@@ -1,0 +1,1561 @@
+                             Accumulated Creep Strain and Energy Density Based
+                        Thermal Fatigue Life Prediction Models for SnAgCu Solder Joints
+
+                                                             Ahmer Syed
+                                                        Amkor Technology, Inc.
+                                                          1900 S. Price Road
+                                                         Chandler, AZ 85248
+                                                          asyed@amkor.com
+
+                                                                       test data is being gathered under accelerated test conditions, it
+Abstract
+                                                                       is also becoming apparent that this will not be enough due to
+    Pb free solder is fast becoming a reality in electronic
+                                                                       rapid implementation of this soldering system. Today,
+manufacturing due to marketing and legislative pressures. The
+                                                                       electronic industry uses electronic components using lead
+industry has pretty much concluded that various version of
+                                                                       frame or laminate technology with countless number of
+SnAgCu solder alloy offer the best alternative for eutectic
+                                                                       packages in various lead counts, lead/ball pitches, and die
+Sn/Pb solder currently in use. With the current trend of
+                                                                       sizes. Since every component has a different interconnect
+cheaper, faster, and better electronic equipment, it has become
+                                                                       reliability behavior, it is unrealistic and cost prohibitive to
+increasingly important to evaluate the package and system
+                                                                       generate test data for every case. The interconnect reliability
+performance very early in the design cycle using simulation
+                                                                       also depends on other factors such as the motherboard
+tools. This requires life prediction models for new solder alloy
+                                                                       thickness and actual end use application and data generated
+systems so that the package-to-board interconnect reliability
+                                                                       on one test condition may not be useful for all. With the
+can be predicted for various environmental and field
+                                                                       current trend of cheaper, faster, and better electronic
+conditions.
+                                                                       equipment, it has become increasingly important to evaluate
+    This paper describes in detail the life prediction models for
+                                                                       the package and system performance for its intended
+SnAgCu solder joints. The models are based on published
+                                                                       application very early in the design cycle using simulation
+constitutive equations for this alloy and thermal cycle fatigue
+                                                                       tools. The life prediction of solder joints is an important part of
+data on actual components. The approach uses advance finite
+                                                                       this evaluation and models are needed to virtually qualify a
+element modeling and analysis techniques and is based on
+                                                                       package without extensive test data. This requires a life
+mechanics of deformation. Both accumulated creep strain and
+                                                                       prediction model, which is based on damage mechanisms and
+creep strain energy density based models are developed. The
+                                                                       can predict life accurately.
+model has been correlated with a number of data points and
+                                                                           Developing a life prediction model for solder joints requires
+predicts life within 25% in most cases. The framework of
+                                                                       four main ingredients and all of these contribute significantly
+modeling and prediction methodology described here is fully
+                                                                       to the accuracy of life prediction model:
+compatible with the framework used for SnPb solder
+previously.                                                            - Constitutive equation and material properties for the
+                                                                       applicable range of stress conditions,
+                                                                       - A damage mechanism based methodology based on
+Introduction
+                                                                       constitutive behavior of the material,
+    The reliability of solder joints is one of the most important
+factors when selecting a package for a particular application.         - Actual test data on real components including failure
+The CTE and stiffness mismatch between the package and the             mechanism, and
+board results in thermal stresses in solder joints during              - Simulation to calculate the response of solder joint under
+temperature and power cycling. The damage caused by these              different stress conditions.
+stresses accumulates as the electronic assembly is subjected
+to multiple cycles, ultimately causing failures of solder joints.           Using the above four ingredients, the author has proposed
+This is a very well documented failure mode for electronic             a life prediction model for SnPb solder joints previously [4, 5].
+assemblies and a wealth of data is available in the literature for     This model has been validated with more than 75 data points
+SnPb solder. Due to this reason, the reliability of Pb free solder     and predicts life within 25% in most cases. This proven
+joints is an important factor for selecting the proper                 approach is used here again to develop the life prediction
+replacement of SnPb solder. Based on various studied                   model for SnAgCu solder joints.
+conducted, the industry as a whole has converged towards                    Actual test data on various packages is generated and the
+SnAgCu solder alloy (with different compositions) to replace           same package attributes and test conditions are simulated
+SnPb solder from electronic assemblies.                                using published constitutive equations for SnAgCu solder.
+    The reliability of SnAgCu solder joints has been a subject         The solder joint response (partitioned creep strain, total creep
+of major research in electronic industry and a number of               strain, and creep strain energy density) are then used to
+researchers have published data [1, 2, 3] showing SnAgCu               determine the parameters of damage mechanism based life
+performs better or worse than SnPb solder, depending on the            prediction models. The life prediction models reported here are
+components tested and test conditions employed. While more             only applicable for thermal and power cycle fatigue, where the
+    A Note to reader: This paper was originally published in ECTC 2004 conference proceedings (pp 737 – 746), however, due to errors in
+data processing the constants for life prediction models published in the original paper were not accurate. These constants, along with
+associated figures, have been corrected here.
+cycling conditions are quite different from a fast cycle bending       the same temperature at low stress levels. As the stress
+or vibration fatigue.                                                  increases, all models for SnAgCu show steeper slope of strain
+                                                                       rate vs. stress curve compared to SnPb solder with different
+Constitutive Models for SnAgCu solder                                  cross-over points depending on the constitutive model and
+    The melting point of SnAgCu (Ag: 3.0 – 4.0%, Cu: 0.5 to            the temperature. This means that except for very high stress
+1.0%) is typically observed as 217oC. This means that the              values, .SnAgCu is generally more creep resistant than SnPb
+homologous temperature (the ratio of operating and melting             solder. This partly explains why solder joints made with this
+temperature in absolute scale) is about 0.47 at –40oC. It is well      particular solder tend to last longer in temperature cycle tests
+documented that creep plays a very important role in                   except for the stiffer assemblies which result in higher stresses
+deformation behavior of materials at homologous temperatures           [1, 2, 3].
+close to and above 0.5 if the loading rate is slow enough for
+creep deformations to occur. Since in actual use conditions,              Table 1: Constitutive Relations for SnAgCu Solder
+the temperature cycle duration is in the order of minutes to           Reference          Constitutive Model
+days and the homologous temperature is more than 0.5, solder
+joints formed by using SnAgCu solder alloy are expected to             Wiese et al [6]                                         n1
+deform primarily due to creep.                                                                                 − H1   σ 
+                                                                                              ε&cr = A 1 exp         
+                                                                                                                           
+    Recently, a number of papers have been published [6, 7, 8,
+                                                                       Equation : 1                            kT   σ n 
+9] on the constitutive equation for creep deformation for                                                                n
+                                                                                                          − H2   σ 
+                                                                                                                            2
+SnAgCu alloy for compositions currently in considerations.                                    + A 2 exp          σ 
+Wiese et al [6] studied the creep behavior of bulk, PCB sample,                                           kT      n 
+and Flip Chip solder joint samples of Sn4.0Ag0.5Cu solder and                                            -1
+                                                                                             A 1 = 4E-7 s , H1/k = 3223, n 1 = 3.0,
+identified two mechanisms for steady state creep deformation
+                                                                                             A 2 = 1E-12 s -1, H2/k = 7348, n 2 = 12,
+for the bulk and PCB samples. They attributed these to climb
+                                                                                             σn = 1 MPa
+controlled (low stress) and combined glide/climb (high stress)
+behavior and represented steady state creep behavior using                                   E(MPa) = 59533 – 66.667T(oK)
+                                                                       Schubert et al                                     − H1 
+double power law model.
+                                                                       [7]                    ε&cr = A1[sinh(ασ )] n exp       
+    Schubert et al [7] combined data from different sources and                                                           kT 
+from their own testing on different compositions of SnAgCu                                   A 1 = 277984 s -1, a = 0.02447 MPa-1,
+solder (Sn3.8Ag0.7Cu, Sn3.5Ag0.75Cu, Sn3.5Ag0.5Cu, and                 Equation : 2
+                                                                                             n = 6.41, H1/k = 6500
+Castin™). They also identified two regions for stress-strain                                 E(MPa) = 61251 – 58.5T(oK) ,
+rate behavior, but postulated the high stress region as power                                CTE = 20.0 ppm/K,
+law break-down region, and chose hyperbolic sine function to
+                                                                                             Poisson’s ratio = 0.36
+represent creep data.
+                                                                       Zhang et al [8]                                    − H1 
+    Zhang et al [8] generated their data on single lap shear                                  ε&cr = A1[sinh(ασ )] n exp       
+specimen of Sn3.9Ag0.6Cu solder alloy. The also modeled the                                                               kT 
+steady state creep behavior using hyperbolic sine function             Converted to          A 1 = 143.4 s-1, a = 0.108 MPa-1,
+postulating power law break-down at high values of stress.             tensile form
+                                                                                             n = 3.7884, H1/k = 7567
+Finally, Morris et al [9] used double power law constitutive                                 E(MPa) = 24224 – 0.0206(oK)
+model to represent creep data on single lap shear specimens of         Morris et al          Double power law:
+Sn3.0Ag0.5Cu solder joints. The stress exponents of 6.6 and            [9]                   H1/k = 11425, n 1 = 6.6,
+10.7 were suggested for the low and high stress regions.                                     H2/k = 9020, n 2 = 10.7
+    The above constitutive equations and their respective                                    G(MPa) = 27360 – 40.5T(oK)
+parameters, converted to tensile stress-strain rate format, are
+shown in Table 1. The reported modulus, CTE, and Poisson’s
+                                                                           Comparing the creep curves for SnAgCu from different
+ratio values are also included for the respective model,
+                                                                       constitutive models, the steady state creep behavior for this
+wherever provided. It should be noted that while steady state
+                                                                       alloy seems to be bounded is a narrow band even though
+creep deformation is usually attributed to distinct regions -
+                                                                       there are differences between samples preparation, test
+and different regions have been suggested for creep
+                                                                       methods, and alloy composition. It should be noted that all
+deformation of SnAgCu by different researchers - these
+                                                                       plots in Figure 1, except for data from [10], are based on
+regions are identified as “Mechanism 1” and “Mechanism 2”
+                                                                       constitutive models, which are themselves fitted from actual
+in the following to avoid multiple subscripts.
+                                                                       data. The plots show that constitutive model proposed by
+    The above constitutive models as well as measured data
+                                                                       Schubert et al [7] and Zhang et al [8] predict very similar
+from [9, 10] are plotted in Figure 1 for three different
+                                                                       behavior at low stresses but start diverging at higher stresses
+temperatures and are compared with published constitutive
+                                                                       (around 30 MPa). On the other hand, the model proposed by
+model of SnPb solder [11]. The figure clearly shows that the
+                                                                       Wiese et al [6], predicts lower creep rate at low stresses (below
+predicted steady state creep rate for SnAgCu solder is two to
+                                                                       30 MPa) but higher rate than Schubert’s model at high
+four orders of magnitude lower than that for SnPb solder for
+                                                                       stresses.
+    A Note to reader: This paper was originally published in ECTC 2004 conference proceedings (pp 737 – 746), however, due to errors in
+data processing the constants for life prediction models published in the original paper were not accurate. These constants, along with
+associated figures, have been corrected here.
+    The actual data from [10], however, shows different                  more detailed comparison of life prediction models using
+behavior depending on the temperature. It correlates better              various constitutive models will be presented elsewhere.
+with Wiese’s model at lower temperatures but falls close to
+Schubert’s and Zhang’s model at high temperatures. This                  Life Prediction Methodology
+difference can be attributed to significantly different alloy                A number of life prediction models have been proposed in
+composition for this data (Sn3.0Ag0.5Cu) compared to the                 the literature for SnPb solder [5, 12, 13] and more recently for
+other data generated on higher Ag percentage.                            SnAgCu solder interconnects [7, 8]. These models are either
+                                                                         based on strain range, accumulated creep strain, or
+                                            Temperature = 60 C
+                                                                         accumulated strain energy density during a temperature cycle.
+                         1.E+03                 SnPb [11]                The author has previously proposed a partitioned
+     Steady-State Creep Rate
+
+
+
+
+                                                SnAgCu [6]               accumulated creep strain model for SnPb solder [4, 5] based on
+                         1.E+01
+                                                SnAgCu [7]               damage mechanisms as described by the constitutive
+                               1.E-01           SnAgCu [8]               equation. The basic assumption for this life prediction model is
+              (1/sec)
+
+
+
+
+                                                SnAgCu [10]              that the damage in solder joint during temperature cycling is
+                               1.E-03
+                                                                         primarily due to steady state creep strain accumulation.
+                               1.E-05
+                                                                         Although the primary creep and time independent plasticity
+                               1.E-07                                    may play a role also, it is assumed that these effects are minor
+                               1.E-09                                    and can be included in a strain rate model as has been done by
+                                        1                   10     100   Darveaux et al [12]. Since creep is considered as the primary
+                                                    Stress (MPa)         damage mechanism for SnAgCu solder during thermal cycling
+                                                                         and is solely used here to simulate the material behavior, the
+                                                                         theoretical basis for the life prediction model has to be creep
+                                            Temperature = 95 C
+                                                                         deformation also. Specifically, instead of using the traditional
+                         1.E+03                 SnPb [11]
+                                                                         definition of fatigue, the cyclic loading is considered as a
+     Steady-State Creep Rate
+
+
+
+
+                                                SnAgCu [6]               special case of creep due to sequence of loading which are
+                         1.E+01
+                                                SnAgCu [7]               repeated in a cyclic manner to derive the life prediction model
+                               1.E-01                                    parameters. This is done by using two equations; a)
+              (1/sec)
+
+
+
+
+                                                SnAgCu [8]
+
+                               1.E-03           SnAgCu [10]              Monkmann-Grant equation for creep rupture, and b) time-
+                                                                         fraction rule.
+                               1.E-05
+                                                                             The Monkmann-Grant equation for creep rupture, as given
+                               1.E-07                                    in Equation 3, states that the time to rupture, tr, is inversely
+                               1.E-09                                    related to the steady state creep strain rate, ε&cr , during a test.
+                                        1                    10    100              εf
+                                                                             tr =                                                  (3)
+                                                    Stress (MPa)
+                                                                                    ε& cr
+                                                                             The constant ε f gives the “creep ductility” or the strain
+                                            Temperature = 130 C
+                                                                         at the onset of failure. The above equation assumes a constant
+                         1.E+03                 SnPb [11]                stress during the creep test.
+     Steady-State Creep Rate
+
+
+
+
+                                                SnAgCu [6]                   In case of varying stresses repeated in a cyclic manner, an
+                         1.E+01
+                                                SnAgCu [7]
+                                                                         estimate of rupture time (or cycles to failure) can be made by
+                               1.E-01           SnAgCu [8]
+              (1/sec)
+
+
+
+
+                                                                         using a special form of time-fraction rule, as given by Equation
+                                                SnAgCu [10]
+                               1.E-03                                    4. Notice the similarity of term within the summation sign to
+                               1.E-05                                    the more familiar Palmgren-Miner rule for cyclic damage.
+                               1.E-07
+                                                                                 n ∆t 
+                               1.E-09                                        Nf  Σ      i= 1                                   (4)
+                                                                                 i =1 tri 
+                                        1                    10    100                    
+                                                    Stress (MPa)         where,
+                                                                            Nf = number of repetitions or cycles to failure,
+   Figure 1: Comparison of Creep Models for SnAgCu.
+                                                                            n    = number of steps within a cycle,
+                                                                            ∆ti = time spent at stress level σi within a cycle, and
+    Because of narrow band in data scatter, any of these
+constitutive models can be employed to simulate the                         tri  = rupture time for stress level σi.
+deformation behavior of SnAgCu solder joints. However, the
+models given by Equation 1 and 2 in Table 1 are selected here               Using Monkmann-Grant equality, Equation 4 becomes
+as the solder composition is closer to one used to generate the
+test data and because of similar mo dulus values reported. A
+    A Note to reader: This paper was originally published in ECTC 2004 conference proceedings (pp 737 – 746), however, due to errors in
+data processing the constants for life prediction models published in the original paper were not accurate. These constants, along with
+associated figures, have been corrected here.
+         n                                                               The above models were originally developed with a limited
+         ∑ ∆ti ε& cri                                                set of data points [14] but have since been validated with more
+                         
+    N f  i= 1            = 1                                 (5)     than 75 data points.
+               εf
+                                                                       A similar approach is attempted here for SnAgCu solder
+                                                                     using the constitutive equations given by Equations 1 and 2.
+                                                                       The constitutive model from Equation 1 is a double power law
+    Where ε&cri is the steady state creep rate for stress level σi.    model and creep strain and energy density can be partitioned
+Realizing that the numerator term within the summation sign is         into their respective mechanisms. On the other hand, the
+the creep strain accumulated during time ∆ti , the summation for       constitutive model in Equation 2 does not separate the two
+all steps n within a cycle gives the Accumulated Creep Strain,         damage mechanisms and partitioning of creep strain or energy
+εacc , for the whole cycle. Thus, the above Equation can be            density is not attempted.
+simplified as                                                              The determination of life prediction model parameters
+                                                                       requires actual test data measuring the cycles to failure during
+                                                                       temperature cycle tests (Nf), and some way of quantifying the
+    Nf     =    (C ′ ε acc ) −1                                (6)     strain or strain energy density during the temperature cycle. In
+         where,                                                        the following sections the test data is first described followed
+         Nf     = number of repetitions or cycles to failure,          by simulation methodology to calculate solder joint response.
+         ε acc  = Accumulated creep strain per cycle,
+                                                                       Solder Joint Reliability Test Data
+          C′          = 1/ ε f , inverse of creep ductility.
+                                                                           In order to evaluate the reliability of solder joints,
+   Notice that the strain exponent is -1 for this life prediction      accelerated temperature cycle tests were conducted on various
+model.                                                                 packages comparing the reliability of SnAgCu solder with that
+   Equation 6 can also be derived using a fracture mechanics           of SnPb eutectic solder. Table 2a lists the test data points
+approach, as discussed previously [14]. It has also been               used here for life prediction model development. The data was
+shown by the author [14] that this equation can easily be              generated on packages of sizes varying from 8x8 mm to 27 x
+converted into energy density based life prediction model:             27mm and various die sizes. The packages were constructed of
+                                                                       three substrate materials, four ball pitches, and four ball sizes
+    Nf     =    (W ′ wacc )−1                                  (7)     to cover the range of BGAs and CSPs.
+                                                                           The daisy chained packages were assembled using either
+   where,                                                              SnAgCu (4.0Ag0.5Cu or 3.9Ag0.5Cu) or SnPb balls and were
+   Nf     = Number of repetitions or cycles to failure,                mounted on test boards using SnAgCu or SnPb paste,
+    wacc = Accumulated creep energy density per cycle,                 respectively. The test boards of various thickness’ had
+                                                                       alternate daisy chains so one or more nets were formed after
+    W ′ = Creep energy density for failure.
+                                                                       package assembly on board. All packages used in this
+    Equations 6 and 7 give the cyclic creep (“Fatigue”) life due
+                                                                       comparison used electrolytic NiAu plating on the ball lands
+to varying and repeated stresses for a single creep mechanis m.
+                                                                       and the test boards had OSP surface finish.
+For two creep mechanisms, such as Equation 1 in Table 1 for
+                                                                           The assembled boards were placed inside thermal cycle
+SnAgCu solder, the above equations become
+
+                        (C                        )
+                                                                       chambers and cycled according to prescribed condition. Three
+                                                II −1
+          Nf      =          I   ε acc
+                                   I
+                                       + C II ε acc            (8)     test conditions were used to generate this data:
+                                                                       - TC1: -40 to 125oC temp cycle, 15 minutes ramps and dwells, 1
+   and
+
+                        (W                            )
+                                                                       cycle per hour,
+                                                      −1
+          Nf      =          I
+                                   I
+                                  wacc + W II wacc
+                                               II
+                                                               (9)     - TC2: -55 to 125oC, 12 minutes ramps and 3 minutes dwells, 2
+                                                                       cycles/hour, and
+    The above life prediction models require the determination
+                                                                       - TC3: 0 to 100oC, 10 minutes ramps and 5 minutes dwells, 2
+of constants C ′ , CI and CII for creep strain based model and
+                                                                       cycles/hour.
+W ′ , WI , and WII for dissipated creep energy density based
+                                                                           These temperature cycle conditions cover the range of
+model, depending on the number of damage mechanisms used
+                                                                       accelerated conditions typically used by the industry to
+accumulated creep strain or creep strain energy density
+                                                                       evaluate solder joint reliability for various applications. The
+calculated simulating the same test conditions.
+                                                                       temperature profiles mentioned above were measured at the
+    For eutectic SnPb solder the constants in equations 8 & 9
+                                                                       test boards during the cycling and are not the chamber
+have been determined by the author [14] and the proposed life
+                                                                       profiles.    The testing also employed in-situ resistance
+prediction models are given by:
+               (0.02ε + 0.063 ε )
+                                                                       measurement to detect failures. The resistance of each
+                                          II −1
+    Nf     =            I
+                        acc               acc                  (10)    electrical net was measured every two minutes and was
+
+               (0.0027 w + 0.0019 w )
+                                                                       compared with the threshold resistance of 300 ohms. A net is
+                                               II −1
+    Nf     =                     I
+                                 acc           acc             (11)    considered as failed at the first instance when its resistance
+                                                                       exceeded the threshold value followed by ten additional such
+                                                                       instances within 10% of the time of first failure. The failures
+    A Note to reader: This paper was originally published in ECTC 2004 conference proceedings (pp 737 – 746), however, due to errors in
+data processing the constants for life prediction models published in the original paper were not accurate. These constants, along with
+associated figures, have been corrected here.
+were also confirmed manually within a week of first                                life is not the characteristic life and is calculated from β and ε
+occurrence. The failure data was further analyzed by Weibull                       parameter using Gamma function.
+analysis software to determine Weibull parameters (slope β
+and characteristic life ε) and the mean life. Note that the mean
+
+                                      Table 2a: Package and test condition for board level reliability tests
+     Data                     Substrate                                                                   Pad      Pad      Ball                  Board
+               Package Type                 Body Size     I/O    Pitch              Die Size                                       Test Type
+     Point                      Type                                                                      Type     Size     Dia                 Thickness
+      1       CABGA           Laminate       15 x 15      208    0.8            8.5 x 8.5 x0.265          SMD       0.4    0.46        TC1          1.0
+      2       CABGA           Laminate       15 x 15      256    0.65            10 x 10 x 0.265          SMD      0.32     0.4        TC2          0.8
+      3       CABGA           Laminate        8 x8         64    0.8             4.8 x 4.8 x 0.29         SMD       0.4    0.46        TC1          1.6
+      4       CABGA           Laminate        8 x8         64    0.8             4.8 x 4.8 x 0.29         SMD       0.4    0.46        TC2          1.6
+      5       Ceramic BGA     Ceramic         8 x8         64    0.8                  None                SMD       0.4    0.46        TC1          1.6
+      6       Ceramic BGA     Ceramic         8 x8         64    0.8                  None                SMD       0.4    0.46        TC3          1.6
+      7       CVBGA           Laminate       12 x 12      288    0.5            7.1 x 7.1 x 0.175         SMD      0.25     0.3        TC1          0.8
+      8       fleXBGA         Tape           12 x 12      144    0.8             6.4 x 6.4 x 0.3          SMD       0.3    0.46        TC1          1.6
+      9       fleXBGA         Tape           12 x 12      144    0.8             6.4 x 6.4 x 0.3          SMD       0.3    0.46        TC2          1.6
+      10      fleXBGA         Tape           12 x 12      144    0.8             6.4 x 6.4 x 0.3          SMD       0.3    0.46        TC3          1.6
+      11      PBGA            Laminate       27 x 27      256    1.27            10 x 10 x 0.30           SMD      0.65    0.76        TC2          1.6
+                                                                          top: 5.08 x 5.08 x 0.15, btm:
+      12      TSCSP           Tape           12 x 12      288     0.5                                     SMD      0.24     0.3        TC2          0.8
+                                                                              10.16 x 10.16 x 0.15
+
+
+                               Table 2b: Board level reliability test results for SnAgCu and SnPb solder joints
+                                                                  SnAgCu Solder                              SnPb Eutectic Solder
+                                                                             Weibull      Mean                             Weibull
+             Data                    Body                 1st   Weibull                                1st   Weibull                    Mean Life
+                   Package Type                I/O                         Char. Life      Life                           Char. Life
+             Point                   Size               Failure Slope                                Failure Slope                       (Cycles)
+                                                                            (Cycles)     (Cycles)                          (Cycles)
+               1   CABGA          15 x 15      208      2491     8.92         3717         3520       2539         10       3450             3281
+               2   CABGA          15 x 15      256      3380     15.4         4096         3960       1856         7.4      2725             2557
+               3   CABGA           8 x8         64      3463     8.36         4843         4570       2445       11.76      3212             3076
+               4   CABGA           8 x8         64      2493     9.81         3263         3103       2205       13.76      2664             2565
+               5   Ceramic BGA     8 x8         64       318     7.08          445          417        340         10        437             416
+               6   Ceramic BGA     8 x8         64       853     9.55         1103         1047        982        8.96      1316             1246
+               7   CVBGA          12 x 12      288      1332     5.81         2005         1890       1700        9.26      2291             2172
+               8   fleXBGA        12 x 12      144      2580    19.06         2948         2868       2369        10.4      3164             3015
+               9   fleXBGA        12 x 12      144      2351     20.4         2792         2720       1902        15.2      2410             2327
+              10   fleXBGA        12 x 12      144      8939     15.7        10370        10027       5042       12.95      6195             5953
+              11   PBGA           27 x 27      256      4651      7.2         6812         6381       3656       13.92      4544             4378
+              12   TSCSP          12 x 12      288       175       6           296          275        NA          NA        NA               NA
+
+
+    Table 2b lists the Weibull parameters and the mean life for                    strain or energy density during each temperature cycle. The
+both SnPb and SnAgCu solder joints for each data point. The                        details of the simulation approach have been described
+data shows that while SnAgCu solder joints had a higher                            elsewhere [5] and are not repeated here. Briefly, the modeling
+reliability for most cases SnPb solder joints lasted longer in                     approach involves a global-local method where a 3-D global
+some cases. The measured mean life covers a range of data                          model (1/4th or 1/8th symmetric) model is generated in the first
+from 275 cycles to 10027 cycles for SnAgCu and 416 to 5953                         step using SOLID185 elements in ANSYS, encompassing all
+cycles for SnPb solder joints, respectively.                                       geometric details of the package-board assembly and linear
+    In all cases reported here, the solder joints failed at                        material properties. The model is analyzed for a unit
+package interface. Figure 2 shows a typical cross-section of                       temperature drop using sub-structuring analysis methods. The
+failed joint showing crack very close to intermetallic on                          super-element so generated is then used in a detailed model of
+package side.                                                                      the critical solder joint using SOLID185 elements. This detailed
+                                                                                   solder joint model includes the geometric shape of the joint as
+                                                                                   well as intermetallics and interfacing package and board pads.
+                                                                                   The super-element is also added to this model to get the effect
+                                                                                   of package stiffness. The solder material is modeled using
+                                                                                   creep and temperature dependent properties. The model is
+                                                                                   then analyzed for one or two complete temperature cycles,
+                                                                                   simulating the actual profile as much as possible. The output
+  Figure 2: Typical failed SnAgCu solder joint cross-section.                      from this simulation includes the accumulated creep strain and
+                                                                                   dissipated creep strain energy density (ANSYS Output
+Finite Element Simulations                                                         parameters: NL, CREQ and SEND, CREEP). A volume
+   The above test data points were simulated in finite element                     averaging technique is then employed to calculate the
+analysis using ANSYS™ to calculate the accumulated creep                           accumulated creep strain or energy density for 25 micron thick
+
+    A Note to reader: This paper was originally published in ECTC 2004 conference proceedings (pp 737 – 746), however, due to errors in
+data processing the constants for life prediction models published in the original paper were not accurate. These constants, along with
+associated figures, have been corrected here.
+layers of solder at package and board interface, respectively.                     (mold compound, die attach, substrate, test board, etc) are
+These layers contain two elements across the thickness to                          accurate. The property values used here for mold compound
+mitigate any stress singularity issues [14]. Figure 3 shows a                      and die attach materials are based on DMA and TMA data
+sample finite element model for package and solder joint.                          generated at Amkor’s lab and not from supplier’s provided
+    This modeling approach has been successfully used for                          data sheets.
+SnPb solder and is applied for SnAgCu solder joints as well. It
+should be noted here that although advanced finite element                                                         7000
+
+
+
+
+                                                                                      Mean Fatigue Life (cycles)
+analysis techniques are used here, they are primarily to                                                           6000       Measured
+enhance the efficiency of analysis. It is not required that the                                                    5000       Predicted
+simulation approach be implemented as is to use the life
+                                                                                                                   4000
+prediction model. The only requirements are: 3-D modeling
+(1/4th or 1/8th symmetric), and volume averaging on a 25 micron                                                    3000
+thick layer of solder at interfaces, each with at least two                                                        2000
+elements across the thickness.
+                                                                                                                   1000
+
+                                                                                                                     0
+                                                                                                                          1   2   3       4   5   6    7   8   9   10   11
+                                                                                                                                              Data Point
+
+
+                                                                                    Figure 4: Comparison of predicted and measured mean life
+                                                                                                 for eutectic SnPb solder joints.
+
+                                                                                   Life Prediction for SnAgCu solder Joints for Double Power
+                                                                                   Law Creep Model
+                                                                                       Having established the confidence in material and
+                                                                                   geometric parameters of the finite element models for packages
+Figure 3: Global finite element model and detailed solder joint
+                                                                                   with SnPb solder joints, the same models were analyzed again
+ model. Blue and red elements in solder joint model indicate
+                                                                                   but with SnAgCu constitutive model and material properties.
+25 micron thick solder layers at package and board interface,
+                                                                                   Thus any differences between solder joint response (strain
+                          respectively.
+                                                                                   and energy density) for the two solder alloys (SnPb and
+                                                                                   SnAgCu) were only due to the difference in constitutive
+Life Prediction for SnPb Solder Joints                                             models and material properties of solder alloy itself. The
+    The test data described above contains measured mean life                      constitutive model and elastic modulus given by Equation 1 &
+for both SnPb and SnAgCu solder joints. In order to revalidate                     2 in Table 1 are used here to simulate solder joint behavior
+the earlier published model for SnPb solder, the 11 data points                    during temperature cycling. The CTE and Poisson’s ratio for
+for SnPb solder were simulated first in finite element using                       SnAgCu solder were assumed as 20 ppm/oC and 0.36,
+above methodology to predict the life.                                             respectively as per [7]. The simulated results for each data
+    For SnPb solder, the following constitutive equation [11] is                   point were post-processed to calculate the volume averaged
+used to simulate the creep behavior                                                accumulated creep strain and creep strain energy density per
+                                   n1                                  n2          cycle. In addition, since Equation 1 is of double power law
+                − H  σ                          − H  σ 
+ε&cr = B I exp                    + B II exp                    (12)   form, accumulated creep strain was also partitioned into its
+                kT   Ε(T )                      kT   Ε(T )                 respective mechanism to determine if a life prediction model
+                                                                                   based on partitioned creep strain, similar to the one used for
+     Steady State Creep Model Parameters (SnPb)                                    SnPb solder, can be established. This resulted in three life
+                                                                                   prediction models, one each for partitioned accumulated creep
+ BI                BII            H           n1                       n2
+                                                                                   strain, total accumulated creep strain, and creep strain energy
+ 1.7e12 1/sec      8.9e24 1/sec   0.468 eV    3                        7           density. The following sections discuss each of these life
+                                                                                   prediction models. In all cases reported here, the failure was
+   With E (T) = -0.088T(oC) + 32 GPa.                                              observed and predicted at the package interface.
+
+   The life prediction models are given by Equation 10 & 11.                           Partitioned Accumulated Creep Strain: The constitutive
+                                                                                   model for SnAgCu solder given by Equation 1 describes two
+    Figure 4 shows the comparison of measured and predicted                        mechanisms of creep deformation. It can be argued that each
+mean life. The predicted life for these new data points is again                   of these mechanisms will cause its own damage and the
+within 25% of measured life and provides further validation of                     fatigue life of solder joint should be a function of damage from
+the life prediction model. The good correlation between                            each mechanism, as given by equations 8 and 9 above.
+predicted and measured fatigue life for SnPb solder also                               The creep strain partitioning approach requires the
+indicates that the material properties used for other materials                    separation of total accumulated creep strain into its respective
+    A Note to reader: This paper was originally published in ECTC 2004 conference proceedings (pp 737 – 746), however, due to errors in
+data processing the constants for life prediction models published in the original paper were not accurate. These constants, along with
+associated figures, have been corrected here.
+components. Since ANSYS does not provide separate values                                                                            Figure 5: Contribution of each mechanism in total
+for each component, post-processing routine was used to                                                                             accumulated creep strain vs. measured mean life.
+separate the total creep strain into its components. The creep                                                                      Significantly higher scatter in data for low stress
+equation was implemented using ANSYS standard implicit                                                                                                 mechanism.
+creep model (TBOPT = 11). Notice that User Subroutine is no
+longer required for ANSYS 7.0 to partition the creep strain and
+
+
+
+
+                                                                                                % contribution of Low Stress Mech
+higher as was done for SnPb solder in the approach described                                                                        90
+in [5].                                                                                                                             80
+    In order to determine the constants of life prediction model,                                                                   70
+Equation 7, linear multiple regression analysis was performed                                                                       60
+on two extremes and a few intermediate data points (measured                                                                        50
+mean life) along with the corresponding partitioned                                                                                                                SnAgCu Solder
+                                                                                                                                    40
+accumulated creep strains. The constants were determined to                                                                                                        SnPb Solder
+                                                                                                                                    30
+be 0.106 and 0.045, respectively with a co-efficient of
+determination of 0.997. Notice that these constants can be                                                                          20
+
+taken as the inverse of creep ductility for each mechanism.                                                                         10
+With these, the life prediction model for SnAgCu is given as:                                                                        0
+                                                                                                                                         1   2    3   4    5   6    7   8    9     10   11   12
+
+                                 Nf     =   ( 0.106ε   I
+                                                       acc   + 0. 045ε acc
+                                                                       II
+                                                                             )
+                                                                             −1
+                                                                                   (13)       Figure 6: Comparison of relative contribution of low stress
+                                                                                                       mechanism in accumulated creep strain.
+    The above model suggests that SnAgCu is about 2.3X
+more ductile at higher stress (mechanism II). However, the                                       Converting the above partitioned creep strains into
+curve fitting indicated standard error for constants as 0.08 and                             damage using the life prediction models above, the damage
+0.002, respectively, thus less confidence in the predicted value                             contribution of low stress mechanism for SnAgCu is predicted
+of 0.106 for CI . The higher value for standard error for                                    to be less than 2% on the average. This is in direct contrast to
+constant CI indicates significantly higher scatter in the data,                              damage contributions from each mechanism for SnPb solder,
+as shown in Figure 5.                                                                        where the two mechanisms contributed almost the same
+    Figure 6 compares the relative contribution of accumulated                               amount of damage on the average. This indicates that while
+creep strain from low stress mechanism for the two alloys for                                damage separation is required for SnPb solder, there is no
+the 11 cases. It is interesting to note that while strain                                    need for such a separation for SnAgCu solder as almost all
+contributions from low stress mechanism are higher for SnPb                                  damage is caused by strain due to higher stress region for this
+solder, they are less than 5% on the average for SnAgCu                                      solder. It should be noted, however, that the cases analyzed
+solder. This small contribution of Mechanism I creep strain for                              here are for accelerated test conditions with wide range of
+SnAgCu solder joint is primarily due to very low creep rates at                              temperature change during a cycle. In real applications, the
+low stresses. Since the stress changes continuously during                                   temperature range can be very small during mini cycles and
+the cycle, the total creep strain is dominated by the                                        contributions from low stress region can become prominent,
+contributions from higher stress region. Furthermore, since the                              requiring damage separation for more accurate life prediction
+creep resistance of SnAgCu solder at low stresses is much                                    for field cases.
+higher compared to SnPb solder, the solder joints made with                                      Total Accumulated Creep Strain: Since the damage
+this alloy can last a much longer time if the stresses are low.                              contribution for low stress region is very small for SnAgCu
+                                                                                             solder (at least for accelerated test cases), it is possible to use
+                              1.0E+00                                                        a simplified life prediction model based on total accumulated
+                                                                                             creep strain. This also simplifies the effort required in
+   Accumulated Creep Strain
+
+
+
+
+                                                                Low Stress Mechanism
+                                                                                             simulating the behavior of SnAgCu using ANSYS as there is
+                              1.0E-01                           High Stress Mechanism        no need to implement user defined creep law. The standard
+                                                                                             outputs from ANSYS (NL, CREQ & SEND, CREEP) provide the
+                              1.0E-02                                                        accumulated creep strain and creep energy density, which can
+                                                                                             be volume averaged by simple post-processing steps using
+                                                                                             ETABLES.
+                              1.0E-03
+                                                                                                 In order to determine the total accumulated creep strain
+                                                                                             (and energy density), the double power law model in Equation
+                              1.0E-04                                                        1 was implemented using ANSYS’ standard implicit creep
+                                     100           1000                10000        100000   equation (TBOPT = 11 with C3 = 0). All 12 data points listed in
+                                                   Mean Life (Cycles)                        Table 2 were then simulated. The accumulated creep strains for
+                                                                                             each element of solder joint were stored in NL, CREQ for every
+                                                                                             step of the temperature cycle, which were then post-processed
+
+    A Note to reader: This paper was originally published in ECTC 2004 conference proceedings (pp 737 – 746), however, due to errors in
+data processing the constants for life prediction models published in the original paper were not accurate. These constants, along with
+associated figures, have been corrected here.
+to determine the volume averaged accumulated creep strain in                                                                     prediction model in the same form as Equation 6 with constant
+the 25 microns thick layer of solder.                                                                                            C’ = 0.0468. The life prediction model for SnAgCu thus
+                                                                                                                                 becomes
+   The total accumulated strain for the two solder alloys are
+compared in Figure 7, which shows that the total accumulated                                                                                                                                          Nf     =   (0.0468 ε acc ) −1
+creep strain for SnAgCu solder joint can be very similar,
+higher, or lower than those for SnPb joint for the same package                                                                                      (14)
+and test condition.                                                                                                                   Notice that the constant for total creep strain based model,
+                                                                                                                                 i.e., 0.0468, is very similar to the constant for Mechanism II of
+                                                         6.0%                                                                    partitioned creep model (0.045). This is because the total
+                        Total Accumulated Creep Strain
+
+
+
+
+                                                                                                                                 accumulated creep strain is only slightly higher than
+                                                         5.0%
+                                                                                                       SnAgCu Joints             accumulated creep strain due to “Mechanism II”.
+                                                         4.0%                                          SnPb Joints
+                                                                                                                                                                                              0.01
+                                                         3.0%
+
+                                                         2.0%
+
+
+
+
+                                                                                                                                                          Inverse of Mean Life (1/cycle)
+                                                         1.0%
+                                                                                                                                                                                             0.001
+                                                         0.0%
+                                                                0   1   2     3   4     5    6     7     8    9      10 11
+                                                                                                                                                                                                                        N f = (0.0468 ε acc)
+                                                                                                                                                                                                                                             -1
+                                                                                      Data Point
+                                                                                                                                                                                            0.0001
+   Figure 7: Comparison of accumulated creep strain in
+SnPb and SnAgCu solder joint.
+
+                                                                                                                                                                                           0.00001
+                        100000
+                                                                                                                                                                                                  0.001          0.01            0.1                 1
+                                                                                                                                                                                                             Acc. Creep Strain per cycle
+                                                                                                          -0.9607
+                                                                                        y = 25.273x
+                                                                                            2                                       Figure 9: Inverse of Mean Life vs. Total Accumulated
+                                                                                           R = 0.9814
+   Mean Life (Cycles)
+
+
+
+
+                         10000                                                                                                   Creep Strain on log-log scale.
+                                                                                            Note: y = Nf
+                                                                                                                                     Creep Strain Energy Density: Plastic or creep strain
+                                                                                                                                 energy density (sometimes referred as plastic work) has also
+                                            1000                                                                                 been used previously to predict the fatigue life of solder joints.
+                                                                                                                                 Since the finite element simulations can calculate both
+                                                                                                                                 accumulated creep strain and dissipated creep strain energy
+                                                                                                                                 density from one analysis, life prediction models for SnAgCu
+                                                         100                                                                     are also determined using Creep Strain Energy Density.
+                                                           0.001               0.01                    0.1                   1
+                                                                                                                                                             100000
+                                                                            Acc. Creep Strain per cycle
+                                                                                                                                                                                                                                           -0.9229
+                                                                                                                                                                                                                            y = 674.08x
+    Figure 8: Mean Life vs. Total Accumulated Creep Strain                                                                                                                                                                       2
+                                                                                                                                                                                                                               R = 0.982
+on log-log scale.
+                                                                                                                                     Mean Life (Cycles)
+
+
+
+
+                                                                                                                                                                                 10000
+                                                                                                                                                                                                                               Note: y = N f
+    Figure 8 shows strain vs. life plot on a log-log scale, the
+typical format for such representation. Also shown is the fitted
+model relating mean life with volume averaged accumulated
+creep strain. Notice that the fitted model predicts the strain                                                                                                                             1000
+exponent as –0.9607, a value very close to the theoretically
+derived exponent of –1.0 discussed in earlier section. This
+shows that the fatigue life model given by Equation 6 is valid
+and data can be fitted with linear regression analysis.                                                                                                                                    100
+    Figure 9 shows the same data replotted on the log-log                                                                                                                                     0.01               0.1                   1                 10
+scale but with strain plotted against the inverse of life. The                                                                                                                                       Acc. Creep Strain Energy Density per Cycle
+linear regression analysis with intercept = 0 of this
+representation shows even a better fit to data, resulting in life
+    A Note to reader: This paper was originally published in ECTC 2004 conference proceedings (pp 737 – 746), however, due to errors in
+data processing the constants for life prediction models published in the original paper were not accurate. These constants, along with
+associated figures, have been corrected here.
+   Figure 10: Mean Life vs. Dissipated Creep Strain Energy                                             This equation was implemented in ANSYS by using
+Density on log-log scale.                                                                          standard implicit creep equation (TBOPT = 8). The
+                                                                                                   accumulated creep strain and dissipated creep strain energy
+     Figure 10 shows the plot of measured mean fatigue life (Nf)                                   density were calculated for each case and the life prediction
+vs. the creep strain energy density calculated using finite                                        model parameters were determined using linear regression
+element simulation on a log-log scale. The fitted model in the                                     analysis. Again a good fit was found for the data and the mean
+figure also shows the energy density exponent of -0.9229,                                          life can be predicted by using the following equations.
+again a value very close to theoretically derived value of –1.0
+in Equation 7. This again proves the validity of the approach                                      Acc. Creep Strain:
+that the fatigue life exponent should be based on damage                                                     Nf     =   (0.0513 ε acc ) −1
+mechanism used to model the behavior of the material. The
+fitted model exponent so close to –1 again indicates that a                                                (16)
+linear regression analysis can be used for creep strain energy                                     Creep Energy Density:
+density based model as well.                                                                                 Nf     =   (0. 0019 wacc ) −1                   (17)
+     Figure 11 shows the result of linear regression of the same
+data, replotted in different format (energy density vs. inverse
+of life), again showing a better fit than the one in Figure 9. The                                     Comparing above to the life prediction models for double
+fitted model can be re-written in the same format as Equation 7                                    power law creep constitutive equation, the exponents are
+as                                                                                                 again determined as –1 for both accumulated creep strain and
+                                                                                                   creep strain energy density. The values of constants,
+                                       Nf        =   (0. 0015 wacc ) −1                     (15)   however, are slightly different. This difference is due to the
+                                                                                                   actual values of creep strain and energy density calculated
+                                          0.01                                                     from two constitutive models.
+                                                                                                       This shows that the life prediction model cannot be
+                                                                                                   independent of deformation constants used to simulate the
+      Inverse of Mean Life (1/cycle)
+
+
+
+
+                                                                                                   material behavior. This effect will be further discussed in detail
+                                         0.001                                                     in a separate paper.
+
+                                                                                                   Life prediction Models Validation and Comparison
+                                                                                                        The data used in above life prediction models
+                                        0.0001                                                     development encompassed different substrate types, ball
+                                                                                        -1         count and sizes, ball pitches, material sets, die sizes, board
+                                                                     N f = (0.0015w acc )          thickness, and temperature cycle conditions.
+                                                                                                        In order to further validate the model, a completely
+                                       0.00001                                                     different package was simulated and tested. The package used
+                                              0.01             0.1            1              10    is PS-etCSP™ (Package Stack-extremely thin CSP), which is a
+                                                 Acc. Creep Strain Energy Density per Cycle        stack package design. The test and simulations were
+                                                                                                   conducted for single and double sided assemblies, with and
+                                                                                                   without package stacking. The details of this package and test
+ Figure 11: Inverse of Mean Life vs. Dissipated Creep Strain
+                                                                                                   data is described elsewher e [15].
+              Energy Density on log-log scale.
+                                                                                                      Table 3: Predicted vs. Measured life for Stack Package.
+                                                                                                                                        Predicted Lives (cycles)
+Life Prediction Models for Hyperbolic Sine Constitutive                                                                    Measured
+Equation                                                                                            Stack    Assembly      Mean Life Power Law            Sinh
+   The life prediction models discussed above are determined                                                                (cycles) Acc. Energy Acc. Energy
+when double power law was used to simulate the creep
+                                                                                                                                     Creep Density Creep Density
+behavior of SnAgCu solder joints. Since a number of
+constitutive models are proposed for SnAgCu solder, the life                                         No     Single Sided      1225      1082   1173    995      1112
+prediction model parameters would depend on the constitutive                                         No     Double Sided      565       574    600     585      608
+equation used to simulate solder behavior. In order to                                               Yes    Single Sided      915       958    1031    904      1000
+investigate the effect of constitutive equation, the same 12                                         Yes    Double Sided      495       536    557     546      560
+data points for SnAgCu solder were simulated using the                                                 Table 3 compares the measured life with the predicted life
+hyperbolic sine relationship, given by Equation 2 in Table 1.                                      using four life prediction models. Of the four models, the
+                                               − H1                                              accumulated creep strain model based on power law creep
+                   ε&cr = A1[sinh(ασ )] n exp                                                    equation predicted life closest to the measured data. The
+                                               kT 
+                                                                                                   accumulated creep strain based on hyperbolic sine creep
+
+    A Note to reader: This paper was originally published in ECTC 2004 conference proceedings (pp 737 – 746), however, due to errors in
+data processing the constants for life prediction models published in the original paper were not accurate. These constants, along with
+associated figures, have been corrected here.
+equation resulted in slightly higher predicted values. The             using accumulated creep strain and double power law creep
+energy density based models resulted in highest predicted              equation gives the closest results compared to experimental
+values.                                                                data.
+      The same trends were observed for data in Table 2 and
+                                                                       Acknowledgments
+their respected predicted values. However, the energy density
+                                                                           The author would like to thank W J Kang, J Y Khim, Y J
+based models do seem to give the same trend as measured life
+                                                                       Kim, and Y H Ka at Amkor Technology, Korea for performing
+when TC1 and TC2 test cycle data was compared, i.e., lower
+                                                                       the reliability tests and data analysis used in this work.
+life for TC2.
+
+                                                                       References
+Characteristic and %BX life calculations
+    The above life prediction models predict the mean life, not        1. Syed, A., “Reliability of Lead-Free Solder Connections for
+the characteristic life associated with 2 parameter Weibull                Area-Array packages,” IPC SMEMA Council APEX 2001,
+distribution. The characteristic life (63.2%), however, can be             pp. LF2-7.
+easily calculated using the predicted mean life and the                2. Bartelo, J., et al, “Thermomechanical Fatigue Behavior of
+estimated slope (β) of Weibull distribution. This slope is                 Selected Lead-Free Solders,” IPC SMEMA Council APEX
+typically around 10 for area array type packages, but can range            2001, pp. LF2-2.
+between 6 and 20. In fact, the data shown in Table 2 has an            3. Schubert, A., et al, “Reliability Assessment of Flip-Chip
+average β of about 11 for both SnAgCu and SnPb solder                      Assemblies with Lead-free Solder Joints,” 52nd ECTC 2002,
+joints. Knowing the β and the mean life, the characteristic life           pp. 1246-1255.
+can be estimated using GAMMALN function in Excel                       4. Syed, A. R., “Factors Affecting Creep-Fatigue Interaction
+spreadsheet by using the following equation                                in Eutectic Sn/Pb Solder Joints,” Advances in Electronic
+                                                                           Packaging 1997, InterPack97, pp. 1535-1542.
+Characteristic Life = Mean Life / EXP(GAMMALN(1+1/β))                  5. Syed, A., “Predicting Solder Joint Reliability for Thermal,
+                                                                           Power, & Bend Cycle within 25% Accuracy,” 51st ECTC
+   Using the β of 10, the above equation results in the                    2001, pp. 255-263.
+characteristic life to be about 1.05X of mean life.                    6. Wiese, S., et al, “Microstructural Dependendence of
+   Once the characteristic life is determined, the life for any            Constitutive Properties of Eutectic SnAg and SnAgCu
+other cumulative failure rate can be determined by using 2 -               Solders,” 53rd ECTC 2003, pp. 197-206.
+parameter Weibull equation.                                            7. Schubert, A., et al, “Fatigue Life Models of SnAgCu and
+                                                                           SnPb Solder Joints Evaluated by Experiements and
+Summary and Conclusions                                                    Simulations,” 53rd ECTC 2003, pp. 603-610.
+    Thermal fatigue life prediction models are presented using         8. Zhang, Q., et al, “Viscoplastic Constitutive Properties and
+double power law and hyperbolic sine constitutive equations                Energy-Partioning Model of Lead-Free Sn3.9Ag0.6Cu
+for SnAgCu solder joints. Both accumulated creep strain and                Solder Alloy,” 53rd ECTC 2003, pp. 1862-1868.
+creep energy density approaches are used and the life                  9. Morris, J. W., et al, “Creep Properties of Sn-rich Solder
+prediction models are developed using damage mechanisms.                   Joints, ” 53rd ECTC 2003, pp. 54-57.
+The partitioning of creep strain shows that the contribution of        10. Hua, F., Private Communications
+low stress region is very small in total creep strain during an        11. Wong, B., et al, “A Creep-Rupture Model for Two-Phase
+accelerated temperature cycle.                                             Eutectic Solders,” IEEE CHMT-11,No.3, pp. 284-290, 1988.
+    Since partitioning of creep strain is not required, the            12. Darveaux, R., et al, “Reliability of Plastic Ball Grid Array
+modeling approach can be easily implemented in ANSYS using                 Assembly,” Chapter 13 in Ball Grid Array Technology, Ed.
+standard features. The creep equations used are standard                   Lau, J. H., McGraw-Hill, 1995.
+options in ANSYS and the accumulated creep strain and creep
+                                                                       13. Lee, W. W., et al, “Solder joint fatigue models: review and
+strain energy density are calculated by ANSYS directly. Post
+                                                                           applicability to chip scale packages,” Microelectronics
+processing of results is required, however, to calculate volume
+                                                                           Reliability, Vol. 40 (2000), pp. 231-244.
+averaged values in a 25 micron thick layer of solder. This can
+                                                                       14. Syed, A. R., "ACES of Finite Element and Life Prediction
+be easily accomplished using ETABLE commands in ANSYS.
+                                                                           Models for Solder Joint Reliability," Design and Reliability
+Although the model parameters are dependent on the finite
+                                                                           of SolderS and Solder Interconnections, Proceedings of
+element techniques used here, they can be used as long as 3-D
+                                                                           Symposium 1997 TMS Conference, pp. 347-355.
+modeling and volume averaging techniques are employed.
+                                                                       15. Kim, J-Y., et al, "Board Level Reliability Study on Three-
+    The constants of life prediction models were determined
+                                                                           Dimensional Thin Stacked Package,” to be published 54TH
+using actual test data and finite element simulations. These
+                                                                           ECTC, 2004.
+constants were calculated for both types of constitutive
+equations, showing slight difference in values.
+    All models show very good correlation with test data with
+predictions with 25% in most cases. Further validation on
+stacked package configuration shows life prediction approach
+
+    A Note to reader: This paper was originally published in ECTC 2004 conference proceedings (pp 737 – 746), however, due to errors in
+data processing the constants for life prediction models published in the original paper were not accurate. These constants, along with
+associated figures, have been corrected here.
+  Accumulated Creep Strain and Energy Density Based
+   Thermal Fatigue Life Prediction Models for SnAgCu
+                      Solder Joints
+
+
+Ahmer Syed                                      Enabling a
+                                              Microelectronic
+asyed@amkor.com                                   World ®
+
+
+  Presented at
+      54th
+   Electronic
+ Components &
+  Technology
+   Conference
+  June 3, 2004
+          Life Prediction Models for SnAgCu Solder
+
+• Why Predict
+   – Industry is fast migrating to SnAgCu solder alloys
+   – Reduced design cycle time limits the use of testing to
+     evaluate reliability
+   – Life prediction models are needed to assess reliability
+     at the design stage
+
+• Four factors governing life prediction
+   –   Material behavior
+   –   Simulation techniques
+   –   Life prediction methodology
+   –   Test data
+
+
+                     © 2004 Amkor Technology, Inc.   Enabling a Microelectronic World
+                                                                 1. Material Behavior
+
+• Constitutive equations for SnAgCu solder joints
+   – Double Power Law
+                                                                             A1 = 4E-7 s-1
+       §   Wiese et al (Sn4.0Ag0.5Cu)                                        H1/k = 3223
+                                             n                      n2       n1 = 3.0
+                           − H1   σ            − H 2  σ 
+                                         1
+             ε&cr = A1exp          + A 2exp                      A2 = 1E-12 s-1
+                           kT   σ n            kT   σ n              H2/k = 7348
+                                                                             n2 = 12.0
+       §   Morris et al (Sn3.0Ag0.5Cu)
+
+   – Hyperbolic Sine
+       §   Schubert et al (Sn3.8Ag0.7Cu, Sn3.5Ag0.75Cu, Sn3.5Ag0.5Cu,
+           CASTIN™)                               A1 = 277984 s-1
+                                                                   a = 0.02447 MPa-1
+                                         − H1 
+            ε&cr = A1[sinh (ασ )] n exp                          n = 6.41
+                                         kT                      H1/k = 6500
+
+       §   Zhang et al (Sn3.9Ag0.6Cu)                              E(MPa) = 61251 – 58.5T( oK)
+                                                                   CTE = 20.0 ppm/K,
+                                                                   Poisson’s ratio = 0.36
+
+                                 © 2004 Amkor Technology, Inc.           Enabling a Microelectronic World
+                                                                             1. Material Behavior
+
+• Steady State Creep Rate                                                    Temperature = 60 C
+  Prediction
+                                                           1.E+03                SnPb Wong]
+   – SnAgCu solder is
+
+
+
+
+                                      Steady-State Creep Rate
+                                                                                 SnAgCu [Wiese]
+     significantly more                                    1.E+01
+                                                                                 SnAgCu Schubert]
+     creep resistant at low                                     1.E-01           SnAgCu [Zhang]
+
+
+
+
+                                               (1/sec)
+     stresses compared to                                                        SnAgCu [Morris]
+     SnPb solder                                                1.E-03
+
+   – Similar creep behavior                                     1.E-05
+     from 3 models at
+                                                                1.E-07
+     stresses below 30
+     MPa                                                        1.E-09
+       §   Models diverge at                                             1                10                   100
+           high stresses                                                            Stress (MPa)
+
+
+
+
+                          © 2004 Amkor Technology, Inc.                             Enabling a Microelectronic World
+                                               2. Finite Element Analysis
+
+• Same approach as SnPb solder
+   – Step 1: Build 3D Model
+       § Simple representation of solder joints
+       § Perform linear analysis to determine
+         the location of critical joint
+   – Step 2: Substructuring
+       § Lump all elements with linear,
+         temperature independent properties
+         into a superelement
+       § Perform superelement analysis for 1oC
+         change in temperature
+   – Step 3: Build Critical Joint Model
+       § Attach Superelement from Step 2
+       § Model Viscoplastic and temperature
+         dependent behavior of solder
+       § Perform nonlinear analysis
+
+• Detailed approach in ECTC’01
+
+
+                            © 2004 Amkor Technology, Inc.   Enabling a Microelectronic World
+                                              2. Finite Element Analysis
+
+• Solder joint response calculation
+   – Inelastic strain and energy density calculated by volume averaging
+       §   25 micron thick layers of solder at package and board side
+       §   Each layer has two elements across the thickness
+   – Life prediction model parameters are only valid for this thickness
+   – Besides 3-D modeling, this is the only requirement for life
+     prediction model
+       §   Substructuring only to improve efficiency
+
+
+
+
+                           © 2004 Amkor Technology, Inc.   Enabling a Microelectronic World
+                                                                                  2. Solder Joint Response
+
+               • Effect of Time Independent Plasticity
+                       – Wiese’s Model (Creep only VS Creep + Plasticity)
+                       – Ceramic BGA on FR4
+                       – -55 <> 125 C cycle, fast ramps (highest stress condition)
+               100.0
+                            Creep                                                                    Creep Only   Creep + Plasticity
+                80.0
+                            Creep+Plasticity                                  Creep Strain %           0.4641          0.4629
+                60.0                                                          Plastic Strain %           NA           0.00058
+Stress (MPa)
+
+
+
+
+                40.0                                                          Total Strain %           0.4641         0.46348
+                                                                              % Plastic                                0.125
+                20.0
+                 0.0                                                          Creep ED                 1.776            1.77
+               -20.0                                                          Plastic ED                NA              0.004
+                                                                              Total Energy Density     1.776            1.774
+               -40.0                                                          % Plastic                                 0.225
+               -60.0
+                   -0.010    0.000        0.010         0.020      0.030
+                                     Inelastic Strain
+                       – Plastic strain and Energy Density contributions are insignificant in total
+                         inelastic response
+               • No need to model time independent plasticity for Thermal Cycle
+                   simulations
+                                                            © 2004 Amkor Technology, Inc.               Enabling a Microelectronic World
+                        3. Life Prediction Model Development
+
+• Solder joint life is governed by Creep
+• Thermal Cycle Fatigue èCyclic Creep Rupture
+    – Creep due to sequence of loading, repeated in a cyclic manner
+    – Monkmann-Grant Equation & Time Fraction Rule
+                          n ∆t 
+        tr =
+              C     N f  Σ i           =1            ∆ti = time spent at stress level σi within a cycle, and
+             ε&cr         i =
+                          tri  one cycle
+                             1                           tri = rupture time for stress level σi.
+    – Combine
+                    Nf     =    (C ′ε acc )−1               Nf          =   (W ′ wacc )−1
+• For two mechanisms (double power law creep)
+
+              Nf    =    (CI ε acc
+                               I
+                                   + C II ε acc )
+                                            II −1
+                                                                   Nf       =   (WI wacc
+                                                                                     I
+                                                                                         + WII wacc )
+                                                                                                II −1
+
+
+• Constants to be determined by relating mean life (test) with solder joint
+    response (simulations)
+•   Same approach has been successfully used for SnPb solder for 8+ years
+
+
+
+                                   © 2004 Amkor Technology, Inc.                        Enabling a Microelectronic World
+                                                                                     4. Fatigue Test Data
+
+• Thermal cycle tests conducted on various packages with different
+         substrate types, body sizes, ball pitches, land sizes
+Data                   Substrate    Body                                                   Pad    Pad                             Board
+      Package Type                           I/O    Pitch             Die Size                           Ball Dia   Test Type
+Point                    Type       Size                                                   Type   Size                          Thickness
+     1      CABGA      Laminate    15 x 15   208     0.8          8.5 x 8.5 x0.265         SMD     0.4    0.46        TC1          1.0
+     2      CABGA      Laminate    15 x 15   256    0.65           10 x 10 x 0.265         SMD    0.32     0.4        TC2          0.8
+     3      CABGA      Laminate     8 x8      64     0.8           4.8 x 4.8 x 0.29        SMD     0.4    0.46        TC1          1.6
+     4      CABGA      Laminate     8 x8      64     0.8           4.8 x 4.8 x 0.29        SMD     0.4    0.46        TC2          1.6
+     5   Ceramic BGA   Ceramic      8 x8      64     0.8                None               SMD     0.4    0.46        TC1          1.6
+     6   Ceramic BGA   Ceramic      8 x8      64     0.8                None               SMD     0.4    0.46        TC3          1.6
+     7      CVBGA      Laminate    12 x 12   288     0.5          7.1 x 7.1 x 0.175        SMD    0.25     0.3        TC1          0.8
+     8     fleXBGA       Tape      12 x 12   144     0.8           6.4 x 6.4 x 0.3         SMD     0.3    0.46        TC1          1.6
+     9     fleXBGA       Tape      12 x 12   144     0.8           6.4 x 6.4 x 0.3         SMD     0.3    0.46        TC2          1.6
+    10     fleXBGA       Tape      12 x 12   144     0.8           6.4 x 6.4 x 0.3         SMD     0.3    0.46        TC3          1.6
+    11       PBGA      Laminate    27 x 27   256    1.27           10 x 10 x 0.30          SMD    0.65    0.76        TC2          1.6
+                                                            top: 5.08 x 5.08 x 0.15 btm:
+    12     TSCSP         Tape      12 x 12   288     0.5                                   SMD    0.24     0.3        TC2          0.8
+                                                                10.16 x 10.16 x 0.15
+
+
+• Three test conditions
+          – TC1: -40<>125oC, 15 minutes ramps and dwells, 1 cycle/hr
+          – TC2: -55 <> 125oC, 2 minutes ramps, 13 minutes dwells, 2 cycles/hr
+          – TC3: 0 <> 100oC, 10 minute ramps, 5 minutes dwells, 2 cycles/hr
+•        Various board thickness’
+
+
+                                               © 2004 Amkor Technology, Inc.                       Enabling a Microelectronic World
+                                                                           4. Fatigue Test Data
+
+• SnAgCu vs. SnPb solder measured fatigue life
+          Package Attributes                            SnAgCu Solder                     SnPb Eutectic Solder
+                                                            Weibull   Mean                    Weibull         Mean
+Data                                         1st   Weibull                     1st   Weibull
+      Package Type   Body Size   I/O                       Char. Life Life                   Char. Life        Life
+Point                                      Failure Slope                     Failure Slope
+                                                           (Cycles) (Cycles)                  (Cycles)       (Cycles)
+  1   CABGA           15 x 15    208         2491       8.92        3717   3520    2539       10     3450        3281
+  2   CABGA           15 x 15    256         3380       15.4        4096   3960    1856      7.4     2725        2557
+  3   CABGA            8 x8      64          3463       8.36        4843   4570    2445     11.76    3212        3076
+  4   CABGA            8 x8      64          2493       9.81        3263   3103    2205     13.76    2664        2565
+  5   Ceramic BGA      8 x8      64          318        7.08        445     417    340        10      437        416
+  6   Ceramic BGA      8 x8      64          853        9.55        1103   1047    982       8.96    1316        1246
+  7   CVBGA           12 x 12    288         1332       5.81        2005   1890    1700      9.26    2291        2172
+  8   fleXBGA         12 x 12    144         2580      19.06        2948   2868    2369      10.4    3164        3015
+  9   fleXBGA         12 x 12    144         2351       20.4        2792   2720    1902      15.2    2410        2327
+ 10   fleXBGA         12 x 12    144         8939       15.7       10370   10027   5042     12.95    6195        5953
+ 11   PBGA            27 x 27    256         4651       7.2         6812   6381    3656     13.92    4544        4378
+ 12   TSCSP           12 x 12    288         175         6          296     275     NA       NA       NA          NA
+
+      – Life for SnAgCu solder joints is longer, but not for every case
+      – Acceleration factors between test conditions are not the same
+
+
+
+                                       © 2004 Amkor Technology, Inc.                Enabling a Microelectronic World
+                                                                                          Life Prediction for SnPb Joints
+                                                                                                               27mm_256PBGA - TC2
+                                                                             n1                           n2
+              − H  σ                − H  σ 
+ε&cr = BI exp               + BII exp
+                                                                                                                    12mm144 XBGA TC3
+                                                  
+              kT   Ε(T )            kT   Ε(T )                                                              12mm144 XBGA TC2
+
+                                                                                                                    12mm144 XBGA TC1
+
+
+                                                     Nf      =     (0.02ε acc
+                                                                          I
+                                                                              + 0.063ε acc )
+                                                                                       II −1                          12mm_288CVBGA
+  Cycles to Mean Failure (Predictions)
+
+
+
+
+                                                                                                                                                                    Predicted
+                                                                                                                     8mm_64 CBGA TC3
+                                                                                                                                                                    Measured
+                    100000                                                                                           8mm_64 CBGA TC1
+                                                          PBGAs
+                                                          LCCCs                                                  8mm-64CABGA - TC2
+                                                          QFPs
+                                                          Flip Chips *                                           8mm-64CABGA - TC1
+                                         10000            PBGAs - Motorola
+                                                          TSOPs *
+                                                                                                                      15mm-256 CABGA
+                                                          Master
+                                                          2X Above
+                                                          2X Below                                                    15mm-208 CABGA
+                                         1000             25% Above
+                                                          25% Below                                                                    0   1000    2000   3000   4000   5000   6000   7000
+                                                                                                                                                  Mean Fatigue Life (cycles)
+
+                                          100                                                                   •       Provides confidence in properties
+                                                                                                                        used for package and board
+                                                                                                                        materials
+                                           10
+                                                10          100          1000     10000     100000              •       Failure location is correctly predicted
+                                                          Cycles to Mean Failure (Test)
+
+                                         Prediction Accuracy: 6 25%
+
+                                                                                     © 2004 Amkor Technology, Inc.                         Enabling a Microelectronic World
+                           SnAgCu Solder Life Prediction
+
+• 5 life prediction models attempted depending on the constitutive
+  equation for SnAgCu solder
+
+• Double power law creep (Wiese et al)
+   – Creep Strain Partitioning
+   – Total Accumulated Creep Strain
+   – Total Accumulated Creep Strain Energy Density
+• Hyperbolic sine creep (Schubert et al)
+   – Total Accumulated Creep Strain
+   – Total Accumulated Creep Strain Energy Density
+
+
+
+
+                      © 2004 Amkor Technology, Inc.   Enabling a Microelectronic World
+                                                           ANSYS Implementation
+
+• Creep Model Implementation in ANSYS
+   – Double Power Law Model
+                                                   n                      n2
+                                − H1   σ            − H 2  σ 
+                                              1
+                  ε&cr = A1exp          + A 2exp             
+                                kT   σ n            kT   σ n 
+
+       § Standard Implicit Creep Model , TBOPT = 11 with C3 = 0.0
+       § Creep strain partitioning in POST PROCESS, if needed
+       § No need for USER SUBROUTINE
+       § Post Processing text file can be provided.
+
+   – Hyperbolic Sine Model
+                                            − H1 
+               ε&cr = A1[sinh (ασ )] n exp       
+                                            kT 
+
+       §   Standard Implicit Creep Model , TBOPT = 8
+• Output Parameters
+       § NL, CREQ = Accumulated Creep Strain
+       § SEND, CREEP = Creep Strain Energy Density
+
+
+
+                                © 2004 Amkor Technology, Inc.         Enabling a Microelectronic World
+                                                             SnAgCu Solder Life Prediction
+
+• Cyclic stability
+                     0.012
+                                      SnPb Solder Joints                                               0.007       SnAgCu Solder Joints
+                                                                                                       0.006         Cycle 1
+                     0.010
+                                      Cycle 1                                                                        Cycle 2
+
+
+
+
+                                                                                   Acc. Creep Strain
+ Acc. Creep Strain
+
+
+
+
+                                                                                                       0.005
+                     0.008            Cycle 2                                                                        Cycle 3
+                                                                                                       0.004
+                     0.006            Cycle 3
+                                                                                                       0.003
+                     0.004
+                                                                                                       0.002
+                     0.002                                                                             0.001
+
+                     0.000                                                                                0
+                             0        300   600   900   1200      1500     1800                                0    300    600    900   1200   1500   1800
+                                   Time (seconds)                          Time (seconds)
+                      – Cycle started   at high temperature (stress free temp)
+                      – SnPb solder joints show cyclic stability after 1st cycle
+                      – SnAgCu solder joints show stability after 2nd cycles
+                                 §   20 to 30% reduction after 1st cycle
+• Life prediction model parameters in the paper are based on 1st
+                     cycle values due to post processing error and are not correct
+
+                                                        © 2004 Amkor Technology, Inc.                                     Enabling a Microelectronic World
+                                                              SnAgCu Solder Life Prediction
+                                                                                                                                                   3                              12
+                                                                                                − H1   σ            − H 2  σ 
+                                                                                  ε&cr = A1exp          + A 2exp             
+                                                                                                kT   σ n            kT   σ n 
+    • Double Power Law Creep
+                              – Creep Strain Partitioning                                                                        Nf       =    (CI ε acc
+                                                                                                                                                     I
+                                                                                                                                                         + C II ε acc )
+                                                                                                                                                                  II −1
+
+                           1.0E+00
+
+
+
+
+                                                                                   % contribution of Low Stress Mech
+                                                                                                                       90
+Accumulated Creep Strain
+
+
+
+
+                                               Low Stress Mechanism                                                    80
+                           1.0E-01             High Stress Mechanism                                                   70
+                                                                                                                       60
+                           1.0E-02                                                                                     50
+                                                                                                                       40                              SnAgCu Solder
+
+                                                                                                                       30                              SnPb Solder
+                           1.0E-03
+                                                                                                                       20
+                                                                                                                       10
+                           1.0E-04
+                                  100   1000          10000           100000                                            0
+                                                                                                                             1   2    3   4    5   6    7   8   9    10   11 12
+                                         Mean Life (Cycles)
+                                                                                                                            Contribution of Low Stress Mechanism
+
+       – More scatter in low stress creep for SnAgCu solder
+       – % contribution of low stress creep is < 10%
+       – Significantly different response compared to SnPb Solder
+    • Creep strain partitioning not needed for SnAgCu solder joints
+
+                                                         © 2004 Amkor Technology, Inc.                                                        Enabling a Microelectronic World
+                              SnAgCu Solder Life Prediction
+
+                                                                                         3                             12
+• Double Power Law Creep                                  − H1   σ        − H 2   σ 
+                                            ε&cr = A1exp          + A 2exp         
+                                                          kT   σ n          kT   σ n 
+   – Total accumulated creep
+     strain & energy density
+     approach                                                    100000
+
+                                                                                                   y = 674.08x-0.9229
+                                                                  10000                                  R2 = 0.982
+   – Std curve fit
+
+
+
+
+                                            Mean Life (Cycles)
+       §   Mean Life Vs Strain                                     1000
+
+       §   Mean Life Vs Energy
+           density                                                  100
+                                                                          y = 25.273x
+                                                                                       -0.9607
+
+
+   – Curve fit for both show                                                  R2 = 0.9814          Acc. Creep Strain
+                                                                     10
+     fatigue life exponent to be                                                                   Creep Energy Density
+
+     very close to 1.0                                                1
+                                                                      0.001     0.01         0.1     1         10           100
+                                                                              Acc. Creep Strain and Energy Density
+
+
+
+
+                         © 2004 Amkor Technology, Inc.                                  Enabling a Microelectronic World
+                                      SnAgCu Solder Life Prediction
+
+                                                                                                           3                        12
+• Double Power Law Creep                                                                      − H1   σ        − H 2   σ 
+                                                                                ε&cr = A1exp          + A 2exp         
+   – Total creep and energy                                                                   kT   σ n          kT   σ n 
+     density                                                                        0.1
+
+
+             =    (C′ε acc )−1                                                                                 -1                        -1
+
+
+
+
+                                               Inverse of Mean Life (1/cycle)
+        Nf                                                                                 Nf = (0.0468ε acc)       Nf = (0.0015w acc)
+                                                                                   0.01
+        Nf   =   (W ′ wacc )−1
+                                                                                  0.001
+   – Constants determined
+     by relating solder joint
+     response with
+                                                                                 0.0001
+     measured life
+                                                                                                                    Acc. Creep Strain
+       C′ = 0.0468
+                                                                                                                    Creep Energy Density
+       W ′ = 0.0015                                                             0.00001
+   – Acc. creep strain model                                                         0.0001     0.001      0.01      0.1        1         10
+     seems to provide better                                                                   Acc. Creep Strain / Energy Density
+
+     fit at high life numbers
+
+                                 © 2004 Amkor Technology, Inc.                                           Enabling a Microelectronic World
+                                       SnAgCu Solder Life Prediction
+
+• Hyperbolic Sine Creep                                                                                                 − H1 
+                                                                                           ε&cr = A1[sinh (ασ )] n exp       
+   – Similar model but                                                                                                  kT 
+     different constants                                                            0.1
+
+
+           =   (0.0513ε acc )−1
+
+
+
+
+                                               Inverse of Mean Life (1/cycle)
+      Nf
+                                                                                                               -1                     -1
+                                                                                   0.01   N f = (0.0513ε acc)       Nf = (0.0019wacc )
+      Nf   =   (0.0019 wacc )−1
+
+                                                                                  0.001
+   – Energy density based
+     model provides better
+     fit at higher life                                                          0.0001
+     numbers                                                                                   Acc. Creep Strain
+                                                                                               Creep Energy Density
+   – Acc. Strain based
+                                                                                0.00001
+     model provides                                                                   0.0001    0.001      0.01        0.1        1        10
+     conservative estimate                                                                     Acc. Creep Strain / Energy Density
+
+
+
+                                  © 2004 Amkor Technology, Inc.                                            Enabling a Microelectronic World
+                            SnAgCu Solder Life Prediction
+
+• Which method is better?                              Prediction Accuracy
+
+                     SnAgCu
+                                      Double Power Law              Hyperbolic Sine
+                     Mean Life       Acc. Creep         Energy    Acc. Creep     Energy
+Package               (Test)           Strain           Density     Strain       Density
+15mm-208 CABGA        3519                 0%            15%         -24%           -4%
+15mm-256 CABGA        3960                 3%             -6%        -16%          -26%
+8mm-64CABGA - TC1     4570                -31%           -16%        -45%          -28%
+8mm-64CABGA - TC2     3101                 8%             4%         -10%          -16%
+8mm-64 CBGA TC1        417                 0%             0%           5%            1%
+8mm-64 CBGA TC3       1047                 -7%            2%          -8%            2%
+12mm-288CVBGA         1890                 7%            20%         -27%          -14%
+12mm-144 XBGA TC1     2866                 -5%           11%         -27%           -6%
+12mm-144 XBGA TC2     2720                21%            18%          -5%           -6%
+12mm-144 XBGA TC3     10027               22%            65%         -44%          -21%
+27mm-256PBGA - TC2    6381                14%            18%         -18%          -12%
+12mm-288TSCSP          275                 1%             1%           1%            0%
+• Models based on Power law creep equation provide better
+  accuracy
+   – Accumulated creep strain based model slightly better
+
+                       © 2004 Amkor Technology, Inc.              Enabling a Microelectronic World
+                                                                                           2. Solder Joint Response
+
+               • Creep Strain                                                                                     • Strain Energy Density (Creep)
+                    – Accumulated vs. range                                                                        0.2                                              140
+                                                                                                                                 Energy Density
+               0.0125                                        140                                                  0.16           Temperature                        100
+
+
+
+
+                                                                                                                                                                          Temperature (degree C)
+                                                                                           Creep Energy Density
+                              Accumulated
+
+
+
+
+                                                                   Temperature (degre C)
+               0.0100         Range                          100                                                  0.12                                              60
+                              Temperature
+Creep Strain
+
+
+
+
+               0.0075                                        60                                                   0.08                                              20
+                                             NL, CREQ
+                                                                                                                                       SEND, CREEP
+               0.0050                                        20                                                   0.04                                              -20
+                                            EPCR, EQV
+
+               0.0025                                        -20                                                    0                                               -60
+                                                                                                                         0   300     600       900   1200 1500   1800
+               0.0000                                    -60                                                                          Time (seconds)
+                        0   300   600   900 1200 1500 1800
+                                  Time (seconds)
+                                                                                                                         – Significant accumulation during
+                                                                                                                           low temperature dwell
+                                                                                                                             §     High stresses at low temp
+                    – Most accumulation during
+                      ramps, some during dwell times                                                                     – Almost no accumulation during
+                      at low and high temperatures                                                                         high temp dwell
+
+
+                                                   © 2004 Amkor Technology, Inc.                                                        Enabling a Microelectronic World
+                                                SnAgCu Solder Life Prediction
+
+• Trend Predictions
+   – 3 test conditions, 12mm-144 fleXBGA package
+   – Predictions show same trend as actual test data
+   – Acceleration factors are different for SnPb and SnAgCu
+                         14000
+
+                         12000         SnPb - Test
+                                       SnPb - Predictions
+    Mean Life (cycles)
+
+
+
+
+                         10000
+                                       SnAgCu - Test
+                          8000         SnAgCu - Predictions
+
+                          6000
+
+                          4000
+
+                          2000
+
+                             0
+                                 12mm144 XBGA TC1 12mm144 XBGA TC2 12mm144 XBGA TC3
+
+
+                                           © 2004 Amkor Technology, Inc.   Enabling a Microelectronic World
+                                                                     Model Validation
+
+• 12mm-320 etCSP package – with and without stacking
+   – Single sided                                          Double sided
+
+
+        12x12mm-320 Ball etCSP
+
+
+
+
+      12x12mm-64 etCSP Stacked on
+          12x12mm-320 etCSP
+                                    Measured         Predicted (Power law)     Predicted (Hyp Sine)
+       Stacked ?     Assembly         Life             Strain    Ener Den        Strain   Ener Den
+          No        Single Sided        1148           1082        1173           995       1112
+          No        Double Sided         563            574        600            585       608
+          Yes       Single Sided         884            958        1031           904       1000
+          Yes       Double Sided         495            536        557            546       560
+
+• Strain based approach resulted in conservative predictions
+
+                           © 2004 Amkor Technology, Inc.                     Enabling a Microelectronic World
+                                                                   SnAgCu Solder Life Prediction
+
+• Prediction Accuracy = 625%
+   – 18 data points
+                                             100000                                                    15mm-208 CABGA
+
+                                                            6 25%
+       Mean Cycles to Failure (Prediction)
+
+
+
+
+                                                                                                       15mm-256 CABGA
+
+                                                                                                       8mm-64 CABGA
+
+                                                                                                       8mm-64 Ceramic BGA
+                                              10000                                                    12mm-288 CVBGA
+
+                                                                                                       12mm-144 fleXBGA
+
+                                                                                                       12mm-288 TapeSCSP
+
+                                                                                                       27mm-256 PBGA
+
+                                               1000                                                    19mm-288 CABGA
+
+                                                                                                       12mm-320 etCSP
+
+                                                                                                       12mm-384 PS-etCSP
+
+                                                                                                       10mm-240CVBGA, 0.4mm
+
+                                                                                                       Perfect Fit
+                                                100
+                                                   100        1000             10000          100000
+                                                         Mean Cycles to Failure (Test)
+
+                                                              © 2004 Amkor Technology, Inc.            Enabling a Microelectronic World
+                                SnAgCu Solder Life Prediction
+
+• Conclusions
+   – Creep strain partitioning not needed for SnAgCu solder joints life
+     prediction
+   – Better prediction accuracy achieved by using double power law
+     constitutive equation
+   – Either accumulated creep strain or energy density can be used for
+     life prediction
+       §   Creep strain provides better prediction accuracy
+       §   Energy density captures high stress effects better
+
+
+
+
+                           © 2004 Amkor Technology, Inc.   Enabling a Microelectronic World
+

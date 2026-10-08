@@ -1,0 +1,182 @@
+# Phase-0I Sec.2/3 -- vertical-integration architecture classes for DVPD.
+#
+# WHY THIS FILE EXISTS
+# Phases 0B..0H modelled exactly one integration option: the converter embedded inside the
+# power substrate. Phase 0H then sourced the GaN device heights and concluded that the
+# minimum realizable substrate is 1.176-1.426 mm, which makes the electrically preferred thin
+# substrate unbuildable. That conclusion is ARCHITECTURE-SPECIFIC and was never labelled so.
+#
+# The reference system itself is explicit that both options exist. June-2026, Sec. I:
+#   "Section II describes the DVPD architecture featuring vertically stacked IN-SUBSTRATE AND
+#    BACKSIDE VR components."
+# and Sec. II:
+#   "when fabricated as individual chiplets, VR components can be vertically stacked on the
+#    BACKSIDE of a substrate and interconnected through TSVs."
+#
+# The same section also records that the embedded multi-layer option is NOT a demonstrated
+# technology:
+#   "while chip embedding within a single substrate layer has been demonstrated, the
+#    fabrication of vertically stacked substrate layers that integrate both active and passive
+#    components REMAINS AN OPEN CHALLENGE."
+#
+# z = 0 is the substrate underside throughout. Positive z is towards the functional die.
+
+meta:
+  datum: "z = 0 at the substrate underside; +z towards the functional die"
+  load: {power_w: 1000.0, v_out: 1.0, v_in: 48.0, i_out_a: 1000.0}
+  die: {size_mm: 22.36, area_mm2: 500.0}
+
+# ------------------------------------------------------------------ source-backed geometry
+technology:
+  source: "June-2026 Table III, Vertical Interconnect Characteristics"
+  bga:      {d_um: 400, h_um: 300, p_um: 800, material: solder, r_mohm: 0.30}
+  tsv_pl:   {d_um: 30,  h_um: 300, p_um: 60,  material: copper, r_mohm: 7.1,
+             note: "identical in PL1, PL2 and PL3; h_c = 300 um IS the power-layer thickness"}
+  chiplet_pad: {d_um: 10, h_um: 10, p_um: 20, material: copper, r_mohm: 1.7}
+  power_layers: 3
+  substrate_thickness_implied_um: 900
+  substrate_thickness_implied_note: "3 power layers x 300 um TSV height. This is the
+    reference system's own implied substrate, and it is a SOURCE-BACKED number that Phases
+    0B-0H never used."
+
+components:
+  inductor:  {name: "Shared_Core_UIC_250_nH", h_um: 500, status: SOURCED,
+              source: "upstream INDUCTOR_LIBRARY (Rasheedi, TCPMT 2026)"}
+  gan_hs:    {part: EPC2212, h_um: 685, h_max_um: 815, status: SOURCED,
+              source: "EPC2212 datasheet, Die Outline / Side View"}
+  gan_ls:    {part: EPC2090, h_um: 606, status: SOURCED,
+              source: "EPC2090 datasheet: 518 +/- 25 die + 50 Cu + 3 Ni + 35 solder"}
+  mlcc:      {part: "Murata GRM31 22uF 50V", h_um: null, status: OPEN,
+              envelope_um: [0, 100, 250],
+              source: "murata.com unreachable from this environment (HTTP 500 / error page)"}
+  interlayer_rdl: {h_um: 10, status: SOURCED, source: "ECTC-2024 Table I"}
+
+# ------------------------------------------------------------------ architecture classes
+architectures:
+
+  ARCH_Z1_EMBEDDED:
+    label: "Embedded HVR -- converter inside the substrate power layers"
+    source_status: "SOURCE-DESCRIBED but NOT DEMONSTRATED. June-2026 Sec. II states that
+      multi-layer vertically stacked substrates integrating active and passive components
+      'remains an open challenge'."
+    is_project_baseline: true
+    z_stack_um:
+      board:            {z0: -1900, z1: -300,  present: "when mounted"}
+      bga:              {z0: -300,  z1: 0}
+      gan_hs:           {z0: -685,  z1: 0,     note: "flip-chipped to the RDL of the bottom
+                          substrate -- BELOW z=0, so it does NOT constrain h_sub"}
+      substrate_pl1_ls: {z0: 0,     z1: 606,   embedded: gan_ls}
+      substrate_pl2_cap: {z0: 616,   z1: "616+t_mlcc", embedded: mlcc}
+      substrate_pl3_ind: {z0: "+10", z1: "+500", embedded: inductor}
+      tsv_field:        {spans: "substrate underside to the cell", min_h_um: 50}
+      die:              {above: substrate}
+    constrains_h_sub: [gan_ls, mlcc, inductor, interlayer_rdl]
+    outside_h_sub:    [gan_hs, bga, board]
+    lv_path: "VR output is directly beneath the die -- shortest possible 1 V path"
+    hv_path: "48 V rises from the board through BGA and the substrate TSV field"
+    tsv_rail: "architecture-dependent: ARCH_A puts HV on the TSV, ARCH_B puts LV on it"
+    cooling: "substrate-embedded micro-channels (June-2026 Sec. IV-D); modelled in Phases
+      0F-0H as an equivalent Robin boundary on the TIM top surface"
+    buildable: CONDITIONAL
+    buildable_note: "Buildable only if the power layers can be made as tall as their
+      components. The reference's own PL thickness is 300 um and the selected LS GaN is
+      606 um and the inductor 500 um, so NEITHER FITS in a reference-thickness power layer."
+
+  ARCH_Z2_BACKSIDE:
+    label: "Backside HVR -- VR chiplets stacked on the substrate underside"
+    source_status: "SOURCE-BACKED. June-2026 Sec. II: 'when fabricated as individual
+      chiplets, VR components can be vertically stacked on the backside of a substrate and
+      interconnected through TSVs.' Sec. I calls the architecture 'in-substrate AND backside'."
+    z_stack_um:
+      board:      {z0: -3000, z1: -1400, present: "when mounted"}
+      bga:        {z0: -1400, z1: -1100}
+      vr_chiplet: {z0: -1100, z1: 0, contains: [gan_hs, gan_ls, mlcc, inductor],
+                   note: "stacked BELOW the substrate; height set by the tallest component
+                          chain, NOT by h_sub"}
+      substrate:  {z0: 0, z1: h_sub, contains: [tsv_field]}
+      die:        {above: substrate}
+    constrains_h_sub: []
+    outside_h_sub: [gan_hs, gan_ls, mlcc, inductor, bga, board]
+    lv_path: "VR output must cross the ENTIRE substrate to reach the die: the 1 V / 1000 A
+      rail is on the TSVs"
+    hv_path: "48 V reaches the backside VR directly from the board through the BGA -- short"
+    tsv_rail: "LV (1 V) -- forced by geometry, not a free choice"
+    cooling: "the VR is on the board side. Direct backside cooling competes with the BGA
+      field for the same surface, so a cold plate cannot simply be attached there when the
+      package is mounted."
+    buildable: "YES"
+    buildable_note: "Chiplet stacking on a substrate backside with TSV interconnect is named
+      by the source. h_sub is free of component height."
+
+  ARCH_Z3_TOPSIDE:
+    label: "Topside HVR -- converter above the substrate, laterally beside the die"
+    source_status: "NOT described by the source. Constructed here for completeness."
+    z_stack_um:
+      substrate:  {z0: 0, z1: h_sub}
+      die:        {z0: h_sub, z1: "h_sub+t_die", footprint: "22.36 mm square"}
+      vr_topside: {z0: h_sub, z1: "h_sub+1200", lateral: "beside the die on the same surface"}
+    constrains_h_sub: []
+    outside_h_sub: [gan_hs, gan_ls, mlcc, inductor]
+    lv_path: "1 V must travel LATERALLY from beside the die to the die's underside pads"
+    hv_path: "48 V rises through the substrate TSVs"
+    tsv_rail: "HV"
+    cooling: "the VR now occupies part of the top surface, which is the die's cooling surface"
+    buildable: REJECTED
+    rejection_reason: "Electrically self-defeating and thermally regressive. DVPD exists to
+      place VR outputs 'just tens of microns from the on-chip POLs' (June-2026 Sec. I); a
+      topside-lateral VR puts the 1 V / 1000 A rail on a multi-millimetre lateral path, which
+      is the very loss DVPD is designed to remove. It additionally consumes the die's cooling
+      surface. It is a strictly worse form of ARCH_Z5, which at least keeps a purpose-built
+      interposer for the lateral run. Not carried forward."
+
+  ARCH_Z4_POWER_DIE:
+    label: "Separate power die -- dedicated VR die bonded directly beneath the compute die"
+    source_status: "PARTIALLY source-backed. June-2026 describes VR components 'fabricated as
+      individual chiplets' and the framework spans 'RDL/Chiplet' pad interfaces (Table III,
+      d = 10 um, p = 20 um). A monolithic power die is an extrapolation of that chiplet
+      framing, not a configuration the source states."
+    z_stack_um:
+      board:      {z0: -2200, z1: -600, present: "when mounted"}
+      bga:        {z0: -600, z1: -300}
+      substrate:  {z0: 0, z1: h_sub, contains: [tsv_field]}
+      power_die:  {z0: h_sub, z1: "h_sub+1200", contains: [gan_hs, gan_ls, mlcc, inductor],
+                   note: "directly beneath the compute die, joined by fine-pitch pads"}
+      hybrid_pad: {d_um: 10, h_um: 10, p_um: 20, source: "June-2026 Table III RDL/Chiplet"}
+      die:        {above: power_die}
+    constrains_h_sub: []
+    outside_h_sub: [gan_hs, gan_ls, mlcc, inductor, bga, board]
+    lv_path: "SHORTEST POSSIBLE: the 1 V rail crosses only the 10 um pad interface between
+      the power die and the compute die"
+    hv_path: "48 V rises from the board through the BGA and the full substrate TSV field"
+    tsv_rail: "HV (48 V) -- the low-current rail takes the long vertical path"
+    cooling: "the power die is sandwiched between the substrate and the compute die, so its
+      heat must exit through the compute die towards the top cooler, or downwards through the
+      substrate. This is the least favourable thermal position of any architecture here."
+    buildable: CONDITIONAL
+    buildable_note: "Requires a VR die carrying a 500 um inductor and a 606 um GaN device
+      between the substrate and the compute die -- a >1.2 mm interposer-like layer in the
+      thermal path of a 1 kW die. Electrically ideal, thermally the worst case. Both must be
+      evaluated, not assumed."
+
+  ARCH_Z5_2P5D_LATERAL:
+    label: "2.5D lateral -- HVR and compute die side by side on a common interposer"
+    source_status: "NOT the source's architecture, but the same paper cites glass-interposer
+      multi-die embedding work, and 2.5D appears in its own keyword list."
+    z_stack_um:
+      board:      {z0: -2600, z1: -1000, present: "when mounted"}
+      bga:        {z0: -1000, z1: -700}
+      substrate:  {z0: 0, z1: h_sub}
+      interposer_rdl: {z0: h_sub, z1: "h_sub+40"}
+      die:        {lateral: "one side of the interposer"}
+      vr_lateral: {lateral: "the other side of the interposer", contains: [gan_hs, gan_ls,
+                    mlcc, inductor]}
+    constrains_h_sub: []
+    outside_h_sub: [gan_hs, gan_ls, mlcc, inductor]
+    lv_path: "1 V travels LATERALLY across the interposer RDL from the VR field to the die"
+    hv_path: "48 V rises through the substrate to the VR field"
+    tsv_rail: "HV"
+    cooling: "the VR field has its own top-surface cooling access, independent of the die"
+    buildable: "YES"
+    buildable_note: "Standard 2.5D practice. Carried forward specifically as the
+      LATERAL-PATH BOUND: it is the architecture DVPD exists to beat, so it sets the scale
+      against which a vertical architecture must be judged."

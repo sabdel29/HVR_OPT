@@ -1,0 +1,230 @@
+meta:
+  alloy: SAC305 (Sn-3.0Ag-0.5Cu)
+  phase: 0I
+  date: '2026-09-10'
+  purpose: temperature-dependent constitutive model for the local solder-joint submodel
+  solver: CalculiX 2.23 -- *ELASTIC + *PLASTIC + *CREEP,LAW=NORTON in *VISCO steps
+  alloy_mixing_rule: NO parameter is taken from a different alloy. Every plasticity and creep number
+    below is SAC305. The SnAgCuCe and SAC405 Anand sets found in the search were REJECTED for that
+    reason.
+solver_capability:
+  verified: true
+  evidence: results/phase0i/solver_audit/ -- a single C3D8 SAC-like cube under cyclic shear in *VISCO
+    steps reversed stress +-91 MPa, accumulated PEEQ monotonically 9.85e-5 -> 1.82e-2, and relaxed
+    stress -38.0 % during a constant-strain hold.
+  not_available:
+  - Anand viscoplasticity (no native model in CalculiX)
+  - user creep subroutine (needs a recompiled solver)
+  - cohesive-zone fracture
+  consequence: An Anand parameter set cannot be used even where one exists for SAC305. The sourced
+    Garofalo law is therefore represented by the solver's Norton law, and because a single power law
+    cannot span Garofalo's curvature (its effective exponent runs 3.1 at 2 MPa to 19.2 at 30 MPa),
+    the Norton card is fitted DIRECTLY to the measured creep points instead.
+elastic:
+  E_MPa_at_25C: 45000.0
+  dE_dT_MPa_per_K: -120.0
+  nu: 0.36
+  status: ASSUMPTION anchored on a sourced range
+  source: 'Paska et al. 2024, Appl. Sci. 14(2):604: the SAC305 elastic modulus ''normally ranges from
+    30 to 54 GPa, with the majority of values falling between 40 and 50 GPa''. That is a room-temperature
+    RANGE with no temperature dependence, so the slope is an assumption and is swept in the sensitivity
+    study.'
+  table_E_nu_T:
+  - - 52800.0
+    - 0.36
+    - -40.0
+  - - 48000.0
+    - 0.36
+    - 0.0
+  - - 45000.0
+    - 0.36
+    - 25.0
+  - - 42000.0
+    - 0.36
+    - 50.0
+  - - 39000.0
+    - 0.36
+    - 75.0
+  - - 36000.0
+    - 0.36
+    - 100.0
+  - - 33000.0
+    - 0.36
+    - 125.0
+plastic:
+  status: SOURCED
+  form: bilinear, (sigma_0, 0) to (sigma_0 + C/gamma, 0.02)
+  source: Yuan 2023, Materials 16(14):4922, Table 31 -- SAC305 Chaboche fit
+  rationale: a Chaboche back-stress saturates at C/gamma, so sigma_0 + C/gamma is the saturation flow
+    stress the source's own fit implies
+  measured_points:
+  - T_c: -40.0
+    sigma0_MPa: 39.32
+    C_MPa: 9174.1
+    gamma: 1004.7
+  - T_c: -20.0
+    sigma0_MPa: 33.8
+    C_MPa: 7535.7
+    gamma: 964.0
+  - T_c: 40.0
+    sigma0_MPa: 21.35
+    C_MPa: 4216.0
+    gamma: 840.0
+  - T_c: 80.0
+    sigma0_MPa: 15.43
+    C_MPa: 2988.0
+    gamma: 824.3
+  - T_c: 122.0
+    sigma0_MPa: 10.5
+    C_MPa: 1886.5
+    gamma: 759.1
+  cross_check: Paska et al. 2024 measured SAC305 Rp0.2 = 23.3-25.6 MPa at room temperature; this model
+    gives sigma_0(25 C) = 24.46 MPa.
+  table_stress_pstrain_T:
+  - - 39.32
+    - 0.0
+    - -40.0
+  - - 48.45118343784214
+    - 0.02
+    - -40.0
+  - - 29.65
+    - 0.0
+    - 0.0
+  - - 36.617991329479764
+    - 0.02
+    - 0.0
+  - - 24.4625
+    - 0.0
+    - 25.0
+  - - 30.255754879448908
+    - 0.02
+    - 25.0
+  - - 19.87
+    - 0.0
+    - 50.0
+  - - 24.545417875190623
+    - 0.02
+    - 50.0
+  - - 16.17
+    - 0.0
+    - 75.0
+  - - 19.972060483199954
+    - 0.02
+    - 75.0
+  - - 13.082380952380952
+    - 0.0
+    - 100.0
+  - - 16.187919932949196
+    - 0.02
+    - 100.0
+  - - 10.5
+    - 0.0
+    - 125.0
+  - - 12.98517981820577
+    - 0.02
+    - 125.0
+creep:
+  status: SOURCED (fitted to primary measured data)
+  law_used: Norton, eps_dot = A sigma^n t^m with m = 0 (secondary creep)
+  fitted_to: Yuan 2023 Table 26 -- 19 measured SAC305 steady-state creep points at 45, 80, 115 and
+    150 C
+  measured_stress_range_MPa:
+  - 7.51
+  - 15.92
+  validity: The card is valid over the MEASURED stress window 7.51-15.92 MPa. Rate-independent plasticity
+    caps the attainable von Mises stress at sigma_0 + C/gamma (30.3 MPa at 25 C falling to 13.0 MPa
+    at 125 C), so the operating range of a joint sits inside or just above this window. The fraction
+    of inelastic work occurring outside it is reported with every run.
+  per_temperature_fits:
+  - T_c: 45.0
+    A: 4.113138395596853e-18
+    n: 8.295282060451559
+    n_points: 4
+    window_MPa:
+    - 10.54
+    - 15.92
+    max_rel_error_pct: 13.03
+    rms_rel_error_pct: 12.17
+  - T_c: 80.0
+    A: 2.7230686734663922e-17
+    n: 8.186421752526927
+    n_points: 5
+    window_MPa:
+    - 10.43
+    - 14.46
+    max_rel_error_pct: 14.8
+    rms_rel_error_pct: 9.75
+  - T_c: 115.0
+    A: 1.9336838454242813e-15
+    n: 7.240124859265489
+    n_points: 5
+    window_MPa:
+    - 8.73
+    - 12.41
+    max_rel_error_pct: 6.17
+    rms_rel_error_pct: 4.11
+  - T_c: 150.0
+    A: 3.058942419442877e-12
+    n: 5.075270649531406
+    n_points: 5
+    window_MPa:
+    - 7.51
+    - 11.52
+    max_rel_error_pct: 7.9
+    rms_rel_error_pct: 5.71
+  interpolation: Arrhenius in the creep RATE at sigma_ref = 10.0 MPa, with the exponent interpolated
+    linearly. Interpolating ln A against 1/T directly is wrong because A absorbs the temperature-dependent
+    exponent; doing so returns an apparent 139 kJ/mol against a literature 62-65.
+  activation_energy_check:
+    implied_by_this_fit_kJ_per_mol: 64.4
+    at_8_MPa: 71.7
+    at_12_MPa: 58.5
+    literature_xiao_armstrong_kJ_per_mol: 62.0
+    literature_yuan_einn_kJ_per_mol: 65.0
+    verdict: AGREES. Fitting the solver's own law to the primary data reproduces the published activation
+      energy to within the spread of the published values themselves.
+  table_A_n_m_T:
+  - - 4.0464768489213657e-22
+    - 8.295282060451559
+    - 0.0
+    - -40.0
+  - - 5.261105782836789e-20
+    - 8.295282060451559
+    - 0.0
+    - 0.0
+  - - 5.679104988151119e-19
+    - 8.295282060451559
+    - 0.0
+    - 25.0
+  - - 4.397136524587525e-18
+    - 8.279730587890898
+    - 0.0
+    - 50.0
+  - - 2.943338929516785e-17
+    - 8.201973225087588
+    - 0.0
+    - 75.0
+  - - 4.707926379997944e-16
+    - 7.645680670663248
+    - 0.0
+    - 100.0
+  - - 1.8334699173514026e-14
+    - 6.621595085055751
+    - 0.0
+    - 125.0
+  rejected_alternatives:
+    anand_SAC305_Motalab_and_EINN: parameter sets exist (Yuan 2023 Tables 28/30) but CalculiX has
+      no Anand model, so they cannot be evaluated by this solver
+    anand_SnAgCuCe: DIFFERENT ALLOY -- rejected under the no-mixing rule
+    anand_SAC405: DIFFERENT ALLOY -- rejected
+    garofalo_direct: the correct physical form, but not implemented in CalculiX; used here only as
+      the cross-check on activation energy
+expansion:
+  cte_per_K: 2.15e-05
+  status: ASSUMPTION
+  note: commonly quoted 21-24 ppm/K for SAC305; not sourced in this phase
+open_items:
+- E(T) slope is an assumption; only a room-temperature range is sourced
+- CTE is an assumption
+- no SAC305 fatigue LIFE law (N_f) has yet been admitted -- see the criterion audit
+- the measured creep data stop at 150 C and start at 45 C; values outside are extrapolated

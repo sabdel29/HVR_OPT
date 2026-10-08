@@ -1,0 +1,191 @@
+{
+  "case": "C08",
+  "spec": {
+    "n_vr": 4,
+    "placement": "distributed_2x2",
+    "tile_ax": 4.899,
+    "tile_ay": 4.899,
+    "h_sub": 0.5,
+    "p_hvr_total_w": 42.0,
+    "question": "Direct h_sub counterpart to C05."
+  },
+  "mesh": {
+    "h_xy_mm": 0.45,
+    "z_scale": 1.0,
+    "h_max_factor": 3.0,
+    "graded": true,
+    "element_type": "C3D8I",
+    "tsv_discrete_pitch": null,
+    "n_nodes": 20760,
+    "n_elems": 17579,
+    "n_z_planes": 12,
+    "elems_through_substrate": 5,
+    "elems_through_die": 3
+  },
+  "loads": {
+    "p_die_W": 240.0,
+    "p_hvr_total_W": 42.0,
+    "p_per_tile_W": 10.5,
+    "q_die_W_per_mm3": 1.6000972859149836
+  },
+  "cooling": {
+    "h_top_W_m2K": 17521.63541738819,
+    "h_bot_W_m2K": 10.0,
+    "a_top_mm2": 499.9695999999987,
+    "a_bot_mm2": 899.9999999999932
+  },
+  "bc": {
+    "bc": "BC_A",
+    "n_bottom_nodes": 2304,
+    "z_bottom_mm": 0.0,
+    "anchor_nodes": {
+      "A_xyz": 1,
+      "B_yz": 20473,
+      "C_z": 283
+    },
+    "anchor_coords": {
+      "A_xyz": [
+        -15.0,
+        -15.0,
+        0.0
+      ],
+      "B_yz": [
+        15.0,
+        -15.0,
+        0.0
+      ],
+      "C_z": [
+        -15.0,
+        15.0,
+        0.0
+      ]
+    },
+    "dofs_removed": 6,
+    "solver": "SPOOLES"
+  },
+  "tiles": [
+    {
+      "cx": -5.59,
+      "cy": -5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    },
+    {
+      "cx": -5.59,
+      "cy": 5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    },
+    {
+      "cx": 5.59,
+      "cy": -5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    },
+    {
+      "cx": 5.59,
+      "cy": 5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    }
+  ],
+  "thermal": {
+    "T_max_C": 77.2141,
+    "T_min_C": 55.0789,
+    "T_mean_C": 66.03066269749517,
+    "hotspot_xyz_mm": [
+      -5.0181,
+      -5.0181,
+      0.4
+    ],
+    "Q_in_W": 282.0,
+    "Q_out_W": 282.0000004533974,
+    "energy_residual_pct": 1.607792115361485e-07
+  },
+  "structural": {
+    "die_warpage_pv_um": 3.40231,
+    "pkg_warpage_pv_um": 5.4354000199824,
+    "uz_max_um": 0.0525907,
+    "uz_min_um": -5.4354,
+    "n_die_top_nodes": 1156,
+    "n_pkg_bot_nodes": 2304,
+    "si_principal_MPa": {
+      "raw_max": 11.981584378907936,
+      "p99": 8.171450000000002,
+      "p95": 6.02907,
+      "n": 13700
+    },
+    "tsv_region_vm_MPa": {
+      "raw_max": 13.355093673511767,
+      "p99": 13.355093673511767,
+      "p95": 12.261542043502848,
+      "n": 288
+    },
+    "hvr_tile_vm_MPa": {
+      "raw_max": 23.386255540184155,
+      "p99": 23.386255540184155,
+      "p95": 23.13822313642279,
+      "n": 288
+    },
+    "interface_shear_MPa": {
+      "raw_max": 2.602559704534941,
+      "p99": 2.5841209674571877,
+      "p95": 2.2017676560809045,
+      "n": 2312
+    },
+    "interface_peel_MPa": {
+      "raw_max": 1.42134,
+      "p99": 1.4119495999999994,
+      "p95": 1.0562794999999994,
+      "n": 2312
+    },
+    "interface_peel_excl025_MPa": {
+      "raw_max": 1.42134,
+      "p99": 1.41246,
+      "p95": 1.13454,
+      "n": 2048
+    },
+    "interface_shear_excl025_MPa": {
+      "raw_max": 2.602559704534941,
+      "p99": 2.584653989358593,
+      "p95": 2.215876348049232,
+      "n": 2048
+    },
+    "interface_peel_excl050_MPa": {
+      "raw_max": 1.42134,
+      "p99": 1.41246,
+      "p95": 1.28946,
+      "n": 1800
+    },
+    "interface_shear_excl050_MPa": {
+      "raw_max": 2.602559704534941,
+      "p99": 2.584653989358593,
+      "p95": 2.2168016603487306,
+      "n": 1800
+    },
+    "interface_peel_excl100_MPa": {
+      "raw_max": 1.42134,
+      "p99": 1.41246,
+      "p95": 1.28946,
+      "n": 1800
+    },
+    "interface_shear_excl100_MPa": {
+      "raw_max": 2.602559704534941,
+      "p99": 2.584653989358593,
+      "p95": 2.2168016603487306,
+      "n": 1800
+    },
+    "interface_excl_note": "excl<NNN> = nodes at least NNN/100 mm inside the underfill perimeter, excluding the free-edge corner"
+  },
+  "overrides": {
+    "underfill_homog": {
+      "cte": 0.7
+    }
+  },
+  "tsv_enabled": true,
+  "runtime_s": 18.0
+}

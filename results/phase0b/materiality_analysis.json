@@ -1,0 +1,364 @@
+{
+  "cases": [
+    "C05",
+    "C07",
+    "C13"
+  ],
+  "headline": [
+    {
+      "metric": "T_max (C)",
+      "key": "T_max_C",
+      "C05": 83.2337,
+      "C07": 87.2176,
+      "C13": 79.7323,
+      "range": 7.4853,
+      "S_m_pct": 8.99,
+      "u_mesh_pct": 0.29,
+      "resolved_vs_mesh": true,
+      "band": "BELOW-BAND"
+    },
+    {
+      "metric": "die warpage p-v (um)",
+      "key": "die_warpage_pv_um",
+      "C05": 7.772,
+      "C07": 12.4808,
+      "C13": 7.7739,
+      "range": 4.7088,
+      "S_m_pct": 60.57,
+      "u_mesh_pct": 0.5,
+      "resolved_vs_mesh": true,
+      "band": "STRONG"
+    },
+    {
+      "metric": "package warpage p-v (um)",
+      "key": "pkg_warpage_pv_um",
+      "C05": 12.1752,
+      "C07": 15.8212,
+      "C13": 12.078,
+      "range": 3.7432,
+      "S_m_pct": 30.74,
+      "u_mesh_pct": 0.4,
+      "resolved_vs_mesh": true,
+      "band": "STRONG"
+    },
+    {
+      "metric": "Si max principal p99 (MPa)",
+      "key": "si_principal_p99_MPa",
+      "C05": 11.0066,
+      "C07": 13.4674,
+      "C13": 10.3524,
+      "range": 3.115,
+      "S_m_pct": 28.3,
+      "u_mesh_pct": 4.43,
+      "resolved_vs_mesh": true,
+      "band": "STRONG"
+    },
+    {
+      "metric": "TSV-region vonMises p99 (MPa)",
+      "key": "tsv_vm_p99_MPa",
+      "C05": 16.1233,
+      "C07": 17.7947,
+      "C13": 14.4233,
+      "range": 3.3714,
+      "S_m_pct": 20.91,
+      "u_mesh_pct": 5.66,
+      "resolved_vs_mesh": true,
+      "band": "MODERATE"
+    },
+    {
+      "metric": "interface shear p99 (MPa)",
+      "key": "interface_shear_p99_MPa",
+      "C05": 1.6954,
+      "C07": 2.0055,
+      "C13": 1.8278,
+      "range": 0.3101,
+      "S_m_pct": 16.97,
+      "u_mesh_pct": 8.7,
+      "resolved_vs_mesh": false,
+      "band": "MODERATE"
+    },
+    {
+      "metric": "interface peel p99 (MPa)",
+      "key": "interface_peel_p99_MPa",
+      "C05": 1.5703,
+      "C07": 1.889,
+      "C13": 1.6654,
+      "range": 0.3187,
+      "S_m_pct": 19.14,
+      "u_mesh_pct": 19.24,
+      "resolved_vs_mesh": false,
+      "band": "MODERATE"
+    }
+  ],
+  "robustness": {
+    "T_max_C": {
+      "S_ref": 0.07654902396222818,
+      "S_min": 0.07580145810446422,
+      "S_max": 0.07654902396222818,
+      "worst_corner": "sens_tsv_off",
+      "order_stable": true,
+      "verdict": "RESOLVED",
+      "by_variant": {
+        "sens_ref": 0.07654902396222818,
+        "sens_hvr_E_hi": 0.07654902396222818,
+        "sens_hvr_E_lo": 0.07654902396222818,
+        "sens_hvr_cte_hi": 0.07654902396222818,
+        "sens_hvr_cte_lo": 0.07654902396222818,
+        "sens_tsv_off": 0.07580145810446422,
+        "sens_uf_E_hi": 0.07654902396222818,
+        "sens_uf_E_lo": 0.07654902396222818,
+        "sens_uf_cte_hi": 0.07654902396222818,
+        "sens_uf_cte_lo": 0.07654902396222818
+      }
+    },
+    "die_warpage_pv_um": {
+      "S_ref": 0.6017263396021689,
+      "S_min": 0.5575580574252752,
+      "S_max": 0.6773348258579898,
+      "worst_corner": "sens_hvr_cte_hi",
+      "order_stable": true,
+      "verdict": "RESOLVED",
+      "by_variant": {
+        "sens_ref": 0.6017263396021689,
+        "sens_hvr_E_hi": 0.5860572122123369,
+        "sens_hvr_E_lo": 0.6273282119822451,
+        "sens_hvr_cte_hi": 0.5575580574252752,
+        "sens_hvr_cte_lo": 0.6773348258579898,
+        "sens_tsv_off": 0.6475524863081347,
+        "sens_uf_E_hi": 0.595882869447658,
+        "sens_uf_E_lo": 0.6080459101572345,
+        "sens_uf_cte_hi": 0.5957176098829454,
+        "sens_uf_cte_lo": 0.6078691051873962
+      }
+    },
+    "pkg_warpage_pv_um": {
+      "S_ref": 0.3025071656837873,
+      "S_min": 0.2730977677382783,
+      "S_max": 0.360124436524536,
+      "worst_corner": "sens_hvr_cte_hi",
+      "order_stable": false,
+      "verdict": "ORDER FLIPS",
+      "by_variant": {
+        "sens_ref": 0.3025071656837873,
+        "sens_hvr_E_hi": 0.29214982414155694,
+        "sens_hvr_E_lo": 0.32298948452383297,
+        "sens_hvr_cte_hi": 0.2730977677382783,
+        "sens_hvr_cte_lo": 0.360124436524536,
+        "sens_tsv_off": 0.3394892078655661,
+        "sens_uf_E_hi": 0.29937470408646394,
+        "sens_uf_E_lo": 0.3058044247934709,
+        "sens_uf_cte_hi": 0.2992653114476055,
+        "sens_uf_cte_lo": 0.3058234251624551
+      }
+    },
+    "si_principal_p99_MPa": {
+      "S_ref": 0.3311226407756167,
+      "S_min": 0.1539223436890337,
+      "S_max": 0.38004245117750224,
+      "worst_corner": "sens_tsv_off",
+      "order_stable": false,
+      "verdict": "ORDER FLIPS",
+      "by_variant": {
+        "sens_ref": 0.3311226407756167,
+        "sens_hvr_E_hi": 0.32783734688721117,
+        "sens_hvr_E_lo": 0.3485358169438696,
+        "sens_hvr_cte_hi": 0.3075420840198942,
+        "sens_hvr_cte_lo": 0.38004245117750224,
+        "sens_tsv_off": 0.1539223436890337,
+        "sens_uf_E_hi": 0.3238682676125142,
+        "sens_uf_E_lo": 0.3373409185290222,
+        "sens_uf_cte_hi": 0.3272620678960043,
+        "sens_uf_cte_lo": 0.33666185603569193
+      }
+    },
+    "tsv_vm_p99_MPa": {
+      "S_ref": 0.24884207846009823,
+      "S_min": 0.06391491044117097,
+      "S_max": 0.3005422307564732,
+      "worst_corner": "sens_hvr_cte_lo",
+      "order_stable": true,
+      "verdict": "NOT RESOLVED",
+      "by_variant": {
+        "sens_ref": 0.24884207846009823,
+        "sens_hvr_E_hi": 0.2849212168223184,
+        "sens_hvr_E_lo": 0.19483212243728312,
+        "sens_hvr_cte_hi": 0.3005422307564732,
+        "sens_hvr_cte_lo": 0.06391491044117097,
+        "sens_uf_E_hi": 0.24946339390336666,
+        "sens_uf_E_lo": 0.24580742287662322,
+        "sens_uf_cte_hi": 0.24911705707396659,
+        "sens_uf_cte_lo": 0.24774671304983034
+      }
+    },
+    "interface_shear_p99_MPa": {
+      "S_ref": 0.10987354059511815,
+      "S_min": 0.10790425893026842,
+      "S_max": 0.2636013502733598,
+      "worst_corner": "sens_uf_cte_hi",
+      "order_stable": false,
+      "verdict": "ORDER FLIPS",
+      "by_variant": {
+        "sens_ref": 0.10987354059511815,
+        "sens_hvr_E_hi": 0.19586972025892774,
+        "sens_hvr_E_lo": 0.10972135626116236,
+        "sens_hvr_cte_hi": 0.19841542510003324,
+        "sens_hvr_cte_lo": 0.1759713949057245,
+        "sens_tsv_off": 0.2636013502733598,
+        "sens_uf_E_hi": 0.11041520609853321,
+        "sens_uf_E_lo": 0.11166881831911848,
+        "sens_uf_cte_hi": 0.10790425893026842,
+        "sens_uf_cte_lo": 0.11183691632845279
+      }
+    },
+    "interface_peel_p99_MPa": {
+      "S_ref": 0.6550867978640056,
+      "S_min": 0.17639765704309576,
+      "S_max": 1.0037643040960147,
+      "worst_corner": "sens_hvr_cte_lo",
+      "order_stable": true,
+      "verdict": "NOT RESOLVED",
+      "by_variant": {
+        "sens_ref": 0.6550867978640056,
+        "sens_hvr_E_hi": 0.6755223024326262,
+        "sens_hvr_E_lo": 0.63908767111066,
+        "sens_hvr_cte_hi": 1.0037643040960147,
+        "sens_hvr_cte_lo": 0.17639765704309576,
+        "sens_tsv_off": 0.8628644187753545,
+        "sens_uf_E_hi": 0.7172937119002329,
+        "sens_uf_E_lo": 0.5448890429992166,
+        "sens_uf_cte_hi": 0.6477004492054301,
+        "sens_uf_cte_lo": 0.6622682644020303
+      }
+    }
+  },
+  "bc_sensitivity": [
+    {
+      "metric": "T_max (C)",
+      "key": "T_max_C",
+      "S_BC_A_pct": 7.65,
+      "S_BC_B_pct": 8.35,
+      "order_same": true,
+      "BC_A_vals": [
+        82.8554,
+        87.0215,
+        80.679
+      ],
+      "BC_B_vals": [
+        78.4649,
+        83.2454,
+        76.6899
+      ]
+    },
+    {
+      "metric": "die warpage p-v (um)",
+      "key": "die_warpage_pv_um",
+      "S_BC_A_pct": 60.17,
+      "S_BC_B_pct": 17.68,
+      "order_same": true,
+      "BC_A_vals": [
+        7.7515,
+        12.4543,
+        7.8154
+      ],
+      "BC_B_vals": [
+        0.5165,
+        0.6102,
+        0.53
+      ]
+    },
+    {
+      "metric": "package warpage p-v (um)",
+      "key": "pkg_warpage_pv_um",
+      "S_BC_A_pct": 30.25,
+      "S_BC_B_pct": 33.94,
+      "order_same": false,
+      "BC_A_vals": [
+        12.1412,
+        15.787,
+        12.1142
+      ],
+      "BC_B_vals": [
+        0.5468,
+        0.7403,
+        0.57
+      ]
+    },
+    {
+      "metric": "Si max principal p99 (MPa)",
+      "key": "si_principal_p99_MPa",
+      "S_BC_A_pct": 33.11,
+      "S_BC_B_pct": 8.49,
+      "order_same": false,
+      "BC_A_vals": [
+        10.3352,
+        13.2014,
+        9.7792
+      ],
+      "BC_B_vals": [
+        4.8999,
+        4.4875,
+        4.8562
+      ]
+    },
+    {
+      "metric": "TSV-region vonMises p99 (MPa)",
+      "key": "tsv_vm_p99_MPa",
+      "S_BC_A_pct": 24.88,
+      "S_BC_B_pct": 7.78,
+      "order_same": true,
+      "BC_A_vals": [
+        14.2264,
+        15.9105,
+        12.3704
+      ],
+      "BC_B_vals": [
+        66.6314,
+        70.0411,
+        64.8565
+      ]
+    },
+    {
+      "metric": "interface shear p99 (MPa)",
+      "key": "interface_shear_p99_MPa",
+      "S_BC_A_pct": 10.99,
+      "S_BC_B_pct": 2.19,
+      "order_same": false,
+      "BC_A_vals": [
+        1.7616,
+        1.9273,
+        1.7338
+      ],
+      "BC_B_vals": [
+        4.9508,
+        4.965,
+        5.0596
+      ]
+    },
+    {
+      "metric": "interface peel p99 (MPa)",
+      "key": "interface_peel_p99_MPa",
+      "S_BC_A_pct": 65.51,
+      "S_BC_B_pct": 3.54,
+      "order_same": false,
+      "BC_A_vals": [
+        2.1114,
+        3.2323,
+        1.8492
+      ],
+      "BC_B_vals": [
+        6.8118,
+        6.8733,
+        7.0551
+      ]
+    }
+  ],
+  "u_mesh_rel": {
+    "T_max_C": 0.0028882531955206625,
+    "die_warpage_pv_um": 0.004994879026654833,
+    "pkg_warpage_pv_um": 0.0040080677779419215,
+    "si_principal_p99_MPa": 0.04429588207057761,
+    "tsv_vm_p99_MPa": 0.05657040937775346,
+    "interface_shear_p99_MPa": 0.08699974695142768,
+    "interface_peel_p99_MPa": 0.19236574135987625
+  }
+}

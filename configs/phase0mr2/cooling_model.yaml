@@ -1,0 +1,105 @@
+# =====================================================================================
+# PHASE 0M-R2 SECTION 5 --- CORRELATION DOMAINS, DECLARED BEFORE USE
+# =====================================================================================
+# Every correlation carries the range its source actually validates. An operating point
+# outside that range is reported OUT_OF_MODEL_DOMAIN and is NOT silently extrapolated.
+# =====================================================================================
+
+fluid:
+  name: water
+  t_ref_c: 25.0
+  rho_kg_m3: 988.0
+  mu_pa_s: 5.470e-4
+  k_w_mk: 0.644
+  cp_j_kgk: 4181.0
+  prandtl: 3.551
+  provenance: SOURCE_BACKED
+  source: "scripts/phase0m/cooling.py constants, water at the stated reference temperature"
+
+correlations:
+
+  nusselt_laminar_fd:
+    name: "Shah & London fully-developed laminar rectangular duct"
+    regime: laminar
+    re_min: 0.0
+    re_max: 2300.0
+    extra_condition: "thermally and hydrodynamically FULLY DEVELOPED"
+    entrance_rule: "L_thermal = 0.05 * Re * Pr * D_h ; developed requires L_thermal << L"
+    provenance: SOURCE_BACKED
+    source: "Shah & London, Laminar Flow Forced Convection in Ducts, rectangular duct table"
+    note: >-
+      The tabulated Nu is the FULLY DEVELOPED value. Where the thermal entrance length is
+      a large fraction of the channel it UNDERSTATES h, so the resulting temperature is
+      conservative rather than optimistic. The framework uses it unchanged and reports
+      L_thermal / L at every operating point so the reader can see when it applies.
+
+  nusselt_gnielinski:
+    name: "Gnielinski turbulent correlation"
+    regime: turbulent
+    re_min: 3000.0
+    re_max: 5.0e6
+    pr_min: 0.5
+    pr_max: 2000.0
+    provenance: SOURCE_BACKED
+    source: "Gnielinski 1976, as reproduced in standard heat-transfer texts"
+    note: >-
+      Validity starts at Re = 3000. scripts/phase0m/cooling.py applied it from Re = 2300,
+      i.e. 700 Reynolds below its floor, and labelled the result `transitional`.
+
+  transitional:
+    name: "NONE AVAILABLE"
+    regime: transitional
+    re_min: 2300.0
+    re_max: 3000.0
+    provenance: OPEN
+    source: >-
+      OPEN. No source in this repository gives a transitional-regime Nusselt correlation
+      for a rectangular microchannel. The laminar correlation has ended and Gnielinski has
+      not begun. Any operating point here is OUT_OF_MODEL_DOMAIN.
+    note: >-
+      This is not a gap that can be filled by picking whichever neighbouring correlation
+      is convenient: at Re = 2342 the laminar value is Nu = 4.603 and the Gnielinski value
+      is Nu = 12.699, a factor of 2.76. The choice sets the answer.
+
+  friction_laminar:
+    name: "f Re = C(alpha), rectangular duct"
+    regime: laminar
+    re_min: 0.0
+    re_max: 2300.0
+    provenance: SOURCE_BACKED
+    source: "Shah & London, same duct family as the Nusselt table"
+
+  friction_petukhov:
+    name: "Petukhov smooth-tube friction factor"
+    regime: turbulent
+    re_min: 3000.0
+    re_max: 5.0e6
+    provenance: SOURCE_BACKED
+    source: "Petukhov 1970, the form paired with Gnielinski"
+
+operating_points:
+  - id: source_stated
+    m_dot_g_s: 1.6
+    why: "the flow rate the June-2026 source states for its cooler"
+  - id: production
+    m_dot_g_s: 27.0
+    why: "the Phase-0M-R production cooler, TOP_SI_MICROCHANNEL_27"
+  - id: high_flow
+    m_dot_g_s: 50.0
+    why: >-
+      the flow Phase 0M-R said is needed to reach the retired calibrated
+      h = 166 000 W/m2K. This is the point under audit.
+  - id: two_sided_per_side
+    m_dot_g_s: 13.5
+    why: "TWO_SIDED_SI_14, per side, at the same 27 g/s total"
+
+channel:
+  w_ch_um: 50.0
+  h_ch_um: 300.0
+  t_fin_um: 50.0
+  t_base_um: 100.0
+  length_mm: 22.36
+  width_mm: 22.36
+  k_solid_w_mk: 130.0
+  provenance: SOURCE_BACKED
+  source: "cooling_production.CANDIDATES TOP_SI_MICROCHANNEL_*, silicon microchannel"

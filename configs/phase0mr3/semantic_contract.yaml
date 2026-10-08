@@ -1,0 +1,369 @@
+# =====================================================================================
+# PHASE 0M-R3 --- SEMANTIC CONTRACT (supersedes configs/phase0mr2/current_state_claims.yaml)
+# =====================================================================================
+# DEFECT #56. Phase 0M-R2 made the checker SECTION-SCOPED, which fixed the flat-string
+# problem. It remained CONTRACT-DRIVEN: it could only find a contradiction for a claim
+# somebody had already entered. Five real current-facing contradictions survived it
+# because none of them was in the contract, and two of those five are not claim-shaped at
+# all -- a paragraph duplicated four times, and two different report dates. A list of
+# claims cannot express "these two fields contradict each other" or "this paragraph
+# appears more than once".
+#
+# This contract therefore has THREE kinds of rule:
+#   claims             a field, its authoritative value, and the wording it licenses
+#   cross_field        an invariant BETWEEN fields, which no single claim can express
+#   structural         document-shape rules that are not about wording at all
+# =====================================================================================
+
+meta:
+  phase: "0M-R3"
+  current_authoritative_phase: "0M-R3C"
+  gates: [0B, 0C, 0D, 0D-R, 0E, 0F, 0G, 0H, 0I, 0I-R, 0J, 0J-R, 0K, 0K-R,
+          0L, 0L-R, 0M, 0M-R, 0M-R2, 0M-R3, 0M-R3A, 0M-R3B,
+          0M-R3C]
+
+current_facing_sections:
+  - "Provenance and tool versions"
+  - "Executive Summary"
+  - "Governing Equations"
+  - "Electrical Model Validation"
+  - "Thermal Model Validation"
+  - "Mechanical Model Validation"
+  - "Architecture Comparison"
+  - "Model Defects Discovered and Fixed"
+  - "Uncertainty and Fidelity Ladder"
+  - "Next Steps --- prioritised roadmap"
+
+historical_chapter_markers:
+  - "superseded by"
+  - "extended by"
+  - "rescoped by"
+  - "SUPERSEDED"
+  - "historical record"
+
+# -------------------------------------------------------------------------------------
+# AUTHORITATIVE STRUCTURED STATE. Every current-facing statement must agree with this.
+# -------------------------------------------------------------------------------------
+authoritative:
+
+  g2_blockers:
+    value:
+      - "N_required is OPEN --- no field or product requirement exists in this repository"
+      - "absolute N_f is unvalidated --- the strain and energy formulations disagree 4.1x"
+      - "no admissible mechanical allowable exists --- nine candidates, none passed"
+    count: 3
+    independent: true
+    source: "results/phase0k/G2_DECISION.md; results/phase0h/criterion_admissibility.csv"
+    note: >-
+      THREE INDEPENDENT blockers. Any wording that names one of them as THE single, sole
+      or only blocker contradicts this field, whichever one it names.
+
+  cooling_domain:
+    value: "the model has a validated laminar domain (Re <= 2300) and an unvalidated gap
+            (2300 < Re < 3000). The PRODUCTION point at 27 g/s, Re = 1264.8, is INSIDE the
+            validated domain. The 50 g/s comparison point, Re = 2342.3, is inside the gap."
+    production_in_gap: false
+    comparison_point_in_gap: true
+    source: "results/phase0mr2/cooling_regime_table.csv"
+
+  fatigue_metric:
+    value: "a local fatigue-relevant inelastic response metric (accumulated equivalent
+            inelastic strain per stabilised cycle), numerically converged and tied to a
+            documented solder-fatigue mechanism"
+    is_damage_model: false
+    is_life_model: false
+    is_failure_criterion: false
+    source: "results/phase0i/local_metric_convergence.csv"
+    note: >-
+      The FE output is a RESPONSE. It becomes DAMAGE only through a sourced damage law,
+      LIFE only through a life model, and a FAILURE CRITERION only with an admissible
+      allowable. None of those three is closed, so the FE quantity must not be called
+      damage in a current-facing section.
+
+  optimizer:
+    value: "FORBIDDEN"
+    source: "results/phase0mr3/optimizer_preconditions.csv"
+
+  tool_availability:
+    value:
+      CalculiX: "2.23, present"
+      MOOSE: "heat_transfer-opt 09515f92aa, present"
+      gmsh: "4.15.2, present"
+      AEDT: "v261 present; Icepak engine present"
+      Palace: "NOT FOUND on this system"
+      Fluent: "NOT INSTALLED"
+      OpenFOAM: "NOT FOUND"
+    source: "results/phase0mr3/BASELINE_REPRODUCTION.md"
+    note: >-
+      Measured directly at the start of Phase 0M-R3. The provenance table of the
+      historical report claimed "PALACE (built, functional)" while the Phase-0M-R2
+      environment record said NOT FOUND: a tool-availability contradiction that no
+      claim-shaped rule would have caught, because neither statement is a scientific
+      claim.
+
+  report_dates:
+    generation_date: "2026-09-19"
+    repository_baseline_date: "2026-09-08"
+    phase_completion_date: "2026-09-19"
+    note: >-
+      These are DIFFERENT quantities and must be labelled as such. A provenance row
+      reading simply "Report date" next to a different front-matter date is the defect.
+
+# -------------------------------------------------------------------------------------
+claims:
+
+  - claim_id: g2_blockers_not_singular
+    field: g2_blockers
+    status: CURRENT
+    originating_phase: "0K"
+    superseded_phase: "0J-R"
+    allowed_wording: "three independent blockers: N_required, absolute N_f, and an
+                      admissible mechanical allowable"
+    forbidden_wording: "any one of them described as the single / sole / only blocker"
+    required_in: ["Executive Summary"]
+    historical_allowed_in: ["Phase 0J", "Phase 0J-R"]
+    source_artifact: "results/phase0k/G2_DECISION.md"
+    retraction_exonerates: false   # a retraction of a DIFFERENT statement in
+                                   # the same paragraph must not clear this one
+    stale_wording:
+      - "this is the single blocking item for G2 and for any constraint-based optimizer"
+
+  - claim_id: cooling_production_point_not_in_gap
+    field: cooling_domain
+    status: CURRENT
+    originating_phase: "0M-R2"
+    superseded_phase: "0M-R"
+    allowed_wording: "the model has a domain hole, BUT the production point is not in it;
+                      the 50 g/s comparison point is"
+    forbidden_wording: "any phrasing that places the production point inside the hole, or
+                        that conjoins the hole and the production point with AND"
+    required_in: ["Thermal Model Validation"]
+    historical_allowed_in: []
+    source_artifact: "results/phase0mr2/cooling_regime_table.csv"
+    retraction_exonerates: false   # a retraction of a DIFFERENT statement in
+                                   # the same paragraph must not clear this one
+    stale_wording:
+      - "THE COOLING MODEL HAS A DOMAIN HOLE, AND THE PRODUCTION POINT IS NOT IN IT."
+
+  - claim_id: fe_output_is_response_not_damage
+    field: fatigue_metric
+    status: CURRENT
+    originating_phase: "0M-R3"
+    superseded_phase: "0I"
+    allowed_wording: "a local fatigue-relevant inelastic response metric"
+    forbidden_wording: "calling the FE output itself DAMAGE in a current-facing section"
+    required_in: ["Mechanical Model Validation"]
+    historical_allowed_in: ["Phase 0I", "Phase 0I-R"]
+    source_artifact: "results/phase0i/local_metric_convergence.csv"
+    retraction_exonerates: false   # a retraction of a DIFFERENT statement in
+                                   # the same paragraph must not clear this one
+    stale_wording:
+      - "Phase 0I it measures DAMAGE and not only load"
+
+  - claim_id: report_date_is_disambiguated
+    field: report_dates
+    status: CURRENT
+    originating_phase: "0M-R3"
+    superseded_phase: "0M-R2"
+    allowed_wording: "separate, labelled rows for generation / baseline / phase-completion"
+    forbidden_wording: "a bare 'Report date' row differing from the front-matter date"
+    required_in: ["__frontmatter__", "Provenance and tool versions"]
+    historical_allowed_in: []
+    source_artifact: "results/phase0mr3/BASELINE_REPRODUCTION.md"
+    stale_wording:
+      - "| Report date | 2026-09-08 |"
+
+# -------------------------------------------------------------------------------------
+# CROSS-FIELD INVARIANTS. These are the rules a per-claim list structurally cannot hold:
+# they are about the RELATIONSHIP between two statements, not about either one alone.
+# -------------------------------------------------------------------------------------
+cross_field:
+
+  - id: g2_blocker_count_consistent
+    description: >-
+      No current-facing section may assert a G2 blocker COUNT that differs from the
+      authoritative list, in words or in number.
+    singular_patterns:
+      - "single blocking item for G2"
+      - "sole blocker for G2"
+      - "only blocker for G2"
+      - "the single G2 blocker"
+      - "is the single blocking item"
+    authoritative_count_field: "g2_blockers.count"
+
+  - id: cooling_hole_and_production_point
+    description: >-
+      A sentence may not place the production point inside the unvalidated gap, and may
+      not join "has a domain hole" to "the production point" with a conjunction that reads
+      as though both are true of the same point.
+    contradiction_patterns:
+      - "DOMAIN HOLE, AND THE PRODUCTION POINT"
+      - "production point .{0,40}(is in|inside) .{0,30}(hole|gap)"
+    requires_when_hole_mentioned:
+      - "production point"
+      - "27 g/s"
+
+  - id: metric_terminology_ladder
+    description: >-
+      LOAD DRIVER -> RESPONSE METRIC -> DAMAGE MODEL -> LIFE MODEL -> FAILURE CRITERION.
+      A current-facing section may use a rung only if that rung is closed. DAMAGE MODEL,
+      LIFE MODEL and FAILURE CRITERION are all open, so the FE output is a RESPONSE.
+    closed_rungs: ["load_driver", "response_metric"]
+    open_rungs: ["damage_model", "life_model", "failure_criterion"]
+    forbidden_in_current:
+      - "it measures DAMAGE"
+      - "measures damage and not only load"
+      - "the damage metric predicts"
+      - "validated relative life"
+      - "Z2 lasts"
+
+  - id: realizability_and_ordering
+    description: >-
+      A section that states the mechanical ordering must not also imply the designs are
+      buildable unless the realizability field says so.
+    forbidden_pairing:
+      - "fully realizable"
+      - "is buildable as specified"
+
+  - id: tool_availability_consistent
+    description: >-
+      No section may describe a solver as available when the measured environment says it
+      is absent. A provenance table is current-facing.
+    forbidden_patterns:
+      - "PALACE \\(built, functional\\)"
+      - "Palace .{0,30}(available|functional|installed)"
+      - "Fluent .{0,20}(available|installed)"
+    authoritative_field: "tool_availability"
+
+  - id: response_not_damage_life_failure
+    description: >-
+      The FE output is a RESPONSE. Calling it damage presumes a sourced damage law, calling
+      it life presumes a life model, calling it a criterion presumes an admissible
+      allowable. All three are OPEN.
+    forbidden_patterns:
+      - "less local damage"
+      - "accumulates less solder-fatigue damage"
+      - "outlives"
+      - "Z2 lasts"
+      - "damage decreased"
+    retraction_exonerates: false
+
+  - id: historical_358_not_current
+    description: >-
+      35.8 % is the HISTORICAL Phase-0I separation for a non-realizable architecture set.
+      The current repaired realizable pair separates by 16.3 %. A current-facing section
+      must not present 35.8 % as the present architecture result.
+    forbidden_patterns:
+      - "architecture shows 35\\.8 % less"
+      - "35\\.8 % less local damage"
+    retraction_exonerates: false
+
+  - id: no_current_realizable_pair_claim
+    description: >-
+      Phase 0M-R3C found no PROVEN_REALIZABLE pair. The Phase-0M-R3 cases are a frozen
+      COMPARISON that was later shown not demonstrated realizable under the Phase-0M-R3B
+      substrate-via rule set, so "the current repaired realizable pair" overstates what is
+      earned. The licensed wording names the phase and its status.
+    forbidden_patterns:
+      - "CURRENT repaired realizable pair"
+      - "current repaired realizable pair"
+      - "the repaired realizable pair"
+    retraction_exonerates: false
+
+  - id: lateral_delivery_is_lossy_not_impossible
+    description: >-
+      "1000 A cannot be fed laterally" is an absolute claim the framework has not proven.
+      What was computed is that direct 1 V lateral delivery in the evaluated stack is
+      prohibitively lossy.
+    forbidden_patterns:
+      - "cannot be fed laterally"
+      - "1000 A cannot be"
+    retraction_exonerates: false
+
+  - id: final_pair_is_0mr3c
+    description: >-
+      The current architecture pair is the Phase-0M-R3C frozen repartitioned pair:
+      D_driver = 1.1947, T_max 118.32 and 126.46 C, response 4.6252 and 3.8714 um. The
+      Phase-0M-R3 values 1.1943, 118.68, 126.91, 4.6401 and 3.8851 are HISTORICAL and must
+      not be presented as the present result.
+    forbidden_patterns:
+      - "D_driver = 1\\.1943"
+      - "126\\.91 C against 118\\.68 C"
+      - "126\\.91 C against ARCH_Z1's 118\\.68 C"
+    retraction_exonerates: false
+
+  - id: weighting_is_response_not_damage
+    description: >-
+      The element weight used for the stress distribution is the solver's own PEEQ
+      increment times element volume, w = dPEEQ * V (scripts/phase0lr/mechanism_audit.py,
+      elementwise_damage). No damage law is applied anywhere in that calculation, so
+      "damage-weighted", "% of package damage" and "damage physics" name a quantity the
+      framework has not earned. The licensed names are inelastic-strain-weighted and
+      accumulated inelastic strain (DEFECT #60).
+    forbidden_patterns:
+      - "damage-weighted"
+      - "damage weighted"
+      - "of package damage"
+      - "of its damage lies"
+      - "damage physics"
+      - "viscoplastic damage metric"
+      - "local inelastic damage metric"
+      - "of damage accumulates"
+      - "of the joint damage"
+      - "of the joint's damage"
+      - "against damage"
+      - "correlation with damage"
+      - "joint's damage is generated"
+    retraction_exonerates: false
+
+  - id: via_provenance_precise
+    description: >-
+      No primary source specifies a 34 um via; only the RANGE is source-backed. And the
+      intra-VR via technology has no sourced rule at all (DEFECT #58).
+    forbidden_patterns:
+      - "the sourced 34 um via"
+      - "sourced 34 um"
+    retraction_exonerates: false
+
+  - id: optimizer_state_consistent
+    description: "No section may describe the optimizer as anything but FORBIDDEN."
+    forbidden_patterns:
+      - "optimi[sz]er is (now )?(allowed|permitted|authorized|authorised|unblocked)"
+      - "Phase 0N (is|has been) (started|authorised|authorized)"
+
+# -------------------------------------------------------------------------------------
+# STRUCTURAL RULES. Not about wording at all. 1E was invisible to every previous checker
+# because a duplicated paragraph is a document-shape defect, not a claim.
+# -------------------------------------------------------------------------------------
+structural:
+
+  sentinel_blocks_unique: true
+
+  no_duplicate_paragraph:
+    min_chars: 200
+    max_occurrences: 1
+    note: >-
+      Any paragraph of 200 characters or more must appear at most once. Four identical
+      copies of the same "Scope of this section" paragraph were shipped by Phase 0M-R2
+      because its builder inserted outside a sentinel block and its idempotency guard
+      had a case mismatch.
+
+  date_coherence:
+    front_matter_key: "date"
+    forbidden_bare_labels: ["Report date"]
+    required_labels:
+      - "Report generated"
+      - "Repository baseline"
+      - "Phase completed"
+
+  gate_count_derived: true
+  provenance_is_current: true
+
+  single_next_work:
+    description: >-
+      Exactly one authoritative current next-work statement. DEFECT #57 shipped two that
+      disagreed: the contract field and a separate next_gate block that still listed two
+      completed actions.
+    completed_must_not_appear:
+      - "ADOPT the Phase-0M physical cooling model into the ETM loop"
+      - "PUT THE RDL IN THE MECHANICAL MESH"

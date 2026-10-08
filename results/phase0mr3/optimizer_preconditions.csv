@@ -1,0 +1,11 @@
+precondition,status,evidence
+interconnect geometry and crowding validated,PARTIAL,Delta_R cross-validated against MOOSE at 0.25-0.73 %; TSV span architecture-aware and consistent across all three domains. The EM allowable is still OPEN.
+routing scope physically correct,YES,"UPGRADED in 0M-R3. Routing is now a HARD GATE in the realizability contract, every net is checked lateral and vertical, and both frozen candidates pass with 6.6 % margin."
+cooling boundary tied to physical hardware,PARTIAL,"the production point is inside a SOURCE_BACKED correlation domain and the solid side is MOOSE-validated at 3.78 %. The fluid side has no conjugate CFD validation, and 2300 < Re < 3000 has no correlation at all."
+architecture templates realizable,PARTIAL,UPGRADED from NO. One Z1 and one Z2 are CONDITIONAL_REALIZABLE at all 27 clearance corners. Neither is PROVEN_REALIZABLE: three package clearances are unsourced.
+architecture geometry physically represented,PARTIAL,"ARCH_Z4's power die is explicit geometry but its construction is unsourced, so its ranking stays conditional."
+process margin on the critical interconnect,NO,"NEW in 0M-R3. ARCH_Z2's TSV field sits at AR = 10.000, M_AR = 1.000, and fails a modest tolerance bound. A 34 um via fixes it but has not been adopted into the frozen pair."
+dominant mechanical physics closed,NO,high-stress SAC305 constitutive response is CONDITIONAL; cohesive-zone parameters OPEN; 6 of 8 enumerated failure mechanisms uncomputed.
+an admissible mechanical criterion exists,NO,nine candidates tested against six admissibility conditions; none passed.
+a required life exists,NO,N_required is OPEN.
+absolute fatigue prediction validated,NO,the strain and energy formulations disagree 4.1x on this joint.

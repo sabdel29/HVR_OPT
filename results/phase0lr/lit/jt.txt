@@ -1,0 +1,792 @@
+Jurnal
+                                                                                                        Full Paper
+Teknologi
+MODIFICATION OF THE ANAND CONSTITUTIVE                                                              Article history
+                                                                                                         Received
+MODEL     FOR   ENHANCING     PREDICTIVE                                                            2 August 2024
+                                                                                          Received in revised form
+ACCURACY       OF    96.5SN-3.0AG-0.5CU                                                        31 December 2024
+INELASTIC DEFORMATION BEHAVIOR                                                                          Accepted
+                                                                                               31 December 2024
+                                                                                                 Published Online
+Aliff Farhan Mohd Yamina,b, Jamaluddin Mahmuda*                                                    22 August 2025
+aFaculty of Mechanical Engineering, Universiti Teknologi MARA,                            *Corresponding author
+40450 Shah Alam, Selangor, Malaysia                                                             jm@uitm.edu.my
+bFaculty of Mechanical Engineering, Universiti Teknologi MARA
+
+Cawangan Pulau Pinang, Permatang Pauh Campus, 13500
+Seberang Prai, Pulau Pinang, Malaysia
+
+
+       Graphical abstract                Abstract
+                                         This paper presents the modification and improvement of the Anand
+                                         constitutive model for accurately predicting the mechanical behavior of
+                                         96.5Sn-3.0Ag-0.5Cu (SAC305) lead-free solder. The original Anand model had
+                                         limitations in capturing strain hardening significantly at low-strain applications.
+                                         The modified Anand model addressed this limitation by correlating the initial
+                                         value of deformation resistance (s0) and hardening coefficient (h0) as a
+                                         temperature and strain rate function. The Anand and modified Anand model
+                                         parameters were determined through two-stage optimization-type curve
+                                         fitting using Genetic Algorithm (GA) and Nelder-Mead (NM) optimization
+                                         methods. Experimental data indicated good agreement with both models.
+                                         However, the modified Anand model showed a significantly lower MSE
+                                         (0.2216) than the Anand model (0.3396), suggesting improved agreement with
+                                         experimental data. The modified model's yield and saturation stress
+                                         prediction were also enhanced, with maximum errors of 4.36% and 4.39%,
+                                         respectively. The modified Anand model also exhibited higher coefficient of
+                                         determination (R2) value (0.9996), surpassing the original model's R2 value of
+                                         0.9981. These results demonstrated the enhanced predictive capability of the
+                                         modified model at various conditions. Thus, the modified Anand model could
+                                         represent the SAC305 solder joint deformation behavior.
+
+                                         Keywords: Anand Model, creep, SAC305, solder joint, stress-strain
+
+
+                                         Abstrak
+                                         Kertas kerja ini membentangkan pengubahsuaian dan penambahbaikan
+                                         model konstitutif Anand untuk meramalkan dengan tepat tingkah laku
+                                         mekanikal sambungan pateri bebas plumbum 96.5Sn-3.0Ag-0.5Cu (SAC305).
+                                         Model Anand amat terhad dalam meramal pengerasan terikan pada aplikasi
+                                         terikan rendah. Model Anand yang diubah suai menangani isu ini dengan
+                                         mengubah suai nilai awal rintangan ubah bentuk (s0) dan pekali pengerasan
+                                         (h0) sebagai fungsi suhu dan kadar terikan. Parameter Anand dan Anand
+                                         yang diubah suai ditentukan melalui pencocokan lengkung jenis
+                                         pengoptimuman dua peringkat menggunakan Algoritma Genetik (GA) dan
+                                         Nelder-Mead (NM). Hasil pencocokan lengkung menunjukkan hubungan baik
+                                         antara kedua-dua model dengan data eksperimen. Walau bagaimanapun,
+                                         ralat kuasa dua minimum (MSE) Anand yang diubah suai menunjukkan MSE
+                                         yang jauh lebih rendah (0.2216) berbanding model Anand (0.3396). Ramalan
+                                         tegasan alah dan tegasan tepu juga ditambah baik untuk model yang
+
+               87:5 (2025) 939−949|https://journals.utm.my/jurnalteknologi|eISSN 2180–3722 |DOI:
+                              |https://doi.org/10.11113/jurnalteknologi.v87.23172|
+940                      Yamin et al. / Jurnal Teknologi (Sciences & Engineering) 87:5 (2025) 939−949
+
+                                                 diubah suai menghasilkan ralat maksimum masing-masing sebanyak 4.36%
+                                                 dan 4.39%. Ini menunjukkan model Anand yang diubah suai lebih mendekati
+                                                 dapatan eksperimen berbanding model Anand. Model Anand yang diubah
+                                                 suai juga menunjukkan nilai pekali penentuan (R2) yang lebih tinggi (0.9996),
+                                                 mengatasi nilai R2 model Anand iaitu 0.9981. Keputusan ini menunjukkan
+                                                 keupayaan ramalan model Anand yang diubah suai yang dipertingkatkan
+                                                 merentasi pelbagai keadaan. Oleh itu, pengubahsuaian yang dilakukan
+                                                 pada model Anand menunjukkan penambahbaikan ramalan tingkah laku
+                                                 SAC305 berbanding model Anand.
+
+                                                 Kata kunci: Model Anand, rayapan, SAC305, sambungan pateri, tegasan-
+                                                 terikan
+
+                                                                                  © 2025 Penerbit UTM Press. All rights reserved
+
+
+
+
+1.0 INTRODUCTION                                                    simulate the creep behavior of lead-free solder joints
+                                                                    in microelectronic packages, successfully captured
+In electronic packaging, solder joints are crucial in               the time-dependent deformation and provided
+interconnecting electronic components on printed                    accurate predictions of long-term reliability [12].
+circuit boards (PCBs), providing mechanical support                 Talledo et al. (2021) developed a new power
+and electrical conduction. As electronic products                   equation for the Quad Flat No-Lead (QFN) packages
+continue to advance in functionality and                            for fatigue prediction models based on accumulated
+miniaturization, the decreasing size of solder joints               creep strain energy density from Finite Element
+poses reliability challenges [1, 2]. Therefore, it                  Analysis (FEA) simulations [13]. The study highlighted
+becomes crucial to understand the mechanical                        the Anand model’s ability to accurately predict the
+behavior of solder joints under various operating                   solder joint lifetime in the QFN packages.
+conditions to ensure their reliability.                                  Despite its widespread use, the Anand model has
+    During thermal cyclic loading, solder joints                    certain limitations. It inaccurately predicts the inelastic
+experience inelastic deformation due to mismatches                  behavior of solder material at low-strain applications,
+in thermal expansion between different adjacent                     often overpredicting the flow stress in such regions
+materials [3]. The accumulation of inelastic strain over            [14]. Additionally, the model must accurately predict
+time is a crucial factor in determining the reliability of          solder joint behavior under complex loading
+these solder connections. Typically, the inelastic strain           conditions, especially in cyclic loading [14]. Unreliable
+range remains below 10% under such thermal loading                  models can result in overpredicted inelastic strain,
+conditions [4]. Accurately predicting this inelastic                which, in turn, may lead to premature detection of
+strain behavior is essential to capturing the complex               fracture or failure in electronic packages.
+deformation mechanisms within solder joints, thereby                     To address these limitations, researchers have
+improving our understanding of their performance                    proposed modifications to the Anand model.
+and durability.                                                     Parameter refinement is a popular approach,
+    The Anand model has been widely employed to                     improving the model's accuracy in predicting solder
+numerically describe the inelastic behavior of solder               joint behavior under various loading conditions,
+alloys. Initially developed for lead solder alloys, this            including complex loading applications. This
+model has also been extended to lead-free solder,                   approach involves adjusting the model parameters to
+such as 96.5Sn-3.0-Ag-0.5Cu (SAC305). The Anand                     better capture solder joints' behavior.
+model offers a unified approach to describe the                          Several studies have focused on modifying the
+mechanical behavior of solder alloys and effectively                parameters in the Anand model to enhance its
+captures the influence of temperature and strain rate               predictive capability. Rizaman et al. (2024) proposed
+on solder joint deformation [5, 6]. It can be efficiently           an improved Anand model specifically for 96.5Sn-4.0-
+implemented in finite element (FE) models, enabling                 Ag-0.5Cu (SAC405) lead-free solder used in
+accurate stress and strain distribution calculation in              microelectronic packages [15]. The modification
+solder joints under different loading conditions [7–11].            focused on the three parameters of the Anand model
+Extensive validation has demonstrated the Anand                     (𝑠0 , ℎ0 and 𝑠̂ ). By introducing temperature and strain
+model's accuracy in predicting the solder's stress-strain           rate dependence for these parameters, more
+relationship under uniaxial monotonic loading.                      accurate predictions of the inelastic deformation
+    Previous studies have utilized the Anand model to               behavior of the SAC405 solder were achieved.
+investigate various aspects of solder joint behavior.               Similarly, Xu Long et al. (2020) refined two Anand
+Zhang et al. (2014) examined the deformation                        model parameters (𝑠0 and a) to improve the
+behavior of solder joints during board-level drop tests             prediction of plastic ball grid array (PBGA) packages
+and found that the Anand model accurately                           under thermal cyclic loading [16]. Sn37-Pb63 and
+predicted the inelastic strain at high strain rates [6].            SAC305 solders data from the tensile test were used to
+Motalab et al. (2016) employed the Anand model to                   calibrate their model. It was demonstrated that the
+941                      Yamin et al. / Jurnal Teknologi (Sciences & Engineering) 87:5 (2025) 939−949
+
+parameterized Anand model could effectively                         The Anand model was initially developed to describe
+predict the deformation and failure mechanisms of                   the hot-working mechanical behavior of metals under
+solder materials across a wide range of temperatures                high-temperature conditions [20, 21]. The model used
+and strain rates.                                                   an internal scalar variable (s) to represent the isotropic
+     This study applied the Anand constitutive model by             resistance to inelastic flow offered by the internal state
+modifying two critical parameters, namely the initial               of the material. It unifies the solder's creep and rate-
+value of deformation resistance (𝑠0 ) and hardening                 independent plastic behavior by utilizing stress, flow,
+coefficient (ℎ0 ). Parameters of the modified Anand                 and evolution equation. For uniaxial loading, the flow
+model were acquired from SAC305 uniaxial tensile                    stress is computed using Equation (3).
+experiments encompassing temperatures ranging
+from 25°C to 125°C and strain rates ranging from 10-5                𝜎 = 𝑐𝑠                                                      (3)
+s-1 to 10-3 s-1[17]. The model capability was assessed by
+comparing the flow stress predicted by the modified                 where, 𝑠 is the internal variable, and 𝑐 is the strain rate
+model with the original Anand model and SAC305                      and temperature function, as expressed in Equation
+experimental data. The modified Anand model is                      (4).
+anticipated to improve the predictive capability
+compared to the unmodified Anand model.                                 1         𝜀̇𝑖𝑛 𝑄 𝑚
+                                                                     𝑐 = sinh−1 [( e𝑅𝑇 ) ]                                       (4)
+                                                                        𝜉          𝐴
+
+2.0 METHODOLOGY                                                     where, 𝜀̇𝑖𝑛 is the inelastic strain rate, 𝑇 is the absolute
+                                                                    temperature, 𝜉 is stress multiplier, 𝐴 is the pre-
+2.1 Mathematical Development of the Anand and                       exponential factor, 𝑄 is the activation energy, 𝑅 is the
+Modified Anand Models                                               universal gas constant, and 𝑚 is the strain rate
+                                                                    sensitivity. Substituting and rearranging Equations (3)
+The total strain (𝜀) in the solder material can be                  and (4) results in the flow equation of the Anand
+decomposed into elastic strain (𝜀𝑒 ) and inelastic strain           model expressed in Equation (5).
+(𝜀𝑖𝑛 ) components as defined in Equation (1).
+                                                                                                     1
+                                                                               𝑄          𝜎 𝑚                                    (5)
+ 𝜀 = 𝜀𝑒 + 𝜀𝑖𝑛                                         (1)            𝜀̇𝑖𝑛 = 𝐴e−𝑅𝑇 [sinh (𝜉 )]
+                                                                                          𝑠
+The elastic strain follows Hooke’s law. In the classical               The value of deformation resistance constantly
+strain model, the inelastic strain is expressed as a linear         changes over time and can be expressed numerically
+combination of time-independent plastic strain (𝜀𝑝 )                by Equation (6).
+and time-dependent creep strain (𝜀𝑐𝑟𝑝 ), as given in
+Equation (2).                                                                        𝑠 𝑎             𝑠
+                                                                     𝑠̇ = [ℎ0 |1 −     ∗
+                                                                                         | sign (1 − ∗ )]                        (6)
+                                                                                     𝑠              𝑠
+ 𝜀𝑖𝑛 = 𝜀𝑝𝑙 + 𝜀𝑐𝑟𝑝                                     (2)
+                                                                    where, ℎ0 is the hardening constant, 𝑎 is the strain rate
+    Equation (2) has a significant limitation as it tends           sensitivity of the hardening process and 𝑠 ∗ is the
+to overestimate the total strain, particularly under                saturation stress at a given temperature and strain
+cyclic loading conditions. This overestimation leads to             rate. The value of 𝑠 ∗ in Equation (6) can be computed
+inaccuracy in the computed hysteresis curves, which                 using Equation (7).
+worsens the fatigue life estimation of solder joints [18].
+Additionally,      separating    creep     and     plastic                     𝜀̇𝑖𝑛 𝑄 𝑛
+                                                                     𝑠 ∗ = 𝑠̂ ( e𝑅𝑇 )                                            (7)
+deformation in experimental measurements poses a                                𝐴
+challenge, further necessitating the development of a
+unified model to predict solder deformation                         where, 𝑠̂ is the deformation resistance coefficient, and
+accurately [19].                                                    𝑛 is the strain rate sensitivity of the saturation value of
+    The unified inelastic strain model addresses these              the deformation resistance. For 𝑠 < 𝑠 ∗, Equation (6)
+issues by consolidating all inelastic deformation                   can be rewritten in incremental form as indicated in
+components, including plastic strain (𝜀𝑝𝑙 ) and creep               Equation (8).
+strain (𝜀𝑐𝑟𝑝 ), into a single inelastic strain term. This
+integration improves the model’s predictive                                           𝑠 𝑎
+                                                                     d𝑠 = ℎ0 (1 −        ) d𝜀𝑖𝑛                                  (8)
+accuracy, offering a more robust framework for solder                                 𝑠∗
+joint applications. As a result, the unified approach
+has gained widespread acceptance to numerically                     The 𝑠 value is determined by integrating Equation (8)
+simulate the deformation behavior of solder joints.                 with inelastic strain (𝜀𝑖𝑛 ).
+Among various unified constitutive models, the Anand
+                                                                                                                           1
+model is the most widely adopted to capture the                      𝑠 = 𝑠 ∗ − [(𝑠 ∗ − 𝑠0 )(1−𝑎) + (𝑎 − 1)ℎ0 𝜀𝑖𝑛 (𝑠 ∗ )−𝑎 ]1−𝑎   (9)
+complex deformation behavior of solder alloys [7–11].
+942                                                  Yamin et al. / Jurnal Teknologi (Sciences & Engineering) 87:5 (2025) 939−949
+
+where, 𝑠0 is the initial value of 𝑠. Substituting Equation                                                    2.2 Preparation of         Flow     Stress-Inelastic    Strain
+(7) into Equation (9) yields the expanded version of                                                          Experimental Data
+internal state variable s, as expressed by Equation (10).
+                                                                                                              The stress-strain curves obtained from different
+                                                                                              1
+                                                𝜀̇𝑖𝑛 𝑄     𝑛           (1−𝑎)                 1−𝑎              temperatures and strain rates were essential for
+         𝜀̇𝑖𝑛 𝑄 𝑛
+                                           [𝑠̂ ( e𝑅𝑇 ) − 𝑠0 ]                     +                           determining the Anand and modified Anand model
+                                                 𝐴                                                     (10)
+ 𝑠 = 𝑠̂ ( e𝑅𝑇 ) −
+          𝐴                                                                       𝑛 −𝑎                        parameters. In previous study, Motalab et al. (2013)
+                                                          𝜀̇𝑖𝑛 𝑄
+                                       ℎ0 (𝑎 − 1)𝜀𝑖𝑛 [𝑠̂ ( e𝑅𝑇 ) ]                                            extracted the SAC305 stress-strain curves at various
+                                     {                     𝐴       }                                          temperatures (25°C, 50°C, 75°C, 100°C and 125°C)
+                                                                                                              and strain rates (10-5 s-1, 10-4 s-1, and 10-3 s-1) [17]. These
+    By substituting Equations (4) and (10) into Equation                                                      stress-strain curves were converted into flow stress-
+(3), the flow stress as a function of inelastic strain,                                                       inelastic strain curves using the 0.2% strain offset
+temperature, and strain rate can be described by                                                              method.
+Equation (11).
+
+                                   1         𝜀̇𝑖𝑛 𝑄 𝑚
+                                  ( sinh−1 [( e𝑅𝑇 ) ])
+                                   𝜉          𝐴
+                                                                                       1
+                                                                  (1−𝑎)               1−𝑎
+                                                 𝜀̇𝑖𝑛 𝑄 𝑛
+ 𝜎=                           𝑛          [𝑠̂ (       e𝑅𝑇 ) − 𝑠0]          +                            (11)
+                  𝜀̇𝑖𝑛 𝑄                          𝐴
+           𝑠̂ (       e𝑅𝑇 ) −                                          𝑛 −𝑎
+                   𝐴                                          𝜀̇𝑖𝑛 𝑄
+                                        ℎ0 (𝑎 − 1)𝜀𝑖𝑛 [𝑠̂ (       e𝑅𝑇 ) ]
+                                    {                          𝐴                  }
+      {(                                                                                    )}
+
+
+    For accurate prediction, especially at low-strain
+applications, two Anand model parameters were
+selected, namely 𝑠0 and ℎ0 . These two parameters are
+defined as a function of temperature and strain rate,
+as depicted in Equations (12) and (13) from previous                                                                                       (a)
+studies [16, 22].
+
+ 𝑠0 = 𝑐0 + 𝑐1 𝑇 + 𝑐2 𝑇 2                                                                               (12)
+
+
+ ℎ0 = 𝑘0 + 𝑘1 𝑇 + 𝑘2 𝑇 2 + 𝑘3 𝜀̇𝑖𝑛 + 𝑘4 𝜀̇𝑖𝑛 2                                                         (13)
+
+    The 𝑠0 and ℎ0 parameters control the overall shape
+of the flow stress-inelastic strain relation in the Anand
+model. The 𝑠0 parameter defines the yield strength of
+the corresponding flow stress-inelastic strain curve
+(intersection at the y-axis). The ℎ0 parameter governs
+the slope of the flow stress-inelastic strain. The effects
+of changing 𝑠0 and ℎ0 can be summarized in Figure 1.                                                                                       (b)
+    By substituting Equations (12) and (13) into                                                              Figure 1 Effects of changing Anand model parameters: a) 𝒔𝟎
+Equation (11), the predicted flow stress for the                                                              and b) 𝒉𝟎 [23]
+modified Anand model is expressed by Equation (14).
+                                                                                                                  The conversion process involved determining the
+                                        1          𝜀̇𝑖𝑛 𝑄 𝑚
+                                          sinh−1 [( e𝑅𝑇 ) ]                                                   modulus of elasticity (𝐸), yield strength (𝜎𝑦 ), and
+                                        𝜉           𝐴
+                                                                    (1−𝑎)
+                                                                                             1
+                                                                                            1−𝑎
+                                                                                                              saturation stress (𝜎𝑠𝑎𝑡 ). The modulus of elasticity was
+                                              𝜀̇𝑖𝑛 𝑄 𝑛
+                                                  𝑠̂ (
+                                                  e𝑅𝑇 ) −                                                     determined by examining the linear elastic region of
+                                        [                     ]      +
+ 𝜎=                                            𝐴                                                       (14)   the stress-strain curve, where the material can return
+                  𝜀̇𝑖𝑛 𝑄 𝑛               (𝑐0 + 𝑐1 𝑇 + 𝑐2 𝑇 2 )
+           𝑠̂ (
+                   𝐴
+                      e𝑅𝑇 )       −
+                                    (𝑘0 + 𝑘1 𝑇 + 𝑘2 𝑇 2 + 𝑘3 𝜀̇𝑖𝑛 + 𝑘4 𝜀̇𝑖𝑛 2 )                               to its original length after unloading. The 𝐸 values at
+                                                               𝜀̇𝑖𝑛 𝑄 𝑛
+                                                                             −𝑎
+                                                                                                              various temperatures and strain rates are calculated
+                                            (𝑎 − 1)𝜀𝑖𝑛 [𝑠̂ (       e𝑅𝑇 ) ]
+      {(                            {                           𝐴                      }          )}          using Equation (15), which is the change of stress (𝛥𝜎)
+                                                                                                              to the change in strain (𝛥𝜀).
+    For the Anand model, only nine parameters (𝐴, 𝜉,
+𝑄 ⁄𝑅, 𝑚, ℎ0 , 𝑎, 𝑠0 , 𝑠̂ , and 𝑛) were determined. However,                                                         𝛥𝜎
+for the modified model, a total of 15 parameters were                                                          𝐸=                                                    (15)
+                                                                                                                    𝛥𝜀
+needed (𝐴, 𝜉, 𝑄 ⁄𝑅, 𝑚, 𝑎, 𝑠̂ , 𝑛, 𝑐0 , 𝑐1 , 𝑐2 , 𝑘0 , 𝑘1 , 𝑘2 , 𝑘3 , and
+𝑘4 ) to predict the inelastic behavior of the solder                                                             SAC305 solder alloy, like many materials, does not
+alloys. These parameters of the Anand and modified                                                            exhibit a distinct yield point where the stress-strain
+Anand        models          were     determined               through                                        curve suddenly transitions from elastic to inelastic
+optimization-type curve fitting techniques.                                                                   deformation. Instead, the curve transitions gradually,
+943                              Yamin et al. / Jurnal Teknologi (Sciences & Engineering) 87:5 (2025) 939−949
+
+making determining an exact yield point difficult.                           𝑐1 tanh(𝑐2 𝜀𝑦 ) + 𝑐3 tanh(𝑐4 𝜀𝑦 ) = 𝐸(𝜀𝑦 − 0.002)    (21)
+ASTM E8/E8M-24 standard proposed 0.2% to 2.0% strain
+offset in determining the yield strength of the metals
+                                                                                Since Equation (21) is a non-linear expression
+[24]. This study chose the 0.2% strain offset to minimize
+                                                                            (cannot be solved directly), the indirect procedure
+the nonlinearity at the elastic region near the yield
+                                                                            must be utilized to find the ɛ𝑦 value. By utilizing the
+point. An offset of 0.2% strain with a slope equal to 𝐸
+                                                                            Newton-Raphson method in Equation (21), the value
+determined the yield point. The offset line can be
+                                                                            of ɛ𝑦 can be found. Subsequently, the yield strength
+represented mathematically by Equation (16). The
+intersection of this line with the stress-strain curve                      (𝜎𝑦 ) can be computed using Equation (22).
+indicates the yield strength of the material.
+                                                                             𝜎𝑦 = 𝐸ɛ𝑦                                             (22)
+ 𝜎 = 𝐸(𝜀 − 0.002)                                            (16)
+                                                                                The inelastic strain (𝜀𝑖𝑛 ) is calculated as the
+                                                                            difference between the total strain (𝜀) and the elastic
+   The stress-strain behavior of the solder alloy can be
+                                                                            strain (𝜀𝑒 ) obtained from the linear portion of the stress-
+effectively modeled using the hyperbolic tangent
+                                                                            strain curve as described in Equation (23).
+empirical model, as introduced by Suhling (1985) [25],
+expressed in Equation (17).                                                              𝜎𝑦
+                                                                             𝜀𝑖𝑛 = 𝜀 −                                            (23)
+                                                                                         𝐸
+ 𝜎 = 𝑐1 tanh(𝑐2 𝜀) + 𝑐3 tanh(𝑐4 𝜀)                           (17)
+                                                                                Each extracted stress-strain curve is converted into
+     Suhling and his colleagues utilized the hyperbolic                     its corresponding flow stress-inelastic strain by
+tangent model to fit the stress-strain relation of solder                   identifying the modulus of elasticity, yield stress, and
+alloy obtained from experiment testing [17, 26]. The                        saturation stress. After identifying these properties, by
+good predictive capability of the hyperbolic tangent                        using Equation (23), the flow stress-inelastic strain can
+empirical model with the experimental data indicates                        be determined.
+the model's reliability in predicting the solder alloys'                        Figure 2 shows the process flow of converting stress-
+stress-strain relation.                                                     strain from the extracted experimental data to flow
+     The extracted stress-strain curves from published                      stress-inelastic strain of SAC305 solder alloy at various
+literature at different temperatures and strain rates                       temperatures and strain rates.
+were fitted to Equation (17). The hyperbolic tangent
+empirical model could substitute the graphical 0.2%                         2.3 Extraction of the Model Parameters
+offset line technique in finding the modulus of
+elasticity, yield strength, and ultimate tensile strength
+                                                                            Recent advancements in computational speed and
+(saturation stress). Using Equation (17), the saturation
+                                                                            optimization       algorithms     have        revolutionized
+stress (𝜎𝑠𝑎𝑡 ) of the solder alloy can be determined using
+                                                                            parameter identification. Pei and Qu (2005) applied
+Equation (18) by assuming a nearly constant stress
+                                                                            neural networks (NN) to effectively determine Anand
+value at a prolonged strain condition (𝜀 → ∞).
+                                                                            model parameters for 96.6Sn-3.5Ag and 95.5Sn-3.8Ag-
+                                                                            0.7Cu solder alloys [27]. Subsequently, Qinghua Su et
+ 𝜎𝑠𝑎𝑡 = 𝑙𝑖𝑚 𝜎 = 𝜎(∞) = 𝑐1 + 𝑐3                               (18)
+        𝜀→∞                                                                 al. (2023) demonstrated the utility of NN in determining
+                                                                            Anand model parameters for SAC305 [28]. The NN
+    The instantaneous slope of the stress-strain curve,                     approach eliminates the multi-step procedures to
+which can be used to find the modulus of elasticity (𝐸),                    determine model parameters as introduced by
+is determined by differentiating Equation (17) and                          previous researchers [20, 21]. Additionally, Zhao Zhang
+yield Equation (19).                                                        (2019) utilized an evolving type of algorithm to identify
+                                                                            Anand model parameters for SAC305, highlighting the
+ 𝑑𝜎                                                                         versatility of contemporary optimization techniques
+    = 𝑐1 𝑐2 sech2 (𝑐2 𝜀) + 𝑐3 𝑐4 sech2 (𝑐4 𝜀)                (19)
+ 𝑑𝜀                                                                         [29]. Similarly, Martin Fusek et al. (2021) incorporated a
+                                                                            modified genetic algorithm (GA) combined with
+   The value of 𝐸 can be found in Equation (20) by                          sensitivity analysis and hill-climbing algorithms to
+assuming the slope value at zero strain condition                           determine Anand model parameters for ABS-M30
+(ε→0).                                                                      plastic utilized in 3D printing applications [30].
+                                                                            Evolving algorithms, including GA, enhance
+            𝑑𝜎                                                              exploration and randomness in the optimization
+ 𝐸 = 𝑙𝑖𝑚       = 𝑐1 𝑐2 + 𝑐3 𝑐4                               (20)
+      𝜀→0   𝑑𝜀                                                              process, significantly facilitating the discovery of
+                                                                            optimal solutions and mitigating the risk of entrapment
+    Equation (20) can be used to describe the modulus                       in local optima [29]. In contrast to gradient methods
+of elasticity (𝐸) for each stress-strain curve. The value                   that may converge to local minima, GA leverages a
+strain at the yield point (ɛ𝑦 ) can be determined by                        population-based          approach,       allowing       the
+combining Equations (16) and (17), thus generating                          simultaneous exploration of multiple solutions. This
+Equation (21).                                                              characteristic is crucial when dealing with Anand
+944                        Yamin et al. / Jurnal Teknologi (Sciences & Engineering) 87:5 (2025) 939−949
+
+model parameters, as the parameter space can be                                  iterative process continued until the GA converged,
+highly non-linear and complex.                                                   either by reaching a predefined number of
+                                                                                 generations or when no significant improvement in
+                                                                                 𝑀𝑆𝐸 was observed.
+                                                                                     The best-performing parameter set from the GA
+                                                                                 was further refined using the Nelder-Mead (NM)
+                                                                                 simplex method for local optimization. The NM
+                                           1   tanh   2   +   tanh   =   0.002
+
+
+
+
+                                                                                 algorithm began by generating a simplex in the
+                                                                                 parameter space, which was then iteratively updated
+                                                                                 through reflection, expansion, contraction, and
+                                                                                 shrinkage steps. These steps evaluated the 𝑀𝑆𝐸 of the
+                                                                                 newly generated points relative to the simplex and
+                                                                                 adjusted the parameter values accordingly to
+                                                                                 minimize the 𝑀𝑆𝐸. The algorithm continued iterating
+                                                                                 until the 𝑀𝑆𝐸 converged below a specified threshold
+                                                                                 or after a maximum number of iterations.
+                                                                                     The predicted flow stress in the Anand and
+                                                                                 modified Anand model is computed using Equations
+                                                                                 (11) and (14), respectively. After the two-stage
+                                                                                 optimization process, the model's parameter values
+                                                                                 were evaluated by comparing the predicted stress
+Figure 2 Flowchart of converting stress-strain curves of the                     values with the experimental data. The fit quality was
+extracted experimental data to flow stress-inelastic strain
+                                                                                 assessed based on 𝑀𝑆𝐸 and coefficient of
+curves of SAC305 solder alloy
+                                                                                 determination (𝑅2 ). The 𝑅2 values quantify the
+                                                                                 goodness of fit between the predicted model and
+     In this study, two-stage optimization technique was                         experimental data, as described in Equations (25) and
+employed to find the optimal set of parameters of the                            (26).
+Anand model (𝐴, 𝜉, 𝑄 ⁄𝑅, 𝑚, ℎ0 , 𝑎, 𝑠0 , 𝑠̂ , and 𝑛) and                                                          2
+modified Anand model (𝐴, 𝜉, 𝑄 ⁄𝑅, 𝑚, 𝑎, 𝑠̂ , 𝑛, 𝑐0 , 𝑐1 , 𝑐2 ,                               ∑(𝜎𝑒𝑥𝑝 − 𝜎𝑝𝑟𝑒𝑑 )
+                                                                                  𝑅2 = 1 −                                                (25)
+𝑘0 , 𝑘1 , 𝑘2 , 𝑘3 , and 𝑘4 ). The first stage utilized GA as a                               ∑(𝜎𝑒𝑥𝑝 − 𝜎𝑎𝑣𝑔 )
+                                                                                                                  2
+
+meta-heuristic optimization method to explore the
+parameter space and identify the initial set of model
+                                                                                           1
+parameters for the second stage of the optimization                               𝜎𝑎𝑣𝑔 =     ∑ 𝜎𝑒𝑥𝑝                                       (26)
+process (Nelder-Mead algorithm). The second stage                                          𝑛
+optimization method was needed as a local search
+                                                                                 where, 𝜎𝑎𝑣𝑔 is the mean flow stress of the experimental
+optimization technique to fine-tune the initial solution
+obtained from the GA optimization.                                               data, and 𝑛 is the total number of data points.
+     Figure 3 summarizes the process of determining
+                                                                                 Table 1 Anand and modified Anand model parameters for
+Anand and modified Anand model parameters using                                  SAC305
+two-stage optimization-type curve fitting. Initially, the
+process began with compiling the flow stress-inelastic                                     Parameter                  Anand     Modified Anand
+strain dataset, essential for calibrating both models.                                        𝑄
+                                                                                                (K-1)                  11690          11396
+Random values were then assigned to the model                                                 𝑅
+                                                                                                𝐴 (s)                    788           268
+parameters to form the initial population for the GA.                                            𝜉                      9.532         11.252
+     The GA evolves this population over multiple                                               𝑚                      0.1578         0.0412
+generations through selection, crossover, and                                                𝑠̂ (MPa)                   43.59         77.81
+mutation operations. At each generation, the mean                                                𝑛                     0.0239         0.0477
+squared error (𝑀𝑆𝐸) between the experimental flow                                                𝑎                     0.9636         1.4529
+stress (𝜎𝑒𝑥𝑝 ) and predicted flow stress (𝜎𝑝𝑟𝑒𝑑 ) is                                               𝑐0 (MPa)                           219.5
+                                                                                    𝑠0
+                                                                                                   𝑐1 (MPa.K-1)        56.98         0.02151
+calculated to assess each parameter set, which is                                  (MPa)
+                                                                                                   𝑐3 (MPa.K-2)                   -5.8795×10-4
+summarized in Equation (24).                                                                       𝑘0 (MPa)                           38320
+                                                                                                   𝑘1 (MPa.K-1)                       -2240
+         1                                                                          ℎ0
+                            2                                                                      𝑘3 (MPa.K-2)        23148          9.4077
+ 𝑀𝑆𝐸 =     ∑(𝜎𝑒𝑥𝑝 − 𝜎𝑝𝑟𝑒𝑑 )                                              (24)      (MPa)
+         𝑛                                                                                         𝑘4 (MPa.s)                      -1.100×108
+                                                                                                   𝑘5 (MPa.s2)                     5.792×108
+   Solutions with lower 𝑀𝑆𝐸 were selected for further
+crossover and mutation to improve performance. This
+945                            Yamin et al. / Jurnal Teknologi (Sciences & Engineering) 87:5 (2025) 939−949
+
+
+
+                                                                                                                                                                0        0
+
+                                                                                                                                                                             0       1   2   0   1
+                                                                                                                                                   2
+
+
+
+
+                                                                                                                                                       s0           h0
+                                                                                         0        0
+
+                                                                                             0    1   2   0   1   2
+
+
+
+
+                                                                                    s0       h0
+
+                                    0   0
+
+                                            0   1   2   0
+                    1   2
+
+                                                                                                                                               0            0
+
+                                                                                                                                                            0   1   2    0       1       2
+                               =0                                                        0        0
+
+                                                                                             0    1   2   0   1   2
+
+
+
+
+                                                                                                                                         s0            h0
+
+                        s0     h0
+                                                                                    s0       h0
+
+
+
+
+                                                                                                                                = +1
+                                                                                             =0
+
+
+
+                =   +1
+
+
+
+                                                                                                                                                            =0
+
+
+                                                            =0
+
+
+
+
+Figure 3 Flowchart of Anand and modified Anand model parameters determination using two-stage optimization type curve fittings
+for SAC305 solder alloy
+
+
+
+Table 2 Comparison of predicted and experimental yield stress and saturation stress between Anand and modified Anand models
+
+                                                                    Yield Stress                                                Saturation Stress
+        Temp.        Strain                 Exp.                 Anand             Mod. Anand                         Exp.       Anand                      Mod. Anand
+         (°C)       Rate (s-1)
+                                        Value               Value       Error      Value              Error           Value   Value    Error            Value                            Error
+                                        (MPa)               (MPa)       (%)        (MPa)              (%)             (MPa)   (MPa)    (%)              (MPa)                            (%)
+                        10-5                24.25           24.77       2.14       24.00              1.03            29.26   30.39    3.86                 30.28                        3.49
+          25            10-4                26.66           26.13       1.99       26.18              1.80            35.55   35.01    1.52                 35.57                        0.06
+                        10-3                27.17           28.35       4.34       27.50              1.21            40.52   40.06    1.14                 40.85                        0.81
+                        10-5                21.72           21.14       2.67       21.91              0.87            24.43   24.89    1.88                 24.55                        0.49
+          50            10-4                22.94           23.31       1.61       23.18              1.05            29.55   28.96    2.00                 29.00                        1.86
+                        10-3                23.99           25.48       6.21       24.46              1.96            33.90   33.50    1.18                 33.95                        0.15
+                        10-5                17.91           19.38       8.21       18.69              4.36            20.13   20.68    2.73                 20.41                        1.39
+          75            10-4                20.76           20.55       1.01       20.86              0.48            24.66   24.15    2.07                 24.39                        1.09
+                        10-3                21.47           23.03       7.27       21.75              1.30            27.90   28.45    1.97                 28.48                        2.08
+                        10-5                16.34           17.10       4.65       16.58              1.47            17.13   17.38    1.46                 17.35                        1.28
+         100            10-4                19.02           18.18       4.42       18.74              1.47            21.33   20.58    3.52                 20.76                        2.67
+                        10-3                20.33           19.28       5.16       20.91              2.85            24.02   24.47    1.87                 24.35                        1.37
+                        10-5                14.99           14.74       1.67       15.02              0.20            15.45   14.74    4.60                 15.02                        2.78
+         125            10-4                15.53           16.90       8.82       16.00              3.03            17.08   17.85    4.51                 17.83                        4.39
+                        10-3                18.57           17.00       8.45       19.06              2.64            21.42   21.17    1.17                 21.28                        0.65
+946                       Yamin et al. / Jurnal Teknologi (Sciences & Engineering) 87:5 (2025) 939−949
+
+
+3.0 RESULTS AND DISCUSSION                                           improvement in accuracy. For the saturation stress
+                                                                     prediction, the Anand model’s errors ranged from
+3.1 Anand and Modified Anand Model Parameters                        1.14% to 4.60%, whereas the modified Anand model
+                                                                     further improved the accuracy with errors between
+This section compares the results of parameter                       0.06% and 4.39%. The consistently lower error margins
+determination of the Anand and modified Anand                        of the modified Anand model demonstrated its
+models obtained from the two-stage optimization-                     superior performance in predicting yield and
+type curve fitting with the experimental data.                       saturation stresses at different environmental
+    Table 1 shows the optimized parameter values of                  conditions. This enhanced capability highlighted the
+SAC305 solder material for Anand and modified                        robustness of the modified model over the original
+Anand models. These parameters were crucial to                       Anand model.
+accurately predict the SAC305 deformation behavior.                       At each specific condition, the modified Anand
+The 𝑠0 and ℎ0 values of the Anand model were                         model showed improved predictive accuracy. For
+constantly maintained for all temperatures and strain                instance, at 25°C and strain rate of 10 -5 s-1, the
+rate conditions. However, the 𝑠0 and ℎ0 values of the                modified model produced an error of only 1.03%
+modified Anand model depended on the                                 compared to the original Anand model (2.14%). This
+temperatures and strain rates.                                       trend was consistent in other conditions. At 50°C and
+    The modified Anand model introduced lower                        strain rate of 10-3 s-1, the modified model’s error was
+differences in 𝐴, 𝜉, 𝑄 ⁄𝑅, 𝑚, 𝑎, 𝑠̂ , and 𝑛 values                   1.96%, significantly lower than the original model’s
+compared to the original Anand model. For instance,                  error of 6.21%. These improvements were attributed to
+the 𝑄 ⁄𝑅 value in the Anand model was reduced from                   the modified model's capability to adjust the 𝑠0 and ℎ0
+11690 K-1 to 11396 K-1 in the modified Anand model,                  values based on temperature and strain rate.
+indicating a change in the temperature sensitivity of                     The Anand model demonstrated optimal
+the material. The 𝜉 value also increased from 9.532 in               accuracy for yield stress prediction at strain rate of 10-
+                                                                     4 s-1 and temperature of 75°C. However, the least
+the Anand model to 11.252 in the modified Anand
+model, suggesting an adjustment in the material's                    accurate prediction occurred at the same strain rate
+strain-hardening behavior. These modifications are                   but at elevated temperature of 125°C. In contrast, the
+expected to enhance the predictive capability of the                 modified Anand model exhibited the best
+modified Anand model.                                                performance at strain rate of 10-5 s-1 and temperature
+    The performance of the fit was evaluated by                      of 125°C, although it performed less accurately at 10-5
+computing the overall 𝑀𝑆𝐸 against the experimental                   s-1 strain rate and 75°C (environmental conditions).
+data. The modified Anand model exhibited lower 𝑀𝑆𝐸                        Similarly, for the saturation stress prediction, the
+of 0.2216 compared to that of the Anand model                        Anand model achieved the highest accuracy at
+(0.3396). This value signified that the modified Anand               strain rate of 10-3 s-1 and temperature of 25°C, and
+model was more accurate in describing the transient                  least accuracy at 10-5 s-1 strain rate and 125°C
+relationship between flow stress and inelastic strain of             temperature. The modified Anand model, however,
+SAC305 solder material. These additional parameters                  exhibited the most accurate prediction of the
+allowed for a more refined description of the                        saturation stress at strain rate of 10-4 s-1 and
+material's response, leading to more accurate                        temperature of 25°C, while its worst performance was
+predictions.                                                         seen at 10-4 s-1 strain rate and 125°C temperature.
+                                                                          Based on the comparative analysis of both models,
+3.2 Yield Stress and Saturation Stress Prediction of                 the modified model demonstrated the superior
+Anand and Modified Anand Models                                      predictive capability of yield and saturation
+                                                                     stresses under different strain rates and temperatures.
+                                                                     The modified Anand model consistently achieved
+A comparative analysis of the Anand and modified
+                                                                     lower error margins, offering more accurate and
+Anand models' predictive capabilities for yield and
+                                                                     reliable predictions under various conditions.
+saturation stress is presented in Table 2. The predicted
+yield stress values ranged from 15 MPa to 27 MPa
+                                                                     3.3 Flow Stress-Inelastic Strain Prediction of Anand
+across strain rates of 10-5 s-1 to 10-3 s-1 and temperatures
+                                                                     and Modified Anand Models
+between 25°C and 125°C. The saturation stress values
+ranged from 15 MPa to 40 MPa under similar strain
+rates and temperatures. Both models followed the                     Figure 4 compares the flow stress-inelastic strain
+general trend of experimental data, with yield and                   response predicted from the Anand and modified
+saturation stresses decreasing as temperature                        Anand models with experimental data at various
+increased, and both properties also reduced as                       temperatures (25°C to 125°C) and strain rates (10-5 s-1
+the strain rate decreased.                                           to 10-3 s-1). Both models showed reasonable
+    When examining the prediction accuracy, the                      agreement with the experimental data. Nevertheless,
+error margin for the yield stress of the Anand model                 the modified Anand model demonstrated a more
+ranged from 1.01% to 8.82%. In contrast, the modified                significant improvement in predicting the flow stress.
+Anand model achieved significantly reduced errors,                   This was evidenced by the specimen being tested at
+ranging from 0.20% to 4.36%, indicating a clear                      10-3 s-1 and 25°C (Refer to Figure 4 (c)). The solid line
+947                         Yamin et al. / Jurnal Teknologi (Sciences & Engineering) 87:5 (2025) 939−949
+
+representing the flow stress predicted by the modified                 whereas the Anand model achieved 𝑅2 value of
+model was more closely aligned with the                                0.1022.
+experimental data than the dotted line representing
+the unmodified model. From this situation, both
+models could also accurately predict the yield and
+saturation stresses in line with experimental
+observations. However, the evolution of the flow stress
+was quite different for both models. The predicted
+flow stress between yield and saturation stress was
+slightly overpredicted by the Anand model as
+opposed to the modified model due to the
+differences in the ℎ0 and 𝑎 values. For this test
+condition, the 𝑎 values of the Anand and modified
+Anand models were 0.9636 and 1.4529, respectively.
+Similarly, the ℎ0 values of the Anand and modified
+Anand models were 23 148 MPa and 96 719 MPa,
+respectively. These two parameters controlled the
+predicted values of the flow stress responses. As a
+result, the flow stress of the Anand model in this
+condition was more prone to early saturation than
+that of the modified model.
+
+Table 3 Comparison of Anand and modified Anand models’
+R2 values at different temperatures (25°C to 125°C) and strain
+rates (10-5 s-1 to 10-3 s-1) for SAC305
+
+                                                R2
+      Temp.        Strain
+       (°C)        Rate (s-1)                         Mod.
+                                   Anand
+                                                     Anand
+                     10-5              0.1068          0.4579
+       25            10-4              0.9875          0.9983
+                     10-3              0.9927          0.9996
+                     10-5              0.1022          0.9255
+       50            10-4              0.9785          0.9833
+                     10-3              0.9981          0.9994
+                     10-5             -0.9013          0.5656
+       75            10-4              0.9848          0.9946
+                     10-3              0.9933          0.9961
+                     10-5             -6.0384          -3.7527
+       100           10-4              0.9617          0.9756
+                     10-3              0.9958          0.9983
+                                                                       Figure 4 Predicted flow stress-inelastic strain responses of the
+                     10-5           -165.1766         -59.7077         Anand and modified Anand models at various temperatures
+       125           10-4              0.7715          0.7736          (25°C - 125°C) and strain rates: a) 10-5 s-1, b) 10-4 s-1, and c) 10-
+                                                                       3 s-1
+                     10-3              0.9971          0.9988
+
+                                                                           The maximum and minimum 𝑅2 values of the
+    To quantitatively evaluate the predictive                          Anand model were 0.9981 (10-3 s-1 and 50°C) and -
+performance of the models, the 𝑅2 value at each                        165.1766 (10-5 s-1 and 125°C), respectively. For the
+temperature and strain rate condition was calculated                   modified Anand model, the maximum and minimum
+and is presented in Table 3. The 𝑅2 values measured                    𝑅 2 values were 0.9996 (10-3 s-1 and 25°C) and -59.7077
+the proportion of variance in the experimental data                    (10-5 s-1 and 125°C). It should be noted that the
+captured by the models, with values approaching 1                      minimum 𝑅2 values of both models were below zero.
+indicating a good fit and near 0 indicating a poor fit.                The negative 𝑅2 values suggested that the models
+In Table 3, the modified Anand model outperformed                      failed to capture the variation and trends exhibited by
+the Anand model based on the 𝑅2 values. For                            the experimental data under these conditions. Both
+example, at 50°C and strain rate of 10 -5 s-1, the 𝑅2                  models were less accurate for predicting flow stress at
+value of the modified Anand model was 0.9255,                          low strain rates (10-5 s-1) and high temperatures.
+948                      Yamin et al. / Jurnal Teknologi (Sciences & Engineering) 87:5 (2025) 939−949
+
+However, the modified Anand model showed higher                     materials or alloys with similar creep and stress-
+minimum 𝑅2 value than the Anand model, indicating                   relaxation behaviors.
+a lower risk in predicting the flow stress at lower strain              Refining model parameters through experimental
+and high temperature conditions. These results                      calibration at more extreme strain rates or
+suggested that the capability of the modified Anand                 temperature ranges may enhance its versatility across
+model to capture the material's response under                      different applications, such as high-reliability
+varying conditions improved.                                        electronic components.
+    Overall, the accuracy of the modified Anand
+model significantly improved compared to the
+unmodified model. Modifying the model parameters                                       Acknowledgement
+of 𝑠0 and ℎ0 resulted in reduced MSE and improved 𝑅2
+values. The increasing trend of 𝑅2 values                           This research was fully supported by the FRGS grant
+demonstrated improved predictive performance of                     (FRGS/1/2021/TK0/UiTM/03/11). The authors fully
+the modified model under various conditions. The                    acknowledge the Ministry of Higher Education (MOHE)
+negative 𝑅2 values highlighted the necessity of                     and Universiti Teknologi MARA for the approved funds
+modifying the existing Anand model to accurately                    that made this study viable and effective.
+capture the material's response.
+
+4.0 CONCLUSION                                                                         Conflicts of Interest
+In conclusion, this study presents the modified Anand               The authors declare that there is no conflict of interest
+constitutive model to accurately predict the                        regarding the publication of this paper.
+mechanical behavior of SAC305, a lead-free solder
+alloy. The modified Anand model demonstrated
+superior performance compared to the Anand                          References
+model, as evidenced by the 𝑀𝑆𝐸 values. The 𝑀𝑆𝐸
+value of the Anand model was 0.3396, whereas the                    [1]   Jiang, N., Zhang, L., Liu, Z.-Q., Sun, L., Long, W.-M., He, P.,
+modified Anand model achieved 𝑀𝑆𝐸 value of                                Xiong, M.-Y. and Zhao, M. 2019. Reliability Issues of Lead-
+0.2216. This indicated a significantly reduced                            free Solder Joints in Electronic Devices. Science and
+deviation from the experimental data.                                     Technology of Advanced Materials. 20(1): 876–901. Doi:
+                                                                          https://doi.org/10.1080/14686996.2019.1640072.
+    The predictive capability of both models was
+                                                                    [2]   Cheng, S., Huang, C.-M. and Pecht, M. 2017. A Review of
+evaluated by their accuracy in predicting yield and                       Lead-free       Solders      for     Electronics    Applications.
+saturation stresses at various temperatures and strain                    Microelectronics         Reliability.     75:     77–95.     Doi:
+rates. The modified Anand model yielded higher stress                     https://doi.org/10.1016/j.microrel.2017.06.016.
+prediction error of 4.36% compared to 8.82% for the                 [3]   Li, L., Du, X., Chen, J. and Wu, Y. 2024. Thermal Fatigue
+Anand model. For the saturation stress, the modified                      Failure of Micro-Solder Joints in Electronic Packaging
+                                                                          Devices: A Review. Materials. 17(10): 2365. Doi:
+Anand model demonstrated a maximum error of                               https://doi.org/10.3390/ma17102365.
+4.39%, while the Anand model yielded an error of                    [4]   Wei, X., Alahmer, A., Ali, H., Tahat, S., Vyas, P. P. and
+4.60%. The reduction in error affirmed the superior                       Hamasha, S. 2023. Effect of Temperature on the Low Cycle
+accuracy and robustness of the modified Anand                             Fatigue Properties of BGA Solder Joints. Microelectronics
+model in capturing material behavior under varying                        Reliability.             146:             115031.            Doi:
+                                                                          https://doi.org/10.1016/j.microrel.2023.115031.
+conditions.                                                         [5]   Lall, P., Zhang, D., Yadav, V. and Locker, D. 2016. High Strain
+    The predictive performance was also assessed by                       Rate Constitutive Behavior of SAC105 and SAC305
+comparing the 𝑅2 values of the flow stress-inelastic                      Leadfree Solder during Operation at High Temperature.
+strain curves at different temperatures and strain rate                   Microelectronics          Reliability.      62:    4–17.     Doi:
+conditions. The Anand model exhibited 𝑅2 values                           https://doi.org/10.1016/j.microrel.2016.03.014.
+                                                                    [6]   Zhang, L., Han, J., Guo, Y. and He, C. 2014. Anand Model
+ranging from a maximum of 0.9981 to a minimum of -                        and FEM Analysis of SnAgCuZn Lead-free Solder Joints in
+165.1766. In contrast, the modified Anand model                           Wafer       Level     Chip     Scale      Packaging      Devices.
+achieved R² values ranging from 0.9996 (maximum)                          Microelectronics        Reliability.    54(1):   281–286.    Doi:
+and -59.7077 (minimum). Although both models                              https://doi.org/10.1016/j.microrel.2013.07.100.
+produced negative 𝑅2 values under certain                           [7]   Gharaibeh, M. A. 2023. Nonlinear Finite Element Simulations
+                                                                          on the Mechanical Response of the Isothermally Aged
+conditions, the modified model significantly improved                     Lead-Free Solders. Proceedings of the Institution of
+overall 𝑅2 values and reduced the occurrence of                           Mechanical Engineers, Part L: Journal of Materials: Design
+negative 𝑅2 values.                                                       and           Applications.            237:       11.        Doi:
+    The results of this study suggested that the modified                 https://doi.org/10.1177/14644207231179564.
+Anand model provided a more reliable framework for                  [8]   Depiver, J. A., Mallik, S. and Amalu, E. H. 2021. Thermal
+                                                                          Fatigue Life of Ball Grid Array (BGA) Solder Joints Made
+capturing the deformation behavior of SAC305 solder                       from Different Alloy Compositions. Engineering Failure
+material. Its reduced error in predicting flow stress                     Analysis.               125:              105447.            Doi:
+values makes it useful for future research to explore the                 https://doi.org/10.1016/j.engfailanal.2021.105447.
+model’s applicability for other lead-free solder                    [9]   Depiver, J., Mallik, S. and Amalu, D. E. 2020. Comparing and
+                                                                          Benchmarking Fatigue Behaviours of Various SAC Solders
+949                            Yamin et al. / Jurnal Teknologi (Sciences & Engineering) 87:5 (2025) 939−949
+
+       under Thermo-Mechanical Loading. (Oct. 2020). Doi:                        Transactions on Device and Materials Reliability. 13(1): 36–
+       https://doi.org/10.1109/ESTC48849.2020.9229699.                           49. Doi: https://doi.org/10.1109/TDMR.2012.2195007.
+[10]   Yamin, A. F. M., Abdullah, A. S., Manap, M. F. A. and Yusoff,      [20]   Anand, L. 1985. Constitutive Equations for Hot-working of
+       H. 2019. Failure Prediction of the Solder Joints in the Ball-             Metals. International Journal of Plasticity. 1(3): 213–231. Doi:
+       grid-array Package Under Thermal Loading. Journal of                      https://doi.org/10.1016/0749-6419(85)90004-X.
+       Physics: Conference Series. 1349(1): 012013. Doi:                  [21]   Brown, S. B., Kim, K. H. and Anand, L. 1989. An Internal
+       https://doi.org/10.1088/1742-6596/1349/1/012013.                          Variable Constitutive Model for Hot Working of Metals.
+[11]   Yamin, A. F. M., Shaffiar, N. M., Loh, W. K. and Tamin, M. N.             International Journal of Plasticity. 5(2): 95–130. Doi:
+       2011. Damage Progression in BGA Solder Joints during                      https://doi.org/10.1016/0749-6419(89)90025-9.
+       Board-level Drop Test. 2011 IEEE 13th Electronics Packaging        [22]   Bo, L. Z., Kamsah, N., Keat, L. W. and Tamin, M. N. 2008.
+       Technology Conference (Dec. 2011). 681–685. Doi:                          Mechanics of Sn-4Ag-0.5Cu Solder Joints in a Ball Grid Array
+       https://doi.org/10.1109/EPTC.2011.6184504.                                Assembly during Reflow and Temperature Cycles. 2008
+[12]   Motalab, M., Mustafa, M., Suhling, J.C. and Lall, P. 2016.                33rd IEEE/CPMT International Electronics Manufacturing
+       Improved Predictions of Cyclic Stress-strain Curves for Lead              Technology Conference (IEMT) (Nov. 2008). 1–8. Doi:
+       Free Solders using the Anand Viscoplastic Constitutive                    https://doi.org/10.1109/IEMT.2008.5507864.
+       Model. 2016 15th IEEE Intersociety Conference on Thermal           [23]   Motalab, M. 2013. A Constitutive Model for Lead Free
+       and Thermomechanical Phenomena in Electronic Systems                      Solder Including Aging Effects and Its Application to
+       (ITherm)        (May         2016).        471–480.        Doi:           Microelectronic Packaging.
+       https://doi.org/10.1109/ITHERM.2016.7517586.                       [24]   ASTM E8/E8M-24 - Standard Test Methods for Tension Testing
+[13]   Talledo, J. 2021. Improving the Solder Joint Reliability                  of Metallic Materials.
+       Prediction Accuracy for Quad Flat No Lead Packages.                [25]   Suhling, J. C. 1985. Constitutive Relations and Failure
+       Journal of Engineering Research and Reports. Doi:                         Predictions for Nonlinear Orthotropic Media. The University
+       https://doi.org/10.9734/jerr/2021/v20i717344.                             of Wisconsin - Madison.
+[14]   Chen, G., Zhao, X. and Wu, H. 2017. A Critical Review of           [26]   Hassan, K. R., Alam, M. S., Wu, J., Suhling, J. C. and Lall, P.
+       Constitutive Models for Solders in Electronic Packaging.                  2020. Isothermal Aging Dependent Anand Parameters of
+       Advances        in     Mechanical        Engineering.     9(8):           SAC305 Lead Free Solder at Extreme High Temperatures.
+       1687814017714976.                                                         2020 19th IEEE Intersociety Conference on Thermal and
+       Doi: https://doi.org/10.1177/1687814017714976.                            Thermomechanical Phenomena in Electronic Systems
+[15]   Rizaman, M. S. A., Abdullah, A. S. and Yamin, A. F. M. 2024.              (ITherm)        (Jul.      2020).       1191–1200.          Doi:
+       Determination of the Anand Parameters for SAC405 Solders                  https://doi.org/10.1109/ITherm45881.2020.9190596.
+       Through the Use of Stress-Strain Data. Journal of Advanced         [27]   Pei, M. and Qu, J. 2005. Constitutive Modeling of Lead-free
+       Research in Applied Mechanics. 113(1): 162–175. Doi:                      Solders. Proceedings. International Symposium on
+       https://doi.org/10.37934/aram.113.1.162175.                               Advanced Packaging Materials: Processes, Properties and
+[16]   Long, X., Chen, Z., Wang, W., Fu, Y. and Wu, Y. 2020.                     Interfaces,      2005.    (Mar.     2005).      45–49.      Doi:
+       Parameterized Anand Constitutive Model under a Wide                       https://doi.org/10.1109/ISAPM.2005.1432043.
+       Range of Temperature and Strain Rate: Experimental and             [28]   Su, Q., Yuan, C. and Chiang, K. N. 2023. Fitting Solder305
+       Theoretical Studies. Journal of Materials Science. 55(24):                Anand Model Parameters with Artificial Neural Networks.
+       10811–10823.      Doi:    https://doi.org/10.1007/s10853-020-             2023 18th International Microsystems, Packaging, Assembly
+       04689-1.                                                                  and Circuits Technology Conference (IMPACT) (Oct. 2023).
+[17]   Motalab, M., Mustafa, M., Suhling, J. C., Zhang, J., Evans, J.,           143–147.
+       Bozack, M. J. and Lall, P. 2013. Correlation of Reliability               Doi: https://doi.org/10.1109/IMPACT59481.2023.10348916.
+       Models Including Aging Effects with Thermal Cycling                [29]   Zhang, Z., Chen, Z., Liu, S. and Dong, F. 2019. Parameter
+       Reliability Data. 2013 IEEE 63rd Electronic Components and                Identification of Anand Constitutive Models for SAC305
+       Technology Conference (May 2013). 986–1004. Doi:                          using the Intelligent Optimization Algorithm. 2019 IEEE 21st
+       https://doi.org/10.1109/ECTC.2013.6575694.                                Electronics Packaging Technology Conference (EPTC)
+[18]   Lee, W. W., Nguyen, L. T. and Selvaduray, G. S. 2000. Solder              (Dec.              2019).            133–137.               Doi:
+       Joint Fatigue Models: Review and Applicability to Chip                    https://doi.org/10.1109/EPTC47984.2019.9026663.
+       Scale Packages. Microelectronics Reliability. 40(2): 231–          [30]   Fusek, M., Paška, Z., Rojíček, J. and Fojtík, F. 2021.
+       244. Doi: https://doi.org/10.1016/S0026-2714(99)00061-X.                  Parameters Identification of the Anand Material Model for
+[19]   Che, F. X. and Pang, J. H. L. 2013. Fatigue Reliability Analysis          3D Printed Structures. Materials. 14(3): 587. Doi:
+       of Sn–Ag–Cu Solder Joints Subject to Thermal Cycling. IEEE                https://doi.org/10.3390/ma14030587.
+

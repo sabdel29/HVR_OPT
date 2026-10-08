@@ -1,0 +1,77 @@
+frozen: true
+frozen_by: Phase 0M-R3C Section 7, before any ETM result was seen
+architecture: ARCH_Z1_EMBEDDED
+verdict: GEOMETRICALLY_REALIZABLE / PROCESS-CONDITIONAL
+why_not_proven: 'Geometry closes at a source-bounded microvia pitch, but three manufacturing inputs
+  remain OPEN: the microvia current allowable, the capture-pad diameter, and a vendor design rule
+  for this build-up technology. Two package clearances (cavity_sidewall_um, cooler_standoff_um)
+  also remain OPEN. PROVEN_REALIZABLE is therefore not available and is not claimed.'
+partition:
+  template: T1C_REORDERED
+  tiers_bottom_to_top:
+  - gan_hs
+  - cap_fly
+  - gan_ls
+  - inductor+cap_out
+  changed_from: T1_EMBEDDED_4LAYER, by swapping gan_ls and cap_fly only
+  what_moved: the flying capacitors move from tier 2 to tier 1 and the low-side GaN switches from
+    tier 1 to tier 2; nothing else changes
+  why: it puts the low-side switch adjacent to the inductor, so the 20.408 A switch node crosses
+    only the interlayer RDL instead of a 100 um component tier, and it removes the 606 um hs_to_cf
+    crossing entirely
+  invariants: same five component classes, same counts, same per-tier areas (max 5.61 mm2), same
+    1921 um stack height, same tier count. It is a permutation, so every Phase-0M-R3 area and height
+    result carries
+  source_compatibility: 'keeps both ends the June-2026 source fixes: high-side GaN flip-chipped
+    at the bottom substrate, inductors in the top layer near the POLs'
+interconnect:
+  microvia_diameter_um: 120.0
+  microvia_pitch_um: 150.0
+  pitch_provenance: SOURCE_BOUNDED -- Ostmann et al. 2008 give min. 150 um I/O pad pitch in production
+    for microvias to embedded dies
+  diameter_provenance: OPEN -- no package-substrate diameter rule was reachable; 120 um is the largest
+    via the legal pitch admits at s_min = 30 um
+  worst_aspect_ratio: 0.833
+  worst_routing_ratio_framework: 0.633
+  nets:
+  - net: ls_to_L
+    via_levels: 1
+    dielectric_depth_um: 10.0
+    i_aggregate_a: 20.4082
+    i_per_device_a: 6.8027
+    n_required_framework: 19
+    n_available: 30
+    routing_ratio: 0.6333
+    aspect_ratio: 0.083
+  - net: hs_to_ls
+    via_levels: 1
+    dielectric_depth_um: 100.0
+    i_aggregate_a: 1.435
+    i_per_device_a: 1.435
+    n_required_framework: 2
+    n_available: 35
+    routing_ratio: 0.0571
+    aspect_ratio: 0.833
+  - net: hs_to_cf
+    via_levels: 1
+    dielectric_depth_um: 10.0
+    i_aggregate_a: 1.015
+    i_per_device_a: 1.015
+    n_required_framework: 1
+    n_available: 31
+    routing_ratio: 0.0323
+    aspect_ratio: 0.083
+manufacturing_status:
+  microvia_current_allowable: OPEN
+  capture_pad_diameter: OPEN
+  vendor_design_rule: OPEN
+  microvia_pitch: SOURCE_BOUNDED
+  stacking_topology: SOURCE_BOUNDED -- one via level per net, well inside the two-stacked-plus-one-staggered
+    qualified configuration
+  landing_area: SOURCE_BOUNDED -- EPC2057 datasheet gives four solder bars on a 1500 x 1200 um die,
+    so the switch-node bar is at most 0.45 mm2
+  note: n_required is FRAMEWORK PROVISIONING at J_design = 1e8 A/m2, a conservative design-side
+    allocation. It is NOT a manufacturing qualification and must never be quoted as one.
+h_sub_mm: 1.3
+etm_settings: identical to the Phase-0M-R3 production replay, plus PHASE0MR3B_PHYSICAL_SPANS=1 and
+  the frozen via geometry

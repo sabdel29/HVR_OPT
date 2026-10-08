@@ -1,0 +1,18 @@
+A. MESH REFINEMENT (CETOL = 1e-2, exclusion band = 1 element)
+ n_xy  n_z   elems   core     d_eps_in  vs prev mesh      s
+    4    5     152     20  6.13853e-03                    8
+    5    6     248     54  6.05144e-03         1.42 %     15
+    6    8     488    128  5.93672e-03         1.90 %     30
+    8   10  INCOMPLETE (solver stalled)
+
+B. CREEP TOLERANCE (mesh 6x8)
+  CETOL=0.05     d_eps_in=5.93761e-03  
+  CETOL=0.01     d_eps_in=5.93672e-03  0.02 %
+  CETOL=0.005  INCOMPLETE
+
+C. CORNER EXCLUSION BAND (mesh 6x8, CETOL = 1e-2)
+  band=0 element(s): core=288 elems, d_eps_in=5.79875e-03
+  band=1 element(s): core=128 elems, d_eps_in=5.93672e-03
+  band=2 element(s): core= 32 elems, d_eps_in=6.16958e-03
+
+wrote results/phase0i/local_metric_convergence.csv (8 rows)

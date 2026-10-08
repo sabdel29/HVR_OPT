@@ -1,0 +1,17 @@
+architecture,segment,from,to,tier,rail,V_rail_V,I_A,upstream_of_conversion,shape,n_parallel_basis,R_single_mOhm,heat_region
+ARCH_A,s1,board,substrate_bottom,bga,HV,48.0,1.3542,True,circular,"ceil(I/I_max), capped by pitch",0.3786,bga
+ARCH_A,s2,substrate_bottom,tile_input,tsv,HV,48.0,1.3542,True,circular,"ceil(I/I_max), capped by pitch",10.237,tsv
+ARCH_A,s3,tile_input,tile_output,converter,CONV,48->1,,,,,,hvr_tile
+ARCH_A,s4,tile_output,die_pol,microbump,LV,1.0,60.0,False,square,"ceil(I/I_max), capped by pitch",2.0675,microbump
+ARCH_A,s5,tile_output,die_pol,rdl,LV,1.0,60.0,False,sheet,sheet solve,,rdl
+ARCH_B,s1,board,tile_input,bga,HV,48.0,1.3542,True,circular,"ceil(I/I_max), capped by pitch",0.3786,bga
+ARCH_B,s2,tile_input,tile_output,converter,CONV,48->1,,,,,,hvr_tile
+ARCH_B,s3,tile_output,substrate_top,tsv,LV,1.0,60.0,False,circular,"ceil(I/I_max), capped by pitch",10.237,tsv
+ARCH_B,s4,substrate_top,die_pol,microbump,LV,1.0,60.0,False,square,"ceil(I/I_max), capped by pitch",2.0675,microbump
+ARCH_B,s5,substrate_top,die_pol,rdl,LV,1.0,60.0,False,sheet,sheet solve,,rdl
+ARCH_C,s1,board,package_top,bga,HV,48.0,1.3542,True,circular,"ceil(I/I_max), capped by pitch",0.3786,bga
+ARCH_C,s2,package_top,interposer_bot,c4,HV,48.0,1.3542,True,circular,"ceil(I/I_max), capped by pitch",1.4136,c4
+ARCH_C,s3,interposer_bot,tile_input,tsv,HV,48.0,1.3542,True,circular,"ceil(I/I_max), capped by pitch",10.237,tsv
+ARCH_C,s4,tile_input,tile_output,converter,CONV,48->1,,,,,,hvr_tile
+ARCH_C,s5,tile_output,die_edge,rdl,LV,1.0,60.0,False,sheet,sheet solve,,rdl
+ARCH_C,s6,die_edge,die_pol,microbump,LV,1.0,60.0,False,square,"ceil(I/I_max), capped by pitch",2.0675,microbump

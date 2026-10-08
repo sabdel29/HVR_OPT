@@ -1,0 +1,45 @@
+parameter,class,unit,value,status_and_source
+rho_Cu_20C,MATERIAL,Ohm.m,1.7e-08,SOURCE_BACKED June-2026
+alpha_Cu,MATERIAL,1/K,0.00393,ASSUMPTION bulk Cu TCR
+rho_solder_20C,MATERIAL,Ohm.m,1.3e-07,SOURCE_BACKED June-2026
+k_Cu,MATERIAL,W/m.K,385.0,handbook
+k_Si,MATERIAL,W/m.K,130.0,handbook
+k_SiO2,MATERIAL,W/m.K,1.4,handbook
+"E_Cu, nu_Cu, CTE_Cu",MATERIAL,"MPa,-,1/K",,handbook
+tsv_liner_thickness,PROCESS,m,5e-07,ASSUMPTION typical SiO2 liner
+tsv_aspect_ratio_max,PROCESS,-,10.0,DERIVED_FROM_SOURCE June-2026 Table III demonstrates d=30 um at h=300 um
+tsv_spacing_min,PROCESS,m,3e-05,DERIVED_FROM_SOURCE June-2026 p=60 um at d=30 um implies s_min = p - d = 30 um
+tsv_koz_ratio,PROCESS,-,1.0,"ASSUMPTION keep-out radius expressed as a multiple of r; swept, never fixed"
+J_max_Cu,PROCESS,A/m^2,,DERIVED_FROM_SOURCE envelope 1.0e8 (June-2026) to 4.0e8 (ECTC-2024); the EM-lifetime limit itself remains OPEN
+J_max_solder,PROCESS,A/m^2,,DERIVED_FROM_SOURCE envelope 1.74e7 to 3.97e7
+rdl_line_space_min,PROCESS,m,2e-06,SOURCE_BACKED ECTC-2024 Table I S=2 um
+bump_pitch_min,PROCESS,m,,"tier-specific, see design space"
+tsv_radius,DESIGN,m,1.5e-05,June-2024 nominal d=30 um
+tsv_pitch,DESIGN,m,6e-05,June-2026 nominal; constrained p >= 2r + s_min
+tsv_height,DESIGN,m,0.0003,= substrate thickness variable
+tsv_n_allocated,DESIGN,-,,set by allocation POLICY
+tsv_field_footprint,DESIGN,m^2,,die shadow or tile footprint
+tsv_pg_ratio,DESIGN,-,0.5,supply/ground split
+rdl_t_cu,DESIGN,m,1e-05,"ECTC-2024 REFERENCE, not a fixed constant"
+rdl_width,DESIGN,m,1e-05,ECTC-2024 REFERENCE
+rdl_space,DESIGN,m,2e-06,"ECTC-2024 REFERENCE, >= process min"
+"rdl_n_vdd, rdl_n_gnd",DESIGN,-,2,ECTC-2024 REFERENCE
+bump_diameter,DESIGN,m,,tier-specific
+bump_height,DESIGN,m,,tier-specific
+bump_pitch,DESIGN,m,,tier-specific
+pad_diameter,DESIGN,m,,"landing pad, promoted in Part 8"
+trace_width_at_pad,DESIGN,m,,promoted in Part 8
+source_footprint,DESIGN,m^2,,VR tile footprint
+load_footprint,DESIGN,m^2,,POL cell footprint
+A_conductor,DERIVED,m^2,,pi (r - t_liner)^2
+R_single,DERIVED,Ohm,,rho(T) h / A_conductor
+I_max_per_via,DERIVED,A,,J_max A_conductor
+n_required,DERIVED,-,,ceil(I / I_max_per_via)
+n_available,DERIVED,-,,footprint pg_ratio / pitch^2
+R_field,DERIVED,Ohm,,R_single / n_allocated
+P_joule,DERIVED,W,,I^2 R_loop
+phi_Cu,DERIVED,-,,n_alloc A_conductor / footprint
+"k_z_eff, k_xy_eff",DERIVED,W/m.K,,"effective-medium, Part 20"
+"E_eff, CTE_eff",DERIVED,"MPa,1/K",,"Voigt/Reuss + Levin, Part 20"
+K_crowd,DERIVED,-,,"R_3D_transition / R_bulk, Part 8"
+sheet_conductance,DERIVED,S,,N t occupancy / rho(T)

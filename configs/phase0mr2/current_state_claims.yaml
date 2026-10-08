@@ -1,0 +1,251 @@
+# =====================================================================================
+# PHASE 0M-R2 --- MACHINE-READABLE CURRENT-STATE CLAIM CONTRACT
+# =====================================================================================
+# Every scientific-state claim that has a CURRENT wording and, where it exists, the
+# HISTORICAL wording it replaced.
+#
+# WHY THIS FILE EXISTS (DEFECT #54). The Phase-0M-R checker searched each report as one
+# flat string: a REQUIRED phrase found ANYWHERE satisfied the check for the whole
+# document. "microchannel" appearing in the Phase-0M-R chapter therefore passed the
+# cooling check while the Validation Status block three thousand lines earlier still
+# described the frozen inverse-calibrated Robin boundary. Presence somewhere is not
+# propagation everywhere. Claims here are scoped to SECTIONS.
+#
+# `stale_wording` entries are the VERBATIM sentences recovered from the delivered
+# report, not paraphrases. Each one is injected in tests/phase0mr2 to prove its guard
+# actually fires.
+# =====================================================================================
+
+meta:
+  phase: "0M-R2"
+  current_authoritative_phase: "0M-R3C"
+  # every gate that has completed, in order. The Executive Summary count is derived
+  # from this list rather than typed, which is how the count went stale at seventeen.
+  gates:
+    - 0B
+    - 0C
+    - 0D
+    - 0D-R
+    - 0E
+    - 0F
+    - 0G
+    - 0H
+    - 0I
+    - 0I-R
+    - 0J
+    - 0J-R
+    - 0K
+    - 0K-R
+    - 0L
+    - 0L-R
+    - 0M
+    - 0M-R
+    - 0M-R2
+    - 0M-R3
+    - 0M-R3A
+    - 0M-R3B
+    - 0M-R3C
+
+# Sections of the historical report that speak in the PRESENT TENSE about the
+# framework. A claim required "current" must hold in every one of these that
+# discusses its subject.
+current_facing_sections:
+  - "Provenance and tool versions"
+  - "Executive Summary"
+  - "Governing Equations"
+  - "Electrical Model Validation"
+  - "Thermal Model Validation"
+  - "Mechanical Model Validation"
+  - "Coupled ETM Physics --- mechanisms, not just numbers"
+  - "Architecture Comparison"
+  - "Model Defects Discovered and Fixed"
+  - "Uncertainty and Fidelity Ladder"
+  - "Next Steps --- prioritised roadmap"
+
+# A chapter heading matching any of these is a HISTORICAL record and may restate what
+# that phase concluded. Phase-0M-R's checker knew only "superseded by" and "extended
+# by", so "(rescoped by Phase 0I-R)" was read as a current chapter.
+historical_chapter_markers:
+  - "superseded by"
+  - "extended by"
+  - "rescoped by"
+  - "SUPERSEDED"
+  - "historical record"
+
+claims:
+
+  - claim_id: gate_count
+    subject: "how many falsification gates have completed"
+    status: CURRENT
+    originating_phase: "0M-R2"
+    superseded_phase: "0M"
+    current_wording: "Twenty-three sequential falsification gates"
+    historical_wording: "Twenty-two sequential falsification gates"
+    required_in:
+      - "Executive Summary"
+    historical_allowed_in: []
+    evidence: "configs/phase0mr2/current_state_claims.yaml::meta.gates"
+    stale_wording:
+      - "Seventeen sequential falsification gates (0B, 0C, 0D, 0D-R, 0E, 0F, 0G, 0H, 0I,\n0I-R, 0J, 0J-R, 0K, 0K-R, 0L, 0L-R, 0M), each designed so that a negative result would stop the"
+    note: >-
+      The count and the parenthesised list are generated from meta.gates. Typing either
+      by hand is what let the Executive Summary sit two gates behind the project.
+
+  - claim_id: phase_authority
+    subject: "which phase is current authoritative"
+    status: CURRENT
+    originating_phase: "0M-R2"
+    superseded_phase: "0M"
+    current_wording: "Phase 0M-R3A is the current authoritative phase"
+    historical_wording: "Phase 0M ... (current authoritative)"
+    required_in:
+      - "Executive Summary"
+    historical_allowed_in: []
+    evidence: "results/phase0mr2/PHASE0MR2_REALIZABILITY_COOLING_STATE_CLOSURE.md"
+    stale_wording:
+      - "# Phase 0M --- Geometry-Resolved Power Delivery, Component-Level Architecture, Cooling and ETM-Coupling Audit (current authoritative)"
+      - "# Phase 0M-R2 --- Architecture Realizability, Cooling-Regime and Current-State Closure (current authoritative)"
+      - "# Phase 0M-R3 --- Realizable-Template Repair, Cooling Validation and Final Current-State Closure (current authoritative)"
+      - "# Phase 0M-R3A --- Final State, Via-Technology and TSV-Margin Closure (current authoritative)"
+      - "# Phase 0M-R3B --- Substrate-Via Technology, Package Rules and Process Margin (current authoritative)"
+    note: >-
+      Exactly one chapter heading in the report may carry "(current authoritative)".
+
+  - claim_id: next_work
+    subject: "what the exact next work is"
+    status: CURRENT
+    originating_phase: "0M-R2"
+    superseded_phase: "0L-R"
+    current_wording: "the Phase-0M-R2 ranked follow-up"
+    historical_wording: "MATERIAL CHARACTERISATION FIRST, with PRIMARY-PAPER ACQUISITION IN PARALLEL"
+    required_in:
+      - "Executive Summary"
+    historical_allowed_in: []
+    evidence: "results/phase0mr2/open_items.md"
+    stale_wording:
+      - "**Exact next work.** MATERIAL CHARACTERISATION FIRST, with PRIMARY-PAPER ACQUISITION IN\nPARALLEL."
+    note: >-
+      Must agree with the open-items ledger. A next-work paragraph that names a
+      different priority from the ledger is a contradiction, not a difference of
+      emphasis.
+
+  - claim_id: transition_resistance_production
+    subject: "whether a current-crowding / transition-resistance correction is applied"
+    status: CURRENT
+    originating_phase: "0M-R"
+    superseded_phase: "0E"
+    current_wording: >-
+      A per-class DC transition resistance Delta_R = R_3D - R_1D is in production,
+      solved exactly per interconnect class and cross-validated against MOOSE at
+      0.25-0.73 %. No AC correction is needed below the skin crossover.
+    historical_wording: "No current-crowding correction was applied"
+    required_in:
+      - "Electrical Model Validation"
+    historical_allowed_in:
+      - "Phase 0E"
+      - "Phase 0F"
+    evidence: "results/phase0mr/current_crowding_validation.csv"
+    stale_wording:
+      - "**No current-crowding correction was applied**, because none was demonstrated ---"
+    note: >-
+      The original sentence sat in an AC/skin-effect discussion and was true OF AC. It
+      reads as a statement about the framework, and since Phase 0M-R it is false of the
+      DC path. It must be scoped, not deleted.
+
+  - claim_id: cooling_production_boundary
+    subject: "what thermal boundary the production loop uses"
+    status: CURRENT
+    originating_phase: "0M-R"
+    superseded_phase: "0F"
+    current_wording: >-
+      The production ET loop uses a physical microchannel cooler: h from a
+      regime-checked Nusselt correlation, fin efficiency and area amplification, a
+      caloric resistance, and a streamwise coolant temperature iterated against the
+      wall flux.
+    historical_wording: "inverse-calibrated Robin coefficient h_top = 166 000 W/m2K"
+    required_in:
+      - "Thermal Model Validation"
+    historical_allowed_in:
+      - "Phase 0B"
+      - "Phase 0F"
+      - "Phase 0G"
+    evidence: "results/phase0mr2/cooling_regime_table.csv"
+    stale_wording: []
+    note: >-
+      The Validation Status block described only the Phase-0E/0F MOOSE cross-check and
+      the discarded Icepak run, and said nothing about the production cooler. The
+      failure here was OMISSION, which a forbidden-phrase checker cannot detect at all.
+
+  - claim_id: intravr_routing_production
+    subject: "whether intra-VR routing is in the production loss total"
+    status: CURRENT
+    originating_phase: "0M-R"
+    superseded_phase: "0M"
+    current_wording: "intra-VR routing is in the production loss ledger"
+    historical_wording: "MODEL BUILT, NOT YET WIRED INTO THE PRODUCTION LOSS TOTAL"
+    required_in:
+      - "Model Defects Discovered and Fixed"
+    historical_allowed_in: []
+    evidence: "results/phase0mr/intravr_loss_ledger.csv"
+    stale_wording:
+      - "- *Status:* **CONFIRMED, MODEL BUILT, NOT YET WIRED INTO THE PRODUCTION LOSS TOTAL**"
+    note: >-
+      A defect row may keep its status AT DISCOVERY, but only with an explicit
+      supersession qualifier naming the phase that closed it.
+
+  - claim_id: cooling_model_adopted
+    subject: "whether the physical cooling model is adopted by the ETM loop"
+    status: CURRENT
+    originating_phase: "0M-R"
+    superseded_phase: "0M"
+    current_wording: "the physical cooling model is in the production ETM loop"
+    historical_wording: "MODEL BUILT, NOT YET ADOPTED BY THE ETM LOOP"
+    required_in:
+      - "Model Defects Discovered and Fixed"
+    historical_allowed_in: []
+    evidence: "results/phase0mr/production_temperature_summary.csv"
+    stale_wording:
+      - "- *Status:* **CONFIRMED, MODEL BUILT, NOT YET ADOPTED BY THE ETM LOOP**"
+
+  - claim_id: thermal_separation
+    subject: "whether the Z architectures differ in temperature"
+    status: CURRENT
+    originating_phase: "0M-R"
+    superseded_phase: "0I"
+    current_wording: >-
+      Under the physical cooler the architectures DO separate in temperature, and Z2 is
+      the hottest of the principal candidates. Ranking by package T_max is nevertheless
+      not equivalent to ranking by the solder-fatigue driver, because geometry- and
+      CTE-induced deformation and the local constitutive response are distinct
+      mechanisms.
+    historical_wording: >-
+      these particular architectures happen not to differ in temperature
+    required_in:
+      - "Executive Summary"
+      - "Architecture Comparison"
+    historical_allowed_in:
+      - "Phase 0I"
+      - "Phase 0I-R"
+    evidence: "results/phase0mr2/architecture_thermal_metrics.csv"
+    stale_wording:
+      - "The current Z-architectures nevertheless separate on MECHANICS, not temperature: their joint temperatures span only 81.10-83.21 C and the correlation between joint temperature and damage across all runs is r = +0.017. Both statements are true and must not be conflated -- temperature-dependent physics matters, and these particular architectures happen not to differ in temperature."
+    note: >-
+      FORBIDDEN PHRASING, licensed by the Phase-0M-R2 brief: never write "temperature
+      does not matter for fatigue". Temperature-dependent constitutive behaviour does
+      matter. The permitted statement is the narrower one above.
+
+  - claim_id: report_date
+    subject: "the report date"
+    status: CURRENT
+    originating_phase: "0M-R2"
+    superseded_phase: "0M"
+    current_wording: "2026-09-17 or later"
+    historical_wording: "2026-09-08"
+    required_in:
+      - "__frontmatter__"
+    historical_allowed_in: []
+    evidence: "results/phase0mr2/environment.md"
+    stale_wording:
+      - 'date: "2026-09-08"'
+    note: >-
+      The document carried a date nine days older than the phases inside it.

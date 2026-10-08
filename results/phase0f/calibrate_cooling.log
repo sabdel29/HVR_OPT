@@ -1,0 +1,25 @@
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  it0  h=  40000.0  T_max=130.052 C  resid=+46.052 K  P_conv=150.20 P_pdn=  0.73 Q= 1150.9 W  eta=86.89%  (183s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  it1  h=  80000.0  T_max= 99.532 C  resid=+15.532 K  P_conv=133.06 P_pdn=  0.67 Q= 1133.7 W  eta=88.20%  (182s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  it2  h= 100000.0  T_max= 93.536 C  resid= +9.536 K  P_conv=129.69 P_pdn=  0.65 Q= 1130.3 W  eta=88.47%  (182s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  it3  h= 110000.0  T_max= 91.364 C  resid= +7.364 K  P_conv=128.47 P_pdn=  0.65 Q= 1129.1 W  eta=88.56%  (183s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  it4  h= 115000.0  T_max= 90.421 C  resid= +6.421 K  P_conv=127.94 P_pdn=  0.65 Q= 1128.6 W  eta=88.61%  (182s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+Traceback (most recent call last):
+  File "/home/beams0/MGHARIB/Mohamed_stuff/HVR_OPT/scripts/phase0f/calibrate_cooling_1kw.py", line 106, in <module>
+    "temperature field; a substrate-side boundary would cool the converter layer "
+
+  File "/home/beams0/MGHARIB/Mohamed_stuff/HVR_OPT/scripts/phase0f/calibrate_cooling_1kw.py", line 43, in main
+    # substrate underside and the TIM top reverts to natural convection.
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/beams0/MGHARIB/Mohamed_stuff/HVR_OPT/scripts/phase0f/kw1.py", line 154, in coupled_1kw
+    st = _stack_with_tile(stack, cs.t_cell_mm, h_bottom=h_bottom)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/beams0/MGHARIB/Mohamed_stuff/HVR_OPT/scripts/phase0f/kw1.py", line 115, in thermal_structural
+    films = ccxio.write_thermal(m, mats, tiles, st, p_die_extra, h_top, ti)
+                                       ^^^^^^^^^
+KeyError: 'DISP'

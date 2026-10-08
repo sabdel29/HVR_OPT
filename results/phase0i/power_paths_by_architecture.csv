@@ -1,0 +1,21 @@
+arch,order,segment,tier,rail,V_volt,I_a,I_rms_a,location,scope
+ARCH_Z1_EMBEDDED,1,board -> substrate underside,bga,HV,48.0,23.435,23.435,z < 0,SYSTEM
+ARCH_Z1_EMBEDDED,2,underside -> embedded cell,tsv,HV,48.0,23.435,23.435,through h_sub - t_cell,SYSTEM
+ARCH_Z1_EMBEDDED,3,conversion in the power layers,converter,CONV,48.0,23.435,23.435,inside the substrate,SYSTEM
+ARCH_Z1_EMBEDDED,4,cell -> die POL,microbump,LV,1.0,1000.0,1000.0,10 um pads,SYSTEM
+ARCH_Z1_EMBEDDED,5,lateral spreading under the die,rdl,LV,1.0,1000.0,1000.0,package RDL,SYSTEM
+ARCH_Z2_BACKSIDE,1,board -> backside VR,bga,HV,48.0,23.435,23.435,"z < 0, short",SYSTEM
+ARCH_Z2_BACKSIDE,2,conversion on the backside chiplet,converter,CONV,48.0,23.435,23.435,below the substrate,SYSTEM
+ARCH_Z2_BACKSIDE,3,"backside VR -> die, through the substrate",tsv,LV,1.0,1000.0,1000.0,through the FULL h_sub,SYSTEM
+ARCH_Z2_BACKSIDE,4,substrate top -> die POL,microbump,LV,1.0,1000.0,1000.0,10 um pads,SYSTEM
+ARCH_Z2_BACKSIDE,5,lateral spreading under the die,rdl,LV,1.0,1000.0,1000.0,package RDL,SYSTEM
+ARCH_Z4_POWER_DIE,1,board -> substrate underside,bga,HV,48.0,23.435,23.435,z < 0,SYSTEM
+ARCH_Z4_POWER_DIE,2,underside -> power die,tsv,HV,48.0,23.435,23.435,through the FULL h_sub,SYSTEM
+ARCH_Z4_POWER_DIE,3,conversion on the power die,converter,CONV,48.0,23.435,23.435,"above the substrate, below the compute die",SYSTEM
+ARCH_Z4_POWER_DIE,4,power die -> compute die,microbump,LV,1.0,1000.0,1000.0,"10 um hybrid pads, the SHORTEST possible 1 V path",SYSTEM
+ARCH_Z4_POWER_DIE,5,lateral spreading on the power die,rdl,LV,1.0,1000.0,1000.0,power-die RDL,SYSTEM
+ARCH_Z5_2P5D_LATERAL,1,board -> substrate underside,bga,HV,48.0,23.435,23.435,z < 0,SYSTEM
+ARCH_Z5_2P5D_LATERAL,2,underside -> lateral VR field,tsv,HV,48.0,23.435,23.435,through the FULL h_sub,SYSTEM
+ARCH_Z5_2P5D_LATERAL,3,conversion beside the die,converter,CONV,48.0,23.435,23.435,"lateral, on the interposer",SYSTEM
+ARCH_Z5_2P5D_LATERAL,4,"VR field -> die, ACROSS the interposer",rdl,LV,1.0,1000.0,1000.0,long lateral interposer RDL,SYSTEM
+ARCH_Z5_2P5D_LATERAL,5,interposer -> die POL,microbump,LV,1.0,1000.0,1000.0,10 um pads,SYSTEM

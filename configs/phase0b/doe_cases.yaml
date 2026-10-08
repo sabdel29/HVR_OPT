@@ -1,0 +1,89 @@
+# Phase-0B controlled DOE — C01..C20, transcribed from NOVELTY_BOUNDARY_ETM_PHASE0B.md
+# section "Controlled DOE".
+#
+# Invariants across ALL cases unless a case explicitly overrides:
+#   P_die = 240 W, V_POL = 1 V, I_total = 240 A
+#   P_HVR_total = 42 W  (PROVISIONAL - controlled mechanical experiment, NOT the HVR compiler output)
+#   A_VR_total  = 96 mm^2  (normalized footprint rule; C11/C12 deliberately violate it)
+#
+# The constant total HVR heat and constant total footprint are what make this a CONTROLLED
+# experiment: an N_VR effect cannot be trivially caused by changing total heat or total
+# embedded stiff material.
+
+defaults:
+  p_die_w: 240.0
+  v_pol: 1.0
+  i_total_a: 240.0
+  p_hvr_total_w: 42.0
+  a_vr_total_mm2: 96.0
+  status_p_hvr: PROVISIONAL
+
+# Execution gating (spec section 9/10 of the task): C05 and C07 first, then C13.
+execution_order:
+  gate_1: [C05, C07]
+  gate_2: [C13]
+  deferred: [C01, C02, C03, C04, C06, C08, C09, C10, C11, C12, C14, C15, C16, C17, C18, C19, C20]
+
+cases:
+  C01: {n_vr: 2, placement: compact_central_pair,  tile_ax: 6.9282, tile_ay: 6.9282, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Do a few large stiff/thermal islands create global curvature?"}
+  C02: {n_vr: 2, placement: opposing_edge_pair,    tile_ax: 6.9282, tile_ay: 6.9282, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Does moving identical material outward change warpage and edge/interface stress?"}
+  C03: {n_vr: 2, placement: compact_central_pair,  tile_ax: 6.9282, tile_ay: 6.9282, h_sub: 0.500, p_hvr_total_w: 42.0,
+        question: "Count fixed; isolates substrate-thickness sensitivity."}
+  C04: {n_vr: 4, placement: compact_2x2_central,   tile_ax: 4.8990, tile_ay: 4.8990, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Electrical-style compact placement versus stress localization."}
+  C05: {n_vr: 4, placement: distributed_2x2,       tile_ax: 4.8990, tile_ay: 4.8990, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Canonical distributed architecture."}
+  C06: {n_vr: 4, placement: edge_corner_biased,    tile_ax: 4.8990, tile_ay: 4.8990, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Package-edge curvature and interface stress."}
+  C07: {n_vr: 4, placement: asymmetric_left,       tile_ax: 4.8990, tile_ay: 4.8990, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Deliberately breaks symmetry; likely high-discrimination case."}
+  C08: {n_vr: 4, placement: distributed_2x2,       tile_ax: 4.8990, tile_ay: 4.8990, h_sub: 0.500, p_hvr_total_w: 42.0,
+        question: "Direct h_sub counterpart to C05."}
+  C09: {n_vr: 4, placement: distributed_2x2,       tile_ax: 6.9282, tile_ay: 3.4641, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Does aspect ratio matter mechanically at fixed area and heat? (AR=2)"}
+  C10: {n_vr: 4, placement: distributed_2x2,       tile_ax: 3.4641, tile_ay: 6.9282, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Rotated 90 deg: detect anisotropy from support/RDL/Si orientation."}
+  C11: {n_vr: 4, placement: distributed_2x2,       tile_ax: 4.2426, tile_ay: 4.2426, h_sub: 0.200, p_hvr_total_w: 42.0,
+        a_vr_total_mm2: 72.0,
+        question: "25% lower total embedded footprint; stiffness/power-density sensitivity."}
+  C12: {n_vr: 4, placement: distributed_2x2,       tile_ax: 5.4772, tile_ay: 5.4772, h_sub: 0.200, p_hvr_total_w: 42.0,
+        a_vr_total_mm2: 120.0,
+        question: "25% larger footprint; direct comparison with C11."}
+  C13: {n_vr: 6, placement: distributed_3x2,       tile_ax: 4.0000, tile_ay: 4.0000, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Finer distribution at constant total area."}
+  C14: {n_vr: 6, placement: perimeter_ring,        tile_ax: 4.0000, tile_ay: 4.0000, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Edge-weighted symmetry."}
+  C15: {n_vr: 6, placement: asymmetric_left,       tile_ax: 4.0000, tile_ay: 4.0000, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Sensitivity to heterogeneous load/placement."}
+  C16: {n_vr: 6, placement: distributed_3x2,       tile_ax: 4.0000, tile_ay: 4.0000, h_sub: 0.500, p_hvr_total_w: 42.0,
+        question: "Thickness counterpart to C13."}
+  C17: {n_vr: 8, placement: uniform_distributed,   tile_ax: 3.4641, tile_ay: 3.4641, h_sub: 0.200, p_hvr_total_w: 42.0,
+        question: "Many small heat/stiffness islands."}
+  C18: {n_vr: 8, placement: perimeter_biased,      tile_ax: 3.4641, tile_ay: 3.4641, h_sub: 0.500, p_hvr_total_w: 42.0,
+        question: "High distribution combined with thick substrate."}
+  C19: {n_vr: 4, placement: asymmetric_left,       tile_ax: 4.8990, tile_ay: 4.8990, h_sub: 0.200, p_hvr_total_w: 31.5,
+        question: "0.75x HVR heat: separates geometry effect from HVR-loss uncertainty."}
+  C20: {n_vr: 4, placement: asymmetric_left,       tile_ax: 4.8990, tile_ay: 4.8990, h_sub: 0.200, p_hvr_total_w: 52.5,
+        question: "1.25x HVR heat: does materiality depend on converter heat?"}
+
+# Placement-class semantics. Coordinates are GENERATED (etm.placement), never transcribed.
+# All positions are tile CENTERS in mm, die center at (0,0).
+placement_classes:
+  compact_central_pair: "N tiles packed side by side about the origin with a minimum gap"
+  opposing_edge_pair:   "N tiles pushed to opposite edges of the legal region along x"
+  compact_2x2_central:  "N tiles in a tight square cluster about the origin with a minimum gap"
+  distributed_2x2:      "N tiles on a 2x2 lattice at +/- 1/4 of the legal span"
+  distributed_3x2:      "N tiles on a 3x2 lattice spanning the legal region"
+  edge_corner_biased:   "N tiles pushed toward the corners of the legal region"
+  asymmetric_left:      "all tiles biased into the left half; deliberately breaks symmetry"
+  perimeter_ring:       "N tiles evenly spaced around the perimeter of the legal region"
+  uniform_distributed:  "N tiles on the most square lattice that fits, filling the legal region"
+  perimeter_biased:     "N tiles on the perimeter, weighted toward corners"
+
+# Legal placement region for tile CENTERS is derived, not hard-coded:
+#   |x| <= (substrate_x - tile_ax)/2 - edge_keepout,  likewise y.
+placement_rules:
+  edge_keepout_mm: {value: 0.5, status: ASSUMPTION, note: "tile outer edge must stay this far inside the substrate edge"}
+  min_gap_mm:      {value: 0.5, status: ASSUMPTION, note: "minimum clear gap between adjacent tiles"}

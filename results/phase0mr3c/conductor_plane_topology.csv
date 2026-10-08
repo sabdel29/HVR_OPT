@@ -1,0 +1,31 @@
+template,net,via_levels_total,i,kind,role,z_start_um,z_end_um,thickness_um,needs_via,capture_land,via_type,source_status
+T1_EMBEDDED_4LAYER,ls_to_L,1,0,TERMINAL PLANE,gan_ls terminal face,1301.0,1301.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T1_EMBEDDED_4LAYER,ls_to_L,1,1,CONDUCTOR PLANE,interlayer RDL above tier 1,1301.0,1311.0,10.0,False,patterned Cu; a microvia can land here,none,SOURCE_BACKED (ECTC-2024 Tab. I)
+T1_EMBEDDED_4LAYER,ls_to_L,1,2,DIELECTRIC REGION,"tier 2 power layer (cap_fly) -- build-up with embedded components, no conductor plane inside it",1311.0,1411.0,100.0,True,none available inside,"build-up via, full tier depth",OPEN (depth/diameter rule unsourced)
+T1_EMBEDDED_4LAYER,ls_to_L,1,3,CONDUCTOR PLANE,interlayer RDL above tier 2,1411.0,1421.0,10.0,False,patterned Cu; a microvia can land here,none,SOURCE_BACKED (ECTC-2024 Tab. I)
+T1_EMBEDDED_4LAYER,ls_to_L,1,4,TERMINAL PLANE,inductor terminal face,1421.0,1421.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T1_EMBEDDED_4LAYER,hs_to_ls,0,0,TERMINAL PLANE,gan_hs terminal face,685.0,685.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T1_EMBEDDED_4LAYER,hs_to_ls,0,1,CONDUCTOR PLANE,interlayer RDL above tier 0,685.0,695.0,10.0,False,patterned Cu; a microvia can land here,none,SOURCE_BACKED (ECTC-2024 Tab. I)
+T1_EMBEDDED_4LAYER,hs_to_ls,0,2,TERMINAL PLANE,gan_ls terminal face,695.0,695.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T1_EMBEDDED_4LAYER,hs_to_cf,1,0,TERMINAL PLANE,gan_hs terminal face,685.0,685.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T1_EMBEDDED_4LAYER,hs_to_cf,1,1,CONDUCTOR PLANE,interlayer RDL above tier 0,685.0,695.0,10.0,False,patterned Cu; a microvia can land here,none,SOURCE_BACKED (ECTC-2024 Tab. I)
+T1_EMBEDDED_4LAYER,hs_to_cf,1,2,DIELECTRIC REGION,"tier 1 power layer (gan_ls) -- build-up with embedded components, no conductor plane inside it",695.0,1301.0,606.0,True,none available inside,"build-up via, full tier depth",OPEN (depth/diameter rule unsourced)
+T1_EMBEDDED_4LAYER,hs_to_cf,1,3,CONDUCTOR PLANE,interlayer RDL above tier 1,1301.0,1311.0,10.0,False,patterned Cu; a microvia can land here,none,SOURCE_BACKED (ECTC-2024 Tab. I)
+T1_EMBEDDED_4LAYER,hs_to_cf,1,4,TERMINAL PLANE,cap_fly terminal face,1311.0,1311.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T4_SPLIT_SC_BUCK,ls_to_L,0,0,SAME TIER,lateral route on the tier's own conductor plane,695.0,1301.0,0.0,False,n/a,none,n/a
+T4_SPLIT_SC_BUCK,hs_to_ls,0,0,TERMINAL PLANE,gan_hs terminal face,685.0,685.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T4_SPLIT_SC_BUCK,hs_to_ls,0,1,CONDUCTOR PLANE,interlayer RDL above tier 0,685.0,695.0,10.0,False,patterned Cu; a microvia can land here,none,SOURCE_BACKED (ECTC-2024 Tab. I)
+T4_SPLIT_SC_BUCK,hs_to_ls,0,2,TERMINAL PLANE,gan_ls terminal face,695.0,695.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T4_SPLIT_SC_BUCK,hs_to_cf,0,0,SAME TIER,lateral route on the tier's own conductor plane,0.0,685.0,0.0,False,n/a,none,n/a
+T2_BACKSIDE_CHIPLET,ls_to_L,1,0,TERMINAL PLANE,gan_ls terminal face,685.0,685.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T2_BACKSIDE_CHIPLET,ls_to_L,1,1,CONDUCTOR PLANE,interlayer RDL above tier 0,685.0,695.0,10.0,False,patterned Cu; a microvia can land here,none,SOURCE_BACKED (ECTC-2024 Tab. I)
+T2_BACKSIDE_CHIPLET,ls_to_L,1,2,DIELECTRIC REGION,"tier 1 power layer (cap_fly) -- build-up with embedded components, no conductor plane inside it",695.0,795.0,100.0,True,none available inside,"build-up via, full tier depth",OPEN (depth/diameter rule unsourced)
+T2_BACKSIDE_CHIPLET,ls_to_L,1,3,CONDUCTOR PLANE,interlayer RDL above tier 1,795.0,805.0,10.0,False,patterned Cu; a microvia can land here,none,SOURCE_BACKED (ECTC-2024 Tab. I)
+T2_BACKSIDE_CHIPLET,ls_to_L,1,4,TERMINAL PLANE,inductor terminal face,805.0,805.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T2_BACKSIDE_CHIPLET,hs_to_ls,0,0,SAME TIER,lateral route on the tier's own conductor plane,0.0,685.0,0.0,False,n/a,none,n/a
+T2_BACKSIDE_CHIPLET,hs_to_cf,0,0,TERMINAL PLANE,gan_hs terminal face,685.0,685.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T2_BACKSIDE_CHIPLET,hs_to_cf,0,1,CONDUCTOR PLANE,interlayer RDL above tier 0,685.0,695.0,10.0,False,patterned Cu; a microvia can land here,none,SOURCE_BACKED (ECTC-2024 Tab. I)
+T2_BACKSIDE_CHIPLET,hs_to_cf,0,2,TERMINAL PLANE,cap_fly terminal face,695.0,695.0,0.0,False,device land,none,SOURCE_BACKED (component height)
+T0_SINGLE_LEVEL,ls_to_L,0,0,SAME TIER,lateral route on the tier's own conductor plane,0.0,685.0,0.0,False,n/a,none,n/a
+T0_SINGLE_LEVEL,hs_to_ls,0,0,SAME TIER,lateral route on the tier's own conductor plane,0.0,685.0,0.0,False,n/a,none,n/a
+T0_SINGLE_LEVEL,hs_to_cf,0,0,SAME TIER,lateral route on the tier's own conductor plane,0.0,685.0,0.0,False,n/a,none,n/a

@@ -1,0 +1,14 @@
+item,kind,rule_id,source,sentence,guard_fired,rules_that_fired
+C,negative,_table_row,ETM_DVPD_FULL_TECHNICAL_REPORT.md:3686,| phase | **0M-R2 complete** | `results/phase0mr2/PHASE0MR2_REALIZABILITY_COOLING_STATE_CLOSURE.md` |,True,stale_current_state_row
+C,negative,_table_row,ETM_DVPD_FULL_TECHNICAL_REPORT.md:3700,"| component partition status | **ZERO OF TWELVE REALIZABLE, AT ANY CORNER OF THE BOUNDED CLEARANCE ENVELOPE.",True,stale_current_state_row
+E,negative,single_next_work,ETM_DVPD_FULL_TECHNICAL_REPORT.md:4276,acquisition in parallel; (2) ADOPT the Phase-0M physical cooling model into the ETM loop; (3),True,single_next_work
+E,negative,single_next_work,ETM_DVPD_FULL_TECHNICAL_REPORT.md:4277,"PUT THE RDL IN THE MECHANICAL MESH, which is the largest unmodelled mechanism that could change",True,single_next_work
+F,negative,response_not_damage_life_failure,ETM_DVPD_FULL_TECHNICAL_REPORT.md:78,the backside architecture shows 35.8 % less local damage than embedded,True,historical_358_not_current;response_not_damage_life_failure
+F,negative,response_not_damage_life_failure,ETM_DVPD_CURRENT_FRAMEWORK_AUDIT_REPORT.md:815,Z2 accumulates less solder-fatigue damage than Z1,True,response_not_damage_life_failure
+F,negative,response_not_damage_life_failure,0M-R3 current_facing wording,Z2 outlives Z1 at the operating baseline.,True,response_not_damage_life_failure
+G,negative,historical_358_not_current,ETM_DVPD_FULL_TECHNICAL_REPORT.md:78,the backside architecture shows 35.8 % less local damage than embedded and the power-die architecture 12.4 % more,True,historical_358_not_current;response_not_damage_life_failure
+O,negative,via_provenance_precise,ETM_DVPD_FULL_TECHNICAL_REPORT.md:133,"close the TSV process margin on ARCH_Z2, either by adopting the sourced 34 um via or by",True,via_provenance_precise
+P,negative,gate_count,ETM_DVPD_CURRENT_FRAMEWORK_AUDIT_REPORT.md:74,"**Method.** Twenty sequential falsification gates (0B, 0C, 0D, 0D-R, 0E, 0F, 0G, 0H, 0I, 0I-R, 0J, 0J-R, 0K, 0K-R, 0L, 0L-R, 0M, 0M-R, 0M-R2, 0M-R3), each designed so that a negative result would stop the project rather than be absorbed.",True,gate_count
+-,control,via_provenance_precise,0M-R3A,THE WORDING `SOURCED 34 um VIA` IS WITHDRAWN. No primary source specifies 34 um; what is source-backed is the RANGE.,False,
+-,control,response_not_damage_life_failure,0M-R3A,No current claim says Z2 outlives Z1; absolute life is not earned.,False,
+-,control,historical_358_not_current,0M-R3A,The historical Phase-0I figure of 35.8 % is NOT the present architecture result.,False,

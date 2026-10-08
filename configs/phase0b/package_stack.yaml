@@ -1,0 +1,176 @@
+# Phase-0B reduced-order DVPD test vehicle — package stack and material cards
+# Authoritative spec: NOVELTY_BOUNDARY_ETM_PHASE0B.md  (sections: "Proposed global geometry",
+# "Material card", "HVR tile representation", "Cooling boundary calibration")
+#
+# STATUS VOCABULARY (every numeric value MUST carry one):
+#   SOURCE_BACKED : traceable to a primary source named in the spec
+#   DERIVED       : computed from SOURCE_BACKED inputs by a documented formula
+#   ASSUMPTION    : chosen for this benchmark, not sourced
+#   PROVISIONAL   : placeholder that MUST be replaced before publication
+#   OPEN_DECISION  : unresolved question, blocks publication-grade claims
+#
+# Coordinate system: die center at (0,0). z = 0 at the BOTTOM of the power substrate,
+# increasing upward toward the cold plate.
+
+meta:
+  spec_document: NOVELTY_BOUNDARY_ETM_PHASE0B.md
+  fidelity_rung: M0            # operational thermoelastic only; no cure/assembly history
+  units: {length: mm, power: W, temperature: degC, stress: MPa, modulus: MPa}
+
+# ----------------------------------------------------------------------------
+# GLOBAL GEOMETRY
+# ----------------------------------------------------------------------------
+geometry:
+  power_substrate:
+    material: silicon
+    size_x: {value: 30.0,  status: ASSUMPTION,   note: "spec: 30x30 mm reduced test vehicle"}
+    size_y: {value: 30.0,  status: ASSUMPTION,   note: "spec: 30x30 mm reduced test vehicle"}
+    # h_sub is a DOE variable: 0.200 or 0.500 mm. Nominal June TSV height is 0.300 mm.
+    thickness_options: {value: [0.200, 0.500], status: ASSUMPTION,
+                        note: "required Phase-0B sweep; June nominal TSV height 300 um is SOURCE_BACKED"}
+
+  functional_die:
+    material: silicon
+    size_x: {value: 22.36, status: SOURCE_BACKED, note: "22.36^2 = 500.0 mm^2, June-2026 reference footprint"}
+    size_y: {value: 22.36, status: SOURCE_BACKED, note: "as above"}
+    thickness: {value: 0.300, status: ASSUMPTION, note: "spec: UNSPECIFIED default 300 um"}
+    power_w: {value: 240.0, status: ASSUMPTION,  note: "Phase-0B load parity; 240 W @ 1 V / 240 A"}
+
+  interface_layer:                 # homogenized microbump + underfill
+    material: underfill_homog
+    footprint: die                 # coincident with the functional die
+    thickness: {value: 0.010, status: ASSUMPTION,
+                note: "spec: ~10 um vertical scale, 20 um pitch fine-pitch interface"}
+
+  tim:
+    material: tim
+    footprint: die
+    thickness: {value: 0.050, status: ASSUMPTION, note: "spec: UNSPECIFIED default 50 um"}
+
+  hvr_tile:
+    material: hvr_effective
+    thickness: {value: 0.150, status: PROVISIONAL,
+                note: "NOT given in spec. Tile embedded flush with the TOP of the power substrate
+                       (component side facing the POL die). Held CONSTANT while h_sub varies so the
+                       thickness sweep is not confounded by tile volume. MUST be replaced by the
+                       HVR compiler stack height."}
+    embed_from: top                # flush with substrate top surface
+
+  tsv_field:                       # homogenized Cu TSV region beneath each HVR tile
+    enabled: {value: true, status: ASSUMPTION,
+              note: "architecture-dependent Cu content is mechanically relevant (CTE 16.66 vs 2.6 ppm/K).
+                     Sensitivity case runs with enabled=false."}
+    material: tsv_homog
+    diameter: {value: 0.030, status: SOURCE_BACKED, note: "June-2026 Table III"}
+    pitch:    {value: 0.060, status: SOURCE_BACKED, note: "June-2026 Table III"}
+    footprint: hvr_tile            # TSV field spans the tile footprint
+    # spans from substrate bottom (z=0) up to the underside of the HVR tile
+
+# ----------------------------------------------------------------------------
+# MATERIAL CARDS
+# ----------------------------------------------------------------------------
+# E, moduli in MPa; CTE in 1/K; k in W/(m*K); density in tonne/mm^3 (CalculiX consistent units)
+materials:
+  silicon:
+    status: SOURCE_BACKED
+    elastic_type: ortho            # cubic single crystal, spec-preferred
+    # cubic stiffness C11=166, C12=64, C44=79.6 GPa -> MPa
+    C11: 166000.0
+    C12:  64000.0
+    C44:  79600.0
+    isotropic_check: {E: 130000.0, nu: 0.28, status: SOURCE_BACKED, note: "spec: isotropic only as a check"}
+    cte: {value: 2.6e-6,  status: SOURCE_BACKED, note: "300 K"}
+    k:   {value: 130.0,   status: SOURCE_BACKED, note: "spec range 130-150 W/mK at 300 K; lower bound taken (conservative T)"}
+
+  copper:
+    status: SOURCE_BACKED
+    elastic_type: iso
+    E:  {value: 110000.0, status: SOURCE_BACKED}
+    nu: {value: 0.34,     status: SOURCE_BACKED}
+    cte: {value: 16.66e-6, status: SOURCE_BACKED}
+    k:   {value: 400.0,    status: SOURCE_BACKED}
+
+  tsv_homog:
+    status: DERIVED
+    note: >
+      Effective properties of a square-pitch Cu-via array in Si.
+      Cu area fraction f = pi*d^2/(4*p^2) = pi*0.030^2/(4*0.060^2) = 0.19635.
+      Stiffness/CTE: Voigt (aligned continuous phase along z);
+      alpha_eff = (f*E_Cu*a_Cu + (1-f)*E_Si*a_Si)/(f*E_Cu + (1-f)*E_Si).
+      Thermal: k_z Voigt (exact for parallel conduction); k_xy Maxwell-Garnett.
+      Computed at load time by etm.materials.derive_tsv_homog() so the formula, not the number, is the record.
+    derive_from: {matrix: silicon, inclusion: copper, geometry: tsv_field}
+
+  underfill_homog:
+    status: PROVISIONAL
+    note: "spec flags this as UNSPECIFIED and HIGH-RISK. Sensitivity: E +/-30%, CTE +/-30%."
+    elastic_type: iso
+    E:  {value: 8000.0,  status: PROVISIONAL}
+    nu: {value: 0.32,    status: PROVISIONAL}
+    cte: {value: 30.0e-6, status: PROVISIONAL}
+    k:   {value: 0.7,     status: PROVISIONAL}
+
+  hvr_effective:
+    status: PROVISIONAL
+    note: "spec: UNSPECIFIED surrogate. Sensitivity E = 80-160 GPa, CTE 4-10 ppm/K."
+    elastic_type: iso
+    E:  {value: 120000.0, status: PROVISIONAL}
+    nu: {value: 0.28,     status: PROVISIONAL}
+    cte: {value: 6.0e-6,  status: PROVISIONAL}
+    k:   {value: 60.0,    status: PROVISIONAL}
+
+  tim:
+    status: PROVISIONAL
+    note: "spec gives E 0.05-0.5 GPa, nu ~0.45, CTE UNSPECIFIED. Modeled as a compliant layer."
+    elastic_type: iso
+    E:  {value: 200.0,   status: PROVISIONAL, note: "0.2 GPa, mid-range of spec"}
+    nu: {value: 0.45,    status: PROVISIONAL}
+    cte: {value: 200.0e-6, status: OPEN_DECISION, note: "spec marks TIM CTE UNSPECIFIED. Typical polymer TIM value used.
+                                                          Compliance makes it a weak stress driver; verified by sensitivity."}
+    k:   {value: 3.0,    status: PROVISIONAL, note: "spec says 'from actual TIM'. 3 W/mK is a mid-grade value."}
+
+# ----------------------------------------------------------------------------
+# THERMAL BOUNDARY CONDITIONS
+# ----------------------------------------------------------------------------
+thermal_bc:
+  coolant_temp: {value: 25.0, status: ASSUMPTION, note: "spec: Phase-0B reference ambient/coolant 25 C"}
+  h_top:
+    value: null                      # filled by calibration; see calibrate_cooling.py
+    status: OPEN_DECISION
+    note: >
+      spec: "Do NOT choose a heat-transfer coefficient because it looks reasonable."
+      Calibrated in a 1-D step against the June-2026 cooled baseline (84 C) scaled to the
+      Phase-0B load, then FROZEN for the entire DOE. Calibration residual recorded.
+  h_bottom: {value: 10.0, status: ASSUMPTION, note: "natural convection under the package carrier"}
+  ambient_bottom: {value: 25.0, status: ASSUMPTION}
+  sides: {value: adiabatic, status: ASSUMPTION}
+
+# ----------------------------------------------------------------------------
+# STRUCTURAL BOUNDARY CONDITIONS
+# ----------------------------------------------------------------------------
+structural_bc:
+  t_ref: {value: 25.0, status: ASSUMPTION,
+          note: "M0 operational-only stress-free reference. NOT an assembly signoff temperature."}
+  t_cure: {value: null, status: OPEN_DECISION,
+           note: "spec: OPEN DECISION. Required for the M1 rung. Do not invent."}
+  variants:
+    BC_A:
+      type: rbm_321
+      status: ASSUMPTION
+      note: "3-2-1 rigid-body suppression on the substrate underside. PRIMARY global-warpage model.
+             ANSYS guidance: supports must prevent rigid-body motion without impeding thermal expansion."
+    BC_B:
+      type: compliant_support_layer
+      status: PROVISIONAL
+      note: >
+        Compliant BGA/board support represented as an explicit low-modulus layer beneath
+        the power substrate, with its underside fully restrained (the board). This is a
+        Winkler-type foundation that also carries shear, and it is implemented with the
+        same solid elements as the rest of the model - no discrete spring elements.
+        Equivalent normal foundation stiffness k_z ~ E_support / t_support.
+        Spec requires calibration from a BGA unit cell or board data - NOT yet done.
+      thickness: {value: 0.400, status: PROVISIONAL, note: "mm; BGA-field equivalent height"}
+      E:  {value: 400.0, status: PROVISIONAL, note: "MPa -> k_z ~ 1000 N/mm^3 at t=0.4 mm"}
+      nu: {value: 0.30,  status: PROVISIONAL}
+      cte: {value: 20.0e-6, status: PROVISIONAL, note: "solder/organic BGA field"}
+      k:  {value: 5.0,   status: PROVISIONAL, note: "W/mK"}

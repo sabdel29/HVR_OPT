@@ -1,0 +1,72 @@
+# Phase-0K Sec.6 -- MACHINE-READABLE MISSION CONTRACT
+#
+# This file is the single place a required life may legitimately enter this project.
+# NOTHING here is guessed. Every field is one of:
+#     USER_REQUIRED  -- must be supplied by the system owner before G2 can be evaluated
+#     UNKNOWN        -- not determinable from any source available to this project
+#     NOT_APPLICABLE -- structurally does not apply
+# A numeric value may appear ONLY with a populated `mission_source`.
+#
+# Phase 0K searched the entire repository and all supplied source material (Sec.5) and found
+# NO field or product life requirement. Every `n_required` in this repository refers to the
+# TSV VIA COUNT and is an unrelated quantity.
+
+meta:
+  status: UNPOPULATED
+  created_by: "Phase 0K"
+  consumed_by: "scripts/phase0k/mission_requirement.py"
+  rule: >-
+    A populated numeric field without a mission_source is INVALID and the tool will refuse it.
+    A qualification count may not be copied into a field-mission field.
+
+mission_source: USER_REQUIRED       # who declared this, and in what document
+mission_type: USER_REQUIRED         # FIELD_MISSION | PRODUCT_DESIGN_REQUIREMENT | QUALIFICATION
+                                    # -- Sec.4 categories A / B / C. Never interchangeable.
+
+# ---- A. the requirement itself
+service_life_years: USER_REQUIRED
+required_survival_fraction: USER_REQUIRED     # e.g. 0.99 of the population at service life
+confidence_target: USER_REQUIRED              # e.g. 90 % lower confidence bound
+qualification_target_cycles: UNKNOWN          # REFERENCE ONLY -- never used as N_required
+
+# ---- B. the load spectrum. The damage metric is per THERMAL EXCURSION OF THE JOINT,
+#         so what matters is the count and depth of excursions, not operating hours.
+cold_boots_per_day: USER_REQUIRED
+full_shutdowns_per_day: USER_REQUIRED
+high_power_events_per_day: USER_REQUIRED
+high_power_dwell_s: USER_REQUIRED
+low_power_dwell_s: USER_REQUIRED
+fraction_of_cycles_reaching_full_deltaT: USER_REQUIRED
+
+# ---- C. the temperature environment
+T_idle: USER_REQUIRED               # deg C at the joint, or inlet air if that is what is known
+T_active: USER_REQUIRED
+system_ever_fully_powered_down: USER_REQUIRED   # if NO, the true dT is far smaller than 58 K
+shipping_storage_excursions: UNKNOWN
+
+# ---- D. multi-bin spectrum (Sec.7). Populate ONLY if several cycle depths matter.
+#         Bins are NOT collapsed into one N_required unless a source-backed cumulative-damage
+#         rule is available -- see cumulative_damage_rule below.
+mission_bins: NOT_POPULATED
+#   - name: cold_boot
+#     dT_K: USER_REQUIRED
+#     T_max_C: USER_REQUIRED
+#     dwell_s: USER_REQUIRED
+#     cycles_per_day: USER_REQUIRED
+
+cumulative_damage_rule:
+  available: true
+  rule: "Miner-type linear damage summation, D = sum(n_i / N_f,i); failure at D >= 1"
+  source_backed: true
+  provenance: >-
+    Syed 2004 derives its life model from the Monkman-Grant creep-rupture relation combined
+    with the TIME FRACTION RULE, which is the creep analogue of linear damage summation, and
+    the model is built by summing damage over the steps WITHIN a cycle. Syed 2001 applies the
+    same framework across thermal, power and bend cycling. Linear summation across cycle TYPES
+    is therefore consistent with the framework's own construction rather than an outside
+    assumption.
+  caveat: >-
+    Syed cautions that for small field dT the LOW-STRESS creep mechanism, which contributes
+    under 5 % of strain in the accelerated tests used for calibration, can become prominent --
+    so a spectrum dominated by shallow cycles is outside the calibration's demonstrated range
+    and bins should be retained separately rather than summed.

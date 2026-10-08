@@ -1,0 +1,122 @@
+# ======================================================================
+# HVR_OPT .gitignore
+# The working tree is ~36 GB, almost entirely CalculiX and ANSYS solver
+# scratch. Everything excluded here is REGENERABLE from the scripts in
+# scripts/ plus the frozen configs in configs/. Nothing excluded here is
+# deleted locally; it is simply not tracked.
+# ======================================================================
+
+# --- FE solver scratch (32.5 GB of .dat alone) ------------------------
+*.dat
+*.frd
+*.inp
+*.sta
+*.cvg
+*.12d
+*.rout
+*.rin
+*.rfn
+spooles.out
+*.ngmesh
+*.nodemap
+
+# --- ANSYS / Icepak / Fluent scratch and autosaves ---------------------
+*.evtrs_0
+*.evtrs_hyd
+*.evtrs_hydh
+*.hvtrs_0
+*.nc_cas
+*.resd
+*.adp
+*.sd/
+*grid_output*
+*.lock
+*.trn
+*.err
+
+# --- Python environments and caches -----------------------------------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.mypy_cache/
+
+# --- Local tooling / credentials / internal endpoints ------------------
+# .claude/settings.json carries an internal auth helper and an internal
+# ANL base URL. Never publish.
+.claude/
+.vscode/
+.idea/
+*.key
+*.pem
+*.p12
+.env
+.env.*
+.netrc
+*credential*
+*secret*
+
+# --- Copyrighted literature downloaded from publishers -----------------
+# Cited in the manuscript; not ours to redistribute.
+results/Papers/
+results/phase0j/sources/
+research/**/*.pdf
+
+# --- Large regenerable report PDFs -------------------------------------
+# ~10 MB each and rebuilt by scripts/phase0mr3b/rebuild_reports.py.
+# The Markdown source of each is tracked instead.
+results/**/ETM_DVPD_FULL_TECHNICAL_REPORT.pdf
+results/**/ETM_DVPD_CURRENT_FRAMEWORK_AUDIT_REPORT.pdf
+results/archive/*.pdf
+
+# --- Per-phase solver working directories ------------------------------
+results/**/replay/
+results/**/wd/
+results/**/decomp/
+results/**/archmetrics/
+results/**/local_final/
+results/**/cetol_sweep/
+results/**/_scratch/
+
+# --- OS noise ----------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# --- top-level items found during the freeze audit ---------------------
+# 129 MB zip of the Scalable_Integrated_VR dependency, which is tracked
+# as a git submodule instead.
+Scalable_Integrated_VR.zip
+
+# Publisher PDFs downloaded for the literature review. Cited, not ours.
+/Design_Considerations_for_DC-DC_Voltage_Regulators_in_Distributed_Vertical_Power_Delivery_Systems.pdf
+/Vertical_Power_Delivery_for_High_Performance_Computing_Systems_with_Buck-Derived_Regulators.pdf
+
+# Machine logs, not results.
+batch.log
+.loglogin
+
+# --- regenerable numeric intermediates ---------------------------------
+# 543 files / 240 MB of mesh-node and displacement arrays dumped by the
+# sweep and replay drivers. Rebuilt by the scripts that wrote them.
+*.npy
+*.npz
+*.h5
+
+# --- ANSYS project / result trees --------------------------------------
+*.aedtresults/
+*.aedt.results/
+*.pyaedt/
+*.aedb/
+*.lock.*
+
+# --- third-party documentation and source bundles ----------------------
+# CalculiX manual and source tarball; upstream at dhondt.de.
+results/phase0l/ccx_2.22.pdf
+results/phase0l/ccx_2.22.txt
+results/phase0l/ccx_src/

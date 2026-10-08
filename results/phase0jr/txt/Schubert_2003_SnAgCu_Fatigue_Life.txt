@@ -1,0 +1,543 @@
+   Fatigue Life Models for SnAgCu and SnPb Solder Joints Evaluated by Experiments and Simulation
+
+                                   A. Schubertt, R. Dudek, E. Auerswald, A. Gollhardt, B. Michel, H. Reicbl
+                                        Fraunhofer Institute for Reliability and Microintegration, Berlin,
+                                              Gustav-Meyer-Allee 25, D-13355 Berlin, Germany
+                                                         email: dudek@che.iztn.fhg.de
+
+
+  Abstract                                                                          The effects of substrate f ~ s b e sand component f ~ s b e s
+      In recent years, many solder fatigue models have been                       on the reliability: Soft solders react with metallizations to
+                                                                                  form interfacial intermetallics. Intermetallics grow with
+  developed to predict the fatigue life of solder joints under
+                                                                                  time and temperature. Metallization consumption by
+  thermal cycle conditions. While a variety of life prediction
+                                                                                  intermetallic growth and intermetallics withim the solder
+  models have been proposed for near eutectic SnPb(Ag)-solder
+                                                                                  can be observed.0ften the soldering process itself induces
+  joints in the literature, not enough work has been reported in
+                                                                                  anomalies (e.g. changes in the reflow temperature profile,
+  extending these models to lead-free soldered assemblies. The
+  development of l i e prediction models requires a deep insight                  different cooling rates, excessive voids inside the solder,
+                                                                                  brittle phase formation, concentration gradients of
+  into failure modes, constitutive models for the themno-
+  mechanical behavior of solders and an experimental reliability                  elemental or metallurgical composition when the joint is
+                                                                                  formed).Smaller solder joints may impose increased
+  database. This is needed for the correlation of experimentally
+  determined cycles-to-failure to simulation results by fmite-                    interfacial effects and decreased fatigue-creep phenomena
+                                                                                  (joint volume versus interfacial effects ).
+  element analysis.
+      This paper describes in detail the life-prediction models of                  The mechanical behavior of solder is non-linear and
+   SnPh(Ag) and SnAgCu solder joints for thermal cycle                            temperature dependent. Solder alloys in consideration are
+  conditions. To obtain reliable FEM input and to verify                          above 0.5 of their melting point at 4 0 OC, so creep
+   simulation results, a variety of material testing and                          processes are expected to dominate the deformation
+  experimental fatigue data is necessary. The accuracy of lie-                    kinetics.
+  prediction tools has also become critically important, as the                     Failure of solder joints is a complex sequence of possible
+   designs need to he evaluated and improved with a high degree                   failure mechanisms involving graidphase coarsening,
+   of reliability, not through relative comparison but by                         grain boundary sliding, matrix creep, micro-void formation
+  providing absolute numbers.                                                     and linking, resulting in crack initiation and crack
+      This work deals with the effect of different solder                         propagation. In the case of SnAgCu solder joints, the
+  interconnect alloys (Sn59Pb40Agl and Sn95.5Ag3.8Cu0.7)                          damage accumulation process leads to much less
+   and the effect of different package types (PBGAs, CSPs, Flip                   coarsening of the microstructure.
+  Chip on FR-4 with and without underfill) on the fatigue life.                     The failure criterion used for recording lifetime might
+  Different temperature cycling conditions are applied.                           vary, based on either mechanical cracks or elecbical
+                                                                                  failure. Most often, electrical opens resulting from solder
+  Introduction                                                                    joint failures are intermittent and may be difficult to detect
+      Since solder joints provide the mechanical and electrical                   accurately (on-line vs. off-line measurements, electrical vs.
+  interconnect between the package and the board, they are                        mechanical damage).
+  susceptible to failures during thermal cycling. For this reason,                 In the past, efforts have been made in characterizing lead-
+  ensuring the solder joint reliability is one of the most critical            free solders to analyze the temperature and stress dependent
+  design aspects of electronic assemblies. Solder joints of                    inelastic behavior (creep and stress relaxation) and to
+  electronic assemblies are complex elements and therefore                     understand the differences in bulk and joint behavior.
+  building accuracy in a life prediction model is not an easy                      But much work still needs to be done for lead-6ee solder
+  task. The acknowledged complexity arises from the                            interconnects in the following areas:
+  following: The 3-dimensional package structures with solder
+                                                                                    Failure mechanisms related to the solder joints of the new
+  joints are subjected to multi-axial nonlinear material
+                                                                                  solder alloys (will creep deformation still play a dominant
+  behaviors, complex joint shapes, and multi-axial loading. In a
+                                                                                  role for e.g. thermally induced low cycle fatigue?),
+  more specific sense the accuracy of life time predictions
+  depends on the understanding and the consideration of the                         Temperature cycle data, for instance, on real components
+  following problems:                                                             (acceleration factors may depend on accelerated test
+                                                                                  conditions and solder alloys) and
+  0    The solder joints of a component are not all the same:
+      Distances to the neutral point (DNP), height tolerances,                      Life prediction models (e.g. a Manson-Coffm type model
+      and variability in joint geometry and metallurgy vary.                      based on creep strains accumulated in one thermal cycle or
+                                                                                  an analogous model based on viscoplastic strain energy
+  0    The initial microstructure can vary (e.g. grain size,
+                                                                                  densities dissipated per cycle).
+      intermetallics size and dispersion): Changes in the solder-
+      microstructure can be observed during testing and service                    This paper presents life prediction approaches based on
+      conditions, and their influence on the thermo-mechanical                 two damage parameters: creep strains accumulated in one
+      properties are not very well understood.                                 thermal cycle and the viscoplastic strain energy density
+
+                    GI2003 IEEE.
+0-7803-7991-5/03/$17.00                                                   603           2003 Electronic Components and Technology Conference
+
+  Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 16:50:26 UTC from IEEE Xplore. Restrictions apply.
+  dissipated per cycle for both SnPb(Ag) and SnAgCu solder
+  joints which are accurate within U[ of actual life
+  measurements.
+   Constitutive Relations of Solders                                           where a prescribes the stress level at which the power law
+      All of the alloys studied here are above half of their                   dependence breaks down. Q, is the apparent activation energy
+   melting point at use temperatures, so creep processes are                   and Cm.Iv is a constant. The parameters determined for a,n
+   expected to dominate the deformation kinetics. The majority                 and Q, for the SnAgCu alloys are given in Table 2.
+   of creep models concern the stress- and temperature-
+   dependence of steady-state creep.
+   Steady-state Creep
+   Sn59Pb4OAgI -Solder
+       Grivas et al. [I]suggested that a fme-grained (fme-
+   phased) SnF‘b(Ag) eutectic alloy exhibited both superplastic
+   deformation and matrix creep deformation. It w a s assumed
+   that both deformation modes occur simultaneously via
+   independent mechanisms. Superplastic deformation is rate-
+   controlled at ‘‘lower’’ stresses (region It) and matrix creep
+   deformation is rate controlling at “intermediate” stresses
+   (region m). Combiaing the rates of the two deformation
+   mechanisms, a semi-empirical equation was developed
+   summing up the strain rates in both stress regions, so that
+                                                                                           1
+
+                                                                                                              Tensile Stress (MPa)
+
+                                                                              Figure 1: Curve-fitting of SnAgCu creep data to hyperbolic
+          de .                                                                sine model (equation (Z)), based on 108 data points from own
+   where   2 IS   the steady-state strain rate, k is the Boltzmann’s          measurements and literature.
+           dt
+   constant, T is the absolute temperature, cr is the applied stress,         Table 2: Deformation constants of the steady-state creep for
+   nn and nm are the stress exponents, and An and Am are
+                                                                              SnAgCu-alloys, based on 108 data points from own
+   constants. Neglecting the dependence of Young’s modulus on
+                                                                              measurements and literature (equation (2))
+   temperature, the activation energies are apparent ones.
+      The data given by Grivas et al. [l] and Hacke et al. [2]                                                               277984 s-’
+   contains these parameters and these data agree with our
+   experimental creep results measured on Sn59Pb40Agl solder                      Sn95.75Ag3.5Cu0.75
+   (Table I).                                                                      Sn96.5Ag3.5CuO.5
+
+   Table 1: Deformation constants of the steady-state creep for                          CastinTM                             0.56 eV
+   Sn59Ph40Ag1, based on own measurements (equation (1))
+                                                                               Primary (Transient) Creep
+                                                                                   Steady-state creep is not observed immediately when
+           II          426.95           1.87      1     0.50                   stress is applied (Figure 2). Transient (or primary) creep
+           m                                                                   occurs before attaining steady state. For normal decelerating
+                        94.36           6.74            0.79
+                                                                               transient creep, the strain rate starts high and decreases to the
+                                                                               steady state value. The creep composed of a primary and
+                                                                               secondary part at constant stress and temperature can be
+                                                                               described by the equation
+
+
+
+
+                                                                           604          2003 Electronic Components and Technology Conference
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 16:50:26 UTC from IEEE Xplore. Restrictions apply.
+ where, ‘ &;           K and n are constants [4]. The saturated transient
+ creep strain can he obtained by extrapolating the steady-state
+ creep line back to the starting point.
+
+                    Primary and Secondary Creep: Sn95.5Ag3.8CuO.7
+
+
+                                                   -Fit       . ..
+   -                                       0         0        Experiment    I
+   E       1.0-
+      ._
+      c
+      e
+      5       .
+      0
+      e!
+           0.5-
+
+
+
+
+           0.0-
+                                                                                                         Young’s        Poisson’s     CTE
+
+
+
+
+                                                                                         I I I 1;: I 1
+                               2500        SOW                7503         10000
+                                                                                                         Modulus          ratio
+                                         Time (s)
+
+ Figure 2: Creep of Sn95.5Ag3.8Cu0.7 composed of a primary
+ and secondary part at constant stress and temperature,                                               36,000 at 210 K
+                                                                                          Sn-Pb-Ag
+ experimental curves and fitted by equation (3)                                                       21.000 at 398 K
+                                                                                                      48,500 at 218 K               20.0
+                                                                                                                                    24.0 10-6
+ Takimg the time-derivative of both sides of equation (3) yields                          Sn-Ag-Cu
+                                                                                                      33.000 at 483 K
+
+                                                                                     Constitutive Relations of Other Materials
+                                                                                         Besides solder, a package-PCB assembly also includes
+ where            k is the total creep rate and &L is the steady-state               metals such as NI-UBM, Cu-traces and metallizations,
+                  dr                                 dt                              polymeric materials like epoxy mold compounds, die attach
+  creep rate. For small times t, the instantaneous creep rate is                     adhesives, solder masks and underfills, as well as FR-4 and
+  greater than the steady-state creep rate (singular at P O ) , and                  BT used as interposer or substrates and the silicon die. Most
+  after a long time, the instantaneous rate approaches zero, and                     of these materials have temperature dependent behaviors.
+  the total creep strain rate is equal to the steady-state rate.                         The behaviors of nickel and copper are both considered
+                                                                                     elastic-plastic. The polymeric underfills, solder mask epoxy
+  Table 3: Deformation constants of the primary (transient)                          mold compounds and die attach adhesives were treated as
+  creep for Sn59Pb40Agl and Sn95.5Ag3.8Cu0.7. based on                               viscoelastic materials. FR-4 and BT interposers and substrates
+  own measurements (equation (4))                                                    consist of layers of epoxy-glass laminate alternating with thin
+                                                                                     sheets of copper, and are assumed to be orthotropic. For these
+  I                             I              I          I          I
+                                                                                     analyses, only the overall behavior of the interposer and
+                                                                                     substrate was of interest. Therefore, they were modeled as
+                                                                                     homogeneous materials. The anisotropic thermal expansion of
+                                                                                     the organic FR-4 and BT interposer and substrate as well as
+                                                                                     its elastic anisotropy are both accounted for in the analyses.
+                                                                                     The silicon die is treated as a linearly elastic body.
+                                                                                     Fatigue Life Models
+     The coefficients of equation (4) were fitted to measuring                          A quantitative comparison of the thermal fatigue lives of
+ results. However, only few measuring data was available.                            lead-free solder joints and lead-containing joints was made,
+ Table 3 shows the results achieved so far, slightly different                       assuming a similar low cycle fatigue behavior of the two
+ for both the solder compositions. It should be mentioned, that                      solder materials. An empirical model has been used for a long
+ a simplified form of equation (4), which was given by                               time [7],which assesses the amplitudes of the accumulated
+ Darveaux et al. [5], was not capable of fitting the stress strain
+                                                                                     creep strain &:along      the damage path for estimation of
+ response for both solders in a reasonable way.
+
+                                                                                   605       2003 Electronic Components and Technology Conference
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 16:50:26 UTC from IEEE Xplore. Restrictions apply.
+  mean cycles to failure Nr by simple application of a Coffm-                     As test chips, 10 x 10 mm' sized silicon dice with a 300
+  Manson type relation:                                                       pm pitch were used. The aluminum pads were coated with
+                                                                              electroless nickel UBM. The chips were placed onto the 1.0
+   N f = O ~ acc
+              ( E)-cl~       .                                        (5)     mm high Tg FR-4 substrate with Cu/NiAu as metal fmish.
+                                                                              Hysol FP 4511 underfill material was selected for the
+         i s the actual minimum (or average) over the path of                 assemblies. The underfill was applied and cured according to
+                                                                              its specitic requirements.
+   local maximum equivalent creep strain.
+                                                                                  For the reliability investigations and the comparison with
+       Besides creep strain criteria, also creep strain energy-
+                                                                              the simulation results, two thermal cycling profiles were
+   based methods have been applied to determine the fatigue of
+                                                                              selected for a total cycle time of 30 min (IO min dwells, triple
+   solder joints. The equation is to be read in terms of
+   viscoplastic energy density:
+                                                                              zone chamber cycling), 125 "C ... -55 "C and 150 "C -55          ___
+                                                                              "C in order to allow direct comparison.
+                    acc -c2                                                   Plastic Ball Grid Arrays (PBGA 256 and 272)
+   Nf=%(AWcr             )       3                                    (6)
+                                                                                  To reach the range of 5000 to 10000 thermal cycles, a
+   where A W F is the actual minimum (or average) over the                    family of wirebonded plastic BGAs with optimized design
+                                                                              for maximum board-level reliability were chosen. PBGAs
+   path of local maximum of viscoplastic strain energy density,
+                                                                              with pin counts of 256 and 272 and with ball pitches of 1.27
+   dissipated per cycle.
+                                                                              mm were analyzed, see also [9],[10]. The PBGA 272 is a four
+       That means, an approach similar to that for the equivalent             row perimeter PBGA with thermal balls. This package
+   creep strain was chosen with regard to the distribution pattern            includes a die in s u e of 10 x 10 x 0.35 mm3, BT-substrate
+   of the creep energy density: The local mini" (or average)                  thickness of 0.56 mm and solder mask defmed pads. The
+   of a band of maximum creep energy density crossing the                     PBGA is mounted onto a 1.57 mm high Tg FR-4 board. For
+   volume of the solder joints is assumed to determine the                    the PBGA 256 the same geomehy was used, but without
+   critical cycle number. The viscoplastic strain energy density is           thermal balls undemeath the die. To establish reliable lifetime
+   defmed as the summation of the scalar product of stress and                models, some experimental reliability data from the literature
+   inelastic strain increment tensors.                                        [ll] were also included in the evaluation. Reliability data
+   Investigated Assemblies and Thermal Cycling Conditions                     from the commonly used 4 0 "C to 125 OC thermal cycling
+      For these models to be more reliable, the empirical                     condition as well a more severe condition of 4 0 OC to 150 "C
+   correlation of l i e data should hold over a minimum of three              were analyzed to include the PBGAs reliability in the lifetime
+   orders of magnitude on the horizontal (experimentally                      prediction models.
+   determined characteristic life) and vertical axis (damage                  Experimental Reliability Results
+   parameters, e.g. creep strains accumulated in one thermal                      The small amount of data from literature shows that
+   cycle or the average viscoplastic strain energy dissipated per             although the joint reliability can be increased by the use of
+   cycle). To fulfill these requirements three different assemblies           SnAgCu or SnAg alloys, the degree of improvement is
+   were chosen and tested under different thermal. cycling                    package dependent. The reliability improvement should be
+   conditions.                                                                better for a more compliant package-board assembly (e.g.
+   Flip Chip on Organic Board Without UnderfiN                                PBGA). For package types with high CTE mismatch to the
+       To analyze the low thermal cycle range of some hundred                 board (e.g. LCCC assembled on FR-4), the solder joint
+   cycles, a flip chip on board assembly without underfill was                reliability may decrease by using lead-kee solders like
+   investigated. For the low cycle range, a silicon chip, having              SnAgCu or SnAg [12].
+   two peripheral bump rows with a pitch of 450 pm, was used                      Furthermore, the comparison of different cycling
+   as the fwst test vehicle. The die s u e was 6.7 x 6.7 mm and               conditions indicates different acceleration factors. For
+   had electroless Nip as under bump metallization (UBM). The                 instance, a CBGA-625 package with SnAgCu solder joints
+   die was flip-chip bonded to a 0.9 mm organic substrate made                performs worse in a severe test condition (with increasing
+   of FR-4 and solder mask. The metal f ~ s of    h the substrate             peak temperature and increasing temperature interval of the
+   was Cuflrliu. Three air-to-air thermal cycling conditions                  thermal cycle) than in a more benign condition, [13], [14].
+   were chosen for the evaluation, -50 "C to 20 OC. 0 OC to 70 "C             In the following, the experimental reliability results for
+   and 50 'C to 120 "C, all at a frequency of 30 min per cycle                different package assemblies are given.
+   with dwell times of 10 min and ramp times of 5 min.                            If sufficient failures were recorded during temperature
+                                                                              cycling, the cycles to failure for the flipchip configurations
+  Flip Chip on Organic Board With Underfill
+                                                                              without underfill were determined by a two-parameter
+      To extend the thermal cycle range to numbers of about                   Weibull analysis. The two parameters of this distribution are
+   1000 and larger cycles, a flip chip on organic board with                  beta, which is the Weibull slope and eta, which is the Weibull
+  underfill was chosen simultaneously. However, because of                    characteristic life, or cycles to 63.2 % package failure, or the
+  failure mode mixing of underfill delamination and solder                    mean-time-to-failure at ahout 50 % failure.
+  fatigue. the testing data should be treated with care [SI.In our
+                                                                                  For the flip-chip assemblies without underfill, Figures 3
+  experiments, cross sectioning has revealed solder fatigue as
+                                                                              and 4 show the lognormal failure probability plots of the tests
+  the dominating failure mode.
+
+                                                                            6CI
+                                                                              6         2003 Electronic Components and Technology Conference
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 16:50:26 UTC from IEEE Xplore. Restrictions apply.
+  with the -50 OC to 20 "C and 50 "C to 120 OC temperature                                   factors depend on accelerated test conditions and the solder
+  ranges and 30 min cycle times. Both ranges maintain the same                               alloys. The data clearly shows that the SnAgCu alloy
+  temperature difference of 70 "C.                                                           considered here has resulted in higher acceleration factors
+                                                                                             compared to the SnF'b alloy when comparing the different
+                                                                                             temperature cycling conditions. Obviously it is possible that
+                                FCOB without Underfill, -50 "C      ... 20 ' C               the treated stiff package with SnAgCu alloy joints performing
+         Bsm                                                                                 worse in a severe test condition may actually perform better in
+                .*                                                                           a more benign condition.
+     E *'PI
+     a
+     -
+     2          w
+     S E
+     ::
+     -
+     2 s
+     s m
+     g m
+     0          s
+                3
+
+
+
+
+                     100                 200           300     400         500   600 700
+                                                 Number of cycles
+                                                                                                                                  Sn63Pb37
+   Figure 3. FCOB without underfill, solder joint reliability                                       0                                    I
+   comparison of SnAgCu alloy with SnPb eutectic for -50 'C to                                          -50 ' C   ...20 "C         0 ' C ... 70%    50 "C ... 120 ' C
+   20 OC, ATC condition.                                                                                                         cycle conditions
+
+                                                                                             Figure 5. Solder joint reliability comparison of SnAgCu alloy
+                            FCOB without Underfill, 50 "C ... 120 "C
+         €53-
+                                                                                             with SnPb eutectic for FCOB, without underfill and under
+                                                                                             different temperature cycling conditions.
+                                                                                                 The impact of the SnAgCu solder compositions on the
+                                                                                             reliability of flip-chip assemblies with underfill was studied
+                                                                                             experimentally and compared to SnPb solder. The assemblies
+                                                                                             were temperature cycled at two different temperature ranges:
+                                                                                             -55 "C to 125 OC and -55 "C to 150 "C. Again, the cycles to
+                                                                                             failure for these flip-chip configurations were determined by a
+                                                                                             two-parameter Weibull analysis in those cases when sufficient
+                                                                                             failures were recorded during temperature cycling.
+
+
+                                                                                                         Flip Chipwith Underfill Assemblies
+                     50    60   70   80 90 100                       200            300
+
+                                          Number of cycles
+
+   Figure 4. FCOB without underfill, solder joint reliability
+   comparison of SnAgCu alloy with eutectic SnPb for 50 "C to
+   120 "C ATC condition.
+
+       The data for the lead-free alloy during -50 OC to 20 "C air-
+   to-air thermal cycle (ATC) test demonstrate an approximately
+    1.8 fold longer fatigue life for the SnAgCu bumps than for the
+   SnPb bumps. Under 50 "C to 120 OC cycling test conditions,
+                                                                                                                     -55 -C to 125 ' C         .55~CtOi5O*C
+   it is clear that the relative fatigue performance of both alloys
+   is fundamentally different fiom that for the -50 OC to 20 OC                                                          temperature cycle conditions
+   range. The SnAgCu flip chip modules have only 2/3 of the                                  Figure 6. Characteristic life of FC with underfill assemblies
+   fatigue life of the SnPb bumped modules.                                                  for SnAgCu and SnPb solder, two temperature cycling
+   The summary of temperature cycle data on these stiff                                      conditions: 125 "C to -55 "C and 150 "C to -55 "C
+   assemblies, given in Figure 5, indicates that the acceleration
+
+
+                                                                                           607       2003 Electronic Components and Technology Conference
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 16:50:26 UTC from IEEE Xplore. Restrictions apply.
+                                                                            behavior is approximately true. The life prediction models for
+ Table 5: Thermal cyclmg characteristic life for PBGA-organic               SnPb(Ag) and SnAgCu solder interconnects based on the
+ board assemblies with Sn-Ag-Cu and SnPb solder joints                      best-fit line going through the data of 14 experiments.
+                                                                            The results suggest that SnAgCu thermo-mechanical failure
+               PBGA-type                    Caracteristic Life              data may correlate to accumulated creep strains as in the case
+      (No. of WO, body size)                                                of eutectic SnPb(Ag) soldered assemblies. In Figure 7, the
+                                                                            slope of the best-fit l i e through the SnF'b(Ag) data is -1.80
+    Thermal cycling condition           Sn-Ag-Cu             SnPb           and for the SnAgCu data about -1.3. Furthermore, a crossover
+                 source                                                     point between the two alloys is indicated at approximately
+                                                                            600 - 800 cycles.
+    PBGA-256 (27 x 27 mm2)                                                      These fmdings suggest that for the same strain level at
+     -40 "C to 125 "C, 60 min              8083              3798           higher strains, SnAgCu performs better, whereas for the same
+                                                                            strain level at lower strains. SnPb(Ag) performs better.
+                A. Syed                                                         A similar trend was found for the correlation of the
+    PBGA-272 (27 x 27 mm2)                                                  thermo-mechanical failure data to the calculated viscoplastic
+                                                                            strain energy density, as shown in Figure 8. In that case, a
+     -40 OC to 125 "C, 60 min                                5560           crossover point between the two alloys is indicated, at
+          A. Mawer et al.                                                   approximately 6000 - 8000 cycles. But these fmdings also
+                                                                            suggest that for the same strain level at higher energy
+    PBGA-272 (27 x 27 mm')                                                  densities SnAgCu performs better, whereas for the same
+     -40 "C to 150 "C, 44 min                                2814           energy density, SnPb(Ag) performs better. The determined
+                                                                            slope of the best-fit line through the SnPqAg) data is -1.20
+        own measurements                                                    and for the SnAgCu data about -1.0.
+    PBGA-316 (35 x 35 mm')                                                   Summary
+     -40 "C to 125 "C, 60 min          3664 - 4187           2603                Based on materials testing as well as data given in the
+                                                                             literature, the constitutive behavior of Sn95.5Ag3.8Cu0.7
+     Shi-Wei R i c h Lee et al.                                              solder is described by a creep law and compared to the creep
+           ~
+
+
+
+
+                                                                             behavior of Sn59Pb40Agl solder. The creep rates given for
+    PBGA-313, (27 x 27 mm')
+                                                                             both solders contain a primary and a secondary part.
+     -40 "C to 125 OC, 60 min          4465 - 4917           2826            However, investigations on the primary creep description are
+                                                                             still ongoing. Improved predicting capabilities are expected to
+     Shi-Wei Ricky Lee et al.
+                                                                             be derived kom inclusion of a primary part, especially for
+                                                                             varying cycling conditions, e.g. air-to-air, liquid-to-liquid, or
+     Figure 6 shows a solder joint reliability comparison for the            field cycle conditions. These expectations have been
+ SnAgCu alloy with SnPb eutectic for both cycling conditions.                c o n f i e d by the fwst simulation results.
+ Under both ATC test conditions, the critical cycle numbers                       Combined experimental and theoretical investigations on
+ are slightly reduced for the SnAgCu solder alloy when                       electronic assemblies were performed to describe the fatigue
+ compared to the SnPb solder alloy. Furthermore, only a small                behavior of SnAgCu solder and its mathematical prediction,
+ difference for both solder compositions was detected for the                based on empirical power-law relationships. It is shown that
+ two temperature cycling conditions: 125 OC to -55 OC and 150                the experimental data can be fitted reasonably well by such a
+ "C to -55 "C.                                                               relationship for both equivalent creep strain and dissipated
+     To reach much higher numbers of temperature cycles,                     creep strain energy density. When the SnAgCu data is
+ PBGAs were considered for the evaluation of lifetime models                 compared to SnPb solder, similar coefficients are observed in
+ in the following analysis. The board reliability of PBGAs on                the empirical fatigue relations. However, the results suggest
+ board assemblies is much larger than for the assemblies                     that for the same strain level at higher strains, SnAgCu
+ considered above. Table 5 shows that for packages with low                  performs better, whereas for the same strain level at lower
+ CTE mismatch with the board, e.g. PBGAs mounted on FR-4,                    strains, SnPb(Ag) performs better. These differences as well
+ the solder joint reliability may actually increase by using                 as the different creep behaviors of the two solders cause the
+ SnAgCu alloys. In other words, the reliability improvement is                experimentally observed trend of an improved fatigue life of
+ better for SnAgCu alloys used in a more compliant package-                   SnPb solder joints for relatively stiff components and high
+ board assembly with lower solder straining, like PBGA on                    thermal mismatch induced loads, compared to a better
+ board.                                                                       performance of SnAgCu solder for relatively compliant
+     Figure 7 shows the correlation of fatigue life data from                 structures and low thermal mismatch induced loads.
+ different accelerated tests on different package types with
+ SnPb(Ag) and SnAgCu interconnects versus the determined                     Acknowledgments
+ accumulated creep strains by FEA in the solder interconnects.                   The authors would like to express their thanks to H.
+ If equation (5) holds, the curve fitting has to be a straight h e           Walter, IZM Berlin, for his materials testing work. The
+ in a log-log plot. It can be observed from the diagram that this            assistance of Mr. R. Doring, CWM GmhH Chemnitz, in
+                                                                             performing the FE-modeling, was gratefully appreciated.
+
+                                                                         608           2003 Electronic Components and Technology Conference
+
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 16:50:26 UTC from IEEE Xplore. Restrictions apply.
+                                              100                           1000                          10000
+                                                                  characteristic life (cycles)
+
+               Figure 7: SnPb(Ag) and SnAgCu fatigue life versus accumulated creep strain during one thermal cycle
+
+
+
+                           -a“    10
+
+
+
+                           r>
+                           ._
+                           c
+                           U)
+
+                          5 1
+                          U
+                           >
+                           P
+                           Ea,
+                           -g
+                           U
+                           a,
+
+                           ._  0.1
+                            U)
+                           ._
+                            U)
+                           U
+
+
+
+
+                                 0.01
+                                            100                             1000                           10000
+                                                               characteristic life (cycles)
+
+                Figure 8. SnPb(Ag) and SnAgCu fatigue life versus dissipated energy density during one thermal cycle
+
+
+                                                                               [3] Schubert, A., Dudek, R, Walter, H., Jong, E., Gollhardt,
+ References
+                                                                                  A.. Michel, B., Reicbl, H., “Reliability Assessment of
+  [I] G v a s , D.2 M W , K.L., Moms, J. w . Jr.. ‘’Deformation                    Flip-chip Assemblies                    Solder joints”,
+      of Pb-Sn Eutectic Alloys at Relatively High Strain
+                                                                                  Proc. 52nd Electronic Components & Technologv Conf
+      Rates”, Acta Metaiiurgica, 27 (1979), pp. 731-737                            (ECTC), San Diego, USA, May 28-31, 2002, Proc. pp.
+  [2] Hacke, P.L.: Sprecher, A.F., Conrad, H., “Thermo-                            1246-1255.
+      mechnical Fatigue of 63Sn-37Pb Solder Joints”
+                                                                               [4] Mayuzumi, M., Oncbi, T., “Creep Deformation and
+  in Lau, J.H.: Thermal Stress and Strain in Microelectronics                      Rupture Properties of Unhadiated zircaloy-4 ~~~l~~
+      Packaeing, Van Nostrand Reinhold, 1993, pp.467-499
+                                                                                                 -
+                                                                                   Fuel Claddine Tube at Temoeratnres of 727 to 857 K”,
+                                                                                  Journal ofNuclear Materials, 175 (1990), pp. 135-142.
+
+                                                                         609          2003 Electronic Components and Technology Conference
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 16:50:26 UTC from IEEE Xplore. Restrictions apply.
+    [5] Darveaux, R., Banjerji, K., Mawer, A., Dody, G.;
+        “Reliability of Plastic Ball Grid Array Assembly”
+    in H. Lau (ed.): Ball Grid Array Technology, McGraw-Hill,
+        New York, 1995, pp. 379-442
+    [6] ABAQUS User Manuals (V. 6.1), Hibbitt, Karlsson and
+        Sorensen, Inc., Providence, RI, 2000
+    [7] Dudek, R.; Nylen, M., Schubert, A., Michel, B., Reichl,
+        H., “An Efficient Approach to Predict Solder Fatigue
+        Life and its Application to SM- and Area Array
+        Components,”
+    Proc. ofECTC 47, San Jose, May 1997, pp. 462-411.
+    [8] Schubert, A.; Dudek, R.; Leutenbauer, R.; Doring, R;
+         Kloeser, J.; Oppermann, H.; Michel, B.; Reichl, H.;
+        Baldwin, D.; Qu, J.; Sitaraman, S.; Swamhathan, M.;
+         Wong, C.P.; Tnmmala, R, “Do Chip Size Limits Exist
+         for DCA?”, IEEE Transactions on Electronics Packaging
+        Manufacturing, Vol. 22, No. 4, Oct. 1999, pp. 1-8.
+     [9] Dudek, R, Doring, R, Michel, B., “Reliability Prediction
+         of Area Array Solder Joints,” Proc. Intemat. Conference
+         EuroSimE 2001, Paris, France, April 2001, pp. 215-222.
+     [lo] Schubert, A., Dudek, R., Doring, R., Walter, H.,
+         Auerswald, E., Gollhardt, A., Schucb, B., Sitzmann, H.,
+         Michel,      B.,   “Lead-free Solder Interconnects:
+         Characterization, Testing and Reliability”, Proc. 3rd Int.
+         Con$ on Benefiing from Thermal and Mechanical
+         Simulation in (Micro)-Electronics (€SIME), Paris,
+         France, April 15-17,2002, Roc. pp. 62-72.
+     [ll] Mawer, A. J., Nick Vo, Johnson, Z., Lindsay, W.,
+         ”Board-Level Characterization of 1.0 and 1.27 m m Pitch
+         PBGA for Automotive Under-Hood Applications”,
+         Proceedings 49th Electronic Components & Technology
+         Conference, 1999.
+     1121 Syed, A.. “Reliability and Au Embrittlement of Lead
+         Free Solders for BGA Applications”, Proc. Intern.
+         Symposium and Exhibition on Advanced Packaging
+         Materials, Braselton, Georgia, USA, March 11-14, 2001,
+         pp. 143-147.
+     [13] Syed, A., “Reliability of Lead-free Solder Connections
+         for Area-Array Packages,” Proc. IPC SMEMA Council,
+         APEX, LF2-7, pp. 1-9.
+     [14] Bartelo. J., Cain, S.R, Caletka, D., Darbha, K.,
+         Gosselin, T., Henderson, XD.W.. King, D., Knadle, K.,
+         Sarkhel, A., Thiel, G., Woychiik, C., Shih, D. Y., b g ,
+         S., Puttlitz, K., Woods, I., “Thennomechanical Fatigue
+         Behavior of Lead-free Solders,” Proc IPC SMEMA
+         Council, APEX 2001, San Diego, CA, Jan. 2001, LF2-2,
+         pp. 1-11.
+
+
+
+
+                                                                           610          2003 Electronic Components and Technology Conference
+
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 16:50:26 UTC from IEEE Xplore. Restrictions apply.
+

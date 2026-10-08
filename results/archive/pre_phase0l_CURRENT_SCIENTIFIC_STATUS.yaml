@@ -1,0 +1,2070 @@
+# SINGLE SOURCE OF TRUTH for what this project currently claims.
+#
+# WHY THIS FILE EXISTS (Phase-0G defect #29)
+# The full report stated the same claim in several places -- Executive Summary, Positive
+# Results, Negative Results, the uncertainty ladder, Next Steps -- and each phase updated
+# only some of them. By Phase 0F the document simultaneously asserted that "200 -> 500 um is
+# win/win/win and survived every correction" and that those thicknesses are unbuildable; that
+# "no architecture-dependent thickness tradeoff exists" and that one appears at 1 kW; and it
+# still listed kW-scale behaviour as NOT TESTED after the 1-kW gate had run.
+#
+# Regex assertions cannot catch that: every individual sentence was true when written. The
+# fix is structural. Every current-status section of the report is now GENERATED from this
+# file, and tests compare the generated text against it.
+#
+# STATUS VOCABULARY
+#   PROVEN      numerically converged AND cross-checked against an independent solver
+#   SUPPORTED   converged in one solver, no independent cross-check
+#   CONDITIONAL true only under an input that is still open; the condition is named
+#   SUPERSEDED  was asserted in an earlier phase and is no longer current; names what replaced it
+#   OPEN        not determined
+#   NOT_TESTED  a gate that has never been evaluated
+
+meta:
+  current_phase: "0K-R"
+  phase_name: "Experimental-domain, statistical-power and report-consistency closure"
+  supersedes_verdict_of: "0H"
+  rescopes_verdict_of: "0I"
+  extends_verdict_of: "0I-R"
+  supersedes_verdict_of_also: "0J"
+  date: "2026-09-14"
+  extends_verdict_of_also: "0J-R"
+  note_on_0j: >-
+    The Phase-0J verdict NO ADMISSIBLE SAC305 LIFE LAW is SUPERSEDED. It was correct on the
+    evidence then available and explicitly recorded its own cause as ACCESS, not physics.
+    The primary papers were subsequently supplied and 7 of its 10 database entries change.
+  note_on_0h: "The Phase-0H verdict is NOT withdrawn. It was correct for the M0
+    thermoelastic model and the single architecture then modelled, and it said so.
+    Phase 0I adds the two things it named as missing -- z-placement as a real
+    variable, and temperature-dependent failure physics -- and reports what changes."
+  optimiser_built: false
+  optimiser_recommended: false   # see verdict.optimiser_gate
+
+authoritative_model:
+  geometry:
+    status: PROVEN
+    hvr_cell_height_um: 720
+    basis: "500 um inductor (SOURCED, upstream INDUCTOR_LIBRARY) + GaN and MLCC layers (OPEN,
+            nominal bound) + 2 x 10 um inter-layer RDL"
+    substrate_rule: "t_cell + h_tsv <= h_sub, h_tsv >= 50 um"
+    realizable_substrate_range_mm: [0.80, 2.00]
+    note: "h_sub = 200 um and 500 um are GEOMETRICALLY INFEASIBLE for the selected converter.
+           All Phase-0B..0E absolute magnitudes rest on a geometry that cannot be built."
+  cooling:
+    status: SUPPORTED
+    model: "equivalent Robin boundary on the TIM top surface"
+    h_top_W_m2K_at_1kW: 166000.0
+    calibrated_to: "June-2026 T_j,max = 84 C at 1 kW"
+    phase0b_value_W_m2K: 17521.6
+    ratio: 9.47
+    caveat: "June cools with substrate-embedded micro-channels adjacent to the GaN layer.
+             That topology cannot reach 84 C in this package model at any film coefficient
+             (floors near 91 C), so the top-cooled field is the only one consistent with the
+             junction target. The through-thickness gradient direction is therefore an
+             assumption."
+    phase0g_bound: "Phase 0G bounded this rather than leaving it open. Swapping to the
+                    substrate-side topology changes warpage magnitudes by up to +45 % and
+                    halves S_h (-0.886 -> -0.431), but flips NO sign and changes NO ordering.
+                    Across a 4x band in h_top the MOUNTED normalized response is invariant to
+                    0.07 % (S_h = -0.4419 / -0.4421 / -0.4422). Substrate-side-only cooling is
+                    separately THERMALLY INFEASIBLE at 1 kW (floors at 90.96 C, reaching
+                    110.4 C at h = 2.00 mm)."
+    evidence: "results/phase0g/cooling_topology_comparison.csv,
+               results/phase0g/thermal_boundary_closure.md"
+  rdl_stack:
+    status: PROVEN
+    source: "ECTC-2024 Table I"
+    t_cu_um: 10
+    line_space_um: [10, 2]
+    layers: {vdd: 2, gnd: 2}
+    occupancy_derived: 0.8333
+    r_sheet_per_net_mohm_sq: 1.020
+  tsv_allocation:
+    status: PROVEN
+    rule: "n_required <= n_allocated <= n_available; R_field = R_single / n_ALLOCATED"
+    provisioning_J_cu_A_per_m2: {conservative: 1.0e+8, aggressive: 4.0e+8}
+    reliability_limit: OPEN
+  reference_point_1kw:
+    load_w: 1000
+    m_vr: 49
+    j_target_A_per_mm2: 3.5
+    areal_utilisation_pct: 55.0
+    note: "June's own optimum is M = 70; 70 tiles of this footprint cannot be placed under
+           this project's 0.5 mm keepout and gap rules."
+
+claims:
+  proven:
+    - id: geometry_realizability
+      statement: "A DVPD converter's component stack sets a hard lower bound on substrate
+                  thickness, and that bound excluded both thicknesses swept in Phases 0B-0E."
+      evidence: "results/phase0f/GEOMETRY_REALIZABILITY_AUDIT.md"
+      phase: "0F"
+    - id: rail_dependence
+      statement: "The rail carried by a vertical interconnect changes its loss by ~1960x for
+                  fixed transferred power, and which rail it carries is architecture-specific."
+      evidence: "results/phase0dr/POWER_PATH_AUDIT.md"
+      phase: "0D-R"
+    - id: allocation_policy
+      statement: "A via field's loss is proportional to current only under minimum-capability
+                  provisioning; under geometric allocation the same field obeys P ~ I^2."
+      evidence: "results/phase0e/tsv_allocation_sensitivity.csv"
+      phase: "0E"
+    - id: no_ac_correction
+      statement: "No AC correction to the vertical interconnect is required at the switching
+                  frequency; HFSS shows loop resistance flat to 0.18 % below the 19.1 MHz
+                  skin crossover."
+      evidence: "results/phase0e/em_validation.md"
+      phase: "0E"
+    - id: thermal_ordering
+      statement: "An independent 3-D thermal solver reproduces candidate ordering exactly at
+                  both 240 W and 1 kW."
+      evidence: "results/phase0e/thermal_validation.md, results/phase0f/thermal_moose_1kw.csv"
+      phase: "0E,0F"
+    - id: unit_consistency_defect
+      statement: "Vertical-tier losses were evaluated per regulator and summed with a
+                  system-wide lateral loss, understating every vertical tier by n_vr -- 4x at
+                  240 W and 49x at the 1 kW reference."
+      quantitative: "P_TSV / P_TSV,corrected = 49.004 to 49.055 at all nine thicknesses;
+                     independent hand check 89.7768 mW/VR x 49 = 4.399 W agrees"
+      evidence: "results/phase0g/electrical_crossover_uncertainty.md, DEFECT #30"
+      phase: "0G"
+    - id: bcb_is_a_clamp
+      statement: "The compact BC-B foundation restrains all three DOF on the underside plane,
+                  so it models a clamp and not a board. It never recovers its own free limit:
+                  at vanishing stiffness it gives 0.739 um where the free package on the
+                  identical mesh gives 8.287 um."
+      quantitative: "S_h > 0 at all 12 stiffnesses over 7 decades -- no crossover k* exists"
+      evidence: "results/phase0g/support_stiffness_sweep.csv,
+                 results/phase0g/board_foundation_calibration.md"
+      phase: "0G"
+    - id: thickness_ordering_universal
+      statement: "Thicker substrate reduces warpage in the free package and in every
+                  explicitly constructed assembly, across the whole board envelope from
+                  compliant to metal-backed, at every stress-free reference temperature and
+                  under every thermal boundary tested."
+      quantitative: "S_h = -0.039 to -0.886 in 5 board cases; sign stable across 3 reference
+                     temperatures and 4 thermal boundaries; 0 sign flips in 20 combinations"
+      evidence: "results/phase0g/explicit_board_crosscheck.csv,
+                 results/phase0g/footprint_m1_1kw.csv,
+                 results/phase0g/cooling_topology_comparison.csv"
+      phase: "0G"
+
+    - id: gan_height_sourced
+      statement: "The GaN device heights are no longer open. Manufacturer datasheets give
+                  685 um nominal (815 max) for the high-side EPC2212 and 606 um for the
+                  low-side EPC2090, against the 0/100/250 um envelope Phases 0F-0G invented."
+      quantitative: "for the EMBEDDED architecture this raises h_sub,min from 0.770 mm to
+                     1.176-1.426 mm"
+      evidence: "results/phase0h/geometry_height_closure.md"
+      phase: "0H"
+      amended_by: "Phase 0I -- see architecture_dependent_realizability. The heights are
+                   sourced and unchanged; what changed is that the BOUND they imply applies
+                   only to the architecture that embeds them."
+    - id: architecture_dependent_realizability
+      statement: "COMPONENT-HEIGHT REALIZABILITY IS ARCHITECTURE DEPENDENT. Component height
+                  constrains substrate thickness ONLY for the embedded architecture. Where the
+                  converter is below, above or beside the substrate, nothing it contains
+                  constrains h_sub, and the binding constraint becomes TSV manufacturability."
+      quantitative: "h_sub,min = 1.276 mm embedded (MLCC nominal) against 0.300 mm for
+                     backside, power-die and 2.5D -- the source-demonstrated TSV layer
+                     thickness (June-2026 Table III, d = 30 um at h = 300 um, AR 10:1).
+                     A 4.3x wider realizable range."
+      supersedes: "the Phase-0H phrasing, which stated the bound universally"
+      evidence: "results/phase0i/REALIZABILITY_BY_Z_ARCHITECTURE.md, DEFECT #33"
+      phase: "0I"
+    - id: warpage_is_not_a_reliability_proxy
+      statement: "Global die warpage does not predict the local interconnect loading for this
+                  architecture, and the relationship is not even sign-stable across assembly
+                  states."
+      quantitative: "70 paired runs: Spearman rho = 0.112 (all cases), 0.349 (mounted),
+                     -0.793 (free) against interface shear. Across the mounted thickness sweep
+                     warpage varies 3.0x (9.66 -> 29.23 um) while shear stays within +-9 %."
+      evidence: "results/phase0h/warpage_local_correlation.csv,
+                 results/phase0h/local_metric_selection.md"
+      phase: "0H"
+    - id: defect30_changed_a_240w_ranking
+      statement: "DEFECT #30 inverted an architecture comparison at 240 W as well as at 1 kW.
+                  Replaying the eleven Phase-0E candidates with the scope-guarded evaluator
+                  moves three ranking positions."
+      quantitative: "ARCH_B distributed j=2.0 h=0.5 shifts +356.83 mW (+1.576 %) and falls from
+                     third-best to worst of the five distributed cases; ARCH_A cases shift
+                     16-25 mW because their vias carry only leakage-scale current"
+      evidence: "results/phase0h/DEFECT30_GLOBAL_PROPAGATION_AUDIT.md"
+      phase: "0H"
+
+  supported:
+    - id: footprint_agreement_mounted
+      statement: "In a mounted assembly the electrical and mechanical preferences on the
+                  footprint lever AGREE: the larger, finer-partitioned footprint is both
+                  lower loss and lower warpage."
+      quantitative: "electrical -6.633 W for M = 36 -> 49 (259.2 -> 329.3 mm2);
+                     mechanical S_A = -0.166 to -0.290 in all 5 board cases"
+      evidence: "results/phase0g/footprint_board_envelope.csv,
+                 results/phase0g/footprint_placement_recheck.md"
+      corroboration: "June-2026 Sec. I asserts the same direction qualitatively -- distributed
+                      VRs produce localized deformation rather than global package deflection,
+                      reducing overall warpage sensitivity. Direction only; no number is given."
+      phase: "0G"
+    - id: count_inert
+      statement: "Regulator count is mechanically inert at constant total footprint and heat."
+      evidence: "results/phase0b, results/phase0c"
+      phase: "0B,0C"
+    - id: rdl_dominates_arch_conditional
+      statement: "Package distribution loss is dominated by lateral RDL spreading for ARCH_A at
+                  every realizable thickness, but NOT for ARCH_B, whose via field exceeds the
+                  RDL by up to 11x above roughly 0.9 mm."
+      quantitative: "ARCH_A: RDL 0.642 W against TSV 0.010-0.163 W. ARCH_B: TSV 0.450 W at
+                     0.80 mm rising to 7.210 W at 2.00 mm against a flat 0.642 W RDL."
+      evidence: "results/phase0h/interconnect_decomposition_1kw.csv"
+      phase: "0H"
+      supersedes: "rdl_dominates (Phase 0D-R), which stated it unconditionally"
+
+  conditional:
+    - id: archA_interior_optimum
+      statement: "ARCH_A retains a numerically resolved interior electrical optimum at
+                  h_sub = 0.90 mm."
+      condition: "resolved but NOT actionable -- the optimum is 8.634 mW deep on a 125 W
+                  budget (0.0069 %). The ARCH_A/ARCH_B gap at fixed thickness is 52x larger
+                  than the entire depth of this optimum."
+      quantitative: "numerical floor 0.0977 mW; depth vs 0.80 mm = 88.4x floor, vs 1.00 mm
+                     = 9.6x floor"
+      evidence: "results/phase0g/crossover_hires_ARCH_A_fixedA.csv"
+      phase: "0G"
+    - id: thickness_opposition
+      statement: "Substrate thickness is a genuine ETM opposition: electrically thinner is
+                  better, mechanically thicker is better."
+      condition: "the opposition is real and sign-stable, but NO criterion exists to make it
+                  binding (G2 NOT TESTED), so it cannot restrict a feasible set. It is a
+                  response coupling, not a constraint."
+      quantitative: "electrical +6.706 W for 0.80 -> 2.00 mm (ARCH_B nominal);
+                     mechanical -44 % warpage over the same range (FR-4 1.6 mm board)"
+      evidence: "results/phase0g/electrical_crossover_uncertainty.md,
+                 results/phase0g/explicit_board_crosscheck.csv"
+      phase: "0G"
+    - id: mounted_warpage_floor
+      statement: "A mounted assembly cannot reach the warpage levels the free package
+                  suggests: its floor is 14.03 um where the free package reaches 1.27 um."
+      condition: "magnitudes are NOT validated -- board CTE, board modulus envelope and the
+                  absence of a solder-mask/copper-plane laminate structure are engineering
+                  values, not measurements of the reference system."
+      evidence: "results/phase0g/mechanical_epsilon_corrected.csv"
+      phase: "0G"
+  superseded:
+    - id: footprint_opposition
+      statement: "HVR footprint is simultaneously an electrical and a mechanical design
+                  variable and the two OPPOSE: larger footprint lowers electrical loss and
+                  raises warpage. Sign preserved in both assembly states."
+      superseded_by: "Phase 0G: the sign is ASSEMBLY-STATE DEPENDENT. It is positive in the
+                      free package (+0.203) and the compact clamp (+0.058) and NEGATIVE in all
+                      five explicit assemblies (-0.166 to -0.290). In a mounted assembly the
+                      two disciplines AGREE. The reference paper asserts the mounted direction.
+                      Replaced by claim footprint_agreement_mounted."
+      phases_asserted: "0C,0D,0D-R,0E,0F"
+    - id: assembly_state_reversal
+      statement: "The mechanical thickness preference REVERSES between assembly states: free
+                  packages prefer thicker substrates, mounted packages prefer thinner ones."
+      superseded_by: "Phase 0G: an artifact of BC-B's three-DOF in-plane clamp. No explicit
+                      assembly reproduces it -- S_h < 0 in all five board cases, at three
+                      reference temperatures and four thermal boundaries. BC-B cannot recover
+                      its own free limit (0.739 vs 8.287 um) and no support stiffness k*
+                      exists over seven decades."
+      phases_asserted: "0F"
+    - id: archB_interior_optimum
+      statement: "ARCH_B has an interior electrical thickness optimum near h_sub = 1.0 mm."
+      superseded_by: "Phase 0G: an artifact of DEFECT #30. The minimum SURVIVED a 25x tighter
+                      convergence tolerance -- it was not numerical -- but vanished when the
+                      vertical-tier unit error was fixed. Corrected ARCH_B is monotonically
+                      increasing with the optimum on the thin boundary in 9 corners of 9."
+      phases_asserted: "0F"
+    - id: win_win_win_200_500
+      statement: "Substrate thickness 200 -> 500 um is win/win/win and survived every
+                  correction."
+      superseded_by: "Phase 0F: both thicknesses are GEOMETRICALLY INFEASIBLE for the selected
+                      converter. The trend DIRECTION survives on realizable geometry
+                      (800 -> 1500 um, -81.9 % warpage) but the magnitudes and the swept range
+                      do not."
+      phases_asserted: "0B,0C,0D,0D-R,0E"
+    - id: no_arch_dependent_thickness
+      statement: "No architecture-dependent thickness tradeoff exists."
+      superseded_by: "Phase 0F: at 1 kW ARCH_B's electrical optimum is interior while its
+                      mechanical preference is monotone. Phase 0G audits whether that
+                      interior optimum is numerically resolved."
+      phases_asserted: "0D-R,0E"
+    - id: archB_infeasible
+      statement: "ARCH_B is infeasible."
+      superseded_by: "Phase 0E: feasible under every source-backed current density; the
+                      verdict rested on an unsourced 4.8 mA per-via limit."
+      phases_asserted: "0D-R"
+    - id: placement_spread_188
+      statement: "The electrical spread across placements is 188.8 %."
+      superseded_by: "Phase 0E: 46.7 % on the sourced RDL stack."
+      phases_asserted: "0D-R"
+    - id: exchange_rate_16
+      statement: "The footprint ETM exchange rate is 16.2 W/um."
+      superseded_by: "Phase 0E: 11.48 W/um; Phase 0F at 1 kW: 12.86 W/um."
+      phases_asserted: "0D-R"
+    - id: ansys_unavailable
+      statement: "ANSYS cross-validation is impossible because the licence server is down."
+      superseded_by: "Licence restored 2026-09-06. HFSS and Icepak used; Q3D is not licensed."
+      phases_asserted: "0B,0C,0D,0D-R,0E"
+
+open:
+  - id: gan_mlcc_layer_heights
+    what: "GaN device and MLCC layer heights"
+    why_it_matters: "sets the HVR cell height and hence the minimum realizable substrate"
+  - id: em_lifetime_limit
+    what: "electromigration lifetime current density for copper TSVs"
+    why_it_matters: "the provisioning density is closed; the reliability limit is not"
+  - id: rdl_dielectric_and_stitching
+    what: "RDL dielectric stack and inter-layer stitching via density"
+  - id: board_laminate_structure
+    what: "real board laminate structure -- copper plane fractions, solder mask, stiffener,
+           and the board's true in-plane CTE"
+    why_it_matters: "Phase 0G CLOSED the question the Phase-0F reversal rested on: BC-B is a
+                     clamp, no k* exists, and every explicit board gives the free-package
+                     sign. What remains open is only MAGNITUDE. The 9.7-29.2 um range is an
+                     engineering envelope, not a prediction, and must not be quoted as
+                     predicted warpage."
+    status_change: "was board_foundation_stiffness (OPEN, Phase 0F) -- the SIGN question is
+                    now closed; only magnitude remains"
+  - id: cooling_topology
+    what: "whether the real package is cooled from the top or from inside the substrate"
+    why_it_matters: "sets the sign of the through-thickness thermal gradient"
+    status_change: "BOUNDED in Phase 0G rather than closed. It moves warpage magnitudes by up
+                    to 45 % and halves S_h, but flips no sign in any configuration tested.
+                    The mounted normalized response is invariant to 0.07 % across a 4x h_top
+                    band. Substrate-side-only cooling is separately thermally infeasible at
+                    1 kW."
+  - id: assembly_pre_stress
+    what: "assembly / cure / cooldown reference state (M1)"
+    why_it_matters: "all warpage here is INCREMENTAL OPERATIONAL, not TOTAL ASSEMBLED"
+    status_change: "BOUNDED in Phase 0G. Raising the reference to 150/175 C changes MAGNITUDES
+                    by up to +54 % (25.1 -> 38.7 um mounted) but leaves the mounted normalized
+                    response stable to 0.5 % (S_h = -0.4421 / -0.4397 / -0.4400) and flips no
+                    ordering. Every absolute warpage number in this project is therefore a
+                    LOWER BOUND. A validated pre-stress model still requires the cure schedule,
+                    cure shrinkage, viscoelastic relaxation and reflow profile -- none
+                    available for the reference system."
+  - id: mechanical_criterion
+    what: "an admissible operational-state warpage or RDL-shear allowable for this stack"
+    why_it_matters: "this is the single blocking item for G2 and for any constraint-based
+                     optimizer. Phase 0G searched the full corpus and found none: June-2026
+                     names the failure mechanisms (global package warpage, delamination, RDL
+                     shear) but attaches no number to any of them. External standards are
+                     unretrievable in this environment AND inadmissible on inspection --
+                     package-outline coplanarity governs the ball plane of a component as
+                     supplied at a defined measurement temperature for solderability at
+                     reflow, which matches neither the package state, the temperature, the
+                     measurement definition nor the failure mechanism analysed here."
+    evidence: "results/phase0g/mechanical_criterion_audit.md"
+
+not_tested:
+  - id: G2
+    what: "feasible-set reversal under a mechanical criterion"
+    why: "no source-backed criterion matching this package state, temperature, size,
+          measurement definition and failure mechanism could be found"
+    consequence: "the epsilon sweep is PARAMETRIC CONSTRAINT SENSITIVITY, never feasibility"
+  - id: transient
+    what: "transient electrothermal and mechanical response"
+  - id: m1_full
+    what: "full assembly-pre-stress model with plasticity and lifetime"
+
+verdict:
+  phase0g: "NO ACTIVE MECHANICAL CONSTRAINT -- RESPONSE COUPLING ONLY"
+  phase0h: "NO ADMISSIBLE MECHANICAL CRITERION FOUND -- RESPONSE COUPLING ONLY"
+  phase0i: "ARCHITECTURE-DEPENDENT RELIABILITY RESPONSE -- NO ACTIVE CONSTRAINT"
+  phase0ir: "PHASE-0I METRIC VALID AFTER REDEFINITION -- READY FOR LIFE-LAW ACQUISITION"
+  phase0j: "NO ADMISSIBLE SAC305 LIFE LAW FOUND FOR THE CURRENT METRIC / REGIME"
+  phase0j_supersession: >-
+    SUPERSEDED by Phase 0J-R. The verdict string above is retained VERBATIM as the
+    historical record. Phase 0J recorded its own cause as ACCESS rather than physics;
+    the primary calibration papers were subsequently supplied and 7 of its 10 database
+    entries change. See verdict.phase0jr.
+  phase0jr: "SAC/SnAgCu LIFE LAW ADMITTED FOR RELATIVE LIFE ONLY"
+  phase0k: "MISSION REQUIREMENT STILL OPEN -- ABSOLUTE-LIFE CALIBRATION ALSO REQUIRED"
+  phase0kr: "LOW-TEMPERATURE DATA INSUFFICIENT -- ORIGINAL PROFILE WITHDRAWN"
+  wording_rule: "The word CONSTRAINT is reserved for a defined mechanical inequality that
+                 binds. A change of sign in a mechanical response is a RESPONSE REVERSAL, not
+                 a constraint. A published number is a CRITERION only if it survives the
+                 six-condition admissibility test."
+  basis:
+    - "Nine candidate thresholds were tested against the six admissibility conditions and NONE
+       passed. The best scored 3 of 6. Zero admitted (criterion_admissibility.csv)."
+    - "Every published package-warpage allowable located is CATEGORY 1 -- manufacturing and
+       solderability. JEP95 80 um room-temperature ball-plane coplanarity, SPP-024 -120/+170 um
+       peak-reflow warpage, and wafer-level-packaging yield guidance of 0.2 mm (0.1 mm
+       preferred). All govern the package as supplied, at reflow or handling temperature, for
+       joint-formation defects."
+    - "JESD22-B112C is a MEASUREMENT METHOD, not an allowable. The allowables live in JEP95 and
+       SPP-024. IPC-9641, read directly, governs printed BOARD flatness through a reflow
+       profile and contains no limit at all."
+    - "Of eight enumerated failure mechanisms, ONE is computable at M0 -- global bending -- and
+       it is not a failure mechanism. Two of the three mechanisms June-2026 itself names
+       (RDL shear, delamination) are outside the mechanical model entirely."
+    - "Global warpage does not predict local interconnect loading (Spearman 0.112 overall) and
+       inverts sign between assembly states (-0.793 free, +0.349 mounted), so it cannot serve
+       as a reliability surrogate."
+    - "Neither local candidate survives validation for decision use: interface shear is
+       non-monotone under refinement (7.6 % spread, samples a bimaterial corner) and relative
+       displacement carries 26.5 % material spread from an underfill modulus the project has
+       never sourced."
+  what_this_is_not: "This is NOT a finding that the mechanics is wrong or irrelevant. The
+                     response model is converged, cross-validated and sign-stable. It is a
+                     finding that no admissible inequality exists to turn that response into a
+                     constraint, and that the project has been measuring the LOAD rather than
+                     the DAMAGE."
+  rejected_verdicts_phase0kr:
+    EXPERIMENT_DESIGN_FROZEN_CURRENT_MATERIAL_MODEL_SUFFICIENT: >-
+      rejected -- the model is not sufficient. The -40 C profile sits 85 K below the creep
+      calibration floor, and the creep card is evaluated 3.4-7.2x above its fitted stress window
+      in EVERY profile including the operating baseline.
+    EXPERIMENT_DESIGN_FROZEN_AFTER_WITHIN_DOMAIN_PROFILE_REDESIGN: >-
+      rejected although the redesign SUCCEEDED and is adopted. "FROZEN" requires all eight Sec.31
+      acceptance criteria, and criterion 2 -- stress inside or defensibly near the calibration
+      domain -- fails irreducibly. Claiming frozen would paper over the single most important
+      finding of this phase. The design is READY TO EXECUTE WITH A DECLARED LIMITATION.
+    LOW_TEMPERATURE_SAC305_MODEL_VALIDATED_ORIGINAL_PROFILE_RETAINED: >-
+      rejected -- no sub-zero SAC305 steady-state creep data exists. The low-temperature
+      literature for this alloy is high-strain-rate impact work, which the creep framework
+      explicitly excludes. Nothing was validated because nothing was extended.
+    STATISTICAL_POWER_INSUFFICIENT_SAMPLE_COUNT_MUST_INCREASE: >-
+      rejected as the VERDICT although it is true and is recorded as a secondary correction:
+      n = 16 answers the life-law question but not the Z2/Z1 architecture question at the
+      observed worst Weibull slope of 5.1, and the count rises to 34 per cell. It is a fix
+      applied within this phase, not the dominant finding.
+    EXPERIMENT_DESIGN_NOT_YET_IDENTIFIABLE: >-
+      rejected -- the design IS identifiable. The within-domain pair gives D = 1.4395, a 44.0 %
+      separation between the two laws' predicted life ratios, at an expected discrimination
+      Z-score of 3.44 with a stated specimen count.
+  rejected_verdicts_phase0k:
+    MISSION_REQUIREMENT_ACQUIRED_CURRENT_MODELS_ROBUSTLY_PASS_G2: >-
+      rejected -- no mission requirement exists. The entire repository and all supplied source
+      material were searched and nothing was found; every n_required here is the TSV via count.
+    MISSION_REQUIREMENT_ACQUIRED_G2_ROBUSTLY_NON_BINDING: "rejected -- no mission requirement
+      exists."
+    MISSION_REQUIREMENT_ACQUIRED_MODEL_FORM_UNCERTAINTY_PREVENTS_G2_DECISION: >-
+      rejected -- the second half is exactly right and is the central Phase-0K finding, but the
+      first half is false. No requirement was acquired.
+    ABSOLUTE_LIFE_CALIBRATION_REQUIRED_BEFORE_G2_CAN_BE_DECIDED: >-
+      rejected as INCOMPLETE, though true as far as it goes. It is silent on the mission, which
+      is equally open and equally blocking. Choosing it would repeat the Phase-0J-R error of
+      naming one blocker when there are two -- the error this phase exists to correct.
+    MISSION_REQUIREMENT_STILL_OPEN_CURRENT_RELATIVE_LIFE_RESULT_IS_THE_MAXIMUM_DEFENSIBLE_CLAIM: >-
+      rejected as UNDERSTATING the phase. It is true that relative life is the maximum currently
+      VALIDATED claim, but this verdict implies nothing further is obtainable. Phase 0K shows
+      precisely what is obtainable, how, and at what cost: 64 packages, two temperature ranges,
+      6.19 sigma of model discrimination.
+  rejected_verdicts_phase0jr:
+    SAC305_LIFE_LAW_ADMITTED_ABSOLUTE_FATIGUE_LIFE_PREDICTION_VALIDATED: >-
+      rejected -- the two admitted Syed models disagree by 4.10x on our joint (2499 vs 610
+      cycles for Z1) while agreeing to 4-7 % on the author's own independent validation
+      package. The cause is measured, not speculative: our w_acc/eps_acc is 124-136 MPa against
+      his 28.8-30.0 MPa. Each metric interpolates inside his range; the PAIR sits 4.3x off the
+      calibration locus.
+    PRIMARY_SOURCES_ACCESSED_LIFE_LAW_TRANSFER_REMAINS_CONDITIONAL: >-
+      rejected as too weak. It would understate a reproduced calibration (11.7 % worst error,
+      4.2 % constant consistency), an averaging volume matched to the source's own 25 um layers,
+      and a relative ratio robust across four independent formulations. "Conditional" is the
+      right word for the ABSOLUTE result and is used for it; it is the wrong word for the phase.
+    PRIMARY_SOURCES_CONFIRM_NO_ADMISSIBLE_LIFE_LAW_FOR_CURRENT_REGIME: >-
+      rejected -- four formulations are admitted for relative life, one as methodology and one
+      for acceleration scaling. This was the Phase-0J verdict and the supplied papers overturn
+      it, exactly as Phase 0J said access would.
+    SAC_LIFE_LAW_FAMILIES_DISAGREE_MODEL_FORM_UNCERTAINTY_DOMINATES: >-
+      rejected for the RANKING, which is identical across every law, exponent and dwell tested
+      (Z2 > Z1 > Z4, Z2/Z1 = 1.21-1.38). Model-form uncertainty dominates the ABSOLUTE value
+      only, at 4.1x, and that is reported as such rather than promoted to the verdict.
+    CURRENT_ZERO_DWELL_LOAD_PROFILE_IS_INCOMPATIBLE_WITH_AVAILABLE_CALIBRATIONS: >-
+      rejected, and DOUBLY false. The premise is wrong -- the solver's own NT output shows a
+      STEP followed by a 300 s HOLD at each extreme, not a ramp, so there is a real 300 s dwell
+      that matches Syed's TC3 exactly. And the conclusion is wrong -- over a 30x dwell change
+      the relative result moves by only +-2 %.
+  rejected_verdicts_phase0j:
+    G2_PASSED_RELIABILITY_CONSTRAINT_CHANGES_THE_FEASIBLE_SET: >-
+      rejected -- both halves of the inequality are missing. No admissible life law and no
+      required life. Sec.24 is explicit that G2 is not passed merely because lifetimes differ.
+    LIFE_LAW_ACQUIRED_ALL_ARCHITECTURES_PASS: "rejected -- no law was acquired."
+    LIFE_LAW_ACQUIRED_ALL_ARCHITECTURES_FAIL: "rejected -- no law was acquired."
+    ARCHITECTURE_DEPENDENT_FATIGUE_LIFE_PROVEN_NO_REQUIRED_LIFE_FOUND: >-
+      rejected although half of it is true. The METRIC difference is proven and resolved at
+      5.8x its paired-perturbation spread, and no required life was found. But FATIGUE LIFE is
+      not proven, because no admissible law converts the metric into a life. Saying "proven"
+      would claim the bridge this phase failed to acquire.
+    FATIGUE_LIFE_RANKING_IS_MODEL_FORM_DEPENDENT: >-
+      rejected -- the OPPOSITE is true and it is a genuine positive result. The ranking
+      Z2 > Z1 > Z4 is identical across all three law families and every exponent tested.
+      Reporting this verdict would invert a finding.
+    LIFE_LAW_FOUND_BUT_LOADING_OUTSIDE_ITS_VALID_DOMAIN: >-
+      rejected as the verdict, though the cycle IS incompatible (zero dwell against 15 min,
+      dT 2.9x apart). It is not the operative blocker, and the domain is not even knowable
+      because no accessible source states it. Verdict F names the primary cause.
+  rejected_verdicts_phase0ir:
+    PHASE_0I_LOCAL_RELIABILITY_METRIC_VALIDATED_AS_IS: "rejected -- the metric's VALUE is
+      correct and its creep content is verified, but its LABEL was wrong. Phase 0I called it a
+      strain range; it is an accumulated inelastic PATH LENGTH per cycle, larger than the range
+      by a factor of 3.72 here. A future life law matched to a range would be misapplied by that
+      factor. That is a redefinition, so 'validated as is' overstates the outcome."
+    PHASE_0I_DAMAGE_METRIC_OMITTED_CREEP_CONTRIBUTION: "rejected -- DISPROVED by experiment.
+      This was the specific failure mode the audit was commissioned to look for, and it did not
+      occur. With a creep-only material and no *PLASTIC card, PEEQ / eq(eps_inelastic) = 1.0000.
+      No replay of the Phase-0I results is required and none was performed."
+    PHASE_0I_LOCAL_RELIABILITY_METRIC_NOT_PHYSICALLY_CLOSED: "rejected -- it is closed. The
+      quantity is exactly defined, its plastic and creep content is verified, the stabilised
+      cycle is correctly extracted, and it converges on mesh, creep tolerance and corner
+      regularisation."
+    PHASE_0I_ARCHITECTURE_CLAIMS_VALID_BUT_LIFE_INTERPRETATION_WITHDRAWN: "rejected as the
+      VERDICT although both halves are true and are recorded. The life interpretation IS
+      withdrawn (see relative_life) and the architecture claims ARE valid and resolved. It is
+      rejected only because it omits the operative finding: the metric itself needed redefining,
+      and once redefined it satisfies every condition for Phase 0J."
+  rejected_verdicts_phase0i:
+    RELIABILITY_CONSTRAINT_PROVEN_MECHANICS_ENTERS_SYNTHESIS: "rejected -- a constraint needs
+      both halves of an inequality. The local metric now exists and is validated; the allowable
+      does not. No admissible SAC305 life law was retrievable and no mission requirement exists."
+    GLOBAL_WARPAGE_DOES_NOT_TRACK_LOCAL_DAMAGE: "rejected -- it DOES track: Spearman +1.000
+      within every architecture and +0.909 pooled. The defensible statement is that warpage
+      OVERSTATES the benefit by 3-5x (29.7-52.6 % against 5.6-17.2 % over the same thickness
+      range). This NARROWS rather than contradicts Phase 0H, whose finding concerned SMEARED
+      INTERFACE SHEAR, which was a poor proxy."
+    NO_MATERIAL_RELIABILITY_EFFECT_FOUND: "rejected -- there is one and it is large: 35.8 % in
+      damage between the backside and embedded architectures. NOTE, Phase 0I-R: the
+      '1.9-3.8x in relative life' that originally closed this sentence is WITHDRAWN. It
+      rested on an unsourced fatigue exponent m = 1.5-3 that entered as a figure annotation;
+      over m = 0.5-5 the ratio spans 1.25-9.18. The 35.8 % metric difference stands."
+    INSUFFICIENT_MATERIAL_MISSION_DATA_FOR_RELIABILITY_VERDICT: "rejected as the verdict,
+      though true of the LIFE LAW and the MISSION specifically. The constitutive model was
+      sourced for the correct alloy, validated 4/4 and cross-checked twice, and a real
+      architecture-dependent response was measured."
+  rejected_verdicts:
+    MECHANICAL_CRITERION_ACQUIRED_G2_PASSES: "rejected -- 0 of 9 candidates admitted"
+    MECHANICAL_CRITERION_ACQUIRED_NON_BINDING: "rejected -- no criterion was acquired at all;
+                                                every candidate failed admissibility"
+    LOCAL_RELIABILITY_METRIC_REPLACES_GLOBAL_WARPAGE: "rejected -- global warpage IS
+      disqualified (Sec. 7), but neither local candidate survived Sec. 10 validation, so
+      nothing replaces it. Claiming a replacement would overstate what was achieved."
+    INSUFFICIENT_MATERIAL_ASSEMBLY_DATA_TO_TEST_A_CANDIDATE: "rejected as the PRIMARY verdict,
+      though true as a sub-finding: mechanism B is NOT TESTABLE WITH PRESENT DATA (Sec. 9).
+      The dominant fact is admissibility, not data volume -- criteria were found and none
+      applies to the operational mounted state."
+  g2_status: NOT_TESTED
+  g2_note_phase0k: >-
+    STILL NOT TESTED, and Phase 0K establishes WHY it cannot be closed by mission definition
+    alone. Two independent pieces are open. (1) MISSION: no field or product requirement exists
+    anywhere in the repository or the supplied material; N_required is USER INPUT REQUIRED and
+    is now enforced mechanically by a contract file that refuses unprovenanced numbers.
+    (2) ABSOLUTE-LIFE CALIBRATION: the four admitted formulations span 5.2x within a single
+    architecture while the architectures separate by only 1.21-1.38x, so NO N_required exists at
+    which all models agree Z1 fails and Z2 passes -- the conditions are disjoint (Z1 fails only
+    above 2499, Z2 passes only below 581). Zero of 601 grid points give a robust reversal.
+    Relative life alone does not pass G2 and is not claimed to. What IS established is
+    ARCHITECTURE-DEPENDENT RELATIVE FATIGUE LIFE.
+  g2_note_phase0jr: >-
+    STILL NOT TESTED, and now blocked by ONE requirement instead of two. Requirement 1, a
+    defensible predicted fatigue life, is PARTIALLY MET: four primary-source laws admitted for
+    RELATIVE life, the source calibration reproduced on tolerances declared in advance, and the
+    averaging volume matched to the source's 25 um layers. Absolute life remains CONDITIONAL
+    because the two admitted metric families disagree 4.1x on our joint. Requirement 4 is MET
+    and strengthened -- Z2/Z1 = 1.21-1.38 across two authors, two alloy variants, two metric
+    families and a 30x dwell range. Requirement 2, a defensible required life, is UNCHANGED.
+    Phase 0J-R called it the SOLE blocker; PHASE 0K WITHDRAWS THAT, having tested it formally:
+    knowing N_required does not by itself produce a unique pass/fail, because the admitted
+    absolute-life formulations differ by 4.1x and therefore disagree about feasibility over a
+    wide band of N_required. TWO OPEN PIECES for absolute G2: (1) the system mission /
+    required life, and (2) an absolute-life calibration, OR a decision region demonstrably
+    robust to the model-form spread. What Phase 0J-R does establish, which the brief
+    explicitly permits, is ARCHITECTURE-DEPENDENT RELATIVE FATIGUE LIFE.
+  g2_note_phase0j: >-
+    STILL NOT TESTED, and now bounded on both sides. LEFT side: closed and strengthened --
+    three metrics frozen natively (M1 path, M2 range, M3 energy), all convergent, all agreeing
+    on architecture ranking. RIGHT side: absent for TWO independent reasons, not one. (a) NO
+    ADMISSIBLE LAW -- 0 of 10 candidates passed the ten predeclared criteria, and the one
+    conditionally transferable candidate failed the reproduction gate because its calibration
+    data are unretrievable. (b) NO REQUIRED LIFE -- no category-B field mission requirement
+    exists, and Sec.14 forbids promoting the 1000-cycle qualification count. Requirement 4 of
+    the Sec.23 set IS met: the ranking survives uncertainty. Requirements 1 and 2 fail outright
+    and 3 is not evaluable.
+  g2_note_phase0ir: "Unchanged, and now precisely bounded. The LEFT side of
+    g_mech(x) <= g_allow is closed: an exactly defined, creep-inclusive, convergent local metric
+    verified against the solver's own output. The RIGHT side is absent and is DATA, not physics
+    -- a SAC305 fatigue relation matched to the accumulated-path-length form of this metric, and
+    a mission requirement. Phase 0J is recommended to acquire exactly those two things."
+  optimiser_gate:
+    phase: "0G"
+    recommended: false
+    condition_1_assembly_response_survives: PARTIAL
+    condition_1_detail: "The thickness RESPONSE survives calibrated board and thermal-boundary
+                         uncertainty with 0 sign flips in 20 combinations. But the
+                         assembly-state REVERSAL the condition was posed about does not
+                         survive -- it does not exist."
+    condition_2_criterion_or_epsilon_alters_feasible_set: false
+    condition_2_detail: "No criterion exists, so nothing can alter the feasible set. Phase 0G
+                         additionally argued the computed range sits far below conventional
+                         tolerances; Phase 0H Sec.18 RETRACTED that comparison as unsourced,
+                         which strengthens rather than weakens the conclusion -- whether the
+                         range is safe or constraining is UNKNOWN."
+    conclusion: "BOTH conditions were required. Condition 2 fails outright and condition 1
+                 fails in the sense it was posed. The global ETM optimizer is NOT recommended
+                 and was NOT built."
+    phase0h_note: "Phase 0H reached the same conclusion by a different route -- 0 of 9
+                   candidate criteria admitted -- and this gate is retained as the Phase-0G
+                   historical record rather than rewritten."
+  g2_note: "Unchanged since Phase 0B, but the reason has narrowed. Phase 0H could not test
+            G2 because it had neither a failure-relevant metric nor an allowable. Phase 0I
+            supplies the metric -- convergent, validated, tied to a documented mechanism -- so
+            g_mech(x) <= g_allow is now writable in FORM. What is still missing is g_allow: a
+            SAC305 life law (both candidate sources return HTTP 403) and a required life (not
+            published for the reference system). Half the gate is now built."
+
+next_gate:
+  id: "0L -- MISSION INPUT AND BOARD-LEVEL CALIBRATION IN PARALLEL, then RDL / delamination"
+  supersedes_0k_framing: >-
+    Phase 0K RAN. Its framing of itself as gated on system-owner input alone is superseded by
+    its own result: a calibration experiment is independently necessary because no robust
+    Z1-fail / Z2-pass band exists under the current model-form spread.
+  recommendation: "MISSION + EXPERIMENT IN PARALLEL -- they are independent, both required, and
+    neither blocks the other"
+  supersedes_0k_framing: >-
+    The Phase-0J framing of 0K as gated on LIFE-LAW ACCESS is SUPERSEDED. Access happened: the
+    primary papers were supplied, four laws are admitted, and the calibration was reproduced.
+    The remaining blocker is NOT mechanics and NOT literature.
+  blockers_TWO_not_one: >-
+    PHASE 0K CORRECTION. Phase 0J-R recorded N_required as the SOLE blocker. Formal decision
+    analysis withdraws that: TWO pieces are open -- (1) the system mission / required life, and
+    (2) an absolute-life calibration OR a demonstrated decision region robust to the 4.1x
+    model-form spread. See results/phase0k/G2_DECISION_REGIONS.md.
+  piece_1_mission: >-
+    N_required, from the system owner. Minimum set in results/phase0jr/MISSION_INPUT_TEMPLATE.md
+    -- expected service lifetime, required survival probability, whether the target is a field
+    mission or a qualification gate, cold boots per day, workload cycles per day and their
+    depth, and whether the system is ever fully powered down.
+  cheapest_high_value_addition: >-
+    ONE board-level thermal-cycle test of the actual DVPD package. A single measured life at a
+    single condition fixes the constant directly, collapses the 4.1x model-form spread on
+    absolute life, and converts every relative result in Phase 0J-R into an absolute one.
+  supersedes: "the Phase-0I-R next_gate, which named 0J. Phase 0J ran and returned a negative:
+    the laws exist, they are paywalled, and none of the accessible reprints carries a
+    calibration dataset."
+  what_0K_needs: >-
+    Exactly two things, both ACQUISITION and neither modelling. (1) A SAC305 fatigue relation
+    matched to one of M1/M2/M3, WITH its constants, its averaging volume, its calibration
+    dT/dwell, AND its own calibration data so the Sec.8 reproduction can actually be run.
+    Institutional access to IEEE Xplore and ASME would supply all three canonical papers
+    immediately and is the cheapest possible unblock. (2) A required life DECLARED BY THE
+    SYSTEM OWNER. If (1) arrives with a calibration cycle far from ours, a justified
+    acceleration relation or a re-run on that cycle becomes a third requirement -- and the
+    Norton surrogate's 7.5-16 MPa window must be re-validated at whatever temperatures it uses.
+  gated_on: >-
+    Phase 0J WAS authorised because Phase-0I-R metric closure passed, and it ran. Its outcome
+    is recorded in verdict.phase0j: the metric side was correct and the DATA side was not
+    available. Phase 0K is therefore gated on ACCESS, not on any further modelling result.
+    Historical note -- Phase 0J was authorised because All five Sec.24
+    conditions are met: the metric is exactly defined; plastic and creep are both proven
+    present by experiment; stabilised-cycle extraction is correct; the Z2 separation is
+    resolved at 5.8x its perturbation spread; and the metric is compatible in principle with
+    a known class of SAC305 fatigue law, subject to matching the law to the accumulated-
+    path-length form or converting by the measured factor 3.72.
+  rationale: "Phase 0I built the half of G2 that was missing physics: a convergent, validated,
+              failure-relevant local damage metric with a sourced SAC305 constitutive model.
+              The other half is not physics, it is DATA -- a life law and a required life.
+              Adding a second failure mechanism before that would produce another well-resolved
+              response with nothing to compare it against."
+  priority_order:
+    - "1. SAC305 life law N_f = f(Delta-eps_in) with its constants, metric definition and the
+       package it was calibrated on. Both candidate open-access sources return HTTP 403 here;
+       institutional access or a different route is needed."
+    - "2. A required life for the target product -- cycles to survive, from a qualification
+       target or a stated product requirement. Not published for the reference system, and
+       Sec.20 forbids inventing one."
+    - "3. RDL / interposer damage. Still absent from the mechanical mesh entirely and one of
+       the three mechanisms June-2026 names. ARCH_Z4 and ARCH_Z5 load it hardest."
+    - "4. Cohesive-zone delamination -- the remaining June-named mechanism and the convergent
+       replacement for the peel metric excluded since Phase 0C."
+    - "5. Joint-to-joint variation; only the single worst joint is modelled."
+  publication_framing: "Unchanged from Phase 0H in kind, strengthened in content: AUDITED
+    CROSS-DOMAIN DVPD MODELLING AND FALSIFICATION. Phase 0I adds vertical integration as a
+    real design variable, a validated reliability-physics chain, and a measured
+    architecture-dependent reliability response -- all without an active constraint."
+  explicitly_not_next: "the global ETM optimizer"
+
+phase0g_defects:
+  - id: 29
+    title: "DUPLICATED CURRENT CLAIMS CAN BECOME SEMANTICALLY STALE"
+    detail: "The report stated the same claim in Executive Summary, Positive Results, Negative
+             Results, the uncertainty ladder and Next Steps; each phase updated only some.
+             Every individual sentence was true when written, so regex assertions could not
+             catch the contradiction."
+    fix: "This file is the single source of truth. Current-status sections are GENERATED from
+          it and semantic tests compare the generated text against it."
+    status: FIXED
+  - id: 30
+    title: "UNIT INCONSISTENCY BETWEEN PER-REGULATOR AND SYSTEM-WIDE LOSS TERMS"
+    detail: "vertical_tier() returns a PER-REGULATOR loss; rdl_network_solve() returns a
+             SYSTEM-WIDE loss. Phases 0D-R, 0E and 0F summed them directly, understating every
+             vertical tier by n_vr -- 4x at 240 W, 49x at 1 kW."
+    detected_by: "Phase 0G Sec. 2 curve decomposition, after the convergence-tolerance
+                  hypothesis had been tested and eliminated"
+    impact: "INVERTED the Phase-0F architecture conclusion. ARCH_B's interior optimum was an
+             artifact; corrected ARCH_B is monotonic with its optimum on the thin boundary."
+    fix: "scripts/phase0e/architecture0e.py -- both terms expressed system-wide; guard test
+          added; 151 tests pass."
+    status: FIXED
+  - id: 31
+    title: "THE SEMANTIC LEDGER WAS VACUOUS -- IT COULD NOT FAIL"
+    detail: "The Phase-0F semantic ledger scored each withdrawn claim against a +-800-character
+             window and accepted 'was ', 'were ', 'became', 'becomes' and 'earlier' as
+             exonerating context. In English technical prose at least one of those appears in
+             any such window, so EVERY ledger entry passed unconditionally. The mechanism built
+             to catch DEFECT #29 could not catch anything."
+    detected_by: "a deliberate NEGATIVE TEST -- three unqualified re-assertions of withdrawn
+                  claims were injected into the report and the ledger stayed green. The guards
+                  had never been checked for the ability to fail."
+    impact: "Five genuinely stale statements were standing in the Executive Summary, the
+             uncertainty ladder and Next Steps, all of them invisible to a green build."
+    fix: "The exonerating vocabulary is restricted to markers that can only be present
+          deliberately; the window is the containing PARAGRAPH or table cell instead of a page
+          of prose; scoring runs on the Markdown so headings are unambiguous; and a claim is
+          exonerated by its enclosing heading CHAIN, so a subsection inside a superseded phase
+          inherits that framing. Verified in BOTH directions: the real report passes 49 checks,
+          and five injected re-assertions are each caught."
+    status: FIXED
+    lesson: "A guard that has never been observed to fail has not been tested. Every assertion
+             added from Phase 0G onward is negative-tested before it is trusted."
+  - id: 32
+    title: "CURRENT_SCIENTIFIC_STATUS DID NOT CONTROL ALL CURRENT-FACING REPORT CONTENT"
+    detail: "Phase 0G brought the CLAIMS LEDGER under this file and generated it, then declared
+             DEFECT #29 fixed. But the Executive Summary, governing equations, validation
+             status, novelty statement, current limitations, publication-defensible claims and
+             next steps were still hand-written, and the Phase-0G ledger deliberately exonerates
+             any withdrawn claim whose enclosing heading names a historical phase -- which is
+             right for narrative sections and wrong for sections that speak in the present
+             tense. Seven current-facing statements were therefore stale behind a green build:
+             thickness still called win/win/win and 'survived every correction'; 'no
+             architecture-dependent thickness tradeoff exists'; the withdrawn ARCH_B interior
+             optimum; footprint still advertised as the ETM opposition novelty; R_field =
+             R_single / n_req with n_alloc absent from the symbol table; the full 3-D MOOSE
+             package validation still called NOT DONE when Phase 0E completed it as TH-1..TH-5;
+             and BC-B still described as a compliant mounted support after Phase 0G proved it a
+             three-DOF clamp."
+    fix: "All seven are now GENERATED from this file into sentinel-delimited blocks, the report
+          is checked to carry each block verbatim, and a CURRENT-FACING SECTION AUDIT forbids
+          nine stale-claim signatures inside present-tense sections with per-pattern
+          exonerations for ledger rows, negations and retractions. Verified in both directions:
+          the clean report passes, and nine injected stale claims are each caught."
+    status: FIXED
+    secondary_finding: "While negative-testing the new guards, two of the nine were found to be
+                        INCAPABLE OF MATCHING: the patterns had been corrupted when written to
+                        disk -- a lost backslash in one, and \\b interpreted as literal
+                        backspace bytes in the other. They reported PASS on text they were
+                        supposed to reject. This is DEFECT #31 recurring in a new form: the
+                        failure was not in the guard's logic but in its source, and only the
+                        negative test could see it. A control-character scan of every guard
+                        source is now part of the check."
+  - id: 33
+    title: "REALIZABILITY WAS ARCHITECTURE-BLIND"
+    detail: "kw1.design_1kw() takes no architecture argument, so the EMBEDDED geometric rule
+             t_cell + h_tsv <= h_sub was applied to every architecture -- including ARCH_B,
+             which converts BELOW the substrate, and ARCH_C, which converts BESIDE the die.
+             At h_sub = 0.30 mm the code answers 'no inductor fits h_sub=300 um (budget 30 um)'
+             identically for all three. The electrical model has varied the converter's vertical
+             position since Phase 0D-R; the geometric and mechanical models never did."
+    detected_by: "Phase 0I Sec.2, on treating z-placement as an architecture variable"
+    impact: "Every 'unbuildable' verdict Phase 0H issued against a thin substrate is
+             EMBEDDED-SPECIFIC. Non-embedded architectures reach 0.300 mm against the embedded
+             1.276 mm -- a 4.3x wider range including exactly the region the corrected
+             electrical model prefers."
+    fix: "scripts/phase0i/zarch.py -- realizable(arch, h_sub) applies the embedded stack rule
+          only where the converter is embedded, and the source-demonstrated TSV-layer rule
+          (June-2026 Table III, d = 30 um at h = 300 um, AR 10:1) elsewhere."
+    status: FIXED
+    lesson: "A coupling is only modelled if EVERY domain sees it. The electrical model carried
+             z-placement for five phases while geometry and mechanics silently did not, and no
+             test could catch it because each domain was self-consistent on its own terms."
+  - id: 34
+    title: "PHASE-0G AND 0H FIGURES WERE NEVER EMBEDDED IN THE PDF"
+    detail: "pandoc is invoked with cwd = results/, so a figure path written relative to the
+             REPO ROOT ('results/phase0g/FIG.png') resolves to results/results/... . pandoc
+             emitted 'Could not fetch resource ... replacing image with description' for all 21
+             such references and substituted the alt text. Every Phase-0G and Phase-0H figure
+             was missing from the PDF, and the Phase-0I figures would have been too."
+    detected_by: "Phase 0I, when a LaTeX error surfaced the pandoc warning stream that had
+                  been carrying these messages unread since Phase 0G"
+    impact: "Two full phases of figures absent from the delivered PDF while the build reported
+             VERIFIED. No numerical result is affected; the deliverable was."
+    why_the_guards_missed_it: "Both existing checks were structurally incapable of catching it.
+             'all figure files exist' evaluated Path(r).is_file() from the REPO ROOT, where the
+             path does exist -- it validated the wrong directory. 'figures embedded in pdf'
+             compared image-object count >= figure count, and a PDF whose surviving figures
+             each contain two image objects satisfies that inequality with a third of the
+             figures missing. Verified: with one figure deliberately broken, the count check
+             still PASSES (80 objects vs 41 figures)."
+    fix: "Figure references are absolute, matching the convention every phase before 0G used.
+          Two new checks: paths are resolved FROM PANDOC'S WORKING DIRECTORY, and the pandoc
+          warning stream is scanned for 'Could not fetch resource'. Negative-tested: reverting
+          one path to repo-relative fails both."
+    status: FIXED
+    lesson: "A build warning nobody reads is not a warning. The verification suite now consumes
+             the toolchain's own warning stream instead of only inspecting its output."
+  - id: 35
+    title: "PHASE-0I SCIENCE NOT FULLY PROPAGATED INTO CURRENT-FACING REPORT SECTIONS"
+    detail: "Phase 0I added reliability physics but left seven current-facing statements in the
+             Phase-0H state. The Executive Summary still framed the answer as 'Phases 0G and 0H
+             find'; the limitations still said 'Neither local metric is fit for decisions',
+             which referred to the two REJECTED Phase-0H proxies and not to the new M2 metric
+             that passes every convergence test; they still said 'GaN and MLCC layer heights are
+             still open' when GaN is source-backed; 'Exact next work' still recommended
+             publication reframing; the validation status still described the mechanics as 'M0
+             -- no plasticity, creep or fatigue' when a temperature-dependent
+             elastic/plastic/creep submodel now exists; the governing equations stopped at M0
+             thermoelasticity with no M2 constitutive law, damage-metric definition or
+             stabilised-cycle definition; and the method still counted eight gates."
+    detected_by: "Phase 0I-R Sec.18, a dedicated re-read of the current-facing sections against
+                  the Phase-0I evidence"
+    impact: "The report understated its own capability -- it described a model without failure
+             physics after failure physics had been added -- and pointed the reader at the wrong
+             next step."
+    fix: "All eight items (A-H) repaired at the single source of truth and regenerated. The
+          validation block now splits GLOBAL M0 from LOCAL M2 explicitly, and four M2 governing
+          equations were added: the constitutive law, the damage-metric definition, the
+          stabilised-cycle definition, and an explicit no_life_equation entry recording that no
+          lifetime equation is current. Two further items were found while verifying A-H and are
+          also fixed: the current-facing guard scope excluded the LIVE phase narrative even
+          though it is headed 'current authoritative', so three over-claims inside it had never
+          been checked; and the report build was not idempotent, because the new
+          reliability_metric fragment was anchored on a heading that a later splice consumes."
+    correction_to_this_entry: "This fix was FIRST LOGGED BEFORE IT WAS APPLIED. The original
+          text read 'All seven repaired ... and regenerated' while items A, B, E and H were still
+          in the Phase-0H state; only C, D, F and G had actually been done. Caught in the Sec.20
+          follow-up by re-reading the GENERATED REPORT rather than the intent, and recorded as
+          DEFECT #36. All eight are now applied and verified in the generated text."
+    status: FIXED
+    lesson: "A phase that ADDS capability must audit the current-facing text as carefully as a
+             phase that withdraws a claim. DEFECT #29, #32 and #35 are the same failure in three
+             directions: stale withdrawal, stale scope, and now stale capability."
+  - id: 36
+    title: "SIX NEW GUARDS WERE NEGATIVE-TESTED AGAINST PARAPHRASES, NOT THE REAL SENTENCES"
+    detail: "Sec.20 requires every new semantic guard to be shown FAILING on an injected
+             violation before it is trusted. All six Phase-0I-R guards passed that test. The
+             test was invalid. The injected sentences were written by the same author, in the
+             same sitting, as the regexes -- so each injection was phrased to match its own
+             pattern. Checked afterwards against the sentences that had ACTUALLY appeared in
+             the report, ALL SIX guards missed: the real text said 'Z5 is eliminated' where the
+             guard looked only for the literal string '2.5D'; 'A 0.300 mm substrate is
+             realizable' where the guard looked for 'manufacturable'; 'Z1 keeps a 30 mW edge'
+             where the guard looked for 'electrically better'; 'the relative-life ratio is
+             parameter-free' where the guard required the unhyphenated 'relative life'; and 'of
+             eight failure mechanisms only ONE is computable' where the guard required the
+             reversed word order 'only one of eight failure mechanisms'."
+    detected_by: "Phase 0I-R Sec.20 follow-up, by testing each pattern against text quoted from
+                  the report itself rather than against text written for the test"
+    impact: "Six guards reporting PASS while blind to their own subject matter, and one real
+             consequence: the stale Executive Summary sentence 'of eight failure mechanisms
+             only ONE is computable' sat in a current-facing section, in guard scope, and was
+             not flagged. It was found by manual re-reading, which is exactly what the guard
+             existed to replace."
+    second_finding: "Even after the patterns were widened, the mechanism guard still passed on
+                     the real sentence -- its exoneration context contained 'phase 0h', and the
+                     stale sentence attributed the count to Phase 0H. An exoneration term that
+                     appears in the violating sentence nullifies the guard silently. The bare
+                     term 'open' in the 0.300 mm guard had the same weakness and was tightened
+                     to 'is open' / 'remains open'."
+    third_finding: "DEFECT #35 was logged as FIXED before the fix was applied. Its log read
+                    'All seven repaired at the single source of truth and regenerated' while
+                    four -- the Executive Summary attribution, the mechanism count, the next-work
+                    recommendation and the gate count -- were still in the Phase-0H state. Three
+                    of the seven had genuinely been repaired, which is what made the log
+                    plausible. All are now actually repaired and verified by re-reading the
+                    generated report, not the intent."
+    fix: "Patterns rewritten against the verbatim historical sentences. A PERMANENT self-test
+          replaces the one-off injection: GUARD_SELFTEST pairs every one of the fifteen
+          current-facing guards with the exact sentence it exists to reject, and the build fails
+          if any pattern misses its sentence OR if an exoneration context clears it. A coverage
+          check makes it impossible to add a guard without a self-test sentence. The eight
+          pre-0I-R guards were retro-fitted with the same self-test."
+    negative_tested: "Yes, twice, on the self-test itself. Narrowing the Z5 pattern back to its
+                      paraphrase-only form fails with 'PATTERN MISSES ITS OWN SENTENCE'.
+                      Re-adding the 'phase 0h' exoneration fails with 'EXONERATED BY ITS OWN
+                      CONTEXT'. Both are the exact defects the self-test was built to detect."
+    status: FIXED
+    lesson: "A negative test written by the author of the guard, at the same time as the guard,
+             tests the author's model of the failure and not the failure. The injection must be
+             the REAL text -- recovered from the artifact or its history -- and it must be
+             asserted permanently in the suite, not performed once by hand. DEFECT #31 said a
+             check never seen to fail has not been tested; #36 adds that a check seen to fail on
+             a straw man has still not been tested."
+
+  - id: 37
+    title: "OLD LOCAL-PROXY RESULT SURVIVED AFTER THE M2 METRIC REPLACED IT"
+    detail: "The Executive Summary stated, as a CURRENT result, that 'the opposition is resolved
+             ONLY in global warpage: in the one local metric available the thickness effect is
+             1.96 %, which is 7x below that metric's own uncertainty.' Both halves belonged to
+             Phase 0H. The '1.96 %' is the thickness effect in the SMEARED INTERFACE SHEAR proxy,
+             and the '7x below its own uncertainty' is that proxy's 14.14 % floor. Phase 0H
+             REJECTED that proxy as non-monotone under refinement, and Phase 0I replaced it with
+             a convergent M2 solder metric -- but the sentence describing the rejected proxy
+             stayed in the current-facing text and kept asserting that no local metric resolves
+             the thickness effect."
+    detected_by: "Phase 0J Sec.38, a directed re-read of the Executive Summary against the
+                  Phase-0I-R state"
+    impact: "The report asserted, as current, that the thickness opposition is invisible locally.
+             Phase 0J measures it directly at all eleven z-sweep points and finds it monotone in
+             every architecture: -5.6 % (Z1), -6.1 % (Z2), -17.2 % (Z4) in accumulated inelastic
+             path. The trend is real, preserved, and simply 3-5x smaller than global warpage
+             makes it look."
+    fix: "Replaced at the single source of truth with the measured M1 values and the explicit
+          statement that the 1.96 % figure is withdrawn as a current result and retained only in
+          the Phase-0H historical section, which Sec.38 forbids editing."
+    status: FIXED
+    lesson: "A phase that REPLACES a metric must retire the replaced metric's CONCLUSIONS, not
+             only its numbers. DEFECT #29, #32, #35 and now #37 are four faces of one failure:
+             stale withdrawal, stale scope, stale capability, and stale superseded-instrument."
+  - id: 38
+    title: "PHASE-0J-R LIFE-LAW STATUS NOT FULLY PROPAGATED INTO CURRENT-FACING REPORT TEXT"
+    detail: "Nine current-facing statements still described a project that could not predict
+             life, three phases after it could: 'No lifetime is predicted anywhere'; 'the
+             EXPONENT m does NOT cancel, and no m is sourced'; 'Over m = 0.5 to 5 the Z2/Z1 ratio
+             spans 1.25 to 9.18'; 'solder fatigue ... has no life law and so yields no
+             pass/fail'. All were in the Executive Summary and all were generated from the
+             single source of truth."
+    detected_by: "Phase 0K Sec.1"
+    impact: "The report understated its own capability -- no life law after four had been
+             admitted, no sourced exponent after two primary sources had bounded it at -1 and
+             -1.3."
+    fix: "Repaired at the source of truth and regenerated, separating the four things that must
+          not be conflated: RELATIVE LIFE validated at 1.21-1.38x, CONDITIONAL ABSOLUTE LIFE not
+          validated at a 4.1x spread, REQUIRED LIFE open, G2 not tested. Six guards added, each
+          self-tested on the VERBATIM standing sentence and each negative-tested to failure."
+    status: FIXED
+    lesson: "A phase that converts a negative result into a positive one must retire the
+             negative's language as carefully as a phase that withdraws a claim retires the
+             claim. Understating your own model never trips a scepticism check."
+  - id: 39
+    title: "PHASE-0K NARRATIVE CURRENT, BUT GENERATED STATUS AND NEXT-WORK FRAGMENTS PRE-0K"
+    detail: "The Executive Summary's 'Exact next work' still read 'PHASE 0K -- SYSTEM-OWNER
+             MISSION DEFINITION' and still asserted 'the remaining blocker is ... a REQUIRED
+             LIFE' -- the exact claim Phase 0K withdrew. Worse than one stale sentence: NO
+             Phase-0K result appeared in current-facing text at all. The 474/3206 decision
+             regions, the two-blocker finding, the G2 decision map and the experiment design each
+             occurred ZERO times."
+    detected_by: "Phase 0K-R Sec.1"
+    impact: "The report recommended as next work a phase that had already run, and named one
+             blocker where its own analysis had established two."
+    fix: "next_work rewritten from the source of truth. Sec.2 typed contract added
+          (relative_life_0kr, absolute_life_0kr, mission_0kr, g2_0kr, experiment_0kr,
+          next_step_0kr) so current status is GENERATED rather than remembered. Four guards with
+          verbatim self-tests, all negative-tested. Sec.34 post-build audit added: the FINAL
+          Markdown and the text extracted from the FINAL PDF are re-read AFTER generation --
+          8 current-facing headings, 15 stale patterns, 0 hits."
+    status: FIXED
+    lesson: "DEFECTS #29, #32, #35, #37, #38 and #39 are six instances of ONE failure: the
+             narrative advances and the generated status does not. The structural fix is not
+             another guard but a typed contract plus the rule that the BUILT ARTIFACT is what
+             gets audited -- all three most recent report defects occurred at or after the
+             generation step, not in the source."
+
+# ============================================================================================
+# CURRENT-FACING CONTENT (Phase-0H DEFECT #32)
+# ============================================================================================
+# Phase 0G brought the *claims ledger* under this file, but the report's Executive Summary,
+# governing equations, validation status, novelty statement, limitations, publication claims
+# and next steps were still hand-written. They drifted: the summary still called substrate
+# thickness "win/win/win and survived every correction", still asserted "no
+# architecture-dependent thickness tradeoff exists", still described the withdrawn ARCH_B
+# interior optimum, still advertised footprint as an ETM opposition, still printed
+# R_field = R_single / n_req, still said the full 3-D MOOSE package validation was not done,
+# and still described BC-B as a compliant mounted support. Every one of those is now
+# superseded. This block is the source; the report sections are generated from it.
+
+# ---------------------------------------------------------------------------
+# PHASE 0J -- life-law acquisition result. Added 2026-09-14.
+# ---------------------------------------------------------------------------
+reliability_metrics:
+  note: >-
+    THREE metrics, frozen in Phase 0J Sec.1 BEFORE any law was selected, so that no metric
+    could be redefined to suit a law found later. All three come from the same solve, the same
+    volume-averaged solder core, the same one-element corner exclusion, and the same stabilised
+    cycle (cycle 4 of 4, 0.48-2.00 %). All three include plastic AND creep.
+  M1:
+    name: "accumulated equivalent inelastic PATH per stabilised cycle"
+    definition: "d(PEEQ) = PEEQ(t_end,k) - PEEQ(t_end,k-1), volume-averaged"
+    units: "dimensionless (strain)"
+    character: "PATH LENGTH -- NOT a strain range"
+    is_the_phase0i_metric: true
+  M2:
+    name: "direct within-cycle inelastic strain RANGE"
+    definition: "max_t eq(eps_in) - min_t eq(eps_in) over the stabilised cycle"
+    units: "dimensionless (strain)"
+    computed: "DIRECTLY from the time history -- never as M1 / 3.72"
+  M3:
+    name: "dissipated inelastic energy density per stabilised cycle"
+    definition: "sum sigma_mid : d(eps_in) over the cycle, engineering shear factor 2"
+    units: "MJ/m^3"
+    integration_region: "whole solder core -- NOT a 12.7 um interface layer"
+  M1_over_M2_ratio:
+    all_11_dvpd_architecture_cases: "2.023 to 2.027"
+    phase0ir_representative_case: 3.72
+    finding: >-
+      The ratio is a property of the LOADING TRAJECTORY, not of the material, the architecture
+      or the geometry. A unidirectional 0->du->0 power cycle gives the textbook factor of ~2; a
+      fully-reversed cycle gives 3.7. Across three architectures and a 6.7x span in substrate
+      thickness the ratio varies by 0.2 %. Using 3.72 to convert the architecture results would
+      have mis-stated M2 by a factor 1.84, and any strain-range life law by 1.84^m -- 2.6x at
+      m = 1.5, 6.2x at m = 3.
+
+life_law_status:
+  verdict: "NO ADMISSIBLE LAW"
+  candidates_evaluated: 10
+  admissible: 0
+  conditionally_transferable: 1
+  inadmissible: 9
+  search_scale: >-
+    762 unique works from 15 targeted queries across two independent indices (OpenAlex
+    title_and_abstract.search, Crossref query.bibliographic); 139 distinct open-access papers
+    citing the three canonical calibrations were enumerated; 11 full-text sources retrieved.
+  primary_sources_unretrievable:
+    - "Syed 2004, 10.1109/ectc.2004.1319419 -- IEEE HTTP 202, Unpaywall is_oa=false, S2 openAccessPdf=null"
+    - "Schubert 2003, 10.1109/ectc.2003.1216343 -- IEEE HTTP 202, is_oa=false"
+    - "Darveaux 2002, 10.1115/1.1413764 -- ASME HTTP 403, is_oa=false"
+  only_constants_obtained: >-
+    Syed 2004 SnAgCu C_I = 0.013, C_II = 0.036, via ONE open-access review (Yu et al. 2026,
+    Eng. Res. Express 8:132401). SECONDARY provenance; no independent second source found.
+  reproduction_gate: >-
+    NOT PASSED. Declared tolerance +-25 % on N_f before attempting. The gate fails one step
+    earlier than Sec.8 anticipates -- the formulas did not fail to reproduce their data, the
+    DATA CANNOT BE REACHED. No absolute lifetime in this project is validated.
+  decisive_disqualifications:
+    engelmaier: >-
+      UNDEFINED for our cycle, not merely inaccurate: c = c0 + c1*T_sj + c2*ln(1 + 360/t_dwell)
+      and our cycle has ZERO dwell, so the logarithm diverges.
+    darveaux: >-
+      Requires dW_ave from three element layers each 0.0005 in (12.7 um) at the pad interface;
+      our finest element is 37.5 um, 3x too coarse to reproduce the extraction. The circulated
+      K1-K4 are EUTECTIC SnPb. The retrieved IMAPS source states absolute predictions "could be
+      off by a factor of 7" under inconsistent methodology.
+    syed: >-
+      Closest family -- its native metric IS accumulated creep strain per cycle -- but the
+      two-mechanism form needs eps_acc PARTITIONED by a double power law, and our Norton card
+      is a single power law that cannot produce that partition.
+    coffin_manson: "needs a PLASTIC-only strain range; CalculiX aliases CEEQ/CE/PE to PEEQ."
+    rejected_on_regime_or_alloy: >-
+      A fully-specified SnAgCu VIBRATION law (N_f = 7758.3 W^-1.036) and a fully-specified
+      92.5Pb5Sn2.5Ag DIE-ATTACH Darveaux recalibration were both found with primary constants
+      and both rejected -- the first on loading regime, the second under the standing
+      no-alloy-mixing rule that already rejected SAC405 and SnAgCuCe in Phase 0I.
+
+mission_requirement:
+  N_required: OPEN
+  category_B_field_mission_requirement: "NONE FOUND"
+  what_was_found_and_NOT_promoted:
+    category_A_qualification: "-40/+125 C, 1000 cycles board-level; -55/+125 C, 1000 cycles package-level"
+    category_C_accelerated_condition: "JESD22-A104-B as applied: 45-min ramp, 15-min dwell, 3.6 C/min"
+    category_A_measured_characteristic_life: "SAC305 256 I/O BGA, ENIG, -40/+185 C: eta = 1390 cycles, beta = 5.4"
+  why_structural: >-
+    Not a search failure. Operating-life limits are set by customer-specific qualification
+    programmes and are not published; the public standards family specifies HOW TO TEST, not
+    how long a part must last. jedec.org, the ANSI webstore and opencompute.org all return
+    HTTP 403. A required life for this system must be DECLARED BY ITS OWNER.
+  parametric_sweep_only: >-
+    10^2 to 10^5 cycles, labelled PARAMETRIC MISSION SENSITIVITY. Sec.14 forbids promoting the
+    1000-cycle qualification count into a mission life, and it is not used as one anywhere.
+
+cycle_compatibility:
+  simulated_cycle: >-
+    T 25.0 -> 81.1-83.2 C, dT 56.1-58.2 K, T_mean 53.1-54.1 C, period 600 s, ramp ~11.6 K/min,
+    SYMMETRIC TRIANGLE WITH ZERO DWELL. write_inp emits *TEMPERATURE with no AMPLITUDE=STEP, so
+    CalculiX ramps linearly and the 300 s named DWELL is a 300 s RAMP.
+  jedec_reference: "-40/+125 C, dT 165 K, 15-min dwell, ~120 min period"
+  compatible: false
+  dominant_difference: "dwell -- zero against 15 minutes; and dT 2.9x apart"
+  remedies_unavailable: >-
+    Sec.15 offers re-running on the law's cycle or a sourced acceleration relation. Neither is
+    actionable because there is no admissible law and therefore no calibration cycle to
+    reconcile with. Re-running at -40/+125 C was CONSIDERED AND DELIBERATELY NOT DONE: both
+    extremes lie outside the validated 7.5-16 MPa Norton window, so it would have produced
+    numbers that look like progress and mean nothing.
+  sec16_already_satisfied: >-
+    The DVPD mission IS power cycling and Phase 0I modelled it that way -- P(t) -> T_local(t)
+    -> nonlinear solder solve, with the half-period justified from the package's own thermal
+    time constant. The cycle is right for the product and wrong for the literature.
+
+architecture_life:
+  status: "CONDITIONAL -- NOT A VALIDATED LIFETIME"
+  ranking: "Z2 > Z1 > Z4"
+  ranking_robustness: >-
+    ROBUST LIFE RANKING in the Sec.20 sense: identical across all three law families
+    (strain range, energy, creep damage) and every exponent tested (m = 1, 1.5, 2, 3).
+  relative_life_is_parameter_free_for_the_syed_form: >-
+    N_f = (C*eps_acc)^-1 is INVERSE-LINEAR, so in a life ratio the constant cancels AND there
+    is no exponent to assume: N_f,Z2/N_f,Z1 = M1_Z1/M1_Z2 = 1.558 exactly, N_f,Z4/N_f,Z1 =
+    0.890. This is the opposite of the Coffin-Manson case, where Phase 0I-R found the ratio
+    spans a factor 7.4 over a plausible exponent range. CONDITIONAL ON THE FORM, not on any
+    fitted number.
+  conditional_absolute: "Z1 4266, Z2 6647, Z4 3795 cycles -- NOT VALIDATED, quoted only to
+    answer Sec.19 and Sec.25"
+  absolute_uncertainty: >-
+    UNBOUNDED -- two unbounded contributors (no admissible law, cycle incompatibility) on top
+    of a factor 2.77 from the choice of constant and -38 % from the choice of eps_acc.
+  relative_uncertainty: "6.2 pp on a 35.8 % effect; ZERO contribution from the law constant or
+    exponent, both of which cancel"
+  mission_life_crossover:
+    band: "N_required in (4266, 6647] -- only Z2 feasible"
+    width_ratio: 1.558
+    note: >-
+      The band's POSITION is conditional on the unvalidated constant C. Its WIDTH is not,
+      because C cancels. Called MISSION-LIFE CROSSOVER, never a product requirement.
+  creep_interpretation_depends_on_law_family: >-
+    Enabling creep moves the STRAIN metric DOWN 21.5-32.0 % and the ENERGY metric UP
+    115-153 % in every architecture. A strain-based law and an energy-based law disagree about
+    the SIGN of what creep does. Any future law must be matched to the measure it was
+    calibrated against.
+  electrical_cost_of_reliability:
+    Z1_to_Z2: "+1.688 W buys 1.56x fatigue life; 8.76 W per decade of N_f"
+    supersedes: "W per um of warpage -- WITHDRAWN for local-reliability decisions"
+    Z1_vs_Z4: "NOT RANKED ELECTRICALLY -- 0.14 sigma, unresolved since Phase 0I-R"
+  temperature_to_life: >-
+    +50 K mean-temperature shift moves the metric +22.7 % with temperature-dependent material
+    physics against -0.2 % with frozen properties; propagated through the Syed form (m fixed at
+    1) that is -18.5 % life. MUST NOT be confused with the architecture comparison, whose joint
+    temperatures differ by 2.1 K with r = +0.017 against damage.
+  word_damage: >-
+    M1, M2 and M3 are RESPONSE METRICS. None is called a fatigue damage parameter, because no
+    source uses them as one for this alloy, joint and cycle. PEEQ is not "damage".
+
+# ---------------------------------------------------------------------------
+# PHASE 0J-R -- primary life-law access. Added 2026-09-14.
+# ---------------------------------------------------------------------------
+life_law_status_0jr:
+  supersedes: "life_law_status (Phase 0J), which is retained as the historical record"
+  verdict: "ADMITTED FOR RELATIVE LIFE ONLY"
+  admissible_for_relative_life: 4
+  admissible_as_methodology: 1
+  admissible_for_acceleration_only: 1
+  inadmissible: 3
+  entries_changed_by_primary_access: "7 of 10"
+  why_phase0j_was_wrong_about_syed: >-
+    Phase 0J rejected the Syed paper largely because the PARTITIONED model needs a two-mechanism
+    creep split our single Norton law cannot produce. The paper contains THREE formulations. The
+    author explicitly offers the TOTAL accumulated creep strain form as the simplification,
+    because the low-stress mechanism contributes less than 5 % of strain and less than 2 % of
+    damage for SnAgCu -- "there is no need for such a separation for SnAgCu solder". That form
+    needs no partition and is the one used here.
+  authoritative_constants:
+    source: "Syed 2004, AUTHOR-CORRECTED version, not the IEEE ECTC original"
+    total_accumulated_creep_strain: "N_f = (0.0468 * eps_acc)^-1   (Eq.14, double power law)"
+    creep_energy_density: "N_f = (0.0015 * w_acc)^-1   (Eq.15)"
+    hyperbolic_sine_variants: "0.0513 (strain, Eq.16) and 0.0019 (energy, Eq.17)"
+    partitioned: "C_I = 0.106, C_II = 0.045 (Eq.13); C_I carries a standard error of 0.08"
+    superseded_original_constants: "0.0358, 0.0012, 0.0405, 0.0014, and 0.013/0.036 -- NOT to be
+      used"
+  why_the_corrected_version_is_MANDATORY_here: >-
+    The author's note records errors in data processing; the appended deck gives the mechanism --
+    the original constants were regressed on FIRST-CYCLE values, and SnAgCu stabilises only after
+    the 2nd cycle with a 20-30 % reduction. This project extracts every metric at the STABILISED
+    cycle, so pairing our stabilised eps with a first-cycle-fitted constant would compound the
+    very error the author corrected and over-predict life by 31 %. The version match is a
+    methodological requirement, not a preference for the later file.
+  reproduction:
+    status: PASSED
+    tolerances_declared_in_advance:
+      - "reproduce the paper's own +-25 % claim from its Table 3"
+      - "the two INDEPENDENTLY fitted constants must recover a consistent w_acc/eps_acc to 10 %"
+    result_a: "worst error 11.7 % on the independent Table 3 validation package"
+    result_b: "w/eps = 28.78, 29.85, 28.99, 30.02 MPa -- spread 4.2 %"
+    digitisation: "NONE -- every value is a printed table entry"
+
+reliability_metrics_0jr:
+  M4:
+    name: "accumulated equivalent CREEP strain per stabilised cycle"
+    status: "IDENTICAL TO M1, PROVEN BY PROBE -- not approximated"
+    proof: >-
+      CalculiX's combined *PLASTIC + *CREEP is a PURE VISCOPLASTIC OVERSTRESS model. Probed
+      under constant uniaxial load: without the plastic card the creep rate is A*sigma^n to 5
+      significant figures; with it, A*(sigma - sigma_y)^n to 3. At 25 MPa against a 15.2 MPa
+      yield, PEEQ at the first output is 1.52e-11 where a rate-independent model would need
+      5.16e-2. There is NO rate-independent plastic strain, so every PEEQ increment is creep and
+      M4 == M1, M5 == M3 identically.
+    corroboration: >-
+      Syed reports the same for his own model: plastic is 0.125 % of strain and 0.225 % of
+      energy, and "No need to model time independent plasticity for Thermal Cycle simulations".
+  averaging_volume:
+    matched_to_source: true
+    definition: "two 25 um solder layers, package side AND board side, TWO 12.5 um elements
+      across each -- the source states the constants are valid ONLY for this thickness"
+    how: "targeted local refinement of the JOINT SUBMODEL ONLY (graded_joint.py); the global
+      package model was not remeshed"
+    mesh_convergence: "3.0-3.2 % over the final refinement, against a predeclared 10 % target"
+    stabilisation: "0.32-0.56 % at cycle 5 of 6"
+    effect_of_matching: "M4 changes by 22-60 % versus the Phase-0I core volume, and by a
+      DIFFERENT amount per architecture -- it is not a scale factor"
+  numerical_findings_recorded:
+    - "a float-noise duplicate in the graded z-grid created ZERO-THICKNESS elements that
+      diverged at increment 1; fixed with tolerance-based merging"
+    - "the FINAL simulated cycle is systematically ~15 % low, identically in the 4-cycle and
+      6-cycle runs whose cycle 3 values agree to four figures. Physics cannot know which cycle
+      is last, so the final cycle is discarded and the penultimate one reported."
+
+cycle_waveform_CORRECTED:
+  supersedes: "cycle_compatibility (Phase 0J), which is WRONG and is retained only as history"
+  actual_waveform: >-
+    SQUARE WAVE. The solver's own NT output carries the full hot value 82.8605 C at t = 0.002 s,
+    the first increment of a 300 s step; a ramp would give 25.0004 C. The temperature is STEPPED
+    and then HELD for the full step duration.
+  dwell_at_each_extreme_s: 300
+  phase0j_error: >-
+    Phase 0J reported ZERO dwell, inherited from a Phase-0I-R note that CalculiX ramps
+    *TEMPERATURE across a step. That note was an inference; it does not hold here. Sec.10 of the
+    Phase-0J-R brief required the actual input behaviour to be checked rather than inferred, and
+    it is a step.
+  consequence: >-
+    Our cycle is much closer to the calibration set than Phase 0J believed. Syed's TC3 has 5-min
+    dwells -- exactly ours.
+  dwell_sensitivity: >-
+    Over a 30x change in dwell (30 s to 900 s) the ABSOLUTE metric moves only +17 % (Z1) and
+    +22 % (Z2), and the RELATIVE Z2/Z1 result moves by +-2 % (1.266-1.320 strain, 1.202-1.282
+    energy). The overstress formulation self-limits as sigma approaches sigma_y, so extending a
+    hold adds little further damage.
+
+architecture_life_0jr:
+  status: "RELATIVE LIFE VALIDATED; ABSOLUTE LIFE CONDITIONAL"
+  relative_life_vs_Z1:
+    Z2: "1.21 to 1.38 across four admissible primary-source formulations"
+    Z4: "0.94 to 0.98 -- NOT RESOLVED and NOT CLAIMED"
+    robustness: "ROBUST ACROSS ADMISSIBLE LIFE-LAW FAMILIES -- two authors, two SnAgCu variants,
+      two metric families, exponents -1 and -1.3, and a 30x dwell range. Ranking Z2 > Z1 > Z4 in
+      every case."
+  supersedes_phase0j_ratio: >-
+    Phase 0J reported Z2/Z1 = 1.558. That was an ALGEBRAIC RATIO on the Phase-0I core volume,
+    which is not the volume Syed calibrated. 1.283 is a TRANSFER-VALIDATED RELATIVE-LIFE RATIO on
+    the source's own 25 um extraction. The two are different quantities and the earlier one is
+    WITHDRAWN.
+  conditional_absolute_life:
+    Z1: "2499 (Eq.14 strain) or 610 (Eq.15 energy)"
+    Z2: "3206 or 736"
+    Z4: "2388 or 601"
+    why_not_validated: >-
+      The two admitted Syed models disagree by 4.10x on our joint while agreeing to 4-7 % on his
+      own independent validation package. The cause is measured: our w_acc/eps_acc is 124-136
+      MPa against his 28.8-30.0 MPa, so our joint runs at roughly four times his effective
+      stress. Each metric interpolates inside his calibrated range; the PAIR does not.
+  domain_classification:
+    eps_acc: "INTERPOLATION -- inside 0.00213-0.0777"
+    w_acc: "INTERPOLATION -- inside 0.0665-2.424 MPa"
+    w_over_eps: "OUTSIDE by 4.3x -- this is the operative limitation"
+  electrical_cost: "+1.688 W (1.3 % of 126.1 W) buys 1.21-1.38x solder fatigue life, on a
+    primary-source calibration with the averaging volume matched and the source validation
+    reproduced"
+  power_cycle_transfer: >-
+    DEFENSIBLE, and it is the published method. Syed 2001 applies the same damage model to a
+    power cycle with the temperature field from a transient thermal solve and NO acceleration
+    factor: 260 s cycle, 16 assemblies, measured 5550 vs predicted 6750 (+20 %). Our cycle is
+    600 s and the chain is identical. Its SnPb constants are NOT used.
+
+# ---------------------------------------------------------------------------
+# PHASE 0K -- mission, identifiability, G2 decision closure. Added 2026-09-14.
+# ---------------------------------------------------------------------------
+g2_decision_map:
+  method: >-
+    All FOUR admitted absolute-life formulations applied independently over a 601-point log grid
+    in N_required from 1e2 to 1e5. No law is chosen. Schubert 2003 is excluded and the exclusion
+    is recorded: it prints exponents but no prefactor, so it yields relative life only and
+    cannot vote on an absolute pass/fail. Adding a fifth absolute model could only widen the
+    ambiguous band, never narrow it.
+  predicted_life_envelope_cycles:
+    Z1: "482 to 2499"
+    Z2: "581 to 3206"
+    Z4: "474 to 2388"
+    model_form_spread_within_one_architecture: "5.2x"
+  regions:
+    robust_all_pass: "N_required <= 474"
+    model_form_ambiguous: "474 < N_required <= 3206 -- a factor of 6.8, and 27.6 % of the swept
+      decade range"
+    robust_all_fail: "N_required > 3206"
+  robust_Z1_fail_Z2_pass_band: >-
+    NONE. Z1 fails under EVERY law only when N_required > 2499; Z2 passes under EVERY law only
+    when N_required <= 581. The conditions are DISJOINT (581 < 2499) and zero of 601 grid points
+    classify as a robust G2 reversal. AN EXPERIMENTAL ABSOLUTE-LIFE CALIBRATION IS NECESSARY
+    BEFORE MECHANICS CAN ALTER THE FEASIBLE ARCHITECTURE SET.
+  why_structural: >-
+    The model-form spread within one architecture is 5.2x while the architecture separation is
+    1.21-1.38x. A 5.2x uncertainty cannot resolve a 1.3x effect at ANY requirement. The relative
+    result survives because the spread cancels in a ratio, and that same cancellation is why
+    choosing a requirement cannot recover it.
+  sole_blocker_claim: >-
+    WITHDRAWN. Phase 0J-R recorded N_required as the sole blocker. At N_required = 1500 both
+    architectures PASS under the strain family and FAIL under the energy family, so mission
+    definition alone produces no decision. TWO OPEN PIECES for absolute G2: (1) the system
+    mission / required life, and (2) an absolute-life calibration OR a decision region
+    demonstrably robust to model form.
+
+mission_requirement_0k:
+  N_required: USER_INPUT_REQUIRED
+  searched: >-
+    The ENTIRE repository and all supplied source material, for service life, required cycles,
+    cold boots, power cycles, thermal cycles, qualification target, field lifetime, availability
+    target, HPC server lifetime, maintenance interval and workload duty cycle. NOTHING found.
+    Every n_required in this repository is the TSV VIA COUNT, an unrelated quantity. The
+    June-2026 and ECTC reference papers discuss reliability only qualitatively.
+  machine_readable_contract: "configs/phase0k/mission_profile.yaml -- every field is
+    USER_REQUIRED, UNKNOWN or NOT_APPLICABLE; a numeric value is INVALID without a populated
+    mission_source"
+  tool_refuses_to_guess: >-
+    scripts/phase0k/mission_requirement.py refuses to emit a number without provenance, refuses
+    to treat a QUALIFICATION type as a field mission, and refuses to collapse a multi-bin
+    spectrum into one count.
+  jedec_1000_cycles: "QUALIFICATION REFERENCE ONLY -- shown as a reference line on FIG-0K-A and
+    never used as N_required"
+  multi_bin_support: >-
+    Miner-type summation IS source-backed for this framework: Syed derives the model from
+    Monkman-Grant plus the TIME FRACTION RULE and builds it by summing damage over steps within
+    a cycle. Caveat recorded: Syed warns the low-stress creep mechanism, under 5 % of strain in
+    his accelerated tests, can become prominent at small field dT, so a shallow-cycle-dominated
+    spectrum is outside the calibrated range and bins are retained separately.
+  illustrative_only_examples: >-
+    5 y / 1 boot per day = 1826 (AMBIGUOUS); 7 y / 2 boots per week + 1 workload cycle per day =
+    3287 (ROBUST ALL FAIL); 5 y / 1 boot + 4 workload cycles per day = 9131 (ROBUST ALL FAIL);
+    3 y never powered down = 0 (mechanism not life-limiting). NOT PROJECT REQUIREMENTS. Every
+    non-trivial example lands in the ambiguous band or worse.
+
+absolute_life_identifiability:
+  one_condition_cannot_identify_the_law: >-
+    PROVEN ALGEBRAICALLY. One measured life is one equation and each law has one free constant,
+    so both fit it EXACTLY (C_fit = 1/(N*eps), W_fit = 1/(N*w)). Residual degrees of freedom for
+    discrimination = 0. It re-labels the disagreement; it does not resolve it.
+  but_one_condition_DOES_collapse_the_G2_ambiguity: >-
+    Both laws are forced through the measured point and then extrapolate to the other
+    architectures through their own metric ratio. Z1 becomes exact, Z2 known to 6.3 % and Z4 to
+    3.0 % under EITHER law, because the three architectures sit within 6 % of each other in
+    w/eps (123.2 / 126.9 / 134.9 MPa). Across 3721 (measured-life x required-life) cells the
+    ambiguous region VANISHES: 50.8 % all-pass, 47.6 % all-fail, 1.6 % a genuine G2 pass, 0 %
+    ambiguous. What it does NOT license is extrapolation to a DIFFERENT cycle, where the two
+    laws diverge by up to 85 %.
+  discrimination_algebra: "D = (eps_B/eps_A)/(w_B/w_A) = (w/eps)_A / (w/eps)_B -- an experiment
+    discriminates ONLY to the extent its two conditions differ in w/eps. Maximising damage is
+    irrelevant."
+  w_over_eps_by_condition_MPa: >-
+    COLD_SHALLOW (-40/+25) 209.2; SHORT_DWELL 142.5; WIDE_HOT 142.8; OP_BASELINE 126.9;
+    LONG_DWELL 124.5; SMALL_DT 118.0; HOT_SHALLOW (+55/+125) 113.1. Temperature RANGE moves
+    w/eps by 85 %, dT alone by 21 %, dwell by only 14 % -- because the creep law sees the
+    OVERSTRESS sigma - sigma_y(T) and sigma_y is high at low temperature.
+  minimum_identifiable_design: >-
+    TWO CONDITIONS spanning w/eps, on at least ONE architecture. COLD_SHALLOW vs HOT_SHALLOW
+    gives D = 1.849, an 84.9 % separation between the two laws' predicted life ratios,
+    resolvable at 6.19 sigma with n = 16 even at the pessimistic Weibull slope beta = 6.
+  two_architectures_one_profile_is_blind: "D = 1.063, only 6.3 % -- it VALIDATES the relative
+    claim but CANNOT identify the law"
+  recommended: "2 architectures x 2 conditions x 16 specimens = 64 packages"
+  Z4_value_of_information: >-
+    DO NOT FABRICATE. D = 1.03 against Z1, so no discrimination; same joint, same cycle, same
+    stress regime, so no distinct mechanical regime; and Z4/Z1 = 0.956-0.984 sits INSIDE the
+    6.3 % post-calibration model spread, so the test could not distinguish it from Z1.
+  specimen_count_basis: >-
+    Weibull MLE SE(ln eta) ~ 1/(beta*sqrt(n)); ratio of two cells sqrt(2)/(beta*sqrt(n)); plus
+    8 % simulation uncertainty on the predicted metric ratio, STATED AS AN ASSUMPTION and larger
+    than the 6.2 pp Phase 0I-R measured because material errors do not fully cancel across
+    TEMPERATURE conditions. n = 4 is the bare 3-sigma minimum; n = 16 gives 6.19 sigma; the
+    ceiling from simulation uncertainty alone is 7.7 sigma, so specimens beyond ~16 buy almost
+    nothing.
+  failure_definition: >-
+    MATCHED TO THE CALIBRATION -- in-situ resistance > 300 ohms confirmed by ten further events
+    within 10 % of the time of the first, Syed's exact rule, with MEAN life reported via
+    eta*Gamma(1+1/beta) and beta ESTIMATED, not assumed. Right-censoring by maximum likelihood.
+  experiment_status: "DESIGNED, NOT RUN. No measurements exist, none are synthesised, and no
+    constant has been fitted to hypothetical data."
+
+electrical_cost_of_reliability_0k:
+  current_statement: "+1.688 W, 1.3 % of 126.1 W, buys +21-38 % RELATIVE solder-fatigue life"
+  forbidden: "'+1.688 W buys exactly X cycles' -- absolute life is not validated"
+  honest_limit: >-
+    Even after perfect calibration the robust G2-pass band is N_required in (measured Z1 life,
+    1.1665 x measured Z1 life] -- a window only 17 % wide. A 1.2-1.4x advantage reliably buys
+    MARGIN; it flips a PASS/FAIL only if the requirement lands in that window.
+
+experimental_priority:
+  recommendation: "MISSION + EXPERIMENT IN PARALLEL"
+  basis: >-
+    Every non-trivial illustrative mission lands in the ambiguous band or in robust all-fail, so
+    the mission alone will very probably not decide G2; the calibration alone cannot decide it
+    either, because it needs a requirement to test against; the two are independent and neither
+    blocks the other; and running them sequentially would add the test duration to the critical
+    path for no information gain.
+
+# ---------------------------------------------------------------------------
+# PHASE 0K-R -- the Sec.2 structured current-state contract. Added 2026-09-14.
+# Current-facing report fragments are generated FROM THESE FIELDS.
+# ---------------------------------------------------------------------------
+relative_life_0kr:
+  status: VALIDATED
+  z2_z1_min: 1.21
+  z2_z1_max: 1.38
+  source_laws: >-
+    Four admitted primary-source formulations -- Syed 2004 author-corrected accumulated creep
+    strain (Eq.14) and creep energy density (Eq.15), and Schubert 2003 SnAgCu strain (slope 1.3)
+    and energy (slope 1.0).
+  validated_scope: >-
+    At the Phase-0J-R reference condition, on Syed's own 25 um interface extraction, with the
+    life-law constant cancelling exactly in a ratio. UNCHANGED BY PHASE 0K-R: the constitutive
+    extrapolation applies identically to all three architectures, so it is common mode and
+    cancels in a ratio.
+
+absolute_life_0kr:
+  status: "CONDITIONAL -- NOT VALIDATED"
+  model_form_spread: "4.1x between the strain and energy families on this joint; 5.2x across
+    all four admitted formulations within a single architecture"
+  calibration_required: true
+  additional_limitation_found_in_0kr: >-
+    The creep card is evaluated far outside its fitted STRESS window. Weighted by the solver's
+    own dPEEQ increments, the median driving overstress is 54-91 MPa in the selected profiles
+    and 69 MPa in the operating baseline, against a fitted window of 7.51-15.92 MPa -- 3.4x to
+    7.2x above the top. 94-99 % of damage accumulates outside the window in EVERY profile.
+    Phase 0J-R checked only the END-OF-HOLD overstress (~15 MPa, inside) and called the card
+    "near its calibrated range"; that is corrected here as an overstatement.
+
+mission_0kr:
+  n_required_status: OPEN
+  provenance_status: "USER_INPUT_REQUIRED -- no field or product requirement exists anywhere in
+    this repository or in any supplied source; every n_required in the repo is the TSV via count"
+
+g2_0kr:
+  status: NOT_TESTED
+  all_pass_region: "N_required <= 474 cycles"
+  all_fail_region: "N_required > 3206 cycles"
+  robust_z1_fail_z2_pass_region: >-
+    NONE. Z1 fails under every admitted law only above 2499; Z2 passes under every law only
+    below 581. The conditions are DISJOINT.
+  ambiguous_interval_wording: >-
+    The ambiguous interval 474-3206 cycles spans approximately 0.83 DECADES -- about 27.6 % of
+    the three-decade 100-100,000-cycle LOGARITHMIC sweep. As a linear fraction it would be
+    2.7 %, an order of magnitude smaller and misleading; the linear figure is not used.
+  post_calibration_window_wording: >-
+    After a package-specific calibration at one condition, a robust Z1-fail / Z2-pass decision
+    requires N_f,Z1 < N_required <= R_min * N_f,Z1 with R_min = 1.1665 (the conservative,
+    energy-law ratio). That is a relative window of (1.000, 1.1665], i.e. 16.65 % OF THE
+    MEASURED Z1 LIFE, or 0.0669 decades -- 333 cycles wide if Z1 measured 2000.
+
+experiment_0kr:
+  status: >-
+    READY TO EXECUTE WITH A DECLARED LIMITATION -- NOT FROZEN. Seven of the eight Sec.31
+    acceptance criteria pass; criterion 2 (stress inside or defensibly near the calibration
+    domain) FAILS and cannot be met by any profile.
+  proposed_architectures: ["Z1 embedded", "Z2 backside"]
+  z4_excluded_because: "w/eps 123.2 vs Z1's 126.9 gives D = 1.030 -- 3 % of model separation for
+    a 50 % increase in specimen count"
+  proposed_profiles:
+    - "LOW_WIDE  45 -> 125 C, 5-min dwells, 3 C/min, 1.06 h/cycle"
+    - "HIGH_NARROW 110 -> 150 C, 5-min dwells, 3 C/min, 0.61 h/cycle"
+  withdrawn_profile: >-
+    COLD_SHALLOW -40 -> +25 C. WITHDRAWN: 100 % of its damage accumulates below the 45 C creep
+    calibration floor, and no sub-zero SAC305 creep data exists to extend the model. The
+    Phase-0K claims attached to it -- D = 1.849, 85 % separation, 6.19 sigma -- are WITHDRAWN as
+    current and retained only as historical experiment-design screening.
+  temperature_domain_status: "PASS -- both selected profiles have T_min >= 45 C and accumulate
+    0 % of damage below the creep floor"
+  stress_domain_status: >-
+    FAIL, IRREDUCIBLY. Damage-weighted median driving overstress 54-91 MPa against a 7.51-15.92
+    MPa fit. This is a property of how hard this package loads its joints, not of the thermal
+    profile, and no profile choice removes it.
+  sample_size_status: >-
+    n = 34 per cell, 4 cells, 136 packages. The Phase-0K n = 16 is SUFFICIENT for model
+    discrimination (Z = 3.41) but INSUFFICIENT for the Z2/Z1 architecture test (Z = 2.49).
+    Sec.15 requires the larger when one campaign answers both.
+  model_discrimination_status: >-
+    D = 1.4395, a 44.0 % separation between the two laws' predicted life ratios, at an EXPECTED
+    DISCRIMINATION Z-SCORE of 3.44 with beta = 5.1 and n = 16, rising with n. NOT called a
+    sigma: the statistic omits uncertainty in beta itself, censoring loss and the
+    constitutive-domain error in the predicted D.
+  weibull_beta:
+    source_backed_range: "5.1 to 20.4 across 16 primary SnAgCu/SAC305 cells"
+    sac305_only: [5.1, 5.4, 5.6, 10.1]
+    observed_minimum_used: 5.1
+    beta_6_is_conservative: false
+    beta_6_percentile: "25th -- 4 of 16 cells fall below it"
+  failure_criterion: >-
+    Syed's rule, verified verbatim against the primary and now exact: in-situ continuity sampled
+    every 2 minutes, event threshold > 300 ohms, failure = first crossing followed by ten
+    further crossings within 10 % of the time of the first, manual confirmation within one week,
+    intermittent opens counted. Reported statistic MEAN life via eta*Gamma(1+1/beta), with beta
+    ESTIMATED, not assumed. Right-censoring by maximum likelihood.
+  terminology:
+    CONDITION: "one thermal profile"
+    CELL: "one architecture x one thermal profile"
+    CAMPAIGN: "the complete multi-cell experiment"
+    rule: "A single thermal-cycle CONDITION cannot identify the fatigue-law family. A
+      multi-condition CAMPAIGN can."
+  experiment_has_been_run: false
+
+next_step_0kr:
+  mission_definition: "results/phase0k/SYSTEM_OWNER_MISSION_REQUEST.md -- eight questions,
+    unchanged and still outstanding"
+  experiment_preparation: "results/phase0kr/FINAL_BOARD_LEVEL_EXPERIMENT_PLAN.md -- 4 cells,
+    136 packages, ready to execute with the stress-domain limitation declared"
+  in_parallel: true
+  parallel_basis: >-
+    The mission defines demand and the experiment calibrates capability; neither depends on the
+    other to begin. Re-verified against the updated decision map rather than assumed.
+  optimizer_allowed: false
+
+current_facing:
+
+  executive_summary:
+    hypothesis: "Distributed vertical power delivery is normally optimised on electrical and
+                 thermal grounds alone. This project asked whether package thermo-mechanics --
+                 warpage and stress -- is a SYNTHESIS constraint that changes which DVPD
+                 architecture one would choose, rather than a downstream signoff check."
+    answer: "No, on the evidence available. Phases 0G through 0I find a real, sign-stable,
+             cross-validated mechanical RESPONSE to the electrical design variables -- now
+             including a resolved, architecture-dependent SOLDER-FATIGUE response -- and no
+             admissible inequality anywhere that could turn any of it into a constraint. Phase
+             0H tested nine candidate thresholds against six admissibility conditions and
+             admitted none. Phase 0I then added vertical placement as a genuine design variable
+             and a temperature-dependent elastic/plastic/creep joint model, and Phase 0I-R
+             verified that model's damage metric; the architectures separate by -35.8 % and
+             +12.4 % in per-cycle inelastic strain, at 5.8x and 5.1x their uncertainty. What is
+             still missing is not the response but the THRESHOLD. Phase 0J searched for a
+             life law and a required life and found neither, recording ACCESS as the cause.
+             The primary calibration papers were then supplied, and Phase 0J-R closes half of
+             that gap: four SnAgCu formulations are admitted for RELATIVE life, Syed 2004's
+             author-corrected calibration is reproduced, its 25 um averaging volume is matched,
+             and Z2 outlives Z1 by 1.21-1.38x. ABSOLUTE life stays conditional and NO required
+             life exists. Mechanics is design-relevant as a response model, now with a
+             validated RELATIVE life ordering, and is still not a feasibility-set restriction."
+    failure_mechanism_availability: "Of the eight mechanisms enumerated in Phase 0H, computability
+             is now three-way and must not be reported as a single count. GLOBAL BENDING is
+             available at M0 and is a driver rather than a failure. SOLDER FATIGUE / cyclic
+             inelastic response is available at M2 as of Phase 0I -- convergent, verified in
+             Phase 0I-R, and lacking only a life law. The remaining six -- RDL fracture,
+             delamination, via fatigue, dielectric cracking, pad cratering and EM-assisted
+             damage -- remain OPEN and uncomputed."
+    method: "Eleven sequential falsification gates (0B-0I plus the 0D-R and 0I-R audit
+             gates), each designed so that a negative result
+             would stop the project rather than be absorbed. No gate was allowed to pass on a
+             metric that failed mesh convergence, and no mechanical allowable was ever chosen
+             after seeing results. From Phase 0H onward every automated guard must also be
+             shown to FAIL on an injected violation before it is trusted."
+
+    survived:
+      - "Mechanics responds strongly to architecture: die warpage spans 1.8-15.6 um across the
+         frozen 20-case DOE at fixed load, footprint and heat (Phase 0C)."
+      - "Substrate thickness is a genuine three-domain variable and the electrical and
+         mechanical preferences OPPOSE: electrically thinner is better (ARCH_B monotone in
+         9 corners of 9), mechanically thicker is better (S_h = -0.039 to -0.886 in the free
+         package and all five explicit boards). Over the realizable band the trade is
+         4.04 W of ARCH_B loss against 29.3 % of mounted warpage. The thickness trend is
+         PRESERVED in the M2-rung solder metrics and is smaller there than in global warpage:
+         across all eleven z-sweep points it is monotone in every architecture, -5.6 % (Z1),
+         -6.1 % (Z2) and -17.2 % (Z4) in accumulated inelastic path, against 29.7-52.6 % in
+         warpage over the same range, so warpage overstates the benefit by 3-5x. The
+         superseded Phase-0H figure of 1.96 %, which belonged to the REJECTED smeared
+         interface-shear proxy and sat 7x below that proxy's own uncertainty, is withdrawn as
+         a current result and is retained only in the Phase-0H historical section."
+      - "The GaN device heights are now SOURCED from manufacturer datasheets -- 685 um high
+         side, 606 um low side -- against the 0/100/250 um envelope earlier phases invented."
+      - "COMPONENT-HEIGHT REALIZABILITY IS ARCHITECTURE DEPENDENT. Component height constrains
+         substrate thickness only where the converter is EMBEDDED (h_sub >= 1.276 mm). Where it
+         sits below, above or beside the substrate, nothing it contains constrains h_sub and
+         the bound falls to the source-demonstrated 0.300 mm TSV layer -- a 4.3x wider range."
+      - "Vertical integration is a real architecture variable with a measurable reliability
+           consequence, and the effect is RESOLVED against uncertainty: the backside
+           architecture shows 35.8 % less local damage than embedded and the power-die
+           architecture 12.4 % more, against a 6.2 pp and 2.4 pp spread across all material,
+           mesh and regularisation perturbations (5.8x and 5.1x). All three inelastic measures
+           -- accumulated path length, strain range and dissipated energy -- give the same
+           ranking and magnitudes to within 2 pp."
+      - "Temperature-dependent failure physics materially changes the answer, but the SIGN of
+           the change depends on which inelastic measure is used, and Phase 0I-R makes that
+           explicit. Against a no-creep model the STRAIN-based metric falls 29.8 % while the
+           DISSIPATED INELASTIC ENERGY rises 164.6 % over the same solves. Creep relaxes stress
+           and suppresses plastic strain accumulation, yet deforms at sustained stress and so
+           dissipates far more. Neither number may be quoted as `damage decreased` without
+           naming the measure. The Phase-0I -27.2 % figure is valid ONLY as a statement about
+           the strain-based metric."
+      - "Temperature enters the damage physics through more than thermal expansion: a
+           temperature-INDEPENDENT model moves only -0.2 % as the cycle mean shifts 25 to 75 C,
+           while the full model moves +22.7 %. The older model class was structurally blind to
+           where in temperature a cycle sits."
+      - "The current Z-architectures nevertheless separate on MECHANICS, not temperature: their
+           joint temperatures span only 81.10-83.21 C and the correlation between joint
+           temperature and damage across all runs is r = +0.017. Both statements are true and
+           must not be conflated -- temperature-dependent physics matters, and these particular
+           architectures happen not to differ in temperature."
+      - "The physical metal stack is sourced, not assumed: 10 um Cu, 10/2 um line/space, 2 VDD
+         + 2 GND layers from ECTC-2024 Table I, whose own derived quantities the model
+         reproduces to better than 2 %."
+      - "No AC correction is needed at the switching frequency -- HFSS shows loop resistance
+         flat to 0.18 % below the 19.1 MHz skin crossover, with f_sw two orders below it."
+      - "The rail carried by a vertical interconnect changes its loss by ~1960x for fixed
+         transferred power, and which rail it carries is architecture-specific."
+      - "A via field's loss is proportional to current only under minimum-capability
+         provisioning; under geometric allocation the same field obeys P ~ I^2."
+      - "The model chain is numerically sound: energy balance closes to +-0.000 %, warpage is
+         mesh-converged to 0.50 %, and an independent solver (MOOSE) reproduces candidate
+         ordering at both 240 W and 1 kW."
+
+    failed:
+      - "Regulator count is mechanically inert (+0.02 % for 4->6, -4.07 % for 4->8), which
+         killed the variable the original novelty argument leaned on."
+      - "Tile aspect ratio is inert (-1.76 %), and on this square vehicle the two aspect cases
+         are provably identical by symmetry."
+      - "Interface peel never converged (19-20 % per refinement against a <10 % target) and is
+         excluded from all decision logic."
+      - "The geometry used by Phases 0B-0E was not buildable: the selected converter needs a
+         720 um cell and the mechanical vehicle used a 150 um tile inside 200 or 500 um
+         substrates. Trend DIRECTIONS survive re-running on realizable geometry; every absolute
+         magnitude from those phases is superseded."
+      - "The Phase-0B cooling calibration was not transferable -- at 1 kW the correct film
+         coefficient is 9.47x larger."
+      - "Substrate-side-only cooling, which is the reference system's actual topology, cannot
+         reach the reference junction temperature at 1 kW: it floors at 90.96 C and reaches
+         110.4 C at h_sub = 2.00 mm."
+      - "The compact BC-B foundation is not a valid model of a mounted package. It clamps all
+         three degrees of freedom, never recovers its own free limit (0.739 um against
+         8.287 um on the identical mesh), and no support stiffness k* exists over seven
+         decades."
+      - "DEFECT #30: per-regulator and system-wide loss terms were summed together for three
+         phases, understating every vertical tier by n_vr -- 49x at the 1 kW reference. It
+         inverted the Phase-0F architecture conclusion and survived a 25x tighter convergence
+         tolerance."
+      - "DEFECT #31: the semantic ledger built to catch stale claims could not fail, because
+         its exonerating vocabulary matched ordinary English prose within a +-800-character
+         window."
+      - "DEFECT #32: the single source of truth controlled the claims ledger but not the
+         Executive Summary, governing equations, validation status, novelty, limitations,
+         publication claims or next steps. Seven current-facing statements were stale behind a
+         green build."
+      - "Global warpage does not predict local interconnect loading (Spearman 0.112 over 70
+         paired runs) and inverts sign between assembly states (-0.793 free, +0.349 mounted).
+         The quantity the project measured best is not the quantity that matters."
+      - "Of eight enumerated failure mechanisms, TWO are now computable and SIX are not. Global
+         bending is computable at M0 but is a driver, not a failure. Solder fatigue became
+         computable at M2 in Phase 0I, was verified in Phase 0I-R, and Phase 0J-R admitted
+           four primary-source SnAgCu life laws for it -- so it now yields a VALIDATED
+           RELATIVE life ordering, though still no pass/fail: absolute life is model-form
+           uncertain at 4.1x and no required life exists.
+         mechanisms the reference paper itself names -- RDL shear and delamination -- which are
+         absent from the mechanical model entirely."
+      - "No admissible mechanical criterion exists. Nine candidates, zero admitted; every
+         published warpage allowable located is a manufacturing or solderability limit."
+
+    novelty: "The defensible contribution is NOT 'mechanics changes the optimum' -- it does
+              not, and with a pure added objective it structurally cannot. It is an AUDITED
+              CROSS-DOMAIN DVPD MODEL AND A FALSIFICATION SEQUENCE that establishes where
+              mechanics is and is not design-relevant: physical-realizability coupling that
+              excludes an entire previously-swept design range; rail-aware interconnect
+              modelling; corrected RDL / bump / TSV losses with explicit allocation policy; an
+              electrothermal fixed point with per-regulator local temperature; a mounted
+              package-mechanics model that is continuous with its own free limit; a
+              demonstrated thickness response opposition; and the negative result that
+              footprint opposition disappears once the package is actually mounted."
+
+    limitations:
+      - "No admissible mechanical criterion exists, so G2 is NOT TESTED and no mechanical term
+           may enter a feasibility test. Phase 0I supplies the METRIC half of G2 -- convergent,
+           validated, tied to a documented failure mechanism. Phase 0J-R then supplied part of
+           the ALLOWABLE half: four primary-source SnAgCu formulations are ADMITTED FOR RELATIVE
+           LIFE, Syed 2004's author-corrected calibration was reproduced, and its 25 um averaging
+           volume was matched. ABSOLUTE life remains CONDITIONAL -- the strain- and energy-based
+           models disagree 4.1x on this joint, whose w_acc/eps_acc sits 4.3x off the calibration
+           locus -- and NO required life exists. The Phase-0J statement that no SAC305 life law
+           was retrievable is SUPERSEDED: it was an ACCESS limitation and the primary papers have
+           since been supplied."
+      - "THREE DIFFERENT THINGS, AND THEY MUST NOT BE CONFLATED. (1) RELATIVE LIFE IS
+           VALIDATED: Z2/Z1 = 1.21-1.38 across four admitted primary-source formulations --
+           Syed 2004 author-corrected strain and energy, and Schubert 2003 strain and energy
+           -- with the life-law constant cancelling exactly and the exponent bounded by the
+           SOURCED values -1 (Syed, derived and measured at -0.9607) and -1.3 (Schubert).
+           The Phase-0I parametric range m = 0.5-5 and its 1.25-9.18 span are SUPERSEDED:
+           the exponent is no longer unsourced. (2) CONDITIONAL ABSOLUTE LIFE EXISTS BUT IS
+           NOT VALIDATED -- the strain and energy formulations disagree by 4.1x on this
+           joint (Z1 2499 vs 610 cycles) because its w_acc/eps_acc sits 4.3x off the Syed
+           calibration locus. (3) REQUIRED LIFE IS OPEN -- no field or product requirement
+           exists in any source or anywhere in this repository."
+      - "Two of eight failure mechanisms are now addressable: global bending (a driver) and
+           solder fatigue (a real mechanism, added in Phase 0I). RDL damage, delamination, CPI
+           and TSV interaction still need geometry or physics the model does not have, and two of
+           those are mechanisms the reference paper itself names."
+      - "The reliability submodel is displacement-driven, models one joint at the worst location,
+           and its Norton creep surrogate is valid only over 7.5-16 MPa."
+      - "The two PHASE-0H local proxies remain unfit for decisions: smeared interface shear is
+           non-monotone under mesh refinement (7.6 % spread) and relative displacement carries
+           26.5 % spread from an unsourced underfill modulus. THEY ARE NOT THE CURRENT METRIC.
+           The Phase-0I M2 metric replaces them and passes mesh convergence (1.90 %), creep-
+           tolerance insensitivity (0.02 %) and corner-regularisation stability (6.4 %)."
+      - "MLCC height remains OPEN -- Murata is not retrievable in this environment -- so the
+           realizable substrate bound is a 250 um band rather than a number."
+      - "Mounted warpage magnitudes (9.7-29.2 um) are an engineering envelope from an assumed
+           board, not a prediction. Only signs and orderings are claimed."
+      - "All warpage is INCREMENTAL OPERATIONAL with a 25 C stress-free reference. Assembly
+           pre-stress is bounded, not modelled: a 175 C reference raises mounted magnitudes by
+           up to 54 %."
+      - "GaN device height is SOURCE_BACKED (manufacturer datasheets, Phase 0H). MLCC height
+           remains OPEN. Complete packaging clearance for the thinnest non-embedded stack is
+           OPEN: 0.300 mm is COMPONENT-HEIGHT-REALIZABLE under the current Z-architecture model
+           and a source-demonstrated TSV-layer thickness, NOT a manufacturability guarantee."
+      - "The electromigration reliability limit for copper TSVs is open; what is closed is the
+           provisioning current density the sources actually used."
+      - "ECTC-2024's absolute loss magnitudes are not reproducible from its printed model, so
+           RDL magnitudes are always quoted with their stack."
+      - "Q3D Extractor is not licensed, so DC resistance is validated with a conduction FE
+           rather than a commercial extractor. Icepak returned a clamped 5000 K solution on this
+           package model and is unusable."
+      - "Interface peel is excluded for non-convergence; interface shear converged but has no
+           allowable."
+
+    next_work: "MISSION-INPUT ACQUISITION AND EXPERIMENT PREPARATION, IN PARALLEL, now
+                that Phase 0K-R has closed the test matrix. Phase 0K established that
+                mission definition ALONE cannot close G2 -- the four admitted absolute-life
+                formulations span 5.2x within a single architecture while the architectures
+                separate by only 1.21-1.38x, so NO required life exists at which all models
+                agree that Z1 fails and Z2 passes. TWO pieces are open, not one: the system
+                mission, and an absolute-life calibration. Phase 0K-R then audited the
+                proposed experiment and WITHDREW its decisive -40/+25 C profile: 100 % of
+                that profile's damage accumulates below the 45 C floor of the SAC305 creep
+                calibration, and no sub-zero SAC305 creep data exists to extend the model --
+                the low-temperature literature for this alloy is high-strain-rate impact
+                work, which the creep framework explicitly excludes. A within-domain
+                replacement was found, 45/125 C paired with 110/150 C, giving D = 1.4395 and
+                an expected discrimination Z-score of 3.44; and the specimen count was
+                raised from 16 to 34 per cell because n = 16 answers the life-law question
+                but not the Z2/Z1 architecture question at the observed worst Weibull slope
+                of 5.1. The experiment is READY TO EXECUTE WITH A DECLARED LIMITATION rather
+                than frozen: the creep card is evaluated 3.4-7.2x above its fitted stress
+                window in every profile, including the operating baseline, and no profile
+                choice removes that. The defensible contribution remains the audited
+                cross-domain model and its falsification sequence, including the negative
+                results, rather than an ETM co-synthesis optimiser."
+
+  governing_equations:
+    - id: tsv_allocation
+      equation: "n_req = ceil(I / I_max);  n_req <= n_alloc <= n_avail;
+                 R_field = R_single / n_alloc"
+      status: CURRENT
+      note: "Phase 0E separated three quantities that Phase 0D-R had conflated into one.
+             Electrical resistance uses n_ALLOCATED, which is what the design actually
+             instantiates. Using n_req makes P ~ I look like a physical law when it is an
+             allocation policy."
+      superseded_form: "R_field = R_single / n_req  (Phases 0D, 0D-R)"
+      symbols_required: ["n_req", "n_alloc", "n_avail"]
+    - id: feasibility
+      equation: "infeasible if n_req > n_avail(A_fp, pitch)"
+      status: CURRENT
+      note: "Unchanged. Feasibility is set by what the footprint can physically hold, not by
+             what the allocation policy chose."
+    - id: m2_constitutive
+      equation: "sigma = C(T) : (eps_total - eps_thermal(T) - eps_plastic - eps_creep);
+                 yield sigma_y(T) with bilinear hardening to sigma_0(T) + C_ch(T)/gamma(T);
+                 creep eps_dot_cr = A(T) sigma^n(T)"
+      status: CURRENT
+      rung: "LOCAL M2 -- solder-joint submodel only, NOT the global package model"
+      note: "SAC305 only. A(T), n(T) fitted directly to 19 measured creep points at
+             45/80/115/150 C, valid over 7.5-16 MPa; sigma_0(T) and the Chaboche hardening from
+             the same source. Temperature enters through stiffness, flow stress AND an Arrhenius
+             creep factor worth 535x across the operating range -- not merely through
+             alpha*dT."
+    - id: m2_damage_metric
+      equation: "d_eps_in(cycle k) = PEEQ(t_end,k) - PEEQ(t_end,k-1),
+                 volume-averaged over the solder core with a one-element corner exclusion band"
+      status: CURRENT
+      rung: "LOCAL M2"
+      note: "PEEQ is CalculiX's ACCUMULATED equivalent inelastic strain. Phase 0I-R proved by
+             experiment that it includes BOTH plastic and creep: with a creep-only material and
+             no *PLASTIC card, PEEQ / eq(eps_inelastic) = 1.0000. The metric is therefore the
+             inelastic PATH LENGTH traversed per cycle, not a strain RANGE; the two differ by a
+             factor of 3.72 here and the naming is fixed accordingly."
+    - id: m2_stabilised_cycle
+      equation: "the stabilised cycle is the first whose d_eps_in differs from the previous
+                 cycle by less than 5 %; reported values are from cycle 4 of 4"
+      status: CURRENT
+      rung: "LOCAL M2"
+      note: "Achieved 0.48-2.00 % cycle-to-cycle change at cycle 4 for every architecture. The
+             metric is a per-cycle DIFFERENCE of an accumulated quantity, so it is not
+             contaminated by total accumulated creep."
+    - id: no_life_equation
+      equation: "NONE"
+      status: AVAILABLE_FOR_RELATIVE_LIFE_ONLY
+      phase0j_result: "The search was RUN, not deferred: 762 works, 10 candidate laws, 10
+                 predeclared admissibility criteria, 0 ADMISSIBLE -- with ACCESS recorded as the
+                 cause."
+      phase0jr_result: "SUPERSEDED. With the primary papers supplied, the current life equation
+                 is N_f = (0.0468 * eps_acc)^-1 (Syed 2004 author-corrected, Eq.14, accumulated
+                 creep strain over two 25 um solder layers), with N_f = (0.0015 * w_acc)^-1 as
+                 the energy-based companion. Both are ADMITTED FOR RELATIVE LIFE. Neither is
+                 admitted for ABSOLUTE life: they disagree 4.1x on this joint because its
+                 w_acc/eps_acc is 4.3x off the calibration locus."
+      note: "SUPERSEDED BY PHASE 0J-R. The Phase-0I statement that no exponent is sourced no
+             longer holds: two primary sources now bound it -- Syed 2004 derives -1
+             theoretically and measures -0.9607, and Schubert 2003 fits -1.3 for SnAgCu. C
+             still cancels in a ratio, so the RELATIVE ratio Z2/Z1 = 1.21-1.38 is validated.
+             What is NOT current is an ABSOLUTE lifetime equation: the strain and energy
+             formulations both have constants but disagree 4.1x on this joint."
+    - id: scope_rule
+      equation: "P_tier,SYSTEM = n_vr * P_tier,PER_REGULATOR;  P_PDN = sum over tiers of
+                 SYSTEM-scope terms only"
+      status: CURRENT
+      note: "Phase-0H structural guard for DEFECT #30. vertical_tier_per_regulator() returns a
+             PER_REGULATOR quantity and rdl_network_solve() returns a SYSTEM quantity; adding
+             them raises ScopeError. Negative-tested in tests/phase0h/test_scope.py."
+
+  validation_status:
+    electrical:
+      status: SUPPORTED
+      done: "Multilayer RDL sheet model agrees with an independent MOOSE conduction solve to
+             0.45-1.10 % on power across three placements under one calibration. HFSS confirms
+             no AC correction is needed below the 19.1 MHz skin crossover."
+      not_done: "Q3D Extractor is not licensed, so no commercial-extractor cross-check of DC
+                 resistance exists."
+    thermal:
+      status: PROVEN
+      done: "Full 3-D MOOSE package thermal cross-check COMPLETED. Phase 0E ran TH-1..TH-5 with
+             spatially mapped Joule heat: candidate ordering preserved exactly, maximum
+             discrepancy 1.66 %, mean 1.05 %. Phase 0F repeated it at the 1-kW reference on the
+             decisive thickness pair: 2.2-2.8 K on T_max, same thickness trend, energy balance
+             closed to 3e-8 % in both codes."
+      not_done: "Icepak remains unusable -- it returned exactly 5000 K on every object, a
+                 solver clamp from applying an external boundary condition to an internal
+                 solid/air interface. That result was discarded and is never used."
+    mechanical:
+      status: SUPPORTED
+      done: "Analytic free-expansion check exact; four graded mesh levels with die warpage
+             converged to 0.50 %; BC-A reaction forces <= 4.3e-10 N, so the constraint
+             manufactures no stress; the explicit BGA + board assembly is continuous with the
+             free package (+18.1 % with a vanishing board, the residual being the BGA layer's
+             own contribution)."
+      not_done: "No ANSYS structural validation exists. No assembly pre-stress model, no
+                 fracture mechanics, no cohesive zone."
+      model_rungs: "TWO DISTINCT MODELS, and they must not be conflated.
+        GLOBAL M0 -- linear thermoelastic package mechanics: warpage, curvature, and the
+        relative displacement handed to the submodel. No plasticity, no creep. This is what
+        Phases 0B-0H used and every warpage statement in this project belongs to it.
+        LOCAL M2 -- temperature-dependent elastic + rate-independent plastic + Norton creep
+        solder-joint submodel, cycled to a stabilised hysteresis loop. Added in Phase 0I,
+        verified in Phase 0I-R. Every damage statement belongs to it.
+        M1 is the intermediate rung used in Phase 0G Sec.11: M0 with a shifted stress-free
+        reference, a pre-stress SENSITIVITY rather than a pre-stress model."
+      local_m2_validation: "free thermal expansion exact to 0.000 % with zero inelastic strain;
+        creep rate x535 and yield -57 % across the operating range; -49.6 % stress relaxation in
+        a 600 s constant-strain hold; per-cycle metric stabilised to 0.4 %. Mesh 1.90 %, creep
+        tolerance 0.02 %, corner-exclusion band 6.4 %."
+      restraint_models: "BC-A is 3-2-1 rigid-body suppression. BC-B applies *BOUNDARY {n},1,3 --
+                         ALL THREE degrees of freedom on the underside plane -- so it is a
+                         CLAMP and NOT a compliant mounted support; Phase 0G withdrew it as a
+                         model of a mounted package. BC_BOARD is an explicit BGA + PCB stack
+                         restrained only by 3-2-1 anchors and is the model used for mounted
+                         conclusions."
+
+  publication_claims:
+    defensible:
+      - "Physical realizability is a first-class DVPD design coupling: the converter component
+         stack sets a hard lower bound on substrate thickness that excluded the entire range
+         swept in Phases 0B-0E."
+      - "The rail a vertical interconnect carries changes its loss by ~1960x at fixed
+         transferred power, and it is architecture-specific."
+      - "Via-field loss scaling is set by allocation policy, not by physics alone."
+      - "An electrothermal fixed point with per-regulator local temperature is required at
+         kilowatt scale; a single global T_max is not adequate."
+      - "The mechanical thickness response opposes the electrical one, with a sign that is
+         stable across 20 combinations of assembly model, stress-free reference and thermal
+         boundary."
+      - "NEGATIVE RESULT: footprint opposition does not exist in a mounted assembly. It is
+         positive only in the unmounted and clamped idealisations and negative on all five
+         explicit boards, in the direction the reference paper itself asserts."
+      - "NEGATIVE RESULT: a compact clamped foundation is not a substitute for an explicit
+         board. It sits in the opposite regime and cannot reproduce its own free limit."
+    must_not_claim:
+      - "That mechanics binds, constrains, or restricts the feasible design set. No admissible
+         criterion exists."
+      - "That footprint is an ETM opposition in a mounted assembly."
+      - "Any absolute mounted warpage value as a prediction."
+      - "Any comparison of the computed warpage against a 'conventional' or 'typical'
+         package limit. No source satisfying the admissibility test has been obtained. The
+         only supportable statement is that simulated mounted INCREMENTAL OPERATIONAL warpage
+         stays below 40 um over the tested envelope; whether that is safe or constraining is
+         UNKNOWN."
+      - "Any board-level conclusion drawn from a BC-A or BC-B result."
+
+# ============================================================================================
+# ARCHITECTURE AND MECHANISM STATUS (Phase-0I Sec.27)
+# ============================================================================================
+# Phases 0B-0H reported a single status for "the architecture" and a single status for
+# "mechanics". Neither is a single thing. Vertical integration is an architecture VARIABLE
+# (DEFECT #33) and the mechanical side has three separable layers -- global deformation, local
+# damage, and a lifetime criterion -- which are at three different maturities.
+architecture_status:
+  ARCH_Z1_EMBEDDED:
+    source_status: "described by June-2026, but the source itself calls multi-layer substrate
+                    stacking with active and passive components an OPEN CHALLENGE"
+    realizability: "h_sub >= 1.276 mm (MLCC nominal); the ONLY architecture whose components
+                    constrain substrate thickness"
+    tsv_rail: "HV, 23.4 A"
+    electrical: "BEST, 126.090 W at its 1.30 mm floor -- because the embedded cell shortens
+                 the via field to 74 um"
+    local_damage: "6.512e-3 per stabilised cycle -- the baseline"
+    status: SUPPORTED
+  ARCH_Z2_BACKSIDE:
+    source_status: "SOURCE-BACKED. June-2026 Sec. I 'in-substrate AND backside'; Sec. II
+                    'VR components can be vertically stacked on the backside of a substrate
+                    and interconnected through TSVs'"
+    realizability: "h_sub >= 0.300 mm; no component constrains it"
+    tsv_rail: "LV, 1000 A -- forced by geometry, not chosen. 14 148 TSVs, which matches
+               June-2026 Table III's own PL3 count exactly"
+    electrical: "+1.688 W vs embedded, and it must stay thin: via loss runs 1.698 W at
+                 0.30 mm to 11.319 W at 2.00 mm"
+    local_damage: "4.179e-3, the LOWEST -- 35.8 % below embedded, resolved at 5.8x the
+                   perturbation spread. Any conversion to life is PARAMETRIC in the fatigue
+                   exponent, which is UNSOURCED; the Phase-0I '1.9-3.8x' is withdrawn."
+    status: SUPPORTED
+  ARCH_Z4_POWER_DIE:
+    source_status: "PARTIAL -- an extrapolation of the source's chiplet framing, not a
+                    configuration it states"
+    realizability: "h_sub >= 0.300 mm"
+    tsv_rail: "HV, 23.4 A"
+    electrical: "+0.030 W vs embedded -- effectively free"
+    local_damage: "7.320e-3, the HIGHEST -- 12.4 % above embedded, 0.70-0.84x relative life"
+    thermal_note: "its converter sits in the die-to-cooler path, but at the joint this does
+                   not show: T_joint 81.10 C, the coolest of the three"
+    status: SUPPORTED
+  ARCH_Z5_2P5D_LATERAL:
+    source_status: "not the source's architecture; retained as the LATERAL-PATH BOUND"
+    realizability: "h_sub >= 0.300 mm"
+    electrical: "THE TESTED TOPOLOGY IS ELIMINATED -- 768.07 W of modelled lateral RDL loss,
+                 52.8 % efficiency. This prices the specific arrangement in which a long lateral
+                 interposer path carries the ~1 V / 1 kA rail."
+    scope_correction: "Phase 0I wrote 'Z5 is eliminated' and read this as pricing 2.5D as a
+      CLASS. That over-reaches and is withdrawn. The result eliminates THE TESTED
+      LOW-VOLTAGE-LATERAL TOPOLOGY only. Untested 2.5D variants that would change the answer
+      include higher-voltage lateral distribution, distributed conversion across the interposer,
+      shorter low-voltage runs, intermediate-voltage distribution with local point-of-load
+      conversion, and different plane geometries. None were modelled, and Phase 0I-R does not
+      model them either -- it only corrects the claim."
+    status: REJECTED_ON_ELECTRICAL_GROUNDS
+  ARCH_Z3_TOPSIDE:
+    status: REJECTED_AS_PHYSICALLY_UNSOUND
+    reason: "puts the 1 V / 1000 A rail on a multi-millimetre lateral path -- the very loss
+             DVPD removes -- while consuming the die's cooling surface. Strictly worse than
+             Z5, which at least uses a purpose-built interposer."
+
+mechanical_layer_status:
+  global_deformation:
+    status: PROVEN
+    what: "die and package warpage under the operational thermal load"
+    maturity: "mesh-converged to 0.02-0.50 %, material-robust to 4.0 %, sign-stable across
+               20 combinations of assembly model, reference state and thermal boundary"
+    caveat: "It is a DRIVER, not a failure mechanism, and Phase 0I shows it OVERSTATES the
+             reliability benefit of a thicker substrate by 3-5x: over the same thickness range
+             warpage moves 29.7-52.6 % while local damage moves only 5.6-17.2 %."
+    phase0h_correction: "Phase 0H reported no correlation (Spearman 0.11) between global
+      warpage and a SMEARED-SHEAR proxy. Phase 0I reported Spearman 1.000 within each
+      architecture and 0.909 pooled against the new damage metric, and described that as
+      warpage tracking damage. Phase 0I-R rescopes it: within a single architecture the
+      substrate-thickness sweep is monotonic and BOTH quantities move monotonically with it, so
+      a rank correlation of 1.000 is close to guaranteed by construction and carries little
+      information. The defensible statement is DIRECTIONAL ONLY -- within the tested thickness
+      sweeps global warpage tracks the DIRECTION of the local damage metric but not its
+      magnitude, changing 29.7-52.6 % where damage changes only 5.6-17.2 % and so exaggerating
+      the apparent reliability benefit by roughly 3-5x. GLOBAL WARPAGE IS NOT A QUANTITATIVELY
+      CALIBRATED RELIABILITY SURROGATE."
+  local_damage:
+    status: SUPPORTED
+    what: "Delta-eps_in per stabilised cycle in the corner BGA, volume-averaged with a corner
+           exclusion band"
+    maturity: "FIRST local mechanical metric in this project to pass mesh convergence
+               (1.90 %), tolerance insensitivity (0.02 %) and regularisation stability (6.4 %)
+               together. Constitutive model sourced for SAC305 and cross-checked twice."
+    caveat: "displacement-driven submodel, one joint at the worst location, Norton surrogate
+             valid 7.5-16 MPa, E(T) slope and CTE assumed"
+  lifetime_criterion:
+    status: NOT_AVAILABLE
+    what: "N_f = f(Delta-eps_in) for SAC305, and a required life"
+    blocker: "both candidate open-access life-law sources return HTTP 403 to publisher
+              servers; no mission profile exists for the reference system"
+    consequence: "no N_f is predicted anywhere in this project. Relative life is reported
+                  instead, which is parameter-free in the life-law constant C."
+
+# ============================================================================================
+# PHASE-0I-R CLOSURE FIELDS (Sec.19)
+# ============================================================================================
+# Phase 0I reported a quantity called "damage" and a set of architecture claims. These fields
+# state exactly what that quantity is, exactly how far each claim reaches, and which parts are
+# resolved against uncertainty. Report text is generated from here.
+reliability_metric:
+  name: "d_eps_in -- accumulated equivalent inelastic strain per stabilised cycle"
+  exact_definition: "d_eps_in(k) = PEEQ(t_end of cycle k) - PEEQ(t_end of cycle k-1),
+    volume-averaged over the solder core with a one-element corner exclusion band:
+    d_eps_in = sum_e(d_PEEQ_e * V_e) / sum_e(V_e)"
+  units: dimensionless (strain)
+  solver_output: "CalculiX 2.23 PEEQ from *EL PRINT. CEEQ, CE and PE are aliased to PEEQ by the
+    solver; no separate creep field is produced."
+  plastic_component: INCLUDED
+  creep_component: INCLUDED
+  creep_verification: "PROVEN BY EXPERIMENT, not inferred. With a creep-only material and NO
+    *PLASTIC card in the deck, PEEQ is non-zero and PEEQ / eq(eps_inelastic) = 1.0000. The
+    identity holds in four single-element probes and, at the first output, in the multiaxial
+    temperature-varying joint (1.0029-1.0035)."
+  is_a_range: false
+  range_clarification: "PEEQ is an ACCUMULATED path length, not a state, so the per-cycle
+    difference is the inelastic PATH LENGTH traversed in one cycle, NOT a strain range. At
+    stabilisation the ratio path-length / range is 3.72, not the 2.0 a fully-reversed uniaxial
+    cycle would give, because the OFF-ON-OFF cycle is a multi-reversal path in strain space.
+    Any future life law must be matched to the path-length form or the metric converted."
+  stabilized_cycle_definition: "the first cycle whose d_eps_in differs from the previous cycle
+    by less than 5 %; all reported values are cycle 4 of 4, achieved at 0.48-2.00 %"
+  numerical_status: "CONVERGENT -- mesh 1.90 % over the final refinement, creep tolerance
+    0.02 %, corner-exclusion band 6.4 % across 0-2 elements. Including the corner LOWERS the
+    value, so the metric is not corner-dominated."
+  metric_agreement: "The architecture ranking and magnitudes are the SAME under all three
+    inelastic measures -- accumulated path length, instantaneous strain range, and dissipated
+    inelastic energy -- to within 2 pp (Z2 -35.8/-35.7/-37.7 %, Z4 +12.4/+12.6/+13.0 %). The
+    architecture conclusion therefore does not depend on the choice of measure."
+  metric_disagreement: "The CREEP-INCLUSION question DOES depend on the measure: enabling creep
+    moves the strain metric -29.8 % and the energy metric +164.6 %. Direction-of-change
+    statements must always name the measure."
+
+relative_life:
+  status: PARAMETRIC LIFE-LAW SENSITIVITY -- NOT A LIFETIME PREDICTION
+  formula: "N_f = C * d_eps_in^(-m);  N_f,2/N_f,1 = (d_eps_in,1 / d_eps_in,2)^m"
+  C_cancels: true
+  exponent_required: true
+  exponent_status: "SOURCED AS OF PHASE 0J-R -- was UNSOURCED in Phase 0I-R. Syed 2004 derives
+    -1 from Monkman-Grant plus a time-fraction rule and measures -0.9607; Schubert 2003 fits
+    -1.3 for SnAgCu. The exponent is bounded, not free."
+  exponent_provenance: "Phase 0I annotated a figure with 'typical solder k is 1.5-3'. That range
+    was written from general knowledge, appears in no retrieved source, and was never labelled.
+    It WAS the sole basis of the Phase-0I headline '1.9-3.8x relative life'. SUPERSEDED: Phase
+    0J-R obtained the exponent from two primary sources, so the Phase-0I parametric span
+    (m = 0.5-5, ratio 1.25 to 9.18) is withdrawn."
+  correction: "Phase 0I said relative life is 'parameter-free in the life-law constant'. That is
+    literally true of C and MISLEADING as written, because it invites the reading that the
+    ratio is parameter-free. It is not: the exponent m does not cancel. Over m = 0.5 to 5 the
+    Z2/Z1 ratio spans 1.25 to 9.18 -- a factor of 7.4 from the exponent alone."
+  what_may_be_claimed: "the METRIC ratio, which is a model output: Z2 is 35.8 % below Z1 and Z4
+    is 12.4 % above it. Any conversion to life must be labelled parametric in m."
+
+architecture_closure:
+  z1_embedded:
+    component_height_status: "CONSTRAINED -- the LS GaN, flying capacitor and inductor occupy the
+      substrate power layers. h_sub >= 1.276 mm at MLCC nominal (a 250 um band, MLCC OPEN)."
+    electrical_resolution: "BASELINE"
+    damage_status: "BASELINE, d_eps_in = 6.513e-3"
+  z2_backside:
+    component_height_status: "NOT CONSTRAINED by converter component height.
+      COMPONENT-HEIGHT-REALIZABLE under the current Z-architecture model down to 0.300 mm, the
+      source-demonstrated TSV-layer thickness. Complete package manufacturability at 0.300 mm
+      is OPEN."
+    electrical_resolution: "RESOLVED -- +1688 mW against a 282 mW combined uncertainty, 5.98
+      sigma. Driven by carrying 1000 A rather than 23.4 A on the via field."
+    damage_status: "RESOLVED -- -35.8 % against a 6.2 pp spread across all material, mesh and
+      regularisation perturbations (5.8x). Same sign and magnitude under all three measures."
+  z4_power_die:
+    component_height_status: "NOT CONSTRAINED. COMPONENT-HEIGHT-REALIZABLE down to 0.300 mm;
+      complete package manufacturability OPEN, and its 1.23 mm power die sits in the
+      die-to-cooler thermal path."
+    electrical_resolution: "UNRESOLVED -- the +30 mW difference from Z1 is 0.024 % of the total
+      and is dwarfed by a term the electrical sweep set to zero: every architecture was
+      evaluated at a FROZEN T_c = 85.0 C, yet the global model shows Z4 running 1.444 K COOLER
+      than Z1. At dP_conv/dT = 148 mW/K that is 214 mW -- 7.1x the claimed difference, and of
+      the OPPOSITE sign. 0.14 sigma. Z1 AND Z4 ARE ELECTRICALLY INDISTINGUISHABLE AT CURRENT
+      FIDELITY, and Z1 MUST NOT be described as electrically preferred."
+    damage_status: "RESOLVED -- +12.4 % against a 2.4 pp perturbation spread (5.1x)."
+  z5_lateral:
+    component_height_status: "NOT CONSTRAINED."
+    topology_scope: "ONLY the tested low-voltage-lateral topology, in which a long lateral
+      interposer path carries the ~1 V / 1 kA rail."
+    electrical_status: "THE TESTED TOPOLOGY IS ELIMINATED -- 768.07 W of modelled RDL loss,
+      52.8 % efficiency. This is NOT a statement about 2.5D as a class."

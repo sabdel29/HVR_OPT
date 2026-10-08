@@ -1,0 +1,135 @@
+{
+  "case": "C01",
+  "spec": {
+    "n_vr": 2,
+    "placement": "compact_central_pair",
+    "tile_ax": 6.9282,
+    "tile_ay": 6.9282,
+    "h_sub": 0.2,
+    "p_hvr_total_w": 42.0,
+    "question": "Do a few large stiff/thermal islands create global curvature?"
+  },
+  "mesh": {
+    "h_xy_mm": 0.32,
+    "z_scale": 1.4,
+    "h_max_factor": 3.0,
+    "graded": true,
+    "element_type": "C3D8I",
+    "n_nodes": 32432,
+    "n_elems": 28476,
+    "n_z_planes": 16,
+    "elems_through_substrate": 7,
+    "elems_through_die": 4
+  },
+  "loads": {
+    "p_die_W": 240.0,
+    "p_hvr_total_W": 42.0,
+    "p_per_tile_W": 21.0,
+    "q_die_W_per_mm3": 1.6000972859149836
+  },
+  "cooling": {
+    "h_top_W_m2K": 17521.63541738819,
+    "h_bot_W_m2K": 10.0,
+    "a_top_mm2": 499.9696000000023,
+    "a_bot_mm2": 900.0000000000026
+  },
+  "bc": {
+    "bc": "BC_A",
+    "n_bottom_nodes": 2650,
+    "z_bottom_mm": 0.0,
+    "anchor_nodes": {
+      "A_xyz": 1,
+      "B_yz": 32033,
+      "C_z": 393
+    },
+    "anchor_coords": {
+      "A_xyz": [
+        -15.0,
+        -15.0,
+        0.0
+      ],
+      "B_yz": [
+        15.0,
+        -15.0,
+        0.0
+      ],
+      "C_z": [
+        -15.0,
+        15.0,
+        0.0
+      ]
+    },
+    "dofs_removed": 6,
+    "solver": "SPOOLES"
+  },
+  "tiles": [
+    {
+      "cx": -3.7141,
+      "cy": 0.0,
+      "ax": 6.9282,
+      "ay": 6.9282,
+      "P_W": 21.0
+    },
+    {
+      "cx": 3.7141,
+      "cy": 0.0,
+      "ax": 6.9282,
+      "ay": 6.9282,
+      "P_W": 21.0
+    }
+  ],
+  "thermal": {
+    "T_max_C": 91.3883,
+    "T_min_C": 52.7185,
+    "T_mean_C": 64.81412496916627,
+    "hotspot_xyz_mm": [
+      -2.3725,
+      -0.3816,
+      0.05
+    ],
+    "Q_in_W": 282.0,
+    "Q_out_W": 282.00001280372646,
+    "energy_residual_pct": 4.540328533000726e-06
+  },
+  "structural": {
+    "die_warpage_pv_um": 15.616689999999998,
+    "pkg_warpage_pv_um": 20.375899999999998,
+    "uz_max_um": 0.0189302,
+    "uz_min_um": -20.375899999999998,
+    "n_die_top_nodes": 1404,
+    "n_pkg_bot_nodes": 2650,
+    "si_principal_MPa": {
+      "raw_max": 20.376032142929876,
+      "p99": 14.282330824691456,
+      "p95": 10.355777770521085,
+      "n": 21992
+    },
+    "tsv_region_vm_MPa": {
+      "raw_max": 22.545566530438286,
+      "p99": 21.99187728175344,
+      "p95": 17.245377551639976,
+      "n": 600
+    },
+    "hvr_tile_vm_MPa": {
+      "raw_max": 30.61342550964502,
+      "p99": 29.85679609136353,
+      "p95": 27.849327863820694,
+      "n": 600
+    },
+    "interface_shear_MPa": {
+      "raw_max": 2.303247629854202,
+      "p99": 2.0118079740661137,
+      "p95": 1.6017618794577426,
+      "n": 2808
+    },
+    "interface_peel_MPa": {
+      "raw_max": 3.2624,
+      "p99": 1.75328,
+      "p95": 0.529999,
+      "n": 2808
+    }
+  },
+  "overrides": {},
+  "tsv_enabled": true,
+  "runtime_s": 47.0
+}

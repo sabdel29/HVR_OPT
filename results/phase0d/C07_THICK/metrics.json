@@ -1,0 +1,187 @@
+{
+  "case": "C07_THICK",
+  "spec": {
+    "n_vr": 4,
+    "placement": "asymmetric_left",
+    "tile_ax": 4.899,
+    "tile_ay": 4.899,
+    "h_sub": 0.5,
+    "p_hvr_total_w": 42.0,
+    "question": "thickness x asymmetry interaction closure (Phase-0D addendum)"
+  },
+  "mesh": {
+    "h_xy_mm": 0.32,
+    "z_scale": 1.4,
+    "h_max_factor": 3.0,
+    "graded": true,
+    "element_type": "C3D8I",
+    "tsv_discrete_pitch": null,
+    "n_nodes": 38320,
+    "n_elems": 33820,
+    "n_z_planes": 16,
+    "elems_through_substrate": 7,
+    "elems_through_die": 4
+  },
+  "loads": {
+    "p_die_W": 240.0,
+    "p_hvr_total_W": 42.0,
+    "p_per_tile_W": 10.5,
+    "q_die_W_per_mm3": 1.6000972859149836
+  },
+  "cooling": {
+    "h_top_W_m2K": 17521.63541738819,
+    "h_bot_W_m2K": 10.0,
+    "a_top_mm2": 499.9695999999997,
+    "a_bot_mm2": 900.0000000000026
+  },
+  "bc": {
+    "bc": "BC_A",
+    "n_bottom_nodes": 3074,
+    "z_bottom_mm": 0.0,
+    "anchor_nodes": {
+      "A_xyz": 1,
+      "B_yz": 37857,
+      "C_z": 457
+    },
+    "anchor_coords": {
+      "A_xyz": [
+        -15.0,
+        -15.0,
+        0.0
+      ],
+      "B_yz": [
+        15.0,
+        -15.0,
+        0.0
+      ],
+      "C_z": [
+        -15.0,
+        15.0,
+        0.0
+      ]
+    },
+    "dofs_removed": 6,
+    "solver": "SPOOLES"
+  },
+  "tiles": [
+    {
+      "cx": -8.2305,
+      "cy": -5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    },
+    {
+      "cx": -8.2305,
+      "cy": 5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    },
+    {
+      "cx": -2.8314999999999992,
+      "cy": -5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    },
+    {
+      "cx": -2.8314999999999992,
+      "cy": 5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    }
+  ],
+  "thermal": {
+    "T_max_C": 82.3124,
+    "T_min_C": 52.5794,
+    "T_mean_C": 67.2423134290188,
+    "hotspot_xyz_mm": [
+      -7.9035,
+      -5.263,
+      0.3875
+    ],
+    "Q_in_W": 282.0,
+    "Q_out_W": 282.00001166744585,
+    "energy_residual_pct": 4.137392144254223e-06
+  },
+  "structural": {
+    "die_warpage_pv_um": 5.46375,
+    "pkg_warpage_pv_um": 7.02531000640068,
+    "uz_max_um": 0.060307099999999995,
+    "uz_min_um": -7.02531,
+    "n_die_top_nodes": 1716,
+    "n_pkg_bot_nodes": 3074,
+    "si_principal_MPa": {
+      "raw_max": 18.588337641721377,
+      "p99": 10.652476124933472,
+      "p95": 8.065841789829955,
+      "n": 25224
+    },
+    "tsv_region_vm_MPa": {
+      "raw_max": 17.443503155754406,
+      "p99": 15.153717965098837,
+      "p95": 12.290092454577996,
+      "n": 768
+    },
+    "hvr_tile_vm_MPa": {
+      "raw_max": 25.42096984613691,
+      "p99": 25.130864895646912,
+      "p95": 24.495305717335864,
+      "n": 768
+    },
+    "interface_shear_MPa": {
+      "raw_max": 3.7928421700652133,
+      "p99": 3.473717078465051,
+      "p95": 2.979869473805032,
+      "n": 3432
+    },
+    "interface_peel_MPa": {
+      "raw_max": 6.49788,
+      "p99": 2.99257,
+      "p95": 1.1469239999999878,
+      "n": 3432
+    },
+    "interface_peel_excl025_MPa": {
+      "raw_max": 6.49788,
+      "p99": 2.53387,
+      "p95": 1.0126029999999997,
+      "n": 3024
+    },
+    "interface_shear_excl025_MPa": {
+      "raw_max": 3.7928421700652133,
+      "p99": 3.478620128300927,
+      "p95": 3.063684891869347,
+      "n": 3024
+    },
+    "interface_peel_excl050_MPa": {
+      "raw_max": 6.49788,
+      "p99": 2.5899177999999963,
+      "p95": 1.1211539999999771,
+      "n": 2720
+    },
+    "interface_shear_excl050_MPa": {
+      "raw_max": 3.7928421700652133,
+      "p99": 3.4876003463436445,
+      "p95": 2.9813820190674143,
+      "n": 2720
+    },
+    "interface_peel_excl100_MPa": {
+      "raw_max": 6.49788,
+      "p99": 2.60396,
+      "p95": 1.2803254999999987,
+      "n": 2432
+    },
+    "interface_shear_excl100_MPa": {
+      "raw_max": 3.7928421700652133,
+      "p99": 3.4917326250550222,
+      "p95": 3.0172160115201336,
+      "n": 2432
+    },
+    "interface_excl_note": "excl<NNN> = nodes at least NNN/100 mm inside the underfill perimeter, excluding the free-edge corner"
+  },
+  "overrides": {},
+  "tsv_enabled": true,
+  "runtime_s": 63.3
+}

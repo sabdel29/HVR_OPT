@@ -1,0 +1,22 @@
+[
+  {
+    "check": "free thermal expansion",
+    "ok": true,
+    "detail": "u_x at the far corner = 6.450000e-04 mm against alpha*dT*L = 6.450000e-04 mm (0.000 % error); PEEQ = 0.00e+00 (must be ~0 -- free expansion generates no inelastic strain)"
+  },
+  {
+    "check": "monotonic temperature dependence",
+    "ok": true,
+    "detail": "creep rate at 10 MPa rises 1.96e-10 -> 1.05e-07 (535x); yield falls 24.5 -> 10.5 MPa; E falls 45000 -> 33000 MPa"
+  },
+  {
+    "check": "creep relaxation at constant strain",
+    "ok": "True",
+    "detail": "mean |sxz| 5.587 -> 2.816 MPa over a 600 s hold (-49.6 %). Negative and material means creep is active."
+  },
+  {
+    "check": "cycle stabilisation",
+    "ok": true,
+    "detail": "per-cycle d(eps_in) = 4.9754e-03, 6.2687e-03, 6.1171e-03, 6.0514e-03, 6.0247e-03; last-to-previous change 0.4 %"
+  }
+]

@@ -1,0 +1,1723 @@
+You are continuing the HVR_Journal_System_Level / ETM-DVPD project after completion of:
+
+Phase 0K-R — Experimental-Domain and Statistical-Design Closure
+
+Current authoritative report:
+
+results/ETM_DVPD_FULL_TECHNICAL_REPORT.md
+results/ETM_DVPD_FULL_TECHNICAL_REPORT.pdf
+
+Current authoritative status:
+
+results/CURRENT_SCIENTIFIC_STATUS.yaml
+
+PHASE 0K-R CURRENT STATE:
+
+- Z2 backside has a robust relative solder-fatigue-life advantage over Z1 embedded:
+      Z2/Z1 ≈ 1.21–1.38
+  across four admitted primary-source formulations.
+
+- Z2 electrical penalty versus Z1:
+      +1.688 W
+      ≈ +1.3 %
+
+- Absolute life remains conditional/model-form uncertain.
+
+- N_required remains OPEN.
+
+- G2 remains NOT TESTED.
+
+- Global optimizer remains forbidden.
+
+- The original -40/+25 C experiment profile was withdrawn.
+
+- Replacement experiment-design profiles were:
+      45 → 125 C
+      110 → 150 C
+  5-min dwells, 3 C/min.
+
+- Proposed statistical design became:
+      Z1 + Z2
+      2 thermal profiles
+      34 specimens/cell
+      136 packages total.
+
+HOWEVER, PHASE 0K-R UNCOVERED A MORE FUNDAMENTAL LIMITATION:
+
+The SAC305 creep model was fitted to 19 measurements over approximately:
+
+      T = 45, 80, 115, 150 C
+      stress = 7.51–15.92 MPa
+
+but damage-weighted solver stresses in the actual package are approximately:
+
+      baseline ≈ 69 MPa
+      45→125 C ≈ 91 MPa
+      110→150 C ≈ 54 MPa
+
+so the model is being evaluated roughly 3.4–7.2x above the fitted stress window during the
+increments that contribute most strongly to the creep response.
+
+This limitation exists not only in the proposed experiment profiles but in the normal
+operating baseline.
+
+There is also a potentially load-bearing semantic/implementation inconsistency:
+
+The current report writes the creep law as approximately:
+
+      eps_dot_cr = A(T) * sigma^n(T)
+
+but Phase 0K-R interprets the driving quantity as:
+
+      sigma_eq - sigma_y(T)
+
+i.e. an overstress.
+
+These are NOT automatically equivalent.
+
+The exact solver implementation and the exact variable used when fitting the 19 experimental
+data points must now be audited from first principles.
+
+This phase is:
+
+# PHASE 0L — HIGH-STRESS SAC305 CONSTITUTIVE CLOSURE
+# AND CURRENT-FRAMEWORK TECHNICAL AUDIT REPORT
+
+There are TWO equal-priority deliverables:
+
+A. close or correctly bound the high-stress constitutive problem;
+
+B. generate a NEW, STANDALONE, CURRENT-STATE technical report describing exactly what the
+   ETM-DVPD framework contains TODAY and how all electrical, thermal, mechanical and
+   reliability pieces couple together.
+
+The standalone report is NOT a history of Phases 0A–0K-R.
+
+It is intended to be handed to an independent technical auditor who may understand electrical
+engineering/package design but have limited background in nonlinear mechanics.
+
+It must therefore be explanatory, rigorous and self-contained.
+
+Do NOT build the optimizer.
+
+Do NOT run a physical experiment.
+
+Do NOT add another failure mechanism.
+
+Do NOT silently modify the SAC305 model to preserve the current result.
+
+======================================================================
+PART I — PRESERVE AND REPRODUCE
+======================================================================
+
+1. Read in full:
+
+- results/phase0kr/PHASE0KR_EXPERIMENTAL_CLOSURE.md
+- results/phase0kr/SAC305_CONSTITUTIVE_DOMAIN.md
+- results/phase0kr/profile_domain_audit.csv
+- results/phase0kr/EXPERIMENT_PROFILE_SELECTION.md
+- results/phase0kr/sample_size_sensitivity.csv
+- results/phase0kr/statistical_power_analysis.csv
+- results/phase0jr/PHASE0JR_PRIMARY_LIFE_LAW_GATE.md
+- results/phase0ir/PHASE0IR_RELIABILITY_METRIC_CLOSURE.md
+- results/CURRENT_SCIENTIFIC_STATUS.yaml
+- current full technical report
+- every source file implementing the SAC305 material law.
+
+2. Run the full existing test suite first.
+
+3. Record exact baseline.
+
+4. Preserve all prior phase artifacts byte-identical except generated fragments explicitly
+   controlled by CURRENT_SCIENTIFIC_STATUS.yaml.
+
+Create:
+
+results/phase0l/
+configs/phase0l/
+scripts/phase0l/
+
+======================================================================
+PART II — LOG THE NEW CONSTITUTIVE DEFECT / RISK
+======================================================================
+
+Log a new issue, provisionally:
+
+# DEFECT #40 — CREEP CALIBRATION VARIABLE / HIGH-STRESS APPLICATION NOT CLOSED
+
+Do NOT call it confirmed until the implementation audit establishes exactly what is wrong.
+
+The audit must separate TWO questions:
+
+A. VARIABLE CONSISTENCY
+
+What exact stress quantity drives CalculiX *CREEP, LAW=NORTON in the current combined
+*PLASTIC + *CREEP implementation?
+
+B. DOMAIN CONSISTENCY
+
+Whatever that quantity is, does the package evaluate it far beyond the domain of the 19
+experimental SAC305 creep points used to fit A(T), n(T)?
+
+These are separate issues.
+
+======================================================================
+PART III — DETERMINE THE EXACT CALCULIX CONSTITUTIVE LAW
+======================================================================
+
+Do not trust the existing prose.
+
+Determine from:
+
+1. CalculiX official documentation;
+2. CalculiX source code if installed / retrievable;
+3. controlled numerical probes.
+
+Answer exactly:
+
+For:
+
+*PLASTIC
+*CREEP, LAW=NORTON
+*VISCO
+
+what stress quantity enters the creep rate?
+
+Candidates include:
+
+sigma_eq
+
+sigma_eq - sigma_y
+
+some effective overstress after return mapping
+
+another internal quantity.
+
+Do not assume.
+
+Trace the actual implementation.
+
+Create:
+
+results/phase0l/CALCULIX_CREEP_IMPLEMENTATION_AUDIT.md
+
+Include:
+
+- relevant manual definition;
+- relevant source routine/function if available;
+- input variables;
+- internal state variables;
+- order of plastic update versus creep update;
+- exact creep-rate expression;
+- how temperature interpolation is applied;
+- how PEEQ is accumulated;
+- whether creep and rate-independent plasticity share an internal effective stress.
+
+======================================================================
+PART IV — CONTROLLED SOLVER PROBES
+======================================================================
+
+Build minimal one-element / one-material tests.
+
+At minimum:
+
+TEST A — CREEP ONLY
+
+*CREEP only, no *PLASTIC.
+
+Apply known constant stresses:
+5, 10, 15, 25, 50, 75, 100 MPa.
+
+Measure creep rate.
+
+Check whether:
+
+eps_dot = A sigma^n.
+
+TEST B — PLASTIC + CREEP
+
+Add current *PLASTIC card.
+
+Apply the same total stresses.
+
+Determine whether creep behaves as:
+
+A sigma^n
+
+or:
+
+A (sigma - sigma_y)^n
+
+or something else.
+
+TEST C — BELOW YIELD
+
+Apply total stress below sigma_y.
+
+Does creep occur?
+
+TEST D — JUST ABOVE YIELD
+
+Sweep narrowly across sigma_y.
+
+Look for a discontinuity / shifted power law.
+
+TEST E — TEMPERATURE
+
+Repeat at:
+45 C
+80 C
+115 C
+150 C
+
+and, if the plastic card is used outside its source domain, also probe:
+125 C
+150 C
+
+to expose extrapolation explicitly.
+
+For every test compare solver output against candidate analytic forms.
+
+Require quantitative residuals.
+
+Create:
+
+results/phase0l/calculix_creep_probe.csv
+
+and figure:
+
+FIG-0L-A
+measured CalculiX creep rate versus candidate analytic laws.
+
+======================================================================
+PART V — AUDIT THE ORIGINAL 19-POINT FIT
+======================================================================
+
+Locate the exact 19 experimental SAC305 creep points used for the existing card.
+
+For every point record:
+
+temperature
+reported applied stress
+reported creep rate
+source table/page
+whether stress is:
+    total uniaxial stress
+    effective stress
+    overstress
+    something else.
+
+Then inspect the fitting script.
+
+Answer:
+
+Was A(T), n(T) fitted against:
+
+sigma_applied
+
+or:
+
+sigma_applied - sigma_y(T)?
+
+This must match the solver variable.
+
+If the current fit and the solver use DIFFERENT independent variables:
+
+that is a real constitutive inconsistency.
+
+Log DEFECT #40 as CONFIRMED.
+
+Do not repair it silently.
+
+First quantify its effect.
+
+Create:
+
+results/phase0l/ORIGINAL_CREEP_FIT_AUDIT.md
+results/phase0l/original_19point_fit.csv
+
+======================================================================
+PART VI — REFIT CONSISTENTLY IF NECESSARY
+======================================================================
+
+If the solver variable and fit variable differ:
+
+construct the scientifically consistent alternative fit(s).
+
+For example:
+
+FIT-A:
+rate = A(T) sigma_applied^n
+
+FIT-B:
+rate = A(T) [sigma_applied - sigma_y(T)]^n
+
+only where physically meaningful.
+
+Do not use negative overstress.
+
+Compare residuals.
+
+Do not choose the fit that preserves Z2/Z1.
+
+Choose the fit supported by:
+
+- solver implementation;
+- experimental definition;
+- constitutive physics.
+
+Report:
+
+RMSE
+maximum error
+temperature dependence
+activation energy
+extrapolation behavior.
+
+======================================================================
+PART VII — HIGH-STRESS SAC305 PRIMARY-LITERATURE SEARCH
+======================================================================
+
+Perform a focused primary-source search for SAC305 / SnAgCu constitutive data that covers the
+actual package stress regime.
+
+Target approximately:
+
+15–100+ MPa
+
+and temperatures relevant to:
+
+45–150 C.
+
+Search for:
+
+- tensile stress-strain data;
+- creep / stress relaxation;
+- viscoplastic response;
+- Anand models;
+- Garofalo / sinh models;
+- hyperbolic-sine creep;
+- unified viscoplastic formulations;
+- Chaboche + creep;
+- strain-rate-dependent SAC305 data.
+
+Prefer SAC305 exactly.
+
+Do not transplant SAC405, SnPb, high-Ag SAC or SnAgCuCe parameter sets without explicit
+transferability evidence.
+
+Create:
+
+results/phase0l/HIGH_STRESS_SAC305_LITERATURE_AUDIT.md
+results/phase0l/high_stress_sac305_sources.csv
+
+For every source record:
+
+alloy
+temperature
+stress
+strain rate
+test type
+constitutive law
+parameters
+sample geometry
+primary/secondary
+availability
+relevance
+admissibility.
+
+======================================================================
+PART VIII — TEST ALTERNATIVE CONSTITUTIVE FORMS
+======================================================================
+
+Do NOT automatically retain a single Norton law.
+
+At minimum evaluate physically supportable candidate forms such as:
+
+A. CURRENT NORTON
+
+eps_dot = A(T) sigma^n
+
+or whatever exact current solver implementation proves to use.
+
+B. HYPERBOLIC-SINE / GAROFALO-TYPE
+
+eps_dot = A(T) [sinh(alpha sigma)]^n
+
+if supported by SAC305 data.
+
+C. ANAND / UNIFIED VISCOPLASTIC MODEL
+
+ONLY if an exact SAC305 parameter set covers our temperature/stress regime and there is an
+available solver implementation we can validate.
+
+D. PIECEWISE / MULTI-REGIME NORTON
+
+ONLY if the literature demonstrates distinct stress regimes.
+
+Do not add complexity without evidence.
+
+======================================================================
+PART IX — SOLVER CAPABILITY AUDIT
+======================================================================
+
+Determine which candidate laws can be implemented faithfully in the available tools.
+
+Available infrastructure currently includes:
+
+- CalculiX 2.23
+- MOOSE
+- Python post-processing / custom constitutive fitting
+- Gmsh
+- ANSYS AEDT HFSS / Icepak
+- PALACE
+
+Do not assume CalculiX supports Anand.
+
+If MOOSE SolidMechanics can implement a better constitutive model and is available in the
+current build, verify this before recommending it.
+
+If a custom user material would be required:
+
+state that explicitly.
+
+Do not fabricate support.
+
+======================================================================
+PART X — HIGH-STRESS MODEL VALIDATION
+======================================================================
+
+Any candidate high-stress constitutive law must first reproduce its SOURCE DATA.
+
+Then test:
+
+1. low-stress 7.5–16 MPa data already used;
+
+2. high-stress SAC305 data;
+
+3. temperature dependence;
+
+4. stress relaxation if source data exist;
+
+5. cyclic response if source data exist.
+
+Classify each candidate:
+
+ADMISSIBLE
+CONDITIONALLY ADMISSIBLE
+REJECTED.
+
+Create:
+
+results/phase0l/HIGH_STRESS_MODEL_VALIDATION.md
+results/phase0l/high_stress_model_comparison.csv
+
+======================================================================
+PART XI — REPLAY THE ACTUAL PACKAGE UNDER ALL ADMISSIBLE MODELS
+======================================================================
+
+For every admissible constitutive model, replay at minimum:
+
+Z1 reference
+Z2 reference
+Z4 reference
+
+and the two current candidate experiment profiles.
+
+Do NOT run a huge DOE.
+
+For every run extract:
+
+- total equivalent stress history;
+- actual creep-driving stress history;
+- sigma_y(T);
+- temperature history;
+- creep rate history;
+- PEEQ / accumulated creep path;
+- creep-only strain;
+- inelastic energy;
+- Syed-compatible 25-um averaged metrics.
+
+Create distributions, not only one median.
+
+Report:
+
+p10
+p50
+p90
+maximum
+damage-weighted mean/median.
+
+======================================================================
+PART XII — TEST WHETHER “COMMON-MODE CANCELLATION” IS TRUE
+======================================================================
+
+This is mandatory.
+
+Phase 0K-R states that the 3.4–7.2x stress extrapolation does not disturb:
+
+Z2/Z1 ≈ 1.21–1.38
+
+because it is common-mode.
+
+Do not assume that.
+
+Test it.
+
+For every admissible constitutive model compute:
+
+M_Z2 / M_Z1
+
+for:
+
+creep strain
+energy
+native fatigue metric
+relative life if transferable.
+
+Then calculate the spread across model forms.
+
+Classify:
+
+ROBUST COMMON-MODE CANCELLATION
+
+if the Z2/Z1 ratio remains within a predeclared tolerance.
+
+or:
+
+PARTIAL CANCELLATION
+
+or:
+
+RELATIVE-LIFE RESULT MODEL-FORM DEPENDENT.
+
+Predeclare the tolerance BEFORE seeing results.
+
+A reasonable gate could be based on whether the model-form spread is small relative to the
+21–38 % architecture effect, but document the actual threshold and justification.
+
+======================================================================
+PART XIII — RE-AUDIT THE EXPERIMENT DESIGN
+======================================================================
+
+Only AFTER the constitutive replay:
+
+recalculate for the candidate experimental profiles:
+
+45→125 C
+110→150 C
+
+the quantities:
+
+w/epsilon
+D
+expected model discrimination
+predicted Z2/Z1 life ratio
+sample-size requirement.
+
+If the high-stress constitutive closure changes the effect size:
+
+update n.
+
+Do not preserve:
+
+34 specimens/cell
+136 total packages
+
+unless it still passes.
+
+Do not freeze any experiment while high-stress model uncertainty remains decision-limiting.
+
+======================================================================
+PART XIV — COMPLETE CONSTITUTIVE DOMAIN, NOT JUST CREEP TEMPERATURE
+======================================================================
+
+Audit ALL temperature-dependent SAC305 properties:
+
+- E(T)
+- nu(T)
+- CTE(T)
+- yield/flow stress
+- hardening parameters
+- creep parameters.
+
+Current known ranges include:
+
+creep:
+45–150 C
+
+plasticity:
+approximately -40–122 C.
+
+Therefore 110→150 C is NOT automatically “fully within-domain” for the complete material card.
+
+For each property classify every selected thermal profile as:
+
+INTERPOLATION
+MILD EXTRAPOLATION
+SEVERE EXTRAPOLATION.
+
+If necessary, source plastic/yield behavior from 122–150 C.
+
+Do not call a profile “within-domain” unless ALL constitutive quantities needed by that
+profile are supported.
+
+======================================================================
+PART XV — PHASE 0L SCIENTIFIC VERDICT
+======================================================================
+
+Choose exactly one:
+
+A.
+HIGH-STRESS SAC305 CONSTITUTIVE MODEL VALIDATED — RELATIVE-LIFE RESULT CONFIRMED
+
+B.
+CONSTITUTIVE LAW CORRECTED — RELATIVE-LIFE RESULT SURVIVES
+
+C.
+HIGH-STRESS MODEL-FORM UNCERTAINTY PRESENT BUT Z2/Z1 RANKING SURVIVES
+
+D.
+RELATIVE-LIFE MAGNITUDE CHANGES — RANKING SURVIVES
+
+E.
+RELATIVE-LIFE CLAIM NOT ROBUST TO HIGH-STRESS CONSTITUTIVE MODEL
+
+F.
+AVAILABLE SAC305 DATA INSUFFICIENT TO CLOSE HIGH-STRESS CONSTITUTIVE RESPONSE
+
+Do not force a positive outcome.
+
+======================================================================
+PART XVI — REQUIRED PHASE 0L SCIENTIFIC ARTIFACTS
+======================================================================
+
+Create at minimum:
+
+results/phase0l/PHASE0L_HIGH_STRESS_CONSTITUTIVE_GATE.md
+
+results/phase0l/CALCULIX_CREEP_IMPLEMENTATION_AUDIT.md
+
+results/phase0l/calculix_creep_probe.csv
+
+results/phase0l/ORIGINAL_CREEP_FIT_AUDIT.md
+
+results/phase0l/original_19point_fit.csv
+
+results/phase0l/HIGH_STRESS_SAC305_LITERATURE_AUDIT.md
+
+results/phase0l/high_stress_sac305_sources.csv
+
+results/phase0l/HIGH_STRESS_MODEL_VALIDATION.md
+
+results/phase0l/high_stress_model_comparison.csv
+
+results/phase0l/package_model_replay.csv
+
+results/phase0l/common_mode_cancellation_test.csv
+
+results/phase0l/experiment_reaudit.csv
+
+results/phase0l/complete_constitutive_domain.csv
+
+Update:
+
+results/CURRENT_SCIENTIFIC_STATUS.yaml
+
+======================================================================
+PART XVII — REQUIRED PHASE 0L FIGURES
+======================================================================
+
+Generate at minimum:
+
+FIG-0L-A
+CalculiX creep-rate probe:
+solver output versus candidate sigma^n / overstress laws.
+
+FIG-0L-B
+19-point original creep dataset and current/refitted laws.
+
+FIG-0L-C
+SAC305 source-data coverage in temperature × stress space with package trajectories overlaid.
+
+FIG-0L-D
+actual package stress / overstress histories for Z1 and Z2.
+
+FIG-0L-E
+damage-weighted stress distribution versus calibrated stress domain.
+
+FIG-0L-F
+candidate constitutive laws over 5–120 MPa at representative temperatures.
+
+FIG-0L-G
+Z2/Z1 relative response under each admissible constitutive model.
+
+FIG-0L-H
+current versus revised experiment discrimination and sample-size result.
+
+======================================================================
+PART XVIII — NEW STANDALONE CURRENT-FRAMEWORK TECHNICAL REPORT
+======================================================================
+
+This is a SEPARATE deliverable from:
+
+results/ETM_DVPD_FULL_TECHNICAL_REPORT.*
+
+Do NOT append this new document to the historical report.
+
+Create:
+
+results/ETM_DVPD_CURRENT_FRAMEWORK_AUDIT_REPORT.md
+
+and:
+
+results/ETM_DVPD_CURRENT_FRAMEWORK_AUDIT_REPORT.pdf
+
+Also create:
+
+results/ETM_DVPD_CURRENT_FRAMEWORK_AUDIT_REPORT_BUILD_LOG.md
+
+The purpose of this document is:
+
+> A technically competent person who has never followed Phases 0A–0L should be able to read
+> this one document and understand exactly what the framework does TODAY, which physics are
+> included, how E/T/M are coupled, which equations are solved, which software tools are used,
+> how quantities move between solvers, what has been validated, what remains uncertain, and
+> how to reproduce/audit every major result.
+
+This report MUST NOT be a chronology.
+
+No “Phase 0B did this, then Phase 0C did this...” structure.
+
+Historical defects should appear only where they explain a CURRENT implementation rule.
+
+======================================================================
+PART XIX — AUDIENCE AND WRITING STYLE FOR THE STANDALONE REPORT
+======================================================================
+
+Assume the reader:
+
+- understands circuits / power delivery / packaging;
+- understands basic heat transfer;
+- may have LITTLE OR NO background in nonlinear solid mechanics or solder fatigue;
+- wants enough mathematical detail to independently audit the implementation.
+
+Therefore every important mechanical concept must have BOTH:
+
+1. a mathematically precise definition;
+
+2. a plain-language explanation.
+
+Example:
+
+Do not merely write:
+
+PEEQ is accumulated equivalent inelastic strain.
+
+Also explain:
+
+“PEEQ behaves more like an odometer than a displacement range: irreversible deformation
+accumulated while the solder moves through a cycle is added even if the joint later returns
+toward its starting position.”
+
+Use similar explanatory treatment for:
+
+- elastic strain;
+- plastic strain;
+- creep;
+- CTE mismatch;
+- warpage;
+- board restraint;
+- stress relaxation;
+- inelastic energy;
+- fatigue life;
+- Weibull beta;
+- relative versus absolute life.
+
+Do not dumb the engineering down.
+
+Explain it.
+
+======================================================================
+PART XX — REQUIRED STRUCTURE OF THE STANDALONE REPORT
+======================================================================
+
+The report must contain at least the following sections.
+
+------------------------------------------------------------
+1. EXECUTIVE TECHNICAL OVERVIEW
+------------------------------------------------------------
+
+Explain in 2–4 pages:
+
+- what system is being modeled;
+- why DVPD is used;
+- what HVR architecture means;
+- what ETM means;
+- what inputs enter;
+- what outputs come out;
+- what the CURRENT strongest conclusion is;
+- what the framework does NOT yet claim.
+
+Include a one-page “framework at a glance” table.
+
+------------------------------------------------------------
+2. PHYSICAL SYSTEM AND ARCHITECTURES
+------------------------------------------------------------
+
+Explain the current package stack.
+
+Include clear cross-sections for:
+
+Z1 embedded
+Z2 backside
+Z4 separate power die
+tested Z5 lateral topology if still relevant.
+
+For each architecture state:
+
+- where conversion occurs;
+- which rail crosses TSVs;
+- where RDL exists;
+- where bumps/BGA/C4/microbumps exist;
+- where heat is generated;
+- where cooling acts;
+- which geometry constrains substrate thickness.
+
+Include dimensional values where current/source-backed.
+
+------------------------------------------------------------
+3. FULL ETM DATAFLOW — MOST IMPORTANT FIGURE
+------------------------------------------------------------
+
+Create a full block diagram:
+
+DESIGN VARIABLES
+    ↓
+CONVERTER SYNTHESIS
+    ↓
+RAIL-AWARE CURRENT PATH
+    ↓
+PDN / INTERCONNECT LOSSES
+    ↓
+LOCAL ELECTRICAL-TEMPERATURE FIXED POINT
+    ↓
+SPATIALLY MAPPED HEAT SOURCES
+    ↓
+THERMAL SOLVER
+    ↓
+T(x,y,z,t)
+    ↓
+GLOBAL THERMOELASTIC PACKAGE
+    ↓
+BOUNDARY DISPLACEMENT HISTORY
+    ↓
+LOCAL SOLDER SUBMODEL
+    ↓
+CREEP / INELASTIC METRICS
+    ↓
+FATIGUE LIFE LAW
+    ↓
+MISSION / N_required
+    ↓
+PASS-FAIL / G2
+
+Mark CURRENTLY CLOSED, CONDITIONAL and OPEN blocks visually.
+
+Explain every arrow.
+
+------------------------------------------------------------
+4. DESIGN VARIABLES AND INPUT CONTRACT
+------------------------------------------------------------
+
+List the actual framework inputs:
+
+electrical
+geometric
+material
+thermal
+mechanical
+architecture
+mission.
+
+Separate:
+
+USER/DESIGN VARIABLE
+SOURCE-BACKED PARAMETER
+CALIBRATED PARAMETER
+ASSUMPTION
+OPEN PARAMETER.
+
+Show units and provenance.
+
+------------------------------------------------------------
+5. CONVERTER ELECTRICAL MODEL
+------------------------------------------------------------
+
+Explain:
+
+- 48 V → intermediate rail → ~1 V;
+- switched-cap + buck concept;
+- converter loss components;
+- conduction;
+- switching;
+- gate-drive;
+- Coss;
+- ripple;
+- inductor DCR;
+- temperature feedback.
+
+Write the actual equations used.
+
+For every equation define every symbol.
+
+State which source/module/function implements it.
+
+------------------------------------------------------------
+6. RAIL-AWARE POWER-PATH MODEL
+------------------------------------------------------------
+
+Explain why a TSV carrying 48 V is radically different from one carrying 1 V.
+
+Show:
+
+P = I^2 R
+
+and the approximately 44x current / ~1960x I²R relationship.
+
+Explain:
+
+n_required
+n_allocated
+n_available
+
+and why they cannot be conflated.
+
+Document hard feasibility.
+
+------------------------------------------------------------
+7. VERTICAL INTERCONNECT MODEL
+------------------------------------------------------------
+
+For:
+
+BGA
+C4
+TSV
+microbump / pad
+
+show:
+
+R = rho(T)L/A
+
+parallel conductors
+
+supply + ground loop.
+
+Explain geometry and source values.
+
+State limitations such as contact/crowding uncertainty.
+
+------------------------------------------------------------
+8. RDL / HORIZONTAL PDN MODEL
+------------------------------------------------------------
+
+Explain the 2-D sheet PDE:
+
+div(sigma_s grad V) = -J
+
+and:
+
+P = integral sigma_s |grad V|^2 dA.
+
+Explain:
+
+- finite source footprint;
+- exact cell-overlap weighting;
+- VDD/GND layers;
+- Cu thickness;
+- occupancy;
+- boundary conditions;
+- why the old scalar R/mm model is no longer used.
+
+Show MOOSE validation.
+
+------------------------------------------------------------
+9. ELECTRICAL ↔ THERMAL FIXED POINT
+------------------------------------------------------------
+
+Explain the iterative coupling:
+
+electrical loss depends on temperature;
+temperature depends on electrical loss.
+
+Provide pseudocode.
+
+For example:
+
+initialize T
+repeat:
+    compute converter loss(T)
+    compute RDL/interconnect loss(T)
+    spatially map heat
+    solve thermal
+    update local component temperatures
+until convergence.
+
+Give convergence criteria and typical iterations.
+
+Explain PER_REGULATOR versus SYSTEM scopes and ScopeError protection.
+
+------------------------------------------------------------
+10. THERMAL MODEL
+------------------------------------------------------------
+
+Write the governing conduction equation.
+
+Explain:
+
+K tensor
+Robin boundary condition
+heat-source mapping
+steady versus transient.
+
+Document exactly which regions receive:
+
+die heat
+HVR loss
+RDL loss
+TSV loss
+bump loss.
+
+Explain cooling assumptions.
+
+Document current thermal cross-validation:
+
+CalculiX
+MOOSE
+Icepak result and why it was discarded if still true.
+
+------------------------------------------------------------
+11. GLOBAL PACKAGE MECHANICS — EXPLAIN FOR A NON-MECHANICS READER
+------------------------------------------------------------
+
+Start from:
+
+different materials expand differently when heated.
+
+Then introduce:
+
+epsilon_th = alpha DeltaT
+
+sigma = C : (epsilon_total - epsilon_th)
+
+and equilibrium.
+
+Explain:
+
+- CTE mismatch;
+- neutral axis;
+- bending stiffness;
+- warpage;
+- stress;
+- why free and board-mounted package behavior differs;
+- BC-A;
+- BC-B historical clamp and why not used;
+- explicit BGA + PCB model.
+
+Use intuitive diagrams.
+
+------------------------------------------------------------
+12. GLOBAL-LOCAL SUBMODELLING
+------------------------------------------------------------
+
+Explain why the full package cannot economically resolve every solder joint.
+
+Show:
+
+GLOBAL PACKAGE
+    ↓ displacements + T(t)
+LOCAL JOINT SUBMODEL
+
+Explain:
+
+- boundary interpolation;
+- selected worst/critical joint;
+- joint geometry;
+- 25-um Syed averaging layers;
+- mesh refinement;
+- corner singularity avoidance.
+
+------------------------------------------------------------
+13. SAC305 CONSTITUTIVE MODEL
+------------------------------------------------------------
+
+This section must reflect the FINAL Phase-0L result.
+
+Explain separately:
+
+elastic
+thermal
+rate-independent plastic if actually present
+creep / viscoplasticity.
+
+Write the exact implemented equations.
+
+DO NOT copy the pre-0L equation if the solver audit changes it.
+
+State:
+
+temperature domain
+stress domain
+source dataset
+fit residual
+high-stress status.
+
+Provide a plot of source-data domain versus package trajectory.
+
+Explain in plain language what extrapolation means.
+
+------------------------------------------------------------
+14. RELIABILITY METRICS
+------------------------------------------------------------
+
+Define clearly:
+
+M1 accumulated equivalent inelastic / creep path
+M2 direct cyclic range
+M3/M5 energy metric as applicable.
+
+Explain the “odometer versus range” analogy.
+
+Show how the metric is spatially averaged.
+
+Explain stabilized cycle.
+
+------------------------------------------------------------
+15. FATIGUE LIFE
+------------------------------------------------------------
+
+Explain:
+
+response metric ≠ fatigue law ≠ required life.
+
+Document the current admitted:
+
+Syed
+Schubert
+
+forms, but ONLY those still scientifically admissible after Phase 0L.
+
+Explain:
+
+relative life
+absolute life
+why constants cancel in ratios
+what does NOT cancel.
+
+State current Z2/Z1 result with the Phase-0L qualification.
+
+------------------------------------------------------------
+16. MISSION REQUIREMENT AND G2
+------------------------------------------------------------
+
+Explain in very simple terms:
+
+N_f = what the package can survive
+
+N_required = what the product must survive
+
+constraint:
+
+N_f >= N_required.
+
+Explain exactly why relative life alone does not prove a design constraint.
+
+Show the current G2 decision logic.
+
+------------------------------------------------------------
+17. ARCHITECTURE COMPARISON
+------------------------------------------------------------
+
+Present ONE current authoritative comparison table for:
+
+Z1
+Z2
+Z4
+
+with current:
+
+electrical loss
+temperatures
+TSV rail
+reliability metric
+relative life
+status.
+
+Do not mix values from superseded phases.
+
+------------------------------------------------------------
+18. TOOLCHAIN
+------------------------------------------------------------
+
+Create a table:
+
+TOOL | PURPOSE | CURRENT USE | VALIDATION ROLE | LIMITATION
+
+Include at minimum:
+
+Python 3.12
+CalculiX 2.23
+Gmsh 4.15.2
+MOOSE
+HFSS / AEDT 2026 R1
+Icepak
+PyAEDT
+PALACE
+pandoc/xelatex
+
+Be exact.
+
+Example:
+
+CalculiX:
+thermal FE
+global thermoelastic FE
+local solder nonlinear FE.
+
+MOOSE:
+independent thermal/conduction checks.
+
+HFSS:
+frequency-domain loop impedance / AC-effect validation.
+
+Icepak:
+attempted package thermal cross-check; discarded if still invalid.
+
+PALACE:
+installed/functional but do NOT claim a validation result unless one actually exists.
+
+------------------------------------------------------------
+19. SOFTWARE / CODE ARCHITECTURE
+------------------------------------------------------------
+
+This is mandatory for the independent auditor.
+
+List actual repository paths and important modules/functions.
+
+For every major block identify:
+
+input file
+script/module
+main function
+output artifact.
+
+Example categories:
+
+converter synthesis
+PPDN
+architecture graph
+thermal solve
+mechanical mesh
+global mechanics
+local solder submodel
+fatigue post-processing
+report generation
+test suite.
+
+Create a code-flow diagram.
+
+------------------------------------------------------------
+20. UNIT AND SCOPE CONTRACTS
+------------------------------------------------------------
+
+Explain known structural protections:
+
+PER_REGULATOR
+SYSTEM
+rail voltage
+temperature reference
+units.
+
+Show how scope errors are prevented.
+
+Document important assertions.
+
+------------------------------------------------------------
+21. VALIDATION MATRIX
+------------------------------------------------------------
+
+Build a table:
+
+MODEL BLOCK
+WHAT WAS VALIDATED
+REFERENCE
+ERROR
+PASS CRITERION
+STATUS
+KNOWN GAP.
+
+Cover:
+
+converter where possible
+vertical interconnect
+RDL
+HFSS AC behavior
+thermal
+global mechanics
+local solder
+creep implementation
+fatigue law
+relative life.
+
+Do not say “validated” where the evidence only supports “cross-checked” or “conditional”.
+
+------------------------------------------------------------
+22. UNCERTAINTY BUDGET
+------------------------------------------------------------
+
+Separate:
+
+numerical
+parameter
+model-form
+architecture
+mission.
+
+Explain which errors are common-mode and which do not cancel.
+
+Include the Phase-0L high-stress constitutive uncertainty explicitly.
+
+------------------------------------------------------------
+23. CURRENT ASSUMPTIONS / OPEN ITEMS
+------------------------------------------------------------
+
+Create a blunt table:
+
+ITEM
+STATUS
+WHY OPEN
+POTENTIAL IMPACT
+WHAT WOULD CLOSE IT.
+
+Include, as applicable:
+
+high-stress SAC305 behavior
+absolute life calibration
+N_required
+MLCC height
+manufacturing clearance
+electromigration criterion
+RDL dielectric/stitching details
+assembly prestress
+unmodeled delamination/RDL/CPI mechanisms
+Icepak issue
+Q3D unavailable.
+
+------------------------------------------------------------
+24. CURRENT CLAIMS — WHAT CAN AND CANNOT BE SAID
+------------------------------------------------------------
+
+Two columns:
+
+DEFENSIBLE TODAY
+NOT DEFENSIBLE TODAY.
+
+Examples:
+
+Defensible:
+“Z placement changes electrical path and local solder response.”
+
+Not defensible unless Phase 0L changes status:
+“Z2 has exactly X cycles of life.”
+
+Do not overstate.
+
+------------------------------------------------------------
+25. REPRODUCIBILITY
+------------------------------------------------------------
+
+Give exact commands, working directories and expected outputs for:
+
+- one electrical architecture solve;
+- one ET fixed point;
+- one thermal FE solve;
+- one global mechanical solve;
+- one local solder solve;
+- one fatigue post-processing run;
+- full current regression tests;
+- report build.
+
+If exact commands cannot be determined:
+say so and point to the responsible script.
+
+Do not invent shell commands.
+
+------------------------------------------------------------
+26. AUDITOR CHECKLIST
+------------------------------------------------------------
+
+Finish with a checklist an external reviewer can use.
+
+Examples:
+
+[ ] rail assignment verified
+[ ] supply/ground included
+[ ] n_alloc scope correct
+[ ] energy balance checked
+[ ] thermal field transferred correctly
+[ ] global/local displacement transfer checked
+[ ] solder metric extraction reproduced
+[ ] constitutive domain checked
+[ ] fatigue-law metric compatible
+[ ] relative/absolute life not conflated
+[ ] mission criterion sourced
+[ ] current claims match code outputs.
+
+======================================================================
+PART XXI — REQUIRED FIGURES FOR THE STANDALONE REPORT
+======================================================================
+
+Generate new explanatory figures where needed.
+
+At minimum:
+
+AUDIT-FIG-1
+overall ETM framework block diagram.
+
+AUDIT-FIG-2
+Z1/Z2/Z4 package cross-sections.
+
+AUDIT-FIG-3
+rail-aware current/power path.
+
+AUDIT-FIG-4
+electrical ↔ thermal fixed-point loop.
+
+AUDIT-FIG-5
+spatial heat-source map.
+
+AUDIT-FIG-6
+global thermoelastic package mechanics explanation.
+
+AUDIT-FIG-7
+global-to-local solder submodel.
+
+AUDIT-FIG-8
+elastic vs plastic vs creep explanation.
+
+AUDIT-FIG-9
+PEEQ/path versus range illustration.
+
+AUDIT-FIG-10
+fatigue-life bridge:
+response → life law → N_f → N_required → pass/fail.
+
+AUDIT-FIG-11
+toolchain / solver responsibility diagram.
+
+AUDIT-FIG-12
+validation ladder.
+
+AUDIT-FIG-13
+current source-data domain versus actual package operating trajectory,
+updated with Phase 0L.
+
+Figures must be readable without prior project knowledge.
+
+======================================================================
+PART XXII — STANDALONE REPORT RULES
+======================================================================
+
+The new audit report MUST:
+
+- describe only CURRENT framework behavior;
+- not walk through old phases;
+- not include stale superseded equations;
+- not include superseded numeric results except where explicitly labeled as a current
+  validation comparison;
+- distinguish source-backed, calibrated, assumed and open quantities;
+- cite primary literature;
+- cite code paths;
+- cite generated CSV/artifact paths;
+- explain mechanical concepts in plain language alongside equations;
+- include a glossary;
+- include a complete symbol table;
+- include units everywhere;
+- use consistent notation throughout.
+
+Target:
+
+approximately 40–70 pages if needed.
+
+Do not artificially shorten it.
+
+Completeness and auditability are more important than page count.
+
+======================================================================
+PART XXIII — BUILD AND VERIFY THE STANDALONE PDF
+======================================================================
+
+Build:
+
+results/ETM_DVPD_CURRENT_FRAMEWORK_AUDIT_REPORT.pdf
+
+Programmatically verify:
+
+- all headings rendered;
+- complete TOC;
+- all figures embedded;
+- no missing-resource warnings;
+- no raw Markdown tables;
+- no dropped mathematical glyphs;
+- equation labels intact;
+- no unresolved absolute paths visible to the reader where inappropriate;
+- all internal references valid;
+- page count plausible;
+- text extraction non-empty on every intended text page.
+
+Run a post-build semantic audit.
+
+Create:
+
+results/ETM_DVPD_CURRENT_FRAMEWORK_AUDIT_REPORT_BUILD_LOG.md
+
+and:
+
+results/ETM_DVPD_CURRENT_FRAMEWORK_AUDIT_REPORT_SEMANTIC_AUDIT.md
+
+======================================================================
+PART XXIV — UPDATE THE HISTORICAL FULL REPORT TOO
+======================================================================
+
+The existing:
+
+results/ETM_DVPD_FULL_TECHNICAL_REPORT.*
+
+remains the chronological research record.
+
+Archive the pre-Phase-0L PDF byte-identical.
+
+Append Phase 0L to that historical report normally.
+
+But do NOT substitute it for the new standalone current-framework report.
+
+The project must end Phase 0L with BOTH:
+
+1. historical report;
+2. clean current-framework audit report.
+
+======================================================================
+PART XXV — CURRENT SCIENTIFIC STATUS AFTER PHASE 0L
+======================================================================
+
+Update CURRENT_SCIENTIFIC_STATUS.yaml with explicit fields:
+
+sac305_constitutive:
+    exact_solver_law:
+    stress_variable:
+    experimental_fit_variable:
+    temperature_domain:
+    stress_domain:
+    high_stress_status:
+    selected_model:
+    model_form_uncertainty:
+
+relative_life:
+    z2_z1:
+    constitutive_model_dependence:
+    status:
+
+absolute_life:
+    status:
+
+experiment:
+    status:
+    profiles:
+    n_per_cell:
+    total_packages:
+    blocker:
+
+mission:
+    n_required_status:
+
+optimizer:
+    allowed:
+
+standalone_audit_report:
+    path_md:
+    path_pdf:
+    build_status:
+
+======================================================================
+PART XXVI — OPTIMIZER GATE
+======================================================================
+
+The optimizer remains forbidden unless ALL previous gate conditions are satisfied.
+
+Phase 0L is constitutive closure and framework documentation.
+
+Do not start optimization.
+
+======================================================================
+PART XXVII — FINAL PHASE 0L RESPONSE
+======================================================================
+
+Return exactly:
+
+1. Phase-0L verdict.
+
+2. Whether DEFECT #40 was confirmed.
+
+3. Exact CalculiX creep law actually executed.
+
+4. Exact stress variable used by the solver.
+
+5. Exact stress variable used in the original 19-point fit.
+
+6. Whether solver and fit definitions matched.
+
+7. Current trustworthy SAC305 temperature domain.
+
+8. Current trustworthy SAC305 stress domain.
+
+9. Whether suitable high-stress SAC305 data were found.
+
+10. Which constitutive model(s) were admitted.
+
+11. Whether the baseline package remains outside the calibration domain.
+
+12. Whether Z2/Z1 relative-life ranking survives every admitted model.
+
+13. Revised Z2/Z1 relative-life range.
+
+14. Whether “common-mode cancellation” was demonstrated or withdrawn.
+
+15. Whether the current 45→125 / 110→150 experimental profiles remain valid.
+
+16. Revised specimen count per cell if changed.
+
+17. Total proposed packages if changed.
+
+18. Current experiment status:
+    FROZEN / PROVISIONAL / BLOCKED.
+
+19. G2 status.
+
+20. Optimizer status.
+
+21. Historical full-report PDF verification status.
+
+22. Standalone current-framework audit-report Markdown path.
+
+23. Standalone current-framework audit-report PDF path.
+
+24. Standalone report page count.
+
+25. Standalone report figure count.
+
+26. Standalone report PDF verification status.
+
+27. Test count.
+
+Stop there.

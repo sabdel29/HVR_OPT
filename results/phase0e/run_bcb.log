@@ -1,0 +1,65 @@
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  A_footprint  small_j4.0   BC_A  w=  1.9930um kappa=+8.576e-03 shear99=  2.852MPa (65s)
+  A_footprint  small_j4.0   BC_B  w=  0.5376um kappa=+3.128e-04 shear99=  5.186MPa (189s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  A_footprint  large_j1.5   BC_A  w=  3.7531um kappa=+1.625e-02 shear99=  2.325MPa (48s)
+  A_footprint  large_j1.5   BC_B  w=  0.4719um kappa=+3.281e-05 shear99=  3.854MPa (106s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  B_thickness  h200         BC_A  w=  6.7021um kappa=+2.854e-02 shear99=  1.593MPa (37s)
+  B_thickness  h200         BC_B  w=  0.5099um kappa=+5.122e-04 shear99=  4.479MPa (68s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  B_thickness  h500         BC_A  w=  2.9172um kappa=+1.247e-02 shear99=  2.432MPa (47s)
+  B_thickness  h500         BC_B  w=  0.5092um kappa=+2.209e-04 shear99=  4.048MPa (84s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  C_placement  distributed  BC_A  w=  2.9172um kappa=+1.247e-02 shear99=  2.432MPa (47s)
+  C_placement  distributed  BC_B  w=  0.5092um kappa=+2.209e-04 shear99=  4.048MPa (84s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  C_placement  edge_biased  BC_A  w=  1.7052um kappa=+5.252e-03 shear99=  2.899MPa (32s)
+  C_placement  edge_biased  BC_B  w=  0.5441um kappa=-2.194e-03 shear99=  4.676MPa (61s)
+
+=== DOES THE LEVER STILL DISCRIMINATE UNDER BC-B? ===
+(resolved iff |delta| > 2*u_m = 1.0 %)
+
+  A_footprint  BC_A
+    die_warpage_pv_um               1.9930 ->      3.7531     +88.31 %   RESOLVED
+    pkg_warpage_pv_um               3.1514 ->      6.0038     +90.51 %   RESOLVED
+    curvature_um_per_mm2            0.0086 ->      0.0162     +89.48 %   RESOLVED
+    interface_shear_p99_MPa         2.8516 ->      2.3253     -18.46 %   RESOLVED
+    si_principal_p99_MPa            6.7339 ->      7.3760      +9.54 %   RESOLVED
+
+  A_footprint  BC_B
+    die_warpage_pv_um               0.5376 ->      0.4719     -12.22 %   RESOLVED
+    pkg_warpage_pv_um               0.5646 ->      0.5321      -5.77 %   RESOLVED
+    curvature_um_per_mm2            0.0003 ->      0.0000     -89.51 %   RESOLVED
+    interface_shear_p99_MPa         5.1863 ->      3.8543     -25.68 %   RESOLVED
+    si_principal_p99_MPa            4.1814 ->      4.9481     +18.34 %   RESOLVED
+
+  B_thickness  BC_A
+    die_warpage_pv_um               6.7021 ->      2.9172     -56.47 %   RESOLVED
+    pkg_warpage_pv_um              10.5205 ->      4.6441     -55.86 %   RESOLVED
+    curvature_um_per_mm2            0.0285 ->      0.0125     -56.31 %   RESOLVED
+    interface_shear_p99_MPa         1.5927 ->      2.4323     +52.71 %   RESOLVED
+    si_principal_p99_MPa            8.9237 ->      7.1396     -19.99 %   RESOLVED
+
+  B_thickness  BC_B
+    die_warpage_pv_um               0.5099 ->      0.5092      -0.14 %   not resolved
+    pkg_warpage_pv_um               0.5229 ->      0.5426      +3.75 %   RESOLVED
+    curvature_um_per_mm2            0.0005 ->      0.0002     -56.87 %   RESOLVED
+    interface_shear_p99_MPa         4.4790 ->      4.0475      -9.63 %   RESOLVED
+    si_principal_p99_MPa            5.9095 ->      4.8226     -18.39 %   RESOLVED
+
+  C_placement  BC_A
+    die_warpage_pv_um               2.9172 ->      1.7052     -41.55 %   RESOLVED
+    pkg_warpage_pv_um               4.6441 ->      3.9172     -15.65 %   RESOLVED
+    curvature_um_per_mm2            0.0125 ->      0.0053     -57.89 %   RESOLVED
+    interface_shear_p99_MPa         2.4323 ->      2.8991     +19.20 %   RESOLVED
+    si_principal_p99_MPa            7.1396 ->      8.6858     +21.66 %   RESOLVED
+
+  C_placement  BC_B
+    die_warpage_pv_um               0.5092 ->      0.5441      +6.85 %   RESOLVED
+    pkg_warpage_pv_um               0.5426 ->      0.5703      +5.11 %   RESOLVED
+    curvature_um_per_mm2            0.0002 ->     -0.0022   -1093.04 %   RESOLVED
+    interface_shear_p99_MPa         4.0475 ->      4.6764     +15.54 %   RESOLVED
+    si_principal_p99_MPa            4.8226 ->      8.0903     +67.76 %   RESOLVED
+
+wrote /home/beams0/MGHARIB/Mohamed_stuff/HVR_OPT/results/phase0e/bcb_corrected_results.csv and bcb_discrimination.csv

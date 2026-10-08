@@ -1,0 +1,163 @@
+{
+  "case": "C14",
+  "spec": {
+    "n_vr": 6,
+    "placement": "perimeter_ring",
+    "tile_ax": 4.0,
+    "tile_ay": 4.0,
+    "h_sub": 0.2,
+    "p_hvr_total_w": 42.0,
+    "question": "Edge-weighted symmetry."
+  },
+  "mesh": {
+    "h_xy_mm": 0.32,
+    "z_scale": 1.4,
+    "h_max_factor": 3.0,
+    "graded": true,
+    "element_type": "C3D8I",
+    "n_nodes": 35872,
+    "n_elems": 31591,
+    "n_z_planes": 16,
+    "elems_through_substrate": 7,
+    "elems_through_die": 4
+  },
+  "loads": {
+    "p_die_W": 240.0,
+    "p_hvr_total_W": 42.0,
+    "p_per_tile_W": 7.0,
+    "q_die_W_per_mm3": 1.6000972859149836
+  },
+  "cooling": {
+    "h_top_W_m2K": 17521.63541738819,
+    "h_bot_W_m2K": 10.0,
+    "a_top_mm2": 499.96960000000075,
+    "a_bot_mm2": 900.0000000000073
+  },
+  "bc": {
+    "bc": "BC_A",
+    "n_bottom_nodes": 2900,
+    "z_bottom_mm": 0.0,
+    "anchor_nodes": {
+      "A_xyz": 1,
+      "B_yz": 35473,
+      "C_z": 393
+    },
+    "anchor_coords": {
+      "A_xyz": [
+        -15.0,
+        -15.0,
+        0.0
+      ],
+      "B_yz": [
+        15.0,
+        -15.0,
+        0.0
+      ],
+      "C_z": [
+        -15.0,
+        15.0,
+        0.0
+      ]
+    },
+    "dofs_removed": 6,
+    "solver": "SPOOLES"
+  },
+  "tiles": [
+    {
+      "cx": -8.68,
+      "cy": -8.68,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    },
+    {
+      "cx": 0.0,
+      "cy": -8.68,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    },
+    {
+      "cx": 8.68,
+      "cy": -8.68,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    },
+    {
+      "cx": -8.68,
+      "cy": 8.68,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    },
+    {
+      "cx": 0.0,
+      "cy": 8.68,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    },
+    {
+      "cx": 8.68,
+      "cy": 8.68,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    }
+  ],
+  "thermal": {
+    "T_max_C": 83.9631,
+    "T_min_C": 52.9807,
+    "T_mean_C": 69.52904402319358,
+    "hotspot_xyz_mm": [
+      -9.3448,
+      -9.3448,
+      0.05
+    ],
+    "Q_in_W": 282.0,
+    "Q_out_W": 281.99998045465884,
+    "energy_residual_pct": -6.930972042788998e-06
+  },
+  "structural": {
+    "die_warpage_pv_um": 5.929949999999999,
+    "pkg_warpage_pv_um": 11.6298,
+    "uz_max_um": 0.026438700000000002,
+    "uz_min_um": -11.6298,
+    "n_die_top_nodes": 1584,
+    "n_pkg_bot_nodes": 2900,
+    "si_principal_MPa": {
+      "raw_max": 14.94780054707846,
+      "p99": 11.645198956401638,
+      "p95": 9.457444868795333,
+      "n": 23680
+    },
+    "tsv_region_vm_MPa": {
+      "raw_max": 14.923864247891716,
+      "p99": 14.814522342924155,
+      "p95": 13.26959358423083,
+      "n": 648
+    },
+    "hvr_tile_vm_MPa": {
+      "raw_max": 25.85418009633566,
+      "p99": 24.778828453861696,
+      "p95": 23.419035961455158,
+      "n": 648
+    },
+    "interface_shear_MPa": {
+      "raw_max": 2.258447144510803,
+      "p99": 1.9851779726846561,
+      "p95": 1.705029439183969,
+      "n": 3168
+    },
+    "interface_peel_MPa": {
+      "raw_max": 3.17098,
+      "p99": 1.779966599999998,
+      "p95": 1.15136,
+      "n": 3168
+    }
+  },
+  "overrides": {},
+  "tsv_enabled": true,
+  "runtime_s": 53.8
+}

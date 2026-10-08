@@ -1,0 +1,1375 @@
+\documentclass[journal]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,graphicx,booktabs,array,url,balance,textcomp}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage[hidelinks]{hyperref}
+\graphicspath{{figs/}}
+\newcommand{\du}{\Delta u_{\mathrm{c}}}
+
+\begin{document}
+
+\title{Electrothermal--Mechanical Co-Design of Distributed Vertical Power
+Delivery: Architecture-Dependent Inelastic Response and Physical
+Realizability}
+
+\author{Mohamed~Gharib and Inna~Partin-Vaisband% author list to be confirmed
+\thanks{Manuscript prepared September 2026.}}
+
+\maketitle
+
+\begin{abstract}
+Power delivery at the kilowatt scale is increasingly limited by what the package can
+physically accommodate rather than by converter efficiency alone. Distributed vertical power
+delivery (DVPD) shortens the 1\,V rail by converting close to the point of load, but existing
+design frameworks evaluate DVPD electrically and thermally, with package mechanics and
+interconnect realizability treated separately and downstream. A system-level
+electrothermal--mechanical framework is presented in which converter synthesis, rail-aware
+power delivery, geometry-derived vertical interconnects, anisotropic package thermal
+transport, thermoelastic deformation and a displacement-driven local solder
+inelastic-response submodel are evaluated on one physical stack. Vertical-interconnect
+feasibility is derived from conductor-plane topology rather than material-layer count, and a
+design-side provisioning state is reported separately from a manufacturing-qualification
+state. The framework is applied to two integration alternatives for a 1\,kW, 48\,V-to-1\,V
+system distributed over 49 regulator cells. Two tier orderings that are equivalent at the
+component-selection and stack-budget level are found to differ by a factor of six in worst
+via aspect ratio,
+$5.05$ against $0.833$. On the resulting geometrically realizable partition the backside
+architecture is found to run $8.14$\,K hotter while carrying $18.4$\,\% lower local
+fatigue-relevant inelastic response, evaluated by a displacement-driven viscoplastic solder
+submodel on the same frozen pair; the displacement driver that feeds that submodel differs by
+$16.3$\,\% and is preserved to within $0.04$\,\% under a complete reconstruction of the
+vertical interconnect topology. Thermal and mechanical-response
+rankings are therefore shown to be non-equivalent. The ordering is robust; its magnitude
+remains conditional on an extrapolated solder constitutive model, and no absolute life is
+claimed.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Distributed vertical power delivery, electrothermal--mechanical co-design, package power
+delivery network, local inelastic response, solder fatigue response, physical realizability,
+through-substrate vias, heterogeneous integration.
+\end{IEEEkeywords}
+\section{Introduction}\label{sec:intro}
+
+\IEEEPARstart{P}{ower} demand in high-performance computing is projected to reach one to
+two kilowatts per compute die, delivered at core voltages near one
+volt~\cite{Krishnakumar2026DVPD,Ramin_VPD}. At that operating point the delivery network,
+rather than the regulator, limits the achievable efficiency. For a 1\,kW load at 1\,V the
+total current approaches one kiloampere, and direct lateral delivery of that current in the
+evaluated package stack is prohibitively lossy: the $I^{2}R$ dissipation of a 1\,V rail
+traversing even a few millimetres of package metal becomes comparable with the load itself.
+Higher-voltage or vertical distribution is therefore required.
+
+Distributed vertical power delivery (DVPD) answers this by partitioning conversion into
+many regulator cells placed immediately above, below or within the package, so that the
+high-current rail travels micrometres rather than
+millimetres~\cite{Sriharini_ECTC_24,VPD_transactions_on_power_electronics_new,
+ISCAS2024DVPD,vertical_stacking_2025_TRansactions_power_electronics}.
+Design frameworks for DVPD have advanced considerably. Converter synthesis, interconnect
+allocation, floorplanning and thermal feasibility are now co-optimised within a single
+flow~\cite{Krishnakumar2026DVPD}; effective models for vertical routing over C4 bumps,
+through-silicon vias and micro-bumps have been formulated~\cite{Sriharini_ECTC_24}; and
+package-embedded passive components have been demonstrated at the densities such
+architectures require~\cite{rasheedi2024embedded,multi-layer_inductor}. Electrothermal
+co-optimization of the power distribution network itself, including a manufacturing-cost
+objective, has been reported for 2.5-D systems~\cite{Wang2025TTSV}.
+
+What these frameworks share is a domain boundary. Electrical and thermal quantities are
+co-optimised; package mechanics and interconnect manufacturability are evaluated afterwards,
+on a geometry the electrical optimisation has already fixed. The separation is convenient
+but not obviously safe, because the converter-design variables that the electrical
+optimisation selects are the variables that set the mechanical and packaging problem. The
+number of regulator cells fixes the footprint each cell may occupy. The device and passive
+selections fix the component heights and therefore the substrate thickness. The partition of
+components across tiers fixes which rail crosses which vertical interconnect, and hence both
+the interconnect loss and the depth at which heat is deposited. The resulting stack of
+dissimilar materials fixes the coefficient-of-thermal-expansion mismatch that drives solder
+deformation. A design that is electrically and thermally attractive may therefore be
+mechanically distinct, or physically unbuildable, for reasons the electrical model cannot
+express.
+
+Thermomechanical analysis of packages is itself mature, and placement studies accounting for
+warpage and solder fatigue are established~\cite{Syed2004,Schubert2003}. What is missing is
+the connection: a formulation in which converter-synthesis outputs are propagated into an
+explicit package stack, and in which the electrical, thermal, mechanical and realizability
+questions are asked of the same geometry. Establishing that connection, and reporting what
+it changes, is the subject of this paper.
+
+The following contributions are made.
+
+\begin{enumerate}
+\item A geometry- and architecture-aware electrothermal--mechanical framework for DVPD is
+presented, in which converter-synthesis outputs---device selection, phase count, switching
+frequency, component heights and cell footprint---are propagated into an explicit package
+stack rather than into a lumped loss budget (Sections~\ref{sec:elec}--\ref{sec:thermech}).
+
+\item A rail-aware power-delivery network model is developed in which each vertical segment
+carries the rail actually assigned to it, and in which interconnect resistance is derived
+from via geometry, allocation policy, temperature-dependent resistivity and the land
+geometry of the connected device, rather than from a lumped crowding factor
+(Section~\ref{sec:elec}).
+
+\item Physical realizability is coupled to the same geometry that produces the electrical
+and thermal results. The number of vertical via levels is derived from the conductor-plane
+sequence of the build-up stack rather than from its material-layer count, and a
+framework provisioning state is reported separately from a manufacturing-qualification
+state (Sections~\ref{sec:elec}-E and~\ref{sec:arch}).
+
+\item A mechanical formulation is developed that progresses from global package deformation
+through a corner-joint displacement driver to a displacement-driven, mesh- and
+cycle-converged local solder inelastic-response submodel, and the two are reported as
+separate quantities: the driver is a displacement in micrometres, the response a
+dimensionless strain increment per stabilised cycle. The terminology ladder from response
+through damage to life is kept explicit (Section~\ref{sec:thermech}).
+
+\item Six positions taken in the prior DVPD literature are reproduced within the framework
+and tested. Two are reproduced, one is found to be rail-dependent, one reverses with the
+assembly state, one is invalidated by physical realizability, and one---peak temperature as
+a reliability ranking---is shown to be non-equivalent to the local mechanical response
+(Section~\ref{sec:compare}).
+\end{enumerate}
+
+\section{DVPD System and Physical Architectures}\label{sec:system}
+
+\subsection{System specification}
+\begin{table}[!t]
+\caption{System specification and synthesised converter design point.}
+\label{tab:spec}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}llc@{}}
+\toprule
+Quantity & Value & Source \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{System}}\\
+Load power / voltage        & 1\,kW / 1\,V              & specification \\
+Platform rail               & 48\,V                     & specification \\
+Compute die                 & $22.36\times22.36$\,mm    & specification \\
+Regulator cells $M$         & 49                        & synthesis \\
+Current per cell            & $20.408$\,A               & derived \\
+Cell footprint              & $5.61$\,mm$^{2}$          & synthesis \\
+Target current density      & $3.5$\,A\,mm$^{-2}$       & specification \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Converter}}\\
+Architecture $N/K/K_{A}$    & $3/3/2$                   & synthesis \\
+Topology                    & 3:1 SC + 3-phase buck     & \cite{DSCH,DPMIH44} \\
+Duty cycle $D$              & $0.0625$                  & synthesis \\
+Switching frequency         & $805.17$\,kHz             & synthesis \\
+High-side device            & EPC2014C, $16$\,m$\Omega$, $1.87$\,mm$^{2}$ & \cite{EPC2014C} \\
+Low-side device             & EPC2057, $8.5$\,m$\Omega$, $1.80$\,mm$^{2}$ & \cite{EPC2057} \\
+Inductor                    & $250$\,nH, $1.6$\,m$\Omega$, $500$\,\textmu m & \cite{rasheedi2024embedded} \\
+Flying / output cap.\       & $10$\,\textmu F, $2.5$\,m$\Omega$, $2.0$\,mm$^{2}$ & datasheet \\
+Loss per cell at $25\,^{\circ}$C & $1.866$\,W           & loss model \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Package and cooling}}\\
+Substrate thickness, Z1 / Z2 & $1.30$ / $0.30$\,mm      & architecture \\
+Converter stack height       & $1921$\,\textmu m        & components \\
+Interlayer RDL               & $10$\,\textmu m          & \cite{Sriharini_ECTC_24} \\
+Through-substrate via        & $30$ / $60$\,\textmu m dia. / pitch & \cite{Krishnakumar2026DVPD} \\
+Coolant / inlet              & water, $25\,^{\circ}$C   & cooling design \\
+Mass flow                    & $27$\,g\,s$^{-1}$        & cooling design \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The system delivers 1\,kW at 1\,V to a $22.36 \times 22.36$\,mm compute die. Conversion from
+a 48\,V platform rail is distributed over $M = 49$ regulator cells arranged beneath or behind
+the load, each supplying $I_{\mathrm{cell}} = 20.408$\,A into a $5.61$\,mm$^{2}$ footprint.
+The specification and the synthesised design point are given in Table~\ref{tab:spec}.
+
+\subsection{Hybrid regulator}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig1_system.pdf}
+\caption{(a) Distributed vertical power delivery: $M{=}49$ regulator cells convert 48\,V to
+1\,V beneath or behind the compute die, so the high-current rail travels micrometres. (b) The
+synthesised hybrid regulator, a three-to-one switched-capacitor stage feeding a three-phase
+buck stage, with the rail carried by each branch annotated. (c) Information flow of the
+framework: converter synthesis and the component library determine an explicit physical
+stack, which is shared by the electrical, thermal, mechanical and realizability models. The
+electrical and thermal models are iterated to a fixed point; the converged field is applied
+one-way to the mechanical model.}
+\label{fig:system}
+\end{figure*}
+
+A hybrid converter is adopted, consistent with the topologies used for high step-down ratios
+in DVPD~\cite{DSCH,DPMIH44,SC_example}. The synthesised architecture, denoted
+$N{=}3$, $K{=}3$, $K_{A}{=}2$, comprises a three-to-one switched-capacitor stage feeding a
+three-phase buck stage, as shown in Fig.~\ref{fig:system}(b). The switched-capacitor stage
+divides the 48\,V input to a 16\,V intermediate rail, relieving both the voltage stress on
+the buck switches and the extreme duty cycle a direct 48\,V-to-1\,V buck would require; the
+resulting duty cycle is $D = 0.0625$. Each of the $N$ high-side branches carries a flying
+capacitor, and each of the $K$ phases carries an inductor and a low-side switch whose drain
+forms the switch node.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig2_stack.pdf}
+\caption{Physical stack and power path for the two integration alternatives. (a) Embedded:
+the converter cells are built into the $1.30$\,mm substrate and the through-substrate field
+carries the 48\,V input rail. (b) Backside: the cells are mounted on the underside of a
+$0.30$\,mm substrate and the identical field carries the 1\,V output rail at the full cell
+current. Arrow width indicates segment current on a logarithmic scale. The two are
+electrically distinct despite sharing the same converter.}
+\label{fig:stack}
+\end{figure*}
+
+The distinction between the two integration alternatives is electrical as well as geometric.
+In the \emph{embedded} architecture (Z1) the converter cells are built into the package
+substrate beneath the compute die, with a substrate thickness of $1.30$\,mm, and the vertical
+through-substrate field carries the 48\,V input rail at low current. In the \emph{backside}
+architecture (Z2) the cells are mounted on the substrate underside and connected through a
+$0.30$\,mm substrate, so the identical field carries the 1\,V output rail at the full cell
+current. The vertical interconnect is therefore not common mode between the two and cannot be
+treated as such. Both are shown in Fig.~\ref{fig:stack}.
+
+A power-die variant and a 2.5-D lateral variant were also formulated. Neither is reported
+here: no source available to this work establishes the power-die construction, and its
+ranking depends on which construction is assumed.
+
+\subsection{Coupled design variables}
+The variables that couple the domains are the number of regulator cells, the substrate
+thickness, the assignment of components to tiers, the vertical interconnect geometry and
+pitch, and the cooling boundary. Each appears in more than one domain. The tier assignment,
+for example, simultaneously sets the interconnect loss, the height budget, the depth at which
+heat is deposited and the distribution of stiffness through the stack.
+
+\section{Converter, Interconnect and Power-Delivery Models}\label{sec:elec}
+
+\subsection{Regulator synthesis}
+The converter is synthesised rather than assumed. Inputs are the per-cell output current
+$I_{\mathrm{cell}}$, the input and output voltages, a target current density
+$J_{\mathrm{t}} = 3.5$\,A\,mm$^{-2}$ that sets the area budget, and the component libraries.
+The search enumerates hybrid architectures over the stage count $N$, the phase count $K$, the
+auxiliary-branch count $K_{A}$ and the conversion-ratio vector $\mathbf{B}$, and for each
+candidate it filters the device library by blocking voltage and current capability,
+\begin{equation}
+V_{\mathrm{DS,max}}^{\mathrm{HS}} \ge \frac{V_{\mathrm{in}}}{N}, \quad
+V_{\mathrm{DS,max}}^{\mathrm{LS}} \ge V_{\mathrm{out}}, \quad
+I_{\mathrm{D}}^{\mathrm{HS}} \ge \frac{I_{\mathrm{cell}}}{N},
+\label{eq:filter}
+\end{equation}
+with the low-side devices filtered at $I_{\mathrm{D}} \ge I_{\mathrm{cell}}B_{\max}/N$. The
+switching frequency is selected as the minimum satisfying the ripple constraint, since the
+loss is monotonic in $f_{\mathrm{sw}}$ above that point. The candidate of lowest total loss
+that satisfies both the area budget and the ripple constraint is retained. For the present
+specification this returns $N3K3K_{A}2$ at $f_{\mathrm{sw}} = 805.17$\,kHz from a 90-device
+library, using the devices and passives listed in Table~\ref{tab:spec}.
+
+\subsection{Converter loss model}
+The losses evaluated are exactly those the synthesis model implements; no mechanism is added
+on the grounds of being conventional. The per-phase inductor current ripple, with
+$k_{\mathrm{c}}$ the inter-inductor coupling coefficient, is
+\begin{equation}
+\Delta i_{\phi} = \frac{1}{1+k_{\mathrm{c}}(K-1)}\,
+\frac{D}{f_{\mathrm{sw}} L}\left(\frac{V_{\mathrm{in}}}{N}K_{A} - V_{\mathrm{out}}K\right),
+\label{eq:ripple}
+\end{equation}
+giving the r.m.s. cell current
+$I_{\mathrm{rms}} = \sqrt{I_{\mathrm{cell}}^{2} + \Delta i_{\phi}^{2}/12}$ and the output
+voltage ripple $\Delta V_{\mathrm{out}} = |\Delta i_{\phi}|/(8 f_{\mathrm{sw}} C_{\mathrm{o}})$.
+
+Conduction loss is evaluated in closed form over the hybrid network. With
+$\mathcal{B} = \sum_{i} B_{i}^{2}$, $B_{k}$ the final conversion ratio and
+$\kappa = (V_{\mathrm{out}}/V_{\mathrm{in}})I_{\mathrm{rms}}^{2}$,
+\begin{equation}
+\begin{aligned}
+P_{\mathrm{cond}} = \kappa \Bigg[ &R_{\mathrm{on}}^{\mathrm{HS}}
+ + 2\!\left(1-\tfrac{1}{N}\right)\!R_{\mathrm{ESR}} \\
+ &+ \left(\frac{V_{\mathrm{in}}}{N^{2}V_{\mathrm{out}}}
+   \big(R_{\mathrm{DCR}} + R_{\mathrm{on}}^{\mathrm{LS}}\big)
+   + \frac{2R_{\mathrm{on}}^{\mathrm{LS}}}{N}\right)\!\mathcal{B}
+ - \Gamma \Bigg],
+\end{aligned}
+\label{eq:pcond}
+\end{equation}
+where $\Gamma = (4B_{k}-1)R_{\mathrm{on}}^{\mathrm{LS}}/N$ for $B_{k}>1$ and
+$3R_{\mathrm{on}}^{\mathrm{LS}}/N$ otherwise. The four bracketed groups are attributed
+respectively to the high-side switches, the flying capacitors, the inductor winding
+resistance and the low-side switches, which is how the loss ledger of
+Section~\ref{sec:arch} is decomposed; the decomposition is checked against the aggregate of
+\eqref{eq:pcond} to machine precision on every evaluation and the run is rejected if it does
+not reproduce it.
+
+Switching loss comprises three terms, evaluated by the plateau-voltage
+method~\cite{efficiency}. With the gate-drive current
+$I_{\mathrm{g}} = (V_{\mathrm{gs}} - \tfrac{1}{2}(V_{\mathrm{th}}+V_{\mathrm{pl}}))/
+(R_{\mathrm{g}}+R_{\mathrm{drv}})$,
+\begin{align}
+P_{\mathrm{sw}} &= f_{\mathrm{sw}}\!\left(\frac{V_{\mathrm{in}}}{N}-V_{\mathrm{out}}\right)
+ I_{\mathrm{rms}}\,\frac{Q_{\mathrm{GD}}+Q_{\mathrm{G}}}{I_{\mathrm{g}}},
+\label{eq:psw}\\
+P_{\mathrm{gate}} &= f_{\mathrm{sw}}\!\left(N C_{\mathrm{G}}^{\mathrm{HS}}
+ + K C_{\mathrm{G}}^{\mathrm{LS}}\right) V_{\mathrm{gs}}^{2},
+\label{eq:pgate}\\
+P_{\mathrm{C_{oss}}} &= \frac{f_{\mathrm{sw}}}{2}\!\left[
+ N C_{\mathrm{oss}}^{\mathrm{HS}}\!\left(\frac{V_{\mathrm{in}}}{N}-V_{\mathrm{out}}\right)^{2}
+ \!\!+ K C_{\mathrm{oss}}^{\mathrm{LS}} V_{\mathrm{out}}^{2}\right]\!.
+\label{eq:pcoss}
+\end{align}
+
+Two omissions are deliberate and are stated rather than left implicit. Inductor core loss is
+not evaluated: the component library carries Steinmetz coefficients, but the synthesis model
+consumes only the winding resistance $R_{\mathrm{DCR}}$, so only conduction loss in the
+inductor is reported. Capacitor loss is likewise represented by the equivalent series
+resistance alone. Both omissions bias the reported dissipation downward and act on the same
+component set in both architectures. They are therefore not expected to alter the reported
+ordering, although the two architectures do not operate at the same temperature, so exact
+cancellation is not asserted. The absolute efficiency remains underestimated.
+
+Temperature dependence enters through two coefficients. The switch on-resistance and the
+inductor winding resistance are scaled from their datasheet reference of $25\,^{\circ}$C, and
+the copper resistivity of every interconnect from $20\,^{\circ}$C,
+\begin{equation}
+\begin{aligned}
+R_{\mathrm{on}}(T) &= R_{\mathrm{on}}^{25}\!\left[1+\alpha_{\mathrm{GaN}}(T-25)\right],\\
+\rho(T) &= \rho_{20}\!\left[1+\alpha_{\mathrm{Cu}}(T-20)\right],
+\end{aligned}
+\label{eq:tdep}
+\end{equation}
+with $\alpha_{\mathrm{Cu}} = 3.93\times10^{-3}$\,K$^{-1}$ and
+$\alpha_{\mathrm{GaN}} = 7.5\times10^{-3}$\,K$^{-1}$. The second is an \emph{adopted
+calibration coefficient, not a sourced material constant}: the device tables used
+here~\cite{EPC2014C,EPC2057} carry no temperature columns, so no coefficient for the two
+selected parts can be cited. The value reproduces the normalised on-resistance rise published
+for enhancement-mode GaN parts, about $1.75\times$ at $125\,^{\circ}$C, and is treated
+throughout as a sensitivity parameter. It is the input to which the electrical result is most
+sensitive: on the frozen pair a $\pm20$\,\% change moves converter loss by $\mp5.8$\,\%, and
+a $\pm33$\,\% change swept through the converged electrical--thermal loop moves peak
+temperature by at most $1.2$\,K. The Z1/Z2 loss ordering is preserved at every value tested,
+so no ordering reported here depends on it; absolute efficiency inferred from this work
+inherits its uncertainty.
+
+\subsection{Rail-aware current assignment}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig3_loss.pdf}
+\caption{(a) Converter loss mechanisms evaluated by \eqref{eq:pcond}--\eqref{eq:pcoss} for
+one cell, showing the dominance of low-side conduction at a duty cycle of $0.0625$. (b)
+Electronics-scope loss breakdown for the final pair, separating converter losses from package
+losses. (c) Segment current and the resulting vertical interconnect loss: the same
+through-substrate field dissipates essentially nothing carrying 48\,V and $0.991$\,W carrying
+1\,V, which is why the interconnect is not common mode across architectures.}
+\label{fig:loss}
+\end{figure*}
+
+The converter is represented as a terminal graph whose edges are the physical connections
+between component terminals. Each edge is assigned the rail it carries and the current that
+rail carries, rather than a representative cell current. For the synthesised topology the
+input bus carries $I_{\mathrm{in}} = P_{\mathrm{in}}/V_{\mathrm{in}} = 0.478$\,A, the
+high-side to flying-capacitor edge $1.015$\,A, the mid-rail edge $1.435$\,A, and the switch
+node and output edges the full $20.408$\,A. The segment currents within one cell therefore
+span nearly two orders of magnitude, as shown in Fig.~\ref{fig:loss}(c). Because segment loss
+scales as the square of the current, assigning one representative current to all vertical
+segments misstates the vertical loss by a correspondingly large and partition-dependent
+factor.
+
+The switch-node edge is an aggregate over the $K$ phases. Per device it carries
+$I_{\mathrm{cell}}/K = 6.803$\,A, within the $9.6$\,A continuous rating of the selected
+low-side part, and there are $K$ such devices each presenting its own drain land.
+
+\subsection{Vertical and lateral interconnect}
+Each vertical field is provisioned from the current it carries and the design current
+density $J_{\mathrm{d}} = 1\times10^{8}$\,A\,m$^{-2}$. For a via of radius $r$ with liner
+thickness $t_{\ell}$ the conducting area is
+$A_{\mathrm{cu}} = \pi(r-t_{\ell})^{2}$ and
+\begin{equation}
+n_{\mathrm{req}} = \left\lceil \frac{I}{J_{\mathrm{d}} A_{\mathrm{cu}}} \right\rceil, \qquad
+n_{\mathrm{req}} \le n_{\mathrm{alloc}} \le n_{\mathrm{avail}},
+\label{eq:nreq}
+\end{equation}
+where $n_{\mathrm{alloc}}$ is the count the allocation policy instantiates and
+$n_{\mathrm{avail}} = \lfloor \eta A_{\mathrm{land}}/p^{2}\rfloor$ is the count the available
+landing area $A_{\mathrm{land}}$ admits at pitch $p$ with areal packing efficiency $\eta$.
+The field resistance uses the allocated count,
+\begin{equation}
+R_{\mathrm{field}} = \frac{R_{\mathrm{single}}}{n_{\mathrm{alloc}}}
+ = \frac{\rho(T)\,h}{A_{\mathrm{cu}}\, n_{\mathrm{alloc}}},
+\label{eq:rfield}
+\end{equation}
+for a via of height $h$. Using $n_{\mathrm{req}}$ in \eqref{eq:rfield} instead states an
+allocation policy as though it were a physical law.
+
+Two consequences are used later. Under minimum-capability provisioning, for which
+$n_{\mathrm{alloc}} = n_{\mathrm{req}}$, the copper fraction of the field is
+\begin{equation}
+\varphi_{\mathrm{cu}} = \frac{n_{\mathrm{req}} A_{\mathrm{cu}}}{A_{\mathrm{field}}}
+ \simeq \frac{I}{J_{\mathrm{d}} A_{\mathrm{field}}},
+\label{eq:phi}
+\end{equation}
+which is independent of $r$: enlarging a via changes the required count and leaves the field
+resistance, the homogenised conductivity and the effective stiffness essentially unchanged.
+And the legal pitch follows from the additive spacing rule
+$p = \max(2r + s_{\min},\, 2r(1+\kappa_{\mathrm{koz}}))$ with $s_{\min} = 30$\,\textmu m, so
+the ratio $n_{\mathrm{req}}/n_{\mathrm{avail}}$ \emph{improves} as $r$ increases, which is
+the opposite of the intuition that finer vias relieve a congested field.
+
+\begin{table}[!t]
+\caption{Final comparison on the frozen repartitioned pair. The corner-joint displacement
+driver $\du$ and the local inelastic response $\Delta\varepsilon_{\mathrm{in}}$ are separate
+quantities and are reported separately: $\du$ is the in-plane displacement the global solve
+imposes on the joint, $\Delta\varepsilon_{\mathrm{in}}$ the dimensionless per-cycle strain
+increment the viscoplastic submodel returns for it. Both architectures are geometrically
+realizable and process-conditional; neither is qualified.}
+\label{tab:final}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Quantity & Z1 embedded & Z2 backside \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Electronics-scope loss}}\\
+Low-side conduction (W) & $96.956$ & $98.074$ \\
+High-side conduction (W) & $10.736$ & $10.859$ \\
+Inductor winding (W) & $14.266$ & $14.370$ \\
+Capacitor ESR (W) & $1.440$ & $1.440$ \\
+Switching, gate, $C_{\mathrm{oss}}$ (W) & $9.602$ & $9.602$ \\
+Intra-cell metal (W) & $3.601$ & $3.627$ \\
+Vertical transitions (W) & $0.011$ & $0.011$ \\
+Through-substrate field (W) & $\sim0$ & $\mathbf{0.991}$ \\
+Bumps + package RDL (W) & $0.680$ & $0.685$ \\
+\textbf{Total} & $\mathbf{137.292}$ & $\mathbf{139.659}$ \\
+Pump power, facility scope (W) & $14.696$ & $14.696$ \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Thermal and mechanical}}\\
+Peak temperature ($^{\circ}$C) & $118.32$ & $\mathbf{126.46}$ \\
+Mean die temperature ($^{\circ}$C) & $93.41$ & $95.41$ \\
+Die warpage, peak-to-valley (\textmu m) & $41.616$ & $38.916$ \\
+Package warpage, P--V (\textmu m) & $77.024$ & $72.039$ \\
+Corner-joint temperature $T_{\mathrm{j}}$ ($^{\circ}$C) & $112.75$ & $\mathbf{120.30}$ \\
+E--T iterations / energy residual & $3$ / $0$\,\% & $3$ / $0$\,\% \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Local joint}}\\
+Displacement driver $\du$ (\textmu m) & $4.6252$ & $\mathbf{3.8714}$ \\
+Inelastic response $\Delta\varepsilon_{\mathrm{in}}$ ($\times10^{-2}$/cycle)
+ & $1.4072$ & $\mathbf{1.1478}$ \\
+Inelastic strain range ($\times10^{-3}$) & $6.898$ & $5.628$ \\
+Inelastic work (MJ\,m$^{-3}$) & $1.0853$ & $0.9309$ \\
+Cycle-to-cycle change, last pair & $0.04$\,\% & $0.06$\,\% \\
+\midrule
+Driver ratio $D_{u}$ & \multicolumn{2}{c}{$1.1947$} \\
+Response ratio $D_{\varepsilon}$ & \multicolumn{2}{c}{$\mathbf{1.2260}$} \\
+Worst via aspect ratio & \multicolumn{2}{c}{$0.833$} \\
+Worst provisioning ratio & \multicolumn{2}{c}{$0.633$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Lateral distribution is treated as a sheet problem. For a segment of length $\ell$ carrying
+current $I$ across $n_{L}$ metal layers of thickness $t_{\mathrm{cu}}$,
+\begin{equation}
+w_{\mathrm{req}} = \frac{I}{J_{\mathrm{d}} t_{\mathrm{cu}} n_{L}}, \qquad
+R = \frac{\rho(T)\,\ell}{n_{L} w t_{\mathrm{cu}}}, \qquad w \le w_{\mathrm{avail}},
+\label{eq:rdl}
+\end{equation}
+and a segment for which $w_{\mathrm{req}} > w_{\mathrm{avail}}$ is infeasible rather than
+merely lossy. Every segment contributes $P = I_{\mathrm{rms}}^{2}R$ to the loss ledger and,
+through its position in the stack, to the volumetric heat source of
+Section~\ref{sec:thermech}. Supply and return are both represented: the ledger separates
+intra-cell metal, the vertical transitions, the through-substrate field, the bump field and
+the package redistribution network, and Table~\ref{tab:final} reports them separately.
+
+\subsection{Conductor-plane topology and realizability}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig4_realizability.pdf}
+\caption{Physical realizability of the vertical interconnect. (a) Conductor-plane sequence
+for the switch-node connection: three material layers separate the terminal faces, but the
+interlayer redistribution layers are capture planes, so one build-up via level is required.
+(b) Component tier order before and after the repartition; exchanging the low-side switches
+with the flying capacitors leaves the component set, per-tier areas and stack height
+unchanged. (c) Worst via aspect ratio per vertical net at a source-bounded microvia pitch:
+the $606$\,\textmu m crossing required by the reference order is eliminated and the worst
+aspect ratio falls from $5.05$ to $0.833$.}
+\label{fig:realize}
+\end{figure*}
+
+Whether a connection between two components in different tiers requires one via level or
+several is determined by the \emph{conductor-plane} sequence of the stack, not by the number
+of material layers between them. An interlayer redistribution layer is patterned copper and
+serves as a capture plane on which a microvia lands; only a region containing no conductor
+plane requires a via to cross it. For the switch-node connection in the reference tier order
+the sequence is: device terminal face, interlayer redistribution layer, flying-capacitor
+power layer, interlayer redistribution layer, device terminal face. Three material layers
+separate the two terminal faces, but only one---the component tier---is a dielectric region
+without an internal conductor plane. One build-up via level is therefore required, of depth
+equal to that tier, as shown in Fig.~\ref{fig:realize}(a).
+
+Feasibility is then evaluated per segment against four conditions: the count condition
+\eqref{eq:nreq}; the pitch rule; the aspect ratio $\mathrm{AR} = h_{\mathrm{diel}}/d$ of each
+via level against what the build-up process admits; and the landing area, which is a
+property of the connected device rather than of the cell. The low-side transistor used here
+is supplied as a bare die with four solder bars on a $1.5 \times 1.2$\,mm
+footprint~\cite{EPC2057}, so its switch node is presented on at most a quarter of the die
+area.
+
+Throughout, the provisioning state of \eqref{eq:nreq} and the manufacturing state are
+reported separately. $n_{\mathrm{req}}$ is a conservative design-side allocation evaluated at
+$J_{\mathrm{d}}$; no current allowable has been sourced for the build-up microvia technology
+considered, so $n_{\mathrm{req}}$ is never presented as a statement of what manufacturing
+requires.
+\section{Thermal and Mechanical Formulation}\label{sec:thermech}
+
+\subsection{Package thermal model}
+Steady conduction is solved on the resolved package stack,
+\begin{equation}
+\nabla \cdot \left( \mathbf{k}\, \nabla T \right) + q'''\!\left(\mathbf{x}\right) = 0,
+\label{eq:cond}
+\end{equation}
+with $\mathbf{k} = \mathrm{diag}(k_{x},k_{y},k_{z})$ an orthotropic conductivity tensor and
+$q'''$ the volumetric source. Every loss term of Section~\ref{sec:elec} is deposited at the
+layer in which it is generated: the converter losses in the converter band, the intra-cell
+metal and vertical-transition losses in the tiers that carry them, the through-substrate
+field loss in the via field, and the bump and package redistribution losses in their own
+layers. The deposited total is checked against the electrical total on every solve to within
+$10^{-6}$ relative, and a mismatch stops the run.
+
+\begin{table}[!t]
+\caption{Material properties of the package stack. Homogenised layers carry effective
+properties derived from an explicitly meshed representative volume element.}
+\label{tab:mat}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Layer / material & $E$ (GPa) & $\nu$ & $\alpha$ (ppm/K) & $k$ (W/m\,K) \\
+\midrule
+Silicon (cubic) & $C_{11}{=}166$ & $C_{12}{=}64$ & $2.6$ & $130$ \\
+Copper & $110$ & $0.34$ & $16.66$ & $400$ \\
+Through-substrate via field & \multicolumn{4}{c}{homogenised, $f_{\mathrm{Cu}}{=}0.196$} \\
+Converter band (effective) & $120$ & $0.28$ & $6.0$ & $60$ \\
+Interface / underfill & $8.0$ & $0.32$ & $30$ & $0.7$ \\
+Thermal interface & $0.2$ & $0.45$ & $200$ & $3.0$ \\
+Ball-grid-array field & $3.93$ & $0.35$ & $20.5$ & $9.82$ \\
+Printed circuit board & $20$ & $0.20$ & $17$ & $0.3$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Layers containing regular arrays are homogenised rather than resolved. For a square-pitch
+copper via array in silicon of area fraction $f = \pi d^{2}/(4p^{2})$, the through-thickness
+conductivity follows the parallel rule $k_{z} = f k_{\mathrm{Cu}} + (1-f) k_{\mathrm{Si}}$,
+exact for aligned continuous phases, and the effective expansion coefficient follows the
+stiffness-weighted rule
+$\alpha_{\mathrm{eff}} = (f E_{\mathrm{Cu}}\alpha_{\mathrm{Cu}} +
+(1-f)E_{\mathrm{Si}}\alpha_{\mathrm{Si}})/(f E_{\mathrm{Cu}} + (1-f)E_{\mathrm{Si}})$. The
+in-plane conductivity is taken from an explicitly meshed representative volume element
+rather than from a closed form: for the bump fields the Maxwell--Garnett estimate agrees to
+within $1.5$\,\%, but for the via arrays it is $11$ to $39$\,\% high, so the element result is
+adopted. The interlayer redistribution layer, through which all dissipated power passes, is
+strongly anisotropic, and treating it as isotropic shifts absolute temperatures by several
+kelvin. Material properties are listed in Table~\ref{tab:mat}.
+
+The unheated faces are treated as adiabatic on the sides, with natural convection of
+$10$\,W\,m$^{-2}$K$^{-1}$ beneath the carrier at $25\,^{\circ}$C.
+
+\subsection{Cooling boundary}
+\begin{table}[!t]
+\caption{Microchannel cold-plate geometry and operating state at the production point.}
+\label{tab:cool}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lcL{2.25cm}@{}}
+\toprule
+Quantity & Value & Note \\
+\midrule
+Channel width / height & $50$ / $300$\,\textmu m & \\
+Channels & 223 & across the die width \\
+Hydraulic diameter $D_{\mathrm{h}}$ & $85.7$\,\textmu m & \\
+Coolant & water, $25\,^{\circ}$C inlet & $k_{\mathrm{f}}{=}0.644$\,W/m\,K \\
+Mass flow (total / channel) & $27$ / $0.121$\,g\,s$^{-1}$ & \\
+Mean velocity & $8.17$\,m\,s$^{-1}$ & \\
+Reynolds number & $1264.8$ & laminar, in domain \\
+Prandtl number & $3.551$ & \\
+Nusselt number & $4.603$ & Shah--London \cite{ShahLondon1978} \\
+Thermal entry length & $19.2$ of $22.4$\,mm & not fully developed \\
+Channel $h$ & $34.6$\,kW\,m$^{-2}$K$^{-1}$ & \\
+Area amplification / fin eff.\ & $5.10$ / $0.769$ & \\
+Effective $h_{\mathrm{eff}}$ & $115.6$\,kW\,m$^{-2}$K$^{-1}$ & referred to the die \\
+Coolant temperature rise & $8.86$\,K & energy balance \\
+Pressure drop & $0.538$\,MPa & \\
+Pump power (facility scope) & $14.70$\,W & $1.47$\,\% of load \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The cooled face is a silicon microchannel cold plate, evaluated at its physical operating
+point rather than through a calibrated coefficient. The channel geometry and the resulting
+operating state are given in Table~\ref{tab:cool}. At $27$\,g\,s$^{-1}$ distributed over 223
+channels the Reynolds number is $1264.8$, within the laminar regime, and the Nusselt number
+is taken from the rectangular-duct solution of Shah and London~\cite{ShahLondon1978}. The
+channel coefficient is amplified by the wetted-area ratio and the fin efficiency to give an
+effective coefficient referred to the die footprint,
+\begin{equation}
+h_{\mathrm{eff}} = \eta_{\mathrm{f}}\,\Lambda\, \frac{\mathrm{Nu}\,k_{\mathrm{f}}}{D_{\mathrm{h}}},
+\label{eq:heff}
+\end{equation}
+with $\Lambda$ the area amplification and $\eta_{\mathrm{f}}$ the fin efficiency. The coolant
+temperature rise is obtained from an energy balance and iterated with the solid solution to
+below $0.02$\,K.
+
+Three statements about the cooling model are kept distinct. The production point at
+$27$\,g\,s$^{-1}$ is \emph{in domain}: $\mathrm{Re} = 1264.8$ lies inside the validated
+laminar range and the solid side agrees with an explicitly meshed fin solution to
+$3.78$\,\%. The transitional band between the laminar ceiling at $\mathrm{Re}=2300$ and the
+turbulent floor of the Gnielinski correlation~\cite{Gnielinski1976} at $\mathrm{Re}=3000$ is
+declared \emph{outside the model domain}: the two neighbouring correlations differ there by
+a factor of $2.8$, and operating points in that band are refused rather than interpolated.
+Conjugate computational fluid dynamics of the cooled package has \emph{not been completed},
+and no result from such an attempt is used anywhere in this work. Hydraulic pumping power is
+accounted in a facility scope separate from the electronics scope, because the pump is not
+within the package and its dissipation is not deposited in the thermal mesh.
+
+\subsection{Electrical--thermal fixed point}
+The dominant loss terms are temperature dependent through \eqref{eq:tdep}, and the
+temperature field depends on those losses, so the two are iterated. Starting from the
+reference-temperature loss set, each iteration evaluates the electrical model at the current
+layer temperatures, deposits the resulting sources, solves \eqref{eq:cond} with the cooling
+boundary, and updates the temperatures. The iteration terminates when the change in the
+converter-layer temperature between successive iterations falls below $0.25$\,K. Three
+iterations are required for both architectures reported here.
+
+\subsection{Global thermoelastic model}
+The converged temperature field is applied as a thermal load to a finite-element model of the
+package,
+\begin{equation}
+\boldsymbol{\sigma} = \mathbf{C}(T) : \left( \boldsymbol{\varepsilon}
+- \boldsymbol{\alpha}\,(T-T_{\mathrm{ref}}) \right),
+\label{eq:const}
+\end{equation}
+with $T_{\mathrm{ref}} = 25\,^{\circ}$C an operational stress-free reference, not an assembly
+signoff temperature. The model is meshed with incompatible-mode hexahedral elements
+(C3D8I) and solved in CalculiX; silicon is treated as cubic-orthotropic and the remaining
+materials as isotropic, with the homogenised layers carrying the effective properties of
+Section~\ref{sec:thermech}-A.
+
+The assembly state is represented explicitly rather than through an equivalent foundation.
+The mounted configuration meshes the ball-grid-array field and the printed circuit board as
+real layers and restrains only rigid-body motion, through a three-point kinematic
+constraint on the board underside; the free configuration applies the same three-point
+constraint to the substrate underside. An intermediate representation, in which the board
+is replaced by a fully restrained compliant layer, was evaluated and rejected: it constrains
+all three translations across the underside plane, which a compliant solder field does not,
+and it fails to recover the free-package limit as its stiffness is reduced. Mounted results
+in this paper use the explicit board.
+
+Global deformation is reported as the peak-to-valley warpage of the die surface. The
+deciding local quantity is the corner-joint relative in-plane displacement,
+\begin{equation}
+\Delta u_{\mathrm{c}} = \max_{i \in \mathcal{C}}
+ \left\| \mathbf{u}_{\mathrm{t}}^{(i)} - \mathbf{u}_{\mathrm{b}}^{(i)} \right\|_{xy},
+\label{eq:duc}
+\end{equation}
+the largest in-plane displacement difference across the solder layer, evaluated over the
+outer annulus $\mathcal{C}$ of the joint field at radius $r > 0.92\,r_{\max}$ where the
+mismatch is greatest.
+
+\subsection{Local solder inelastic response}
+$\Delta u_{\mathrm{c}}$ is the driver of a separate local submodel, not the end of the chain.
+A single corner joint---solder core between two copper pads---is meshed with hexahedral
+elements, its lower pad fully restrained, its upper pad constrained normal to the joint and
+displaced in-plane by $\Delta u_{\mathrm{c}}$, and integrated through the thermal cycle with
+a viscoplastic procedure. The inelastic strain rate is driven by the overstress
+\begin{equation}
+\dot{\varepsilon}_{\mathrm{in}} =
+A(T)\,\left\langle \sigma_{\mathrm{vm}} - \sigma_{y} \right\rangle^{\,n(T)},
+\label{eq:creep}
+\end{equation}
+which is the form the solver integrates; a power law written against total applied stress is
+not the variable the solver consumes, and the two are not interchangeable in a fit.
+
+The reported local quantity is the per-cycle increment of accumulated equivalent inelastic
+strain,
+\begin{equation}
+\Delta\varepsilon_{\mathrm{in}} = \varepsilon^{\,\mathrm{eq}}_{\mathrm{in}}(t_{k})
+ - \varepsilon^{\,\mathrm{eq}}_{\mathrm{in}}(t_{k-1}),
+\label{eq:resp}
+\end{equation}
+volume-averaged over the solder core with a one-element corner exclusion band and evaluated
+on the stabilised cycle. It is an inelastic \emph{path length} per cycle, not a strain range;
+the two differ by a factor of about $3.7$ for this joint, and the distinction was confirmed
+by a controlled experiment in which a creep-only material returns unity against the
+equivalent inelastic strain.
+
+The submodel is meshed with $488$ hexahedral elements, $128$ of them in the excluded core,
+and integrated over four cycles of a $300$\,s dwell at the joint temperature followed by a
+$300$\,s dwell at $25\,^{\circ}$C, with the stress-free reference at $25\,^{\circ}$C. The
+creep strain-increment tolerance of the time integrator is $5\times10^{-2}$. That tolerance
+is a numerical control rather than a material property; at the tolerance used, the published
+lower-stress reference case is reproduced to within the printed precision. Its influence on
+the final pair was measured directly over a five-value ladder spanning $10^{-5}$ to
+$10^{-1}$, with every other model input held fixed. Three tolerances tighter than the one
+used admit no solution at this operating point: the solver completes zero increments at
+$10^{-5}$, $10^{-4}$ and $10^{-2}$. The two that converge, $5\times10^{-2}$ and $10^{-1}$,
+take the same number of increments with no cutbacks and return
+$\Delta\varepsilon_{\mathrm{in}}$, its range and the inelastic work identical to twelve
+digits for both architectures, leaving $D_{\varepsilon}$ unchanged at $1.2260$. Doubling the
+tolerance therefore moves the result by nothing, which is the direct test of whether the
+result is an artifact of relaxing it. The bracket is one-sided: no tighter tolerance
+converges here, so agreement with a tight-tolerance solution is neither demonstrated nor
+claimed.
+
+Applied to the frozen pair of Section~\ref{sec:arch}, the submodel is driven by
+$\Delta u_{\mathrm{c}}$ and by a corner-joint temperature of $112.75\,^{\circ}$C and
+$120.30\,^{\circ}$C respectively, both read from the same converged fields that produced
+$\Delta u_{\mathrm{c}}$. The two inputs oppose each other: the backside architecture imposes
+the smaller displacement on a joint that runs $7.55$\,K hotter, so the ordering is decided by
+the solve rather than by either input alone.
+
+Both $\Delta u_{\mathrm{c}}$ and $\Delta\varepsilon_{\mathrm{in}}$ are \emph{response}
+quantities. Converting either to damage requires a damage law, converting that to life
+requires a life relation, and converting that to a pass or fail requires an admissible
+allowable. None of the three is established here and none is performed. Where an
+element-weighted stress distribution is reported, the weight is
+$\Delta\varepsilon_{\mathrm{in}}\!\cdot\!V$, the solver's own inelastic-strain increment
+times element volume, and it is named accordingly.
+
+\subsection{Coupling level}
+Mechanical feedback to the electrical domain is quantified rather than assumed negligible:
+the intact-state effect on the field resistance is $0.16$\,\%, against $22.8$\,\% from the
+thermal dependence of resistivity already inside the fixed point, and a $4$\,\% change in the
+thermal-interface bond line moves the package temperature by $1.5$\,K. The mechanical
+solution is therefore evaluated one-way on the converged thermal field. This holds for the
+intact regime evaluated here; it is not a statement about a damaged or delaminated interface,
+which is outside the model. The complete coupling structure is shown in
+Fig.~\ref{fig:system}(c).
+\section{Validation and Computational Cost}\label{sec:valid}
+
+\subsection{Platform and software}
+All results were produced on a single machine: two Intel Xeon Gold 6342 processors at
+$2.80$\,GHz, 48 physical cores over two sockets, 96 logical processors and 2.0\,TiB of
+memory, under Red Hat Enterprise Linux 8.10 with Python 3.12.14, NumPy 2.5.2 and SciPy
+1.16.3. No accelerator is used; every solver in the chain is CPU-only.
+
+Three solvers carry the production path. CalculiX 2.23~\cite{CalculiX} performs the
+package thermal and
+thermoelastic solves and the local viscoplastic joint submodel, threaded over 48 cores. An
+in-house conservative finite-volume direct-current solver, cell-centred with harmonic-mean
+face conductivities, evaluates current crowding and via-chain resistance. The converter
+synthesis, rail-aware network, homogenisation and cooling correlations are evaluated in
+closed form. The MOOSE heat-transfer module~\cite{MOOSE}, build \texttt{09515f92aa}, is
+used only as an
+independent reference and is never in the production path.
+
+\subsection{Electrical and interconnect validation}
+The redistribution plane model was compared with MOOSE on a $300\times300$ finite-element
+mesh for three regulator placements---distributed, edge-biased and asymmetric, each with 49
+sources---agreeing to $0.45$, $1.10$ and $0.58$\,\% on dissipated power and to within
+$2.2$\,\% on IR drop. Interconnect transition resistance was compared with MOOSE over five
+via-to-pad and pad-to-plane geometries, agreeing to $0.25$--$0.73$\,\%, all five accepted.
+The finite-volume solver returns $\rho\ell/A$ exactly for a uniform conductor at every mesh
+level and the spreading resistance $\rho/(4a)$ to $+0.9$\,\% at six cells per radius.
+
+A three-dimensional solution of one physical via column, including the capture lands,
+returns $1.16$ times the analytical series resistance, converged to $0.13$\,\% on the two
+finest meshes. The excess is current spreading into and out of the lands; it is retained as a
+geometry-specific correction and is not generalised into a global crowding multiplier.
+
+The frequency dependence of the via is reported from an analytic skin-depth model checked
+against the Bessel-function solution, which gives $\delta/r = 4.41$ and a ratio of $1.0001$
+at 1\,MHz. A full-wave confirmation was attempted: the geometry, lumped port and boundaries
+were built and verified in AEDT 2026 R1 batch, but the adaptive solve of a
+$15$\,\textmu m copper via with solve-inside did not converge within the allotted budget. No
+full-wave result is therefore claimed.
+
+\subsection{Thermal validation}
+The homogenisation was checked against explicitly meshed representative volume elements: the
+parallel rule for $k_{z}$ agrees within $1$\,\% for every layer, Maxwell--Garnett within
+$1.5$\,\% for the bump fields, and the periodicity of the cell was confirmed by a $1\times1$
+against $2\times2$ comparison agreeing to $0.000$\,\%. The cooling fluid side reproduces the
+analytic energy balance exactly, and the solid side agrees with an explicitly meshed fin
+solution to $3.78$\,\% at the production geometry. A short, thick fin geometry outside the
+adopted envelope disagreed by $10.11$\,\% and was rejected rather than accepted as a
+tolerance. The full three-dimensional package field was compared against MOOSE, which
+preserves the architecture ordering.
+
+Conjugate computational fluid dynamics of the cooled package was attempted and the run was
+discarded; no CFD validation is claimed and no number from that attempt appears in this
+paper.
+
+\subsection{Mechanical convergence}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig5_validation.pdf}
+\caption{Validation. (a) Redistribution-plane dissipated power against MOOSE for three
+regulator placements, and interconnect transition resistance for five geometries; all eight
+within $1.2$\,\%. (b) Three-dimensional conduction against closed-form references, and the
+measured land-spreading correction of the physical via chain. (c) Cooling solid side against
+an explicitly meshed fin solution, with the rejected off-envelope geometry shown. (d) Mesh
+refinement and cycle stabilisation of the local response metric.}
+\label{fig:valid}
+\end{figure*}
+
+Four graded mesh levels bound the numerical uncertainty on the global warpage at $0.50$\,\%.
+For the local submodel, three genuine mesh-refinement levels give a $1.9$\,\% change in the
+per-cycle increment between the two finest, as shown in Fig.~\ref{fig:valid}(d); the
+architecture \emph{ratio} is converged an order better because the residual error is largely
+common mode. The per-cycle increment stabilises from $15.9$\,\% to $1.9$\,\% and then
+$0.7$\,\% cycle-to-cycle, below the $5$\,\% criterion by the fourth cycle. An independent
+integration route for the inelastic energy agrees to $0.79$--$1.56$\,\%.
+Integration-tolerance sensitivity, measured separately on the final pair, is zero to twelve
+digits across the tolerances that admit a solution, against $1.9$\,\% for the mesh.
+
+\begin{table}[!t]
+\caption{Validation matrix. Two attempts produced no usable result and are reported as such.}
+\label{tab:valid}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}L{2.30cm}L{1.50cm}L{1.45cm}L{2.05cm}@{}}
+\toprule
+Quantity & Production model & Reference & Error \\
+\midrule
+RDL plane power, 3 placements & sheet PDE & MOOSE, $300^{2}$ & $0.45$--$1.10$\,\% \\
+Transition resistance, 5 geometries & analytic & MOOSE 3-D & $0.25$--$0.73$\,\% \\
+Uniform conductor & finite volume & $\rho\ell/A$ & exact \\
+Spreading resistance & finite volume & $\rho/(4a)$ & $+0.9$\,\% \\
+Via-chain with lands & analytic series & finite volume & $1.16\times$, conv. $0.13$\,\% \\
+Via AC ratio, 1\,MHz & skin-depth & Bessel & $\delta/r{=}4.41$, $1.0001$ \\
+$k_{z}$, all layers & parallel rule & explicit RVE & $<1$\,\% \\
+$k_{xy}$, bump field & Maxwell & explicit RVE & $<1.5$\,\% \\
+$k_{xy}$, via array & explicit RVE & Maxwell & $11$--$39$\,\% high; RVE adopted \\
+Cell periodicity & $1{\times}1$ & $2{\times}2$ & $0.000$\,\% \\
+Cooling, fluid side & energy balance & closed form & exact \\
+Cooling, solid side & fin efficiency & MOOSE, explicit fins & $3.78$\,\% \\
+Loss decomposition & per-term & aggregate & machine precision \\
+Heat deposition & per-layer & electrical total & $<10^{-6}$ rel. \\
+Package thermal field & conduction & MOOSE 3-D & ordering preserved \\
+PEEQ identity & CalculiX & creep-only test & $1.0000$ \\
+Global warpage & 4 mesh levels & refinement & $0.50$\,\% \\
+Local response & 3 mesh levels & refinement & $1.9$\,\% \\
+Local integration tolerance & \textsc{cetol} $5{\times}10^{-2}$ & published case at the same tolerance & $0.0000$\,\% \\
+Local response, final pair & 4 cycles & cycle-to-cycle & $0.04$, $0.06$\,\% \\
+E--T fixed point & Picard & iterate difference & $<0.25$\,K, 3 iters \\
+\midrule
+Conjugate CFD & --- & ANSYS Icepak & discarded; \emph{not claimed} \\
+Via loop AC, full wave & --- & ANSYS HFSS & did not converge; \emph{not claimed} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The complete validation matrix, including the two attempts that produced no usable result,
+is given in Table~\ref{tab:valid}.
+
+\subsection{Computational cost}
+\begin{table}[!t]
+\caption{Measured computational cost. The timing run reproduced the frozen results exactly.}
+\label{tab:cost}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{3.1cm}p{2.1cm}rc@{}}
+\toprule
+Stage & Size & Wall time & Threads \\
+\midrule
+Converter synthesis & 90-device library & $4.56$\,s & 1 \\
+Rail-aware PPDN + routing & 6 segments $\times$ 49 cells & $0.10$\,ms & 1 \\
+Cooling correlation & 223 channels & $11.2$\,ms & 1 \\
+Full ETM evaluation, Z1 & 3 E--T iterations & $134.6$\,s & 48 \\
+Full ETM evaluation, Z2 & 3 E--T iterations & $204.2$\,s & 48 \\
+\midrule
+\multicolumn{4}{@{}p{7.6cm}}{\footnotesize Platform: 2$\times$Intel Xeon Gold 6342 @ 2.80\,GHz,
+48 physical cores, 2.0\,TiB, RHEL 8.10, CalculiX 2.23, Python 3.12.14. No accelerator.
+Speedup against a higher-fidelity reference: \emph{not available}; no controlled
+same-geometry timing pair was recorded and the two commercial attempts produced no valid
+reference.}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:cost} reports the measured cost of one complete evaluation. The timing run
+reproduced the frozen results exactly, so the times correspond to the evaluation that
+produced the reported numbers.
+
+The analytical layers are effectively free relative to the finite-element solves. Converter
+synthesis over the 90-device library costs $4.56$\,s once; the per-design rail-aware network
+evaluation costs $0.10$\,ms and the cooling correlation $11.2$\,ms. A complete
+electrothermal--mechanical evaluation costs $134.6$\,s for the embedded architecture and
+$204.2$\,s for the backside architecture. The split follows the execution path rather than
+the loop count. Each fixed-point iteration contains thermal finite-element work only, and the
+thermal solve is itself fluid-coupled, so each iteration runs three to four thermal
+sub-solves: eleven in total over the three iterations, $75.1$\,s for the embedded and
+$121.4$\,s for the backside architecture. The thermoelastic solve is \emph{not} inside the
+loop. It is entered once, after the temperature field has converged, for $49.5$\,s and
+$67.6$\,s respectively, which is the one-way thermal-to-mechanical coupling of
+Section~\ref{sec:thermech}. The local solder submodel is a further $45.0$\,s and $35.1$\,s,
+entered once per architecture. The remainder is mesh construction, material assembly, input
+writing and result parsing. The two architectures differ because the backside stack resolves
+a through-substrate via field the embedded stack does not, changing the element count; both
+converge in three iterations.
+
+This cost structure is the practical argument for the framework's organisation: the numerical
+work is confined to the thermal solves inside the loop, one thermoelastic solve after it and
+one local submodel, and everything that can be evaluated in closed form is, so that the
+expensive part is entered once per candidate rather than once per design variable.
+
+No speedup against a higher-fidelity reference is claimed. The MOOSE cross-checks establish
+accuracy but were run on different meshes and case sets, and no controlled same-geometry,
+same-machine timing pair was recorded; the two commercial attempts did not produce valid
+references. Reporting a speedup on any of these bases would not be defensible.
+\section{Comparison With Existing DVPD Frameworks}\label{sec:compare}
+
+\subsection{Capability comparison}
+\begin{table*}[!t]
+\caption{Capability comparison with DVPD and package co-design frameworks whose full text was examined. \checkmark: modelled explicitly; $\triangle$: partial, assumed, or reported as future work; ---: not included. Rows below the rule are capabilities the present framework does not provide.}
+\label{tab:cmp}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+Capability & \cite{Krishnakumar2026DVPD} & \cite{Sriharini_ECTC_24} & \cite{ISCAS2024DVPD} & \cite{VPD2023Architectures} & \cite{DVPD2026PowerMgmt} & \cite{Wang2025TTSV} & This work \\
+\midrule
+Converter synthesis from a device library & \checkmark & \checkmark & \checkmark & $\triangle$ & --- & --- & \checkmark \\
+Multi-stage hybrid regulator topology & \checkmark & \checkmark & \checkmark & \checkmark & $\triangle$ & --- & \checkmark \\
+Switching, gate and $C_{\mathrm{oss}}$ loss terms & \checkmark & $\triangle$ & $\triangle$ & $\triangle$ & \checkmark & --- & \checkmark \\
+Rail-aware per-segment current assignment & $\triangle$ & $\triangle$ & $\triangle$ & $\triangle$ & $\triangle$ & --- & \checkmark \\
+Geometry-derived through-substrate via model & \checkmark & \checkmark & $\triangle$ & $\triangle$ & --- & \checkmark & \checkmark \\
+Geometry-derived RDL plane model & \checkmark & \checkmark & \checkmark & $\triangle$ & \checkmark & \checkmark & \checkmark \\
+Bump and transition resistance & $\triangle$ & \checkmark & --- & \checkmark & --- & $\triangle$ & \checkmark \\
+Intra-converter routing inside the cell & --- & --- & --- & --- & \checkmark & --- & \checkmark \\
+Temperature-dependent $\rho$ and $R_{\mathrm{on}}$ & \checkmark & --- & --- & --- & --- & \checkmark & \checkmark \\
+Component heights in the stack budget & $\triangle$ & --- & --- & $\triangle$ & --- & --- & \checkmark \\
+Component partition across tiers & $\triangle$ & --- & --- & \checkmark & --- & --- & \checkmark \\
+Electrical--thermal fixed point & \checkmark & --- & $\triangle$ & --- & --- & \checkmark & \checkmark \\
+Anisotropic / homogenised thermal model & $\triangle$ & --- & --- & --- & --- & \checkmark & \checkmark \\
+Physical cooling boundary with a stated domain & \checkmark & --- & $\triangle$ & --- & --- & \checkmark & \checkmark \\
+Pump power separated from electronics scope & $\triangle$ & --- & --- & --- & --- & --- & \checkmark \\
+Global thermoelastic package model & --- & --- & --- & --- & --- & --- & \checkmark \\
+Explicit assembly state, free against mounted & --- & --- & --- & --- & --- & --- & \checkmark \\
+Local solder inelastic-response model & --- & --- & --- & --- & --- & --- & \checkmark \\
+Mechanical-to-electrical feedback quantified & --- & --- & --- & --- & --- & --- & \checkmark \\
+Vertical-interconnect realizability check & --- & --- & --- & $\triangle$ & --- & $\triangle$ & \checkmark \\
+Manufacturability separated from feasibility & --- & --- & --- & --- & --- & $\triangle$ & \checkmark \\
+Independent cross-solver validation reported & $\triangle$ & --- & $\triangle$ & --- & --- & \checkmark & \checkmark \\
+Computational cost reported & --- & --- & --- & --- & --- & $\triangle$ & \checkmark \\
+\midrule
+Load-dependent operating point & --- & --- & --- & --- & \checkmark & --- & --- \\
+Regulator activation and power management & --- & --- & --- & --- & \checkmark & --- & --- \\
+Output ripple and regulation constraint & $\triangle$ & $\triangle$ & $\triangle$ & $\triangle$ & \checkmark & --- & $\triangle$ \\
+Manufacturing-cost objective & --- & --- & --- & --- & --- & \checkmark & --- \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Table~\ref{tab:cmp} compares the framework with five DVPD studies and one 2.5-D
+electrothermal co-optimization study. Only works whose full text was examined are scored;
+capability is not inferred from a title or an abstract, and several relevant works could not
+be obtained in full text from the present host and are consequently cited for motivation but
+left unscored.
+
+The comparison is not a deficiency list, and the rows below the rule are capabilities the
+present framework does not have. The architecture study~\cite{VPD2023Architectures} defines
+the vertical-integration family used here---power devices on the interposer periphery, power
+devices embedded beneath the die, and multi-stage variants---and establishes the 1\,kW,
+high-current-density operating point; the embedded and backside alternatives evaluated in
+this work are two members of that family. The baseline design
+framework~\cite{Krishnakumar2026DVPD} co-optimises converter synthesis, interconnect
+allocation and floorplanning under thermal feasibility, and it identifies multi-substrate
+vertical stacking and chiplet embedding as the enabling packaging technologies; the present
+work takes that identification as its starting point and asks what the package does to the
+architecture ranking once those technologies are represented geometrically. The power-management
+methodology~\cite{DVPD2026PowerMgmt} resolves conduction loss by routing segment, including
+the path inside the regulator cell, and adds a capability absent here: the operating point is
+load-dependent, regulators are activated according to instantaneous demand, and ripple and
+regulation are constrained explicitly. The present framework evaluates a single full-load
+operating point and does not model activation, so its loss figures are not comparable with a
+light-load result. The 2.5-D study~\cite{Wang2025TTSV} carries a manufacturing-cost objective
+and reports validation errors of $3.97$\,\% on impedance and $0.35$\,\% on temperature, but
+contains no converter synthesis and no mechanical model. The distinguishing rows for the
+present work are intra-converter routing geometry, component partition across tiers, assembly
+state, local solder response and the separation of manufacturability from feasibility.
+
+\subsection{Reproduction and testing of published positions}
+\begin{table*}[!t]
+\caption{Positions from the prior DVPD literature, reproduced within the framework and tested.
+Each is labelled by its standing in the cited work: a \emph{published result} is stated there
+explicitly, an \emph{implication of the formulation} follows from how that work is set up
+without being claimed, and a \emph{modelling assumption} is a choice the cited model makes.
+The purpose is to identify the conditions under which each holds.}
+\label{tab:prior}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{4.5cm}p{3.9cm}p{3.7cm}p{4.5cm}@{}}
+\toprule
+Position, and its standing in the cited work & Representation here & Outcome & Interpretation \\
+\midrule
+\emph{Published result.} Vertical interconnect loss is small relative to lateral routing; the
+loss breakdown is reported and vertical dissipation called negligible
+\cite{VPD2023Architectures,Krishnakumar2026DVPD,Sriharini_ECTC_24,ISCAS2024DVPD}
+& each vertical segment carries its assigned rail; loss from via geometry and segment current
+& \textbf{reproduced, and rail-dependent}: the identical field dissipates $\approx0$\,W carrying 48\,V and $0.991$\,W carrying 1\,V
+& holds for a high-voltage vertical path; does not transfer to a low-voltage one \\
+\emph{Published result.} Lateral delivery of the low-voltage rail dominates delivery loss, and
+is the stated motivation for converting near the load
+\cite{VPD2023Architectures,Krishnakumar2026DVPD,Sriharini_ECTC_24,ISCAS2024DVPD}
+& same sheet model, geometry-derived width, $\rho(T)$
+& \textbf{reproduced}
+& retained as motivation; no general claim about 2.5-D delivery is made \\
+\emph{Implication of the formulation}, not an explicit conclusion: a larger converter footprint
+is favourable, since it lowers current density and loss in the cited flows
+\cite{Krishnakumar2026DVPD,ISCAS2024DVPD}
+& same variation, evaluated free and on five explicit boards
+& \textbf{reversed by assembly state}: warpage $+20.3$\,\% free, $-16.6$ to $-29.0$\,\% mounted
+& the electrical preference is unchanged; a free-package mechanical screen inverts the sign \\
+\emph{Implication of the formulation}: substrate thickness is selected on electrical and thermal
+grounds, no mechanical model being present \cite{Krishnakumar2026DVPD,Sriharini_ECTC_24}
+& same variation through the thermoelastic model under the explicit assembly
+& \textbf{no opposition found} in the evaluated range
+& thickness remains an electrical--thermal decision here \\
+\emph{Implication of the formulation}: tier assignment is treated as electrically free, counts,
+area and height being unchanged by it \cite{Krishnakumar2026DVPD,VPD2023Architectures}
+& assignment propagated into the conductor-plane topology; per-net aspect ratio and landing area checked
+& \textbf{invalidated for one ordering}: worst aspect ratio $5.05$ against $0.833$
+& tier assignment is constrained by package conductor-plane structure, invisibly to an electrical model \\
+\emph{Modelling assumption}: peak temperature is the thermal figure carried into feasibility or
+the objective, and no local mechanical response is evaluated alongside it
+\cite{Krishnakumar2026DVPD,ISCAS2024DVPD,Wang2025TTSV}
+& $T_{\max}$ and local corner-joint response on the same converged field
+& \textbf{not equivalent}: $+8.14$\,K against $-18.4$\,\% inelastic response
+& $T_{\max}$ is insufficient to rank local mechanical response; temperature remains inside the response model \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Six positions taken in this literature were reproduced within the framework and tested. The
+purpose is to identify the conditions under which each holds, not to contest it. Two of the
+six are results the cited works state explicitly; the remaining four are not claimed there in
+those words, and are labelled in Table~\ref{tab:prior} as implications of how those flows are
+formulated or as modelling assumptions they make. They are tested as such. The results are
+summarised in Table~\ref{tab:prior} and three are developed below.
+
+\emph{Vertical interconnect loss is small.} This is reproduced and found to be
+rail-dependent. The through-substrate field is geometrically identical in both
+architectures, but in the embedded case it carries the 48\,V input rail and dissipates
+essentially nothing, while in the backside case it carries the 1\,V output rail at the full
+cell current and dissipates $0.991$\,W, as shown in Fig.~\ref{fig:loss}(c). The conclusion
+holds for a high-voltage vertical path and does not transfer to a low-voltage one. Vertical
+loss is a property of the rail assignment rather than of the interconnect, which is why the
+model assigns rails per segment.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig6_assembly.pdf}
+\caption{Package deformation and assembly state. (a), (b) Out-of-plane displacement of the
+die surface for the frozen pair, on one shared scale, from the converged thermoelastic solve
+of Section~\ref{sec:thermech}, drawn on the $30\times30$ die-surface nodes of the global
+mesh; both surfaces are domed, and the embedded architecture carries the larger
+peak-to-valley. (c) Change in die warpage when the converter footprint is
+enlarged, evaluated for the free package and for five explicit board constructions. The sign
+of the interaction reverses between the free and the mounted state, so a mechanical
+conclusion obtained in one state cannot be quoted in the other.}
+\label{fig:assembly}
+\end{figure*}
+
+\emph{A larger converter footprint is favourable.} This is reproduced electrically and
+thermally, and it reverses mechanically with the assembly state. Fig.~\ref{fig:assembly}
+reports the change in die warpage when the converter footprint is enlarged: for the free
+package the warpage increases by $20.3$\,\%, and on each of five explicit board
+constructions spanning compliant to metal-backed it decreases, by between $16.6$ and
+$29.0$\,\%. The electrical preference is unchanged; the mechanical consequence changes sign.
+A free-package mechanical screen can therefore invert the conclusion it is used to support.
+
+\emph{Component tiers may be assigned on electrical grounds.} This is invalidated for one
+ordering by physical realizability. Two tier orderings of the same components, identical in component count, per-tier area and total stack height, and therefore
+equivalent at the component-selection and stack-budget level, differ by a factor of six in
+the worst via aspect ratio their vertical nets require. They are not identical electrically:
+each order fixes which rail crosses which dielectric depth, so the intra-cell routing
+parasitics differ between them. That difference is carried inside the final refinement step
+of Table~\ref{tab:ablation} together with the conductor-plane correction, and is not
+separated from it here. The mechanism is developed in Section~\ref{sec:arch}.
+
+\section{Cross-Domain Architecture Study}\label{sec:arch}
+
+\subsection{Sensitivity of the mechanical response to DVPD variables}
+Of the converter-level variables, the number of regulator cells is mechanically inert over
+the swept range: redistributing the same total dissipation over more or fewer cells does not
+materially change the corner-joint response. The variables that matter are geometric---
+substrate thickness, tier partition and the resulting stiffness distribution---consistent
+with deformation being driven by the mismatch of the stack rather than by the granularity of
+the heat source.
+
+Global die warpage and the local corner-joint driver track in direction but not in
+magnitude. In the final pair the architecture with the larger die warpage carries the larger
+local driver, so the direction is consistent; the warpage differs by $6.5$\,\%, the
+corner-joint driver $\du$ by $16.3$\,\% and the local inelastic response
+$\Delta\varepsilon_{\mathrm{in}}$ by $18.4$\,\%. Global warpage is therefore a useful screen and an
+insufficient reliability metric on its own.
+
+\subsection{Robustness of the architecture ordering}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig7_sensitivity.pdf}
+\caption{Displacement-driver ratio $D_{u}$ under successive refinement of the physical
+model. The ratio
+converges as the geometric representation is corrected and is thereafter insensitive; the
+architecture ordering is preserved at every stage.}
+\label{fig:sens}
+\end{figure}
+
+The quantity tracked through the refinement sequence is the ratio of the
+corner-joint displacement drivers,
+$D_{u} = \Delta u_{\mathrm{c}}^{\mathrm{Z1}} / \Delta u_{\mathrm{c}}^{\mathrm{Z2}}$.
+Fig.~\ref{fig:sens} reports $D_{u}$ as the physical representation was successively refined:
+from an initial coupled model, through production-level coupling, corrected package
+materials and architecture-aware via spans, an interconnect repair, and finally the
+conductor-plane topology and component repartition described below. The ratio falls from
+$1.3225$ to $1.1942$ as the geometry is corrected and is thereafter insensitive, the last
+three refinements moving it by less than $0.05$\,\% in total. The ordering is never in
+question and the magnitude converges. This separation---a robust ordering with a magnitude
+that remains model-dependent until the geometry is physical---is why the ordering is reported
+as a result and the magnitude as an envelope.
+
+\subsection{Component repartition}
+In the reference tier order---high-side switch, low-side switch, flying capacitors, then
+inductor and output capacitor---the switch-node connection must cross the flying-capacitor
+tier, and the connection between the high-side device and the flying capacitors must cross
+the entire low-side tier. The latter is the demanding one: a $606$\,\textmu m crossing implies
+a build-up via of aspect ratio $5.05$ at the finest pitch reported for a comparable
+embedded-die process~\cite{Ostmann2008ChipEmbedding}, well outside routine microvia
+practice~\cite{Cauwe2023HDI}.
+
+All assignments of the existing components to tiers were enumerated subject to the per-tier
+area budget and scored by the dielectric depth each high-current net must cross. Of 144
+assignments satisfying the area budget, eight retain both endpoints fixed by the reference
+architecture---the high-side device flip-chipped at the bottom substrate and the inductors in
+the top tier adjacent to the points of load. The preferred assignment exchanges the low-side
+switches with the flying capacitors and changes nothing else. It is a permutation: the same
+component classes, the same counts, the same per-tier areas and the same $1921$\,\textmu m
+stack height, so every area and height result carries over unchanged.
+
+The effect on the vertical interconnect is substantial. The switch node becomes an
+adjacent-tier transition through a single redistribution layer, the high-side to
+flying-capacitor connection becomes adjacent as well, and the only remaining build-up via
+carries $1.435$\,A. The worst aspect ratio over all vertical nets falls from $5.05$ to
+$0.833$ and the worst ratio of required to available vias is $0.633$, as shown in
+Fig.~\ref{fig:realize}.
+
+\subsection{Final architecture comparison}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig8_final.pdf}
+\caption{Final cross-domain comparison on the frozen repartitioned pair. The backside
+architecture dissipates $2.37$\,W more and runs $8.14$\,K hotter, yet carries a $16.3$\,\%
+lower corner-joint displacement driver $\du$ (d) and an $18.4$\,\% lower stabilised local
+inelastic response $\Delta\varepsilon_{\mathrm{in}}$ (e). The two are distinct quantities: (d)
+is a displacement in micrometres and drives the submodel, (e) is the dimensionless per-cycle
+response it returns. Warpage is peak-to-valley. Panel (f)
+reports the measured cost of one complete evaluation on 48 cores; the thermoelastic and
+local solder solves are entered once each, not once per fixed-point iteration. The ordinates
+of (a)--(e) are truncated, as the axis break marks.}
+\label{fig:final}
+\end{figure*}
+
+Both architectures were frozen on the repartitioned stack before any result was computed, and
+one steady-state electrothermal--mechanical solution was obtained for each. The results are
+given in Table~\ref{tab:final} and Fig.~\ref{fig:final}.
+
+The backside architecture dissipates $2.37$\,W more, almost entirely because its
+through-substrate field carries the 1\,V rail rather than the 48\,V rail, and it runs
+$8.14$\,K hotter at the peak, and its corner joints run $7.55$\,K hotter than Z1's. It
+nevertheless carries $18.4$\,\% lower local inelastic response,
+$D_{\varepsilon} = 1.2260$, and a $16.3$\,\% lower corner-joint displacement driver,
+$D_{u} = 1.1947$. Ranking the two architectures by peak temperature therefore gives the
+opposite answer to ranking them by local mechanical response.
+
+The driver and the response order the pair the same way, but they do not agree on magnitude,
+and only the second is a measure of solder response. Two cross cases through the same
+submodel separate the causes. Applying the backside displacement at the embedded joint
+temperature gives $19.39$\,\% below the embedded response, more than the $16.3$\,\%
+reduction in the driver itself, because the accumulated inelastic strain depends nonlinearly
+on the imposed displacement through \eqref{eq:creep}, whose exponent is about seven at these
+temperatures. Applying the embedded displacement at the backside joint temperature raises the
+response by $0.75$\,\%. The hotter joint therefore works against the backside architecture
+and returns part of its advantage, and the net $18.43$\,\% exceeds the driver separation
+despite the temperature, not because of it. Two further quantities returned by the same solve rank the pair
+identically: the equivalent inelastic strain range, $1.2257$, and the inelastic work per
+cycle, $1.1658$. The stabilised cycle is reached well within the four cycles integrated, the
+last two differing by $0.04$\,\% and $0.06$\,\%.
+
+This is not a statement that temperature is unimportant to solder fatigue; temperature-
+dependent constitutive behaviour is among the dominant physics in \eqref{eq:creep}. The
+narrower and correct statement is that the two rankings are not equivalent, because the local
+response is set by the geometry and stiffness distribution of the joint's immediate
+neighbourhood as well as by its temperature, and those are architecture properties that peak
+temperature does not encode.
+
+\subsection{Realizability status}
+Both architectures are geometrically realizable on the repartitioned stack, at a microvia
+pitch bounded by reported practice for embedded-die
+interconnection~\cite{Ostmann2008ChipEmbedding} and a stacking topology well inside the
+qualified configuration for multi-level build-up interconnects~\cite{Cauwe2023HDI}. Neither
+is qualified. The microvia current allowable, the capture-pad diameter and a vendor design
+rule for the specific build-up technology remain unavailable, as do two package clearance
+rules. The status carried forward is therefore \emph{geometrically realizable and
+process-conditional}, and the provisioning quantity $n_{\mathrm{req}}$ of \eqref{eq:nreq} is
+never presented as a manufacturing requirement.
+
+\subsection{What each physics block contributes}
+\begin{table}[!t]
+\caption{Contribution of each physics block, same architecture pair, reconstructed
+from the successive recorded states of the model. Within each block every row above the
+last is a superseded intermediate state of that refinement path, retained to show how
+the absolute quantities move; only the final row is a current result.}
+\label{tab:ablation}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}L{2.85cm}cccc@{}}
+\toprule
+Model state & $P$ (W) & $T_{\max}$ ($^{\circ}$C) & warp (\textmu m) & $\du$ (\textmu m) \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{Z1 embedded}}\\
+Calibrated boundary, lumped VR & $125.10$ & $84.87$ & $20.04$ & $2.745$ \\
++ physical cooling, geometry-derived interconnect, resolved converter & $141.78$ & $123.53$ & $25.37$ & $4.280$ \\
++ corrected materials, architecture-aware spans & --- & --- & --- & $4.645$ \\
++ realizable template, intra-cell interconnect repair & $138.80$ & $118.68$ & $41.70$ & $4.640$ \\
++ conductor-plane topology, repartition & $137.29$ & $118.32$ & $41.62$ & $4.625$ \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{Z2 backside}}\\
+Calibrated boundary, lumped VR & $126.19$ & $83.31$ & $17.24$ & $2.075$ \\
++ physical cooling, geometry-derived interconnect, resolved converter & $143.61$ & $130.31$ & $22.62$ & $3.410$ \\
++ corrected materials, architecture-aware spans & --- & --- & --- & $3.890$ \\
++ realizable template, intra-cell interconnect repair & $141.19$ & $126.91$ & $39.00$ & $3.885$ \\
++ conductor-plane topology, repartition & $139.66$ & $126.46$ & $38.92$ & $3.871$ \\
+\midrule
+Driver ratio $D_{u}$ & \multicolumn{4}{c}{$1.3225 \!\rightarrow\! 1.2552 \!\rightarrow\! 1.1942 \!\rightarrow\! 1.1943 \!\rightarrow\! 1.1947$} \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+{\footnotesize Ratios are formed from the unrounded responses and need not reproduce exactly from the rounded entries.}
+\end{table}
+
+Table~\ref{tab:ablation} reports the same architecture pair evaluated as physics is added,
+reconstructed from the recorded states of the model. Replacing a calibrated convective
+boundary and a lumped regulator with the physical cooling model, the geometry-derived
+interconnect and the resolved converter band raises the electronics-scope loss by $13$\,\%
+and the peak temperature by $39$\,K, and raises the corner-joint driver by $56$\,\% for the
+embedded architecture and $64$\,\% for the backside one. Correcting the package materials and
+making the via spans architecture-aware then moves the driver ratio by a further
+$-4.9$\,\%, and the interconnect and partition corrections move it by $+0.04$\,\%. Each block
+changes the absolute quantities substantially; none changes the ordering.
+\section{Discussion and Limitations}\label{sec:discuss}
+
+\subsection{When mechanics matters in DVPD design}
+The results support a specific and bounded role for mechanics. It is not established that
+mechanics selects a different optimum: no admissible mechanical allowable exists for this
+system, so no architecture can be excluded on mechanical grounds. What is established is
+that the mechanical response is architecture dependent, that it is not inferable from the
+electrical or thermal result, and that it is not captured by global warpage. Mechanics is
+therefore design-relevant as a signoff and ranking quantity, and should be evaluated on the
+same geometry as the electrical and thermal design rather than afterwards.
+
+\subsection{What is, and is not, a synthesis constraint}
+Physical realizability, by contrast, is an active constraint now. A tier order equivalent to
+another at the component-selection and stack-budget level can require a via of aspect ratio
+$5.05$, and the alternative that avoids it costs nothing in area, height or component count.
+Constraints of this kind cannot be discovered by an electrical model, because they depend on
+the conductor-plane structure of the package rather than on its netlist; and they cannot be
+deferred to a later packaging step, because the remedy is a change of component partition,
+which is a synthesis variable.
+
+\subsection{Limitations}
+Each limitation below is stated with its effect on the claims.
+
+\emph{Solder constitutive extrapolation.} The creep card is fitted on Sn3.9Ag0.6Cu over
+$7.51$--$15.92$\,MPa, whereas $99.8$\,\% of the accumulated inelastic-strain contribution in
+this package is generated above that window. The final pair is well outside it: the imposed
+corner displacement produces an elastic trial shear of $195$ and $159$\,MPa on joints whose
+yield stress at temperature is $11.6$ and $10.7$\,MPa, so the joint operates at fifteen to
+seventeen times yield and roughly an order of magnitude above the top of the fitted stress
+range. The consequence is visible numerically as well as physically: at the tighter
+integration tolerance used for the lower-stress cases the time integrator cannot advance at
+this operating point at all, while force equilibrium converges to machine zero. This limits
+interpretation of the response \emph{magnitude}, which is reported as an envelope. It does
+not threaten the ordering: the same ordering is obtained under every constitutive variant
+admitted, under all three local metrics returned by the same solves, and under the complete
+sequence of geometric corrections in Fig.~\ref{fig:sens}.
+
+\emph{The integration tolerance cannot be bracketed from below.} Of five tolerances evaluated
+on the final pair, only $5\times10^{-2}$ and $10^{-1}$ admit a solution, and they agree to
+twelve digits, so the response is not a product of the tolerance. No tighter tolerance
+converges here, so the magnitude is not corroborated against a tight-tolerance reference;
+this follows from the stress regime above, not from the integration scheme.
+
+\emph{Absolute life is not computed.} No damage law, life relation or admissible allowable is
+established, so no cycles-to-failure and no margin against a requirement is reported. The
+paper's claims are ordering and realizability claims and do not depend on absolute life.
+
+\emph{Microvia process parameters are incomplete.} The pitch and stacking topology are
+bounded by reported practice, but the diameter, capture-pad geometry, current allowable and a
+vendor design rule are unavailable. Consequently neither architecture is described as
+manufacturable or qualified; the realizability claim is explicitly conditional and the
+provisioning quantity is kept separate from a manufacturing requirement.
+
+\emph{Two package clearance rules remain unsourced.} Their bounds are carried as an envelope
+and the realizability verdict is evaluated across it, so the verdict does not depend on a
+particular value within that envelope.
+
+\emph{Conjugate CFD has not been completed.} The cooling model is validated at its laminar
+operating point against an explicitly meshed fin solution, and the transitional Reynolds band
+is refused rather than interpolated. Absolute temperatures inherit this limitation; the
+temperature \emph{difference} between the two architectures arises from where the 1\,V rail
+runs and is not sensitive to the cooling correlation in the same way.
+
+\emph{Inductor core loss and capacitor dielectric loss are not evaluated.} Only the winding
+resistance and the equivalent series resistance are consumed by the loss model. Both
+omissions bias the reported dissipation downward and act on the same component set in both
+architectures, so the reported ordering is not expected to be altered; exact cancellation is
+not claimed, because the two architectures operate at different component temperatures. The
+absolute efficiency that may be inferred remains bounded from above.
+
+\emph{Mechanical-to-electrical feedback is neglected.} It is quantified at $0.16$\,\% of the
+field resistance in the intact regime, against $22.8$\,\% from the thermal dependence already
+inside the fixed point. This justification is specific to the intact regime and does not
+extend to a delaminated or cracked interface, which is outside the model.
+
+\emph{Other package failure mechanisms are enumerated but not computed:}
+redistribution-layer fracture, delamination, via fatigue, dielectric cracking, pad cratering
+and electromigration-assisted damage. The paper makes no claim of completeness over package
+failure modes.
+
+\section{Conclusion}\label{sec:concl}
+
+An electrothermal--mechanical framework for distributed vertical power delivery has been
+presented in which converter synthesis, rail-aware power delivery, physical interconnect
+geometry, package thermal transport, thermoelastic deformation and a displacement-driven
+local solder inelastic-response submodel are evaluated on one physical stack.
+Vertical-interconnect feasibility is derived from conductor-plane topology, and design-side
+provisioning is kept distinct from manufacturing qualification.
+
+Three conclusions are drawn. Physical realizability cannot be separated from system-level
+architecture selection: a tier order equivalent to another in component set, per-tier area and
+stack height can require a via of aspect ratio $5.05$ where a permutation of the same
+components requires $0.833$, and
+the remedy is a synthesis variable. Temperature ranking and local mechanical-response
+ranking need not agree; on the final pair the hotter architecture carries the lower response,
+by $8.14$\,K against $18.4$\,\% in the local inelastic response. And the architecture
+ordering is robust to the physical
+corrections that most affect its magnitude: the displacement-driver ratio, the quantity
+tracked across the whole refinement sequence, changes by $0.04$\,\% under a complete
+reconstruction of the vertical interconnect topology. The local inelastic response was
+evaluated on the final pair only and is not carried through that sequence.
+
+Mechanical response and physical realizability therefore alter the interpretation of
+electrically and thermally attractive solutions, without mechanics being established as an
+active synthesis constraint. Closing that gap requires a solder characterisation at the
+stresses these packages generate, a required life for the application, and an admissible
+mechanical allowable; process qualification of the package interconnect rules is the
+corresponding requirement on the manufacturing side.
+
+\section*{Acknowledgment}
+The authors thank the members of the Center for Heterogeneous Integration of Micro Electronic
+Systems for discussions on package-level power delivery.
+
+% \balance is disabled: with the present reference list it balances the final two
+% columns at the cost of a 2.46 pt overfull vbox on the last page. Re-enable it if the
+% reference list changes length.
+%\balance
+\bibliographystyle{IEEEtran}
+\bibliography{ETM_DVPD_REFERENCES}
+
+\end{document}

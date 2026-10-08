@@ -1,0 +1,181 @@
+{
+  "case": "C07",
+  "spec": {
+    "n_vr": 4,
+    "placement": "asymmetric_left",
+    "tile_ax": 4.899,
+    "tile_ay": 4.899,
+    "h_sub": 0.2,
+    "p_hvr_total_w": 42.0,
+    "question": "Deliberately breaks symmetry; likely high-discrimination case."
+  },
+  "mesh": {
+    "h_xy_mm": 0.45,
+    "z_scale": 1.0,
+    "h_max_factor": 3.0,
+    "graded": true,
+    "element_type": "C3D8I",
+    "tsv_discrete_pitch": null,
+    "n_nodes": 19776,
+    "n_elems": 16713,
+    "n_z_planes": 12,
+    "elems_through_substrate": 5,
+    "elems_through_die": 3
+  },
+  "loads": {
+    "p_die_W": 240.0,
+    "p_hvr_total_W": 42.0,
+    "p_per_tile_W": 10.5,
+    "q_die_W_per_mm3": 1.6000972859149836
+  },
+  "cooling": {
+    "h_top_W_m2K": 17521.63541738819,
+    "h_bot_W_m2K": 10.0,
+    "a_top_mm2": 499.9696000000014,
+    "a_bot_mm2": 899.9999999999943
+  },
+  "bc": {
+    "bc": "BC_A",
+    "n_bottom_nodes": 2208,
+    "z_bottom_mm": 0.0,
+    "anchor_nodes": {
+      "A_xyz": 1,
+      "B_yz": 19489,
+      "C_z": 283
+    },
+    "anchor_coords": {
+      "A_xyz": [
+        -15.0,
+        -15.0,
+        0.0
+      ],
+      "B_yz": [
+        15.0,
+        -15.0,
+        0.0
+      ],
+      "C_z": [
+        -15.0,
+        15.0,
+        0.0
+      ]
+    },
+    "dofs_removed": 6,
+    "solver": "SPOOLES"
+  },
+  "tiles": [
+    {
+      "cx": -8.2305,
+      "cy": -5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    },
+    {
+      "cx": -8.2305,
+      "cy": 5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    },
+    {
+      "cx": -2.8314999999999992,
+      "cy": -5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    },
+    {
+      "cx": -2.8314999999999992,
+      "cy": 5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 10.5
+    }
+  ],
+  "thermal": {
+    "T_max_C": 87.2268,
+    "T_min_C": 52.4078,
+    "T_mean_C": 66.79291203478965,
+    "hotspot_xyz_mm": [
+      -7.6586,
+      -5.0181,
+      0.05
+    ],
+    "Q_in_W": 282.0,
+    "Q_out_W": 281.99999932839836,
+    "energy_residual_pct": -2.3815660995699785e-07
+  },
+  "structural": {
+    "die_warpage_pv_um": 8.25737,
+    "pkg_warpage_pv_um": 10.362400000000001,
+    "uz_max_um": 0.0231065,
+    "uz_min_um": -10.362400000000001,
+    "n_die_top_nodes": 1088,
+    "n_pkg_bot_nodes": 2208,
+    "si_principal_MPa": {
+      "raw_max": 26.897001781645894,
+      "p99": 18.405188742273467,
+      "p95": 9.889175438033561,
+      "n": 13568
+    },
+    "hvr_tile_vm_MPa": {
+      "raw_max": 28.99575303500549,
+      "p99": 28.897219135137505,
+      "p95": 28.021643797180598,
+      "n": 288
+    },
+    "interface_shear_MPa": {
+      "raw_max": 2.4092208007976352,
+      "p99": 2.091170527038102,
+      "p95": 1.6547143312052388,
+      "n": 2176
+    },
+    "interface_peel_MPa": {
+      "raw_max": 4.7455,
+      "p99": 3.15266,
+      "p95": 1.61539,
+      "n": 2176
+    },
+    "interface_peel_excl025_MPa": {
+      "raw_max": 4.7455,
+      "p99": 3.27515,
+      "p95": 1.62255,
+      "n": 1856
+    },
+    "interface_shear_excl025_MPa": {
+      "raw_max": 2.4092208007976352,
+      "p99": 2.172049484490627,
+      "p95": 1.672335532280828,
+      "n": 1856
+    },
+    "interface_peel_excl050_MPa": {
+      "raw_max": 4.7455,
+      "p99": 3.27676,
+      "p95": 1.62255,
+      "n": 1620
+    },
+    "interface_shear_excl050_MPa": {
+      "raw_max": 2.4092208007976352,
+      "p99": 2.061291412446246,
+      "p95": 1.6556086824189464,
+      "n": 1620
+    },
+    "interface_peel_excl100_MPa": {
+      "raw_max": 4.7455,
+      "p99": 3.2773504,
+      "p95": 1.619757,
+      "n": 1560
+    },
+    "interface_shear_excl100_MPa": {
+      "raw_max": 2.4092208007976352,
+      "p99": 2.1775622568533484,
+      "p95": 1.643180990396226,
+      "n": 1560
+    },
+    "interface_excl_note": "excl<NNN> = nodes at least NNN/100 mm inside the underfill perimeter, excluding the free-edge corner"
+  },
+  "overrides": {},
+  "tsv_enabled": false,
+  "runtime_s": 15.0
+}

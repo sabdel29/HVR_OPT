@@ -1,0 +1,790 @@
+                     Effect of Simulation Methodology on Solder Joint Crack Growth Correlation
+                                                                     Robert Darveaux
+                                                                   1900 South Price Road
+                                                                    Chandler, AZ 85248
+                                                                     rdarvw1mnkor.cot'ii
+                                                                Ph. 480-821-2408 ext 5235
+                                                                    F a . 480-821-6730
+
+
+    Abstract
+        A generalized solder joint fatigue life model for surface
+    mount packages was previously published in Refs [1,2]. The
+    model is based on correlation to measured crack growth data
+    on BGA joints during thermal cycling. It was subsequently                                        Calculate Strain Energy Density
+                                                                                                        Accumulated per Cycle
+    discovered by Anderson et.al. that the ANSYSTM5.2 finite
+    element code used in the model had an error in its method for
+    calculating plastic work [3]. It was shown that significant
+    error in life prediction could result by using a recent version of
+    the code where the bug has been fixed. The error comes about
+    since the original crack growth constants were derived based                                       Calculate Number of Cycles
+    on plastic work calculations that had the bug.                                                        to Crack Initiation
+        In this paper, crack initiation and growth constants are re-
+    calculated using ANSYSTM5.6. In addition, several other
+    model related issues are explored with respect to the crack
+    growth correlations. For example, 3D slice models were
+    compared to quarter symmetry models. Anand's constitutive                                          Calculate Crack Growth Rate
+    model was compared with Darveaux's constitutive model. It
+    was shown that the crack growth rate dependence on strain
+    energy density always had an exponent of 1.10 +/- 0.15. This
+    is in the range of the original correlation, so the accuracy of
+    relative predictions should still be within +/- 25%. However,
+    the accuracy of absolute predictions could be off by a factor                                          Calculate Fatigue Life
+    of 7 in the worst case, if the analyst uses a modeling procedure                                       Based on Joint Length
+    that is not consistent with that used for the crack growth
+    correlation.      The key to good accuracy is to maintain
+    consistency in the modeling procedure.                                          Figure 1. Solder joint fatigue life prediction method.
+    Introduction
+        Analytical models in engineering have several practical                     It was subsequently discovered by Anderson et.al. that
+    uses: 1) rapid design optimization during the development                   ANSYS , 5 5 2 and earlier versions of the finite element code
+    phase of a product, 2) predicting field use limits, and 3) failure          had an error in their method for calculating plastic work [3].
+    analysis of product returned tkom the field or failed in a                  Even though there had generally been good correlation to
+    qualification test. The solder joint fatigue model presented                measured results, it was shown that significant error in life
+    here was first published in Ref [I]. An outline of the                      prediction could result by using a recent version of the code
+    procedure to predict fatigue life is shown schematically in                 where the bug has been fixed (e.g. ANSYS 5.5.3 and later
+    Figure 1. The model utilizes finite element analysis to                     versions). The error comes about since the original crack
+    calculate the inelastic strain energy density accumulated per               growth constants were derived based on plastic work
+    cycle during thermal or power cycling. The strain energy                    calculations that had the bug.
+    density is then used with crack growth data to calculate the                    In this paper, crack initiation and growth constants are re-
+    number of cycles to initiate a cracks, and the number of cycles             calculated using ANSYS 5.6. In addition, several other model
+    to propagate cracks through a joint.                                        related issues are explored with respect to the crack growth
+        In reference [2], more work was presented regarding                     correlations. Several recommendations are made so the analyst
+    sensitivity of the life prediction to the FEA procedure. As a               can get accurate results more efficiently.
+    result, the procedure was modified slightly to include volume
+    averaging of the strain energy values near the joint interface.
+    The model has been successfully applied to TSOP, CQFP,
+    CBGA, PBGA, and power hybrid packages [ 1,2,4-91.
+
+
+                           02000 IEEE
+       0-7803-5908-9/00/$10.00                                             1048              2000 Electronic Components and Technology Conterence
+
+
+
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+Constitutive Relations                                                         where dsc/dt is the instantaneous creep rate and des/dt is
+   since         is above haif of its melting point at room                the steady state creep rate. Hence at t = 0, the instantaneous
+temperature, creep processes are expected to dominate the                  creep rate is (1 + ET B) times P a t e r than the steady State
+deformation kinetics. Steady state creep of solder can be                  creep rate, and after a long time, the instantaneous rate is
+expressed by a relationship of the form [10-121                            equal to the steady state rate. A typical creep curve showing
+                                                                           this behavior for 62Sn36Pb2Ag solder joints is shown in
+   dES                 n     -Qa                                           Figure 3 (y is used to indicate shear strain, instead of E for
+          =   Css[sWa@I e x P ( E              1             (1)           tensile strain).
+
+   where dEs/dt is the steady state strain rate, k is Boltzmann's
+constant, T is the absolute temperature, (3 is the applied stress,
+Qa is the apparent activation energy, n is the stress exponent,
+a prescribes the stress level at which the power law
+dependence breaks down, and Cssis a constant. Steady state
+                                                                                         R
+creep data for 62Sn36Pb2Ag solder joints is shown in Figure                              .CI
+                                                                                         AI
+2.                                                                                       3i
+                                                                                         a
+                                                                                         8
+                                                                                         6
+                     10 -1
+              a
+              Q)
+                     10 -2
+              g 10      -3
+
+                                                                                                      0   20000       40000     60000      80000
+                        -4
+
+              P
+              El
+                 lo -5
+                 lo
+                                                                                                             Time (sec)
+                                                                            Figure 3. Typical creep strain plot for constant load test in
+              c 10 -6
+              .I
+
+
+                                                                            shear.
+              z  10 -1
+              3
+              AI
+              i 10 -8
+              ;                                                                  At high stresses, d G >          there is also a time-
+              g      10 -9                                                  independent plastic strain component to the deformation. The
+                                                                            following strain hardening law can be used to describe high
+              3      10 -    l o . - - -   -
+              r/)
+                             10   '
+                                 10          io          10                 stress deformation
+                              Shear Stress (psi)
+Figure 2. Steady state creep of 62Sn36Pb2Ag solder joints in                    Ep   =   Cp(%)mP                                         (4)
+shear with Cr/Ni/Au pad metallization.
+
+   Steady state creep is not generally achieved immediately                     where      is the time-independent plastic strain, G is the
+when stress is applied. A certain amount of transient (or                   shear modulus, and Cp and mp are constants. The total
+primary) creep occurs before attaining steady state. For                    inelastic strain is given by the sum of creep strain and plastic
+normal decelerating transient creep, the strain rate starts high            strain
+and decreases to the steady state value as the material work
+hardens. Transient creep at constant stress and temperature                     &in =    EC    + Ep                                      (5)
+can be described by [ 131
+                                                                                where &inis the total inelastic strain.
+                                 dES
+   EC =             t+ET( 1-exp(-Bxt))
+                                                                                Equations (1) - ( 5 ) were shown to fit the deformation
+    where is the creep strain, des/dt is the steady state creep             behavior of five different solder alloys in Ref [l]. The
+rate, ET is the transient creep strain, and B is the transient              constants for 62Sn36Pb2Ag solder are given in Table 1.
+                                                                            Unfortunately, these relations are not available in all
+creep coefficient. Taking the time derivative of both sides
+                                                                            commercial finite element codes as standard options.
+yields
+                                                                            However, it is possible to input user defined constitutive
+                                                                            relations in most codes.
+   -dEc
+     =        des
+                    ET B exp(-B-t))dES                             (3)
+    dt         dt                   dt                                                                                                                    ,
+
+
+
+
+                                                                         1049             2000 Electronic Components and Technology Conference
+
+
+
+ Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+                                Table 1.                                                                   Table 2
+                   Darveaux Model Constitutive Constants                                          Anand Constants for ANSYS
+
+
+
+
+                                                                                Non-linear Finite Element Analysis Method
+       ANSYS does have viscoplastic elements as a standard
+    option, but they use Anand’s constitutive model [14,15]. The                    Three-dimensional non-linear finite element modeling was
+    use of these elements is convenient since the user does not                 used to calculate the strain energy density accumulation in
+    have to modi@ the source code. Anand’s model is broken                      solder joints. ANSYS 5.6 was used for all aspects: pre-
+    down into a flow equation, and three evolution equations:                   processing, solution, and post-processing. The solder material
+                                                                                was modeled as a viscoplastic solid, the printed circuit boards
+                                                                                as orthotropic linear elastic solids, and the rest of the materials
+    Flow Equation                                                               as linear elastic solids. The linear elastic material properties
+                                               -Q
+           -
+           d&p     = A[sinh(~a/s)]
+                                    1/m
+                                        exp(   -  1                    (6)
+                                                                                are given in Refs [1,161.
+                                                                                    The goal of the simulations was to calculate the plastic
+            dt                                   kT
+                                                                                work per unit volume (or viscoplastic strain energy density)
+    Evolution Equations                                                         accumulated per thermal cycle. Either two or three complete
+                                                                                thermal cycles were simulated in order to establish a stable
+                                                                 (7)            stress-strain hysteresis loop. The plastic work accumulated
+                                                                                during the last cycle was used for all crack growth
+                                                                                correlations. A typical slice model is shown in Figure 4, and a
+                                                                                quarter symmetry model is shown in Figure 5. A solder joint
+                                                                                model is shown in Figure 6.
+
+
+                 d&p I dt      Q
+    s* =   SA[   -  A
+                          exp( -
+                               kT
+                                           11”                   (9)
+
+        In Real], an approximate fit was made to the solder
+    deformation data using only the flow equation, Eq. (6). In
+    reference [2], a fit has been made using both the flow
+    equation, Eq. (6), and the evolution equations, Eq. (7-9). A
+    spreadsheet was set up to do 1-dimensional thermal cycle
+    simulations, with assembly stiffhess and imposed strain as
+    inputs. Both the Anand model, Eqs. (6-9), and the Darveaux
+    model, Eqs. (1-5), were used. An iterative process was used
+    to determine the Anand constants that gave approximately the
+    same results as the Darveaux model. The recommended
+    Anand constants are listed in Table 2.                                      Figure 4. Slice model of CBGA assembly
+
+
+
+
+                                                                             1050           2000 Electronic Components and Technology Conference
+
+
+
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+                                                                              Regarding time step size, sub-steps that result in a 1OC
+                                                                          temperature change during the ramps, and an increasing time
+                                                                          step during the dwells were used. For example, considering a
+                                                                          -4OC <-> 125C thermal cycle with 900 sec ramps and 900 sec
+                                                                          dwells, sixteen load steps were used during the ramps, and 4
+                                                                          load steps during the dwells (60, 120,240, and 480 sec).
+                                                                          Linear + Non-linear Analysis Method
+                                                                              A second method was employed to calculate the strain
+                                                                          energy density accumulation in solder joints. In this method,
+                                                                          linear finite element analysis is used to calculate the assembly
+   Figure 5 Quarter svmmetrv model of CBGA assemblv                       stifhess and imposed strain on the solder joints. Then a 1-
+                                                                          dimensional nonlinear analysis is used to calculate strain
+                                                                          energy density accumulated per cycle. The non-linear
+                                                                          simulation can be performed in a spreadsheet. This method
+                                                                          was used to analyze flip chip assemblies in Ref [ 171.
+                                                                              Two finite element simulations are required.             The
+                                                                          reference temperature is set to the high temperature of the
+                                                                          cycle, and the final temperature is set to the average
+                                                                          temperature of the cycle. For example, for a 4 O C          125C
+                                                                          cycle, the reference temperature would be 125C and the final
+                                                                          temperature is 4232. A linear analysis is used to calculate the
+                                                                          equivalent stress and strain distribution in the solder joints.
+                                                                          This simulation is then repeated using a lOOX lower elastic
+                                                                          modulus for the solder material. The results of these two
+                                                                          simulations are used to estimate the effective assembly
+                                                                          stifhess, Se , and imposed strain per degree temperature
+                                                                          change, eo ,as indicated in Figure 7.
+
+
+interface are .0005” thick each.
+    The slice model (Figure 4) has a symmetry boundary
+condition along the centerline of the joints. The boundary
+condition along the opposite edge (centerline between rows) is            where 01 and ~1 are the equivalent stress and strain calculated
+coupled in the y-direction.
+                                                                          using the full elastic modulus of solder, and 0.01 and E . O ~are
+    It was shown in Ref [2] that the calculated strain energy
+density increases as element size in the solder joint decreases.          calculated using 1400 the elastic modulus of solder.
+Hence, a volume averaging technique was used to reduce this                   The advantage of this method is that it is at least 30 times
+sensitivityto meshing. The strain energy value of each element            faster than doing a full non-linear finite element analysis. The
+is normalized by the volume of the element.                               disadvantages are 1) the full effect of temperature dependent
+                                                                          properties cannot be captured, and 2) the stress distribution in
+                                                                          the solder joints is probably not exactly equal to that of a full
+                                                                          non-linear method.
+                                                                          Crack Growth Measurement
+                                                                              A series of tests were run using 4 assemblies, 2 alloys, and
+where AWaveis the average viscoplastic strain energy density              8 thermal cycle conditions. All of the assemblies used
+accumulated per cycle for the interface elements, AW is the               ceramic chip carriers and eutectic ball grid array joints, but
+viscoplastic strain energy density accumulated per cycle of               there were variations in the PC boards, chip carrier structures,
+each element, and V is the volume of each element. This                   and joint array patterns. Details of the Ceramic BGA
+technique helps make the analysis more robust, but it was                 assemblies are given in Table 3. Thermal cycling conditions
+found that there was still some dependency on the thickness of            are given in Table 4. All of the tests were conducted using
+the interface elements. For the models in the present study,              62Sn36Pb2AgY and 3 additional tests were done using
+the thickness of the first three layers of elements was set to            60Sn40Pb.
+0.0005 inches each.
+
+
+
+
+                                                                      1051             2000 Electronic Components and Technology Conference
+
+
+
+
+ Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+                                                                                                        In each case, the crack growth data were fit to relations of
+             12000 1                                                                         I      the form
+
+             10000    1 VEl)                                                                        Crack Initiation:
+                                                                                                    Crack Growth:
+                                                                                                                                 No = K1 AWave
+                                                                                                                                 da = K3 AW,, I<4
+                                                                                                                                                     KZ
+                                                                                                                                                                       (13)
+                                                                                                                                                                       (14)
+                                                                                                        Shown in Table 6 are the constants K,, Kz,K3, and I<4 for
+                                                                                                    all the various modeling methodologies employed. The finite
+                                                                                                    element model configuration, simulation method, and
+                                                                                                    constitutive models are described in previous sections. It was
+                                                                                                    found that the TUNIF temperature change command in
+                                                                                                    ANSYS does not give a ramped loading. This reduces
+                                                                                                    accuracy somewhat, and can cause convergence problems as
+
+
+
+                  0
+                  0.000
+                       ,   ,   ,   ,   ,
+
+                                   0.005
+                                           ,   ,   ,   b
+
+
+                                                       0.010
+                                                                 ,\ 1
+                                                       , . ,0 1,tE.01)      ,
+
+
+
+
+                                                                         0.015
+                                                                                 ,   ,   ,
+
+
+
+
+                                                                                         0.020
+                                                                                                    well. The BF command is preferred.
+
+
+                                                                                                                    0.020   -I      I
+
+
+
+                                           Equivalent Strain
+                                                                                                         .-
+                                                                                                          h
+
+                                                                                                          v
+                                                                                                          c, 0.015
+                                                                                                          M
+    Figure 7. Graphical representation of effective assembly
+    stifhess and imposed strain calculated using linear finite                                            J
+    element simulations.                                                                                  $
+                                                                                                                    0.010
+                                                                                                         U
+        The dye-n-pry technique was used to measure crack length                                         .-.-
+                                                                                                          0
+                                                                                                          .cI
+
+
+   throughout the thermal cycle tests [1,18]. Each test was                                               $         0.005
+    divided into 6 to 8 intervals, and 3 chip carriers were pried off                                     e
+    at each interval. The primary and secondary crack lengths
+   were measured along lines extending from the package neutral                                          f?
+                                                                                                                    0.000
+                                                                                                                    ... .
+   point to the 8 outermost joints. Hence, a total of 24 joints                                                             0           1000        2000        3000      4000
+   were measured to determine each crack length data point.                                                                                    Thermal Cycles
+        Representative crack growth data are shown in Figure 8.
+   The crack growth rate (slope of the curves) stays essentially                                    Figure 8. Crack growth data for data sets 5 and 6.
+   constant during the thermal cycle tests. The number of cycles
+   to crack initiation can be determined by extrapolating the
+    curves back to the x-axis (crack length = 0). It is seen that
+   crack initiation only accounts for about 10% of the fatigue life
+    for these particular assemblies.
+        Given in Table 5 are the combined primary + secondary
+   crack length data. The combined data are presented because
+   our intention is to correlate with strain energy density values
+   that were calculated by averaging across all the elements at the
+   joint interface. Note that these are characteristic (63.2
+   percentile) crack rate data as calculated by a 3-parameter
+   Weibull analysis of l/length for each set of 24 readings [l]. In
+   contrast, the original crack rate data given in Ref [18] were
+   simply derived from the mean values of the crack length data.
+   Hence, there is not quite exact agreement between the present
+   work and Ref [HI.
+                                                                                                                      10                          100                    1000
+    Crack Growth Correlations
+                                                                                                                      Inelastic Strain Energy Density per Cycle (psi)
+        In this section, the measured crack growth data are                                                     ,
+
+
+    correlated with calculated inelastic strain energy density per                                     Figure 9. Crack growth rate correlation. Slice, non-linear
+    cycle in the solder. The various terminology that is equivalent                                 FEA, Anand constitutive model. Averaging over element
+    to “inelastic” are “viscoplastic” for the Anand constitutive                                    layers 1+2, .001” total thickness.
+    model, “time-independent plastic + time-dependent creep” for
+    the Darveaux constitutive model, or “plastic work per unit
+    volume” in the ANSYS code. Several different modeling
+    methodologies were used.
+
+                                                                                                 1052                2000 Electronic Components and Technology Conference
+
+
+
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+          Assembly               PC Board                  Substrate                   Die                 Cover              Solder Joints
+                                                                                                                         8 x 9, no corners
+              1                6 Layer PI              Co-fired A1203          .248 x .291 x          SO0 x .560 x      .030 dia .070 pitch
+                               .037 thick            .560 x .630 x .028            .015                   .064               .0146 high
+                                                                                                                        8 x 9, no comers
+             2                 6 Layer PI             Co-fired A12 0 3               none                 none          .030 dia .070 pitch
+                               .037 thick            .560 x .630 x .028                                                      .O 168 high
+                                                                                                                        8 x 9, no comers
+             3                2 Layer FR4             CO-fired A1203           248 x .291 x           SO0 x .560 x      .030 dia .070 pitch
+                               .050 thick            .560 x .630 x .028            .015                   .064               .O 168 high
+                                                                                                                        10 x 10, no comers
+             4                 2 Layer PI             Thin Film A1203                none             .570 x .570 x     .030 dia .060 pitch
+                               .038 thick            .680 x .680 x .025                                   .064               .0185 high
+
+
+
+
+                                                                                    1000
+                       Table 5.
+             Measured Crack Growth Data
+                                                                               C
+       Combined Primarv + Secondarv Crack Length                                0
+                                                                               *
+                                                                               g                                           -Slice NL Anand
+ Data     Crack Initiation        Crack Growth Rate                            .-   I00
+  Set         (cycles)                (pin/cycle)                              -e
+
+   1            81.1                     36.3                                  5
+                                                                               e
+                                                                               0
+   2            21.1                     65.0
+                                                                               3
+   3            48.3                     71.7
+   4             130                     21.5
+                                                                               -0
+                                                                                     10
+
+                                                                               0”
+                                                                                                                               \I
+   5            29.1                     32.7                                                                      A
+1 6 1           289             I        6.87                           I
+1 7 1            3.9            I        39.6                           I             1
+   8 1          500                      8.18                                         10.00                       100.00                   1000.00
+
+                                                                                           Inelastic Strain h e r g y Density per Cycle (psi)
+                                                                            Figure 10. Crack initiation correlation. Slice, non-linear
+                                                                            FEA, Anand constitutive model. Averaging over element
+                                                                            layers 1+2, .001” total thickness.
+
+
+
+                                                                     1053                  2000 Electronic Components and Technology Conference
+
+
+
+
+ Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+                                                                    Table 6
+                                                        Crack Growth Correlation Constants
+
+
+
+
+       Shown in Figure 9 is the crack growth rate correlation                 horizontal direction. Since the slopes are consistent (K4 =
+  using a slice non-linear finite element model with Anand’s                   1.04 to 1.05), relative fatigue life predictions should be
+   constitutive model. The strain energy density values were                  somewhat independent of the averaging scheme chosen.
+  averaged over first two element layers next to the package                      Note in Table 6 that the constant K4 does vary a little more
+   interface. The total thickness of these two layers is .001”.
+  The data points representing each test assembly from Table 3                with element averaging scheme for the linear FEA + 1-D non-
+  are shown. All of the assemblies follow approximately the                   linear method. The range in K4 is 1.16 to 1.2 1 for the Anand
+   same trend line.                                                           constitutive model and 1.19 to 1.25 for the Darveaux
+       Shown in Figure 10 is the correlation with crack initiation.           constitutive model. This confirms that linear fmite element
+  Typically, the data for crack initiatioqiis a little more scattered         analysis does not capture the stress and strain concentration
+  than that for crack growth.             i .)                                near the interface the same as non-linear finite element
+       Shown in Figures 1 1 - 13 are the crack growth correlations            analysis.
+  using quarter symmetry finite element models. Comparing                         Shown in Figure 15 is a comparison of the 7 different
+  Figure 9 to Figure 11, it is seen that slice model and quarter              methods used to generate crack growth rate correlations. The
+  symmetry model give approximately the same relative relation                highlighted region indicates the range of measured data. The
+  between the 4 assemblies. The position of each assemblies                   trend lines are extrapolated above and below this region to
+  data relative to the trend line is similar in Figures 9 and 11.             amplify any divergence between curves.
+  On the other hand, comparing Figure 11 to Figures 12 and 13,                    It is seen that the curves tend to diverge at the low strain
+  it is seen that the linear finite element analysis + 1-D                    energy density end of the scale. This region would be
+  nonlinear method gave somewhat different results than the                   representative of very mild cycling, possibly field use
+  nonlinear finite element method.          In Figures 12 and 13,             conditions (hopefully field use conditions!).
+  assembly 2 data has shifted to the right of the tend line, and                  The divergence between curves is almost 7X in comparing
+  assemblies 1 and 3 data have shifted to the left. Assemblies 1              the worse case between a slice non-linear finite element model
+  and 3 should have the highest stifhess since they both have a               and a quarter symmetry linear + 1-D non-linear model.
+  die and a cover attached to the substrate. This shift in data               Hence, if an analyst used the crack growth correlation
+  relative to the trend line suggests that the 2 different modeling           constants from the slice model and tried to apply them to a
+  methodologies do not capture this change in stifhess equally.               quarter symmetry linear + 1-D non-linear analysis, the error in
+      Since the data in Figures 12 and 13 are similar to each                 field use extrapolationscould be up to 7X.
+  other, it appears that the 2 constitutive models produce similar                This example clearly highlights the requirement of
+  results.                                                                    consistency. If an analyst is using a slice model, then the
+      Shown in Figure 14 are crack growth correlation trend                   slice model correlation constants should be used as well.
+  lines drawn by averaging 1, 2, and 3 layers of elements near                Also, if there is any measured life data available, an analyst
+  the substrate interface. Quarter symmetry, non-linear finite                will typically make relative predictions. In this case the error
+  element analysis was used. It is seen that the slope of the                 will be significantly less.
+  curves is essentially the same, they are just offset in the
+
+
+
+                                                                          1054             2000 Electronic Components and Technology Conference
+
+
+
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+    There is no way to determine from the work presented                          In comparing ANSYS 5.6 to 5.2, it is seen that version
+here which methodology or which correlation is “correct”.                    5.6 predicts lower strain energy density for a given simulation.
+There are a couple of possible approaches one could use to                   This is consistent with the finding of Anderson et.al. [3], who
+answer this question. One could use Moire or strain gage                     originally found the bug in ANSYS 5.2.
+techniques to measure strains in the PCB and package to                          Just by coincidence, the crack growth correlation for
+establish further correlation to the simulation results.                     ANSYS 5.6 quarter symmetry model is very close the original
+Alternatively, the various methods could also be applied to a                correlation for ANSYS 5.2 slice model. Hence, for an analyst
+large database of measured life test results to see which                    using the newer version of code, it is possible that the error
+method does the best job of predicted life.                                  was fairly small if they happened to be utilizing a quarter
+    On purely theoretical grounds, one would expect the                      symmetry model.
+quarter symmetry models to be more accurate, because a slice
+model cannot capture the effects at the die and package
+comers. Joints in these regions typically fail frst BGA
+assemblies.
+                                                                                  5,
+
+
+                                               ;         I               ’
+                                                                                  -Y
+                                                                                  =L   ”
+
+
+
+
+                                                                                                                          A    Assy3
+                                                                                                                          0    Assy4
+                                                                                                                               QTR L-NL Darv
+                                               Assy2
+                                                                                           l                                                   i
+                                           A Assy3
+                                                                                               10                        100                   1000
+                                           0   Assy4
+                                                                                           Inelastic Strain Energy Density per Cycle (psi)
+            17                                                               Figure 13. Crack growth rate correlation. Quarter symmetry,
+             10                        100                        1000       linear FEA + 1D non-linear, Darveaux constitutive model.
+                Inelastic Strain Energy Density per Cycle (psi)              Averaging over element layers 1+2, .OOl” total thickness.
+
+Figure 11. Crack growth rate correlation. Quarter symmetry,
+non-linear FEA, Anand constitutive model. Averaging over
+element layers 1+2, .001” total thickness.                                       loo   #
+      100   ,                                      f              1
+
+
+
+
+      10 1
+                                             Assyl
+
+
+  Y
+
+  2
+                                       A     ASsy3                                                                  1
+                                                                                                                        --e Layer 1
+                                                                                                                                                I
+                                                                                                                                                I
+  0         I
+                                                                                       10                                              100
+                                             QTR L-NL Anand                              Inelastic Strain-Energy Density per Cycle (psi)
+                                   I                          I
+        1J
+            10                     100                   1000                Figure 14. Crack growth rate correlations. quarter symmetry,
+             Inelastic Strain Energy Density per Cycle (psi)                 non-linear FEA, Anand constitutive model. Comparison of
+                                                                             element layer averaging schemes.
+Figure 12. Crack growth rate correlation. Quarter symmetry,
+linear FEA + 1D non-linear, Anand constitutive model.
+Averaging over element layers 1+2, .OOl” total thickness.
+
+
+
+
+                                                                         1055                  2000 Electronic Components and Technology Conference
+
+
+
+  Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+                                                                                                                         a
+                                                                                                         aw=No+          -
+                                                                                                                         da / dN
+                                                                                               where “a” is the joint diameter at the interface (i%al crack
+                                                                                               length). It was shown in Ref [l] that the maximum crack
+                                                                                               length in the population was approximately 2X the
+                                                                                               characteristic length. Hence we would expect the failure free
+                                                                                               life to be approximately one half of the characteristic life
+
+                                                                                                          NE= aw1 2                             (17)
+
+                                                                                               In practice, one does not test an infinitely large sample size, so
+                                                                                               the number of cycles to first failure will be greater than the
+                                                                                               failure free life. The cycles to fvst failure is given by
+
+                  1                     10                       100                 1000
+                                                                                                     N = Nff + (aw- Nff)(-ln( 1-F)) lIPw               (18)
+                      Inelastic Strain Jhergy Density per Cycle (psi)
+
+      +Slice.      N - L F E A . A N S Y S 5.2, A n a n d , Tunif, Old Time S t e p
+                                                                                               where the F is calculated in terms of median rank
+      -O-Slice,    N - L F E A , A N S Y S 5.6, A n a n d , Tunif, Old Time S t e p
+
+      +Slice.      N - L F E A . A N S Y S 5.6, A n a n d , B F , Old Time S t e p
+
+      +Slice,      N-L F E A , A N S Y S 5.6, A n a n d , B F , N e w Time S t e p             where Ss is the sample size. For example, a typical test has a
+      Q
+      -Q
+       -TR,        N - L F E A , A N S Y S 5.6, A n a n d , B F . N e w T i m e S t e p        sample size of 32 units. The first unit to fail represents a
+      +QTR,        Linear FEA      + 1D   Non-linear, Anand                                    cumulative fraction failed of 0.0216 (or 2.16%).
+      d Q T R , Linear FEA         + 1D N o n - l i n e a r , D a w
+                                                                                                   The procedure to calculate fatigue life consists of the
+    Figure 15. Crack growth rate correlations. Comparison of                                   following steps
+    modeling methodologies. Highlighted region indicates range
+    of measured data.
+                                                                                               13 Calculate inelastic strain energy density per cycle using
+                                                                                               one of the methods described in previous sections.
+    Fatigue Life Prediction                                                                    21 Calculate number of cycles to crack initiation using Eq.
+        To predict fatigue life from crack growth data, one needs                              (13) and Table 6, using the correct constants for the method
+    to assume a certain failure distribution. Clech [ 191 has shown                            that was utilized.
+    that a 3-parameter Weibull distribution is most appropriate.                               31 Calculate crack growth rate using Eq. (14) and Table 6,
+    The cumulative distribution of failures, F, for the 3P Weibull                             using the correct constants for the method that was utilized.
+    distribution is given by                                                                   41 Calculate characteristic life based on Eq. (16).
+                                                                                               51 Calculate failure free life based on Eq. (17).
+         F=O                                              for N < Nff                          61 Calculate the first failure for a particular sample size based
+                                                                                               on Eqs. (18) and (19).
+         F=l-exp[-(-) N - N f f               Pw ]       forN>Nff               (15)               As an example, consider the following prediction for a 144
+                      a W - Nff
+                                                                                               tfBGA. A quarter symmetry, non-linear finite element model
+                                                                                               was used with Anand’s constitutive model. The thermal cycle
+    where N is the number of cycles, NE is the failure free life,                              was -40C <=> 1292, with 900 sec ramps and 900 sec dwells.
+    awis the characteristic life at which 63.2% of the population                              16 load steps were used during the ramps, and 4 load steps
+    has failed, and pw is the shape parameter which indicates the                              during the dwells (60, 120,240, and 480 sec). The simulation
+    amount of scatter in the data.                                                             results show that the worst case joint is under the die edge.
+                                                                                               Moreover, the interface at the package side has the highest
+        Since the crack growth rate was shown to be constant                                   inelastic strain energy density per cycle. The solder element
+    during thermal cycling, the fatigue life of a joint can be                                 thickness at this interface was 0.0005”, and the interface
+    calculated by adding the number of cycles for crack initiation                             diameter was 0.016”. The shape factor, pw, was assumed to
+    plus the number of cycles to grow the cracks across the joint                              be 2.6. A summary of the calculation results is shown in
+    interface. The characteristic life is given by                                             Table 7.
+
+
+
+
+                                                                                            1056           2000 Electronic Components and Technology Conference
+
+
+
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+                                 Table 7                                                       identical stress, so the component needs to be divided into
+                     Fatigue Life Prediction Example                                           groups of joints that have similar stress applied. This
+I     AW      I     No       I     dddN      I     Nff      I   FirstFail   I      a       1   procedure was demonstrated in Ref [l].
+      (psi)       (cycles)       (idcycle)       (cycles)       (cycles)        (cycles)           For components with hundreds of joints, the reliability of
+                                                                                               the component will be significantly de-rated compared to that
+    Relative vs. Absolute Predictions                                                          of an individual joint. It is questionable whether such a large
+        A comment should be made about relative versus absolute                                de-rating if valid.
+    predictions. In most cases, there is at least one data set of                                  In reality, the joints that are most likely to fail are almost
+    measured fatigue life for a particular package assembly. In                                always near the comers of the die or comers of the package.
+    this scenario, relative predictions can be made.              The                          If one does a lot of failure analysis after thermal cycling, this
+    procedure is to first calculate life for the known case                                    trend becomes evident. This is not to say that failures do not
+    (measured data), then calculate life for the unknown case. A                               occur in the middle region of a row of joints, but rather that
+    relative life prediction can be made fiom these two                                        the vast majority of failures occur at the comers. Hence, it is
+    calculations. For example, the unknown case could be                                       probably not valid to consider all of the joints when de-rating
+    changing motherboard thickness, pad diameter, ball size, etc.                              component reliability.
+    The accuracy of relative predictions is usually in the range of                                This issue is relevant in the present life prediction
+    +I- 25% or better [1,2,3-91.                                                               methodology because crack growth data fkom individual joints
+        For the case where the package assembly is only in the                                 is being used to predict life of components with many joints.
+    concept stage, and there is no measured data available,                                    If we consider the group of worst case joints to control the
+    absolute predictions must be made. Also, if one is comparing                               component reliability, then Eq. (21) can combined with Eq.
+    measured versus predicted results for a wide range of package                              (17) and re-arranged to give the de-rating factor for a
+    types, material sets, and test conditions, the prediction is more                          component
+    of an absolute nature. For absolute predictions, the accuracy                              where ac is the characteristic life of the component, a j is the
+    is somewhat less, but typically +/- 2X or better. If one does a                            characteristic life of the worst case joints, and q is the number
+    very good job at characterizing the material properties and
+    modeling the exact configuration that was tested, the accuracy
+    can be better than +/- 2X. For example, a quarter or eighth                                          ajq l 2+ ( ; ) X w )
+                                                                                                         %                                  (22)
+    symmetry model should be better than a slice model in this
+    regard.                                                                                    of worst case joints, typically 4 or 8.
+        One of the reasons that reasonable prediction accuracy was                                 An alternate approach to Eq. 22 is to consider all of the
+    possible with earlier versions of ANSYS that had a bug in the                              highest stressed joints on a component as an individual
+    plastic work calculation was that this error carried through                               Weibull distribution. Hence, if simulation results predict that
+    fkom simulation to simulation. In a relative sense, the error                              the joints at the package comers are most likely to fail first,
+    washed out. However, when the recent version of ANSYS                                      then the component failure will occur when 1 out of a
+    was released where the bug was fixed, the error no longer                                  population of 4 comer joints fails. To estimate the de-rating
+    carried through fiom the original crack growth correlation.                                factor for this approach, Eqs. (17) to (19) can combined and
+    The error no longer washed out.                                                            re-arranged to give
+
+    Effect of Multiple Joints
+        In Refs [1,20] the argument was made that the fatigue life
+    of a component should be related to the number of solder
+    joints, because they are all acting in series and the failure of
+    any one joint will cause failure of the component. Hence, the
+    overall component reliability, h,is related to the joint                                       Plots of component de-rating factor, acI a j , for both Eqs.
+    reliability, Rj, by                                                                        (22) and (23) are shown in Figure 16 (pw was assumed to be
+                                                                                               2.6). It is seen that for typical case of 4 worst case joints, the
+                                                                                               de-rating factor is 0.79 for Eq. (22) and 0.75 for Eq. (23).
+                                                                                               Hence, the component characteristic life should be 75% to
+                                                                                               79% of the characteristic life calculated for the worst case
+    The number of cycles that & of the comQonents survive is                                   joints. Note that the de-rating factor approaches 0.5 for a
+    given by [11                                                                               large number of joints. In this limit, the characteristic life of
+                                                                                               the component is equal to the failure fkee life of the
+                                                                                               component (which is equal to the failure fiee life of the joints).
+
+
+    where a j is the characteristic life of the joints and q is the
+    number of joints. Not all of the joints are subjected to
+
+
+                                                                                           1057            2000 Electronic Components and Technology Conference
+
+
+
+
+     Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+       1.0   1                                                         I
+                                                                   51 A. Mawer, J. Trent, N. Vo, T. Vo, Y. Guo, P, Seto, L.
+       0.9                                                            Bosley, and R. Darveaux, “Reliability Evaluation of a
+  \
+   *
+   1
+
+       0.8                                                             PBGA MCM for Automotive Applications,” Proc SMI
+       0.7                                                             1997, pp. 125-132.
+                                                                   61 A. Mawer, D. Cho, and R. Darveaux, “The Effect of PBGA
+   i0.6
+  B                                                                    Solder Pad Geometry on Solder Joint Reliability,” Proc.
+   2 0.5                                                               SMI, 1996, pp. 127-135.
+  LL
+      0.4                                                          71 J. Fusaro and R. Darveaux, “Reliability of Copper
+   E
+  5   0.3                                                             Baseplate High Current Power Modules,” Proc. 1996
+                                                                      ISHM Symposium.
+  a& 0.2                                                           81 M. Amagai, “Chip Scale Package (CSP) Solder Joint
+      0.1                                                             Reliability and Modeling,” Proc. 36* International
+      0.0 I               I           I            I                  Reliability Physics Symposium, 1998, pp. 260-268.
+                                                                   91 Z. Johnson, “Implementation of and Extensions to
+           1             10          100        1000         10000
+                                                                      Darveaux’s Approach to Finite-Element Simulation of
+                  Number of Worst Case Joints, q                      BGA Solder Joint Reliability,” Proc. 1999 ECTC.
+                                                                   IO] F. Garfalo, Fundamentals of Creep and Creep-Rupture in
+   Figure 16. De-rating factor for component based on number          Metals, The Macmillan Company, New York, NY, 1965.
+   of worst case joints.                                           111 K.L. Murty and I. Turlik, “Deformation Mechanisms in
+   Conclusions                                                        Lead-Tin Alloys, Application to Solder Reliability in
+   1) Crack initiation and growth correlations were re-established    Electronic Packages,” Proceedings 1st Joint Conference on
+  using measured crack growth data and ANSYS 5.6 simulation           Electronic Packaging, ASMEIJSME, 1992, pp. 309-3 18.
+  results.                                                         121  H.J. Frost and M.F. Ashby, Deformation Mechanism
+  2) Three simulation methodologies and two constitutive              Maps,   Pergamon Press, 1982, Chapter 2.
+  models were compared with respect to their impact on the         131    K.L.  Murty, G.S. Clevinger, and T.P. Papazoglou,
+   crack growth correlations.                                          “Thermal Creep of Zircaloy-4 Cladding,” Proceedings 4th
+   3) The crack growth rate dependence on strain energy density       International Conference on Structural Mechanics in
+  always had an exponent of 1.10 +/- 0.15. This is in the range       Reactor  Technology, C 314, 1977.
+   of the original correlation, so the accuracy of relative        141   L. Anand,   “Constitutive Equations for Hot-Working of
+  predictions should still be within +/- 25%.                         Metals,”   International   Journal of Plasticity, Vol. 1, pp.
+  4) The accuracy of absolute predictions could be off by a           213-231,   1985.
+  factor of 7 in the worst case, if the analyst uses a modeling 151 S.B. Brown, K.H. Kim, and L. Anand, “An Internal
+  procedure that is not consistent with that used for the crack       Variable Constitutive Model for Hot Working of Metals,”
+  growth correlation                                                  International  Journal of Plasticity, Vol. 5, pp. 95-130,
+  5) De-rating factor relations were derived to estimate               1989.
+  component fatigue life based on worst case joint fatigue life.   161 R. Darveaux and A. Mawer, “Thermal and Power Cycling
+                                                                      Limits of Plastic Ball Grid Array (PBGA) Assemblies,”
+  Acknowledgments                                                     Proc. Surface Mount International, 1995, pp. 3 15-326.
+      The author would like to acknowledge helpful discussions 171 R. Darveaux and K. Banerji, “Fatigue Analysis of Flip
+  with Zane Johnson regarding temperature change commands             Chip Assemblies Using Thermal Stress Simulations and a
+  in ANSYS.                                                           Coffin-Manson Relation,” Proc. 4 1st IEEE ECTC, 1991,
+  References                                                          pp. 797-805.
+        R.  Darveaux,    K. Banerji,  A.  Mawer,   and  G.   Dody, 181 R. Darveaux, “Crack Initiation and Growth in Surface
+   11
+      “Reliability of Plastic Ball Grid Array Assembly,” Ball         Mount Solder Joints,” Proc. ISHM International
+      Grid Array Technology, J. Lau Editor, McGraw-Hill, Inc.,        Symposium on Microelectronics, 1993, pp.86-97.
+      New York
+            ~. 1995.
+                  I-- -
+                                                                   191  J-P. Clech, D.M. Noctor, J.C. Manock, G.W. Lynott, and
+  21  R.  Darveaux,   “Solder  Joint  Fatigue Life   Model,”  Proc    F.E.  Bader, “Surface Mount Assembly Failure Statistics
+      TMS, 1997.                                                      and Failure Free Time,” Proc. 44th IEEE ECTC, 1994.
+  31 T. Anderson, I. Guven, E. Madenci, and G. Gustafsson, 201 A. Mawer and R. Darveaux, “Calculation of Thermal
+      “The Necessity of Reexamining Previous Life Prediction          Cycling and Application Fatigue Life of Plastic Ball Grid
+      Analyses of Solder Joints in Electronic Packages,” Proc         Array (PBGA) Package,” Proc. IEPS, 1993.
+      1999 ECTC.
+  41 R. Darveaux, “Optimizing the Reliability of Thin Small ANSYSm is a trademark  I
+                                                                                               of ANSYS, Inc.
+                                                                                                                                    1
+      Outline Package (TSOP) Solder Joints,“ Advances in
+      Electronic Packaging 1995 - Proc. ASME Interpack ‘95,
+      pp. 675-685.                                                                     We alert you to the presence of color in the
+                                                                                                         CD-ROMversion of this paper.
+                                                                                                                                        html
+                                                                                                   http://www.cpmt.org/proceedings/order.
+                                                                           1058            2000 Electronic Components and Technology Conference
+
+
+
+
+Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:03:03 UTC from IEEE Xplore. Restrictions apply.
+

@@ -1,0 +1,167 @@
+{
+  "case": "C13",
+  "spec": {
+    "n_vr": 6,
+    "placement": "distributed_3x2",
+    "tile_ax": 4.0,
+    "tile_ay": 4.0,
+    "h_sub": 0.2,
+    "p_hvr_total_w": 42.0,
+    "question": "Finer distribution at constant total area."
+  },
+  "mesh": {
+    "h_xy_mm": 0.45,
+    "z_scale": 1.0,
+    "h_max_factor": 3.0,
+    "graded": true,
+    "element_type": "C3D8I",
+    "n_nodes": 22728,
+    "n_elems": 19311,
+    "n_z_planes": 12,
+    "elems_through_substrate": 5,
+    "elems_through_die": 3
+  },
+  "loads": {
+    "p_die_W": 240.0,
+    "p_hvr_total_W": 42.0,
+    "p_per_tile_W": 7.0,
+    "q_die_W_per_mm3": 1.6000972859149836
+  },
+  "cooling": {
+    "h_top_W_m2K": 17521.63541738819,
+    "h_bot_W_m2K": 10.0,
+    "a_top_mm2": 499.9695999999996,
+    "a_bot_mm2": 899.9999999999934
+  },
+  "bc": {
+    "bc": "BC_A",
+    "n_bottom_nodes": 2496,
+    "z_bottom_mm": 0.0,
+    "anchor_nodes": {
+      "A_xyz": 1,
+      "B_yz": 22441,
+      "C_z": 283
+    },
+    "anchor_coords": {
+      "A_xyz": [
+        -15.0,
+        -15.0,
+        0.0
+      ],
+      "B_yz": [
+        15.0,
+        -15.0,
+        0.0
+      ],
+      "C_z": [
+        -15.0,
+        15.0,
+        0.0
+      ]
+    },
+    "dofs_removed": 6,
+    "solver": "SPOOLES"
+  },
+  "tiles": [
+    {
+      "cx": -7.453333333333333,
+      "cy": -5.59,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    },
+    {
+      "cx": 0.0,
+      "cy": -5.59,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    },
+    {
+      "cx": 7.453333333333333,
+      "cy": -5.59,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    },
+    {
+      "cx": -7.453333333333333,
+      "cy": 5.59,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    },
+    {
+      "cx": 0.0,
+      "cy": 5.59,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    },
+    {
+      "cx": 7.453333333333333,
+      "cy": 5.59,
+      "ax": 4.0,
+      "ay": 4.0,
+      "P_W": 7.0
+    }
+  ],
+  "thermal": {
+    "T_max_C": 80.679,
+    "T_min_C": 54.5927,
+    "T_mean_C": 66.30533445969729,
+    "hotspot_xyz_mm": [
+      -0.1224,
+      -5.4676,
+      0.05
+    ],
+    "Q_in_W": 282.0,
+    "Q_out_W": 282.0000178140569,
+    "energy_residual_pct": 6.317041450058486e-06
+  },
+  "structural": {
+    "die_warpage_pv_um": 4.323770000000001,
+    "pkg_warpage_pv_um": 6.62185,
+    "uz_max_um": 0.0205992,
+    "uz_min_um": -6.62185,
+    "n_die_top_nodes": 1292,
+    "n_pkg_bot_nodes": 2496,
+    "si_principal_MPa": {
+      "raw_max": 7.271922490197158,
+      "p99": 5.752837132843161,
+      "p95": 4.70406873616476,
+      "n": 14348
+    },
+    "tsv_region_vm_MPa": {
+      "raw_max": 17.334361482017883,
+      "p99": 16.9634510819782,
+      "p95": 16.723584141500194,
+      "n": 432
+    },
+    "hvr_tile_vm_MPa": {
+      "raw_max": 9.902278887756596,
+      "p99": 9.655943839102628,
+      "p95": 9.445277205244004,
+      "n": 432
+    },
+    "interface_shear_MPa": {
+      "raw_max": 0.8152696912273877,
+      "p99": 0.7715996785386837,
+      "p95": 0.5588905287486987,
+      "n": 2584
+    },
+    "interface_peel_MPa": {
+      "raw_max": 1.98313,
+      "p99": 1.09691,
+      "p95": 0.450776,
+      "n": 2584
+    }
+  },
+  "overrides": {
+    "hvr_effective": {
+      "cte": 0.6666666666666666
+    }
+  },
+  "tsv_enabled": true,
+  "runtime_s": 19.0
+}

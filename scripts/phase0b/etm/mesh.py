@@ -1,0 +1,325 @@
+"""Structured hexahedral mesher for the Phase-0B reduced-order package.
+
+A structured conforming brick mesh is deliberately preferred over an unstructured
+tet mesh here:
+  * exact control of through-thickness element counts (the spec requires >=4-6
+    through the Si substrate and 3-4 through the die);
+  * element faces conform exactly to every material boundary and tile edge, so no
+    partial-volume material smearing;
+  * refinement is a single scalar, making the mandatory convergence study exact;
+  * identical mesh for the thermal and structural passes, so the temperature field
+    transfers node-to-node with zero interpolation error.
+
+Coordinates: die centre at (0,0); z = 0 at the substrate underside, +z upward.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+import math
+
+import numpy as np
+
+from .placement import Tile
+
+
+@dataclass
+class Layer:
+    name: str
+    z0: float
+    z1: float
+    nz: int
+    material: str
+    footprint: str          # 'substrate' | 'die'
+    # DEFECT #55. `footprint` says how far a layer extends IN PLANE; it was also being used
+    # to decide which layers CONTAIN THE TSV FIELD. Every assembly layer added below z = 0 in
+    # Phase 0G -- the PCB, the BGA field, and for ARCH_Z2 the backside converter -- was given
+    # footprint 'substrate' because it does span the substrate extent, and therefore had its
+    # material overwritten with `tsv_homog` inside every tile. The PCB was being modelled as
+    # a copper/silicon composite. The two questions are now separate fields.
+    tsv_host: bool = False  # does the TSV field pass through this layer?
+
+
+@dataclass
+class Mesh:
+    nodes: np.ndarray                       # (N,3) float, node i has id i+1
+    elems: np.ndarray                       # (M,8) int node ids
+    elem_material: np.ndarray               # (M,) object -> material name
+    elem_layer: np.ndarray                  # (M,) object -> layer name
+    elem_tile: np.ndarray                   # (M,) int, tile index or -1
+    layers: list[Layer]
+    xs: np.ndarray
+    ys: np.ndarray
+    zs: np.ndarray
+
+    def layer(self, name: str) -> Layer:
+        return next(l for l in self.layers if l.name == name)
+
+    @property
+    def n_nodes(self): return len(self.nodes)
+    @property
+    def n_elems(self): return len(self.elems)
+
+    def elem_centroids(self) -> np.ndarray:
+        return self.nodes[self.elems - 1].mean(axis=1)
+
+    def elem_volumes(self) -> np.ndarray:
+        """Exact for axis-aligned bricks."""
+        p = self.nodes[self.elems - 1]
+        dx = p[:, 1, 0] - p[:, 0, 0]
+        dy = p[:, 3, 1] - p[:, 0, 1]
+        dz = p[:, 4, 2] - p[:, 0, 2]
+        return np.abs(dx * dy * dz)
+
+    def elem_set(self, **kw) -> np.ndarray:
+        """1-based element ids matching all given attribute filters."""
+        m = np.ones(self.n_elems, bool)
+        if "material" in kw: m &= (self.elem_material == kw["material"])
+        if "layer" in kw:    m &= (self.elem_layer == kw["layer"])
+        if "tile" in kw:     m &= (self.elem_tile == kw["tile"])
+        return np.nonzero(m)[0] + 1
+
+    def node_ids_at_z(self, z: float, tol: float = 1e-9) -> np.ndarray:
+        return np.nonzero(np.abs(self.nodes[:, 2] - z) < tol)[0] + 1
+
+    def node_ids_in_box(self, x0, x1, y0, y1, z, tol=1e-9) -> np.ndarray:
+        n = self.nodes
+        m = (np.abs(n[:, 2] - z) < tol) & (n[:, 0] >= x0 - tol) & (n[:, 0] <= x1 + tol) \
+            & (n[:, 1] >= y0 - tol) & (n[:, 1] <= y1 + tol)
+        return np.nonzero(m)[0] + 1
+
+
+def _grid_1d(breaks: list[float], h: float) -> np.ndarray:
+    """Uniform subdivision of each interval between sorted unique breakpoints to <= h."""
+    b = np.unique(np.round(np.asarray(sorted(breaks), float), 9))
+    out = [b[0]]
+    for lo, hi in zip(b[:-1], b[1:]):
+        n = max(1, int(np.ceil((hi - lo) / h - 1e-9)))
+        out.extend(np.linspace(lo, hi, n + 1)[1:])
+    return np.array(out)
+
+
+def _grid_1d_graded(breaks: list[float], h_fine: float, h_max: float,
+                    growth: float = 1.35) -> np.ndarray:
+    """Graded subdivision: smallest elements at every material boundary, growing
+    geometrically toward the interval centre and capped at `h_max`.
+
+    Every breakpoint is a tile edge, die edge or package edge - exactly where the
+    stress and temperature gradients live - so this puts resolution where the fields
+    vary and coarsens the far field. That keeps the element count inside the range the
+    direct (SPOOLES) solver handles, which matters because the iterative solver was
+    measured to disagree with the direct solver by 35% on package warpage and is
+    therefore unusable for this study.
+    """
+    b = np.unique(np.round(np.asarray(sorted(breaks), float), 9))
+    out = [b[0]]
+    for lo, hi in zip(b[:-1], b[1:]):
+        span = hi - lo
+        if span <= 2 * h_fine:
+            n = max(1, int(np.ceil(span / h_fine - 1e-9)))
+            out.extend(np.linspace(lo, hi, n + 1)[1:])
+            continue
+        # build half-widths from one end until the midpoint, then mirror
+        sizes, tot = [], 0.0
+        h = h_fine
+        while tot + h < span / 2.0:
+            sizes.append(h)
+            tot += h
+            h = min(h * growth, h_max)
+        half = np.cumsum(sizes) if sizes else np.array([])
+        left = lo + half
+        right = hi - half[::-1]
+        pts = np.concatenate([[lo], left, right, [hi]])
+        pts = np.unique(np.round(pts, 9))
+        # ensure the untouched middle gap is not larger than h_max
+        gaps = np.diff(pts)
+        fixed = [pts[0]]
+        for g, x in zip(gaps, pts[1:]):
+            if g > h_max * 1.5:
+                n = int(np.ceil(g / h_max))
+                fixed.extend(np.linspace(fixed[-1], x, n + 1)[1:])
+            else:
+                fixed.append(x)
+        out.extend(np.array(fixed)[1:])
+    return np.unique(np.round(np.array(out), 9))
+
+
+def build(tiles: list[Tile], stack: dict, h_sub: float, *,
+          h_xy: float = 0.55, z_scale: float = 1.0, graded: bool = True,
+          h_max_factor: float = 3.0, support_layer: bool = False,
+          tsv_discrete_pitch: float | None = None,
+          interface_nz: int | None = None,
+          extra_bottom_layers: list | None = None,
+          extra_mid_layers: list | None = None,
+          tile_band_is_converter: bool = True) -> Mesh:
+    """Build the mesh.
+
+    `h_xy`    in-plane element size at material boundaries (mm)
+    `z_scale` multiplies the per-layer through-thickness element counts
+    `graded`  grade the in-plane grid away from material boundaries (default) so
+              resolution is spent at tile/die edges rather than in the far field
+    """
+    g = stack["geometry"]
+    Lx = g["power_substrate"]["size_x"]["value"]
+    Ly = g["power_substrate"]["size_y"]["value"]
+    Dx = g["functional_die"]["size_x"]["value"]
+    Dy = g["functional_die"]["size_y"]["value"]
+    t_die = g["functional_die"]["thickness"]["value"]
+    t_if = g["interface_layer"]["thickness"]["value"]
+    t_tim = g["tim"]["thickness"]["value"]
+    t_tile = g["hvr_tile"]["thickness"]["value"]
+    tsv_on = g["tsv_field"]["enabled"]["value"]
+
+    if t_tile >= h_sub:
+        raise ValueError(f"HVR tile thickness {t_tile} mm must be < h_sub {h_sub} mm")
+
+    def nz(base): return max(1, int(round(base * z_scale)))
+
+    # Optional compliant support layer (BC-B): sits BELOW z=0, so the substrate
+    # underside stays at z=0 and every other coordinate is unchanged between BC families.
+    layers: list[Layer] = []
+    if extra_bottom_layers:
+        # Phase-0G: an EXPLICIT assembly stack below the package (BGA field, PCB) instead of
+        # the single compact foundation. Entries are (name, thickness_mm, material, nz).
+        # They are laid down downward from z = 0, deepest first, so z = 0 stays the substrate
+        # underside and every package coordinate is unchanged.
+        depth = sum(t for _, t, _, _ in extra_bottom_layers)
+        z = -depth
+        for nm, t, mat, n in extra_bottom_layers:
+            # tsv_host=False: the board, the BGA field and the backside converter lie BELOW
+            # the substrate. No TSV passes through them (DEFECT #55).
+            layers.append(Layer(nm, z, z + t, n, mat, "substrate", tsv_host=False))
+            z += t
+    elif support_layer:
+        t_sup = stack["structural_bc"]["variants"]["BC_B"]["thickness"]["value"]
+        layers.append(Layer("support", -t_sup, 0.0, nz(2), "support_foundation",
+                            "substrate", tsv_host=False))
+    layers += [Layer("sub_lower", 0.0, h_sub - t_tile, nz(2), "silicon", "substrate",
+                     tsv_host=True),
+              Layer("tile_band", h_sub - t_tile, h_sub, nz(3), "silicon", "substrate",
+                    tsv_host=not tile_band_is_converter)]
+    # Layers stacked ABOVE the substrate top and BELOW the compute die. ARCH_Z4 puts its
+    # power die here. Entries are (name, thickness_mm, material, nz) laid down upward from
+    # z = h_sub; everything above is shifted by their total thickness, so the substrate and
+    # everything below it keep their coordinates and the architectures stay comparable.
+    z_top = h_sub
+    for nm, t, mat, n in (extra_mid_layers or []):
+        layers.append(Layer(nm, z_top, z_top + t, n, mat, "die"))
+        z_top += t
+    layers += [Layer("interface", z_top, z_top + t_if, interface_nz or nz(1),
+                     "underfill_homog", "die"),
+              Layer("die", z_top + t_if, z_top + t_if + t_die, nz(3), "silicon", "die"),
+              Layer("tim", z_top + t_if + t_die, z_top + t_if + t_die + t_tim, nz(2),
+                    "tim", "die")]
+
+    # ---- in-plane grid conforming to every material boundary -----------------
+    xb = [-Lx / 2, Lx / 2, -Dx / 2, Dx / 2]
+    yb = [-Ly / 2, Ly / 2, -Dy / 2, Dy / 2]
+    for t in tiles:
+        xb += [t.x0, t.x1]
+        yb += [t.y0, t.y1]
+
+    # H1b: resolve the TSV field as discrete equal-area square inclusions on a coarsened
+    # lattice instead of smearing it. The Cu volume fraction is held EXACTLY equal to the
+    # homogenised model, so any difference is attributable to resolving the phase, not to
+    # changing how much copper is present.
+    via_boxes: list[tuple[float, float, float, float]] = []
+    if tsv_discrete_pitch:
+        f_cu = math.pi * (g["tsv_field"]["diameter"]["value"] ** 2) / (
+            4.0 * g["tsv_field"]["pitch"]["value"] ** 2)
+        for t in tiles:
+            nx_v = max(1, int(t.ax // tsv_discrete_pitch))
+            ny_v = max(1, int(t.ay // tsv_discrete_pitch))
+            a_side = math.sqrt(f_cu * t.ax * t.ay / (nx_v * ny_v))
+            for iv in range(nx_v):
+                for jv in range(ny_v):
+                    cx = t.x0 + (iv + 0.5) * t.ax / nx_v
+                    cy = t.y0 + (jv + 0.5) * t.ay / ny_v
+                    bx0, bx1 = cx - a_side / 2, cx + a_side / 2
+                    by0, by1 = cy - a_side / 2, cy + a_side / 2
+                    via_boxes.append((bx0, bx1, by0, by1))
+                    xb += [bx0, bx1]
+                    yb += [by0, by1]
+    if graded:
+        hm = h_xy * h_max_factor
+        xs, ys = _grid_1d_graded(xb, h_xy, hm), _grid_1d_graded(yb, h_xy, hm)
+    else:
+        xs, ys = _grid_1d(xb, h_xy), _grid_1d(yb, h_xy)
+
+    zb: list[float] = []
+    for L in layers:
+        zb.extend(np.linspace(L.z0, L.z1, L.nz + 1))
+    zs = np.unique(np.round(np.array(zb), 9))
+
+    nx, ny, nzz = len(xs), len(ys), len(zs)
+    X, Y, Z = np.meshgrid(xs, ys, zs, indexing="ij")
+    all_nodes = np.column_stack([X.ravel(), Y.ravel(), Z.ravel()])
+
+    def nid(i, j, k):  # 0-based grid -> 1-based node id in the full lattice
+        return (i * ny + j) * nzz + k + 1
+
+    # ---- elements -------------------------------------------------------------
+    xc = 0.5 * (xs[:-1] + xs[1:])
+    yc = 0.5 * (ys[:-1] + ys[1:])
+    zc = 0.5 * (zs[:-1] + zs[1:])
+
+    layer_of_k = []
+    for k, zz in enumerate(zc):
+        hit = next((L for L in layers if L.z0 - 1e-9 < zz < L.z1 + 1e-9), None)
+        layer_of_k.append(hit)
+
+    in_die_x = (np.abs(xc) <= Dx / 2 + 1e-9)
+    in_die_y = (np.abs(yc) <= Dy / 2 + 1e-9)
+
+    via_idx = np.zeros((len(xc), len(yc)), bool)
+    for (bx0, bx1, by0, by1) in via_boxes:
+        mx = (xc >= bx0 - 1e-9) & (xc <= bx1 + 1e-9)
+        my = (yc >= by0 - 1e-9) & (yc <= by1 + 1e-9)
+        via_idx[np.ix_(mx, my)] = True
+
+    tile_idx = -np.ones((len(xc), len(yc)), int)
+    for ti, t in enumerate(tiles):
+        mx = (xc >= t.x0 - 1e-9) & (xc <= t.x1 + 1e-9)
+        my = (yc >= t.y0 - 1e-9) & (yc <= t.y1 + 1e-9)
+        tile_idx[np.ix_(mx, my)] = ti
+
+    elems, emat, elay, etile = [], [], [], []
+    for k, L in enumerate(layer_of_k):
+        if L is None:
+            continue
+        for i in range(len(xc)):
+            if L.footprint == "die" and not in_die_x[i]:
+                continue
+            for j in range(len(yc)):
+                if L.footprint == "die" and not in_die_y[j]:
+                    continue
+                ti = tile_idx[i, j]
+                mat = L.material
+                if L.footprint == "substrate" and ti >= 0:
+                    if L.name == "tile_band" and tile_band_is_converter:
+                        mat = "hvr_effective"
+                    elif not L.tsv_host:
+                        # DEFECT #55: an assembly layer below the substrate keeps its own
+                        # material inside a tile. It previously became `tsv_homog`.
+                        mat = L.material
+                    elif not tsv_on:
+                        mat = "silicon"
+                    elif via_boxes:                       # H1b discrete inclusions
+                        mat = "copper" if via_idx[i, j] else "silicon"
+                    else:                                 # H0 homogenised block
+                        mat = "tsv_homog"
+                elems.append([nid(i, j, k), nid(i + 1, j, k), nid(i + 1, j + 1, k), nid(i, j + 1, k),
+                              nid(i, j, k + 1), nid(i + 1, j, k + 1), nid(i + 1, j + 1, k + 1),
+                              nid(i, j + 1, k + 1)])
+                emat.append(mat); elay.append(L.name)
+                etile.append(ti if L.footprint == "substrate" else -1)
+
+    elems = np.array(elems, int)
+
+    # ---- prune unused nodes, renumber contiguously ----------------------------
+    used = np.unique(elems)
+    remap = np.zeros(len(all_nodes) + 1, int)
+    remap[used] = np.arange(1, len(used) + 1)
+    return Mesh(nodes=all_nodes[used - 1], elems=remap[elems],
+                elem_material=np.array(emat, object), elem_layer=np.array(elay, object),
+                elem_tile=np.array(etile, int), layers=layers, xs=xs, ys=ys, zs=zs)

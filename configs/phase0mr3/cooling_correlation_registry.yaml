@@ -1,0 +1,95 @@
+# =====================================================================================
+# PHASE 0M-R3 SECTION 10 --- COOLING CORRELATION REGISTRY
+# =====================================================================================
+# Every correlation the production cooler may use, with the range its SOURCE validates.
+# A registry rather than a pair of if-branches, so an operating point can be dispatched
+# and, where no entry covers it, REFUSED.
+# =====================================================================================
+
+meta:
+  production_design_space: "Re <= 2300"
+  production_design_space_rule: >-
+    RESTRICTED IN PHASE 0M-R3. No correlation in this registry covers 2300 < Re < 3000 for
+    a rectangular liquid microchannel, and none could be sourced. The production cooling
+    design space is therefore capped at the validated laminar maximum. A flow that would
+    take the channel above Re = 2300 is not a design option, not a point to interpolate.
+
+correlations:
+
+  - id: shah_london_laminar_fd
+    quantity: Nusselt
+    geometry: "rectangular duct, fully developed"
+    fluid: liquid
+    re_min: 0.0
+    re_max: 2300.0
+    aspect_ratio_range: "tabulated 1:1 to 8:1, interpolated"
+    boundary_condition: "constant wall temperature (T)"
+    provenance: SOURCE_BACKED
+    source: "Shah & London, Laminar Flow Forced Convection in Ducts, rectangular duct table"
+    in_production: true
+
+  - id: fre_laminar
+    quantity: friction
+    geometry: "rectangular duct"
+    fluid: liquid
+    re_min: 0.0
+    re_max: 2300.0
+    provenance: SOURCE_BACKED
+    source: "Shah & London, f Re = C(alpha) for the same duct family"
+    in_production: true
+
+  - id: gnielinski
+    quantity: Nusselt
+    geometry: "circular tube, extended to ducts by hydraulic diameter"
+    fluid: "liquid or gas"
+    re_min: 3000.0
+    re_max: 5.0e+6
+    pr_min: 0.5
+    pr_max: 2000.0
+    provenance: SOURCE_BACKED
+    source: "Gnielinski 1976, as reproduced in standard heat-transfer texts"
+    in_production: false
+    why_not_in_production: >-
+      Its floor is Re = 3000 and the production cap is Re = 2300, so it is never reached.
+      It is retained so that any attempt to evaluate above 3000 dispatches to a correlation
+      whose range actually covers the point, rather than to an extrapolated laminar value.
+
+  - id: TRANSITIONAL_RECTANGULAR_MICROCHANNEL
+    quantity: Nusselt
+    geometry: "rectangular microchannel"
+    fluid: liquid
+    re_min: 2300.0
+    re_max: 3000.0
+    provenance: OPEN
+    source: "NONE FOUND"
+    in_production: false
+    search_record:
+      queries:
+        - "microchannel transition laminar turbulent Nusselt correlation rectangular"
+        - "Gnielinski transitional Reynolds 2300 3000 interpolation single phase liquid duct"
+        - "single phase liquid microchannel heat transfer transition region experimental
+           water rectangular"
+      apis_reached: ["OpenAlex", "Crossref"]
+      web_search: "BLOCKED in this environment"
+      outcome: >-
+        Titles returned are about flow boiling, gas microtubes, reviews and adjacent
+        topics. None is a single-phase liquid rectangular-microchannel correlation whose
+        COEFFICIENTS and VALIDITY RANGE could be read from an accessible primary text.
+      why_nothing_was_implemented: >-
+        Correlations for this band exist in the literature. Writing one down from memory
+        would put unverifiable coefficients into the production model, which is the
+        failure mode this project exists to prevent. A correlation is implemented only
+        when its source can be cited and its range checked.
+    consequence: >-
+      2300 < Re < 3000 is permanently OUT_OF_MODEL_DOMAIN until a source is obtained, and
+      the production design space is capped below it.
+
+boundary_continuity_check:
+  description: >-
+    Where two correlations meet, the discontinuity is reported rather than smoothed. At
+    Re = 2300 the laminar Nusselt number is 4.603 and Gnielinski, evaluated 700 below its
+    floor, would give 12.699 -- a factor of 2.76. That jump is the reason the gap may not
+    be interpolated across.
+  laminar_Nu_at_2300: 4.603
+  gnielinski_Nu_at_2342: 12.699
+  ratio: 2.76

@@ -1,0 +1,15 @@
+quantity,fidelity,uncertainty_kind,magnitude,common_mode,cancels_in_ratio,evidence
+TSV field resistance R = rho h J / I,ANALYTICALLY_DERIVED,model-form,exact under the stated allocation policy; 0.07 % over a 20x radius range,YES across architectures -- same tier model,TESTED: yes,tsv_geometry_production_audit.csv
+J_design,SOURCE_BACKED,source,"1.0e8 A/m2 (June-2026); envelope to 4.0e8 (ECTC-2024), a factor of 4",YES,TESTED: yes,configs/phase0e/physical_stack.yaml
+J_reliability_allow,OPEN,source,UNBOUNDED -- no primary EM study retrievable,n/a,n/a,results/phase0mr/TSV_GEOMETRY_INTERPRETATION.md
+transition resistance dR per class,INDEPENDENTLY_CROSS_VALIDATED,numerical,0.25 to 0.73 % against MOOSE on 5 geometries; FV mesh drift 0.03-0.26 %,PARTIAL -- same classes appear in every architecture but with different currents,TESTED: largely,current_crowding_validation.csv
+intra-VR routing loss,NUMERICALLY_VALIDATED,geometry,"4.97 to 5.34 W across templates at a fixed stack, 7.5 %; 4.06 to 39.31 W across stacks","MOSTLY -- 7.5 % template-dependent, measured not assumed",TESTED: 7.5 % residual,intravr_routing_by_template.csv
+RDL in-plane conductivity,NUMERICALLY_VALIDATED,geometry,92 to 335 W/m.K depending on stack organisation; the production model uses 0.7,YES,TESTED: yes,rdl_effective_tensor.csv
+RDL mechanical contribution,NUMERICALLY_VALIDATED,geometry,-3.6 % to +6.8 % on corner shear; <= 0.11 % on the Z1/Z2 ratio,YES -- both architectures move the same way,"TESTED: yes, to 0.11 %",rdl_mechanical_fidelity.csv
+cooling: fluid side,ANALYTICALLY_DERIVED,boundary-condition,energy balance exact; Nu correlation used only inside its Re range,YES,TESTED: yes,cooling_energy_balance.csv
+cooling: solid side,NUMERICALLY_VALIDATED,model-form,"3.78 % at the production geometry; 10.11 % for short thick fins, which is REJECTED against the predeclared band",YES,TESTED: yes,cooling_validation.csv
+pump efficiency,OPEN,source,not sourced; hydraulic power is primary and a 35/55/75 % band is carried,YES,n/a,cooling_energy_balance.csv
+high-stress SAC305 constitutive response,CONDITIONAL,material,DOMINANT. Fitted on Sn3.9Ag0.6Cu over 7.51-15.92 MPa; 99.8 % of package damage lies outside,"PARTIAL -- medians 1.5 % apart, peaks differ",TESTED: partially; the envelope is 1.19 to 1.22,results/phase0lr/ALLOY_TRANSFERABILITY_MATRIX.md
+package clearances,OPEN,source,three clearances unsourced; no template may be called buildable,n/a,n/a,component_partition_feasibility.csv
+Z4 power-die layer geometry,OPEN,geometry,the global mesh has no Z4 converter layer; its heat is deposited in the interface layer and the Z4 thermal result is conditional on that,NO -- affects Z4 only,NO,scripts/phase0mr/production_et.py::converter_layer
+mechanical allowable,OPEN,source,none admitted since Phase 0H; G2 stays untestable,n/a,n/a,results/phase0k/G2_DECISION_REGIONS.md

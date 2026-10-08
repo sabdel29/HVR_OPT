@@ -1,0 +1,45 @@
+# Phase-0K-R Sec.4 -- machine-readable SAC305 constitutive domain.
+# Consumed by scripts/phase0kr/domain_audit.py. Read from the material card, not restated.
+meta:
+  source_card: scripts/phase0i/solder_model.py
+  primary_sources:
+    creep: "Yuan 2023, Materials 16(14):4922, Table 26 -- 19 measured steady-state points"
+    plastic: "Yuan 2023, Table 31 -- Chaboche fit"
+    elastic: "Paska et al. 2024, Appl. Sci. 14(2):604 -- room-temperature range only"
+creep:
+  law: "NORTON, eps_dot = A sigma^n t^m, m = 0"
+  calibration_temperatures_C: [45.0, 80.0, 115.0, 150.0]
+  temperature_floor_C: 45.0
+  temperature_ceiling_C: 150.0
+  stress_window_MPa: [7.51, 15.92]
+  driving_variable: >-
+    OVERSTRESS sigma_eq - sigma_y(T, PEEQ). Proven in Phase 0J-R by single-element probe:
+    without a *PLASTIC card CalculiX integrates A*sigma^n; with one it integrates
+    A*(sigma - sigma_y)^n. The 7.51-15.92 MPa window was fitted on TOTAL stress in creep
+    coupons, so applying it to an overstress is already a model-form change.
+  interpolation: "Arrhenius in the rate at sigma_ref = 10 MPa; exponent interpolated separately"
+  arrhenius_independently_validated: false
+  arrhenius_external_check: "implied activation energy 64.4 kJ/mol at 10 MPa vs published 62-65"
+plastic:
+  calibration_temperatures_C: [-40.0, -20.0, 40.0, 80.0, 122.0]
+  form: "bilinear (sigma0, 0) -> (sigma0 + C/gamma, 0.02)"
+elastic:
+  E_25C_MPa: 45000
+  E_source_status: "SOURCED RANGE 40-50 GPa, room temperature only"
+  dE_dT_MPa_per_K: -120
+  dE_dT_status: ASSUMPTION
+  nu: 0.36
+expansion:
+  cte_per_K: 2.15e-05
+  status: ASSUMPTION
+already_extrapolated_card_rows:
+  creep: [-40.0, 0.0, 25.0]
+  plastic: [125.0]
+  note: >-
+    The 25 C row is ALREADY outside the creep calibration, and every result this project has
+    produced uses a cycle whose cold half sits at 25 C.
+classification_thresholds:
+  FULLY_INSIDE: "T_min >= 45 C AND under 5 % of damage outside the stress window"
+  MILD: "under 5 % of damage below the T floor AND under 25 % outside the stress window"
+  SEVERE: "under 50 % of damage below the T floor"
+  INVALID: "50 % or more of damage accumulated below the T floor"

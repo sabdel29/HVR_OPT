@@ -1,0 +1,19 @@
+claim,phase_0D,phase_0D_R,phase_0E,unit,changed_in_0E,note
+"RDL loss, reference point",0.17,12.129,2.165,W,YES,sourced stack is 5.56x more conductive
+"total electrical loss, reference point",,32.73,22.53,W,YES,
+"efficiency, reference point",,88.00,91.42,%,YES,
+placement electrical spread (total elec),1.08,188.8,46.7,%,YES,0D claim withdrawn in 0D-R; 0D-R magnitude falls 4x in 0E
+placement: electrical best,,distributed,distributed,—,NO,
+placement: mechanical best,,edge,edge,—,NO,
+placement ETM exchange rate,,21.13,3.70,W/um,YES,cheapest mechanical lever in the project
+"thickness 200->500 um, ARCH_A: dP_elec",,-0.99,-0.67,%,no (sign),win/win/win both phases
+"thickness 200->500 um, ARCH_A: dwarpage",,-56.5,-56.5,%,NO,
+"thickness 200->500 um, ARCH_B: dP_elec",,-0.88,-0.25,%,no (sign),win/win/win both phases
+"thickness 200->500 um, ARCH_B: dwarpage",,-56.5,-56.5,%,NO,
+footprint dP_elec (small->large),-54,-54.2,-53.0,%,no (sign),
+footprint dwarpage (small->large),+84,+83.9,+87.9,%,no (sign),
+footprint ETM exchange rate,2.03,17.03,11.48,W/um,YES,
+ARCH_B feasibility,not modelled,INFEASIBLE at 4.8 mA/via,FEASIBLE for every sourced J,—,YES,0D-R limit had no source; 0E envelope 1.0e8-4.0e8 A/m2
+per-via current limit,implicit,33 / 4.8 mA (unsourced),70.7 / 282.8 mA (sourced),mA,YES,0D-R 33 mA dropped the P&G factor 2
+"n_alloc, ARCH_B reference",,1819,849,vias,YES,0D-R used n_required as the electrical count
+RDL stack provenance,none (lumped 0.5 mOhm/mm),"ASSUMPTION (5 um, occ 0.60, 1 layer)","SOURCE_BACKED (10 um, occ 0.833, 2+2 layers)",—,YES,"ECTC-2024 Table I, verified on both trace rows"

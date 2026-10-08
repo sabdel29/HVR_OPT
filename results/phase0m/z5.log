@@ -1,0 +1,47 @@
+Z5-LV baseline: P_loop = 768.072 W, R_eq = 0.76807 mOhm, 0.2999 loop squares on 2.5611 mOhm/sq, IR = 0.7681 V
+  ectc2024_one_per_net               P= 1536.145 W  R_eq=1.53614 mOhm  squares=0.2999
+  iscas2024_variant                  P= 2560.241 W  R_eq=2.56024 mOhm  squares=0.2999
+  ectc2024_primary_gap0.5            P=  680.014 W  R_eq=0.68001 mOhm  squares=0.2655
+  ectc2024_primary_gap1              P=  710.275 W  R_eq=0.71027 mOhm  squares=0.2773
+  ectc2024_primary_gap2              P=  768.072 W  R_eq=0.76807 mOhm  squares=0.2999
+  ectc2024_primary_gap4              P=  876.777 W  R_eq=0.87678 mOhm  squares=0.3423
+  ectc2024_primary_grid121           P=  767.239 W  R_eq=0.76724 mOhm  squares=0.2996
+  ectc2024_primary_grid161           P=  768.072 W  R_eq=0.76807 mOhm  squares=0.2999
+  ectc2024_primary_grid201           P=  768.381 W  R_eq=0.76838 mOhm  squares=0.3000
+  PCB  t= 152.0um W/S=32/32 n=1 occ=0.500 loop R = 0.5616 mOhm/sq
+  RDL  t=  10.0um W/S=10/2 n=2 occ=0.833 loop R = 2.5611 mOhm/sq
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  V_lat=  1.0: stage1 48->1 OK                   P=125.26443889730017   stage2 1->1 none                 P=0.0
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  V_lat=  3.3: stage1 48->3.3 NO FEASIBLE CONVERTER P=None   stage2 3.3->1 OK                   P=270.17425805070184
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  V_lat=  5.0: stage1 48->5 NO FEASIBLE CONVERTER P=None   stage2 5->1 OK                   P=210.4285660059279
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  V_lat= 12.0: stage1 48->12 NO FEASIBLE CONVERTER P=None   stage2 12->1 OK                   P=149.68582903695352
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  V_lat= 24.0: stage1 48->24 NO FEASIBLE CONVERTER P=None   stage2 24->1 OK                   P=129.87346690796846
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  V_lat= 48.0: stage1 48->48 none                 P=0.0   stage2 48->1 OK                   P=125.26443889730017
+  clustered Z5: 1 edge(s), 49 sources -> R_eq = 0.76807 mOhm (0.2999 squares)
+  clustered Z5: 2 edge(s), 48 sources -> R_eq = 0.27821 mOhm (0.1086 squares)
+  clustered Z5: 4 edge(s), 48 sources -> R_eq = 0.17179 mOhm (0.0671 squares)
+
+  V_lat  nc   P_lat    P_stage1  P_stage2   P_total  +97% SC  status
+    1.0   1   768.072   125.264     0.000   893.337    893.3  COMPLETE
+    1.0   4   171.793   125.264     0.000   297.058    297.1  COMPLETE
+    3.3   1    70.530       nan   270.174   340.704    371.6  LOWER BOUND -- a stage could not be compiled
+    3.3   4    15.775       nan   270.174   285.950    316.9  LOWER BOUND -- a stage could not be compiled
+    5.0   1    30.723       nan   210.429   241.151    272.1  LOWER BOUND -- a stage could not be compiled
+    5.0   4     6.872       nan   210.429   217.300    248.2  LOWER BOUND -- a stage could not be compiled
+   12.0   1     5.334       nan   149.686   155.020    185.9  LOWER BOUND -- a stage could not be compiled
+   12.0   4     1.193       nan   149.686   150.879    181.8  LOWER BOUND -- a stage could not be compiled
+   24.0   1     1.333       nan   129.873   131.207    162.1  LOWER BOUND -- a stage could not be compiled
+   24.0   4     0.298       nan   129.873   130.172    161.1  LOWER BOUND -- a stage could not be compiled
+   48.0   1     0.333     0.000   125.264   125.598    125.6  COMPLETE
+   48.0   4     0.075     0.000   125.264   125.339    125.3  COMPLETE
+
+wrote /home/beams0/MGHARIB/Mohamed_stuff/HVR_OPT/results/phase0m/z5_architecture_comparison.csv

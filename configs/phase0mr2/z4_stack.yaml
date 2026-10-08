@@ -1,0 +1,177 @@
+# =====================================================================================
+# PHASE 0M-R2 SECTION 2 --- EXPLICIT GEOMETRY FOR THE ARCH_Z4 POWER DIE
+# =====================================================================================
+# Phase 0M-R deposited ARCH_Z4's converter heat into the `interface` layer because
+# `zglobal.stack_for` has branches for "in" (Z1) and "below" (Z2) and NO branch for
+# "above" (Z4). `zglobal.conv_above_layers()` was written for that branch and is dead
+# code -- it is defined and never called. The Z4 power die has therefore never existed
+# geometrically, and every Z4 thermal and mechanical number to date is conditional.
+#
+# PROVENANCE CLASSES, used unchanged from Phase 0M:
+#   SOURCE_BACKED  a named datasheet or paper gives this number
+#   DERIVED        computed from SOURCE_BACKED quantities by a stated rule
+#   BOUNDED        not sourced, but enclosed by a defensible interval that is swept
+#   OPEN           not determined and not defaulted
+#   ASSUMED        a modelling choice, stated as such, with its effect measured
+# =====================================================================================
+
+architecture: ARCH_Z4_POWER_DIE
+
+placement:
+  description: >-
+    The converter is a dedicated power die sitting ABOVE the power substrate and BELOW
+    the compute die, per zarch.path_for: "conversion on the power die, above the
+    substrate, below the compute die", reached by a 48 V TSV field through the full
+    substrate and connected upward to the compute die by 10 um hybrid pads.
+  z_reference: "substrate top, z = h_sub"
+  order_bottom_to_top:
+    - power_die_rdl_lower
+    - gan_hs
+    - gan_ls
+    - inductor
+    - mlcc
+    - power_die_rdl_upper
+    - hybrid_bond
+  provenance: SOURCE_BACKED
+  source: "scripts/phase0i/zarch.py::path_for(ARCH_Z4_POWER_DIE)"
+
+# -------------------------------------------------------------------------------------
+# WHY THE HIGH-SIDE DEVICE IS IN THIS STACK AND NOT BELOW z = 0
+# -------------------------------------------------------------------------------------
+# For ARCH_Z1 the June-2026 source flip-chips the HIGH-SIDE device to the RDL of the
+# BOTTOM substrate, below z = 0, which is why the Z1 charged cell height is 1226 um and
+# not 1911 um. ARCH_Z4 has no such surface available to it: its whole conversion happens
+# on the power die above the substrate. The HS device is therefore part of the Z4 stack.
+# This is a DERIVED consequence of the declared power path, not a new assumption.
+# -------------------------------------------------------------------------------------
+
+layers:
+
+  - name: power_die_rdl_lower
+    thickness_um: 10.0
+    provenance: SOURCE_BACKED
+    source: "geometry.INTERLAYER_RDL_H_UM --- ECTC-2024, 2 x 10 um Cu plus dielectric"
+    material: rdl_effective
+    role: "48 V distribution from the TSV field into the power die"
+
+  - name: gan_hs
+    thickness_um: 685.0
+    provenance: SOURCE_BACKED
+    source: "zarch.GAN_HS_UM --- EPC2212 datasheet Side View, nominal (815 um max)"
+    material: gan_device
+    role: "high-side switch"
+
+  - name: gan_ls
+    thickness_um: 606.0
+    provenance: SOURCE_BACKED
+    source: "zarch.GAN_LS_UM --- EPC2090 datasheet, 518 +/- 25 die + 50 Cu + 3 Ni + 35 solder"
+    material: gan_device
+    role: "low-side switch"
+
+  - name: inductor
+    thickness_um: 500.0
+    provenance: SOURCE_BACKED
+    source: "geometry.inductor_library, the 250 nH part used by the compiled N3K3KA2 design"
+    material: inductor_effective
+    role: "output inductor"
+
+  - name: mlcc
+    thickness_um: 100.0
+    provenance: BOUNDED
+    bound_um: [0.0, 250.0]
+    source: >-
+      geometry.MLCC_H_UM --- the manufacturer page could not be reached in any phase. The
+      framework carries optimistic 0 / nominal 100 / pessimistic 250 um and sweeps it.
+    material: mlcc_effective
+    role: "flying and output capacitors"
+
+  - name: power_die_rdl_upper
+    thickness_um: 10.0
+    provenance: SOURCE_BACKED
+    source: "geometry.INTERLAYER_RDL_H_UM"
+    material: rdl_effective
+    role: "1 V collection plane on the power die"
+
+  - name: hybrid_bond
+    thickness_um: 10.0
+    provenance: SOURCE_BACKED
+    source: >-
+      zarch.path_for declares "10 um hybrid pads, the SHORTEST possible 1 V path" for the
+      power-die-to-compute-die connection.
+    material: microbump_underfill_homog
+    role: "power die to compute die attachment"
+
+# -------------------------------------------------------------------------------------
+# EFFECTIVE MATERIAL
+# -------------------------------------------------------------------------------------
+# The framework has ONE converter material, `hvr_effective` (k = 60 W/mK, E = 120 GPa,
+# CTE = 6e-6), derived in Phase 0B for the embedded cell and used for Z1's tile_band and
+# Z2's `conv` layer. Giving Z4 a different effective material would make the architecture
+# comparison a material comparison. Z4 therefore uses `hvr_effective` for its component
+# layers, exactly as Z1 and Z2 do, and the RDL and bond layers use their own materials.
+#
+# This is the point the brief warns about: the Z4 power die is NOT modelled as a generic
+# silicon slab. It is modelled as the same component stack the other two architectures
+# use, placed where Z4 puts it.
+# -------------------------------------------------------------------------------------
+
+effective_material:
+  component_layers: hvr_effective
+  provenance: DERIVED
+  source: >-
+    etm.config material `hvr_effective`, the same effective converter medium used by
+    ARCH_Z1 (tile_band) and ARCH_Z2 (conv). Identical material across architectures is
+    what makes the comparison a comparison of PLACEMENT.
+  properties_note: "k = 60 W/mK, E = 120 000 MPa, CTE = 6.0e-6 1/K"
+  density_heat_capacity: OPEN
+  density_note: >-
+    OPEN and not needed: every solve in this phase is steady state. Any transient claim
+    would require rho and c_p for this medium, which no source in this repository gives.
+
+# -------------------------------------------------------------------------------------
+# CONSTRUCTION VARIANTS --- the geometry question the sources do not settle
+# -------------------------------------------------------------------------------------
+variants:
+
+  - id: Z4_STACKED
+    primary: true
+    total_thickness_um: 1921.0
+    rule: "sum of all layer thicknesses"
+    provenance: DERIVED
+    rationale: >-
+      The components are stacked through-thickness, exactly as ARCH_Z1 stacks them in the
+      substrate power layers and ARCH_Z2 stacks them in its backside layer. This is the
+      only construction the framework's own converter model describes, and it keeps the
+      three architectures comparable.
+
+  - id: Z4_PLANAR
+    primary: false
+    total_thickness_um: 715.0
+    rule: "max(component heights) + both RDLs + bond = 685 + 10 + 10 + 10"
+    provenance: BOUNDED
+    rationale: >-
+      A real monolithic power die would place its components SIDE BY SIDE, so the stack
+      height would be set by the tallest part rather than by the sum. No source in this
+      repository describes such a die, and adopting it would also change the required
+      footprint, which the converter area model does not currently support. It is carried
+      as the lower bound of a two-point geometry sweep so the Z4 conclusion can be tested
+      for robustness across the construction question rather than resting on one choice.
+
+# -------------------------------------------------------------------------------------
+# WHAT REMAINS OPEN
+# -------------------------------------------------------------------------------------
+open_items:
+  - item: "monolithic power-die process and its layer stack"
+    status: OPEN
+    consequence: >-
+      Without it the choice between Z4_STACKED and Z4_PLANAR cannot be closed. Both are
+      run and the Z4 verdict is reported over the pair.
+  - item: "power-die footprint under the planar construction"
+    status: OPEN
+    consequence: >-
+      A planar die would need roughly the summed component area per cell. The converter
+      area model returns a tile area, not a planar power-die area, so the planar variant
+      is a THERMAL and MECHANICAL bound only and is not claimed to be routable.
+  - item: "density and specific heat of hvr_effective"
+    status: OPEN
+    consequence: "no transient result may be quoted for any architecture"

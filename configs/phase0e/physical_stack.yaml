@@ -1,0 +1,175 @@
+# Phase-0E: PHYSICAL metal stack, current-density envelope and TSV allocation policy.
+#
+# WHAT CHANGED FROM PHASE 0D-R
+# ----------------------------
+# Phase 0D-R validated the NUMERICS of a 2-D sheet (FD vs MOOSE 0.33-0.45 %) but the sheet
+# itself (t_Cu 5 um, 1 layer, occupancy 0.60) was an ASSUMPTION. Two primary sources by the
+# same group were recovered in Phase 0E and close it:
+#
+#   [ECTC-2024] Table I gives the RDL trace stack EXPLICITLY: t=10 um, W=10 um, S=2 um,
+#               P/G layers = 2. Self-consistency verified to 4 significant figures:
+#                 R/l   = rho/(W t)                = 170.00 Ohm/m  (paper: 170)
+#                 N_Hmax= sqrt(A_L)/(W+S)          = 1863 traces
+#                 R'_Heff = (R/l)/(n N_Hmax)       = 0.0456 Ohm/m  (paper: 0.046)
+#   [June-2026] Table III gives the ALLOCATED VIC count per level, and states the policy
+#               verbatim: "the number of parallel VICs per connection is sized based on the
+#               connection current and per-via current limit, with current assumed to be
+#               uniformly distributed across the allocated VICs."
+#
+# Both papers are internally self-consistent but differ from each other by 4x in copper
+# current density. That difference is the envelope, not an error.
+
+meta:
+  phase: 0E
+  supersedes: configs/phase0dr/power_path_graphs.yaml   # tiers/architectures still loaded from there
+  status_vocab: [SOURCE_BACKED, DERIVED_FROM_SOURCE, ASSUMPTION, OPEN]
+
+# ============================================================ RDL metal stack envelope
+# A stack is (n_layers_vdd, n_layers_gnd, t_cu, width, space). Occupancy is DERIVED as
+# W/(W+S) from the design rule -- it is not a free parameter once line/space is known.
+rdl_stacks:
+
+  ectc2024_primary:
+    label: "ECTC-2024 Table I RDL trace stack -- 2 VDD + 2 GND layers (primary source)"
+    status: SOURCE_BACKED
+    src: "Vertical Power Delivery for HPC Systems with Buck-Derived Regulators, ECTC 2024, Table I"
+    t_cu_m: 10.0e-6
+    width_m: 10.0e-6
+    space_m: 2.0e-6
+    n_vdd: 2
+    n_gnd: 2
+    note: >
+      The "P/G layers" column is used verbatim as n in eq. (1), and BOTH trace rows then
+      reproduce the paper's own R'_Heff to <2 %:
+        RDL n=2: R/l=170.0 Ohm/m, N_Hmax=1863 -> 0.0456  (paper 0.046)
+        PCB n=1: R/l=  3.20 Ohm/m, N_Hmax=36.8 -> 0.0869  (paper 0.087)
+      The PCB row DECIDES the otherwise ambiguous reading: a PCB power distribution cannot
+      have zero return path, so "P/G layers = 1" must count layers PER NETWORK. Hence the
+      RDL carries 2 VDD layers and 2 GND layers, not one of each.
+
+  ectc2024_one_per_net:
+    label: "Pessimistic reading: 1 VDD + 1 GND (retained as the lower bound)"
+    status: DERIVED_FROM_SOURCE
+    src: "alternative reading of the same table; rejected by the PCB-row cross-check above"
+    t_cu_m: 10.0e-6
+    width_m: 10.0e-6
+    space_m: 2.0e-6
+    n_vdd: 1
+    n_gnd: 1
+
+  iscas2024_variant:
+    label: "ISCAS-2024 text: RDL thickness 10 um, trace width 2 um"
+    status: SOURCE_BACKED
+    src: "Design Considerations for DC-DC VRs in DVPD Systems, ISCAS 2024, Sec. II"
+    t_cu_m: 10.0e-6
+    width_m: 2.0e-6
+    space_m: 2.0e-6
+    n_vdd: 1
+    n_gnd: 1
+    note: >
+      The ISCAS text states "trace width (32 um on PCB and 2 um for RDL) and thickness
+      (152 um on PCB and 10 um for RDL)". ECTC Table I lists W=10, S=2 for the same group's
+      RDL; the ISCAS sentence appears to transpose width and space. Both readings agree on
+      t_Cu = 10 um, so THICKNESS IS DOUBLY SOURCED. Carried as the pessimistic width bound.
+
+  phase0dr_legacy:
+    label: "Phase-0D-R assumed stack (superseded; kept for regression only)"
+    status: ASSUMPTION
+    t_cu_m: 5.0e-6
+    width_m: null            # occupancy was set directly, no line/space rule
+    space_m: null
+    occupancy_override: 0.60
+    n_vdd: 1
+    n_gnd: 0                 # ground was modelled as "x2 on the answer", not as a network
+    note: "Retained ONLY so the Phase-0D-R numbers can be reproduced bit-for-bit."
+
+default_stack: ectc2024_primary
+
+# ============================================================ current-density envelope
+# J is the provisioning current density that appears in N_alloc = 2 I / (A_conn * J)
+# (the factor 2 is the source's own P&G convention). Each paper is self-consistent across
+# INDEPENDENT tiers; the two papers differ by 4x for copper.
+current_density:
+  cu:
+    june2026:
+      value: 1.00e+8          # A/m^2
+      status: DERIVED_FROM_SOURCE
+      src: "June-2026 Table III: 200,000 pads (A=100 um^2) for 1 kA -> 1.000e8;
+            30,202 PL1 TSVs (A=707 um^2) -> 9.366e7. Two independent tiers agree to 6.8 %."
+      role: conservative_bound
+    ectc2024:
+      value: 4.00e+8
+      status: DERIVED_FROM_SOURCE
+      src: "ECTC-2024 Table I: advance pad N=R/R_Veff=50,000 -> 4.000e8;
+            TSV N=5,811 -> 4.027e8. Two independent tiers agree to 0.7 %."
+      role: aggressive_bound
+  solder:
+    june2026:
+      value: 1.74e+7
+      status: DERIVED_FROM_SOURCE
+      src: "June-2026: 132 BGAs for I_in,rms = I_out*sqrt(Vout/Vin) = 144.3 A"
+    ectc2024:
+      value: 3.97e+7
+      status: DERIVED_FROM_SOURCE
+      src: "ECTC-2024: C4 N=150 -> 3.972e7; BGA N=8.8 -> 4.221e7 (6 % apart)"
+
+# The distinction Phase 0E is required to make explicit.
+current_limit_semantics:
+  I_allocated_per_via:
+    status: DERIVED_FROM_SOURCE
+    definition: "J_provision * A_conductor, where J_provision is what the source authors used."
+  I_max_reliability:
+    status: OPEN
+    definition: "The electromigration/lifetime limit J(T, t_life, geometry, liner)."
+    why_open: >
+      No primary electromigration study giving a current-density limit WITH its temperature,
+      lifetime and geometry conditions could be retrieved in this environment: WebSearch is
+      disabled by organisation policy, the arXiv API returns no quantitative TSV EM design
+      limit, and the Semantic Scholar API returned HTTP 500/429. June-2026 does state that
+      "RMS current directly governs electromigration ... and long-term reliability of each
+      vertical link", which supports reading J_provision as reliability-motivated, but the
+      paper does not print the limit itself.
+    consequence: >
+      Feasibility is therefore reported as a MAP over J, never as a single verdict. No claim
+      of physical infeasibility is made for any architecture in Phase 0E.
+
+# ============================================================ TSV allocation policies (Sec. 4)
+# n_req  <= n_alloc <= n_avail   is enforced; R_eq = R_single / n_alloc (NOT / n_req).
+allocation_policies:
+  A_min_capability:
+    label: "n_alloc = n_req  (minimum current-capability provisioning)"
+    status: SOURCE_BACKED
+    src: >
+      June-2026 Sec. III-E verbatim: "Different nodes within a VR cell carry different
+      currents; the number of parallel VICs per connection is sized based on the connection
+      current and per-via current limit, with current assumed to be uniformly distributed
+      across the allocated VICs." This is the policy the June framework actually uses.
+    note: "Only under THIS policy does P_TSV become approximately linear in I."
+  B_geometric:
+    label: "n_alloc = floor(pg_fraction * footprint / pitch^2)  (fixed-density provisioning)"
+    status: ASSUMPTION
+    pg_fraction: 0.5
+    note: "Half the available via sites assigned to VDD, half to GND."
+  C_area_optimal:
+    label: "n_alloc chosen to minimise loss subject to n_req <= n_alloc <= n_avail"
+    status: MODEL_DERIVED
+    note: "Sensitivity probe only. Phase 0E does NOT globally optimise this."
+
+# ============================================================ validation targets
+# Source-backed numbers the Phase-0E model must reproduce without tuning.
+validation_targets:
+  ectc_table2_vr_to_pol:
+    A1_w: 76.0
+    A2_w: 39.5
+    conditions: "1 kW at 1 V (1000 A) into a 500 mm^2 die; A1 = periphery VRs, A2 = under-die"
+    src: "ECTC-2024 Table II"
+    note: "Independent check of the multilayer RDL solver against the source's own answer."
+  june_rdl_loss_share:
+    statement: "RDL power loss up to 8 % of total power"
+    src: "ECTC-2024 Sec. III-B"
+  june_thermal:
+    t_junction_c: 84.0
+    total_loss_w: 210.0
+    efficiency: 0.826
+    conditions: "1 kW A1, coolant 1.6 g/s"
+    src: "June-2026 Sec. IV-D"

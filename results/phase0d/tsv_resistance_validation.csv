@@ -1,0 +1,24 @@
+check,param,value_model,value_reference,error_pct,note
+june_reference,"R_single(300um,20C)",0.007215024086832588,0.0071,1.6200575610223664,"June-2026 Table III: Cu 17 nOhm.m, d=30um, h=300um, pitch=60um -> 7.1 mOhm"
+height_scaling,"R_single(h=100um,25C)",0.002452266436712949,0.0024522664367129495,-1.7684900078619246e-14,"R = rho(T)*h/A, linear in h"
+height_scaling,"R_single(h=200um,25C)",0.004904532873425898,0.004904532873425899,-1.7684900078619246e-14,"R = rho(T)*h/A, linear in h"
+height_scaling,"R_single(h=300um,25C)",0.007356799310138848,0.007356799310138848,0.0,"R = rho(T)*h/A, linear in h"
+height_scaling,"R_single(h=400um,25C)",0.009809065746851796,0.009809065746851798,-1.7684900078619246e-14,"R = rho(T)*h/A, linear in h"
+height_scaling,"R_single(h=500um,25C)",0.012261332183564748,0.012261332183564745,2.82958401257908e-14,"R = rho(T)*h/A, linear in h"
+height_scaling,"R_single(h=600um,25C)",0.014713598620277695,0.014713598620277695,0.0,"R = rho(T)*h/A, linear in h"
+diameter_scaling,"R_single(d=15um,25C)",0.029427197240555394,0.029427197240555394,0.0,R ~ 1/d^2
+diameter_scaling,"R_single(d=30um,25C)",0.0073567993101388484,0.0073567993101388484,0.0,R ~ 1/d^2
+diameter_scaling,"R_single(d=60um,25C)",0.0018391998275347121,0.0018391998275347121,0.0,R ~ 1/d^2
+parallel_scaling,R_field(n=1),0.007356799310138848,0.007356799310138848,0.0,R_field = R_single/n
+parallel_scaling,R_field(n=2),0.003678399655069424,0.003678399655069424,0.0,R_field = R_single/n
+parallel_scaling,R_field(n=4),0.001839199827534712,0.001839199827534712,0.0,R_field = R_single/n
+parallel_scaling,R_field(n=10),0.0007356799310138847,0.0007356799310138847,0.0,R_field = R_single/n
+parallel_scaling,R_field(n=100),7.356799310138847e-05,7.356799310138847e-05,0.0,R_field = R_single/n
+temperature_cu,rho_Cu(25C),1.7334049999999998e-08,1.7334049999999998e-08,0.0,alpha_Cu=0.00393 /K
+temperature_gan,R_DSon_norm(25C),1.0,1.0,0.0,alpha_GaN=0.0075 /K ASSUMPTION
+temperature_cu,rho_Cu(55C),1.933835e-08,1.933835e-08,0.0,alpha_Cu=0.00393 /K
+temperature_gan,R_DSon_norm(55C),1.225,1.225,0.0,alpha_GaN=0.0075 /K ASSUMPTION
+temperature_cu,rho_Cu(85C),2.134265e-08,2.134265e-08,0.0,alpha_Cu=0.00393 /K
+temperature_gan,R_DSon_norm(85C),1.45,1.45,0.0,alpha_GaN=0.0075 /K ASSUMPTION
+temperature_cu,rho_Cu(125C),2.401505e-08,2.401505e-08,0.0,alpha_Cu=0.00393 /K
+temperature_gan,R_DSon_norm(125C),1.75,1.75,0.0,alpha_GaN=0.0075 /K ASSUMPTION

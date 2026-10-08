@@ -1,0 +1,26 @@
+# Phase-0I Sec.7 -- volumetric heat capacity for the transient thermal solve.
+#
+# The Phase-0B..0H stack carries thermal CONDUCTIVITY only, because every previous thermal
+# solve was steady state. A transient solve needs rho*cp as well.
+#
+# STATUS: every value here is a HANDBOOK ASSUMPTION, not a source from the DVPD reference
+# system. They are adequate for the purpose they are used for -- establishing the thermal TIME
+# CONSTANT of the package, so that the dwell length of a thermal cycle can be justified rather
+# than assumed -- and they are NOT used to predict any absolute temperature. The steady-state
+# field, which is what the damage assessment actually consumes, is unaffected by rho*cp.
+meta:
+  purpose: "transient thermal time constant only"
+  status: ASSUMPTION
+  note: "rho*cp affects the TIME to reach steady state, never the steady state itself"
+materials:
+  silicon:         {rho_kg_m3: 2330, cp_J_kgK: 700,  basis: handbook}
+  copper:          {rho_kg_m3: 8960, cp_J_kgK: 385,  basis: handbook}
+  tim:             {rho_kg_m3: 2500, cp_J_kgK: 700,  basis: handbook}
+  underfill_homog: {rho_kg_m3: 1600, cp_J_kgK: 900,  basis: handbook, note: "filled epoxy"}
+  hvr_effective:   {rho_kg_m3: 4000, cp_J_kgK: 500,  basis: ASSUMPTION,
+                    note: "homogenised GaN + MLCC + inductor + Cu; no source"}
+  tsv_homog:       {rho_kg_m3: 4500, cp_J_kgK: 550,  basis: ASSUMPTION,
+                    note: "Cu via field in silicon"}
+  board_fr4:       {rho_kg_m3: 1850, cp_J_kgK: 1100, basis: handbook}
+  bga_homog:       {rho_kg_m3: 7400, cp_J_kgK: 220,  basis: handbook, note: "SAC solder"}
+  support_foundation: {rho_kg_m3: 1500, cp_J_kgK: 900, basis: ASSUMPTION}

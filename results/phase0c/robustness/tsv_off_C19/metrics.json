@@ -1,0 +1,181 @@
+{
+  "case": "C19",
+  "spec": {
+    "n_vr": 4,
+    "placement": "asymmetric_left",
+    "tile_ax": 4.899,
+    "tile_ay": 4.899,
+    "h_sub": 0.2,
+    "p_hvr_total_w": 31.5,
+    "question": "0.75x HVR heat: separates geometry effect from HVR-loss uncertainty."
+  },
+  "mesh": {
+    "h_xy_mm": 0.45,
+    "z_scale": 1.0,
+    "h_max_factor": 3.0,
+    "graded": true,
+    "element_type": "C3D8I",
+    "tsv_discrete_pitch": null,
+    "n_nodes": 19776,
+    "n_elems": 16713,
+    "n_z_planes": 12,
+    "elems_through_substrate": 5,
+    "elems_through_die": 3
+  },
+  "loads": {
+    "p_die_W": 240.0,
+    "p_hvr_total_W": 31.5,
+    "p_per_tile_W": 7.875,
+    "q_die_W_per_mm3": 1.6000972859149836
+  },
+  "cooling": {
+    "h_top_W_m2K": 17521.63541738819,
+    "h_bot_W_m2K": 10.0,
+    "a_top_mm2": 499.9696000000014,
+    "a_bot_mm2": 899.9999999999943
+  },
+  "bc": {
+    "bc": "BC_A",
+    "n_bottom_nodes": 2208,
+    "z_bottom_mm": 0.0,
+    "anchor_nodes": {
+      "A_xyz": 1,
+      "B_yz": 19489,
+      "C_z": 283
+    },
+    "anchor_coords": {
+      "A_xyz": [
+        -15.0,
+        -15.0,
+        0.0
+      ],
+      "B_yz": [
+        15.0,
+        -15.0,
+        0.0
+      ],
+      "C_z": [
+        -15.0,
+        15.0,
+        0.0
+      ]
+    },
+    "dofs_removed": 6,
+    "solver": "SPOOLES"
+  },
+  "tiles": [
+    {
+      "cx": -8.2305,
+      "cy": -5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 7.875
+    },
+    {
+      "cx": -8.2305,
+      "cy": 5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 7.875
+    },
+    {
+      "cx": -2.8314999999999992,
+      "cy": -5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 7.875
+    },
+    {
+      "cx": -2.8314999999999992,
+      "cy": 5.59,
+      "ax": 4.899,
+      "ay": 4.899,
+      "P_W": 7.875
+    }
+  ],
+  "thermal": {
+    "T_max_C": 80.6457,
+    "T_min_C": 52.392,
+    "T_mean_C": 65.11089095873787,
+    "hotspot_xyz_mm": [
+      -7.6586,
+      -5.0181,
+      0.05
+    ],
+    "Q_in_W": 271.5,
+    "Q_out_W": 271.4999907752296,
+    "energy_residual_pct": -3.3977054860651376e-06
+  },
+  "structural": {
+    "die_warpage_pv_um": 7.3028699999999995,
+    "pkg_warpage_pv_um": 9.083559999999999,
+    "uz_max_um": 0.0219583,
+    "uz_min_um": -9.083559999999999,
+    "n_die_top_nodes": 1088,
+    "n_pkg_bot_nodes": 2208,
+    "si_principal_MPa": {
+      "raw_max": 24.276999921447462,
+      "p99": 16.87318764767448,
+      "p95": 8.811986772186675,
+      "n": 13568
+    },
+    "hvr_tile_vm_MPa": {
+      "raw_max": 25.61369573837809,
+      "p99": 25.60482282106291,
+      "p95": 25.3162756801101,
+      "n": 288
+    },
+    "interface_shear_MPa": {
+      "raw_max": 2.207343661349768,
+      "p99": 1.9261975467840833,
+      "p95": 1.5095043702156017,
+      "n": 2176
+    },
+    "interface_peel_MPa": {
+      "raw_max": 4.32307,
+      "p99": 2.9416425000000004,
+      "p95": 1.44107,
+      "n": 2176
+    },
+    "interface_peel_excl025_MPa": {
+      "raw_max": 4.32307,
+      "p99": 2.99381,
+      "p95": 1.45304,
+      "n": 1856
+    },
+    "interface_shear_excl025_MPa": {
+      "raw_max": 2.207343661349768,
+      "p99": 2.0017450570212483,
+      "p95": 1.5557740202857224,
+      "n": 1856
+    },
+    "interface_peel_excl050_MPa": {
+      "raw_max": 4.32307,
+      "p99": 2.99666,
+      "p95": 1.45304,
+      "n": 1620
+    },
+    "interface_shear_excl050_MPa": {
+      "raw_max": 2.207343661349768,
+      "p99": 1.8544619398510178,
+      "p95": 1.5477868989556538,
+      "n": 1620
+    },
+    "interface_peel_excl100_MPa": {
+      "raw_max": 4.32307,
+      "p99": 2.997316,
+      "p95": 1.452413,
+      "n": 1560
+    },
+    "interface_shear_excl100_MPa": {
+      "raw_max": 2.207343661349768,
+      "p99": 1.975409449231375,
+      "p95": 1.5368875478684392,
+      "n": 1560
+    },
+    "interface_excl_note": "excl<NNN> = nodes at least NNN/100 mm inside the underfill perimeter, excluding the free-edge corner"
+  },
+  "overrides": {},
+  "tsv_enabled": false,
+  "runtime_s": 15.0
+}

@@ -1,0 +1,55 @@
+frozen: true
+frozen_by: Phase 0M-R3 Section 13, before any ETM result was seen
+architecture: ARCH_Z1_EMBEDDED
+verdict: CONDITIONAL_REALIZABLE
+why_not_proven: two conditions of the frozen realizability contract -- C_package_clearance
+  and L_cooling_clearance -- depend on OPEN inputs. The candidate passes at all 27 corners
+  of the bounded envelope, which is the strongest verdict reachable while those three clearances
+  are unsourced.
+corners_passing: 27/27
+converter:
+  m_vr: 49
+  j_target: 3.5
+  component_height_bound: nominal
+  inductor: Shared_Core_UIC_250_nH
+  inductor_height_um: 500.0
+  inductor_i_sat_a: 23.0
+  hs_device: EPC2014C
+  ls_device: EPC2057
+  f_sw_hz: 805170.3343770516
+  i_per_cell_a: 20.408163265306122
+  cell_area_mm2: 5.61
+  source: kw1.design_1kw, existing compiler, existing device library
+repair_applied:
+  what: intra-VR via radius 15.0 -> 20.0 um
+  pitch_um: 70.0
+  pitch_rule: max(2r + s_min, 2r(1+koz)) with s_min = 30 um SOURCE_BACKED
+  legality: inside the sourced range design_variables.tsv.radius_m = {lo 2.5 um, nominal 15
+    um, hi 50 um}
+  why: 'the binding constraint was the ls_to_L via stack carrying 20.4 A at 1.236x the vias
+    available. n_required scales as 1/r^2 and n_available as 1/p^2, so the ratio goes as (p/r)^2:
+    16.0 at r=15, 12.25 at r=20.'
+  nothing_else_changed: true
+geometry:
+  tsv_span_um: 74.0
+  tsv_AR: 2.466666666666667
+  tsv_AR_margin: 4.0540540540540535
+  cell_space_um: 1250.0
+  h_sub_for_compiler_mm: 1.52
+margins_at_worst_corner:
+  area_ratio: 0.5638295187107542
+  height_ratio: 0.584
+  routing_ratio: 0.9344262295081968
+  current_density_ratio: null
+  tsv_count_ratio: 0.009298305351109249
+  tsv_AR_ratio: 0.24666666666666667
+load_w: 1000.0
+package_budget_mm2: 500.0
+unchanged:
+- 1 kW load
+- package footprint
+- substrate TSV geometry
+- cooling design
+- bump geometry
+- RDL stack
+- device library

@@ -1,0 +1,528 @@
+                       An Acceleration Model for Lead-Free (SAC) Solder Joint Reliability
+                                           under Thermal Cycling
+
+                                                    Vasu Vasudevan* and Xuejun Fan**
+                                     * Intel Corporation, 5200 Elam Young Pkwy, Hillsboro, OR 97124
+                                                        vasu.s.vasudevan@Intel.com
+                                                 ** Department of Mechanical Engineering
+                                           Lamar University, PO Box 10028, Beaumont, TX 77710
+                                                           xuejun.fan@lamar.edu
+
+
+                                                                              come from various types of packages, such as FCBGA,
+Abstract
+                                                                              CBGA, CSP, QFP and die-side capacitor packages. The test
+     The electronics industry has successfully transitioned from              data also include extended cycle time effect and maximum
+Sn/Pb to Pb free (LF) solder for computing and consumer                       temperature as well as the temperature range effect.
+electronics applications. However, there is no industry-wide
+standardized LF solder joint reliability model (neither                       2. Review: Lifetime Prediction Models for Solder Joint
+empirical nor FEA-based) available for solder fatigue                         Fatigue
+reliability assessment. A LF solder fatigue model has been                        Solder joint fatigue is considered as low-cycle failure.
+proposed in this paper based on a 3-parameter modified                        Therefore almost all lifetime prediction models originate from
+Coffin-Manson approach. The proposed model showed best                        the Coffin-Manson’s equation
+fit to the experimental data (17 pairs of temperature cycle test
+data) from different sources for multiple package types and                    N ( ∆ε p ) n = C
+sizes including various test conditions. The model fit to the                                                                                                            (1)
+experimental data was excellent and the error was less than                   where N is the number of cycles to failure, ∆εp is the plastic
+6%. This analysis showed that the LF acceleration factor (AF)                 strain range per cycle, n is an empirical material constant, and
+model is not significantly different from the Sn/Pb model and                 C is a proportionality factor. A fatigue failure always begins
+proposed model provides best fit to experimental results.                     at a local discontinuity such as the area of stress concentration
+                                                                              near solder/pad interface. Plastic strain accumulates each
+1. Introduction
+                                                                              cycle resulting in failure. The acceleration factor (AF) can be
+    While the electronics industry has successfully completed
+                                                                              defined based on equation (1) as follows
+the transition to Pb-free (LF) technology for computing and                                                               −n
+                                                                                        N 1 ⎛⎜ ∆ε p ⎞⎟
+                                                                                                    1
+consumer electronics applications, there is still no
+standardized LF solder joint reliability model (neither                            AF =    =
+empirical nor FEA-based) available for solder fatigue.                                  N 2 ⎜⎝ ∆ε p 2 ⎟⎠
+                                                                                                                                     (2)
+Numerous studies have been published regarding the thermal
+cycling reliability of SnAgCu solder joints under accelerated                 where N1 and N2 are fatigue life under two different cyclic
+test conditions [e.g., 1-5]. The acceleration factor (AF)                     loading conditions, which correspond to the plastic strain
+models for LF are of particular interests to the electronics                  range ∆εp1 and ∆εp2 respectively. Equation (2) has been
+industry for the simple reason that the solder joint reliability              widely used since the field life (e.g. N1) can be related to a
+in field power cycling conditions can be predicted in a simple                test life (e.g. N2) with an empirical material constant n if the
+yet accurate manner. Pan et al [6] first attempted to obtain an               plastic strain range at each loading condition can be
+acceleration factor model using several thermal cycle profiles,               calculated. Norris and Landzberg [9] assumed that the plastic
+in which the temperature range, maximum temperature and                       strain range is proportional to the temperature excursion
+the cycle time or frequency were systematically varied.                       range, and further introduced two more factors to account for
+However, it has been shown in several studies [7,8] that this                 the effects of temperature-cycling frequency f and the
+model prediction is not well correlated with experimental                     maximum temperature Tmax of the solder material. By doing
+results. Studies by Salmela [8], and Zhang and Clech [7]                      this, the AF equation obtains the form:
+evaluated several different types of AF models. Those AF                                                        −m                 − n ⎛ Ea ⎛⎜ 1           1       ⎟⎞
+                                                                                                                                                                   ⎞
+
+models also include models based on the compact strain                                 N         ⎛f        ⎞         ⎛ ∆Tfield   ⎞ ⎜ k ⎜⎝ Tmax, field − Tmax,test ⎟⎠ ⎟   (3)
+                                                                                   AF = field = ⎜⎜ field   ⎟⎟        ⎜⎜          ⎟⎟ ⎜ e                              ⎟
+energy analysis and the finite element analysis. It showed that                        N test ⎝ f test      ⎠         ⎝ ∆Ttest    ⎠ ⎜                                ⎟
+                                                                                                                                       ⎝                             ⎠
+the FEA based models have limited success in predicting the
+AF factors, especially when test conditions and package types                 where “ field ” and “ test ” denote the field and the test
+vary dramatically.                                                            condition, respectively. The Norris-Landzberg model can also
+    In this paper, a LF acceleration factor model is proposed                 be used to compare two different field or test conditions. Ea is
+based on the Norris-Landzberg equation. A total of 17 pairs                   the activation energy, and k is Boltzmann’s constant. For
+of experimental data suitable for acceleration factor                         SnPb eutectic solder,
+computations, taken from Intel and industry published test
+                                                                              m=1/3, n=1.9, and Ea/k = 1414                                                              (4)
+data, were used to calibrate and support the model. These data
+
+978-1-4244-2231-9/08/$25.00 ©2008 IEEE                                   139      2008 Electronic Components and Technology Conference
+ Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:05:13 UTC from IEEE Xplore. Restrictions apply.
+    Pan et al [6] obtained a new set of parameters based on                                                      m
+                                                                                      N    ⎛ ∆W p        1
+                                                                                                             ⎞
+their experiments for SnAgCu soldered components,
+                                                                                  AF = 1 = ⎜                 ⎟
+including ceramic Ball Grid Array (CBGA) components, Chip                             N 2 ⎜⎝ ∆W p 2          ⎟
+                                                                                                             ⎠
+Scale Packages (CSP), and Thin Small-Outline Packages                                                                                          (11)
+(TSOP). The new set of coefficients are
+                                                                                  It is noted that the empirical material constant (exponent
+m=0.136, n=2.65, and Ea/k = 2185                                      (5)     m) will be different from that when the plastic strain range is
+                                                                              used.
+    Engelmaier [10] proposed an analytical form of the
+                                                                                  Clech [13] developed an analytical model to compute the
+Coffin-Manson’s equation to obtain the plastic strain range
+                                                                              plastic strain energy range. The stabilized hysteresis loops are
+analytically. The original form of Engelmaier’s model
+                                                                              computed for shear deformations driven by the global CTE
+consists of two parts: the physical part and the statistical part
+                                                                              mismatch between board and component, and for normal
+by a 2-parameter Weibull distribution. The combination of
+                                                                              stresses and strains driven by local CTE mismatches between
+these two parts can be presented as a number of cycles N (x%)
+                                                                              solder and the interconnected parts. The methodology was
+until x% of the population have failed as
+                             1
+                                                                              first developed by Hall [14, 15] in the simulation of measured
+                         −                         1
+                                                                              hysteresis loops for SnPb assemblies. The method applies to
+         1 ⎛ 2ε         ⎞ c ⎛ ln(1 − 0.01x) ⎞ β
+N ( x%) = ⎜ c           ⎟ ⎜                 ⎟                                 any shape of a periodic temperature profile, including
+         2 ⎜⎝ ε p       ⎟ ⎝
+                        ⎠         ln 0.5    ⎠                                 trapezoidal, saw-tooth and sine profiles.
+                                                          (6)                     Finite Element Analysis (FEA) has been utilized
+where εp is the potential cyclic fatigue damage at complete                   extensively to calculate the plastic strain range or plastic
+stress relaxation, and εc is the fatigue ductility coefficient, c             strain density range [1-5, 16-19]. Finite element models can
+is the fatigue ductility exponent, and β is the shape parameter               take into consideration the interaction among components in
+of the Weibull distribution. εp for leadless packages can be                  an assembly with little or no geometric simplification. It also
+presented as                                                                  offers the advantage of being able to solve the full field
+                                                                              equations and provide stress/strain information on all solder
+       FL∆α∆Te                                                                joints. However, this does not necessarily translate the FEA
+εp =                                                                          approach into one with superior accuracy in predicting the
+          h                                                       (7)
+                                                                              fatigue life over other simplified empirical models. There are
+where F is empirical non-ideality factor, L is half of the                    several FEA based SnAgCu fatigue life models such as [17],
+maximum distance between component solder joints                              [18], and [19]. However, many of them showed limited
+(Distance form Nnutral point), ∆α is the absolute difference in               success.
+coefficients of thermal expansion of the component and the
+substrate, ∆Te is equivalent cycling temperature range and h                  3. Experimental Data Collection
+is solder joint height. ∆Te can be presented as                                   In the following, the experimental data from various
+                                                                              sources will be listed, and used to recalibrate the Norris
+             α s ∆Ts − α c ∆Tc                                                Landzberg model. In order to achieve this, the test data must
+    ∆Te =                                                                     the following criteria:
+                    ∆α                                         (8)                 1. The experimental data must be available to calculate
+                                                                                       the life with 50% failure rate and the requirement on
+                                                                                       the statistical pattern is met;
+where s denotes substrate and c denotes component. For                             2. The test data must include two temperature cycling
+leaded packages, the strain range is approximated as                                   conditions, with all specific cyclic loading details
+                                                                                       included to obtain the temperature range, maximum
+         FK d ( L∆α∆Te ) 2
+    εp =                                                                               temperature and the cyclic frequency.
+                 Ah                                            (9)                Table 1 shows those test data taken from published papers
+                                                                              by Intel on FCBGA, socket, and die side capacitor (DSC)
+where Kd is the diagonal flexural lead stiffness and A is the                 packages. Both SAC105 and SAC405 data are shown in
+effective solder bond area. Salmela [12] recalibrated the                     Table 1 and the temp behavior is similar for both alloys. The
+Engelmaier model by replacing the fatigue ductility                           experimental test procedures were provided in our previous
+coefficient by temperature-dependent and solder material                      paper [1]. An Air to air temperature cycle test was used. The
+specific correction term. Osterman [11] presented a new set of                in-situ monitoring on the resistance change were correlated to
+constants based on the Engelmaier model for SnAgCu solder.                    solder joint cracks using dye and pull test and cross-section
+    An extension to the original Coffin-Manson equation is to                 analysis. In order to investigate the SnAgCu fatigue
+use the plastic strain energy density instead of the plastic                  performance under the extended cycle time, several special
+strain range to represent the cumulative damage on solder                     temperature cycle profiles have been defined. For socket, the
+joint. Equation (1) and (2) based on the plastic strain energy                total cycle time is 480 minutes per cycle to investigate the
+density range can be re-written as                                            SnAgCu performance in power cycling conditions.
+N (∆W p ) m = C ′
+                                                               (10)
+
+                                                                            140    2008 Electronic Components and Technology Conference
+ Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:05:13 UTC from IEEE Xplore. Restrictions apply.
+Table 1: SAC thermal cycling data collection from Intel (refs.1, 3)               Table 3 lists the package information and test data from
+                                                                              ref. [18] for SAC305/405. In order to evaluate the reliability
+Solder                                                          AF
+             Package                TC Conditions 1 & 2                       of solder joints, accelerated temperature cycle tests were
+Alloy                                                           test
+                                                                              conducted on various packages. The data were generated on
+                           -40°C to 85°C, cycle time 46min                    packages of sizes varying from 8x8mm to 27mmx27mm and
+SAC405       FCBGA                                              1.2           various die sizes. All packages used in this study used
+                           -40°C to 85°C, cycle time 76min                    electrolytic NiAu plating on the ball lands and the test boards
+                                                                              had OSP surface finish. Three test conditions were used to
+             CSP-
+                           -40°C to 125°C, cycle time 30min                   generate the test data as shown in Table 3. These temperature
+SAC105                                                          2.5           cycle conditions cover the range of accelerated conditions
+             BGA
+                           -25°C to 100°C, cycle time 30min                   typically used by the industry to evaluate solder joint
+                                                                              reliability for various applications.
+                           -25°C to 100°C, cycle time 60min
+SAC405       Socket                                             2.1           Table 3, Test conditions and acceleration factors from test (ref. 18)
+                           -25°C to 100°C, cycle time 480min
+                                                                                                                                              AF
+                                                                                            Package           Test conditions TC1 & TC2
+                                                                                  Alloy                                                       Test
+                           -40°C to 85°C, cycle time 46min
+SAC405       CSP                                                1.4
+                                                                                                          0°C to 100°C, cycle time 30min
+                           0°C to 125°C, cycle time 120min                                 flexBGA                                             3.5
+                                                                                   SAC
+                                                                                                         -55°C to 125°C, cycle time 30min
+                           -40°C to 85°C, cycle time 46min
+SAC405       FCBGA                                              3.2
+                                                                                                          0°C to 100°C, cycle time 30min
+                           0°C to 125°C, cycle time 120min                         SAC     flexBGA                                             3.7
+                                                                                                         -40°C to 125°C, cycle time 60min
+                           -40°C to 85°C, cycle time 46min
+SAC405       FCBGA                                              2.5                                      -40°C to 125°C, cycle time 60min
+                                                                                             Plastic
+                           0°C to 125C, cycle time 120min                          SAC                                                         1.5
+                                                                                              CSP
+                                                                                                         -55°C to 125°C, cycle time 30min
+             Die-side      -25°C to 100°C, cycle time 30min
+SAC405       capacitor                                          1.5                                       0°C to 100°C, cycle time 30min
+             package       -25°C to 125°C, cycle time 30min                        SAC       CBGA                                              2.5
+                                                                                                         -40°C to 125°C, cycle time 60min
+             Die-side      -25°C to 125°C, cycle time 30min
+SAC405       capacitor                                          1.9
+             package       -55°C to 125°C, cycle time 30min                      CALCE [11] investigated the SnAgCu performance for
+                                                                              CLCC, TQFP and TSOP packages under thermal cycling, as
+    Table 2 gives the test data used by Zhang and Clech [7].                  shown in Table 4. In that study, two temperature-cycling
+For PBGA assembly, the accelerated thermal cycling                            conditions were applied to independent groups of test
+conditions were thermal cycling between 0°C and 100°C with                    assemblies. The first test subjected a set of test assemblies to a
+10 minutes ramps (up and down), 10 minutes dwells at 0°C,                     temperature cycle of -55 to 125°C. The second test subjected
+and 10 minutes or 60 minutes at 100°C, respectively. For                      another set of test specimens to a smaller temperature cycle of
+CBGA, three temperature cyclic profiles were used, but with                   -20 to 80°C. For both tests, the dwell time at the maximum
+the fixed total cycle time as 80 minutes. Total cycle time was                temperature was 30 minutes and dwell time at the minimum
+used for acceleration factor calculation.                                     temperature was 10 minutes.
+
+Table 2: Test conditions and acceleration factors from test (ref. 7)          Table 4 Test conditions and acceleration factors from test (ref. 11)
+
+    Solder                                                        AF             Solder                                                          AF
+                 Package          TC Conditions 1 & 2                                         Package          TC Conditions 1 & 2
+    Alloy                                                         test           Alloy                                                           Test
+
+                                                                                 SAC                       -20°C to 80°C, cycle time 76min
+                             0°C to 100°C, cycle time 90min
+                                                                                 Sn3.9        CLCC20                                             1.2
+    SAC305       PBGA                                             1.2
+                                                                                 Ag 0.7
+                             0°C to 100°C, cycle time 48min                      Cu                        -55°C to 125°C, cycle time 60min
+
+
+                             0°C to 100°C, cycle time 80min                      SAC                       -20°C to 80°C, cycle time 70min
+                                                                                 Sn3.9        TQFP
+    SAC305       CBGA                                             2.5                                                                            2.5
+                                                                                 Ag 0.7       144
+                             30°C to 80°C, cycle time 80min                      Cu                        -55°C to 125°C, cycle time 60min
+
+                             -40°C to 125°C, cycle time 80min                    SAC                       -20°C to 80°C, cycle time 76min
+    SAC305       CBGA                                             2.1            Sn3.9        TSOP50                                             2.1
+                             30°C to 80°C, cycle time 80min                      Ag 0.7
+                                                                                 Cu                        -55°C to 125°C, cycle time 60min
+
+
+
+                                                                         141      2008 Electronic Components and Technology Conference
+ Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:05:13 UTC from IEEE Xplore. Restrictions apply.
+ 4. Acceleration Model                                                        assembly when all the data were used. Although it has been
+     SAC solder is more creep resistant than Sn/Pb solder                     generally accepted that SnAgCu performs better than Sn/Pb,
+under most conditions. However, temperature, and cycle time                   the acceleration factor, in particular, in terms of the extended
+still have significant impact on the thermal fatigue life of SAC              cycle time and maximum temperature range effect, is similar
+solder joints, as shown from the test data above. The impact                  to Sn/Pb. The individual data fit for a particular set with
+of the extended cycle time on solder joint reliability for both               respect to the cycle time or maximum temperature may not be
+Sn/Pb and SAC 405 has been characterized by Vasudevan et                      ideal using the above coeffients, but the overall fit is very
+al [1] and showed no cross-over for both Sn/Pb and LF even                    good. The acceleration model in equation (12) was used to
+after 8 hrs cycle time. Both Sn/Pb and LF solder showed                       compare the predicted and observed acceleration factor (AF),
+decrease in fatigue performance with the increase in dwell                    as shown in Figure 1. Figure 1 shows that the acceleration
+time. Solder joint fatigue life scales inversely with cyclic                  model gives satisfactory results when compared with the data
+shear strain range (∆Γ) for both Sn/Pb and LF. High strain                    generated from various sources. The error in mean based on
+components (∆Γ= {L. ∆α. ∆T/h) such as large ceramic BGA                       the 17 data sets for the new model is 5.8%. It can be seen that
+and CLCC showed a temperature-dependent behavior [20] for                     the test conditions and data collected above have a wide
+solder fatigue performance. Osterman [20] showed that there                   spread, with different temperature range, different maximum
+is a cross-over in temperature cycle performance for SAC                      temperature and, in particular, the cycle time ranging from 45
+solder compared to Sn/Pb for high strain packages such as                     minutes to 480 minutes. The newly proposed model fit all 17
+CLCC. Their study showed that for the same temperature                        pairs of test data with an average deviation less than 6% and
+range, if the Tmax is 100oC or lower, LF performed better                     data used were from LF SAC alloy system (3 to 4.0% Ag and
+than Sn/Pb. However, when Tmax was 125oC, LF showed                           0.5 to 0.7 % Cu range). One can perform similar analysis for
+poor performance compared to Sn/Pb. This behavior was                         low cyclic strain components and expected n values will be at
+hypothesized as a potential shift in solder fatigue damage                    the higher end of Sn/Pb C-M coefficients (2.1 to 2.2 range).
+mechanism. Based on Intel test data, when Tmax was below                      It is surprising to see a general fit to the original Norris and
+100oC and the ramp rate was below 15oC/min, the LF                            Landzberg model and hence for LF solder, the original Sn/Pb
+temperature cycle results showed improved solder fatigue                      solder fatigue model can be used. Depending on the package
+performance compared to Sn/Pb [1]. Typically when cyclic                      type and material choices, the fatigue model coefficients can
+shear strain is lower than ~6%, the SAC alloy showed better                   vary slightly.
+fatigue performance. As a general design practice for                                              14
+                                                                                                            Master line
+reliability, the recommended strain ranges are lower than 6%
+                                                                                                            Proposed LF model (Industry data)
+(1-2% range typical). The failure mode, failure signature, the                                     12       Proposed LF model (Intel data)
+location, and the interface separation for LF solder are similar
+to Sn/Pb solder in temperature cycle test, even in extended                                        10
+cycle time testing [1]. Therefore, the modified Coffin-Manson
+                                                                                    Predicted AF
+
+
+
+
+equation proposed by Norris and Landzberg should still be a                                        8
+viable empirical acceleration model for SAC alloys. For this
+reason, we used the same form as in equation (3) for our SAC                                       6
+solder acceleration model. The coefficient in the temperature
+range, frequency, and Tmax terms were fit from the                                                 4
+experimental results for SAC solder joints at various thermal
+cycle conditions. Different from Pan et al’s extension, the                                        2
+cyclic frequency is sill used other than dwell time. A
+nonlinear curve fit was performed to simultaneously fit the                                        0
+three coefficients with the thermal cycling test results given in                                       0    2      4       6       8       10   12   14
+Tables 1-4. In order to have a consistency with the original                                                                Test AF
+Norris-Landzberg model, some adjustment has been made.
+The resulting acceleration model is given as follows                          Figure 1 Acceleration factor (AF) predicted with equation
+                                                                              (12) vs. observed AF from test data in various sources
+                      −m        − n ⎛ Ea ⎛ 1   1 ⎞⎞
+         N 1 ⎛ f1 ⎞ ⎛ ∆T1 ⎞ ⎜ k ⎜⎜⎝ Tmax,1 − Tmax, 2 ⎟⎟⎠ ⎟                    5. Extended Cycle Time Effect and Failure Analysis
+    AF =    =⎜ ⎟ ⎜             ⎟ e
+         N 2 ⎜⎝ f 2 ⎟⎠ ⎜⎝ ∆T2 ⎟⎠ ⎜⎜                      ⎟⎟                        One of the key concerns for the LF acceleration factor
+                                    ⎝                     ⎠                   estimation is the incorporation of the effect of LF creep. The
+                                                                              effect of extended cycle time on temperature cycle
+                                                               (12)           performance of LF solder was compared with Sn/Pb in Fig. 2.
+                                                                              The improved fatigue performance in 8 hrs cycle time test for
+with
+                                                                              LF was observed. Solder joint analysis was performed for
+   m=0.33, n= 1.9, and Ea/k = 1414                                            both passing and failing samples to understand the failure
+                                                                              mechanism, mode, location etc. Both X-section and dye and
+    Surprisingly, the coefficients are very similar to the                    peel tests were used to understand the solder crack signature,
+original values of the Norris-Landzberg model for Sn/Pb                       size, frequency and location. The failure signature, failure
+
+                                                                         142      2008 Electronic Components and Technology Conference
+ Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:05:13 UTC from IEEE Xplore. Restrictions apply.
+mode, location and mechanism were the same for both LF and                    discrepancies with the experimental results. Although Pan’s
+Sn/Pb samples. Fig. 3 shows the X-section images for Sn/Pb                    own data fit very well with the predicted values, Syed’s data,
+and LF samples post 1400 cycles of 8 hrs test with bigger size                CALCE’s data do not fit the line very well [12]. The error in
+solder crack for Sn/Pb compared to LF. There is no change in                  mean based on all 17 data set was plotted in Fig. 4 for the
+failure location, mode, or the type of interface separation                   model proposed here against Pan et al’s model.
+(board side cracks) between 60 and 480 minutes cycle time.
+Fig. 3 showed for the same temperature cycle readout LF had
+                                                                                                   14
+a lower crack size compared to Sn/Pb even at 480 min cycle                                                  Master line
+time. This suggests the frequency term for LF is similar to                                                 Pan’s model (Industry data)
+                                                                                                   12       Pan’s model (Intel data)
+Sn/Pb for the extended cycle time (use condition).
+
+                                                                                                   10
+
+
+
+
+                                                                                    Predicted AF
+                                                                                                   8
+
+
+
+                                                                                                   6
+
+
+
+                                                                                                   4
+
+
+
+                                                                                                   2
+
+
+
+                                                                                                   0
+                                                                                                        0    2      4       6       8        10    12     14
+                         Normalized
+                                                                                                                            Test AF
+
+                                                                                                            Fig.4. Pan et al’ model fit
+Fig.2 LF (SAC 405) solder showed improved fatigue
+performance in temp cycle test compared to Sn/Pb in the                                                          Error in mean (%)
+extended cycle time test ( 60 min vs. 480 min cycle time and
+                                                                                     70%
+temperature range is from -25 to + 100oC.). The component                                                                                 60.66%
+                                                                                     60%
+tested is BGA socket with enabling load.
+                                                                                     50%
+                                                                                     40%
+                                                                                     30%
+                                                                                     20%
+                                                                                     10%                    5.79%
+                                                                                           0%
+                                                                                                    Proposed LF model                      Pan et al’ model
+
+                                                                              Fig. 5 the comparison of the proposed model with Pan et al’s
+                                                                              model
+
+                                                                                  There are a number of thermal fatigue life prediction
+Figure 3 X-section images of post 1400 cycles samples                         models based on the FEA analysis or analytical solutions
+showed the full solder crack for Sn/Pb (top image) compared                   using strain energy density range or plastic strain range (or
+LF (SAC 405) solder which showed only minor crack (10%,                       nonlinear strain range). It is clear that when running FEA
+bottom image)) at board side. The temp cycle test parameters:                 simulations, it is easier to take into account structural details
+cycle time is 480 min and temperature range is from -25 to +                  than the relatively simple analytical models. However, the
+100 oC). The component tested is BGA socket with enabling                     accuracy of the FEA-based models is not always satisfactory.
+load.                                                                         Fig. 6 summarized some FEA results predictions. It should be
+6. Discussion                                                                 noted that the FEA results or analytical results plotted in Fig.
+                                                                              6 are from different FEA based life prediction models but are
+    As we have discussed earlier, Pan et al [17] proposed an
+                                                                              consistent with each of their predictions.
+acceleration model based on the Norris-Landzberg model.
+Fig. 4 plotted the comparison between these two models for
+the available test data. It is observed that the Pan et al’s model
+presented a reasonable fit when the acceleration factor is less
+than 3.5. Beyond this range, the model showed large
+
+
+                                                                         143      2008 Electronic Components and Technology Conference
+ Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:05:13 UTC from IEEE Xplore. Restrictions apply.
+                    14
+                                                                              effort will be focused on combining the FEA model approach
+                             Master line                                      with the empirical model approach to assess LF reliability
+                             FEA model
+                    12       CSEM model
+                                                                              7. Conclusion
+                                                                                  In this paper a new set of AF model constants based on
+                    10
+                                                                              the Norris-Landzberg equation has been proposed. The
+     Predicted AF
+
+
+
+
+                                                                              proposed model has been validated using thermal cycle tests.
+                    8
+                                                                              The thermal cycling experimental data from various sources
+                    6
+                                                                              with various types of packages, such as FCBGA, CBGA,
+                                                                              CSP, QFP, socket, and die-side capacitor packages have been
+                    4
+                                                                              used for determining the model fit. The temp cycle test
+                                                                              conditions have a wide spread, with different temperature
+                    2
+                                                                              range, different maximum temperature and different cycle
+                                                                              time, in particular, the cycle time ranging from 15 minutes to
+                    0                                                         480 minutes. The model fit to experimental data was excellent
+                         0   2     4       6    8    10   12   14             and the error was less than 6%. This analysis showed that the
+                                           Test AF                            LF acceleration factor (AF) model is not significantly
+                                                                              different from the Sn/Pb model and proposed model provides
+                                                                              the best fit to the experimental results.
+Fig. 6 the comparison of the FEA model prediction with
+experimental results                                                          Acknowledgments
+                                                                                  The authors would like to acknowledge the following Intel
+    The popularity of Norris-Landeberg model is the ease of                   people for their contributions and support towards this study:
+use and the terms used are only related to the profile of the                 Dave Young, Eric Monroe, Alan Lucero and Nick Mencinger.
+temperature cycling test. This makes the use of the equation                  The authors would like to thank Gregory Henshall of HP for
+appealing as no information on the test vehicles; -neither the                his valuable feed back and comments
+geometry nor the material properties is required. This may
+                                                                              References
+sound a bit odd, as it is well known that these factors have
+                                                                              1. Vasudevan, Vasu, Fan, Xuejun; Liu Tao, Young, Dave,
+significant effect on the reliability performance of the solder
+                                                                                  “Slow cycle fatigue creep performance of Pb-Free (LF)
+joints. However, in terms of the acceleration factor (AF),
+                                                                                  solders”, Proceedings - Electronic Components and
+which is the ratio of the lifetime in field and test, those effects
+                                                                                  Technology Conference, Proceedings - 57th Electronic
+are cancelled out.
+                                                                                  Components and Technology Conference 2007, ECTC
+    The FEA based AF results often predict that the geometry                      '07, 2007, p 116-123
+or material properties effects are not cancelled out. It has                  2. Pardeep K. Bhatti; Min Pei; and Xuejun Fan, “Reliability
+been noted that the current FEA does not take considerations                      analysis of SnPb and SnAgCu solder joints in FC-BGA
+of the solder softening or aging effect into simulation. This                     packages with thermal enabling preload”, IEEE
+might be one of reasons that the discrepancy using FEA                            Electronic Components and Technology Conference
+comes from.                                                                       (ECTC), 2006, May 30 - June 2, San Diego, CA
+    It has been debated whether or not a saturation effect                    3. Xuejun Fan; G. Rasier; V. S. Vasudevan, “Effects of
+needs to be considered for the frequency term since solder                        Dwell Time and Ramp Rate on Lead¬Free Solder Joints
+joint damage in a certain thermal cycle ‘saturates’ when the                      in FCBGA Packages”, IEEE Electronic Components and
+joint reaches a point where the majority of the relaxation has                    Technology Conference, 2005. ECTC '05 Proceedings,
+occurred. In our test, we have designed a couple of tests with                    May 31-June 3, 2005 Page(s):901 - 906
+extended cycle time to make sure that the proposed model is                   4. Min Pei, Xuejun, Fan; Bhatti, Pardeep K., “Field
+calibrated to include the long cycle time effect. It has shown                    condition reliability assessment for SnPb and SnAgCu
+that, similar to the SnPb assembly, the SAC will eventually                       solder joints in power cycling including mini cycles”,
+reach to a point where the stress is completely relaxed.                          Proceedings - Electronic Components and Technology
+    The paper also examined the AF predictions based on                           Conference, v 2006, Proceedings - IEEE 56th Electronic
+finite element analysis. Although various existing finite                         Components and Technology Conference, 2006, p 899-
+element models were supposed to give a good prediction for                        905
+certain types of packages and certain test conditions, the FEA                5. G.Q. Zhang, W.D. van Driel, and X.J. Fan, “Mechanics
+results showed poor prediction to other data when package                         of Microelectronics”, Springer, May 2006
+format and accelerated conditions change. One of the reasons                  6. N. Pan et al, “An Acceleration Model for Sn-Ag-Cu
+that FEA models did not predict well is that the material aging                   Solder Joint Reliability under Various Thermal Cycle
+effect is not taken into consideration in current lead-free                                Conditions”, Proc. SMTA, 2005, pp. 876-883
+models in FEA implementation. However, FEA analysis is                        7. Ron Zhang, Jean-Paul Clech, Applicability of various Pb-
+efficient in predicting the worst-case and qualitative trend for                  free solder joint acceleration factor models, SMTA, 2006
+a given family of packages under same test conditions. Future
+
+
+
+                                                                         144      2008 Electronic Components and Technology Conference
+ Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:05:13 UTC from IEEE Xplore. Restrictions apply.
+8.    O. Salmela et al, “Reliability Analysis of Some Ceramic
+      Lead-free Solder Attachments”, Proc. SMTA PanPac,
+      2005, pp. 161-169
+9.    K. C. Norris, A.H. Landzberg, “Reliability of Controlled
+      Collapse Interconnections”, IBM Journal of Research and
+      Development, vol. 13, no. 3, May 1969, pp- 266-271.
+10.    W. Engelmaier, The Use Environments of Electronic
+      Assemblies and Their Impact of Surface Mount Solder
+      Attachment Reliability, IEEE Transactions of
+      Components, Hybrids, and Manufacturing Technology,
+      vol. 13, 1990, pp. 903-908.
+11.   M. Osterman, “Strain range approximation for estimating
+      fatigue life of lead-free solder interconnects under
+      thermal cycle loading”, 2006
+12.   O. Salmela, “Acceleration factors for lead-free
+      materials”, 2007
+13.   J-P Clech, “Acceleration Factors and Thermal Cycling
+      Test Efficiency for Lead-free Sn-Ag-Cu Assemblies”,
+      SMTAI, 2005.
+14.   Hall, P.M., “Forces, moments, and displacements during
+      thermal chamber cycling of leadless ceramic chip carriers
+      soldered to printed boards”, IEEE Transactions on
+      Components, Hybrids and Manufacturing Technology,
+      1984, Vol. 7, No. 4, Dec. 1984, pp. 314-327.
+15.    Hall, P. M., “Creep and stress relaxation in solder joints
+      of surface mounted chip carriers”, IEEE Transactions on
+      Components, Hybrids and Manufacturing Technology,
+      1987, Vol. CHMT-12, No. 4, Dec. 1987, pp. 556-565.
+16.   Fan, Xuejun; Pei, Min; Bhatti, Pardeep K, “Effect of
+      finite element modeling techniques on solder joint fatigue
+      life prediction of flip-chip BGA packages”, IEEE 56th
+      Electronic Components and Technology Conference,
+      2006, p 972-980
+17.   A. Schubert et al, “Fatigue Life Models for SnAgCu and
+      SnPb Solder Joints Evaluated by Experiments and
+      Simulation” Proc. IEEE 53rd Electronic Components and
+      Technology Conference, New Orleans, LA, May 27-30,
+      2003.
+18.   A. Syed, “Accumulated Creep Strain Energy and Energy
+      Density Based Thermal Fatigue Life Prediction Models
+      for SnAgCu Solder Joints”, Proc. 54th Electronic
+      Components and Technology Conference, Las Vegas,
+      NV, June 1-4, 2004, pp. 737-746.
+19.   H.S. Ng et al, “Absolute and Relative Fatigue Life
+      Prediction Methodology for Virtual Qualification and
+      Design Enhancement of Lead-free BGA”, Proc. 55th
+      Electronic Components and Technology Conference,
+      Orlando, FL, May 31.June 3, 2005, pp.1282-1291.
+20.   Michael Osterman and Abhijit Dasgupta, “Life
+      expectancies of Pb-free SAC solder interconnects in
+      electronic hardware” “ J Mater Sci: Mater Electron
+      (2007) 18:229–236
+
+
+
+
+                                                                         145      2008 Electronic Components and Technology Conference
+ Authorized licensed use limited to: Argonne National Laboratory. Downloaded on September 14,2026 at 17:05:13 UTC from IEEE Xplore. Restrictions apply.
+

@@ -1,0 +1,45 @@
+Sec.13  mounted mechanical response, missing thicknesses (BC_BOARD, fr4_1p6mm)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  h=1.20  w=  20.8510 tau99= 7.9157 rel= 0.09207 Tmax= 84.213 (163s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  h=1.30  w=  19.8554 tau99= 7.9646 rel= 0.09306 Tmax= 84.201 (173s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  h=1.40  w=  18.8983 tau99= 8.0024 rel= 0.09320 Tmax= 84.191 (167s)
+Loaded 90 usable EPC devices from EPC-Product-Table.csv
+  h=1.75  w=  15.8790 tau99= 8.1009 rel= 0.08966 Tmax= 84.163 (166s)
+
+=== thickness response over the REALIZABLE band ===
+  h mm             buildable?    P_A (W)    P_B (W)  w mounted um    tau99
+  0.80          NOT BUILDABLE   125.1583   125.6109       25.1482   7.3981
+  0.90          NOT BUILDABLE   125.1496   126.1679                       
+  1.00          NOT BUILDABLE   125.1506   126.7346                       
+  1.10          NOT BUILDABLE   125.1560   127.3059                       
+  1.20               opt only   125.1638   127.8796       20.8510   7.9157
+  1.30                opt+nom   125.1731   128.4549       19.8554   7.9646
+  1.40                opt+nom   125.1832   129.0312       18.8983   8.0024
+  1.50            opt+nom+pes   125.1939   129.6080       17.9815   8.0420
+  1.75            opt+nom+pes                             15.8790   8.1009
+  2.00            opt+nom+pes   125.2508   132.4975       14.0309   8.1211
+
+  mlcc_optimistic: realizable band 1.20 -> 2.00 mm
+    dP_elec ARCH_B =   +4617.8 mW  (thinner is better by this much)
+    dP_elec ARCH_A =     +87.0 mW
+    dT_max        =    +0.134 K
+    d warpage     =    -6.820 um (-32.7 %, thicker is better)
+    d tau99       =    +0.205 MPa
+
+  mlcc_nominal: realizable band 1.30 -> 2.00 mm
+    dP_elec ARCH_B =   +4042.6 mW  (thinner is better by this much)
+    dP_elec ARCH_A =     +77.7 mW
+    dT_max        =    +0.127 K
+    d warpage     =    -5.824 um (-29.3 %, thicker is better)
+    d tau99       =    +0.156 MPa
+
+  mlcc_pessimistic: realizable band 1.50 -> 2.00 mm
+    dP_elec ARCH_B =   +2889.4 mW  (thinner is better by this much)
+    dP_elec ARCH_A =     +56.9 mW
+    dT_max        =    +0.100 K
+    d warpage     =    -3.951 um (-22.0 %, thicker is better)
+    d tau99       =    +0.079 MPa
+
+wrote /home/beams0/MGHARIB/Mohamed_stuff/HVR_OPT/results/phase0h/thickness_response_final.csv

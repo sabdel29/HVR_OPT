@@ -1,0 +1,720 @@
+      Predicting Solder Joint Reliability for Thermal, Power, & Bend Cycle within 25% Accuracy
+                                                                  Ahmer Syed
+                                                               Amkor Technology
+                                                               1900 S. Price Road
+                                                               Chandler, AZ 85248
+                                                              Phone: (480)821-5000
+                                                               asyed@amkor.com
+
+Abstract                                                                     to 3X of actual life. However, this is one of the biggest
+    Solder joint reliability has received a renewed interest                 limitations in using these models as an up-front engineering
+since the inception of BGA and CSP type packages. While                      tool in actual life prediction. Today’s electronic products have
+traditionally board level reliability during thermal and power               requirements of passing between 500 to 6000 accelerated
+cycling is considered important for most applications, solder                thermal cycles, depending on the application, and if the
+joint failures due to board bending have also become a major                 package does not pass the requirements even by 10%, its
+reliability concern for portable applications. With the current              selection for the product becomes highly doubtful. Obviously,
+trend of cheaper, faster, and better electronic equipment, it has            an analysis that predicts life within 200 to 300% of actual life
+become increasingly important to evaluate the package and                    can not replace testing and its use becomes limited to
+system performance very early in the design cycle using                      providing relative comparisons instead of absolute numbers.
+simulation tools. Although a number of life prediction models                Even if its used for relatively comparisons, the design
+for solder joint under thermal cycle conditions have been                    improvements it suggests to meet or exceed the minimum
+proposed in the literature, not enough work has been reported                requirements may actual add cost and may very well be an
+in extending these models to power and bend cycle                            over design. Clearly, the prediction has to have better
+simulations. The accuracy of life prediction tool has also                   accuracy to be considered as the essential part of design and
+become critically important, as the designs need to be                       to really impact the package selection process by reducing, if
+evaluated and improved with high degree of confidence not                    not completely eliminating, the role of testing.
+through relative comparison but by providing absolute                            Building accuracy in a life prediction model is not an easy
+numbers.                                                                     task, however. This is partly due to inherent variations
+    This paper describes in detail the life prediction model for             involved in fatigue process itself and partly due to material
+solder joints for thermal cycle conditions and its extension to              variations & modeling assumptions. It is, therefore, unrealistic
+power and bend cycle conditions. The approach uses advance                   to assume that the life prediction model can give a 100%
+finite element modeling and analysis techniques such as                      accurate result. This is true for any material or structure. The
+constraint equations and sub-structuring and is based on                     situation becomes a bit more complex for solder joints in
+mechanics of deformation. The model has been correlated                      electronic assemblies because of nonlinear material behaviors,
+with more than 60 data points and predicts life within 25% in                complex joint shapes, 3-dimensional structures, and multi-
+most cases. The framework of modeling and prediction                         axial loading. Although finite element analysis can handle
+methodology described here is fully applicable for developing                most of these complexities rather accurately, these factors
+life prediction models for Pb free solder also, once the                     make the analysis computationally intensive and inefficient.
+deformation mechanisms are identified.                                       In order increase analysis efficiency, or attainable in some
+                                                                             case, a number of assumptions have to be made. These
+Introduction                                                                 assumptions will in turn result in reducing the accuracy, if
+     Electronic assemblies experience a number of loading                    proper homework is not done in making these assumptions in
+conditions during actual manufacturing processes and in                      the first place. Very often the analyst has to sacrifice accuracy
+actual use. This includes overstress, power and thermal                      for efficiency.
+cycling, vibration & shock, and cyclic bending of circuit                        This paper presents a life prediction approach that aims to
+board. Since solder joints provide the mechanical and                        maximize the efficiency without sacrificing the accuracy.
+electrical interconnect between the package and the board,                   Modeling assumptions are presented and their effect is
+they are susceptible to failures during these loading                        discussed both from accuracy and efficiency standpoint. The
+conditions. For this reason, ensuring the reliability of solder              approach has been developed for predicting solder joint
+joints is one of the most critical design aspects of electronic              fatigue life for temperature, power, and bend cycle
+assemblies. While this is mostly done by performing actual                   applications. The utilization of this approach results in most
+accelerated testing, the long lead time in getting the test data             analysis to be completed in less than 4 hours on standard
+and the associated costs not only increase the product                       750Mhz NT workstations and a life prediction which is
+development time but also put constraints on design                          accurate within 25% of actual measurements. A complete step
+optimization. Hence, it is becoming increasing necessary to                  by step procedure is provided which can be used as a basis for
+use life prediction models to determine solder joint reliability             developing life prediction models for Pb free solder.
+while the product is still very early in the design stage.
+     During the last decade, a number of life prediction models              Material Properties Considerations
+have been proposed to predict the thermal fatigue life of                        One of the most important considerations in simulation is
+solder joint [1], mostly using finite element analysis approach.             the time and temperature dependent deformation behavior of
+It is generally claimed that the model can predict life within 2             various materials involved. Although one would like to
+
+   Authorized licensed use limited
+0-7803-7038-4/01/$10.00            to: Argonne
+                                (C)2001        National Laboratory. Downloaded on September
+                                            IEEE                                       200114,2026 at 17:04:38
+                                                                                            Electronic         UTC from IEEE
+                                                                                                          Components     andXplore. Restrictions
+                                                                                                                             Technology          apply.
+                                                                                                                                             Conference
+include as much information about a material as possible in                          Table 1: Model Parameters for Eqn. 1 & 2
+the model, the time required for actual analysis puts a                      Wong et al Model Parameters
+constraint on what should be included. There are two                              B1               B2           H         n1      n2
+important aspects that must be considered before                             1.7e12 1/sec     8.9e24 1/sec   0.468 eV      3      7
+implementing a constitutive model for a particular material:                 Darveaux et al Model Parameters
+1. The analysis objective or the most critical response the                         C4t              αt         Q              n
+     analyst is interested in. For example, if the objective is to            0.114 K/sec/psi       751      0.548 eV         3.3
+     predict solder joint response during temperature cycling,               E (Wong et al): -0.088T(oC) + 32 GPa
+     including detailed time and temperature dependent,                      G (Darveaux et al): 1.9e6 –8.1e3(T-273) psi
+     nonlinear behavior for other materials may seriously
+     impact the analysis time without significantly improving                    It is important to note that while Darveaux et al developed
+     the accuracy, and                                                       their equation based on actual testing of realistic solder joints,
+2. Simulation requires modeling the material behavior , not                  the constitutive model given by Wong et al was determined by
+     the actual material. For example, the deformation                       combining and curve fitting the data from 11 different sources
+     behavior of eutectic Sn/Pb solder is highly inelastic with              available at that time. It should also be emphasized that both
+     both time independent plasticity and time dependent                     equations use different values of the activation energy, H or
+     creep playing important roles. Although eutectic Sn/Pb                  Q, and Young’s and shear modulus, E & G, as listed in Table
+     solder creeps at room temperature, creep would not occur                1.
+     if the rate of strain and loading is very high. Therefore,
+                                                                                               1.0E+07
+     while it is necessary to include the creep behavior when
+     simulating fatigue due to thermal and power cycling, it is                                1.0E+05        Darveaux Data
+
+
+
+
+                                                                               Strain Rate/D
+     not needed for predicting solder deformation due to rapid                                                Wong et al Model
+     mechanical cycling at room temperature such as cyclic                                     1.0E+03
+     bending and vibration of printed circuit board assemblies.                                1.0E+01
+     The rate of loading in the later case is high enough to
+     cause no deformation due to creep and including this                                      1.0E-01
+     behavior unnecessarily causes inefficiencies in the
+                                                                                               1.0E-03
+     analysis.
+    Since both accuracy and efficiency are of prime                                                 0.00001     0.0001        0.001       0.01
+consideration in the present approach, the following describes                                                       Stress/E
+the material models used here for simulating the material
+                                                                             Fig. 1 Comparison of Sn/Pb behavior from Equation 1 and
+behavior and the associated assumptions.
+                                                                                                   Equation 2.
+Eutectic Sn/Pb Solder: The creep deformation behavior of                         Although the form of the above equations is different and
+eutectic Sn/Pb solder alloy has been extensively studied (see                they use different parameter values, both equations describe
+reference [2] for a comprehensive review) and it has generally               almost the same steady state creep behavior, as shown in
+been observed that the steady state response depends on the                  Figure 1, with two different slopes on normalized stress vs
+applied stress. At least two different mechanisms have been                  strain rate curves. Notice that Equation 1 over predicts the
+identified; one operating at low stresses and high temperatures              strain rate by about an order of magnitude for low stresses
+(grain boundary sliding or dislocation glide) and the other at               compared to Equation 2, which may seem excessive.
+high stresses and low temperatures (dislocation climb).                      However, an order of magnitude difference is normally within
+Mathematically, the steady state creep strain rate is                        the spread of creep data and has also been observed in
+represented by either a Dorn type equation, ε = Aσ n , or by                Darveaux’ testing for different pad metallization [4]. It should
+sinh equation and both have been used to describe the creep                  also be realized that this difference is in creep strain rate not
+deformation behavior of eutectic Sn/Pb solder in the literature.             on actual strain. In fact, the difference can be very small in
+A representative of these constitutive models have been given                terms of creep strain, as shown in Figure 2, where the
+by Wong et al [3] and Darveaux et al [4]. These models are                   accumulated creep strains are compared for a MLF™ package
+described in Equation 1 and 2 below and the values of the                    for –40 to 125oC cycle for two values of constant B1 in
+parameters for each equation are given in Table 1 for Sn/Pb                  Equation 1.
+solder.
+                                                                                Besides encompassing data from different sources, the
+Wong et al Model:                                                            constitutive model described in Equation 1 also has the
+                             n1                           n2                 advantage of describing and separating the damage
+              − H  σ                    − H  σ                       mechanisms. This is an important aspect of the life prediction
+εcr = B1 exp                 + B 2 exp                (1)
+              kT  Ε                     kT  Ε                        model described later and, for this reason, the steady state
+                                                                             creep behavior of eutectic Sn/Pb is simulated using Equation
+Darveaux et al Model:                                                        1 in the current approach. For thermal and power cycle
+                                  n
+              G        σ       −Q                                      simulation, the deformation is assumed to be completely
+εcr = C 4t       sinh α t  exp                           (2)
+              T       G       kT 
+                                                                             described by the steady state creep and no primary creep or
+                                                                             time independent plasticity terms are included.
+
+
+
+   Authorized licensed use limited
+0-7803-7038-4/01/$10.00            to: Argonne
+                                (C)2001        National Laboratory. Downloaded on September
+                                            IEEE                                       200114,2026 at 17:04:38
+                                                                                            Electronic         UTC from IEEE
+                                                                                                          Components     andXplore. Restrictions
+                                                                                                                             Technology          apply.
+                                                                                                                                             Conference
+                                                                                                     1.   Include temperature dependent properties for all materials
+  Accumulated Creep Strain      1.6E-02                                                                   whose glass transition temperature is within the
+                                1.4E-02                    B1 = 1.7e12                                    temperature range of analysis and the modulus is
+                                1.2E-02                    B1 = 1.7e11                                    changed significantly (more than 4X). This requirement
+                                1.0E-02                                                                   can be relaxed if the glass transition temperature is very
+                                8.0E-03                                                                   close to temperature extremes in the loading conditions.
+                                6.0E-03                                                                   This requirement can also be relaxed if there is a thick
+                                4.0E-03                                                                   interfacing material between the solder joint and the
+                                2.0E-03                                                                   material layer in question, thus minimizing its effect on
+                                0.0E+00                                                                   the response of solder joints.
+                                                  0       1000       2000        3000         4000   2.   Exclude temperature dependent properties for materials
+                                                                   Time (sec)                             which show only slight temperature dependent behavior.
+                                                                                                          Use linear, temperature independent averaged values.
+ Fig. 2 Comparison of Accumulated Creep Strain for two
+            values of B1 constant in Eqn. 1.                                                         Accuracy in Modeling
+                                                                                                         Realizing that the life prediction for solder joint involves
+    As mentioned before, creep does not play a role for a very                                       nonlinear analysis, with temperature dependent properties for
+fast rate of mechanical loading, such as in cyclic bend and                                          possibly one or two other materials, immediately puts the
+vibration of PCBs. Therefore, for these simulations, only time                                       constraint on the size of FE model (# of elements and nodes).
+independent plasticity of solder is modeled as given by                                              Obviously, analyzing a very big model will take significantly
+Darveaux et al [4] and shown in Figure 3.                                                            more time and may very well be beyond equipment
+                                             80                                                      (computer) capability and assumptions have to be made in
+                                                                                                     describing the geometric details and in devising the meshing
+                             Stress (MPa)
+
+
+
+
+                                             60                                                      scheme. There are three guiding principles used here to
+                                                                                                     improve the efficiency without sacrificing accuracy.
+                                             40
+                                                                                                     1.   Models should physically describe the structure,
+                                             20                                                      2.   One critical joint, a very small part of the whole package-
+                                                                                                          PCB assembly, describes the fatigue life of the whole
+                                              0                                                           component, and
+                                                                                                     3.   2nd and higher order effects should be ignored.
+                                                  0         0.1            0.2          0.3
+                                                                                                         The first principle implies 3-dimensional modeling while
+                                                                  Strain                             taking advantage of symmetry, wherever possible. It has been
+                                            Fig. 3 Elastic-Plastic Model for Sn/Pb solder            shown by the author [5] that plane stress/plane strain or sector
+Other materials: Besides solder, a package-printed circuit                                           models degrade the accuracy of results and should not be
+board assembly also includes materials such as Cu metal                                              used. Fortunately, with ever increasing computing
+traces and layers, die, mold compound, die attach adhesives                                          capabilities, 3-dimensional approach is being used more and
+and underfill, FR4 & BT substrates, and solder mask. All of                                          more today in the industry for solder joint life prediction and
+these materials have temperature dependent behavior and                                              is becoming a standard.
+some are visco-elastic in nature. However, the degree of                                                 The 2nd guideline lends itself into considering a global-
+temperature dependence in a particular material property                                             local approach for modeling. The objective of this is to use a
+varies from material to material. While the modulus and CTE                                          very detailed model of the critical joint while transmitting the
+of Cu and Silicon have very slight temperature dependence,                                           correct load vector and assembly stiffness from the rest of the
+temperature can have a significant affect on these properties                                        structure to this model. Almost all commercially available
+for die attach and mold compound materials, especially if the                                        finite element software have the capability of achieving this
+material goes through the glass transition temperature.                                              very accurately by using either a sub-structuring or sub-
+    Given these properties, the analyst has to make a judgment                                       modeling approach. Of the two, the sub-structuring approach
+call on whether to include the temperature dependent and                                             is more powerful as it requires only one analysis of the global
+visco-elastic properties or use temperature independent linear                                       model for a unit loading condition (1 degree rise or fall of
+property assumption. While including this behavior may                                               temperature for temperature cycling or unit displacement for
+improve the accuracy, the exclusion will make the actual                                             bend cycle). Using appropriate scaling factors, the super-
+number crunching phase more efficient. In making this                                                element can be repeatedly used for multiple temperature or
+decision, one has to recognize at this stage that the purpose of                                     bend cycle conditions. Sub-structuring approach is also
+solder joint life prediction is just that - solder joint life                                        advantageous as most of the materials in the global model can
+prediction, not the detailed stress-strain response of other                                         be assumed as having linear, temperature independent
+materials.                                                                                           behavior without a significant loss of accuracy. Using the sub-
+    Based on numerous comparisons done by the author, the                                            structuring approach can increase the analysis efficiency by
+following guidelines are used in the current approach for an                                         orders of magnitude.
+accurate but efficient analysis:                                                                         The only disadvantage of using sub-structuring is that it
+                                                                                                     cannot include materials with non-linear, temperature
+                                                                                                     dependent behavior. This limitation, however, can be
+
+   Authorized licensed use limited
+0-7803-7038-4/01/$10.00            to: Argonne
+                                (C)2001        National Laboratory. Downloaded on September
+                                            IEEE                                       200114,2026 at 17:04:38
+                                                                                            Electronic         UTC from IEEE
+                                                                                                          Components     andXplore. Restrictions
+                                                                                                                             Technology          apply.
+                                                                                                                                             Conference
+overcome by either excluding these materials from the                        mesh for non-critical joints will increase the analysis time by
+substructure or by doing multiple sub-structure analyses. In                 orders of magnitude. Obviously, this insignificant level of
+the current approach, the materials, such as die attach, with                improved accuracy with very detailed models for the non-
+temperature dependent properties are excluded from the sub-                  critical joint does not match up with the highly significant
+structure. The non-critical solder joints, however, are included             impact on analysis efficiency.
+in the sub-structure. This is achieved by assuming linear
+behavior and temperature independent modulus for these
+joints instead of creep behavior. The modulus is artificially
+lowered to 1 GPa. This assumption has less than 5% effect on
+the creep strain in the critical joint but can substantially
+enhance the analysis efficiency. Note that this effect is
+negligible for leaded packages [6]. It should also be noted that
+at the time this modeling approach was first developed (1993),
+the available computer resources warranted the use of this
+assumption to complete the analysis in a reasonable time even
+on a high-end workstation. However, with the availability of
+much faster workstations today and the enhancements in
+ANSYS (implicit time integration for creep), this assumption
+may no longer be required for a reasonable size package
+(<400 I/Os).
+    Using the sub-structuring approach does not, however,
+automatically mean that global model can be very detailed.
+Care must be taken in reducing the model size as the sub-
+                                                                                 Fig. 4 Comparison of corner joint displacements for
+structuring analysis itself is a function of number of elements
+                                                                                    coarse vs. detailed model of non-critical joints.
+within the substructure and the master degrees of freedom
+interfacing with the residual structure. Further reduction in the
+model size is thus warranted. The model size, however, is
+dependent on two factors.
+a. Cu metal details in different layers, and
+b. Model of non-critical solder joint.
+    Of the two, the inner and outer layer details of the
+substrate and motherboard are higher order effects on solder
+joint reliability and are not included. Efforts are made to
+duplicate the Cu percent coverage on the outer layers,
+however.
+    Handling the non-critical solder joints is more critical. The
+shape of the joints and typically circular pads at the
+component and motherboard interface often define the model
+size. A common approach is to use a rather detailed model of                      Fig. 5 Cross-sectional view of the model showing
+non-critical joints mimicking the actual shape of the joint and               discontinuous mesh and the displacement plot indicating
+pads. The circular geometry of the pads requires at least 8                    continuity across discontinuous mesh using constraint
+elements for the each pad that is carried over to the other areas                                     equations.
+of the model for mesh continuity. This approach, however,
+builds inefficiencies in the model and analysis that can be                      One final but very important enhancement in the modeling
+easily removed by realizing that the details in non-critical                 approach employed here is the used of constraint equations.
+joint are really the 2nd order effect on the response of critical            This is a very powerful tool available in all major FEA
+joint. This is shown in Figure 4, presenting the results of                  software packages and is very easily done within ANSYS
+linear analysis by using two different schemes for modeling                  (CEINTF        command).        Constraint     equations      allow
+non-critical joints. The results indicate less than 1% difference            displacement continuities in a discontinuous mesh region
+in deflections and about 1.5% difference in stress values for                without the loss of any accuracy. In the current approach, this
+the critical joint when a rather coarse mesh is used for non-                technique is employed in joining the detailed model of critical
+critical joints. Also notice that the pads are modeled as square,            joint with the coarse model of package and motherboard. The
+removing the need for mesh transitioning. It should be                       displacement contours in the region of detailed model are
+emphasized here that even for this relatively small model of                 shown in Figure 5 for the 64 lead CABGA package. Notice
+64 leaded package (quarter symmetric model) and linear                       that the displacements remained continuous from coarse
+analysis, the CPU time was reduced by a factor of 6 when the                 model (Package/PCB) to the detailed model of solder joint,
+coarse model is used for non-critical joint. As the CPU time                 proving the validity of this approach. One should be cautioned
+depends on model size, this factor will exponentially increase               that constraint equations do not result in strain continuity and
+as the model size increases for higher I/O devices. Also, any                the stress/strain results of fine mesh at the interface will not be
+attempt to perform a nonlinear analysis on the model with fine               accurate. This can easily avoided by including a very thin
+
+
+   Authorized licensed use limited
+0-7803-7038-4/01/$10.00            to: Argonne
+                                (C)2001        National Laboratory. Downloaded on September
+                                            IEEE                                       200114,2026 at 17:04:38
+                                                                                            Electronic         UTC from IEEE
+                                                                                                          Components     andXplore. Restrictions
+                                                                                                                             Technology          apply.
+                                                                                                                                             Conference
+layer (2 microns) of Cu or intermetallic at the interface in                     The modeling approach can be completed automated for a
+between the solder and package/PCB elements to take care of                  particular package by using parametric modeling. The models
+stress/strain discontinuities at the coarse/detailed model                   can typically be generated within 15 minutes.
+interface.
+                                                                              Life Prediction Model for Thermal and Power Cycling
+Summary of Modeling Approach                                                     As mentioned earlier, the constitutive equation for Sn/Pb
+   The detailed description of the modeling approach above                   solder for simulating thermal and power cycling describes the
+can be summarized as follows:                                                steady state creep only and no time independent plasticity
+                                                                             terms are considered. This is because the rate of loading and
+Step 1: Global Model                                                         unloading are relatively slow in these cycling and the
+• Create 3-D, 1/8th or 1/4th symmetric models, wherever                      homologous temperature is beyond 0.5 even at –40oC. The
+    applicable                                                               steady state creep equation chosen, given by Equation 1,
+• Define geometry in x-y plane and extrude in z-direction                    describes two different creep mechanisms with stress
+• Model exact die size and thickness of various layers                       exponent of 3 (grain boundary sliding or dislocation glide)
+• Model solder joints as cubed shaped with at least two                      and 7 (dislocation climb) respectively. The life prediction
+    elements across the thickness and 1 or 2 elements in x                   model is also based on these two damage mechanisms and is
+    and y direction.                                                         briefly described below. More detailed derivations can be
+• Use linear material properties for all materials which do                  found in earlier publications [7,8].
+    not go through their glass transition point within the
+    temperature range of interest.                                           Model Derivation
+• Use linear properties (reduced modulus) for all solder                         Since the objective is to predict the fatigue life of solder
+    joints.                                                                  joints, most of the life prediction models for solder are
+                                                                             assumed to follow Coffin-Manson equation which relates
+• Use at least 2 elements across the thickness for mold
+                                                                             fatigue life with plastic strain range during a cycle. However,
+    compound, die, PCB, and substrate.
+                                                                             this equation is more valid for materials with nonlinear stress-
+• Analyze model for 1oC rise of temperature and locate the
+                                                                             strain behavior described by metal plasticity (time-
+    critical joint by comparing stress or displacement vector
+                                                                             independent), not for time dependent creep deformation.
+    across the thickness.
+                                                                             Since creep is considered as the primary damage mechanism
+Step 2: Sub-structuring                                                      for eutectic Sn/Pb solder during thermal cycling and is solely
+• Divide the global model into two sub-models and save                       used here to simulate the material behavior, the theoretical
+    the database                                                             basis for the life prediction model should also be creep.
+    • Sub-structure consisting of all elements with                          Therefore, instead of using the traditional definition of
+         temperature independent properties minus the                        fatigue, the cyclic loading is considered as a special case of
+         elements for critical joint, its interfacing                        creep due to sequence of loading which are repeated in a
+         package/PCB elements, and any material with                         cyclic manner to derive the life prediction model parameters.
+         temperature dependent properties.                                   This is done by using two equations; a) Monkmann-Grant
+    • Residual structure consisting of all elements not part                 equation for creep rupture, and b) time-fraction rule.
+         of sub-structure.                                                       The Monkmann-Grant equation for creep rupture, as given
+• Define Master nodes by selecting all interfacing nodes                     in Equation 3, states that the time to rupture, tr ,is inversely
+    between the sub-structure and the residual structure                     related to the steady state creep strain rate, εcr , during a test.
+• Perform Substructure analysis for 1oC decrease in                                         C
+    temperature.                                                                        tr =                                      (3)
+                                                                                           εcr
+Step 3: Local Model                                                              The constant C gives the “creep ductility” or the strain at
+• Restart the global model database and remove all                           the onset of failure. The above equation assumes a constant
+    elements and nodes associated with sub-structure                         stress during the creep test. In case of varying stresses
+• Replace the coarse model of critical solder joint with a                   repeated in a cyclic form, an estimate of rupture time can be
+    detailed model. Joint should have two layers at each                     made by using a special form of time-fraction rule, given in
+    interface. Each layer should be 25 microns thick and                     Equation 4. Notice the similarity of term within the
+    should have two elements in thickness direction, as                      summation sign to the more familiar Palmgren-Miner rule for
+    shown in Figure 5.                                                       cyclic damage.
+• Use constraint equations to attach the detailed joint model
+    with the coarser parts of package/PCB model.                                              n ∆t        
+                                                                                        N f  Σ i         
+                                                                                                                      = 1                  (4)
+• Attach the superelement from substructure analysis to the                                   i =1 t ri    one cycle
+    local model to transmit assembly stiffness and load vector
+    to the critical joint.                                                   where
+• Analyze the local model with creep and temperature                         Nf         = number of repetitions or cycles to failure,
+    dependence for thermal and power cycle and time                          n          = number of steps within a cycle,
+    independent plasticity for bend and high cycle fatigue as                ∆ti        = time spent at stress level σi within a cycle, and
+    described in the next section.                                           tri        = rupture time for stress level σi.
+
+
+
+   Authorized licensed use limited
+0-7803-7038-4/01/$10.00            to: Argonne
+                                (C)2001        National Laboratory. Downloaded on September
+                                            IEEE                                       200114,2026 at 17:04:38
+                                                                                            Electronic         UTC from IEEE
+                                                                                                          Components     andXplore. Restrictions
+                                                                                                                             Technology          apply.
+                                                                                                                                             Conference
+Using Monkmann-Grant equality, Equation 4 becomes                                                              10 000 0
+                                                                                                                                    P B GA s
+
+
+
+
+                                                                              Cycles to M ean Failure (Predictions)
+                 n ∆t ε                                                                                                          LC C C s
+
+           N f  Σ i cri     
+                                         = 1                  (5)                                                                  QFP s
+                                                                                                                                    F lip C hip s *
+                 i =1 C       one cycle                                                                             10 000        P B GA s - M otorola
+                                                                                                                                    TS OP s *
+                                                                                                                                    Master
+
+    Where εcri is the steady state creep rate for stress level σi.                                                                 2X A bove
+                                                                                                                                    2X B elow
+Realizing that the numerator term within the summation sign                                                            10 00        25% A bove
+                                                                                                                                    25% B elow
+is the creep strain accumulated during time ∆ti , the summation
+for all steps n within a cycle gives the Accumulated Creep
+                                                                                                                                                           Open Symbols : Model Development
+Strain, Εcr , for the whole cycle. Thus, Equation 5 can be                                                              10 0                               Closed Symbols : Model Validation
+simplified as
+                                                                                                                                        * Unpublished Test Data
+               Ε 
+           N f  cr           = 1                             (6)                                                       10
+                                                                                                                                        Test Data & Predictions Scaled by the Same Factor
+
+                C  one cycle                                                                                                 10       10 0                 10 00         10 000       10 000 0
+
+                                                                                                                                    C ycles to M ean Failure (Test)
+    Equation 6 gives the cyclic creep (“Fatigue”) life due to
+varying and repeated stresses for a single creep mechanism.                      Fig. 6 Correlation of life prediction model with test data.
+For two creep mechanisms described in Equation 1 for
+eutectic Sn/Pb solder, the above equation becomes                            Creep Analysis and Damage Accumulation
+                                                                                 The use of above life prediction requires the determination
+                Ε   Ε                                                      of accumulated creep strain E1 and E2 from finite element
+           N f  1 + 2            = 1                       (7)           analysis using equation 1 as the constitutive model for
+                 C
+                 1  C 2  one cycle
+                                                                             eutectic Sn/Pb solder. Since this equation is not a standard
+or                                                                           form of creep equation in ANSYS or ABAQUS, a user
+                                    −1                                       subroutine option is used. This routine not only calculates the
+                     Ε   Ε 
+           Nf     =  1 + 2                                 (8)           creep strain but it also separates and stores the partitioned
+                      C1 C2  per cycle                                     creep strain for the two damage mechanisms for each solder
+                                                                             element by using the user defined output variables option in
+    Notice that the strain exponent is -1 for this life prediction           ANSYS and ABAQUS. The user subroutine implemented in
+model. Also the constants, C1 and C2, can be considered as                   ANSYS is reproduced in the Appendix I here. The routine
+creep ductility of solder for the two creep mechanisms. It                   looks very similar for ABAQUS and can be made available.
+should also be noted that the same equation can be derived by                    The temperature cycle simulations, the analysis is done by
+using a fracture mechanics approach [7]. It has also been                    specify the loading and boundary conditions for either one or
+shown by the author [8] that this equation can easily be                     two complete cycles. The cycling starts at the end of high
+converted into energy density based life prediction model.                   temperature dwell and ramps down to low temperature dwell
+                                                                             followed by ramp up and hold at high temperature. This is
+    The above life prediction model requires the determination               done to eliminate the need to multiple cycle simulations,
+of constants C1 and C2. These constants were determined by                   especially if the high temperature is around 125oC. It is well
+the author [7] by using the mean cycles to failure, Nf, from                 known that eutectic Sn/Pb solder relaxes completely within a
+actual testing for a number of components and by determining                 few minutes at high temperature and the stresses are typically
+E1 and E2 using the finite element simulation approach                       zero at the end of high temperature dwell. This is used as a
+described above. The constants were determined as C1 = 50                    basis for starting the cycle at high temperatures, or zero stress
+and C2 = 15.87. Notice that the constant C2 is about 3X lower
+                                                                             condition, and has been shown [6] to be valid.
+than C1, suggesting a 3X lower ductility of Sn/Pb solder at
+                                                                                 The final step in the analysis is the post processing of
+high stresses and low temperature when matrix creep
+                                                                             results (partitioned creep strain at each time increment for all
+(mechanism 2) dominates. Using the above values for the
+                                                                             solder elements), saved as extra variables (NMISC data in
+constants, the life prediction model for Mean Cycles to
+                                                                             ANSYS) for each element (location 49, 50, & 51 for
+Failure, Nf, becomes
+                                                                             SOLID45 element in ANSYS). The post processing involves
+                                                                             volume averaging and accumulation of these creep strains for
+           Nf     =    (0.02Ε1 + 0.063Ε 2 )−1                  (9)
+                                                                             the whole cycle. The volume averaging is necessary to avoid
+                                                                             stress singularity issues [5] at the interface and is done by
+    Although the above model was originally developed with
+                                                                             selecting a 25 microns thick layer of solder at each interface
+a limited set of data points [7], it has been validated with more
+                                                                             (package and board). In ANSYS, this is accomplished by first
+than 60 data points at this time. Figure 6 shows the model
+                                                                             selecting all elements within this layer and then using
+correlation with actual test data for a number of different
+                                                                             ETABLE command to get the creep strains for each increment
+packages. As can be seen, the model mostly predicts the mean
+                                                                             of time for each element within the layer. The elemental creep
+cycles to failure within 25% of actual fatigue life and is very
+                                                                             strains are then multiplied with the elemental volume and the
+accurate.
+                                                                             result is summed of all elements in this layer and is divided by
+                                                                             the total volume of the layer. This value is finally added to the
+                                                                             previous sum to get the accumulated creep strain E1 and E2 for
+
+   Authorized licensed use limited
+0-7803-7038-4/01/$10.00            to: Argonne
+                                (C)2001        National Laboratory. Downloaded on September
+                                            IEEE                                       200114,2026 at 17:04:38
+                                                                                            Electronic         UTC from IEEE
+                                                                                                          Components     andXplore. Restrictions
+                                                                                                                             Technology          apply.
+                                                                                                                                             Conference
+the whole cycle. The post processing routine is given in                                                                               Test - Pkg. Top
+                                                                                                       160
+Appendix II.                                                                                                                           Test - PCB
+
+
+
+
+                                                                              Temperature (degree C)
+                                                                                                       140                             Test - Solder
+Implementation for Power Cycle                                                                         120                             Model - Pkg Top
+                                                                                                                                       Model - PCB
+    The approach can easily be implemented for power cycle                                             100                             Model - Solder
+applications also. The only difference is that while in                                                 80
+temperature cycle case a uniform temperature change is                                                  60
+assumed for the whole model, the temperature distribution for                                           40
+power cycle needs to be determined by first performing a                                                20
+transient heat transfer analysis on the model for a given power                                          0
+dissipation. The temperature distribution is then used in stress                                       -20
+analysis to determine the mean life as described above.
+                                                                                                             0   50        100         150          200
+    In order to check the validity of this life prediction model,
+a special power cycle test was performed on 27mm-256 lead                                                             Time (seconds)
+PBGA package. The test was done by heating the packages                       Fig. 8 Correlation of model and test temperature profiles.
+from the top in a cyclic manner by using peltier effect
+thermoelectic coolers, thus eliminating the need for thermal                 Life Prediction for Bend Cycle
+test die. The cycle duration was 260 seconds. A sample size of                   The life prediction model described above is not
+16 package-pcb assemblies was used for this test and the daisy               applicable for predicting life due to cyclic bending of PCB.
+chain nets were monitored for electrical continuity. The same                Since this bending takes place at a higher rate (1 cycle/sec),
+package-pcb assembly was then modeled by finite element                      creep effects are not expected to play a role there. Instead, the
+method and the transient response of the assembly was                        solder behavior is governed by time-independent plasticity
+determined. Figure 7 shows the temperature distribution at 50                and has to be modeled as such.
+seconds into the analysis. The time history plot is shown in
+Figure 8, comparing the model results with the test results. As                                                  100mm
+can be seen, the model predictions are very accurate. In the
+next step of the analysis, the model was converted into a
+structure model and the temperatures from the heat transfer
+analysis were used as the loading conditions for different time
+values, defining the load steps. For each load step, a                                                                                       62mm
+substructure analysis was performed which resulted in a load
+vector and stiffness matrix. The results of the substructure
+analysis were then used in the detailed model of solder joint to
+predict its life for the whole power cycle. At least 3 power
+cycles were simulated to get the stable cyclic results. The                                                      114mm
+measured mean life for this power cycling was 5550 cycles.
+The analysis predicted 6750 cycles, which is about 20% over-
+prediction.                                                                                                                                     0.8mm
+
+
+
+
+Fig. 7 Temperature Distribution During Power Cycling at
+                      50 seconds.
+
+
+
+                                                                                               Fig. 9 Three Point Bend Simulation in Finte Element.
+
+                                                                                 A preliminary model, based on the bend cycle data
+                                                                             published earlier [9], has been developed. The model uses the
+                                                                             time-independent plastic behavior of Sn/Pb solder given by
+                                                                             Darveaux et al [4] and shown in Figure 3. The same modeling
+                                                                             approach as described above has been used with the exception
+                                                                             that the global model is expanded to represent the bend cycle
+                                                                             test. Figure 9 shows a quarter symmetric representation of 3
+                                                                             point bend test. A substructure is formed which is analyzed
+
+
+   Authorized licensed use limited
+0-7803-7038-4/01/$10.00            to: Argonne
+                                (C)2001        National Laboratory. Downloaded on September
+                                            IEEE                                       200114,2026 at 17:04:38
+                                                                                            Electronic         UTC from IEEE
+                                                                                                          Components     andXplore. Restrictions
+                                                                                                                             Technology          apply.
+                                                                                                                                             Conference
+for a unit out of plane displacement in the center and is used                                            APENDIX I: User Creep Subroutine
+in the elastic-plastic analysis of the detailed model of corner                                           *deck,usercreep
+solder joint, which fails first in cyclic bending test.
+                             1                                                                            c* ADD from Following
+                                                   EPPLEQV (Range)
+                                                                                                          c Add Common Block to store creep strain for gbs and mc (ARS
+                                                   Total
+                                                                                      Thin Brd            7/20/00)
+                           0.1                     EPEQ (Accumulated)
+                                                                                     3mm 2mm                  COMMON CRP_G(8,5000), CRP_M(8,5000)
+ Strain (Simulations)
+
+
+
+
+                                                                                                              if (seqv.LE.ZERO.AND.creqv.LE.ZERO) GO TO 990
+                          0.01
+                                        Thk                                                               c *** Steady State Creep Law
+                                        Brd.                                                              c** delcr=(a1*(seqv/E)^n1 + a2*(seqv/E)^n2)*exp(-q/T) * dtime
+                                        2mm                                                               c *** Calculate temperature dependent Modulus (KPa)
+                         0.001                                                                                e_mod        = 5.6E+07 - 88000.0*temp
+                                               f                                                          c *** make sure if prop(5) has nonzero value, temperature should be
+                                           Nf = 42.66(EPEQ)-1.09                                          also nonzero.
+                        0.0001                                                                                con1 = ZERO
+                                 1000                                   10000                    100000       if(prop(5).ne.ZERO) con1 = exp(-prop(5)/temp)
+                                                                                                              epet = seqv/e_mod
+                                                           Cycles to Mean Failure (Test)
+                                                                                                          c *** incremental creep strain
+Fig. 10 Preliminary Life Prediction Model for Bend Cycle.                                                     delcr = ZERO
+                                                                                                              IF(prop(1).gt.ZERO) THEN
+    Since ANSYS provides two plastic strain outputs, EPPL-                                                     gbs = prop(1) * epet**prop(2) * con1 * dtime
+EQV (plastic strain magnitude) & EPEQ (accumulated plastic                                                      gmc      = prop(3) * epet**prop(4) * con1 * dtime
+                                                                                                                delcr = delcr + gbs + gmc
+strain), both are used to develop the life prediction model. In
+                                                                                                              ENDIF
+addition, the total strain is also calculated. The analysis is                                                CRP_G(kDInPt,elemId) = gbs
+typically done for more than 10 cycles to achieve a stable                                                    CRP_M(kDInPt,elemId) = gmc
+response. Figure 10 shows the results for 12mm, 132 lead                                                  c *** derivitive of incremental creep strain to effective stress
+                                                                                                              c1 = prop(2)*(epet**(prop(2)-1))/e_mod
+fleXBGA, indicating EPEQ to provide better fit. However,                                                      c2 = prop(4)*(epet**(prop(4)-1))/e_mod
+both the data and the model are very preliminary. More data is                                                dcrda(1) = (prop(1)*c1 + prop(3)*c2) * con1 * dtime
+being generated at this time to build more confidence in the                                              c *** derivitive of incremental creep strain to effective creep strain
+model.                                                                                                    c *** Not Needed for this creep law (ARS 7/20/00)
+                                                                                                              dcrda(2)= ZERO
+Reference                                                                                                 c *** Update State Variable
+                                                                                                              statev(5) = creqv + max(delcr, ZERO)
+1. Lee, W. W., Nguyen, L. T., & Selvaduray, G. S., “Solder                                                c
+    joint fatigue models: review and applicability to chip                                                 990 continue
+    scale packages,” Microelectronics Reliability, Vol. 40                                                    return
+    (2000), pp. 231-244.                                                                                      end
+2. Arrowood, R., Mukherjee, A. K., & Jones, W. B., “Hot                                                   c-------------------------------------------------------------------------------
+    Deformation of Two Phase Mixtures,” Chaper 3 in Solder                                                *DECK,USEROU
+    Mechanics Astate of the Art Assessment, Ed. Frear, D.                                                 C*** Used to save values in NMISC data block (Locations 49, 50 and
+    R., Jones, W. B., Kinsman, K. R., TMS ,1991.                                                          51 for SOLID 45)
+                                                                                                          C Define Additional Local variables
+3. Darveaux, R., Banerji, K., Mawer, A., & Dody, G.,                                                      c --- local variables
+    “Reliability of Plastic Ball Grid Array Assembly,”                                                    c
+    Chapter 13 in Ball Grid Array Technology, Ed. Lau, J.                                                      INTEGER              intpt
+    H., McGraw-Hill, 1995.                                                                                     DOUBLE PRECISION e_avg_g, e_avg_m
+4. Wong, B., Helling, D. E., and Clark, R. W., “A Creep-                                                  c   Common Block to store creep strain for gbs and mc (ARS 7/20/00)
+    Rupture Model for Two-Phase Eutectic Solders,” IEEE                                                       COMMON CRP_G(8,5000), CRP_M(8,5000)
+    CHMT-11,No.3, pp. 284-290, 1988.
+5. Syed, A. R., “A Review of Finite Element Methods for                                                       NUMDAT = 3
+                                                                                                              e_avg_g = ZERO
+    Solder Joint Analysis,” 1996 proceedings of                                                               e_avg_m = ZERO
+    Experimental/Numerical Mechanics in Electronic                                                        c*** Calculate elemental values
+    Packaging, SEM, Vol. 1, pp 117-125.                                                                       DO intpt = 1, 8
+6. Bhatti, P. K., Gschwend, K., Kwang, A., & Syed, A. R.,                                                      e_avg_g = e_avg_g + CRP_G(intpt,ELEM)/8.0
+                                                                                                               e_avg_m = e_avg_m + CRP_M(intpt,ELEM)/8.0
+    “Three Dimensional Creep Analysis of Solder Joints in                                                     END DO
+    Surface Mount Devices,” ASME JEP, Vol. 117, No. 1,                                                    C*** Multiply by element volume
+    1995, pp. 20-25.                                                                                          IF (TIME.LE.1.0E-3) THEN
+7. Syed, A., “Solder Joint Life Prediction Model and                                                           UDBDAT(1) = 0.0
+                                                                                                               UDBDAT(2) = 0.0
+    Application to Ball Gid Array Design Optimization,”                                                        UDBDAT(3) = 0.0
+    1996 proceedings of Experimental/Numerical Mechanics                                                      ELSE
+    in Electronic Packaging, SEM, Vol. 1, pp. 136-144.                                                         UDBDAT(1) = (e_avg_g + e_avg_m) * VOL
+8. Syed, A. R., “Factors Affecting Creep-Fatigue Interaction                                                   UDBDAT(2) = (e_avg_g) * VOL
+                                                                                                               UDBDAT(3) = (e_avg_m) * VOL
+    in Eutectic Sn/Pb Solder Joints,” Advances in Electronic                                                  ENDIF
+    Packaging 1997, InterPack97, pp. 1535-1542, 1997                                                      C
+9. Darveaux, R., and Syed, A., “Reliability of Area Array                                                     RETURN
+    Solder Joints in Bending”, SMTA, 2000, pp. 313-324.                                                       END
+
+
+
+   Authorized licensed use limited
+0-7803-7038-4/01/$10.00            to: Argonne
+                                (C)2001        National Laboratory. Downloaded on September
+                                            IEEE                                       200114,2026 at 17:04:38
+                                                                                            Electronic         UTC from IEEE
+                                                                                                          Components     andXplore. Restrictions
+                                                                                                                             Technology          apply.
+                                                                                                                                             Conference
+APPENDIX II: Post Processing
+C*** Resume model database file
+resu,file,db
+eall
+/POST1
+C*** Select top layer of elements
+CMSEL,S,top
+*get,numelem,elem,,count
+*dim,vcta,array,1300,4,1
+file,file,rst,
+set,last
+*get,lasttime,active,,set,time
+lp=0
+ec_tot = 0
+ec_gb = 0
+ec_mc = 0
+:RESTR
+lp=lp+1
+set,next
+*get,nowtime,active,,set,time
+enum=0
+C*** Initiate etable using nmisc data
+C*** For Solid 45, nmisc 49, 50, 51 store the (Creep strain * VOl)
+C*** calculated from usercreep and saved using userou
+
+etable,total,nmisc,49
+etable,totgb,nmisc,50
+etable,totmc,nmisc,51
+etable,e_vol,VOLU,
+ssum
+C*** Sum for all selected elements
+*get,sumtot,ssum,0,item,total
+*get,sumgb,ssum,0,item,totgb
+*get,summc,ssum,0,item,totmc
+*get,sumvol,ssum,0,item,e_vol
+C*** Add to the previous sum
+ec_tot = ec_tot + sumtot
+ec_gb = ec_gb + sumgb
+ec_mc = ec_mc + summc
+vcta(lp,1)=nowtime
+C*** Divide by the whole volume to do volume averaging
+vcta(lp,2)=ec_tot/sumvol
+vcta(lp,3)=ec_gb/sumvol
+vcta(lp,4)=ec_mc/sumvol
+C*** Repeat for all iterations
+*if,nowtime,lt,lasttime,:RESTR
+life = 1/(0.02*vcta(lp,3)+0.063*vcta(lp,4))
+C*** Write the results to a file
+*cfopen,life,acs
+*vwrite,vcta(1,1),vcta(1,2),vcta(1,3),vcta(1,4)
+(F10.3,2x,E10.3,2x,E10.3,2X,E10.3)
+*vwrite,life
+("Cycles to Mean Failure, N50 = "F10.1)
+*cfclos
+fini
+/EXIT
+
+
+
+
+   Authorized licensed use limited
+0-7803-7038-4/01/$10.00            to: Argonne
+                                (C)2001        National Laboratory. Downloaded on September
+                                            IEEE                                       200114,2026 at 17:04:38
+                                                                                            Electronic         UTC from IEEE
+                                                                                                          Components     andXplore. Restrictions
+                                                                                                                             Technology          apply.
+                                                                                                                                             Conference
+

@@ -1,0 +1,23 @@
+A/B/C at a FIXED cycle 0 -> 100 C, identical loading
+  A  temperature-INDEPENDENT (Phase-0H class)       d_eps_in = 8.21399e-03  (46 s)
+  B  T-dependent elastic + plastic, no creep        d_eps_in = 8.52392e-03  (48 s)
+  C  FULL: T-dependent elastic + plastic + creep    d_eps_in = 5.98032e-03  (47 s)
+
+  full physics vs temperature-independent: 0.73x  (-27.2 %)
+  creep alone contributes:                 0.70x  (-29.8 %)
+
+MEAN-TEMPERATURE SWEEP at a fixed 100 K swing (an Arrhenius law must care; a frozen model cannot)
+  A  T_mean =   25.0 C  d_eps_in = 8.21713e-03
+  A  T_mean =   50.0 C  d_eps_in = 8.21399e-03
+  A  T_mean =   75.0 C  d_eps_in = 8.20749e-03
+  A  T_mean =  100.0 C  d_eps_in = 8.20015e-03
+  C  T_mean =   25.0 C  d_eps_in = 5.46349e-03
+  C  T_mean =   50.0 C  d_eps_in = 5.98032e-03
+  C  T_mean =   75.0 C  d_eps_in = 6.70155e-03
+  C  T_mean =  100.0 C  d_eps_in = 7.12503e-03
+
+  model A: d_eps_in across T_mean 25 -> 100 C changes -0.2 %
+
+  model C: d_eps_in across T_mean 25 -> 100 C changes +30.4 %
+
+wrote results/phase0i/temperature_dependent_damage_test.csv

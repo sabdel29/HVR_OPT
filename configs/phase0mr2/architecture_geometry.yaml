@@ -1,0 +1,84 @@
+# =====================================================================================
+# PHASE 0M-R2 SECTION 3 --- ONE ARCHITECTURE-AWARE GEOMETRY SOURCE
+# =====================================================================================
+# Before this file the TSV vertical span was decided in three different places:
+#
+#   ELECTRICAL   zpower.evaluate_z: h_tsv = h_sub - t_cell for Z1, h_sub otherwise
+#   MECHANICAL   etm.mesh: the tsv_homog region is whatever `sub_lower` happens to be,
+#                i.e. h_sub - t_tile, which for Z2 and Z4 is 280 um, not 300 um
+#   FEASIBILITY  tsv_production.sweep: a hard-coded 100 / 300 / 1300 um ladder labelled
+#                "Z2_LV_1000A" and tied to no architecture at all
+#
+# The 1300 um rung was the origin of the Phase-0M-R statement that "at 1300 um no radius
+# in the swept range works". NO ARCHITECTURE TRAVERSES 1300 um. ARCH_Z1 has a 1.30 mm
+# substrate, but 1226 um of it is the embedded converter cell sitting ON TOP of the via
+# field, so its TSVs traverse 74 um.
+# =====================================================================================
+
+meta:
+  aspect_ratio_max: 10.0
+  aspect_ratio_source: >-
+    SOURCE_BACKED. June-2026 Table III demonstrates d = 30 um at h = 300 um, i.e. exactly
+    10:1. The framework treats that demonstrated point as the capability ceiling; no
+    source in this repository demonstrates a deeper via.
+  tsv_diameter_um: 30.0
+  tsv_diameter_source: "SOURCE_BACKED. June-2026 Table III, configs stack tsv_field.diameter"
+  tsv_pitch_um: 60.0
+  tsv_pitch_source: "SOURCE_BACKED. configs stack tsv_field.pitch"
+  liner_um: 0.5
+  liner_source: "SOURCE_BACKED. interconnect.TSVGeometry default t_liner_m = 5e-7"
+
+architectures:
+
+  ARCH_Z1_EMBEDDED:
+    h_sub_mm: 1.30
+    converter_placement: in
+    converter_cell_um: 1226.0
+    converter_cell_source: >-
+      DERIVED from SOURCE_BACKED parts: inductor 500 + GaN LS 606 (EPC2090) + MLCC 100
+      (BOUNDED) + 2 x 10 um interlayer RDL (ECTC-2024). zarch.embedded_cell_um().
+    tsv_z_start_um: 0.0
+    tsv_z_end_um: 74.0
+    tsv_span_rule: "h_sub - t_cell: the embedded cell sits ON TOP of the via field"
+    tsv_rail: HV
+    tsv_voltage_v: 48.0
+    note: >-
+      The span is the `sub_lower` layer. The electrical model and the mesh already agree
+      here; the feasibility sweep did not, because it never asked the architecture.
+
+  ARCH_Z2_BACKSIDE:
+    h_sub_mm: 0.30
+    converter_placement: below
+    converter_cell_um: 0.0
+    tsv_z_start_um: 0.0
+    tsv_z_end_um: 300.0
+    tsv_span_rule: "the full substrate: the 1 V rail crosses it from the backside VR"
+    tsv_rail: LV
+    tsv_voltage_v: 1.0
+    note: >-
+      MISMATCH FOUND. The mesh gives the field only `sub_lower` = h_sub - t_tile = 280 um,
+      because a 20 um RDL band is reserved at the substrate top even though the converter
+      is not in the substrate for this architecture. The electrical model uses 300 um.
+      A 6.67 % disagreement between the domains, now enforced away.
+
+  ARCH_Z4_POWER_DIE:
+    h_sub_mm: 0.30
+    converter_placement: above
+    converter_cell_um: 0.0
+    tsv_z_start_um: 0.0
+    tsv_z_end_um: 300.0
+    tsv_span_rule: "the full substrate: the 48 V rail rises to the power die above it"
+    tsv_rail: HV
+    tsv_voltage_v: 48.0
+    note: "same 6.67 % electrical/mechanical mismatch as ARCH_Z2"
+
+  ARCH_Z5_2P5D_LATERAL:
+    h_sub_mm: 0.30
+    converter_placement: lateral
+    converter_cell_um: 0.0
+    tsv_z_start_um: 0.0
+    tsv_z_end_um: 300.0
+    tsv_span_rule: "the full substrate: the 48 V rail rises to the lateral VR field"
+    tsv_rail: HV
+    tsv_voltage_v: 48.0
+    note: "not in the frozen replay set; listed so the geometry API covers every architecture"

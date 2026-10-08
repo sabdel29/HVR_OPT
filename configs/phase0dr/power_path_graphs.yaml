@@ -1,0 +1,143 @@
+# Phase-0D-R: explicit power-path graphs per architecture.
+#
+# CENTRAL CORRECTION: the rail (and therefore the current) carried by each interconnect
+# segment is a property of WHERE CONVERSION HAPPENS in the physical stack. There is no
+# global "TSV carries input" or "TSV carries output" rule. Phase 0D assumed the former,
+# which is correct for ARCH_A only.
+#
+# Segment current convention:
+#   rail = HV  -> segment is UPSTREAM of the converter, carries I_in  = P_in / V_in
+#   rail = LV  -> segment is DOWNSTREAM of the converter, carries I_out = I_total / N_VR
+#   P_in = V_out*I_out + P_conv   (actual converter loss, never assumed ideal)
+#
+# Cross-section shapes matter: validating June-2026 Table III shows BGA and TSV are
+# CIRCULAR (A = pi d^2/4) but the chiplet pad is SQUARE 10x10 um (A = 100 um^2 exactly
+# reproduces their 1.7 mOhm; a circular pad would overstate it by 27%).
+
+meta:
+  phase: 0D-R
+  basis_stack: configs/phase0b/package_stack.yaml
+  status_vocab: [SOURCE_BACKED, MODEL_DERIVED, ASSUMPTION, OPEN]
+
+# ---------------------------------------------------------------- interconnect library
+tiers:
+  bga:
+    material: solder
+    shape: circular
+    d_m:     {value: 400.0e-6, status: SOURCE_BACKED, src: "June-2026 Table III"}
+    h_m:     {value: 300.0e-6, status: SOURCE_BACKED, src: "June-2026 Table III"}
+    pitch_m: {value: 800.0e-6, status: SOURCE_BACKED, src: "June-2026 Table III"}
+    rho_20c: {value: 130.0e-9, status: SOURCE_BACKED, src: "June-2026: solder resistivity 130 nOhm.m"}
+    alpha:   {value: 4.0e-3,   status: ASSUMPTION,    src: "typical SnPb/SAC TCR"}
+    r_ref_ohm: {value: 0.3e-3, status: SOURCE_BACKED, src: "June Table III quoted value (model gives 0.310 mOhm)"}
+    i_max_a: {value: 0.5,      status: ASSUMPTION,    src: "per-ball current limit not stated in any available source"}
+    r_contact_ohm: {value: 0.0, status: OPEN,         src: "UBM/IMC contact resistance not available"}
+
+  c4:
+    material: solder
+    shape: circular
+    d_m:     {value: 100.0e-6, status: ASSUMPTION, src: "NOT in June Table III; typical flip-chip C4"}
+    h_m:     {value: 70.0e-6,  status: ASSUMPTION, src: "typical collapsed C4 standoff"}
+    pitch_m: {value: 150.0e-6, status: ASSUMPTION, src: "typical C4 pitch"}
+    rho_20c: {value: 130.0e-9, status: SOURCE_BACKED, src: "June-2026 solder resistivity"}
+    alpha:   {value: 4.0e-3,   status: ASSUMPTION}
+    i_max_a: {value: 0.2,      status: ASSUMPTION}
+    r_contact_ohm: {value: 0.0, status: OPEN}
+    note: "A C4 is NOT a microbump. Its geometry is ~10x larger; do not reuse microbump values."
+
+  tsv:
+    material: copper
+    shape: circular
+    d_m:     {value: 30.0e-6,  status: SOURCE_BACKED, src: "June-2026 Table III"}
+    h_m:     {value: null,     status: MODEL_DERIVED, src: "= h_sub - t_tile; the thickness variable"}
+    pitch_m: {value: 60.0e-6,  status: SOURCE_BACKED, src: "June-2026 Table III"}
+    rho_20c: {value: 17.0e-9,  status: SOURCE_BACKED, src: "June-2026: Cu resistivity 17 nOhm.m"}
+    alpha:   {value: 3.93e-3,  status: ASSUMPTION,    src: "bulk Cu TCR; same value as configs/phase0b"}
+    r_ref_ohm: {value: 7.1e-3, status: SOURCE_BACKED, src: "June Table III at h=300 um (model gives 7.215 mOhm, +1.6%)"}
+    i_max_a: {value: 0.033,    status: OPEN,          src: "derived from June's 30202 TSVs for 1 kA IF PL1 carries output current; 4.8 mA if input RMS"}
+
+  microbump:
+    material: copper
+    shape: square              # June's 100 um^2 area for a 10 um pad is square, not circular
+    d_m:     {value: 10.0e-6,  status: SOURCE_BACKED, src: "June-2026 Table III chiplet pad"}
+    h_m:     {value: 10.0e-6,  status: SOURCE_BACKED, src: "June-2026 Table III"}
+    pitch_m: {value: 20.0e-6,  status: SOURCE_BACKED, src: "June-2026 Table III"}
+    rho_20c: {value: 17.0e-9,  status: SOURCE_BACKED}
+    alpha:   {value: 3.93e-3,  status: ASSUMPTION}
+    r_ref_ohm: {value: 1.7e-3, status: SOURCE_BACKED, src: "June Table III (square 100 um^2 reproduces this EXACTLY)"}
+    i_max_a: {value: 0.02,     status: ASSUMPTION}
+    r_contact_ohm: {value: 0.0, status: OPEN}
+
+  rdl:
+    material: copper
+    t_cu_m:  {value: 5.0e-6,   status: ASSUMPTION, src: "Phase-0A recorded 'RDL Cu thickness 5 um, UNSPECIFIED default'"}
+    rho_20c: {value: 17.0e-9,  status: SOURCE_BACKED}
+    alpha:   {value: 3.93e-3,  status: ASSUMPTION}
+    metal_occupancy: {value: 0.60, status: ASSUMPTION,
+                      src: "fraction of routing corridor that is VDD or GND metal; Phase 0D implicitly used 1.0"}
+    note: "Phase 0D used W_eff = full die width and occupancy 1.0, which is optimistic. A 2-D
+           resistive-sheet solve replaces that here."
+
+# ---------------------------------------------------------------- architectures
+architectures:
+
+  ARCH_A:
+    label: "HV-TSV - HVR embedded at the TOP of the power substrate (validated Phase-0B/0C vehicle)"
+    tile_face: top
+    tsv_rail: HV
+    mech_geometry: phase0b_validated
+    segments:
+      - {id: s1, from: board,       to: substrate_bottom, tier: bga,       rail: HV, direction: vertical}
+      - {id: s2, from: substrate_bottom, to: tile_input,  tier: tsv,       rail: HV, direction: vertical, length: h_sub_minus_tile}
+      - {id: s3, from: tile_input,  to: tile_output,      tier: converter, rail: CONV}
+      - {id: s4, from: tile_output, to: die_pol,          tier: microbump, rail: LV, direction: vertical}
+      - {id: s5, from: tile_output, to: die_pol,          tier: rdl,       rail: LV, direction: lateral, layer: interface}
+    rationale: >
+      The tile sits flush with the substrate top (embed_from: top), so the TSV field spans
+      from the board side up to the tile underside and is UPSTREAM of conversion. The 1 V
+      output reaches the die through only the 10 um interface layer. This is the geometry
+      Phase 0B/0C validated and Phase 0D analysed.
+
+  ARCH_B:
+    label: "LV-TSV - HVR embedded at the BOTTOM of the power substrate (land-side VR)"
+    tile_face: bottom
+    tsv_rail: LV
+    mech_geometry: tile_at_substrate_bottom
+    segments:
+      - {id: s1, from: board,       to: tile_input,  tier: bga,       rail: HV, direction: vertical}
+      - {id: s2, from: tile_input,  to: tile_output, tier: converter, rail: CONV}
+      - {id: s3, from: tile_output, to: substrate_top, tier: tsv,     rail: LV, direction: vertical, length: h_sub_minus_tile}
+      - {id: s4, from: substrate_top, to: die_pol,   tier: microbump, rail: LV, direction: vertical}
+      - {id: s5, from: substrate_top, to: die_pol,   tier: rdl,       rail: LV, direction: lateral, layer: interface}
+    rationale: >
+      The tile sits flush with the substrate underside, so the BGA feeds the converter input
+      almost directly and the entire 1 V output current must traverse the substrate
+      vertically. The thickness-dependent TSV is now DOWNSTREAM of conversion. This is the
+      architecture in which a genuine electrical-mechanical thickness tension can exist.
+
+  ARCH_C:
+    label: "2.5D lateral - HVR beside the die on the interposer"
+    tile_face: lateral
+    tsv_rail: HV
+    mech_geometry: tile_outside_die_footprint
+    segments:
+      - {id: s1, from: board,          to: package_top,   tier: bga,       rail: HV, direction: vertical}
+      - {id: s2, from: package_top,    to: interposer_bot, tier: c4,       rail: HV, direction: vertical}
+      - {id: s3, from: interposer_bot, to: tile_input,    tier: tsv,       rail: HV, direction: vertical, length: h_sub_minus_tile}
+      - {id: s4, from: tile_input,     to: tile_output,   tier: converter, rail: CONV}
+      - {id: s5, from: tile_output,    to: die_edge,      tier: rdl,       rail: LV, direction: lateral, layer: interposer, long: true}
+      - {id: s6, from: die_edge,       to: die_pol,       tier: microbump, rail: LV, direction: vertical}
+    rationale: >
+      Classic 2.5D: high voltage arrives vertically through BGA/C4/TSV, conversion happens
+      beside the die, and the 1 V output travels a LONG lateral interposer route before
+      entering the die. Thickness is electrically cheap here but lateral RDL loss becomes the
+      dominant distribution term, and the VR sits outside the die footprint mechanically.
+
+# Both supply and return are modelled: R_loop = R_supply + R_ground.
+return_path:
+  model: symmetric
+  status: ASSUMPTION
+  note: >
+    Ground return is modelled as an identical parallel structure to the supply for every
+    tier, so R_loop = 2 * R_supply. Phase 0D omitted the return path entirely, understating
+    every interconnect loss by a factor of 2.
