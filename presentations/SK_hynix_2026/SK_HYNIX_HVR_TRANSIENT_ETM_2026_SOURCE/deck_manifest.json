@@ -1,0 +1,672 @@
+[
+ {
+  "kind": "main",
+  "title": null,
+  "kicker": null,
+  "figures": [],
+  "takeaway": null,
+  "notes": "[~25 s]\n\nThank you for having me. I am going to put two pieces of work next to each other\ntoday, and argue that they are the same argument told at two different timescales.\n\nThe claim in the title is the whole talk: a power delivery decision only means\nsomething once you evaluate it on the physical package, and on the timescale the\nsystem actually runs at.\n\nTRANSITION: Let me start with what I am going to show you, and what I am not.\n\nIf asked: Who did what \u2014 the transient electrothermal work and the DVPD\nelectrothermal\u2013mechanical work are both mine; the DVPD manuscript is co-authored\nwith Inna Partin-Vaisband.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 1,
+  "fn": "s_title"
+ },
+ {
+  "kind": "main",
+  "title": "What this talk covers \u2014 and what it does not claim",
+  "kicker": "roadmap",
+  "figures": [],
+  "takeaway": null,
+  "notes": "[~65 s]\n\nThree parts. Part one is a fast transient electrothermal solver, and the setting\nthere is workload stepping and power gating \u2014 the millisecond behaviour. Part two\nis an architecture question at steady state: where the regulator physically sits\nin a kilowatt stack, and what that does electrically, thermally and mechanically.\nPart three ties them together.\n\nI want to put the limitations on the screen before the results rather than after,\nbecause they bound everything that follows. The transient work is verified against\ntwo other codes \u2014 it is not validated against measurement. The mechanical work\nproduces a response quantity; it is not a damage metric and it is not a life\nprediction. And nothing here is an optimiser result, nor a recommendation about\nwhat SK hynix should build.\n\nKEY NUMBERS: none yet \u2014 this slide is the contract.\n\nTRANSITION: Let me start with why any of this is hard, which is a current number.\n\nIf asked: Why no measurement \u2014 no hardware vehicle exists for either study; both\nare modelling results and are reported as such.",
+  "tables": 0,
+  "bullets": 3,
+  "page": 2,
+  "fn": "s_roadmap",
+  "accent": "GRY"
+ },
+ {
+  "kind": "main",
+  "title": "At 1 V, the delivery network is the constraint",
+  "kicker": "the problem",
+  "figures": [
+   "deck/p_current.png"
+  ],
+  "takeaway": "Converting closer to the load shortens the 1 V rail \u2014 which turns \u201cwhere does conversion happen?\u201d into a packaging question.",
+  "notes": "[~75 s]\n\nA kilowatt at one volt is about a thousand amps, into a die 22.4 millimetres on\na side. At that current the thing that limits you is not converter efficiency \u2014\nit is I-squared-R in a one-volt rail crossing a few millimetres of package metal.\nThat term is comparable to the load itself.\n\nThe standard answer is to convert closer to the load so the high-current rail is\nshort. That is distributed vertical power delivery. But the moment you say\n\"closer\", you have made a packaging decision, not a circuit decision \u2014 and that is\nthe whole of Part II.\n\nKEY NUMBERS: 1 kW at 1 V is about 1000 A; die is 22.36 mm square.\n\nTRANSITION: Before the results, one slide on why a single kind of model is not\nenough for this.\n\nIf asked: Why 1 V \u2014 it is the frozen operating point of this study, chosen to make\nthe delivery problem explicit; the argument is about the method, not that voltage.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 3,
+  "fn": "s_current",
+  "accent": "RED"
+ },
+ {
+  "kind": "main",
+  "title": "Different models answer different questions",
+  "kicker": "framing",
+  "figures": [
+   "deck/p_scope.png"
+  ],
+  "takeaway": "Each row is correct and useful. The architecture question needs several of them at once, on one geometry.",
+  "notes": "[~70 s]\n\nThis is not a criticism of anyone's tools. A circuit-level regulator model tells\nyou loss and efficiency and tells you nothing about the package. A steady package\nthermal model resolves geometry but not the transient and not the mechanics. A\nstand-alone mechanical FEA resolves the mechanics but is usually run downstream, on\na temperature field someone handed it.\n\nThe point of the bottom row is not that it is better physics. It is that the\narchitecture question \u2014 where should conversion happen \u2014 touches all four columns\nat once, so it has to be evaluated on one geometry with the couplings live.\n\nKEY NUMBERS: none \u2014 this is the framing slide.\n\nTRANSITION: And there is a second axis besides which physics: which timescale.\n\nIf asked: Is coupled always necessary \u2014 no. If you only need efficiency, use the\ncircuit model. Coupling earns its cost only when the answer depends on the\ninteraction, which is exactly the case I will show.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 4,
+  "fn": "s_scope",
+  "accent": "GRY"
+ },
+ {
+  "kind": "main",
+  "title": "Two timescales, one design principle",
+  "kicker": "the thesis",
+  "figures": [
+   "deck/p_bridge.png"
+  ],
+  "takeaway": "Same argument, two timescales: the physical package and the operating timescale decide whether a power delivery choice is good.",
+  "notes": "[~70 s]\n\nHere is the thesis in one picture, and I will come back to it at the end.\n\nOn the left, milliseconds. The die heats and cools as the workload steps and as\nblocks are power-gated. To study that you need to march a transient many times\nover, and the cost of doing that is what Part I is about \u2014 13.6 times faster\nmatched stepping.\n\nOn the right, the architecture. Steady state, but now the question is where the\nregulator physically is, and the answer moves temperature by +8.14 kelvin and moves\nthe local mechanical response by 18.4 per cent.\n\nDifferent timescales, different physics, same discipline: evaluate it on the real\npackage, at the timescale that matters.\n\nKEY NUMBERS: 13.62\u00d7 matched transient stepping; +8.14 K; 16.3 % driver; 18.4 % response.\n\nTRANSITION: Part I \u2014 milliseconds.\n\nIf asked: Are the two studies on the same package \u2014 no. Different vehicles and\ndifferent problems. The shared thing is the method discipline, not the geometry.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 5,
+  "fn": "s_bridge_up",
+  "accent": "GRY"
+ },
+ {
+  "kind": "main",
+  "title": null,
+  "kicker": null,
+  "figures": [],
+  "takeaway": null,
+  "notes": "[~18 s]\n\nPart one. The millisecond timescale.\n\nTRANSITION: Start with why the transient matters at all for HBM.\n\nIf asked: nothing \u2014 this is a divider.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 6,
+  "fn": "s_part1"
+ },
+ {
+  "kind": "main",
+  "title": "The vehicle: a GPU with six HBM stacks on an interposer",
+  "kicker": "why transient",
+  "figures": [
+   "epeps/paper_fig2_module.png"
+  ],
+  "takeaway": "Power gating and workload steps are transient events \u2014 a steady-state answer cannot see the excursion that actually occurs.",
+  "notes": "[~75 s]\n\nThis is the vehicle for Part I: a 700 watt GPU with six HBM stacks either side on\nan interposer, and a thermal-aware controller that decides what to gate.\n\nThe reason this has to be transient is that none of these blocks sits at one\noperating point. Traffic arrives in bursts, the heavy HBM stacks come and go, and\nthe thermal response has its own time constants.\n\nIf you solve steady state at the average power you miss the excursion. If you\nsolve steady state at the peak you over-design, because the die never dwells there\nlong enough to get that hot. The honest answer needs the time history \u2014 and you\nneed it once per candidate gating policy, which is where the cost problem comes\nfrom.\n\nKEY NUMBERS: 700 W GPU; six HBM stacks, two marked heavy.\n\nTRANSITION: So here is how the model is posed.\n\nIf asked: Is this a specific product \u2014 no, it is a representative 2.5D module used\nfor the study; the power split and the heavy/light assignment are study inputs.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 7,
+  "fn": "s_workload",
+  "accent": "BLU"
+ },
+ {
+  "kind": "main",
+  "title": "The thermal model sits inside the policy loop, not after it",
+  "kicker": "method",
+  "figures": [
+   "epeps/f2_framework.png"
+  ],
+  "takeaway": "Every candidate gating action is simulated as a transient and screened BEFORE it is allowed \u2014 which is only affordable if a transient is cheap.",
+  "notes": "[~90 s]\n\nThis is the structure of the method, and it is the reason runtime matters rather\nthan being a benchmark curiosity.\n\nA candidate power-gating action comes in. It goes through an electrical and inrush\nmodel, which gives a distributed Joule heating map, which is handed to a transient\nthermal oracle \u2014 a three-dimensional finite-volume solve. The oracle returns the\ntemperature history, and a feasibility screen either rejects the action or passes\nit to the policy optimiser.\n\nThe important word is BEFORE. The screen sits between the model and the optimiser,\nnot after the fact. The optimiser never gets to choose an action that would cook\nthe stack, because infeasible actions are removed from its choice set.\n\nThat is a strictly better architecture than checking afterwards \u2014 but it is only\naffordable if one transient solve is cheap, because you now need one per candidate\naction per epoch. Which is the next slide.\n\nKEY NUMBERS: one 3-D transient solve per candidate action, inside the loop.\n\nTRANSITION: So how do you make a transient cheap enough to put in a loop?\n\nIf asked: Why not a reduced-order or RC model \u2014 you can, and people do; the cost\nis that you have to trust the reduction across the whole action space. Here the\nfull solve is made cheap instead, so no reduction is needed.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 8,
+  "fn": "s_framework",
+  "accent": "BLU"
+ },
+ {
+  "kind": "main",
+  "title": "Where the speed comes from: the operator is reused",
+  "kicker": "mechanism",
+  "figures": [
+   "epeps/f3_operator_reuse.png"
+  ],
+  "takeaway": "Build and factorise once, then every step is a solve against the existing factorisation \u2014 so cost per step falls as steps accumulate.",
+  "notes": "[~90 s]\n\nThis is the mechanism, and it is the honest reason for the number on the next\nslide but one.\n\nFor a linear, constant-property transient on a fixed mesh, the system operator does\nnot change from step to step. So you assemble it once and factorise it once, and\nthen each subsequent timestep is a back-substitution against a factorisation you\nalready own. The expensive part is paid at step zero and amortised across every\nstep after it.\n\nThat immediately tells you the shape of the result: the advantage is not a constant\nfactor. It grows with the number of steps, and it is smallest \u2014 in fact negative \u2014\nwhen there is only one solve to do. I will show you both ends of that.\n\nKEY NUMBERS: cost is dominated by one factorisation; per-step cost is a solve.\n\nTRANSITION: Before any speed claim, the answers have to agree.\n\nIf asked: What breaks the reuse \u2014 anything that changes the operator: strong\ntemperature-dependent conductivity, a moving mesh, or a changing boundary\ncondition type. Those cases lose the amortisation.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 9,
+  "fn": "s_operator",
+  "accent": "BLU"
+ },
+ {
+  "kind": "main",
+  "title": "Does it agree with codes I did not write?",
+  "kicker": "verification",
+  "figures": [
+   "epeps/f5_steady_three_tool.png"
+  ],
+  "takeaway": "Largest deviation from the finite-element reference is 0.452 K (this work) and 0.086 K (Icepak, 1,064,526 cells). Verification, not validation.",
+  "notes": "[~85 s]\n\nSteady state first, because if the codes disagree here then nothing about the\ntransient is interesting.\n\nAgainst the finite-element reference, Ansys Icepak on about 1,064,526 cells sits\nwithin 0.086 kelvin, and my finite-volume solver within 0.452 kelvin, across\nthe GPU case and both HBM cases. Those are small numbers against a package that is\ntens of kelvin above ambient.\n\nI want to be exact about the word: this is verification. Three independent\nimplementations of the same stated physics give the same answer, which tells you\nthe implementations are right. It does not tell you the physics matches hardware,\nbecause no hardware was measured. The figure says that too.\n\nKEY NUMBERS: FV max 0.452 K; Icepak max 0.086 K; Icepak 1,064,526 cells.\n\nTRANSITION: The agreement is backed by explicit invariant checks, not just a\ntemperature comparison.\n\nIf asked: Why is Icepak closer \u2014 it meshes the exact physical die volume, whereas\nmy FV support is matched to the contract; the residual is a support-definition\ndifference, not a physics difference.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 10,
+  "fn": "s_steady3",
+  "accent": "BLU"
+ },
+ {
+  "kind": "main",
+  "title": "The checks that back the agreement",
+  "kicker": "verification",
+  "figures": [
+   "epeps/f4_verification_checks.png"
+  ],
+  "takeaway": "Agreement has to hold in the mathematics, the discretisation, the observable AND across independent codes \u2014 a single matching temperature is not evidence on its own.",
+  "notes": "[~70 s]\n\nOne matching temperature can happen by luck, so the agreement is decomposed into\nfour things that each have to hold.\n\nExact mathematics: there is an analytic three-dimensional block solution to check\nagainst. Discrete integrity: control volumes conserve energy. Matched observable:\nevery code is asked for the same quantity over the same region and the same\nsupport \u2014 this is where most cross-code comparisons quietly fail. And independent\ncodes: MOOSE and Ansys Icepak were written by other people.\n\nOnly when all four hold does an agreeing temperature mean anything.\n\nKEY NUMBERS: four independent conditions; two independent third-party codes.\n\nTRANSITION: Now the runtime, with its counter-case.\n\nIf asked: Which of the four is hardest \u2014 the matched observable. Comparing a\nsurface average against a point probe will produce a disagreement that looks like\nphysics and is not.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 11,
+  "fn": "s_checks",
+  "accent": "BLU"
+ },
+ {
+  "kind": "main",
+  "title": "13.6\u00d7 on matched transient stepping \u2014 and the case where it loses",
+  "kicker": "result",
+  "figures": [
+   "epeps/f6_runtime.png"
+  ],
+  "takeaway": "13.6\u00d7 holds for repeated transient stepping (77 s vs 1046 s, 400 steps, one core). For ONE steady solve the same code is 21\u00d7 SLOWER.",
+  "notes": "[~110 s]\n\nThis is the headline of Part I, and the red box is as important as the big number.\n\nOn a matched 400-step transient, one core, same problem size and same output\nresponsibility: 77 seconds against 1046 seconds. That is 13.62 times. The figure\nalso shows MOOSE on six ranks, so you can see the single-core comparison is not\nhiding a parallelism story.\n\nNow the counter-case, in red. For a single steady solve, my code takes about\n127 seconds and MOOSE takes about 6. That is roughly 21 times SLOWER,\nnot faster. That is exactly what the amortisation argument predicts: if you only\nsolve once, you pay the factorisation and get nothing back for it.\n\nSo the claim is narrow and I want it heard narrowly: this is a repeated-transient\ntool. If your workload is one steady point, use a general code.\n\nThe right panel shows the crossover \u2014 25 steps gives about 2.3\u00d7, and it grows\nmonotonically to 13.6\u00d7 at 400.\n\nKEY NUMBERS: 76.8 s vs 1046.4 s = 13.62\u00d7; steady 127.2 s vs 6.0 s = 21.1\u00d7 slower.\n\nTRANSITION: So what does that buy you in practice?\n\nIf asked: Is the MOOSE configuration fair \u2014 it is a linear LU/MUMPS screen\nconfiguration on the same mesh, interleaved with the FV runs so machine load is\nshared; the load averages per point are recorded in the artifact.\n\nIf asked: Does it parallelise \u2014 the comparison is single core by construction; the\nsix-rank MOOSE bar is there so the reader can scale the claim themselves.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 12,
+  "fn": "s_runtime",
+  "accent": "BLU"
+ },
+ {
+  "kind": "main",
+  "title": "What the speed buys: screening power-gating policies",
+  "kicker": "application",
+  "figures": [
+   "epeps/f7_policy_greedy.png"
+  ],
+  "takeaway": "A greedy policy reaches 98.93 \u00b0C (oracle) / 101.37 \u00b0C (Ansys) \u2014 above the 95 \u00b0C HBM limit used here.",
+  "notes": "[~80 s]\n\nHere is why the speed matters rather than being a benchmark curiosity.\n\nIf evaluating one candidate policy costs you twenty minutes, you evaluate three. If\nit costs ninety seconds, you evaluate hundreds, and you can put the thermal model\ninside the policy loop instead of checking afterwards.\n\nThis is a greedy gating policy \u2014 take the best immediate move at each step. It\nreaches about 98.93 degrees on the oracle trace and 101.37 on the Ansys\ncross-check, against the 95 degree HBM limit used in this study. So greedy\nviolates, and it violates because it never looks ahead at the thermal consequence.\n\nKEY NUMBERS: greedy 98.93 \u00b0C oracle, 101.37 \u00b0C Ansys; limit 95 \u00b0C.\n\nTRANSITION: Thermally screening the same policy fixes it.\n\nIf asked: Is 95 \u00b0C a real HBM spec \u2014 it is the limit adopted in this study;\ntreat it as a parameter, not a datasheet value for any specific part.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 13,
+  "fn": "s_greedy",
+  "accent": "BLU"
+ },
+ {
+  "kind": "main",
+  "title": "Thermally screened: the same workload, under the limit",
+  "kicker": "application",
+  "figures": [
+   "epeps/f8_policy_screened.png"
+  ],
+  "takeaway": "Screened policy holds 88.09 \u00b0C / 89.88 \u00b0C \u2014 33 violations to 0 over 96 epochs, at 8.1 % leakage overhead.",
+  "notes": "[~80 s]\n\nSame workload, same hardware model, but now the thermal model is consulted inside\nthe policy loop and moves that would cross the limit are screened out.\n\nPeak goes to about 88.09 degrees on the oracle trace and 89.88 on the\nAnsys cross-check \u2014 comfortably under 95. Over 96 epochs the violation\ncount goes from 33 to 0, and the price is about\n8.1 per cent leakage overhead.\n\nOne piece of provenance I owe you: these two policy traces are the published EPEPS\n2026 application result. They were produced before a later solver correction and\nthey have not been rerun. The verification and runtime numbers I showed you were\nrerun; these were not. I am showing them as a published application result, not as\na fresh measurement.\n\nKEY NUMBERS: 88.09 / 89.88 \u00b0C; 33\u21920 violations over 96 epochs; 8.1 % overhead.\n\nTRANSITION: Let me close Part I with the claim boundary.\n\nIf asked: Would the correction change these \u2014 the correction affected the solver\npath, so the absolute temperatures could shift slightly; the qualitative result\n(screening removes violations at modest overhead) is what I am standing behind.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 14,
+  "fn": "s_screened",
+  "accent": "BLU"
+ },
+ {
+  "kind": "main",
+  "title": "Part I \u2014 the claim boundary",
+  "kicker": "what is and is not claimed",
+  "figures": [],
+  "takeaway": "The speed-up is real and narrow. The verification is real and is not validation.",
+  "notes": "[~75 s]\n\nLet me say the boundary once, plainly, so it carries into the second half.\n\nWhat I am claiming: three codes agree on one stated physical contract; the\ninvariant checks hold; the solver is 13.6 times faster on repeated transient\nstepping; and in the published application, screening removed the violations.\n\nWhat I am not claiming: anything about agreement with measurement, any speed\nadvantage outside repeated stepping, and any freshness for the two policy traces.\n\nKEY NUMBERS: 0.452 K; 13.62\u00d7; 21.1\u00d7 slower on one steady solve.\n\nTRANSITION: That is the millisecond half. Now the architecture half.\n\nIf asked: What would make it validation \u2014 a thermally instrumented vehicle with\nknown power maps; that is the natural next step and it has not been done.",
+  "tables": 1,
+  "bullets": 0,
+  "page": 15,
+  "fn": "s_part1_claims",
+  "accent": "BLU"
+ },
+ {
+  "kind": "main",
+  "title": null,
+  "kicker": null,
+  "figures": [],
+  "takeaway": null,
+  "notes": "[~18 s]\n\nPart two. Same discipline, different timescale \u2014 now the question is architectural\nand the state is steady.\n\nTRANSITION: The question itself, stated precisely.\n\nIf asked: nothing \u2014 divider.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 16,
+  "fn": "s_part2"
+ },
+ {
+  "kind": "main",
+  "title": "The question: two placements, everything else held fixed",
+  "kicker": "the question",
+  "figures": [],
+  "takeaway": "This is a controlled comparison of placement, not an optimisation and not a search over architectures.",
+  "notes": "[~70 s]\n\nThe question is deliberately narrow, because that is what makes it answerable.\n\nTwo placements. Z1 embeds the regulator inside the substrate, which is\n1.30 millimetres thick. Z2 puts it as a chiplet on the backside of a\nsubstrate thinned to 0.30 millimetres. Everything else is held \u2014 same converter,\nsame tier partition, same cooling, same die, same kilowatt.\n\nBoth configurations were frozen in files before either was solved, and each got\nexactly one solve. That matters because the result I am going to show is a\ndifference of a few per cent on a mechanical quantity, and if I had been free to\nre-run and re-tune I could have produced whatever ordering I wanted.\n\nKEY NUMBERS: h_sub 1.30 mm vs 0.30 mm; 1 kW; one solve each.\n\nTRANSITION: First the converter that is common to both.\n\nIf asked: Why only two \u2014 this is a controlled pair, not a design space. There is\nno optimiser here and no claim that either is best.",
+  "tables": 0,
+  "bullets": 5,
+  "page": 17,
+  "fn": "s_dvpd_q",
+  "accent": "ORA"
+ },
+ {
+  "kind": "main",
+  "title": "The converter, common to both architectures",
+  "kicker": "the vehicle",
+  "figures": [
+   "deck/p_converter.png"
+  ],
+  "takeaway": "M = 49 cells, 20.408 A and 5.61 mm\u00b2 per cell. Identical in Z1 and Z2 \u2014 the only thing that moves is where it sits.",
+  "notes": "[~85 s]\n\nA word on the converter, because this audience will want to know it is not a toy.\n\n48 volts in, 1 volt out, through a two-stage hybrid. A 3-to-1 switched-capacitor\nstage with no magnetics takes 48 down to a 16 volt intermediate rail, and then a\n3-phase buck takes 16 to 1. The reason for the intermediate rail is the duty\nratio: a single 48-to-1 stage would need a duty ratio no real switch will hold,\nwhereas from 16 volts you need D = 0.0625, which is reachable at\n805 kilohertz.\n\nThe system is 49 such cells, each carrying 20.408 amps in\n5.61 square millimetres.\n\nThis whole design is identical in Z1 and Z2. I am not comparing converters.\n\nKEY NUMBERS: 48\u219216\u21921 V; M = 49; D = 0.0625; f_sw = 805.17 kHz; 5.61 mm\u00b2/cell.\n\nTRANSITION: And the cooling, also identical.\n\nIf asked: Why GaN \u2014 the device set follows the sourced design; the switch-level\nchoice is upstream of this study and is not varied.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 18,
+  "fn": "s_converter",
+  "accent": "ORA"
+ },
+ {
+  "kind": "main",
+  "title": "The cooling solution, also identical",
+  "kicker": "the vehicle",
+  "figures": [
+   "deck/p_cooling.png"
+  ],
+  "takeaway": "223 microchannels, laminar at Re = 1265, 8.86 K coolant rise, 14.7 W of pump power \u2014 counted, not ignored.",
+  "notes": "[~65 s]\n\nCooling is held fixed too: 223 parallel microchannels, 50 by\n300 microns, water at 25 degrees inlet and 27 grams per second.\n\nReynolds number is 1265, so we are laminar with margin. Coolant rise is\n8.86 kelvin, pressure drop 0.538 megapascal, and pump power is\n14.7 watts.\n\nI put pump power on the slide deliberately. It is about 11 per cent of the\nconverter loss it exists to remove, and it is a real part of the budget. It is\ncounted here, not quietly dropped.\n\nKEY NUMBERS: 223 channels; Re 1264.8; h_eff 115.6 kW/m\u00b2K; \u0394T 8.858 K; \u0394p 0.5378 MPa; pump 14.696 W.\n\nTRANSITION: Now the thing that actually differs between the two.\n\nIf asked: Is the microchannel model conjugate CFD \u2014 no. It is a correlation-based\nchannel model. There is no conjugate CFD validation in this work, and that is a\nstated limitation.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 19,
+  "fn": "s_cooling",
+  "accent": "ORA"
+ },
+ {
+  "kind": "main",
+  "title": "Where the conversion sits decides which rail crosses the substrate",
+  "kicker": "the mechanism",
+  "figures": [
+   "deck/p_rail.png"
+  ],
+  "takeaway": "Z1 sends 23 A of 48 V rail through 74 \u00b5m. Z2 sends 1000 A of 1 V rail through 300 \u00b5m.",
+  "notes": "[~105 s]\n\nThis is the slide that explains everything downstream, so let me walk it.\n\nOn the left, Z1. The regulator cell is embedded in the substrate, near the top. So\nthe path from the board up to that cell is short \u2014 74 microns, the part of the\nsubstrate below the cell \u2014 and critically, what crosses it is the 48 volt INPUT,\nwhich at system level is about 23 amps. Above the cell it is microbumps to\nthe die at 1 volt, which is a very short hop.\n\nOn the right, Z2. The regulator is a chiplet below the substrate, so conversion\nhappens before the substrate. What crosses the substrate is now the 1 volt OUTPUT\n\u2014 1000 amps \u2014 and it crosses the full 300 microns.\n\nNotice what I am NOT saying. I am not saying the via geometry is the same; it is\nnot, and the substrates are drawn here to a common scale so you can see that. The\npoint is the rail assignment. Statements like \"the TSV carries 48 volts\" or \"the\nTSV carries 1 volt\" are both wrong as general claims \u2014 which one is true is set by\nwhere conversion sits relative to the substrate.\n\nKEY NUMBERS: Z1 74 \u00b5m at 23.43 A (48 V); Z2 300 \u00b5m at 1000 A (1 V).\n\nTRANSITION: So what does that cost?\n\nIf asked: Where does 23.4 A come from \u2014 1 kW at the converter efficiency used in\nthe path model, divided by 48 V. It is a system-level current, not per cell.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 20,
+  "fn": "s_rail",
+  "accent": "ORA"
+ },
+ {
+  "kind": "main",
+  "title": "The vertical loss follows the rail, not the via",
+  "kicker": "result",
+  "figures": [
+   "deck/p_tsvloss.png"
+  ],
+  "takeaway": "Z2's vertical loss is 0.991 W. Z1's is below 0.2 mW \u2014 with a path that is 4.1\u00d7 SHORTER carrying 43\u00d7 less current.",
+  "notes": "[~80 s]\n\nHere is the consequence. Z2's through-substrate loss is 0.991 watts. Z1's is\nbelow two tenths of a milliwatt \u2014 effectively zero.\n\nAnd I want you to notice the direction, because it is the opposite of the naive\nintuition. Z1's via is 4.1 times SHORTER. If this were a geometry story,\na shorter via would be the whole explanation. It is not. It is a current story:\n43 times less current, and the loss goes as current squared against a\nvia count that is itself allocated from the current.\n\nSo \"TSV resistance\" on its own is not an architecture metric. Geometry times\nassigned rail times current times allocation policy is.\n\nKEY NUMBERS: 0.9905 W vs |-0.00017| W; 4.05\u00d7 path; 42.7\u00d7 current.\n\nTRANSITION: One watt out of how many, though? Context matters.\n\nIf asked: Why report Z1 as a bound \u2014 the ledger value is a very small negative\nnumber, which is a known small-signal artefact of adding an FV-derived transition\ncorrection to a 74 \u00b5m bulk path. Reporting it as \"below 0.2 mW\" is honest; quoting\na negative loss would not be.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 21,
+  "fn": "s_tsvloss",
+  "accent": "ORA"
+ },
+ {
+  "kind": "main",
+  "title": "In context: about 2 W out of about 137 W",
+  "kicker": "result",
+  "figures": [
+   "deck/p_loss.png"
+  ],
+  "takeaway": "Z1 137.29 W \u2192 Z2 139.66 W. The TSV is only part of it \u2014 the rest is thermal feedback, because the hotter architecture is the more resistive one.",
+  "notes": "[~85 s]\n\nContext, because a one-watt number means nothing without a denominator.\n\nTotal converter loss is 137.29 watts for Z1 and 139.66 for Z2 \u2014 a difference of\n2.37 watts, about 1.7 per cent. Electrically, moving the regulator is\nnearly free.\n\nBut look at the right panel, because this is the interesting part. The TSV\naccounts for about forty per cent of that difference. The majority is switch\nconduction and inductor DCR going up \u2014 and those went up because Z2 runs hotter,\nand copper and channel resistance rise with temperature.\n\nThat is a coupled-model result. An uncoupled calculation would have given you the\nTSV term and stopped, and would have under-predicted the penalty by more than half.\n\nKEY NUMBERS: 137.292 \u2192 139.659 W; \u0394 2.367 W; TSV share \u2248 42 %.\n\nTRANSITION: Electrically cheap. But is either architecture buildable?\n\nIf asked: Is 2 W significant at 1 kW \u2014 not on its own. It matters because it is a\nvisible signature of the coupling, and because it lands as heat in a place that\nchanges the mechanics.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 22,
+  "fn": "s_loss",
+  "accent": "ORA"
+ },
+ {
+  "kind": "main",
+  "title": "Realizability comes from conductor-plane topology, not layer count",
+  "kicker": "realizability",
+  "figures": [
+   "deck/p_tiers.png"
+  ],
+  "takeaway": "Permuting two tiers takes the worst via aspect ratio from 5.05 to 0.833 \u2014 same parts, same areas, same 1921 \u00b5m stack height.",
+  "notes": "[~90 s]\n\nA packaging audience will ask whether any of this can be built, so here is the\nrealizability argument.\n\nThe usual way people assess vertical interconnect is by counting material layers.\nThat is the wrong invariant. What sets whether a via is manufacturable is the\nconductor-plane topology \u2014 which planes a net actually has to cross \u2014 and from\nthat you get an aspect ratio.\n\nIn the reference arrangement, the worst net has to cross a 5.05 aspect ratio\nvia, which is not a comfortable build-up structure. Permute two tiers \u2014 move the\nflying capacitors down and the low-side GaN up \u2014 and the worst aspect ratio becomes\n0.833. Same five component classes, same counts, same per-tier areas, same\n1921 micron stack height. It is a permutation, not a redesign.\n\nThe reason it works is that the high-current switch node now crosses only the\ninterlayer RDL instead of a 100 micron component tier.\n\nAnd the limit: this is GEOMETRICALLY REALIZABLE and PROCESS-CONDITIONAL. Three\nmanufacturing inputs are still open \u2014 the microvia current allowable, the capture\npad diameter, and a vendor design rule. This is not a manufacturing qualification\nand must not be read as one.\n\nKEY NUMBERS: AR 5.050 \u2192 0.833; pitch 150 \u00b5m (source-bounded); stack 1921 \u00b5m.\n\nTRANSITION: Now the mechanics \u2014 and first, three words that get conflated.\n\nIf asked: Is 150 \u00b5m pitch realistic \u2014 it is source-bounded from published\nproduction practice for microvias to embedded dies; the via diameter, by contrast,\nis open.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 23,
+  "fn": "s_tiers",
+  "accent": "ORA"
+ },
+ {
+  "kind": "main",
+  "title": "Three quantities that are routinely conflated",
+  "kicker": "mechanics",
+  "figures": [
+   "deck/p_mech_chain.png"
+  ],
+  "takeaway": "Warpage is not the driver. The driver is not the response. The response is not damage, and damage is not life.",
+  "notes": "[~95 s]\n\nThis slide exists because in my experience these three get used interchangeably,\nand they are not the same thing.\n\nGlobal warpage is the shape of the whole package \u2014 41.62 microns for Z1,\n38.92 for Z2. It is a package-level quantity and it is NOT what a solder joint\nexperiences.\n\nWhat the critical joint experiences is a relative displacement across it \u2014 I call\nit delta-u-c, the driver. That is 4.6252 microns for Z1 and 3.8714 for Z2.\nDifferent quantity, different magnitude, and it does not track warpage\nproportionally.\n\nAnd then the response: how the solder actually responds to that driver, given its\nconstitutive behaviour and its temperature. That is delta-epsilon-in, an inelastic\nstrain increment per cycle.\n\nNow the sentence I most want you to take away. A response is not damage. Damage is\nnot life. Life is not failure. I ran no fatigue model, I am not reporting a cycles\nto failure, and I am not telling you either architecture is mechanically safe.\n\nKEY NUMBERS: warpage 41.616\u219238.916 \u00b5m; driver 4.6252\u21923.8714 \u00b5m; response 1.4072\u21921.1478 \u00d710\u207b\u00b2.\n\nTRANSITION: With that vocabulary, here is the result.\n\nIf asked: Why not compute life \u2014 a Coffin-Manson or energy-based life model would\nneed a damage correlation fitted for this joint and this loading; none is\navailable here, and inventing one would be the least defensible step in the chain.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 24,
+  "fn": "s_mech_chain",
+  "accent": "PUR"
+ },
+ {
+  "kind": "main",
+  "title": "The result: the hotter architecture has the lower local response",
+  "kicker": "the result",
+  "figures": [
+   "deck/p_final.png"
+  ],
+  "takeaway": "Z2 runs +8.14 K hotter, yet carries 16.3 % less driver and 18.4 % less response. Temperature and mechanical response decouple.",
+  "notes": "[~115 s]\n\nThis is the central result of Part II, and it is the one I did not expect.\n\nFour quantities, Z1 on the left of each panel, Z2 on the right.\n\nPeak temperature goes UP: 118.32 to 126.46 degrees, so +8.14 kelvin. Z2 is the\nhotter architecture, and it is hotter for a reason you already saw \u2014 it is\ndissipating that extra watt in the substrate, in the path between the chiplet and\nthe die.\n\nBut the three mechanical panels all go DOWN. Die warpage falls about 6.5 per\ncent. The local driver falls 16.3 per cent. And the local solder response falls\n18.4 per cent.\n\nSo the architecture that is thermally worse is, on this metric, mechanically\ngentler. If you had used peak temperature as a proxy for mechanical severity \u2014\nwhich is an extremely common shortcut \u2014 you would have ranked these two backwards.\n\nThat is the argument for coupling. Not that coupling is more rigorous in the\nabstract, but that here it reverses the ordering.\n\nLet me be careful about what survives. The ORDERING is robust. The absolute\nmagnitude of the solder response is conditional on a constitutive model evaluated\nwell outside its fitted stress window, and I will come back to that.\n\nKEY NUMBERS: T_max 118.32\u2192126.46 \u00b0C (+8.14 K); joint 112.75\u2192120.30 \u00b0C (+7.55 K); driver ratio D_u = 1.1947; response ratio D_\u03b5 = 1.2260.\n\nTRANSITION: Why does the response fall further than the driver?\n\nIf asked: Is 18.4 % a big effect \u2014 as a response difference it is modest. I am not\nclaiming it is decisive. I am claiming it has the opposite sign to what a thermal\nproxy predicts, and that is the point.\n\nIf asked: Does this mean Z2 lasts longer \u2014 no. That is exactly the inference I am\nrefusing to make. Lower response is not longer life.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 25,
+  "fn": "s_final",
+  "accent": "ORA"
+ },
+ {
+  "kind": "main",
+  "title": "Separating the two causes",
+  "kicker": "mechanism",
+  "figures": [
+   "deck/p_decomp.png"
+  ],
+  "takeaway": "The displacement reduction does the work; the hotter joint gives a little of it back. The two effects are separable and oppose each other.",
+  "notes": "[~85 s]\n\nTwo things change between Z1 and Z2: the displacement field, and the joint\ntemperature. They push in opposite directions, so I ran the two cross cases to\nseparate them.\n\nBar one is Z1. Bar four is Z2 \u2014 about -18.4 per cent.\n\nBar two takes Z2's displacement but holds Z1's joint temperature: that alone gives\n-19.4 per cent. So the displacement reduction is doing essentially all of\nthe work, and slightly more than the net result.\n\nBar three takes Z1's displacement at Z2's joint temperature: +0.75 per cent. The\nhotter joint \u2014 +7.55 kelvin at the joint \u2014 makes the solder marginally more\ncompliant and gives a little back.\n\nSo the net 18.4 per cent is a large displacement benefit partly offset by a small\nthermal penalty. That is a cleaner statement than a single number, and it is only\navailable because the two effects could be run independently.\n\nKEY NUMBERS: Z1 1.407; displacement-only 1.134; temperature-only 1.418; Z2 1.148 (\u00d710\u207b\u00b2).\n\nTRANSITION: One more thing before I close this half \u2014 is the number numerically trustworthy?\n\nIf asked: Do the two effects superpose \u2014 not exactly; the sum of the two\nindividual deltas is close to but not identical to the combined result, which is\nexpected for a nonlinear creep response.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 26,
+  "fn": "s_decomp",
+  "accent": "PUR"
+ },
+ {
+  "kind": "main",
+  "title": "Numerical conditioning \u2014 stated honestly",
+  "kicker": "conditioning",
+  "figures": [
+   "deck/p_cetol.png"
+  ],
+  "takeaway": "Insensitive to further relaxation, with a ONE-SIDED bracket. No tighter tolerance converges, so the magnitude stays conditional.",
+  "notes": "[~85 s]\n\nA reviewer's first question about a creep result is whether the integration\ntolerance drove it, so I tested it.\n\nFive tolerances, everything else frozen. The three tight ones \u2014 1e-5, 1e-4 and\n1e-2 \u2014 do not converge at all. The solver makes cutback attempts and completes\nzero increments. At 5e-2 and 1e-1 it converges, and the two converged runs are\nbit-identical: same 336 increments, zero cutbacks, identical to all twelve\nprinted digits.\n\nSo doubling the tolerance changes the answer by exactly zero, which rules out the\n\"you got this by loosening the tolerance\" objection.\n\nBut I have to tell you why they are identical, because it is not the flattering\nreason. Once the tolerance is loose enough for the solve to start, it is no longer\nthe binding step-size control \u2014 the step schedule is. So the agreement shows\ninsensitivity to further relaxation; it does not show agreement with a tight\ntolerance reference, because no tight tolerance converges here.\n\nThe bracket is one-sided, and the response MAGNITUDE stays conditional. The\nunderlying reason is constitutive: the joint is operating at fifteen to seventeen\ntimes yield against a card fitted over a much lower stress window.\n\nKEY NUMBERS: 2 of 5 tolerances converge; D_\u03b5 = 1.226006 at both; 336 increments, 0 cutbacks.\n\nTRANSITION: Let me put the Part II boundary up the same way I did for Part I.\n\nIf asked: Why not fix the constitutive model \u2014 it would need creep data for this\nalloy at this stress level; that data is not available to me, and extrapolating\nfurther would be worse than declaring the limit.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 27,
+  "fn": "s_cetol",
+  "accent": "PUR"
+ },
+ {
+  "kind": "main",
+  "title": "Part II \u2014 the claim boundary",
+  "kicker": "what is and is not claimed",
+  "figures": [],
+  "takeaway": "The ordering is the result. The magnitude is conditional. Neither architecture is qualified.",
+  "notes": "[~80 s]\n\nSame discipline as before.\n\nWhat I claim: on this frozen pair, the ordering holds \u2014 Z2 is hotter and has the\nlower local response, and that ordering survives the tolerance ladder and the\ndecomposition. The geometry closes at a source-bounded pitch. The cooling is\ncounted.\n\nWhat I do not claim: any life or damage number; any manufacturing qualification \u2014\nthree process inputs are still open; any optimiser result; conjugate CFD\nvalidation \u2014 and I should say plainly that a full-wave HFSS attempt on this\nstructure did not converge, so there is no full-wave electromagnetic result here\neither.\n\nKEY NUMBERS: +8.14 K; 18.4 %; 3 OPEN process inputs; 2 of 5 tolerances converge.\n\nTRANSITION: Which brings me back to where I started.\n\nIf asked: What would close the process inputs \u2014 a vendor design rule set for this\nbuild-up technology, a microvia current allowable, and a capture pad diameter.\nThose are data, not modelling.",
+  "tables": 1,
+  "bullets": 0,
+  "page": 28,
+  "fn": "s_part2_claims",
+  "accent": "ORA"
+ },
+ {
+  "kind": "main",
+  "title": "The same argument, at both timescales",
+  "kicker": "synthesis",
+  "figures": [
+   "deck/p_bridge.png"
+  ],
+  "takeaway": "In both halves, the answer changed once the evaluation was done on the physical package at the right timescale.",
+  "notes": "[~75 s]\n\nBack to the picture I opened with, now with the evidence behind it.\n\nOn the left, the millisecond side. The reason a fast repeated transient matters is\nthat the question \u2014 what does this gating policy do to peak temperature \u2014 is a\ntransient question. Answer it at steady state and you either miss the excursion or\nover-design. And we saw that concretely: greedy looked fine until it was evaluated\nagainst the thermal response, and then it violated.\n\nOn the right, the architecture side. The reason the coupled evaluation matters is\nthat peak temperature and local mechanical response moved in OPPOSITE directions.\nA thermal proxy would have ranked the two placements backwards.\n\nDifferent physics, different timescale, same failure mode if you shortcut it: the\ncheap proxy gives you a confident wrong ordering.\n\nKEY NUMBERS: 13.6\u00d7 matched stepping; +8.14 K with 18.4 % lower response.\n\nTRANSITION: So what does that mean for people doing this work on real parts?\n\nIf asked: Would you always couple \u2014 no. Couple when you have reason to think the\ncoupling changes the ordering. The contribution is partly knowing when that is.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 29,
+  "fn": "s_bridge_back",
+  "accent": "GRY"
+ },
+ {
+  "kind": "main",
+  "title": "What this suggests for 2.5D/3D power delivery work",
+  "kicker": "implications",
+  "figures": [],
+  "takeaway": "These are observations about method from two specific studies \u2014 not recommendations about any particular product or architecture.",
+  "notes": "[~95 s]\n\nLet me generalise carefully, and then say what I am not generalising.\n\nFirst, invariants. The thing that predicted whether a vertical interconnect was\nbuildable was conductor-plane topology, not how many material layers the stack\nhad. If you are screening stack-ups, that is the cheaper and more predictive\nquantity.\n\nSecond, be explicit about rail assignment. I showed that the same vertical\nstructure gives essentially zero loss or a watt depending only on which rail\ncrosses it. Any statement of the form \"the TSV carries X volts\" needs the\narchitecture attached.\n\nThird, peak temperature is a poor proxy for local mechanical severity. Here it had\nthe wrong sign.\n\nFourth \u2014 and this one is free \u2014 keep the four words separate. Response, damage,\nlife, failure.\n\nFifth, the amortisation point cuts both ways; know which regime you are in.\n\nNow the disclaimer, and I mean it. These are observations from two specific\nstudies on two specific vehicles. I am not telling you which architecture to\nbuild, I am not saying anything about what SK hynix does today, and nothing here\nis a recommendation about a product.\n\nKEY NUMBERS: none \u2014 this is the method summary.\n\nTRANSITION: The limitations, consolidated in one place.\n\nIf asked: Does this transfer to HBM stacks specifically \u2014 the method does; the\nnumbers do not, because the vehicle is different. The DVPD study is a logic die\nwith a distributed regulator, not a memory stack.",
+  "tables": 0,
+  "bullets": 5,
+  "page": 30,
+  "fn": "s_implications",
+  "accent": "GRY"
+ },
+ {
+  "kind": "main",
+  "title": "Limitations, in one place",
+  "kicker": "limitations",
+  "figures": [],
+  "takeaway": null,
+  "notes": "[~85 s]\n\nI would rather you heard all of these from me than found them afterwards.\n\nThe two biggest, in my view. First, neither study is validated against\nmeasurement. Everything is cross-code verification and internal consistency.\n\nSecond, the mechanical magnitude is conditional. The ordering is robust \u2014 it\nsurvived the decomposition and the tolerance ladder \u2014 but the absolute response\nnumber rests on a constitutive card being used far outside the stress range it was\nfitted over. I would defend the sign of the effect. I would not defend the third\ndigit.\n\nAnd the two I get asked about most: realizability is geometric and\nprocess-conditional with three inputs still open; and the full-wave HFSS attempt\ndid not converge, so there is no electromagnetic result here.\n\nKEY NUMBERS: 3 OPEN process inputs; one-sided tolerance bracket; 21\u00d7 slower on one steady solve.\n\nTRANSITION: Let me close.\n\nIf asked: Which limitation would you fix first \u2014 the constitutive data for the\nsolder, because it is the one that currently caps what the mechanical result can\nbe used for.",
+  "tables": 1,
+  "bullets": 0,
+  "page": 31,
+  "fn": "s_limits",
+  "accent": "RED"
+ },
+ {
+  "kind": "main",
+  "title": "Summary",
+  "kicker": "close",
+  "figures": [],
+  "takeaway": "A response is not damage, damage is not life, and a thermal proxy can rank two architectures backwards.",
+  "notes": "[~85 s]\n\nTo close.\n\nPart one: a transient electrothermal solver that is verified against two\nindependent codes to within half a kelvin, and that is 13.6 times faster when you\nneed to march the same transient many times \u2014 which is the case that matters for\ngating policy studies. It is slower for a single steady solve, and I would rather\nyou remembered both halves of that sentence.\n\nPart two: a controlled two-point comparison of where the regulator sits, frozen\nbefore solving, evaluated on one geometry across four domains. The result is that\nthe hotter architecture is the one with the lower local mechanical response, which\nis the opposite of what a thermal proxy predicts.\n\nAnd the realizability result, which I think travels furthest: the right invariant\nfor buildability was conductor-plane topology, and a pure permutation moved the\nworst aspect ratio by a factor of six.\n\nThe thread through all of it is the last line on the screen.\n\nKEY NUMBERS: 0.452 K; 13.62\u00d7; +8.14 K; 18.4 %; AR 5.05\u21920.833.\n\nTRANSITION: Happy to take questions \u2014 and there is backup material behind this.\n\nIf asked: What is next \u2014 an instrumented vehicle for validation, and solder creep\ndata at the operating stress level.",
+  "tables": 0,
+  "bullets": 4,
+  "page": 32,
+  "fn": "s_summary",
+  "accent": "GRY"
+ },
+ {
+  "kind": "main",
+  "title": null,
+  "kicker": null,
+  "figures": [],
+  "takeaway": null,
+  "notes": "[~15 s]\n\nThank you \u2014 happy to take questions. There are backup slides with the full tables\nbehind this if anything needs digging into.\n\nIf asked: anything \u2014 see the backup deck.",
+  "tables": 0,
+  "bullets": 0,
+  "page": 33,
+  "fn": "s_questions"
+ },
+ {
+  "kind": "backup",
+  "title": "B1 \u2014 The frozen pair, every reported quantity",
+  "kicker": "backup B1",
+  "figures": [],
+  "takeaway": null,
+  "notes": "D_u = 1.1947, D_\u03b5 = 1.2260. Source: results/phase0mr3c/final_etm_replay.csv, final_local_response.csv, local_submodel_inputs.csv.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B1",
+  "fn": "b_pair",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B2 \u2014 Full converter loss ledger",
+  "kicker": "backup B2",
+  "figures": [],
+  "takeaway": null,
+  "notes": "Scope ELECTRONICS, per-system. Source: results/phase0mr3c/final_loss_ledger.csv. The aggregate P_total_electronics row is excluded to avoid double counting.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B2",
+  "fn": "b_ledger",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B3 \u2014 Routing feasibility, per net",
+  "kicker": "backup B3",
+  "figures": [],
+  "takeaway": null,
+  "notes": "Worst AR 5.050 \u2192 0.833 at 150 \u00b5m pitch. n_required is FRAMEWORK PROVISIONING at J_design = 1e8 A/m\u00b2, a design-side allocation \u2014 NOT a manufacturing qualification. Source: results/phase0mr3c/routing_feasibility.csv.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B3",
+  "fn": "b_nets",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B4 \u2014 Integration-tolerance ladder, every attempt",
+  "kicker": "backup B4",
+  "figures": [],
+  "takeaway": "Bracket is ONE-SIDED. Once CETOL is loose enough to start, the step schedule binds \u2014 not the tolerance.",
+  "notes": "Source: results/phase0mr3c/cetol_final_pair.csv, manuscript/CETOL_FINAL_PAIR_ROBUSTNESS.md. The two converged runs are bit-identical in \u0394\u03b5_in, strain range and inelastic work for both architectures, with zero cutbacks.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B4",
+  "fn": "b_cetol",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B5 \u2014 Response decomposition, the two cross cases",
+  "kicker": "backup B5",
+  "figures": [],
+  "takeaway": null,
+  "notes": "Source: results/phase0mr3c/local_response_decomposition.csv. The two effects oppose and do not superpose exactly, as expected for a nonlinear creep response.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B5",
+  "fn": "b_decomp",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B6 \u2014 Transient crossover, step by step",
+  "kicker": "backup B6",
+  "figures": [],
+  "takeaway": "The advantage grows with step count \u2014 and inverts for a single steady solve.",
+  "notes": "One core, interleaved runs so machine load is shared; per-point load averages are recorded in the artifact. MOOSE deck: results/ectc_package/moose_solver_config/screen_linear_lu_mumps/case.i. Source: OTAPM revision_jetcas_2026-09-19 results/ectc_package/perf_tables.json.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B6",
+  "fn": "b_crossover",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B7 \u2014 Steady three-tool comparison",
+  "kicker": "backup B7",
+  "figures": [
+   "epeps/f5_steady_three_tool.png"
+  ],
+  "takeaway": null,
+  "notes": "FV max deviation 0.4522 K, Icepak max 0.0859 K against the MOOSE finite-element reference. Icepak mesh 1,064,526 cells. Verification, not validation.",
+  "tables": 0,
+  "bullets": 0,
+  "page": "B7",
+  "fn": "b_threetool",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B8 \u2014 Mesh refinement ladder",
+  "kicker": "backup B8",
+  "figures": [
+   "epeps/b3_mesh_ladder.png"
+  ],
+  "takeaway": null,
+  "notes": "Reproduced from the published EPEPS 2026 material. The answer stops moving under refinement; the reported configuration sits on the flat part of the ladder.",
+  "tables": 0,
+  "bullets": 0,
+  "page": "B8",
+  "fn": "b_meshladder",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B9 \u2014 Policy outcome summary (published, not rerun)",
+  "kicker": "backup B9",
+  "figures": [
+   "epeps/f9_workload.png"
+  ],
+  "takeaway": "EPEPS 2026 published application result; produced before the post-publication solver correction and not rerun.",
+  "notes": "33 thermal-limit violations under the energy-greedy policy, 0 under the feasibility-screened policy, over 96 epochs, at 8.1 % mean idle-leakage overhead. Produced before the post-publication solver correction and NOT rerun.",
+  "tables": 0,
+  "bullets": 0,
+  "page": "B9",
+  "fn": "b_ladder",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B10 \u2014 Notation and vocabulary",
+  "kicker": "backup B10",
+  "figures": [],
+  "takeaway": null,
+  "notes": "Kept in backup because the audience spans packaging, PI, thermal and architecture; these are the terms most often used differently across those groups.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B10",
+  "fn": "b_models",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B11 \u2014 Converter design point",
+  "kicker": "backup B11",
+  "figures": [],
+  "takeaway": null,
+  "notes": "Identical in Z1 and Z2. Source: the frozen pair configs and the compiled converter design in the R3C replay.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B11",
+  "fn": "b_converter",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B12 \u2014 Microchannel cooling design point",
+  "kicker": "backup B12",
+  "figures": [],
+  "takeaway": null,
+  "notes": "Correlation-based channel model. There is NO conjugate CFD validation in this work \u2014 stated as a limitation, not hidden.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B12",
+  "fn": "b_cooling",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B13 \u2014 What \u201cgeometrically realizable\u201d means here",
+  "kicker": "backup B13",
+  "figures": [],
+  "takeaway": "Verdict: GEOMETRICALLY REALIZABLE / PROCESS-CONDITIONAL. PROVEN_REALIZABLE is not available and is not claimed.",
+  "notes": "Source: configs/phase0mr3c/frozen_pair_Z1.yaml and _Z2.yaml, manufacturing_status block, verbatim.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B13",
+  "fn": "b_realiz",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B14 \u2014 Provenance of the policy result",
+  "kicker": "backup B14",
+  "figures": [],
+  "takeaway": "EPEPS 2026 published application result; produced before the post-publication solver correction and not rerun.",
+  "notes": "These traces were NOT rerun after the post-publication solver correction. The verification and runtime numbers in the main deck WERE rerun. Stated explicitly so the two are not conflated.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B14",
+  "fn": "b_prov",
+  "accent": "GRY"
+ },
+ {
+  "kind": "backup",
+  "title": "B15 \u2014 Platform and reproducibility",
+  "kicker": "backup B15",
+  "figures": [],
+  "takeaway": null,
+  "notes": "Source: results/phase0mr3c/platform.json. Repository github.com/mgharib5/HVR_OPT, tag paper-freeze-r3c. REPRODUCE.md gives the build recipe and per-artifact runtimes.",
+  "tables": 1,
+  "bullets": 0,
+  "page": "B15",
+  "fn": "b_platform",
+  "accent": "GRY"
+ }
+]
