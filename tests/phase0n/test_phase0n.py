@@ -327,6 +327,29 @@ def test_baseline_AR_depends_on_the_low_side_height():
     assert rep["depth"] == pytest.approx(100.0) and rep["ar"] == pytest.approx(0.833, abs=1e-3)
 
 
+def test_converter_inventory_is_identical_across_architectures(design):
+    """Task 15: only location/support/cooling may differ between Z1 and Z2."""
+    a = design.arch
+    per_cell = {"HS": a.N, "LS": a.K, "inductors": a.K, "flying_caps": a.N - 1}
+    assert sum(per_cell.values()) == a.component_count == 11
+    import production_et as PE
+    inv = {}
+    for arch, h in (("ARCH_Z1_EMBEDDED", 1.30), ("ARCH_Z2_BACKSIDE", 0.30)):
+        _m, _mats, _st, tiles = PE.build_global(arch, h)
+        inv[arch] = (len(tiles), round(sum(t.ax * t.ay for t in tiles), 6))
+    assert inv["ARCH_Z1_EMBEDDED"] == inv["ARCH_Z2_BACKSIDE"], (
+        f"cell count / footprint differ between architectures: {inv}")
+    assert inv["ARCH_Z1_EMBEDDED"][0] == 49
+    assert inv["ARCH_Z1_EMBEDDED"][1] == pytest.approx(274.89, abs=0.1)
+
+
+def test_closed_stack_spec_declares_what_is_unimplemented():
+    t = (R / "research" / "Z1_Z2_PHYSICALLY_CLOSED_STACKS.md").read_text()
+    assert "NOT implemented" in t
+    for gate in ("supply/return continuity", "annular PCB mesh", "mesh convergence"):
+        assert gate in t, f"closure gate '{gate}' dropped from the specification"
+
+
 # ============================================== PCB THICKNESS / BGA / LATERAL
 PCBJ = R / "research" / "phase0ns" / "pcb_thickness_audit.json"
 LATJ = R / "research" / "phase0ns" / "lateral_rdl_loss.json"
