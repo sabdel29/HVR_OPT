@@ -1,0 +1,90 @@
+{
+ "four_tier_nom_um": 1953.0,
+ "four_tier_max_um": 2083.0,
+ "allowances": [
+  {
+   "item": "land-side attach RDL",
+   "um": 10.0,
+   "class": "SOURCE_BACKED",
+   "basis": "ECTC-2024 10 um interlayer RDL"
+  },
+  {
+   "item": "cell-to-substrate attach solder + underfill",
+   "um": 30.0,
+   "class": "BOUNDED",
+   "basis": "same order as the 10 um microbump + underfill the package already uses; no source"
+  },
+  {
+   "item": "bottom keep-out below the deepest device",
+   "um": 50.0,
+   "class": "BOUNDED",
+   "basis": "anchored on H_TSV_MIN_UM = 50 um, the only keep-out length the framework names"
+  },
+  {
+   "item": "assembly / placement tolerance",
+   "um": 50.0,
+   "class": "BOUNDED",
+   "basis": "engineering allowance; no source"
+  }
+ ],
+ "allowance_total_um": 140.0,
+ "bga_um": 300.0,
+ "tim_spreader_um": 500.0,
+ "boards": [
+  {
+   "board": "1.6 mm",
+   "t_nom_um": 1600.0,
+   "t_min_um": 1440.0,
+   "available_um": 1740.0,
+   "margin_nominal_um": -353.0,
+   "margin_maxdevice_um": -483.0,
+   "margin_maxdevice_plus_tim_um": -983.0,
+   "verdict": "FAILS",
+   "source": "historical framework ASSUMPTION (board.py FR-4 envelope)"
+  },
+  {
+   "board": "2.0 mm",
+   "t_nom_um": 2000.0,
+   "t_min_um": 1800.0,
+   "available_um": 2100.0,
+   "margin_nominal_um": 7.0,
+   "margin_maxdevice_um": -123.0,
+   "margin_maxdevice_plus_tim_um": -623.0,
+   "verdict": "closes nominal only",
+   "source": "PCBWay rigid-board thickness list"
+  },
+  {
+   "board": "2.4 mm",
+   "t_nom_um": 2400.0,
+   "t_min_um": 2160.0,
+   "available_um": 2460.0,
+   "margin_nominal_um": 367.0,
+   "margin_maxdevice_um": 237.0,
+   "margin_maxdevice_plus_tim_um": -263.0,
+   "verdict": "CLOSES at max device",
+   "source": "18-layer server/HPC board offered at 2.4 mm +-10 % (ugpcb); PCBWay; within Schweizer 0.6-3.2 mm standard multilayer"
+  },
+  {
+   "board": "3.2 mm",
+   "t_nom_um": 3200.0,
+   "t_min_um": 2880.0,
+   "available_um": 3180.0,
+   "margin_nominal_um": 1087.0,
+   "margin_maxdevice_um": 957.0,
+   "margin_maxdevice_plus_tim_um": 457.0,
+   "verdict": "CLOSES at max device; TIM fits inside",
+   "source": "Schweizer standard multilayer upper bound; PCBWay; JLCPCB; Isola 370HR/IS410 laminate to 3.2 mm; Wurth DEVICE.embedding max final PCB thickness 3.2 mm"
+  },
+  {
+   "board": "4.2 mm",
+   "t_nom_um": 4200.0,
+   "t_min_um": 3780.0,
+   "available_um": 4080.0,
+   "margin_nominal_um": 1987.0,
+   "margin_maxdevice_um": 1857.0,
+   "margin_maxdevice_plus_tim_um": 1357.0,
+   "verdict": "CLOSES at max device; TIM fits inside",
+   "source": "Schweizer HIGHER-STANDARD capability only -- reported, NOT a baseline design"
+  }
+ ]
+}

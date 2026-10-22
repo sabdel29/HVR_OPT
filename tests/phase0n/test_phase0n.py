@@ -327,6 +327,57 @@ def test_baseline_AR_depends_on_the_low_side_height():
     assert rep["depth"] == pytest.approx(100.0) and rep["ar"] == pytest.approx(0.833, abs=1e-3)
 
 
+# ============================================== PCB THICKNESS / BGA / LATERAL
+PCBJ = R / "research" / "phase0ns" / "pcb_thickness_audit.json"
+LATJ = R / "research" / "phase0ns" / "lateral_rdl_loss.json"
+
+
+def test_pcb_closure_is_evaluated_at_worst_case_board_and_max_device():
+    a = json.loads(PCBJ.read_text())
+    by = {b["board"]: b for b in a["boards"]}
+    assert a["four_tier_max_um"] == pytest.approx(2083.0), "EPC2014C max stack changed"
+    assert a["allowance_total_um"] >= 100.0, "interface allowances were dropped"
+    for b in a["boards"]:
+        assert b["t_min_um"] == pytest.approx(b["t_nom_um"] * 0.9), (
+            f"{b['board']}: closure must use the -10 % board, not nominal")
+    assert by["1.6 mm"]["margin_maxdevice_um"] < 0, "1.6 mm must FAIL"
+    assert by["2.0 mm"]["margin_maxdevice_um"] < 0, "2.0 mm must fail at the device max"
+    assert by["2.4 mm"]["margin_maxdevice_um"] > 0, "2.4 mm must close"
+    assert by["3.2 mm"]["margin_maxdevice_plus_tim_um"] > 0, (
+        "3.2 mm must fit the backside TIM inside the board")
+    assert by["2.4 mm"]["margin_maxdevice_plus_tim_um"] < 0, (
+        "2.4 mm must NOT fit the TIM inside -- the spreader protrudes, and the "
+        "audit says so")
+
+
+def test_lateral_loss_is_not_presented_as_an_extra_term():
+    t = (R / "research" / "Z1_Z2_SUPPLY_RETURN_GEOMETRY.md").read_text()
+    assert re.search(r"upper bound, not an additional term", t, re.I), (
+        "the single-layer strip estimate must not be presented as a loss to add")
+    l = json.loads(LATJ.read_text())
+    f = l["frozen_z2_terms_w"]
+    assert f["P_pkg_RDL"] / f["P_TSV"] > 0.5, (
+        "lateral spreading is no longer the same order as P_TSV; re-check the finding")
+
+
+def test_bga_budget_separates_power_from_package_io():
+    t = (R / "research" / "Z2_CUTOUT_BGA_SIGNAL_BUDGET.md").read_text()
+    flat = re.sub(r"\s+", " ", t)
+    assert ("complete package-I/O BGA capacity is outside the current model" in flat), (
+        "the required honesty statement about signal I/O was removed")
+    assert re.search(r"proves only that power-delivery BGA capacity is not limiting",
+                     flat, re.I), "the power-vs-I/O distinction was weakened"
+
+
+def test_no_new_etm_lineage_without_closure():
+    """Tasks G/18/22: phase0ns results may not appear while closure gates are open."""
+    assert not (R / "results" / "phase0ns").exists(), (
+        "a phase0ns results lineage appeared; supply/return geometry and the annular "
+        "PCB mesh are still unimplemented")
+    t = (R / "research" / "Z1_Z2_SUPPLY_RETURN_GEOMETRY.md").read_text()
+    assert "Not implemented" in t
+
+
 # ================================================== Z2-CUTOUT CANDIDATE
 Z2GEO = R / "research" / "phase0nr" / "z2_cutout_geometry.json"
 Z2DOC = R / "research" / "Z2_CUTOUT_GEOMETRY.md"
