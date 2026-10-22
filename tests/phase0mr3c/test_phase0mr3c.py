@@ -450,6 +450,10 @@ def test_manuscript_never_calls_the_driver_an_inelastic_response():
             # The window is short enough to exclude the caption sentence that legitimately
             # names both quantities 88 characters apart.
             r"16\.3\$?\\,\\%\s*(?:lower|less|lower,)[^.]{0,40}inelastic",
+            # PHASE 0N: the same defect written the other way round --
+            # "...inelastic response, by 16.3 %". The original pattern required the
+            # figure to PRECEDE the quantity and was blind to this order.
+            r"inelastic[^.]{0,40}?(?:by|of)\s*\$?16\.3\$?\\,\\%",
             # the table row label that called the driver a response
             r"Corner-joint response \$\\du\$"):
         assert not re.search(bad, tex), f"driver labelled as response: {bad}"
@@ -469,8 +473,12 @@ def test_manuscript_never_calls_the_driver_an_inelastic_response():
     # the exact abstract and results wordings that attached the driver's 16.3 % to a strain
     ("an $18.4$\\,\\% lower stabilised local\ninelastic response",
      "a $16.3$\\,\\% lower local inelastic response"),
-    ("carrying $18.4$\\,\\% lower local\nfatigue-relevant inelastic response",
-     "carrying $16.3$\\,\\% lower local\nfatigue-relevant inelastic response"),
+    # Phase 0N reworded the abstract; the anchor follows the text it guards.
+    ("an $18.4$\\,\\% lower fatigue-relevant inelastic response",
+     "an $16.3$\\,\\% lower fatigue-relevant inelastic response"),
+    # Phase 0N: the reversed wording, which the original pattern could not see
+    ("an $18.4$\\,\\% lower fatigue-relevant inelastic response",
+     "a fatigue-relevant inelastic response lower by $16.3$\\,\\%"),
 ])
 def test_conflation_guard_fires_on_the_real_defect(old, new):
     """Each probe is the real text this pass removed, not a paraphrase."""

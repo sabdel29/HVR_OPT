@@ -33,15 +33,20 @@ state. The framework is applied to two integration alternatives for a 1\,kW, 48\
 system distributed over 49 regulator cells. Two tier orderings that are equivalent at the
 component-selection and stack-budget level are found to differ by a factor of six in worst
 via aspect ratio,
-$5.05$ against $0.833$. On the resulting geometrically realizable partition the backside
-architecture is found to run $8.14$\,K hotter while carrying $18.4$\,\% lower local
-fatigue-relevant inelastic response, evaluated by a displacement-driven viscoplastic solder
-submodel on the same frozen pair; the displacement driver that feeds that submodel differs by
-$16.3$\,\% and is preserved to within $0.04$\,\% under a complete reconstruction of the
-vertical interconnect topology. Thermal and mechanical-response
-rankings are therefore shown to be non-equivalent. The ordering is robust; its magnitude
-remains conditional on an extrapolated solder constitutive model, and no absolute life is
-claimed.
+$5.05$ against $0.833$, on a vertical interconnect that is geometrically realizable and
+process-conditional. On that partition the backside architecture carries a $16.3$\,\% lower local
+displacement driver and an $18.4$\,\% lower fatigue-relevant inelastic response, for the
+frozen backside representation; the response is evaluated by a displacement-driven
+viscoplastic solder submodel on the same frozen pair. The \emph{direction}
+of that ordering is preserved to within $0.04$\,\% under a complete reconstruction of the
+vertical interconnect topology and under every backside representation tested. Its
+\emph{magnitude}, and the accompanying temperature ordering, are conditional: the lateral
+extent of the backside converter medium is not established by any source available to this
+work, and varying it within defensible bounds moves the driver reduction over $3.6$--$65.6$\,\%
+and reverses the sign of the temperature difference. Thermal and mechanical-response rankings
+are therefore shown to be non-equivalent in direction, which is the claim this work makes; no
+absolute life is claimed, and the response magnitude additionally remains conditional on an
+extrapolated solder constitutive model.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -60,11 +65,21 @@ evaluated package stack is prohibitively lossy: the $I^{2}R$ dissipation of a 1\
 traversing even a few millimetres of package metal becomes comparable with the load itself.
 Higher-voltage or vertical distribution is therefore required.
 
-Distributed vertical power delivery (DVPD) answers this by partitioning conversion into
-many regulator cells placed immediately above, below or within the package, so that the
-high-current rail travels micrometres rather than
-millimetres~\cite{Sriharini_ECTC_24,VPD_transactions_on_power_electronics_new,
-ISCAS2024DVPD,vertical_stacking_2025_TRansactions_power_electronics}.
+Vertical power delivery (VPD) addresses this by converting in or near the package beneath
+the load, removing the long board-to-package lateral path~\cite{Sriharini_ECTC_24}. Converting
+vertically is not by itself sufficient, however: with a single lumped regulator the
+post-conversion low-voltage, high-current rail must still traverse the package or interposer
+redistribution layers to reach spatially separated points of load, a distance reported as up
+to a quarter of the system perimeter~\cite{Krishnakumar2026DVPD}. Distributed vertical power
+delivery (DVPD) answers \emph{that} by partitioning conversion into many regulator cells
+placed laterally beneath or around their corresponding load regions, so that high-voltage,
+low-current power is distributed laterally first and the residual high-current rail travels
+micrometres rather than millimetres, with the per-cell output current scaling as
+$I_{\mathrm{o}}/M$~\cite{Krishnakumar2026DVPD,Sriharini_ECTC_24,
+VPD_transactions_on_power_electronics_new,
+ISCAS2024DVPD,vertical_stacking_2025_TRansactions_power_electronics}. DVPD is therefore a
+distributed form of vertical power delivery, and the quantity that distinguishes the two is
+the low-voltage lateral path that survives conversion.
 Design frameworks for DVPD have advanced considerably. Converter synthesis, interconnect
 allocation, floorplanning and thermal feasibility are now co-optimised within a single
 flow~\cite{Krishnakumar2026DVPD}; effective models for vertical routing over C4 bumps,
@@ -164,13 +179,21 @@ Loss per cell at $25\,^{\circ}$C & $1.866$\,W           & loss model \\
 \midrule
 \multicolumn{3}{@{}l}{\emph{Package and cooling}}\\
 Substrate thickness, Z1 / Z2 & $1.30$ / $0.30$\,mm      & architecture \\
-Converter stack height       & $1921$\,\textmu m        & components \\
+Converter component stack    & $1921$\,\textmu m        & components \\
+Embedded in Z1 substrate     & $1226$\,\textmu m        & derived \\
 Interlayer RDL               & $10$\,\textmu m          & \cite{Sriharini_ECTC_24} \\
 Through-substrate via        & $30$ / $60$\,\textmu m dia. / pitch & \cite{Krishnakumar2026DVPD} \\
 Coolant / inlet              & water, $25\,^{\circ}$C   & cooling design \\
 Mass flow                    & $27$\,g\,s$^{-1}$        & cooling design \\
 \bottomrule
 \end{tabular}
+
+\vspace{2pt}
+\footnotesize The $1921$\,\textmu m component stack is the serial height of the four-tier
+partition template. It is \emph{not} contained in the Z1 substrate: $1226$\,\textmu m is
+embedded and the $685$\,\textmu m high-side device is flip-chipped below the substrate,
+outside the modelled domain. Device heights follow EPC2212 (high side) and EPC2090 (low
+side); the electrical model uses the EPC2014C/EPC2057 pair listed above.
 \end{table}
 
 The system delivers 1\,kW at 1\,V to a $22.36 \times 22.36$\,mm compute die. Conversion from
@@ -207,21 +230,32 @@ forms the switch node.
 \centering
 \includegraphics[width=\textwidth]{fig2_stack.pdf}
 \caption{Physical stack and power path for the two integration alternatives. (a) Embedded:
-the converter cells are built into the $1.30$\,mm substrate and the through-substrate field
-carries the 48\,V input rail. (b) Backside: the cells are mounted on the underside of a
-$0.30$\,mm substrate and the identical field carries the 1\,V output rail at the full cell
-current. Arrow width indicates segment current on a logarithmic scale. The two are
+the low-side devices, flying capacitors and inductors---$1226$\,\textmu m of the
+$1921$\,\textmu m component stack---are embedded in the $1.30$\,mm substrate, which they fill
+together with the $74$\,\textmu m through-substrate field; that field carries the 48\,V input
+rail. The $685$\,\textmu m high-side device is flip-chipped below the substrate and is outside
+the modelled domain. (b) Backside: the converter medium occupies a continuous layer below a
+$0.30$\,mm substrate and the field carries the 1\,V output rail at the full cell current; the
+lateral subdivision of that layer into cells, and the board interface beneath it, are not
+resolved. Arrow width indicates segment current on a logarithmic scale. The two are
 electrically distinct despite sharing the same converter.}
 \label{fig:stack}
 \end{figure*}
 
 The distinction between the two integration alternatives is electrical as well as geometric.
-In the \emph{embedded} architecture (Z1) the converter cells are built into the package
-substrate beneath the compute die, with a substrate thickness of $1.30$\,mm, and the vertical
-through-substrate field carries the 48\,V input rail at low current. In the \emph{backside}
-architecture (Z2) the cells are mounted on the substrate underside and connected through a
-$0.30$\,mm substrate, so the identical field carries the 1\,V output rail at the full cell
-current. The vertical interconnect is therefore not common mode between the two and cannot be
+In the \emph{embedded} architecture (Z1) the low-side devices, flying capacitors and
+inductors are embedded in the package substrate beneath the compute die. They occupy
+$1226$\,\textmu m of the $1.30$\,mm substrate and the remaining $74$\,\textmu m is the
+through-substrate field, which carries the 48\,V input rail at low current; the substrate
+budget therefore closes exactly. Following the reference
+architecture~\cite{Krishnakumar2026DVPD}, the $685$\,\textmu m high-side device is
+flip-chipped below the substrate; it lies outside the modelled domain, and its loss is
+deposited in the embedded band. In the \emph{backside} architecture (Z2) the converter medium
+lies below the substrate and is connected through the full $0.30$\,mm, so the identical field
+carries the 1\,V output rail at the full cell current. That medium is represented as a
+continuous layer rather than as 49 discrete cells, and the interface between it and the board
+is not defined; both are limitations of the present geometry rather than properties of the
+architecture, and Sec.~\ref{sec:backside-limit} quantifies their effect. The vertical interconnect is therefore not common mode between the two and cannot be
 treated as such. Both are shown in Fig.~\ref{fig:stack}.
 
 A power-die variant and a 2.5-D lateral variant were also formulated. Neither is reported
@@ -1029,8 +1063,8 @@ area and height being unchanged by it \cite{Krishnakumar2026DVPD,VPD2023Architec
 the objective, and no local mechanical response is evaluated alongside it
 \cite{Krishnakumar2026DVPD,ISCAS2024DVPD,Wang2025TTSV}
 & $T_{\max}$ and local corner-joint response on the same converged field
-& \textbf{not equivalent}: $+8.14$\,K against $-18.4$\,\% inelastic response
-& $T_{\max}$ is insufficient to rank local mechanical response; temperature remains inside the response model \\
+& \textbf{not equivalent} on the frozen pair: $+8.14$\,K against $-18.4$\,\% inelastic response (conditional, Sec.~\ref{sec:backside-limit})
+& $T_{\max}$ is insufficient to rank local mechanical response; a counterexample suffices, and temperature remains inside the response model \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -1155,7 +1189,9 @@ Fig.~\ref{fig:realize}.
 \caption{Final cross-domain comparison on the frozen repartitioned pair. The backside
 architecture dissipates $2.37$\,W more and runs $8.14$\,K hotter, yet carries a $16.3$\,\%
 lower corner-joint displacement driver $\du$ (d) and an $18.4$\,\% lower stabilised local
-inelastic response $\Delta\varepsilon_{\mathrm{in}}$ (e). The two are distinct quantities: (d)
+inelastic response $\Delta\varepsilon_{\mathrm{in}}$ (e). The temperature difference and the
+two magnitudes are conditional on the frozen backside representation
+(Sec.~\ref{sec:backside-limit}); the sign of the driver ordering is not. The two are distinct quantities: (d)
 is a displacement in micrometres and drives the submodel, (e) is the dimensionless per-cycle
 response it returns. Warpage is peak-to-valley. Panel (f)
 reports the measured cost of one complete evaluation on 48 cores; the thermoelastic and
@@ -1170,11 +1206,15 @@ given in Table~\ref{tab:final} and Fig.~\ref{fig:final}.
 
 The backside architecture dissipates $2.37$\,W more, almost entirely because its
 through-substrate field carries the 1\,V rail rather than the 48\,V rail, and it runs
-$8.14$\,K hotter at the peak, and its corner joints run $7.55$\,K hotter than Z1's. It
-nevertheless carries $18.4$\,\% lower local inelastic response,
+$8.14$\,K hotter at the peak---a difference conditional on the backside representation, and
+one that changes sign within the bracket of Sec.~\ref{sec:backside-limit}---and its corner
+joints run $7.55$\,K hotter than Z1's. It nevertheless carries $18.4$\,\% lower local inelastic response,
 $D_{\varepsilon} = 1.2260$, and a $16.3$\,\% lower corner-joint displacement driver,
-$D_{u} = 1.1947$. Ranking the two architectures by peak temperature therefore gives the
-opposite answer to ranking them by local mechanical response.
+$D_{u} = 1.1947$. On this pair, ranking the two architectures by peak temperature therefore
+gives the opposite answer to ranking them by local mechanical response, which is sufficient
+to show that peak temperature is not a reliable proxy for the local mechanical ranking. The
+sign of the displacement-driver ordering, unlike that of the temperature difference, is
+preserved across every backside representation tested.
 
 The driver and the response order the pair the same way, but they do not agree on magnitude,
 and only the second is a measure of solder response. Two cross cases through the same
@@ -1272,6 +1312,50 @@ the conductor-plane structure of the package rather than on its netlist; and the
 deferred to a later packaging step, because the remedy is a change of component partition,
 which is a synthesis variable.
 
+\subsection{Lateral extent of the backside converter}\label{sec:backside-limit}
+The backside architecture is represented by a converter medium occupying a continuous layer
+below the substrate, whereas the embedded architecture carries converter medium only inside
+the 49 cell footprints, which cover $30.5$\,\% of the substrate area. The two architectures
+therefore do not contain the same volume of converter medium: $1103.40$\,mm$^{3}$ against
+$337.02$\,mm$^{3}$, a factor of $3.27$. No source available to this work establishes what
+occupies the remaining $69.5$\,\% of the backside, and the question is consequential rather
+than cosmetic.
+
+Rerunning the frozen pipeline with that area filled by a non-converter medium, so that both
+architectures carry an identical $337.02$\,mm$^{3}$, gives the bracket in
+Table~\ref{tab:backside}. The \emph{direction} of the displacement-driver ordering survives
+every case. Its magnitude does not: the reduction spans $3.59$--$65.56$\,\%, and the
+temperature difference changes sign, from $+8.14$\,K for the frozen representation to
+$-2.77$\,K when the out-of-cell area is filled with substrate silicon. The claim that the
+backside architecture is the hotter one is therefore \emph{not} established by this work, and
+the $16.3$\,\% and $18.4$\,\% figures are reported as conditional on the frozen
+representation. The local solder submodel was not rerun across the bracket, so the
+$D_{\varepsilon}$ value inherits the same conditionality through $\Delta u_{\mathrm{c}}$ and
+the joint temperature.
+
+A physically correct backside would be laterally structured, with cells over part of the area
+and the board interface over the rest. The present geometry cannot represent that, because
+the ball field is a separate full-area layer below the converter rather than coexisting with
+it; resolving it requires a backside construction that no source available to this work
+supplies.
+
+\begin{table}[!t]
+\caption{Effect of the backside converter's lateral extent on the frozen pair. Z1 is
+unaffected. The frozen row reproduces Table~\ref{tab:final} exactly.}
+\label{tab:backside}
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+out-of-cell medium & $T_{\max}$ (\textdegree C) & $\Delta u_{\mathrm{c}}$ (\textmu m) & vs.\ Z1 \\
+\midrule
+Z1 (reference)                    & $118.32$ & $4.6252$ & --- \\
+converter medium (frozen)         & $126.46$ & $3.8714$ & $-16.30$\,\% \\
+underfill, $8$\,GPa               & $171.24$ & $1.5930$ & $-65.56$\,\% \\
+substrate silicon, $130$\,GPa     & $115.55$ & $4.4591$ & $-3.59$\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Limitations}
 Each limitation below is stated with its effect on the claims.
 
@@ -1346,8 +1430,11 @@ architecture selection: a tier order equivalent to another in component set, per
 stack height can require a via of aspect ratio $5.05$ where a permutation of the same
 components requires $0.833$, and
 the remedy is a synthesis variable. Temperature ranking and local mechanical-response
-ranking need not agree; on the final pair the hotter architecture carries the lower response,
-by $8.14$\,K against $18.4$\,\% in the local inelastic response. And the architecture
+ranking need not agree: on the final pair the hotter architecture carries the lower response,
+by $8.14$\,K against $18.4$\,\% in the local inelastic response, which is a counterexample to
+using peak temperature as a mechanical proxy. That temperature difference is conditional on
+the backside representation (Sec.~\ref{sec:backside-limit}); the direction of the
+displacement-driver ordering is not. And the architecture
 ordering is robust to the physical
 corrections that most affect its magnitude: the displacement-driver ratio, the quantity
 tracked across the whole refinement sequence, changes by $0.04$\,\% under a complete

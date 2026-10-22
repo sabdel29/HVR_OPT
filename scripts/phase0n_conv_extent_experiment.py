@@ -49,6 +49,12 @@ VARIANTS = [
 
 def main() -> int:
     import replay_production as RPX
+    # Use a Phase-0N scratch directory. Sharing replay_production.WD would leave the
+    # LAST variant's solver output where extract_die_field.py reads the frozen field,
+    # which is exactly how this script once broke
+    # tests/phase0mr3c::test_plotted_die_field_reproduces_the_frozen_warpage.
+    RPX.WD = R / "results" / "phase0n" / "replay"
+    RPX.WD.mkdir(parents=True, exist_ok=True)
     rows = []
     for tag, arch, h, fill, note in VARIANTS:
         if fill:

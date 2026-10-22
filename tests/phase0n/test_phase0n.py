@@ -299,6 +299,27 @@ def test_manuscript_does_not_put_1921_inside_the_substrate():
             "1.30 mm substrate; only 1226 um is embedded")
 
 
+def test_manuscript_states_the_embedded_split():
+    """Positive guard: the corrected split must be present, not merely the defect absent."""
+    tex = TEX.read_text()
+    assert "1226" in tex, "the manuscript no longer states what is actually embedded"
+    assert re.search(r"outside the modelled domain", tex), (
+        "the manuscript no longer discloses that the high-side device is unmodelled")
+    assert re.search(r"sec:backside-limit", tex), (
+        "the backside lateral-extent limitation section was removed")
+
+
+def test_manuscript_does_not_assert_the_temperature_ordering():
+    """The +8.14 K ordering was withdrawn; it may be reported only as conditional."""
+    tex = TEX.read_text()
+    for m in re.finditer(r"8\.14", tex):
+        w = tex[max(0, m.start() - 320): m.end() + 320]
+        assert re.search(r"condition|not established|bracket|frozen representation|"
+                         r"reverses|changes sign", w, re.I), (
+            "an unqualified 8.14 K claim reappeared at offset "
+            f"{m.start()}; it must be reported as conditional")
+
+
 def test_manuscript_1921_claim_negative():
     """NEGATIVE: the real offending sentence from the pre-audit Fig. 2 caption."""
     offending = (r"the converter cells are built into the $1.30$\,mm substrate and the "
