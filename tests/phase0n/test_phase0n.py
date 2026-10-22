@@ -310,6 +310,23 @@ def test_no_interleaving_is_modelled():
             f"research/HVR_PHASE_COUNT_AUDIT.md section 9")
 
 
+def test_baseline_AR_depends_on_the_low_side_height():
+    """The 5.05 headline is device-height dependent; pin the corrected 5.32."""
+    import sys as _s
+    _s.path.insert(0, str(R / "presentations/SK_hynix_2026/SK_HYNIX_HVR_TRANSIENT_ETM_2026_SOURCE"))
+    import sources as S
+    base = S.NETS["baseline_T1"]["hs_to_cf"]
+    assert base["depth"] == pytest.approx(606.0), "baseline hs_to_cf no longer crosses the LS tier"
+    assert base["ar"] == pytest.approx(5.05, abs=1e-3)
+    d_via = base["depth"] / base["ar"]
+    assert d_via == pytest.approx(120.0, abs=0.5)
+    assert 638.0 / d_via == pytest.approx(5.317, abs=2e-3), (
+        "the corrected baseline AR moved; update research/DEVICE_GEOMETRY_AUDIT.md")
+    # the repartitioned value must NOT move: it crosses the 100 um capacitor tier
+    rep = S.NETS["repartition_C1"]["hs_to_ls"]
+    assert rep["depth"] == pytest.approx(100.0) and rep["ar"] == pytest.approx(0.833, abs=1e-3)
+
+
 # ===================================================== SELECTED-DEVICE GEOMETRY
 def test_device_heights_match_the_selected_parts(design):
     """The geometry must use the heights of the devices the electrical model picks."""

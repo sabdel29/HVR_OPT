@@ -39,13 +39,17 @@ vertical interconnect carries:
 
 | | **Z1 embedded** | **Z2 backside** |
 |---|---|---|
-| converter cells | inside the 1.30 mm package substrate | on the underside of a 0.30 mm substrate |
+| converter cells | low side, flying caps and inductors embedded in the 1.30 mm substrate (1226 µm of the 1921 µm stack); the 685 µm high-side device sits below it and is **not modelled** | represented as a **continuous layer** below a 0.30 mm substrate; the 49 cells are **not resolved laterally** |
 | through-substrate field carries | the **48 V input** rail, low current | the **1 V output** rail, full cell current |
 | that field dissipates | ≈ 0 W | 0.991 W |
 
-The same nominal via field, same geometry — three orders of magnitude apart in loss. This is
-why "TSV resistance" alone is not a meaningful architecture metric: what matters is
-**geometry × assigned rail × current × allocation**.
+The vertical loss follows the **assigned rail**, not the via: Z1 carries 43× less current
+through a 4.1× *shorter* path (74 µm vs 300 µm). "TSV resistance" alone is not a meaningful
+architecture metric; **geometry × assigned rail × current × allocation** is.
+
+> **Neither architecture is physically closed.** Z1 omits its high-side device and, with the
+> corrected EPC2057 height, its substrate is 8 µm short. Z2's backside construction and board
+> interface are undefined. See `research/PHYSICAL_ARCHITECTURE_AUDIT_Z1_Z2.md`.
 
 ## What is coupled
 
@@ -70,15 +74,26 @@ of six in worst build-up via aspect ratio:
 
 Only the tier *locations* were permuted; the electrical topology is untouched. A physically
 problematic architecture becomes geometrically realizable for free.
-Status: **geometrically realizable / process-conditional** — *not* manufacturing-qualified.
+Status: the **vertical interconnect** is geometrically realizable / process-conditional.
+Component-stack and board-assembly realizability are **NOT ESTABLISHED** for either
+architecture, and nothing is manufacturing-qualified.
 
 **Peak temperature does not uniquely rank local mechanical response.** On the frozen pair:
 
 | | Z1 embedded | Z2 backside | |
 |---|---:|---:|---|
-| T_max | 118.32 °C | 126.46 °C | Z2 **+8.14 K hotter** |
-| Δu_c displacement driver | 4.6252 µm | 3.8714 µm | Z2 **16.3 % lower** |
-| Δε_in inelastic response | 1.4072×10⁻² | 1.1478×10⁻² | Z2 **18.43 % lower** |
+| T_max | 118.32 °C | 126.46 °C | +8.14 K — **sign not established**, see below |
+| Δu_c displacement driver | 4.6252 µm | 3.8714 µm | 16.3 % lower — **magnitude conditional** |
+| Δε_in inelastic response | 1.4072×10⁻² | 1.1478×10⁻² | 18.43 % lower — **most conditional** |
+
+> **These are the frozen-geometry numbers and they are geometry-conditional, not
+> architecture results.** Z2's backside is modelled as a full-area converter slab
+> (1103.40 mm³) against Z1's 337.02 mm³, so the pair does not isolate placement. Refilling
+> the out-of-cell backside area moves the Δu_c reduction over 3.6–65.6 % and **reverses the
+> sign of ΔT** (−2.77 K with a silicon fill). Δu_c stayed lower for Z2 across all three
+> surrogate fills tested; whether that survives a physically closed backside is **open**.
+> The local solder model was not rerun for the surrogates, so 18.43 % is conditional twice
+> over.
 
 Z2 is the hotter architecture **and** the one with the lower local inelastic response. The
 mechanism is measured, not asserted: the displacement reduction alone would give 19.39 %, and

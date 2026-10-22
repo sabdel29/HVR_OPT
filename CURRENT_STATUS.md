@@ -44,9 +44,14 @@ change, two reference page ranges) — see `manuscript/TCPMT_PRE_SUBMISSION_STAT
     D_u = 1.1947      displacement-driver ratio
     D_ε = 1.2260      inelastic-response ratio
 
-**Reading:** Z2 runs **8.14 K hotter**, carries **16.3 % lower** displacement driver and
-**18.43 % lower** local inelastic response. Peak temperature and local mechanical response
-therefore do **not** rank the two architectures the same way.
+**Reading — and its limits.** On the frozen geometry Z2 runs 8.14 K hotter, carries 16.3 %
+lower displacement driver and 18.43 % lower local inelastic response. **None of these is an
+architecture-level result**: the frozen pair does not isolate placement, because Z2's
+backside is a full-area converter slab (1103.40 mm³) against Z1's 337.02 mm³. Over the three
+surrogate backside fills tested the Δu_c reduction spans 3.6–65.6 % and **ΔT changes sign**.
+Peak temperature is therefore not sufficient to infer local mechanical response — the
+surrogates include cases where the two rankings diverge — but whether the physically closed
+Z1/Z2 implementations show that reversal is **unresolved**.
 
 Source: `results/phase0mr3c/final_etm_replay.csv`, `final_local_response.csv`,
 `local_submodel_inputs.csv`.
@@ -102,11 +107,19 @@ Source: `results/phase0mr3c/cetol_final_pair.csv`,
   through-substrate field dissipates ≈0 W carrying 48 V and 0.991 W carrying 1 V.
 * Physical realizability is an **active architecture/synthesis constraint**: two tier orders
   equivalent in component set, area and stack height differ 6× in worst via aspect ratio.
-* Peak-temperature ranking ≠ local mechanical-response ranking on the frozen pair.
-* The ordering Z2 < Z1 holds across every constitutive variant admitted, all three local
-  metrics, the whole geometric refinement sequence, and both converged integration tolerances.
+* Peak temperature is **not sufficient** to infer local mechanical response: the response
+  depends additionally on geometry, stiffness distribution, boundary conditions and local
+  joint loading, and the surrogate set includes cases where the two rankings diverge.
+* The **method** — global thermoelastic field driving a local displacement-driven solder
+  submodel, with response, damage, life and failure kept separate.
 
 **Conditional:**
+* **Every Z1/Z2 number below is geometry-conditional.** Neither architecture is physically
+  closed: Z1 omits its 685 µm high-side device and, with the corrected EPC2057 height
+  (638 µm, not 606 µm), its 1.30 mm substrate is 8 µm short of the 1308 µm minimum; Z2's
+  backside construction, lateral cell extent and board interface are undefined.
+* Δu_c remained lower for Z2 across all three surrogate backside treatments; whether that
+  ordering survives a physically closed backside package **remains to be established**.
 * The **magnitude** of the 18.43 % separation. The solder Norton card is fitted over
   7.51–15.92 MPa while the final joints operate at 15–17× yield — roughly an order of
   magnitude above the top of the fitted window. Ordering robust, magnitude an envelope.

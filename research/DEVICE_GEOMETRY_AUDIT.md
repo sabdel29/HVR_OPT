@@ -83,3 +83,20 @@ is unchanged and byte-identical.
   1408 µm and h_sub must be ≥ 1458 µm.
 - The inductor's 500 µm is sourced from the part, not from a mounted-height dimension, so
   it may not follow the same convention as the two GaN devices.
+
+## Knock-on: the realizability headline number also moves
+
+The baseline tier order's worst via is the `hs_to_cf` net, which crosses the **low-side
+tier**. Its aspect ratio is therefore `t_LS / d_via`:
+
+| | frozen (LS = 606 µm) | corrected (LS = 638 µm) |
+|---|---:|---:|
+| baseline `hs_to_cf` depth | 606 µm | **638 µm** |
+| baseline worst AR | 5.05 | **5.32** |
+| repartitioned worst AR (`hs_to_ls`, 100 µm cap tier) | 0.833 | 0.833 — unchanged |
+| improvement factor | 6.06× | **6.38×** |
+
+The repartitioned value is untouched because it crosses the capacitor tier, not the
+low-side tier. **The mechanism and the conclusion are unaffected and the improvement is
+slightly larger**, but the widely quoted "5.05" is a device-height-dependent number and
+must be restated as **5.32** wherever the corrected geometry is adopted.

@@ -37,16 +37,18 @@ $5.05$ against $0.833$, on a vertical interconnect that is geometrically realiza
 process-conditional. On that partition the backside architecture carries a $16.3$\,\% lower local
 displacement driver and an $18.4$\,\% lower fatigue-relevant inelastic response, for the
 frozen backside representation; the response is evaluated by a displacement-driven
-viscoplastic solder submodel on the same frozen pair. The \emph{direction}
-of that ordering is preserved to within $0.04$\,\% under a complete reconstruction of the
-vertical interconnect topology and under every backside representation tested. Its
-\emph{magnitude}, and the accompanying temperature ordering, are conditional: the lateral
-extent of the backside converter medium is not established by any source available to this
-work, and varying it within defensible bounds moves the driver reduction over $3.6$--$65.6$\,\%
-and reverses the sign of the temperature difference. Thermal and mechanical-response rankings
-are therefore shown to be non-equivalent in direction, which is the claim this work makes; no
-absolute life is claimed, and the response magnitude additionally remains conditional on an
-extrapolated solder constitutive model.
+viscoplastic solder submodel on the same frozen pair. The displacement driver remained lower for the
+backside architecture across all three surrogate backside treatments tested, and the ratio is
+preserved to within $0.04$\,\% under a complete reconstruction of the vertical interconnect
+topology; whether that ordering survives a physically closed backside package remains to be
+established, since neither architecture is yet dimensionally closed. The \emph{magnitude}, and
+the accompanying temperature ordering, are conditional: the lateral extent of the backside
+converter medium is not established by any source available to this work, and varying it within
+defensible bounds moves the driver reduction over $3.6$--$65.6$\,\% and reverses the sign of the
+temperature difference. What the study does establish is that peak temperature is not in general
+sufficient to infer local mechanical response, which additionally depends on geometry, stiffness
+distribution, boundary conditions and local joint loading. No absolute life is claimed, and the
+response magnitude additionally remains conditional on an extrapolated solder constitutive model.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -1449,11 +1451,12 @@ architecture selection: a tier order equivalent to another in component set, per
 stack height can require a via of aspect ratio $5.05$ where a permutation of the same
 components requires $0.833$, and
 the remedy is a synthesis variable. Temperature ranking and local mechanical-response
-ranking need not agree: on the final pair the hotter architecture carries the lower response,
-by $8.14$\,K against $18.4$\,\% in the local inelastic response, which is a counterexample to
-using peak temperature as a mechanical proxy. That temperature difference is conditional on
-the backside representation (Sec.~\ref{sec:backside-limit}); the direction of the
-displacement-driver ordering is not. And the architecture
+ranking need not agree. Peak temperature is not in general sufficient to infer local
+mechanical response, because the latter additionally depends on geometry, stiffness
+distribution, boundary conditions and local joint loading; the surrogate representations
+examined here include cases in which the two rankings diverge. Whether the physically closed
+Z1 and Z2 implementations exhibit that divergence is unresolved, since neither architecture is
+yet dimensionally closed (Sec.~\ref{sec:backside-limit}). And the architecture
 ordering is robust to the physical
 corrections that most affect its magnitude: the displacement-driver ratio, the quantity
 tracked across the whole refinement sequence, changes by $0.04$\,\% under a complete
