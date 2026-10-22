@@ -589,6 +589,43 @@ def test_manuscript_topology_wording_negative(pat, why):
         f"the negative fixture no longer exercises {pat!r}")
 
 
+STALE_FROZEN = [
+    (r"1921", r"1953"),      # component stack at selected-device heights
+    (r"1226", r"1258"),      # embedded cell
+    (r"5\.05", r"5\.32"),    # baseline worst via AR
+]
+
+
+@pytest.mark.parametrize("stale,corrected", STALE_FROZEN)
+def test_manuscript_pairs_every_frozen_value_with_the_corrected_one(stale, corrected):
+    """A frozen value may appear only alongside its selected-device counterpart."""
+    tex = TEX.read_text()
+    for m in re.finditer(stale, tex):
+        w = tex[max(0, m.start() - 500): m.end() + 500]
+        assert re.search(corrected, w) or re.search(r"frozen|historical", w, re.I), (
+            f"{stale} at offset {m.start()} appears without {corrected} or a "
+            f"'frozen' label")
+
+
+def test_manuscript_device_attribution_is_corrected():
+    tex = TEX.read_text()
+    for m in re.finditer(r"EPC2212|EPC2090", tex):
+        w = tex[max(0, m.start() - 300): m.end() + 300]
+        assert re.search(r"EPC2014C|EPC2057|mis-attribut", w), (
+            "the manuscript attributes a height to EPC2212/EPC2090 without the "
+            "selected-device correction nearby")
+    assert "EPC2014C" in tex and "EPC2057" in tex
+
+
+def test_readme_has_no_unconditional_architecture_ordering():
+    t = (R / "README.md").read_text()
+    for m in re.finditer(r"hotter architecture", t, re.I):
+        w = t[max(0, m.start() - 200): m.end() + 420]
+        assert re.search(r"frozen geometry|not an architecture result|condition|"
+                         r"reverses|open", w, re.I), (
+            "README states the hotter-architecture ordering unconditionally")
+
+
 def test_entry_points_do_not_claim_whole_package_realizability():
     """Task A sweep: README/CURRENT_STATUS must scope realizability to the interconnect."""
     for name in ("README.md", "CURRENT_STATUS.md"):

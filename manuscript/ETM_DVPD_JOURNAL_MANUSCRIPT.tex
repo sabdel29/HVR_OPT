@@ -33,7 +33,8 @@ state. The framework is applied to two integration alternatives for a 1\,kW, 48\
 system distributed over 49 regulator cells. Two tier orderings that are equivalent at the
 component-selection and stack-budget level are found to differ by a factor of six in worst
 via aspect ratio,
-$5.05$ against $0.833$, on a vertical interconnect that is geometrically realizable and
+$5.05$ against $0.833$ ($5.32$ against $0.833$ at the selected device heights), on a
+vertical interconnect that is geometrically realizable and
 process-conditional. On that partition the backside architecture carries a $16.3$\,\% lower local
 displacement driver and an $18.4$\,\% lower fatigue-relevant inelastic response, for the
 frozen backside representation; the response is evaluated by a displacement-driven
@@ -182,8 +183,8 @@ Loss per cell at $25\,^{\circ}$C & $1.866$\,W           & loss model \\
 \midrule
 \multicolumn{3}{@{}l}{\emph{Package and cooling}}\\
 Substrate thickness, Z1 / Z2 & $1.30$ / $0.30$\,mm      & architecture \\
-Converter component stack    & $1921$\,\textmu m        & components \\
-Embedded in Z1 substrate     & $1226$\,\textmu m        & derived \\
+Converter component stack    & $1953$\,\textmu m\,/\,$1921$\,\textmu m & components$^{\dagger}$ \\
+Embedded in Z1 substrate     & $1258$\,\textmu m\,/\,$1226$\,\textmu m & derived$^{\dagger}$ \\
 Interlayer RDL               & $10$\,\textmu m          & \cite{Sriharini_ECTC_24} \\
 Through-substrate via        & $30$ / $60$\,\textmu m dia. / pitch & \cite{Krishnakumar2026DVPD} \\
 Coolant / inlet              & water, $25\,^{\circ}$C   & cooling design \\
@@ -192,11 +193,16 @@ Mass flow                    & $27$\,g\,s$^{-1}$        & cooling design \\
 \end{tabular}
 
 \vspace{2pt}
-\footnotesize The $1921$\,\textmu m component stack is the serial height of the four-tier
-partition template. It is \emph{not} contained in the Z1 substrate: $1226$\,\textmu m is
-embedded and the $685$\,\textmu m high-side device is flip-chipped below the substrate,
-outside the modelled domain. Device heights follow EPC2212 (high side) and EPC2090 (low
-side); the electrical model uses the EPC2014C/EPC2057 pair listed above.
+\footnotesize $\dagger$~Two values are given: the first uses the heights of the devices the
+synthesis actually selects, the second is the frozen value retained so the Phase-0M-R3C
+results stay reproducible. The selected high side is EPC2014C, whose datasheet gives
+$685$\,\textmu m nominal ($815$\,\textmu m max); the selected low side is EPC2057, whose
+datasheet gives $518\pm25$\,\textmu m die $+\;120\pm12$\,\textmu m bump $=638$\,\textmu m,
+against the $606$\,\textmu m used in the frozen model. The component stack is \emph{not}
+contained in the Z1 substrate: only the embedded-cell portion is, and the $685$\,\textmu m
+high-side device is flip-chipped below the substrate, outside the modelled domain. With the
+selected-device heights the Z1 substrate requires $\ge 1308$\,\textmu m, so the frozen
+$1.30$\,mm is $8$\,\textmu m short.
 \end{table}
 
 The system delivers 1\,kW at 1\,V to a $22.36 \times 22.36$\,mm compute die. Conversion from
@@ -247,7 +253,8 @@ capacitor solve---so no claim of interleaving is made.
 \includegraphics[width=\textwidth]{fig2_stack.pdf}
 \caption{Physical stack and power path for the two integration alternatives. (a) Embedded:
 the low-side devices, flying capacitors and inductors---$1226$\,\textmu m of the
-$1921$\,\textmu m component stack---are embedded in the $1.30$\,mm substrate, which they fill
+$1921$\,\textmu m component stack at the frozen device heights, $1258$ of $1953$\,\textmu m
+at the selected ones---are embedded in the $1.30$\,mm substrate, which they fill
 together with the $74$\,\textmu m through-substrate field; that field carries the 48\,V input
 rail. The $685$\,\textmu m high-side device is flip-chipped below the substrate and is outside
 the modelled domain. (b) Backside: the converter medium occupies a continuous layer below a
@@ -261,7 +268,9 @@ electrically distinct despite sharing the same converter.}
 The distinction between the two integration alternatives is electrical as well as geometric.
 In the \emph{embedded} architecture (Z1) the low-side devices, flying capacitors and
 inductors are embedded in the package substrate beneath the compute die. They occupy
-$1226$\,\textmu m of the $1.30$\,mm substrate and the remaining $74$\,\textmu m is the
+$1226$\,\textmu m of the $1.30$\,mm substrate at the frozen device heights ($1258$ at the
+selected ones, which the $1.30$\,mm substrate no longer accommodates) and the remaining
+$74$\,\textmu m is the
 through-substrate field, which carries the 48\,V input rail at low current; the substrate
 budget therefore closes exactly. Following the reference
 architecture~\cite{Krishnakumar2026DVPD}, the $685$\,\textmu m high-side device is
@@ -536,7 +545,10 @@ interlayer redistribution layers are capture planes, so one build-up via level i
 with the flying capacitors leaves the component set, per-tier areas and stack height
 unchanged. (c) Worst via aspect ratio per vertical net at a source-bounded microvia pitch:
 the $606$\,\textmu m crossing required by the reference order is eliminated and the worst
-aspect ratio falls from $5.05$ to $0.833$.}
+aspect ratio falls from $5.05$ to $0.833$ at the frozen device heights. The reference
+order's worst net crosses the low-side tier, so with the selected EPC2057 height
+($638$\,\textmu m) the figure becomes $5.32$ to $0.833$; the repartitioned value is
+unchanged because it crosses the capacitor tier.}
 \label{fig:realize}
 \end{figure*}
 
@@ -1183,7 +1195,8 @@ In the reference tier order---high-side switch, low-side switch, flying capacito
 inductor and output capacitor---the switch-node connection must cross the flying-capacitor
 tier, and the connection between the high-side device and the flying capacitors must cross
 the entire low-side tier. The latter is the demanding one: a $606$\,\textmu m crossing implies
-a build-up via of aspect ratio $5.05$ at the finest pitch reported for a comparable
+a build-up via of aspect ratio $5.05$ at the frozen low-side height, $5.32$ at the selected
+one, at the finest pitch reported for a comparable
 embedded-die process~\cite{Ostmann2008ChipEmbedding}, well outside routine microvia
 practice~\cite{Cauwe2023HDI}.
 
@@ -1193,8 +1206,9 @@ assignments satisfying the area budget, eight retain both endpoints fixed by the
 architecture---the high-side device flip-chipped at the bottom substrate and the inductors in
 the top tier adjacent to the points of load. The preferred assignment exchanges the low-side
 switches with the flying capacitors and changes nothing else. It is a permutation: the same
-component classes, the same counts, the same per-tier areas and the same $1921$\,\textmu m
-stack height, so every area and height result carries over unchanged.
+component classes, the same counts, the same per-tier areas and the same stack height
+($1921$\,\textmu m at the frozen device heights, $1953$\,\textmu m at the selected ones), so
+every area and height result carries over unchanged.
 
 The effect on the vertical interconnect is substantial. The switch node becomes an
 adjacent-tier transition through a single redistribution layer, the high-side to
@@ -1327,7 +1341,8 @@ same geometry as the electrical and thermal design rather than afterwards.
 \subsection{What is, and is not, a synthesis constraint}
 Physical realizability, by contrast, is an active constraint now. A tier order equivalent to
 another at the component-selection and stack-budget level can require a via of aspect ratio
-$5.05$, and the alternative that avoids it costs nothing in area, height or component count.
+$5.05$ (frozen devices; $5.32$ with the selected ones), and the alternative that avoids it
+costs nothing in area, height or component count.
 Constraints of this kind cannot be discovered by an electrical model, because they depend on
 the conductor-plane structure of the package rather than on its netlist; and they cannot be
 deferred to a later packaging step, because the remedy is a change of component partition,
@@ -1448,8 +1463,8 @@ provisioning is kept distinct from manufacturing qualification.
 
 Three conclusions are drawn. Physical realizability cannot be separated from system-level
 architecture selection: a tier order equivalent to another in component set, per-tier area and
-stack height can require a via of aspect ratio $5.05$ where a permutation of the same
-components requires $0.833$, and
+stack height can require a via of aspect ratio $5.05$ at the frozen device heights---$5.32$
+at the selected ones---where a permutation of the same components requires $0.833$, and
 the remedy is a synthesis variable. Temperature ranking and local mechanical-response
 ranking need not agree. Peak temperature is not in general sufficient to infer local
 mechanical response, because the latter additionally depends on geometry, stiffness

@@ -95,13 +95,20 @@ architecture, and nothing is manufacturing-qualified.
 > The local solder model was not rerun for the surrogates, so 18.43 % is conditional twice
 > over.
 
-Z2 is the hotter architecture **and** the one with the lower local inelastic response. The
-mechanism is measured, not asserted: the displacement reduction alone would give 19.39 %, and
-Z2's hotter joint gives 0.75 % of it back.
+On the frozen geometry Z2 is the hotter architecture and the one with the lower local
+inelastic response, and the mechanism is measured rather than asserted: the displacement
+reduction alone would give 19.39 % and Z2's hotter joint gives 0.75 % of it back. **Neither
+the temperature ordering nor the magnitude is an architecture result.** The temperature sign
+reverses under a defensible alternative backside fill, and neither architecture is yet
+physically closed — Z1 omits its high-side device and is 8 µm short with the corrected
+low-side height; Z2's land-side stack is 1963 µm and needs a PCB through-cutout whose
+dimensions no source supplies.
 
 **Δε_in is a response — not damage, not life, not failure.** No damage law, life relation or
-allowable is established here, and none is applied. The ordering is robust; the *magnitude*
-is conditional on a solder model used far outside its fitted stress window.
+allowable is established here, and none is applied. The *direction* of the Δu_c ordering held
+across all three surrogate backside treatments tested; whether it survives a physically
+closed package is **open**. The *magnitude* is additionally conditional on a solder model
+used far outside its fitted stress window.
 
 ## Manuscript
 
