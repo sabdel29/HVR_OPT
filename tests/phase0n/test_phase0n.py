@@ -327,6 +327,60 @@ def test_baseline_AR_depends_on_the_low_side_height():
     assert rep["depth"] == pytest.approx(100.0) and rep["ar"] == pytest.approx(0.833, abs=1e-3)
 
 
+# ============================================ Z1 CANDIDATE PACKAGE CLOSURE
+CONSTR = R / "research" / "Z1_Z2_PACKAGE_CONSTRUCTIONS.md"
+
+
+def _candidate_rows():
+    rows = []
+    for line in CONSTR.read_text().splitlines():
+        if re.match(r"^\| *\d+ *\|", line):
+            c = [x.strip() for x in line.split("|")]
+            rows.append((c[2], float(c[3]), c[4]))
+    return rows
+
+
+def test_z1_candidate_is_contiguous_and_closes():
+    rows = _candidate_rows()
+    assert len(rows) == 15, f"candidate layer count changed: {len(rows)}"
+    z = -1600.0
+    for name, t, span in rows:
+        lo, hi = [float(x) for x in span.replace("−", "-").split("→")]
+        assert lo == pytest.approx(z, abs=1e-6), f"{name}: gap/overlap at {lo} vs {z}"
+        assert hi - lo == pytest.approx(t, abs=1e-6), f"{name}: thickness mismatch"
+        assert t > 0, f"{name}: non-positive thickness"
+        z = hi
+    assert z == pytest.approx(2933.0), f"candidate top is {z}, audit says 2933 um"
+
+
+def test_z1_candidate_contains_the_high_side():
+    """The whole point: unlike the frozen Z1, the candidate HAS a high-side device."""
+    names = [n for n, _t, _s in _candidate_rows()]
+    assert any("HS GaN" in n for n in names), "the candidate lost its high-side device"
+    hs = next(t for n, t, _ in _candidate_rows() if "HS GaN" in n)
+    ls = next(t for n, t, _ in _candidate_rows() if "LS GaN" in n)
+    assert hs == 685.0 and ls == 638.0, "candidate does not use the selected-device heights"
+
+
+def test_z1_candidate_does_not_interfere_with_the_bga():
+    rows = _candidate_rows()
+    bga = next(r for r in rows if "BGA" in r[0])
+    hs = next(r for r in rows if "HS GaN" in r[0])
+    bga_hi = float(bga[2].replace("−", "-").split("→")[1])
+    hs_lo = float(hs[2].replace("−", "-").split("→")[0])
+    assert hs_lo >= bga_hi, (
+        "the high-side device re-entered the ball gap; the frozen Z1's 385 um "
+        "interference is supposed to be resolved in the candidate")
+
+
+def test_z2_has_no_proposed_construction():
+    """Z2 must stay OPEN until a source supports a construction."""
+    t = CONSTR.read_text()
+    assert "No candidate is proposed" in t, (
+        "a Z2 construction was proposed; it must be literature-supported or absent")
+    assert re.search(r"958", t), "the corrected Z2 standoff shortfall is no longer stated"
+
+
 # ===================================================== SELECTED-DEVICE GEOMETRY
 def test_device_heights_match_the_selected_parts(design):
     """The geometry must use the heights of the devices the electrical model picks."""
