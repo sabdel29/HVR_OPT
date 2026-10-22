@@ -310,6 +310,49 @@ def test_no_interleaving_is_modelled():
             f"research/HVR_PHASE_COUNT_AUDIT.md section 9")
 
 
+# ===================================================== SELECTED-DEVICE GEOMETRY
+def test_device_heights_match_the_selected_parts(design):
+    """The geometry must use the heights of the devices the electrical model picks."""
+    import yaml
+    cfg = yaml.safe_load((R / "configs/phase0nr/device_geometry.yaml").read_text())
+    assert cfg["devices"]["high_side"]["part"] == design.hs.part_number == "EPC2014C"
+    assert cfg["devices"]["low_side"]["part"] == design.ls.part_number == "EPC2057"
+    assert cfg["devices"]["high_side"]["height_um"]["nominal"] == 685.0
+    assert cfg["devices"]["low_side"]["height_um"]["nominal"] == 638.0
+
+
+def test_low_side_height_is_die_plus_bump():
+    import yaml
+    d = yaml.safe_load((R / "configs/phase0nr/device_geometry.yaml").read_text())
+    ls = d["devices"]["low_side"]
+    assert (ls["die_thickness_um"]["nominal"] + ls["terminal_um"]["nominal"]
+            == ls["height_um"]["nominal"]), "EPC2057 638 um must equal 518 + 120"
+
+
+def test_corrected_geometry_is_opt_in_and_default_is_frozen():
+    """Default must reproduce the frozen cell; the flag must give the corrected one."""
+    import importlib, os, sys
+    sys.path.insert(0, str(R / "scripts" / "phase0i"))
+    os.environ.pop("PHASE0NR_DEVICE_GEOM", None)
+    import zarch
+    importlib.reload(zarch)
+    assert zarch.embedded_cell_um() == pytest.approx(1226.0), "frozen default drifted"
+    os.environ["PHASE0NR_DEVICE_GEOM"] = "selected"
+    try:
+        importlib.reload(zarch)
+        assert zarch.embedded_cell_um() == pytest.approx(1258.0)
+        r = zarch.realizable("ARCH_Z1_EMBEDDED", 1.30)
+        assert not r.feasible, (
+            "Z1 at 1.30 mm became feasible with the corrected low-side height; "
+            "research/DEVICE_GEOMETRY_AUDIT.md says it is 8 um short")
+        assert r.h_sub_min_um == pytest.approx(1308.0)
+        assert zarch.realizable("ARCH_Z1_EMBEDDED", 1.308).feasible
+    finally:
+        os.environ.pop("PHASE0NR_DEVICE_GEOM", None)
+        importlib.reload(zarch)
+    assert zarch.embedded_cell_um() == pytest.approx(1226.0), "flag leaked"
+
+
 # =================================================== CONNECTIVITY CONTINUITY
 def test_power_path_is_continuous(design):
     """PCB -> 48 V -> converter -> 1 V -> die, with a return accounted for."""

@@ -1,0 +1,93 @@
+# =====================================================================================
+# PHASE 0N-R --- DEVICE GEOMETRY FOR THE DEVICES THE ELECTRICAL MODEL ACTUALLY SELECTS
+# =====================================================================================
+# Phase 0N found that the geometry used heights attributed to EPC2212 / EPC2090 while
+# the electrical model selects EPC2014C / EPC2057. The official datasheets were fetched
+# and read in Phase 0N-R. Outcome:
+#
+#   HIGH SIDE  the 685 um nominal / 815 um max pair attributed to "EPC2212" is EXACTLY
+#              what the EPC2014C datasheet Side View gives. The VALUE was always right;
+#              only the part number in the comment was wrong. No height change.
+#
+#   LOW SIDE   the code used 606 um, built up as "518 +/- 25 die + 50 Cu + 3 Ni + 35
+#              solder". The EPC2057 datasheet gives the same 518 +/- 25 die but a
+#              120 +/- 12 um bump, for a nominal overall of 638 um. The code's 88 um
+#              terminal build-up is 32 um short of the datasheet's own 120 um.
+#              CORRECTED: 606 -> 638 um.
+#
+# CONVENTION, stated once and applied to both: heights are the OVERALL MOUNTED HEIGHT
+# to the seating plane, INCLUDING the solder terminal. This is what both datasheets
+# dimension in their Side View, and it is what an embedded-component cavity must clear.
+# =====================================================================================
+
+meta:
+  convention: "overall mounted height to the seating plane, including solder terminals"
+  retrieved: "2026-10-22, https://epc-co.com/epc/documents/datasheets/<PART>_datasheet.pdf"
+  note: >-
+    The datasheet PDFs are publisher documents and are NOT committed to this repository
+    (see .gitignore). The extracted dimensions and their location in each document are
+    recorded here so the numbers are traceable without redistributing the files.
+
+devices:
+
+  high_side:
+    part: EPC2014C
+    selected_by: "kw1.design_1kw() -> HVR_FULL_OPT_EPC_V2 device filter"
+    die_xy_mm: [1.7, 1.1]
+    die_xy_source: "datasheet p.1 'Die size: 1.7 x 1.1 mm'; DIE OUTLINE A = 1702 um nominal, B = 1087 um nominal"
+    terminal_um: {nominal: 100.0, tol: 20.0}
+    terminal_source: "DIE OUTLINE Side View, '100 +/- 20' above the seating plane"
+    height_um: {nominal: 685.0, max: 815.0}
+    height_source: "DIE OUTLINE Side View, '(685)' nominal and '815 Max'"
+    status: SOURCE_BACKED
+    change_from_frozen: "none -- the frozen 685 um is this device's nominal height"
+    frozen_comment_was: "zarch.GAN_HS_UM: 'EPC2212 datasheet Side View, nominal (815 max)' -- WRONG PART NUMBER, right value"
+
+  low_side:
+    part: EPC2057
+    selected_by: "kw1.design_1kw() -> HVR_FULL_OPT_EPC_V2 device filter"
+    die_xy_mm: [1.5, 1.2]
+    die_xy_source: "datasheet p.1 'Die Size: 1.5 x 1.2 mm'; DIE OUTLINE A = 1500 um nominal, B = 1200 um nominal"
+    die_thickness_um: {nominal: 518.0, tol: 25.0}
+    die_thickness_source: "DIE OUTLINE Side View, '518 +/- 25'"
+    terminal_um: {nominal: 120.0, tol: 12.0}
+    terminal_source: "DIE OUTLINE Side View, '120 +/- 12'"
+    height_um: {nominal: 638.0}
+    height_source: "DIE OUTLINE Side View, '638' overall; equals 518 + 120"
+    status: SOURCE_BACKED
+    change_from_frozen: "606 -> 638 um (+32)"
+    frozen_comment_was: "zarch.GAN_LS_UM: 'EPC2090 datasheet: 518 +/- 25 die + 50 Cu + 3 Ni + 35 solder' -- wrong part number AND an 88 um terminal stack where the datasheet gives 120 um"
+
+# -------------------------------------------------------------------------------------
+# CONSEQUENCES, recomputed with the corrected low-side height
+# -------------------------------------------------------------------------------------
+derived:
+  embedded_cell_um:
+    frozen: 1226.0
+    corrected: 1258.0
+    rule: "inductor 500 + GaN LS + MLCC 100 + 2 x 10 interlayer RDL"
+  component_stack_um:
+    frozen: 1921.0
+    corrected: 1953.0
+    rule: "GaN HS 685 + MLCC 100 + GaN LS + inductor 500 + 3 x 10 interlayer RDL"
+  z1_substrate:
+    frozen_h_sub_um: 1300.0
+    frozen_tsv_span_um: 74.0
+    corrected_tsv_span_um: 42.0
+    h_tsv_min_um: 50.0
+    h_tsv_min_status: ASSUMPTION
+    verdict: >-
+      INFEASIBLE AT 1.30 mm. The corrected cell needs 1258 um, leaving 42 um of via span
+      against the framework's own 50 um minimum. The minimum substrate that closes is
+      1258 + 50 = 1308 um, so the frozen 1300 um is short by 8 um.
+    minimum_closing_h_sub_um: 1308.0
+
+activation:
+  env: PHASE0NR_DEVICE_GEOM
+  values:
+    unset: "frozen Phase-0M-R3C heights (606 um low side). Preserves byte-identical replay."
+    selected: "corrected heights from the selected devices (638 um low side)."
+  why_opt_in: >-
+    Changing the default would make results/phase0mr3c unreproducible. Per the Phase-0N-R
+    brief no new pair may be frozen until both architectures are physically closed, so the
+    corrected geometry is carried as an explicit option and reported, not silently adopted.

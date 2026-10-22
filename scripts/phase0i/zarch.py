@@ -25,6 +25,7 @@ OTHERS     the converter is not in the substrate, so the substrate only has to c
            extrapolation below the source's own demonstrated geometry rather than above it.
 """
 from __future__ import annotations
+import os
 
 import math
 import sys
@@ -43,10 +44,25 @@ from scope import Q, Scope, ScopeError, total, watts_per_regulator, watts_system
 
 CFG = REPO / "configs" / "phase0i" / "z_architectures.yaml"
 
-# SOURCED in Phase 0H from the manufacturer datasheets. These replace the invented
-# GAN_H_UM envelope for every architecture that actually embeds the device.
-GAN_HS_UM = 685.0        # EPC2212 datasheet Side View, nominal (815 max)
-GAN_LS_UM = 606.0        # EPC2090 datasheet: 518 +/- 25 die + 50 Cu + 3 Ni + 35 solder
+# Device heights, as the OVERALL MOUNTED HEIGHT to the seating plane (including the
+# solder terminal). Provenance and the Phase-0N-R correction are in
+# configs/phase0nr/device_geometry.yaml.
+#
+# PHASE 0N-R. Phase 0N found the geometry naming EPC2212/EPC2090 while the electrical
+# model selects EPC2014C/EPC2057. Reading the official datasheets resolved it:
+#   HIGH SIDE  685 nominal / 815 max is EXACTLY the EPC2014C Side View. The value was
+#              always correct; only the part number in this comment was wrong.
+#   LOW SIDE   EPC2057 gives 518 +/- 25 die + 120 +/- 12 bump = 638 um overall. The
+#              frozen 606 um used an 88 um terminal build-up, 32 um short of the
+#              datasheet's own 120 um.
+# The corrected low-side height is OPT-IN so results/phase0mr3c stays reproducible:
+# set PHASE0NR_DEVICE_GEOM=selected. See the config for why it is not yet the default.
+GAN_HS_UM = 685.0        # EPC2014C datasheet Side View, nominal (815 max)
+GAN_LS_UM_FROZEN = 606.0     # Phase-0M-R3C value; mislabelled EPC2090, 88 um terminal
+GAN_LS_UM_SELECTED = 638.0   # EPC2057 datasheet Side View: 518 +/- 25 die + 120 +/- 12 bump
+GAN_LS_UM = (GAN_LS_UM_SELECTED
+             if os.environ.get("PHASE0NR_DEVICE_GEOM") == "selected"
+             else GAN_LS_UM_FROZEN)
 
 # June-2026 Table III: power-layer TSV d = 30 um, h = 300 um -> demonstrated AR 10:1.
 TSV_D_UM = 30.0
