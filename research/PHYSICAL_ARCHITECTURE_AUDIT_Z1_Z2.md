@@ -343,3 +343,87 @@ The source also states plainly that the Z1 family is **not demonstrated**:
 > passive components remains an open challenge**."
 
 which `configs/phase0i/z_architectures.yaml` already records.
+
+---
+
+## 10. Package height and board-clearance audit (Section E)
+
+Thicknesses measured from the mesh. "Modelled" means the element set exists; "required" means the construction needs it and the model does not have it.
+
+### Z1
+
+| element | t (µm) | cumulative (µm) | status |
+|---|---:|---:|---|
+| board | 1600 | 1600 | modelled (ASSUMPTION: FR-4 envelope) |
+| bga | 300 | 1900 | modelled |
+| sub_lower | 74 | 1974 | modelled |
+| tile_band | 1226 | 3200 | modelled (converter in 30.5 % of area) |
+| interface | 10 | 3210 | modelled |
+| die | 300 | 3510 | modelled |
+| tim | 50 | 3560 | modelled |
+| **total modelled** | **3560** | | |
+| **package only (excl. PCB)** | **1960** | | |
+| high-side GaN below z = 0 | 685 | — | **REQUIRED, NOT MODELLED** |
+| **total if the source construction is honoured** | **4245** | | |
+
+### Z2
+
+| element | t (µm) | cumulative (µm) | status |
+|---|---:|---:|---|
+| board | 1600 | 1600 | modelled (ASSUMPTION: FR-4 envelope) |
+| bga | 300 | 1900 | modelled |
+| conv | 1226 | 3126 | modelled (converter in 100 % of area — see §6) |
+| sub_lower | 280 | 3406 | modelled |
+| tile_band | 20 | 3426 | modelled |
+| interface | 10 | 3436 | modelled |
+| die | 300 | 3736 | modelled |
+| tim | 50 | 3786 | modelled |
+| **total modelled** | **3786** | | |
+| **package only (excl. PCB)** | **2186** | | |
+
+### Clearance findings
+
+| architecture | clearance | required | available | verdict |
+|---|---|---:|---:|---|
+| Z1 | high-side device below the substrate | 685 µm | 300 µm (BGA) | **interference of 385 µm** unless a bottom substrate is added |
+| Z1 | die-to-component gap | 10–50 µm (OPEN) | 10 µm `interface` layer | satisfied ONLY at the 10 µm bound, and only by re-using a functional microbump layer as a clearance |
+| Z1 | substrate budget | 1226 + 74 = 1300 µm | 1300 µm | closed with **zero slack** |
+| Z2 | package-to-PCB standoff for discrete cells | ≥ 1226 µm | 300 µm (BGA) | **shortfall of 926 µm**; no entry exists in the clearance ledger |
+| Z2 | converter / PCB intersection as modelled | — | — | none (the converter is stacked serially on the BGA) |
+| both | cooler standoff | 0–100 µm (OPEN) | 0 µm | at the 0 µm bound only |
+
+### Verdict
+
+- **Z1 — category B**, geometrically consistent but dependent on explicitly identified unsourced values, **and** with one required element (the high-side device) absent from the model entirely. Its substrate closes exactly, with no room for the die-to-component gap at any bound above 10 µm.
+- **Z2 — category C**, physically inconsistent as currently modelled. The construction the manuscript describes (discrete backside cells) cannot be assembled with the sourced 300 µm BGA, and the construction the code builds (a full-area converter interposer carrying every ball) is not demonstrated by any source available here.
+
+**Terminology consequence.** "Geometrically realizable" must not be used for the package as a whole. The evidence supports only the narrowest of the four levels:
+
+| level | Z1 | Z2 |
+|---|---|---|
+| vertical-interconnect realizability (microvia topology, AR) | **GEOMETRICALLY REALIZABLE / PROCESS-CONDITIONAL** (worst AR 0.833 at a source-bounded 150 µm pitch) | same |
+| component / package-stack realizability | **NOT ESTABLISHED** — the high-side device has no place in the stack | **NOT ESTABLISHED** — the backside construction is undefined |
+| board / package assembly realizability | **NOT ESTABLISHED** — 385 µm interference | **NOT ESTABLISHED** — 926 µm shortfall |
+| manufacturing qualification | **NOT CLAIMED** (3 process inputs OPEN) | **NOT CLAIMED** |
+---
+
+## 11. What Z1 and Z2 should be called (Section I)
+
+Names must describe the construction that exists, not the one the figures suggest.
+
+| | recommended name | why | names REJECTED, and why |
+|---|---|---|---|
+| **Z1** | **substrate-embedded distributed VR cells (single-layer, high-side external)** | The 49 cells are embedded in a single package substrate; the low side, flying capacitors and inductors are inside it; the high side is declared external and is not modelled. | *"multi-layer stacked-substrate embedded VR"* — the source's construction, but **not ours**: ours is one 1.30 mm substrate, not three 300 µm power layers. *"cavity-embedded VR"* — no cavity geometry exists; only an unsourced `cavity_sidewall_um` bound. *"EV-PDN / thick-core FC-BGA embedded VR"* — the ECTC 2025 precedent is **unverified** and uses an *organic* core, where ours is modelled as silicon. |
+| **Z2** | **package-backside distributed VR cells (board interface undefined)** | The cells sit below the substrate and the 1 V output crosses it through TSVs, which matches the source sentence. Everything between the cells and the PCB is undefined, and the name must say so. | *"PMIC in a cavity"* — **no.** There is no cavity anywhere in the model, and no PMIC: the converter is 49 cells of discrete GaN dice, inductors and MLCCs, not a packaged power-management IC or module. *"PCB-cavity VR"* — a PCB cavity is one way to resolve the 926 µm shortfall, but it is **not modelled and not sourced**; naming it after a fix we have not made would assert the fix. *"backside VR module"* — "module" implies a packaged assembly with its own substrate and terminals; none is defined. |
+
+**On "PMIC" specifically.** The term should not be used anywhere for this work. A PMIC is a
+packaged integrated circuit. Our regulator is a synthesised cell of **{N=3 EPC2014C
+high-side dice, K=3 EPC2057 low-side dice, 3 inductors, 2 flying capacitors}** — eleven
+discrete components per cell, 49 cells. Neither the implementation nor any source
+available to this audit packages them as a PMIC.
+
+**If the honest answer is that the construction is an abstraction, say so.** It is: for
+Z2 the model places a converter medium below the substrate without defining how it
+attaches to, or coexists with, the board interface. That is a legitimate modelling
+abstraction for a placement study, but it is not a package, and the manuscript must not
+imply otherwise.
