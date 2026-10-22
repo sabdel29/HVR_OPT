@@ -298,3 +298,48 @@ structure, no return-via field and no return plane in the mesh.
 | PCB stackup | ASSUMPTION (FR-4 envelope) |
 | microvia current allowable, capture-pad diameter, vendor design rule | OPEN |
 | return-path geometry | not modelled (loop factor of 2 only) |
+
+---
+
+## 9. Literature comparison matrix
+
+**Access rule applied:** a construction column is filled **only** from a source read in
+full. Where only metadata was reachable the row says `NOT ACCESSIBLE` and **nothing is
+inferred from the title or abstract**, per the audit brief.
+
+| source | DOI | access | architecture type | VR location | VR count / distribution | substrate / interposer | converter→die path | PCB→converter path | cavity? | backside? | built or conceptual | relevance to Z1/Z2 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Krishnakumar *et al.* 2026, "Comprehensive Design Framework for VPD in HPC" | `10.1109/TCPMT.2026.3724907` | **FULL** | DVPD | VR components **vertically stacked across multiple power layers**; HS GaN **flip-chipped to the RDL of the bottom substrate**; LS bottom layer, flying caps middle layer, inductors top layer near the POLs | fine-pitch network of horizontally distributed VRs; per-VR current `I_o/M` | **three stacked substrate power layers**, each 300 µm (Table III: PL1/PL2/PL3 TSV h = 300 µm) ⇒ **≈900 µm implied** | VR outputs "just tens of microns from the on-chip POLs" | BGA 400 µm dia / **300 µm high** / 800 µm pitch (Table III) | not stated | **yes, as an alternative**: "when fabricated as individual chiplets, VR components can be vertically stacked on the **backside** of a substrate and interconnected through TSVs" | conceptual framework + models | **THE source for both Z1 and Z2.** Z1 is its multi-substrate option; Z2 is its backside-chiplet sentence |
+| Sriharini *et al.* ECTC 2024, "VPD for HPC with Buck-Derived Regulators" | `10.1109/ECTC51529.2024.00364` | **FULL** | VPD → DVPD | "multiple VRs ... distributed **below and/or along the periphery** of the functional die" | multiple, on/in-interposer | interposer | shortened VR-to-POL high-current paths | not detailed | not stated | not stated | conceptual + analysis | confirms the VPD/DVPD distinction; no cross-section for Z1/Z2 |
+| "Design Considerations for DC-DC VRs in DVPD Systems", ISCAS 2024 | `10.1109/ISCAS58744.2024.10558456` | **FULL** | DVPD | distributed | optimal **number and placement** of VRs is the paper's subject | not detailed | not detailed | not detailed | no | no | analysis | supports VR-count scaling only |
+| "Embedded Vertical PDN (EV-PDN) incl. VR for Over-1 kW FC-BGA on Over-1 mm Thick-Core Organic Substrate", ECTC 2025 | `10.1109/ECTC51687.2025.00176` | metadata only | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | **Topically the closest potential precedent for Z1** (>1 kW, embedded VR, >1 mm thick-core organic substrate). **Not verified.** Our substrate is modelled as *silicon*, not organic, so equivalence must not be asserted. |
+| "VPD for Emerging Packaging and Integration Platforms", SOCC 2023 | `10.1109/SOCC58585.2023.10256973` | metadata only | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | four VPD architecture families claimed by the brief; **cannot be used to classify Z1/Z2 without the full text** |
+| "Package Power Delivery ... 1 kW IVR in CCM-DCM Boundary Mode", ECTC 2024 | `10.1109/ECTC51529.2024.00054` | metadata only | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | NOT ACCESSIBLE | cited in the manuscript as `Ramin_VPD`; cross-section not verified here |
+| "A VPD Architecture for HPC", TPEL 2025 | `10.1109/TPEL.2025.3531414` | metadata only | NOT ACCESSIBLE | — | — | — | — | — | — | — | — | cited as `VPD_transactions_...`; not verified |
+| "Vertically Stacked Dual-Bus DC–DC Converter", TPEL 2025 | `10.1109/TPEL.2025.3532833` | metadata only | NOT ACCESSIBLE | — | — | — | — | — | — | — | hardware per the brief | would be the reference for real vertical converter assembly; **not verified** |
+| "Integrated VPD – Review & Challenges", TCPMT 2026 | `10.1109/TCPMT.2026.3716987` | metadata only | NOT ACCESSIBLE | — | — | — | — | — | — | — | review | taxonomy **cannot be adopted** without the full text |
+
+All nine DOIs were resolved against Crossref and the titles match the brief. Six of nine
+could not be read in full from this environment (no open copy; WebSearch is blocked here,
+as already recorded in `configs/phase0mr2/package_clearances.yaml`).
+
+### What the one fully-readable architecture source actually supports
+
+| our model | the source | match? |
+|---|---|---|
+| Z1: **one** 1.30 mm substrate, 1226 µm contiguous embedded band | **three** stacked power layers of 300 µm (≈900 µm), one component class per layer | **NO** |
+| Z1: high-side device absent from geometry | high-side GaN **flip-chipped to the RDL of the bottom substrate** | **NO** — the source places it; we do not model it |
+| Z1: inductor in the top tier nearest the die | "inductors (top layer near the POLs)" | **YES** |
+| Z1: LS below, flying caps between | "low-side switches (bottom layer), flying capacitors (middle layer)" | **ordering matches**, but ours are stacked inside one band, not one per power layer |
+| Z2: converter chiplet below the substrate, 1 V across the substrate via TSVs | "when fabricated as individual chiplets, VR components can be vertically stacked on the backside of a substrate and interconnected through TSVs" | **YES in concept** — but the source gives **no** backside dimensions, no BGA relationship and no cavity |
+| Z2: converter as a continuous full-area layer | source says *distributed* cells, and argues against "a single mechanically stiff region" | **NO** |
+| substrate material: silicon | source is a substrate/power-layer stack; material not established here | unverified |
+| BGA 400/300/800 µm | Table III, verbatim | **YES** |
+
+The source also states plainly that the Z1 family is **not demonstrated**:
+
+> "while chip embedding within a single substrate layer has been demonstrated, the
+> fabrication of **vertically stacked substrate layers that integrate both active and
+> passive components remains an open challenge**."
+
+which `configs/phase0i/z_architectures.yaml` already records.
