@@ -362,7 +362,8 @@ def test_lateral_loss_is_not_presented_as_an_extra_term():
 
 def test_bga_budget_separates_power_from_package_io():
     t = (R / "research" / "Z2_CUTOUT_BGA_SIGNAL_BUDGET.md").read_text()
-    flat = re.sub(r"\s+", " ", t)
+    # normalise markdown: blockquote markers and emphasis must not break the match
+    flat = re.sub(r"\s+", " ", re.sub(r"[>*_`]", "", t))
     assert ("complete package-I/O BGA capacity is outside the current model" in flat), (
         "the required honesty statement about signal I/O was removed")
     assert re.search(r"proves only that power-delivery BGA capacity is not limiting",
