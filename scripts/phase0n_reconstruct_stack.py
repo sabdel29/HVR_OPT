@@ -45,6 +45,12 @@ def layer_table(m, tiles):
 
 
 def main():
+    # This file records the FROZEN baseline geometry. Running it with the Phase-0N
+    # correction enabled would silently overwrite that baseline with a variant.
+    if os.environ.get("PHASE0N_Z2_CONV_FILL"):
+        raise SystemExit("refusing to run: PHASE0N_Z2_CONV_FILL is set, which would "
+                         "overwrite the frozen baseline in stack_reconstruction.json. "
+                         "Unset it, or use phase0n_conv_extent_experiment.py instead.")
     report = {}
     for tag, (arch, h_sub) in CASES.items():
         m, mats, st, tiles = PE.build_global(arch, h_sub)
