@@ -28,7 +28,7 @@ change, two reference page ranges) — see `manuscript/TCPMT_PRE_SUBMISSION_STAT
 
 ## 2. The frozen final pair
 
-1 kW, 48 V → 1 V, 49 regulator cells, hybrid 3:1 switched-capacitor + 3-phase buck.
+1 kW, 48 V → 1 V, 49 regulator cells, hybrid 3:1 switched-capacitor + **two-phase** buck with K=3 parallel inductor branches (K_A=2 driven in phase A, K_B=1 freewheeling).
 
 | quantity | Z1 embedded | Z2 backside |
 |---|---:|---:|

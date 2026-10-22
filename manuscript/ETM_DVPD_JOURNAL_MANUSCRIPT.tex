@@ -114,7 +114,7 @@ The following contributions are made.
 
 \begin{enumerate}
 \item A geometry- and architecture-aware electrothermal--mechanical framework for DVPD is
-presented, in which converter-synthesis outputs---device selection, phase count, switching
+presented, in which converter-synthesis outputs---device selection, branch count, switching
 frequency, component heights and cell footprint---are propagated into an explicit package
 stack rather than into a lumped loss budget (Sections~\ref{sec:elec}--\ref{sec:thermech}).
 
@@ -168,7 +168,8 @@ Target current density      & $3.5$\,A\,mm$^{-2}$       & specification \\
 \midrule
 \multicolumn{3}{@{}l}{\emph{Converter}}\\
 Architecture $N/K/K_{A}$    & $3/3/2$                   & synthesis \\
-Topology                    & 3:1 SC + 3-phase buck     & \cite{DSCH,DPMIH44} \\
+Topology                    & 3:1 SC + two-phase buck, & \cite{DSCH,DPMIH44} \\
+                             & $K{=}3$ inductor branches &  \\
 Duty cycle $D$              & $0.0625$                  & synthesis \\
 Switching frequency         & $805.17$\,kHz             & synthesis \\
 High-side device            & EPC2014C, $16$\,m$\Omega$, $1.87$\,mm$^{2}$ & \cite{EPC2014C} \\
@@ -207,7 +208,7 @@ The specification and the synthesised design point are given in Table~\ref{tab:s
 \includegraphics[width=\textwidth]{fig1_system.pdf}
 \caption{(a) Distributed vertical power delivery: $M{=}49$ regulator cells convert 48\,V to
 1\,V beneath or behind the compute die, so the high-current rail travels micrometres. (b) The
-synthesised hybrid regulator, a three-to-one switched-capacitor stage feeding a three-phase
+synthesised hybrid regulator, a three-to-one switched-capacitor stage feeding a two-phase
 buck stage, with the rail carried by each branch annotated. (c) Information flow of the
 framework: converter synthesis and the component library determine an explicit physical
 stack, which is shared by the electrical, thermal, mechanical and realizability models. The
@@ -219,12 +220,25 @@ one-way to the mechanical model.}
 A hybrid converter is adopted, consistent with the topologies used for high step-down ratios
 in DVPD~\cite{DSCH,DPMIH44,SC_example}. The synthesised architecture, denoted
 $N{=}3$, $K{=}3$, $K_{A}{=}2$, comprises a three-to-one switched-capacitor stage feeding a
-three-phase buck stage, as shown in Fig.~\ref{fig:system}(b). The switched-capacitor stage
-divides the 48\,V input to a 16\,V intermediate rail, relieving both the voltage stress on
-the buck switches and the extreme duty cycle a direct 48\,V-to-1\,V buck would require; the
-resulting duty cycle is $D = 0.0625$. Each of the $N$ high-side branches carries a flying
-capacitor, and each of the $K$ phases carries an inductor and a low-side switch whose drain
-forms the switch node.
+\emph{two-phase} buck stage with $K{=}3$ parallel inductor branches, as shown in
+Fig.~\ref{fig:system}(b). The switched-capacitor stage divides the 48\,V input to a 16\,V
+intermediate rail, relieving both the voltage stress on the buck switches and the extreme
+duty cycle a direct 48\,V-to-1\,V buck would require; the resulting duty cycle is
+$D = N V_{\mathrm{out}}/V_{\mathrm{in}} = 0.0625$. The $N$ switched-capacitor branches share
+$N-1$ flying capacitors, and each of the $K$ inductor branches carries an inductor and a
+low-side switch whose drain forms the switch node.
+
+The buck stage operates in \emph{two} switching phases, not $K$. In phase~A the
+$\lceil N/2 \rceil$ branches of that group conduct and the $K_{A}{=}2$ inductors they feed
+are connected to the intermediate rail, while the remaining $K_{B} = K - K_{A} = 1$ inductor
+freewheels; in phase~B the complementary set conducts and the roles reverse, which is what
+balances the flying capacitors over a cycle. $K$ is therefore the number of parallel
+inductor branches and $K_{A}$ the number of those branches driven in phase~A; neither is a
+count of switching phases. Branch currents follow
+$I_{\mathrm{branch},i} = I_{\mathrm{cell}} B_{i} / N$ with $\sum_i B_i = N$, which for
+$\mathbf{B} = [1,1,1]$ gives $6.803$\,A in every branch. The implementation contains no
+time-domain model of the two states---no phase displacement, dead time or per-state
+capacitor solve---so no claim of interleaving is made.
 
 \begin{figure*}[!t]
 \centering
@@ -275,8 +289,10 @@ heat is deposited and the distribution of stiffness through the stack.
 The converter is synthesised rather than assumed. Inputs are the per-cell output current
 $I_{\mathrm{cell}}$, the input and output voltages, a target current density
 $J_{\mathrm{t}} = 3.5$\,A\,mm$^{-2}$ that sets the area budget, and the component libraries.
-The search enumerates hybrid architectures over the stage count $N$, the phase count $K$, the
-auxiliary-branch count $K_{A}$ and the conversion-ratio vector $\mathbf{B}$, and for each
+The search enumerates hybrid architectures over the stage count $N$, the inductor-branch
+count $K$, the phase-A branch count $K_{A}$ (restricted in the present implementation to
+$\lceil K/2 \rceil$) and the branch-allocation vector $\mathbf{B}$, where $B_i$ is the number
+of switched-capacitor branches feeding inductor $i$ and $\sum_i B_i = N$. For each
 candidate it filters the device library by blocking voltage and current capability,
 \begin{equation}
 V_{\mathrm{DS,max}}^{\mathrm{HS}} \ge \frac{V_{\mathrm{in}}}{N}, \quad
@@ -293,14 +309,17 @@ library, using the devices and passives listed in Table~\ref{tab:spec}.
 
 \subsection{Converter loss model}
 The losses evaluated are exactly those the synthesis model implements; no mechanism is added
-on the grounds of being conventional. The per-phase inductor current ripple, with
+on the grounds of being conventional. The \emph{summed output} current ripple---$K_{A}$
+inductors driven from the intermediate rail while $K-K_{A}$ freewheel---with
 $k_{\mathrm{c}}$ the inter-inductor coupling coefficient, is
 \begin{equation}
 \Delta i_{\phi} = \frac{1}{1+k_{\mathrm{c}}(K-1)}\,
 \frac{D}{f_{\mathrm{sw}} L}\left(\frac{V_{\mathrm{in}}}{N}K_{A} - V_{\mathrm{out}}K\right),
 \label{eq:ripple}
 \end{equation}
-giving the r.m.s. cell current
+where the $K_{A}V_{\mathrm{in}}/N$ term is the contribution of the branches connected to the
+intermediate rail in that state and the $KV_{\mathrm{out}}$ term is the output voltage
+sustained by all $K$ inductors in every state. This gives the r.m.s. cell current
 $I_{\mathrm{rms}} = \sqrt{I_{\mathrm{cell}}^{2} + \Delta i_{\phi}^{2}/12}$ and the output
 voltage ripple $\Delta V_{\mathrm{out}} = |\Delta i_{\phi}|/(8 f_{\mathrm{sw}} C_{\mathrm{o}})$.
 

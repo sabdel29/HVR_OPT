@@ -190,41 +190,109 @@ def test_default_build_is_unchanged():
 
 
 # ============================================================== TOPOLOGY
-def test_K_is_the_buck_phase_count(design):
-    """K multiplies BOTH the low-side device count and the inductor count."""
+# Phase 0N-R. The earlier guards here asserted "K = buck phase count", which is WRONG.
+# K counts PARALLEL INDUCTOR BRANCHES; the buck stage has TWO switching phases, with
+# K_A branches driven in phase A and K - K_A freewheeling. See
+# research/HVR_PHASE_COUNT_AUDIT.md.
+N_SWITCHING_PHASES = 2
+
+
+def test_K_is_the_branch_count_not_the_phase_count(design):
+    """K multiplies LS devices and inductors -- hardware, not time."""
     from HVR_FULL_OPT_EPC_V2 import compute_component_count
     a = design.arch
     cc = compute_component_count(a.N, a.K, 1, 1, 1, 1)
     assert cc == a.component_count == a.N + 2 * a.K + (a.N - 1)
     assert a.K == 3 and a.N == 3 and a.K_A == 2
+    # K is NOT the number of switching phases
+    assert a.K != N_SWITCHING_PHASES, (
+        "K coincided with the phase count; the distinction this guard protects is "
+        "that they are different quantities")
 
 
-def test_K_phase_count_negative(design):
-    """NEGATIVE: if K stopped driving the inductor count the identity must break."""
+def test_component_count_cannot_distinguish_phases_negative(design):
+    """NEGATIVE: the component-count identity holds for ANY phase count, so it can
+    never be evidence about phases. Re-deriving it must not resurrect the old claim."""
     from HVR_FULL_OPT_EPC_V2 import compute_component_count
     a = design.arch
-    wrong = compute_component_count(a.N, a.K, 1, 1, 0, 1)   # inductor_weight = 0
-    assert wrong != a.component_count
+    base = compute_component_count(a.N, a.K, 1, 1, 1, 1)
+    # the identity is blind to how the K branches are grouped in time
+    for hypothetical_phase_count in (2, 3, 5, 7):
+        assert compute_component_count(a.N, a.K, 1, 1, 1, 1) == base, (
+            "component count varied with an assumed phase count, which it cannot do")
 
 
-def test_K_A_is_derived_not_free(design):
+def test_two_switching_phases_from_the_ripple_equation(design):
+    """The ripple expression IS K_A driven + (K - K_A) freewheeling. Two states."""
+    a = design.arch
+    N, K, KA, D = a.N, a.K, a.K_A, a.D
+    L = design.inductor.l_nh * 1e-9
+    f = design.f_sw_hz
+    v_mid = design.v_in / N
+    code = (D / (f * L)) * (design.v_in / N * KA - design.v_out * K)
+    driven = KA * (v_mid - design.v_out)          # phase-A branches on the mid rail
+    free = (K - KA) * (-design.v_out)             # the rest freewheel
+    recon = (driven + free) / L * (D / f)
+    assert code == pytest.approx(recon, rel=1e-12), (
+        "the ripple equation no longer decomposes into K_A driven + (K-K_A) "
+        "freewheeling; the two-phase reading in HVR_PHASE_COUNT_AUDIT.md is stale")
+
+
+def test_phase_group_sizes(design):
+    a = design.arch
+    assert a.K_A == 2, "phase-A branch count changed"
+    assert a.K - a.K_A == 1, "phase-B branch count changed"
+
+
+def test_K_B_is_K_minus_K_A_in_the_generator():
+    src = (R / "Scalable_Integrated_VR/src/HVR_FULL_OPT_EPC_V2.py").read_text()
+    assert re.search(r"K_B\s*=\s*K\s*-\s*K_A", src), (
+        "generate_B_array no longer defines K_B = K - K_A")
+
+
+def test_sc_branches_split_ceil_floor_between_the_two_groups():
+    """The N SC branches are split ceil(N/2) / floor(N/2) -- a TWO-group split."""
     import math
+    from HVR_FULL_OPT_EPC_V2 import generate_B_array, distribute_branches
+    for N, K, KA in ((3, 3, 2), (4, 3, 2), (5, 3, 2), (6, 4, 2)):
+        B = generate_B_array(N, K, KA)
+        assert len(B) == K, f"B_array length must equal the branch count K for N={N}"
+        assert sum(B) == N, (
+            f"sum(B) must equal N (every SC branch lands on one inductor); "
+            f"N={N} K={K} gave {sum(B)}")
+        assert sorted(distribute_branches(math.ceil(N / 2), KA)
+                      + distribute_branches(math.floor(N / 2), K - KA)) == sorted(B)
+
+
+def test_K_A_is_a_search_restriction_not_a_topology_property():
+    """generate_B_array accepts any K_A; only the SEARCH fixes K_A = ceil(K/2)."""
+    import math
+    from HVR_FULL_OPT_EPC_V2 import generate_B_array
+    free = generate_B_array(6, 4, 1)          # K_A = 1, not ceil(4/2) = 2
+    assert sum(free) == 6 and len(free) == 4, (
+        "the formulation no longer accepts a free K_A; update the audit's section 6")
+    src = (R / "Scalable_Integrated_VR/src/HVR_FULL_OPT_EPC_V2.py").read_text()
+    assert re.search(r"K_A\s*=\s*math\.ceil\(K\s*/\s*2\)", src), (
+        "the search no longer fixes K_A = ceil(K/2); the audit says it does")
+
+
+def test_branch_current_is_I_over_sum_B_not_I_over_K(design):
+    """6.8027 A is a BRANCH current, I_cell*B_i/N -- equal to I/K only by coincidence."""
     a = design.arch
-    assert a.K_A == math.ceil(a.K / 2)
-
-
-def test_branches_per_inductor_match_K(design):
-    a = design.arch
-    assert len(a.B_array) == a.K, "B_array length must equal the inductor/phase count"
-    assert sum(a.B_array) == a.N, "every high-side branch must land on an inductor"
-
-
-def test_per_phase_current_matches_network(design):
-    i_phase = design.i_out_a / design.arch.K
-    assert i_phase == pytest.approx(6.8027, abs=1e-3)
-    assert i_phase < design.ls.ID_A, (
-        f"per-phase {i_phase:.3f} A exceeds the {design.ls.part_number} "
+    i_branch = design.i_out_a * a.B_array[0] / sum(a.B_array)
+    assert i_branch == pytest.approx(6.8027, abs=1e-3)
+    assert sum(a.B_array) == a.N
+    assert i_branch < design.ls.ID_A, (
+        f"branch current {i_branch:.3f} A exceeds the {design.ls.part_number} "
         f"{design.ls.ID_A} A rating")
+    # and the two formulas must be shown to diverge in general
+    from HVR_FULL_OPT_EPC_V2 import generate_B_array
+    B = generate_B_array(4, 3, 2)                     # [1, 2, 1]
+    cur = [design.i_out_a * b / sum(B) for b in B]
+    assert len({round(c, 6) for c in cur}) > 1, (
+        "branch currents are equal for N=4,K=3; the counterexample in the audit is void")
+    assert not any(c == pytest.approx(design.i_out_a / 3, abs=1e-6) for c in cur), (
+        "a branch happened to carry I/K; pick a different counterexample")
 
 
 def test_duty_ratio_follows_N(design):
@@ -233,13 +301,13 @@ def test_duty_ratio_follows_N(design):
 
 
 def test_no_interleaving_is_modelled():
-    """'interleaved' may not be claimed: no phase-shift construct exists."""
+    """No phase-shift construct exists, so 'interleaved' may not be claimed."""
     src = (R / "Scalable_Integrated_VR/src/HVR_FULL_OPT_EPC_V2.py").read_text()
     code = "\n".join(l for l in src.splitlines() if not l.strip().startswith("#"))
-    for pat in (r"phase_shift", r"phase_offset", r"interleav"):
+    for pat in (r"phase_shift", r"phase_offset", r"dead_?time", r"interleav"):
         assert not re.search(pat, code, re.I), (
             f"{pat!r} now appears in code -- re-audit "
-            f"research/HVR_PHASE_COUNT_AUDIT.md section 4")
+            f"research/HVR_PHASE_COUNT_AUDIT.md section 9")
 
 
 # =================================================== CONNECTIVITY CONTINUITY
@@ -278,15 +346,80 @@ def test_z1_high_side_has_no_geometry(recon):
 
 
 # ============================================================ TERMINOLOGY
+BAD_TOPOLOGY_WORDING = [
+    (r"3-phase buck", "the buck stage is two-phase with K=3 branches"),
+    (r"three-phase buck", "the buck stage is two-phase with K=3 branches"),
+    (r"phase count \$?K", "K is the branch count, not the phase count"),
+    (r"per-phase (?:inductor )?current", "I_cell*B_i/N is a BRANCH current"),
+    (r"auxiliary-branch count", "K_A is the phase-A branch count"),
+]
+
+
+@pytest.mark.parametrize("pat,why", BAD_TOPOLOGY_WORDING)
+def test_manuscript_topology_wording(pat, why):
+    assert not re.search(pat, TEX.read_text(), re.I), f"{pat!r}: {why}"
+
+
+@pytest.mark.parametrize("pat,why", BAD_TOPOLOGY_WORDING)
+def test_manuscript_topology_wording_negative(pat, why):
+    """NEGATIVE: each probe is the real pre-correction wording."""
+    real = ("Topology 3:1 SC + 3-phase buck. The search enumerates hybrid architectures "
+            "over the stage count $N$, the phase count $K$, the auxiliary-branch count "
+            "$K_{A}$. The per-phase inductor current ripple, with a three-phase buck "
+            "stage, is")
+    assert re.search(pat, real, re.I), (
+        f"the negative fixture no longer exercises {pat!r}")
+
+
+def test_repo_docs_use_the_corrected_topology():
+    """README / CURRENT_STATUS must not carry the withdrawn 3-phase wording."""
+    for name in ("README.md", "CURRENT_STATUS.md"):
+        t = (R / name).read_text()
+        assert not re.search(r"3-phase buck|three-phase buck", t, re.I), (
+            f"{name} still says 3-phase buck")
+        assert re.search(r"two-phase", t, re.I), (
+            f"{name} does not state the corrected two-phase topology")
+
+
+def test_phase_audit_records_the_correction():
+    t = (R / "research" / "HVR_PHASE_COUNT_AUDIT.md").read_text()
+    assert "supersedes" in t and "WRONG" in t, (
+        "the topology audit no longer records that the earlier conclusion was wrong")
+    assert "two-phase" in t.lower()
+
+
+_NEG = re.compile(r"\b(no|not|never|cannot|neither|nor|without|non-)\b", re.I)
+
+
+def _clause(text, pos):
+    lo = max(text.rfind(".", 0, pos), text.rfind(";", 0, pos),
+             text.rfind("\n\n", 0, pos)) + 1
+    m = re.compile(r"[^.;!?]*").match(text, pos)
+    return text[lo:(m.end() if m else len(text))]
+
+
+def _interleaving_claims(text):
+    """Occurrences of 'interleav' that are ASSERTED rather than denied."""
+    return [m.group(0) for m in re.finditer(r"interleav\w*", text, re.I)
+            if not _NEG.search(_clause(text, m.start()))]
+
+
 def test_manuscript_does_not_claim_interleaving():
-    assert not re.search(r"interleav", TEX.read_text(), re.I), (
-        "the manuscript claims interleaving, which the implementation does not model")
+    """A denial ('no claim of interleaving is made') is allowed; an assertion is not."""
+    bad = _interleaving_claims(TEX.read_text())
+    assert not bad, f"the manuscript asserts interleaving, which is not modelled: {bad}"
 
 
-def test_manuscript_interleaving_negative():
-    """NEGATIVE: the real offending phrase must be caught."""
-    injected = r"Topology 3:1 SC + 3-phase interleaved buck"
-    assert re.search(r"interleav", injected, re.I)
+@pytest.mark.parametrize("injected", [
+    r"Topology 3:1 SC + 3-phase interleaved buck",
+    r"The two phases are interleaved at 180 degrees.",
+])
+def test_manuscript_interleaving_negative(injected):
+    """NEGATIVE: real offending phrasings must be caught, denials must not."""
+    assert _interleaving_claims(injected), f"guard went blind to {injected!r}"
+    assert not _interleaving_claims(
+        "The implementation contains no time-domain model, so no claim of "
+        "interleaving is made."), "guard now rejects a legitimate denial"
 
 
 def test_manuscript_does_not_put_1921_inside_the_substrate():

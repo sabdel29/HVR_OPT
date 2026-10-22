@@ -26,7 +26,7 @@ Synthesised from a 90-device library rather than assumed:
 
 | | |
 |---|---|
-| topology | hybrid 3:1 switched-capacitor + 3-phase buck |
+| topology | hybrid 3:1 switched-capacitor + **two-phase** buck, $K=3$ parallel inductor branches ($K_A=2$ driven in phase A) |
 | conversion | 48 V → 16 V intermediate → 1 V |
 | cells | M = 49, each 20.408 A into 5.61 mm² |
 | duty cycle | 0.0625 |
