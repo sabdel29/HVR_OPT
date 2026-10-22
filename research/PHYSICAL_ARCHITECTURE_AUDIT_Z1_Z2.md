@@ -427,3 +427,27 @@ Z2 the model places a converter medium below the substrate without defining how 
 attaches to, or coexists with, the board interface. That is a legitimate modelling
 abstraction for a placement study, but it is not a package, and the manuscript must not
 imply otherwise.
+
+---
+
+## 12. Commit record
+
+| # | SHA | subject |
+|---|---|---|
+| 1 | `0f43fa8` | audit: reconstruct Z1 Z2 physical stack and connectivity |
+| 2 | `314f2d7` | research: validate VPD vs DVPD terminology and architecture precedents |
+| 3 | `6649058` | test: add physical stack and topology regression guards |
+| 4 | `4e089e2` | audit: package height, clearance, naming and architecture claim matrix |
+| 5 | `12ad496` | docs: correct ETM manuscript architecture definitions and claim scope |
+
+Baseline before this phase: `e893264` on `main`. Submodule `Scalable_Integrated_VR`
+unchanged at `ed56ae6` throughout (its working tree carries pre-existing local IDE
+files, which were not touched and not committed).
+
+**No commit in this phase modified any frozen artifact under `results/phase0mr3c/`.**
+The commit that would have been #7 in the suggested progression --- `results: rerun
+corrected ETM frozen pair` --- was **deliberately not made**: a corrected rerun requires
+choosing a backside construction, and no source available to this work supplies one.
+Producing a new "authoritative" pair from an invented construction would replace a
+documented conditionality with an undocumented one. The bracket in section 6 is reported
+instead.
