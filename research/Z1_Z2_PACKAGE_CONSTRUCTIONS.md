@@ -100,18 +100,35 @@ components, not by the source. That is a documented departure, not an invention 
 means the source's own 3 × 300 µm geometry is **incompatible with the selected device set**,
 which is itself a finding.
 
-## 4. Z2 — not closable from available evidence
+## 4. Z2 — superseded by Z2-CUTOUT
 
-No accessible source gives a backside construction with dimensions. The specific gap:
-a backside cell is 1258 µm tall (corrected) and the sourced ball is 300 µm, so **958 µm**
-must be absorbed by a tall standoff, a PCB cavity, a substrate cavity or a secondary
-interposer. Each is a different package with different stiffness and a different board
-interface, and the choice changes the mechanical answer by the factors already measured.
+> **CORRECTION (Phase 0N-R, second pass).** This section originally gave the Z2 backside
+> cell as **1258 µm** and the shortfall as **958 µm**. Both were wrong. 1258 µm is the
+> *embedded-cell* quantity, which structurally **excludes the 685 µm high-side device** —
+> an exclusion justified only by Z1's bottom substrate, which Z2 does not have. Z2 must
+> carry all four tiers: **1953 µm** with the corrected devices, and the no-cutout shortfall
+> against a 300 µm ball is **1653 µm**, not 958 µm. The same error is in the frozen model
+> itself, which gives Z2's `conv` layer 1226 µm and so understates its converter height by
+> **695 µm**.
 
-**No candidate is proposed.** Inventing one would reintroduce exactly the problem this audit
-exists to remove. Z2 remains **OPEN** pending either the EV-PDN paper
-(`10.1109/ECTC51687.2025.00176`), the vertically-stacked-converter paper
-(`10.1109/TPEL.2025.3532833`) or vendor process data.
+With that corrected, a land-side construction with a **PCB through-cutout** becomes
+dimensionally plausible: the substrate underside to PCB backside distance is
+300 + 1600 = **1900 µm**, and the 1963 µm stack (with its land-side attach RDL) ends only
+**63 µm** proud of the board backside at nominal device heights.
+
+A candidate is now developed in:
+
+- `research/Z2_CUTOUT_SOURCE_AUDIT.md` — every source classified; the cutout is
+  **patent-precedented (ARM US20260059645A1, Intel US20250233088A1), not demonstrated**,
+  and **neither patent gives a single dimension**;
+- `research/Z2_CUTOUT_GEOMETRY.md` — the stack, the closure arithmetic and the cutout size;
+- `research/Z2_CUTOUT_BGA_POWER_RETURN.md` — BGA capacity, the power path and return;
+- `research/Z2_CUTOUT_THERMOMECH_PLAN.md` — what the cutout does to stiffness and cooling.
+
+**Z2 is still not closed.** At the EPC2014C maximum height the protrusion is 193 µm, a
+backside heat sink would add more, the land-side attach and sidewall clearance are
+unsourced, and return is still a loop factor rather than geometry. It is now a *specified*
+gap rather than an unspecified one.
 
 ## 5. Supply and return in a closed model
 

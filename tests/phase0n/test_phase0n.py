@@ -327,6 +327,101 @@ def test_baseline_AR_depends_on_the_low_side_height():
     assert rep["depth"] == pytest.approx(100.0) and rep["ar"] == pytest.approx(0.833, abs=1e-3)
 
 
+# ================================================== Z2-CUTOUT CANDIDATE
+Z2GEO = R / "research" / "phase0nr" / "z2_cutout_geometry.json"
+Z2DOC = R / "research" / "Z2_CUTOUT_GEOMETRY.md"
+
+
+@pytest.fixture(scope="module")
+def z2():
+    assert Z2GEO.exists(), "run scripts/phase0nr_z2_cutout_geometry.py first"
+    return json.loads(Z2GEO.read_text())
+
+
+def test_z2_stack_includes_the_high_side(z2):
+    """Z2 has no bottom substrate, so it cannot offload the HS. 1258 um is incomplete."""
+    names = [L["layer"] for L in z2["stack"]]
+    assert any("HS GaN" in n for n in names), "the Z2 cell stack lost its high-side device"
+    hs = next(L["t_um"] for L in z2["stack"] if "HS GaN" in L["layer"])
+    assert hs == 685.0
+    assert z2["four_tier_um"] == pytest.approx(1953.0), "four-tier stack is not 1953 um"
+    assert z2["serial_um"] == pytest.approx(1963.0)
+
+
+def test_1258_is_never_used_as_the_z2_total():
+    """The embedded-cell quantity may not stand in for the Z2 backside protrusion."""
+    for p_ in (Z2DOC, R / "research" / "Z1_Z2_PACKAGE_CONSTRUCTIONS.md"):
+        t = p_.read_text()
+        for m in re.finditer(r"1258", t):
+            w = t[max(0, m.start() - 420): m.end() + 420]
+            assert re.search(r"wrong|exclud\w*|embedded[- ]cell|CORRECTION|incomplete",
+                             w, re.I), (
+                f"{p_.name}: 1258 um used near offset {m.start()} without saying it "
+                f"excludes the high-side device")
+
+
+def test_z2_height_closure_arithmetic(z2):
+    assert z2["bga_h_um"] == pytest.approx(300.0), "sourced BGA height changed"
+    assert z2["pcb_um"] == pytest.approx(1600.0), "PCB assumption changed"
+    assert z2["cutout_depth_um"] == pytest.approx(1900.0)
+    assert z2["protrusion_um"] == pytest.approx(63.0, abs=1.0), (
+        "the cutout closure moved; update research/Z2_CUTOUT_GEOMETRY.md")
+    # without a cutout the shortfall must be the FULL stack minus the ball
+    assert z2["serial_um"] - z2["bga_h_um"] == pytest.approx(1663.0, abs=1.0)
+
+
+def test_z2_cutout_removes_bga_sites_but_keeps_enough_for_power(z2):
+    for o in z2["cutout_options"]:
+        assert o["bga_sites"] < z2["bga_sites_full"], "the cutout removed no BGA sites"
+    worst = min(o["bga_sites"] for o in z2["cutout_options"])
+    need = 2 * z2["balls_needed_conservative"]
+    assert need < worst, (
+        f"power+return needs {need} balls but only {worst} sites remain")
+    assert z2["balls_needed_conservative"] == 16 and z2["balls_needed_jdesign"] == 2
+
+
+def test_z2_cells_are_resolved_laterally(z2):
+    assert z2["n_cells"] == 49
+    area = z2["n_cells"] * z2["cell_side_mm"] ** 2
+    assert area == pytest.approx(274.89, abs=0.1), "cell inventory changed"
+    bbox = z2["grid_bbox_mm"][0] * z2["grid_bbox_mm"][1]
+    assert area < bbox, "cells fill their whole bbox -- that is a full-area layer again"
+
+
+def test_z2_lateral_offset_is_small_but_recorded(z2):
+    assert z2["lateral_offset_max_mm"] == pytest.approx(0.123, abs=5e-3)
+    assert z2["lateral_offset_max_mm"] * 1e3 < 0.1 * z2["serial_um"], (
+        "residual LV lateral run exceeded 10 % of the vertical stack; re-evaluate "
+        "Xu 2019's pin-misalignment caution for this geometry")
+
+
+def test_z2_is_not_called_a_pmic_or_a_cavity():
+    for name in ("Z2_CUTOUT_SOURCE_AUDIT.md", "Z2_CUTOUT_GEOMETRY.md",
+                 "Z2_CUTOUT_BGA_POWER_RETURN.md", "Z2_CUTOUT_THERMOMECH_PLAN.md"):
+        t = (R / "research" / name).read_text()
+        for m in re.finditer(r"PMIC", t, re.I):
+            w = t[max(0, m.start() - 200): m.end() + 200]
+            assert re.search(r"not|never|reject", w, re.I), (
+                f"{name}: PMIC asserted rather than rejected")
+
+
+def test_patents_are_never_called_demonstrated():
+    t = (R / "research" / "Z2_CUTOUT_SOURCE_AUDIT.md").read_text()
+    assert "patent" in t.lower()
+    assert re.search(r"not demonstrated|industry construction precedent|not hardware",
+                     t, re.I), "the patent/hardware distinction was dropped"
+    assert re.search(r"neither patent gives", t, re.I), (
+        "the 'no dimensions in either patent' limit was dropped")
+
+
+def test_no_new_pair_frozen_before_closure():
+    """Task G gate: no corrected ETM pair may be frozen while closure is open."""
+    assert not (R / "results" / "phase0nr").exists(), (
+        "a Phase-0N-R results directory appeared; closure gates are still open")
+    t = (R / "research" / "Z2_CUTOUT_GEOMETRY.md").read_text()
+    assert re.search(r"not yet closed|still open|plausible, not yet closed", t, re.I)
+
+
 # ============================================ Z1 CANDIDATE PACKAGE CLOSURE
 CONSTR = R / "research" / "Z1_Z2_PACKAGE_CONSTRUCTIONS.md"
 
@@ -373,12 +468,21 @@ def test_z1_candidate_does_not_interfere_with_the_bga():
         "interference is supposed to be resolved in the candidate")
 
 
-def test_z2_has_no_proposed_construction():
-    """Z2 must stay OPEN until a source supports a construction."""
+def test_z2_candidate_is_source_classified_and_still_open():
+    """Phase 0N-R: a Z2 candidate now EXISTS. It must carry its evidence class and
+    must not be declared closed."""
     t = CONSTR.read_text()
-    assert "No candidate is proposed" in t, (
-        "a Z2 construction was proposed; it must be literature-supported or absent")
-    assert re.search(r"958", t), "the corrected Z2 standoff shortfall is no longer stated"
+    assert "Z2-CUTOUT" in t or "Z2_CUTOUT" in t, "the Z2 candidate vanished"
+    assert re.search(r"patent-precedented|patent precedent", t, re.I), (
+        "the Z2 candidate no longer states that the cutout is patent-precedented")
+    assert re.search(r"still not closed|not yet closed", t, re.I), (
+        "Z2 was declared closed; the protrusion, attach stack, sidewall clearance and "
+        "return geometry are all still open")
+    assert "1653" in t, "the corrected no-cutout shortfall is no longer stated"
+    # and the superseded figure must be marked as such wherever it survives
+    assert re.search(r"958.{0,80}(wrong|were wrong)", t, re.I) or \
+           re.search(r"(wrong|CORRECTION).{0,200}958", t, re.I | re.S), (
+        "the withdrawn 958 um figure is present without being marked wrong")
 
 
 # ===================================================== SELECTED-DEVICE GEOMETRY
