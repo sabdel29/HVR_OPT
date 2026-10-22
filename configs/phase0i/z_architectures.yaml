@@ -42,10 +42,16 @@ technology:
 components:
   inductor:  {name: "Shared_Core_UIC_250_nH", h_um: 500, status: SOURCED,
               source: "upstream INDUCTOR_LIBRARY (Rasheedi, TCPMT 2026)"}
-  gan_hs:    {part: EPC2212, h_um: 685, h_max_um: 815, status: SOURCED,
-              source: "EPC2212 datasheet, Die Outline / Side View"}
-  gan_ls:    {part: EPC2090, h_um: 606, status: SOURCED,
-              source: "EPC2090 datasheet: 518 +/- 25 die + 50 Cu + 3 Ni + 35 solder"}
+  # PHASE 0N-R: part attribution CORRECTED. The electrical model selects EPC2014C/EPC2057.
+  # 685 um nom / 815 um max IS the EPC2014C Side View (the value was always right, the
+  # part number was not). The low side is EPC2057 at 638 um (518 +-25 die + 120 +-12 bump);
+  # the 606 um below is the FROZEN value, retained so results/phase0mr3c stays reproducible.
+  # See configs/phase0nr/device_geometry.yaml and research/DEVICE_GEOMETRY_AUDIT.md.
+  gan_hs:    {part: EPC2014C, h_um: 685, h_max_um: 815, status: SOURCED,
+              source: "EPC2014C datasheet, DIE OUTLINE Side View: (685) nominal, 815 Max"}
+  gan_ls:    {part: EPC2057, h_um: 606, h_um_corrected: 638, status: SOURCED,
+              source: "EPC2057 datasheet, DIE OUTLINE Side View: 518 +/- 25 die + 120 +/- 12 bump = 638 overall",
+              frozen_note: "h_um 606 is the FROZEN value (88 um terminal stack); the datasheet gives 638"}
   mlcc:      {part: "Murata GRM31 22uF 50V", h_um: null, status: OPEN,
               envelope_um: [0, 100, 250],
               source: "murata.com unreachable from this environment (HTTP 500 / error page)"}

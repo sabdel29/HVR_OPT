@@ -66,11 +66,20 @@ Source: `results/phase0mr3c/final_etm_replay.csv`, `final_local_response.csv`,
 | repartitioned | **0.833** |
 
 Only the tier *locations* of existing components were permuted. Component set, component
-count, per-tier area budget and total 1921 µm stack height are unchanged.
+count, per-tier area budget and total stack height are unchanged. The stack height is
+1921 µm with the frozen device heights and **1953 µm** with the selected devices
+(EPC2014C 685 µm, EPC2057 638 µm); the baseline worst AR correspondingly becomes **5.32**,
+because that net crosses the low-side tier. The repartitioned 0.833 is unaffected.
 
-Status: **GEOMETRICALLY REALIZABLE / PROCESS-CONDITIONAL.**
+Status: the **VERTICAL INTERCONNECT** is GEOMETRICALLY REALIZABLE / PROCESS-CONDITIONAL.
 Explicitly **not** manufacturing-qualified — the microvia current allowable, the capture-pad
 diameter, a vendor design rule and two package clearance rules remain unavailable.
+
+**This status does NOT extend to the package.** Component-stack and board-assembly
+realizability are **NOT ESTABLISHED** for either architecture: Z1's 1.30 mm substrate is
+8 µm short with the corrected low-side height and omits its 685 µm high-side device; Z2's
+land-side stack is 1963 µm and needs a PCB through-cutout that is patent-precedented but
+dimensionally unsourced. See `research/Z2_CUTOUT_GEOMETRY.md`.
 
 Source: `results/phase0mr3c/routing_feasibility.csv`, `repartition_candidates.csv`.
 

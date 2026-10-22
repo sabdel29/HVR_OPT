@@ -589,6 +589,35 @@ def test_manuscript_topology_wording_negative(pat, why):
         f"the negative fixture no longer exercises {pat!r}")
 
 
+def test_entry_points_do_not_claim_whole_package_realizability():
+    """Task A sweep: README/CURRENT_STATUS must scope realizability to the interconnect."""
+    for name in ("README.md", "CURRENT_STATUS.md"):
+        t = (R / name).read_text()
+        for m in re.finditer(r"GEOMETRICALLY REALIZABLE|geometrically realizable", t):
+            w = t[max(0, m.start() - 260): m.end() + 260]
+            assert re.search(r"vertical interconnect|VERTICAL INTERCONNECT|"
+                             r"NOT ESTABLISHED|for free", w), (
+                f"{name}: unscoped realizability claim at offset {m.start()}")
+
+
+def test_entry_points_carry_the_corrected_device_values():
+    t = (R / "CURRENT_STATUS.md").read_text()
+    assert "1953" in t and "5.32" in t, (
+        "CURRENT_STATUS does not carry the corrected stack height / baseline AR")
+    assert "EPC2014C" in t and "EPC2057" in t
+
+
+def test_no_live_config_attributes_heights_to_the_wrong_parts():
+    """EPC2212/EPC2090 may appear only as a recorded mis-attribution."""
+    import glob
+    for f in glob.glob(str(R / "configs" / "**" / "*.yaml"), recursive=True):
+        t = Path(f).read_text()
+        for m in re.finditer(r"EPC2212|EPC2090", t):
+            w = t[max(0, m.start() - 300): m.end() + 300]
+            assert re.search(r"mis-attribution|CORRECTED|wrong|Phase 0N-R|frozen", w, re.I), (
+                f"{Path(f).name}: live attribution to {m.group(0)} at offset {m.start()}")
+
+
 def test_repo_docs_use_the_corrected_topology():
     """README / CURRENT_STATUS must not carry the withdrawn 3-phase wording."""
     for name in ("README.md", "CURRENT_STATUS.md"):

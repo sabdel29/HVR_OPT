@@ -107,7 +107,7 @@ geometry per tier), and produces a distributed array of substrate-embedded hybri
 minimizes total system-wide power loss from platform input to delivered on-chip load power.
 
 Its logic is essentially *analytic-then-enumerate*. For a trial VR count M, per-VR current is
-I/M; per-phase current follows; the modular inductor count is the ceiling ratio of phase current
+I/M; per-BRANCH current follows (I_cell*B_i/N -- Phase 0N-R: NOT 'per-phase'; the buck stage has two switching phases and K parallel branches); the modular inductor count is the ceiling ratio of branch current
 to unit-inductor rating; minimum feasible switching frequency follows from the ripple budget;
 optimal switch width follows in closed form from ∂P/∂w = 0; the cell footprint follows from the
 largest component extent; and if the analytic switch width exceeds what the per-layer area budget
@@ -172,7 +172,7 @@ current allocation is **emergent from proximity**, not a decision variable.
 
 ### C. Derived quantities
 
-Per-VR current I/M; per-phase current I_φ; ripple Δi_φ = γI_φ; minimum f_sw; converter losses
+Per-VR current I/M; per-BRANCH current I_b = I_cell*B_i/N (Phase 0N-R correction); summed output ripple Δi_φ; minimum f_sw; converter losses
 (switch conduction ∝1/w, switching ∝ w·f_sw — ">70 % of conversion losses originate from power
 switches"); inductor R_ESR and core loss; flying-capacitor loss; intra-VR routing loss scaling as
 M·(R_PDN/M)·(I/M)² ∝ 1/M²; inter-VR / VR-to-POL RDL loss (corner POLs ≈2× central); VIC loss
