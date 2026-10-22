@@ -104,9 +104,13 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
     # converter cell -- and the TSV field passes THROUGH it. Treating it as a converter
     # cell shortened the meshed via field to 280 um while the electrical model used the
     # full 300 um: one physical via with two lengths.
+    # PHASE 0N. Opt-in correction of the backside converter's lateral extent. Unset
+    # reproduces the frozen Phase-0M-R3C geometry byte for byte.
+    conv_fill = os.environ.get("PHASE0N_Z2_CONV_FILL") or None
     m = build(tiles, st, h_sub_mm, h_xy=h_xy, z_scale=1.4, support_layer=False,
               extra_bottom_layers=extra, extra_mid_layers=mid,
-              tile_band_is_converter=(ZG.CONV_PLACE.get(arch) == "in"))
+              tile_band_is_converter=(ZG.CONV_PLACE.get(arch) == "in"),
+              conv_fill_material=conv_fill)
     return m, build_materials(st), st, tiles
 
 

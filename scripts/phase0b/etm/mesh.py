@@ -151,7 +151,8 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
           interface_nz: int | None = None,
           extra_bottom_layers: list | None = None,
           extra_mid_layers: list | None = None,
-          tile_band_is_converter: bool = True) -> Mesh:
+          tile_band_is_converter: bool = True,
+          conv_fill_material: str | None = None) -> Mesh:
     """Build the mesh.
 
     `h_xy`    in-plane element size at material boundaries (mm)
@@ -295,6 +296,13 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
                     continue
                 ti = tile_idx[i, j]
                 mat = L.material
+                # PHASE 0N. The backside converter layer `conv` is laid down as a
+                # FULL-AREA band, so outside a VR-cell footprint it is still converter
+                # medium. Physically that area is package fill, not converter. When
+                # `conv_fill_material` is given, the out-of-cell area takes that medium
+                # instead. Default None reproduces the frozen model exactly.
+                if conv_fill_material and L.name == "conv" and ti < 0:
+                    mat = conv_fill_material
                 if L.footprint == "substrate" and ti >= 0:
                     if L.name == "tile_band" and tile_band_is_converter:
                         mat = "hvr_effective"
