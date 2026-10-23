@@ -1,7 +1,14 @@
-# Z1 and Z2 physically closed stacks — specification
+# Z1 and Z2 — physically SPECIFIED candidate stacks
 
-Phase 0N-S Tasks 5, 6, 14, 15, 23. **This is the specification the ETM implementation must
-satisfy. It is NOT yet implemented** — see §6.
+> **STATUS: physically specified candidate architecture.** Not "physically closed", not
+> "manufacturable", not "qualified". The closure gates in §6 are open: supply/return
+> implementation, annular PCB mesh, surviving BGA field, material outside the Z2 cells,
+> thermal boundary, mesh convergence, critical-joint identification and the local solder
+> solve. The term **"physically closed within the model assumptions"** may be used only
+> once every gate in §6 passes.
+
+Phase 0N-S/0N-T. **This is the specification the ETM implementation must satisfy. It is
+NOT yet implemented** — see §6.
 
 Both candidates use the **2.4 mm board** selected in `research/PCB_THICKNESS_Z2_AUDIT.md`
 and the selected-device heights (EPC2014C 685 µm, EPC2057 638 µm).
@@ -33,29 +40,57 @@ Package above the board: **2933 µm**; total with board **5333 µm**.
 
 ## 2. Z2 — land-side distributed cells with a PCB through-cutout
 
-Tier order **inverted** relative to Z1 so the inductor stays nearest the POL.
+> **COORDINATE CORRECTION (Phase 0N-T).** The previous version of this table stacked the
+> HVR **in series above the BGA**, running 2700 → 4663 µm. That was wrong twice over: it
+> reproduced the "every ball lands on the converter" defect this audit exists to remove,
+> and it made the converter grow **upward toward the die** while labelling its topmost tier
+> "deepest into the cutout". The HVR and the PCB/BGA **coexist laterally** — they do not
+> stack.
 
-| element | t (µm) | z (µm) | class | electrical role |
-|---|---:|---|---|---|
-| PCB frame (2.4 mm, ANNULAR) | 2400 | 0 → 2400 | ASSUMPTION/vendor | cutout 23.36 mm sq |
-| BGA field (peripheral only) | 300 | 2400 → 2700 | SOURCE_BACKED | 48 V in + return |
-| land-side attach RDL | 10 | 2700 → 2710 | SOURCE_BACKED | 48 V distribution + 1 V collection |
-| inductors + output caps | 500 | 2710 → 3210 | SOURCE_BACKED | nearest the substrate/POL |
-| interlayer RDL | 10 | 3210 → 3220 | SOURCE_BACKED |  |
-| LS GaN EPC2057 | 638 | 3220 → 3858 | SOURCE_BACKED | low side |
-| interlayer RDL | 10 | 3858 → 3868 | SOURCE_BACKED |  |
-| flying capacitors | 100 | 3868 → 3968 | BOUNDED | C_f x2 |
-| interlayer RDL | 10 | 3968 → 3978 | SOURCE_BACKED |  |
-| HS GaN EPC2014C | 685 | 3978 → 4663 | SOURCE_BACKED | deepest into the cutout |
-| power substrate | 300 | 4663 → 4963 | SOURCE_BACKED | 1 V supply + return TSV fields |
-| top RDL | 10 | 4963 → 4973 | SOURCE_BACKED | 1 V + ground plane |
-| microbumps + underfill | 10 | 4973 → 4983 | SOURCE_BACKED | 1 V to die |
-| compute die | 300 | 4983 → 5283 | SOURCE_BACKED | load |
-| TIM | 50 | 5283 → 5333 | design choice | cooling |
+**Datum: z = 0 at the PCB backside, +z upward.** The land-side interface (package-substrate
+underside) is at **z = 2700 µm**. From there the converter descends into the cutout and the
+substrate and die rise.
+
+### Central region — inside the cutout, the HVR DESCENDS
+
+| element | t (µm) | z (µm), descending | electrical role |
+|---|---:|---|---|
+| land-side attach RDL | 10 | **2700 → 2690** | 48 V distribution + 1 V collection |
+| inductors + output caps | 500 | **2690 → 2190** | nearest the substrate, so nearest the POL |
+| interlayer RDL | 10 | **2190 → 2180** |  |
+| LS GaN EPC2057 | 638 | **2180 → 1542** | low side |
+| interlayer RDL | 10 | **1542 → 1532** |  |
+| flying capacitors | 100 | **1532 → 1432** | C_f x2 |
+| interlayer RDL | 10 | **1432 → 1422** |  |
+| HS GaN EPC2014C | 685 | **1422 → 737** | deepest into the cutout |
+| **deepest HVR point** | | **737** | 737 µm clear of the PCB backside |
+
+### Peripheral region — outside the cutout, over the SAME z range
+
+| element | t (µm) | z (µm) | electrical role |
+|---|---:|---|---|
+| PCB frame (annular) | 2400 | 0 → 2400 | board; cutout 23.36 mm square |
+| BGA field (peripheral only) | 300 | 2400 → 2700 | 48 V in + return |
+
+### Above the land-side interface — the package RISES
+
+| element | t (µm) | z (µm) | electrical role |
+|---|---:|---|---|
+| power substrate | 300 | 2700 → 3000 | 1 V supply + return TSV fields |
+| top RDL | 10 | 3000 → 3010 | 1 V + ground plane |
+| microbumps + underfill | 10 | 3010 → 3020 | 1 V to die |
+| compute die | 300 | 3020 → 3320 | load |
+| TIM | 50 | 3320 → 3370 | cooling |
+
+**Total package height above the PCB backside: 3370 µm.** The HVR occupies
+2700 → 737 µm, entirely **inside** the board's vertical extent, with
+**737 µm** of clearance to the PCB backside at nominal board thickness — so at 2.4 mm nominal
+the converter does **not** protrude below the board. At the worst-case −10 % board the
+margin is +237 µm at the EPC2014C maximum, as
+`research/PCB_THICKNESS_Z2_AUDIT.md` reports.
 
 Land-side protrusion below the substrate: **1963 µm** nominal,
-**2093 µm** at the EPC2014C maximum. Available depth at the worst-case
-2.4 mm board: **2460 µm**, leaving **+237 µm** at the device maximum.
+**2093 µm** at the EPC2014C maximum.
 
 ## 3. Lateral construction (x/y)
 

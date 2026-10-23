@@ -343,8 +343,82 @@ def test_converter_inventory_is_identical_across_architectures(design):
     assert inv["ARCH_Z1_EMBEDDED"][1] == pytest.approx(274.89, abs=0.1)
 
 
+SPEC = R / "research" / "Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md"
+LAND_SIDE_IFACE_UM = 2700.0          # PCB 2400 + BGA 300, z = 0 at the PCB backside
+
+
+def _z2_descending_rows():
+    """(name, t, z_from, z_to) for the central-region table."""
+    t = SPEC.read_text()
+    blk = t[t.index("### Central region"):t.index("### Peripheral region")]
+    out = []
+    for line in blk.splitlines():
+        m = re.match(r"\|\s*([^|]+?)\s*\|\s*([\d.]+)\s*\|\s*\*{0,2}(\d+)\s*→\s*(\d+)",
+                     line)
+        if m:
+            out.append((m.group(1), float(m.group(2)), float(m.group(3)), float(m.group(4))))
+    return out
+
+
+def test_z2_hvr_descends_into_the_cutout():
+    """The real Phase-0N-S defect: the HVR was drawn growing UPWARD toward the die."""
+    rows = _z2_descending_rows()
+    assert len(rows) >= 8, f"Z2 central-region table not parsed ({len(rows)} rows)"
+    for name, t, z0, z1 in rows:
+        assert z1 < z0, f"{name}: z increases ({z0}->{z1}); the HVR must DESCEND"
+        assert z0 - z1 == pytest.approx(t, abs=1e-6), f"{name}: thickness mismatch"
+        assert z0 <= LAND_SIDE_IFACE_UM + 1e-6, (
+            f"{name} starts at {z0} um, above the land-side interface "
+            f"{LAND_SIDE_IFACE_UM} um -- Z2 converter tiers must be BELOW the substrate")
+    assert rows[0][2] == pytest.approx(LAND_SIDE_IFACE_UM)
+
+
+def test_z2_high_side_is_the_deepest_tier():
+    rows = _z2_descending_rows()
+    deepest = min(rows, key=lambda r: r[3])
+    assert "HS GaN" in deepest[0], (
+        f"the deepest Z2 tier is {deepest[0]!r}; the high side must be deepest into "
+        f"the cutout")
+
+
+def test_z2_substrate_is_above_the_converter():
+    t = SPEC.read_text()
+    blk = t[t.index("### Above the land-side interface"):]
+    m = re.search(r"\|\s*power substrate\s*\|\s*[\d.]+\s*\|\s*(\d+)\s*→\s*(\d+)", blk)
+    assert m, "the power substrate row vanished from the rising table"
+    z0, z1 = float(m.group(1)), float(m.group(2))
+    assert z1 > z0 and z0 >= LAND_SIDE_IFACE_UM, (
+        "the package substrate must rise from the land-side interface, not sit below it")
+    deepest = min(r[3] for r in _z2_descending_rows())
+    assert z0 > deepest, "substrate is below the converter -- coordinates inverted again"
+
+
+def test_z2_converter_fits_inside_the_board_at_nominal():
+    rows = _z2_descending_rows()
+    deepest = min(r[3] for r in rows)
+    assert deepest > 0, (
+        f"the HVR reaches {deepest} um, i.e. below the PCB backside at nominal board "
+        f"thickness; the audit says it clears by 737 um")
+    assert deepest == pytest.approx(737.0, abs=1.0)
+
+
+def test_spec_is_not_called_physically_closed():
+    t = SPEC.read_text()
+    assert "physically specified candidate architecture" in t.lower()
+    for m in re.finditer(r"physically closed", t, re.I):
+        w = t[max(0, m.start() - 260): m.end() + 260]
+        assert re.search(r"not |may be used only|gates|open", w, re.I), (
+            f"'physically closed' asserted at offset {m.start()} while gates are open")
+    # negation-aware: 'not "manufacturable"' is the status banner, not a claim
+    for bad in ("manufacturable", "qualified"):
+        for m in re.finditer(bad, t, re.I):
+            cl = _clause(t, m.start())
+            assert _NEG.search(cl) or re.search(r'not\s*"', cl), (
+                f"the specification asserts {bad!r} at offset {m.start()}: {cl.strip()[:90]!r}")
+
+
 def test_closed_stack_spec_declares_what_is_unimplemented():
-    t = (R / "research" / "Z1_Z2_PHYSICALLY_CLOSED_STACKS.md").read_text()
+    t = (R / "research" / "Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md").read_text()
     assert "NOT implemented" in t
     for gate in ("supply/return continuity", "annular PCB mesh", "mesh convergence"):
         assert gate in t, f"closure gate '{gate}' dropped from the specification"
