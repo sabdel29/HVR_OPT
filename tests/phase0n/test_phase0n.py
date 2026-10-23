@@ -424,6 +424,90 @@ def test_closed_stack_spec_declares_what_is_unimplemented():
         assert gate in t, f"closure gate '{gate}' dropped from the specification"
 
 
+# ============================================ PCB MATERIAL MODEL (0N-V)
+PCBCFG = R / "configs" / "phase0nv" / "pcb_it968g_18layer.yaml"
+PCBHOM = R / "research" / "phase0nv" / "pcb_homogenization.json"
+
+
+@pytest.fixture(scope="module")
+def pcbcfg():
+    import yaml
+    return yaml.safe_load(PCBCFG.read_text())
+
+
+def test_it968g_values_match_the_datasheet(pcbcfg):
+    lam = pcbcfg["laminate"]
+    assert lam["name"] == "ITEQ IT-968G"
+    assert lam["E_warp_MPa"] == 15000.0 and lam["E_fill_MPa"] == 14000.0
+    assert lam["cte_xy_primary_ppm"] == [12.0, 14.0]       # IPC 2.4.41
+    assert lam["cte_xy_alt_ppm"] == [11.0, 12.0]           # IPC 2.4.24.5
+    assert lam["cte_z_pre_tg_ppm"] == 45.0 and lam["cte_z_post_tg_ppm"] == 260.0
+    assert lam["Tg_C"] == 175.0 and lam["Td_C"] == 400.0 and lam["MOT_C"] == 130.0
+
+
+def test_absent_datasheet_properties_are_declared_absent(pcbcfg):
+    absent = set(pcbcfg["laminate"]["absent"])
+    for k in ("poisson", "thermal_conductivity", "E_z", "shear_moduli", "density"):
+        assert k in absent, f"{k} must be declared absent from the IT-968G datasheet"
+    ob = pcbcfg["open_or_bounded"]
+    assert ob["shear_moduli"] == "OPEN" and ob["poisson_ratios"] == "OPEN"
+
+
+def test_copper_coverage_is_swept_not_assumed(pcbcfg):
+    assert pcbcfg["open_or_bounded"]["copper_coverage_eta"] == [0.0, 0.25, 0.5, 0.75, 1.0]
+    b = pcbcfg["board"]
+    assert b["n_1oz"] == 14 and b["n_2oz"] == 4, "copper schedule changed"
+    assert b["t_cu_full_um"] == pytest.approx(765.6, abs=0.1)
+    assert b["f_cu_full"] == pytest.approx(0.3190, abs=1e-3)
+    assert "UPPER BOUND" in b["f_cu_full_note"], (
+        "the full-coverage figure must be labelled an upper bound, not the board's "
+        "copper volume")
+    assert pcbcfg["nominal"]["eta"] == 0.50
+    assert "not a measurement" in pcbcfg["nominal"]["note"]
+
+
+def test_physical_board_is_not_the_arbitrary_isotropic_fr4():
+    import board as BRD
+    for case in ("it968g_2p4mm", "it968g_3p2mm"):
+        c = BRD.BOARD_CASES[case]
+        assert c["E_MPa"] != 22000.0 and c["E_MPa"] != 24000.0, (
+            f"{case} fell back to the unsourced arbitrary modulus")
+        assert c["cte"] not in (16.0e-6, 15.0e-6), f"{case} uses the unsourced CTE"
+
+
+def test_thickness_study_is_not_confounded():
+    """T-only: 2.4 and 3.2 mm must share ONE material tensor."""
+    import board as BRD
+    a, b = BRD.BOARD_CASES["it968g_2p4mm"], BRD.BOARD_CASES["it968g_3p2mm"]
+    for k in ("E_MPa", "nu", "cte", "k"):
+        assert a[k] == b[k], (
+            f"{k} differs between the 2.4 and 3.2 mm T-only cases; that confounds "
+            f"geometric stiffness with a material change")
+    assert a["t_mm"] == 2.4 and b["t_mm"] == 3.2
+    # and the historical pair must remain confounded, i.e. unusable for this study
+    fa, fb = BRD.BOARD_CASES["fr4_2p4mm"], BRD.BOARD_CASES["fr4_3p2mm"]
+    assert fa["E_MPa"] != fb["E_MPa"], (
+        "the historical cases are no longer distinguishable; the audit says they "
+        "change material with thickness")
+
+
+def test_board_cases_reach_the_mesh():
+    import production_et as PE
+    for case, want in (("it968g_2p4mm", 2400.0), ("it968g_3p2mm", 3200.0)):
+        m, _a, _b, _c = PE.build_global("ARCH_Z2_BACKSIDE", 0.30,
+                                        board_case=case, cutout_mm=23.36)
+        L = m.layer("board")
+        assert (L.z1 - L.z0) * 1e3 == pytest.approx(want, abs=1e-6), (
+            f"{case} produced {(L.z1-L.z0)*1e3:.0f} um in the mesh")
+
+
+def test_mot_and_tg_gate_is_recorded_but_not_yet_evaluated():
+    t = (R / "research" / "PCB_MATERIAL_PROPERTY_AUDIT.md").read_text()
+    assert "MOT = 130" in t and "Tg = 175" in t
+    assert re.search(r"has not been run", t, re.I), (
+        "the audit must state that T_PCB,max has not yet been computed")
+
+
 # ===================================================== ANNULAR PCB (0N-T)
 ANNJ = R / "research" / "phase0nt" / "annular_pcb.json"
 
@@ -1076,3 +1160,143 @@ def test_geometry_config_matches_the_measured_mesh(recon):
     bands = {L["layer"]: L for L in layers(recon, "Z1")}
     assert bands["sub_lower"]["t_um"] == pytest.approx(z1["tsv_z_end_um"], abs=1e-6)
     assert bands["tile_band"]["t_um"] == pytest.approx(z1["converter_cell_um"], abs=1e-6)
+
+
+# ---------------------------------------------------------------- Phase 0N-V, board tensor
+HOMOG = R / "research" / "PCB_IT968G_HOMOGENIZATION.md"
+
+
+def _board_card(case):
+    import sys
+    sys.path.insert(0, str(R / "scripts"))
+    from phase0b.etm.config import build_materials
+    import phase0i.zglobal as ZG
+    st, _extra, _t = ZG.stack_for("ARCH_Z2_BACKSIDE", 0.30, board_case=case)
+    return build_materials(st)["board_fr4"]
+
+
+def test_it968g_thickness_study_is_material_identical():
+    """T-only: 2.4 vs 3.2 mm may differ in thickness and in NOTHING else."""
+    import sys
+    sys.path.insert(0, str(R / "scripts"))
+    from phase0g.board import BOARD_CASES
+    a = dict(BOARD_CASES["it968g_2p4mm"])
+    b = dict(BOARD_CASES["it968g_3p2mm"])
+    assert a.pop("t_mm") == 2.4 and b.pop("t_mm") == 3.2
+    assert a == b, (
+        "the IT-968G thickness study changes material as well as thickness, which is the "
+        f"exact confound that disqualified the fr4_* pair: {a} vs {b}")
+
+
+def test_legacy_fr4_pair_still_confounds_and_is_therefore_forbidden():
+    """The reason the fr4_* pair cannot be used for the physical comparison."""
+    import sys
+    sys.path.insert(0, str(R / "scripts"))
+    from phase0g.board import BOARD_CASES
+    a, b = BOARD_CASES["fr4_2p4mm"], BOARD_CASES["fr4_3p2mm"]
+    assert (a["E_MPa"], a["cte"]) != (b["E_MPa"], b["cte"]), (
+        "fr4_2p4mm/fr4_3p2mm no longer differ in material -- if that was fixed, the "
+        "forbidden-case list and the T-only rationale must be revisited, not left stale")
+
+
+def test_board_thermal_orthotropy_reaches_the_calculix_deck():
+    card = _board_card("it968g_2p4mm").ccx_conductivity()
+    assert "TYPE=ORTHO" in card[0], f"board conductivity is not orthotropic: {card}"
+    kx, ky, kz = (float(v) for v in card[1].split(","))
+    assert kx == ky and kx / kz > 100, (
+        f"in-plane/through-thickness ratio collapsed: {kx} {ky} {kz}")
+
+
+def test_legacy_board_path_emits_the_isotropic_card_unchanged():
+    """Protects the frozen 0M-R3C replay, which runs on fr4_1p6mm."""
+    card = _board_card("fr4_1p6mm").ccx_conductivity()
+    assert card == ["*CONDUCTIVITY", "0.0003"], (
+        f"the frozen board path changed and every frozen result is now suspect: {card}")
+
+
+def test_elastic_anisotropy_is_declared_unmodelled_with_its_reason():
+    t = HOMOG.read_text()
+    assert re.search(r"cubic", t, re.I), (
+        "the doc must say WHY elastic orthotropy is unavailable (the emitter is cubic)")
+    assert "unmodelled, not modelled-as-equal" in t
+    for c in ("E_z", "G_xz", "nu_xz"):
+        assert c in t, f"{c} must be named as an OPEN constant"
+
+
+def _negligible_claims(text):
+    """Occurrences of 'negligible' near the shear term that are ASSERTED, not denied."""
+    return [m.group(0) for m in re.finditer(r"negligib\w*", text, re.I)
+            if not _NEG.search(_clause(text, m.start()))]
+
+
+def test_shear_deformation_omission_is_not_called_negligible():
+    assert not _negligible_claims(HOMOG.read_text()), (
+        "the unmodelled through-thickness compliance is a 10 %-order effect; it must not "
+        "be waved away as negligible")
+
+
+@pytest.mark.parametrize("injected", [
+    "The shear-deformation correction is negligible for this plate.",
+    "E_z and G_xz are unmodelled, but the effect is negligible.",
+])
+def test_negligible_guard_negative(injected):
+    """NEGATIVE: real offending phrasings caught; the actual denial must not be."""
+    assert _negligible_claims(injected), f"guard went blind to {injected!r}"
+    assert not _negligible_claims(
+        "That is a 10 %-order effect, not a negligible one.")
+
+
+def test_thickness_study_bias_direction_is_disclosed():
+    t = HOMOG.read_text()
+    assert "grows with thickness" in t, (
+        "the shear omission is larger for the thicker board; a T-only study that does not "
+        "say so lets a biased comparison read as a clean one")
+    assert re.search(r"0\.341|0\.114", t), "the 3.2 mm bracket must be stated numerically"
+
+
+def test_homogenization_doc_claims_no_solve():
+    assert re.search(r"has not been run", HOMOG.read_text(), re.I)
+
+
+def test_board_tensor_has_exactly_one_source():
+    """board.py, the JSON and the document must all show the SAME derived numbers.
+
+    An earlier draft had the doc printing k_xy = 67.58 (bracket upper) while board.py used
+    65.86 (bracket midpoint). Both were defensible in isolation; together they were a
+    contradiction that no test could see, because each file was internally consistent.
+    """
+    import sys, json
+    sys.path.insert(0, str(R / "scripts"))
+    from phase0g.board import BOARD_CASES
+    n = json.loads((R / "research" / "phase0nv" / "pcb_homogenization.json").read_text()
+                   )["nominal_tensor"]
+    c = BOARD_CASES["it968g_2p4mm"]
+    assert c["E_MPa"] == n["E_MPa"] and c["nu"] == n["nu"]
+    assert c["cte"] == n["cte"] * 1e-6
+    assert c["k_ortho"] == [n["k_xy"], n["k_xy"], n["k_z"]] and c["k"] == n["k_z"]
+    t = HOMOG.read_text()
+    for v in (f"{n['E_MPa']:.1f}", f"{n['cte']:.3f}", f"{n['k_xy']:.3f}", f"{n['k_z']:.4f}"):
+        assert v in t, f"the document does not print the derived value {v}"
+
+
+def test_nominal_tensor_applies_one_bracket_rule_uniformly():
+    """Mixing 'midpoint' for one quantity and 'upper bound' for another is how the two
+    sources diverged in the first place."""
+    import json
+    h = json.loads((R / "research" / "phase0nv" / "pcb_homogenization.json").read_text())
+    n = h["nominal_tensor"]
+    for val, br in ((n["k_xy"], n["k_xy_bracket"]), (n["k_z"], n["k_z_bracket"]),
+                    (n["Ez_MPa"], n["Ez_MPa_bracket"])):
+        assert abs(val - 0.5 * (br[0] + br[1])) < 1e-9 * max(1.0, abs(val)), (
+            f"{val} is not the midpoint of {br}; the reduction rule is not uniform")
+
+
+def test_yaml_config_is_generated_from_the_same_tensor():
+    """configs/phase0nv is a THIRD consumer; it must not be hand-maintained."""
+    import json, yaml
+    y = yaml.safe_load((R / "configs" / "phase0nv" / "pcb_it968g_18layer.yaml").read_text())
+    n = json.loads((R / "research" / "phase0nv" / "pcb_homogenization.json").read_text()
+                   )["nominal_tensor"]
+    assert all(y["nominal"][k] == n[k] for k in n), (
+        "the YAML nominal block has drifted from the generator's reduction")
+    assert "do not hand-edit" in y["nominal"]["note"].lower()

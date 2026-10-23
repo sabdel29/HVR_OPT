@@ -33,6 +33,10 @@ BOARD_CASES = {
     "compliant":   {"t_mm": 0.8, "E_MPa": 12000.0, "nu": 0.20, "cte": 18.0e-6, "k": 0.30},
     "stiff_metal_backed": {"t_mm": 3.2, "E_MPa": 120000.0, "nu": 0.30, "cte": 12.0e-6,
                            "k": 100.0},
+    # PHASE 0N-V. The source-backed IT-968G cases are NOT literals here -- they are
+    # inserted below by _add_it968g_cases() from the generator's single nominal_tensor
+    # block, because a copy of a derived value is a second source that goes stale alone.
+    # The fr4_* entries above are UNSOURCED and are kept only for reproducibility.
 }
 
 
@@ -46,12 +50,31 @@ def bga_material():
 
 
 def board_material(case):
+    """Board card. The it968g_* cases are DERIVED from a datasheet; the fr4_* are not.
+
+    ELASTIC ANISOTROPY IS DELIBERATELY NOT MODELLED. Two independent reasons:
+      1. etm/config.py's ``*ELASTIC, TYPE=ORTHO`` emitter writes D1111 = D2222 = D3333
+         from a single C11, i.e. CUBIC symmetry. It cannot express E_xy != E_z at all.
+      2. Even with a general emitter, three of the five transversely-isotropic constants
+         (E_z, G_xz, nu_xz) are OPEN -- absent from the IT-968G datasheet and not
+         derivable from E_warp/E_fill. Supplying them would be fabrication.
+    So E is the in-plane homogenised modulus and the through-thickness compliance is
+    UNMODELLED, not modelled-as-equal. research/PCB_IT968G_HOMOGENIZATION.md Sec.5
+    quantifies what that omission is worth and records it as OPEN.
+
+    THERMAL anisotropy IS modelled: k_ortho is a first-class CalculiX card.
+    """
     c = BOARD_CASES[case]
-    return {"status": "ASSUMPTION", "elastic_type": "iso",
-            "E": {"value": c["E_MPa"], "status": "ASSUMPTION"},
-            "nu": {"value": c["nu"], "status": "ASSUMPTION"},
-            "cte": {"value": c["cte"], "status": "ASSUMPTION"},
-            "k": {"value": c["k"], "status": "ASSUMPTION"}}
+    derived = case.startswith("it968g_")
+    st = "DERIVED" if derived else "ASSUMPTION"
+    m = {"status": st, "elastic_type": "iso",
+         "E": {"value": c["E_MPa"], "status": st},
+         "nu": {"value": c["nu"], "status": "ASSUMPTION"},   # OPEN for IT-968G
+         "cte": {"value": c["cte"], "status": st},
+         "k": {"value": c["k"], "status": st}}
+    if c.get("k_ortho"):
+        m["k_ortho"] = {"value": list(c["k_ortho"]), "status": "DERIVED"}
+    return m
 
 
 def stack_with_board(stack, t_tile_mm, case="fr4_1p6mm"):
@@ -72,3 +95,33 @@ def bottom_layers(case="fr4_1p6mm", nz_board=2, nz_bga=2):
 def k_z_equivalent():
     """Normal foundation stiffness of the ball array alone, for comparison with BC-B."""
     return E_SOLDER_MPA * AREA_FRACTION / BALL_H_MM
+
+
+# ---------------------------------------------------------------------------------- 0N-V
+def _add_it968g_cases():
+    """Derive the source-backed board cases from the ONE nominal tensor.
+
+    `scripts/phase0nv_pcb_homogenization.py` owns the reduction (nominal copper coverage,
+    midpoint of each bounded bracket) and writes it to research/phase0nv/. Re-picking a
+    value out of the sweep here would make this file a second source, and two sources of a
+    derived number drift apart without anything going red.
+
+    The two cases share ONE material dict and differ ONLY in thickness, so a 2.4 -> 3.2 mm
+    comparison isolates geometric stiffness. The fr4_* pair changes E/CTE/k with thickness
+    and is unsourced; it is kept for reproducibility and must not be used for that study.
+
+    Conductivity is orthotropic (k_xy >> k_z, ~148x) and reaches CalculiX as a real
+    *CONDUCTIVITY, TYPE=ORTHO card. Elasticity is isotropic at the in-plane modulus: the
+    solver's ORTHO elastic card is cubic-only, AND E_z/G_xz/nu_xz are OPEN. See
+    research/PCB_IT968G_HOMOGENIZATION.md Sec.5 for what that omission is worth.
+    """
+    import pathlib
+    j = pathlib.Path(__file__).resolve().parents[2] / "research" / "phase0nv" / "pcb_homogenization.json"
+    n = json.loads(j.read_text())["nominal_tensor"]
+    mat = {"E_MPa": n["E_MPa"], "nu": n["nu"], "cte": n["cte"] * 1e-6, "k": n["k_z"],
+           "k_ortho": [n["k_xy"], n["k_xy"], n["k_z"]]}
+    for key, t in (("it968g_2p4mm", 2.4), ("it968g_3p2mm", 3.2)):
+        BOARD_CASES[key] = dict(mat, t_mm=t)
+
+
+_add_it968g_cases()
