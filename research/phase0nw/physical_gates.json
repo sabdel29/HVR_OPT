@@ -1,0 +1,228 @@
+{
+ "gates": [
+  {
+   "area": "Board",
+   "gate": "physical YAML uses it968g_2p4mm",
+   "status": "IMPLEMENTED",
+   "evidence": "config board.case = it968g_2p4mm"
+  },
+  {
+   "area": "Board",
+   "gate": "board thickness reaches the mesh",
+   "status": "IMPLEMENTED",
+   "evidence": "meshed 2400 um against config 2400 um"
+  },
+  {
+   "area": "Board",
+   "gate": "PCB-H0 documented",
+   "status": "SPECIFIED",
+   "evidence": "model_level = PCB-H0; see PCB_IT968G_HOMOGENIZATION.md Sec.8"
+  },
+  {
+   "area": "Board",
+   "gate": "PCB-H1 thermal validation",
+   "status": "OPEN",
+   "evidence": "not implemented"
+  },
+  {
+   "area": "Board",
+   "gate": "eta uncertainty retained",
+   "status": "SPECIFIED",
+   "evidence": "eta_sensitivity = [0.25, 0.5, 0.75]"
+  },
+  {
+   "area": "Board",
+   "gate": "T-only cases material-identical",
+   "status": "IMPLEMENTED",
+   "evidence": "it968g_2p4mm and it968g_3p2mm share one material dict"
+  },
+  {
+   "area": "Z2",
+   "gate": "2.4 mm board",
+   "status": "IMPLEMENTED",
+   "evidence": "meshed 2400 um"
+  },
+  {
+   "area": "Z2",
+   "gate": "23.36 mm conforming cutout",
+   "status": "IMPLEMENTED",
+   "evidence": "cutout 23.36 mm, edges are grid breakpoints"
+  },
+  {
+   "area": "Z2",
+   "gate": "49 discrete cells",
+   "status": "IMPLEMENTED",
+   "evidence": "49 tile footprints in the mesh"
+  },
+  {
+   "area": "Z2",
+   "gate": "full 1.963 mm stack",
+   "status": "IMPLEMENTED",
+   "evidence": "8 tiers measured, total 1963.0 um"
+  },
+  {
+   "area": "Z2",
+   "gate": "EPC2014C high side explicitly present",
+   "status": "IMPLEMENTED",
+   "evidence": "deepest tier conv_7_gan_hs_EPC2014C at 737 um above the PCB backside"
+  },
+  {
+   "area": "Z2",
+   "gate": "no full-area converter slab",
+   "status": "IMPLEMENTED",
+   "evidence": "0 of 37254 elements belong to a layer named 'conv'"
+  },
+  {
+   "area": "Z2",
+   "gate": "no converter medium outside a cell",
+   "status": "IMPLEMENTED",
+   "evidence": "0 of 6615 in-cell converter elements lie outside a footprint"
+  },
+  {
+   "area": "Z2",
+   "gate": "out-of-cell material/void defined",
+   "status": "SPECIFIED",
+   "evidence": "F1 encapsulated (primary) and F2 void both build; bracket not yet run"
+  },
+  {
+   "area": "Z2",
+   "gate": "converter descends into the cutout",
+   "status": "IMPLEMENTED",
+   "evidence": "HVR occupies 1422 -> 737 um, inside the board's 0 -> 2400 um extent"
+  },
+  {
+   "area": "Z2",
+   "gate": "no overlap",
+   "status": "IMPLEMENTED",
+   "evidence": "the mesh builder raises if two layers claim one element; all 37254 elements were accepted"
+  },
+  {
+   "area": "Z2",
+   "gate": "symmetric BGA feed",
+   "status": "IMPLEMENTED",
+   "evidence": "16+16 mirror-symmetric pairs, first moments (0,0); research/phase0nt/annular_pcb.json"
+  },
+  {
+   "area": "Z2",
+   "gate": "split VDD / GND TSV fields meshed",
+   "status": "OPEN",
+   "evidence": "analytical model exists; the two rails are not yet distinct mesh regions"
+  },
+  {
+   "area": "Z2",
+   "gate": "per-tier material fidelity",
+   "status": "OPEN",
+   "evidence": "MLCC tier has no sourced card; GaN epi not resolved (mapped to the Si carrier)"
+  },
+  {
+   "area": "Z1",
+   "gate": "complete physical stack",
+   "status": "IMPLEMENTED",
+   "evidence": "package top 5333 um above the PCB backside (specified 5333); converter 1973 um in 9 tiers"
+  },
+  {
+   "area": "Z1",
+   "gate": "HS explicitly present",
+   "status": "IMPLEMENTED",
+   "evidence": "EPC2014C meshed 685 um at 3010 -> 3695 um"
+  },
+  {
+   "area": "Z1",
+   "gate": "selected-device dimensions",
+   "status": "IMPLEMENTED",
+   "evidence": "EPC2014C 685 um and EPC2057 638 um in both architectures"
+  },
+  {
+   "area": "Z1",
+   "gate": "same converter inventory",
+   "status": "IMPLEMENTED",
+   "evidence": "147 HS / 147 LS / 147 inductors / 98 flying caps in both; active volume 528.613 mm3 equal to machine precision"
+  },
+  {
+   "area": "Z1",
+   "gate": "explicit supply/return",
+   "status": "OPEN",
+   "evidence": "48 V VDD/GND TSV fields not yet meshed (analytical model exists)"
+  },
+  {
+   "area": "Z2",
+   "gate": "VDD/GND TSV fields: analytical model",
+   "status": "SPECIFIED",
+   "evidence": "interleaved 37x37 lattice, 685 VDD / 684 GND per cell, I_cell 20.408 A; R_loop includes constriction (1.4 % of the loop)"
+  },
+  {
+   "area": "Results",
+   "gate": "physical ET result lineage",
+   "status": "OPEN",
+   "evidence": "BLOCKED: no new ETM result may be generated until every gate above is closed"
+  }
+ ],
+ "tiers": [
+  {
+   "tier": "conv_7_gan_hs_EPC2014C",
+   "material": "silicon",
+   "spec_um": 685.0,
+   "mesh_um": 685.0,
+   "z0_um": -1963.0,
+   "z1_um": -1278.0
+  },
+  {
+   "tier": "conv_6_interlayer_rdl",
+   "material": "rdl_composite",
+   "spec_um": 10.0,
+   "mesh_um": 10.0,
+   "z0_um": -1278.0,
+   "z1_um": -1268.0
+  },
+  {
+   "tier": "conv_5_flying_caps",
+   "material": "hvr_effective",
+   "spec_um": 100.0,
+   "mesh_um": 100.0,
+   "z0_um": -1268.0,
+   "z1_um": -1168.0
+  },
+  {
+   "tier": "conv_4_interlayer_rdl",
+   "material": "rdl_composite",
+   "spec_um": 10.0,
+   "mesh_um": 10.0,
+   "z0_um": -1168.0,
+   "z1_um": -1158.0
+  },
+  {
+   "tier": "conv_3_gan_ls_EPC2057",
+   "material": "silicon",
+   "spec_um": 638.0,
+   "mesh_um": 638.0,
+   "z0_um": -1158.0,
+   "z1_um": -520.0
+  },
+  {
+   "tier": "conv_2_interlayer_rdl",
+   "material": "rdl_composite",
+   "spec_um": 10.0,
+   "mesh_um": 10.0,
+   "z0_um": -520.0,
+   "z1_um": -510.0
+  },
+  {
+   "tier": "conv_1_inductor_plus_cout",
+   "material": "hvr_effective",
+   "spec_um": 500.0,
+   "mesh_um": 500.0,
+   "z0_um": -510.0,
+   "z1_um": -10.0
+  },
+  {
+   "tier": "conv_0_land_side_attach_rdl",
+   "material": "rdl_composite",
+   "spec_um": 10.0,
+   "mesh_um": 10.0,
+   "z0_um": -10.0,
+   "z1_um": 0.0
+  }
+ ],
+ "n_open": 5,
+ "n_elems": 37254
+}

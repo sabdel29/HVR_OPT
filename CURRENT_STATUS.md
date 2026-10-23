@@ -123,10 +123,20 @@ Source: `results/phase0mr3c/cetol_final_pair.csv`,
   submodel, with response, damage, life and failure kept separate.
 
 **Conditional:**
-* **Every Z1/Z2 number below is geometry-conditional.** Neither architecture is physically
-  closed: Z1 omits its 685 µm high-side device and, with the corrected EPC2057 height
-  (638 µm, not 606 µm), its 1.30 mm substrate is 8 µm short of the 1308 µm minimum; Z2's
-  backside construction, lateral cell extent and board interface are undefined.
+* **Every Z1/Z2 number below is geometry-conditional, and the geometry they were produced
+  on has since been replaced.** The numbers in this document come from the Phase-0M-R3C
+  lineage, in which Z1 omits its 685 µm high-side device entirely (its 1226 µm homogenized
+  band structurally excludes it) and Z2's backside construction, lateral cell extent and
+  board interface are undefined.
+
+  Phase 0N-W has now built both architectures physically — 49 discrete cells, the full
+  1963 µm Z2 and 1973 µm Z1 tier stacks with the high-side device explicitly present, on a
+  source-backed IT-968G board — but **no electrothermal or mechanical result has been run
+  on that geometry**. The live gate table, regenerated from the config and the meshes on
+  every run, is `research/PHYSICAL_Z1_Z2_IMPLEMENTATION_AUDIT.md`; it is the single source
+  for which gates are closed, and no gate count is repeated here precisely because a
+  second copy would go stale. Until that table shows zero OPEN gates and a physical result
+  lineage exists, **every Z1/Z2 number in this document remains the old-geometry result**.
 * Δu_c remained lower for Z2 across all three surrogate backside treatments; whether that
   ordering survives a physically closed backside package **remains to be established**.
 * The **magnitude** of the 18.43 % separation. The solder Norton card is fitted over
