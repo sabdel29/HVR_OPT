@@ -442,13 +442,21 @@ def test_cutout_removes_real_elements_not_relabelled_ones(ann):
     f = ann["elements_full"]
     assert a["board"] < f["board"] and a["bga"] < f["bga"], (
         "the cutout removed nothing -- it is a label, not an opening")
-    assert f["board"] - a["board"] == 1682 and f["bga"] - a["bga"] == 1682
+    # the opening is ~61 % of the 30x30 mm area, so most of the board must go.
+    # An absolute count would over-fit the mesh: adding the cutout edges as grid
+    # breakpoints legitimately changes it.
+    frac = (f["board"] - a["board"]) / f["board"]
+    assert 0.5 < frac < 0.8, f"cutout removed {100*frac:.0f} % of the board elements"
+    assert a["board"] == a["bga"], "board and BGA must be cut identically"
 
 
-def test_cutout_does_not_disturb_the_package_above_it(ann):
+def test_cutout_does_not_remove_anything_above_the_board(ann):
+    """Refining the grid at the cutout edge may change counts above the board, but
+    the cutout must never DELETE package elements -- only board and BGA."""
     f, a = ann["elements_full"], ann["elements_annular"]
     for lay in ("conv", "sub_lower", "die"):
-        assert f[lay] == a[lay], f"{lay} changed when the board was cut"
+        assert a[lay] >= f[lay], (
+            f"{lay} lost elements to the cutout; only board and bga may be cut")
 
 
 def test_default_build_is_still_the_full_slab():
@@ -472,12 +480,81 @@ def test_surviving_bga_count_and_allocation(ann):
         "supply balls cannot carry the 48 V input current")
 
 
-def test_z2_converter_is_still_a_full_area_slab_gate(ann):
-    """GATE: 49 discrete cells are NOT yet implemented. Fails once they are, as a
-    reminder to update this guard and the closure table."""
-    assert ann["elements_annular"]["conv"] == 2450, (
-        "the conv layer changed -- if discrete cells are now implemented, update "
-        "this gate and research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md section 6")
+def test_z2_converter_is_still_a_full_area_slab_gate():
+    """GATE: 49 discrete cells are NOT yet implemented, and the config says so."""
+    import yaml
+    c = yaml.safe_load((R / "configs/phase0nt/z2_2p4mm_cutout.yaml").read_text())
+    assert c["converter"]["implemented"] is False, (
+        "the config claims discrete cells are implemented -- verify it in the mesh "
+        "and update this gate plus the closure table")
+
+
+def test_physical_build_actually_uses_a_2p4mm_board():
+    """Commit 30f717b called a 1600 um board '2.4 mm'. This makes it checkable."""
+    import production_et as PE
+    m, _mats, _st, _t = PE.build_global("ARCH_Z2_BACKSIDE", 0.30,
+                                        board_case="fr4_2p4mm", cutout_mm=23.36)
+    L = m.layer("board")
+    assert (L.z1 - L.z0) * 1e3 == pytest.approx(2400.0, abs=1e-6), (
+        f"physical build has {(L.z1-L.z0)*1e3:.0f} um of FR-4, not 2400")
+    m16, _a, _b, _c = PE.build_global("ARCH_Z2_BACKSIDE", 0.30)
+    L16 = m16.layer("board")
+    assert (L16.z1 - L16.z0) * 1e3 == pytest.approx(1600.0), (
+        "the historical default board drifted off fr4_1p6mm")
+    m32, _a, _b, _c = PE.build_global("ARCH_Z2_BACKSIDE", 0.30,
+                                      board_case="fr4_3p2mm", cutout_mm=23.36)
+    assert (m32.layer("board").z1 - m32.layer("board").z0) * 1e3 == pytest.approx(3200.0)
+
+
+def test_cutout_boundary_is_mesh_conforming():
+    """Edges must be grid breakpoints; no board/BGA element may straddle them."""
+    import numpy as np, production_et as PE
+    CUT = 23.36
+    h = CUT / 2
+    m, _mats, _st, _t = PE.build_global("ARCH_Z2_BACKSIDE", 0.30,
+                                        board_case="fr4_2p4mm", cutout_mm=CUT)
+    assert np.any(np.isclose(m.xs, h)) and np.any(np.isclose(m.xs, -h)), (
+        f"+/-{h} mm are not breakpoints in xs")
+    assert np.any(np.isclose(m.ys, h)) and np.any(np.isclose(m.ys, -h))
+    straddle = 0
+    for e, lay in zip(m.elems, m.elem_layer):
+        if lay not in ("board", "bga"):
+            continue
+        xs, ys = m.nodes[e - 1, 0], m.nodes[e - 1, 1]
+        inside_x = xs.min() < h - 1e-9 and xs.max() > -h + 1e-9
+        inside_y = ys.min() < h - 1e-9 and ys.max() > -h + 1e-9
+        if inside_x and inside_y:
+            straddle += 1
+    assert straddle == 0, f"{straddle} board/BGA elements straddle the cutout boundary"
+
+
+def test_bga_lattice_is_centred_and_allocation_symmetric(ann):
+    """The lattice ran -14.6..+14.2 before, so no symmetric allocation existed."""
+    for rail in ("supply_first_moment_mm", "return_first_moment_mm"):
+        mx, my = ann[rail]
+        assert abs(mx) < 1e-6 and abs(my) < 1e-6, (
+            f"{rail} = ({mx}, {my}); each rail must be mirror-symmetric")
+    for k in ("per_side_supply", "per_side_return"):
+        sides = ann[k]
+        assert set(sides) == {"N", "S", "E", "W"}, f"{k} misses a side: {sides}"
+        assert len(set(sides.values())) == 1, f"{k} is uneven across sides: {sides}"
+
+
+def test_z2_physical_config_forbids_the_embedded_cell_proxy():
+    import yaml
+    c = yaml.safe_load((R / "configs/phase0nt/z2_2p4mm_cutout.yaml").read_text())
+    tot = c["converter"]["with_land_side_rdl_um"]
+    assert tot == pytest.approx(1963.0)
+    assert c["converter"]["four_tier_um"] == pytest.approx(1953.0)
+    for forbidden in (1226.0, 1258.0):
+        assert tot != forbidden, (
+            f"the physical Z2 config uses {forbidden} um -- that is the Z1 "
+            f"embedded-cell proxy and excludes the high-side device")
+    names = [t["name"] for t in c["converter"]["tiers_from_substrate_downward"]]
+    assert names[-1] == "gan_hs_EPC2014C", "the high side must be the deepest tier"
+    assert names[1] == "inductor_plus_cout", "the inductor must stay nearest the POL"
+    assert sum(t["um"] for t in c["converter"]["tiers_from_substrate_downward"]) == \
+        pytest.approx(1963.0)
 
 
 # ============================================== PCB THICKNESS / BGA / LATERAL

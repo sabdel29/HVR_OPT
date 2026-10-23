@@ -218,6 +218,12 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
     # ---- in-plane grid conforming to every material boundary -----------------
     xb = [-Lx / 2, Lx / 2, -Dx / 2, Dx / 2]
     yb = [-Ly / 2, Ly / 2, -Dy / 2, Dy / 2]
+    if cutout_mm:
+        # PHASE 0N-T: the cutout edges become GRID BREAKPOINTS, so the opening
+        # boundary coincides with element faces. Centroid deletion alone would
+        # leave elements straddling the edge.
+        xb += [-cutout_mm / 2, cutout_mm / 2]
+        yb += [-cutout_mm / 2, cutout_mm / 2]
     for t in tiles:
         xb += [t.x0, t.x1]
         yb += [t.y0, t.y1]

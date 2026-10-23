@@ -83,7 +83,9 @@ def converter_layer(arch: str, m) -> str:
 
 
 def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
-                 z4_variant: str = "Z4_STACKED"):
+                 z4_variant: str = "Z4_STACKED",
+                 board_case: str | None = None,
+                 cutout_mm: float | None = None):
     """The Phase-0I global mesh for one architecture, with its materials and tiles.
 
     Extracted so the layer set a given architecture actually gets can be inspected
@@ -94,7 +96,13 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
     deposited into the `interface` layer.
     """
     doe = load_doe() if doe is None else doe
-    st, extra, _t_tile = ZG.stack_for(arch, h_sub_mm)
+    # PHASE 0N-T. board_case is an EXPLICIT parameter. Default None keeps the
+    # historical fr4_1p6mm so results/phase0mr3c reproduces; the physical package
+    # builds pass fr4_2p4mm / fr4_3p2mm. Commit 30f717b described an annular mesh
+    # as "2.4 mm" while it still contained a 1600 um board -- this parameter is
+    # what makes the claim checkable.
+    board_case = board_case or os.environ.get("PHASE0NT_BOARD") or "fr4_1p6mm"
+    st, extra, _t_tile = ZG.stack_for(arch, h_sub_mm, board_case=board_case)
     mid = ZG.mid_layers(arch, os.environ.get("PHASE0MR2_Z4_VARIANT", z4_variant))
     side = math.sqrt(HVR_AREA_MM2 / N_VR)
     xy = kw1.tiles_for("uniform", side, st, doe, N_VR)
@@ -110,8 +118,10 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
     # PHASE 0N-T: opt-in annular PCB. PHASE0NT_CUTOUT_MM creates a true through-opening
     # in the board and BGA layers -- elements inside it are never created. Unset
     # reproduces the Phase-0M-R3C full-slab board exactly.
-    cut = os.environ.get("PHASE0NT_CUTOUT_MM")
-    cut = float(cut) if cut else None
+    if cutout_mm is None:
+        _c = os.environ.get("PHASE0NT_CUTOUT_MM")
+        cutout_mm = float(_c) if _c else None
+    cut = cutout_mm
     m = build(tiles, st, h_sub_mm, h_xy=h_xy, z_scale=1.4, support_layer=False,
               extra_bottom_layers=extra, extra_mid_layers=mid,
               tile_band_is_converter=(ZG.CONV_PLACE.get(arch) == "in"),
