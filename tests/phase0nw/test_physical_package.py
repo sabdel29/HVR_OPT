@@ -135,12 +135,165 @@ def test_high_side_device_is_present_in_the_tier_list(cfg):
 
 
 def test_converter_gate_is_honest_about_the_mesh(cfg):
-    """implemented: true may only be set once the mesh actually contains the tiers."""
-    lay = measure_layers(build_physical_package(cfg)[0])
-    meshed = lay.get("conv", {}).get("t_um")
+    """implemented: true may only stand while the mesh actually carries the tiers.
+
+    The earlier form of this guard read a layer called "conv". Once the slab was replaced
+    the lookup returned None, which compared unequal to 1963 and passed for the wrong
+    reason -- a guard that cannot fail is not a guard. It now measures the tiers.
+    """
+    import z2_converter as _Z2C
+    m = build_physical_package(cfg)[0]
+    total = sum(r["mesh_um"] or 0.0 for r in _Z2C.tier_report(cfg, m))
     if cfg.converter_implemented:
-        assert meshed == pytest.approx(cfg.conv_total_um, abs=1.0), (
-            f"config claims implemented but the mesh has a {meshed:.0f} um converter")
+        assert total == pytest.approx(cfg.conv_total_um, abs=1e-6), (
+            f"config claims implemented but the mesh totals {total:.1f} um")
     else:
-        assert meshed != pytest.approx(cfg.conv_total_um, abs=1.0), (
+        assert total != pytest.approx(cfg.conv_total_um, abs=1e-6), (
             "the mesh now matches the config -- flip converter.implemented to true")
+
+
+def test_material_mapping_is_declared_with_status(cfg):
+    """The geometry gate must not be read as a material claim."""
+    import yaml as _y
+    c = _y.safe_load(CFG.read_text())
+    mm = c["converter"]["material_mapping"]
+    assert mm["flying_caps"]["status"] == "OPEN", (
+        "the MLCC tier has no sourced card; it must stay OPEN")
+    assert mm["gan_hs_and_ls"]["status"] == "BOUNDED"
+    assert "NOT implemented" in c["converter"].get("implemented_note", "") or any(
+        "material fidelity" in g for g in c["open_gates"]), (
+        "per-tier material fidelity must remain an open gate")
+
+
+def test_out_of_cell_is_declared_with_both_cases(cfg):
+    import yaml as _y
+    o = _y.safe_load(CFG.read_text())["out_of_cell"]
+    assert set(o["cases"]) == {"F1_encapsulated", "F2_void"}
+    assert o["primary"] == "F1_encapsulated"
+    assert o["bracket_required"] is True
+    # the governing fraction is of the OPENING, not of the substrate
+    assert abs(o["fraction_of_opening_pct"] - 100 * (1 - 49 * 5.61 / 23.36 ** 2)) < 0.2
+
+
+# ===================================================== 49-cell converter (brief 13, 14, 15)
+import numpy as np  # noqa: E402
+
+import z2_converter as Z2C  # noqa: E402
+
+# The specified Z2 table, in the PCB-backside frame, from
+# research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md section 6.
+SPEC_Z = {
+    "land_side_attach_rdl": (2700.0, 2690.0),
+    "inductor_plus_cout":   (2690.0, 2190.0),
+    "gan_ls_EPC2057":       (2180.0, 1542.0),
+    "flying_caps":          (1532.0, 1432.0),
+    "gan_hs_EPC2014C":      (1422.0, 737.0),
+}
+
+
+@pytest.fixture(scope="module")
+def built(cfg):
+    m, mats, st, tiles = build_physical_package(cfg)
+    return cfg, m, tiles
+
+
+def _pcb_backside(cfg):
+    return -cfg.board_thickness_um - 300.0      # board z0 in the mesh frame
+
+
+def test_full_area_converter_slab_is_gone(built):
+    cfg, m, _ = built
+    assert "conv" not in set(m.elem_layer), (
+        "the full-area 1226 um converter slab is still in the physical mesh")
+
+
+def test_converter_totals_1963um_in_the_mesh(built):
+    cfg, m, _ = built
+    rows = Z2C.tier_report(cfg, m)
+    assert len(rows) == 8
+    for r in rows:
+        assert r["mesh_um"] == pytest.approx(r["spec_um"], abs=1e-6), (
+            f"{r['tier']}: config {r['spec_um']} um, mesh {r['mesh_um']} um")
+    assert sum(r["mesh_um"] for r in rows) == pytest.approx(1963.0, abs=1e-6)
+
+
+@pytest.mark.parametrize("tier,z", sorted(SPEC_Z.items()))
+def test_each_tier_sits_at_its_specified_depth(built, tier, z):
+    """Totalling 1963 um is not enough: the tiers must be in the right ORDER.
+
+    An inverted stack still totals 1963 um but puts the high-side device against the
+    substrate and the land-side attach RDL at the bottom of the hole.
+    """
+    cfg, m, _ = built
+    off = _pcb_backside(cfg)
+    r = next(r for r in Z2C.tier_report(cfg, m) if r["tier"].endswith(tier))
+    assert r["z1_um"] - off == pytest.approx(z[0], abs=0.5), f"{tier} top"
+    assert r["z0_um"] - off == pytest.approx(z[1], abs=0.5), f"{tier} bottom"
+
+
+def test_high_side_is_deepest_and_clears_the_pcb_backside(built):
+    cfg, m, _ = built
+    off = _pcb_backside(cfg)
+    rows = Z2C.tier_report(cfg, m)
+    deepest = min(rows, key=lambda r: r["z0_um"])
+    assert "gan_hs" in deepest["tier"], (
+        f"the deepest tier is {deepest['tier']}, not the high-side device")
+    assert deepest["z0_um"] - off == pytest.approx(737.0, abs=0.5)
+
+
+def test_converter_descends_into_the_cutout_not_in_series_below_the_bga(built):
+    """The HVR shares the board's z range; it does not push the board further down."""
+    cfg, m, _ = built
+    lay = measure_layers(m)
+    assert lay["board"]["z0_um"] == pytest.approx(-2700.0, abs=1e-6)
+    assert lay["board"]["z1_um"] == pytest.approx(-300.0, abs=1e-6)
+    assert lay["bga"]["z1_um"] == pytest.approx(0.0, abs=1e-6)
+    conv_bottom = min(r["z0_um"] for r in Z2C.tier_report(cfg, m))
+    assert conv_bottom > lay["board"]["z0_um"], (
+        "the converter extends below the PCB backside")
+    assert conv_bottom < lay["board"]["z1_um"], (
+        "the converter does not reach into the board's z range -- it is in series again")
+
+
+def test_no_converter_medium_outside_a_cell_footprint(built):
+    cfg, m, _ = built
+    names = {t[0] for t in Z2C.converter_layers(cfg)}
+    sel = np.array([l in names for l in m.elem_layer])
+    mat = np.array(m.elem_material)[sel]
+    tile = np.array(m.elem_tile)[sel]
+    stray = sorted(set(mat[(mat != "underfill_homog") & (tile < 0)]))
+    assert not stray, f"converter media outside a cell footprint: {stray}"
+
+
+def test_out_of_cell_region_is_declared_and_present(built):
+    cfg, m, _ = built
+    names = {t[0] for t in Z2C.converter_layers(cfg)}
+    sel = np.array([l in names for l in m.elem_layer])
+    mat = np.array(m.elem_material)[sel]
+    assert (mat == "underfill_homog").any(), "F1 encapsulant is absent from the opening"
+    assert "hvr_effective" not in set(mat[np.array(m.elem_tile)[sel] < 0])
+
+
+def test_void_variant_removes_the_out_of_cell_material(cfg):
+    """F2: 'void' must mean no element, not an air-property relabel."""
+    m_void = build_physical_package(cfg, out_of_cell="F2_void")[0]
+    names = {t[0] for t in Z2C.converter_layers(cfg)}
+    sel = np.array([l in names for l in m_void.elem_layer])
+    assert sel.sum() > 0
+    assert not (np.array(m_void.elem_material)[sel] == "underfill_homog").any()
+    assert m_void.n_elems < build_physical_package(cfg)[0].n_elems
+
+
+def test_overlapping_geometry_is_rejected(cfg):
+    """NEGATIVE: the no-overlap gate must actually fire.
+
+    Two layers sharing a z slab AND a lateral region would interpenetrate. Emitting two
+    coincident elements instead of raising is how a converter could be built through the
+    board without anything going red.
+    """
+    from etm.mesh import build as mesh_build
+    st = build_physical_package(cfg)[2]
+    with pytest.raises(ValueError, match="overlapping geometry"):
+        mesh_build([], st, 0.30, h_xy=6.0,
+                   explicit_bottom_layers=[("a", -0.1, 0.0, "silicon", 1, "all"),
+                                           ("b", -0.1, 0.0, "silicon", 1, "all")])

@@ -564,13 +564,20 @@ def test_surviving_bga_count_and_allocation(ann):
         "supply balls cannot carry the 48 V input current")
 
 
-def test_z2_converter_is_still_a_full_area_slab_gate():
-    """GATE: 49 discrete cells are NOT yet implemented, and the config says so."""
+def test_z2_discrete_cell_gate_is_closed_and_verified_in_the_mesh():
+    """GATE CLOSED in Phase 0N-W. This guard used to assert implemented is False.
+
+    Inverting it is only legitimate because the mesh was checked, not because the flag
+    was flipped: tests/phase0nw measures all eight tiers at their specified depths. The
+    flag and the mesh are cross-checked there, in both directions.
+    """
     import yaml
     c = yaml.safe_load((R / "configs/phase0nt/z2_2p4mm_cutout.yaml").read_text())
-    assert c["converter"]["implemented"] is False, (
-        "the config claims discrete cells are implemented -- verify it in the mesh "
-        "and update this gate plus the closure table")
+    assert c["converter"]["implemented"] is True
+    assert c["converter"]["descends_into_cutout"] is True
+    # the geometry gate must not be read as a material claim
+    assert any("material fidelity" in g for g in c["open_gates"]), (
+        "per-tier material fidelity is still open and must stay listed")
 
 
 def test_physical_build_actually_uses_a_2p4mm_board():

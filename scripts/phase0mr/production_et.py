@@ -85,7 +85,9 @@ def converter_layer(arch: str, m) -> str:
 def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
                  z4_variant: str = "Z4_STACKED",
                  board_case: str | None = None,
-                 cutout_mm: float | None = None):
+                 cutout_mm: float | None = None,
+                 physical_converter=None,
+                 physical_z1=None):
     """The Phase-0I global mesh for one architecture, with its materials and tiles.
 
     Extracted so the layer set a given architecture actually gets can be inspected
@@ -103,7 +105,16 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
     # as "2.4 mm" while it still contained a 1600 um board -- this parameter is
     # what makes the claim checkable.
     board_case = board_case or os.environ.get("PHASE0NT_BOARD") or "fr4_1p6mm"
-    st, extra, _t_tile = ZG.stack_for(arch, h_sub_mm, board_case=board_case)
+    # PHASE 0N-W. The physical Z1 is NOT the embedded proxy. Its converter is nine
+    # explicit tiers on a 300 um substrate, so the tile band collapses to a thin RDL
+    # band exactly as it does for Z2 -- otherwise stack_for would hand back the 1226 um
+    # `hvr_effective` band whose height is what excludes the high-side device.
+    if physical_z1 is not None:
+        import zglobal as _ZG
+        st = _ZG.BRD.stack_with_board(_ZG.load_stack(), 0.020, board_case)
+        extra, _t_tile = _ZG.BRD.bottom_layers(board_case), 0.020
+    else:
+        st, extra, _t_tile = ZG.stack_for(arch, h_sub_mm, board_case=board_case)
     mid = ZG.mid_layers(arch, os.environ.get("PHASE0MR2_Z4_VARIANT", z4_variant))
     side = math.sqrt(HVR_AREA_MM2 / N_VR)
     xy = kw1.tiles_for("uniform", side, st, doe, N_VR)
@@ -123,10 +134,28 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
         _c = os.environ.get("PHASE0NT_CUTOUT_MM")
         cutout_mm = float(_c) if _c else None
     cut = cutout_mm
+    # PHASE 0N-W. The physical path replaces the full-area `conv` slab with the eight
+    # specified tiers, present only inside the 49 cell footprints. Passing None keeps
+    # the historical slab, so results/phase0mr3c reproduces byte for byte.
+    conv_names, explicit_bottom = ("conv",), None
+    if physical_z1 is not None:
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "phase0nw"))
+        import z1_package as Z1P
+        mid, conv_names, conv_fill = Z1P.install(st, physical_z1)
+    if physical_converter is not None:
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "phase0nw"))
+        import z2_converter as Z2C
+        cfg_phys, out_of_cell = physical_converter
+        extra, explicit_bottom, conv_names, conv_fill = Z2C.install(
+            cfg_phys, st, extra, out_of_cell)
     m = build(tiles, st, h_sub_mm, h_xy=h_xy, z_scale=1.4, support_layer=False,
-              extra_bottom_layers=extra, extra_mid_layers=mid,
-              tile_band_is_converter=(ZG.CONV_PLACE.get(arch) == "in"),
-              conv_fill_material=conv_fill, cutout_mm=cut)
+              extra_bottom_layers=extra, explicit_bottom_layers=explicit_bottom,
+              extra_mid_layers=mid,
+              tile_band_is_converter=(physical_z1 is None
+                                      and ZG.CONV_PLACE.get(arch) == "in"),
+              conv_fill_material=conv_fill, conv_layer_names=conv_names, cutout_mm=cut)
     return m, build_materials(st), st, tiles
 
 

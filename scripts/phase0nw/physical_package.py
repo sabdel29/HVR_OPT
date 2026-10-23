@@ -173,7 +173,9 @@ def load_physical_package_config(path) -> PhysicalPackage:
     )
 
 
-def build_physical_package(cfg: PhysicalPackage, h_xy: float = 1.1):
+def build_physical_package(cfg: PhysicalPackage, h_xy: float = 1.1,
+                           discrete_cells: bool = True,
+                           out_of_cell: str = "F1_encapsulated"):
     """Mesh a physical package. Every geometric argument comes from `cfg`.
 
     This is the only supported entry point for the physical path: calling
@@ -183,8 +185,12 @@ def build_physical_package(cfg: PhysicalPackage, h_xy: float = 1.1):
     import production_et as PE
     if cfg.board_case in FORBIDDEN_BOARD_CASES:
         raise PhysicalConfigError(f"refusing to build on legacy board {cfg.board_case}")
+    if not discrete_cells:
+        return PE.build_global(cfg.architecture, cfg.substrate_mm, h_xy=h_xy,
+                               board_case=cfg.board_case, cutout_mm=cfg.cutout_mm)
     return PE.build_global(cfg.architecture, cfg.substrate_mm, h_xy=h_xy,
-                           board_case=cfg.board_case, cutout_mm=cfg.cutout_mm)
+                           board_case=cfg.board_case, cutout_mm=cfg.cutout_mm,
+                           physical_converter=(cfg, out_of_cell))
 
 
 def measure_layers(mesh) -> dict:
@@ -212,3 +218,20 @@ if __name__ == "__main__":
         if k in lay:
             print(f"    {k:10s} {lay[k]['t_um']:8.1f} um  "
                   f"[{lay[k]['z0_um']:+.1f}, {lay[k]['z1_um']:+.1f}]")
+
+
+def build_physical_z1(cfg: PhysicalPackage, h_xy: float = 1.1,
+                      out_of_cell: str = "F1_encapsulated"):
+    """Mesh the COMPLETE physical Z1: 300 um substrate, nine explicit converter tiers on
+    49 cell footprints, microbumps, die, TIM -- on the same board as Z2.
+
+    The historical Z1 is a 1.30 mm substrate with a 1226 um homogenized band and no
+    high-side device in the geometry at all. Comparing a completed Z2 against that is the
+    comparison the brief forbids.
+    """
+    import production_et as PE
+    if cfg.board_case in FORBIDDEN_BOARD_CASES:
+        raise PhysicalConfigError(f"refusing to build on legacy board {cfg.board_case}")
+    return PE.build_global("ARCH_Z1_EMBEDDED", cfg.substrate_mm, h_xy=h_xy,
+                           board_case=cfg.board_case, cutout_mm=None,
+                           physical_z1=out_of_cell)

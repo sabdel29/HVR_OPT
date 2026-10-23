@@ -38,6 +38,13 @@ class Layer:
     # material overwritten with `tsv_homog` inside every tile. The PCB was being modelled as
     # a copper/silicon composite. The two questions are now separate fields.
     tsv_host: bool = False  # does the TSV field pass through this layer?
+    # PHASE 0N-W. Where a layer exists IN PLANE relative to the PCB cutout. The Z2
+    # converter descends INTO the opening, so it shares a z range with the board and the
+    # BGA and is separated from them only laterally. A purely sequential bottom stack
+    # cannot express that: it puts the converter in series BELOW the BGA, which is the
+    # "HVR in series above the BGA" defect recorded in
+    # research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md.
+    region: str = "all"     # 'all' | 'inside_cutout' | 'outside_cutout'
 
 
 @dataclass
@@ -150,9 +157,11 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
           tsv_discrete_pitch: float | None = None,
           interface_nz: int | None = None,
           extra_bottom_layers: list | None = None,
+          explicit_bottom_layers: list | None = None,
           extra_mid_layers: list | None = None,
           tile_band_is_converter: bool = True,
           conv_fill_material: str | None = None,
+          conv_layer_names: tuple = ("conv",),
           cutout_mm: float | None = None,
           cutout_layers: tuple = ("board", "bga")) -> Mesh:
     """Build the mesh.
@@ -193,7 +202,13 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
             # the substrate. No TSV passes through them (DEFECT #55).
             layers.append(Layer(nm, z, z + t, n, mat, "substrate", tsv_host=False))
             z += t
-    elif support_layer:
+    if explicit_bottom_layers:
+        # (name, z0, z1, material, nz, region) with ABSOLUTE z. Used for geometry that
+        # OVERLAPS the sequential stack in z and is separated from it only in plane.
+        for nm, z0, z1, mat, n, reg in explicit_bottom_layers:
+            layers.append(Layer(nm, z0, z1, n, mat, "substrate", tsv_host=False,
+                                region=reg))
+    if support_layer and not extra_bottom_layers:
         t_sup = stack["structural_bc"]["variants"]["BC_B"]["thickness"]["value"]
         layers.append(Layer("support", -t_sup, 0.0, nz(2), "support_foundation",
                             "substrate", tsv_host=False))
@@ -206,8 +221,14 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
     # z = h_sub; everything above is shifted by their total thickness, so the substrate and
     # everything below it keep their coordinates and the architectures stay comparable.
     z_top = h_sub
-    for nm, t, mat, n in (extra_mid_layers or []):
-        layers.append(Layer(nm, z_top, z_top + t, n, mat, "die"))
+    for ent in (extra_mid_layers or []):
+        # PHASE 0N-W. A 5th field gives the layer's in-plane footprint. ARCH_Z4's power
+        # die spans the die extent, but the physical Z1 converter is 49 DISCRETE CELLS on
+        # the substrate footprint, so it needs 'substrate' to pick up tile indices and
+        # the out-of-cell rule. 4-tuples keep the historical 'die' behaviour exactly.
+        nm, t, mat, n = ent[:4]
+        fp = ent[4] if len(ent) > 4 else "die"
+        layers.append(Layer(nm, z_top, z_top + t, n, mat, fp))
         z_top += t
     layers += [Layer("interface", z_top, z_top + t_if, interface_nz or nz(1),
                      "underfill_homog", "die"),
@@ -272,10 +293,13 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
     yc = 0.5 * (ys[:-1] + ys[1:])
     zc = 0.5 * (zs[:-1] + zs[1:])
 
-    layer_of_k = []
+    # PHASE 0N-W. Layers may now OVERLAP in z (the Z2 converter descends into the PCB
+    # cutout, sharing the board's z range and separated from it only in plane), so each
+    # z slab can be claimed by several layers. They must be laterally disjoint; the
+    # occupancy guard below enforces that rather than trusting it.
+    layers_of_k = []
     for k, zz in enumerate(zc):
-        hit = next((L for L in layers if L.z0 - 1e-9 < zz < L.z1 + 1e-9), None)
-        layer_of_k.append(hit)
+        layers_of_k.append([L for L in layers if L.z0 - 1e-9 < zz < L.z1 + 1e-9])
 
     in_die_x = (np.abs(xc) <= Dx / 2 + 1e-9)
     in_die_y = (np.abs(yc) <= Dy / 2 + 1e-9)
@@ -293,9 +317,9 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
         tile_idx[np.ix_(mx, my)] = ti
 
     elems, emat, elay, etile = [], [], [], []
-    for k, L in enumerate(layer_of_k):
-        if L is None:
-            continue
+    occupied: dict = {}
+    for k, Ls in enumerate(layers_of_k):
+      for L in Ls:
         in_cut = cutout_mm is not None and L.name in cutout_layers
         half = (cutout_mm / 2.0) if cutout_mm else 0.0
         for i in range(len(xc)):
@@ -304,6 +328,11 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
             for j in range(len(yc)):
                 if L.footprint == "die" and not in_die_y[j]:
                     continue
+                if L.region != "all":
+                    inside = (cutout_mm is not None
+                              and abs(xc[i]) < cutout_mm / 2 and abs(yc[j]) < cutout_mm / 2)
+                    if (L.region == "inside_cutout") != inside:
+                        continue
                 if in_cut and abs(xc[i]) < half and abs(yc[j]) < half:
                     # PHASE 0N-T: real PCB through-cutout. The element is never
                     # created, so the opening contains NO solid material. This is
@@ -316,7 +345,14 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
                 # medium. Physically that area is package fill, not converter. When
                 # `conv_fill_material` is given, the out-of-cell area takes that medium
                 # instead. Default None reproduces the frozen model exactly.
-                if conv_fill_material and L.name == "conv" and ti < 0:
+                # PHASE 0N-W. The converter is now EIGHT discrete tiers, not one
+                # band, so the out-of-cell rule applies to every tier in
+                # `conv_layer_names`. "VOID" means the element is never created:
+                # outside a cell footprint there is genuinely no material, which is
+                # a different physical statement from filling it with encapsulant.
+                if conv_fill_material and L.name in conv_layer_names and ti < 0:
+                    if conv_fill_material == "VOID":
+                        continue
                     mat = conv_fill_material
                 if L.footprint == "substrate" and ti >= 0:
                     if L.name == "tile_band" and tile_band_is_converter:
@@ -331,6 +367,16 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
                         mat = "copper" if via_idx[i, j] else "silicon"
                     else:                                 # H0 homogenised block
                         mat = "tsv_homog"
+                # NO-OVERLAP GATE. Two layers sharing a z slab must be laterally
+                # disjoint. If both claim the same cell the geometry is wrong -- the
+                # converter would be interpenetrating the board -- and silently
+                # emitting two coincident elements would hide it.
+                prev = occupied.get((i, j, k))
+                if prev is not None:
+                    raise ValueError(
+                        f"overlapping geometry at element ({i},{j},{k}): layers "
+                        f"'{prev}' and '{L.name}' both occupy it")
+                occupied[(i, j, k)] = L.name
                 elems.append([nid(i, j, k), nid(i + 1, j, k), nid(i + 1, j + 1, k), nid(i, j + 1, k),
                               nid(i, j, k + 1), nid(i + 1, j, k + 1), nid(i + 1, j + 1, k + 1),
                               nid(i, j + 1, k + 1)])
