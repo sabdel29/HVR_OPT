@@ -53,8 +53,11 @@ def homogenize(eta):
     fl = 1.0 - fv
     Ex = fv * E_CU + fl * E_WARP              # Voigt in-plane
     Ey = fv * E_CU + fl * E_FILL
-    Ez_lo = 1.0 / (fv / E_CU + fl / E_LAM_Z_BOUND[1])   # Reuss, OPEN E_lam_z
-    Ez_hi = 1.0 / (fv / E_CU + fl / E_LAM_Z_BOUND[0])
+    # Reuss over the OPEN E_lam_z bracket. A STIFFER laminate gives a STIFFER stack, so
+    # the lower bound must be built from E_LAM_Z_BOUND[0]. Naming these the other way
+    # round is what stored the composite bracket as [upper, lower].
+    Ez_lo = 1.0 / (fv / E_CU + fl / E_LAM_Z_BOUND[0])
+    Ez_hi = 1.0 / (fv / E_CU + fl / E_LAM_Z_BOUND[1])
     ax = (fv * E_CU * CTE_CU + fl * E_WARP * CTE_XY_A[0]) / Ex   # modulus-weighted
     ay = (fv * E_CU * CTE_CU + fl * E_FILL * CTE_XY_A[1]) / Ey
     az = fv * CTE_CU + fl * CTE_Z_A1                              # series, pre-Tg
@@ -99,7 +102,10 @@ _n = next(r for r in rows if abs(r["eta"] - ETA_NOM) < 1e-12)
 
 
 def _mid(b):
-    return 0.5 * (b[0] + b[1])
+    lo, hi = b
+    if lo > hi:
+        raise ValueError(f"bracket {b} is stored [upper, lower]; store [lower, upper]")
+    return 0.5 * (lo + hi)
 
 
 NOMINAL = {

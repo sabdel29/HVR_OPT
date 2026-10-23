@@ -502,7 +502,7 @@ def test_board_cases_reach_the_mesh():
 
 
 def test_mot_and_tg_gate_is_recorded_but_not_yet_evaluated():
-    t = (R / "research" / "PCB_MATERIAL_PROPERTY_AUDIT.md").read_text()
+    t = re.sub(r"\s+", " ", (R / "research" / "PCB_MATERIAL_PROPERTY_AUDIT.md").read_text())
     assert "MOT = 130" in t and "Tg = 175" in t
     assert re.search(r"has not been run", t, re.I), (
         "the audit must state that T_PCB,max has not yet been computed")
@@ -1300,3 +1300,156 @@ def test_yaml_config_is_generated_from_the_same_tensor():
     assert all(y["nominal"][k] == n[k] for k in n), (
         "the YAML nominal block has drifted from the generator's reduction")
     assert "do not hand-edit" in y["nominal"]["note"].lower()
+
+
+# ------------------------------------------------- Phase 0N-V2: claim scope + physical path
+PCBAUDIT = R / "research" / "PCB_MATERIAL_PROPERTY_AUDIT.md"
+LEGACY_BOARDS = ("fr4_2p4mm", "fr4_3p2mm")
+
+
+def _flat(p):
+    """Markdown re-wraps, so a phrase can straddle a newline. Compare on flattened text."""
+    return re.sub(r"\s+", " ", p.read_text())
+
+# Files that constitute the PHYSICAL package path. Historical Phase-0G/0M-R3C scripts are
+# deliberately excluded: they must keep reproducing with the legacy board.
+PHYSICAL_SOURCES = ["configs/phase0nt/z2_2p4mm_cutout.yaml", "scripts/phase0nt_annular_pcb.py"]
+
+
+def _physical_files():
+    out = [R / p for p in PHYSICAL_SOURCES]
+    out += sorted((R / "configs").glob("phase0nw/*.yaml"))
+    out += sorted((R / "scripts").glob("phase0nw*.py"))
+    return [p for p in out if p.exists()]
+
+
+def _legacy_board_hits(text, legacy):
+    """Lines that SELECT a legacy board case, ignoring prose and comments about it."""
+    hits = []
+    for i, line in enumerate(text.splitlines(), 1):
+        code = line.split("#", 1)[0]          # drop trailing/whole-line comments
+        if legacy in code:
+            hits.append(f"{i}: {line.strip()}")
+    return hits
+
+
+@pytest.mark.parametrize("legacy", LEGACY_BOARDS)
+def test_physical_path_never_uses_a_legacy_board_case(legacy):
+    """The unsourced fr4_* cases are reproduction-only and must not reach a physical build."""
+    bad = []
+    for f in _physical_files():
+        bad += [f"{f.relative_to(R)}:{h}" for h in _legacy_board_hits(f.read_text(), legacy)]
+    assert not bad, f"legacy board {legacy} selected on the physical path:\n" + "\n".join(bad)
+
+
+@pytest.mark.parametrize("injected", [
+    'board_case="fr4_2p4mm", cutout_mm=cut)',
+    "  case: fr4_2p4mm",
+])
+def test_legacy_board_guard_negative(injected):
+    """NEGATIVE: a real selection is caught; naming it in a comment or in prose is not."""
+    assert _legacy_board_hits(injected, "fr4_2p4mm"), f"guard went blind to {injected!r}"
+    assert not _legacy_board_hits(
+        "  case: it968g_2p4mm   # the legacy fr4_2p4mm is UNSOURCED and is forbidden",
+        "fr4_2p4mm")
+    assert not _legacy_board_hits("# fr4_2p4mm is kept for reproduction only", "fr4_2p4mm")
+
+
+def test_physical_z2_config_selects_it968g():
+    import yaml
+    c = yaml.safe_load((R / "configs/phase0nt/z2_2p4mm_cutout.yaml").read_text())
+    assert c["board"]["case"] == "it968g_2p4mm"
+    assert c["board"]["thickness_sensitivity_case"] == "it968g_3p2mm"
+    assert c["board"]["eta_sensitivity"] == [0.25, 0.50, 0.75], (
+        "the coverage sweep must stay live; eta = 0.5 is a midpoint, not a measurement")
+    assert c["board"]["model_level"] == "PCB-H0"
+
+
+def test_every_bracket_is_stored_lower_then_upper():
+    import json
+    h = json.loads((R / "research/phase0nv/pcb_homogenization.json").read_text())
+    bad = [(r["eta"], k, r[k]) for r in h["sweep"]
+           for k in ("Ez_MPa_bounds", "k_xy_bounds", "k_z_bounds") if r[k][0] > r[k][1]]
+    n = h["nominal_tensor"]
+    bad += [("nominal", k, n[k]) for k in ("Ez_MPa_bracket", "k_xy_bracket", "k_z_bracket")
+            if n[k][0] > n[k][1]]
+    assert not bad, f"brackets stored [upper, lower]: {bad}"
+
+
+def test_bracket_helper_rejects_reversed_input():
+    """NEGATIVE: the ordering invariant must be enforced in code, not just in the data."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "_h", R / "scripts/phase0nv_pcb_homogenization.py")
+    src = (R / "scripts/phase0nv_pcb_homogenization.py").read_text()
+    assert "store [lower, upper]" in src and "raise ValueError" in src, (
+        "_mid() no longer rejects a reversed bracket")
+
+
+def test_ez_nominal_bracket_is_the_expected_range():
+    import json
+    n = json.loads((R / "research/phase0nv/pcb_homogenization.json").read_text())["nominal_tensor"]
+    lo, hi = (v / 1e3 for v in n["Ez_MPa_bracket"])
+    assert 4.0 < lo < 4.9 and 10.0 < hi < 11.0, f"Ez bracket moved: [{lo:.2f}, {hi:.2f}] GPa"
+    assert abs(n["Ez_MPa"] / 1e3 - 7.49) < 0.05, "the midpoint should not have changed"
+
+
+def _asserted(text, pattern):
+    return [m.group(0) for m in re.finditer(pattern, text, re.I)
+            if not _NEG.search(_clause(text, m.start()))]
+
+
+def test_historical_22gpa_is_not_called_impossible():
+    """A copper-loaded board CAN exceed the bare laminate modulus; the objection is
+    provenance, not plausibility."""
+    t = _flat(PCBAUDIT)
+    assert "not necessarily physically impossible" in t
+    assert "unsupported" in t
+    bad = _asserted(t, r"wrong in direction")
+    assert not bad, "the audit still claims the historical values were wrong in direction"
+
+
+def test_whole_board_values_are_labelled_conditional():
+    for f in (PCBAUDIT, HOMOG):
+        t = _flat(f).lower()
+        assert "conditional derived estimate" in t, (
+            f"{f.name} does not label the whole-board numbers as conditional on eta")
+    t = PCBAUDIT.read_text()
+    for s in ("SOURCE_BACKED", "DERIVED", "BOUNDED"):
+        assert s in t
+    assert "not measured board properties" in _flat(PCBAUDIT)
+
+
+def test_kxy_is_labelled_a_nominal_h0_estimate_not_a_board_property():
+    t = _flat(HOMOG)
+    assert re.search(r"nominal PCB-H0 homogenized estimate at \d+ % areal copper", t), (
+        "k_xy must be labelled a nominal H0 estimate at a stated coverage")
+    assert 'not "the IT-968G board conductivity"' in t
+    assert _flat(HOMOG).count("| 0.25 |") >= 2, "k_xy(eta) must be reported across the sweep"
+
+
+def test_model_is_not_described_as_an_orthotropic_board_model():
+    t = _flat(HOMOG)
+    assert "thermally orthotropic, mechanically isotropic reduced model" in t
+    for c in ("E_x ≠ E_y", "alpha_x", "alpha_y"):
+        assert c in t, f"the discarded in-plane anisotropy {c} must be recorded"
+
+
+def test_shear_estimate_is_only_a_scaling_argument():
+    t = _flat(HOMOG)
+    assert "scaling argument, not a validated uncertainty bound" in t
+    assert "not an error bar" in t
+    bad = _asserted(t, r"mechanical uncertainty is\s*~?\s*10\s*%")
+    assert not bad, "the shear scaling is being presented as a formal uncertainty"
+
+
+@pytest.mark.parametrize("injected", [
+    "The mechanical uncertainty is ~10% from transverse shear.",
+    "Transverse shear gives a mechanical uncertainty is 10 % error bar.",
+])
+def test_shear_scaling_guard_negative(injected):
+    assert _asserted(injected, r"mechanical uncertainty is\s*~?\s*10\s*%"), (
+        f"guard went blind to {injected!r}")
+    assert not _asserted(
+        "This is a scaling argument; the mechanical uncertainty is not 10 %.",
+        r"mechanical uncertainty is\s*~?\s*10\s*%")
