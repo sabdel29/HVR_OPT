@@ -424,6 +424,62 @@ def test_closed_stack_spec_declares_what_is_unimplemented():
         assert gate in t, f"closure gate '{gate}' dropped from the specification"
 
 
+# ===================================================== ANNULAR PCB (0N-T)
+ANNJ = R / "research" / "phase0nt" / "annular_pcb.json"
+
+
+@pytest.fixture(scope="module")
+def ann():
+    assert ANNJ.exists(), "run scripts/phase0nt_annular_pcb.py first"
+    return json.loads(ANNJ.read_text())
+
+
+def test_cutout_removes_real_elements_not_relabelled_ones(ann):
+    """A true through-opening: no board or BGA element may exist inside it."""
+    a = ann["elements_annular"]
+    assert a["board_inside_cutout"] == 0, "PCB elements remain inside the cutout"
+    assert a["bga_inside_cutout"] == 0, "BGA elements remain inside the cutout"
+    f = ann["elements_full"]
+    assert a["board"] < f["board"] and a["bga"] < f["bga"], (
+        "the cutout removed nothing -- it is a label, not an opening")
+    assert f["board"] - a["board"] == 1682 and f["bga"] - a["bga"] == 1682
+
+
+def test_cutout_does_not_disturb_the_package_above_it(ann):
+    f, a = ann["elements_full"], ann["elements_annular"]
+    for lay in ("conv", "sub_lower", "die"):
+        assert f[lay] == a[lay], f"{lay} changed when the board was cut"
+
+
+def test_default_build_is_still_the_full_slab():
+    """The frozen board must survive untouched when the env var is unset."""
+    import os, production_et as PE
+    assert "PHASE0NT_CUTOUT_MM" not in os.environ
+    m, _mats, _st, _t = PE.build_global("ARCH_Z2_BACKSIDE", 0.30)
+    n_board = sum(1 for l in m.elem_layer if l == "board")
+    assert n_board == 2450, f"frozen full-slab board drifted to {n_board} elements"
+
+
+def test_surviving_bga_count_and_allocation(ann):
+    assert ann["bga_sites_full"] == 1369
+    assert ann["bga_sites_surviving"] == 528
+    assert ann["bga_sites_removed"] == 841
+    for xy in ann["supply_xy_mm"] + ann["return_xy_mm"]:
+        assert max(abs(xy[0]), abs(xy[1])) >= ann["cutout_mm"] / 2, (
+            f"ball at {xy} lies inside the cutout")
+    assert ann["n_supply_balls"] == 16 and ann["n_return_balls"] == 16
+    assert ann["n_supply_balls"] * ann["i_per_ball_a"] >= ann["i_in_a"], (
+        "supply balls cannot carry the 48 V input current")
+
+
+def test_z2_converter_is_still_a_full_area_slab_gate(ann):
+    """GATE: 49 discrete cells are NOT yet implemented. Fails once they are, as a
+    reminder to update this guard and the closure table."""
+    assert ann["elements_annular"]["conv"] == 2450, (
+        "the conv layer changed -- if discrete cells are now implemented, update "
+        "this gate and research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md section 6")
+
+
 # ============================================== PCB THICKNESS / BGA / LATERAL
 PCBJ = R / "research" / "phase0ns" / "pcb_thickness_audit.json"
 LATJ = R / "research" / "phase0ns" / "lateral_rdl_loss.json"

@@ -107,10 +107,15 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
     # PHASE 0N. Opt-in correction of the backside converter's lateral extent. Unset
     # reproduces the frozen Phase-0M-R3C geometry byte for byte.
     conv_fill = os.environ.get("PHASE0N_Z2_CONV_FILL") or None
+    # PHASE 0N-T: opt-in annular PCB. PHASE0NT_CUTOUT_MM creates a true through-opening
+    # in the board and BGA layers -- elements inside it are never created. Unset
+    # reproduces the Phase-0M-R3C full-slab board exactly.
+    cut = os.environ.get("PHASE0NT_CUTOUT_MM")
+    cut = float(cut) if cut else None
     m = build(tiles, st, h_sub_mm, h_xy=h_xy, z_scale=1.4, support_layer=False,
               extra_bottom_layers=extra, extra_mid_layers=mid,
               tile_band_is_converter=(ZG.CONV_PLACE.get(arch) == "in"),
-              conv_fill_material=conv_fill)
+              conv_fill_material=conv_fill, cutout_mm=cut)
     return m, build_materials(st), st, tiles
 
 

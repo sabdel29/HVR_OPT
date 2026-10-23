@@ -152,7 +152,9 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
           extra_bottom_layers: list | None = None,
           extra_mid_layers: list | None = None,
           tile_band_is_converter: bool = True,
-          conv_fill_material: str | None = None) -> Mesh:
+          conv_fill_material: str | None = None,
+          cutout_mm: float | None = None,
+          cutout_layers: tuple = ("board", "bga")) -> Mesh:
     """Build the mesh.
 
     `h_xy`    in-plane element size at material boundaries (mm)
@@ -288,11 +290,18 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
     for k, L in enumerate(layer_of_k):
         if L is None:
             continue
+        in_cut = cutout_mm is not None and L.name in cutout_layers
+        half = (cutout_mm / 2.0) if cutout_mm else 0.0
         for i in range(len(xc)):
             if L.footprint == "die" and not in_die_x[i]:
                 continue
             for j in range(len(yc)):
                 if L.footprint == "die" and not in_die_y[j]:
+                    continue
+                if in_cut and abs(xc[i]) < half and abs(yc[j]) < half:
+                    # PHASE 0N-T: real PCB through-cutout. The element is never
+                    # created, so the opening contains NO solid material. This is
+                    # not an air-property relabel of FR-4.
                     continue
                 ti = tile_idx[i, j]
                 mat = L.material
