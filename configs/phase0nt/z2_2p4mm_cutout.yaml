@@ -13,7 +13,12 @@ architecture: ARCH_Z2_BACKSIDE
 label: Z2-2.4mm-CUTOUT
 
 board:
-  case: fr4_2p4mm
+  case: it968g_2p4mm           # PHASE 0N-V. The legacy fr4_2p4mm is UNSOURCED and is
+                               # forbidden on any physical path; a guard enforces it.
+  thickness_sensitivity_case: it968g_3p2mm
+  model_level: PCB-H0          # single homogenized orthotropic board; H1 validates it
+  eta_nominal: 0.50            # conditional: whole-board values are estimates at this
+  eta_sensitivity: [0.25, 0.50, 0.75]
   thickness_um: 2400.0
   tolerance_pct: 10.0
   status: VENDOR_EVIDENCE
@@ -21,10 +26,11 @@ board:
     18-layer server/HPC PCB offered at 2.4 mm +-10 % (ugpcb); within Schweizer standard
     multilayer 0.6-3.2 mm; PCBWay rigid list. NOT peer-reviewed.
   note: >-
-    The historical default fr4_1p6mm is preserved elsewhere so results/phase0mr3c
-    reproduces. Commit 30f717b described an annular mesh as "2.4 mm" while it still
-    contained a 1600 um board; board_case is now an explicit parameter so the claim is
-    checkable.
+    The historical fr4_* cases are preserved for reproduction only (results/phase0mr3c
+    runs on fr4_1p6mm). Commit 30f717b described an annular mesh as "2.4 mm" while it
+    still contained a 1600 um board; board_case is an explicit parameter so the claim is
+    checkable. Board-level E/CTE/k are DERIVED estimates conditional on eta, not
+    measured board properties -- see research/PCB_MATERIAL_PROPERTY_AUDIT.md Sec.5.
 
 substrate:
   thickness_um: 300.0

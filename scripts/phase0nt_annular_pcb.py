@@ -24,7 +24,7 @@ CUT = 23.36          # mm, 1.0 mm sidewall clearance on the 21.36 mm cell-grid b
 
 def counts(cut):
     m, _mats, st, tiles = PE.build_global(
-        "ARCH_Z2_BACKSIDE", 0.30, board_case="fr4_2p4mm", cutout_mm=cut)
+        "ARCH_Z2_BACKSIDE", 0.30, board_case="it968g_2p4mm", cutout_mm=cut)
     cen = m.elem_centroids()
     out = {}
     for lay in ("board", "bga", "conv", "sub_lower", "die"):
@@ -106,7 +106,7 @@ print(f"  return per side {dict(Counter(side_of(*p_) for p_ in ret))}")
 print(f"  supply first moment  ({mx_s:+.4f}, {my_s:+.4f}) mm")
 print(f"  return first moment  ({mx_r:+.4f}, {my_r:+.4f}) mm")
 
-json.dump({"cutout_mm": CUT, "board_case": "fr4_2p4mm",
+json.dump({"cutout_mm": CUT, "board_case": "it968g_2p4mm",
            "board_um": 2400.0, "elements_full": full, "elements_annular": ann,
            "bga_sites_full": len(sites), "bga_sites_surviving": len(surv),
            "bga_sites_removed": len(sites) - len(surv),

@@ -98,7 +98,8 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
     doe = load_doe() if doe is None else doe
     # PHASE 0N-T. board_case is an EXPLICIT parameter. Default None keeps the
     # historical fr4_1p6mm so results/phase0mr3c reproduces; the physical package
-    # builds pass fr4_2p4mm / fr4_3p2mm. Commit 30f717b described an annular mesh
+    # builds pass it968g_2p4mm / it968g_3p2mm (the fr4_* cases are unsourced and are
+    # forbidden on the physical path). Commit 30f717b described an annular mesh
     # as "2.4 mm" while it still contained a 1600 um board -- this parameter is
     # what makes the claim checkable.
     board_case = board_case or os.environ.get("PHASE0NT_BOARD") or "fr4_1p6mm"
