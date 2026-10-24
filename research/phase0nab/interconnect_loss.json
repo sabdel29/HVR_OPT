@@ -1,0 +1,290 @@
+{
+ "Z1": {
+  "arch": "Z1",
+  "T_c": 20.0,
+  "i_hv_a": 23.69358880962203,
+  "i_lv_a": 1000.0,
+  "tsv_rail_v": 48.0,
+  "bga": {
+   "i_a": 23.69358880962203,
+   "T_c": 20.0,
+   "r_supply_ohm": 1.9397008689324743e-05,
+   "r_return_ohm": 1.9397008689324743e-05,
+   "p_supply_w": 0.01088921204279579,
+   "p_return_w": 0.01088921204279579,
+   "p_total_w": 0.02177842408559158,
+   "i_per_ball_a": 1.480849300601377,
+   "j_nominal_A_cm2": 1178.4224308244256,
+   "j_local_A_cm2": null,
+   "j_local_status": "OPEN -- needs this package's own pad/RDL solve; the 22x in 10.1016/j.jmrt.2023.12.187 is that paper's geometry",
+   "status": "RECOMPUTED (equal-sharing lower bound)"
+  },
+  "tsv": {
+   "i_total_a": 23.69358880962203,
+   "i_cell_a": 0.4835426287677966,
+   "cells": 49,
+   "T_c": 20.0,
+   "n_vdd": 722,
+   "n_gnd": 722,
+   "r_vdd_ohm": 1.0149766411702416e-05,
+   "r_gnd_ohm": 1.0149766411702416e-05,
+   "p_vdd_w": 0.00011628445502369708,
+   "p_gnd_w": 0.00011628445502369708,
+   "p_total_w": 0.00023256891004739416,
+   "transition_term": null,
+   "transition_status": "OPEN -- 10.1145/3698364.3705353 describes DC crowding where current TURNS between landing pad, via and TSV. The two-ended constriction already here is the plane-to-via-mouth convergence; a pad/via-ladder transition would be a DIFFERENT effect. Adding a second factor without establishing they are different would double-count.",
+   "status": "RECOMPUTED"
+  },
+  "microbump": {
+   "i_a": 1000.0,
+   "T_c": 20.0,
+   "cases": {
+    "MB_L": {
+     "n": 100000,
+     "d_mm": 0.05,
+     "r_bulk_one_ohm": 8.658028904199107e-05,
+     "r_spread_one_ohm": 0.00033999999999999997,
+     "r_contact_one_ohm": 0.0,
+     "r_total_ohm": 4.26580289041991e-09,
+     "p_w": 0.0042658028904199105
+    },
+    "MB_H": {
+     "n": 10000,
+     "d_mm": 0.02,
+     "r_bulk_one_ohm": 0.0005411268065124442,
+     "r_spread_one_ohm": 0.00085,
+     "r_contact_one_ohm": 0.0,
+     "r_total_ohm": 1.3911268065124442e-07,
+     "p_w": 0.1391126806512444
+    }
+   },
+   "p_low_w": 0.0042658028904199105,
+   "p_high_w": 0.1391126806512444,
+   "geometry_status": "OPEN -- no microbump field in the physical config",
+   "contact_status": "r_contact = 0 is the IDEAL-CONTACT LOWER BOUND, not a claim of zero; no transferable source was found",
+   "status": "BRACKETED (geometry OPEN)"
+  },
+  "bga_capacity": {
+   "i_in_a": 23.69358880962203,
+   "i_ball_max_a": 1.5,
+   "i_ball_status": "BOUNDED -- conservative engineering assumption, not sourced",
+   "n_supply_required": 16,
+   "n_return_required": 16,
+   "n_supply_present": 16,
+   "n_return_present": 16,
+   "capacity_a": 24.0,
+   "margin_a": 0.30641119037796827,
+   "margin_frac": 0.012767132932415345,
+   "sufficient": true,
+   "sites_surviving": 528,
+   "sites_needed": 32,
+   "fits_in_surviving_sites": true
+  },
+  "terms": {
+   "P_BGA_supply": {
+    "w": 0.01088921204279579,
+    "status": "RECOMPUTED"
+   },
+   "P_BGA_return": {
+    "w": 0.01088921204279579,
+    "status": "RECOMPUTED"
+   },
+   "P_TSV_VDD": {
+    "w": 0.00011628445502369708,
+    "status": "RECOMPUTED"
+   },
+   "P_TSV_GND": {
+    "w": 0.00011628445502369708,
+    "status": "RECOMPUTED"
+   },
+   "P_microbump_supply": {
+    "w": null,
+    "bracket_w": [
+     0.0042658028904199105,
+     0.1391126806512444
+    ],
+    "status": "BRACKETED"
+   },
+   "P_microbump_return": {
+    "w": null,
+    "bracket_w": [
+     0.0042658028904199105,
+     0.1391126806512444
+    ],
+    "status": "BRACKETED"
+   },
+   "P_pkg_RDL_HV_supply": {
+    "w": null,
+    "status": "OPEN"
+   },
+   "P_pkg_RDL_HV_return": {
+    "w": null,
+    "status": "OPEN"
+   },
+   "P_pkg_RDL_LV_supply": {
+    "w": null,
+    "status": "OPEN"
+   },
+   "P_pkg_RDL_LV_return": {
+    "w": null,
+    "status": "OPEN"
+   },
+   "P_intraVR_metal": {
+    "w": null,
+    "status": "OPEN"
+   },
+   "P_intraVR_vertical": {
+    "w": null,
+    "status": "OPEN"
+   }
+  },
+  "p_recomputed_total_w": 0.022010992995638974,
+  "n_recomputed": 4,
+  "n_bracketed": 2,
+  "n_open": 6
+ },
+ "Z2": {
+  "arch": "Z2",
+  "T_c": 20.0,
+  "i_hv_a": 23.742906111475396,
+  "i_lv_a": 1000.0,
+  "tsv_rail_v": 1.0,
+  "bga": {
+   "i_a": 23.742906111475396,
+   "T_c": 20.0,
+   "r_supply_ohm": 1.9397008689324743e-05,
+   "r_return_ohm": 1.9397008689324743e-05,
+   "p_supply_w": 0.01093459017961858,
+   "p_return_w": 0.01093459017961858,
+   "p_total_w": 0.02186918035923716,
+   "i_per_ball_a": 1.4839316319672122,
+   "j_nominal_A_cm2": 1180.875272190025,
+   "j_local_A_cm2": null,
+   "j_local_status": "OPEN -- needs this package's own pad/RDL solve; the 22x in 10.1016/j.jmrt.2023.12.187 is that paper's geometry",
+   "status": "RECOMPUTED (equal-sharing lower bound)"
+  },
+  "tsv": {
+   "i_total_a": 1000.0,
+   "i_cell_a": 20.408163265306122,
+   "cells": 49,
+   "T_c": 20.0,
+   "n_vdd": 722,
+   "n_gnd": 722,
+   "r_vdd_ohm": 1.0149766411702416e-05,
+   "r_gnd_ohm": 1.0149766411702416e-05,
+   "p_vdd_w": 0.20713809003474318,
+   "p_gnd_w": 0.20713809003474318,
+   "p_total_w": 0.41427618006948635,
+   "transition_term": null,
+   "transition_status": "OPEN -- 10.1145/3698364.3705353 describes DC crowding where current TURNS between landing pad, via and TSV. The two-ended constriction already here is the plane-to-via-mouth convergence; a pad/via-ladder transition would be a DIFFERENT effect. Adding a second factor without establishing they are different would double-count.",
+   "status": "RECOMPUTED"
+  },
+  "microbump": {
+   "i_a": 1000.0,
+   "T_c": 20.0,
+   "cases": {
+    "MB_L": {
+     "n": 100000,
+     "d_mm": 0.05,
+     "r_bulk_one_ohm": 8.658028904199107e-05,
+     "r_spread_one_ohm": 0.00033999999999999997,
+     "r_contact_one_ohm": 0.0,
+     "r_total_ohm": 4.26580289041991e-09,
+     "p_w": 0.0042658028904199105
+    },
+    "MB_H": {
+     "n": 10000,
+     "d_mm": 0.02,
+     "r_bulk_one_ohm": 0.0005411268065124442,
+     "r_spread_one_ohm": 0.00085,
+     "r_contact_one_ohm": 0.0,
+     "r_total_ohm": 1.3911268065124442e-07,
+     "p_w": 0.1391126806512444
+    }
+   },
+   "p_low_w": 0.0042658028904199105,
+   "p_high_w": 0.1391126806512444,
+   "geometry_status": "OPEN -- no microbump field in the physical config",
+   "contact_status": "r_contact = 0 is the IDEAL-CONTACT LOWER BOUND, not a claim of zero; no transferable source was found",
+   "status": "BRACKETED (geometry OPEN)"
+  },
+  "bga_capacity": {
+   "i_in_a": 23.742906111475396,
+   "i_ball_max_a": 1.5,
+   "i_ball_status": "BOUNDED -- conservative engineering assumption, not sourced",
+   "n_supply_required": 16,
+   "n_return_required": 16,
+   "n_supply_present": 16,
+   "n_return_present": 16,
+   "capacity_a": 24.0,
+   "margin_a": 0.25709388852460435,
+   "margin_frac": 0.010712245355191849,
+   "sufficient": true,
+   "sites_surviving": 528,
+   "sites_needed": 32,
+   "fits_in_surviving_sites": true
+  },
+  "terms": {
+   "P_BGA_supply": {
+    "w": 0.01093459017961858,
+    "status": "RECOMPUTED"
+   },
+   "P_BGA_return": {
+    "w": 0.01093459017961858,
+    "status": "RECOMPUTED"
+   },
+   "P_TSV_VDD": {
+    "w": 0.20713809003474318,
+    "status": "RECOMPUTED"
+   },
+   "P_TSV_GND": {
+    "w": 0.20713809003474318,
+    "status": "RECOMPUTED"
+   },
+   "P_microbump_supply": {
+    "w": null,
+    "bracket_w": [
+     0.0042658028904199105,
+     0.1391126806512444
+    ],
+    "status": "BRACKETED"
+   },
+   "P_microbump_return": {
+    "w": null,
+    "bracket_w": [
+     0.0042658028904199105,
+     0.1391126806512444
+    ],
+    "status": "BRACKETED"
+   },
+   "P_pkg_RDL_HV_supply": {
+    "w": null,
+    "status": "OPEN"
+   },
+   "P_pkg_RDL_HV_return": {
+    "w": null,
+    "status": "OPEN"
+   },
+   "P_pkg_RDL_LV_supply": {
+    "w": null,
+    "status": "OPEN"
+   },
+   "P_pkg_RDL_LV_return": {
+    "w": null,
+    "status": "OPEN"
+   },
+   "P_intraVR_metal": {
+    "w": null,
+    "status": "OPEN"
+   },
+   "P_intraVR_vertical": {
+    "w": null,
+    "status": "OPEN"
+   }
+  },
+  "p_recomputed_total_w": 0.43614536042872354,
+  "n_recomputed": 4,
+  "n_bracketed": 2,
+  "n_open": 6
+ }
+}
