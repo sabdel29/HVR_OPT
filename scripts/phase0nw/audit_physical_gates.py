@@ -80,6 +80,9 @@ REQUIRED_GATES = {
         "mat.rdl_tensor_transfer_validated",
     ],
     "tsv": ["tsv.density_sensitivity_run", "tsv.fe_copper_representation"],
+    "recompute": ["mat.bga_alloy_provenance", "elec.bga_rho_T_model",
+                  "elec.microbump_geometry_closed", "elec.microbump_series_resistance",
+                  "elec.tsv_transition_audited"],
     "configuration": ["config.z1_yaml_drives_mesh"],
     "literature": ["lit.interconnect_matrix", "lit.bga_current_rule",
                    "lit.microbump_contact_bounded", "lit.tsv_allowable"],
@@ -264,6 +267,39 @@ def gates():
     lit = _json.loads((R / "research/phase0naa/literature_summary.json").read_text())
     ap = lit["by_applicability"]
     op = lit["operating_points"]
+    import interconnect_loss as IL
+    L1, L2 = IL.ledger("Z1"), IL.ledger("Z2")
+    add("mat.bga_alloy_provenance", "Recompute", "BGA solder alloy provenance",
+        "SPECIFIED",
+        "the retrievable abstract of 10.1109/TCPMT.2026.3724907 does NOT state a solder "
+        "alloy, so the model no longer asserts SAC305. The RESISTIVITY is sourced "
+        f"separately: {IL.RHO_SOLDER_20C*1e9:.0f} nOhm.m, {IL.BGA_RHO_STATUS}. "
+        f"Alloy itself: {IL.BGA_ALLOY_STATUS}")
+    add("elec.bga_rho_T_model", "Recompute", "BGA resistivity is temperature dependent",
+        "IMPLEMENTED",
+        f"rho_solder(T) = {IL.RHO_SOLDER_20C*1e9:.0f} nOhm.m x (1 + "
+        f"{IL.ALPHA_SOLDER:.1e}(T-20)); alpha is an ASSUMPTION. Recomputed BGA loss at "
+        f"{L1['T_c']:.0f} C: Z1 {L1['bga']['p_total_w']*1e3:.2f} mW, "
+        f"Z2 {L2['bga']['p_total_w']*1e3:.2f} mW (equal-sharing lower bound)")
+    notrun("elec.microbump_geometry_closed", "Recompute",
+           "microbump field geometry defined",
+           "no microbump field exists in the physical config; diameter, pitch and count "
+           "are all OPEN, so loss is bracketed "
+           f"{L1['microbump']['p_low_w']*1e3:.1f}-{L1['microbump']['p_high_w']*1e3:.0f} mW")
+    add("elec.microbump_series_resistance", "Recompute",
+        "microbump modelled as a series ladder with an explicit contact term",
+        "SPECIFIED",
+        "R = R_bulk + R_constriction + R_contact, with r_contact = 0 labelled the "
+        "IDEAL-CONTACT LOWER BOUND rather than a claim of zero")
+    add("elec.tsv_transition_audited", "Recompute",
+        "TSV landing/transition resistance audited against the existing spreading term",
+        "SPECIFIED",
+        "10.1145/3698364.3705353 describes DC crowding where current TURNS between "
+        "landing pad, via and TSV. The two-ended constriction already modelled is the "
+        "plane-to-via-mouth convergence. They may be different effects; no second "
+        "factor is added until that is established, because adding one would "
+        "double-count. Recomputed TSV loss: Z1 "
+        f"{L1['tsv']['p_total_w']*1e3:.3f} mW, Z2 {L2['tsv']['p_total_w']*1e3:.1f} mW")
     add("lit.interconnect_matrix", "Literature",
         "DOI-backed provenance matrix for interconnect assumptions", "IMPLEMENTED",
         f"16 DOIs resolved via Crossref/OpenAlex: {ap['DIRECT']} DIRECT, "
@@ -271,11 +307,12 @@ def gates():
         f"research/phase0naa/interconnect_literature_matrix.csv")
     add("lit.bga_current_rule", "Literature",
         "1.5 A/ball examined against the literature", "SPECIFIED",
-        f"our BGA runs at {op['Z1']['j_ball_A_cm2']:.0f} A/cm2 average, only 1.95x "
-        f"below the MILDEST accelerated EM condition in 10.1016/j.jmrt.2023.12.187 "
-        f"(2300 A/cm2 at 160 C), and that paper reports ~22x crowding at the UBM "
-        f"contact. 1.5 A/ball is retained as a BOUNDED provisioning rule and is NOT an "
-        f"EM-safe limit; no lifetime claim is made")
+        f"our BGA runs at {op['Z1']['j_nominal_ball_A_cm2']:.0f} A/cm2 NOMINAL, only "
+        f"1.95x below the MILDEST accelerated EM condition in "
+        f"10.1016/j.jmrt.2023.12.187 (2300 A/cm2 at 160 C). That paper also reports "
+        f"~22x crowding at ITS UBM contact; that factor is NOT transferred here and our "
+        f"local J stays OPEN pending a pad/RDL solve of this package. 1.5 A/ball is a "
+        f"BOUNDED provisioning rule, NOT an EM-safe limit; no lifetime claim is made")
     notrun("lit.microbump_contact_bounded", "Literature",
            "microbump contact/UBM/IMC resistance bounded from literature",
            "10.1109/EPTC.2015.7412351 shows microbump resistance RISES as solder "

@@ -190,6 +190,41 @@
    "evidence": "19 declared owners (7 converter-intrinsic + 12 interconnect); every interconnect owner has at least one segment, no segment has two, converter-intrinsic terms are forbidden from owning a conductor, and an unknown owner raises. STRUCTURE only -- 10 Z1 and 10 Z2 segments still have OPEN loss values and 5 carry Phase-0M-R3C references"
   },
   {
+   "id": "mat.bga_alloy_provenance",
+   "area": "Recompute",
+   "gate": "BGA solder alloy provenance",
+   "status": "SPECIFIED",
+   "evidence": "the retrievable abstract of 10.1109/TCPMT.2026.3724907 does NOT state a solder alloy, so the model no longer asserts SAC305. The RESISTIVITY is sourced separately: 130 nOhm.m, SOURCE_BACKED -- June-2026 via scripts/phase0m/interconnect.py. Alloy itself: OPEN -- the design source does not state the alloy"
+  },
+  {
+   "id": "elec.bga_rho_T_model",
+   "area": "Recompute",
+   "gate": "BGA resistivity is temperature dependent",
+   "status": "IMPLEMENTED",
+   "evidence": "rho_solder(T) = 130 nOhm.m x (1 + 4.0e-03(T-20)); alpha is an ASSUMPTION. Recomputed BGA loss at 20 C: Z1 21.78 mW, Z2 21.87 mW (equal-sharing lower bound)"
+  },
+  {
+   "id": "elec.microbump_geometry_closed",
+   "area": "Recompute",
+   "gate": "microbump field geometry defined",
+   "status": "OPEN",
+   "evidence": "no microbump field exists in the physical config; diameter, pitch and count are all OPEN, so loss is bracketed 4.3-139 mW"
+  },
+  {
+   "id": "elec.microbump_series_resistance",
+   "area": "Recompute",
+   "gate": "microbump modelled as a series ladder with an explicit contact term",
+   "status": "SPECIFIED",
+   "evidence": "R = R_bulk + R_constriction + R_contact, with r_contact = 0 labelled the IDEAL-CONTACT LOWER BOUND rather than a claim of zero"
+  },
+  {
+   "id": "elec.tsv_transition_audited",
+   "area": "Recompute",
+   "gate": "TSV landing/transition resistance audited against the existing spreading term",
+   "status": "SPECIFIED",
+   "evidence": "10.1145/3698364.3705353 describes DC crowding where current TURNS between landing pad, via and TSV. The two-ended constriction already modelled is the plane-to-via-mouth convergence. They may be different effects; no second factor is added until that is established, because adding one would double-count. Recomputed TSV loss: Z1 0.233 mW, Z2 414.3 mW"
+  },
+  {
    "id": "lit.interconnect_matrix",
    "area": "Literature",
    "gate": "DOI-backed provenance matrix for interconnect assumptions",
@@ -201,7 +236,7 @@
    "area": "Literature",
    "gate": "1.5 A/ball examined against the literature",
    "status": "SPECIFIED",
-   "evidence": "our BGA runs at 1178 A/cm2 average, only 1.95x below the MILDEST accelerated EM condition in 10.1016/j.jmrt.2023.12.187 (2300 A/cm2 at 160 C), and that paper reports ~22x crowding at the UBM contact. 1.5 A/ball is retained as a BOUNDED provisioning rule and is NOT an EM-safe limit; no lifetime claim is made"
+   "evidence": "our BGA runs at 1178 A/cm2 NOMINAL, only 1.95x below the MILDEST accelerated EM condition in 10.1016/j.jmrt.2023.12.187 (2300 A/cm2 at 160 C). That paper also reports ~22x crowding at ITS UBM contact; that factor is NOT transferred here and our local J stays OPEN pending a pad/RDL solve of this package. 1.5 A/ball is a BOUNDED provisioning rule, NOT an EM-safe limit; no lifetime claim is made"
   },
   {
    "id": "lit.microbump_contact_bounded",
@@ -557,6 +592,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 37,
+ "n_open": 38,
  "n_elems": 38623
 }
