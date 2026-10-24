@@ -37,13 +37,18 @@ ALPHA_CU = 3.9e-3             # 1/K, temperature coefficient of resistivity
 def _lattice(cell_side_mm: float, pitch_mm: float, keepout_mm: float = 0.05):
     """Interleaved VDD/GND sites on a square lattice, centred on the cell.
 
-    Checkerboard interleaving: every VDD via has GND nearest neighbours in x and y. That
-    minimises loop inductance and makes the two fields co-located, so neither rail sees a
-    systematically different thermal or mechanical environment -- which a block-split
-    (VDD on one half, GND on the other) would not give.
+    ONE CONVENTION, USED EVERYWHERE IN THIS MODULE: n sites span (n - 1) gaps, so the
+    largest n at a given pitch is floor(usable / pitch) + 1. An earlier version used
+    n = floor(usable / pitch) here while the integer sweep used (n - 1) gaps, which is
+    two different lattices in one file -- at 60 um that is 37x37 = 1369 sites against
+    38x38 = 1444, and the two would have been quoted interchangeably.
+
+    Checkerboard interleaving: every VDD via has GND nearest neighbours in x and y, so
+    the two fields are co-located and neither rail sees a systematically different
+    thermal or mechanical environment. A block split would not give that.
     """
     usable = cell_side_mm - 2 * keepout_mm
-    n = int(usable // pitch_mm)
+    n = int(usable // pitch_mm) + 1
     if n < 2:
         raise ValueError(f"cell side {cell_side_mm} mm holds no TSV lattice at {pitch_mm} mm")
     off = (n - 1) * pitch_mm / 2.0          # centred, as in the BGA lattice fix
@@ -318,61 +323,93 @@ def z2_rail_report(cfg, i_load_a: float = 1000.0, h_tsv_mm: float = 0.300,
 V_DROP_BUDGET_FRAC = 0.01        # 1 % of the rail voltage across the TSV field
 
 
-def _n_for_lattice(cell_side_mm, pitch_mm):
-    n, vdd, gnd = _lattice(cell_side_mm, pitch_mm)
-    return n, len(vdd), len(gnd)
+KEEPOUT_MM = 0.05
 
 
-def sizing_study(cfg, i_total_a: float = 1000.0, rail_v: float = V_OUT_1,
-                 h_tsv_mm: float = 0.300, T_C: float = 20.0) -> dict:
-    """Three-point TSV field bracket for one rail.
+def lattice_for_n(cell_side_mm: float, n: int, keepout_mm: float = KEEPOUT_MM):
+    """The largest centred pitch that fits an n x n checkerboard inside the cell.
 
-    min_drop     the coarsest lattice still meeting the declared voltage-drop budget
-    max_density  the finest lattice the cell geometry permits
-    mid          between them
-
-    Each point reports the drop it actually achieves, so the budget is auditable.
+    n sites span (n-1) gaps, so p_max = usable / (n - 1). Enumerating n directly is what
+    distinguishes this from the old sparse-pitch search.
     """
+    if n < 2:
+        raise ValueError("a checkerboard needs n >= 2")
+    usable = cell_side_mm - 2 * keepout_mm
+    pitch = usable / (n - 1)
+    n_vdd = (n * n + 1) // 2
+    return pitch, n_vdd, n * n - n_vdd
+
+
+def lattice_sweep(cfg, i_total_a: float, rail_v: float, h_tsv_mm: float = 0.300,
+                  T_C: float = 20.0, n_max: int = 64,
+                  budget_frac: float | None = None) -> dict:
+    """EXACT integer sweep over every feasible square checkerboard.
+
+    WHY THIS REPLACED A SPARSE PITCH SEARCH. The old version tried pitches at
+    60 x {1,2,3,4,6,8,12,16} um and took whichever passed. Those pitches land on
+    n = 37, 19, 13, 9, 6, ... so the search jumped straight from 81 sites (pass) to
+    36 (fail) and reported 81 as "the minimum". The true Z2 minimum is 64: an 8x8 field
+    drops 9.71 mV against the 10 mV budget, while 7x7 drops 12.71 mV and fails. Sampling
+    a sparse grid and calling the first passing point a minimum is not a minimisation.
+    """
+    budget_frac = V_DROP_BUDGET_FRAC if budget_frac is None else budget_frac
     i_cell = i_total_a / cfg.cells
-    budget_v = V_DROP_BUDGET_FRAC * rail_v
-
-    def point(pitch_mm):
-        n, nv, ng = _n_for_lattice(cfg.cell_side_mm, pitch_mm)
+    budget_v = budget_frac * rail_v
+    rows = []
+    for n in range(2, n_max + 1):
+        pitch, nv, ng = lattice_for_n(cfg.cell_side_mm, n)
+        if pitch < P_TSV_MM:
+            # P_TSV_MM (60 um) is the SOURCE_BACKED minimum pitch, Table III. Packing
+            # closer than that is not a denser design, it is an unsourced one.
+            break
         r_v = (field_resistance(nv, h_tsv_mm, D_TSV_MM, T_C)
-               + spreading_resistance(nv, D_TSV_MM, pitch_mm, T_C, ends=2))
+               + spreading_resistance(nv, D_TSV_MM, pitch, T_C, ends=2))
         r_g = (field_resistance(ng, h_tsv_mm, D_TSV_MM, T_C)
-               + spreading_resistance(ng, D_TSV_MM, pitch_mm, T_C, ends=2))
+               + spreading_resistance(ng, D_TSV_MM, pitch, T_C, ends=2))
         r_loop = r_v + r_g
-        return {"pitch_um": pitch_mm * 1e3, "lattice_n": n, "n_vdd": nv, "n_gnd": ng,
-                "n_total": nv + ng, "r_loop_ohm": r_loop,
-                "v_drop_v": i_cell * r_loop,
-                "v_drop_frac_of_rail": i_cell * r_loop / rail_v,
-                "p_loop_w": i_cell ** 2 * r_loop,
-                "meets_budget": i_cell * r_loop <= budget_v}
+        drop = i_cell * r_loop
+        a_via = math.pi * (D_TSV_MM / 2) ** 2
+        rows.append({
+            "n": n, "n_total": n * n, "n_vdd": nv, "n_gnd": ng,
+            "pitch_um": pitch * 1e3,
+            "r_vdd_ohm": r_v, "r_gnd_ohm": r_g, "r_loop_ohm": r_loop,
+            "v_drop_v": drop, "v_drop_frac_of_rail": drop / rail_v,
+            "p_loop_w": i_cell ** 2 * r_loop,
+            "i_per_via_vdd_ma": 1e3 * i_cell / nv,
+            "j_vdd_A_cm2": i_cell / nv / (a_via * 1e-2),
+            "cu_area_fraction": n * n * a_via / cfg.cell_side_mm ** 2,
+            "meets_budget": drop <= budget_v,
+        })
+    passing = [r for r in rows if r["meets_budget"]]
+    return {"rail_v": rail_v, "i_total_a": i_total_a, "i_cell_a": i_cell,
+            "budget_frac": budget_frac, "budget_v": budget_v,
+            "rows": rows,
+            "n_min_checkerboard": passing[0]["n_total"] if passing else None,
+            "n_min_row": passing[0] if passing else None,
+            "n_max_density": rows[-1]["n_total"] if rows else None}
 
-    # coarsest pitch (fewest vias) that still meets the budget
-    candidates = [round(P_TSV_MM * k, 4) for k in (1, 2, 3, 4, 6, 8, 12, 16)]
-    feasible = [p for p in candidates if point(p)["meets_budget"]]
-    p_min = max(feasible) if feasible else P_TSV_MM
-    p_max = P_TSV_MM
-    p_mid = min(candidates, key=lambda p: abs(p - 0.5 * (p_min + p_max)))
 
-    return {
-        "rail_v": rail_v, "i_total_a": i_total_a, "i_cell_a": i_cell,
-        "budget_frac": V_DROP_BUDGET_FRAC, "budget_v": budget_v,
-        "budget_status": "BOUNDED -- declared engineering budget, not a sourced allowable",
-        "current_density_allowable": None,
-        "current_density_note": ("no validated EM/current-density allowable exists for "
-                                 "this via geometry, so none is asserted; the field is "
-                                 "bracketed by voltage drop and geometry instead"),
-        "min_drop": point(p_min), "mid": point(p_mid), "max_density": point(p_max),
-        "adopted": "max_density",
-        "adopted_rationale": ("the mechanical and thermal models need the copper volume "
-                              "fraction to be an upper bound on stiffening and spreading; "
-                              "the ELECTRICAL bracket is reported alongside so the "
-                              "sensitivity is visible. This is a MAXIMUM-DENSITY field, "
-                              "explicitly not a minimum-required one."),
-    }
+def minimum_electrical_pair(cfg, i_total_a: float, rail_v: float,
+                            h_tsv_mm: float = 0.300, T_C: float = 20.0,
+                            budget_frac: float | None = None) -> dict:
+    """The genuine electrical floor: ONE VDD via and ONE return via.
+
+    The checkerboard generator cannot represent fewer than 2x2 = 4 sites, so a reported
+    "minimum of 4" is a property of the GENERATOR, not of the physics. This computes the
+    actual electrical floor so the two are never conflated.
+    """
+    budget_frac = V_DROP_BUDGET_FRAC if budget_frac is None else budget_frac
+    i_cell = i_total_a / cfg.cells
+    pitch = cfg.cell_side_mm - 2 * KEEPOUT_MM          # the two vias sit far apart
+    r = 2 * (field_resistance(1, h_tsv_mm, D_TSV_MM, T_C)
+             + spreading_resistance(1, D_TSV_MM, pitch, T_C, ends=2))
+    drop = i_cell * r
+    return {"n_total": 2, "n_vdd": 1, "n_gnd": 1, "r_loop_ohm": r,
+            "v_drop_v": drop, "v_drop_frac_of_rail": drop / rail_v,
+            "meets_budget": drop <= budget_frac * rail_v,
+            "note": ("one VDD + one return. This is the voltage-drop floor only; it "
+                     "implies no EM, redundancy or symmetry criterion, and none is "
+                     "asserted here.")}
 
 
 # =======================================================================================
@@ -397,6 +434,54 @@ def sizing_study(cfg, i_total_a: float = 1000.0, rail_v: float = V_OUT_1,
 # =======================================================================================
 
 PRIMARY_TSV_COMPARISON = "A_same_field"
+
+
+def sizing_study(cfg, i_total_a: float = 1000.0, rail_v: float = V_OUT_1,
+                 h_tsv_mm: float = 0.300, T_C: float = 20.0) -> dict:
+    """TSV field sizing from an EXACT integer lattice sweep.
+
+    Reports three genuinely different quantities, which the previous version conflated:
+
+      n_min_electrical     the voltage-drop floor: 1 VDD + 1 return. Physics only.
+      n_min_checkerboard   the smallest SYMMETRIC interleaved field that passes -- a
+                           geometry/symmetry choice layered on top of the physics.
+      n_adopted            what the model actually uses, and why.
+
+    For Z1 the two minima are far apart, because voltage drop barely constrains a 48 V
+    rail at ~0.48 A per cell. Reporting "Z1 requires four TSVs per cell" would assert a
+    requirement that no criterion in this model produces: 4 is simply the smallest field
+    the checkerboard generator can represent.
+    """
+    sw = lattice_sweep(cfg, i_total_a, rail_v, h_tsv_mm, T_C)
+    mn = minimum_electrical_pair(cfg, i_total_a, rail_v, h_tsv_mm, T_C)
+    rows = {r["n_total"]: r for r in sw["rows"]}
+    n_min, n_max = sw["n_min_checkerboard"], sw["n_max_density"]
+    mid = min(rows, key=lambda k: abs(k - 0.5 * ((n_min or n_max) + n_max)))
+    return {
+        "rail_v": rail_v, "i_total_a": i_total_a, "i_cell_a": sw["i_cell_a"],
+        "budget_frac": sw["budget_frac"], "budget_v": sw["budget_v"],
+        "budget_status": "BOUNDED -- declared engineering budget, not a sourced allowable",
+        "current_density_allowable": None,
+        "current_density_note": ("no validated EM/current-density allowable exists for "
+                                 "this via geometry, so none is asserted; the field is "
+                                 "bracketed by voltage drop and geometry instead"),
+        "n_min_electrical": mn,
+        "n_min_checkerboard": n_min,
+        "min_drop": rows.get(n_min),
+        "mid": rows[mid],
+        "max_density": rows[n_max],
+        "sweep_rows": sw["rows"],
+        "adopted": "max_density", "n_adopted": n_max,
+        "adopted_rationale": ("the mechanical and thermal models need the copper volume "
+                              "fraction to be an upper bound on stiffening and "
+                              "spreading; the ELECTRICAL bracket is reported alongside "
+                              "so the sensitivity is visible. This is a MAXIMUM-DENSITY "
+                              "field at the SOURCE_BACKED 60 um minimum pitch, "
+                              "explicitly not a minimum-required one."),
+        "symmetry_note": ("the gap between n_min_electrical and n_min_checkerboard is a "
+                          "SYMMETRY/representability choice, not a physical requirement. "
+                          "No EM or redundancy criterion is invented to justify it."),
+    }
 
 
 def z1_sizing_study(cfg, p_loss_w: float | None = None, p_load_w: float | None = None,
@@ -441,3 +526,53 @@ def comparison_studies(cfg, **kw) -> dict:
                        "only, never the primary physics comparison"),
         },
     }
+
+
+# =======================================================================================
+# SECTION D --- BGA POWER-BALL CAPACITY MUST BE RECOMPUTED, NOT FROZEN
+#
+# The annular ledger carries 16 supply + 16 return balls, sized against the eta-based
+# 23.4346 A. At the bounded 1.5 A/ball that is 24.0 A of capacity. The ledger-derived
+# current is 23.6936 A, leaving 1.3 % margin -- so 16+16 is not a property of the
+# package, it is a number that happens to still fit. When the physical loss ledger
+# replaces the 137.29 W placeholder, any increase can invalidate it.
+# =======================================================================================
+
+I_BALL_MAX_A = 1.5          # BOUNDED: conservative engineering assumption, not sourced
+BGA_SITES_SURVIVING = 528
+
+
+def bga_capacity(i_in_a: float, i_ball_max_a: float = I_BALL_MAX_A,
+                 n_supply: int = 16, n_return: int = 16,
+                 sites_surviving: int = BGA_SITES_SURVIVING) -> dict:
+    """Required supply/return ball counts for a given input current.
+
+    N = ceil(I / I_ball_max), per rail. The allocator keeps mirror-symmetric PAIRS, so an
+    odd requirement is rounded up to the next even count -- otherwise the first moments
+    stop being zero and one rail becomes laterally biased.
+    """
+    need = math.ceil(i_in_a / i_ball_max_a)
+    need_sym = need + (need % 2)           # whole mirror-symmetric pairs
+    cap = n_supply * i_ball_max_a
+    return {
+        "i_in_a": i_in_a, "i_ball_max_a": i_ball_max_a,
+        "i_ball_status": "BOUNDED -- conservative engineering assumption, not sourced",
+        "n_supply_required": need_sym, "n_return_required": need_sym,
+        "n_supply_present": n_supply, "n_return_present": n_return,
+        "capacity_a": cap, "margin_a": cap - i_in_a,
+        "margin_frac": (cap - i_in_a) / cap,
+        "sufficient": need_sym <= n_supply and need_sym <= n_return,
+        "sites_surviving": sites_surviving,
+        "sites_needed": 2 * need_sym,
+        "fits_in_surviving_sites": 2 * need_sym <= sites_surviving,
+    }
+
+
+def bga_capacity_for(cfg, p_loss_w: float | None = None,
+                     p_load_w: float | None = None, **kw) -> dict:
+    """BGA capacity against the CURRENT derived from the power ledger."""
+    r = z1_rail_report(cfg, p_loss_w=p_loss_w, p_load_w=p_load_w)
+    out = bga_capacity(r["i_total_a"], **kw)
+    out.update({"placeholder": r["placeholder"], "source": r["source"],
+                "p_input_w": r["p_input_w"]})
+    return out

@@ -271,3 +271,65 @@ def test_a_much_smaller_field_would_still_meet_the_drop_budget(cfg):
     """The adopted field is ~17x the electrically required count, and that is stated."""
     s = TSV.sizing_study(cfg)
     assert s["max_density"]["n_total"] / s["min_drop"]["n_total"] > 5.0
+
+
+# ===================================== brief A, B, D, Q: exact lattice + BGA capacity
+def test_z2_minimum_is_64_not_81(cfg):
+    """An 8x8 field passes the 1 % drop budget; the sparse search never evaluated it."""
+    s = TSV.z2_sizing_study(cfg)
+    assert s["n_min_checkerboard"] == 64, (
+        f"Z2 checkerboard minimum is {s['n_min_checkerboard']}, expected 64")
+    rows = {r["n_total"]: r for r in s["sweep_rows"]}
+    assert rows[64]["meets_budget"] and rows[64]["v_drop_v"] * 1e3 < 10.0
+    assert not rows[49]["meets_budget"], "7x7 must fail the budget"
+    assert rows[49]["v_drop_v"] * 1e3 > 12.0
+
+
+def test_the_lattice_sweep_is_exhaustive_over_n(cfg):
+    """NEGATIVE on the old defect: no integer n may be skipped."""
+    s = TSV.z2_sizing_study(cfg)
+    ns = [r["n"] for r in s["sweep_rows"]]
+    assert ns == list(range(2, max(ns) + 1)), f"gaps in the sweep: {ns}"
+
+
+def test_electrical_and_checkerboard_minima_are_reported_separately(cfg):
+    """'Z1 requires 4 TSVs' asserted a requirement no criterion produces."""
+    s1 = TSV.z1_sizing_study(cfg)
+    e = s1["n_min_electrical"]
+    assert e["n_total"] == 2 and e["meets_budget"], (
+        "one VDD + one return already satisfies Z1's 480 mV budget")
+    assert e["v_drop_v"] * 1e3 < 10.0
+    assert s1["n_min_checkerboard"] == 4
+    assert "SYMMETRY/representability choice" in s1["symmetry_note"]
+    assert "No EM or redundancy criterion is invented" in s1["symmetry_note"]
+
+
+def test_z2_electrical_floor_genuinely_fails(cfg):
+    """The 1+1 floor is not a formality: for Z2 it misses by 30x."""
+    e = TSV.z2_sizing_study(cfg)["n_min_electrical"]
+    assert not e["meets_budget"] and e["v_drop_v"] * 1e3 > 300.0
+
+
+def test_one_lattice_convention_in_the_module(cfg):
+    """n sites span (n-1) gaps, everywhere."""
+    n, vdd, gnd = TSV._lattice(cfg.cell_side_mm, TSV.P_TSV_MM)
+    pitch, nv, ng = TSV.lattice_for_n(cfg.cell_side_mm, n)
+    assert (len(vdd), len(gnd)) == (nv, ng)
+    assert pitch >= TSV.P_TSV_MM * 0.98
+
+
+def test_bga_capacity_is_recomputed_not_frozen(cfg):
+    c = TSV.bga_capacity_for(cfg)
+    assert c["n_supply_required"] == 16 and c["sufficient"]
+    assert 0.0 < c["margin_frac"] < 0.02, "16+16 passes, but only just"
+    worse = TSV.bga_capacity_for(cfg, p_loss_w=TSV.P_LOSS_PLACEHOLDER_W["Z1"] + 20.0)
+    assert not worse["sufficient"], (
+        "+20 W of loss must already break 16+16; a frozen allocation would not notice")
+    assert worse["n_supply_required"] >= 18
+
+
+def test_bga_requirement_stays_mirror_symmetric(cfg):
+    for extra in (0.0, 5.0, 20.0, 60.0):
+        c = TSV.bga_capacity_for(cfg, p_loss_w=TSV.P_LOSS_PLACEHOLDER_W["Z1"] + extra)
+        assert c["n_supply_required"] % 2 == 0, "whole mirror-symmetric pairs only"
+        assert c["fits_in_surviving_sites"]
