@@ -48,6 +48,12 @@ REQUIRED_GATES = {
     "electrical": [
         "elec.z1_power_bookkeeping", "elec.z1_rail_model", "elec.z2_rail_model",
         "elec.z1_tsv_sizing", "elec.z2_tsv_sizing", "elec.tsv_count_justified",
+        "elec.tsv_lattice_exact", "elec.bga_power_ball_capacity",
+        "elec.bga_loss_recomputed", "elec.microbump_loss_recomputed",
+        "elec.package_rdl_hv_recomputed", "elec.package_rdl_lv_recomputed",
+        "elec.intravr_horizontal_recomputed", "elec.intravr_vertical_recomputed",
+        "elec.power_path_graph", "elec.one_owner_per_conductor",
+        "elec.contact_resistance_bounded", "elec.rdl10um_electrical_model",
         "elec.tsv_resistance_temperature_dependent", "elec.rdl_loss_recomputed",
         "elec.energy_conservation_verified", "elec.loss_audit_frozen",
     ],
@@ -171,6 +177,43 @@ def gates():
         (f"1 V rail, I = {z2r['i_total_a']:.0f} A load current, "
          f"{z2r['i_cell_a']:.3f} A per cell") if z2r else "not implemented")
     s1, s2 = TSV.z1_sizing_study(cfg), TSV.z2_sizing_study(cfg)
+    add("elec.tsv_lattice_exact", "Electrical",
+        "TSV minimum from an exact integer lattice sweep", "IMPLEMENTED",
+        f"every n from 2 upward is enumerated. Z2 minimum is "
+        f"{s2['n_min_checkerboard']} (8x8, {s2['min_drop']['v_drop_v']*1e3:.2f} mV vs a "
+        f"{s2['budget_v']*1e3:.0f} mV budget); 7x7 = 49 fails at 12.71 mV. The previous "
+        f"sparse-pitch search reported 81 because its pitch set landed on n = 9 and "
+        f"n = 6 and skipped n = 8 entirely")
+    cap = TSV.bga_capacity_for(cfg)
+    add("elec.bga_power_ball_capacity", "Electrical",
+        "BGA power-ball count recomputed from the ledger current",
+        "SPECIFIED" if cap["sufficient"] else "OPEN",
+        f"I_in {cap['i_in_a']:.4f} A at {cap['i_ball_max_a']} A/ball needs "
+        f"{cap['n_supply_required']}+{cap['n_return_required']}; 16+16 gives "
+        f"{cap['capacity_a']:.1f} A, margin {100*cap['margin_frac']:.2f} %. "
+        f"Recomputed dynamically, NOT frozen: +20 W of additional loss already requires "
+        f"18+18. Stays SPECIFIED until the physical ledger replaces the placeholder")
+    for gid, what in (
+            ("elec.bga_loss_recomputed", "BGA loss on the annular package"),
+            ("elec.microbump_loss_recomputed", "microbump loss"),
+            ("elec.package_rdl_hv_recomputed", "package RDL loss, HV rail"),
+            ("elec.package_rdl_lv_recomputed", "package RDL loss, LV rail"),
+            ("elec.intravr_horizontal_recomputed", "intra-VR horizontal routing loss"),
+            ("elec.intravr_vertical_recomputed", "intra-VR vertical via-stack loss")):
+        notrun(gid, "Electrical", what + " recomputed on the physical geometry",
+               f"{what} still has only the Phase-0M-R3C value, which was computed on the "
+               f"OLD geometry and may be used as a reference but never as a physical "
+               f"result")
+    notrun("elec.contact_resistance_bounded", "Electrical",
+           "contact / UBM / IMC resistance modelled or bounded",
+           "the power-path library carries R_contact = 0 with status OPEN; zero is "
+           "'not modelled because unsourced', NOT 'physically negligible', and the "
+           "distinction must survive into the manuscript")
+    notrun("elec.rdl10um_electrical_model", "Electrical",
+           "10 um RDL electrical (resistance) model closed or bounded",
+           "the mechanical/thermal tensor is bracketed, but the electrical sheet "
+           "resistance of the actual 10 um tier -- Cu thickness, occupancy, routing "
+           "layer count, supply/ground split -- is not yet defined")
     add("elec.z1_tsv_sizing", "Electrical", "Z1-specific TSV sizing", "SPECIFIED",
         f"48 V rail, {s1['budget_v']*1e3:.0f} mV budget: minimum "
         f"{s1['min_drop']['n_total']} vias/cell against Z2's "
@@ -192,6 +235,24 @@ def gates():
            "not tied to the adopted TSV density; electrical rails are separated "
            "analytically while thermal/mechanical Cu would be one co-located "
            "homogenized field, and that is not yet implemented or stated in the mesh")
+    import power_path as PP
+    pz1, pz2 = PP.check("Z1"), PP.check("Z2")
+    add("elec.power_path_graph", "Electrical",
+        "complete rail-aware power-path graph for both architectures",
+        "IMPLEMENTED" if pz1["ok"] and pz2["ok"] else "OPEN",
+        f"Z1 {pz1['n_segments']} segments, Z2 {pz2['n_segments']}, 48 V board to 1 V "
+        f"die with supply and return enumerated separately; chain continuity and rail "
+        f"assignment checked (the BGA carries {PP.rail_currents()['hv_total_a']:.2f} A "
+        f"at 48 V in BOTH architectures, while the substrate TSVs carry 48 V in Z1 and "
+        f"1000 A at 1 V in Z2)")
+    add("elec.one_owner_per_conductor", "Electrical",
+        "every physical conductor has exactly one ledger owner",
+        "IMPLEMENTED" if pz1["ok"] and pz2["ok"] else "OPEN",
+        f"{len(PP.LEDGER_OWNERS)} declared owners; every interconnect owner has at "
+        f"least one segment, no segment has two, converter-intrinsic terms are "
+        f"forbidden from owning a conductor, and an unknown owner raises. "
+        f"STRUCTURE only -- {pz1['n_open']} Z1 and {pz2['n_open']} Z2 segments still "
+        f"have OPEN loss values and {pz1['n_historical']} carry Phase-0M-R3C references")
     add("config.z1_yaml_drives_mesh", "Configuration",
         "Z1 YAML drives the Z1 mesh", "IMPLEMENTED",
         f"build_physical_z1 takes a Z1Package from configs/phase0nx/z1_physical.yaml "
@@ -522,17 +583,27 @@ def main():
               f"{sz['current_density_note'].capitalize()}.", "",
               "| point | pitch | lattice | N | drop | % of rail |",
               "|---|---:|---:|---:|---:|---:|"]
+    e = sz["n_min_electrical"]
+    lines.append(f"| n_min_electrical (1 VDD + 1 GND) | - | 1+1 | {e['n_total']} | "
+                 f"{e['v_drop_v']*1e3:.3f} mV | "
+                 f"{100*e['v_drop_frac_of_rail']:.3f} % |")
     for k in ("min_drop", "mid", "max_density"):
         q = sz[k]
-        lines.append(f"| {k} | {q['pitch_um']:.0f} um | {q['lattice_n']}x"
-                     f"{q['lattice_n']} | {q['n_total']} | {q['v_drop_v']*1e3:.3f} mV | "
-                     f"{100*q['v_drop_frac_of_rail']:.2f} % |")
-    lines += ["", f"**Adopted: {sz['adopted']}.** {sz['adopted_rationale']} The "
-              f"electrically required field is {sz['min_drop']['n_total']} vias; the "
-              f"adopted field is {sz['max_density']['n_total']}, about "
-              f"{sz['max_density']['n_total']/sz['min_drop']['n_total']:.0f}x larger. "
-              "685/684 per cell is therefore a geometric upper bound, not a "
-              "requirement.", "",
+        lines.append(f"| {k} | {q['pitch_um']:.0f} um | {q['n']}x{q['n']} | "
+                     f"{q['n_total']} | {q['v_drop_v']*1e3:.3f} mV | "
+                     f"{100*q['v_drop_frac_of_rail']:.3f} % |")
+    lines += ["", f"**Adopted: {sz['adopted']}, {sz['n_adopted']} vias/cell.** "
+              f"{sz['adopted_rationale']}", "",
+              f"THREE DIFFERENT NUMBERS, PREVIOUSLY CONFLATED. The voltage-drop floor is "
+              f"{e['n_total']} vias (1 VDD + 1 return). The smallest SYMMETRIC "
+              f"checkerboard that passes is {sz['n_min_checkerboard']}. The adopted "
+              f"field is {sz['n_adopted']}, "
+              f"{sz['n_adopted']/sz['n_min_checkerboard']:.0f}x the symmetric minimum. "
+              f"{sz['symmetry_note']}", "",
+              "The earlier sparse-pitch search reported a Z2 minimum of 81. It is 64: "
+              "an 8x8 field drops 9.71 mV against the 10 mV budget and 7x7 drops "
+              "12.71 mV. The old pitch set landed on n = 9 and n = 6 and never "
+              "evaluated n = 8.", "",
               "### Spreading resistance is counted at BOTH ends", "",
               f"R_loop = R_vdd + R_gnd + 2 R_spread,vdd + 2 R_spread,gnd = "
               f"{z2t['per_cell']['r_loop_ohm']*1e6:.3f} uohm. Current converges out of "

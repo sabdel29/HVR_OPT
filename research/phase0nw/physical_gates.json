@@ -78,25 +78,95 @@
    "evidence": "1 V rail, I = 1000 A load current, 20.408 A per cell"
   },
   {
+   "id": "elec.tsv_lattice_exact",
+   "area": "Electrical",
+   "gate": "TSV minimum from an exact integer lattice sweep",
+   "status": "IMPLEMENTED",
+   "evidence": "every n from 2 upward is enumerated. Z2 minimum is 64 (8x8, 9.71 mV vs a 10 mV budget); 7x7 = 49 fails at 12.71 mV. The previous sparse-pitch search reported 81 because its pitch set landed on n = 9 and n = 6 and skipped n = 8 entirely"
+  },
+  {
+   "id": "elec.bga_power_ball_capacity",
+   "area": "Electrical",
+   "gate": "BGA power-ball count recomputed from the ledger current",
+   "status": "SPECIFIED",
+   "evidence": "I_in 23.6936 A at 1.5 A/ball needs 16+16; 16+16 gives 24.0 A, margin 1.28 %. Recomputed dynamically, NOT frozen: +20 W of additional loss already requires 18+18. Stays SPECIFIED until the physical ledger replaces the placeholder"
+  },
+  {
+   "id": "elec.bga_loss_recomputed",
+   "area": "Electrical",
+   "gate": "BGA loss on the annular package recomputed on the physical geometry",
+   "status": "OPEN",
+   "evidence": "BGA loss on the annular package still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+  },
+  {
+   "id": "elec.microbump_loss_recomputed",
+   "area": "Electrical",
+   "gate": "microbump loss recomputed on the physical geometry",
+   "status": "OPEN",
+   "evidence": "microbump loss still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+  },
+  {
+   "id": "elec.package_rdl_hv_recomputed",
+   "area": "Electrical",
+   "gate": "package RDL loss, HV rail recomputed on the physical geometry",
+   "status": "OPEN",
+   "evidence": "package RDL loss, HV rail still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+  },
+  {
+   "id": "elec.package_rdl_lv_recomputed",
+   "area": "Electrical",
+   "gate": "package RDL loss, LV rail recomputed on the physical geometry",
+   "status": "OPEN",
+   "evidence": "package RDL loss, LV rail still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+  },
+  {
+   "id": "elec.intravr_horizontal_recomputed",
+   "area": "Electrical",
+   "gate": "intra-VR horizontal routing loss recomputed on the physical geometry",
+   "status": "OPEN",
+   "evidence": "intra-VR horizontal routing loss still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+  },
+  {
+   "id": "elec.intravr_vertical_recomputed",
+   "area": "Electrical",
+   "gate": "intra-VR vertical via-stack loss recomputed on the physical geometry",
+   "status": "OPEN",
+   "evidence": "intra-VR vertical via-stack loss still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+  },
+  {
+   "id": "elec.contact_resistance_bounded",
+   "area": "Electrical",
+   "gate": "contact / UBM / IMC resistance modelled or bounded",
+   "status": "OPEN",
+   "evidence": "the power-path library carries R_contact = 0 with status OPEN; zero is 'not modelled because unsourced', NOT 'physically negligible', and the distinction must survive into the manuscript"
+  },
+  {
+   "id": "elec.rdl10um_electrical_model",
+   "area": "Electrical",
+   "gate": "10 um RDL electrical (resistance) model closed or bounded",
+   "status": "OPEN",
+   "evidence": "the mechanical/thermal tensor is bracketed, but the electrical sheet resistance of the actual 10 um tier -- Cu thickness, occupancy, routing layer count, supply/ground split -- is not yet defined"
+  },
+  {
    "id": "elec.z1_tsv_sizing",
    "area": "Electrical",
    "gate": "Z1-specific TSV sizing",
    "status": "SPECIFIED",
-   "evidence": "48 V rail, 480 mV budget: minimum 4 vias/cell against Z2's 81 -- the Z2 bracket does not apply to Z1"
+   "evidence": "48 V rail, 480 mV budget: minimum 4 vias/cell against Z2's 64 -- the Z2 bracket does not apply to Z1"
   },
   {
    "id": "elec.z2_tsv_sizing",
    "area": "Electrical",
    "gate": "Z2-specific TSV sizing",
    "status": "SPECIFIED",
-   "evidence": "1 V rail, 10 mV budget: 81 / 324 / 1369 vias/cell"
+   "evidence": "1 V rail, 10 mV budget: 64 / 729 / 1444 vias/cell"
   },
   {
    "id": "tsv.density_sensitivity_run",
    "area": "TSV",
    "gate": "thermal/mechanical sensitivity to TSV density",
    "status": "OPEN",
-   "evidence": "the adopted field is 1369 vias/cell, 17x the electrically required minimum, so Cu volume fraction -- and therefore substrate k, E and CTE -- depends strongly on a choice no solve has tested"
+   "evidence": "the adopted field is 1444 vias/cell, 23x the electrically required minimum, so Cu volume fraction -- and therefore substrate k, E and CTE -- depends strongly on a choice no solve has tested"
   },
   {
    "id": "tsv.fe_copper_representation",
@@ -104,6 +174,20 @@
    "gate": "TSV copper represented consistently in the FE model",
    "status": "OPEN",
    "evidence": "the substrate currently carries the historical tsv_homog fraction, which is not tied to the adopted TSV density; electrical rails are separated analytically while thermal/mechanical Cu would be one co-located homogenized field, and that is not yet implemented or stated in the mesh"
+  },
+  {
+   "id": "elec.power_path_graph",
+   "area": "Electrical",
+   "gate": "complete rail-aware power-path graph for both architectures",
+   "status": "IMPLEMENTED",
+   "evidence": "Z1 15 segments, Z2 15, 48 V board to 1 V die with supply and return enumerated separately; chain continuity and rail assignment checked (the BGA carries 23.69 A at 48 V in BOTH architectures, while the substrate TSVs carry 48 V in Z1 and 1000 A at 1 V in Z2)"
+  },
+  {
+   "id": "elec.one_owner_per_conductor",
+   "area": "Electrical",
+   "gate": "every physical conductor has exactly one ledger owner",
+   "status": "IMPLEMENTED",
+   "evidence": "19 declared owners; every interconnect owner has at least one segment, no segment has two, converter-intrinsic terms are forbidden from owning a conductor, and an unknown owner raises. STRUCTURE only -- 10 Z1 and 10 Z2 segments still have OPEN loss values and 5 carry Phase-0M-R3C references"
   },
   {
    "id": "config.z1_yaml_drives_mesh",
@@ -117,7 +201,7 @@
    "area": "Electrical",
    "gate": "TSV count justified by a design criterion",
    "status": "SPECIFIED",
-   "evidence": "three-point study: N_min_drop 81, N_mid 324, N_max_density 1369; adopted = max_density"
+   "evidence": "three-point study: N_min_drop 64, N_mid 729, N_max_density 1444; adopted = max_density"
   },
   {
    "id": "elec.tsv_resistance_temperature_dependent",
@@ -445,6 +529,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 27,
+ "n_open": 35,
  "n_elems": 38623
 }
