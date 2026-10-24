@@ -1,0 +1,16 @@
+seg_id,frm,to,arch,location,orientation,rail_v,i_dc_a,i_rms_a,t_C,conductor,length_mm,width_mm,thickness_mm,count,r_ohm,p_w,owner,loss_status,note
+Z1-S01,PCB 48 V plane,package underside,Z1,bga,vertical,48.0,23.69358880962203,,,copper,,,,16,,,P_BGA_supply,OPEN,"annular package; must use surviving-site coordinates, not a full board"
+Z1-S02,package underside,substrate underside,Z1,board/bga pad,horizontal,48.0,23.69358880962203,,,copper,,,,,,,P_pkg_RDL_HV_supply,OPEN,48 V spreading from the BGA ring to the TSV field footprint
+Z1-S03,substrate underside,bottom-substrate RDL,Z1,sub_lower,vertical,48.0,23.69358880962203,,,copper,,,,,,,P_TSV_VDD,OPEN,48 V through-substrate field; LOW current -- this is the architectural distinction from Z2
+Z1-S04,bottom-substrate RDL,HVR cell input,Z1,z1conv_0_bottom_substrate_rdl,horizontal,48.0,0.4835426287677966,,,copper,,,,49,,,P_intraVR_metal,HISTORICAL_REFERENCE,per-cell 48 V input bus; historical reference only
+Z1-S05,HVR cell input,HVR cell output,Z1,z1conv_1..7,vertical,48.0,0.4835426287677966,,,copper,,,,49,,,P_intraVR_vertical,HISTORICAL_REFERENCE,"inter-tier via stacks inside the cell; rail changes along the chain (48 V in, ~16 V mid, 1 V out) so one representative current is wrong"
+Z1-S06,HVR cell output,output RDL,Z1,z1conv_8_output_rdl,horizontal,1.0,20.408163265306122,,,copper,,,,49,,,P_intraVR_metal,HISTORICAL_REFERENCE,1 V collection at ~20.4 A/cell
+Z1-S07,output RDL,microbump field,Z1,z1conv_8_output_rdl,horizontal,1.0,1000.0,,,copper,,,,,,,P_pkg_RDL_LV_supply,OPEN,1 V spreading from 49 cells to the die POL grid
+Z1-S08,microbump field,die POL,Z1,interface,vertical,1.0,1000.0,,,copper,,,,,,,P_microbump_supply,OPEN,
+Z1-R01,die ground,microbump field,Z1,interface,vertical,1.0,1000.0,,,copper,,,,,,,P_microbump_return,OPEN,
+Z1-R02,microbump field,output RDL ground,Z1,z1conv_8_output_rdl,horizontal,1.0,1000.0,,,copper,,,,,,,P_pkg_RDL_LV_return,OPEN,
+Z1-R03,output RDL ground,HVR cell return,Z1,z1conv_1..8,vertical,1.0,20.408163265306122,,,copper,,,,49,,,P_intraVR_vertical,HISTORICAL_REFERENCE,
+Z1-R04,HVR cell return,substrate GND field,Z1,z1conv_0_bottom_substrate_rdl,horizontal,48.0,0.4835426287677966,,,copper,,,,49,,,P_intraVR_metal,HISTORICAL_REFERENCE,
+Z1-R05,substrate GND field,package underside,Z1,sub_lower,vertical,48.0,23.69358880962203,,,copper,,,,,,,P_TSV_GND,OPEN,
+Z1-R06,package underside,BGA return,Z1,board/bga pad,horizontal,48.0,23.69358880962203,,,copper,,,,,,,P_pkg_RDL_HV_return,OPEN,
+Z1-R07,BGA return,PCB ground,Z1,bga,vertical,48.0,23.69358880962203,,,copper,,,,16,,,P_BGA_return,OPEN,

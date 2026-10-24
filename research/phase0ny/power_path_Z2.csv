@@ -1,0 +1,16 @@
+seg_id,frm,to,arch,location,orientation,rail_v,i_dc_a,i_rms_a,t_C,conductor,length_mm,width_mm,thickness_mm,count,r_ohm,p_w,owner,loss_status,note
+Z2-S01,PCB 48 V plane,package periphery,Z2,bga,vertical,48.0,23.69358880962203,,,copper,,,,16,,,P_BGA_supply,OPEN,PERIPHERAL only -- 841 of 1369 sites are removed by the cutout
+Z2-S02,package periphery,HVR cell input,Z2,conv_0_land_side_attach_rdl,horizontal,48.0,23.69358880962203,,,copper,,,,,,,P_pkg_RDL_HV_supply,OPEN,48 V spreading ACROSS the opening to 49 land-side cells. This path has no Z1 counterpart and is the longest HV lateral run in either design
+Z2-S03,HVR cell input,HVR cell output,Z2,conv_7..1,vertical,48.0,0.4835426287677966,,,copper,,,,49,,,P_intraVR_vertical,HISTORICAL_REFERENCE,inter-tier via stacks; rail changes along the chain
+Z2-S04,HVR cell output,cell output RDL,Z2,conv_2/4/6 rdl,horizontal,1.0,20.408163265306122,,,copper,,,,49,,,P_intraVR_metal,HISTORICAL_REFERENCE,
+Z2-S05,cell output RDL,substrate underside,Z2,conv_0_land_side_attach_rdl,horizontal,1.0,20.408163265306122,,,copper,,,,49,,,P_intraVR_metal,HISTORICAL_REFERENCE,1 V collection to the TSV footprint
+Z2-S06,substrate underside,top RDL,Z2,sub_lower,vertical,1.0,1000.0,,,copper,,,,,,,P_TSV_VDD,OPEN,"1 V through-substrate field at ~1000 A -- 42x the Z1 rail current, so ~1781x the Joule loss through the same geometry"
+Z2-S07,top RDL,microbump field,Z2,z2_top_rdl,horizontal,1.0,1000.0,,,copper,,,,,,,P_pkg_RDL_LV_supply,OPEN,
+Z2-S08,microbump field,die POL,Z2,interface,vertical,1.0,1000.0,,,copper,,,,,,,P_microbump_supply,OPEN,
+Z2-R01,die ground,microbump field,Z2,interface,vertical,1.0,1000.0,,,copper,,,,,,,P_microbump_return,OPEN,
+Z2-R02,microbump field,top RDL ground,Z2,z2_top_rdl,horizontal,1.0,1000.0,,,copper,,,,,,,P_pkg_RDL_LV_return,OPEN,
+Z2-R03,top RDL ground,substrate GND field,Z2,sub_lower,vertical,1.0,1000.0,,,copper,,,,,,,P_TSV_GND,OPEN,
+Z2-R04,substrate GND field,HVR cell return,Z2,conv_0_land_side_attach_rdl,horizontal,1.0,20.408163265306122,,,copper,,,,49,,,P_intraVR_metal,HISTORICAL_REFERENCE,
+Z2-R05,HVR cell return,land-side return plane,Z2,conv_1..7,vertical,48.0,0.4835426287677966,,,copper,,,,49,,,P_intraVR_vertical,HISTORICAL_REFERENCE,
+Z2-R06,land-side return plane,package periphery,Z2,conv_0_land_side_attach_rdl,horizontal,48.0,23.69358880962203,,,copper,,,,,,,P_pkg_RDL_HV_return,OPEN,
+Z2-R07,package periphery,PCB ground,Z2,bga,vertical,48.0,23.69358880962203,,,copper,,,,16,,,P_BGA_return,OPEN,
