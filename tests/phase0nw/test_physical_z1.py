@@ -14,8 +14,10 @@ for p in ("scripts/phase0nw", "scripts/phase0mr", "scripts/phase0i", "scripts/ph
 
 import inventory_audit as INV           # noqa: E402
 import z1_package as Z1P                # noqa: E402
-from physical_package import (build_physical_package, build_physical_z1,  # noqa: E402
-                              load_physical_package_config, measure_layers)
+from physical_package import (PhysicalConfigError,  # noqa: E402
+                              build_physical_package, build_physical_z1,
+                              load_physical_package_config, load_z1_package_config,
+                              measure_layers)
 
 CFG = R / "configs/phase0nt/z2_2p4mm_cutout.yaml"
 
@@ -32,7 +34,7 @@ SPEC_Z1 = {
 
 @pytest.fixture(scope="module")
 def z1():
-    cfg = load_physical_package_config(CFG)
+    cfg = load_z1_package_config()          # Z1's OWN config, not Z2's
     m = build_physical_z1(cfg)[0]
     lay = measure_layers(m)
     return cfg, m, lay, lay["board"]["z0_um"]
@@ -41,7 +43,8 @@ def z1():
 @pytest.mark.parametrize("tier,z", sorted(SPEC_Z1.items()))
 def test_each_z1_tier_sits_at_its_specified_depth(z1, tier, z):
     _cfg, m, _lay, off = z1
-    r = next(r for r in Z1P.tier_report(m) if r["tier"].endswith(tier))
+    cfg = _cfg
+    r = next(r for r in Z1P.tier_report(m, cfg) if r["tier"].endswith(tier))
     assert r["z0_um"] - off == pytest.approx(z[0], abs=0.5), f"{tier} bottom"
     assert r["z1_um"] - off == pytest.approx(z[1], abs=0.5), f"{tier} top"
 
@@ -71,14 +74,14 @@ def test_z1_has_no_homogenised_converter_band(z1):
 
 def test_z1_high_side_is_explicitly_present(z1):
     _cfg, m, _lay, off = z1
-    hs = next((r for r in Z1P.tier_report(m) if "gan_hs" in r["tier"]), None)
+    hs = next((r for r in Z1P.tier_report(m, _cfg) if "gan_hs" in r["tier"]), None)
     assert hs is not None and hs["mesh_um"] == pytest.approx(685.0, abs=1e-6), (
         "EPC2014C is absent from the physical Z1 geometry")
 
 
 def test_z1_converter_is_discrete_cells_not_a_slab(z1):
     cfg, m, _lay, _off = z1
-    names = {t[0] for t in Z1P.mid_layers()}
+    names = {t[0] for t in Z1P.mid_layers(cfg)}
     sel = np.array([l in names for l in m.elem_layer])
     mat = np.array(m.elem_material)[sel]
     tile = np.array(m.elem_tile)[sel]
@@ -129,8 +132,8 @@ def test_the_rdl_difference_is_the_only_one_and_is_justified(inv):
 
 
 def test_z1_and_z2_sit_on_the_same_board(inv):
+    l1 = measure_layers(build_physical_z1(load_z1_package_config())[0])
     cfg = load_physical_package_config(CFG)
-    l1 = measure_layers(build_physical_z1(cfg)[0])
     l2 = measure_layers(build_physical_package(cfg)[0])
     assert l1["board"]["t_um"] == pytest.approx(l2["board"]["t_um"], abs=1e-9), (
         "the architectures are not being compared on the same board")
@@ -174,17 +177,47 @@ def test_z1_stack_is_not_a_python_constant():
         "the hard-coded tier table is back")
 
 
-def test_editing_the_z1_config_changes_the_mesh(tmp_path, monkeypatch):
-    """Same load-bearing property Z2 has: edit the YAML, the mesh follows."""
-    import importlib
-    base = Z1P.load_z1_config()
-    assert base["substrate"]["thickness_um"] == 300.0
-    edited = Z1P.load_z1_config(_tmp_z1(
+def test_editing_the_z1_config_changes_the_mesh(tmp_path):
+    """LOAD-BEARING. The previous version of this test edited YAML and checked PARSING.
+
+    It never built a mesh, so it would have passed even while build_physical_z1() was
+    reading Z2's board case and substrate thickness -- which is exactly what it was
+    doing. A config test that does not reach the mesh proves nothing about whether the
+    config drives anything.
+    """
+    base = load_z1_package_config()
+    m0 = build_physical_z1(base)[0]
+    l0 = measure_layers(m0)
+    t0 = l0["sub_lower"]["t_um"] + l0["tile_band"]["t_um"]
+    assert t0 == pytest.approx(300.0, abs=0.5)
+
+    edited = load_z1_package_config(_tmp_z1(
         tmp_path, **{"substrate.thickness_um": 400.0,
                      "expected.package_top_um": 5433.0}))
-    assert edited["substrate"]["thickness_um"] == 400.0
-    # the loader's own conservation check must have accepted the consistent edit
-    assert edited["expected"]["package_top_um"] == 5433.0
+    m1 = build_physical_z1(edited)[0]
+    l1 = measure_layers(m1)
+    t1 = l1["sub_lower"]["t_um"] + l1["tile_band"]["t_um"]
+
+    assert t1 == pytest.approx(400.0, abs=0.5), (
+        f"the Z1 config said 400 um and the mesh built {t1:.0f} um")
+    assert t1 != t0
+    assert (l1["tim"]["z1_um"] - l1["board"]["z0_um"]) == pytest.approx(5433.0, abs=0.5)
+
+
+def test_z1_refuses_to_be_built_from_the_z2_config():
+    """Z1 reading Z2's board case and substrate is invisible while the two agree."""
+    z2 = load_physical_package_config(CFG)
+    with pytest.raises(PhysicalConfigError, match="Z2 PhysicalPackage"):
+        build_physical_z1(z2)
+
+
+def test_z1_config_object_carries_its_own_geometry():
+    c = load_z1_package_config()
+    assert c.board_case == "it968g_2p4mm"
+    assert (c.substrate_um, c.cells, c.conv_total_um) == (300.0, 49, 1973.0)
+    assert (c.interface_um, c.die_um, c.tim_um) == (10.0, 300.0, 50.0)
+    assert c.rail_v == 48.0 and c.package_top_um == 5333.0
+    assert len(c.tiers) == 9
 
 
 def test_z1_loader_rejects_an_inconsistent_tier_sum(tmp_path):

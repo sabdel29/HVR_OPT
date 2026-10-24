@@ -93,14 +93,15 @@ def _material(tier_name: str) -> str:
     return TIER_MATERIAL[tier_name][0]
 
 
-def mid_layers(nz_thin: int = 1, nz_thick: int = 2) -> list:
+def mid_layers(cfg=None, nz_thin: int = 1, nz_thick: int = 2) -> list:
     """(name, thickness_mm, material, nz, footprint) stacked UPWARD from the substrate top.
 
     Footprint 'substrate' so the 49 cell footprints and the out-of-cell rule apply; the
     historical 4-tuple form would silently give these the die footprint.
     """
+    tiers = cfg.tiers if cfg is not None else Z1_TIERS
     out = []
-    for i, (nm, um) in enumerate(Z1_TIERS):
+    for i, (nm, um) in enumerate(tiers):
         out.append((f"z1conv_{i}_{nm}", um / 1e3, _material(nm),
                     nz_thin if um <= 20.0 else nz_thick, "substrate"))
     # NO separate microbump layer. The production stack already carries a 10 um
@@ -111,22 +112,22 @@ def mid_layers(nz_thin: int = 1, nz_thick: int = 2) -> list:
     return out
 
 
-def install(stack: dict, out_of_cell: str = "F1_encapsulated"):
+def install(stack: dict, out_of_cell: str = "F1_encapsulated", cfg=None):
     """Materials + mid layers + the out-of-cell rule for the complete physical Z1."""
     if out_of_cell not in OUT_OF_CELL:
         raise ValueError(f"unknown out-of-cell case {out_of_cell!r}")
     stack["materials"]["rdl_tier"] = rdl_tier_material()
     stack["materials"]["microbump"] = microbump_material()
-    mids = mid_layers()
+    mids = mid_layers(cfg)
     conv_names = tuple(m[0] for m in mids if m[0].startswith("z1conv_"))
     return mids, conv_names, OUT_OF_CELL[out_of_cell]
 
 
-def tier_report(mesh) -> list:
+def tier_report(mesh, cfg=None) -> list:
     from physical_package import measure_layers
     lay = measure_layers(mesh)
     rows = []
-    for nm, t_mm, mat, _nz, _fp in mid_layers():
+    for nm, t_mm, mat, _nz, _fp in mid_layers(cfg):
         m = lay.get(nm)
         rows.append({"tier": nm, "material": mat, "spec_um": round(t_mm * 1e3, 3),
                      "mesh_um": None if m is None else round(m["t_um"], 3),

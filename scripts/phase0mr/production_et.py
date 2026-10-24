@@ -142,7 +142,9 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
         import sys as _sys
         _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "phase0nw"))
         import z1_package as Z1P
-        mid, conv_names, conv_fill = Z1P.install(st, physical_z1)
+        z1cfg, z1_fill = (physical_z1 if isinstance(physical_z1, tuple)
+                          else (None, physical_z1))
+        mid, conv_names, conv_fill = Z1P.install(st, z1_fill, cfg=z1cfg)
         iface_mat = "microbump"
     if physical_converter is not None:
         import sys as _sys

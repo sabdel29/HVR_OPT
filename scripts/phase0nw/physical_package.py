@@ -206,7 +206,7 @@ if __name__ == "__main__":
           f"({cfg.board_model_level}, eta={cfg.eta_nominal})")
     print(f"  substrate  {cfg.substrate_um:.0f} um   cutout {cfg.cutout_mm} mm")
     print(f"  converter  {cfg.conv_total_um:.0f} um over {len(cfg.tiers)} tiers, "
-          f"{cfg.cells} cells of {cfg.cell_side_mm} mm  implemented={cfg.converter_implemented}")
+          f"{cfg.cells} cells of {cfg.cell_side_mm} mm")
     m, mats, st, tiles = build_physical_package(cfg)
     lay = measure_layers(m)
     print(f"  mesh       {m.n_elems} elements, {len(tiles)} tiles")
@@ -216,18 +216,90 @@ if __name__ == "__main__":
                   f"[{lay[k]['z0_um']:+.1f}, {lay[k]['z1_um']:+.1f}]")
 
 
-def build_physical_z1(cfg: PhysicalPackage, h_xy: float = 1.1,
+def build_physical_z1(cfg=None, h_xy: float = 1.1,
                       out_of_cell: str = "F1_encapsulated"):
-    """Mesh the COMPLETE physical Z1: 300 um substrate, nine explicit converter tiers on
-    49 cell footprints, microbumps, die, TIM -- on the same board as Z2.
+    """Mesh the COMPLETE physical Z1 from Z1's OWN configuration.
 
-    The historical Z1 is a 1.30 mm substrate with a 1226 um homogenized band and no
-    high-side device in the geometry at all. Comparing a completed Z2 against that is the
-    comparison the brief forbids.
+    `cfg` is a Z1Package (or None for the default Z1 YAML). A Z2 PhysicalPackage is
+    REFUSED: Z1 reading Z2's board case and substrate thickness is exactly the coupling
+    this signature exists to break, and it is invisible while the two configs agree.
     """
     import production_et as PE
+    if cfg is None:
+        cfg = load_z1_package_config()
+    if isinstance(cfg, PhysicalPackage):
+        raise PhysicalConfigError(
+            "build_physical_z1 received a Z2 PhysicalPackage. Z1 must be built from "
+            "configs/phase0nx/z1_physical.yaml via load_z1_package_config().")
     if cfg.board_case in FORBIDDEN_BOARD_CASES:
         raise PhysicalConfigError(f"refusing to build on legacy board {cfg.board_case}")
-    return PE.build_global("ARCH_Z1_EMBEDDED", cfg.substrate_mm, h_xy=h_xy,
+    return PE.build_global(cfg.architecture, cfg.substrate_mm, h_xy=h_xy,
                            board_case=cfg.board_case, cutout_mm=None,
-                           physical_z1=out_of_cell)
+                           physical_z1=(cfg, out_of_cell))
+
+
+@dataclass(frozen=True)
+class Z1Package:
+    """Z1's own configuration object, loaded from configs/phase0nx/z1_physical.yaml.
+
+    build_physical_z1() used to take the Z2 PhysicalPackage and read board_case and
+    substrate_mm off it. Those values match today, so the geometry was right -- but Z1
+    was not configuration-driven, it was Z2-driven, and would silently follow Z2 the
+    moment the configs diverged. A dedicated Z1 YAML that nothing reads is worse than no
+    YAML, because the file implies an independence that does not exist.
+    """
+    label: str
+    architecture: str
+    board_case: str
+    board_thickness_um: float
+    substrate_um: float
+    tile_band_um: float
+    cells: int
+    cell_area_mm2: float
+    cell_side_mm: float
+    conv_total_um: float
+    tiers: tuple
+    interface_um: float
+    die_um: float
+    tim_um: float
+    rail_v: float
+    package_top_um: float
+    source_path: Path = field(compare=False, default=None)
+
+    @property
+    def substrate_mm(self) -> float:
+        return self.substrate_um / 1e3
+
+    @property
+    def board_thickness_mm(self) -> float:
+        return self.board_thickness_um / 1e3
+
+    def tier_names(self) -> list:
+        return [t[0] for t in self.tiers]
+
+
+def load_z1_package_config(path=None) -> Z1Package:
+    """Build a validated Z1 configuration OBJECT. Cross-checks live in z1_package."""
+    sys.path.insert(0, str(R / "scripts/phase0nw"))
+    import z1_package as Z1P
+    c = Z1P.load_z1_config(path)
+    conv = c["converter"]
+    if c["board"]["case"] in FORBIDDEN_BOARD_CASES:
+        raise PhysicalConfigError(f"legacy board {c['board']['case']} on the Z1 path")
+    return Z1Package(
+        label=c.get("label", "Z1"), architecture=c["architecture"],
+        board_case=c["board"]["case"],
+        board_thickness_um=float(c["board"]["thickness_um"]),
+        substrate_um=float(c["substrate"]["thickness_um"]),
+        tile_band_um=float(c["substrate"]["tile_band_um"]),
+        cells=int(conv["cells"]), cell_area_mm2=float(conv["cell_area_mm2"]),
+        cell_side_mm=float(conv["cell_side_mm"]),
+        conv_total_um=float(conv["total_um"]),
+        tiers=tuple((t["name"], float(t["um"]))
+                    for t in conv["tiers_from_substrate_upward"]),
+        interface_um=float(c["interface"]["thickness_um"]),
+        die_um=float(c["die"]["thickness_um"]), tim_um=float(c["tim"]["thickness_um"]),
+        rail_v=float(c["supply_return"]["rail_v"]),
+        package_top_um=float(c["expected"]["package_top_um"]),
+        source_path=Path(path) if path else None,
+    )
