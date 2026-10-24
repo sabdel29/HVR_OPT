@@ -1,160 +1,333 @@
 {
  "gates": [
   {
+   "id": "board.it968g_selected",
    "area": "Board",
    "gate": "physical YAML uses it968g_2p4mm",
    "status": "IMPLEMENTED",
    "evidence": "config board.case = it968g_2p4mm"
   },
   {
+   "id": "board.thickness_reaches_mesh",
    "area": "Board",
    "gate": "board thickness reaches the mesh",
    "status": "IMPLEMENTED",
    "evidence": "meshed 2400 um against config 2400 um"
   },
   {
+   "id": "board.h0_documented",
    "area": "Board",
    "gate": "PCB-H0 documented",
    "status": "SPECIFIED",
-   "evidence": "model_level = PCB-H0; see PCB_IT968G_HOMOGENIZATION.md Sec.8"
+   "evidence": "model_level = PCB-H0; PCB_IT968G_HOMOGENIZATION.md Sec.8"
   },
   {
+   "id": "board.h1_meshed",
+   "area": "Board",
+   "gate": "PCB-H1 meshed as FE depth blocks",
+   "status": "OPEN",
+   "evidence": "five-block model defined and 1-D consistent with H0 (k_xy exact, k_z 7.9e-07), but not yet built into the mesh"
+  },
+  {
+   "id": "board.h1_thermal_validated",
    "area": "Board",
    "gate": "PCB-H1 thermal validation",
    "status": "OPEN",
-   "evidence": "not implemented"
+   "evidence": "no H0-vs-H1 solve exists"
   },
   {
+   "id": "board.eta_sensitivity_run",
    "area": "Board",
-   "gate": "eta uncertainty retained",
-   "status": "SPECIFIED",
-   "evidence": "eta_sensitivity = [0.25, 0.5, 0.75]"
+   "gate": "eta coverage sensitivity completed",
+   "status": "OPEN",
+   "evidence": "material tensors exist for eta 0.25/0.50/0.75; no solve run"
   },
   {
+   "id": "board.t_only_material_identical",
    "area": "Board",
    "gate": "T-only cases material-identical",
    "status": "IMPLEMENTED",
    "evidence": "it968g_2p4mm and it968g_3p2mm share one material dict"
   },
   {
-   "area": "Z2",
-   "gate": "2.4 mm board",
-   "status": "IMPLEMENTED",
-   "evidence": "meshed 2400 um"
+   "id": "board.t_only_comparison_run",
+   "area": "Board",
+   "gate": "2.4/3.2 T-only comparison completed",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for '2.4/3.2 T-only comparison completed'"
   },
   {
-   "area": "Z2",
+   "id": "elec.z1_rail_model",
+   "area": "Electrical",
+   "gate": "Z1 48 V rail-specific VDD/GND model",
+   "status": "SPECIFIED",
+   "evidence": "48 V rail, I = P_in/48 V (currently 2.86 A from the Phase-0M-R3C P_in placeholder, NOT a physical solve)"
+  },
+  {
+   "id": "elec.z2_rail_model",
+   "area": "Electrical",
+   "gate": "Z2 1 V rail-specific VDD/GND model",
+   "status": "SPECIFIED",
+   "evidence": "1 V rail, I = 1000 A load current, 20.408 A per cell"
+  },
+  {
+   "id": "elec.tsv_count_justified",
+   "area": "Electrical",
+   "gate": "TSV count justified by a design criterion",
+   "status": "SPECIFIED",
+   "evidence": "three-point study: N_min_drop 81, N_mid 324, N_max_density 1369; adopted = max_density"
+  },
+  {
+   "id": "elec.tsv_resistance_temperature_dependent",
+   "area": "Electrical",
+   "gate": "temperature-dependent TSV resistance in the fixed point",
+   "status": "OPEN",
+   "evidence": "rho(T) exists in the analytical model but is evaluated at 20 C; not yet coupled"
+  },
+  {
+   "id": "elec.rdl_loss_recomputed",
+   "area": "Electrical",
+   "gate": "RDL loss recomputed on the physical geometry",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'RDL loss recomputed on the physical geometry'"
+  },
+  {
+   "id": "elec.energy_conservation_verified",
+   "area": "Electrical",
+   "gate": "energy conservation verified on the physical heat map",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'energy conservation verified on the physical heat map'"
+  },
+  {
+   "id": "elec.loss_audit_frozen",
+   "area": "Electrical",
+   "gate": "physical Z1/Z2 loss audit frozen",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'physical Z1/Z2 loss audit frozen'"
+  },
+  {
+   "id": "therm.tier_aware_heat_map",
+   "area": "Thermal",
+   "gate": "tier-aware converter heat deposition",
+   "status": "OPEN",
+   "evidence": "production heat map still targets a single converter layer"
+  },
+  {
+   "id": "therm.bc_selected",
+   "area": "Thermal",
+   "gate": "physical thermal BC selected",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'physical thermal BC selected'"
+  },
+  {
+   "id": "therm.z2_passive",
+   "area": "Thermal",
+   "gate": "Z2-PASSIVE case implemented",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'Z2-PASSIVE case implemented'"
+  },
+  {
+   "id": "therm.z2_cooled",
+   "area": "Thermal",
+   "gate": "Z2-COOLED case implemented",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'Z2-COOLED case implemented'"
+  },
+  {
+   "id": "therm.et_fixed_point_converged",
+   "area": "Thermal",
+   "gate": "ET fixed point converged",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'ET fixed point converged'"
+  },
+  {
+   "id": "therm.mot_tg_evaluated",
+   "area": "Thermal",
+   "gate": "PCB MOT/Tg checks evaluated",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'PCB MOT/Tg checks evaluated'"
+  },
+  {
+   "id": "therm.h0_h1_compared",
+   "area": "Thermal",
+   "gate": "H0 vs H1 thermal comparison run",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'H0 vs H1 thermal comparison run'"
+  },
+  {
+   "id": "mech.f1_f2_bracket_run",
+   "area": "Mechanical",
+   "gate": "F1/F2 out-of-cell bracket run",
+   "status": "OPEN",
+   "evidence": "both cases BUILD; neither has been solved"
+  },
+  {
+   "id": "mech.mesh_convergence",
+   "area": "Mechanical",
+   "gate": "physical mesh convergence",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'physical mesh convergence'"
+  },
+  {
+   "id": "mech.bga_528_site_search",
+   "area": "Mechanical",
+   "gate": "critical-joint search over all 528 surviving sites",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'critical-joint search over all 528 surviving sites'"
+  },
+  {
+   "id": "mech.t_only_mechanical",
+   "area": "Mechanical",
+   "gate": "2.4/3.2 T-only mechanical comparison",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for '2.4/3.2 T-only mechanical comparison'"
+  },
+  {
+   "id": "local.solder_rerun_at_new_critical_site",
+   "area": "Local",
+   "gate": "local solder rerun at the new critical site",
+   "status": "OPEN",
+   "evidence": "not run -- no artifact exists for 'local solder rerun at the new critical site'"
+  },
+  {
+   "id": "geom.z2_cutout_conforming",
+   "area": "Z2 geometry",
    "gate": "23.36 mm conforming cutout",
    "status": "IMPLEMENTED",
    "evidence": "cutout 23.36 mm, edges are grid breakpoints"
   },
   {
-   "area": "Z2",
+   "id": "geom.z2_49_cells",
+   "area": "Z2 geometry",
    "gate": "49 discrete cells",
    "status": "IMPLEMENTED",
    "evidence": "49 tile footprints in the mesh"
   },
   {
-   "area": "Z2",
+   "id": "geom.z2_full_stack",
+   "area": "Z2 geometry",
    "gate": "full 1.963 mm stack",
    "status": "IMPLEMENTED",
    "evidence": "8 tiers measured, total 1963.0 um"
   },
   {
-   "area": "Z2",
-   "gate": "EPC2014C high side explicitly present",
-   "status": "IMPLEMENTED",
-   "evidence": "deepest tier conv_7_gan_hs_EPC2014C at 737 um above the PCB backside"
-  },
-  {
-   "area": "Z2",
+   "id": "geom.z2_no_slab",
+   "area": "Z2 geometry",
    "gate": "no full-area converter slab",
    "status": "IMPLEMENTED",
-   "evidence": "0 of 37254 elements belong to a layer named 'conv'"
+   "evidence": "0 of 38623 elements belong to a layer named 'conv'"
   },
   {
-   "area": "Z2",
+   "id": "geom.z2_no_medium_outside_cells",
+   "area": "Z2 geometry",
    "gate": "no converter medium outside a cell",
    "status": "IMPLEMENTED",
    "evidence": "0 of 6615 in-cell converter elements lie outside a footprint"
   },
   {
-   "area": "Z2",
-   "gate": "out-of-cell material/void defined",
-   "status": "SPECIFIED",
-   "evidence": "F1 encapsulated (primary) and F2 void both build; bracket not yet run"
-  },
-  {
-   "area": "Z2",
+   "id": "geom.z2_descends_into_cutout",
+   "area": "Z2 geometry",
    "gate": "converter descends into the cutout",
    "status": "IMPLEMENTED",
-   "evidence": "HVR occupies 1422 -> 737 um, inside the board's 0 -> 2400 um extent"
+   "evidence": "HVR occupies 1422 -> 737 um inside the board's 0 -> 2400 um extent"
   },
   {
-   "area": "Z2",
+   "id": "geom.z2_no_overlap",
+   "area": "Z2 geometry",
    "gate": "no overlap",
    "status": "IMPLEMENTED",
-   "evidence": "the mesh builder raises if two layers claim one element; all 37254 elements were accepted"
+   "evidence": "the mesh builder raises if two layers claim one element; all 38623 elements were accepted"
   },
   {
-   "area": "Z2",
+   "id": "geom.z2_out_of_cell_defined",
+   "area": "Z2 geometry",
+   "gate": "out-of-cell material/void defined",
+   "status": "SPECIFIED",
+   "evidence": "F1 encapsulated (primary) and F2 void both build; bracket not run"
+  },
+  {
+   "id": "geom.bga_symmetric_feed",
+   "area": "Z2 geometry",
    "gate": "symmetric BGA feed",
    "status": "IMPLEMENTED",
    "evidence": "16+16 mirror-symmetric pairs, first moments (0,0); research/phase0nt/annular_pcb.json"
   },
   {
-   "area": "Z2",
-   "gate": "split VDD / GND TSV fields meshed",
-   "status": "OPEN",
-   "evidence": "analytical model exists; the two rails are not yet distinct mesh regions"
-  },
-  {
-   "area": "Z2",
-   "gate": "per-tier material fidelity",
-   "status": "OPEN",
-   "evidence": "MLCC tier has no sourced card; GaN epi not resolved (mapped to the Si carrier)"
-  },
-  {
-   "area": "Z1",
+   "id": "geom.z1_complete_stack",
+   "area": "Z1 geometry",
    "gate": "complete physical stack",
    "status": "IMPLEMENTED",
-   "evidence": "package top 5333 um above the PCB backside (specified 5333); converter 1973 um in 9 tiers"
+   "evidence": "package top 5333 um (specified 5333); converter 1973 um in 9 tiers"
   },
   {
-   "area": "Z1",
+   "id": "geom.z1_hs_present",
+   "area": "Z1 geometry",
    "gate": "HS explicitly present",
    "status": "IMPLEMENTED",
    "evidence": "EPC2014C meshed 685 um at 3010 -> 3695 um"
   },
   {
-   "area": "Z1",
+   "id": "geom.z1_selected_devices",
+   "area": "Z1 geometry",
    "gate": "selected-device dimensions",
    "status": "IMPLEMENTED",
    "evidence": "EPC2014C 685 um and EPC2057 638 um in both architectures"
   },
   {
-   "area": "Z1",
+   "id": "geom.inventory_equal",
+   "area": "Inventory",
    "gate": "same converter inventory",
    "status": "IMPLEMENTED",
-   "evidence": "147 HS / 147 LS / 147 inductors / 98 flying caps in both; active volume 528.613 mm3 equal to machine precision"
+   "evidence": "147 HS / 147 LS / 147 inductors / 98 flying caps as a TOPOLOGY inventory, homogenized within each cell tier footprint; active volume 528.613 mm3 equal to machine precision"
   },
   {
-   "area": "Z1",
-   "gate": "explicit supply/return",
+   "id": "geom.stack_conservation",
+   "area": "Inventory",
+   "gate": "1-D stack thickness conserves exactly",
+   "status": "IMPLEMENTED",
+   "evidence": "Z2 cutout column 2633 um and periphery 3010 um; Z1 5333 um; no gaps, no overlaps"
+  },
+  {
+   "id": "mat.rdl_tier_tensor",
+   "area": "Material",
+   "gate": "explicit RDL tiers use the RDL tensor",
+   "status": "IMPLEMENTED",
+   "evidence": "Phase-0M-R rdl_effective_tensor.csv (RDL alone), replacing the 40 um RDL + 10 um bump composite previously applied to a 10 um tier"
+  },
+  {
+   "id": "mat.microbump_separate",
+   "area": "Material",
+   "gate": "microbump/underfill kept separate",
+   "status": "IMPLEMENTED",
+   "evidence": "841 interface elements carry bump_layer_effective_tensor.csv (k_z 11.7 vs underfill 0.7 W/mK)"
+  },
+  {
+   "id": "mat.gan_bounded",
+   "area": "Material",
+   "gate": "GaN epi contribution bounded",
    "status": "OPEN",
-   "evidence": "48 V VDD/GND TSV fields not yet meshed (analytical model exists)"
+   "evidence": "devices meshed as the Si carrier; the epi contribution is not yet bounded"
   },
   {
-   "area": "Z2",
-   "gate": "VDD/GND TSV fields: analytical model",
-   "status": "SPECIFIED",
-   "evidence": "interleaved 37x37 lattice, 685 VDD / 684 GND per cell, I_cell 20.408 A; R_loop includes constriction (1.4 % of the loop)"
+   "id": "mat.mlcc_bounded",
+   "area": "Material",
+   "gate": "MLCC tier material bounded",
+   "status": "OPEN",
+   "evidence": "flying-cap tier meshed at hvr_effective; no ceramic/Ni bracket yet"
   },
   {
+   "id": "mat.inductor_tier_bounded",
+   "area": "Material",
+   "gate": "inductor/Cout tier bounded",
+   "status": "OPEN",
+   "evidence": "hvr_effective is generic; occupancy-based bracket not built"
+  },
+  {
+   "id": "results.physical_etm_lineage",
    "area": "Results",
-   "gate": "physical ET result lineage",
+   "gate": "physical ETM result lineage",
    "status": "OPEN",
-   "evidence": "BLOCKED: no new ETM result may be generated until every gate above is closed"
+   "evidence": "BLOCKED: no physical ETM result may be generated until every gate above closes"
   }
  ],
  "tiers": [
@@ -168,7 +341,7 @@
   },
   {
    "tier": "conv_6_interlayer_rdl",
-   "material": "rdl_composite",
+   "material": "rdl_tier",
    "spec_um": 10.0,
    "mesh_um": 10.0,
    "z0_um": -1278.0,
@@ -184,7 +357,7 @@
   },
   {
    "tier": "conv_4_interlayer_rdl",
-   "material": "rdl_composite",
+   "material": "rdl_tier",
    "spec_um": 10.0,
    "mesh_um": 10.0,
    "z0_um": -1168.0,
@@ -200,7 +373,7 @@
   },
   {
    "tier": "conv_2_interlayer_rdl",
-   "material": "rdl_composite",
+   "material": "rdl_tier",
    "spec_um": 10.0,
    "mesh_um": 10.0,
    "z0_um": -520.0,
@@ -216,13 +389,13 @@
   },
   {
    "tier": "conv_0_land_side_attach_rdl",
-   "material": "rdl_composite",
+   "material": "rdl_tier",
    "spec_um": 10.0,
    "mesh_um": 10.0,
    "z0_um": -10.0,
    "z1_um": 0.0
   }
  ],
- "n_open": 5,
- "n_elems": 37254
+ "n_open": 24,
+ "n_elems": 38623
 }

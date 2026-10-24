@@ -24,6 +24,56 @@ import z2_converter as Z2C                                              # noqa: 
 from physical_package import (build_physical_package, measure_layers,   # noqa: E402
                               load_physical_package_config)
 
+
+# =======================================================================================
+# THE CANONICAL REQUIRED-GATE MANIFEST.
+#
+# This list, not the evaluator, defines what must be true before a physical ETM result may
+# exist. The evaluator below must produce a row for EVERY id here; `gates()` raises if it
+# does not. That is the whole point: a registry that only reports the gates someone
+# remembered to evaluate can declare "ready for ETM" by omission, which is exactly how the
+# previous version reported "5 of 26 OPEN" while thermal BC selection, mesh convergence
+# and the 528-site critical-joint search were not in it at all -- they were sitting in a
+# handwritten YAML list that nothing checked.
+#
+# Configuration describes geometry and materials. THIS file owns implementation state.
+# =======================================================================================
+REQUIRED_GATES = {
+    "board": [
+        "board.it968g_selected", "board.thickness_reaches_mesh", "board.h0_documented",
+        "board.h1_meshed", "board.h1_thermal_validated", "board.eta_sensitivity_run",
+        "board.t_only_material_identical", "board.t_only_comparison_run",
+    ],
+    "electrical": [
+        "elec.z1_rail_model", "elec.z2_rail_model", "elec.tsv_count_justified",
+        "elec.tsv_resistance_temperature_dependent", "elec.rdl_loss_recomputed",
+        "elec.energy_conservation_verified", "elec.loss_audit_frozen",
+    ],
+    "thermal": [
+        "therm.tier_aware_heat_map", "therm.bc_selected", "therm.z2_passive",
+        "therm.z2_cooled", "therm.et_fixed_point_converged", "therm.mot_tg_evaluated",
+        "therm.h0_h1_compared",
+    ],
+    "mechanical": [
+        "mech.f1_f2_bracket_run", "mech.mesh_convergence", "mech.bga_528_site_search",
+        "mech.t_only_mechanical",
+    ],
+    "local": ["local.solder_rerun_at_new_critical_site"],
+    "geometry": [
+        "geom.z2_cutout_conforming", "geom.z2_49_cells", "geom.z2_full_stack",
+        "geom.z2_no_slab", "geom.z2_no_medium_outside_cells", "geom.z2_descends_into_cutout",
+        "geom.z2_no_overlap", "geom.z2_out_of_cell_defined", "geom.bga_symmetric_feed",
+        "geom.z1_complete_stack", "geom.z1_hs_present", "geom.z1_selected_devices",
+        "geom.inventory_equal", "geom.stack_conservation",
+    ],
+    "material": [
+        "mat.rdl_tier_tensor", "mat.microbump_separate", "mat.gan_bounded",
+        "mat.mlcc_bounded", "mat.inductor_tier_bounded",
+    ],
+    "results": ["results.physical_etm_lineage"],
+}
+ALL_REQUIRED = [g for v in REQUIRED_GATES.values() for g in v]
+
 OUT = R / "research"
 CFG = R / "configs/phase0nt/z2_2p4mm_cutout.yaml"
 
@@ -37,120 +87,197 @@ def gates():
     sel = np.array([l in names for l in m.elem_layer])
     mat = np.array(m.elem_material)[sel]
     tile = np.array(m.elem_tile)[sel]
-    off = -cfg.board_thickness_um - 300.0
+    off = lay["board"]["z0_um"]
+
+    from physical_package import build_physical_z1
+    import z1_package as Z1P, inventory_audit as INV, stack_audit as SA
+    import tsv_fields as TSV, pcb_h1 as H1
+    m1 = build_physical_z1(cfg)[0]
+    lay1 = measure_layers(m1)
+    off1 = lay1["board"]["z0_um"]
+    rows1 = Z1P.tier_report(m1)
 
     g = []
 
-    def add(area, gate, status, evidence):
-        g.append({"area": area, "gate": gate, "status": status, "evidence": evidence})
+    def add(gid, area, gate, status, evidence):
+        g.append({"id": gid, "area": area, "gate": gate, "status": status,
+                  "evidence": evidence})
 
-    # ---- board ----------------------------------------------------------------------
-    add("Board", "physical YAML uses it968g_2p4mm",
+    def notrun(gid, area, gate, why=None):
+        # Default must still SAY something: "not run" alone does not tell a reader
+        # whether the thing is unimplemented, blocked, or merely unexecuted.
+        add(gid, area, gate, "OPEN",
+            why or f"not run -- no artifact exists for '{gate}'")
+
+    # ---------------------------------------------------------------- board
+    add("board.it968g_selected", "Board", "physical YAML uses it968g_2p4mm",
         "IMPLEMENTED" if cfg.board_case == "it968g_2p4mm" else "OPEN",
         f"config board.case = {cfg.board_case}")
-    add("Board", "board thickness reaches the mesh",
+    add("board.thickness_reaches_mesh", "Board", "board thickness reaches the mesh",
         "IMPLEMENTED" if abs(lay["board"]["t_um"] - cfg.board_thickness_um) < 1e-6 else "OPEN",
         f"meshed {lay['board']['t_um']:.0f} um against config {cfg.board_thickness_um:.0f} um")
-    add("Board", "PCB-H0 documented", "SPECIFIED",
-        f"model_level = {cfg.board_model_level}; see PCB_IT968G_HOMOGENIZATION.md Sec.8")
-    add("Board", "PCB-H1 thermal validation", "OPEN", "not implemented")
-    add("Board", "eta uncertainty retained",
-        "SPECIFIED" if list(cfg.eta_sensitivity) == [0.25, 0.5, 0.75] else "OPEN",
-        f"eta_sensitivity = {list(cfg.eta_sensitivity)}")
+    add("board.h0_documented", "Board", "PCB-H0 documented", "SPECIFIED",
+        f"model_level = {cfg.board_model_level}; PCB_IT968G_HOMOGENIZATION.md Sec.8")
+    h1s = H1.summary()
+    add("board.h1_meshed", "Board", "PCB-H1 meshed as FE depth blocks", "OPEN",
+        "five-block model defined and 1-D consistent with H0 "
+        f"(k_xy exact, k_z {h1s['k_z_rel_diff']:.1e}), but not yet built into the mesh")
+    notrun("board.h1_thermal_validated", "Board", "PCB-H1 thermal validation",
+           "no H0-vs-H1 solve exists")
+    notrun("board.eta_sensitivity_run", "Board", "eta coverage sensitivity completed",
+           "material tensors exist for eta 0.25/0.50/0.75; no solve run")
     import importlib
-    bd = importlib.import_module("phase0g.board") if "phase0g.board" in sys.modules else None
-    if bd is None:
-        sys.path.insert(0, str(R / "scripts"))
-        from phase0g import board as bd
+    sys.path.insert(0, str(R / "scripts"))
+    from phase0g import board as bd
     a = dict(bd.BOARD_CASES["it968g_2p4mm"]); b = dict(bd.BOARD_CASES["it968g_3p2mm"])
     a.pop("t_mm"); b.pop("t_mm")
-    add("Board", "T-only cases material-identical",
+    add("board.t_only_material_identical", "Board", "T-only cases material-identical",
         "IMPLEMENTED" if a == b else "OPEN",
         "it968g_2p4mm and it968g_3p2mm share one material dict" if a == b
         else "the two cases differ in material")
+    notrun("board.t_only_comparison_run", "Board", "2.4/3.2 T-only comparison completed")
 
-    # ---- Z2 -------------------------------------------------------------------------
-    add("Z2", "2.4 mm board", "IMPLEMENTED", f"meshed {lay['board']['t_um']:.0f} um")
-    add("Z2", "23.36 mm conforming cutout",
+    # ---------------------------------------------------------------- electrical
+    z1r = TSV.z1_rail_report(cfg) if hasattr(TSV, "z1_rail_report") else None
+    z2r = TSV.z2_rail_report(cfg) if hasattr(TSV, "z2_rail_report") else None
+    add("elec.z1_rail_model", "Electrical", "Z1 48 V rail-specific VDD/GND model",
+        "SPECIFIED" if z1r else "OPEN",
+        (f"48 V rail, I = P_in/48 V (currently {z1r['i_total_a']:.2f} A from the "
+         f"Phase-0M-R3C P_in placeholder, NOT a physical solve)") if z1r
+        else "not implemented")
+    add("elec.z2_rail_model", "Electrical", "Z2 1 V rail-specific VDD/GND model",
+        "SPECIFIED" if z2r else "OPEN",
+        (f"1 V rail, I = {z2r['i_total_a']:.0f} A load current, "
+         f"{z2r['i_cell_a']:.3f} A per cell") if z2r else "not implemented")
+    sz = TSV.sizing_study(cfg) if hasattr(TSV, "sizing_study") else None
+    add("elec.tsv_count_justified", "Electrical",
+        "TSV count justified by a design criterion",
+        "SPECIFIED" if sz else "OPEN",
+        (f"three-point study: N_min_drop {sz['min_drop']['n_total']}, "
+         f"N_mid {sz['mid']['n_total']}, N_max_density {sz['max_density']['n_total']}; "
+         f"adopted = {sz['adopted']}") if sz else "685/684 is maximum density, unjustified")
+    add("elec.tsv_resistance_temperature_dependent", "Electrical",
+        "temperature-dependent TSV resistance in the fixed point", "OPEN",
+        "rho(T) exists in the analytical model but is evaluated at 20 C; not yet coupled")
+    notrun("elec.rdl_loss_recomputed", "Electrical",
+           "RDL loss recomputed on the physical geometry")
+    notrun("elec.energy_conservation_verified", "Electrical",
+           "energy conservation verified on the physical heat map")
+    notrun("elec.loss_audit_frozen", "Electrical", "physical Z1/Z2 loss audit frozen")
+
+    # ---------------------------------------------------------------- thermal
+    notrun("therm.tier_aware_heat_map", "Thermal",
+           "tier-aware converter heat deposition",
+           "production heat map still targets a single converter layer")
+    notrun("therm.bc_selected", "Thermal", "physical thermal BC selected")
+    notrun("therm.z2_passive", "Thermal", "Z2-PASSIVE case implemented")
+    notrun("therm.z2_cooled", "Thermal", "Z2-COOLED case implemented")
+    notrun("therm.et_fixed_point_converged", "Thermal", "ET fixed point converged")
+    notrun("therm.mot_tg_evaluated", "Thermal", "PCB MOT/Tg checks evaluated")
+    notrun("therm.h0_h1_compared", "Thermal", "H0 vs H1 thermal comparison run")
+
+    # ---------------------------------------------------------------- mechanical
+    notrun("mech.f1_f2_bracket_run", "Mechanical", "F1/F2 out-of-cell bracket run",
+           "both cases BUILD; neither has been solved")
+    notrun("mech.mesh_convergence", "Mechanical", "physical mesh convergence")
+    notrun("mech.bga_528_site_search", "Mechanical",
+           "critical-joint search over all 528 surviving sites")
+    notrun("mech.t_only_mechanical", "Mechanical", "2.4/3.2 T-only mechanical comparison")
+    notrun("local.solder_rerun_at_new_critical_site", "Local",
+           "local solder rerun at the new critical site")
+
+    # ---------------------------------------------------------------- geometry
+    add("geom.z2_cutout_conforming", "Z2 geometry", "23.36 mm conforming cutout",
         "IMPLEMENTED" if cfg.cutout_mm == 23.36 else "OPEN",
         f"cutout {cfg.cutout_mm} mm, edges are grid breakpoints")
-    add("Z2", "49 discrete cells",
+    add("geom.z2_49_cells", "Z2 geometry", "49 discrete cells",
         "IMPLEMENTED" if len(tiles) == cfg.cells else "OPEN",
         f"{len(tiles)} tile footprints in the mesh")
     total = sum(r["mesh_um"] or 0 for r in rows)
-    add("Z2", "full 1.963 mm stack",
+    add("geom.z2_full_stack", "Z2 geometry", "full 1.963 mm stack",
         "IMPLEMENTED" if abs(total - 1963.0) < 1e-6 else "OPEN",
         f"8 tiers measured, total {total:.1f} um")
-    deepest = min(rows, key=lambda r: r["z0_um"])
-    add("Z2", "EPC2014C high side explicitly present",
-        "IMPLEMENTED" if "gan_hs" in deepest["tier"] else "OPEN",
-        f"deepest tier {deepest['tier']} at {deepest['z0_um']-off:.0f} um above the PCB backside")
-    add("Z2", "no full-area converter slab",
+    add("geom.z2_no_slab", "Z2 geometry", "no full-area converter slab",
         "IMPLEMENTED" if "conv" not in set(m.elem_layer) else "OPEN",
         f"0 of {int(m.n_elems)} elements belong to a layer named 'conv'")
     stray = sorted(set(mat[(mat != "underfill_homog") & (tile < 0)]))
-    add("Z2", "no converter medium outside a cell",
+    add("geom.z2_no_medium_outside_cells", "Z2 geometry",
+        "no converter medium outside a cell",
         "IMPLEMENTED" if not stray else "OPEN",
-        f"0 of {int(((mat != 'underfill_homog')).sum())} in-cell converter elements lie "
+        f"0 of {int((mat != 'underfill_homog').sum())} in-cell converter elements lie "
         f"outside a footprint" if not stray else f"stray media {stray}")
-    add("Z2", "out-of-cell material/void defined",
-        "SPECIFIED", "F1 encapsulated (primary) and F2 void both build; bracket not yet run")
-    add("Z2", "converter descends into the cutout",
-        "IMPLEMENTED" if deepest["z0_um"] > lay["board"]["z0_um"]
-        and deepest["z0_um"] < lay["board"]["z1_um"] else "OPEN",
-        f"HVR occupies {rows[0]['z1_um']-off:.0f} -> {deepest['z0_um']-off:.0f} um, "
+    deepest = min(rows, key=lambda r: r["z0_um"])
+    add("geom.z2_descends_into_cutout", "Z2 geometry", "converter descends into the cutout",
+        "IMPLEMENTED" if lay["board"]["z0_um"] < deepest["z0_um"] < lay["board"]["z1_um"]
+        else "OPEN",
+        f"HVR occupies {rows[0]['z1_um']-off:.0f} -> {deepest['z0_um']-off:.0f} um "
         f"inside the board's 0 -> {lay['board']['t_um']:.0f} um extent")
-    add("Z2", "no overlap", "IMPLEMENTED",
+    add("geom.z2_no_overlap", "Z2 geometry", "no overlap",
+        "IMPLEMENTED",
         f"the mesh builder raises if two layers claim one element; all "
         f"{int(m.n_elems)} elements were accepted")
-    add("Z2", "symmetric BGA feed", "IMPLEMENTED",
+    add("geom.z2_out_of_cell_defined", "Z2 geometry", "out-of-cell material/void defined",
+        "SPECIFIED", "F1 encapsulated (primary) and F2 void both build; bracket not run")
+    add("geom.bga_symmetric_feed", "Z2 geometry", "symmetric BGA feed", "IMPLEMENTED",
         "16+16 mirror-symmetric pairs, first moments (0,0); research/phase0nt/annular_pcb.json")
-    add("Z2", "split VDD / GND TSV fields meshed", "OPEN",
-        "analytical model exists; the two rails are not yet distinct mesh regions")
-    add("Z2", "per-tier material fidelity", "OPEN",
-        "MLCC tier has no sourced card; GaN epi not resolved (mapped to the Si carrier)")
-
-    # ---- Z1 -------------------------------------------------------------------------
-    from physical_package import build_physical_z1
-    import z1_package as Z1P
-    import inventory_audit as INV
-    m1 = build_physical_z1(cfg)[0]
-    lay1 = measure_layers(m1)
-    pcb1 = lay1["board"]["z0_um"]
-    rows1 = Z1P.tier_report(m1)
     t1 = sum(r["mesh_um"] or 0 for r in rows1)
-    add("Z1", "complete physical stack",
-        "IMPLEMENTED" if abs(lay1["tim"]["z1_um"] - pcb1 - 5333.0) < 0.5 else "OPEN",
-        f"package top {lay1['tim']['z1_um']-pcb1:.0f} um above the PCB backside "
-        f"(specified 5333); converter {t1:.0f} um in 9 tiers")
+    add("geom.z1_complete_stack", "Z1 geometry", "complete physical stack",
+        "IMPLEMENTED" if abs(lay1["tim"]["z1_um"] - off1 - 5333.0) < 0.5 else "OPEN",
+        f"package top {lay1['tim']['z1_um']-off1:.0f} um (specified 5333); "
+        f"converter {t1:.0f} um in 9 tiers")
     hs = next((r for r in rows1 if "gan_hs" in r["tier"]), None)
-    add("Z1", "HS explicitly present",
+    add("geom.z1_hs_present", "Z1 geometry", "HS explicitly present",
         "IMPLEMENTED" if hs and hs["mesh_um"] == 685.0 else "OPEN",
-        f"EPC2014C meshed {hs['mesh_um']:.0f} um at "
-        f"{hs['z0_um']-pcb1:.0f} -> {hs['z1_um']-pcb1:.0f} um" if hs else "absent")
-    add("Z1", "selected-device dimensions", "IMPLEMENTED",
-        "EPC2014C 685 um and EPC2057 638 um in both architectures")
+        f"EPC2014C meshed {hs['mesh_um']:.0f} um at {hs['z0_um']-off1:.0f} -> "
+        f"{hs['z1_um']-off1:.0f} um" if hs else "absent")
+    add("geom.z1_selected_devices", "Z1 geometry", "selected-device dimensions",
+        "IMPLEMENTED", "EPC2014C 685 um and EPC2057 638 um in both architectures")
     inv = INV.audit()
-    add("Z1", "same converter inventory",
+    add("geom.inventory_equal", "Inventory", "same converter inventory",
         "IMPLEMENTED" if all(c["equal"] for c in inv["components"]) else "OPEN",
-        "147 HS / 147 LS / 147 inductors / 98 flying caps in both; active volume "
+        "147 HS / 147 LS / 147 inductors / 98 flying caps as a TOPOLOGY inventory, "
+        "homogenized within each cell tier footprint; active volume "
         f"{inv['active_volume_z1_mm3']:.3f} mm3 equal to machine precision")
-    add("Z1", "explicit supply/return", "OPEN",
-        "48 V VDD/GND TSV fields not yet meshed (analytical model exists)")
+    sa2 = SA.audit(m, cfg.cutout_mm)
+    sa1 = SA.audit(m1, None)
+    cons = all(c["conserved"] for c in sa2.values()) and all(
+        c["conserved"] for c in sa1.values())
+    add("geom.stack_conservation", "Inventory", "1-D stack thickness conserves exactly",
+        "IMPLEMENTED" if cons else "OPEN",
+        f"Z2 cutout column {sa2['cutout']['sum_t_um']:.0f} um and periphery "
+        f"{sa2['periphery']['sum_t_um']:.0f} um; Z1 {sa1['single']['sum_t_um']:.0f} um; "
+        "no gaps, no overlaps")
 
-    # ---- TSV fields -----------------------------------------------------------------
-    import tsv_fields as TSV
-    tr = TSV.system_report(cfg.cells, cfg.cell_side_mm, 0.300, 1000.0)
-    add("Z2", "VDD/GND TSV fields: analytical model",
-        "SPECIFIED",
-        f"interleaved {tr['per_cell']['lattice_n']}x{tr['per_cell']['lattice_n']} lattice, "
-        f"{tr['per_cell']['n_vdd']} VDD / {tr['per_cell']['n_gnd']} GND per cell, "
-        f"I_cell {tr['i_cell_a']:.3f} A; R_loop includes constriction "
-        f"({tr['per_cell']['spreading_share_pct']:.1f} % of the loop)")
+    # ---------------------------------------------------------------- material
+    add("mat.rdl_tier_tensor", "Material", "explicit RDL tiers use the RDL tensor",
+        "IMPLEMENTED" if "rdl_tier" in st["materials"] else "OPEN",
+        "Phase-0M-R rdl_effective_tensor.csv (RDL alone), replacing the 40 um RDL + "
+        "10 um bump composite previously applied to a 10 um tier")
+    add("mat.microbump_separate", "Material", "microbump/underfill kept separate",
+        "IMPLEMENTED" if "microbump" in set(m.elem_material) else "OPEN",
+        f"{int((np.array(m.elem_material) == 'microbump').sum())} interface elements "
+        f"carry bump_layer_effective_tensor.csv (k_z 11.7 vs underfill 0.7 W/mK)")
+    notrun("mat.gan_bounded", "Material", "GaN epi contribution bounded",
+           "devices meshed as the Si carrier; the epi contribution is not yet bounded")
+    notrun("mat.mlcc_bounded", "Material", "MLCC tier material bounded",
+           "flying-cap tier meshed at hvr_effective; no ceramic/Ni bracket yet")
+    notrun("mat.inductor_tier_bounded", "Material", "inductor/Cout tier bounded",
+           "hvr_effective is generic; occupancy-based bracket not built")
 
-    # ---- results --------------------------------------------------------------------
-    add("Results", "physical ET result lineage", "OPEN",
-        "BLOCKED: no new ETM result may be generated until every gate above is closed")
+    # ---------------------------------------------------------------- results
+    add("results.physical_etm_lineage", "Results", "physical ETM result lineage", "OPEN",
+        "BLOCKED: no physical ETM result may be generated until every gate above closes")
+
+    # ---- the registry must cover the manifest ------------------------------------
+    emitted = {r["id"] for r in g}
+    missing = [x for x in ALL_REQUIRED if x not in emitted]
+    extra = sorted(emitted - set(ALL_REQUIRED))
+    if missing:
+        raise AssertionError(
+            "the gate registry is INCOMPLETE -- required gates have no row and would "
+            f"therefore never block an ETM run: {missing}")
+    if extra:
+        raise AssertionError(f"gate rows not declared in REQUIRED_GATES: {extra}")
     return cfg, rows, g, off, m
 
 
@@ -217,6 +344,13 @@ def main():
     lines += ["## Converter inventory equality", "",
               "Volumes are measured from the two MESHES, not computed from the "
               "specification, so a dropped or duplicated tier would show up here.", "",
+              "**These counts are a TOPOLOGY inventory, not a count of separately "
+              "resolved bodies in the FE model.** The mesh carries 49 cell-sized tier "
+              "footprints per architecture; each cell's component population is "
+              "homogenized within its corresponding tier footprint. There are not 147 "
+              "individually meshed transistor bodies. The volume equality below is "
+              "still the meaningful result -- it says both architectures carry the same "
+              "active material -- but it must not be read as spatial resolution.", "",
               "| component | per cell | total | Z1 (mm3) | Z2 (mm3) | relative delta |",
               "|---|---:|---:|---:|---:|---:|"]
     for c in inv["components"]:
@@ -272,6 +406,65 @@ def main():
               f"{tr['p_tsv_total_w']:.3f} W.", "",
               "**These fields are not yet meshed as distinct regions** -- the model is "
               "analytical and the gate stays OPEN.", ""]
+
+    # ---- rails and sizing -----------------------------------------------------------
+    z1t, z2t = TSV.z1_rail_report(cfg), TSV.z2_rail_report(cfg)
+    sz = TSV.sizing_study(cfg)
+    lines += ["## The two TSV rails are electrically different", "",
+              "Same via geometry, currents three orders of magnitude apart. A single "
+              "1000 A model applied to both erased the distinction.", "",
+              "| | Z1 | Z2 |", "|---|---:|---:|",
+              f"| rail | {z1t['rail_v']:.0f} V input | {z2t['rail_v']:.0f} V output |",
+              f"| system current | {z1t['i_total_a']:.3f} A | {z2t['i_total_a']:.0f} A |",
+              f"| per-cell current | {z1t['i_cell_a']:.4f} A | {z2t['i_cell_a']:.3f} A |",
+              f"| system TSV loss | {z1t['p_tsv_total_w']*1e3:.4f} mW | "
+              f"{z2t['p_tsv_total_w']*1e3:.1f} mW |",
+              "",
+              f"Z1's current is **a placeholder**: {z1t['source']}. It is "
+              "I = P_in / 48 V and cannot be final until the physical electrical "
+              "solution exists. Z2's is the 1 V load current and must still be updated "
+              "self-consistently with losses.", "",
+              "### The TSV count is a choice, and the adopted one is the maximum", "",
+              f"Declared budget: {100*sz['budget_frac']:.0f} % of the rail "
+              f"({sz['budget_v']*1e3:.0f} mV). {sz['budget_status']}. "
+              f"{sz['current_density_note'].capitalize()}.", "",
+              "| point | pitch | lattice | N | drop | % of rail |",
+              "|---|---:|---:|---:|---:|---:|"]
+    for k in ("min_drop", "mid", "max_density"):
+        q = sz[k]
+        lines.append(f"| {k} | {q['pitch_um']:.0f} um | {q['lattice_n']}x"
+                     f"{q['lattice_n']} | {q['n_total']} | {q['v_drop_v']*1e3:.3f} mV | "
+                     f"{100*q['v_drop_frac_of_rail']:.2f} % |")
+    lines += ["", f"**Adopted: {sz['adopted']}.** {sz['adopted_rationale']} The "
+              f"electrically required field is {sz['min_drop']['n_total']} vias; the "
+              f"adopted field is {sz['max_density']['n_total']}, about "
+              f"{sz['max_density']['n_total']/sz['min_drop']['n_total']:.0f}x larger. "
+              "685/684 per cell is therefore a geometric upper bound, not a "
+              "requirement.", "",
+              "### Spreading resistance is counted at BOTH ends", "",
+              f"R_loop = R_vdd + R_gnd + 2 R_spread,vdd + 2 R_spread,gnd = "
+              f"{z2t['per_cell']['r_loop_ohm']*1e6:.3f} uohm. Current converges out of "
+              "the plane into the via mouths at one end and diverges back out at the "
+              "other, so each rail carries two constrictions -- Holm's contact "
+              "resistance, rho/(2a) per via rather than rho/(4a). The earlier version "
+              "charged one end per rail. Correcting it moved the spreading share from "
+              f"1.4 % to {z2t['per_cell']['spreading_share_pct']:.1f} % of the loop and "
+              f"the naive 2 R_field error from -1.4 % to "
+              f"{z2t['per_cell']['naive_error_pct']:.1f} %. A modest change, reported as "
+              "a modest one.", ""]
+
+    # ---- 1-D conservation -------------------------------------------------------------
+    import stack_audit as SA
+    lines += ["## 1-D stack conservation", "",
+              "Every layer accounted for exactly once, from the PCB backside to the TIM "
+              "top. This audit caught two defects that the converter total could not "
+              "see: Z1 double-counted the microbump layer (package top 5343 um), and Z2 "
+              "was missing the 10 um top RDL so the `interface` layer stood in for it "
+              "and the microbump row vanished (package top 3360 um).", ""]
+    lines.append(SA.report(m, cfg.cutout_mm, "Z2", off))
+    lines.append("")
+    lines.append(SA.report(m1, None, "Z1", off1))
+    lines.append("")
 
     lines += [
         "## What 'IMPLEMENTED' means here, and what it does not",

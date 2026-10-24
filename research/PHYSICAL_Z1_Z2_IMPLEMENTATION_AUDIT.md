@@ -2,7 +2,7 @@
 
 Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_physical_gates.py`: the config is loaded, the mesh is built, and the measured geometry decides the status. Nothing here is typed by hand, because a hand-typed status table goes stale a phase after it is written.
 
-**5 of 26 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
+**24 of 47 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
 
 | status | meaning |
 |---|---|
@@ -17,30 +17,51 @@ Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_ph
 |---|---|---|---|
 | Board | physical YAML uses it968g_2p4mm | **IMPLEMENTED** | config board.case = it968g_2p4mm |
 | Board | board thickness reaches the mesh | **IMPLEMENTED** | meshed 2400 um against config 2400 um |
-| Board | PCB-H0 documented | **SPECIFIED** | model_level = PCB-H0; see PCB_IT968G_HOMOGENIZATION.md Sec.8 |
-| Board | PCB-H1 thermal validation | **OPEN** | not implemented |
-| Board | eta uncertainty retained | **SPECIFIED** | eta_sensitivity = [0.25, 0.5, 0.75] |
+| Board | PCB-H0 documented | **SPECIFIED** | model_level = PCB-H0; PCB_IT968G_HOMOGENIZATION.md Sec.8 |
+| Board | PCB-H1 meshed as FE depth blocks | **OPEN** | five-block model defined and 1-D consistent with H0 (k_xy exact, k_z 7.9e-07), but not yet built into the mesh |
+| Board | PCB-H1 thermal validation | **OPEN** | no H0-vs-H1 solve exists |
+| Board | eta coverage sensitivity completed | **OPEN** | material tensors exist for eta 0.25/0.50/0.75; no solve run |
 | Board | T-only cases material-identical | **IMPLEMENTED** | it968g_2p4mm and it968g_3p2mm share one material dict |
-| Z2 | 2.4 mm board | **IMPLEMENTED** | meshed 2400 um |
-| Z2 | 23.36 mm conforming cutout | **IMPLEMENTED** | cutout 23.36 mm, edges are grid breakpoints |
-| Z2 | 49 discrete cells | **IMPLEMENTED** | 49 tile footprints in the mesh |
-| Z2 | full 1.963 mm stack | **IMPLEMENTED** | 8 tiers measured, total 1963.0 um |
-| Z2 | EPC2014C high side explicitly present | **IMPLEMENTED** | deepest tier conv_7_gan_hs_EPC2014C at 737 um above the PCB backside |
-| Z2 | no full-area converter slab | **IMPLEMENTED** | 0 of 37254 elements belong to a layer named 'conv' |
-| Z2 | no converter medium outside a cell | **IMPLEMENTED** | 0 of 6615 in-cell converter elements lie outside a footprint |
-| Z2 | out-of-cell material/void defined | **SPECIFIED** | F1 encapsulated (primary) and F2 void both build; bracket not yet run |
-| Z2 | converter descends into the cutout | **IMPLEMENTED** | HVR occupies 1422 -> 737 um, inside the board's 0 -> 2400 um extent |
-| Z2 | no overlap | **IMPLEMENTED** | the mesh builder raises if two layers claim one element; all 37254 elements were accepted |
-| Z2 | symmetric BGA feed | **IMPLEMENTED** | 16+16 mirror-symmetric pairs, first moments (0,0); research/phase0nt/annular_pcb.json |
-| Z2 | split VDD / GND TSV fields meshed | **OPEN** | analytical model exists; the two rails are not yet distinct mesh regions |
-| Z2 | per-tier material fidelity | **OPEN** | MLCC tier has no sourced card; GaN epi not resolved (mapped to the Si carrier) |
-| Z1 | complete physical stack | **IMPLEMENTED** | package top 5333 um above the PCB backside (specified 5333); converter 1973 um in 9 tiers |
-| Z1 | HS explicitly present | **IMPLEMENTED** | EPC2014C meshed 685 um at 3010 -> 3695 um |
-| Z1 | selected-device dimensions | **IMPLEMENTED** | EPC2014C 685 um and EPC2057 638 um in both architectures |
-| Z1 | same converter inventory | **IMPLEMENTED** | 147 HS / 147 LS / 147 inductors / 98 flying caps in both; active volume 528.613 mm3 equal to machine precision |
-| Z1 | explicit supply/return | **OPEN** | 48 V VDD/GND TSV fields not yet meshed (analytical model exists) |
-| Z2 | VDD/GND TSV fields: analytical model | **SPECIFIED** | interleaved 37x37 lattice, 685 VDD / 684 GND per cell, I_cell 20.408 A; R_loop includes constriction (1.4 % of the loop) |
-| Results | physical ET result lineage | **OPEN** | BLOCKED: no new ETM result may be generated until every gate above is closed |
+| Board | 2.4/3.2 T-only comparison completed | **OPEN** | not run -- no artifact exists for '2.4/3.2 T-only comparison completed' |
+| Electrical | Z1 48 V rail-specific VDD/GND model | **SPECIFIED** | 48 V rail, I = P_in/48 V (currently 2.86 A from the Phase-0M-R3C P_in placeholder, NOT a physical solve) |
+| Electrical | Z2 1 V rail-specific VDD/GND model | **SPECIFIED** | 1 V rail, I = 1000 A load current, 20.408 A per cell |
+| Electrical | TSV count justified by a design criterion | **SPECIFIED** | three-point study: N_min_drop 81, N_mid 324, N_max_density 1369; adopted = max_density |
+| Electrical | temperature-dependent TSV resistance in the fixed point | **OPEN** | rho(T) exists in the analytical model but is evaluated at 20 C; not yet coupled |
+| Electrical | RDL loss recomputed on the physical geometry | **OPEN** | not run -- no artifact exists for 'RDL loss recomputed on the physical geometry' |
+| Electrical | energy conservation verified on the physical heat map | **OPEN** | not run -- no artifact exists for 'energy conservation verified on the physical heat map' |
+| Electrical | physical Z1/Z2 loss audit frozen | **OPEN** | not run -- no artifact exists for 'physical Z1/Z2 loss audit frozen' |
+| Thermal | tier-aware converter heat deposition | **OPEN** | production heat map still targets a single converter layer |
+| Thermal | physical thermal BC selected | **OPEN** | not run -- no artifact exists for 'physical thermal BC selected' |
+| Thermal | Z2-PASSIVE case implemented | **OPEN** | not run -- no artifact exists for 'Z2-PASSIVE case implemented' |
+| Thermal | Z2-COOLED case implemented | **OPEN** | not run -- no artifact exists for 'Z2-COOLED case implemented' |
+| Thermal | ET fixed point converged | **OPEN** | not run -- no artifact exists for 'ET fixed point converged' |
+| Thermal | PCB MOT/Tg checks evaluated | **OPEN** | not run -- no artifact exists for 'PCB MOT/Tg checks evaluated' |
+| Thermal | H0 vs H1 thermal comparison run | **OPEN** | not run -- no artifact exists for 'H0 vs H1 thermal comparison run' |
+| Mechanical | F1/F2 out-of-cell bracket run | **OPEN** | both cases BUILD; neither has been solved |
+| Mechanical | physical mesh convergence | **OPEN** | not run -- no artifact exists for 'physical mesh convergence' |
+| Mechanical | critical-joint search over all 528 surviving sites | **OPEN** | not run -- no artifact exists for 'critical-joint search over all 528 surviving sites' |
+| Mechanical | 2.4/3.2 T-only mechanical comparison | **OPEN** | not run -- no artifact exists for '2.4/3.2 T-only mechanical comparison' |
+| Local | local solder rerun at the new critical site | **OPEN** | not run -- no artifact exists for 'local solder rerun at the new critical site' |
+| Z2 geometry | 23.36 mm conforming cutout | **IMPLEMENTED** | cutout 23.36 mm, edges are grid breakpoints |
+| Z2 geometry | 49 discrete cells | **IMPLEMENTED** | 49 tile footprints in the mesh |
+| Z2 geometry | full 1.963 mm stack | **IMPLEMENTED** | 8 tiers measured, total 1963.0 um |
+| Z2 geometry | no full-area converter slab | **IMPLEMENTED** | 0 of 38623 elements belong to a layer named 'conv' |
+| Z2 geometry | no converter medium outside a cell | **IMPLEMENTED** | 0 of 6615 in-cell converter elements lie outside a footprint |
+| Z2 geometry | converter descends into the cutout | **IMPLEMENTED** | HVR occupies 1422 -> 737 um inside the board's 0 -> 2400 um extent |
+| Z2 geometry | no overlap | **IMPLEMENTED** | the mesh builder raises if two layers claim one element; all 38623 elements were accepted |
+| Z2 geometry | out-of-cell material/void defined | **SPECIFIED** | F1 encapsulated (primary) and F2 void both build; bracket not run |
+| Z2 geometry | symmetric BGA feed | **IMPLEMENTED** | 16+16 mirror-symmetric pairs, first moments (0,0); research/phase0nt/annular_pcb.json |
+| Z1 geometry | complete physical stack | **IMPLEMENTED** | package top 5333 um (specified 5333); converter 1973 um in 9 tiers |
+| Z1 geometry | HS explicitly present | **IMPLEMENTED** | EPC2014C meshed 685 um at 3010 -> 3695 um |
+| Z1 geometry | selected-device dimensions | **IMPLEMENTED** | EPC2014C 685 um and EPC2057 638 um in both architectures |
+| Inventory | same converter inventory | **IMPLEMENTED** | 147 HS / 147 LS / 147 inductors / 98 flying caps as a TOPOLOGY inventory, homogenized within each cell tier footprint; active volume 528.613 mm3 equal to machine precision |
+| Inventory | 1-D stack thickness conserves exactly | **IMPLEMENTED** | Z2 cutout column 2633 um and periphery 3010 um; Z1 5333 um; no gaps, no overlaps |
+| Material | explicit RDL tiers use the RDL tensor | **IMPLEMENTED** | Phase-0M-R rdl_effective_tensor.csv (RDL alone), replacing the 40 um RDL + 10 um bump composite previously applied to a 10 um tier |
+| Material | microbump/underfill kept separate | **IMPLEMENTED** | 841 interface elements carry bump_layer_effective_tensor.csv (k_z 11.7 vs underfill 0.7 W/mK) |
+| Material | GaN epi contribution bounded | **OPEN** | devices meshed as the Si carrier; the epi contribution is not yet bounded |
+| Material | MLCC tier material bounded | **OPEN** | flying-cap tier meshed at hvr_effective; no ceramic/Ni bracket yet |
+| Material | inductor/Cout tier bounded | **OPEN** | hvr_effective is generic; occupancy-based bracket not built |
+| Results | physical ETM result lineage | **OPEN** | BLOCKED: no physical ETM result may be generated until every gate above closes |
 
 ## Measured Z2 converter tiers
 
@@ -49,13 +70,13 @@ z is given in the PCB-backside frame, matching `Z1_Z2_PHYSICALLY_SPECIFIED_STACK
 | tier | material | spec (um) | mesh (um) | z top | z bottom |
 |---|---|---:|---:|---:|---:|
 | conv_7_gan_hs_EPC2014C | `silicon` | 685 | 685 | 1422 | 737 |
-| conv_6_interlayer_rdl | `rdl_composite` | 10 | 10 | 1432 | 1422 |
+| conv_6_interlayer_rdl | `rdl_tier` | 10 | 10 | 1432 | 1422 |
 | conv_5_flying_caps | `hvr_effective` | 100 | 100 | 1532 | 1432 |
-| conv_4_interlayer_rdl | `rdl_composite` | 10 | 10 | 1542 | 1532 |
+| conv_4_interlayer_rdl | `rdl_tier` | 10 | 10 | 1542 | 1532 |
 | conv_3_gan_ls_EPC2057 | `silicon` | 638 | 638 | 2180 | 1542 |
-| conv_2_interlayer_rdl | `rdl_composite` | 10 | 10 | 2190 | 2180 |
+| conv_2_interlayer_rdl | `rdl_tier` | 10 | 10 | 2190 | 2180 |
 | conv_1_inductor_plus_cout | `hvr_effective` | 500 | 500 | 2690 | 2190 |
-| conv_0_land_side_attach_rdl | `rdl_composite` | 10 | 10 | 2700 | 2690 |
+| conv_0_land_side_attach_rdl | `rdl_tier` | 10 | 10 | 2700 | 2690 |
 | **total** | | **1963** | **1963** | | |
 
 ## Measured Z1 converter tiers
@@ -64,21 +85,23 @@ Specified table: `Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md` section 1.
 
 | tier | material | spec (um) | mesh (um) | z bottom | z top |
 |---|---|---:|---:|---:|---:|
-| z1conv_0_bottom_substrate_rdl | `rdl_composite` | 10 | 10 | 3000 | 3010 |
+| z1conv_0_bottom_substrate_rdl | `rdl_tier` | 10 | 10 | 3000 | 3010 |
 | z1conv_1_gan_hs_EPC2014C | `silicon` | 685 | 685 | 3010 | 3695 |
-| z1conv_2_interlayer_rdl | `rdl_composite` | 10 | 10 | 3695 | 3705 |
+| z1conv_2_interlayer_rdl | `rdl_tier` | 10 | 10 | 3695 | 3705 |
 | z1conv_3_gan_ls_EPC2057 | `silicon` | 638 | 638 | 3705 | 4343 |
-| z1conv_4_interlayer_rdl | `rdl_composite` | 10 | 10 | 4343 | 4353 |
+| z1conv_4_interlayer_rdl | `rdl_tier` | 10 | 10 | 4343 | 4353 |
 | z1conv_5_flying_caps | `hvr_effective` | 100 | 100 | 4353 | 4453 |
-| z1conv_6_interlayer_rdl | `rdl_composite` | 10 | 10 | 4453 | 4463 |
+| z1conv_6_interlayer_rdl | `rdl_tier` | 10 | 10 | 4453 | 4463 |
 | z1conv_7_inductor_plus_cout | `hvr_effective` | 500 | 500 | 4463 | 4963 |
-| z1conv_8_output_rdl | `rdl_composite` | 10 | 10 | 4963 | 4973 |
+| z1conv_8_output_rdl | `rdl_tier` | 10 | 10 | 4963 | 4973 |
 
 Package top **5333 um** above the PCB backside (specified 5333). Substrate **300 um** -- the 1300 um embedded proxy with its 1226 um homogenized band, which contains no high-side device at all, is gone from the physical path.
 
 ## Converter inventory equality
 
 Volumes are measured from the two MESHES, not computed from the specification, so a dropped or duplicated tier would show up here.
+
+**These counts are a TOPOLOGY inventory, not a count of separately resolved bodies in the FE model.** The mesh carries 49 cell-sized tier footprints per architecture; each cell's component population is homogenized within its corresponding tier footprint. There are not 147 individually meshed transistor bodies. The volume equality below is still the meaningful result -- it says both architectures carry the same active material -- but it must not be read as spatial resolution.
 
 | component | per cell | total | Z1 (mm3) | Z2 (mm3) | relative delta |
 |---|---:|---:|---:|---:|---:|
@@ -103,14 +126,101 @@ The only difference is interconnect: Z1 carries 5 RDLs (13.7445 mm3) against Z2'
 | current per via (mA) | 29.79 | 29.84 |
 | current density (A/cm2) | 4215 | 4221 |
 | field resistance (uohm) | 10.409 | 10.424 |
-| spreading resistance (uohm) | 0.145 | 0.145 |
-| loss per cell (mW) | 4.40 | 4.40 |
+| spreading resistance (uohm) | 0.289 | 0.289 |
+| loss per cell (mW) | 4.46 | 4.46 |
 
 Geometry is the SOURCE_BACKED 30 um / 60 um pitch over a 300 um substrate, checkerboard-interleaved on a 37x37 lattice so every VDD via has GND nearest neighbours. Both fields are symmetric about the cell centre to machine precision, so neither rail sees a systematically different thermal or mechanical environment.
 
-**R_loop = 21.122 uohm**, against 20.818 uohm for the naive `2 R_field`. Constriction at the via mouths contributes 1.4 % of the loop, so the naive form UNDER-predicts by 1.4 %. That is a small correction here, but it was computed rather than assumed, which is what the brief asks for. System TSV loss 0.431 W.
+**R_loop = 21.412 uohm**, against 20.818 uohm for the naive `2 R_field`. Constriction at the via mouths contributes 2.7 % of the loop, so the naive form UNDER-predicts by 2.8 %. That is a small correction here, but it was computed rather than assumed, which is what the brief asks for. System TSV loss 0.437 W.
 
 **These fields are not yet meshed as distinct regions** -- the model is analytical and the gate stays OPEN.
+
+## The two TSV rails are electrically different
+
+Same via geometry, currents three orders of magnitude apart. A single 1000 A model applied to both erased the distinction.
+
+| | Z1 | Z2 |
+|---|---:|---:|
+| rail | 48 V input | 1 V output |
+| system current | 2.860 A | 1000 A |
+| per-cell current | 0.0584 A | 20.408 A |
+| system TSV loss | 0.0036 mW | 437.0 mW |
+
+Z1's current is **a placeholder**: Phase-0M-R3C P_in (PLACEHOLDER). It is I = P_in / 48 V and cannot be final until the physical electrical solution exists. Z2's is the 1 V load current and must still be updated self-consistently with losses.
+
+### The TSV count is a choice, and the adopted one is the maximum
+
+Declared budget: 1 % of the rail (10 mV). BOUNDED -- declared engineering budget, not a sourced allowable. No validated em/current-density allowable exists for this via geometry, so none is asserted; the field is bracketed by voltage drop and geometry instead.
+
+| point | pitch | lattice | N | drop | % of rail |
+|---|---:|---:|---:|---:|---:|
+| min_drop | 240 um | 9x9 | 81 | 7.649 mV | 0.76 % |
+| mid | 120 um | 18x18 | 324 | 1.888 mV | 0.19 % |
+| max_density | 60 um | 37x37 | 1369 | 0.437 mV | 0.04 % |
+
+**Adopted: max_density.** the mechanical and thermal models need the copper volume fraction to be an upper bound on stiffening and spreading; the ELECTRICAL bracket is reported alongside so the sensitivity is visible. This is a MAXIMUM-DENSITY field, explicitly not a minimum-required one. The electrically required field is 81 vias; the adopted field is 1369, about 17x larger. 685/684 per cell is therefore a geometric upper bound, not a requirement.
+
+### Spreading resistance is counted at BOTH ends
+
+R_loop = R_vdd + R_gnd + 2 R_spread,vdd + 2 R_spread,gnd = 21.412 uohm. Current converges out of the plane into the via mouths at one end and diverges back out at the other, so each rail carries two constrictions -- Holm's contact resistance, rho/(2a) per via rather than rho/(4a). The earlier version charged one end per rail. Correcting it moved the spreading share from 1.4 % to 2.7 % of the loop and the naive 2 R_field error from -1.4 % to -2.8 %. A modest change, reported as a modest one.
+
+## 1-D stack conservation
+
+Every layer accounted for exactly once, from the PCB backside to the TIM top. This audit caught two defects that the converter total could not see: Z1 double-counted the microbump layer (package top 5343 um), and Z2 was missing the 10 um top RDL so the `interface` layer stood in for it and the microbump row vanished (package top 3360 um).
+
+### Z2
+
+**cutout** — 14 layers, span 2633.0 um, sum of thicknesses 2633.0 um, conserved = True
+
+| layer | z0 | z1 | t |
+|---|---:|---:|---:|
+| conv_7_gan_hs_EPC2014C | 737.0 | 1422.0 | 685.0 |
+| conv_6_interlayer_rdl | 1422.0 | 1432.0 | 10.0 |
+| conv_5_flying_caps | 1432.0 | 1532.0 | 100.0 |
+| conv_4_interlayer_rdl | 1532.0 | 1542.0 | 10.0 |
+| conv_3_gan_ls_EPC2057 | 1542.0 | 2180.0 | 638.0 |
+| conv_2_interlayer_rdl | 2180.0 | 2190.0 | 10.0 |
+| conv_1_inductor_plus_cout | 2190.0 | 2690.0 | 500.0 |
+| conv_0_land_side_attach_rdl | 2690.0 | 2700.0 | 10.0 |
+| sub_lower | 2700.0 | 2980.0 | 280.0 |
+| tile_band | 2980.0 | 3000.0 | 20.0 |
+| z2_top_rdl | 3000.0 | 3010.0 | 10.0 |
+| interface | 3010.0 | 3020.0 | 10.0 |
+| die | 3020.0 | 3320.0 | 300.0 |
+| tim | 3320.0 | 3370.0 | 50.0 |
+
+**periphery** — 5 layers, span 3010.0 um, sum of thicknesses 3010.0 um, conserved = True
+
+| layer | z0 | z1 | t |
+|---|---:|---:|---:|
+| board | -0.0 | 2400.0 | 2400.0 |
+| bga | 2400.0 | 2700.0 | 300.0 |
+| sub_lower | 2700.0 | 2980.0 | 280.0 |
+| tile_band | 2980.0 | 3000.0 | 20.0 |
+| z2_top_rdl | 3000.0 | 3010.0 | 10.0 |
+
+### Z1
+
+**single** — 16 layers, span 5333.0 um, sum of thicknesses 5333.0 um, conserved = True
+
+| layer | z0 | z1 | t |
+|---|---:|---:|---:|
+| board | -0.0 | 2400.0 | 2400.0 |
+| bga | 2400.0 | 2700.0 | 300.0 |
+| sub_lower | 2700.0 | 2980.0 | 280.0 |
+| tile_band | 2980.0 | 3000.0 | 20.0 |
+| z1conv_0_bottom_substrate_rdl | 3000.0 | 3010.0 | 10.0 |
+| z1conv_1_gan_hs_EPC2014C | 3010.0 | 3695.0 | 685.0 |
+| z1conv_2_interlayer_rdl | 3695.0 | 3705.0 | 10.0 |
+| z1conv_3_gan_ls_EPC2057 | 3705.0 | 4343.0 | 638.0 |
+| z1conv_4_interlayer_rdl | 4343.0 | 4353.0 | 10.0 |
+| z1conv_5_flying_caps | 4353.0 | 4453.0 | 100.0 |
+| z1conv_6_interlayer_rdl | 4453.0 | 4463.0 | 10.0 |
+| z1conv_7_inductor_plus_cout | 4463.0 | 4963.0 | 500.0 |
+| z1conv_8_output_rdl | 4963.0 | 4973.0 | 10.0 |
+| interface | 4973.0 | 4983.0 | 10.0 |
+| die | 4983.0 | 5283.0 | 300.0 |
+| tim | 5283.0 | 5333.0 | 50.0 |
 
 ## What 'IMPLEMENTED' means here, and what it does not
 

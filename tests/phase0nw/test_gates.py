@@ -45,16 +45,59 @@ def test_no_physical_result_lineage_exists_while_gates_are_open(g):
             f"{lineage} -- the brief forbids generating headline numbers before closure")
 
 
-def test_the_open_gates_are_the_ones_we_say_they_are(g):
-    """If this list shrinks, the closure must be demonstrated, not announced."""
-    opens = {r["gate"] for r in g["gates"] if r["status"] == "OPEN"}
-    assert opens == {
-        "PCB-H1 thermal validation",
-        "split VDD / GND TSV fields meshed",
-        "per-tier material fidelity",
-        "explicit supply/return",
-        "physical ET result lineage",
-    }, f"the open-gate set changed: {sorted(opens)}"
+# Gates we CLAIM are closed. Pinning the closed set is the safety-relevant direction:
+# a gate must never close silently. New OPEN gates may appear freely.
+CLOSED_IDS = {
+    "board.it968g_selected", "board.thickness_reaches_mesh", "board.h0_documented",
+    "board.t_only_material_identical",
+    "elec.z1_rail_model", "elec.z2_rail_model", "elec.tsv_count_justified",
+    "geom.z2_cutout_conforming", "geom.z2_49_cells", "geom.z2_full_stack",
+    "geom.z2_no_slab", "geom.z2_no_medium_outside_cells", "geom.z2_descends_into_cutout",
+    "geom.z2_no_overlap", "geom.z2_out_of_cell_defined", "geom.bga_symmetric_feed",
+    "geom.z1_complete_stack", "geom.z1_hs_present", "geom.z1_selected_devices",
+    "geom.inventory_equal", "geom.stack_conservation",
+    "mat.rdl_tier_tensor", "mat.microbump_separate",
+}
+
+
+def test_registry_covers_every_required_gate(g):
+    """The registry must not be able to say 'ready for ETM' by omitting a requirement."""
+    import audit_physical_gates as A
+    ids = {r["id"] for r in g["gates"]}
+    assert set(A.ALL_REQUIRED) == ids, (
+        f"missing {sorted(set(A.ALL_REQUIRED) - ids)}; "
+        f"undeclared {sorted(ids - set(A.ALL_REQUIRED))}")
+
+
+def test_removing_a_required_gate_definition_fails(monkeypatch):
+    """NEGATIVE: drop a required gate and the registry must refuse to build.
+
+    This is the regression the brief asks for. The previous registry reported
+    '5 of 26 OPEN' while thermal BC selection, mesh convergence and the 528-site search
+    were simply not in it -- an omission is indistinguishable from a pass unless the
+    manifest is checked.
+    """
+    import audit_physical_gates as A
+    patched = dict(A.REQUIRED_GATES)
+    patched["thermal"] = list(patched["thermal"]) + ["therm.a_requirement_nobody_evaluates"]
+    monkeypatch.setattr(A, "REQUIRED_GATES", patched)
+    monkeypatch.setattr(
+        A, "ALL_REQUIRED", [x for v in patched.values() for x in v])
+    with pytest.raises(AssertionError, match="INCOMPLETE"):
+        A.gates()
+
+
+def test_no_gate_closes_without_being_listed_as_closed(g):
+    closed = {r["id"] for r in g["gates"] if r["status"] in ("IMPLEMENTED", "SPECIFIED")}
+    assert closed == CLOSED_IDS, (
+        f"silently closed: {sorted(closed - CLOSED_IDS)}; "
+        f"regressed: {sorted(CLOSED_IDS - closed)}")
+
+
+def test_every_open_gate_states_why(g):
+    for r in g["gates"]:
+        if r["status"] == "OPEN":
+            assert r["evidence"] and len(r["evidence"]) > 8, r
 
 
 def test_closed_geometry_gates_are_backed_by_a_mesh_measurement(g):
