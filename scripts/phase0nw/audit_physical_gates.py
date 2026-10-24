@@ -81,6 +81,8 @@ REQUIRED_GATES = {
     ],
     "tsv": ["tsv.density_sensitivity_run", "tsv.fe_copper_representation"],
     "rms": ["elec.current_waveforms_defined", "elec.rms_current_model",
+            "elec.branch_average_currents", "elec.aggregate_output_ripple",
+            "elec.individual_branch_waveforms", "elec.hv_input_waveform",
             "elec.z1_hv_rms_current", "elec.z2_lv_rms_current",
             "elec.bga_bulk_dc_baseline", "elec.bga_rms_current",
             "elec.bga_network_sharing", "mat.copper_resistivity_canonical",
@@ -285,25 +287,41 @@ def gates():
     op = lit["operating_points"]
     add("elec.current_waveforms_defined", "RMS",
         "avg, RMS and peak current defined per rail", "IMPLEMENTED",
-        f"branch I_avg {cc['branches'][0]['i_avg_a']:.4f} A (= I_cell/3, NOT 20.4), "
-        f"phase A I_rms {cc['branches'][0]['i_rms_a']:.4f} A vs phase B "
-        f"{cc['branches'][2]['i_rms_a']:.4f} A; cell output rms/avg "
-        f"{cc['i_cell_out_rms_a']/cc['i_cell_out_avg_a']:.5f}")
-    add("elec.rms_current_model", "RMS", "RMS fidelity ladder implemented", "IMPLEMENTED",
-        "L0 DC lower bound and L1 analytic (triangular ripple from the design's own D, "
-        "f_sw, L and phase grouping, cross-checked against numerical integration). "
-        "L2 time-domain is NOT built: the 3:1 SC switch-state sequence does not exist "
-        "in the framework")
+        f"branch I_avg {cc['branches'][0]['i_avg_a']:.4f} A (= I_cell*B_i/sum(B), NOT "
+        f"20.4) is KNOWN; cell output rms/avg "
+        f"{cc['i_cell_out_rms_a']/cc['i_cell_out_avg_a']:.5f} is KNOWN from the model's "
+        f"own aggregate ripple. Individual branch ripple and RMS are WITHDRAWN and OPEN")
+    add("elec.branch_average_currents", "RMS", "branch average currents", "IMPLEMENTED",
+        f"I_branch = I_cell*B_i/sum(B) = {cc['branches'][0]['i_avg_a']:.4f} A, with "
+        f"B_array built by generate_B_array() in the pinned source")
+    add("elec.aggregate_output_ripple", "RMS", "aggregate output ripple", "IMPLEMENTED",
+        f"{cc['ripple_out_pp_a']:.4f} A pp, the converter model's own expression")
+    add("elec.individual_branch_waveforms", "RMS", "individual branch waveforms", "OPEN",
+        "WITHDRAWN in Phase 0N-AD. Decomposing the summed output ripple into per-branch "
+        "terms over D*T does not give a branch's periodic waveform; volt-second balance "
+        f"on a conventional branch gives {cc['conventional_branch_ripple_sanity_a']:.4f} A "
+        "on both ramps against the 0.310 A previously claimed for phase B. The pinned "
+        "source has no switch-state sequence to settle it")
+    add("elec.hv_input_waveform", "RMS", "48 V input waveform", "OPEN",
+        "no SC charge-transfer sequence, phase displacement or dead time in the pinned "
+        "source; see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md")
+    add("elec.rms_current_model", "RMS", "RMS scenario framework", "IMPLEMENTED",
+        "L0 DC lower bound; L1A aggregate quantities the converter model genuinely "
+        "provides; L1B explicit named SCENARIOS (HV-S0 continuous, HV-S1 square at D). "
+        "L2 is NOT built and cannot be from the pinned source")
     add("elec.z1_hv_rms_current", "RMS", "48 V rail RMS current", "OPEN",
-        f"BRACKET [{r1['hv_rms_lo_a']:.2f}, {r1['hv_rms_hi_a']:.2f}] A, a 4x span set by "
-        f"the unknown SC charge-transfer waveform. Because I^2 R scales as the square, "
-        f"every 48 V conductor loss carries a 16x span -- Z1 BGA supply is "
-        f"{L1['terms']['P_BGA_supply']['bracket_w'][0]*1e3:.1f} to "
+        f"two SCENARIOS, not a bracket: HV-S0 continuous {r1['hv_S0_a']:.2f} A and "
+        f"HV-S1 constant square pulse at D {r1['hv_S1_a']:.2f} A. S1 is the MINIMUM RMS "
+        f"for support D (Cauchy-Schwarz), NOT an upper bound; {r1['hv_upper_bound']}. "
+        f"They differ 4x in RMS and 16x in I^2 R -- Z1 BGA supply "
+        f"{L1['terms']['P_BGA_supply']['bracket_w'][0]*1e3:.1f} vs "
         f"{L1['terms']['P_BGA_supply']['bracket_w'][1]*1e3:.0f} mW")
     add("elec.z2_lv_rms_current", "RMS", "1 V substrate rail RMS current", "IMPLEMENTED",
-        f"rms/avg = {r1['lv_rms_over_avg']:.6f} worst case (no interleaving credit), "
-        f"derived from the per-cell triangular ripple. Z2's substrate TSV loss is "
-        f"therefore RMS-CLOSED at {L2['terms']['P_TSV_VDD']['w']*1e3:.1f} mW per rail")
+        f"per-cell rms/avg = {r1['cell_rms_over_avg']:.6f} from the model's own "
+        f"aggregate ripple. The 49 TSV fields are ELECTRICALLY SEPARATE, so "
+        f"P = 49*I_cell_rms^2*(R_VDD+R_GND) with no cross terms and inter-cell phase "
+        f"cannot enter. Z2 substrate TSV loss is RMS-CLOSED at "
+        f"{L2['terms']['P_TSV_VDD']['w']*1e3:.1f} mW per rail")
     add("elec.bga_bulk_dc_baseline", "RMS", "source-backed bulk BGA DC lower bound",
         "IMPLEMENTED",
         f"Z1 {L1['bga']['p_supply_w']*1e3:.3f} mW supply at equal sharing and I_avg; "

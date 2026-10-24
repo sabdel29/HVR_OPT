@@ -194,28 +194,56 @@
    "area": "RMS",
    "gate": "avg, RMS and peak current defined per rail",
    "status": "IMPLEMENTED",
-   "evidence": "branch I_avg 6.8027 A (= I_cell/3, NOT 20.4), phase A I_rms 6.9343 A vs phase B 6.8033 A; cell output rms/avg 1.00808"
+   "evidence": "branch I_avg 6.8027 A (= I_cell*B_i/sum(B), NOT 20.4) is KNOWN; cell output rms/avg 1.00808 is KNOWN from the model's own aggregate ripple. Individual branch ripple and RMS are WITHDRAWN and OPEN"
+  },
+  {
+   "id": "elec.branch_average_currents",
+   "area": "RMS",
+   "gate": "branch average currents",
+   "status": "IMPLEMENTED",
+   "evidence": "I_branch = I_cell*B_i/sum(B) = 6.8027 A, with B_array built by generate_B_array() in the pinned source"
+  },
+  {
+   "id": "elec.aggregate_output_ripple",
+   "area": "RMS",
+   "gate": "aggregate output ripple",
+   "status": "IMPLEMENTED",
+   "evidence": "9.0043 A pp, the converter model's own expression"
+  },
+  {
+   "id": "elec.individual_branch_waveforms",
+   "area": "RMS",
+   "gate": "individual branch waveforms",
+   "status": "OPEN",
+   "evidence": "WITHDRAWN in Phase 0N-AD. Decomposing the summed output ripple into per-branch terms over D*T does not give a branch's periodic waveform; volt-second balance on a conventional branch gives 4.6574 A on both ramps against the 0.310 A previously claimed for phase B. The pinned source has no switch-state sequence to settle it"
+  },
+  {
+   "id": "elec.hv_input_waveform",
+   "area": "RMS",
+   "gate": "48 V input waveform",
+   "status": "OPEN",
+   "evidence": "no SC charge-transfer sequence, phase displacement or dead time in the pinned source; see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md"
   },
   {
    "id": "elec.rms_current_model",
    "area": "RMS",
-   "gate": "RMS fidelity ladder implemented",
+   "gate": "RMS scenario framework",
    "status": "IMPLEMENTED",
-   "evidence": "L0 DC lower bound and L1 analytic (triangular ripple from the design's own D, f_sw, L and phase grouping, cross-checked against numerical integration). L2 time-domain is NOT built: the 3:1 SC switch-state sequence does not exist in the framework"
+   "evidence": "L0 DC lower bound; L1A aggregate quantities the converter model genuinely provides; L1B explicit named SCENARIOS (HV-S0 continuous, HV-S1 square at D). L2 is NOT built and cannot be from the pinned source"
   },
   {
    "id": "elec.z1_hv_rms_current",
    "area": "RMS",
    "gate": "48 V rail RMS current",
    "status": "OPEN",
-   "evidence": "BRACKET [23.69, 94.77] A, a 4x span set by the unknown SC charge-transfer waveform. Because I^2 R scales as the square, every 48 V conductor loss carries a 16x span -- Z1 BGA supply is 10.9 to 174 mW"
+   "evidence": "two SCENARIOS, not a bracket: HV-S0 continuous 23.69 A and HV-S1 constant square pulse at D 94.77 A. S1 is the MINIMUM RMS for support D (Cauchy-Schwarz), NOT an upper bound; NONE EXISTS from average current alone. They differ 4x in RMS and 16x in I^2 R -- Z1 BGA supply 10.9 vs 174 mW"
   },
   {
    "id": "elec.z2_lv_rms_current",
    "area": "RMS",
    "gate": "1 V substrate rail RMS current",
    "status": "IMPLEMENTED",
-   "evidence": "rms/avg = 1.008078 worst case (no interleaving credit), derived from the per-cell triangular ripple. Z2's substrate TSV loss is therefore RMS-CLOSED at 213.0 mW per rail"
+   "evidence": "per-cell rms/avg = 1.008078 from the model's own aggregate ripple. The 49 TSV fields are ELECTRICALLY SEPARATE, so P = 49*I_cell_rms^2*(R_VDD+R_GND) with no cross terms and inter-cell phase cannot enter. Z2 substrate TSV loss is RMS-CLOSED at 213.0 mW per rail"
   },
   {
    "id": "elec.bga_bulk_dc_baseline",
@@ -655,6 +683,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 41,
+ "n_open": 43,
  "n_elems": 38623
 }

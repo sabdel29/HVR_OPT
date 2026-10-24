@@ -2,18 +2,18 @@
 
 Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_physical_gates.py`: the config is loaded, the mesh is built, and the measured geometry decides the status. Nothing here is typed by hand, because a hand-typed status table goes stale a phase after it is written.
 
-**41 of 84 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
+**43 of 88 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
 
 Maturity is reported by status rather than collapsed into "closed", because SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:
 
 | status | count |
 |---|---:|
-| IMPLEMENTED | 31 |
+| IMPLEMENTED | 33 |
 | SPECIFIED | 12 |
 | VALIDATED | 0 |
-| OPEN | 41 |
+| OPEN | 43 |
 
-So **43 of 84 are non-open**, of which only 31 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
+So **45 of 88 are non-open**, of which only 33 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
 
 | status | meaning |
 |---|---|
@@ -53,10 +53,14 @@ So **43 of 84 are non-open**, of which only 31 are IMPLEMENTED and **0 are VALID
 | TSV | TSV copper represented consistently in the FE model | **OPEN** | the substrate currently carries the historical tsv_homog fraction, which is not tied to the adopted TSV density; electrical rails are separated analytically while thermal/mechanical Cu would be one co-located homogenized field, and that is not yet implemented or stated in the mesh |
 | Electrical | complete rail-aware power-path graph for both architectures | **IMPLEMENTED** | Z1 15 segments, Z2 15, 48 V board to 1 V die with supply and return enumerated separately; chain continuity and rail assignment checked. Z1 and Z2 draw INDEPENDENT 48 V currents (23.6936 A and 23.7429 A, from their own loss totals); the substrate TSVs carry 48 V in Z1 and 1000 A at 1 V in Z2. Return chains are continuity-checked end to end and must terminate at PCB ground |
 | Electrical | every physical conductor has exactly one ledger owner | **IMPLEMENTED** | 19 declared owners (7 converter-intrinsic + 12 interconnect); every interconnect owner has at least one segment, no segment has two, converter-intrinsic terms are forbidden from owning a conductor, and an unknown owner raises. STRUCTURE only -- 10 Z1 and 10 Z2 segments still have OPEN loss values and 5 carry Phase-0M-R3C references |
-| RMS | avg, RMS and peak current defined per rail | **IMPLEMENTED** | branch I_avg 6.8027 A (= I_cell/3, NOT 20.4), phase A I_rms 6.9343 A vs phase B 6.8033 A; cell output rms/avg 1.00808 |
-| RMS | RMS fidelity ladder implemented | **IMPLEMENTED** | L0 DC lower bound and L1 analytic (triangular ripple from the design's own D, f_sw, L and phase grouping, cross-checked against numerical integration). L2 time-domain is NOT built: the 3:1 SC switch-state sequence does not exist in the framework |
-| RMS | 48 V rail RMS current | **OPEN** | BRACKET [23.69, 94.77] A, a 4x span set by the unknown SC charge-transfer waveform. Because I^2 R scales as the square, every 48 V conductor loss carries a 16x span -- Z1 BGA supply is 10.9 to 174 mW |
-| RMS | 1 V substrate rail RMS current | **IMPLEMENTED** | rms/avg = 1.008078 worst case (no interleaving credit), derived from the per-cell triangular ripple. Z2's substrate TSV loss is therefore RMS-CLOSED at 213.0 mW per rail |
+| RMS | avg, RMS and peak current defined per rail | **IMPLEMENTED** | branch I_avg 6.8027 A (= I_cell*B_i/sum(B), NOT 20.4) is KNOWN; cell output rms/avg 1.00808 is KNOWN from the model's own aggregate ripple. Individual branch ripple and RMS are WITHDRAWN and OPEN |
+| RMS | branch average currents | **IMPLEMENTED** | I_branch = I_cell*B_i/sum(B) = 6.8027 A, with B_array built by generate_B_array() in the pinned source |
+| RMS | aggregate output ripple | **IMPLEMENTED** | 9.0043 A pp, the converter model's own expression |
+| RMS | individual branch waveforms | **OPEN** | WITHDRAWN in Phase 0N-AD. Decomposing the summed output ripple into per-branch terms over D*T does not give a branch's periodic waveform; volt-second balance on a conventional branch gives 4.6574 A on both ramps against the 0.310 A previously claimed for phase B. The pinned source has no switch-state sequence to settle it |
+| RMS | 48 V input waveform | **OPEN** | no SC charge-transfer sequence, phase displacement or dead time in the pinned source; see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md |
+| RMS | RMS scenario framework | **IMPLEMENTED** | L0 DC lower bound; L1A aggregate quantities the converter model genuinely provides; L1B explicit named SCENARIOS (HV-S0 continuous, HV-S1 square at D). L2 is NOT built and cannot be from the pinned source |
+| RMS | 48 V rail RMS current | **OPEN** | two SCENARIOS, not a bracket: HV-S0 continuous 23.69 A and HV-S1 constant square pulse at D 94.77 A. S1 is the MINIMUM RMS for support D (Cauchy-Schwarz), NOT an upper bound; NONE EXISTS from average current alone. They differ 4x in RMS and 16x in I^2 R -- Z1 BGA supply 10.9 vs 174 mW |
+| RMS | 1 V substrate rail RMS current | **IMPLEMENTED** | per-cell rms/avg = 1.008078 from the model's own aggregate ripple. The 49 TSV fields are ELECTRICALLY SEPARATE, so P = 49*I_cell_rms^2*(R_VDD+R_GND) with no cross terms and inter-cell phase cannot enter. Z2 substrate TSV loss is RMS-CLOSED at 213.0 mW per rail |
 | RMS | source-backed bulk BGA DC lower bound | **IMPLEMENTED** | Z1 10.889 mW supply at equal sharing and I_avg; single-ball bulk R 0.310 mOhm, consistent with the source's ~0.3 mOhm |
 | RMS | BGA loss uses RMS current | **OPEN** | blocked by elec.z1_hv_rms_current: the 48 V RMS is a bracket |
 | RMS | BGA current sharing from the RDL network | **OPEN** | equal sharing is assumed and flagged a lower bound; no package RDL network exists to produce the real split |
