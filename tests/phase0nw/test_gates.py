@@ -48,15 +48,33 @@ def test_no_physical_result_lineage_exists_while_gates_are_open(g):
 # Gates we CLAIM are closed. Pinning the closed set is the safety-relevant direction:
 # a gate must never close silently. New OPEN gates may appear freely.
 CLOSED_IDS = {
-    "board.it968g_selected", "board.thickness_reaches_mesh", "board.h0_documented",
+    "board.h0_documented",
+    "board.it968g_selected",
     "board.t_only_material_identical",
-    "elec.z1_rail_model", "elec.z2_rail_model", "elec.tsv_count_justified",
-    "geom.z2_cutout_conforming", "geom.z2_49_cells", "geom.z2_full_stack",
-    "geom.z2_no_slab", "geom.z2_no_medium_outside_cells", "geom.z2_descends_into_cutout",
-    "geom.z2_no_overlap", "geom.z2_out_of_cell_defined", "geom.bga_symmetric_feed",
-    "geom.z1_complete_stack", "geom.z1_hs_present", "geom.z1_selected_devices",
-    "geom.inventory_equal", "geom.stack_conservation",
-    "mat.rdl_tier_tensor", "mat.microbump_separate",
+    "board.thickness_reaches_mesh",
+    "config.z1_yaml_drives_mesh",
+    "elec.tsv_count_justified",
+    "elec.z1_power_bookkeeping",
+    "elec.z1_rail_model",
+    "elec.z1_tsv_sizing",
+    "elec.z2_rail_model",
+    "elec.z2_tsv_sizing",
+    "geom.bga_symmetric_feed",
+    "geom.inventory_equal",
+    "geom.stack_conservation",
+    "geom.z1_complete_stack",
+    "geom.z1_hs_present",
+    "geom.z1_selected_devices",
+    "geom.z2_49_cells",
+    "geom.z2_cutout_conforming",
+    "geom.z2_descends_into_cutout",
+    "geom.z2_full_stack",
+    "geom.z2_no_medium_outside_cells",
+    "geom.z2_no_overlap",
+    "geom.z2_no_slab",
+    "geom.z2_out_of_cell_defined",
+    "mat.microbump_separate",
+    "mat.rdl_tier_tensor",
 }
 
 
@@ -92,6 +110,17 @@ def test_no_gate_closes_without_being_listed_as_closed(g):
     assert closed == CLOSED_IDS, (
         f"silently closed: {sorted(closed - CLOSED_IDS)}; "
         f"regressed: {sorted(CLOSED_IDS - closed)}")
+
+
+def test_status_counts_are_reported_separately(g):
+    """SPECIFIED is not IMPLEMENTED and neither is VALIDATED; "closed" hides that."""
+    from collections import Counter
+    c = Counter(r["status"] for r in g["gates"])
+    assert c["VALIDATED"] == 0, (
+        "a gate claims VALIDATED but no solve has been run in this package")
+    assert c["SPECIFIED"] > 0 and c["IMPLEMENTED"] > 0
+    doc = (R / "research" / "PHYSICAL_Z1_Z2_IMPLEMENTATION_AUDIT.md").read_text()
+    assert "| VALIDATED |" in doc and "are VALIDATED" in doc
 
 
 def test_every_open_gate_states_why(g):

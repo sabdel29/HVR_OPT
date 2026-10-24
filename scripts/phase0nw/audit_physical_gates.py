@@ -22,7 +22,8 @@ R = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(R / "scripts/phase0nw"))
 import z2_converter as Z2C                                              # noqa: E402
 from physical_package import (build_physical_package, measure_layers,   # noqa: E402
-                              load_physical_package_config)
+                              load_physical_package_config,
+                              load_z1_package_config)
 
 
 # =======================================================================================
@@ -45,7 +46,8 @@ REQUIRED_GATES = {
         "board.t_only_material_identical", "board.t_only_comparison_run",
     ],
     "electrical": [
-        "elec.z1_rail_model", "elec.z2_rail_model", "elec.tsv_count_justified",
+        "elec.z1_power_bookkeeping", "elec.z1_rail_model", "elec.z2_rail_model",
+        "elec.z1_tsv_sizing", "elec.z2_tsv_sizing", "elec.tsv_count_justified",
         "elec.tsv_resistance_temperature_dependent", "elec.rdl_loss_recomputed",
         "elec.energy_conservation_verified", "elec.loss_audit_frozen",
     ],
@@ -69,7 +71,10 @@ REQUIRED_GATES = {
     "material": [
         "mat.rdl_tier_tensor", "mat.microbump_separate", "mat.gan_bounded",
         "mat.mlcc_bounded", "mat.inductor_tier_bounded",
+        "mat.rdl_tensor_transfer_validated",
     ],
+    "tsv": ["tsv.density_sensitivity_run", "tsv.fe_copper_representation"],
+    "configuration": ["config.z1_yaml_drives_mesh"],
     "results": ["results.physical_etm_lineage"],
 }
 ALL_REQUIRED = [g for v in REQUIRED_GATES.values() for g in v]
@@ -92,10 +97,11 @@ def gates():
     from physical_package import build_physical_z1
     import z1_package as Z1P, inventory_audit as INV, stack_audit as SA
     import tsv_fields as TSV, pcb_h1 as H1
-    m1 = build_physical_z1(cfg)[0]
+    z1cfg = load_z1_package_config()
+    m1 = build_physical_z1(z1cfg)[0]
     lay1 = measure_layers(m1)
     off1 = lay1["board"]["z0_um"]
-    rows1 = Z1P.tier_report(m1)
+    rows1 = Z1P.tier_report(m1, z1cfg)
 
     g = []
 
@@ -138,18 +144,60 @@ def gates():
     notrun("board.t_only_comparison_run", "Board", "2.4/3.2 T-only comparison completed")
 
     # ---------------------------------------------------------------- electrical
-    z1r = TSV.z1_rail_report(cfg) if hasattr(TSV, "z1_rail_report") else None
-    z2r = TSV.z2_rail_report(cfg) if hasattr(TSV, "z2_rail_report") else None
+    z1r = TSV.z1_rail_report(cfg)
+    z2r = TSV.z2_rail_report(cfg)
+
+    # The bookkeeping gate is SEPARATE from the rail-model gate, because the rail model
+    # was previously "closed" while silently dividing a LOSS by 48 V.
+    book_ok = (abs(z1r["p_input_w"] - (z1r["p_load_w"] + z1r["p_loss_w"])) < 1e-9
+               and abs(z1r["i_total_a"] - 23.6936) < 1e-3)
+    add("elec.z1_power_bookkeeping", "Electrical",
+        "Z1 power bookkeeping distinguishes load, loss and input",
+        "IMPLEMENTED" if book_ok else "OPEN",
+        f"P_in = P_load {z1r['p_load_w']:.0f} W + P_loss {z1r['p_loss_w']:.3f} W = "
+        f"{z1r['p_input_w']:.4f} W -> I = {z1r['i_total_a']:.4f} A. The earlier model "
+        f"divided the LOSS by 48 V and reported 2.86 A, low by 8.3x in current and 69x "
+        f"in I^2 R.")
+    # The rail gate requires correct bookkeeping AND an honest placeholder label AND a
+    # path for a physical solve to replace it.
+    rail_ok = book_ok and z1r["placeholder"] and "LOSS" in z1r["source"]
     add("elec.z1_rail_model", "Electrical", "Z1 48 V rail-specific VDD/GND model",
-        "SPECIFIED" if z1r else "OPEN",
-        (f"48 V rail, I = P_in/48 V (currently {z1r['i_total_a']:.2f} A from the "
-         f"Phase-0M-R3C P_in placeholder, NOT a physical solve)") if z1r
-        else "not implemented")
+        "SPECIFIED" if rail_ok else "OPEN",
+        f"48 V rail at {z1r['i_total_a']:.4f} A from (P_load + P_loss)/48. "
+        f"Source: {z1r['source']}. Stays SPECIFIED, not IMPLEMENTED, until a physical "
+        f"loss ledger replaces the historical placeholder.")
     add("elec.z2_rail_model", "Electrical", "Z2 1 V rail-specific VDD/GND model",
         "SPECIFIED" if z2r else "OPEN",
         (f"1 V rail, I = {z2r['i_total_a']:.0f} A load current, "
          f"{z2r['i_cell_a']:.3f} A per cell") if z2r else "not implemented")
-    sz = TSV.sizing_study(cfg) if hasattr(TSV, "sizing_study") else None
+    s1, s2 = TSV.z1_sizing_study(cfg), TSV.z2_sizing_study(cfg)
+    add("elec.z1_tsv_sizing", "Electrical", "Z1-specific TSV sizing", "SPECIFIED",
+        f"48 V rail, {s1['budget_v']*1e3:.0f} mV budget: minimum "
+        f"{s1['min_drop']['n_total']} vias/cell against Z2's "
+        f"{s2['min_drop']['n_total']} -- the Z2 bracket does not apply to Z1")
+    add("elec.z2_tsv_sizing", "Electrical", "Z2-specific TSV sizing", "SPECIFIED",
+        f"1 V rail, {s2['budget_v']*1e3:.0f} mV budget: "
+        f"{s2['min_drop']['n_total']} / {s2['mid']['n_total']} / "
+        f"{s2['max_density']['n_total']} vias/cell")
+    comp = TSV.comparison_studies(cfg)
+    notrun("tsv.density_sensitivity_run", "TSV",
+           "thermal/mechanical sensitivity to TSV density",
+           f"the adopted field is {comp['A_same_field']['n_per_cell']} vias/cell, "
+           f"{comp['A_same_field']['n_per_cell']/s2['min_drop']['n_total']:.0f}x the "
+           f"electrically required minimum, so Cu volume fraction -- and therefore "
+           f"substrate k, E and CTE -- depends strongly on a choice no solve has tested")
+    notrun("tsv.fe_copper_representation", "TSV",
+           "TSV copper represented consistently in the FE model",
+           "the substrate currently carries the historical tsv_homog fraction, which is "
+           "not tied to the adopted TSV density; electrical rails are separated "
+           "analytically while thermal/mechanical Cu would be one co-located "
+           "homogenized field, and that is not yet implemented or stated in the mesh")
+    add("config.z1_yaml_drives_mesh", "Configuration",
+        "Z1 YAML drives the Z1 mesh", "IMPLEMENTED",
+        f"build_physical_z1 takes a Z1Package from configs/phase0nx/z1_physical.yaml "
+        f"({z1cfg.substrate_um:.0f} um substrate, {len(z1cfg.tiers)} tiers, "
+        f"{z1cfg.rail_v:.0f} V rail) and REFUSES a Z2 PhysicalPackage")
+    sz = s2
     add("elec.tsv_count_justified", "Electrical",
         "TSV count justified by a design criterion",
         "SPECIFIED" if sz else "OPEN",
@@ -263,6 +311,16 @@ def gates():
            "flying-cap tier meshed at hvr_effective; no ceramic/Ni bracket yet")
     notrun("mat.inductor_tier_bounded", "Material", "inductor/Cout tier bounded",
            "hvr_effective is generic; occupancy-based bracket not built")
+    br = Z2C.rdl_tensor_bracket()
+    notrun("mat.rdl_tensor_transfer_validated", "Material",
+           "10 um RDL tier tensor transfer validated",
+           f"NOT transferable as-is: the tensor is a four-metal-layer STACK property "
+           f"(source stack height {br['source_stack_height_um']:.0f} um, recorded in "
+           f"code as {br['recorded_t_um_in_code']:.0f} um -- {br['label_inconsistency']}), "
+           f"applied to a {br['tier_thickness_um']:.0f} um single-layer tier. Across the "
+           f"sweep k_x spans {br['k_x_range'][0]:.1f}-{br['k_x_range'][1]:.1f} and k_z "
+           f"{br['k_z_range'][0]:.2f}-{br['k_z_range'][1]:.2f} W/mK. Carried as BOUNDED; "
+           f"closes on recomputation for the actual tier or demonstrated insensitivity")
 
     # ---------------------------------------------------------------- results
     add("results.physical_etm_lineage", "Results", "physical ETM result lineage", "OPEN",
@@ -283,7 +341,9 @@ def gates():
 
 def main():
     cfg, rows, g, off, m = gates()
-    n_open = sum(1 for r in g if r["status"] == "OPEN")
+    from collections import Counter
+    counts = Counter(r["status"] for r in g)
+    n_open = counts["OPEN"]
     lines = [
         "# Physical Z1/Z2 implementation audit",
         "",
@@ -292,8 +352,21 @@ def main():
         "built, and the measured geometry decides the status. Nothing here is typed by "
         "hand, because a hand-typed status table goes stale a phase after it is written.",
         "",
-        f"**{n_open} of {len(g)} gates are OPEN.** No physical ETM result lineage may be "
-        "created while that number is non-zero.",
+        f"**{n_open} of {len(g)} gates are OPEN.** No physical ETM result lineage may "
+        "be created while that number is non-zero.",
+        "",
+        "Maturity is reported by status rather than collapsed into \"closed\", because "
+        "SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:",
+        "",
+        "| status | count |", "|---|---:|",
+        f"| IMPLEMENTED | {counts['IMPLEMENTED']} |",
+        f"| SPECIFIED | {counts['SPECIFIED']} |",
+        f"| VALIDATED | {counts['VALIDATED']} |",
+        f"| OPEN | {counts['OPEN']} |",
+        "",
+        f"So **{len(g) - n_open} of {len(g)} are non-open**, of which only "
+        f"{counts['IMPLEMENTED']} are IMPLEMENTED and **{counts['VALIDATED']} are "
+        "VALIDATED**. Nothing in this package has been validated against a solve yet.",
         "",
         "| status | meaning |",
         "|---|---|",
@@ -324,14 +397,15 @@ def main():
     # ---- Z1 tiers, inventory, TSV fields -------------------------------------------
     from physical_package import build_physical_z1
     import z1_package as Z1P, inventory_audit as INV, tsv_fields as TSV
-    m1 = build_physical_z1(cfg)[0]
+    z1cfg = load_z1_package_config()
+    m1 = build_physical_z1(z1cfg)[0]
     lay1 = measure_layers(m1)
     off1 = lay1["board"]["z0_um"]
     lines += ["## Measured Z1 converter tiers", "",
               "Specified table: `Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md` section 1.", "",
               "| tier | material | spec (um) | mesh (um) | z bottom | z top |",
               "|---|---|---:|---:|---:|---:|"]
-    for r in Z1P.tier_report(m1):
+    for r in Z1P.tier_report(m1, z1cfg):
         lines.append(f"| {r['tier']} | `{r['material']}` | {r['spec_um']:.0f} | "
                      f"{r['mesh_um']:.0f} | {r['z0_um']-off1:.0f} | {r['z1_um']-off1:.0f} |")
     lines += ["", f"Package top **{lay1['tim']['z1_um']-off1:.0f} um** above the PCB "
@@ -411,8 +485,11 @@ def main():
     z1t, z2t = TSV.z1_rail_report(cfg), TSV.z2_rail_report(cfg)
     sz = TSV.sizing_study(cfg)
     lines += ["## The two TSV rails are electrically different", "",
-              "Same via geometry, currents three orders of magnitude apart. A single "
-              "1000 A model applied to both erased the distinction.", "",
+              "Same via geometry. The rail CURRENT differs by more than 40x, and "
+              "because Joule loss goes as I^2 the TSV LOSS differs by roughly three "
+              "orders of magnitude. The two ratios are different numbers and must not "
+              "be quoted interchangeably. A single 1000 A model applied to both erased "
+              "the distinction entirely.", "",
               "| | Z1 | Z2 |", "|---|---:|---:|",
               f"| rail | {z1t['rail_v']:.0f} V input | {z2t['rail_v']:.0f} V output |",
               f"| system current | {z1t['i_total_a']:.3f} A | {z2t['i_total_a']:.0f} A |",
@@ -420,10 +497,25 @@ def main():
               f"| system TSV loss | {z1t['p_tsv_total_w']*1e3:.4f} mW | "
               f"{z2t['p_tsv_total_w']*1e3:.1f} mW |",
               "",
+              f"| ratio (Z2/Z1) | | **{z2t['i_total_a']/z1t['i_total_a']:.1f}x current, "
+              f"{z2t['p_tsv_total_w']/z1t['p_tsv_total_w']:.0f}x loss** |", "",
               f"Z1's current is **a placeholder**: {z1t['source']}. It is "
-              "I = P_in / 48 V and cannot be final until the physical electrical "
-              "solution exists. Z2's is the 1 V load current and must still be updated "
-              "self-consistently with losses.", "",
+              f"I = (P_load + P_loss)/48 V = ({z1t['p_load_w']:.0f} + "
+              f"{z1t['p_loss_w']:.3f})/48 = {z1t['i_total_a']:.4f} A, and cannot be "
+              "final until the physical electrical solution replaces the loss term. "
+              "Z2's is the 1 V load current and must still be updated self-consistently "
+              "with losses.", "",
+              "**A previous version divided the LOSS by 48 V**, giving 2.86 A -- low by "
+              "8.3x in current and 69x in I^2 R. P_total_electronics_w in the frozen "
+              "replay is exactly sum(L_P_*), i.e. a loss total, not an input power.", "",
+              "**Two consistency problems this exposes.** The framework's own "
+              "`zarch.rail_currents()` uses a FIXED Phase-0F efficiency eta = 0.889, "
+              "giving 23.4346 A and an implied loss of 124.86 W -- 12.43 W below the "
+              "137.29 W the ETM ledger actually reports, so the canonical current is "
+              "about 10 % inconsistent with the framework's own losses. And the BGA "
+              "supply allocation (16 balls x 1.5 A = 24.0 A) was sized against the "
+              "eta-based 23.4346 A; against the ledger-derived 23.6936 A the margin is "
+              "only 1.3 %, so any further loss growth makes 16 balls insufficient.", "",
               "### The TSV count is a choice, and the adopted one is the maximum", "",
               f"Declared budget: {100*sz['budget_frac']:.0f} % of the rail "
               f"({sz['budget_v']*1e3:.0f} mV). {sz['budget_status']}. "
@@ -500,7 +592,8 @@ def main():
     json.dump({"gates": g, "tiers": rows, "n_open": n_open,
                "n_elems": int(m.n_elems)},
               (OUT / "phase0nw" / "physical_gates.json").open("w"), indent=1)
-    print(f"{n_open} of {len(g)} gates OPEN")
+    print(f"{n_open} of {len(g)} gates OPEN  |  "
+          + "  ".join(f"{k} {v}" for k, v in sorted(counts.items())))
     for r in g:
         if r["status"] == "OPEN":
             print(f"  OPEN  {r['area']:8s} {r['gate']}")

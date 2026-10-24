@@ -2,7 +2,18 @@
 
 Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_physical_gates.py`: the config is loaded, the mesh is built, and the measured geometry decides the status. Nothing here is typed by hand, because a hand-typed status table goes stale a phase after it is written.
 
-**24 of 47 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
+**27 of 54 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
+
+Maturity is reported by status rather than collapsed into "closed", because SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:
+
+| status | count |
+|---|---:|
+| IMPLEMENTED | 20 |
+| SPECIFIED | 7 |
+| VALIDATED | 0 |
+| OPEN | 27 |
+
+So **27 of 54 are non-open**, of which only 20 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
 
 | status | meaning |
 |---|---|
@@ -23,8 +34,14 @@ Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_ph
 | Board | eta coverage sensitivity completed | **OPEN** | material tensors exist for eta 0.25/0.50/0.75; no solve run |
 | Board | T-only cases material-identical | **IMPLEMENTED** | it968g_2p4mm and it968g_3p2mm share one material dict |
 | Board | 2.4/3.2 T-only comparison completed | **OPEN** | not run -- no artifact exists for '2.4/3.2 T-only comparison completed' |
-| Electrical | Z1 48 V rail-specific VDD/GND model | **SPECIFIED** | 48 V rail, I = P_in/48 V (currently 2.86 A from the Phase-0M-R3C P_in placeholder, NOT a physical solve) |
+| Electrical | Z1 power bookkeeping distinguishes load, loss and input | **IMPLEMENTED** | P_in = P_load 1000 W + P_loss 137.292 W = 1137.2923 W -> I = 23.6936 A. The earlier model divided the LOSS by 48 V and reported 2.86 A, low by 8.3x in current and 69x in I^2 R. |
+| Electrical | Z1 48 V rail-specific VDD/GND model | **SPECIFIED** | 48 V rail at 23.6936 A from (P_load + P_loss)/48. Source: Phase-0M-R3C electronics LOSS + load (PLACEHOLDER). Stays SPECIFIED, not IMPLEMENTED, until a physical loss ledger replaces the historical placeholder. |
 | Electrical | Z2 1 V rail-specific VDD/GND model | **SPECIFIED** | 1 V rail, I = 1000 A load current, 20.408 A per cell |
+| Electrical | Z1-specific TSV sizing | **SPECIFIED** | 48 V rail, 480 mV budget: minimum 4 vias/cell against Z2's 81 -- the Z2 bracket does not apply to Z1 |
+| Electrical | Z2-specific TSV sizing | **SPECIFIED** | 1 V rail, 10 mV budget: 81 / 324 / 1369 vias/cell |
+| TSV | thermal/mechanical sensitivity to TSV density | **OPEN** | the adopted field is 1369 vias/cell, 17x the electrically required minimum, so Cu volume fraction -- and therefore substrate k, E and CTE -- depends strongly on a choice no solve has tested |
+| TSV | TSV copper represented consistently in the FE model | **OPEN** | the substrate currently carries the historical tsv_homog fraction, which is not tied to the adopted TSV density; electrical rails are separated analytically while thermal/mechanical Cu would be one co-located homogenized field, and that is not yet implemented or stated in the mesh |
+| Configuration | Z1 YAML drives the Z1 mesh | **IMPLEMENTED** | build_physical_z1 takes a Z1Package from configs/phase0nx/z1_physical.yaml (300 um substrate, 9 tiers, 48 V rail) and REFUSES a Z2 PhysicalPackage |
 | Electrical | TSV count justified by a design criterion | **SPECIFIED** | three-point study: N_min_drop 81, N_mid 324, N_max_density 1369; adopted = max_density |
 | Electrical | temperature-dependent TSV resistance in the fixed point | **OPEN** | rho(T) exists in the analytical model but is evaluated at 20 C; not yet coupled |
 | Electrical | RDL loss recomputed on the physical geometry | **OPEN** | not run -- no artifact exists for 'RDL loss recomputed on the physical geometry' |
@@ -61,6 +78,7 @@ Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_ph
 | Material | GaN epi contribution bounded | **OPEN** | devices meshed as the Si carrier; the epi contribution is not yet bounded |
 | Material | MLCC tier material bounded | **OPEN** | flying-cap tier meshed at hvr_effective; no ceramic/Ni bracket yet |
 | Material | inductor/Cout tier bounded | **OPEN** | hvr_effective is generic; occupancy-based bracket not built |
+| Material | 10 um RDL tier tensor transfer validated | **OPEN** | NOT transferable as-is: the tensor is a four-metal-layer STACK property (source stack height 55 um, recorded in code as 40 um -- rdl_mechanical.RDL says t_um = 40 (metal only) while the source row's stack_height_um is 55 (metal + dielectric)), applied to a 10 um single-layer tier. Across the sweep k_x spans 92.5-140.6 and k_z 0.80-2.46 W/mK. Carried as BOUNDED; closes on recomputation for the actual tier or demonstrated insensitivity |
 | Results | physical ETM result lineage | **OPEN** | BLOCKED: no physical ETM result may be generated until every gate above closes |
 
 ## Measured Z2 converter tiers
@@ -137,16 +155,22 @@ Geometry is the SOURCE_BACKED 30 um / 60 um pitch over a 300 um substrate, check
 
 ## The two TSV rails are electrically different
 
-Same via geometry, currents three orders of magnitude apart. A single 1000 A model applied to both erased the distinction.
+Same via geometry. The rail CURRENT differs by more than 40x, and because Joule loss goes as I^2 the TSV LOSS differs by roughly three orders of magnitude. The two ratios are different numbers and must not be quoted interchangeably. A single 1000 A model applied to both erased the distinction entirely.
 
 | | Z1 | Z2 |
 |---|---:|---:|
 | rail | 48 V input | 1 V output |
-| system current | 2.860 A | 1000 A |
-| per-cell current | 0.0584 A | 20.408 A |
-| system TSV loss | 0.0036 mW | 437.0 mW |
+| system current | 23.694 A | 1000 A |
+| per-cell current | 0.4835 A | 20.408 A |
+| system TSV loss | 0.2453 mW | 437.0 mW |
 
-Z1's current is **a placeholder**: Phase-0M-R3C P_in (PLACEHOLDER). It is I = P_in / 48 V and cannot be final until the physical electrical solution exists. Z2's is the 1 V load current and must still be updated self-consistently with losses.
+| ratio (Z2/Z1) | | **42.2x current, 1781x loss** |
+
+Z1's current is **a placeholder**: Phase-0M-R3C electronics LOSS + load (PLACEHOLDER). It is I = (P_load + P_loss)/48 V = (1000 + 137.292)/48 = 23.6936 A, and cannot be final until the physical electrical solution replaces the loss term. Z2's is the 1 V load current and must still be updated self-consistently with losses.
+
+**A previous version divided the LOSS by 48 V**, giving 2.86 A -- low by 8.3x in current and 69x in I^2 R. P_total_electronics_w in the frozen replay is exactly sum(L_P_*), i.e. a loss total, not an input power.
+
+**Two consistency problems this exposes.** The framework's own `zarch.rail_currents()` uses a FIXED Phase-0F efficiency eta = 0.889, giving 23.4346 A and an implied loss of 124.86 W -- 12.43 W below the 137.29 W the ETM ledger actually reports, so the canonical current is about 10 % inconsistent with the framework's own losses. And the BGA supply allocation (16 balls x 1.5 A = 24.0 A) was sized against the eta-based 23.4346 A; against the ledger-derived 23.6936 A the margin is only 1.3 %, so any further loss growth makes 16 balls insufficient.
 
 ### The TSV count is a choice, and the adopted one is the maximum
 

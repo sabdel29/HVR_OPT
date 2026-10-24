@@ -57,11 +57,18 @@
    "evidence": "not run -- no artifact exists for '2.4/3.2 T-only comparison completed'"
   },
   {
+   "id": "elec.z1_power_bookkeeping",
+   "area": "Electrical",
+   "gate": "Z1 power bookkeeping distinguishes load, loss and input",
+   "status": "IMPLEMENTED",
+   "evidence": "P_in = P_load 1000 W + P_loss 137.292 W = 1137.2923 W -> I = 23.6936 A. The earlier model divided the LOSS by 48 V and reported 2.86 A, low by 8.3x in current and 69x in I^2 R."
+  },
+  {
    "id": "elec.z1_rail_model",
    "area": "Electrical",
    "gate": "Z1 48 V rail-specific VDD/GND model",
    "status": "SPECIFIED",
-   "evidence": "48 V rail, I = P_in/48 V (currently 2.86 A from the Phase-0M-R3C P_in placeholder, NOT a physical solve)"
+   "evidence": "48 V rail at 23.6936 A from (P_load + P_loss)/48. Source: Phase-0M-R3C electronics LOSS + load (PLACEHOLDER). Stays SPECIFIED, not IMPLEMENTED, until a physical loss ledger replaces the historical placeholder."
   },
   {
    "id": "elec.z2_rail_model",
@@ -69,6 +76,41 @@
    "gate": "Z2 1 V rail-specific VDD/GND model",
    "status": "SPECIFIED",
    "evidence": "1 V rail, I = 1000 A load current, 20.408 A per cell"
+  },
+  {
+   "id": "elec.z1_tsv_sizing",
+   "area": "Electrical",
+   "gate": "Z1-specific TSV sizing",
+   "status": "SPECIFIED",
+   "evidence": "48 V rail, 480 mV budget: minimum 4 vias/cell against Z2's 81 -- the Z2 bracket does not apply to Z1"
+  },
+  {
+   "id": "elec.z2_tsv_sizing",
+   "area": "Electrical",
+   "gate": "Z2-specific TSV sizing",
+   "status": "SPECIFIED",
+   "evidence": "1 V rail, 10 mV budget: 81 / 324 / 1369 vias/cell"
+  },
+  {
+   "id": "tsv.density_sensitivity_run",
+   "area": "TSV",
+   "gate": "thermal/mechanical sensitivity to TSV density",
+   "status": "OPEN",
+   "evidence": "the adopted field is 1369 vias/cell, 17x the electrically required minimum, so Cu volume fraction -- and therefore substrate k, E and CTE -- depends strongly on a choice no solve has tested"
+  },
+  {
+   "id": "tsv.fe_copper_representation",
+   "area": "TSV",
+   "gate": "TSV copper represented consistently in the FE model",
+   "status": "OPEN",
+   "evidence": "the substrate currently carries the historical tsv_homog fraction, which is not tied to the adopted TSV density; electrical rails are separated analytically while thermal/mechanical Cu would be one co-located homogenized field, and that is not yet implemented or stated in the mesh"
+  },
+  {
+   "id": "config.z1_yaml_drives_mesh",
+   "area": "Configuration",
+   "gate": "Z1 YAML drives the Z1 mesh",
+   "status": "IMPLEMENTED",
+   "evidence": "build_physical_z1 takes a Z1Package from configs/phase0nx/z1_physical.yaml (300 um substrate, 9 tiers, 48 V rail) and REFUSES a Z2 PhysicalPackage"
   },
   {
    "id": "elec.tsv_count_justified",
@@ -323,6 +365,13 @@
    "evidence": "hvr_effective is generic; occupancy-based bracket not built"
   },
   {
+   "id": "mat.rdl_tensor_transfer_validated",
+   "area": "Material",
+   "gate": "10 um RDL tier tensor transfer validated",
+   "status": "OPEN",
+   "evidence": "NOT transferable as-is: the tensor is a four-metal-layer STACK property (source stack height 55 um, recorded in code as 40 um -- rdl_mechanical.RDL says t_um = 40 (metal only) while the source row's stack_height_um is 55 (metal + dielectric)), applied to a 10 um single-layer tier. Across the sweep k_x spans 92.5-140.6 and k_z 0.80-2.46 W/mK. Carried as BOUNDED; closes on recomputation for the actual tier or demonstrated insensitivity"
+  },
+  {
    "id": "results.physical_etm_lineage",
    "area": "Results",
    "gate": "physical ETM result lineage",
@@ -396,6 +445,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 24,
+ "n_open": 27,
  "n_elems": 38623
 }

@@ -21,7 +21,8 @@ sys.path.insert(0, str(R / "scripts/phase0nw"))
 import z1_package as Z1P                                                  # noqa: E402
 import z2_converter as Z2C                                               # noqa: E402
 from physical_package import (build_physical_package, build_physical_z1,  # noqa: E402
-                              load_physical_package_config)
+                              load_physical_package_config,
+                              load_z1_package_config)
 
 CFG = R / "configs/phase0nt/z2_2p4mm_cutout.yaml"
 
@@ -49,10 +50,10 @@ def _tier_volumes(mesh, layer_names) -> dict:
 def audit() -> dict:
     cfg = load_physical_package_config(CFG)
     m2 = build_physical_package(cfg)[0]
-    m1 = build_physical_z1(cfg)[0]
+    m1 = build_physical_z1(load_z1_package_config())[0]
 
     z2_names = [t[0] for t in Z2C.converter_layers(cfg)]
-    z1_names = [t[0] for t in Z1P.mid_layers() if t[0].startswith("z1conv_")]
+    z1_names = [t[0] for t in Z1P.mid_layers(load_z1_package_config()) if t[0].startswith("z1conv_")]
     v2, v1 = _tier_volumes(m2, z2_names), _tier_volumes(m1, z1_names)
 
     def by_component(vols):
