@@ -26,12 +26,35 @@ import math
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[2]
+import sys as _sys
+for _p in ("scripts/phase0m", "scripts"):
+    if str(R / _p) not in _sys.path:
+        _sys.path.insert(0, str(R / _p))
 
 # --- SOURCE_BACKED geometry (June-2026 Table III, via package_stack.yaml) --------------
 D_TSV_MM = 0.030
 P_TSV_MM = 0.060
-RHO_CU_20C = 1.68e-8          # ohm.m, annealed copper
-ALPHA_CU = 3.9e-3             # 1/K, temperature coefficient of resistivity
+# --- CANONICAL copper. Imported, never redeclared. ------------------------------------
+# This module previously carried its own rho_Cu = 16.8 nOhm.m ("annealed copper", an
+# ASSUMPTION) while scripts/phase0m/interconnect.py carried 17.0 nOhm.m SOURCE_BACKED to
+# the June-2026 design source. Two physical copper resistivities in one framework is a
+# defect regardless of which is nearer the truth; the sourced one wins.
+from interconnect import ALPHA_CU, RHO_CU_20C, rho_cu  # noqa: E402,F401
+
+# --- TSV CONDUCTING GEOMETRY ----------------------------------------------------------
+# Is the source's 30 um the conducting Cu diameter or the outer via diameter? Resolved by
+# reproducing the source's single-TSV resistance rather than by choosing:
+#
+#   d_Cu = 30 um (full)          -> 7.215 mOhm   MATCHES the source's ~7.1 mOhm
+#   d_Cu = 30 um - 2x0.5 um liner -> 7.721 mOhm   does NOT
+#
+# So 30 um is the ELECTRICAL conducting diameter. The historical general TSV class
+# subtracts a 0.5 um liner from the radius; that is a different (mechanical/outer)
+# convention and the two must not be mixed silently.
+TSV_D_IS_CONDUCTING = True
+TSV_D_PROVENANCE = ("30 um reproduces the source single-via resistance as a CONDUCTING "
+                    "diameter (7.215 mOhm at 17.0 nOhm.m, 300 um); subtracting the "
+                    "0.5 um liner gives 7.721 mOhm and does not")
 
 
 def _lattice(cell_side_mm: float, pitch_mm: float, keepout_mm: float = 0.05):
