@@ -1,0 +1,122 @@
+# =====================================================================================
+# PHASE 0N-X --- Z1-EMBEDDED-PHYSICAL, the substrate-side package
+# =====================================================================================
+# CONFIGURATION ONLY. No implementation state lives here; the generated gate registry
+# (scripts/phase0nw/audit_physical_gates.py) owns that.
+#
+# This file exists because Z1's physical stack was embedded in Python constants while
+# Z2's lived in YAML. One architecture configurable and the other hard-coded is how the
+# two silently drift apart, and the whole Z1/Z2 comparison depends on them not drifting.
+#
+# Specified stack: research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md section 1.
+# =====================================================================================
+
+architecture: ARCH_Z1_EMBEDDED
+label: Z1-EMBEDDED-PHYSICAL
+
+board:
+  case: it968g_2p4mm           # identical to Z2 -- the comparison requires it
+  thickness_sensitivity_case: it968g_3p2mm
+  model_level: PCB-H0
+  eta_nominal: 0.50
+  eta_sensitivity: [0.25, 0.50, 0.75]
+  thickness_um: 2400.0
+  tolerance_pct: 10.0
+  status: VENDOR_EVIDENCE
+  source: >-
+    18-layer server/HPC PCB offered at 2.4 mm +-10 % (ugpcb); laminate ITEQ IT-968G.
+    Board-level E/CTE/k are DERIVED estimates conditional on eta, not measured board
+    properties -- see research/PCB_MATERIAL_PROPERTY_AUDIT.md Sec.5.
+
+bga:
+  pitch_mm: 0.8
+  diameter_mm: 0.4
+  height_um: 300.0
+  status: SOURCE_BACKED        # Krishnakumar 2026 Table III
+  lattice: centred
+  note: >-
+    Z1 has NO PCB cutout, so the full lattice survives. The 528-site figure is Z2's.
+
+substrate:
+  thickness_um: 300.0
+  size_mm: [30.0, 30.0]
+  status: SOURCE_BACKED
+  tile_band_um: 20.0           # thin RDL band; NOT the 1226 um embedded-cell proxy
+
+cutout:
+  present: false               # Z1 is substrate-side; the board is a full slab
+
+supply_return:
+  # Z1's through-substrate field carries the 48 V INPUT at low current. This is the core
+  # electrical distinction from Z2, whose field carries the 1 V output at ~kA.
+  rail_v: 48.0
+  current_rule: "I = P_in / 48 V, from the physical electrical solution"
+  current_status: OPEN         # no physical electrical solve exists yet
+  vdd_field: {status: SPECIFIED, interleave: checkerboard}
+  gnd_field: {status: SPECIFIED, interleave: checkerboard}
+  tsv:
+    diameter_um: 30.0
+    pitch_um: 60.0
+    status: SOURCE_BACKED      # June-2026 Table III
+    count_rule: >-
+      Bracketed by voltage drop and geometry, not by an invented EM allowable. See
+      tsv_fields.sizing_study(); the adopted point is MAXIMUM DENSITY and is labelled so.
+
+converter:
+  # Stacked above the bottom substrate, beneath the compute die. NINE tiers: Z1 is
+  # sandwiched and needs a landing RDL at BOTH ends, where Z2 needs one.
+  total_um: 1973.0
+  tiers_from_substrate_upward:
+    - {name: bottom_substrate_rdl, um: 10.0,  status: SOURCE_BACKED}
+    - {name: gan_hs_EPC2014C,      um: 685.0, status: SOURCE_BACKED}
+    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
+    - {name: gan_ls_EPC2057,       um: 638.0, status: SOURCE_BACKED}
+    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
+    - {name: flying_caps,          um: 100.0, status: BOUNDED}
+    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
+    - {name: inductor_plus_cout,   um: 500.0, status: SOURCE_BACKED}
+    - {name: output_rdl,           um: 10.0,  status: SOURCE_BACKED}
+  cells: 49
+  cell_area_mm2: 5.61
+  cell_side_mm: 2.3685
+  material_mapping:
+    rule: >-
+      Each tier maps to a medium already in the framework. The geometry gate does not
+      license inventing material data.
+    rdl_tiers:     {material: rdl_tier, status: DERIVED,
+                    note: "Phase-0M-R results/phase0mr/rdl_effective_tensor.csv, RDL
+                           ALONE -- NOT the old 40 um RDL + 10 um bump composite"}
+    gan_hs_and_ls: {material: silicon, status: BOUNDED,
+                    note: "GaN-on-Si carrier; the epi is not resolved"}
+    inductor_cout: {material: hvr_effective, status: PROVISIONAL}
+    flying_caps:   {material: hvr_effective, status: OPEN,
+                    note: "an MLCC ceramic/Ni stack is NOT this medium"}
+
+out_of_cell:
+  primary: F1_encapsulated
+  cases:
+    F1_encapsulated: {material: underfill_homog, status: PROVISIONAL}
+    F2_void:         {material: null, status: BOUNDED}
+  bracket_required: true
+
+interface:
+  # The production `interface` layer IS the "microbumps + underfill" row of the specified
+  # table. It must not be duplicated by a separate microbump layer -- doing so put the
+  # package top at 5343 um against a specified 5333 um.
+  thickness_um: 10.0
+  material: microbump
+  status: DERIVED
+  source: results/phase0mr/bump_layer_effective_tensor.csv
+
+die:
+  thickness_um: 300.0
+  status: SOURCE_BACKED
+
+tim:
+  thickness_um: 50.0
+  status: DESIGN_CHOICE
+
+expected:
+  # Cross-checks the loader re-derives rather than trusts.
+  package_top_um: 5333.0       # above the PCB backside
+  converter_span_um: [3000.0, 4973.0]

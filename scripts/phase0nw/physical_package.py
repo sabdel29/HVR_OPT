@@ -67,8 +67,6 @@ class PhysicalPackage:
     cell_side_mm: float
     conv_total_um: float
     tiers: tuple
-    converter_implemented: bool
-    open_gates: tuple
     source_path: Path = field(compare=False, default=None)
 
     # ---- derived, never stored twice -------------------------------------------------
@@ -167,8 +165,6 @@ def load_physical_package_config(path) -> PhysicalPackage:
         cutout_mm=cut_mm,
         cells=cells, cell_area_mm2=area, cell_side_mm=side,
         conv_total_um=stated, tiers=tiers,
-        converter_implemented=bool(conv.get("implemented", False)),
-        open_gates=tuple(c.get("open_gates", ())),
         source_path=path,
     )
 

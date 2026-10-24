@@ -565,19 +565,19 @@ def test_surviving_bga_count_and_allocation(ann):
 
 
 def test_z2_discrete_cell_gate_is_closed_and_verified_in_the_mesh():
-    """GATE CLOSED in Phase 0N-W. This guard used to assert implemented is False.
+    """GATE CLOSED in Phase 0N-W, and verified where the state now lives.
 
-    Inverting it is only legitimate because the mesh was checked, not because the flag
-    was flipped: tests/phase0nw measures all eight tiers at their specified depths. The
-    flag and the mesh are cross-checked there, in both directions.
+    This guard used to read `converter.implemented` out of the YAML. That field is gone:
+    configuration describes the package, and the generated gate registry owns
+    implementation state. The registry evaluates the mesh, so this reads the registry.
     """
-    import yaml
-    c = yaml.safe_load((R / "configs/phase0nt/z2_2p4mm_cutout.yaml").read_text())
-    assert c["converter"]["implemented"] is True
-    assert c["converter"]["descends_into_cutout"] is True
+    reg = json.loads((R / "research/phase0nw/physical_gates.json").read_text())
+    by = {r["id"]: r for r in reg["gates"]}
+    for gid in ("geom.z2_49_cells", "geom.z2_full_stack", "geom.z2_no_slab",
+                "geom.z2_descends_into_cutout"):
+        assert by[gid]["status"] == "IMPLEMENTED", f"{gid} regressed: {by[gid]}"
     # the geometry gate must not be read as a material claim
-    assert any("material fidelity" in g for g in c["open_gates"]), (
-        "per-tier material fidelity is still open and must stay listed")
+    assert by["mat.mlcc_bounded"]["status"] == "OPEN"
 
 
 def test_physical_build_actually_uses_a_2p4mm_board():

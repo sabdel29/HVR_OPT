@@ -134,22 +134,30 @@ def test_high_side_device_is_present_in_the_tier_list(cfg):
     assert "2057" in names, "the EPC2057 low-side device must appear explicitly"
 
 
-def test_converter_gate_is_honest_about_the_mesh(cfg):
-    """implemented: true may only stand while the mesh actually carries the tiers.
+def test_mesh_matches_the_configured_converter_total(cfg):
+    """The config states 1963 um; the mesh must deliver exactly that.
 
-    The earlier form of this guard read a layer called "conv". Once the slab was replaced
-    the lookup returned None, which compared unequal to 1963 and passed for the wrong
-    reason -- a guard that cannot fail is not a guard. It now measures the tiers.
+    This replaces a guard that read a hand-maintained `implemented:` flag. The flag is
+    gone -- implementation state belongs to the gate registry, not to configuration --
+    and the invariant that actually matters is config-against-mesh, which cannot be
+    satisfied by editing a boolean.
     """
     import z2_converter as _Z2C
     m = build_physical_package(cfg)[0]
     total = sum(r["mesh_um"] or 0.0 for r in _Z2C.tier_report(cfg, m))
-    if cfg.converter_implemented:
-        assert total == pytest.approx(cfg.conv_total_um, abs=1e-6), (
-            f"config claims implemented but the mesh totals {total:.1f} um")
-    else:
-        assert total != pytest.approx(cfg.conv_total_um, abs=1e-6), (
-            "the mesh now matches the config -- flip converter.implemented to true")
+    assert total == pytest.approx(cfg.conv_total_um, abs=1e-6), (
+        f"config says {cfg.conv_total_um:.1f} um, mesh built {total:.1f} um")
+
+
+def test_config_carries_no_implementation_state(cfg):
+    """Configuration describes the package; the gate registry owns progress."""
+    import yaml as _y
+    c = _y.safe_load(CFG.read_text())
+    assert "open_gates" not in c, "the handwritten open-gate list is back"
+    assert "implemented" not in c["converter"]
+    flat = _y.safe_dump(c).lower()
+    for word in ("still open", "not yet implemented", "gate --"):
+        assert word not in flat, f"status bookkeeping leaked back into config: {word!r}"
 
 
 def test_material_mapping_is_declared_with_status(cfg):
@@ -160,9 +168,12 @@ def test_material_mapping_is_declared_with_status(cfg):
     assert mm["flying_caps"]["status"] == "OPEN", (
         "the MLCC tier has no sourced card; it must stay OPEN")
     assert mm["gan_hs_and_ls"]["status"] == "BOUNDED"
-    assert "NOT implemented" in c["converter"].get("implemented_note", "") or any(
-        "material fidelity" in g for g in c["open_gates"]), (
-        "per-tier material fidelity must remain an open gate")
+    # per-tier material fidelity remains open -- asserted against the GATE REGISTRY,
+    # which owns that state, not against a config field
+    import json as _j
+    reg = _j.loads((R / "research/phase0nw/physical_gates.json").read_text())
+    opens = {r["id"] for r in reg["gates"] if r["status"] == "OPEN"}
+    assert {"mat.mlcc_bounded", "mat.gan_bounded"} <= opens
 
 
 def test_out_of_cell_is_declared_with_both_cases(cfg):

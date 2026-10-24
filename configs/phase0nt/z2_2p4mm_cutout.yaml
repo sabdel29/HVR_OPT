@@ -4,9 +4,13 @@
 # One explicit configuration for the physical build, replacing the loose environment
 # variables used for the historical experiments. Env vars remain honoured for those.
 #
-# STATUS: geometry PARTIALLY implemented. See research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md
-# section 6 for the live gate table. No ETM result may be generated from this config
-# until every gate passes.
+# THIS FILE IS CONFIGURATION ONLY -- geometry, materials, architecture and sensitivity
+# cases. It carries NO implementation state. Implementation state is owned entirely by
+# scripts/phase0nw/audit_physical_gates.py, which evaluates every required gate against
+# the config, the meshes and the generated artifacts. A handwritten status list here was
+# stale within one phase (it still said "complete physical Z1" was open after Z1 was
+# built) and, worse, it listed requirements the generated registry did not contain, so
+# nothing checked them.
 # =====================================================================================
 
 architecture: ARCH_Z2_BACKSIDE
@@ -87,12 +91,6 @@ converter:
   cell_area_mm2: 5.61
   cell_side_mm: 2.3685
   coverage_pct: 30.5
-  implemented: true            # GEOMETRY ONLY. The mesh carries 49 discrete footprints,
-                               # all eight tiers at their specified depths, total 1963 um,
-                               # HS deepest at 737 um above the PCB backside, and no
-                               # converter medium outside a cell. PER-TIER MATERIAL
-                               # FIDELITY IS NOT IMPLEMENTED -- see material_mapping.
-  descends_into_cutout: true   # shares the board's z range; NOT in series below the BGA
   material_mapping:
     rule: >-
       The geometry gate does not license inventing material data. Every tier maps to a
@@ -126,10 +124,3 @@ out_of_cell:
                              air-property relabel"}
   bracket_required: true       # final mechanical result must be run across F1 and F2
 
-open_gates:
-  - per-tier material fidelity (MLCC card, GaN epi) -- geometry is implemented
-  - split VDD / GND TSV fields per cell
-  - complete physical Z1 in the same solver
-  - thermal boundary selection
-  - mesh convergence on this geometry
-  - critical-joint search over the 528 surviving sites

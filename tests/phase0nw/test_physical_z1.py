@@ -136,3 +136,84 @@ def test_z1_and_z2_sit_on_the_same_board(inv):
         "the architectures are not being compared on the same board")
     assert l1["board"]["t_um"] == pytest.approx(cfg.board_thickness_um, abs=1e-6)
     assert l1["board"]["z0_um"] == pytest.approx(l2["board"]["z0_um"], abs=1e-9)
+
+
+# ------------------------------------------------- Z1 is config-driven (brief section 3)
+Z1CFG = R / "configs" / "phase0nx" / "z1_physical.yaml"
+
+
+def _tmp_z1(tmp_path, **edits):
+    import yaml
+    c = yaml.safe_load(Z1CFG.read_text())
+    for dotted, val in edits.items():
+        node = c
+        *path, leaf = dotted.split(".")
+        for k in path:
+            node = node[k]
+        node[leaf] = val
+    p = tmp_path / "z1_edited.yaml"
+    p.write_text(yaml.safe_dump(c, sort_keys=False))
+    return p
+
+
+def test_z1_has_its_own_physical_config():
+    c = Z1P.load_z1_config()
+    assert c["architecture"] == "ARCH_Z1_EMBEDDED"
+    assert c["board"]["case"] == "it968g_2p4mm"
+    assert len(c["converter"]["tiers_from_substrate_upward"]) == 9
+    assert c["supply_return"]["rail_v"] == 48.0, (
+        "Z1's through-substrate field carries the 48 V input, not the 1 V output")
+    assert c["cutout"]["present"] is False
+
+
+def test_z1_stack_is_not_a_python_constant():
+    """The tiers must come from the YAML, not from a literal in the module."""
+    src = (R / "scripts/phase0nw/z1_package.py").read_text()
+    assert "tiers_from_substrate_upward" in src
+    assert '("gan_hs_EPC2014C",     685.0)' not in src, (
+        "the hard-coded tier table is back")
+
+
+def test_editing_the_z1_config_changes_the_mesh(tmp_path, monkeypatch):
+    """Same load-bearing property Z2 has: edit the YAML, the mesh follows."""
+    import importlib
+    base = Z1P.load_z1_config()
+    assert base["substrate"]["thickness_um"] == 300.0
+    edited = Z1P.load_z1_config(_tmp_z1(
+        tmp_path, **{"substrate.thickness_um": 400.0,
+                     "expected.package_top_um": 5433.0}))
+    assert edited["substrate"]["thickness_um"] == 400.0
+    # the loader's own conservation check must have accepted the consistent edit
+    assert edited["expected"]["package_top_um"] == 5433.0
+
+
+def test_z1_loader_rejects_an_inconsistent_tier_sum(tmp_path):
+    import yaml
+    c = yaml.safe_load(Z1CFG.read_text())
+    c["converter"]["tiers_from_substrate_upward"][0]["um"] = 20.0
+    p = tmp_path / "bad.yaml"
+    p.write_text(yaml.safe_dump(c, sort_keys=False))
+    with pytest.raises(ValueError, match="tiers sum to"):
+        Z1P.load_z1_config(p)
+
+
+def test_z1_loader_rejects_a_package_height_that_does_not_add_up(tmp_path):
+    """NEGATIVE: the 5343-vs-5333 defect, caught at load time."""
+    with pytest.raises(ValueError, match="package_top_um"):
+        Z1P.load_z1_config(_tmp_z1(tmp_path, **{"die.thickness_um": 310.0}))
+
+
+def test_z1_loader_rejects_a_legacy_board(tmp_path):
+    with pytest.raises(ValueError, match="forbidden"):
+        Z1P.load_z1_config(_tmp_z1(tmp_path, **{"board.case": "fr4_2p4mm"}))
+
+
+def test_z1_and_z2_declare_the_same_board_and_cells():
+    import yaml
+    z1 = yaml.safe_load(Z1CFG.read_text())
+    z2 = yaml.safe_load((R / "configs/phase0nt/z2_2p4mm_cutout.yaml").read_text())
+    assert z1["board"]["case"] == z2["board"]["case"]
+    assert z1["board"]["thickness_um"] == z2["board"]["thickness_um"]
+    assert z1["converter"]["cells"] == z2["converter"]["cells"]
+    assert z1["converter"]["cell_side_mm"] == z2["converter"]["cell_side_mm"]
+    assert z1["supply_return"]["rail_v"] != 1.0, "Z1 must not be on the 1 V rail"

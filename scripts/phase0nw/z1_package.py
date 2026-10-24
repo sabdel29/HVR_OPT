@@ -30,29 +30,66 @@ for _p in ("scripts/phase0nw", "scripts/phase0mr", "scripts/phase0i", "scripts")
     if str(R / _p) not in sys.path:
         sys.path.insert(0, str(R / _p))
 
-from z2_converter import OUT_OF_CELL, TIER_MATERIAL, rdl_composite_material  # noqa: E402
+from z2_converter import (OUT_OF_CELL, TIER_MATERIAL,  # noqa: E402
+                          microbump_material, rdl_tier_material)
 
-SUBSTRATE_UM = 300.0
-UBUMP_UM = 10.0        # carried by the production `interface` layer, not added here
+Z1_CFG = R / "configs" / "phase0nx" / "z1_physical.yaml"
 
-# Specified Z1 converter, from the bottom substrate UPWARD (section 1 of the stack doc).
-Z1_TIERS = (
-    ("bottom_substrate_rdl", 10.0),
-    ("gan_hs_EPC2014C",     685.0),
-    ("interlayer_rdl",       10.0),
-    ("gan_ls_EPC2057",      638.0),
-    ("interlayer_rdl",       10.0),
-    ("flying_caps",         100.0),
-    ("interlayer_rdl",       10.0),
-    ("inductor_plus_cout",  500.0),
-    ("output_rdl",           10.0),
-)
-Z1_CONV_UM = sum(t for _n, t in Z1_TIERS)        # 1973
+
+def load_z1_config(path=None) -> dict:
+    """Parse and CROSS-CHECK the Z1 physical config.
+
+    Same philosophy as the Z2 loader: a config that states a tier list AND a total AND a
+    package height is asserting relations, and the loader re-derives them rather than
+    trusting them. Z1 previously had no config at all -- its stack was Python constants,
+    which is how two architectures that must stay comparable drift apart unnoticed.
+    """
+    import yaml
+    p = Path(path) if path else Z1_CFG
+    c = yaml.safe_load(p.read_text())
+    conv = c["converter"]
+    tiers = conv["tiers_from_substrate_upward"]
+    summed = sum(float(t["um"]) for t in tiers)
+    if abs(summed - float(conv["total_um"])) > 1e-9:
+        raise ValueError(f"{p.name}: tiers sum to {summed} um, total_um says "
+                         f"{conv['total_um']}")
+    if c["board"]["case"].startswith("fr4_"):
+        raise ValueError(f"{p.name}: legacy board case {c['board']['case']} is forbidden "
+                         f"on the physical path")
+    side, area = float(conv["cell_side_mm"]), float(conv["cell_area_mm2"])
+    if abs(side * side - area) / area > 2e-4:
+        raise ValueError(f"{p.name}: cell_side {side} squares to {side*side:.4f}, not "
+                         f"cell_area_mm2 {area}")
+    # the stated package height must equal the sum of everything in the stack
+    height = (float(c["board"]["thickness_um"]) + float(c["bga"]["height_um"])
+              + float(c["substrate"]["thickness_um"]) + summed
+              + float(c["interface"]["thickness_um"]) + float(c["die"]["thickness_um"])
+              + float(c["tim"]["thickness_um"]))
+    want = float(c["expected"]["package_top_um"])
+    if abs(height - want) > 1e-6:
+        raise ValueError(f"{p.name}: layers sum to {height} um but expected.package_top_um "
+                         f"says {want}")
+    return c
+
+
+_C = load_z1_config()
+SUBSTRATE_UM = float(_C["substrate"]["thickness_um"])
+
+UBUMP_UM = float(_C["interface"]["thickness_um"])   # the production `interface` layer
+
+# Specified Z1 converter, FROM THE CONFIG -- no longer a Python constant.
+Z1_TIERS = tuple((t["name"], float(t["um"]))
+                 for t in _C["converter"]["tiers_from_substrate_upward"])
+Z1_CONV_UM = sum(t for _n, t in Z1_TIERS)
+Z1_CELLS = int(_C["converter"]["cells"])
+Z1_CELL_SIDE_MM = float(_C["converter"]["cell_side_mm"])
+Z1_BOARD_CASE = _C["board"]["case"]
+Z1_RAIL_V = float(_C["supply_return"]["rail_v"])
 
 
 def _material(tier_name: str) -> str:
     if tier_name.endswith("_rdl"):
-        return "rdl_composite"
+        return "rdl_tier"
     return TIER_MATERIAL[tier_name][0]
 
 
@@ -78,7 +115,8 @@ def install(stack: dict, out_of_cell: str = "F1_encapsulated"):
     """Materials + mid layers + the out-of-cell rule for the complete physical Z1."""
     if out_of_cell not in OUT_OF_CELL:
         raise ValueError(f"unknown out-of-cell case {out_of_cell!r}")
-    stack["materials"]["rdl_composite"] = rdl_composite_material()
+    stack["materials"]["rdl_tier"] = rdl_tier_material()
+    stack["materials"]["microbump"] = microbump_material()
     mids = mid_layers()
     conv_names = tuple(m[0] for m in mids if m[0].startswith("z1conv_"))
     return mids, conv_names, OUT_OF_CELL[out_of_cell]
