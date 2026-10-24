@@ -82,7 +82,7 @@
    "area": "Electrical",
    "gate": "TSV minimum from an exact integer lattice sweep",
    "status": "IMPLEMENTED",
-   "evidence": "every n from 2 upward is enumerated. Z2 minimum is 64 (8x8, 9.71 mV vs a 10 mV budget); 7x7 = 49 fails at 12.71 mV. The previous sparse-pitch search reported 81 because its pitch set landed on n = 9 and n = 6 and skipped n = 8 entirely"
+   "evidence": "every n from 2 upward is enumerated. Z2 minimum is 64 (8x8, 9.83 mV vs a 10 mV budget); 7x7 = 49 fails at 12.71 mV. The previous sparse-pitch search reported 81 because its pitch set landed on n = 9 and n = 6 and skipped n = 8 entirely"
   },
   {
    "id": "elec.bga_power_ball_capacity",
@@ -94,9 +94,9 @@
   {
    "id": "elec.bga_loss_recomputed",
    "area": "Electrical",
-   "gate": "BGA loss on the annular package recomputed on the physical geometry",
+   "gate": "BGA loss recomputed on the physical geometry",
    "status": "OPEN",
-   "evidence": "BGA loss on the annular package still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+   "evidence": "a source-backed bulk-BGA DC/equal-sharing LOWER BOUND now exists (21.78 mW for Z1), but the final physical BGA loss remains open pending RMS-current and network-sharing closure"
   },
   {
    "id": "elec.microbump_loss_recomputed",
@@ -152,7 +152,7 @@
    "area": "Electrical",
    "gate": "Z1-specific TSV sizing",
    "status": "SPECIFIED",
-   "evidence": "48 V rail, 480 mV budget. N_electrical = 2 (1 VDD + 1 return, 7.43 mV); N_checkerboard = 4. The second is a SYMMETRY floor, not a requirement -- Z2's bracket does not apply to Z1"
+   "evidence": "48 V rail, 480 mV budget. N_electrical = 2 (1 VDD + 1 return, 7.51 mV); N_checkerboard = 4. The second is a SYMMETRY floor, not a requirement -- Z2's bracket does not apply to Z1"
   },
   {
    "id": "elec.z2_tsv_sizing",
@@ -190,6 +190,69 @@
    "evidence": "19 declared owners (7 converter-intrinsic + 12 interconnect); every interconnect owner has at least one segment, no segment has two, converter-intrinsic terms are forbidden from owning a conductor, and an unknown owner raises. STRUCTURE only -- 10 Z1 and 10 Z2 segments still have OPEN loss values and 5 carry Phase-0M-R3C references"
   },
   {
+   "id": "elec.current_waveforms_defined",
+   "area": "RMS",
+   "gate": "avg, RMS and peak current defined per rail",
+   "status": "IMPLEMENTED",
+   "evidence": "branch I_avg 6.8027 A (= I_cell/3, NOT 20.4), phase A I_rms 6.9343 A vs phase B 6.8033 A; cell output rms/avg 1.00808"
+  },
+  {
+   "id": "elec.rms_current_model",
+   "area": "RMS",
+   "gate": "RMS fidelity ladder implemented",
+   "status": "IMPLEMENTED",
+   "evidence": "L0 DC lower bound and L1 analytic (triangular ripple from the design's own D, f_sw, L and phase grouping, cross-checked against numerical integration). L2 time-domain is NOT built: the 3:1 SC switch-state sequence does not exist in the framework"
+  },
+  {
+   "id": "elec.z1_hv_rms_current",
+   "area": "RMS",
+   "gate": "48 V rail RMS current",
+   "status": "OPEN",
+   "evidence": "BRACKET [23.69, 94.77] A, a 4x span set by the unknown SC charge-transfer waveform. Because I^2 R scales as the square, every 48 V conductor loss carries a 16x span -- Z1 BGA supply is 10.9 to 174 mW"
+  },
+  {
+   "id": "elec.z2_lv_rms_current",
+   "area": "RMS",
+   "gate": "1 V substrate rail RMS current",
+   "status": "IMPLEMENTED",
+   "evidence": "rms/avg = 1.008078 worst case (no interleaving credit), derived from the per-cell triangular ripple. Z2's substrate TSV loss is therefore RMS-CLOSED at 213.0 mW per rail"
+  },
+  {
+   "id": "elec.bga_bulk_dc_baseline",
+   "area": "RMS",
+   "gate": "source-backed bulk BGA DC lower bound",
+   "status": "IMPLEMENTED",
+   "evidence": "Z1 10.889 mW supply at equal sharing and I_avg; single-ball bulk R 0.310 mOhm, consistent with the source's ~0.3 mOhm"
+  },
+  {
+   "id": "elec.bga_rms_current",
+   "area": "RMS",
+   "gate": "BGA loss uses RMS current",
+   "status": "OPEN",
+   "evidence": "blocked by elec.z1_hv_rms_current: the 48 V RMS is a bracket"
+  },
+  {
+   "id": "elec.bga_network_sharing",
+   "area": "RMS",
+   "gate": "BGA current sharing from the RDL network",
+   "status": "OPEN",
+   "evidence": "equal sharing is assumed and flagged a lower bound; no package RDL network exists to produce the real split"
+  },
+  {
+   "id": "mat.copper_resistivity_canonical",
+   "area": "RMS",
+   "gate": "one canonical copper resistivity",
+   "status": "IMPLEMENTED",
+   "evidence": "tsv_fields carried its own 16.8 nOhm.m ASSUMPTION against phase0m's 17.0 nOhm.m SOURCE_BACKED; now imported, 17.0 nOhm.m everywhere"
+  },
+  {
+   "id": "elec.tsv_conductor_geometry_consistent",
+   "area": "RMS",
+   "gate": "TSV conducting diameter resolved against the source resistance",
+   "status": "IMPLEMENTED",
+   "evidence": "30 um as CONDUCTING Cu diameter gives 7.215 mOhm, matching the source's ~7.1 mOhm; subtracting the 0.5 um liner gives 7.721 mOhm and does not. Electrical conducting diameter and mechanical outer diameter are now distinct"
+  },
+  {
    "id": "mat.bga_alloy_provenance",
    "area": "Recompute",
    "gate": "BGA solder alloy provenance",
@@ -222,7 +285,7 @@
    "area": "Recompute",
    "gate": "TSV landing/transition resistance audited against the existing spreading term",
    "status": "SPECIFIED",
-   "evidence": "10.1145/3698364.3705353 describes DC crowding where current TURNS between landing pad, via and TSV. The two-ended constriction already modelled is the plane-to-via-mouth convergence. They may be different effects; no second factor is added until that is established, because adding one would double-count. Recomputed TSV loss: Z1 0.233 mW, Z2 414.3 mW"
+   "evidence": "10.1145/3698364.3705353 describes DC crowding where current TURNS between landing pad, via and TSV. The two-ended constriction already modelled is the plane-to-via-mouth convergence. They may be different effects; no second factor is added until that is established, because adding one would double-count. Recomputed TSV loss: Z1 0.235 mW, Z2 419.2 mW"
   },
   {
    "id": "lit.interconnect_matrix",
@@ -592,6 +655,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 38,
+ "n_open": 41,
  "n_elems": 38623
 }

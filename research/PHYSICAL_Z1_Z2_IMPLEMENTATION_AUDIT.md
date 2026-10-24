@@ -2,18 +2,18 @@
 
 Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_physical_gates.py`: the config is loaded, the mesh is built, and the measured geometry decides the status. Nothing here is typed by hand, because a hand-typed status table goes stale a phase after it is written.
 
-**38 of 75 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
+**41 of 84 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
 
 Maturity is reported by status rather than collapsed into "closed", because SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:
 
 | status | count |
 |---|---:|
-| IMPLEMENTED | 25 |
+| IMPLEMENTED | 31 |
 | SPECIFIED | 12 |
 | VALIDATED | 0 |
-| OPEN | 38 |
+| OPEN | 41 |
 
-So **37 of 75 are non-open**, of which only 25 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
+So **43 of 84 are non-open**, of which only 31 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
 
 | status | meaning |
 |---|---|
@@ -37,9 +37,9 @@ So **37 of 75 are non-open**, of which only 25 are IMPLEMENTED and **0 are VALID
 | Electrical | Z1 power bookkeeping distinguishes load, loss and input | **IMPLEMENTED** | P_in = P_load 1000 W + P_loss 137.292 W = 1137.2923 W -> I = 23.6936 A. The earlier model divided the LOSS by 48 V and reported 2.86 A, low by 8.3x in current and 69x in I^2 R. |
 | Electrical | Z1 48 V rail-specific VDD/GND model | **SPECIFIED** | 48 V rail at 23.6936 A from (P_load + P_loss)/48. Source: Phase-0M-R3C electronics LOSS + load (PLACEHOLDER). Stays SPECIFIED, not IMPLEMENTED, until a physical loss ledger replaces the historical placeholder. |
 | Electrical | Z2 1 V rail-specific VDD/GND model | **SPECIFIED** | 1 V rail, I = 1000 A load current, 20.408 A per cell |
-| Electrical | TSV minimum from an exact integer lattice sweep | **IMPLEMENTED** | every n from 2 upward is enumerated. Z2 minimum is 64 (8x8, 9.71 mV vs a 10 mV budget); 7x7 = 49 fails at 12.71 mV. The previous sparse-pitch search reported 81 because its pitch set landed on n = 9 and n = 6 and skipped n = 8 entirely |
+| Electrical | TSV minimum from an exact integer lattice sweep | **IMPLEMENTED** | every n from 2 upward is enumerated. Z2 minimum is 64 (8x8, 9.83 mV vs a 10 mV budget); 7x7 = 49 fails at 12.71 mV. The previous sparse-pitch search reported 81 because its pitch set landed on n = 9 and n = 6 and skipped n = 8 entirely |
 | Electrical | BGA power-ball count recomputed from the ledger current | **SPECIFIED** | I_in 23.6936 A at 1.5 A/ball needs 16+16; 16+16 gives 24.0 A, margin 1.28 %. Recomputed dynamically, NOT frozen: +20 W of additional loss already requires 18+18. Stays SPECIFIED until the physical ledger replaces the placeholder |
-| Electrical | BGA loss on the annular package recomputed on the physical geometry | **OPEN** | BGA loss on the annular package still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result |
+| Electrical | BGA loss recomputed on the physical geometry | **OPEN** | a source-backed bulk-BGA DC/equal-sharing LOWER BOUND now exists (21.78 mW for Z1), but the final physical BGA loss remains open pending RMS-current and network-sharing closure |
 | Electrical | microbump loss recomputed on the physical geometry | **OPEN** | microbump loss still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result |
 | Electrical | package RDL loss, HV rail recomputed on the physical geometry | **OPEN** | package RDL loss, HV rail still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result |
 | Electrical | package RDL loss, LV rail recomputed on the physical geometry | **OPEN** | package RDL loss, LV rail still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result |
@@ -47,17 +47,26 @@ So **37 of 75 are non-open**, of which only 25 are IMPLEMENTED and **0 are VALID
 | Electrical | intra-VR vertical via-stack loss recomputed on the physical geometry | **OPEN** | intra-VR vertical via-stack loss still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result |
 | Electrical | contact / UBM / IMC resistance modelled or bounded | **OPEN** | the power-path library carries R_contact = 0 with status OPEN; zero is 'not modelled because unsourced', NOT 'physically negligible', and the distinction must survive into the manuscript |
 | Electrical | 10 um RDL electrical (resistance) model closed or bounded | **OPEN** | the mechanical/thermal tensor is bracketed, but the electrical sheet resistance of the actual 10 um tier -- Cu thickness, occupancy, routing layer count, supply/ground split -- is not yet defined |
-| Electrical | Z1-specific TSV sizing | **SPECIFIED** | 48 V rail, 480 mV budget. N_electrical = 2 (1 VDD + 1 return, 7.43 mV); N_checkerboard = 4. The second is a SYMMETRY floor, not a requirement -- Z2's bracket does not apply to Z1 |
+| Electrical | Z1-specific TSV sizing | **SPECIFIED** | 48 V rail, 480 mV budget. N_electrical = 2 (1 VDD + 1 return, 7.51 mV); N_checkerboard = 4. The second is a SYMMETRY floor, not a requirement -- Z2's bracket does not apply to Z1 |
 | Electrical | Z2-specific TSV sizing | **SPECIFIED** | 1 V rail, 10 mV budget: 64 / 729 / 1444 vias/cell |
 | TSV | thermal/mechanical sensitivity to TSV density | **OPEN** | the adopted field is 1444 vias/cell, 23x the electrically required minimum, so Cu volume fraction -- and therefore substrate k, E and CTE -- depends strongly on a choice no solve has tested |
 | TSV | TSV copper represented consistently in the FE model | **OPEN** | the substrate currently carries the historical tsv_homog fraction, which is not tied to the adopted TSV density; electrical rails are separated analytically while thermal/mechanical Cu would be one co-located homogenized field, and that is not yet implemented or stated in the mesh |
 | Electrical | complete rail-aware power-path graph for both architectures | **IMPLEMENTED** | Z1 15 segments, Z2 15, 48 V board to 1 V die with supply and return enumerated separately; chain continuity and rail assignment checked. Z1 and Z2 draw INDEPENDENT 48 V currents (23.6936 A and 23.7429 A, from their own loss totals); the substrate TSVs carry 48 V in Z1 and 1000 A at 1 V in Z2. Return chains are continuity-checked end to end and must terminate at PCB ground |
 | Electrical | every physical conductor has exactly one ledger owner | **IMPLEMENTED** | 19 declared owners (7 converter-intrinsic + 12 interconnect); every interconnect owner has at least one segment, no segment has two, converter-intrinsic terms are forbidden from owning a conductor, and an unknown owner raises. STRUCTURE only -- 10 Z1 and 10 Z2 segments still have OPEN loss values and 5 carry Phase-0M-R3C references |
+| RMS | avg, RMS and peak current defined per rail | **IMPLEMENTED** | branch I_avg 6.8027 A (= I_cell/3, NOT 20.4), phase A I_rms 6.9343 A vs phase B 6.8033 A; cell output rms/avg 1.00808 |
+| RMS | RMS fidelity ladder implemented | **IMPLEMENTED** | L0 DC lower bound and L1 analytic (triangular ripple from the design's own D, f_sw, L and phase grouping, cross-checked against numerical integration). L2 time-domain is NOT built: the 3:1 SC switch-state sequence does not exist in the framework |
+| RMS | 48 V rail RMS current | **OPEN** | BRACKET [23.69, 94.77] A, a 4x span set by the unknown SC charge-transfer waveform. Because I^2 R scales as the square, every 48 V conductor loss carries a 16x span -- Z1 BGA supply is 10.9 to 174 mW |
+| RMS | 1 V substrate rail RMS current | **IMPLEMENTED** | rms/avg = 1.008078 worst case (no interleaving credit), derived from the per-cell triangular ripple. Z2's substrate TSV loss is therefore RMS-CLOSED at 213.0 mW per rail |
+| RMS | source-backed bulk BGA DC lower bound | **IMPLEMENTED** | Z1 10.889 mW supply at equal sharing and I_avg; single-ball bulk R 0.310 mOhm, consistent with the source's ~0.3 mOhm |
+| RMS | BGA loss uses RMS current | **OPEN** | blocked by elec.z1_hv_rms_current: the 48 V RMS is a bracket |
+| RMS | BGA current sharing from the RDL network | **OPEN** | equal sharing is assumed and flagged a lower bound; no package RDL network exists to produce the real split |
+| RMS | one canonical copper resistivity | **IMPLEMENTED** | tsv_fields carried its own 16.8 nOhm.m ASSUMPTION against phase0m's 17.0 nOhm.m SOURCE_BACKED; now imported, 17.0 nOhm.m everywhere |
+| RMS | TSV conducting diameter resolved against the source resistance | **IMPLEMENTED** | 30 um as CONDUCTING Cu diameter gives 7.215 mOhm, matching the source's ~7.1 mOhm; subtracting the 0.5 um liner gives 7.721 mOhm and does not. Electrical conducting diameter and mechanical outer diameter are now distinct |
 | Recompute | BGA solder alloy provenance | **SPECIFIED** | the retrievable abstract of 10.1109/TCPMT.2026.3724907 does NOT state a solder alloy, so the model no longer asserts SAC305. The RESISTIVITY is sourced separately: 130 nOhm.m, SOURCE_BACKED -- June-2026 via scripts/phase0m/interconnect.py. Alloy itself: OPEN -- the design source does not state the alloy |
 | Recompute | BGA resistivity is temperature dependent | **IMPLEMENTED** | rho_solder(T) = 130 nOhm.m x (1 + 4.0e-03(T-20)); alpha is an ASSUMPTION. Recomputed BGA loss at 20 C: Z1 21.78 mW, Z2 21.87 mW (equal-sharing lower bound) |
 | Recompute | microbump field geometry defined | **OPEN** | no microbump field exists in the physical config; diameter, pitch and count are all OPEN, so loss is bracketed 4.3-139 mW |
 | Recompute | microbump modelled as a series ladder with an explicit contact term | **SPECIFIED** | R = R_bulk + R_constriction + R_contact, with r_contact = 0 labelled the IDEAL-CONTACT LOWER BOUND rather than a claim of zero |
-| Recompute | TSV landing/transition resistance audited against the existing spreading term | **SPECIFIED** | 10.1145/3698364.3705353 describes DC crowding where current TURNS between landing pad, via and TSV. The two-ended constriction already modelled is the plane-to-via-mouth convergence. They may be different effects; no second factor is added until that is established, because adding one would double-count. Recomputed TSV loss: Z1 0.233 mW, Z2 414.3 mW |
+| Recompute | TSV landing/transition resistance audited against the existing spreading term | **SPECIFIED** | 10.1145/3698364.3705353 describes DC crowding where current TURNS between landing pad, via and TSV. The two-ended constriction already modelled is the plane-to-via-mouth convergence. They may be different effects; no second factor is added until that is established, because adding one would double-count. Recomputed TSV loss: Z1 0.235 mW, Z2 419.2 mW |
 | Literature | DOI-backed provenance matrix for interconnect assumptions | **IMPLEMENTED** | 16 DOIs resolved via Crossref/OpenAlex: 0 DIRECT, 5 CLOSE_ANALOG, 11 CONTEXT_ONLY. research/phase0naa/interconnect_literature_matrix.csv |
 | Literature | 1.5 A/ball examined against the literature | **SPECIFIED** | our BGA runs at 1178 A/cm2 NOMINAL, only 1.95x below the MILDEST accelerated EM condition in 10.1016/j.jmrt.2023.12.187 (2300 A/cm2 at 160 C). That paper also reports ~22x crowding at ITS UBM contact; that factor is NOT transferred here and our local J stays OPEN pending a pad/RDL solve of this package. 1.5 A/ball is a BOUNDED provisioning rule, NOT an EM-safe limit; no lifetime claim is made |
 | Literature | microbump contact/UBM/IMC resistance bounded from literature | **OPEN** | 10.1109/EPTC.2015.7412351 shows microbump resistance RISES as solder converts to Cu6Sn5 then Cu3Sn, so R_contact = 0 is 'not modelled', not 'negligible'. No transferable value for our geometry was found; the two most on-point papers (ICEPT 2026, TCPMT 2026) have no retrievable abstract in this environment |
@@ -164,13 +173,13 @@ The only difference is interconnect: Z1 carries 5 RDLs (13.7445 mm3) against Z2'
 | Cu area fraction | 0.0910 | 0.0910 |
 | current per via (mA) | 28.27 | 28.27 |
 | current density (A/cm2) | 3999 | 3999 |
-| field resistance (uohm) | 9.876 | 9.876 |
-| spreading resistance (uohm) | 0.274 | 0.274 |
-| loss per cell (mW) | 4.23 | 4.23 |
+| field resistance (uohm) | 9.993 | 9.993 |
+| spreading resistance (uohm) | 0.277 | 0.277 |
+| loss per cell (mW) | 4.28 | 4.28 |
 
 Geometry is the SOURCE_BACKED 30 um / 60 um pitch over a 300 um substrate, checkerboard-interleaved on a 38x38 lattice so every VDD via has GND nearest neighbours. Both fields are symmetric about the cell centre to machine precision, so neither rail sees a systematically different thermal or mechanical environment.
 
-**R_loop = 20.300 uohm**, against 19.751 uohm for the naive `2 R_field`. Constriction at the via mouths contributes 2.7 % of the loop, so the naive form UNDER-predicts by 2.7 %. That is a small correction here, but it was computed rather than assumed, which is what the brief asks for. System TSV loss 0.414 W.
+**R_loop = 20.541 uohm**, against 19.986 uohm for the naive `2 R_field`. Constriction at the via mouths contributes 2.7 % of the loop, so the naive form UNDER-predicts by 2.7 %. That is a small correction here, but it was computed rather than assumed, which is what the brief asks for. System TSV loss 0.419 W.
 
 **These fields are not yet meshed as distinct regions** -- the model is analytical and the gate stays OPEN.
 
@@ -183,7 +192,7 @@ Same via geometry. The rail CURRENT differs by more than 40x, and because Joule 
 | rail | 48 V input | 1 V output |
 | system current | 23.694 A | 1000 A |
 | per-cell current | 0.4835 A | 20.408 A |
-| system TSV loss | 0.2326 mW | 414.3 mW |
+| system TSV loss | 0.2353 mW | 419.2 mW |
 
 | ratio (Z2/Z1) | | **42.2x current, 1781x loss** |
 
@@ -199,10 +208,10 @@ Declared budget: 1 % of the rail (10 mV). BOUNDED -- declared engineering budget
 
 | point | pitch | lattice | N | drop | % of rail |
 |---|---:|---:|---:|---:|---:|
-| n_min_electrical (1 VDD + 1 GND) | - | 1+1 | 2 | 313.431 mV | 31.343 % |
-| min_drop | 324 um | 8x8 | 64 | 9.712 mV | 0.971 % |
-| mid | 87 um | 27x27 | 729 | 0.832 mV | 0.083 % |
-| max_density | 61 um | 38x38 | 1444 | 0.415 mV | 0.041 % |
+| n_min_electrical (1 VDD + 1 GND) | - | 1+1 | 2 | 317.163 mV | 31.716 % |
+| min_drop | 324 um | 8x8 | 64 | 9.828 mV | 0.983 % |
+| mid | 87 um | 27x27 | 729 | 0.842 mV | 0.084 % |
+| max_density | 61 um | 38x38 | 1444 | 0.420 mV | 0.042 % |
 
 **Adopted: max_density, 1444 vias/cell.** the mechanical and thermal models need the copper volume fraction to be an upper bound on stiffening and spreading; the ELECTRICAL bracket is reported alongside so the sensitivity is visible. This is a MAXIMUM-DENSITY field at the SOURCE_BACKED 60 um minimum pitch, explicitly not a minimum-required one.
 
@@ -212,7 +221,7 @@ The earlier sparse-pitch search reported a Z2 minimum of 81. It is 64: an 8x8 fi
 
 ### Spreading resistance is counted at BOTH ends
 
-R_loop = R_vdd + R_gnd + 2 R_spread,vdd + 2 R_spread,gnd = 20.300 uohm. Current converges out of the plane into the via mouths at one end and diverges back out at the other, so each rail carries two constrictions -- Holm's contact resistance, rho/(2a) per via rather than rho/(4a). The earlier version charged one end per rail. Correcting it moved the spreading share from 1.4 % to 2.7 % of the loop and the naive 2 R_field error from -1.4 % to -2.7 %. A modest change, reported as a modest one.
+R_loop = R_vdd + R_gnd + 2 R_spread,vdd + 2 R_spread,gnd = 20.541 uohm. Current converges out of the plane into the via mouths at one end and diverges back out at the other, so each rail carries two constrictions -- Holm's contact resistance, rho/(2a) per via rather than rho/(4a). The earlier version charged one end per rail. Correcting it moved the spreading share from 1.4 % to 2.7 % of the loop and the naive 2 R_field error from -1.4 % to -2.7 %. A modest change, reported as a modest one.
 
 ## 1-D stack conservation
 

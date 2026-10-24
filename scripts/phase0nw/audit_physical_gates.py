@@ -80,6 +80,11 @@ REQUIRED_GATES = {
         "mat.rdl_tensor_transfer_validated",
     ],
     "tsv": ["tsv.density_sensitivity_run", "tsv.fe_copper_representation"],
+    "rms": ["elec.current_waveforms_defined", "elec.rms_current_model",
+            "elec.z1_hv_rms_current", "elec.z2_lv_rms_current",
+            "elec.bga_bulk_dc_baseline", "elec.bga_rms_current",
+            "elec.bga_network_sharing", "mat.copper_resistivity_canonical",
+            "elec.tsv_conductor_geometry_consistent"],
     "recompute": ["mat.bga_alloy_provenance", "elec.bga_rho_T_model",
                   "elec.microbump_geometry_closed", "elec.microbump_series_resistance",
                   "elec.tsv_transition_audited"],
@@ -110,6 +115,13 @@ def gates():
     import tsv_fields as TSV, pcb_h1 as H1
     z1cfg = load_z1_package_config()
     m1 = build_physical_z1(z1cfg)[0]
+    import interconnect_loss as IL
+    import rms_currents as RMS
+    import tsv_fields as _TF
+    L1, L2 = IL.ledger("Z1"), IL.ledger("Z2")
+    cc = RMS.cell_currents()
+    r1 = L1["rms"]
+
     lay1 = measure_layers(m1)
     off1 = lay1["board"]["z0_um"]
     rows1 = Z1P.tier_report(m1, z1cfg)
@@ -198,8 +210,12 @@ def gates():
         f"{cap['capacity_a']:.1f} A, margin {100*cap['margin_frac']:.2f} %. "
         f"Recomputed dynamically, NOT frozen: +20 W of additional loss already requires "
         f"18+18. Stays SPECIFIED until the physical ledger replaces the placeholder")
+    add("elec.bga_loss_recomputed", "Electrical",
+        "BGA loss recomputed on the physical geometry", "OPEN",
+        "a source-backed bulk-BGA DC/equal-sharing LOWER BOUND now exists "
+        f"({L1['bga']['p_total_w']*1e3:.2f} mW for Z1), but the final physical BGA loss "
+        "remains open pending RMS-current and network-sharing closure")
     for gid, what in (
-            ("elec.bga_loss_recomputed", "BGA loss on the annular package"),
             ("elec.microbump_loss_recomputed", "microbump loss"),
             ("elec.package_rdl_hv_recomputed", "package RDL loss, HV rail"),
             ("elec.package_rdl_lv_recomputed", "package RDL loss, LV rail"),
@@ -267,8 +283,47 @@ def gates():
     lit = _json.loads((R / "research/phase0naa/literature_summary.json").read_text())
     ap = lit["by_applicability"]
     op = lit["operating_points"]
-    import interconnect_loss as IL
-    L1, L2 = IL.ledger("Z1"), IL.ledger("Z2")
+    add("elec.current_waveforms_defined", "RMS",
+        "avg, RMS and peak current defined per rail", "IMPLEMENTED",
+        f"branch I_avg {cc['branches'][0]['i_avg_a']:.4f} A (= I_cell/3, NOT 20.4), "
+        f"phase A I_rms {cc['branches'][0]['i_rms_a']:.4f} A vs phase B "
+        f"{cc['branches'][2]['i_rms_a']:.4f} A; cell output rms/avg "
+        f"{cc['i_cell_out_rms_a']/cc['i_cell_out_avg_a']:.5f}")
+    add("elec.rms_current_model", "RMS", "RMS fidelity ladder implemented", "IMPLEMENTED",
+        "L0 DC lower bound and L1 analytic (triangular ripple from the design's own D, "
+        "f_sw, L and phase grouping, cross-checked against numerical integration). "
+        "L2 time-domain is NOT built: the 3:1 SC switch-state sequence does not exist "
+        "in the framework")
+    add("elec.z1_hv_rms_current", "RMS", "48 V rail RMS current", "OPEN",
+        f"BRACKET [{r1['hv_rms_lo_a']:.2f}, {r1['hv_rms_hi_a']:.2f}] A, a 4x span set by "
+        f"the unknown SC charge-transfer waveform. Because I^2 R scales as the square, "
+        f"every 48 V conductor loss carries a 16x span -- Z1 BGA supply is "
+        f"{L1['terms']['P_BGA_supply']['bracket_w'][0]*1e3:.1f} to "
+        f"{L1['terms']['P_BGA_supply']['bracket_w'][1]*1e3:.0f} mW")
+    add("elec.z2_lv_rms_current", "RMS", "1 V substrate rail RMS current", "IMPLEMENTED",
+        f"rms/avg = {r1['lv_rms_over_avg']:.6f} worst case (no interleaving credit), "
+        f"derived from the per-cell triangular ripple. Z2's substrate TSV loss is "
+        f"therefore RMS-CLOSED at {L2['terms']['P_TSV_VDD']['w']*1e3:.1f} mW per rail")
+    add("elec.bga_bulk_dc_baseline", "RMS", "source-backed bulk BGA DC lower bound",
+        "IMPLEMENTED",
+        f"Z1 {L1['bga']['p_supply_w']*1e3:.3f} mW supply at equal sharing and I_avg; "
+        f"single-ball bulk R {L1['bga']['r_supply_ohm']*16*1e3:.3f} mOhm, consistent "
+        f"with the source's ~0.3 mOhm")
+    add("elec.bga_rms_current", "RMS", "BGA loss uses RMS current", "OPEN",
+        "blocked by elec.z1_hv_rms_current: the 48 V RMS is a bracket")
+    add("elec.bga_network_sharing", "RMS", "BGA current sharing from the RDL network",
+        "OPEN", "equal sharing is assumed and flagged a lower bound; no package RDL "
+                "network exists to produce the real split")
+    add("mat.copper_resistivity_canonical", "RMS", "one canonical copper resistivity",
+        "IMPLEMENTED" if abs(_TF.RHO_CU_20C - 17.0e-9) < 1e-18 else "OPEN",
+        f"tsv_fields carried its own 16.8 nOhm.m ASSUMPTION against phase0m's "
+        f"17.0 nOhm.m SOURCE_BACKED; now imported, {_TF.RHO_CU_20C*1e9:.1f} nOhm.m "
+        f"everywhere")
+    add("elec.tsv_conductor_geometry_consistent", "RMS",
+        "TSV conducting diameter resolved against the source resistance", "IMPLEMENTED",
+        "30 um as CONDUCTING Cu diameter gives 7.215 mOhm, matching the source's "
+        "~7.1 mOhm; subtracting the 0.5 um liner gives 7.721 mOhm and does not. "
+        "Electrical conducting diameter and mechanical outer diameter are now distinct")
     add("mat.bga_alloy_provenance", "Recompute", "BGA solder alloy provenance",
         "SPECIFIED",
         "the retrievable abstract of 10.1109/TCPMT.2026.3724907 does NOT state a solder "
