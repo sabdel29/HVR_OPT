@@ -97,13 +97,15 @@ def test_operating_point_is_computed_from_the_live_model():
     spec.loader.exec_module(m)
     live = m.operating_points()
     for a in ("Z1", "Z2"):
-        assert live[a]["j_ball_A_cm2"] == pytest.approx(
-            s["operating_points"][a]["j_ball_A_cm2"], rel=1e-9)
+        assert live[a]["j_nominal_ball_A_cm2"] == pytest.approx(
+            s["operating_points"][a]["j_nominal_ball_A_cm2"], rel=1e-9)
+        # the transferred crowding factor must stay gone
+        assert live[a]["j_local_A_cm2"] is None
 
 
 def test_our_bga_margin_against_the_mildest_accelerated_condition():
     """1178 A/cm2 against 2300 A/cm2 is under 2x. That is NOT a comfortable margin,
     and nothing in the repo may describe 1.5 A/ball as conservative without it."""
     s = json.loads(SUMMARY.read_text())
-    j = s["operating_points"]["Z1"]["j_ball_A_cm2"]
+    j = s["operating_points"]["Z1"]["j_nominal_ball_A_cm2"]
     assert 2300.0 / j < 2.5, f"margin to the mildest accelerated condition is {2300/j:.2f}x"

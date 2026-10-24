@@ -38,9 +38,15 @@ def operating_points() -> dict:
     for a in ("Z1", "Z2"):
         i_hv = rc[a]["hv_total_a"]
         i_ball = i_hv / 16
+        # NOMINAL only. An earlier version also reported j * 22, importing the
+        # crowding factor measured in 10.1016/j.jmrt.2023.12.187 for ITS pad/UBM/trace
+        # geometry and presenting it as OUR local density. That factor is a property of
+        # that paper's structure, not a transferable multiplier, and a local J for this
+        # package can only come from solving this package's own pad/RDL geometry.
         out[a] = {"i_hv_a": i_hv, "i_ball_a": i_ball,
-                  "j_ball_A_cm2": i_ball / A_BALL_CM2,
-                  "j_ball_local_A_cm2": i_ball / A_BALL_CM2 * 22.0}
+                  "j_nominal_ball_A_cm2": i_ball / A_BALL_CM2,
+                  "j_local_A_cm2": None,
+                  "j_local_status": "OPEN -- requires this package's own pad/RDL solve"}
     return out
 
 
@@ -52,9 +58,11 @@ ROWS = [
      "500 um BGA solder joints, Cu UBM 16 um / 68 um",
      "accelerated EM: 130 C-3000, 160 C-2300, 160 C-3000, 160 C-4600 A/cm2",
      "CLOSE_ANALOG",
-     "Establishes the accelerated-stress regime for a BGA of comparable size and the "
-     "existence of ~22x current crowding at the UBM contact. Does NOT establish an "
-     "allowable: every listed condition is a deliberate failure-inducing stress.",
+     "Establishes the accelerated-stress regime for a BGA of comparable size, and that "
+     "current crowding at the UBM contact can be severe IN THAT GEOMETRY (the paper "
+     "reports ~22x there). Neither the allowable nor the crowding factor transfers: "
+     "every listed condition is a deliberate failure-inducing stress, and the crowding "
+     "factor is a property of that pad/trace/UBM structure.",
      "BOUNDED -- 1.5 A/ball retained as a provisioning rule, NOT an EM-safe limit"),
     ("BGA current density context", "BGA ball, 400 um", "derived from I_ball_max",
      "10.1108/SSMT-08-2025-0041",
@@ -160,8 +168,9 @@ def build():
     meta = {m["doi"]: m for m in
             json.loads((OUT / "doi_metadata.json").read_text())}
     op = operating_points()
-    ours = (f"BGA average J = {op['Z1']['j_ball_A_cm2']:.0f} A/cm2 (Z1) / "
-            f"{op['Z2']['j_ball_A_cm2']:.0f} (Z2) at 400 um ball, 1.48 A/ball")
+    ours = (f"BGA NOMINAL J = {op['Z1']['j_nominal_ball_A_cm2']:.0f} A/cm2 (Z1) / "
+            f"{op['Z2']['j_nominal_ball_A_cm2']:.0f} (Z2) at 400 um ball, 1.48 A/ball. "
+            f"Local J is OPEN -- not imported from any paper's crowding factor")
     rows = []
     for (param, struct, cur, doi, geom, cond, appl, establishes, status) in ROWS:
         m = meta.get(doi, {})
@@ -198,5 +207,5 @@ if __name__ == "__main__":
     print("applicability:", dict(Counter(r["applicability"] for r in rows)))
     print("final status: ", dict(Counter(r["final_status"].split(" --")[0] for r in rows)))
     for a in ("Z1", "Z2"):
-        print(f"  {a}: J_ball {op[a]['j_ball_A_cm2']:.0f} A/cm2 "
-              f"(local ~{op[a]['j_ball_local_A_cm2']:.0f} with 22x crowding)")
+        print(f"  {a}: J_nominal {op[a]['j_nominal_ball_A_cm2']:.0f} A/cm2 "
+              f"(local J OPEN -- not imported)")
