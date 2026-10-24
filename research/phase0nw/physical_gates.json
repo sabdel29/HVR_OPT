@@ -152,7 +152,7 @@
    "area": "Electrical",
    "gate": "Z1-specific TSV sizing",
    "status": "SPECIFIED",
-   "evidence": "48 V rail, 480 mV budget: minimum 4 vias/cell against Z2's 64 -- the Z2 bracket does not apply to Z1"
+   "evidence": "48 V rail, 480 mV budget. N_electrical = 2 (1 VDD + 1 return, 7.43 mV); N_checkerboard = 4. The second is a SYMMETRY floor, not a requirement -- Z2's bracket does not apply to Z1"
   },
   {
    "id": "elec.z2_tsv_sizing",
@@ -180,14 +180,42 @@
    "area": "Electrical",
    "gate": "complete rail-aware power-path graph for both architectures",
    "status": "IMPLEMENTED",
-   "evidence": "Z1 15 segments, Z2 15, 48 V board to 1 V die with supply and return enumerated separately; chain continuity and rail assignment checked (the BGA carries 23.69 A at 48 V in BOTH architectures, while the substrate TSVs carry 48 V in Z1 and 1000 A at 1 V in Z2)"
+   "evidence": "Z1 15 segments, Z2 15, 48 V board to 1 V die with supply and return enumerated separately; chain continuity and rail assignment checked. Z1 and Z2 draw INDEPENDENT 48 V currents (23.6936 A and 23.7429 A, from their own loss totals); the substrate TSVs carry 48 V in Z1 and 1000 A at 1 V in Z2. Return chains are continuity-checked end to end and must terminate at PCB ground"
   },
   {
    "id": "elec.one_owner_per_conductor",
    "area": "Electrical",
    "gate": "every physical conductor has exactly one ledger owner",
    "status": "IMPLEMENTED",
-   "evidence": "19 declared owners; every interconnect owner has at least one segment, no segment has two, converter-intrinsic terms are forbidden from owning a conductor, and an unknown owner raises. STRUCTURE only -- 10 Z1 and 10 Z2 segments still have OPEN loss values and 5 carry Phase-0M-R3C references"
+   "evidence": "19 declared owners (7 converter-intrinsic + 12 interconnect); every interconnect owner has at least one segment, no segment has two, converter-intrinsic terms are forbidden from owning a conductor, and an unknown owner raises. STRUCTURE only -- 10 Z1 and 10 Z2 segments still have OPEN loss values and 5 carry Phase-0M-R3C references"
+  },
+  {
+   "id": "lit.interconnect_matrix",
+   "area": "Literature",
+   "gate": "DOI-backed provenance matrix for interconnect assumptions",
+   "status": "IMPLEMENTED",
+   "evidence": "16 DOIs resolved via Crossref/OpenAlex: 0 DIRECT, 5 CLOSE_ANALOG, 11 CONTEXT_ONLY. research/phase0naa/interconnect_literature_matrix.csv"
+  },
+  {
+   "id": "lit.bga_current_rule",
+   "area": "Literature",
+   "gate": "1.5 A/ball examined against the literature",
+   "status": "SPECIFIED",
+   "evidence": "our BGA runs at 1178 A/cm2 average, only 1.95x below the MILDEST accelerated EM condition in 10.1016/j.jmrt.2023.12.187 (2300 A/cm2 at 160 C), and that paper reports ~22x crowding at the UBM contact. 1.5 A/ball is retained as a BOUNDED provisioning rule and is NOT an EM-safe limit; no lifetime claim is made"
+  },
+  {
+   "id": "lit.microbump_contact_bounded",
+   "area": "Literature",
+   "gate": "microbump contact/UBM/IMC resistance bounded from literature",
+   "status": "OPEN",
+   "evidence": "10.1109/EPTC.2015.7412351 shows microbump resistance RISES as solder converts to Cu6Sn5 then Cu3Sn, so R_contact = 0 is 'not modelled', not 'negligible'. No transferable value for our geometry was found; the two most on-point papers (ICEPT 2026, TCPMT 2026) have no retrievable abstract in this environment"
+  },
+  {
+   "id": "lit.tsv_allowable",
+   "area": "Literature",
+   "gate": "TSV current-density allowable sourced or explicitly refused",
+   "status": "OPEN",
+   "evidence": "the 1 MA/cm2 in 10.1016/j.microrel.2015.05.019 is an accelerated stress condition, not an allowable; 10.1109/TED.2023.3307505 and 10.1016/j.ijmecsci.2025.110758 both show J alone is insufficient without T and stress. No allowable is asserted"
   },
   {
    "id": "config.z1_yaml_drives_mesh",
@@ -529,6 +557,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 35,
+ "n_open": 37,
  "n_elems": 38623
 }

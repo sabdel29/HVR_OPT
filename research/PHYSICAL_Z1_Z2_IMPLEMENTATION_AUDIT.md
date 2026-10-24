@@ -2,18 +2,18 @@
 
 Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_physical_gates.py`: the config is loaded, the mesh is built, and the measured geometry decides the status. Nothing here is typed by hand, because a hand-typed status table goes stale a phase after it is written.
 
-**35 of 66 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
+**37 of 70 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
 
 Maturity is reported by status rather than collapsed into "closed", because SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:
 
 | status | count |
 |---|---:|
-| IMPLEMENTED | 23 |
-| SPECIFIED | 8 |
+| IMPLEMENTED | 24 |
+| SPECIFIED | 9 |
 | VALIDATED | 0 |
-| OPEN | 35 |
+| OPEN | 37 |
 
-So **31 of 66 are non-open**, of which only 23 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
+So **33 of 70 are non-open**, of which only 24 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
 
 | status | meaning |
 |---|---|
@@ -47,12 +47,16 @@ So **31 of 66 are non-open**, of which only 23 are IMPLEMENTED and **0 are VALID
 | Electrical | intra-VR vertical via-stack loss recomputed on the physical geometry | **OPEN** | intra-VR vertical via-stack loss still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result |
 | Electrical | contact / UBM / IMC resistance modelled or bounded | **OPEN** | the power-path library carries R_contact = 0 with status OPEN; zero is 'not modelled because unsourced', NOT 'physically negligible', and the distinction must survive into the manuscript |
 | Electrical | 10 um RDL electrical (resistance) model closed or bounded | **OPEN** | the mechanical/thermal tensor is bracketed, but the electrical sheet resistance of the actual 10 um tier -- Cu thickness, occupancy, routing layer count, supply/ground split -- is not yet defined |
-| Electrical | Z1-specific TSV sizing | **SPECIFIED** | 48 V rail, 480 mV budget: minimum 4 vias/cell against Z2's 64 -- the Z2 bracket does not apply to Z1 |
+| Electrical | Z1-specific TSV sizing | **SPECIFIED** | 48 V rail, 480 mV budget. N_electrical = 2 (1 VDD + 1 return, 7.43 mV); N_checkerboard = 4. The second is a SYMMETRY floor, not a requirement -- Z2's bracket does not apply to Z1 |
 | Electrical | Z2-specific TSV sizing | **SPECIFIED** | 1 V rail, 10 mV budget: 64 / 729 / 1444 vias/cell |
 | TSV | thermal/mechanical sensitivity to TSV density | **OPEN** | the adopted field is 1444 vias/cell, 23x the electrically required minimum, so Cu volume fraction -- and therefore substrate k, E and CTE -- depends strongly on a choice no solve has tested |
 | TSV | TSV copper represented consistently in the FE model | **OPEN** | the substrate currently carries the historical tsv_homog fraction, which is not tied to the adopted TSV density; electrical rails are separated analytically while thermal/mechanical Cu would be one co-located homogenized field, and that is not yet implemented or stated in the mesh |
-| Electrical | complete rail-aware power-path graph for both architectures | **IMPLEMENTED** | Z1 15 segments, Z2 15, 48 V board to 1 V die with supply and return enumerated separately; chain continuity and rail assignment checked (the BGA carries 23.69 A at 48 V in BOTH architectures, while the substrate TSVs carry 48 V in Z1 and 1000 A at 1 V in Z2) |
-| Electrical | every physical conductor has exactly one ledger owner | **IMPLEMENTED** | 19 declared owners; every interconnect owner has at least one segment, no segment has two, converter-intrinsic terms are forbidden from owning a conductor, and an unknown owner raises. STRUCTURE only -- 10 Z1 and 10 Z2 segments still have OPEN loss values and 5 carry Phase-0M-R3C references |
+| Electrical | complete rail-aware power-path graph for both architectures | **IMPLEMENTED** | Z1 15 segments, Z2 15, 48 V board to 1 V die with supply and return enumerated separately; chain continuity and rail assignment checked. Z1 and Z2 draw INDEPENDENT 48 V currents (23.6936 A and 23.7429 A, from their own loss totals); the substrate TSVs carry 48 V in Z1 and 1000 A at 1 V in Z2. Return chains are continuity-checked end to end and must terminate at PCB ground |
+| Electrical | every physical conductor has exactly one ledger owner | **IMPLEMENTED** | 19 declared owners (7 converter-intrinsic + 12 interconnect); every interconnect owner has at least one segment, no segment has two, converter-intrinsic terms are forbidden from owning a conductor, and an unknown owner raises. STRUCTURE only -- 10 Z1 and 10 Z2 segments still have OPEN loss values and 5 carry Phase-0M-R3C references |
+| Literature | DOI-backed provenance matrix for interconnect assumptions | **IMPLEMENTED** | 16 DOIs resolved via Crossref/OpenAlex: 0 DIRECT, 5 CLOSE_ANALOG, 11 CONTEXT_ONLY. research/phase0naa/interconnect_literature_matrix.csv |
+| Literature | 1.5 A/ball examined against the literature | **SPECIFIED** | our BGA runs at 1178 A/cm2 average, only 1.95x below the MILDEST accelerated EM condition in 10.1016/j.jmrt.2023.12.187 (2300 A/cm2 at 160 C), and that paper reports ~22x crowding at the UBM contact. 1.5 A/ball is retained as a BOUNDED provisioning rule and is NOT an EM-safe limit; no lifetime claim is made |
+| Literature | microbump contact/UBM/IMC resistance bounded from literature | **OPEN** | 10.1109/EPTC.2015.7412351 shows microbump resistance RISES as solder converts to Cu6Sn5 then Cu3Sn, so R_contact = 0 is 'not modelled', not 'negligible'. No transferable value for our geometry was found; the two most on-point papers (ICEPT 2026, TCPMT 2026) have no retrievable abstract in this environment |
+| Literature | TSV current-density allowable sourced or explicitly refused | **OPEN** | the 1 MA/cm2 in 10.1016/j.microrel.2015.05.019 is an accelerated stress condition, not an allowable; 10.1109/TED.2023.3307505 and 10.1016/j.ijmecsci.2025.110758 both show J alone is insufficient without T and stress. No allowable is asserted |
 | Configuration | Z1 YAML drives the Z1 mesh | **IMPLEMENTED** | build_physical_z1 takes a Z1Package from configs/phase0nx/z1_physical.yaml (300 um substrate, 9 tiers, 48 V rail) and REFUSES a Z2 PhysicalPackage |
 | Electrical | TSV count justified by a design criterion | **SPECIFIED** | three-point study: N_min_drop 64, N_mid 729, N_max_density 1444; adopted = max_density |
 | Electrical | temperature-dependent TSV resistance in the fixed point | **OPEN** | rho(T) exists in the analytical model but is evaluated at 20 C; not yet coupled |

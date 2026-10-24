@@ -81,6 +81,8 @@ REQUIRED_GATES = {
     ],
     "tsv": ["tsv.density_sensitivity_run", "tsv.fe_copper_representation"],
     "configuration": ["config.z1_yaml_drives_mesh"],
+    "literature": ["lit.interconnect_matrix", "lit.bga_current_rule",
+                   "lit.microbump_contact_bounded", "lit.tsv_allowable"],
     "results": ["results.physical_etm_lineage"],
 }
 ALL_REQUIRED = [g for v in REQUIRED_GATES.values() for g in v]
@@ -215,9 +217,11 @@ def gates():
            "resistance of the actual 10 um tier -- Cu thickness, occupancy, routing "
            "layer count, supply/ground split -- is not yet defined")
     add("elec.z1_tsv_sizing", "Electrical", "Z1-specific TSV sizing", "SPECIFIED",
-        f"48 V rail, {s1['budget_v']*1e3:.0f} mV budget: minimum "
-        f"{s1['min_drop']['n_total']} vias/cell against Z2's "
-        f"{s2['min_drop']['n_total']} -- the Z2 bracket does not apply to Z1")
+        f"48 V rail, {s1['budget_v']*1e3:.0f} mV budget. N_electrical = "
+        f"{s1['n_min_electrical']['n_total']} (1 VDD + 1 return, "
+        f"{s1['n_min_electrical']['v_drop_v']*1e3:.2f} mV); N_checkerboard = "
+        f"{s1['n_min_checkerboard']}. The second is a SYMMETRY floor, not a "
+        f"requirement -- Z2's bracket does not apply to Z1")
     add("elec.z2_tsv_sizing", "Electrical", "Z2-specific TSV sizing", "SPECIFIED",
         f"1 V rail, {s2['budget_v']*1e3:.0f} mV budget: "
         f"{s2['min_drop']['n_total']} / {s2['mid']['n_total']} / "
@@ -242,17 +246,49 @@ def gates():
         "IMPLEMENTED" if pz1["ok"] and pz2["ok"] else "OPEN",
         f"Z1 {pz1['n_segments']} segments, Z2 {pz2['n_segments']}, 48 V board to 1 V "
         f"die with supply and return enumerated separately; chain continuity and rail "
-        f"assignment checked (the BGA carries {PP.rail_currents()['hv_total_a']:.2f} A "
-        f"at 48 V in BOTH architectures, while the substrate TSVs carry 48 V in Z1 and "
-        f"1000 A at 1 V in Z2)")
+        f"assignment checked. Z1 and Z2 draw INDEPENDENT 48 V currents "
+        f"({PP.rail_currents('Z1')['hv_total_a']:.4f} A and "
+        f"{PP.rail_currents('Z2')['hv_total_a']:.4f} A, from their own loss totals); "
+        f"the substrate TSVs carry 48 V in Z1 and 1000 A at 1 V in Z2. Return chains "
+        f"are continuity-checked end to end and must terminate at PCB ground")
     add("elec.one_owner_per_conductor", "Electrical",
         "every physical conductor has exactly one ledger owner",
         "IMPLEMENTED" if pz1["ok"] and pz2["ok"] else "OPEN",
-        f"{len(PP.LEDGER_OWNERS)} declared owners; every interconnect owner has at "
+        f"{len(PP.LEDGER_OWNERS)} declared owners (7 converter-intrinsic + 12 "
+        f"interconnect); every interconnect owner has at "
         f"least one segment, no segment has two, converter-intrinsic terms are "
         f"forbidden from owning a conductor, and an unknown owner raises. "
         f"STRUCTURE only -- {pz1['n_open']} Z1 and {pz2['n_open']} Z2 segments still "
         f"have OPEN loss values and {pz1['n_historical']} carry Phase-0M-R3C references")
+    import json as _json
+    lit = _json.loads((R / "research/phase0naa/literature_summary.json").read_text())
+    ap = lit["by_applicability"]
+    op = lit["operating_points"]
+    add("lit.interconnect_matrix", "Literature",
+        "DOI-backed provenance matrix for interconnect assumptions", "IMPLEMENTED",
+        f"16 DOIs resolved via Crossref/OpenAlex: {ap['DIRECT']} DIRECT, "
+        f"{ap['CLOSE_ANALOG']} CLOSE_ANALOG, {ap['CONTEXT_ONLY']} CONTEXT_ONLY. "
+        f"research/phase0naa/interconnect_literature_matrix.csv")
+    add("lit.bga_current_rule", "Literature",
+        "1.5 A/ball examined against the literature", "SPECIFIED",
+        f"our BGA runs at {op['Z1']['j_ball_A_cm2']:.0f} A/cm2 average, only 1.95x "
+        f"below the MILDEST accelerated EM condition in 10.1016/j.jmrt.2023.12.187 "
+        f"(2300 A/cm2 at 160 C), and that paper reports ~22x crowding at the UBM "
+        f"contact. 1.5 A/ball is retained as a BOUNDED provisioning rule and is NOT an "
+        f"EM-safe limit; no lifetime claim is made")
+    notrun("lit.microbump_contact_bounded", "Literature",
+           "microbump contact/UBM/IMC resistance bounded from literature",
+           "10.1109/EPTC.2015.7412351 shows microbump resistance RISES as solder "
+           "converts to Cu6Sn5 then Cu3Sn, so R_contact = 0 is 'not modelled', not "
+           "'negligible'. No transferable value for our geometry was found; the two "
+           "most on-point papers (ICEPT 2026, TCPMT 2026) have no retrievable abstract "
+           "in this environment")
+    notrun("lit.tsv_allowable", "Literature",
+           "TSV current-density allowable sourced or explicitly refused",
+           "the 1 MA/cm2 in 10.1016/j.microrel.2015.05.019 is an accelerated stress "
+           "condition, not an allowable; 10.1109/TED.2023.3307505 and "
+           "10.1016/j.ijmecsci.2025.110758 both show J alone is insufficient without T "
+           "and stress. No allowable is asserted")
     add("config.z1_yaml_drives_mesh", "Configuration",
         "Z1 YAML drives the Z1 mesh", "IMPLEMENTED",
         f"build_physical_z1 takes a Z1Package from configs/phase0nx/z1_physical.yaml "

@@ -77,6 +77,8 @@ CLOSED_IDS = {
     "geom.z2_no_overlap",
     "geom.z2_no_slab",
     "geom.z2_out_of_cell_defined",
+    "lit.bga_current_rule",
+    "lit.interconnect_matrix",
     "mat.microbump_separate",
     "mat.rdl_tier_tensor",
 }
