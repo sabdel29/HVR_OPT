@@ -107,3 +107,104 @@ def test_power_is_consistent_with_the_reported_resistances(sys_r):
 def test_cell_too_small_for_a_lattice_is_rejected():
     with pytest.raises(ValueError, match="no TSV lattice"):
         cell_report(0.10, 0.300, 1.0)
+
+
+# ============================== brief 4, 5, 6: rails, sizing, spreading ends
+import sys as _sys  # noqa: E402
+
+_sys.path.insert(0, str(R / "scripts/phase0nw"))
+from physical_package import load_physical_package_config  # noqa: E402
+import tsv_fields as TSV  # noqa: E402
+
+CFG = R / "configs/phase0nt/z2_2p4mm_cutout.yaml"
+
+
+@pytest.fixture(scope="module")
+def cfg():
+    return load_physical_package_config(CFG)
+
+
+# ---------------------------------------------------------------- section 6: both ends
+def test_spreading_counts_two_interfaces_per_rail():
+    """Current converges INTO the bundle at one end and OUT of it at the other."""
+    one = TSV.spreading_resistance(100, TSV.D_TSV_MM, TSV.P_TSV_MM, ends=1)
+    two = TSV.spreading_resistance(100, TSV.D_TSV_MM, TSV.P_TSV_MM, ends=2)
+    assert two == pytest.approx(2 * one, rel=1e-12)
+    with pytest.raises(ValueError, match="ends must be"):
+        TSV.spreading_resistance(100, TSV.D_TSV_MM, TSV.P_TSV_MM, ends=3)
+
+
+def test_cell_report_uses_two_ends(sys_r):
+    c = sys_r["per_cell"]
+    assert c["spreading_ends_per_rail"] == 2
+    one_end = TSV.spreading_resistance(c["n_vdd"], TSV.D_TSV_MM, TSV.P_TSV_MM, ends=1)
+    assert c["r_spread_vdd_ohm"] == pytest.approx(2 * one_end, rel=1e-12), (
+        "the rail is being charged only one constriction")
+
+
+def test_two_ended_spreading_raises_the_loop_above_the_one_ended_value(sys_r):
+    """The correction is modest (~2.7 % of the loop) and is reported as modest."""
+    c = sys_r["per_cell"]
+    assert 2.0 < c["spreading_share_pct"] < 4.0
+    assert -4.0 < c["naive_error_pct"] < -2.0
+
+
+# ---------------------------------------------------------- section 4: distinct rails
+def test_z1_rail_is_48v_and_low_current(cfg):
+    r = TSV.z1_rail_report(cfg)
+    assert r["rail_v"] == 48.0
+    assert r["i_total_a"] == pytest.approx(r["p_in_w"] / 48.0, rel=1e-12)
+    assert r["i_total_a"] < 20.0, "Z1's 48 V input current is amps, not kiloamps"
+
+
+def test_z2_rail_is_1v_and_high_current(cfg):
+    r = TSV.z2_rail_report(cfg)
+    assert r["rail_v"] == 1.0
+    assert r["i_total_a"] == pytest.approx(1000.0)
+    assert r["i_cell_a"] == pytest.approx(1000.0 / 49, rel=1e-9)
+
+
+def test_the_two_architectures_do_not_share_a_tsv_current(cfg):
+    """This is a core physical distinction of the paper; one shared 1000 A erased it."""
+    z1, z2 = TSV.z1_rail_report(cfg), TSV.z2_rail_report(cfg)
+    assert z2["i_total_a"] / z1["i_total_a"] > 50.0, (
+        f"Z1 {z1['i_total_a']:.2f} A vs Z2 {z2['i_total_a']:.0f} A -- the rails have "
+        f"collapsed onto one current")
+    assert z2["p_tsv_total_w"] > 100 * z1["p_tsv_total_w"]
+
+
+def test_z1_current_is_flagged_as_a_placeholder_until_a_physical_solve_exists(cfg):
+    r = TSV.z1_rail_report(cfg)
+    assert r["placeholder"] is True
+    assert "PLACEHOLDER" in r["source"]
+    explicit = TSV.z1_rail_report(cfg, p_in_w=150.0)
+    assert explicit["placeholder"] is False
+    assert explicit["i_total_a"] == pytest.approx(150.0 / 48.0)
+
+
+# -------------------------------------------------------- section 5: sizing is a choice
+def test_tsv_count_is_bracketed_not_just_maximum(cfg):
+    s = TSV.sizing_study(cfg)
+    assert s["min_drop"]["n_total"] < s["mid"]["n_total"] < s["max_density"]["n_total"]
+    assert s["min_drop"]["meets_budget"]
+
+
+def test_no_current_density_allowable_is_invented(cfg):
+    s = TSV.sizing_study(cfg)
+    assert s["current_density_allowable"] is None, (
+        "an EM allowable was asserted; none is available for this via geometry")
+    assert "BOUNDED" in s["budget_status"]
+
+
+def test_the_adopted_field_is_labelled_maximum_density(cfg):
+    """685/684 must not silently become 'the physical TSV count'."""
+    s = TSV.sizing_study(cfg)
+    assert s["adopted"] == "max_density"
+    assert "MAXIMUM-DENSITY" in s["adopted_rationale"]
+    assert "not a minimum-required one" in s["adopted_rationale"]
+
+
+def test_a_much_smaller_field_would_still_meet_the_drop_budget(cfg):
+    """The adopted field is ~17x the electrically required count, and that is stated."""
+    s = TSV.sizing_study(cfg)
+    assert s["max_density"]["n_total"] / s["min_drop"]["n_total"] > 5.0
