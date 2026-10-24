@@ -1,0 +1,98 @@
+{
+ "design": {
+  "N": 3,
+  "K": 3,
+  "K_A": 2,
+  "K_B": 1,
+  "B": [
+   1,
+   1,
+   1
+  ],
+  "D": 0.0625,
+  "f_sw_hz": 805170.3343770516,
+  "L_nH": 250,
+  "coupling_k": 0.0,
+  "v_in": 48.0,
+  "v_mid": 16.0,
+  "v_out": 1.0,
+  "i_cell_out_avg_a": 20.408163265306122,
+  "ripple_out_pp_a": 9.004305909518163,
+  "i_cell_out_rms_a": 20.573030604962867,
+  "ripple_A_pp_a": 4.657399608371462,
+  "ripple_B_pp_a": 0.3104933072247642,
+  "i_mid_avg_a": 1.2755102040816326,
+  "i_mid_rms_a": 5.1020408163265305,
+  "i_mid_rung": "RMS_L1_ANALYTIC"
+ },
+ "branches": [
+  {
+   "index": 0,
+   "phase": "A",
+   "i_avg_a": 6.802721088435374,
+   "ripple_pp_a": 4.657399608371462,
+   "i_rms_a": 6.93430807408941,
+   "i_peak_a": 9.131420892621104,
+   "waveform": "triangular (CCM)",
+   "rung": "RMS_L1_ANALYTIC"
+  },
+  {
+   "index": 1,
+   "phase": "A",
+   "i_avg_a": 6.802721088435374,
+   "ripple_pp_a": 4.657399608371462,
+   "i_rms_a": 6.93430807408941,
+   "i_peak_a": 9.131420892621104,
+   "waveform": "triangular (CCM)",
+   "rung": "RMS_L1_ANALYTIC"
+  },
+  {
+   "index": 2,
+   "phase": "B",
+   "i_avg_a": 6.802721088435374,
+   "ripple_pp_a": 0.3104933072247642,
+   "i_rms_a": 6.803311550134683,
+   "i_peak_a": 6.957967742047756,
+   "waveform": "triangular (CCM)",
+   "rung": "RMS_L1_ANALYTIC"
+  }
+ ],
+ "architectures": {
+  "Z1": {
+   "hv": {
+    "i_avg_a": 23.69358880962203,
+    "duty_used": 0.0625,
+    "i_rms_lower_a": 23.69358880962203,
+    "i_rms_upper_a": 94.77435523848813,
+    "ratio_upper_over_avg": 4.0,
+    "rung": "RMS_L0_DC (lower) / bounded square pulse (upper)",
+    "status": "OPEN -- the 3:1 SC charge-transfer waveform is not in the framework; no switch-state timing, phase shift or dead time",
+    "why_not_eq5": "10.1109/TCPMT.2026.3724907 Eq.(5) scales I_in,rms with I_out sqrt(V_out/V_in) for a buck-derived input. Our converter puts a 3:1 SC stage in front, so the 48 V node does not see the buck's gated waveform directly. Eq.(5) is used as an order-of-magnitude SANITY CHECK, not as our value."
+   },
+   "lv_avg_a": 1000.0,
+   "lv_ripple_pp_worst_a": 441.21098956638997,
+   "lv_rms_worst_a": 1008.0784996431806,
+   "lv_rms_over_avg_worst": 1.0080784996431806,
+   "lv_rung": "RMS_L1_ANALYTIC (worst case, no interleaving credit)",
+   "eq5_reference_total_a": 144.33756729740642
+  },
+  "Z2": {
+   "hv": {
+    "i_avg_a": 23.742906111475396,
+    "duty_used": 0.0625,
+    "i_rms_lower_a": 23.742906111475396,
+    "i_rms_upper_a": 94.97162444590158,
+    "ratio_upper_over_avg": 4.0,
+    "rung": "RMS_L0_DC (lower) / bounded square pulse (upper)",
+    "status": "OPEN -- the 3:1 SC charge-transfer waveform is not in the framework; no switch-state timing, phase shift or dead time",
+    "why_not_eq5": "10.1109/TCPMT.2026.3724907 Eq.(5) scales I_in,rms with I_out sqrt(V_out/V_in) for a buck-derived input. Our converter puts a 3:1 SC stage in front, so the 48 V node does not see the buck's gated waveform directly. Eq.(5) is used as an order-of-magnitude SANITY CHECK, not as our value."
+   },
+   "lv_avg_a": 1000.0,
+   "lv_ripple_pp_worst_a": 441.21098956638997,
+   "lv_rms_worst_a": 1008.0784996431806,
+   "lv_rms_over_avg_worst": 1.0080784996431806,
+   "lv_rung": "RMS_L1_ANALYTIC (worst case, no interleaving credit)",
+   "eq5_reference_total_a": 144.33756729740642
+  }
+ }
+}

@@ -162,6 +162,21 @@ def microbump_loss(i_a: float, T_c: float = T_REF_C,
 
 
 # =======================================================================================
+def rms_brackets(arch: str) -> dict:
+    """RMS current per rail. The 48 V rail is a BRACKET, not a value."""
+    import rms_currents as RMS
+    import power_path as PP
+    rc = PP.rail_currents(arch)
+    hv = RMS.hv_input_bracket(rc["hv_total_a"])
+    c = RMS.cell_currents()
+    lv_rms = RMS.triangular_rms(rc["lv_total_a"], c["ripple_out_pp_a"] * rc["cells"])
+    return {"hv_avg_a": rc["hv_total_a"],
+            "hv_rms_lo_a": hv["i_rms_lower_a"], "hv_rms_hi_a": hv["i_rms_upper_a"],
+            "hv_status": hv["status"],
+            "lv_avg_a": rc["lv_total_a"], "lv_rms_a": lv_rms,
+            "lv_rms_over_avg": lv_rms / rc["lv_total_a"]}
+
+
 def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
     import power_path as PP
     import tsv_fields as TSV
@@ -177,11 +192,33 @@ def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
     tsv = tsv_loss(i_tsv, n_tsv_side, n_tsv_side, cfg_cells, T_c)
     mb = microbump_loss(i_lv, T_c)
 
+    # --- RMS correction ---------------------------------------------------------------
+    # I^2 R needs RMS, not average. The 48 V rail's RMS is a 4x BRACKET because the SC
+    # charge-transfer waveform is unknown, and I^2 R scales as the SQUARE, so every
+    # 48 V conductor loss carries a 16x span. The DC figures below are LOWER BOUNDS.
+    rb = rms_brackets(arch)
+    f_hv_lo = (rb["hv_rms_lo_a"] / rb["hv_avg_a"]) ** 2
+    f_hv_hi = (rb["hv_rms_hi_a"] / rb["hv_avg_a"]) ** 2
+    f_lv = rb["lv_rms_over_avg"] ** 2
+    f_tsv_lo, f_tsv_hi = ((f_hv_lo, f_hv_hi) if arch == "Z1" else (f_lv, f_lv))
+
     terms = {
-        "P_BGA_supply": {"w": bga["p_supply_w"], "status": "RECOMPUTED"},
-        "P_BGA_return": {"w": bga["p_return_w"], "status": "RECOMPUTED"},
-        "P_TSV_VDD": {"w": tsv["p_vdd_w"], "status": "RECOMPUTED"},
-        "P_TSV_GND": {"w": tsv["p_gnd_w"], "status": "RECOMPUTED"},
+        "P_BGA_supply": {"w": bga["p_supply_w"] * f_hv_lo,
+                         "bracket_w": [bga["p_supply_w"] * f_hv_lo,
+                                       bga["p_supply_w"] * f_hv_hi],
+                         "status": "DC_LOWER_BOUND"},
+        "P_BGA_return": {"w": bga["p_return_w"] * f_hv_lo,
+                         "bracket_w": [bga["p_return_w"] * f_hv_lo,
+                                       bga["p_return_w"] * f_hv_hi],
+                         "status": "DC_LOWER_BOUND"},
+        "P_TSV_VDD": {"w": tsv["p_vdd_w"] * f_tsv_lo,
+                      "bracket_w": [tsv["p_vdd_w"] * f_tsv_lo,
+                                    tsv["p_vdd_w"] * f_tsv_hi],
+                      "status": "DC_LOWER_BOUND" if arch == "Z1" else "RECOMPUTED_RMS"},
+        "P_TSV_GND": {"w": tsv["p_gnd_w"] * f_tsv_lo,
+                      "bracket_w": [tsv["p_gnd_w"] * f_tsv_lo,
+                                    tsv["p_gnd_w"] * f_tsv_hi],
+                      "status": "DC_LOWER_BOUND" if arch == "Z1" else "RECOMPUTED_RMS"},
         "P_microbump_supply": {"w": None, "bracket_w": [mb["p_low_w"], mb["p_high_w"]],
                                "status": "BRACKETED"},
         "P_microbump_return": {"w": None, "bracket_w": [mb["p_low_w"], mb["p_high_w"]],
@@ -193,14 +230,17 @@ def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
         "P_intraVR_metal": {"w": None, "status": "OPEN"},
         "P_intraVR_vertical": {"w": None, "status": "OPEN"},
     }
-    done = sum(v["w"] for v in terms.values() if v["status"] == "RECOMPUTED")
+    done = sum(v["w"] for v in terms.values()
+               if v["status"] in ("RECOMPUTED", "RECOMPUTED_RMS", "DC_LOWER_BOUND"))
     return {"arch": arch, "T_c": T_c, "i_hv_a": i_hv, "i_lv_a": i_lv,
             "tsv_rail_v": 48.0 if arch == "Z1" else 1.0,
             "bga": bga, "tsv": tsv, "microbump": mb, "bga_capacity": cap,
             "terms": terms,
             "p_recomputed_total_w": done,
+            "rms": rb,
             "n_recomputed": sum(1 for v in terms.values()
-                                if v["status"] == "RECOMPUTED"),
+                                if v["status"] in ("RECOMPUTED", "RECOMPUTED_RMS",
+                                                   "DC_LOWER_BOUND")),
             "n_bracketed": sum(1 for v in terms.values()
                                if v["status"] == "BRACKETED"),
             "n_open": sum(1 for v in terms.values() if v["status"] == "OPEN")}
