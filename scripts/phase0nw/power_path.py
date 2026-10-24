@@ -69,6 +69,14 @@ INTERCONNECT_OWNERS = LEDGER_OWNERS[7:]
 LOSS_STATUS = ("RECOMPUTED", "HISTORICAL_REFERENCE", "OPEN")
 
 
+# The BGA is SOLDER. The Segment default is copper, and leaving it there labelled the
+# BGA segments as copper in the exported CSV -- a 7x error in resistivity if anything
+# downstream had read it. The alloy, resistivity and status are recorded in
+# research/phase0naa/interconnect_literature_matrix.csv.
+BGA_CONDUCTOR = "solder_SAC305"
+MICROBUMP_CONDUCTOR = "cu_pillar_solder_cap"
+
+
 @dataclass(frozen=True)
 class Segment:
     seg_id: str
@@ -106,26 +114,41 @@ def _cells():
     return load_physical_package_config(R / "configs/phase0nt/z2_2p4mm_cutout.yaml").cells
 
 
-def rail_currents():
-    """System and per-cell currents on each rail, from the power ledger."""
+def rail_currents(arch: str | None = None):
+    """System and per-cell currents on each rail, PER ARCHITECTURE.
+
+    Z1 and Z2 do not draw the same 48 V input current, because they do not have the
+    same losses. I_HV = (P_load + P_loss_arch) / 48, and the two loss totals differ
+    (historically 137.292 W and 139.659 W). An earlier version called z1_rail_report()
+    once and applied the result to both graphs, which silently gave Z2 Z1's current.
+
+    Both are PLACEHOLDERS until the physical loss ledger replaces them independently.
+    """
     import tsv_fields as TSV
     from physical_package import load_physical_package_config
     cfg = load_physical_package_config(R / "configs/phase0nt/z2_2p4mm_cutout.yaml")
-    hv = TSV.z1_rail_report(cfg)["i_total_a"]        # (P_load + P_loss)/48
-    lv = 1000.0
-    return {"hv_total_a": hv, "lv_total_a": lv, "cells": cfg.cells,
-            "hv_cell_a": hv / cfg.cells, "lv_cell_a": lv / cfg.cells}
+    out = {}
+    for a in ("Z1", "Z2"):
+        p_loss = TSV.P_LOSS_PLACEHOLDER_W[a]
+        p_in = TSV.input_power_w(TSV.P_LOAD_W, p_loss)
+        out[a] = {"p_loss_w": p_loss, "p_input_w": p_in,
+                  "hv_total_a": p_in / TSV.V_IN_48,
+                  "lv_total_a": 1000.0, "cells": cfg.cells,
+                  "hv_cell_a": p_in / TSV.V_IN_48 / cfg.cells,
+                  "lv_cell_a": 1000.0 / cfg.cells,
+                  "placeholder": True}
+    return out[arch] if arch else out
 
 
 def z1_segments() -> list:
     """Z1: convert INSIDE the substrate. 48 V crosses the substrate, 1 V goes to the die."""
-    c = rail_currents()
+    c = rail_currents("Z1")
     HV, LV, HVc, LVc, n = (c["hv_total_a"], c["lv_total_a"], c["hv_cell_a"],
                            c["lv_cell_a"], c["cells"])
     S, OPEN, HIST = Segment, "OPEN", "HISTORICAL_REFERENCE"
     return [
         S("Z1-S01", "PCB 48 V plane", "package underside", "Z1", "bga", "vertical",
-          48.0, HV, "P_BGA_supply", OPEN, count=16,
+          48.0, HV, "P_BGA_supply", OPEN, count=16, conductor=BGA_CONDUCTOR,
           note="annular package; must use surviving-site coordinates, not a full board"),
         S("Z1-S02", "package underside", "substrate underside", "Z1", "board/bga pad",
           "horizontal", 48.0, HV, "P_pkg_RDL_HV_supply", OPEN,
@@ -149,10 +172,10 @@ def z1_segments() -> list:
           "horizontal", 1.0, LV, "P_pkg_RDL_LV_supply", OPEN,
           note="1 V spreading from 49 cells to the die POL grid"),
         S("Z1-S08", "microbump field", "die POL", "Z1", "interface", "vertical",
-          1.0, LV, "P_microbump_supply", OPEN),
+          1.0, LV, "P_microbump_supply", OPEN, conductor=MICROBUMP_CONDUCTOR),
         # ---- return path. NOT assumed symmetric with supply. -----------------------
         S("Z1-R01", "die ground", "microbump field", "Z1", "interface", "vertical",
-          1.0, LV, "P_microbump_return", OPEN),
+          1.0, LV, "P_microbump_return", OPEN, conductor=MICROBUMP_CONDUCTOR),
         S("Z1-R02", "microbump field", "output RDL ground", "Z1",
           "z1conv_8_output_rdl", "horizontal", 1.0, LV, "P_pkg_RDL_LV_return", OPEN),
         S("Z1-R03", "output RDL ground", "HVR cell return", "Z1", "z1conv_1..8",
@@ -165,19 +188,19 @@ def z1_segments() -> list:
         S("Z1-R06", "package underside", "BGA return", "Z1", "board/bga pad",
           "horizontal", 48.0, HV, "P_pkg_RDL_HV_return", OPEN),
         S("Z1-R07", "BGA return", "PCB ground", "Z1", "bga", "vertical",
-          48.0, HV, "P_BGA_return", OPEN, count=16),
+          48.0, HV, "P_BGA_return", OPEN, count=16, conductor=BGA_CONDUCTOR),
     ]
 
 
 def z2_segments() -> list:
     """Z2: convert BELOW the substrate. 48 V spreads laterally, 1 V crosses the substrate."""
-    c = rail_currents()
+    c = rail_currents("Z2")
     HV, LV, HVc, LVc, n = (c["hv_total_a"], c["lv_total_a"], c["hv_cell_a"],
                            c["lv_cell_a"], c["cells"])
     S, OPEN, HIST = Segment, "OPEN", "HISTORICAL_REFERENCE"
     return [
         S("Z2-S01", "PCB 48 V plane", "package periphery", "Z2", "bga", "vertical",
-          48.0, HV, "P_BGA_supply", OPEN, count=16,
+          48.0, HV, "P_BGA_supply", OPEN, count=16, conductor=BGA_CONDUCTOR,
           note="PERIPHERAL only -- 841 of 1369 sites are removed by the cutout"),
         S("Z2-S02", "package periphery", "HVR cell input", "Z2",
           "conv_0_land_side_attach_rdl", "horizontal", 48.0, HV,
@@ -200,10 +223,10 @@ def z2_segments() -> list:
         S("Z2-S07", "top RDL", "microbump field", "Z2", "z2_top_rdl", "horizontal",
           1.0, LV, "P_pkg_RDL_LV_supply", OPEN),
         S("Z2-S08", "microbump field", "die POL", "Z2", "interface", "vertical",
-          1.0, LV, "P_microbump_supply", OPEN),
+          1.0, LV, "P_microbump_supply", OPEN, conductor=MICROBUMP_CONDUCTOR),
         # ---- return ----------------------------------------------------------------
         S("Z2-R01", "die ground", "microbump field", "Z2", "interface", "vertical",
-          1.0, LV, "P_microbump_return", OPEN),
+          1.0, LV, "P_microbump_return", OPEN, conductor=MICROBUMP_CONDUCTOR),
         S("Z2-R02", "microbump field", "top RDL ground", "Z2", "z2_top_rdl",
           "horizontal", 1.0, LV, "P_pkg_RDL_LV_return", OPEN),
         S("Z2-R03", "top RDL ground", "substrate GND field", "Z2", "sub_lower",
@@ -217,7 +240,7 @@ def z2_segments() -> list:
           "conv_0_land_side_attach_rdl", "horizontal", 48.0, HV,
           "P_pkg_RDL_HV_return", OPEN),
         S("Z2-R07", "package periphery", "PCB ground", "Z2", "bga", "vertical",
-          48.0, HV, "P_BGA_return", OPEN, count=16),
+          48.0, HV, "P_BGA_return", OPEN, count=16, conductor=BGA_CONDUCTOR),
     ]
 
 
@@ -257,7 +280,7 @@ def check(arch: str) -> dict:
         problems.append(f"converter-intrinsic owner used for a conductor: {intrinsic}")
 
     # rail sanity: the 1 kA rail must never appear on a 48 V segment and vice versa
-    c = rail_currents()
+    c = rail_currents(arch)
     for s in segs:
         if s.rail_v == 48.0 and s.i_dc_a > 2 * c["hv_total_a"]:
             problems.append(f"{s.seg_id}: {s.i_dc_a} A on a 48 V segment")
@@ -275,6 +298,15 @@ def check(arch: str) -> dict:
         if a.to != b.frm:
             problems.append(f"supply chain broken: {a.seg_id} -> {b.seg_id} "
                             f"({a.to!r} != {b.frm!r})")
+    # The return chain was only checked at its first node, so a discontinuity anywhere
+    # downstream of the die was invisible.
+    for a, b in zip(ret, ret[1:]):
+        if a.to != b.frm:
+            problems.append(f"return chain broken: {a.seg_id} -> {b.seg_id} "
+                            f"({a.to!r} != {b.frm!r})")
+    if ret and "pcb ground" not in ret[-1].to.lower():
+        problems.append(f"return chain does not terminate at PCB ground: "
+                        f"{ret[-1].seg_id} ends at {ret[-1].to!r}")
 
     return {"arch": arch, "n_segments": len(segs), "problems": problems,
             "ok": not problems,
@@ -308,9 +340,13 @@ def write_csv(out_dir=None) -> list:
 
 
 if __name__ == "__main__":
-    c = rail_currents()
-    print(f"HV rail {c['hv_total_a']:.4f} A system, {c['hv_cell_a']:.4f} A/cell")
-    print(f"LV rail {c['lv_total_a']:.1f} A system, {c['lv_cell_a']:.4f} A/cell\n")
+    rc = rail_currents()
+    for a in ("Z1", "Z2"):
+        c = rc[a]
+        print(f"{a}: P_loss {c['p_loss_w']:.4f} W -> P_in {c['p_input_w']:.4f} W -> "
+              f"HV {c['hv_total_a']:.4f} A ({c['hv_cell_a']:.4f} A/cell); "
+              f"LV {c['lv_total_a']:.0f} A")
+    print()
     for arch in ("Z1", "Z2"):
         r = check(arch)
         print(f"{arch}: {r['n_segments']} segments  ok={r['ok']}  "
