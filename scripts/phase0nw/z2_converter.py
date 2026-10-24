@@ -13,8 +13,12 @@ MATERIAL HONESTY. This module implements the GEOMETRY gate. It does not invent m
 data to do it. Every tier maps to a medium already in the framework, and the mapping and
 its status are stated here and carried into the mesh audit:
 
-  RDL tiers        rdl_composite   DERIVED   rdl_mechanical.composite(), the framework's
-                                             own Cu-line/dielectric + bump homogenization
+  RDL tiers        rdl_tier        DERIVED   the Phase-0M-R RDL effective tensor, RDL
+                                             ALONE. It must NOT be the old
+                                             composite(RDL 40 um, BUMP 10 um) blend: that
+                                             folds in a microbump layer this geometry
+                                             represents separately, on a thickness basis
+                                             that is not the tier's.
   GaN HS and LS    silicon         BOUNDED   EPC eGaN FETs are GaN-on-Si; the 685/638 um
                                              body is predominantly the Si carrier. The
                                              thin GaN epi is NOT resolved.
@@ -40,8 +44,8 @@ for _p in ("scripts/phase0mr", "scripts/phase0i", "scripts/phase0b", "scripts"):
 
 # Tier name -> (framework material, status, note)
 TIER_MATERIAL = {
-    "land_side_attach_rdl": ("rdl_composite", "DERIVED", "framework RDL+bump composite"),
-    "interlayer_rdl":       ("rdl_composite", "DERIVED", "framework RDL+bump composite"),
+    "land_side_attach_rdl": ("rdl_tier", "DERIVED", "Phase-0M-R RDL effective tensor, RDL ALONE"),
+    "interlayer_rdl":       ("rdl_tier", "DERIVED", "Phase-0M-R RDL effective tensor, RDL ALONE"),
     "inductor_plus_cout":   ("hvr_effective", "PROVISIONAL", "existing converter medium"),
     "gan_ls_EPC2057":       ("silicon", "BOUNDED", "GaN-on-Si carrier; epi not resolved"),
     "gan_hs_EPC2014C":      ("silicon", "BOUNDED", "GaN-on-Si carrier; epi not resolved"),
@@ -55,16 +59,49 @@ OUT_OF_CELL = {
 }
 
 
-def rdl_composite_material() -> dict:
-    """The framework's own RDL homogenization, as a material card."""
+def rdl_tier_material() -> dict:
+    """The RDL tensor ITSELF, for the explicit 10 um converter RDL tiers.
+
+    THIS REPLACES A WRONG MAPPING. The first version called
+    rdl_mechanical.composite(RDL.t_um=40, BUMP.t_um=10), which blends a 40 um RDL with a
+    10 um microbump/underfill layer. Applying that blend to a nominal 10 um RDL tier is
+    wrong twice: the thickness basis is not the tier's, and it folds in a microbump layer
+    that this geometry represents SEPARATELY. The two media must not be merged when the
+    mesh already carries them apart.
+
+    Source: `RDL` in scripts/phase0mr/rdl_mechanical.py, whose provenance is
+    results/phase0mr/rdl_effective_tensor.csv, ORTHOGONAL routing at t_diel = 5 um --
+    the Phase-0M-R RDL homogenization. Orthotropic: k_x = k_y >> k_z.
+    """
     import rdl_mechanical as RM
-    s = RM.composite(RM.RDL["t_um"], RM.BUMP["t_um"])
+    r = RM.RDL
     return {"status": "DERIVED", "elastic_type": "iso",
-            "E": {"value": s["E_MPa"], "status": "DERIVED"},
-            "nu": {"value": s["nu"], "status": "ASSUMPTION"},
-            "cte": {"value": s["cte"], "status": "DERIVED"},
-            "k": {"value": s["k_z"], "status": "DERIVED"},
-            "k_ortho": {"value": [s["k_x"], s["k_y"], s["k_z"]], "status": "DERIVED"}}
+            "E": {"value": r["E_MPa"], "status": "DERIVED"},
+            "nu": {"value": r["nu"], "status": "ASSUMPTION"},
+            "cte": {"value": r["cte"], "status": "DERIVED"},
+            "k": {"value": r["k_z"], "status": "DERIVED"},
+            "k_ortho": {"value": [r["k_x"], r["k_y"], r["k_z"]], "status": "DERIVED"},
+            "provenance": r["src"]}
+
+
+def microbump_material() -> dict:
+    """The microbump + underfill layer, kept SEPARATE from the RDL tiers.
+
+    Source: `BUMP` in scripts/phase0mr/rdl_mechanical.py, from
+    results/phase0mr/bump_layer_effective_tensor.csv, microbump_underfill. Note k_z
+    (11.7 W/mK, the copper bumps conducting through) greatly exceeds k_x (0.89, the
+    underfill in plane) -- the opposite anisotropy to an RDL, which is precisely why
+    blending the two into one medium destroys both.
+    """
+    import rdl_mechanical as RM
+    b = RM.BUMP
+    return {"status": "DERIVED", "elastic_type": "iso",
+            "E": {"value": b["E_MPa"], "status": "DERIVED"},
+            "nu": {"value": b["nu"], "status": "ASSUMPTION"},
+            "cte": {"value": b["cte"], "status": "DERIVED"},
+            "k": {"value": b["k_z"], "status": "DERIVED"},
+            "k_ortho": {"value": [b["k_x"], b["k_y"], b["k_z"]], "status": "DERIVED"},
+            "provenance": b["src"]}
 
 
 def converter_layers(cfg, nz_thin: int = 1, nz_thick: int = 2) -> list:
@@ -101,7 +138,8 @@ def install(cfg, stack: dict, extra_bottom: list, out_of_cell: str = "F1_encapsu
         raise ValueError(f"unknown out-of-cell case {out_of_cell!r}")
     if cfg.cutout_mm is None:
         raise ValueError("a backside converter needs a cutout to descend into")
-    stack["materials"]["rdl_composite"] = rdl_composite_material()
+    stack["materials"]["rdl_tier"] = rdl_tier_material()
+    stack["materials"]["microbump"] = microbump_material()
     kept = [e for e in extra_bottom if e[0] != "conv"]
     if len(kept) == len(extra_bottom):
         raise ValueError("no full-area 'conv' layer found to replace")
@@ -119,6 +157,19 @@ def install(cfg, stack: dict, extra_bottom: list, out_of_cell: str = "F1_encapsu
         explicit.append((nm, z - t_mm, z, mat, nz, "inside_cutout"))
         z -= t_mm
     return kept, explicit, tuple(e[0] for e in explicit), OUT_OF_CELL[out_of_cell]
+
+
+# Above the substrate, Z2 carries a 10 um top RDL (1 V + ground plane) between the
+# substrate top and the microbumps -- specified table, 3000 -> 3010 um. It is NOT part of
+# the 1963 um land-side converter. Omitting it let the production `interface` layer stand
+# in for the RDL, which silently dropped the microbump row and put the package top at
+# 3360 instead of 3370 um.
+TOP_RDL_UM = 10.0
+
+
+def mid_layers(nz_thin: int = 1) -> list:
+    """(name, thickness_mm, material, nz, footprint) above the substrate top."""
+    return [("z2_top_rdl", TOP_RDL_UM / 1e3, "rdl_tier", nz_thin, "substrate")]
 
 
 def tier_report(cfg, mesh) -> list:

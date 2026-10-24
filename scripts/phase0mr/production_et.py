@@ -137,12 +137,13 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
     # PHASE 0N-W. The physical path replaces the full-area `conv` slab with the eight
     # specified tiers, present only inside the 49 cell footprints. Passing None keeps
     # the historical slab, so results/phase0mr3c reproduces byte for byte.
-    conv_names, explicit_bottom = ("conv",), None
+    conv_names, explicit_bottom, iface_mat = ("conv",), None, "underfill_homog"
     if physical_z1 is not None:
         import sys as _sys
         _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "phase0nw"))
         import z1_package as Z1P
         mid, conv_names, conv_fill = Z1P.install(st, physical_z1)
+        iface_mat = "microbump"
     if physical_converter is not None:
         import sys as _sys
         _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "phase0nw"))
@@ -150,12 +151,15 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
         cfg_phys, out_of_cell = physical_converter
         extra, explicit_bottom, conv_names, conv_fill = Z2C.install(
             cfg_phys, st, extra, out_of_cell)
+        mid = mid + Z2C.mid_layers()
+        iface_mat = "microbump"
     m = build(tiles, st, h_sub_mm, h_xy=h_xy, z_scale=1.4, support_layer=False,
               extra_bottom_layers=extra, explicit_bottom_layers=explicit_bottom,
               extra_mid_layers=mid,
               tile_band_is_converter=(physical_z1 is None
                                       and ZG.CONV_PLACE.get(arch) == "in"),
-              conv_fill_material=conv_fill, conv_layer_names=conv_names, cutout_mm=cut)
+              conv_fill_material=conv_fill, conv_layer_names=conv_names,
+              interface_material=iface_mat, cutout_mm=cut)
     return m, build_materials(st), st, tiles
 
 

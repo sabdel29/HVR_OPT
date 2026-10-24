@@ -162,6 +162,7 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
           tile_band_is_converter: bool = True,
           conv_fill_material: str | None = None,
           conv_layer_names: tuple = ("conv",),
+          interface_material: str = "underfill_homog",
           cutout_mm: float | None = None,
           cutout_layers: tuple = ("board", "bga")) -> Mesh:
     """Build the mesh.
@@ -230,8 +231,11 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
         fp = ent[4] if len(ent) > 4 else "die"
         layers.append(Layer(nm, z_top, z_top + t, n, mat, fp))
         z_top += t
+    # PHASE 0N-W. The `interface` layer IS the microbump + underfill row of the specified
+    # stack. On the physical path it takes the Phase-0M-R microbump_underfill tensor
+    # rather than generic underfill, whose k_z is 17x lower. Default is unchanged.
     layers += [Layer("interface", z_top, z_top + t_if, interface_nz or nz(1),
-                     "underfill_homog", "die"),
+                     interface_material, "die"),
               Layer("die", z_top + t_if, z_top + t_if + t_die, nz(3), "silicon", "die"),
               Layer("tim", z_top + t_if + t_die, z_top + t_if + t_die + t_tim, nz(2),
                     "tim", "die")]
