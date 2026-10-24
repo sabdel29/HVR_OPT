@@ -185,3 +185,64 @@ def tier_report(cfg, mesh) -> list:
                      "z0_um": None if m is None else round(m["z0_um"], 2),
                      "z1_um": None if m is None else round(m["z1_um"], 2)})
     return rows
+
+
+# =======================================================================================
+# SECTION 14 --- IS THE 40 um RDL TENSOR TRANSFERABLE TO A 10 um TIER?
+#
+# NO. It is a STACK-LEVEL effective property, not a thickness-independent material.
+#
+# results/phase0mr/rdl_effective_tensor.csv computes a FOUR-METAL-LAYER unit cell (10 um
+# Cu lines separated by t_diel dielectric). Its own sweep shows the dependence directly,
+# for the ORGANISATION the physical path uses:
+#
+#   t_diel   stack h   f_Cu     k_x      k_z      E_x
+#     2 um     46 um   0.725   140.59    2.459   66503 MPa
+#     5 um     55 um   0.606   117.63    1.236   57251 MPa     <- the adopted row
+#    10 um     70 um   0.476    92.49    0.801   48424 MPa
+#
+# k_x varies by 1.5x and k_z by 3.1x across that bracket, so the tensor plainly depends
+# on the construction, not only on the material.
+#
+# A SECOND INCONSISTENCY. rdl_mechanical.RDL records t_um = 40.0, but the source row's
+# stack_height_um is 55.0 -- 40 um counts only the four 10 um metal layers and omits the
+# dielectric between them. So the "40 um" label does not even describe the cell the
+# tensor came from.
+#
+# The explicit converter interlayer RDLs are 10 um TOTAL. That is not four metal layers
+# plus dielectric; it is a thin single-layer RDL whose unit cell does not exist in the
+# Phase-0M-R sweep. Recomputing it would need a new homogenization, which this phase does
+# not do. So the tensor is carried with the sweep's own bracket as a BOUNDED sensitivity,
+# and the gate stays open until either the recomputation or a demonstrated insensitivity.
+# =======================================================================================
+
+RDL_TRANSFER_STATUS = "BOUNDED"
+
+
+def rdl_tensor_bracket() -> dict:
+    """The ORTHOGONAL tensor across the available t_diel sweep, as a bounded range."""
+    import csv
+    rows = [r for r in csv.DictReader(
+        (R / "results" / "phase0mr" / "rdl_effective_tensor.csv").open())
+        if r["organisation"] == "ORTHOGONAL"]
+    f = lambda k: [float(r[k]) for r in rows]                        # noqa: E731
+    return {
+        "organisation": "ORTHOGONAL",
+        "adopted_t_diel_um": 5.0,
+        "source_stack_height_um": 55.0,
+        "recorded_t_um_in_code": 40.0,
+        "label_inconsistency": ("rdl_mechanical.RDL says t_um = 40 (metal only) while "
+                                "the source row's stack_height_um is 55 (metal + "
+                                "dielectric)"),
+        "tier_thickness_um": 10.0,
+        "transferable": False,
+        "reason": ("a four-metal-layer stack property applied to a 10 um single-layer "
+                   "tier; the sweep shows k_x varying 1.5x and k_z 3.1x with "
+                   "construction"),
+        "k_x_range": [min(f("k_x")), max(f("k_x"))],
+        "k_z_range": [min(f("k_z")), max(f("k_z"))],
+        "E_MPa_range": [min(f("E_x_MPa")), max(f("E_x_MPa"))],
+        "cte_range": [min(f("CTE_x")), max(f("CTE_x"))],
+        "f_cu_range": [min(f("f_cu")), max(f("f_cu"))],
+        "status": RDL_TRANSFER_STATUS,
+    }
