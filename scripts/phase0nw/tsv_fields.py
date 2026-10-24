@@ -23,6 +23,9 @@ TWO THINGS THE BRIEF WARNS ABOUT, BOTH HANDLED HERE.
 from __future__ import annotations
 
 import math
+from pathlib import Path
+
+R = Path(__file__).resolve().parents[2]
 
 # --- SOURCE_BACKED geometry (June-2026 Table III, via package_stack.yaml) --------------
 D_TSV_MM = 0.030
@@ -180,9 +183,12 @@ def system_report(cells: int, cell_side_mm: float, h_tsv_mm: float, i_total_a: f
 #       I = P_in / 48 V -- a few amps.
 #   Z2  the through-substrate field carries the 1 V OUTPUT at ~kiloamp system current.
 #
-# Same geometry, currents three orders of magnitude apart. Any statement that the two
-# architectures have "the same via field" is false in the only sense that matters
-# electrically.
+# Same geometry. The through-substrate rail CURRENT differs by more than 40x
+# (1000 A against ~23.7 A), and because Joule loss goes as I^2 the TSV LOSS differs by
+# roughly three orders of magnitude. Those two ratios are not the same number and must
+# not be quoted interchangeably: 42.2^2 = 1781, which is the loss ratio the model
+# produces. Any statement that the two architectures have "the same via field" is false
+# in the only sense that matters electrically.
 #
 # P_in is NOT hard-coded. It must come from the physical electrical solution; until that
 # exists the caller passes the historical Phase-0M-R3C value explicitly and the result is
@@ -191,27 +197,97 @@ def system_report(cells: int, cell_side_mm: float, h_tsv_mm: float, i_total_a: f
 
 V_IN_48 = 48.0
 V_OUT_1 = 1.0
-# Phase-0M-R3C input powers. PLACEHOLDERS, carried only so the rail model can be exercised
-# before the physical electrical solve exists.
-P_IN_PLACEHOLDER_W = {"Z1": 137.292, "Z2": 139.659}
 
 
-def z1_rail_report(cfg, p_in_w: float | None = None, h_tsv_mm: float = 0.300,
-                   T_C: float = 20.0, n_per_cell: int | None = None) -> dict:
-    """Z1's 48 V through-substrate rail. I = P_in / 48 V.
+# ---------------------------------------------------------------------------------------
+# POWER BOOKKEEPING. The three quantities below are NOT interchangeable, and conflating
+# two of them is the defect this block exists to prevent.
+#
+#   p_load_w    the useful power delivered to the die            (1000 W)
+#   p_loss_w    everything dissipated getting it there           (~137 W)
+#   p_input_w   what the 48 V supply must deliver = load + loss  (~1137 W)
+#
+# The first version of this module stored the LOSS under the name P_IN_PLACEHOLDER_W and
+# then divided it by 48 V. That is not an approximation of the input current, it is a
+# different quantity: it gave 2.86 A where the correct historical-order figure is
+# 23.69 A -- low by 8.3x in current and by 69x in any I^2 R derived from it.
+#
+# Nothing here is hard-coded. P_load comes from the architecture config and the
+# historical losses are RE-SUMMED from the frozen replay's own L_P_* columns, which also
+# demonstrates that P_total_electronics_w is a loss total rather than an input power.
+# ---------------------------------------------------------------------------------------
 
-    `p_in_w` must come from the physical electrical solution. Passing None falls back to
-    the Phase-0M-R3C value and marks the result `placeholder`.
+_ARCH_YAML = R / "configs" / "phase0i" / "z_architectures.yaml"
+_REPLAY_CSV = R / "results" / "phase0mr3c" / "final_etm_replay.csv"
+
+
+def _load_power_w() -> float:
+    import yaml
+    c = yaml.safe_load(_ARCH_YAML.read_text())
+    for node in (c, *(v for v in c.values() if isinstance(v, dict))):
+        if isinstance(node, dict) and isinstance(node.get("load"), dict):
+            return float(node["load"]["power_w"])
+    raise KeyError(f"no load.power_w in {_ARCH_YAML}")
+
+
+def _historical_losses_w() -> dict:
+    """Phase-0M-R3C electronics LOSS per architecture, re-summed from the L_P_* columns.
+
+    Deliberately recomputed rather than read from P_total_electronics_w: the sum IS the
+    proof that the column is a loss total. If a future edit makes them disagree, that is
+    a finding, not a rounding issue, so it raises.
     """
-    placeholder = p_in_w is None
-    p_in = P_IN_PLACEHOLDER_W["Z1"] if placeholder else p_in_w
+    import csv
+    out = {}
+    for r in csv.DictReader(_REPLAY_CSV.open()):
+        terms = sum(float(v) for k, v in r.items() if k.startswith("L_P_"))
+        stated = float(r["P_total_electronics_w"])
+        if abs(terms - stated) > 1e-9:
+            raise ValueError(
+                f"{r['arch']}: sum(L_P_*) = {terms!r} but P_total_electronics_w = "
+                f"{stated!r}; the column is no longer a pure loss total")
+        out["Z1" if "Z1" in r["arch"] else "Z2"] = terms
+    return out
+
+
+P_LOAD_W = _load_power_w()
+P_LOSS_PLACEHOLDER_W = _historical_losses_w()
+
+
+def input_power_w(p_load_w: float, p_loss_w: float) -> float:
+    """p_input = p_load + p_loss. The one place this sum is formed."""
+    if p_loss_w > p_load_w:
+        raise ValueError(
+            f"p_loss_w = {p_loss_w} exceeds p_load_w = {p_load_w}. That is possible in "
+            f"principle but is overwhelmingly likely to be the load/loss/input mix-up "
+            f"this function exists to catch -- pass the LOSS, not the input power.")
+    return p_load_w + p_loss_w
+
+
+def rail_current_48v(p_load_w: float, p_loss_w: float) -> float:
+    return input_power_w(p_load_w, p_loss_w) / V_IN_48
+
+
+def z1_rail_report(cfg, p_loss_w: float | None = None, p_load_w: float | None = None,
+                   h_tsv_mm: float = 0.300, T_C: float = 20.0,
+                   n_per_cell: int | None = None) -> dict:
+    """Z1's 48 V through-substrate rail.
+
+    I = (P_load + P_loss) / 48 V. `p_loss_w` is the ELECTRICAL LOSS, not the input power;
+    passing an input power here would be caught by input_power_w().
+    """
+    placeholder = p_loss_w is None
+    p_load = P_LOAD_W if p_load_w is None else p_load_w
+    p_loss = P_LOSS_PLACEHOLDER_W["Z1"] if placeholder else p_loss_w
+    p_in = input_power_w(p_load, p_loss)
     i_total = p_in / V_IN_48
     r = system_report(cfg.cells, cfg.cell_side_mm, h_tsv_mm, i_total, T_C=T_C,
                       n_per_cell=n_per_cell)
-    r.update({"architecture": "Z1", "rail_v": V_IN_48, "p_in_w": p_in,
+    r.update({"architecture": "Z1", "rail_v": V_IN_48,
+              "p_load_w": p_load, "p_loss_w": p_loss, "p_input_w": p_in,
               "placeholder": placeholder,
-              "source": "Phase-0M-R3C P_in (PLACEHOLDER)" if placeholder
-                        else "physical electrical solution"})
+              "source": ("Phase-0M-R3C electronics LOSS + load (PLACEHOLDER)"
+                         if placeholder else "physical electrical loss ledger")})
     return r
 
 
@@ -221,7 +297,7 @@ def z2_rail_report(cfg, i_load_a: float = 1000.0, h_tsv_mm: float = 0.300,
     r = system_report(cfg.cells, cfg.cell_side_mm, h_tsv_mm, i_load_a, T_C=T_C,
                       n_per_cell=n_per_cell)
     r.update({"architecture": "Z2", "rail_v": V_OUT_1, "i_load_a": i_load_a,
-              "placeholder": False,
+              "p_load_w": P_LOAD_W, "placeholder": False,
               "source": "1 V load current; to be updated self-consistently with losses"})
     return r
 
@@ -296,4 +372,72 @@ def sizing_study(cfg, i_total_a: float = 1000.0, rail_v: float = V_OUT_1,
                               "the ELECTRICAL bracket is reported alongside so the "
                               "sensitivity is visible. This is a MAXIMUM-DENSITY field, "
                               "explicitly not a minimum-required one."),
+    }
+
+
+# =======================================================================================
+# SECTIONS 9 AND 10 --- PER-ARCHITECTURE SIZING, AND THE TWO DISTINCT COMPARISONS
+#
+# sizing_study() defaults to 1 V / 1000 A. That is a Z2 study, and reporting its
+# 81 / 324 / 1369 bracket as if it applied to Z1 too would be wrong: Z1's rail is 48 V at
+# ~23.7 A, so its drop budget is 480 mV against 10 mV and its current is 42x lower. The
+# minimum field it needs is therefore dramatically smaller.
+#
+# TWO COMPARISONS, AND THEY MUST NOT BE MIXED:
+#
+#   Study A, SAME-FIELD (primary). Identical physical via fabric in both architectures.
+#       Isolates the rail assignment itself -- what happens when the same fabric carries
+#       48 V at low current versus 1 V at high current. Any difference is attributable to
+#       the electrical architecture, not to one design having more copper.
+#
+#   Study B, AS-DESIGNED (sensitivity). Each field sized independently to its own
+#       declared criterion. Answers what provisioned architectures would look like, but
+#       confounds rail assignment with copper content, so it cannot be the primary
+#       physics comparison.
+# =======================================================================================
+
+PRIMARY_TSV_COMPARISON = "A_same_field"
+
+
+def z1_sizing_study(cfg, p_loss_w: float | None = None, p_load_w: float | None = None,
+                    **kw) -> dict:
+    """Z1's field sized against its own 48 V rail and its own drop budget."""
+    p_load = P_LOAD_W if p_load_w is None else p_load_w
+    p_loss = P_LOSS_PLACEHOLDER_W["Z1"] if p_loss_w is None else p_loss_w
+    i = input_power_w(p_load, p_loss) / V_IN_48
+    s = sizing_study(cfg, i_total_a=i, rail_v=V_IN_48, **kw)
+    s.update({"architecture": "Z1", "placeholder": p_loss_w is None})
+    return s
+
+
+def z2_sizing_study(cfg, i_load_a: float = 1000.0, **kw) -> dict:
+    """Z2's field sized against its own 1 V rail."""
+    s = sizing_study(cfg, i_total_a=i_load_a, rail_v=V_OUT_1, **kw)
+    s.update({"architecture": "Z2", "placeholder": False})
+    return s
+
+
+def comparison_studies(cfg, **kw) -> dict:
+    """Study A (same field, primary) and Study B (independently sized, sensitivity)."""
+    z1, z2 = z1_rail_report(cfg, **kw), z2_rail_report(cfg, **kw)
+    s1, s2 = z1_sizing_study(cfg), z2_sizing_study(cfg)
+    return {
+        "primary": PRIMARY_TSV_COMPARISON,
+        "A_same_field": {
+            "rule": "identical maximum-density fabric in both; only the rail differs",
+            "n_per_cell": z1["per_cell"]["n_total"],
+            "z1": {"i_total_a": z1["i_total_a"], "p_tsv_w": z1["p_tsv_total_w"]},
+            "z2": {"i_total_a": z2["i_total_a"], "p_tsv_w": z2["p_tsv_total_w"]},
+            "current_ratio": z2["i_total_a"] / z1["i_total_a"],
+            "loss_ratio": z2["p_tsv_total_w"] / z1["p_tsv_total_w"],
+            "note": ("loss ratio ~= current ratio squared, as Joule scaling requires; "
+                     "that it does is a check on the model, not a coincidence"),
+        },
+        "B_as_designed": {
+            "rule": "each field sized to its own rail and drop budget",
+            "z1_min_n": s1["min_drop"]["n_total"], "z2_min_n": s2["min_drop"]["n_total"],
+            "z1_budget_v": s1["budget_v"], "z2_budget_v": s2["budget_v"],
+            "caveat": ("confounds rail assignment with copper content; sensitivity "
+                       "only, never the primary physics comparison"),
+        },
     }

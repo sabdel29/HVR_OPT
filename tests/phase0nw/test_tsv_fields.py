@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -150,11 +151,38 @@ def test_two_ended_spreading_raises_the_loop_above_the_one_ended_value(sys_r):
 
 
 # ---------------------------------------------------------- section 4: distinct rails
-def test_z1_rail_is_48v_and_low_current(cfg):
+def test_z1_rail_is_48v_and_uses_load_plus_loss(cfg):
+    """I = (P_load + P_loss) / 48 V. Dividing the LOSS by 48 V is a different quantity."""
     r = TSV.z1_rail_report(cfg)
     assert r["rail_v"] == 48.0
-    assert r["i_total_a"] == pytest.approx(r["p_in_w"] / 48.0, rel=1e-12)
-    assert r["i_total_a"] < 20.0, "Z1's 48 V input current is amps, not kiloamps"
+    assert r["p_input_w"] == pytest.approx(r["p_load_w"] + r["p_loss_w"], rel=1e-12)
+    assert r["i_total_a"] == pytest.approx(r["p_input_w"] / 48.0, rel=1e-12)
+    assert r["i_total_a"] == pytest.approx(23.6936, abs=1e-3), (
+        f"historical-order Z1 current should be ~23.69 A, got {r['i_total_a']:.4f}")
+    # the old bug produced this; it must not come back
+    assert abs(r["i_total_a"] - r["p_loss_w"] / 48.0) > 10.0
+
+
+def test_the_historical_loss_is_resummed_from_the_frozen_columns():
+    """P_total_electronics_w IS sum(L_P_*), which is what makes it a loss, not an input."""
+    import csv
+    for row in csv.DictReader((R / "results/phase0mr3c/final_etm_replay.csv").open()):
+        terms = sum(float(v) for k, v in row.items() if k.startswith("L_P_"))
+        assert terms == pytest.approx(float(row["P_total_electronics_w"]), abs=1e-9)
+        assert terms < 200.0, "a loss total of this magnitude cannot be a 1 kW input"
+
+
+def test_input_power_rejects_a_loss_passed_as_input():
+    """NEGATIVE, brief section 5: hand it an input power where a loss belongs."""
+    with pytest.raises(ValueError, match="load/loss/input"):
+        TSV.input_power_w(TSV.P_LOAD_W, 1137.2922628618575)
+    # and the correct call must still work
+    assert TSV.input_power_w(1000.0, 137.29226286185747) == pytest.approx(1137.2923, abs=1e-3)
+
+
+def test_z1_rail_report_rejects_an_input_power_passed_as_loss(cfg):
+    with pytest.raises(ValueError, match="load/loss/input"):
+        TSV.z1_rail_report(cfg, p_loss_w=1137.2922628618575)
 
 
 def test_z2_rail_is_1v_and_high_current(cfg):
@@ -165,21 +193,56 @@ def test_z2_rail_is_1v_and_high_current(cfg):
 
 
 def test_the_two_architectures_do_not_share_a_tsv_current(cfg):
-    """This is a core physical distinction of the paper; one shared 1000 A erased it."""
+    """Core physical distinction; one shared 1000 A erased it.
+
+    The current ratio is ~42x, NOT three orders of magnitude. The LOSS ratio is ~1781x
+    because Joule loss goes as I^2. Quoting one as the other is the error this guards.
+    """
     z1, z2 = TSV.z1_rail_report(cfg), TSV.z2_rail_report(cfg)
-    assert z2["i_total_a"] / z1["i_total_a"] > 50.0, (
-        f"Z1 {z1['i_total_a']:.2f} A vs Z2 {z2['i_total_a']:.0f} A -- the rails have "
-        f"collapsed onto one current")
-    assert z2["p_tsv_total_w"] > 100 * z1["p_tsv_total_w"]
+    ratio = z2["i_total_a"] / z1["i_total_a"]
+    assert 40.0 < ratio < 45.0, f"current ratio {ratio:.1f}x is outside the expected ~42x"
+    loss_ratio = z2["p_tsv_total_w"] / z1["p_tsv_total_w"]
+    assert loss_ratio == pytest.approx(ratio ** 2, rel=1e-6), (
+        "loss ratio must equal the current ratio squared for an identical field")
+
+
+def test_no_source_claims_the_currents_differ_by_three_orders_of_magnitude():
+    for f in (R / "scripts/phase0nw/tsv_fields.py",
+              R / "scripts/phase0nw/audit_physical_gates.py"):
+        t = re.sub(r"\s+", " ", f.read_text())
+        for m in re.finditer(r"three orders of magnitude", t):
+            window = t[max(0, m.start() - 200):m.start()]
+            assert "loss" in window.lower() or "LOSS" in window, (
+                f"{f.name}: 'three orders of magnitude' near text that is about "
+                f"current, not loss")
 
 
 def test_z1_current_is_flagged_as_a_placeholder_until_a_physical_solve_exists(cfg):
     r = TSV.z1_rail_report(cfg)
     assert r["placeholder"] is True
-    assert "PLACEHOLDER" in r["source"]
-    explicit = TSV.z1_rail_report(cfg, p_in_w=150.0)
+    assert "PLACEHOLDER" in r["source"] and "LOSS" in r["source"]
+    explicit = TSV.z1_rail_report(cfg, p_loss_w=150.0)
     assert explicit["placeholder"] is False
-    assert explicit["i_total_a"] == pytest.approx(150.0 / 48.0)
+    assert explicit["i_total_a"] == pytest.approx((TSV.P_LOAD_W + 150.0) / 48.0)
+
+
+def test_z1_and_z2_sizing_studies_are_separate(cfg):
+    """81/324/1369 is a Z2 bracket; Z1's rail is 48 V at 42x lower current."""
+    s1, s2 = TSV.z1_sizing_study(cfg), TSV.z2_sizing_study(cfg)
+    assert s1["rail_v"] == 48.0 and s2["rail_v"] == 1.0
+    assert s1["budget_v"] == pytest.approx(0.48) and s2["budget_v"] == pytest.approx(0.01)
+    assert s1["min_drop"]["n_total"] < s2["min_drop"]["n_total"], (
+        "Z1's low-current 48 V rail should need far fewer vias than Z2's")
+
+
+def test_the_two_tsv_comparisons_are_distinct_and_one_is_primary(cfg):
+    c = TSV.comparison_studies(cfg)
+    assert c["primary"] == "A_same_field"
+    A, B = c["A_same_field"], c["B_as_designed"]
+    assert A["z1"]["i_total_a"] != A["z2"]["i_total_a"]
+    assert A["loss_ratio"] == pytest.approx(A["current_ratio"] ** 2, rel=1e-6)
+    assert B["z1_min_n"] != B["z2_min_n"]
+    assert "confounds" in B["caveat"]
 
 
 # -------------------------------------------------------- section 5: sizing is a choice
