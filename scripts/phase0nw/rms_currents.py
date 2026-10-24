@@ -85,26 +85,35 @@ def cell_currents() -> dict:
     # total output ripple -- the framework's own expression, reused rather than restated
     di_out = ((D / (f * L)) * (v_in / N * K_A - v_out * K)) / boost
 
-    # per-branch ripple: phase A branches see (V_mid - V_out) during the on-time,
-    # phase B branches see (-V_out). Their signed sum must reproduce di_out.
+    # PER-BRANCH RIPPLE IS WITHDRAWN. An earlier version decomposed the model's summed
+    # output ripple into K_A*(V_mid - V_out) and (K - K_A)*(-V_out), each taken over the
+    # on-interval D*T, and called those the branches' full-cycle ripples: 4.657 A and
+    # 0.310 A. The algebra is right; the interpretation is not. A term's contribution to
+    # the SUMMED ripple during one interval is not the periodic waveform of one inductor.
+    #
+    # Volt-second balance shows the gap: a conventional buck branch here ripples
+    # (V_mid - V_out)*D*T/L = V_out*(1-D)*T/L = 4.657 A on BOTH ramps. The 0.310 A value
+    # used (1-D) nowhere and described no complete cycle. Whether our phase-B inductors
+    # behave conventionally depends on a switching sequence that the pinned source does
+    # not contain -- see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md. BOTH
+    # values are therefore withdrawn and branch ripple is OPEN.
     t_on = D / f
-    di_A = (v_mid - v_out) / L * t_on / boost
-    di_B = (v_out) / L * t_on / boost
-    check = K_A * di_A - (K - K_A) * di_B
-    if abs(check - di_out) > 1e-9 * max(abs(di_out), 1.0):
-        raise ValueError(f"branch ripples {check} do not reproduce the ledger's "
-                         f"output ripple {di_out}")
+    conv_ripple = (v_mid - v_out) / L * t_on / boost          # sanity check only
+    conv_down = v_out / L * (1.0 - D) / f / boost
+    if abs(conv_ripple - conv_down) > 1e-9 * conv_ripple:
+        raise ValueError("volt-second balance broken in the conventional sanity check")
 
     b_sum = sum(B)
-    i_branch_avg = [i_out * b / b_sum for b in B]
     branches = []
-    for k, i_avg in enumerate(i_branch_avg):
-        phase = "A" if k < K_A else "B"
-        dpp = di_A if phase == "A" else di_B
+    for k, b in enumerate(B):
         branches.append({
-            "index": k, "phase": phase, "i_avg_a": i_avg, "ripple_pp_a": dpp,
-            "i_rms_a": triangular_rms(i_avg, dpp), "i_peak_a": i_avg + dpp / 2,
-            "waveform": "triangular (CCM)", "rung": L1})
+            "index": k, "phase": "A" if k < K_A else "B", "b_i": b,
+            "i_avg_a": i_out * b / b_sum,
+            "i_avg_status": "KNOWN -- I_cell * B_i / sum(B)",
+            "ripple_pp_a": None, "i_rms_a": None, "i_peak_a": None,
+            "rms_status": "OPEN -- no switch-state sequence in the pinned source",
+            "conventional_buck_ripple_sanity_a": conv_ripple,
+            "rung": "OPEN"})
 
     i_out_rms = triangular_rms(i_out, di_out)
     # 16 V mid-node: the buck input, a gated square at duty D
@@ -116,46 +125,60 @@ def cell_currents() -> dict:
         "v_in": v_in, "v_mid": v_mid, "v_out": v_out,
         "i_cell_out_avg_a": i_out, "ripple_out_pp_a": di_out,
         "i_cell_out_rms_a": i_out_rms,
-        "ripple_A_pp_a": di_A, "ripple_B_pp_a": di_B,
+        "conventional_branch_ripple_sanity_a": conv_ripple,
         "branches": branches,
-        "i_mid_avg_a": i_mid_avg, "i_mid_rms_a": i_mid_rms,
-        "i_mid_rung": L1,
+        "i_mid_avg_a": i_mid_avg, "i_mid_rms_scenario_a": i_mid_rms,
+        "i_mid_status": "OPEN -- the square-pulse value is a SCENARIO",
     }
 
 
-def hv_input_bracket(i_hv_avg_a: float, duty_eff: float | None = None) -> dict:
-    """The 48 V rail RMS, as a BRACKET. The SC waveform is not established.
+def hv_input_scenarios(i_hv_avg_a: float, duty_eff: float | None = None) -> dict:
+    """48 V rail RMS SCENARIOS. There is NO upper bound, and S1 is not one.
 
-    lower  DC: I_rms = I_avg, true only if the 48 V draw is continuous
-    upper  a gated square pulse at the buck duty: I_rms = I_avg / sqrt(D)
+    WHY I_avg/sqrt(D) IS A LOWER BOUND. For a nonnegative current whose support is
+    exactly D*T, Cauchy-Schwarz on the support gives
 
-    The upper bound is deliberately crude. It assumes the input conducts only during the
-    buck on-time, which a multi-phase SC stage with charge-transfer smoothing would not
-    do -- 10.1109/JSSC.2024.3485210 demonstrates hybrid topologies specifically designed
-    to make the input current continuous. So the true value is somewhere inside, and the
-    bracket is wide because the sequence is genuinely unknown, not because the bound is
-    careless.
+        (int i dt)^2 <= (int i^2 dt) * (int 1 dt)
+        (I_avg*T)^2  <= (I_rms^2*T) * (D*T)
+        I_rms        >= I_avg / sqrt(D)
+
+    with equality ONLY for a constant rectangular pulse. So I_avg/sqrt(D) is the MINIMUM
+    RMS compatible with support D. A narrower, taller pulse of the same average has
+    strictly higher RMS, without limit -- from an average current alone there is no
+    finite RMS upper bound at all.
+
+    A previous version called this an upper bound and reported a "bracket". It was
+    neither a bound nor a bracket.
     """
     d = design()
     D = duty_eff if duty_eff is not None else d.arch.D
-    lo = i_hv_avg_a
-    hi = i_hv_avg_a / math.sqrt(D)
-    return {"i_avg_a": i_hv_avg_a, "duty_used": D,
-            "i_rms_lower_a": lo, "i_rms_upper_a": hi,
-            "ratio_upper_over_avg": hi / lo,
-            "rung": L0 + " (lower) / bounded square pulse (upper)",
-            "status": "OPEN -- the 3:1 SC charge-transfer waveform is not in the "
-                      "framework; no switch-state timing, phase shift or dead time",
-            "why_not_eq5": (
-                "10.1109/TCPMT.2026.3724907 Eq.(5) scales I_in,rms with "
-                "I_out sqrt(V_out/V_in) for a buck-derived input. Our converter puts a "
-                "3:1 SC stage in front, so the 48 V node does not see the buck's gated "
-                "waveform directly. Eq.(5) is used as an order-of-magnitude SANITY "
-                "CHECK, not as our value.")}
+    return {
+        "i_avg_a": i_hv_avg_a, "duty_used": D,
+        "HV_S0": {"name": "continuous / DC current", "i_rms_a": i_hv_avg_a,
+                  "rationale": "continuous 48 V draw; some hybrid topologies are "
+                               "explicitly designed for this "
+                               "(10.1109/JSSC.2024.3485210, CONTEXT_ONLY)"},
+        "HV_S1": {"name": "constant square pulse at the buck duty",
+                  "i_rms_a": i_hv_avg_a / math.sqrt(D),
+                  "rationale": "MINIMUM RMS for support exactly D; NOT an upper bound"},
+        "ratio_S1_over_S0": 1.0 / math.sqrt(D),
+        "loss_ratio_S1_over_S0": 1.0 / D,
+        "upper_bound_a": None,
+        "upper_bound_status": "NONE EXISTS from average current alone",
+        "status": "OPEN -- the 3:1 SC charge-transfer waveform is absent from the "
+                  "pinned source; see "
+                  "research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md",
+    }
 
 
-def eq5_reference(i_out_total_a: float, v_out: float, v_in: float) -> float:
-    """DVPD Eq.(5)-style scaling, for comparison ONLY."""
+def dvpd_eq5_input_rms_reference_a(i_out_total_a: float, v_out: float,
+                                   v_in: float) -> float:
+    """DVPD Eq.(5): an INPUT-side RMS reference, I_out*sqrt(V_out/V_in).
+
+    1000 A at 1 V from 48 V gives 144.3 A. That is an INPUT current. An earlier label
+    called it "the 1 V output RMS" and compared it against our 1008 A output figure,
+    which compared two different nodes of the converter.
+    """
     return i_out_total_a * math.sqrt(v_out / v_in)
 
 
@@ -166,20 +189,28 @@ def summary() -> dict:
            "branches": c["branches"], "architectures": {}}
     for arch in ("Z1", "Z2"):
         rc = PP.rail_currents(arch)
-        hv = hv_input_bracket(rc["hv_total_a"])
-        # the 1 V substrate rail: 49 cells in parallel, ripple partially cancelling.
-        # Worst case (no interleaving credit) is cells adding in phase.
-        lv_avg = rc["lv_total_a"]
-        lv_ripple_worst = c["ripple_out_pp_a"] * 49
-        lv_rms_worst = triangular_rms(lv_avg, lv_ripple_worst)
+        hv = hv_input_scenarios(rc["hv_total_a"])
+        # SECTION L: the 49 TSV fields are ELECTRICALLY SEPARATE conductors, so
+        # P_total = sum_m I_m,rms^2 R_m with NO cross terms. Inter-cell phase alignment
+        # cannot affect that sum. Building a 1000 A + 49*dI aggregate and squaring it
+        # would imply all 49 currents share one resistor, which they do not.
+        i_cell_rms = triangular_rms(c["i_cell_out_avg_a"], c["ripple_out_pp_a"])
         out["architectures"][arch] = {
             "hv": hv,
-            "lv_avg_a": lv_avg,
-            "lv_ripple_pp_worst_a": lv_ripple_worst,
-            "lv_rms_worst_a": lv_rms_worst,
-            "lv_rms_over_avg_worst": lv_rms_worst / lv_avg,
-            "lv_rung": L1 + " (worst case, no interleaving credit)",
-            "eq5_reference_total_a": eq5_reference(lv_avg, c["v_out"], c["v_in"]),
+            "lv_total_avg_a": rc["lv_total_a"],
+            "i_cell_avg_a": c["i_cell_out_avg_a"],
+            "ripple_cell_pp_a": c["ripple_out_pp_a"],
+            "i_cell_rms_a": i_cell_rms,
+            "cell_rms_over_avg": i_cell_rms / c["i_cell_out_avg_a"],
+            "lv_form": "P = 49 * I_cell_rms^2 * (R_VDD + R_GND); fields are separate",
+            "inter_cell_phase_matters": False,
+            "inter_cell_phase_reason": (
+                "no conductor is shared between cells, so no cross term I_m*I_n enters "
+                "the Joule sum; phase alignment would only matter for a shared "
+                "conductor"),
+            "lv_rung": L1,
+            "dvpd_eq5_input_rms_reference_a": dvpd_eq5_input_rms_reference_a(
+                rc["lv_total_a"], c["v_out"], c["v_in"]),
         }
     return out
 
@@ -193,21 +224,26 @@ def main():
     print(f"cell output  I_avg {d['i_cell_out_avg_a']:.4f} A  ripple_pp "
           f"{d['ripple_out_pp_a']:.4f} A  I_rms {d['i_cell_out_rms_a']:.4f} A  "
           f"(rms/avg {d['i_cell_out_rms_a']/d['i_cell_out_avg_a']:.5f})")
-    print(f"16 V mid     I_avg {d['i_mid_avg_a']:.4f} A  I_rms {d['i_mid_rms_a']:.4f} A "
+    print(f"16 V mid     I_avg {d['i_mid_avg_a']:.4f} A  I_rms(scenario) {d['i_mid_rms_scenario_a']:.4f} A "
           f"(gated square, duty {d['D']})")
-    print(f"\n{'branch':8s} {'phase':6s} {'I_avg':>8s} {'ripple':>8s} {'I_rms':>8s} {'I_peak':>8s}")
+    print(f"\n{'branch':8s} {'phase':6s} {'B_i':>4s} {'I_avg':>8s}   rms status")
     for b in s["branches"]:
-        print(f"{b['index']:<8d} {b['phase']:6s} {b['i_avg_a']:8.4f} "
-              f"{b['ripple_pp_a']:8.4f} {b['i_rms_a']:8.4f} {b['i_peak_a']:8.4f}")
+        print(f"{b['index']:<8d} {b['phase']:6s} {b['b_i']:4d} {b['i_avg_a']:8.4f}   "
+              f"{b['rms_status']}")
+    print(f"  conventional-buck branch ripple (SANITY ONLY): "
+          f"{s['design']['conventional_branch_ripple_sanity_a']:.4f} A")
     for a, v in s["architectures"].items():
         h = v["hv"]
-        print(f"\n{a}  48 V  I_avg {h['i_avg_a']:.4f} A -> RMS BRACKET "
-              f"[{h['i_rms_lower_a']:.4f}, {h['i_rms_upper_a']:.4f}] A "
-              f"({h['ratio_upper_over_avg']:.2f}x)  STATUS OPEN")
-        print(f"     1 V  I_avg {v['lv_avg_a']:.1f} A  I_rms(worst) "
-              f"{v['lv_rms_worst_a']:.3f} A  ratio {v['lv_rms_over_avg_worst']:.6f}")
-        print(f"     Eq.(5) reference for the 1 V output: "
-              f"{v['eq5_reference_total_a']:.2f} A (sanity check only)")
+        print(f"\n{a}  48 V I_avg {h['i_avg_a']:.4f} A")
+        print(f"     HV-S0 continuous      I_rms {h['HV_S0']['i_rms_a']:.4f} A")
+        print(f"     HV-S1 square at D     I_rms {h['HV_S1']['i_rms_a']:.4f} A  "
+              f"({h['ratio_S1_over_S0']:.2f}x -> {h['loss_ratio_S1_over_S0']:.0f}x in I^2R)")
+        print(f"     upper bound: {h['upper_bound_status']}")
+        print(f"     1 V per cell  I_avg {v['i_cell_avg_a']:.4f} A  ripple "
+              f"{v['ripple_cell_pp_a']:.4f} A  I_rms {v['i_cell_rms_a']:.4f} A  "
+              f"(rms/avg {v['cell_rms_over_avg']:.6f})")
+        print(f"     DVPD Eq.(5) INPUT-side reference: "
+              f"{v['dvpd_eq5_input_rms_reference_a']:.1f} A")
     out = R / "research" / "phase0nac"
     out.mkdir(parents=True, exist_ok=True)
     (out / "current_waveforms.json").write_text(json.dumps(s, indent=1))

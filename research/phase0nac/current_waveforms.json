@@ -19,42 +19,50 @@
   "i_cell_out_avg_a": 20.408163265306122,
   "ripple_out_pp_a": 9.004305909518163,
   "i_cell_out_rms_a": 20.573030604962867,
-  "ripple_A_pp_a": 4.657399608371462,
-  "ripple_B_pp_a": 0.3104933072247642,
+  "conventional_branch_ripple_sanity_a": 4.657399608371462,
   "i_mid_avg_a": 1.2755102040816326,
-  "i_mid_rms_a": 5.1020408163265305,
-  "i_mid_rung": "RMS_L1_ANALYTIC"
+  "i_mid_rms_scenario_a": 5.1020408163265305,
+  "i_mid_status": "OPEN -- the square-pulse value is a SCENARIO"
  },
  "branches": [
   {
    "index": 0,
    "phase": "A",
+   "b_i": 1,
    "i_avg_a": 6.802721088435374,
-   "ripple_pp_a": 4.657399608371462,
-   "i_rms_a": 6.93430807408941,
-   "i_peak_a": 9.131420892621104,
-   "waveform": "triangular (CCM)",
-   "rung": "RMS_L1_ANALYTIC"
+   "i_avg_status": "KNOWN -- I_cell * B_i / sum(B)",
+   "ripple_pp_a": null,
+   "i_rms_a": null,
+   "i_peak_a": null,
+   "rms_status": "OPEN -- no switch-state sequence in the pinned source",
+   "conventional_buck_ripple_sanity_a": 4.657399608371462,
+   "rung": "OPEN"
   },
   {
    "index": 1,
    "phase": "A",
+   "b_i": 1,
    "i_avg_a": 6.802721088435374,
-   "ripple_pp_a": 4.657399608371462,
-   "i_rms_a": 6.93430807408941,
-   "i_peak_a": 9.131420892621104,
-   "waveform": "triangular (CCM)",
-   "rung": "RMS_L1_ANALYTIC"
+   "i_avg_status": "KNOWN -- I_cell * B_i / sum(B)",
+   "ripple_pp_a": null,
+   "i_rms_a": null,
+   "i_peak_a": null,
+   "rms_status": "OPEN -- no switch-state sequence in the pinned source",
+   "conventional_buck_ripple_sanity_a": 4.657399608371462,
+   "rung": "OPEN"
   },
   {
    "index": 2,
    "phase": "B",
+   "b_i": 1,
    "i_avg_a": 6.802721088435374,
-   "ripple_pp_a": 0.3104933072247642,
-   "i_rms_a": 6.803311550134683,
-   "i_peak_a": 6.957967742047756,
-   "waveform": "triangular (CCM)",
-   "rung": "RMS_L1_ANALYTIC"
+   "i_avg_status": "KNOWN -- I_cell * B_i / sum(B)",
+   "ripple_pp_a": null,
+   "i_rms_a": null,
+   "i_peak_a": null,
+   "rms_status": "OPEN -- no switch-state sequence in the pinned source",
+   "conventional_buck_ripple_sanity_a": 4.657399608371462,
+   "rung": "OPEN"
   }
  ],
  "architectures": {
@@ -62,37 +70,63 @@
    "hv": {
     "i_avg_a": 23.69358880962203,
     "duty_used": 0.0625,
-    "i_rms_lower_a": 23.69358880962203,
-    "i_rms_upper_a": 94.77435523848813,
-    "ratio_upper_over_avg": 4.0,
-    "rung": "RMS_L0_DC (lower) / bounded square pulse (upper)",
-    "status": "OPEN -- the 3:1 SC charge-transfer waveform is not in the framework; no switch-state timing, phase shift or dead time",
-    "why_not_eq5": "10.1109/TCPMT.2026.3724907 Eq.(5) scales I_in,rms with I_out sqrt(V_out/V_in) for a buck-derived input. Our converter puts a 3:1 SC stage in front, so the 48 V node does not see the buck's gated waveform directly. Eq.(5) is used as an order-of-magnitude SANITY CHECK, not as our value."
+    "HV_S0": {
+     "name": "continuous / DC current",
+     "i_rms_a": 23.69358880962203,
+     "rationale": "continuous 48 V draw; some hybrid topologies are explicitly designed for this (10.1109/JSSC.2024.3485210, CONTEXT_ONLY)"
+    },
+    "HV_S1": {
+     "name": "constant square pulse at the buck duty",
+     "i_rms_a": 94.77435523848813,
+     "rationale": "MINIMUM RMS for support exactly D; NOT an upper bound"
+    },
+    "ratio_S1_over_S0": 4.0,
+    "loss_ratio_S1_over_S0": 16.0,
+    "upper_bound_a": null,
+    "upper_bound_status": "NONE EXISTS from average current alone",
+    "status": "OPEN -- the 3:1 SC charge-transfer waveform is absent from the pinned source; see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md"
    },
-   "lv_avg_a": 1000.0,
-   "lv_ripple_pp_worst_a": 441.21098956638997,
-   "lv_rms_worst_a": 1008.0784996431806,
-   "lv_rms_over_avg_worst": 1.0080784996431806,
-   "lv_rung": "RMS_L1_ANALYTIC (worst case, no interleaving credit)",
-   "eq5_reference_total_a": 144.33756729740642
+   "lv_total_avg_a": 1000.0,
+   "i_cell_avg_a": 20.408163265306122,
+   "ripple_cell_pp_a": 9.004305909518163,
+   "i_cell_rms_a": 20.573030604962867,
+   "cell_rms_over_avg": 1.0080784996431804,
+   "lv_form": "P = 49 * I_cell_rms^2 * (R_VDD + R_GND); fields are separate",
+   "inter_cell_phase_matters": false,
+   "inter_cell_phase_reason": "no conductor is shared between cells, so no cross term I_m*I_n enters the Joule sum; phase alignment would only matter for a shared conductor",
+   "lv_rung": "RMS_L1_ANALYTIC",
+   "dvpd_eq5_input_rms_reference_a": 144.33756729740642
   },
   "Z2": {
    "hv": {
     "i_avg_a": 23.742906111475396,
     "duty_used": 0.0625,
-    "i_rms_lower_a": 23.742906111475396,
-    "i_rms_upper_a": 94.97162444590158,
-    "ratio_upper_over_avg": 4.0,
-    "rung": "RMS_L0_DC (lower) / bounded square pulse (upper)",
-    "status": "OPEN -- the 3:1 SC charge-transfer waveform is not in the framework; no switch-state timing, phase shift or dead time",
-    "why_not_eq5": "10.1109/TCPMT.2026.3724907 Eq.(5) scales I_in,rms with I_out sqrt(V_out/V_in) for a buck-derived input. Our converter puts a 3:1 SC stage in front, so the 48 V node does not see the buck's gated waveform directly. Eq.(5) is used as an order-of-magnitude SANITY CHECK, not as our value."
+    "HV_S0": {
+     "name": "continuous / DC current",
+     "i_rms_a": 23.742906111475396,
+     "rationale": "continuous 48 V draw; some hybrid topologies are explicitly designed for this (10.1109/JSSC.2024.3485210, CONTEXT_ONLY)"
+    },
+    "HV_S1": {
+     "name": "constant square pulse at the buck duty",
+     "i_rms_a": 94.97162444590158,
+     "rationale": "MINIMUM RMS for support exactly D; NOT an upper bound"
+    },
+    "ratio_S1_over_S0": 4.0,
+    "loss_ratio_S1_over_S0": 16.0,
+    "upper_bound_a": null,
+    "upper_bound_status": "NONE EXISTS from average current alone",
+    "status": "OPEN -- the 3:1 SC charge-transfer waveform is absent from the pinned source; see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md"
    },
-   "lv_avg_a": 1000.0,
-   "lv_ripple_pp_worst_a": 441.21098956638997,
-   "lv_rms_worst_a": 1008.0784996431806,
-   "lv_rms_over_avg_worst": 1.0080784996431806,
-   "lv_rung": "RMS_L1_ANALYTIC (worst case, no interleaving credit)",
-   "eq5_reference_total_a": 144.33756729740642
+   "lv_total_avg_a": 1000.0,
+   "i_cell_avg_a": 20.408163265306122,
+   "ripple_cell_pp_a": 9.004305909518163,
+   "i_cell_rms_a": 20.573030604962867,
+   "cell_rms_over_avg": 1.0080784996431804,
+   "lv_form": "P = 49 * I_cell_rms^2 * (R_VDD + R_GND); fields are separate",
+   "inter_cell_phase_matters": false,
+   "inter_cell_phase_reason": "no conductor is shared between cells, so no cross term I_m*I_n enters the Joule sum; phase alignment would only matter for a shared conductor",
+   "lv_rung": "RMS_L1_ANALYTIC",
+   "dvpd_eq5_input_rms_reference_a": 144.33756729740642
   }
  }
 }

@@ -167,14 +167,16 @@ def rms_brackets(arch: str) -> dict:
     import rms_currents as RMS
     import power_path as PP
     rc = PP.rail_currents(arch)
-    hv = RMS.hv_input_bracket(rc["hv_total_a"])
+    hv = RMS.hv_input_scenarios(rc["hv_total_a"])
     c = RMS.cell_currents()
-    lv_rms = RMS.triangular_rms(rc["lv_total_a"], c["ripple_out_pp_a"] * rc["cells"])
+    # SECTION L: 49 electrically separate TSV fields -> no cross terms. Per-cell RMS.
+    i_cell_rms = RMS.triangular_rms(c["i_cell_out_avg_a"], c["ripple_out_pp_a"])
     return {"hv_avg_a": rc["hv_total_a"],
-            "hv_rms_lo_a": hv["i_rms_lower_a"], "hv_rms_hi_a": hv["i_rms_upper_a"],
-            "hv_status": hv["status"],
-            "lv_avg_a": rc["lv_total_a"], "lv_rms_a": lv_rms,
-            "lv_rms_over_avg": lv_rms / rc["lv_total_a"]}
+            "hv_S0_a": hv["HV_S0"]["i_rms_a"], "hv_S1_a": hv["HV_S1"]["i_rms_a"],
+            "hv_status": hv["status"], "hv_upper_bound": hv["upper_bound_status"],
+            "lv_total_avg_a": rc["lv_total_a"],
+            "i_cell_avg_a": c["i_cell_out_avg_a"], "i_cell_rms_a": i_cell_rms,
+            "cell_rms_over_avg": i_cell_rms / c["i_cell_out_avg_a"]}
 
 
 def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
@@ -192,33 +194,36 @@ def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
     tsv = tsv_loss(i_tsv, n_tsv_side, n_tsv_side, cfg_cells, T_c)
     mb = microbump_loss(i_lv, T_c)
 
-    # --- RMS correction ---------------------------------------------------------------
-    # I^2 R needs RMS, not average. The 48 V rail's RMS is a 4x BRACKET because the SC
-    # charge-transfer waveform is unknown, and I^2 R scales as the SQUARE, so every
-    # 48 V conductor loss carries a 16x span. The DC figures below are LOWER BOUNDS.
+    # --- RMS -------------------------------------------------------------------------
+    # I^2 R needs RMS, not average. The 48 V rail has NO established waveform, so its
+    # loss is reported across two SCENARIOS: HV-S0 continuous and HV-S1 constant square
+    # pulse at the buck duty. S1 is the MINIMUM RMS for support D, not an upper bound,
+    # and no finite upper bound exists from average current alone. The two scenarios
+    # differ by 4x in RMS and 16x in I^2 R; that is a scenario separation, NOT an
+    # uncertainty interval.
     rb = rms_brackets(arch)
-    f_hv_lo = (rb["hv_rms_lo_a"] / rb["hv_avg_a"]) ** 2
-    f_hv_hi = (rb["hv_rms_hi_a"] / rb["hv_avg_a"]) ** 2
-    f_lv = rb["lv_rms_over_avg"] ** 2
+    f_hv_lo = (rb["hv_S0_a"] / rb["hv_avg_a"]) ** 2          # continuous scenario
+    f_hv_hi = (rb["hv_S1_a"] / rb["hv_avg_a"]) ** 2          # square-pulse-at-D scenario
+    f_lv = rb["cell_rms_over_avg"] ** 2
     f_tsv_lo, f_tsv_hi = ((f_hv_lo, f_hv_hi) if arch == "Z1" else (f_lv, f_lv))
 
     terms = {
         "P_BGA_supply": {"w": bga["p_supply_w"] * f_hv_lo,
                          "bracket_w": [bga["p_supply_w"] * f_hv_lo,
                                        bga["p_supply_w"] * f_hv_hi],
-                         "status": "DC_LOWER_BOUND"},
+                         "status": "SCENARIO_S0_S1"},
         "P_BGA_return": {"w": bga["p_return_w"] * f_hv_lo,
                          "bracket_w": [bga["p_return_w"] * f_hv_lo,
                                        bga["p_return_w"] * f_hv_hi],
-                         "status": "DC_LOWER_BOUND"},
+                         "status": "SCENARIO_S0_S1"},
         "P_TSV_VDD": {"w": tsv["p_vdd_w"] * f_tsv_lo,
                       "bracket_w": [tsv["p_vdd_w"] * f_tsv_lo,
                                     tsv["p_vdd_w"] * f_tsv_hi],
-                      "status": "DC_LOWER_BOUND" if arch == "Z1" else "RECOMPUTED_RMS"},
+                      "status": "SCENARIO_S0_S1" if arch == "Z1" else "RECOMPUTED_RMS"},
         "P_TSV_GND": {"w": tsv["p_gnd_w"] * f_tsv_lo,
                       "bracket_w": [tsv["p_gnd_w"] * f_tsv_lo,
                                     tsv["p_gnd_w"] * f_tsv_hi],
-                      "status": "DC_LOWER_BOUND" if arch == "Z1" else "RECOMPUTED_RMS"},
+                      "status": "SCENARIO_S0_S1" if arch == "Z1" else "RECOMPUTED_RMS"},
         "P_microbump_supply": {"w": None, "bracket_w": [mb["p_low_w"], mb["p_high_w"]],
                                "status": "BRACKETED"},
         "P_microbump_return": {"w": None, "bracket_w": [mb["p_low_w"], mb["p_high_w"]],
@@ -231,7 +236,7 @@ def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
         "P_intraVR_vertical": {"w": None, "status": "OPEN"},
     }
     done = sum(v["w"] for v in terms.values()
-               if v["status"] in ("RECOMPUTED", "RECOMPUTED_RMS", "DC_LOWER_BOUND"))
+               if v["status"] in ("RECOMPUTED", "RECOMPUTED_RMS", "SCENARIO_S0_S1"))
     return {"arch": arch, "T_c": T_c, "i_hv_a": i_hv, "i_lv_a": i_lv,
             "tsv_rail_v": 48.0 if arch == "Z1" else 1.0,
             "bga": bga, "tsv": tsv, "microbump": mb, "bga_capacity": cap,
@@ -240,7 +245,7 @@ def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
             "rms": rb,
             "n_recomputed": sum(1 for v in terms.values()
                                 if v["status"] in ("RECOMPUTED", "RECOMPUTED_RMS",
-                                                   "DC_LOWER_BOUND")),
+                                                   "SCENARIO_S0_S1")),
             "n_bracketed": sum(1 for v in terms.values()
                                if v["status"] == "BRACKETED"),
             "n_open": sum(1 for v in terms.values() if v["status"] == "OPEN")}
@@ -250,7 +255,8 @@ def main():
     out = {a: ledger(a) for a in ("Z1", "Z2")}
     d = R / "research" / "phase0nab"
     d.mkdir(parents=True, exist_ok=True)
-    (d / "interconnect_loss.json").write_text(json.dumps(out, indent=1))
+    (d / "interconnect_loss.json").write_text(
+        json.dumps(out, indent=1, sort_keys=True))
     for a, L in out.items():
         print(f"\n=== {a}  (T_ref {L['T_c']:.0f} C, substrate rail "
               f"{L['tsv_rail_v']:.0f} V) ===")
