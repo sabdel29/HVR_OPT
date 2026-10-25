@@ -69,24 +69,36 @@ def cell_centres(cells: int = 49, pitch_mm: float | None = None):
     return PCO.physical_cell_coordinates()
 
 
-def _supply_sites(arch: str, cells=None):
-    """Supply/return sites, from the REAL centred 0.8 mm BGA lattice in both cases.
+N_SUPPLY_DEFAULT = 16          # matched across architectures unless a case changes it
+N_RETURN_DEFAULT = 16
 
-    The previous Z1 placement was synthesised by adding (+0.4, +0.4) mm to selected cell
-    centres. Those are not lattice positions at all -- is_on_bga_lattice() rejects them
-    -- so the Z1 arm of the comparison was built on fabricated coordinates. Both
-    architectures now draw from physical_coords, under ONE allocation rule, so that
-    placement and cutout effects are not confounded.
+
+def _supply_sites(arch: str, cells=None, n_supply: int = N_SUPPLY_DEFAULT,
+                  n_return: int = N_RETURN_DEFAULT,
+                  allocation_rule: str = "nearest_symmetric",
+                  bga_case: str = "BGA_P1"):
+    """Candidate sites differ by architecture; the ALLOCATION RULE and COUNTS do not.
+
+    That is the whole point: Z1 draws from the full centred lattice, Z2 from the sites
+    surviving the 23.36 mm cutout, and everything else is held identical. Any resistance
+    difference is then attributable to which sites exist rather than to how many balls
+    each architecture was given or how they were chosen.
+
+    BGA_P0 reproduces the frozen historical Z2 allocation and must NOT be used for the
+    controlled comparison.
     """
     import physical_coords as PCO
     cells = cells or PCO.physical_cell_coordinates()
-    ann_sup, ann_ret = PCO.annulus_supply_return()
-    n_pairs = len(ann_sup) // 2
-    if arch == "Z2":
-        return ann_sup, ann_ret, "surviving annulus (cutout removes the interior)"
-    legal = PCO.bga_lattice_sites()                      # Z1 has no cutout
-    sup, ret = PCO.select_sites(legal, cells, n_pairs)
-    return sup, ret, "full centred 0.8 mm lattice, nearest-to-load symmetric pairs"
+    if bga_case == "BGA_P0":
+        sup, ret = PCO.annulus_supply_return()
+        return sup, ret, "BGA_P0 historical frozen allocation (reproduction only)"
+    cand = (PCO.bga_lattice_sites(23.36) if arch == "Z2"
+            else PCO.bga_lattice_sites())
+    sel = PCO.select_power_sites(cand, cells, n_supply, n_return, allocation_rule)
+    where = "annulus (cutout removes the interior)" if arch == "Z2" else "full lattice"
+    return (sel["supply"], sel["return"],
+            f"{bga_case}/{allocation_rule}: {n_supply}+{n_return} from {where} "
+            f"({sel['n_candidates']} candidates)")
 
 
 class SheetNetwork:
@@ -184,11 +196,22 @@ class SheetNetwork:
 
 
 def solve_case(arch: str, n_grid: int, t_cu_mm: float, occupancy: float,
-               T_c: float = T_REF_C) -> dict:
+               T_c: float = T_REF_C, n_supply: int = N_SUPPLY_DEFAULT,
+               n_return: int = N_RETURN_DEFAULT,
+               allocation_rule: str = "nearest_symmetric",
+               bga_case: str = "BGA_P1", candidate_override=None) -> dict:
     r_sq = sheet_resistance_ohm_sq(t_cu_mm, occupancy, T_c)
     net = SheetNetwork(n_grid, r_sq)
     cells = cell_centres()
-    sup, ret, placement = _supply_sites(arch, cells)
+    if candidate_override is not None:
+        import physical_coords as PCO
+        sel = PCO.select_power_sites(candidate_override, cells, n_supply, n_return,
+                                     allocation_rule)
+        sup, ret = sel["supply"], sel["return"]
+        placement = f"CONTROLLED/{allocation_rule}: {n_supply}+{n_return}"
+    else:
+        sup, ret, placement = _supply_sites(arch, cells, n_supply, n_return,
+                                            allocation_rule, bga_case)
     # Z2's supply sites are restricted to the surviving annulus; Z1 has no cutout, so
     # the same ring is used for comparability -- the DIFFERENCE is that Z2's load sits
     # inside an opening its supply cannot cross directly.
@@ -202,7 +225,52 @@ def solve_case(arch: str, n_grid: int, t_cu_mm: float, occupancy: float,
             "r_eff_ohm": p_norm,              # P at 1 A = R_eff
             "v_drop_at_1A": drop,
             "n_sources": len(src), "n_sinks": len(snk),
+            "n_supply_requested": n_supply, "n_return_requested": n_return,
+            "allocation_rule": allocation_rule, "bga_case": bga_case,
             "source_placement": placement}
+
+
+def controlled_cutout_experiment(n_grid: int = 61,
+                                 t_cu_mm: float = 5.0e-3,
+                                 occupancy: float = 0.30,
+                                 n_supply: int = N_SUPPLY_DEFAULT) -> dict:
+    """CTRL-FULL vs CTRL-CUTOUT: the ONLY difference is which sites exist.
+
+    Same sheet, same cell coordinates, same ball count, same allocation rule, same RDL
+    construction, same grid. Removing the central lattice sites is then the only change,
+    so the difference IS the cutout penalty -- unlike comparing two architectures whose
+    placements were chosen differently, which is what produced the withdrawn 5.13x and
+    0.55 figures.
+    """
+    import physical_coords as PCO
+    cells = PCO.physical_cell_coordinates()
+    full = PCO.bga_lattice_sites()
+    cut = PCO.bga_lattice_sites(23.36)
+    out = {}
+    for tag, cand in (("CTRL_FULL", full), ("CTRL_CUTOUT", cut)):
+        c = solve_case("CTRL", n_grid, t_cu_mm, occupancy,
+                       n_supply=n_supply, n_return=n_supply,
+                       candidate_override=cand)
+        c["n_candidate_sites"] = len(cand)
+        out[tag] = c
+    r_full = out["CTRL_FULL"]["r_eff_ohm"]
+    r_cut = out["CTRL_CUTOUT"]["r_eff_ohm"]
+    # placement sensitivity, on the SAME candidate set, isolates rule from geometry
+    place = {}
+    for rule in ("nearest_symmetric", "outer_perimeter"):
+        place[rule] = solve_case("CTRL", n_grid, t_cu_mm, occupancy,
+                                 n_supply=n_supply, n_return=n_supply,
+                                 allocation_rule=rule,
+                                 candidate_override=cut)["r_eff_ohm"]
+    return {"cases": out,
+            "delta_R_cutout_ohm": r_cut - r_full,
+            "ratio_cutout_over_full": r_cut / r_full,
+            "placement_on_fixed_candidates": place,
+            "delta_R_placement_ohm": abs(place["outer_perimeter"]
+                                         - place["nearest_symmetric"]),
+            "note": ("delta_R_cutout is the ONLY quantity entitled to be called a "
+                     "cutout penalty; delta_R_placement is how much the allocation "
+                     "rule moves the answer on an unchanged candidate set")}
 
 
 def convergence(arch: str, t_cu_mm: float, occupancy: float,

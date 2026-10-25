@@ -72,28 +72,62 @@ def annulus_supply_return() -> tuple:
             [tuple(p) for p in j["return_xy_mm"]])
 
 
-def select_sites(candidates, cells, n_pairs: int) -> tuple:
-    """Pick n_pairs supply + n_pairs return sites nearest the cell grid, mirror-symmetric.
+def select_power_sites(candidate_sites, cells, n_supply: int, n_return: int,
+                       allocation_rule: str = "nearest_symmetric") -> dict:
+    """Select EXACTLY n_supply supply and n_return return sites from one candidate set.
 
-    A DESIGN CHOICE, not a sourced placement: the rule is "closest legal lattice sites to
-    the load centroid, in mirror-symmetric pairs". It is applied identically to Z1 and Z2
-    so the architectures are compared under one allocation rule rather than two.
+    THE ARGUMENT IS A COUNT OF SITES, NOT A COUNT OF PAIRS. The previous API took
+    `n_pairs` and the caller passed len(annulus_supply)//2 = 8, so Z1 received eight
+    supply balls against Z2's sixteen. That silently replaced one uncontrolled
+    comparison with another: the resulting 0.55 ratio measured the ball count, not the
+    architecture.
+
+    `allocation_rule` is applied identically to whichever candidate set it is given, so
+    the ONLY difference between a Z1 and a Z2 run is which sites exist -- which is what
+    isolating the cutout requires.
+
+      nearest_symmetric  mirror-symmetric pairs closest to the load centroid
+      outer_perimeter    mirror-symmetric pairs furthest from the centroid
+      inner_edge         mirror-symmetric pairs closest to the cutout boundary
     """
     import math
+    if n_supply % 2 or n_return % 2:
+        raise ValueError("mirror symmetry needs even counts; got "
+                         f"{n_supply} supply and {n_return} return")
     cx = sum(x for x, _ in cells) / len(cells)
     cy = sum(y for _, y in cells) / len(cells)
-    ranked = sorted(candidates, key=lambda p: math.hypot(p[0] - cx, p[1] - cy))
+    cand = set(candidate_sites)
+
+    def dist(p):
+        return math.hypot(p[0] - cx, p[1] - cy)
+
+    if allocation_rule == "nearest_symmetric":
+        ranked = sorted(candidate_sites, key=dist)
+    elif allocation_rule == "outer_perimeter":
+        ranked = sorted(candidate_sites, key=dist, reverse=True)
+    elif allocation_rule == "inner_edge":
+        # closest to the centroid among sites that EXIST -- for an annulus that is the
+        # inner boundary, for a full lattice it coincides with nearest_symmetric
+        ranked = sorted(candidate_sites, key=dist)
+    else:
+        raise ValueError(f"unknown allocation_rule {allocation_rule!r}")
+
     sup, ret, used = [], [], set()
     for p in ranked:
-        if len(sup) >= n_pairs and len(ret) >= n_pairs:
+        if len(sup) >= n_supply and len(ret) >= n_return:
             break
         mirror = (-p[0], -p[1])
-        if p in used or mirror in used or mirror not in set(candidates):
+        if p in used or mirror in used or mirror not in cand or mirror == p:
             continue
-        if len(sup) < n_pairs:
+        if len(sup) < n_supply:
             sup += [p, mirror]
             used |= {p, mirror}
-        elif len(ret) < n_pairs:
+        elif len(ret) < n_return:
             ret += [p, mirror]
             used |= {p, mirror}
-    return sup[:n_pairs], ret[:n_pairs]
+    if len(sup) < n_supply or len(ret) < n_return:
+        raise ValueError(f"only {len(sup)}/{n_supply} supply and {len(ret)}/{n_return} "
+                         f"return sites could be placed symmetrically")
+    return {"supply": sup[:n_supply], "return": ret[:n_return],
+            "allocation_rule": allocation_rule,
+            "n_candidates": len(candidate_sites)}

@@ -69,9 +69,8 @@ def test_the_513x_cutout_penalty_is_withdrawn(art):
     ratio = z2 / z1
     assert ratio < 1.0, (
         f"Z2/Z1 is {ratio:.2f}; the withdrawn claim was 5.13x the other way")
-    # and neither direction may be asserted while the network is unconverged
-    for a in ("Z1", "Z2"):
-        assert art["architectures"][a]["convergence"]["converged"] is False
+    # Z1 is still unconverged, so no architecture ratio may be reported either way
+    assert art["architectures"]["Z1"]["convergence"]["converged"] is False
 
 
 def test_losses_are_named_scenarios_scaled_from_one_linear_solve(art):
@@ -86,20 +85,23 @@ def test_losses_are_named_scenarios_scaled_from_one_linear_solve(art):
             assert "bracket" not in json.dumps(c).lower()
 
 
-def test_the_network_is_not_converged_and_says_so(art):
-    """The 1 % threshold was declared before any result was read. It was not met.
+def test_convergence_is_reported_per_architecture_not_assumed(art):
+    """The 1 % threshold was declared before any result was read, and is not moved.
 
-    Reporting the failure is the point: a solver that is tuned until it passes its own
-    test has not been converged, it has been argued with.
+    Matching the ball counts improved the conditioning enough that Z2 now passes at
+    0.430 %. Z1 still fails at 2.168 %, so the ARCHITECTURE RATIO remains unreportable
+    even though one arm converged -- a ratio is only as converged as its worse half.
     """
-    for arch in ("Z1", "Z2"):
-        cv = art["architectures"][arch]["convergence"]
+    cz1 = art["architectures"]["Z1"]["convergence"]
+    cz2 = art["architectures"]["Z2"]["convergence"]
+    for cv in (cz1, cz2):
         assert cv["threshold"] == 0.01
         assert "before any result was inspected" in cv["threshold_declared"]
-        assert cv["converged"] is False, (
-            "if this now passes, the grid or the model changed -- re-read the numbers")
-        assert cv["delta_r_eff"] > 0.01
         assert len(cv["levels"]) >= 3
+    assert cz2["converged"] is True and cz2["delta_r_eff"] < 0.01
+    assert cz1["converged"] is False, (
+        "if Z1 now converges, the architecture ratio becomes reportable -- re-read it "
+        "deliberately rather than letting this test pass silently")
 
 
 def test_point_injection_singularity_is_handled_by_finite_contacts():
