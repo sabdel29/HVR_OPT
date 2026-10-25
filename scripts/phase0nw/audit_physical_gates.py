@@ -386,18 +386,29 @@ def gates():
            "BGA modelled as voltage-fed branches rather than imposed currents",
            "the solver injects I_total/N into every source, which MATHEMATICALLY "
            "ENFORCES equal sharing -- an ideal current source cannot be redistributed "
-           "by the sheet. elec.bga_network_sharing therefore cannot be solved until "
-           "each ball is a resistance to a common source potential")
+           "by the sheet. This is the CURRENT reason the gate is open; a package RDL "
+           "network does now exist. Sharing cannot be solved until each ball is a "
+           "resistance to a common source potential")
     notrun("elec.pkg_rdl_return_solved", "PkgRDL",
            "package return RDL network solved",
            "_supply_sites() returns both arrays but solve_case() only solves supply")
-    notrun("elec.cutout_penalty_isolated", "PkgRDL",
-           "cutout penalty isolated from BGA-placement penalty",
-           "the present comparison uses real annular sites for Z2 against SYNTHETIC "
-           "non-lattice sites for Z1, so placement and cutout effects are confounded")
+    add("elec.cutout_penalty_isolated", "PkgRDL",
+        "cutout penalty isolated from BGA-placement penalty", "SPECIFIED",
+        "CTRL_FULL (1369 candidate sites) against CTRL_CUTOUT (528), with sheet, "
+        "cells, ball count, allocation rule and grid all held identical: "
+        "dR_cutout = -0.351 mOhm, i.e. the cutout slightly REDUCES resistance because "
+        "nearest-to-centroid selection would otherwise cluster balls centrally. "
+        "Changing only the rule on the same annulus moves R_eff 2.047 mOhm, so "
+        "placement dominates the cutout by ~5.8x. SPECIFIED not IMPLEMENTED: Z1 "
+        "remains unconverged and the sources are still current-fed")
     notrun("elec.pkg_rdl_network_converged", "PkgRDL",
            "package RDL network converged",
-           f"NOT CONVERGED. Threshold 1 % on R_eff was declared before any result was "
+           f"Z2 NOW CONVERGES at "
+           f"{net['architectures']['Z2']['convergence']['delta_r_eff']*100:.3f} % after "
+           f"the ball counts were matched, but Z1 does not at "
+           f"{net['architectures']['Z1']['convergence']['delta_r_eff']*100:.3f} %. A "
+           f"ratio is only as converged as its worse half, so no architecture ratio is "
+           f"reportable. Threshold 1 % on R_eff was declared before any result was "
            f"read; four levels (41/61/81/101) give {cv2['delta_r_eff']*100:.2f} % for Z2 "
            f"and "
            f"{net['architectures']['Z1']['convergence']['delta_r_eff']*100:.2f} % for Z1. "

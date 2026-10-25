@@ -59,6 +59,7 @@ CLOSED_IDS = {
     "elec.bga_rho_T_model",
     "elec.branch_average_currents",
     "elec.current_waveforms_defined",
+    "elec.cutout_penalty_isolated",
     "elec.interface_primary_selected",
     "elec.microbump_series_resistance",
     "elec.one_owner_per_conductor",

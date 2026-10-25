@@ -285,14 +285,14 @@
    "area": "PkgRDL",
    "gate": "continuous Z1 package HV RDL exists",
    "status": "IMPLEMENTED",
-   "evidence": "2-D sheet over the 30 mm substrate, 8 supply contacts to 49 cell nodes, full centred 0.8 mm lattice, nearest-to-load symmetric pairs; R_eff 2.8146 mOhm at RDL_T2_RDL_M"
+   "evidence": "2-D sheet over the 30 mm substrate, 16 supply contacts to 49 cell nodes, BGA_P1/nearest_symmetric: 16+16 from full lattice (1369 candidates); R_eff 1.7849 mOhm at RDL_T2_RDL_M"
   },
   {
    "id": "elec.z2_pkg_hv_rdl_geometry",
    "area": "PkgRDL",
    "gate": "continuous Z2 package HV RDL exists",
    "status": "IMPLEMENTED",
-   "evidence": "same sheet but sources restricted to the surviving annulus (cutout removes the interior); R_eff 1.5460 mOhm. THE RATIO TO Z1 IS WITHDRAWN as a physical conclusion: it is unconverged (5.13x at 61x61 against 4.53x at 101x101) and contaminated by a hard-coded 3.0 mm cell pitch against the actual 3.165243 mm, synthetic non-lattice Z1 sources, BGA contacts smaller than the grid spacing, and imposed equal source currents. Preliminary unconverged network observation only"
+   "evidence": "same sheet but sources restricted to the BGA_P1/nearest_symmetric: 16+16 from annulus (cutout removes the interior) (528 candidates); R_eff 1.4337 mOhm. THE RATIO TO Z1 IS WITHDRAWN as a physical conclusion: it is unconverged (5.13x at 61x61 against 4.53x at 101x101) and contaminated by a hard-coded 3.0 mm cell pitch against the actual 3.165243 mm, synthetic non-lattice Z1 sources, BGA contacts smaller than the grid spacing, and imposed equal source currents. Preliminary unconverged network observation only"
   },
   {
    "id": "elec.pkg_rdl_sheet_model",
@@ -306,7 +306,7 @@
    "area": "PkgRDL",
    "gate": "BGA modelled as voltage-fed branches rather than imposed currents",
    "status": "OPEN",
-   "evidence": "the solver injects I_total/N into every source, which MATHEMATICALLY ENFORCES equal sharing -- an ideal current source cannot be redistributed by the sheet. elec.bga_network_sharing therefore cannot be solved until each ball is a resistance to a common source potential"
+   "evidence": "the solver injects I_total/N into every source, which MATHEMATICALLY ENFORCES equal sharing -- an ideal current source cannot be redistributed by the sheet. This is the CURRENT reason the gate is open; a package RDL network does now exist. Sharing cannot be solved until each ball is a resistance to a common source potential"
   },
   {
    "id": "elec.pkg_rdl_return_solved",
@@ -319,15 +319,15 @@
    "id": "elec.cutout_penalty_isolated",
    "area": "PkgRDL",
    "gate": "cutout penalty isolated from BGA-placement penalty",
-   "status": "OPEN",
-   "evidence": "the present comparison uses real annular sites for Z2 against SYNTHETIC non-lattice sites for Z1, so placement and cutout effects are confounded"
+   "status": "SPECIFIED",
+   "evidence": "CTRL_FULL (1369 candidate sites) against CTRL_CUTOUT (528), with sheet, cells, ball count, allocation rule and grid all held identical: dR_cutout = -0.351 mOhm, i.e. the cutout slightly REDUCES resistance because nearest-to-centroid selection would otherwise cluster balls centrally. Changing only the rule on the same annulus moves R_eff 2.047 mOhm, so placement dominates the cutout by ~5.8x. SPECIFIED not IMPLEMENTED: Z1 remains unconverged and the sources are still current-fed"
   },
   {
    "id": "elec.pkg_rdl_network_converged",
    "area": "PkgRDL",
    "gate": "package RDL network converged",
    "status": "OPEN",
-   "evidence": "NOT CONVERGED. Threshold 1 % on R_eff was declared before any result was read; four levels (41/61/81/101) give 1.30 % for Z2 and 2.17 % for Z1. Finite-area contacts already removed the point-source log singularity that made the first attempt diverge; the residual is reported rather than absorbed by loosening the threshold"
+   "evidence": "Z2 NOW CONVERGES at 0.430 % after the ball counts were matched, but Z1 does not at 2.168 %. A ratio is only as converged as its worse half, so no architecture ratio is reportable. Threshold 1 % on R_eff was declared before any result was read; four levels (41/61/81/101) give 0.43 % for Z2 and 2.17 % for Z1. Finite-area contacts already removed the point-source log singularity that made the first attempt diverge; the residual is reported rather than absorbed by loosening the threshold"
   },
   {
    "id": "elec.interface_primary_selected",
@@ -809,6 +809,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 49,
+ "n_open": 48,
  "n_elems": 38623
 }
