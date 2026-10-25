@@ -87,6 +87,9 @@ REQUIRED_GATES = {
             "elec.bga_bulk_dc_baseline", "elec.bga_rms_current",
             "elec.bga_network_sharing", "mat.copper_resistivity_canonical",
             "elec.tsv_conductor_geometry_consistent"],
+    "interface": ["elec.interface_primary_selected", "elec.source_pad_geometry",
+                  "elec.source_pad_resistance", "elec.source_pad_count",
+                  "elec.source_pad_loss", "elec.phase_group_index_mapping"],
     "recompute": ["mat.bga_alloy_provenance", "elec.bga_rho_T_model",
                   "elec.microbump_geometry_closed", "elec.microbump_series_resistance",
                   "elec.tsv_transition_audited"],
@@ -310,12 +313,14 @@ def gates():
         "provides; L1B explicit named SCENARIOS (HV-S0 continuous, HV-S1 square at D). "
         "L2 is NOT built and cannot be from the pinned source")
     add("elec.z1_hv_rms_current", "RMS", "48 V rail RMS current", "OPEN",
-        f"two SCENARIOS, not a bracket: HV-S0 continuous {r1['hv_S0_a']:.2f} A and "
-        f"HV-S1 constant square pulse at D {r1['hv_S1_a']:.2f} A. S1 is the MINIMUM RMS "
-        f"for support D (Cauchy-Schwarz), NOT an upper bound; {r1['hv_upper_bound']}. "
-        f"They differ 4x in RMS and 16x in I^2 R -- Z1 BGA supply "
-        f"{L1['terms']['P_BGA_supply']['bracket_w'][0]*1e3:.1f} vs "
-        f"{L1['terms']['P_BGA_supply']['bracket_w'][1]*1e3:.0f} mW")
+        f"THREE named SCENARIOS, not a bracket: HV-S0 continuous {r1['hv_S0_a']:.2f} A, "
+        f"HV-S1 square pulse at the buck duty {r1['hv_S1_a']:.2f} A, HV-S2 square pulse "
+        f"at the overall ratio {r1['hv_S2_a']:.2f} A (the duty the DVPD source's Eq.(5) "
+        f"assumes). S1 and S2 are MINIMUM RMS values for their supports, NOT upper "
+        f"bounds; {r1['hv_upper_bound']}. Z1 BGA supply spans "
+        f"{L1['terms']['P_BGA_supply']['scenario_w']['HV_S0']*1e3:.1f} / "
+        f"{L1['terms']['P_BGA_supply']['scenario_w']['HV_S1']*1e3:.0f} / "
+        f"{L1['terms']['P_BGA_supply']['scenario_w']['HV_S2']*1e3:.0f} mW")
     add("elec.z2_lv_rms_current", "RMS", "1 V substrate rail RMS current", "IMPLEMENTED",
         f"per-cell rms/avg = {r1['cell_rms_over_avg']:.6f} from the model's own "
         f"aggregate ripple. The 49 TSV fields are ELECTRICALLY SEPARATE, so "
@@ -342,10 +347,49 @@ def gates():
         "30 um as CONDUCTING Cu diameter gives 7.215 mOhm, matching the source's "
         "~7.1 mOhm; subtracting the 0.5 um liner gives 7.721 mOhm and does not. "
         "Electrical conducting diameter and mechanical outer diameter are now distinct")
+    import pad_interface as PAD
+    import rms_currents as _R
+    xc = PAD.source_cross_check()
+    psys = L1["pad"]
+    add("elec.interface_primary_selected", "Interface",
+        "primary die-side interface technology selected", "IMPLEMENTED",
+        f"IF_PAD_SRC (Table III Cu pad) is primary; IF_MB_ALT (Cu pillar + solder + UBM "
+        f"+ IMC) is an ALTERNATIVE technology only. The source's R_c of "
+        f"{PAD.PAD_R_SRC_MOHM} mOhm is exactly bulk Cu to "
+        f"{xc['rel_diff']*100:.2f} %, which is consistent with a pad and inconsistent "
+        f"with a solder microbump carrying IMC and contact terms")
+    add("elec.source_pad_geometry", "Interface", "source pad geometry verified",
+        "IMPLEMENTED",
+        f"Table III RDL/Chiplet read directly from {PAD.ARXIV}: d_c {PAD.PAD_D_UM:.0f} um, "
+        f"h_c {PAD.PAD_H_UM:.0f} um, p_c {PAD.PAD_P_UM:.0f} um, A_c {PAD.PAD_A_UM2:.0f} "
+        f"um^2. The pad is {PAD.PAD_SHAPE}: a circular reading of d_c gives 78.54 um^2 "
+        f"and contradicts the source's own A_c")
+    add("elec.source_pad_resistance", "Interface", "source pad resistance reproduced",
+        "IMPLEMENTED",
+        f"rho_Cu*h/A = {xc['bulk_R_mohm']:.4f} mOhm against Table III's "
+        f"{xc['source_R_mohm']} mOhm, {xc['rel_diff']*100:.2f} % apart. The published "
+        f"value contains NO contact, UBM or IMC term. A circular misreading would give "
+        f"{xc['circular_misreading_mohm']:.3f} mOhm")
+    add("elec.source_pad_count", "Interface", "pad count sized for the 49-cell design",
+        "SPECIFIED",
+        f"{psys['per_cell']['PAD_ADOPTED']['n_per_rail']} per rail per cell, "
+        f"geometry-limited; the drop-limited count is only "
+        f"{psys['per_cell']['PAD_DROP']['n_per_rail']}. The source's 200,000 VIC "
+        f"allocation is NOT copied -- its semantics are {PAD.SRC_VIC_SEMANTICS[:40]}... "
+        f"and it optimized a 70-VR architecture")
+    add("elec.source_pad_loss", "Interface", "pad interface loss", "IMPLEMENTED",
+        f"P_pad_VDD = P_pad_GND = {psys['p_pad_vdd_w']*1e3:.3f} mW at T_ref, CLOSED "
+        f"because the 1 V cell output RMS is known from the converter model")
+    add("elec.phase_group_index_mapping", "Interface",
+        "branch phase group derived from the generator, not the index", "IMPLEMENTED",
+        "generate_B_array() interleaves distA and distB, giving A,B,A for N=3 K=3 "
+        "K_A=2. The naive 'A if k < K_A else B' gives A,A,B and was wrong; B_array "
+        "[1,1,1] alone cannot distinguish them")
     add("mat.bga_alloy_provenance", "Recompute", "BGA solder alloy provenance",
         "SPECIFIED",
-        "the retrievable abstract of 10.1109/TCPMT.2026.3724907 does NOT state a solder "
-        "alloy, so the model no longer asserts SAC305. The RESISTIVITY is sourced "
+        "Table III footnote b gives 'Solder resistivity: 130 nOhm.m, Cu resistivity: "
+        "17 nOhm.m' and names the BGA material only as 'solder' -- the alloy is still "
+        "not stated, so the model does not assert SAC305. The RESISTIVITY is sourced "
         f"separately: {IL.RHO_SOLDER_20C*1e9:.0f} nOhm.m, {IL.BGA_RHO_STATUS}. "
         f"Alloy itself: {IL.BGA_ALLOY_STATUS}")
     add("elec.bga_rho_T_model", "Recompute", "BGA resistivity is temperature dependent",
@@ -356,9 +400,9 @@ def gates():
         f"Z2 {L2['bga']['p_total_w']*1e3:.2f} mW (equal-sharing lower bound)")
     notrun("elec.microbump_geometry_closed", "Recompute",
            "microbump field geometry defined",
-           "no microbump field exists in the physical config; diameter, pitch and count "
-           "are all OPEN, so loss is bracketed "
-           f"{L1['microbump']['p_low_w']*1e3:.1f}-{L1['microbump']['p_high_w']*1e3:.0f} mW")
+           "SUPERSEDED as the primary interface by the source Cu pad "
+           "(elec.source_pad_*). The arbitrary microbump bracket is retained only as "
+           "legacy_sensitivity and no longer drives any ledger term")
     add("elec.microbump_series_resistance", "Recompute",
         "microbump modelled as a series ladder with an explicit contact term",
         "SPECIFIED",

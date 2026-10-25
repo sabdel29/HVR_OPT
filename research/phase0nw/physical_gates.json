@@ -236,7 +236,7 @@
    "area": "RMS",
    "gate": "48 V rail RMS current",
    "status": "OPEN",
-   "evidence": "two SCENARIOS, not a bracket: HV-S0 continuous 23.69 A and HV-S1 constant square pulse at D 94.77 A. S1 is the MINIMUM RMS for support D (Cauchy-Schwarz), NOT an upper bound; NONE EXISTS from average current alone. They differ 4x in RMS and 16x in I^2 R -- Z1 BGA supply 10.9 vs 174 mW"
+   "evidence": "THREE named SCENARIOS, not a bracket: HV-S0 continuous 23.69 A, HV-S1 square pulse at the buck duty 94.77 A, HV-S2 square pulse at the overall ratio 164.15 A (the duty the DVPD source's Eq.(5) assumes). S1 and S2 are MINIMUM RMS values for their supports, NOT upper bounds; NONE EXISTS from average current alone. Z1 BGA supply spans 10.9 / 174 / 523 mW"
   },
   {
    "id": "elec.z2_lv_rms_current",
@@ -281,11 +281,53 @@
    "evidence": "30 um as CONDUCTING Cu diameter gives 7.215 mOhm, matching the source's ~7.1 mOhm; subtracting the 0.5 um liner gives 7.721 mOhm and does not. Electrical conducting diameter and mechanical outer diameter are now distinct"
   },
   {
+   "id": "elec.interface_primary_selected",
+   "area": "Interface",
+   "gate": "primary die-side interface technology selected",
+   "status": "IMPLEMENTED",
+   "evidence": "IF_PAD_SRC (Table III Cu pad) is primary; IF_MB_ALT (Cu pillar + solder + UBM + IMC) is an ALTERNATIVE technology only. The source's R_c of 1.7 mOhm is exactly bulk Cu to 0.00 %, which is consistent with a pad and inconsistent with a solder microbump carrying IMC and contact terms"
+  },
+  {
+   "id": "elec.source_pad_geometry",
+   "area": "Interface",
+   "gate": "source pad geometry verified",
+   "status": "IMPLEMENTED",
+   "evidence": "Table III RDL/Chiplet read directly from arXiv:2606.28837: d_c 10 um, h_c 10 um, p_c 20 um, A_c 100 um^2. The pad is square_10x10_um: a circular reading of d_c gives 78.54 um^2 and contradicts the source's own A_c"
+  },
+  {
+   "id": "elec.source_pad_resistance",
+   "area": "Interface",
+   "gate": "source pad resistance reproduced",
+   "status": "IMPLEMENTED",
+   "evidence": "rho_Cu*h/A = 1.7000 mOhm against Table III's 1.7 mOhm, 0.00 % apart. The published value contains NO contact, UBM or IMC term. A circular misreading would give 2.165 mOhm"
+  },
+  {
+   "id": "elec.source_pad_count",
+   "area": "Interface",
+   "gate": "pad count sized for the 49-cell design",
+   "status": "SPECIFIED",
+   "evidence": "4908 per rail per cell, geometry-limited; the drop-limited count is only 4. The source's 200,000 VIC allocation is NOT copied -- its semantics are AMBIGUOUS -- the paper does not state wh... and it optimized a 70-VR architecture"
+  },
+  {
+   "id": "elec.source_pad_loss",
+   "area": "Interface",
+   "gate": "pad interface loss",
+   "status": "IMPLEMENTED",
+   "evidence": "P_pad_VDD = P_pad_GND = 7.184 mW at T_ref, CLOSED because the 1 V cell output RMS is known from the converter model"
+  },
+  {
+   "id": "elec.phase_group_index_mapping",
+   "area": "Interface",
+   "gate": "branch phase group derived from the generator, not the index",
+   "status": "IMPLEMENTED",
+   "evidence": "generate_B_array() interleaves distA and distB, giving A,B,A for N=3 K=3 K_A=2. The naive 'A if k < K_A else B' gives A,A,B and was wrong; B_array [1,1,1] alone cannot distinguish them"
+  },
+  {
    "id": "mat.bga_alloy_provenance",
    "area": "Recompute",
    "gate": "BGA solder alloy provenance",
    "status": "SPECIFIED",
-   "evidence": "the retrievable abstract of 10.1109/TCPMT.2026.3724907 does NOT state a solder alloy, so the model no longer asserts SAC305. The RESISTIVITY is sourced separately: 130 nOhm.m, SOURCE_BACKED -- June-2026 via scripts/phase0m/interconnect.py. Alloy itself: OPEN -- the design source does not state the alloy"
+   "evidence": "Table III footnote b gives 'Solder resistivity: 130 nOhm.m, Cu resistivity: 17 nOhm.m' and names the BGA material only as 'solder' -- the alloy is still not stated, so the model does not assert SAC305. The RESISTIVITY is sourced separately: 130 nOhm.m, SOURCE_BACKED -- June-2026 via scripts/phase0m/interconnect.py. Alloy itself: OPEN -- the design source does not state the alloy"
   },
   {
    "id": "elec.bga_rho_T_model",
@@ -299,7 +341,7 @@
    "area": "Recompute",
    "gate": "microbump field geometry defined",
    "status": "OPEN",
-   "evidence": "no microbump field exists in the physical config; diameter, pitch and count are all OPEN, so loss is bracketed 4.3-139 mW"
+   "evidence": "SUPERSEDED as the primary interface by the source Cu pad (elec.source_pad_*). The arbitrary microbump bracket is retained only as legacy_sensitivity and no longer drives any ledger term"
   },
   {
    "id": "elec.microbump_series_resistance",

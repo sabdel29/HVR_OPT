@@ -2,18 +2,18 @@
 
 Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_physical_gates.py`: the config is loaded, the mesh is built, and the measured geometry decides the status. Nothing here is typed by hand, because a hand-typed status table goes stale a phase after it is written.
 
-**43 of 88 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
+**43 of 94 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
 
 Maturity is reported by status rather than collapsed into "closed", because SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:
 
 | status | count |
 |---|---:|
-| IMPLEMENTED | 33 |
-| SPECIFIED | 12 |
+| IMPLEMENTED | 38 |
+| SPECIFIED | 13 |
 | VALIDATED | 0 |
 | OPEN | 43 |
 
-So **45 of 88 are non-open**, of which only 33 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
+So **51 of 94 are non-open**, of which only 38 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
 
 | status | meaning |
 |---|---|
@@ -59,16 +59,22 @@ So **45 of 88 are non-open**, of which only 33 are IMPLEMENTED and **0 are VALID
 | RMS | individual branch waveforms | **OPEN** | WITHDRAWN in Phase 0N-AD. Decomposing the summed output ripple into per-branch terms over D*T does not give a branch's periodic waveform; volt-second balance on a conventional branch gives 4.6574 A on both ramps against the 0.310 A previously claimed for phase B. The pinned source has no switch-state sequence to settle it |
 | RMS | 48 V input waveform | **OPEN** | no SC charge-transfer sequence, phase displacement or dead time in the pinned source; see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md |
 | RMS | RMS scenario framework | **IMPLEMENTED** | L0 DC lower bound; L1A aggregate quantities the converter model genuinely provides; L1B explicit named SCENARIOS (HV-S0 continuous, HV-S1 square at D). L2 is NOT built and cannot be from the pinned source |
-| RMS | 48 V rail RMS current | **OPEN** | two SCENARIOS, not a bracket: HV-S0 continuous 23.69 A and HV-S1 constant square pulse at D 94.77 A. S1 is the MINIMUM RMS for support D (Cauchy-Schwarz), NOT an upper bound; NONE EXISTS from average current alone. They differ 4x in RMS and 16x in I^2 R -- Z1 BGA supply 10.9 vs 174 mW |
+| RMS | 48 V rail RMS current | **OPEN** | THREE named SCENARIOS, not a bracket: HV-S0 continuous 23.69 A, HV-S1 square pulse at the buck duty 94.77 A, HV-S2 square pulse at the overall ratio 164.15 A (the duty the DVPD source's Eq.(5) assumes). S1 and S2 are MINIMUM RMS values for their supports, NOT upper bounds; NONE EXISTS from average current alone. Z1 BGA supply spans 10.9 / 174 / 523 mW |
 | RMS | 1 V substrate rail RMS current | **IMPLEMENTED** | per-cell rms/avg = 1.008078 from the model's own aggregate ripple. The 49 TSV fields are ELECTRICALLY SEPARATE, so P = 49*I_cell_rms^2*(R_VDD+R_GND) with no cross terms and inter-cell phase cannot enter. Z2 substrate TSV loss is RMS-CLOSED at 213.0 mW per rail |
 | RMS | source-backed bulk BGA DC lower bound | **IMPLEMENTED** | Z1 10.889 mW supply at equal sharing and I_avg; single-ball bulk R 0.310 mOhm, consistent with the source's ~0.3 mOhm |
 | RMS | BGA loss uses RMS current | **OPEN** | blocked by elec.z1_hv_rms_current: the 48 V RMS is a bracket |
 | RMS | BGA current sharing from the RDL network | **OPEN** | equal sharing is assumed and flagged a lower bound; no package RDL network exists to produce the real split |
 | RMS | one canonical copper resistivity | **IMPLEMENTED** | tsv_fields carried its own 16.8 nOhm.m ASSUMPTION against phase0m's 17.0 nOhm.m SOURCE_BACKED; now imported, 17.0 nOhm.m everywhere |
 | RMS | TSV conducting diameter resolved against the source resistance | **IMPLEMENTED** | 30 um as CONDUCTING Cu diameter gives 7.215 mOhm, matching the source's ~7.1 mOhm; subtracting the 0.5 um liner gives 7.721 mOhm and does not. Electrical conducting diameter and mechanical outer diameter are now distinct |
-| Recompute | BGA solder alloy provenance | **SPECIFIED** | the retrievable abstract of 10.1109/TCPMT.2026.3724907 does NOT state a solder alloy, so the model no longer asserts SAC305. The RESISTIVITY is sourced separately: 130 nOhm.m, SOURCE_BACKED -- June-2026 via scripts/phase0m/interconnect.py. Alloy itself: OPEN -- the design source does not state the alloy |
+| Interface | primary die-side interface technology selected | **IMPLEMENTED** | IF_PAD_SRC (Table III Cu pad) is primary; IF_MB_ALT (Cu pillar + solder + UBM + IMC) is an ALTERNATIVE technology only. The source's R_c of 1.7 mOhm is exactly bulk Cu to 0.00 %, which is consistent with a pad and inconsistent with a solder microbump carrying IMC and contact terms |
+| Interface | source pad geometry verified | **IMPLEMENTED** | Table III RDL/Chiplet read directly from arXiv:2606.28837: d_c 10 um, h_c 10 um, p_c 20 um, A_c 100 um^2. The pad is square_10x10_um: a circular reading of d_c gives 78.54 um^2 and contradicts the source's own A_c |
+| Interface | source pad resistance reproduced | **IMPLEMENTED** | rho_Cu*h/A = 1.7000 mOhm against Table III's 1.7 mOhm, 0.00 % apart. The published value contains NO contact, UBM or IMC term. A circular misreading would give 2.165 mOhm |
+| Interface | pad count sized for the 49-cell design | **SPECIFIED** | 4908 per rail per cell, geometry-limited; the drop-limited count is only 4. The source's 200,000 VIC allocation is NOT copied -- its semantics are AMBIGUOUS -- the paper does not state wh... and it optimized a 70-VR architecture |
+| Interface | pad interface loss | **IMPLEMENTED** | P_pad_VDD = P_pad_GND = 7.184 mW at T_ref, CLOSED because the 1 V cell output RMS is known from the converter model |
+| Interface | branch phase group derived from the generator, not the index | **IMPLEMENTED** | generate_B_array() interleaves distA and distB, giving A,B,A for N=3 K=3 K_A=2. The naive 'A if k < K_A else B' gives A,A,B and was wrong; B_array [1,1,1] alone cannot distinguish them |
+| Recompute | BGA solder alloy provenance | **SPECIFIED** | Table III footnote b gives 'Solder resistivity: 130 nOhm.m, Cu resistivity: 17 nOhm.m' and names the BGA material only as 'solder' -- the alloy is still not stated, so the model does not assert SAC305. The RESISTIVITY is sourced separately: 130 nOhm.m, SOURCE_BACKED -- June-2026 via scripts/phase0m/interconnect.py. Alloy itself: OPEN -- the design source does not state the alloy |
 | Recompute | BGA resistivity is temperature dependent | **IMPLEMENTED** | rho_solder(T) = 130 nOhm.m x (1 + 4.0e-03(T-20)); alpha is an ASSUMPTION. Recomputed BGA loss at 20 C: Z1 21.78 mW, Z2 21.87 mW (equal-sharing lower bound) |
-| Recompute | microbump field geometry defined | **OPEN** | no microbump field exists in the physical config; diameter, pitch and count are all OPEN, so loss is bracketed 4.3-139 mW |
+| Recompute | microbump field geometry defined | **OPEN** | SUPERSEDED as the primary interface by the source Cu pad (elec.source_pad_*). The arbitrary microbump bracket is retained only as legacy_sensitivity and no longer drives any ledger term |
 | Recompute | microbump modelled as a series ladder with an explicit contact term | **SPECIFIED** | R = R_bulk + R_constriction + R_contact, with r_contact = 0 labelled the IDEAL-CONTACT LOWER BOUND rather than a claim of zero |
 | Recompute | TSV landing/transition resistance audited against the existing spreading term | **SPECIFIED** | 10.1145/3698364.3705353 describes DC crowding where current TURNS between landing pad, via and TSV. The two-ended constriction already modelled is the plane-to-via-mouth convergence. They may be different effects; no second factor is added until that is established, because adding one would double-count. Recomputed TSV loss: Z1 0.235 mW, Z2 419.2 mW |
 | Literature | DOI-backed provenance matrix for interconnect assumptions | **IMPLEMENTED** | 16 DOIs resolved via Crossref/OpenAlex: 0 DIRECT, 5 CLOSE_ANALOG, 11 CONTEXT_ONLY. research/phase0naa/interconnect_literature_matrix.csv |
