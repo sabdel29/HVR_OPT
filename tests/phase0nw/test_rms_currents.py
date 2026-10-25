@@ -159,9 +159,10 @@ def test_the_two_scenarios_differ_by_sixteen_in_loss_but_are_not_a_span():
     import interconnect_loss as IL
     L = IL.ledger("Z1")
     for k in ("P_BGA_supply", "P_BGA_return"):
-        s0, s1 = L["terms"][k]["bracket_w"]
-        assert s1 / s0 == pytest.approx(16.0, rel=0.02)
-        assert L["terms"][k]["status"] == "SCENARIO_S0_S1"
+        sc = L["terms"][k]["scenario_w"]
+        assert sc["HV_S1"] / sc["HV_S0"] == pytest.approx(16.0, rel=0.02)
+        assert sc["HV_S2"] > sc["HV_S1"], "the Eq.(5) duty gives a larger scenario still"
+        assert L["terms"][k]["maturity"]["loss"] == "SCENARIO"
     assert "NONE EXISTS" in L["rms"]["hv_upper_bound"]
 
 
@@ -169,8 +170,81 @@ def test_z2_substrate_tsv_is_rms_closed_from_local_cell_currents():
     import interconnect_loss as IL
     L = IL.ledger("Z2")
     t = L["terms"]["P_TSV_VDD"]
-    assert t["status"] == "RECOMPUTED_RMS"
-    lo, hi = t["bracket_w"]
-    assert hi == pytest.approx(lo, rel=1e-9)
-    assert t["w"] * 1e3 == pytest.approx(213.0, abs=1.0)   # 209.60 raw x 1.008078^2
+    assert t["maturity"] == {"geometry": "CLOSED", "current": "CLOSED", "loss": "CLOSED"}
+    assert t["scenario_w"] is None
+    assert t["w"] * 1e3 == pytest.approx(213.0, abs=1.0)
     assert L["rms"]["i_cell_rms_a"] == pytest.approx(20.5730, abs=1e-3)
+
+
+# ================= brief 1, 2, 3: no stale bound/bracket wording left ===============
+STALE = ["upper bound", "rms bracket", "square-pulse upper",
+         "buck side is fully determined", "bracket_w"]
+
+
+@pytest.mark.parametrize("phrase", STALE)
+def test_active_source_has_no_stale_bound_wording(phrase):
+    """Allowed only where the text explicitly records the statement as withdrawn."""
+    import re as _re
+    for f in ("scripts/phase0nw/rms_currents.py",
+              "scripts/phase0nw/interconnect_loss.py",
+              "scripts/phase0nw/pad_interface.py"):
+        txt = (R / f).read_text()
+        for m in _re.finditer(_re.escape(phrase), txt, _re.I):
+            ctx = txt[max(0, m.start() - 320):m.start() + 200].lower()
+            assert any(w in ctx for w in ("withdraw", "not an upper", "no rms upper",
+                                          "earlier version", "lower bound", "never",
+                                          "said otherwise", "is a lower", "no finite",
+                                          "previous version", "upper_bound_status",
+                                          "none exists")), (
+                f"{f}: stale '{phrase}' without a withdrawal note")
+
+
+def test_scenarios_are_named_not_bracketed():
+    import interconnect_loss as IL
+    L = IL.ledger("Z1")
+    t = L["terms"]["P_BGA_supply"]
+    assert "bracket_w" not in t
+    assert set(t["scenario_w"]) == {"HV_S0", "HV_S1", "HV_S2"}
+    for bad in ("lo", "hi", "min", "max"):
+        assert bad not in t
+
+
+# ====================== brief 4: phase group is not index-based ====================
+def test_phase_group_comes_from_the_generator_interleave(s):
+    """For N=3,K=3,K_A=2 the generator yields A,B,A -- not the naive A,A,B."""
+    import rms_currents as RMS
+    order = [g for g, _ in RMS.phase_group_order(3, 3, 2)]
+    assert order == ["A", "B", "A"]
+    assert order != ["A", "A", "B"], "index-based inference would give this"
+    assert [b["phase"] for b in s["branches"]] == order
+    for b in s["branches"]:
+        assert "interleave" in b["phase_provenance"]
+
+
+def test_no_index_based_phase_inference_in_source():
+    src = (R / "scripts/phase0nw/rms_currents.py").read_text()
+    assert '"A" if k < K_A else "B"' not in src
+
+
+# ============================ brief 46: three-axis maturity ========================
+@pytest.mark.parametrize("arch", ["Z1", "Z2"])
+def test_every_term_has_geometry_current_and_loss_maturity(arch):
+    import interconnect_loss as IL
+    for k, v in IL.ledger(arch)["terms"].items():
+        m = v["maturity"]
+        assert set(m) == {"geometry", "current", "loss"}
+        assert m["geometry"] in ("CLOSED", "BOUNDED", "OPEN")
+        assert m["current"] in ("CLOSED", "SCENARIO", "OPEN")
+        assert m["loss"] in ("CLOSED", "SCENARIO", "OPEN")
+        if m["loss"] == "CLOSED":
+            assert v["w"] is not None
+        if m["loss"] == "SCENARIO":
+            assert v["w"] is None and v["scenario_w"]
+
+
+def test_closed_geometry_is_not_downgraded_by_open_current():
+    """A resistor whose geometry is known must not read as unresolved just because its
+    waveform is not."""
+    import interconnect_loss as IL
+    t = IL.ledger("Z1")["terms"]["P_BGA_supply"]["maturity"]
+    assert t["geometry"] == "CLOSED" and t["current"] == "OPEN"

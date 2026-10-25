@@ -1,35 +1,26 @@
-"""PHASE 0N-AC --- avg / RMS / peak currents per rail, with an explicit fidelity ladder.
+"""PHASE 0N-AC/AD/AE --- avg / RMS / peak currents, with what is and is not resolved.
 
-WHY THIS EXISTS. The previous phase computed I^2 R using I_avg = P_in/48. Average current
-closes ENERGY balance; RMS current closes CONDUCTION loss. They coincide only for a DC
-waveform, and nothing had demonstrated that for any conductor here.
+KNOWN
+  branch AVERAGE current          I_cell * B_i / sum(B) = 6.8027 A
+  aggregate per-cell output ripple  the converter model's own expression
+  per-cell output RMS             triangular RMS of the above
 
-THE LADDER (brief section 5):
+SCENARIO ONLY (named references, not bounds)
+  16 V gated-square reference
+  HV-S0  continuous 48 V input
+  HV-S1  square pulse at the BUCK duty D = V_out*N/V_in
+  HV-S2  square pulse at the OVERALL ratio V_out/V_in, which is the duty the DVPD
+         source's Eq.(5) assumes
 
-  RMS-L0  LOWER_BOUND_DC      I_rms = |I_avg|. Reproduces the Phase-0N-AB numbers and is
-                              a strict lower bound for any non-DC waveform.
-  RMS-L1  ANALYTIC            derived from the design's own duty, inductance, switching
-                              frequency and branch grouping. Used where the waveform
-                              shape is actually determined by those quantities.
-  RMS-L2  TIME_DOMAIN         requires the SC switch-state sequence. NOT BUILT -- see
-                              below.
+OPEN
+  individual branch periodic waveform, branch RMS, branch peak
+  actual 16 V rail waveform
+  actual 48 V SC input waveform
 
-WHAT L1 CAN AND CANNOT REACH.
-
-The buck side is fully determined: the framework's own ledger already derives the
-output ripple from D, f_sw, L, N, K and K_A, and a triangular inductor current has the
-closed-form RMS sqrt(I_dc^2 + dI_pp^2/12). Branch currents follow from the B array and
-the phase grouping. These are L1.
-
-The 48 V INPUT current is NOT determined by those quantities. It is set by the 3:1
-switched-capacitor stage's charge-transfer waveform, which depends on switch-state
-timing, phase shift, dead time and flying-capacitor impedance -- none of which exists in
-this framework. Inventing a sequence to produce an RMS number would be fabrication, so
-the 48 V RMS is returned as a BRACKET with the DC lower bound and a square-pulse upper
-bound, and its status stays OPEN.
-
-That matters because the 48 V rail is exactly where the BGA, the HV package RDL and the
-Z1 substrate TSVs live.
+There is NO RMS upper bound derivable from an average current, and I_avg/sqrt(D) is a
+LOWER bound for a waveform of support D, not an upper one. Earlier versions of this
+module said otherwise; see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md for the
+withdrawal and its evidence.
 """
 from __future__ import annotations
 
@@ -45,6 +36,40 @@ for _p in ("scripts/phase0mr", "scripts/phase0f", "scripts/phase0d", "scripts/ph
         sys.path.insert(0, str(R / _p))
 
 L0, L1, L2 = "RMS_L0_DC", "RMS_L1_ANALYTIC", "RMS_L2_TIME_DOMAIN"
+
+
+def phase_group_order(N: int, K: int, K_A: int) -> list:
+    """Reproduce generate_B_array()'s INTERLEAVING to recover each branch's phase group.
+
+    The order is NOT index-based. For N=3, K=3, K_A=2 the generator appends
+    distA[0], distB[0], distA[1], giving ['A', 'B', 'A'] -- while the naive
+    "A if k < K_A else B" gives ['A', 'A', 'B']. B_array alone is [1, 1, 1] and cannot
+    distinguish them; only re-running the generator's interleave can.
+
+    For the selected design this does not change any current magnitude, because all
+    three B_i are equal. It WILL matter the moment an edge is mapped to a particular
+    device or tier.
+    """
+    def distribute(branches, inductors):
+        base, rem = branches // inductors, branches % inductors
+        return [base + 1 if i < rem else base for i in range(inductors)]
+
+    K_B = K - K_A
+    distA, distB = distribute(math.ceil(N / 2), K_A), distribute(math.floor(N / 2), K_B)
+    order, i, j = [], 0, 0
+    if N % 2 == 0:
+        while i < len(distA) or j < len(distB):
+            if i < len(distA): order.append(("A", distA[i])); i += 1
+            if j < len(distB): order.append(("B", distB[j])); j += 1
+    elif K_A == 1:
+        while i < len(distA) or j < len(distB):
+            if j < len(distB): order.append(("B", distB[j])); j += 1
+            if i < len(distA): order.append(("A", distA[i])); i += 1
+    else:
+        while i < len(distA) or j < len(distB):
+            if i < len(distA): order.append(("A", distA[i])); i += 1
+            if j < len(distB): order.append(("B", distB[j])); j += 1
+    return order
 
 
 def design():
@@ -104,10 +129,16 @@ def cell_currents() -> dict:
         raise ValueError("volt-second balance broken in the conventional sanity check")
 
     b_sum = sum(B)
+    groups = phase_group_order(N, K, K_A)
+    if [g[1] for g in groups] != list(B):
+        raise ValueError(f"reconstructed B {[g[1] for g in groups]} != source {B}")
     branches = []
     for k, b in enumerate(B):
         branches.append({
-            "index": k, "phase": "A" if k < K_A else "B", "b_i": b,
+            "index": k, "phase": groups[k][0],
+            "phase_provenance": "generate_B_array() interleave, re-run from the pinned "
+                                "source; NOT inferred from the index",
+            "b_i": b,
             "i_avg_a": i_out * b / b_sum,
             "i_avg_status": "KNOWN -- I_cell * B_i / sum(B)",
             "ripple_pp_a": None, "i_rms_a": None, "i_peak_a": None,
@@ -161,6 +192,14 @@ def hv_input_scenarios(i_hv_avg_a: float, duty_eff: float | None = None) -> dict
         "HV_S1": {"name": "constant square pulse at the buck duty",
                   "i_rms_a": i_hv_avg_a / math.sqrt(D),
                   "rationale": "MINIMUM RMS for support exactly D; NOT an upper bound"},
+        "HV_S2": {"name": "square pulse at the overall ratio V_out/V_in",
+                  "i_rms_a": i_hv_avg_a / math.sqrt(d.v_out / d.v_in),
+                  "rationale": "the duty the DVPD source's Eq.(5) assumes -- it states "
+                               "the relation is valid 'when the input current waveform "
+                               "is nearly a square pulse with duty cycle proportional "
+                               "to Vout/Vin', for buck-derived INCLUDING HYBRID "
+                               "converters in CCM. Our 3:1 SC front end may or may not "
+                               "behave that way; still a scenario."},
         "ratio_S1_over_S0": 1.0 / math.sqrt(D),
         "loss_ratio_S1_over_S0": 1.0 / D,
         "upper_bound_a": None,
