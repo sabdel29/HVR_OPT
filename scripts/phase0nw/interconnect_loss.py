@@ -236,10 +236,17 @@ def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
                        "maturity": MAT("CLOSED", "OPEN", "SCENARIO")} if arch == "Z1"
                       else {"w": lv_val(tsv["p_gnd_w"]), "scenario_w": None,
                             "maturity": MAT("CLOSED", "CLOSED", "CLOSED")}),
-        "P_pad_VDD": {"w": pad["p_pad_vdd_w"], "scenario_w": None,
-                      "maturity": MAT("CLOSED", "CLOSED", "CLOSED")},
-        "P_pad_GND": {"w": pad["p_pad_gnd_w"], "scenario_w": None,
-                      "maturity": MAT("CLOSED", "CLOSED", "CLOSED")},
+        # One pad's area, resistance and the cell current are all closed. The FIELD
+        # COUNT is not -- no physical criterion selects it -- so the field loss is a
+        # count scenario spanning ~1227x, not a number.
+        "P_pad_VDD": {"w": None,
+                      "scenario_w": {k: v for k, v in
+                                     pad["scenario_p_pad_rail_w"].items()},
+                      "maturity": MAT("CLOSED", "CLOSED", "SCENARIO")},
+        "P_pad_GND": {"w": None,
+                      "scenario_w": {k: v for k, v in
+                                     pad["scenario_p_pad_rail_w"].items()},
+                      "maturity": MAT("CLOSED", "CLOSED", "SCENARIO")},
         "P_pkg_RDL_HV_supply": {"w": None, "scenario_w": None,
                                 "maturity": MAT("OPEN", "OPEN", "OPEN")},
         "P_pkg_RDL_HV_return": {"w": None, "scenario_w": None,
@@ -282,19 +289,24 @@ def main():
         print(f"\n=== {a}  (T_ref {L['T_c']:.0f} C, substrate rail "
               f"{L['tsv_rail_v']:.0f} V) ===")
         print(f"  I_HV {L['i_hv_a']:.4f} A   I_LV {L['i_lv_a']:.0f} A")
-        b = L["bga"]
-        print(f"  BGA   {b['i_per_ball_a']:.4f} A/ball  R_s {b['r_supply_ohm']*1e6:8.2f} uohm"
-              f"  P_s {b['p_supply_w']*1e3:8.3f} mW  P_r {b['p_return_w']*1e3:8.3f} mW"
-              f"  J_nom {b['j_nominal_A_cm2']:.0f} A/cm2")
-        t = L["tsv"]
-        print(f"  TSV   {t['n_vdd']}+{t['n_gnd']}/cell  R_v {t['r_vdd_ohm']*1e6:8.3f} uohm"
-              f"  P_VDD {t['p_vdd_w']*1e3:9.3f} mW  P_GND {t['p_gnd_w']*1e3:9.3f} mW")
-        m = L["microbump"]
-        print(f"  ubump bracket  {m['p_low_w']*1e3:.3f} - {m['p_high_w']*1e3:.1f} mW "
-              f"(geometry OPEN)")
-        print(f"  recomputed {L['n_recomputed']} terms = "
-              f"{L['p_recomputed_total_w']*1e3:.3f} mW; "
-              f"bracketed {L['n_bracketed']}; OPEN {L['n_open']}")
+        print(f"  loss CLOSED {L['n_loss_closed']}  SCENARIO {L['n_loss_scenario']}  "
+              f"OPEN {L['n_loss_open']}  |  geometry CLOSED {L['n_geometry_closed']}/12")
+        for k, v in L["terms"].items():
+            m = v["maturity"]
+            tag = f"{m['geometry']}/{m['current']}/{m['loss']}"
+            if v["w"] is not None:
+                print(f"    {k:22s} {v['w']*1e3:10.3f} mW   {tag}")
+            elif v.get("scenario_w"):
+                sc = v["scenario_w"]
+                print(f"    {k:22s} S0 {sc['HV_S0']*1e3:7.2f} S1 {sc['HV_S1']*1e3:8.1f} "
+                      f"S2 {sc['HV_S2']*1e3:8.1f} mW   {tag}")
+            else:
+                print(f"    {k:22s} {'--':>10s}      {tag}")
+        pd = L["pad"]
+        print(f"  pad field: count OPEN, loss {pd['loss_maturity']} spanning "
+              f"{pd['sensitivity']['loss_span_factor']:.0f}x "
+              f"({pd['sensitivity']['n_drop']} to "
+              f"{pd['sensitivity']['n_geom_max']} pads/rail/cell)")
 
 
 if __name__ == "__main__":

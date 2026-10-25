@@ -139,6 +139,10 @@ def test_ledger_marks_open_terms_open_not_zero(led):
             assert t[k]["w"] is None and t[k]["maturity"]["loss"] == "OPEN", (
                 f"{k} must be OPEN, not a zero that reads as 'no loss'")
         assert led[a]["n_loss_open"] == 6
-    # the source Cu pad replaced the arbitrary microbump bracket as the primary term
-    assert led["Z1"]["terms"]["P_pad_VDD"]["maturity"]["loss"] == "CLOSED"
+    # the source Cu pad replaced the arbitrary microbump bracket as the primary term,
+    # but its FIELD COUNT has no criterion, so its loss is a scenario not a value
+    pad = led["Z1"]["terms"]["P_pad_VDD"]
+    assert pad["maturity"] == {"geometry": "CLOSED", "current": "CLOSED",
+                               "loss": "SCENARIO"}
+    assert pad["w"] is None and pad["scenario_w"]
     assert "microbump_arbitrary_bracket" in led["Z1"]["legacy_sensitivity"]

@@ -66,31 +66,21 @@
    }
   },
   "n_geometry_closed": 6,
-  "n_loss_closed": 2,
+  "n_loss_closed": 0,
   "n_loss_open": 6,
-  "n_loss_scenario": 4,
-  "p_recomputed_total_w": 0.014367029626372915,
+  "n_loss_scenario": 6,
+  "p_recomputed_total_w": 0,
   "pad": {
    "cells": 49,
+   "count_maturity": "OPEN",
    "current_maturity": "CLOSED",
    "geometry_maturity": "CLOSED",
    "interface": "IF_PAD_SRC",
-   "loss_maturity": "CLOSED",
-   "n_gnd_total": 240492,
-   "n_vdd_total": 240492,
-   "note": "the 1 V cell output RMS is known from the converter model, so this interface's loss is genuinely closed at T_ref",
-   "p_pad_gnd_w": 0.007183514813186458,
-   "p_pad_total_w": 0.014367029626372915,
-   "p_pad_vdd_w": 0.007183514813186458,
+   "loss_maturity": "SCENARIO",
+   "note": "one-pad geometry, one-pad resistance and the cell current are all closed; the FIELD COUNT is not, so the field loss is a scenario spanning 1227x",
+   "p_pad_gnd_w": null,
+   "p_pad_vdd_w": null,
    "per_cell": {
-    "PAD_ADOPTED": {
-     "i_per_pad_a": 0.004191734027091049,
-     "j_per_pad_A_cm2": 4191.734027091049,
-     "n_per_rail": 4908,
-     "p_rail_w": 0.00014660234312625423,
-     "r_rail_ohm": 3.4637326813365925e-07,
-     "v_drop_v": 7.125947846054781e-06
-    },
     "PAD_DROP": {
      "i_per_pad_a": 5.143257651240717,
      "j_per_pad_A_cm2": 5143257.651240717,
@@ -99,7 +89,7 @@
      "r_rail_ohm": 0.0004249999999999999,
      "v_drop_v": 0.008743538007109216
     },
-    "PAD_GEOM": {
+    "PAD_GEOM_MAX": {
      "i_per_pad_a": 0.004191734027091049,
      "j_per_pad_A_cm2": 4191.734027091049,
      "n_per_rail": 4908,
@@ -107,6 +97,8 @@
      "r_rail_ohm": 3.4637326813365925e-07,
      "v_drop_v": 7.125947846054781e-06
     },
+    "adopted": null,
+    "adopted_status": "OPEN -- no physical criterion selects a count. Voltage drop gives a floor, geometry gives a ceiling, and the source's allocation semantics are AMBIGUOUS.",
     "budget_status": "BOUNDED_ENGINEERING -- declared drop budget",
     "budget_v": 0.01,
     "em_allowable": null,
@@ -122,8 +114,132 @@
      "usable_mm2": 3.927
     },
     "i_cell_rms_a": 20.573030604962867,
-    "r_one_pad_ohm": 0.0016999999999999997,
-    "selection_criterion": "adopted = geometry-limited count; the drop-limited count is far smaller, so geometry rather than voltage drop sets the field"
+    "keepout_frac": 0.3,
+    "r_one_pad_ohm": 0.0016999999999999997
+   },
+   "scenario_p_pad_rail_w": {
+    "PAD_DROP": 8.814172675779783,
+    "PAD_GEOM_MAX": 0.007183514813186458
+   },
+   "sensitivity": {
+    "conclusion": "interface loss spans 1227x across the admissible count range; no nominal count is selected",
+    "counts": [
+     {
+      "i_per_pad_a": 5.143257651240717,
+      "is_drop_floor": true,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 5143257.651240717,
+      "n_per_rail": 4,
+      "p_rail_w": 0.17988107501591394,
+      "p_system_both_rails_w": 17.628345351559567,
+      "r_rail_ohm": 0.0004249999999999999,
+      "v_drop_v": 0.008743538007109216
+     },
+     {
+      "i_per_pad_a": 2.0573030604962868,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 2057303.060496287,
+      "n_per_rail": 10,
+      "p_rail_w": 0.07195243000636557,
+      "p_system_both_rails_w": 7.051338140623827,
+      "r_rail_ohm": 0.00016999999999999996,
+      "v_drop_v": 0.0034974152028436865
+     },
+     {
+      "i_per_pad_a": 0.41146061209925733,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 411460.61209925736,
+      "n_per_rail": 50,
+      "p_rail_w": 0.014390486001273116,
+      "p_system_both_rails_w": 1.4102676281247652,
+      "r_rail_ohm": 3.399999999999999e-05,
+      "v_drop_v": 0.0006994830405687374
+     },
+     {
+      "i_per_pad_a": 0.20573030604962866,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 205730.30604962868,
+      "n_per_rail": 100,
+      "p_rail_w": 0.007195243000636558,
+      "p_system_both_rails_w": 0.7051338140623826,
+      "r_rail_ohm": 1.6999999999999996e-05,
+      "v_drop_v": 0.0003497415202843687
+     },
+     {
+      "i_per_pad_a": 0.041146061209925734,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 41146.061209925734,
+      "n_per_rail": 500,
+      "p_rail_w": 0.0014390486001273114,
+      "p_system_both_rails_w": 0.14102676281247653,
+      "r_rail_ohm": 3.399999999999999e-06,
+      "v_drop_v": 6.994830405687373e-05
+     },
+     {
+      "i_per_pad_a": 0.020573030604962867,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 20573.030604962867,
+      "n_per_rail": 1000,
+      "p_rail_w": 0.0007195243000636557,
+      "p_system_both_rails_w": 0.07051338140623827,
+      "r_rail_ohm": 1.6999999999999996e-06,
+      "v_drop_v": 3.4974152028436865e-05
+     },
+     {
+      "i_per_pad_a": 0.010286515302481434,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 10286.515302481434,
+      "n_per_rail": 2000,
+      "p_rail_w": 0.00035976215003182785,
+      "p_system_both_rails_w": 0.03525669070311913,
+      "r_rail_ohm": 8.499999999999998e-07,
+      "v_drop_v": 1.7487076014218432e-05
+     },
+     {
+      "i_per_pad_a": 0.004191734027091049,
+      "is_drop_floor": false,
+      "is_geom_ceiling": true,
+      "j_per_pad_A_cm2": 4191.734027091049,
+      "n_per_rail": 4908,
+      "p_rail_w": 0.00014660234312625423,
+      "p_system_both_rails_w": 0.014367029626372915,
+      "r_rail_ohm": 3.4637326813365925e-07,
+      "v_drop_v": 7.125947846054781e-06
+     }
+    ],
+    "counts_in_multi_MA_regime": [
+     4,
+     10
+    ],
+    "em_context_doi": "10.3390/ma14216394",
+    "em_context_note": "counts [4, 10] operate at or above 1e+06 A/cm^2, the regime in which 10.3390/ma14216394 observes Cu-Cu bump electromigration and interface current crowding. This flags a regime, it does not set a limit",
+    "em_context_status": "CONTEXT_ONLY / RELIABILITY_WARNING -- not an allowable, not a safe limit, not a lifetime criterion",
+    "keepout_cases": {
+     "KO_HIGH": {
+      "keepout_frac": 0.6,
+      "n_geom_per_rail": 2805,
+      "p_system_both_rails_w": 0.025138460394380845
+     },
+     "KO_LOW": {
+      "keepout_frac": 0.1,
+      "n_geom_per_rail": 6311,
+      "p_system_both_rails_w": 0.011173091650489348
+     },
+     "KO_NOM": {
+      "keepout_frac": 0.3,
+      "n_geom_per_rail": 4908,
+      "p_system_both_rails_w": 0.014367029626372915
+     }
+    },
+    "loss_span_factor": 1227.0,
+    "n_drop": 4,
+    "n_geom_max": 4908
    },
    "source": "10.1109/TCPMT.2026.3724907 Table III (arXiv:2606.28837)"
   },
@@ -214,19 +330,25 @@
     "maturity": {
      "current": "CLOSED",
      "geometry": "CLOSED",
-     "loss": "CLOSED"
+     "loss": "SCENARIO"
     },
-    "scenario_w": null,
-    "w": 0.007183514813186458
+    "scenario_w": {
+     "PAD_DROP": 8.814172675779783,
+     "PAD_GEOM_MAX": 0.007183514813186458
+    },
+    "w": null
    },
    "P_pad_VDD": {
     "maturity": {
      "current": "CLOSED",
      "geometry": "CLOSED",
-     "loss": "CLOSED"
+     "loss": "SCENARIO"
     },
-    "scenario_w": null,
-    "w": 0.007183514813186458
+    "scenario_w": {
+     "PAD_DROP": 8.814172675779783,
+     "PAD_GEOM_MAX": 0.007183514813186458
+    },
+    "w": null
    },
    "P_pkg_RDL_HV_return": {
     "maturity": {
@@ -350,31 +472,21 @@
    }
   },
   "n_geometry_closed": 6,
-  "n_loss_closed": 4,
+  "n_loss_closed": 2,
   "n_loss_open": 6,
-  "n_loss_scenario": 2,
-  "p_recomputed_total_w": 0.440375571395777,
+  "n_loss_scenario": 4,
+  "p_recomputed_total_w": 0.42600854176940406,
   "pad": {
    "cells": 49,
+   "count_maturity": "OPEN",
    "current_maturity": "CLOSED",
    "geometry_maturity": "CLOSED",
    "interface": "IF_PAD_SRC",
-   "loss_maturity": "CLOSED",
-   "n_gnd_total": 240492,
-   "n_vdd_total": 240492,
-   "note": "the 1 V cell output RMS is known from the converter model, so this interface's loss is genuinely closed at T_ref",
-   "p_pad_gnd_w": 0.007183514813186458,
-   "p_pad_total_w": 0.014367029626372915,
-   "p_pad_vdd_w": 0.007183514813186458,
+   "loss_maturity": "SCENARIO",
+   "note": "one-pad geometry, one-pad resistance and the cell current are all closed; the FIELD COUNT is not, so the field loss is a scenario spanning 1227x",
+   "p_pad_gnd_w": null,
+   "p_pad_vdd_w": null,
    "per_cell": {
-    "PAD_ADOPTED": {
-     "i_per_pad_a": 0.004191734027091049,
-     "j_per_pad_A_cm2": 4191.734027091049,
-     "n_per_rail": 4908,
-     "p_rail_w": 0.00014660234312625423,
-     "r_rail_ohm": 3.4637326813365925e-07,
-     "v_drop_v": 7.125947846054781e-06
-    },
     "PAD_DROP": {
      "i_per_pad_a": 5.143257651240717,
      "j_per_pad_A_cm2": 5143257.651240717,
@@ -383,7 +495,7 @@
      "r_rail_ohm": 0.0004249999999999999,
      "v_drop_v": 0.008743538007109216
     },
-    "PAD_GEOM": {
+    "PAD_GEOM_MAX": {
      "i_per_pad_a": 0.004191734027091049,
      "j_per_pad_A_cm2": 4191.734027091049,
      "n_per_rail": 4908,
@@ -391,6 +503,8 @@
      "r_rail_ohm": 3.4637326813365925e-07,
      "v_drop_v": 7.125947846054781e-06
     },
+    "adopted": null,
+    "adopted_status": "OPEN -- no physical criterion selects a count. Voltage drop gives a floor, geometry gives a ceiling, and the source's allocation semantics are AMBIGUOUS.",
     "budget_status": "BOUNDED_ENGINEERING -- declared drop budget",
     "budget_v": 0.01,
     "em_allowable": null,
@@ -406,8 +520,132 @@
      "usable_mm2": 3.927
     },
     "i_cell_rms_a": 20.573030604962867,
-    "r_one_pad_ohm": 0.0016999999999999997,
-    "selection_criterion": "adopted = geometry-limited count; the drop-limited count is far smaller, so geometry rather than voltage drop sets the field"
+    "keepout_frac": 0.3,
+    "r_one_pad_ohm": 0.0016999999999999997
+   },
+   "scenario_p_pad_rail_w": {
+    "PAD_DROP": 8.814172675779783,
+    "PAD_GEOM_MAX": 0.007183514813186458
+   },
+   "sensitivity": {
+    "conclusion": "interface loss spans 1227x across the admissible count range; no nominal count is selected",
+    "counts": [
+     {
+      "i_per_pad_a": 5.143257651240717,
+      "is_drop_floor": true,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 5143257.651240717,
+      "n_per_rail": 4,
+      "p_rail_w": 0.17988107501591394,
+      "p_system_both_rails_w": 17.628345351559567,
+      "r_rail_ohm": 0.0004249999999999999,
+      "v_drop_v": 0.008743538007109216
+     },
+     {
+      "i_per_pad_a": 2.0573030604962868,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 2057303.060496287,
+      "n_per_rail": 10,
+      "p_rail_w": 0.07195243000636557,
+      "p_system_both_rails_w": 7.051338140623827,
+      "r_rail_ohm": 0.00016999999999999996,
+      "v_drop_v": 0.0034974152028436865
+     },
+     {
+      "i_per_pad_a": 0.41146061209925733,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 411460.61209925736,
+      "n_per_rail": 50,
+      "p_rail_w": 0.014390486001273116,
+      "p_system_both_rails_w": 1.4102676281247652,
+      "r_rail_ohm": 3.399999999999999e-05,
+      "v_drop_v": 0.0006994830405687374
+     },
+     {
+      "i_per_pad_a": 0.20573030604962866,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 205730.30604962868,
+      "n_per_rail": 100,
+      "p_rail_w": 0.007195243000636558,
+      "p_system_both_rails_w": 0.7051338140623826,
+      "r_rail_ohm": 1.6999999999999996e-05,
+      "v_drop_v": 0.0003497415202843687
+     },
+     {
+      "i_per_pad_a": 0.041146061209925734,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 41146.061209925734,
+      "n_per_rail": 500,
+      "p_rail_w": 0.0014390486001273114,
+      "p_system_both_rails_w": 0.14102676281247653,
+      "r_rail_ohm": 3.399999999999999e-06,
+      "v_drop_v": 6.994830405687373e-05
+     },
+     {
+      "i_per_pad_a": 0.020573030604962867,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 20573.030604962867,
+      "n_per_rail": 1000,
+      "p_rail_w": 0.0007195243000636557,
+      "p_system_both_rails_w": 0.07051338140623827,
+      "r_rail_ohm": 1.6999999999999996e-06,
+      "v_drop_v": 3.4974152028436865e-05
+     },
+     {
+      "i_per_pad_a": 0.010286515302481434,
+      "is_drop_floor": false,
+      "is_geom_ceiling": false,
+      "j_per_pad_A_cm2": 10286.515302481434,
+      "n_per_rail": 2000,
+      "p_rail_w": 0.00035976215003182785,
+      "p_system_both_rails_w": 0.03525669070311913,
+      "r_rail_ohm": 8.499999999999998e-07,
+      "v_drop_v": 1.7487076014218432e-05
+     },
+     {
+      "i_per_pad_a": 0.004191734027091049,
+      "is_drop_floor": false,
+      "is_geom_ceiling": true,
+      "j_per_pad_A_cm2": 4191.734027091049,
+      "n_per_rail": 4908,
+      "p_rail_w": 0.00014660234312625423,
+      "p_system_both_rails_w": 0.014367029626372915,
+      "r_rail_ohm": 3.4637326813365925e-07,
+      "v_drop_v": 7.125947846054781e-06
+     }
+    ],
+    "counts_in_multi_MA_regime": [
+     4,
+     10
+    ],
+    "em_context_doi": "10.3390/ma14216394",
+    "em_context_note": "counts [4, 10] operate at or above 1e+06 A/cm^2, the regime in which 10.3390/ma14216394 observes Cu-Cu bump electromigration and interface current crowding. This flags a regime, it does not set a limit",
+    "em_context_status": "CONTEXT_ONLY / RELIABILITY_WARNING -- not an allowable, not a safe limit, not a lifetime criterion",
+    "keepout_cases": {
+     "KO_HIGH": {
+      "keepout_frac": 0.6,
+      "n_geom_per_rail": 2805,
+      "p_system_both_rails_w": 0.025138460394380845
+     },
+     "KO_LOW": {
+      "keepout_frac": 0.1,
+      "n_geom_per_rail": 6311,
+      "p_system_both_rails_w": 0.011173091650489348
+     },
+     "KO_NOM": {
+      "keepout_frac": 0.3,
+      "n_geom_per_rail": 4908,
+      "p_system_both_rails_w": 0.014367029626372915
+     }
+    },
+    "loss_span_factor": 1227.0,
+    "n_drop": 4,
+    "n_geom_max": 4908
    },
    "source": "10.1109/TCPMT.2026.3724907 Table III (arXiv:2606.28837)"
   },
@@ -490,19 +728,25 @@
     "maturity": {
      "current": "CLOSED",
      "geometry": "CLOSED",
-     "loss": "CLOSED"
+     "loss": "SCENARIO"
     },
-    "scenario_w": null,
-    "w": 0.007183514813186458
+    "scenario_w": {
+     "PAD_DROP": 8.814172675779783,
+     "PAD_GEOM_MAX": 0.007183514813186458
+    },
+    "w": null
    },
    "P_pad_VDD": {
     "maturity": {
      "current": "CLOSED",
      "geometry": "CLOSED",
-     "loss": "CLOSED"
+     "loss": "SCENARIO"
     },
-    "scenario_w": null,
-    "w": 0.007183514813186458
+    "scenario_w": {
+     "PAD_DROP": 8.814172675779783,
+     "PAD_GEOM_MAX": 0.007183514813186458
+    },
+    "w": null
    },
    "P_pkg_RDL_HV_return": {
     "maturity": {
