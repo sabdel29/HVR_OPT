@@ -87,6 +87,8 @@ REQUIRED_GATES = {
             "elec.bga_bulk_dc_baseline", "elec.bga_rms_current",
             "elec.bga_network_sharing", "mat.copper_resistivity_canonical",
             "elec.tsv_conductor_geometry_consistent"],
+    "pkgrdl": ["elec.z1_pkg_hv_rdl_geometry", "elec.z2_pkg_hv_rdl_geometry",
+               "elec.pkg_rdl_sheet_model", "elec.pkg_rdl_network_converged"],
     "interface": ["elec.interface_primary_selected", "elec.source_pad_geometry",
                   "elec.source_pad_resistance", "elec.source_pad_count",
                   "elec.source_pad_loss", "elec.phase_group_index_mapping"],
@@ -351,6 +353,36 @@ def gates():
     import rms_currents as _R
     xc = PAD.source_cross_check()
     psys = L1["pad"]
+    import json as _j2
+    net = _j2.loads((R / "research/phase0naf/pkg_rdl_network.json").read_text())
+    nz1 = net["architectures"]["Z1"]["cases"]["RDL_T2_RDL_M"]
+    nz2 = net["architectures"]["Z2"]["cases"]["RDL_T2_RDL_M"]
+    cv2 = net["architectures"]["Z2"]["convergence"]
+    add("elec.z1_pkg_hv_rdl_geometry", "PkgRDL",
+        "continuous Z1 package HV RDL exists", "IMPLEMENTED",
+        f"2-D sheet over the 30 mm substrate, {nz1['n_sources']} supply contacts to "
+        f"{nz1['n_sinks']} cell nodes, {nz1['source_placement']}; "
+        f"R_eff {nz1['r_eff_ohm']*1e3:.4f} mOhm at RDL_T2_RDL_M")
+    add("elec.z2_pkg_hv_rdl_geometry", "PkgRDL",
+        "continuous Z2 package HV RDL exists", "IMPLEMENTED",
+        f"same sheet but sources restricted to the {nz2['source_placement']}; "
+        f"R_eff {nz2['r_eff_ohm']*1e3:.4f} mOhm, "
+        f"{nz2['r_eff_ohm']/nz1['r_eff_ohm']:.2f}x Z1 because the 48 V must cross the "
+        f"23.36 mm opening laterally")
+    add("elec.pkg_rdl_sheet_model", "PkgRDL", "RDL electrical sheet model", "SPECIFIED",
+        f"R_sq = rho_Cu(T)/(t_Cu*occupancy), independent of the thermal tensor. "
+        f"t_Cu swept 2/5/10 um (BOUNDED_FROM_LITERATURE, 10 um scale from TVLSI 2022 "
+        f"CLOSE_ANALOG) x occupancy 0.80/0.30 (BOUNDED_ENGINEERING). The DVPD source "
+        f"explicitly defers trace dimensions to process technology")
+    notrun("elec.pkg_rdl_network_converged", "PkgRDL",
+           "package RDL network converged",
+           f"NOT CONVERGED. Threshold 1 % on R_eff was declared before any result was "
+           f"read; four levels (41/61/81/101) give {cv2['delta_r_eff']*100:.2f} % for Z2 "
+           f"and "
+           f"{net['architectures']['Z1']['convergence']['delta_r_eff']*100:.2f} % for Z1. "
+           f"Finite-area contacts already removed the point-source log singularity that "
+           f"made the first attempt diverge; the residual is reported rather than "
+           f"absorbed by loosening the threshold")
     add("elec.interface_primary_selected", "Interface",
         "primary die-side interface technology selected", "IMPLEMENTED",
         f"IF_PAD_SRC (Table III Cu pad) is primary; IF_MB_ALT (Cu pillar + solder + UBM "

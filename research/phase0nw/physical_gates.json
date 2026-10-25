@@ -281,6 +281,34 @@
    "evidence": "30 um as CONDUCTING Cu diameter gives 7.215 mOhm, matching the source's ~7.1 mOhm; subtracting the 0.5 um liner gives 7.721 mOhm and does not. Electrical conducting diameter and mechanical outer diameter are now distinct"
   },
   {
+   "id": "elec.z1_pkg_hv_rdl_geometry",
+   "area": "PkgRDL",
+   "gate": "continuous Z1 package HV RDL exists",
+   "status": "IMPLEMENTED",
+   "evidence": "2-D sheet over the 30 mm substrate, 16 supply contacts to 49 cell nodes, full lattice beneath the cell grid, offset half a ball pitch (no cutout to cross); R_eff 0.3161 mOhm at RDL_T2_RDL_M"
+  },
+  {
+   "id": "elec.z2_pkg_hv_rdl_geometry",
+   "area": "PkgRDL",
+   "gate": "continuous Z2 package HV RDL exists",
+   "status": "IMPLEMENTED",
+   "evidence": "same sheet but sources restricted to the surviving annulus (cutout removes the interior); R_eff 1.6226 mOhm, 5.13x Z1 because the 48 V must cross the 23.36 mm opening laterally"
+  },
+  {
+   "id": "elec.pkg_rdl_sheet_model",
+   "area": "PkgRDL",
+   "gate": "RDL electrical sheet model",
+   "status": "SPECIFIED",
+   "evidence": "R_sq = rho_Cu(T)/(t_Cu*occupancy), independent of the thermal tensor. t_Cu swept 2/5/10 um (BOUNDED_FROM_LITERATURE, 10 um scale from TVLSI 2022 CLOSE_ANALOG) x occupancy 0.80/0.30 (BOUNDED_ENGINEERING). The DVPD source explicitly defers trace dimensions to process technology"
+  },
+  {
+   "id": "elec.pkg_rdl_network_converged",
+   "area": "PkgRDL",
+   "gate": "package RDL network converged",
+   "status": "OPEN",
+   "evidence": "NOT CONVERGED. Threshold 1 % on R_eff was declared before any result was read; four levels (41/61/81/101) give 1.22 % for Z2 and 6.64 % for Z1. Finite-area contacts already removed the point-source log singularity that made the first attempt diverge; the residual is reported rather than absorbed by loosening the threshold"
+  },
+  {
    "id": "elec.interface_primary_selected",
    "area": "Interface",
    "gate": "primary die-side interface technology selected",
@@ -725,6 +753,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 43,
+ "n_open": 44,
  "n_elems": 38623
 }

@@ -2,18 +2,18 @@
 
 Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_physical_gates.py`: the config is loaded, the mesh is built, and the measured geometry decides the status. Nothing here is typed by hand, because a hand-typed status table goes stale a phase after it is written.
 
-**43 of 94 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
+**44 of 98 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
 
 Maturity is reported by status rather than collapsed into "closed", because SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:
 
 | status | count |
 |---|---:|
-| IMPLEMENTED | 38 |
-| SPECIFIED | 13 |
+| IMPLEMENTED | 40 |
+| SPECIFIED | 14 |
 | VALIDATED | 0 |
-| OPEN | 43 |
+| OPEN | 44 |
 
-So **51 of 94 are non-open**, of which only 38 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
+So **54 of 98 are non-open**, of which only 40 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
 
 | status | meaning |
 |---|---|
@@ -66,6 +66,10 @@ So **51 of 94 are non-open**, of which only 38 are IMPLEMENTED and **0 are VALID
 | RMS | BGA current sharing from the RDL network | **OPEN** | equal sharing is assumed and flagged a lower bound; no package RDL network exists to produce the real split |
 | RMS | one canonical copper resistivity | **IMPLEMENTED** | tsv_fields carried its own 16.8 nOhm.m ASSUMPTION against phase0m's 17.0 nOhm.m SOURCE_BACKED; now imported, 17.0 nOhm.m everywhere |
 | RMS | TSV conducting diameter resolved against the source resistance | **IMPLEMENTED** | 30 um as CONDUCTING Cu diameter gives 7.215 mOhm, matching the source's ~7.1 mOhm; subtracting the 0.5 um liner gives 7.721 mOhm and does not. Electrical conducting diameter and mechanical outer diameter are now distinct |
+| PkgRDL | continuous Z1 package HV RDL exists | **IMPLEMENTED** | 2-D sheet over the 30 mm substrate, 16 supply contacts to 49 cell nodes, full lattice beneath the cell grid, offset half a ball pitch (no cutout to cross); R_eff 0.3161 mOhm at RDL_T2_RDL_M |
+| PkgRDL | continuous Z2 package HV RDL exists | **IMPLEMENTED** | same sheet but sources restricted to the surviving annulus (cutout removes the interior); R_eff 1.6226 mOhm, 5.13x Z1 because the 48 V must cross the 23.36 mm opening laterally |
+| PkgRDL | RDL electrical sheet model | **SPECIFIED** | R_sq = rho_Cu(T)/(t_Cu*occupancy), independent of the thermal tensor. t_Cu swept 2/5/10 um (BOUNDED_FROM_LITERATURE, 10 um scale from TVLSI 2022 CLOSE_ANALOG) x occupancy 0.80/0.30 (BOUNDED_ENGINEERING). The DVPD source explicitly defers trace dimensions to process technology |
+| PkgRDL | package RDL network converged | **OPEN** | NOT CONVERGED. Threshold 1 % on R_eff was declared before any result was read; four levels (41/61/81/101) give 1.22 % for Z2 and 6.64 % for Z1. Finite-area contacts already removed the point-source log singularity that made the first attempt diverge; the residual is reported rather than absorbed by loosening the threshold |
 | Interface | primary die-side interface technology selected | **IMPLEMENTED** | IF_PAD_SRC (Table III Cu pad) is primary; IF_MB_ALT (Cu pillar + solder + UBM + IMC) is an ALTERNATIVE technology only. The source's R_c of 1.7 mOhm is exactly bulk Cu to 0.00 %, which is consistent with a pad and inconsistent with a solder microbump carrying IMC and contact terms |
 | Interface | source pad geometry verified | **IMPLEMENTED** | Table III RDL/Chiplet read directly from arXiv:2606.28837: d_c 10 um, h_c 10 um, p_c 20 um, A_c 100 um^2. The pad is square_10x10_um: a circular reading of d_c gives 78.54 um^2 and contradicts the source's own A_c |
 | Interface | source pad resistance reproduced | **IMPLEMENTED** | rho_Cu*h/A = 1.7000 mOhm against Table III's 1.7 mOhm, 0.00 % apart. The published value contains NO contact, UBM or IMC term. A circular misreading would give 2.165 mOhm |
