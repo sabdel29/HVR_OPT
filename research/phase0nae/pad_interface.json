@@ -1,0 +1,75 @@
+{
+ "cross_check": {
+  "bulk_R_mohm": 1.6999999999999997,
+  "circular_misreading_mohm": 2.164507226049777,
+  "conclusion": "Table III's pad resistance IS simple bulk Cu; it contains no contact, UBM or IMC term, which is consistent with a Cu pad and inconsistent with a solder microbump",
+  "rel_diff": 1.3061447348531254e-16,
+  "source_R_mohm": 1.7
+ },
+ "source_comparison": {
+  "our_n_gnd": 240492,
+  "our_n_vdd": 240492,
+  "our_total": 480984,
+  "source_area_mm2": 20.0,
+  "source_semantics": "AMBIGUOUS -- the paper does not state whether a VIC count is one rail, supply+return combined, or current-carrying only. Area = count * pitch^2 holds (132*0.8^2 = 84.5 vs 85 mm^2), which fixes the count as physical sites but not their rail assignment",
+  "source_vic_48v1v": 200000,
+  "why_not_copied": "the source optimized a 70-VR architecture; our design has 49 cells and a different cell footprint, so its total count is not transferable. The source's VALUES (geometry, resistance, resistivity) are used; its ALLOCATION is not"
+ },
+ "system": {
+  "cells": 49,
+  "current_maturity": "CLOSED",
+  "geometry_maturity": "CLOSED",
+  "interface": "IF_PAD_SRC",
+  "loss_maturity": "CLOSED",
+  "n_gnd_total": 240492,
+  "n_vdd_total": 240492,
+  "note": "the 1 V cell output RMS is known from the converter model, so this interface's loss is genuinely closed at T_ref",
+  "p_pad_gnd_w": 0.007183514813186458,
+  "p_pad_total_w": 0.014367029626372915,
+  "p_pad_vdd_w": 0.007183514813186458,
+  "per_cell": {
+   "PAD_ADOPTED": {
+    "i_per_pad_a": 0.004191734027091049,
+    "j_per_pad_A_cm2": 4191.734027091049,
+    "n_per_rail": 4908,
+    "p_rail_w": 0.00014660234312625423,
+    "r_rail_ohm": 3.4637326813365925e-07,
+    "v_drop_v": 7.125947846054781e-06
+   },
+   "PAD_DROP": {
+    "i_per_pad_a": 5.143257651240717,
+    "j_per_pad_A_cm2": 5143257.651240717,
+    "n_per_rail": 4,
+    "p_rail_w": 0.17988107501591394,
+    "r_rail_ohm": 0.0004249999999999999,
+    "v_drop_v": 0.008743538007109216
+   },
+   "PAD_GEOM": {
+    "i_per_pad_a": 0.004191734027091049,
+    "j_per_pad_A_cm2": 4191.734027091049,
+    "n_per_rail": 4908,
+    "p_rail_w": 0.00014660234312625423,
+    "r_rail_ohm": 3.4637326813365925e-07,
+    "v_drop_v": 7.125947846054781e-06
+   },
+   "budget_status": "BOUNDED_ENGINEERING -- declared drop budget",
+   "budget_v": 0.01,
+   "em_allowable": null,
+   "em_status": "OPEN -- the source references a per-via current limit but never gives its value",
+   "geometry": {
+    "footprint_mm2": 5.61,
+    "keepout_frac": 0.3,
+    "keepout_status": "BOUNDED_ENGINEERING -- declared, swept, not sourced",
+    "n_gnd": 4908,
+    "n_total": 9817,
+    "n_vdd": 4908,
+    "pitch_area_mm2": 0.0004,
+    "usable_mm2": 3.927
+   },
+   "i_cell_rms_a": 20.573030604962867,
+   "r_one_pad_ohm": 0.0016999999999999997,
+   "selection_criterion": "adopted = geometry-limited count; the drop-limited count is far smaller, so geometry rather than voltage drop sets the field"
+  },
+  "source": "10.1109/TCPMT.2026.3724907 Table III (arXiv:2606.28837)"
+ }
+}
