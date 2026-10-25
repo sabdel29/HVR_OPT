@@ -1,0 +1,11 @@
+constant,where,classification,note
+49 cells / 7x7 grid,configs + 15 scripts,SYSTEM_SPECIFICATION,comes from the architecture config; placement generator derives coordinates
+48 V input,configs/phase0i/z_architectures.yaml,SYSTEM_SPECIFICATION,load block is config-driven
+1 V output / 1000 A,configs/phase0i/z_architectures.yaml,SYSTEM_SPECIFICATION,
+"N=3, K=3, K_A=2",pinned HVR generator,MODEL_LIMITATION,"the converter equations are specific to this topology family; another topology needs its own synthesis model, not just a config change"
+30 mm substrate,package_stack.yaml + 14 scripts,SYSTEM_SPECIFICATION,
+22.36 mm die,package_stack.yaml,SYSTEM_SPECIFICATION,
+16 BGA supply balls,pkg_rdl_network.N_SUPPLY_DEFAULT,ACCIDENTAL_HARDCODING,"now an explicit argument with a module default; was previously derived from len(annulus)//2, which silently halved Z1's count"
+0.8 mm BGA pitch / 14.4 mm half-span,physical_coords,SYSTEM_SPECIFICATION,single source; lattice legality is testable
+architecture names Z1 / Z2,"power_path, interconnect_loss, gates",ACCIDENTAL_HARDCODING,graph builders are keyed by literal names; an ArchitectureSpec registry would remove this and has NOT been built
+cell pitch 3.165243 mm,derived from the FE placement generator,DERIVED,no longer hard-coded anywhere after Phase 0N-AG

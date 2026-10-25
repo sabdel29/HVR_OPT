@@ -1,0 +1,9 @@
+claim,classification,evidence
+analytical stages complete in milliseconds to a few seconds,MEASURED,"runtime_benchmark.csv: 0.0001 s routing, 0.01121 s cooling, 4.564 s synthesis"
+global thermal and mechanical FE dominate runtime,MEASURED,134.62 s (Z1) and 204.23 s (Z2) against <5 s for every analytical stage
+the framework is faster than commercial FEM/FVM,NOT_SUPPORTED,no controlled same-geometry same-hardware comparison has been run
+reduced-order models can lower repeated simulation cost,LITERATURE_CONTEXT,"10.1109/SAPIW.2013.6558333, 10.1016/j.pedc.2024.100063 -- their speedups are NOT transferred"
+"mechanics is solved once after E-T convergence, not inside the loop",MEASURED,"3 E-T iterations, 1 mechanical solve per architecture"
+local nonlinear solder is solved only at the critical joint,INFERENCE,architectural choice; the avoided cost is not separately timed
+the framework has a single accuracy percentage,NOT_SUPPORTED,errors are model-specific and mix validation with convergence
+runtime scales as a known complexity in DOF,NOT_SUPPORTED,only a handful of empirical points exist; report measured scaling only
