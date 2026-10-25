@@ -88,7 +88,12 @@ REQUIRED_GATES = {
             "elec.bga_network_sharing", "mat.copper_resistivity_canonical",
             "elec.tsv_conductor_geometry_consistent"],
     "pkgrdl": ["elec.z1_pkg_hv_rdl_geometry", "elec.z2_pkg_hv_rdl_geometry",
-               "elec.pkg_rdl_sheet_model", "elec.pkg_rdl_network_converged"],
+               "elec.pkg_rdl_sheet_model", "elec.pkg_rdl_network_converged",
+               "elec.bga_voltage_fed_network", "elec.pkg_rdl_return_solved",
+               "elec.cutout_penalty_isolated", "geom.cell_coordinate_single_source",
+               "geom.bga_lattice_single_source"],
+    "padcount": ["elec.pad_count_criterion", "elec.pad_density_sensitivity",
+                 "elec.pad_loss_closed"],
     "interface": ["elec.interface_primary_selected", "elec.source_pad_geometry",
                   "elec.source_pad_resistance", "elec.source_pad_count",
                   "elec.source_pad_loss", "elec.phase_group_index_mapping"],
@@ -366,14 +371,30 @@ def gates():
     add("elec.z2_pkg_hv_rdl_geometry", "PkgRDL",
         "continuous Z2 package HV RDL exists", "IMPLEMENTED",
         f"same sheet but sources restricted to the {nz2['source_placement']}; "
-        f"R_eff {nz2['r_eff_ohm']*1e3:.4f} mOhm, "
-        f"{nz2['r_eff_ohm']/nz1['r_eff_ohm']:.2f}x Z1 because the 48 V must cross the "
-        f"23.36 mm opening laterally")
+        f"R_eff {nz2['r_eff_ohm']*1e3:.4f} mOhm. THE RATIO TO Z1 IS WITHDRAWN as a "
+        f"physical conclusion: it is unconverged (5.13x at 61x61 against 4.53x at "
+        f"101x101) and contaminated by a hard-coded 3.0 mm cell pitch against the "
+        f"actual 3.165243 mm, synthetic non-lattice Z1 sources, BGA contacts smaller "
+        f"than the grid spacing, and imposed equal source currents. Preliminary "
+        f"unconverged network observation only")
     add("elec.pkg_rdl_sheet_model", "PkgRDL", "RDL electrical sheet model", "SPECIFIED",
         f"R_sq = rho_Cu(T)/(t_Cu*occupancy), independent of the thermal tensor. "
         f"t_Cu swept 2/5/10 um (BOUNDED_FROM_LITERATURE, 10 um scale from TVLSI 2022 "
         f"CLOSE_ANALOG) x occupancy 0.80/0.30 (BOUNDED_ENGINEERING). The DVPD source "
         f"explicitly defers trace dimensions to process technology")
+    notrun("elec.bga_voltage_fed_network", "PkgRDL",
+           "BGA modelled as voltage-fed branches rather than imposed currents",
+           "the solver injects I_total/N into every source, which MATHEMATICALLY "
+           "ENFORCES equal sharing -- an ideal current source cannot be redistributed "
+           "by the sheet. elec.bga_network_sharing therefore cannot be solved until "
+           "each ball is a resistance to a common source potential")
+    notrun("elec.pkg_rdl_return_solved", "PkgRDL",
+           "package return RDL network solved",
+           "_supply_sites() returns both arrays but solve_case() only solves supply")
+    notrun("elec.cutout_penalty_isolated", "PkgRDL",
+           "cutout penalty isolated from BGA-placement penalty",
+           "the present comparison uses real annular sites for Z2 against SYNTHETIC "
+           "non-lattice sites for Z1, so placement and cutout effects are confounded")
     notrun("elec.pkg_rdl_network_converged", "PkgRDL",
            "package RDL network converged",
            f"NOT CONVERGED. Threshold 1 % on R_eff was declared before any result was "
@@ -402,16 +423,52 @@ def gates():
         f"{xc['source_R_mohm']} mOhm, {xc['rel_diff']*100:.2f} % apart. The published "
         f"value contains NO contact, UBM or IMC term. A circular misreading would give "
         f"{xc['circular_misreading_mohm']:.3f} mOhm")
+    import physical_coords as PCO
+    _cells = PCO.physical_cell_coordinates()
+    add("geom.cell_coordinate_single_source", "PkgRDL",
+        "one source of cell coordinates", "IMPLEMENTED",
+        f"physical_cell_coordinates() returns the FE placement's own {len(_cells)} "
+        f"centres at {PCO.cell_pitch_mm(_cells):.6f} mm pitch; the RDL solver had "
+        f"hard-coded 3.0 mm")
+    _sup, _ = PCO.annulus_supply_return()
+    add("geom.bga_lattice_single_source", "PkgRDL",
+        "BGA sites are legal centred-lattice positions", "IMPLEMENTED",
+        f"{len(PCO.bga_lattice_sites())} legal sites at 0.8 mm pitch, "
+        f"{len(PCO.bga_lattice_sites(23.36))} outside the cutout; the recorded annulus "
+        f"allocation is on-lattice, while the synthetic Z1 (+0.4, +0.4) offsets were "
+        f"NOT and are removed")
+    _sens = psys["sensitivity"]
+    notrun("elec.pad_count_criterion", "PadCount",
+           "a physical criterion selects the pad count",
+           f"NONE EXISTS. The previous logic min(n_geom, max(n_drop, n_geom)) is "
+           f"identically n_geom, so it always chose maximum density and called it "
+           f"closed. Voltage drop gives a floor of {_sens['n_drop']}, geometry a "
+           f"ceiling of {_sens['n_geom_max']}, and the source's allocation semantics "
+           f"are ambiguous")
+    add("elec.pad_density_sensitivity", "PadCount", "pad count swept", "IMPLEMENTED",
+        f"{len(_sens['counts'])} counts from {_sens['n_drop']} to "
+        f"{_sens['n_geom_max']} per rail per cell; system interface loss spans "
+        f"{_sens['loss_span_factor']:.0f}x (17.63 W to 0.014 W). Keepout swept "
+        f"0.10/0.30/0.60. Counts {_sens['counts_in_multi_MA_regime']} sit at or above "
+        f"1e6 A/cm^2, the regime {_sens['em_context_doi']} associates with Cu-Cu bump "
+        f"EM -- {_sens['em_context_status']}")
+    notrun("elec.pad_loss_closed", "PadCount", "pad interface loss closed",
+           f"loss is a COUNT SCENARIO spanning {_sens['loss_span_factor']:.0f}x. The "
+           f"14.37 mW previously reported as CLOSED was the maximum-density end of "
+           f"that span")
     add("elec.source_pad_count", "Interface", "pad count sized for the 49-cell design",
         "SPECIFIED",
-        f"{psys['per_cell']['PAD_ADOPTED']['n_per_rail']} per rail per cell, "
-        f"geometry-limited; the drop-limited count is only "
-        f"{psys['per_cell']['PAD_DROP']['n_per_rail']}. The source's 200,000 VIC "
+        f"drop floor {psys['per_cell']['PAD_DROP']['n_per_rail']}, geometry ceiling "
+        f"{psys['per_cell']['PAD_GEOM_MAX']['n_per_rail']} per rail per cell, NO "
+        f"adopted value. The source's 200,000 VIC "
         f"allocation is NOT copied -- its semantics are {PAD.SRC_VIC_SEMANTICS[:40]}... "
         f"and it optimized a 70-VR architecture")
-    add("elec.source_pad_loss", "Interface", "pad interface loss", "IMPLEMENTED",
-        f"P_pad_VDD = P_pad_GND = {psys['p_pad_vdd_w']*1e3:.3f} mW at T_ref, CLOSED "
-        f"because the 1 V cell output RMS is known from the converter model")
+    add("elec.source_pad_loss", "Interface", "pad interface loss", "SPECIFIED",
+        f"per-rail system loss {psys['scenario_p_pad_rail_w']['PAD_DROP']:.3f} W at the "
+        f"drop floor against "
+        f"{psys['scenario_p_pad_rail_w']['PAD_GEOM_MAX']*1e3:.3f} mW at the geometry "
+        f"ceiling. One pad's geometry, its resistance and the cell current are closed; "
+        f"the FIELD COUNT is not, so the field loss is a scenario")
     add("elec.phase_group_index_mapping", "Interface",
         "branch phase group derived from the generator, not the index", "IMPLEMENTED",
         "generate_B_array() interleaves distA and distB, giving A,B,A for N=3 K=3 "

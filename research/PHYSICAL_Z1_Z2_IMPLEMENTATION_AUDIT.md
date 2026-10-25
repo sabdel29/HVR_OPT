@@ -2,18 +2,18 @@
 
 Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_physical_gates.py`: the config is loaded, the mesh is built, and the measured geometry decides the status. Nothing here is typed by hand, because a hand-typed status table goes stale a phase after it is written.
 
-**44 of 98 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
+**49 of 106 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
 
 Maturity is reported by status rather than collapsed into "closed", because SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:
 
 | status | count |
 |---|---:|
-| IMPLEMENTED | 40 |
-| SPECIFIED | 14 |
+| IMPLEMENTED | 42 |
+| SPECIFIED | 15 |
 | VALIDATED | 0 |
-| OPEN | 44 |
+| OPEN | 49 |
 
-So **54 of 98 are non-open**, of which only 40 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
+So **57 of 106 are non-open**, of which only 42 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet.
 
 | status | meaning |
 |---|---|
@@ -66,15 +66,23 @@ So **54 of 98 are non-open**, of which only 40 are IMPLEMENTED and **0 are VALID
 | RMS | BGA current sharing from the RDL network | **OPEN** | equal sharing is assumed and flagged a lower bound; no package RDL network exists to produce the real split |
 | RMS | one canonical copper resistivity | **IMPLEMENTED** | tsv_fields carried its own 16.8 nOhm.m ASSUMPTION against phase0m's 17.0 nOhm.m SOURCE_BACKED; now imported, 17.0 nOhm.m everywhere |
 | RMS | TSV conducting diameter resolved against the source resistance | **IMPLEMENTED** | 30 um as CONDUCTING Cu diameter gives 7.215 mOhm, matching the source's ~7.1 mOhm; subtracting the 0.5 um liner gives 7.721 mOhm and does not. Electrical conducting diameter and mechanical outer diameter are now distinct |
-| PkgRDL | continuous Z1 package HV RDL exists | **IMPLEMENTED** | 2-D sheet over the 30 mm substrate, 16 supply contacts to 49 cell nodes, full lattice beneath the cell grid, offset half a ball pitch (no cutout to cross); R_eff 0.3161 mOhm at RDL_T2_RDL_M |
-| PkgRDL | continuous Z2 package HV RDL exists | **IMPLEMENTED** | same sheet but sources restricted to the surviving annulus (cutout removes the interior); R_eff 1.6226 mOhm, 5.13x Z1 because the 48 V must cross the 23.36 mm opening laterally |
+| PkgRDL | continuous Z1 package HV RDL exists | **IMPLEMENTED** | 2-D sheet over the 30 mm substrate, 8 supply contacts to 49 cell nodes, full centred 0.8 mm lattice, nearest-to-load symmetric pairs; R_eff 2.8146 mOhm at RDL_T2_RDL_M |
+| PkgRDL | continuous Z2 package HV RDL exists | **IMPLEMENTED** | same sheet but sources restricted to the surviving annulus (cutout removes the interior); R_eff 1.5460 mOhm. THE RATIO TO Z1 IS WITHDRAWN as a physical conclusion: it is unconverged (5.13x at 61x61 against 4.53x at 101x101) and contaminated by a hard-coded 3.0 mm cell pitch against the actual 3.165243 mm, synthetic non-lattice Z1 sources, BGA contacts smaller than the grid spacing, and imposed equal source currents. Preliminary unconverged network observation only |
 | PkgRDL | RDL electrical sheet model | **SPECIFIED** | R_sq = rho_Cu(T)/(t_Cu*occupancy), independent of the thermal tensor. t_Cu swept 2/5/10 um (BOUNDED_FROM_LITERATURE, 10 um scale from TVLSI 2022 CLOSE_ANALOG) x occupancy 0.80/0.30 (BOUNDED_ENGINEERING). The DVPD source explicitly defers trace dimensions to process technology |
-| PkgRDL | package RDL network converged | **OPEN** | NOT CONVERGED. Threshold 1 % on R_eff was declared before any result was read; four levels (41/61/81/101) give 1.22 % for Z2 and 6.64 % for Z1. Finite-area contacts already removed the point-source log singularity that made the first attempt diverge; the residual is reported rather than absorbed by loosening the threshold |
+| PkgRDL | BGA modelled as voltage-fed branches rather than imposed currents | **OPEN** | the solver injects I_total/N into every source, which MATHEMATICALLY ENFORCES equal sharing -- an ideal current source cannot be redistributed by the sheet. elec.bga_network_sharing therefore cannot be solved until each ball is a resistance to a common source potential |
+| PkgRDL | package return RDL network solved | **OPEN** | _supply_sites() returns both arrays but solve_case() only solves supply |
+| PkgRDL | cutout penalty isolated from BGA-placement penalty | **OPEN** | the present comparison uses real annular sites for Z2 against SYNTHETIC non-lattice sites for Z1, so placement and cutout effects are confounded |
+| PkgRDL | package RDL network converged | **OPEN** | NOT CONVERGED. Threshold 1 % on R_eff was declared before any result was read; four levels (41/61/81/101) give 1.30 % for Z2 and 2.17 % for Z1. Finite-area contacts already removed the point-source log singularity that made the first attempt diverge; the residual is reported rather than absorbed by loosening the threshold |
 | Interface | primary die-side interface technology selected | **IMPLEMENTED** | IF_PAD_SRC (Table III Cu pad) is primary; IF_MB_ALT (Cu pillar + solder + UBM + IMC) is an ALTERNATIVE technology only. The source's R_c of 1.7 mOhm is exactly bulk Cu to 0.00 %, which is consistent with a pad and inconsistent with a solder microbump carrying IMC and contact terms |
-| Interface | source pad geometry verified | **IMPLEMENTED** | Table III RDL/Chiplet read directly from arXiv:2606.28837: d_c 10 um, h_c 10 um, p_c 20 um, A_c 100 um^2. The pad is square_10x10_um: a circular reading of d_c gives 78.54 um^2 and contradicts the source's own A_c |
+| Interface | source pad geometry verified | **IMPLEMENTED** | Table III RDL/Chiplet read directly from arXiv:2606.28837: d_c 10 um, h_c 10 um, p_c 20 um, A_c 100 um^2. The pad is source_effective_area: a circular reading of d_c gives 78.54 um^2 and contradicts the source's own A_c |
 | Interface | source pad resistance reproduced | **IMPLEMENTED** | rho_Cu*h/A = 1.7000 mOhm against Table III's 1.7 mOhm, 0.00 % apart. The published value contains NO contact, UBM or IMC term. A circular misreading would give 2.165 mOhm |
-| Interface | pad count sized for the 49-cell design | **SPECIFIED** | 4908 per rail per cell, geometry-limited; the drop-limited count is only 4. The source's 200,000 VIC allocation is NOT copied -- its semantics are AMBIGUOUS -- the paper does not state wh... and it optimized a 70-VR architecture |
-| Interface | pad interface loss | **IMPLEMENTED** | P_pad_VDD = P_pad_GND = 7.184 mW at T_ref, CLOSED because the 1 V cell output RMS is known from the converter model |
+| PkgRDL | one source of cell coordinates | **IMPLEMENTED** | physical_cell_coordinates() returns the FE placement's own 49 centres at 3.165243 mm pitch; the RDL solver had hard-coded 3.0 mm |
+| PkgRDL | BGA sites are legal centred-lattice positions | **IMPLEMENTED** | 1369 legal sites at 0.8 mm pitch, 528 outside the cutout; the recorded annulus allocation is on-lattice, while the synthetic Z1 (+0.4, +0.4) offsets were NOT and are removed |
+| PadCount | a physical criterion selects the pad count | **OPEN** | NONE EXISTS. The previous logic min(n_geom, max(n_drop, n_geom)) is identically n_geom, so it always chose maximum density and called it closed. Voltage drop gives a floor of 4, geometry a ceiling of 4908, and the source's allocation semantics are ambiguous |
+| PadCount | pad count swept | **IMPLEMENTED** | 8 counts from 4 to 4908 per rail per cell; system interface loss spans 1227x (17.63 W to 0.014 W). Keepout swept 0.10/0.30/0.60. Counts [4, 10] sit at or above 1e6 A/cm^2, the regime 10.3390/ma14216394 associates with Cu-Cu bump EM -- CONTEXT_ONLY / RELIABILITY_WARNING -- not an allowable, not a safe limit, not a lifetime criterion |
+| PadCount | pad interface loss closed | **OPEN** | loss is a COUNT SCENARIO spanning 1227x. The 14.37 mW previously reported as CLOSED was the maximum-density end of that span |
+| Interface | pad count sized for the 49-cell design | **SPECIFIED** | drop floor 4, geometry ceiling 4908 per rail per cell, NO adopted value. The source's 200,000 VIC allocation is NOT copied -- its semantics are AMBIGUOUS -- the paper does not state wh... and it optimized a 70-VR architecture |
+| Interface | pad interface loss | **SPECIFIED** | per-rail system loss 8.814 W at the drop floor against 7.184 mW at the geometry ceiling. One pad's geometry, its resistance and the cell current are closed; the FIELD COUNT is not, so the field loss is a scenario |
 | Interface | branch phase group derived from the generator, not the index | **IMPLEMENTED** | generate_B_array() interleaves distA and distB, giving A,B,A for N=3 K=3 K_A=2. The naive 'A if k < K_A else B' gives A,A,B and was wrong; B_array [1,1,1] alone cannot distinguish them |
 | Recompute | BGA solder alloy provenance | **SPECIFIED** | Table III footnote b gives 'Solder resistivity: 130 nOhm.m, Cu resistivity: 17 nOhm.m' and names the BGA material only as 'solder' -- the alloy is still not stated, so the model does not assert SAC305. The RESISTIVITY is sourced separately: 130 nOhm.m, SOURCE_BACKED -- June-2026 via scripts/phase0m/interconnect.py. Alloy itself: OPEN -- the design source does not state the alloy |
 | Recompute | BGA resistivity is temperature dependent | **IMPLEMENTED** | rho_solder(T) = 130 nOhm.m x (1 + 4.0e-03(T-20)); alpha is an ASSUMPTION. Recomputed BGA loss at 20 C: Z1 21.78 mW, Z2 21.87 mW (equal-sharing lower bound) |
