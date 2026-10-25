@@ -45,15 +45,33 @@ def test_resistance_scales_inversely_with_copper():
     assert mesh > plane
 
 
-def test_z1_and_z2_have_architecturally_different_supply_paths(art):
-    """Z2's 48 V must cross the 23.36 mm opening; Z1's need not."""
+def test_both_architectures_use_real_lattice_sites(art):
+    """The Z1 arm used to be built on synthetic (+0.4, +0.4) offsets, which are not
+    lattice positions. Both arms must now draw from physical_coords."""
+    import physical_coords as PCO
     k = "RDL_T2_RDL_M"
     z1 = art["architectures"]["Z1"]["cases"][k]
     z2 = art["architectures"]["Z2"]["cases"][k]
     assert "annulus" in z2["source_placement"]
-    assert "no cutout" in z1["source_placement"]
-    assert z2["r_eff_ohm"] > z1["r_eff_ohm"] * 3, (
-        f"Z2 {z2['r_eff_ohm']*1e3:.3f} vs Z1 {z1['r_eff_ohm']*1e3:.3f} mOhm")
+    assert "lattice" in z1["source_placement"]
+    assert "offset" not in z1["source_placement"]
+    src = (R / "scripts/phase0nw/pkg_rdl_network.py").read_text()
+    assert "physical_coords" in src and "pitch_mm=3.0" not in src
+
+
+def test_the_513x_cutout_penalty_is_withdrawn(art):
+    """It reversed. Under real coordinates and ONE allocation rule Z1 comes out HIGHER
+    than Z2, so the earlier figure was an artifact of comparing real annular sites
+    against fabricated ones -- not a cutout penalty."""
+    k = "RDL_T2_RDL_M"
+    z1 = art["architectures"]["Z1"]["cases"][k]["r_eff_ohm"]
+    z2 = art["architectures"]["Z2"]["cases"][k]["r_eff_ohm"]
+    ratio = z2 / z1
+    assert ratio < 1.0, (
+        f"Z2/Z1 is {ratio:.2f}; the withdrawn claim was 5.13x the other way")
+    # and neither direction may be asserted while the network is unconverged
+    for a in ("Z1", "Z2"):
+        assert art["architectures"][a]["convergence"]["converged"] is False
 
 
 def test_losses_are_named_scenarios_scaled_from_one_linear_solve(art):

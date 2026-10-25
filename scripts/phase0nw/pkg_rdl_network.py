@@ -62,35 +62,31 @@ def sheet_resistance_ohm_sq(t_cu_mm: float, occupancy: float, T_c: float = T_REF
     return rho_cu(T_c) / (t_cu_mm * 1e-3 * occupancy)
 
 
-def cell_centres(cells: int = 49, pitch_mm: float = 3.0):
-    n = int(round(cells ** 0.5))
-    off = (n - 1) * pitch_mm / 2.0
-    return [(-off + i * pitch_mm, -off + j * pitch_mm) for i in range(n) for j in range(n)]
+def cell_centres(cells: int = 49, pitch_mm: float | None = None):
+    """DELEGATES to the FE placement. The hard-coded 3.0 mm pitch was wrong: the actual
+    placement is 3.165243 mm, so every earlier RDL result used the wrong grid."""
+    import physical_coords as PCO
+    return PCO.physical_cell_coordinates()
 
 
 def _supply_sites(arch: str, cells=None):
-    """Z2's supply must come from the SURVIVING ANNULUS -- 841 of 1369 BGA sites are
-    removed by the 23.36 mm cutout, so its 48 V crosses the opening laterally to reach
-    cells sitting inside it. Z1 has no cutout, so it may place supply balls directly
-    beneath the cell grid. That is the architectural difference in the distribution
-    path, and it comes from the geometry rather than being asserted."""
-    j = json.loads((R / "research/phase0nt/annular_pcb.json").read_text())
-    ann_sup = [tuple(p) for p in j["supply_xy_mm"]]
-    ann_ret = [tuple(p) for p in j["return_xy_mm"]]
+    """Supply/return sites, from the REAL centred 0.8 mm BGA lattice in both cases.
+
+    The previous Z1 placement was synthesised by adding (+0.4, +0.4) mm to selected cell
+    centres. Those are not lattice positions at all -- is_on_bga_lattice() rejects them
+    -- so the Z1 arm of the comparison was built on fabricated coordinates. Both
+    architectures now draw from physical_coords, under ONE allocation rule, so that
+    placement and cutout effects are not confounded.
+    """
+    import physical_coords as PCO
+    cells = cells or PCO.physical_cell_coordinates()
+    ann_sup, ann_ret = PCO.annulus_supply_return()
+    n_pairs = len(ann_sup) // 2
     if arch == "Z2":
         return ann_sup, ann_ret, "surviving annulus (cutout removes the interior)"
-    # Z1: same COUNT, placed on the 0.8 mm BGA lattice under the cell grid but OFFSET
-    # by half a ball pitch. Putting a source exactly on a sink makes the two coincide
-    # and the network degenerate -- the lateral path would be zero-length, which is not
-    # what "co-located" means physically: the ball is on the far side of the substrate
-    # and still has to reach the cell laterally.
-    cells = cells or cell_centres()
-    n, off = len(ann_sup), 0.4
-    step = max(1, len(cells) // n)
-    z1 = [(cells[k][0] + off, cells[k][1] + off)
-          for k in range(0, len(cells), step)][:n]
-    return z1, z1, ("full lattice beneath the cell grid, offset half a ball pitch "
-                    "(no cutout to cross)")
+    legal = PCO.bga_lattice_sites()                      # Z1 has no cutout
+    sup, ret = PCO.select_sites(legal, cells, n_pairs)
+    return sup, ret, "full centred 0.8 mm lattice, nearest-to-load symmetric pairs"
 
 
 class SheetNetwork:
