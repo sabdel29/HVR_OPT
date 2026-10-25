@@ -162,7 +162,7 @@ def microbump_loss(i_a: float, T_c: float = T_REF_C,
 
 
 # =======================================================================================
-def rms_brackets(arch: str) -> dict:
+def rms_scenarios(arch: str) -> dict:
     """RMS current per rail. The 48 V rail is a BRACKET, not a value."""
     import rms_currents as RMS
     import power_path as PP
@@ -173,6 +173,7 @@ def rms_brackets(arch: str) -> dict:
     i_cell_rms = RMS.triangular_rms(c["i_cell_out_avg_a"], c["ripple_out_pp_a"])
     return {"hv_avg_a": rc["hv_total_a"],
             "hv_S0_a": hv["HV_S0"]["i_rms_a"], "hv_S1_a": hv["HV_S1"]["i_rms_a"],
+            "hv_S2_a": hv["HV_S2"]["i_rms_a"],
             "hv_status": hv["status"], "hv_upper_bound": hv["upper_bound_status"],
             "lv_total_avg_a": rc["lv_total_a"],
             "i_cell_avg_a": c["i_cell_out_avg_a"], "i_cell_rms_a": i_cell_rms,
@@ -201,54 +202,74 @@ def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
     # and no finite upper bound exists from average current alone. The two scenarios
     # differ by 4x in RMS and 16x in I^2 R; that is a scenario separation, NOT an
     # uncertainty interval.
-    rb = rms_brackets(arch)
-    f_hv_lo = (rb["hv_S0_a"] / rb["hv_avg_a"]) ** 2          # continuous scenario
-    f_hv_hi = (rb["hv_S1_a"] / rb["hv_avg_a"]) ** 2          # square-pulse-at-D scenario
+    rb = rms_scenarios(arch)
+    # PRIMARY interface is the source Cu pad; the arbitrary microbump bracket moves to
+    # legacy_sensitivity and no longer drives any ledger term.
+    import pad_interface as PAD
+    import rms_currents as _RMS
+    pad = PAD.system(_RMS.cell_currents()["i_cell_out_rms_a"])
+    f_S0 = (rb["hv_S0_a"] / rb["hv_avg_a"]) ** 2
+    f_S1 = (rb["hv_S1_a"] / rb["hv_avg_a"]) ** 2
+    f_S2 = (rb["hv_S2_a"] / rb["hv_avg_a"]) ** 2
     f_lv = rb["cell_rms_over_avg"] ** 2
-    f_tsv_lo, f_tsv_hi = ((f_hv_lo, f_hv_hi) if arch == "Z1" else (f_lv, f_lv))
 
+    def hv_scen(p_base):
+        return {"HV_S0": p_base * f_S0, "HV_S1": p_base * f_S1, "HV_S2": p_base * f_S2}
+
+    def lv_val(p_base):
+        return p_base * f_lv
+
+    # THREE-AXIS MATURITY (brief 46): geometry, current and loss are tracked
+    # separately, so a conductor whose resistance is closed is not called unresolved
+    # merely because its waveform is open.
+    MAT = lambda g, c, l: {"geometry": g, "current": c, "loss": l}   # noqa: E731
     terms = {
-        "P_BGA_supply": {"w": bga["p_supply_w"] * f_hv_lo,
-                         "bracket_w": [bga["p_supply_w"] * f_hv_lo,
-                                       bga["p_supply_w"] * f_hv_hi],
-                         "status": "SCENARIO_S0_S1"},
-        "P_BGA_return": {"w": bga["p_return_w"] * f_hv_lo,
-                         "bracket_w": [bga["p_return_w"] * f_hv_lo,
-                                       bga["p_return_w"] * f_hv_hi],
-                         "status": "SCENARIO_S0_S1"},
-        "P_TSV_VDD": {"w": tsv["p_vdd_w"] * f_tsv_lo,
-                      "bracket_w": [tsv["p_vdd_w"] * f_tsv_lo,
-                                    tsv["p_vdd_w"] * f_tsv_hi],
-                      "status": "SCENARIO_S0_S1" if arch == "Z1" else "RECOMPUTED_RMS"},
-        "P_TSV_GND": {"w": tsv["p_gnd_w"] * f_tsv_lo,
-                      "bracket_w": [tsv["p_gnd_w"] * f_tsv_lo,
-                                    tsv["p_gnd_w"] * f_tsv_hi],
-                      "status": "SCENARIO_S0_S1" if arch == "Z1" else "RECOMPUTED_RMS"},
-        "P_microbump_supply": {"w": None, "bracket_w": [mb["p_low_w"], mb["p_high_w"]],
-                               "status": "BRACKETED"},
-        "P_microbump_return": {"w": None, "bracket_w": [mb["p_low_w"], mb["p_high_w"]],
-                               "status": "BRACKETED"},
-        "P_pkg_RDL_HV_supply": {"w": None, "status": "OPEN"},
-        "P_pkg_RDL_HV_return": {"w": None, "status": "OPEN"},
-        "P_pkg_RDL_LV_supply": {"w": None, "status": "OPEN"},
-        "P_pkg_RDL_LV_return": {"w": None, "status": "OPEN"},
-        "P_intraVR_metal": {"w": None, "status": "OPEN"},
-        "P_intraVR_vertical": {"w": None, "status": "OPEN"},
+        "P_BGA_supply": {"w": None, "scenario_w": hv_scen(bga["p_supply_w"]),
+                         "maturity": MAT("CLOSED", "OPEN", "SCENARIO")},
+        "P_BGA_return": {"w": None, "scenario_w": hv_scen(bga["p_return_w"]),
+                         "maturity": MAT("CLOSED", "OPEN", "SCENARIO")},
+        "P_TSV_VDD": ({"w": None, "scenario_w": hv_scen(tsv["p_vdd_w"]),
+                       "maturity": MAT("CLOSED", "OPEN", "SCENARIO")} if arch == "Z1"
+                      else {"w": lv_val(tsv["p_vdd_w"]), "scenario_w": None,
+                            "maturity": MAT("CLOSED", "CLOSED", "CLOSED")}),
+        "P_TSV_GND": ({"w": None, "scenario_w": hv_scen(tsv["p_gnd_w"]),
+                       "maturity": MAT("CLOSED", "OPEN", "SCENARIO")} if arch == "Z1"
+                      else {"w": lv_val(tsv["p_gnd_w"]), "scenario_w": None,
+                            "maturity": MAT("CLOSED", "CLOSED", "CLOSED")}),
+        "P_pad_VDD": {"w": pad["p_pad_vdd_w"], "scenario_w": None,
+                      "maturity": MAT("CLOSED", "CLOSED", "CLOSED")},
+        "P_pad_GND": {"w": pad["p_pad_gnd_w"], "scenario_w": None,
+                      "maturity": MAT("CLOSED", "CLOSED", "CLOSED")},
+        "P_pkg_RDL_HV_supply": {"w": None, "scenario_w": None,
+                                "maturity": MAT("OPEN", "OPEN", "OPEN")},
+        "P_pkg_RDL_HV_return": {"w": None, "scenario_w": None,
+                                "maturity": MAT("OPEN", "OPEN", "OPEN")},
+        "P_pkg_RDL_LV_supply": {"w": None, "scenario_w": None,
+                                "maturity": MAT("OPEN", "OPEN", "OPEN")},
+        "P_pkg_RDL_LV_return": {"w": None, "scenario_w": None,
+                                "maturity": MAT("OPEN", "OPEN", "OPEN")},
+        "P_intraVR_metal": {"w": None, "scenario_w": None,
+                            "maturity": MAT("OPEN", "OPEN", "OPEN")},
+        "P_intraVR_vertical": {"w": None, "scenario_w": None,
+                               "maturity": MAT("OPEN", "OPEN", "OPEN")},
     }
     done = sum(v["w"] for v in terms.values()
-               if v["status"] in ("RECOMPUTED", "RECOMPUTED_RMS", "SCENARIO_S0_S1"))
+               if v["maturity"]["loss"] == "CLOSED" and v["w"] is not None)
     return {"arch": arch, "T_c": T_c, "i_hv_a": i_hv, "i_lv_a": i_lv,
             "tsv_rail_v": 48.0 if arch == "Z1" else 1.0,
-            "bga": bga, "tsv": tsv, "microbump": mb, "bga_capacity": cap,
+            "bga": bga, "tsv": tsv, "pad": pad, "bga_capacity": cap,
+            "legacy_sensitivity": {"microbump_arbitrary_bracket": mb},
             "terms": terms,
             "p_recomputed_total_w": done,
             "rms": rb,
-            "n_recomputed": sum(1 for v in terms.values()
-                                if v["status"] in ("RECOMPUTED", "RECOMPUTED_RMS",
-                                                   "SCENARIO_S0_S1")),
-            "n_bracketed": sum(1 for v in terms.values()
-                               if v["status"] == "BRACKETED"),
-            "n_open": sum(1 for v in terms.values() if v["status"] == "OPEN")}
+            "n_loss_closed": sum(1 for v in terms.values()
+                                 if v["maturity"]["loss"] == "CLOSED"),
+            "n_loss_scenario": sum(1 for v in terms.values()
+                                   if v["maturity"]["loss"] == "SCENARIO"),
+            "n_loss_open": sum(1 for v in terms.values()
+                               if v["maturity"]["loss"] == "OPEN"),
+            "n_geometry_closed": sum(1 for v in terms.values()
+                                     if v["maturity"]["geometry"] == "CLOSED")}
 
 
 def main():

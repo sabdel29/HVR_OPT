@@ -136,6 +136,9 @@ def test_ledger_marks_open_terms_open_not_zero(led):
     for a in ("Z1", "Z2"):
         t = led[a]["terms"]
         for k in ("P_pkg_RDL_HV_supply", "P_intraVR_metal", "P_intraVR_vertical"):
-            assert t[k]["w"] is None and t[k]["status"] == "OPEN", (
+            assert t[k]["w"] is None and t[k]["maturity"]["loss"] == "OPEN", (
                 f"{k} must be OPEN, not a zero that reads as 'no loss'")
-        assert led[a]["n_recomputed"] == 4 and led[a]["n_open"] == 6
+        assert led[a]["n_loss_open"] == 6
+    # the source Cu pad replaced the arbitrary microbump bracket as the primary term
+    assert led["Z1"]["terms"]["P_pad_VDD"]["maturity"]["loss"] == "CLOSED"
+    assert "microbump_arbitrary_bracket" in led["Z1"]["legacy_sensitivity"]

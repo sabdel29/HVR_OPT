@@ -28,6 +28,7 @@
   {
    "index": 0,
    "phase": "A",
+   "phase_provenance": "generate_B_array() interleave, re-run from the pinned source; NOT inferred from the index",
    "b_i": 1,
    "i_avg_a": 6.802721088435374,
    "i_avg_status": "KNOWN -- I_cell * B_i / sum(B)",
@@ -40,7 +41,8 @@
   },
   {
    "index": 1,
-   "phase": "A",
+   "phase": "B",
+   "phase_provenance": "generate_B_array() interleave, re-run from the pinned source; NOT inferred from the index",
    "b_i": 1,
    "i_avg_a": 6.802721088435374,
    "i_avg_status": "KNOWN -- I_cell * B_i / sum(B)",
@@ -53,7 +55,8 @@
   },
   {
    "index": 2,
-   "phase": "B",
+   "phase": "A",
+   "phase_provenance": "generate_B_array() interleave, re-run from the pinned source; NOT inferred from the index",
    "b_i": 1,
    "i_avg_a": 6.802721088435374,
    "i_avg_status": "KNOWN -- I_cell * B_i / sum(B)",
@@ -79,6 +82,11 @@
      "name": "constant square pulse at the buck duty",
      "i_rms_a": 94.77435523848813,
      "rationale": "MINIMUM RMS for support exactly D; NOT an upper bound"
+    },
+    "HV_S2": {
+     "name": "square pulse at the overall ratio V_out/V_in",
+     "i_rms_a": 164.15399852764304,
+     "rationale": "the duty the DVPD source's Eq.(5) assumes -- it states the relation is valid 'when the input current waveform is nearly a square pulse with duty cycle proportional to Vout/Vin', for buck-derived INCLUDING HYBRID converters in CCM. Our 3:1 SC front end may or may not behave that way; still a scenario."
     },
     "ratio_S1_over_S0": 4.0,
     "loss_ratio_S1_over_S0": 16.0,
@@ -110,6 +118,11 @@
      "name": "constant square pulse at the buck duty",
      "i_rms_a": 94.97162444590158,
      "rationale": "MINIMUM RMS for support exactly D; NOT an upper bound"
+    },
+    "HV_S2": {
+     "name": "square pulse at the overall ratio V_out/V_in",
+     "i_rms_a": 164.49567881765196,
+     "rationale": "the duty the DVPD source's Eq.(5) assumes -- it states the relation is valid 'when the input current waveform is nearly a square pulse with duty cycle proportional to Vout/Vin', for buck-derived INCLUDING HYBRID converters in CCM. Our 3:1 SC front end may or may not behave that way; still a scenario."
     },
     "ratio_S1_over_S0": 4.0,
     "loss_ratio_S1_over_S0": 16.0,

@@ -34,43 +34,104 @@
   },
   "i_hv_a": 23.69358880962203,
   "i_lv_a": 1000.0,
-  "microbump": {
-   "T_c": 20.0,
-   "cases": {
-    "MB_H": {
-     "d_mm": 0.02,
-     "n": 10000,
-     "p_w": 0.1391126806512444,
-     "r_bulk_one_ohm": 0.0005411268065124442,
-     "r_contact_one_ohm": 0.0,
-     "r_spread_one_ohm": 0.00085,
-     "r_total_ohm": 1.3911268065124442e-07
+  "legacy_sensitivity": {
+   "microbump_arbitrary_bracket": {
+    "T_c": 20.0,
+    "cases": {
+     "MB_H": {
+      "d_mm": 0.02,
+      "n": 10000,
+      "p_w": 0.1391126806512444,
+      "r_bulk_one_ohm": 0.0005411268065124442,
+      "r_contact_one_ohm": 0.0,
+      "r_spread_one_ohm": 0.00085,
+      "r_total_ohm": 1.3911268065124442e-07
+     },
+     "MB_L": {
+      "d_mm": 0.05,
+      "n": 100000,
+      "p_w": 0.0042658028904199105,
+      "r_bulk_one_ohm": 8.658028904199107e-05,
+      "r_contact_one_ohm": 0.0,
+      "r_spread_one_ohm": 0.00033999999999999997,
+      "r_total_ohm": 4.26580289041991e-09
+     }
     },
-    "MB_L": {
-     "d_mm": 0.05,
-     "n": 100000,
-     "p_w": 0.0042658028904199105,
-     "r_bulk_one_ohm": 8.658028904199107e-05,
-     "r_contact_one_ohm": 0.0,
-     "r_spread_one_ohm": 0.00033999999999999997,
-     "r_total_ohm": 4.26580289041991e-09
-    }
-   },
-   "contact_status": "r_contact = 0 is the IDEAL-CONTACT LOWER BOUND, not a claim of zero; no transferable source was found",
-   "geometry_status": "OPEN -- no microbump field in the physical config",
-   "i_a": 1000.0,
-   "p_high_w": 0.1391126806512444,
-   "p_low_w": 0.0042658028904199105,
-   "status": "BRACKETED (geometry OPEN)"
+    "contact_status": "r_contact = 0 is the IDEAL-CONTACT LOWER BOUND, not a claim of zero; no transferable source was found",
+    "geometry_status": "OPEN -- no microbump field in the physical config",
+    "i_a": 1000.0,
+    "p_high_w": 0.1391126806512444,
+    "p_low_w": 0.0042658028904199105,
+    "status": "BRACKETED (geometry OPEN)"
+   }
   },
-  "n_bracketed": 2,
-  "n_open": 6,
-  "n_recomputed": 4,
-  "p_recomputed_total_w": 0.022013761673139537,
+  "n_geometry_closed": 6,
+  "n_loss_closed": 2,
+  "n_loss_open": 6,
+  "n_loss_scenario": 4,
+  "p_recomputed_total_w": 0.014367029626372915,
+  "pad": {
+   "cells": 49,
+   "current_maturity": "CLOSED",
+   "geometry_maturity": "CLOSED",
+   "interface": "IF_PAD_SRC",
+   "loss_maturity": "CLOSED",
+   "n_gnd_total": 240492,
+   "n_vdd_total": 240492,
+   "note": "the 1 V cell output RMS is known from the converter model, so this interface's loss is genuinely closed at T_ref",
+   "p_pad_gnd_w": 0.007183514813186458,
+   "p_pad_total_w": 0.014367029626372915,
+   "p_pad_vdd_w": 0.007183514813186458,
+   "per_cell": {
+    "PAD_ADOPTED": {
+     "i_per_pad_a": 0.004191734027091049,
+     "j_per_pad_A_cm2": 4191.734027091049,
+     "n_per_rail": 4908,
+     "p_rail_w": 0.00014660234312625423,
+     "r_rail_ohm": 3.4637326813365925e-07,
+     "v_drop_v": 7.125947846054781e-06
+    },
+    "PAD_DROP": {
+     "i_per_pad_a": 5.143257651240717,
+     "j_per_pad_A_cm2": 5143257.651240717,
+     "n_per_rail": 4,
+     "p_rail_w": 0.17988107501591394,
+     "r_rail_ohm": 0.0004249999999999999,
+     "v_drop_v": 0.008743538007109216
+    },
+    "PAD_GEOM": {
+     "i_per_pad_a": 0.004191734027091049,
+     "j_per_pad_A_cm2": 4191.734027091049,
+     "n_per_rail": 4908,
+     "p_rail_w": 0.00014660234312625423,
+     "r_rail_ohm": 3.4637326813365925e-07,
+     "v_drop_v": 7.125947846054781e-06
+    },
+    "budget_status": "BOUNDED_ENGINEERING -- declared drop budget",
+    "budget_v": 0.01,
+    "em_allowable": null,
+    "em_status": "OPEN -- the source references a per-via current limit but never gives its value",
+    "geometry": {
+     "footprint_mm2": 5.61,
+     "keepout_frac": 0.3,
+     "keepout_status": "BOUNDED_ENGINEERING -- declared, swept, not sourced",
+     "n_gnd": 4908,
+     "n_total": 9817,
+     "n_vdd": 4908,
+     "pitch_area_mm2": 0.0004,
+     "usable_mm2": 3.927
+    },
+    "i_cell_rms_a": 20.573030604962867,
+    "r_one_pad_ohm": 0.0016999999999999997,
+    "selection_criterion": "adopted = geometry-limited count; the drop-limited count is far smaller, so geometry rather than voltage drop sets the field"
+   },
+   "source": "10.1109/TCPMT.2026.3724907 Table III (arXiv:2606.28837)"
+  },
   "rms": {
    "cell_rms_over_avg": 1.0080784996431804,
    "hv_S0_a": 23.69358880962203,
    "hv_S1_a": 94.77435523848813,
+   "hv_S2_a": 164.15399852764304,
    "hv_avg_a": 23.69358880962203,
    "hv_status": "OPEN -- the 3:1 SC charge-transfer waveform is absent from the pinned source; see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md",
    "hv_upper_bound": "NONE EXISTS from average current alone",
@@ -80,75 +141,127 @@
   },
   "terms": {
    "P_BGA_return": {
-    "bracket_w": [
-     0.01088921204279579,
-     0.17422739268473264
-    ],
-    "status": "SCENARIO_S0_S1",
-    "w": 0.01088921204279579
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "CLOSED",
+     "loss": "SCENARIO"
+    },
+    "scenario_w": {
+     "HV_S0": 0.01088921204279579,
+     "HV_S1": 0.17422739268473264,
+     "HV_S2": 0.5226821780541981
+    },
+    "w": null
    },
    "P_BGA_supply": {
-    "bracket_w": [
-     0.01088921204279579,
-     0.17422739268473264
-    ],
-    "status": "SCENARIO_S0_S1",
-    "w": 0.01088921204279579
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "CLOSED",
+     "loss": "SCENARIO"
+    },
+    "scenario_w": {
+     "HV_S0": 0.01088921204279579,
+     "HV_S1": 0.17422739268473264,
+     "HV_S2": 0.5226821780541981
+    },
+    "w": null
    },
    "P_TSV_GND": {
-    "bracket_w": [
-     0.00011766879377397918,
-     0.0018827007003836668
-    ],
-    "status": "SCENARIO_S0_S1",
-    "w": 0.00011766879377397918
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "CLOSED",
+     "loss": "SCENARIO"
+    },
+    "scenario_w": {
+     "HV_S0": 0.00011766879377397918,
+     "HV_S1": 0.0018827007003836668,
+     "HV_S2": 0.005648102101151003
+    },
+    "w": null
    },
    "P_TSV_VDD": {
-    "bracket_w": [
-     0.00011766879377397918,
-     0.0018827007003836668
-    ],
-    "status": "SCENARIO_S0_S1",
-    "w": 0.00011766879377397918
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "CLOSED",
+     "loss": "SCENARIO"
+    },
+    "scenario_w": {
+     "HV_S0": 0.00011766879377397918,
+     "HV_S1": 0.0018827007003836668,
+     "HV_S2": 0.005648102101151003
+    },
+    "w": null
    },
    "P_intraVR_metal": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    },
    "P_intraVR_vertical": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    },
-   "P_microbump_return": {
-    "bracket_w": [
-     0.0042658028904199105,
-     0.1391126806512444
-    ],
-    "status": "BRACKETED",
-    "w": null
+   "P_pad_GND": {
+    "maturity": {
+     "current": "CLOSED",
+     "geometry": "CLOSED",
+     "loss": "CLOSED"
+    },
+    "scenario_w": null,
+    "w": 0.007183514813186458
    },
-   "P_microbump_supply": {
-    "bracket_w": [
-     0.0042658028904199105,
-     0.1391126806512444
-    ],
-    "status": "BRACKETED",
-    "w": null
+   "P_pad_VDD": {
+    "maturity": {
+     "current": "CLOSED",
+     "geometry": "CLOSED",
+     "loss": "CLOSED"
+    },
+    "scenario_w": null,
+    "w": 0.007183514813186458
    },
    "P_pkg_RDL_HV_return": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    },
    "P_pkg_RDL_HV_supply": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    },
    "P_pkg_RDL_LV_return": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    },
    "P_pkg_RDL_LV_supply": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    }
   },
@@ -205,43 +318,104 @@
   },
   "i_hv_a": 23.742906111475396,
   "i_lv_a": 1000.0,
-  "microbump": {
-   "T_c": 20.0,
-   "cases": {
-    "MB_H": {
-     "d_mm": 0.02,
-     "n": 10000,
-     "p_w": 0.1391126806512444,
-     "r_bulk_one_ohm": 0.0005411268065124442,
-     "r_contact_one_ohm": 0.0,
-     "r_spread_one_ohm": 0.00085,
-     "r_total_ohm": 1.3911268065124442e-07
+  "legacy_sensitivity": {
+   "microbump_arbitrary_bracket": {
+    "T_c": 20.0,
+    "cases": {
+     "MB_H": {
+      "d_mm": 0.02,
+      "n": 10000,
+      "p_w": 0.1391126806512444,
+      "r_bulk_one_ohm": 0.0005411268065124442,
+      "r_contact_one_ohm": 0.0,
+      "r_spread_one_ohm": 0.00085,
+      "r_total_ohm": 1.3911268065124442e-07
+     },
+     "MB_L": {
+      "d_mm": 0.05,
+      "n": 100000,
+      "p_w": 0.0042658028904199105,
+      "r_bulk_one_ohm": 8.658028904199107e-05,
+      "r_contact_one_ohm": 0.0,
+      "r_spread_one_ohm": 0.00033999999999999997,
+      "r_total_ohm": 4.26580289041991e-09
+     }
     },
-    "MB_L": {
-     "d_mm": 0.05,
-     "n": 100000,
-     "p_w": 0.0042658028904199105,
-     "r_bulk_one_ohm": 8.658028904199107e-05,
-     "r_contact_one_ohm": 0.0,
-     "r_spread_one_ohm": 0.00033999999999999997,
-     "r_total_ohm": 4.26580289041991e-09
-    }
-   },
-   "contact_status": "r_contact = 0 is the IDEAL-CONTACT LOWER BOUND, not a claim of zero; no transferable source was found",
-   "geometry_status": "OPEN -- no microbump field in the physical config",
-   "i_a": 1000.0,
-   "p_high_w": 0.1391126806512444,
-   "p_low_w": 0.0042658028904199105,
-   "status": "BRACKETED (geometry OPEN)"
+    "contact_status": "r_contact = 0 is the IDEAL-CONTACT LOWER BOUND, not a claim of zero; no transferable source was found",
+    "geometry_status": "OPEN -- no microbump field in the physical config",
+    "i_a": 1000.0,
+    "p_high_w": 0.1391126806512444,
+    "p_low_w": 0.0042658028904199105,
+    "status": "BRACKETED (geometry OPEN)"
+   }
   },
-  "n_bracketed": 2,
-  "n_open": 6,
-  "n_recomputed": 4,
-  "p_recomputed_total_w": 0.44787772212864124,
+  "n_geometry_closed": 6,
+  "n_loss_closed": 4,
+  "n_loss_open": 6,
+  "n_loss_scenario": 2,
+  "p_recomputed_total_w": 0.440375571395777,
+  "pad": {
+   "cells": 49,
+   "current_maturity": "CLOSED",
+   "geometry_maturity": "CLOSED",
+   "interface": "IF_PAD_SRC",
+   "loss_maturity": "CLOSED",
+   "n_gnd_total": 240492,
+   "n_vdd_total": 240492,
+   "note": "the 1 V cell output RMS is known from the converter model, so this interface's loss is genuinely closed at T_ref",
+   "p_pad_gnd_w": 0.007183514813186458,
+   "p_pad_total_w": 0.014367029626372915,
+   "p_pad_vdd_w": 0.007183514813186458,
+   "per_cell": {
+    "PAD_ADOPTED": {
+     "i_per_pad_a": 0.004191734027091049,
+     "j_per_pad_A_cm2": 4191.734027091049,
+     "n_per_rail": 4908,
+     "p_rail_w": 0.00014660234312625423,
+     "r_rail_ohm": 3.4637326813365925e-07,
+     "v_drop_v": 7.125947846054781e-06
+    },
+    "PAD_DROP": {
+     "i_per_pad_a": 5.143257651240717,
+     "j_per_pad_A_cm2": 5143257.651240717,
+     "n_per_rail": 4,
+     "p_rail_w": 0.17988107501591394,
+     "r_rail_ohm": 0.0004249999999999999,
+     "v_drop_v": 0.008743538007109216
+    },
+    "PAD_GEOM": {
+     "i_per_pad_a": 0.004191734027091049,
+     "j_per_pad_A_cm2": 4191.734027091049,
+     "n_per_rail": 4908,
+     "p_rail_w": 0.00014660234312625423,
+     "r_rail_ohm": 3.4637326813365925e-07,
+     "v_drop_v": 7.125947846054781e-06
+    },
+    "budget_status": "BOUNDED_ENGINEERING -- declared drop budget",
+    "budget_v": 0.01,
+    "em_allowable": null,
+    "em_status": "OPEN -- the source references a per-via current limit but never gives its value",
+    "geometry": {
+     "footprint_mm2": 5.61,
+     "keepout_frac": 0.3,
+     "keepout_status": "BOUNDED_ENGINEERING -- declared, swept, not sourced",
+     "n_gnd": 4908,
+     "n_total": 9817,
+     "n_vdd": 4908,
+     "pitch_area_mm2": 0.0004,
+     "usable_mm2": 3.927
+    },
+    "i_cell_rms_a": 20.573030604962867,
+    "r_one_pad_ohm": 0.0016999999999999997,
+    "selection_criterion": "adopted = geometry-limited count; the drop-limited count is far smaller, so geometry rather than voltage drop sets the field"
+   },
+   "source": "10.1109/TCPMT.2026.3724907 Table III (arXiv:2606.28837)"
+  },
   "rms": {
    "cell_rms_over_avg": 1.0080784996431804,
    "hv_S0_a": 23.742906111475396,
    "hv_S1_a": 94.97162444590158,
+   "hv_S2_a": 164.49567881765196,
    "hv_avg_a": 23.742906111475396,
    "hv_status": "OPEN -- the 3:1 SC charge-transfer waveform is absent from the pinned source; see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md",
    "hv_upper_bound": "NONE EXISTS from average current alone",
@@ -251,75 +425,119 @@
   },
   "terms": {
    "P_BGA_return": {
-    "bracket_w": [
-     0.01093459017961858,
-     0.17495344287389727
-    ],
-    "status": "SCENARIO_S0_S1",
-    "w": 0.01093459017961858
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "CLOSED",
+     "loss": "SCENARIO"
+    },
+    "scenario_w": {
+     "HV_S0": 0.01093459017961858,
+     "HV_S1": 0.17495344287389727,
+     "HV_S2": 0.5248603286216917
+    },
+    "w": null
    },
    "P_BGA_supply": {
-    "bracket_w": [
-     0.01093459017961858,
-     0.17495344287389727
-    ],
-    "status": "SCENARIO_S0_S1",
-    "w": 0.01093459017961858
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "CLOSED",
+     "loss": "SCENARIO"
+    },
+    "scenario_w": {
+     "HV_S0": 0.01093459017961858,
+     "HV_S1": 0.17495344287389727,
+     "HV_S2": 0.5248603286216917
+    },
+    "w": null
    },
    "P_TSV_GND": {
-    "bracket_w": [
-     0.21300427088470203,
-     0.21300427088470203
-    ],
-    "status": "RECOMPUTED_RMS",
+    "maturity": {
+     "current": "CLOSED",
+     "geometry": "CLOSED",
+     "loss": "CLOSED"
+    },
+    "scenario_w": null,
     "w": 0.21300427088470203
    },
    "P_TSV_VDD": {
-    "bracket_w": [
-     0.21300427088470203,
-     0.21300427088470203
-    ],
-    "status": "RECOMPUTED_RMS",
+    "maturity": {
+     "current": "CLOSED",
+     "geometry": "CLOSED",
+     "loss": "CLOSED"
+    },
+    "scenario_w": null,
     "w": 0.21300427088470203
    },
    "P_intraVR_metal": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    },
    "P_intraVR_vertical": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    },
-   "P_microbump_return": {
-    "bracket_w": [
-     0.0042658028904199105,
-     0.1391126806512444
-    ],
-    "status": "BRACKETED",
-    "w": null
+   "P_pad_GND": {
+    "maturity": {
+     "current": "CLOSED",
+     "geometry": "CLOSED",
+     "loss": "CLOSED"
+    },
+    "scenario_w": null,
+    "w": 0.007183514813186458
    },
-   "P_microbump_supply": {
-    "bracket_w": [
-     0.0042658028904199105,
-     0.1391126806512444
-    ],
-    "status": "BRACKETED",
-    "w": null
+   "P_pad_VDD": {
+    "maturity": {
+     "current": "CLOSED",
+     "geometry": "CLOSED",
+     "loss": "CLOSED"
+    },
+    "scenario_w": null,
+    "w": 0.007183514813186458
    },
    "P_pkg_RDL_HV_return": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    },
    "P_pkg_RDL_HV_supply": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    },
    "P_pkg_RDL_LV_return": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    },
    "P_pkg_RDL_LV_supply": {
-    "status": "OPEN",
+    "maturity": {
+     "current": "OPEN",
+     "geometry": "OPEN",
+     "loss": "OPEN"
+    },
+    "scenario_w": null,
     "w": null
    }
   },
