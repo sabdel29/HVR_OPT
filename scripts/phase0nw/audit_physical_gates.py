@@ -91,6 +91,10 @@ REQUIRED_GATES = {
                "elec.pkg_rdl_sheet_model", "elec.pkg_rdl_network_converged",
                "elec.bga_voltage_fed_network", "elec.pkg_rdl_return_solved",
                "elec.cutout_penalty_isolated", "geom.cell_coordinate_single_source",
+               # Phase 0N-AI
+               "elec.z1_network_nonconvergence_diagnosed",
+               "elec.cutout_penalty_isolated_HISTORICAL",
+               "elec.pkg_rdl_network_converged_HISTORICAL",
                "geom.bga_lattice_single_source"],
     "padcount": ["elec.pad_count_criterion", "elec.pad_density_sensitivity",
                  "elec.pad_loss_closed"],
@@ -360,6 +364,13 @@ def gates():
     psys = L1["pad"]
     import json as _j2
     net = _j2.loads((R / "research/phase0naf/pkg_rdl_network.json").read_text())
+    VF = _j2.loads((R / "research/phase0nai/voltage_fed_network.json").read_text())
+    DG = _j2.loads((R / "research/phase0nai/z1_convergence_diagnostic.json").read_text())
+    vfz1, vfz2 = VF["loop"]["Z1"], VF["loop"]["Z2"]
+    vfc = VF["controlled"]
+    vfconv = VF["convergence"]
+    vfa = VF["asymmetry"]
+    _worst = max(vfconv.values(), key=lambda c: c["worst_delta"])
     nz1 = net["architectures"]["Z1"]["cases"]["RDL_T2_RDL_M"]
     nz2 = net["architectures"]["Z2"]["cases"]["RDL_T2_RDL_M"]
     cv2 = net["architectures"]["Z2"]["convergence"]
@@ -382,18 +393,58 @@ def gates():
         f"t_Cu swept 2/5/10 um (BOUNDED_FROM_LITERATURE, 10 um scale from TVLSI 2022 "
         f"CLOSE_ANALOG) x occupancy 0.80/0.30 (BOUNDED_ENGINEERING). The DVPD source "
         f"explicitly defers trace dimensions to process technology")
-    notrun("elec.bga_voltage_fed_network", "PkgRDL",
-           "BGA modelled as voltage-fed branches rather than imposed currents",
-           "the solver injects I_total/N into every source, which MATHEMATICALLY "
-           "ENFORCES equal sharing -- an ideal current source cannot be redistributed "
-           "by the sheet. This is the CURRENT reason the gate is open; a package RDL "
-           "network does now exist. Sharing cannot be solved until each ball is a "
-           "resistance to a common source potential")
-    notrun("elec.pkg_rdl_return_solved", "PkgRDL",
-           "package return RDL network solved",
-           "_supply_sites() returns both arrays but solve_case() only solves supply")
+    add("elec.bga_voltage_fed_network", "PkgRDL",
+        "BGA modelled as voltage-fed branches rather than imposed currents",
+        "IMPLEMENTED",
+        f"a rail node feeds each ball through its own Table III series resistance "
+        f"({VF['meta']['r_ball_ohm']*1e3:.4f} mOhm, rho_solder*h/A) and a finite "
+        f"contact, so the split is an OUTPUT. Under a UNIFORM load the balls carry "
+        f"{vfa['UNIFORM']['i_ball_min_a']:.4f}-{vfa['UNIFORM']['i_ball_max_a']:.4f} A "
+        f"against the {vfa['UNIFORM']['imposed_value_would_be_a']:.4f} A the imposed "
+        f"model forced on every ball, a spread of "
+        f"{vfa['UNIFORM']['spread_pct_of_mean']:.1f} % of the mean; moving half the "
+        f"load to one corner cell widens it to "
+        f"{vfa['CORNER_HEAVY']['spread_pct_of_mean']:.1f} %")
+    add("elec.pkg_rdl_return_solved", "PkgRDL",
+        "package return RDL network solved", "IMPLEMENTED",
+        f"supply and return are two separate sheets, each with its own sites, solved "
+        f"separately and added in series. Z1 R_supply "
+        f"{vfz1['r_supply_ohm']*1e3:.4f} + R_return {vfz1['r_return_ohm']*1e3:.4f} = "
+        f"{vfz1['r_loop_ohm']*1e3:.4f} mOhm; Z2 {vfz2['r_supply_ohm']*1e3:.4f} + "
+        f"{vfz2['r_return_ohm']*1e3:.4f} = {vfz2['r_loop_ohm']*1e3:.4f} mOhm. The "
+        f"return leg was previously computed and DISCARDED, so every earlier package "
+        f"RDL resistance understated the loop by "
+        f"{100*vfz1['r_return_ohm']/vfz1['r_supply_ohm']:.0f} % (Z1) and "
+        f"{100*vfz2['r_return_ohm']/vfz2['r_supply_ohm']:.0f} % (Z2)")
+    _z1l = vfz1["r_loop_ohm"]
+    _err = max(vfconv["Z1_supply"]["deltas"]["r_eff_ohm"],
+               vfconv["Z1_return"]["deltas"]["r_eff_ohm"])
     add("elec.cutout_penalty_isolated", "PkgRDL",
         "cutout penalty isolated from BGA-placement penalty", "SPECIFIED",
+        f"CTRL_FULL is BIT-IDENTICAL to Z1 and CTRL_CUTOUT to Z2 (verified on "
+        f"R_supply and R_return), so dR_cutout IS the Z1/Z2 loop difference "
+        f"expressed as a difference -- which means it inherits Z1's convergence "
+        f"failure and cannot be called IMPLEMENTED. What survives that failure "
+        f"is the SIGN: Z1's worst R_eff drift over the final refinement is "
+        f"{100*_err:.4f} %, bounding its loop resistance to "
+        f"{_err*_z1l*1e3:.5f} mOhm, against a cutout term of "
+        f"{vfc['delta_R_cutout_ohm']*1e3:+.4f} mOhm -- a factor of "
+        f"{abs(vfc['delta_R_cutout_ohm'])/(_err*_z1l):.0f}. "
+        f"re-run on the voltage-fed, loop-inclusive, contact-resolved model. "
+        f"dR_cutout = {vfc['delta_R_cutout_ohm']*1e3:+.4f} mOhm against "
+        f"dR_placement = {vfc['delta_R_placement_ohm']*1e3:+.4f} mOhm "
+        f"({vfc['placement_over_cutout']:.2f}x). THE SIGN OF THE CUTOUT TERM FLIPPED: "
+        f"the imposed-current model read -0.351 mOhm (the cutout appearing to HELP) "
+        f"and the corrected model reads "
+        f"{vfc['delta_R_cutout_ohm']*1e3:+.4f} mOhm. The earlier conclusion that the "
+        f"cutout penalty was a placement artefact 'in both magnitude and sign' was "
+        f"itself an artefact of imposing equal ball currents and discarding the "
+        f"return conductor. Placement still moves the answer more than the cutout "
+        f"does, but by {vfc['placement_over_cutout']:.2f}x rather than 5.8x, and "
+        f"dR_placement contrasts two DELIBERATELY OPPOSITE rules (nearest-to-centroid "
+        f"against furthest), so it is a span, not a typical sensitivity")
+    add("elec.cutout_penalty_isolated_HISTORICAL", "PkgRDL",
+        "superseded imposed-current cutout decomposition", "SUPERSEDED",
         "CTRL_FULL (1369 candidate sites) against CTRL_CUTOUT (528), with sheet, "
         "cells, ball count, allocation rule and grid all held identical: "
         "dR_cutout = -0.351 mOhm, i.e. the cutout slightly REDUCES resistance because "
@@ -401,8 +452,36 @@ def gates():
         "Changing only the rule on the same annulus moves R_eff 2.047 mOhm, so "
         "placement dominates the cutout by ~5.8x. SPECIFIED not IMPLEMENTED: Z1 "
         "remains unconverged and the sources are still current-fed")
-    notrun("elec.pkg_rdl_network_converged", "PkgRDL",
-           "package RDL network converged",
+    add("elec.pkg_rdl_network_converged", "PkgRDL",
+        "package RDL network converged", "SPECIFIED",
+        f"convergence is now declared on ALL of "
+        f"{', '.join(VF['meta']['conv_metrics'])} between the two finest of five "
+        f"levels, threshold {100*VF['meta']['conv_threshold']:.0f} % set before any "
+        f"value was read. "
+        f"{sum(1 for c in vfconv.values() if c['converged'])} of {len(vfconv)} "
+        f"networks pass: "
+        f"{', '.join(sorted(k for k,c in vfconv.items() if c['converged']))}. "
+        f"FAILING: "
+        f"{', '.join('%s at %.4f %%' % (k, 100*c['worst_delta']) for k,c in sorted(vfconv.items()) if not c['converged'])}. "
+        f"SPECIFIED not IMPLEMENTED because Z1 still fails, for the third "
+        f"successive phase. The threshold is NOT relaxed to admit it. The "
+        f"earlier study checked R_eff ONLY at grids where a 400 um ball was "
+        f"sub-grid (h = 0.3 mm); the grid here is n = {VF['meta']['resolved_grid']} "
+        f"(h = 50 um, ball spanning 8 cells)")
+    add("elec.z1_network_nonconvergence_diagnosed", "PkgRDL",
+        "the cause of Z1's non-convergence is isolated, not just observed",
+        "IMPLEMENTED",
+        f"Z1 draws sites from the full lattice by nearest-to-centroid, so "
+        f"{DG['overlapping_balls_of_16']['Z1']['supply']}/16 supply and "
+        f"{DG['overlapping_balls_of_16']['Z1']['return']}/16 return balls land "
+        f"beneath a VR cell tile and couple to it through rho_c instead of "
+        f"through the sheet; Z2's 23.36 mm cutout removes exactly those central "
+        f"sites and it has 0 and 0. Removing ONLY the overlapping candidates, at "
+        f"the identical 501->601 step: {DG['finding']['Z1_supply']}. "
+        f"{DG['finding']['Z1_return']}. Corroborated by the rho_c sweep, where "
+        f"Z1's loop resistance moves 1.58x across three decades against Z2's 1.12x")
+    notrun("elec.pkg_rdl_network_converged_HISTORICAL", "PkgRDL",
+           "superseded imposed-current convergence study",
            f"Z2 NOW CONVERGES at "
            f"{net['architectures']['Z2']['convergence']['delta_r_eff']*100:.3f} % after "
            f"the ball counts were matched, but Z1 does not at "

@@ -327,3 +327,392 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ===========================================================================
+# PHASE 0N-AI --- VOLTAGE-FED BGA NETWORK.
+#
+# WHAT WAS WRONG. solve() above injects i_total/len(sources) at every ball. That
+# is not a boundary condition, it is the ANSWER: equal sharing is imposed by the
+# right-hand side, so no ball can ever be found to carry more than another, and
+# any "the network decides the sharing" claim made from it was circular. The
+# docstring of solve() asserts exactly that claim and it was false.
+#
+# WHAT THIS DOES INSTEAD. One rail node held at a fixed potential feeds every
+# ball through its OWN series resistance; the balls reach the sheet through a
+# finite-area contact; the die cells draw their load currents from pad nodes
+# that reach the sheet the same way. Nothing constrains the balls to share
+# equally, so the per-ball current is an output. With an asymmetric load the
+# currents come out unequal, which is the test that the imposed version could
+# not fail.
+#
+#     rail --[R_ball,j]-- ball_j --[contact]-- sheet -- [contact] -- cell_m -> i_m
+#
+# GRID INDEPENDENCE. A contact is stamped by AREA OVERLAP: node k of the sheet
+# owns a square of side h, and the conductance it receives is proportional to
+# the area that square shares with the physical contact disc. The overlaps sum
+# to the true contact area at every refinement, so the total contact
+# conductance does not drift with h. What DOES drift is the sheet's own
+# spreading: a 400 um ball is smaller than one 0.5 mm grid cell, so a coarse
+# sheet cannot resolve the constriction around it. That missing piece is added
+# back analytically as R_sq/(2*pi) * ln(r_cover/a), the 2-D spreading
+# resistance between the contact radius and the radius the covered nodes
+# actually represent. It vanishes identically once the grid resolves the
+# contact, so it is a discretisation correction, not a tuning knob.
+# ===========================================================================
+
+# Specific contact resistance between ball/pad and the RDL sheet, Ohm.mm^2.
+# NOT source-backed: Table III's BGA resistance is pure bulk solder (see
+# pad_interface.bga_ball_resistance_ohm), so the source supplies no contact
+# term at all. These are declared engineering cases and every result says
+# which one produced it.
+#: the VR cell contact is the SQUARE tile footprint, not a disc of that width
+VR_TILE_SIDE_MM = 2.3685438564654024
+
+RHO_C_CASES = {"CONTACT_L": 1.0e-6, "CONTACT_N": 1.0e-5, "CONTACT_H": 1.0e-4}
+RHO_C_STATUS = ("BOUNDED_ENGINEERING -- the DVPD source's own BGA and pad "
+                "resistances are exactly rho*L/A and contain NO contact term, "
+                "so no published value can be quoted here; swept over three "
+                "declared decades and reported as a sensitivity")
+
+_GL_X, _GL_W = np.polynomial.legendre.leggauss(64)
+
+
+def _disc_rect_area(xc, yc, r, x1, x2, y1, y2):
+    """Exact-to-quadrature area of disc(xc, yc, r) intersected with a rectangle."""
+    a, b = max(x1, xc - r), min(x2, xc + r)
+    if b <= a:
+        return 0.0
+    xm, xr = 0.5 * (a + b), 0.5 * (b - a)
+    xs = xm + xr * _GL_X
+    s = np.sqrt(np.maximum(0.0, r * r - (xs - xc) ** 2))
+    hi = np.minimum(y2, yc + s)
+    lo = np.maximum(y1, yc - s)
+    return float(xr * np.dot(_GL_W, np.maximum(0.0, hi - lo)))
+
+
+def contact_overlap(net: "SheetNetwork", x: float, y: float, d_mm: float,
+                    shape: str = "disc"):
+    """-> (node ids, overlap areas mm^2). The areas sum to the contact's real
+    area at every grid level; that is what makes the stamping grid-independent.
+
+    SHAPE IS NOT COSMETIC. A BGA ball is circular -- Table III's A_c = 125663
+    um^2 is exactly pi*(200 um)^2 -- but a VR cell contact is the square tile
+    footprint, and stamping a 2.3685 mm tile as a DISC of that diameter gives
+    pi*(1.18425)^2 = 4.406 mm^2 against the true 2.3685^2 = 5.610 mm^2, a 21 %
+    under-count. That is the same square-vs-circle error already recorded for
+    the Table III Cu pad (d_c = 10 um with A_c = 100 um^2 is a square), so it
+    is an error this project has made once before and must not repeat.
+    """
+    if shape == "square":
+        return _square_overlap(net, x, y, d_mm)
+    if shape != "disc":
+        raise ValueError(f"unknown contact shape {shape!r}")
+    r, h = d_mm / 2.0, net.h
+    lo = np.searchsorted(net.xs, x - r - h) - 1
+    hi = np.searchsorted(net.xs, x + r + h) + 1
+    jlo = np.searchsorted(net.xs, y - r - h) - 1
+    jhi = np.searchsorted(net.xs, y + r + h) + 1
+    nodes, areas = [], []
+    for i in range(max(0, lo), min(net.n, hi + 1)):
+        for j in range(max(0, jlo), min(net.n, jhi + 1)):
+            a = _disc_rect_area(x, y, r,
+                                net.xs[i] - h / 2, net.xs[i] + h / 2,
+                                net.xs[j] - h / 2, net.xs[j] + h / 2)
+            if a > 0.0:
+                nodes.append(net.node(i, j))
+                areas.append(a)
+    if not nodes:                      # disc fell between sample points
+        nodes, areas = [net.nearest(x, y)], [np.pi * r * r]
+    return nodes, np.asarray(areas)
+
+
+def _square_overlap(net, x, y, side_mm):
+    """Exact rectangle-rectangle overlap; no quadrature needed."""
+    h, a = net.h, side_mm / 2.0
+    nodes, areas = [], []
+    ilo = max(0, np.searchsorted(net.xs, x - a - h) - 1)
+    ihi = min(net.n, np.searchsorted(net.xs, x + a + h) + 2)
+    jlo = max(0, np.searchsorted(net.xs, y - a - h) - 1)
+    jhi = min(net.n, np.searchsorted(net.xs, y + a + h) + 2)
+    for i in range(ilo, ihi):
+        ox = (min(net.xs[i] + h / 2, x + a) - max(net.xs[i] - h / 2, x - a))
+        if ox <= 0:
+            continue
+        for j in range(jlo, jhi):
+            oy = (min(net.xs[j] + h / 2, y + a) - max(net.xs[j] - h / 2, y - a))
+            if oy > 0:
+                nodes.append(net.node(i, j))
+                areas.append(ox * oy)
+    if not nodes:
+        nodes, areas = [net.nearest(x, y)], [side_mm ** 2]
+    return nodes, np.asarray(areas)
+
+
+def _contact_conductances(net, x, y, d_mm, rho_c_ohm_mm2, shape="disc"):
+    """Pure area-overlap stamp. Returns (nodes, g_k) with sum(g_k) = A/rho_c.
+
+    NO ANALYTIC SPREADING CORRECTION. A first version of this function added
+    R_sq/(2*pi)*ln(r_cover/a) in series, with r_cover taken from the number of
+    nodes the disc touched. That estimator is not even monotone in h: the
+    touched-node count jumps as the disc boundary crosses cell boundaries, so
+    r_spread read 1.15, 0.95, 0.43, 0.79, 0.46, 0.46 mOhm down a refinement
+    sweep, and it dominated the ball path (84-94 % of it) at every level. The
+    "corrected" model drifted 20 % over n = 101..401 and never settled.
+
+    Removed, not retuned. With the plain stamp the same sweep is monotone and
+    converges once the grid RESOLVES the contact: R_eff = 0.5355, 0.5402,
+    0.5513, 0.5731, 0.5766, 0.5800, 0.5806 mOhm at n = 101..601, the last step
+    being 0.10 %. A 400 um ball needs h <~ 50 um, which is why the converged
+    grid is n = 601 and not the n = 101 the earlier study stopped at. The
+    correction was solving a problem that refinement solves properly, and it
+    was introducing a non-monotone discretisation artefact of its own.
+    """
+    nodes, areas = contact_overlap(net, x, y, d_mm, shape)
+    a_tot = float(areas.sum())
+    r_contact = rho_c_ohm_mm2 / a_tot
+    return nodes, areas / rho_c_ohm_mm2, {
+        "r_contact_ohm": r_contact, "a_contact_mm2": a_tot, "shape": shape,
+        "n_nodes": len(nodes), "d_over_h": d_mm / net.h}
+
+
+class VoltageFedNetwork:
+    """Sheet + ball nodes + cell pad nodes + one rail node held at a potential."""
+
+    def __init__(self, n, r_sq, span_mm=SUBSTRATE_MM):
+        self.sheet = SheetNetwork(n, r_sq, span_mm)
+        self.ns = n * n
+
+    def build(self, ball_xy, cell_xy, r_ball_ohm, rho_c_ball, rho_c_cell,
+              d_ball_mm, d_cell_mm, cell_shape="square"):
+        net = self.sheet
+        nb, nc = len(ball_xy), len(cell_xy)
+        self.nb, self.nc = nb, nc
+        self.i_ball = self.ns                      # ball nodes
+        self.i_cell = self.ns + nb                 # cell pad nodes
+        self.i_rail = self.ns + nb + nc            # single rail node
+        N = self.i_rail + 1
+        rows, cols, vals = [], [], []
+
+        def edge(a, b, g):
+            rows.extend((a, b, a, b))
+            cols.extend((a, b, b, a))
+            vals.extend((g, g, -g, -g))
+
+        L = net.laplacian().tocoo()                # sheet interior
+        rows.extend(L.row.tolist())
+        cols.extend(L.col.tolist())
+        vals.extend(L.data.tolist())
+
+        self.ball_meta, self.cell_meta = [], []
+        for j, (x, y) in enumerate(ball_xy):
+            bj = self.i_ball + j
+            edge(self.i_rail, bj, 1.0 / r_ball_ohm)          # the ball itself
+            nd, g, meta = _contact_conductances(net, x, y, d_ball_mm, rho_c_ball)
+            for k, gk in zip(nd, g):
+                edge(bj, k, gk)
+            self.ball_meta.append(meta)
+        for m, (x, y) in enumerate(cell_xy):
+            cm = self.i_cell + m
+            nd, g, meta = _contact_conductances(net, x, y, d_cell_mm,
+                                                rho_c_cell, cell_shape)
+            for k, gk in zip(nd, g):
+                edge(cm, k, gk)
+            self.cell_meta.append(meta)
+
+        self.G = sp.csr_matrix(sp.coo_matrix((vals, (rows, cols)), shape=(N, N)))
+        self.N = N
+        self.r_ball_ohm = r_ball_ohm
+        return self
+
+    def solve(self, i_cells, v_rail: float = 0.0):
+        """Draw i_cells[m] out of cell pad m; the rail supplies all of it.
+
+        The rail is the only Dirichlet node. Ball currents are NOT prescribed.
+        """
+        N = self.N
+        i_cells = np.asarray(i_cells, float)
+        assert len(i_cells) == self.nc
+        rhs = np.zeros(N)
+        rhs[self.i_cell:self.i_cell + self.nc] = -i_cells
+        free = np.ones(N, bool)
+        free[self.i_rail] = False
+        Gff = self.G[free][:, free]
+        gfr = np.asarray(self.G[free][:, [self.i_rail]].todense()).ravel()
+        Vf = spla.spsolve(Gff.tocsc(), rhs[free] - gfr * v_rail)
+        V = np.empty(N)
+        V[free] = Vf
+        V[self.i_rail] = v_rail
+        return V
+
+    def report(self, V, i_cells):
+        i_cells = np.asarray(i_cells, float)
+        i_tot = float(i_cells.sum())
+        vb = V[self.i_ball:self.i_ball + self.nb]
+        vc = V[self.i_cell:self.i_cell + self.nc]
+        i_ball = (V[self.i_rail] - vb) / self.r_ball_ohm
+        # Joule loss over EVERY edge of the assembled network
+        Gc = self.G.tocoo()
+        up = Gc.row < Gc.col
+        p = float(np.sum(-Gc.data[up] * (V[Gc.row[up]] - V[Gc.col[up]]) ** 2))
+        # independent check: power in at the rail minus power out at the loads
+        p_vi = float(V[self.i_rail] * i_ball.sum() - np.dot(vc, i_cells))
+        return {
+            "i_total_a": i_tot,
+            "p_loss_w": p,
+            "p_loss_vi_w": p_vi,
+            "energy_residual_rel": abs(p - p_vi) / max(abs(p), 1e-300),
+            "r_eff_ohm": p / i_tot ** 2,
+            "i_ball_a": i_ball,
+            "i_ball_sum_a": float(i_ball.sum()),
+            "i_ball_max_a": float(i_ball.max()),
+            "i_ball_min_a": float(i_ball.min()),
+            "ball_imax_over_imean": float(i_ball.max() / (i_tot / self.nb)),
+            "max_cell_drop_v": float(V[self.i_rail] - vc.min()),
+            "min_cell_drop_v": float(V[self.i_rail] - vc.max()),
+            "r_ball_total_ohm": self.r_ball_ohm,
+        }
+
+
+# --- drivers for the voltage-fed form -------------------------------------
+
+#: supply and return are modelled as TWO SEPARATE SHEETS (a plane pair), which
+#: is why they are solved separately rather than as one network: the return
+#: conductor has its own BGA sites and its own spreading problem, and the loop
+#: resistance is the series sum. Sharing one sheet between both rails would
+#: short them together.
+RAILS = ("supply", "return")
+
+
+def solve_rail_vf(arch, rail, n_grid, t_cu_mm, occupancy, i_cells=None,
+                  rho_c_ball=None, rho_c_cell=None, T_c=T_REF_C,
+                  n_supply=N_SUPPLY_DEFAULT, n_return=N_RETURN_DEFAULT,
+                  allocation_rule="nearest_symmetric", bga_case="BGA_P1",
+                  candidate_override=None, d_cell_mm=VR_TILE_SIDE_MM):
+    import pad_interface as PI
+    import physical_coords as PCO
+    rho_c_ball = RHO_C_CASES["CONTACT_N"] if rho_c_ball is None else rho_c_ball
+    rho_c_cell = RHO_C_CASES["CONTACT_N"] if rho_c_cell is None else rho_c_cell
+    cells = cell_centres()
+    if candidate_override is not None:
+        sel = PCO.select_power_sites(candidate_override, cells, n_supply,
+                                     n_return, allocation_rule)
+        sup, ret = sel["supply"], sel["return"]
+        placement = f"CONTROLLED/{allocation_rule}: {n_supply}+{n_return}"
+    else:
+        sup, ret, placement = _supply_sites(arch, cells, n_supply, n_return,
+                                            allocation_rule, bga_case)
+    balls = sup if rail == "supply" else ret
+    if i_cells is None:
+        i_cells = np.full(len(cells), 1.0 / len(cells))
+    net = VoltageFedNetwork(n_grid, sheet_resistance_ohm_sq(t_cu_mm, occupancy, T_c))
+    net.build(balls, cells, PI.bga_ball_resistance_ohm(T_c),
+              rho_c_ball, rho_c_cell, PI.BGA_D_UM * 1e-3, d_cell_mm,
+              cell_shape="square")
+    V = net.solve(i_cells)
+    out = net.report(V, i_cells)
+    out.update({"arch": arch, "rail": rail, "n_grid": n_grid, "n_balls": len(balls),
+                "t_cu_mm": t_cu_mm, "occupancy": occupancy,
+                "rho_c_ball_ohm_mm2": rho_c_ball, "rho_c_cell_ohm_mm2": rho_c_cell,
+                "source_placement": placement,
+                "min_ball_d_over_h": float(min(m["d_over_h"]
+                                               for m in net.ball_meta)),
+                "min_ball_contact_nodes": int(min(m["n_nodes"]
+                                                  for m in net.ball_meta)),
+                "feed": "VOLTAGE_FED"})
+    out["i_ball_a"] = out["i_ball_a"].tolist()
+    return out
+
+
+#: metrics the convergence study must settle, declared before inspection
+VF_CONV_METRICS = ("r_eff_ohm", "p_loss_w", "max_cell_drop_v",
+                   "i_ball_max_a", "ball_imax_over_imean")
+VF_CONV_THRESH = 0.01
+#: a 400 um ball on a 30 mm span is sub-grid until h <~ 50 um. Levels below
+#: this do not resolve the contact and their R_eff is still climbing.
+VF_CONV_LEVELS = (201, 301, 401, 501, 601)
+VF_RESOLVED_GRID = 601
+
+
+def converge_rail_vf(arch, rail, t_cu_mm=5.0e-3, occupancy=0.30,
+                     levels=VF_CONV_LEVELS, **kw):
+    """1 % on EVERY metric in VF_CONV_METRICS, not just on R_eff.
+
+    The earlier study converged R_eff alone. R_eff is an integral of the field
+    and settles first; the peak ball current is a local quantity and settles
+    last, so declaring convergence on R_eff alone would have passed a solution
+    whose worst-case ball loading was still moving.
+    """
+    rows = [solve_rail_vf(arch, rail, n, t_cu_mm, occupancy, **kw) for n in levels]
+    fine, mid = rows[-1], rows[-2]
+    deltas = {m: abs(fine[m] - mid[m]) / abs(fine[m]) for m in VF_CONV_METRICS}
+    return {"arch": arch, "rail": rail, "levels": rows, "deltas": deltas,
+            "threshold": VF_CONV_THRESH,
+            "threshold_declared": ("1 % between the two finest levels on ALL of "
+                                   + ", ".join(VF_CONV_METRICS)
+                                   + "; declared before any value was inspected"),
+            "worst_metric": max(deltas, key=deltas.get),
+            "worst_delta": max(deltas.values()),
+            "converged": max(deltas.values()) < VF_CONV_THRESH}
+
+
+def loop_resistance_vf(arch, n_grid=VF_RESOLVED_GRID, t_cu_mm=5.0e-3, occupancy=0.30, **kw):
+    """R_loop = R_supply + R_return, each from its OWN network and sites."""
+    legs = {r: solve_rail_vf(arch, r, n_grid, t_cu_mm, occupancy, **kw)
+            for r in RAILS}
+    return {"arch": arch, "n_grid": n_grid,
+            "r_supply_ohm": legs["supply"]["r_eff_ohm"],
+            "r_return_ohm": legs["return"]["r_eff_ohm"],
+            "r_loop_ohm": legs["supply"]["r_eff_ohm"] + legs["return"]["r_eff_ohm"],
+            "legs": legs,
+            "note": "two separate sheets in series; the return leg was previously "
+                    "computed and then DISCARDED, so every earlier package-RDL "
+                    "resistance omitted the return conductor entirely"}
+
+
+def controlled_cutout_experiment_vf(n_grid=VF_RESOLVED_GRID, t_cu_mm=5.0e-3,
+                                    occupancy=0.30, n_supply=N_SUPPLY_DEFAULT,
+                                    **kw):
+    """CTRL-FULL vs CTRL-CUTOUT on the VOLTAGE-FED, LOOP-INCLUSIVE model.
+
+    Same question as the imposed-current version, asked of a model that no
+    longer dictates its own ball sharing and no longer throws the return
+    conductor away. Everything but the candidate set is held fixed, and the
+    placement rule is varied on an UNCHANGED candidate set so the two effects
+    can be told apart -- the earlier run found the apparent cutout penalty was
+    mostly placement, in magnitude and in sign, so the decomposition is the
+    result, not the ratio.
+    """
+    import physical_coords as PCO
+    full = PCO.bga_lattice_sites()
+    cut = PCO.bga_lattice_sites(23.36)
+
+    def loop(cand, rule):
+        legs = {r: solve_rail_vf("CTRL", r, n_grid, t_cu_mm, occupancy,
+                                 n_supply=n_supply, n_return=n_supply,
+                                 allocation_rule=rule,
+                                 candidate_override=cand, **kw)
+                for r in RAILS}
+        return {"r_supply_ohm": legs["supply"]["r_eff_ohm"],
+                "r_return_ohm": legs["return"]["r_eff_ohm"],
+                "r_loop_ohm": legs["supply"]["r_eff_ohm"]
+                              + legs["return"]["r_eff_ohm"],
+                "n_candidate_sites": len(cand),
+                "ball_imax_over_imean": max(legs[r]["ball_imax_over_imean"]
+                                            for r in RAILS)}
+
+    cases = {"CTRL_FULL": loop(full, "nearest_symmetric"),
+             "CTRL_CUTOUT": loop(cut, "nearest_symmetric"),
+             "CTRL_CUTOUT_OUTER": loop(cut, "outer_perimeter")}
+    d_cut = cases["CTRL_CUTOUT"]["r_loop_ohm"] - cases["CTRL_FULL"]["r_loop_ohm"]
+    d_place = (cases["CTRL_CUTOUT_OUTER"]["r_loop_ohm"]
+               - cases["CTRL_CUTOUT"]["r_loop_ohm"])
+    return {"n_grid": n_grid, "cases": cases,
+            "delta_R_cutout_ohm": d_cut,
+            "delta_R_placement_ohm": d_place,
+            "placement_over_cutout": (abs(d_place) / abs(d_cut)
+                                      if d_cut else None),
+            "feed": "VOLTAGE_FED", "includes_return": True,
+            "note": ("delta_R_cutout is the ONLY quantity entitled to be called "
+                     "a cutout penalty; delta_R_placement is how far the same "
+                     "candidate set moves under a different allocation rule")}

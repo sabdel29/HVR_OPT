@@ -106,9 +106,19 @@ def select_power_sites(candidate_sites, cells, n_supply: int, n_return: int,
     elif allocation_rule == "outer_perimeter":
         ranked = sorted(candidate_sites, key=dist, reverse=True)
     elif allocation_rule == "inner_edge":
-        # closest to the centroid among sites that EXIST -- for an annulus that is the
-        # inner boundary, for a full lattice it coincides with nearest_symmetric
-        ranked = sorted(candidate_sites, key=dist)
+        # WITHDRAWN. This branch ran `sorted(candidate_sites, key=dist)` -- the exact
+        # expression used by nearest_symmetric -- so it returned the identical 16+16
+        # sites on the full lattice AND on the Z2 annulus, verified directly. Its
+        # comment claimed the annulus case would differ; it does not, because nothing
+        # in the ranking refers to the cutout. Counting it as a third allocation rule
+        # overstated how much placement sensitivity had been explored: two of the
+        # three "rules" were one rule. A genuine inner-edge rule needs the cutout
+        # radius passed in, which this signature does not carry.
+        raise NotImplementedError(
+            "allocation_rule='inner_edge' was an alias of 'nearest_symmetric' "
+            "(identical ranking expression, identical sites on both candidate "
+            "sets). It is withdrawn rather than silently duplicated; pass "
+            "'nearest_symmetric' or 'outer_perimeter'.")
     else:
         raise ValueError(f"unknown allocation_rule {allocation_rule!r}")
 

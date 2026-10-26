@@ -162,6 +162,9 @@ def microbump_loss(i_a: float, T_c: float = T_REF_C,
 
 
 # =======================================================================================
+MAT_ = lambda g, c, l: {"geometry": g, "current": c, "loss": l}   # noqa: E731
+
+
 def rms_scenarios(arch: str) -> dict:
     """RMS current per rail. The 48 V rail is a BRACKET, not a value."""
     import rms_currents as RMS
@@ -208,6 +211,7 @@ def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
     import pad_interface as PAD
     import rms_currents as _RMS
     pad = PAD.system(_RMS.cell_currents()["i_cell_out_rms_a"])
+    MAT = MAT_
     f_S0 = (rb["hv_S0_a"] / rb["hv_avg_a"]) ** 2
     f_S1 = (rb["hv_S1_a"] / rb["hv_avg_a"]) ** 2
     f_S2 = (rb["hv_S2_a"] / rb["hv_avg_a"]) ** 2
@@ -219,10 +223,36 @@ def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
     def lv_val(p_base):
         return p_base * f_lv
 
+    # --- PHASE 0N-AI: the package HV RDL is now a solved physical network -----
+    # geometry CLOSED for both architectures (sheet, real BGA lattice sites,
+    # finite source-backed contacts, separate return conductor). The LOSS axis
+    # follows CONVERGENCE, not merely the existence of a number: Z2's two
+    # networks pass the 1 % test on all five metrics and Z1's two do not, so
+    # Z1's loss stays OPEN while its geometry is closed. That is exactly the
+    # distinction the three-axis maturity model exists to express.
+    import json as _jn
+    _vf = _jn.loads((R / "research/phase0nai"
+                     / "voltage_fed_network.json").read_text())
+    _cv = _vf["convergence"]
+    _rdl_ok = all(_cv[f"{arch}_{r}"]["converged"] for r in ("supply", "return"))
+    _rdl = _vf["loop"][arch]
+    _rdl_mat = MAT_("CLOSED", "SCENARIO", "SCENARIO" if _rdl_ok else "OPEN")
+    _rdl_note = (
+        "voltage-fed network, converged on all five metrics"
+        if _rdl_ok else
+        "voltage-fed network built and solved, but %s fail the 1 %% convergence "
+        "test (worst %s), so the resistance is not yet a reportable value"
+        % (", ".join(sorted(k for k in _cv if k.startswith(arch)
+                            and not _cv[k]["converged"])),
+           max((_cv[k]["worst_delta"] for k in _cv if k.startswith(arch)),
+               default=0.0)))
+
+    def _rdl_scen(r_ohm):
+        return hv_scen(rb["hv_avg_a"] ** 2 * r_ohm) if _rdl_ok else None
+
     # THREE-AXIS MATURITY (brief 46): geometry, current and loss are tracked
     # separately, so a conductor whose resistance is closed is not called unresolved
     # merely because its waveform is open.
-    MAT = lambda g, c, l: {"geometry": g, "current": c, "loss": l}   # noqa: E731
     terms = {
         "P_BGA_supply": {"w": None, "scenario_w": hv_scen(bga["p_supply_w"]),
                          "maturity": MAT("CLOSED", "OPEN", "SCENARIO")},
@@ -247,10 +277,16 @@ def ledger(arch: str, T_c: float = T_REF_C, n_tsv_side: int = 722) -> dict:
                       "scenario_w": {k: v for k, v in
                                      pad["scenario_p_pad_rail_w"].items()},
                       "maturity": MAT("CLOSED", "CLOSED", "SCENARIO")},
-        "P_pkg_RDL_HV_supply": {"w": None, "scenario_w": None,
-                                "maturity": MAT("OPEN", "OPEN", "OPEN")},
-        "P_pkg_RDL_HV_return": {"w": None, "scenario_w": None,
-                                "maturity": MAT("OPEN", "OPEN", "OPEN")},
+        "P_pkg_RDL_HV_supply": {"w": None,
+                                "scenario_w": _rdl_scen(_rdl["r_supply_ohm"]),
+                                "r_ohm": _rdl["r_supply_ohm"],
+                                "converged": _rdl_ok, "note": _rdl_note,
+                                "maturity": _rdl_mat},
+        "P_pkg_RDL_HV_return": {"w": None,
+                                "scenario_w": _rdl_scen(_rdl["r_return_ohm"]),
+                                "r_ohm": _rdl["r_return_ohm"],
+                                "converged": _rdl_ok, "note": _rdl_note,
+                                "maturity": _rdl_mat},
         "P_pkg_RDL_LV_supply": {"w": None, "scenario_w": None,
                                 "maturity": MAT("OPEN", "OPEN", "OPEN")},
         "P_pkg_RDL_LV_return": {"w": None, "scenario_w": None,
@@ -297,9 +333,14 @@ def main():
             if v["w"] is not None:
                 print(f"    {k:22s} {v['w']*1e3:10.3f} mW   {tag}")
             elif v.get("scenario_w"):
+                # PRE-EXISTING BUG: this printed sc['HV_S0'] unconditionally and
+                # raised KeyError on the pad terms, whose scenarios are keyed
+                # PAD_DROP / PAD_GEOM_MAX. main() could not run to completion.
+                # Render whatever scenario keys the term actually carries.
                 sc = v["scenario_w"]
-                print(f"    {k:22s} S0 {sc['HV_S0']*1e3:7.2f} S1 {sc['HV_S1']*1e3:8.1f} "
-                      f"S2 {sc['HV_S2']*1e3:8.1f} mW   {tag}")
+                body = "  ".join(f"{n.replace('HV_', '')} {w*1e3:.2f}"
+                                 for n, w in sc.items())
+                print(f"    {k:22s} {body} mW   {tag}")
             else:
                 print(f"    {k:22s} {'--':>10s}      {tag}")
         pd = L["pad"]

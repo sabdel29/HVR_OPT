@@ -23,42 +23,45 @@ OUT.mkdir(parents=True, exist_ok=True)
 # stage, model, type, governing quantity, independent reference, error, evidence class
 HIERARCHY = [
     ("converter synthesis", "closed-form HVR loss/ripple equations + enumeration",
-     "ANALYTICAL", "device/passive loss ledger", "none", "", "VERIFICATION",
-     "4.564", "1"),
+     "ANALYTICAL", "device/passive loss ledger", "none", "",
+     "CONSERVATION_VERIFICATION", "4.564", "1"),
     ("rail-aware power path", "terminal/segment graph with one owner per conductor",
-     "NETWORK/ALGEBRAIC", "current ownership", "none", "", "VERIFICATION",
-     "0.0001", "1"),
+     "NETWORK/ALGEBRAIC", "current ownership", "none", "",
+     "CONSERVATION_VERIFICATION", "0.0001", "1"),
     ("BGA / pad / TSV bulk R", "rho L / A with parallel allocation",
      "ANALYTICAL", "conductor resistance",
-     "DVPD Table III", "0.00 % pad, 3 % BGA, 1.6 % TSV", "VALIDATION", "<0.001", "1"),
+     "DVPD Table III (the source's OWN rho, L, A)", "0.00 % pad, 3 % BGA, 1.6 % TSV",
+     "SOURCE_REPRODUCTION", "<0.001", "1"),
     ("TSV transition", "bulk + two-ended constriction",
-     "ANALYTICAL", "end/spreading resistance", "MOOSE", "0.25-0.73 %", "VALIDATION",
-     "<0.001", "1"),
+     "ANALYTICAL", "end/spreading resistance", "MOOSE", "0.25-0.73 %",
+     "INDEPENDENT_NUMERICAL_VALIDATION", "<0.001", "1"),
     ("package RDL", "2-D resistive sheet, G V = I",
      "REDUCED PDE / RESISTOR NETWORK", "R_eff, IR drop",
-     "MOOSE (historical geometry)", "0.45-1.10 % power, 0.90-2.19 % IR",
-     "VALIDATION", "~1", "1"),
+     "MOOSE (HISTORICAL geometry)", "0.45-1.10 % power, 0.90-2.19 % IR",
+     "INDEPENDENT_NUMERICAL_VALIDATION", "~1", "1"),
     ("detailed current crowding", "cell-centred conservative finite volume",
      "FVM", "local current density", "rho L / A exact; MOOSE",
-     "exact on uniform; +0.9 % spreading at 6 cells/radius", "VALIDATION", "", ""),
+     "exact on uniform; +0.9 % spreading at 6 cells/radius",
+     "CLOSED_FORM_VERIFICATION", "", ""),
     ("homogenised materials", "explicit RVE homogenization",
      "REDUCED MATERIAL MODEL", "effective k, E, CTE", "numerical RVE",
-     "k_z ~1 %, bump k_xy ~1.5 %", "VALIDATION", "", ""),
+     "k_z ~1 %, bump k_xy ~1.5 %", "INDEPENDENT_NUMERICAL_VALIDATION", "", ""),
     ("cooling", "energy balance + fin efficiency + Nusselt correlation",
      "ANALYTICAL / COMPACT", "h, T_fluid", "MOOSE explicit fins",
-     "3.78 % in-domain (10.11 % off-design REJECTED)", "VALIDATION", "0.01121", "1"),
+     "3.78 % in-domain (10.11 % off-design REJECTED)",
+     "INDEPENDENT_NUMERICAL_VALIDATION", "0.01121", "1"),
     ("package thermal field", "CalculiX C3D8 conduction FE",
      "FEM", "T(x)", "none (commercial comparison not established)", "",
-     "CONVERGENCE", "75.1 / 121.4", "48"),
+     "UNVALIDATED", "75.1 / 121.4", "48"),
     ("electrothermal coupling", "Picard fixed point",
      "ITERATIVE COUPLING", "self-consistent T and P", "none",
-     "dT < 0.25 K in 3 iterations", "CONVERGENCE", "", "48"),
+     "dT < 0.25 K in 3 iterations", "ITERATION_CONVERGENCE", "", "48"),
     ("global mechanics", "CalculiX C3D8I thermoelastic FE",
      "FEM", "warpage, joint displacement", "none", "0.50 % mesh convergence",
-     "CONVERGENCE", "49.5 / 67.6", "48"),
+     "MESH_CONVERGENCE", "49.5 / 67.6", "48"),
     ("local solder", "displacement-driven viscoplastic FE submodel",
      "FEM (nonlinear)", "inelastic response", "none",
-     "1.9 % mesh, 0.04-0.06 % cycle", "CONVERGENCE", "45.0 / 35.1", "48"),
+     "1.9 % mesh, 0.04-0.06 % cycle", "MESH_CONVERGENCE", "44.99 / 35.14", "128"),
 ]
 
 CLAIMS = [
@@ -123,15 +126,59 @@ def write():
         w = csv.writer(fh)
         w.writerow(["constant", "where", "classification", "note"])
         w.writerows(GENERALITY)
-    # runtime, explicitly labelled historical
+    # runtime, explicitly labelled historical.
+    # runtime_benchmark.csv does NOT contain the local solder submodel: its
+    # "full ETM evaluation" row is the E-T fixed point plus the single global
+    # thermoelastic solve plus overhead, and nothing else. The local stage is a
+    # separate run on a different core count, so it is appended here from its own
+    # artifact rather than left out -- omitting it is what produced the "three FE
+    # stages cost 135 / 204 s" error.
     src = list(csv.DictReader(
         (R / "results/phase0mr3c/runtime_benchmark.csv").open()))
+    fields = list(src[0]) + ["provenance"]
+    rows = []
+    for row in src:
+        row["provenance"] = "HISTORICAL_FROZEN_R3C_RUNTIME"
+        if row["stage"].startswith("full ETM evaluation"):
+            row["stage"] = (row["stage"]
+                            + " [EXCLUDES the local solder submodel]")
+        rows.append(row)
+    loc = {r["case"]: r for r in csv.DictReader(
+        (R / "results/phase0mr3c/final_local_response.csv").open())}
+    etm = {r["case"]: r for r in rows if r["stage"].startswith("full ETM")}
+    for case in ("Z1", "Z2"):
+        lr = loc[case]
+        rows.append({
+            "stage": "critical-joint local solder response (SEPARATE stage)",
+            "case": case,
+            "size": "%s elem, %s cycles" % (lr["n_elem"], lr["n_cycles"]),
+            "dof": "",
+            "wall_s": lr["wall_s"],
+            "threads": lr["n_core"],
+            "reference_tool": "none",
+            "error": "",
+            "speedup": "",
+            "provenance": "HISTORICAL_FROZEN_R3C_RUNTIME",
+        })
+        rows.append({
+            "stage": "ETM + local solder arithmetic total",
+            "case": case,
+            "size": "",
+            "dof": "",
+            "wall_s": "%.2f" % (float(etm[case]["wall_s"])
+                                + float(lr["wall_s"])),
+            "threads": "mixed (%s then %s)" % (etm[case]["threads"],
+                                               lr["n_core"]),
+            "reference_tool": "none",
+            "error": "",
+            "speedup": "",
+            "provenance": "DERIVED_SERIAL_SUM -- not a measured wall interval; "
+                          "the two parts ran on different core counts",
+        })
     with (OUT / "runtime_breakdown.csv").open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(src[0]) + ["provenance"])
+        w = csv.DictWriter(fh, fieldnames=fields)
         w.writeheader()
-        for row in src:
-            row["provenance"] = "HISTORICAL_FROZEN_R3C_RUNTIME"
-            w.writerow(row)
+        w.writerows(rows)
     summary = {
         "n_stages": len(HIERARCHY),
         "by_type": {t: sum(1 for h in HIERARCHY if h[2] == t)
@@ -142,6 +189,23 @@ def write():
                    for c in {x[1] for x in CLAIMS}},
         "generality": {g: sum(1 for x in GENERALITY if x[2] == g)
                        for g in {x[2] for x in GENERALITY}},
+        "runtime_accounting": {
+            "etm_wall_s": {"Z1": 134.62, "Z2": 204.23},
+            "etm_covers": "E-T fixed point + global thermoelastic + overhead",
+            "etm_excludes": "the local solder submodel",
+            "local_solder_wall_s": {"Z1": 44.99, "Z2": 35.14},
+            "local_solder_cores": 128,
+            "other_stage_cores": 48,
+            "derived_serial_sum_s": {"Z1": 134.62 + 44.99, "Z2": 204.23 + 35.14},
+            "derived_serial_sum_status": (
+                "DERIVED_SERIAL_SUM -- no single benchmark measured this wall "
+                "interval, and the two parts ran on different core counts"),
+            "correction": (
+                "an earlier version of MODEL_HIERARCHY.md said 'the three FE stages "
+                "cost 135 s / 204 s', which folded the local solder submodel into a "
+                "figure that EXCLUDES it. The manuscript was already correct: it calls "
+                "local solder 'a further 45.0 s and 35.1 s'"),
+        },
         "runtime_provenance": "HISTORICAL_FROZEN_R3C_RUNTIME",
         "runtime_caveat": ("these timings belong to the frozen R3C geometry. The "
                            "physical pair has changed substantially and has NOT been "

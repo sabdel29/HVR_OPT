@@ -305,27 +305,48 @@
    "id": "elec.bga_voltage_fed_network",
    "area": "PkgRDL",
    "gate": "BGA modelled as voltage-fed branches rather than imposed currents",
-   "status": "OPEN",
-   "evidence": "the solver injects I_total/N into every source, which MATHEMATICALLY ENFORCES equal sharing -- an ideal current source cannot be redistributed by the sheet. This is the CURRENT reason the gate is open; a package RDL network does now exist. Sharing cannot be solved until each ball is a resistance to a common source potential"
+   "status": "IMPLEMENTED",
+   "evidence": "a rail node feeds each ball through its own Table III series resistance (0.3104 mOhm, rho_solder*h/A) and a finite contact, so the split is an OUTPUT. Under a UNIFORM load the balls carry 0.0207-0.1538 A against the 0.0625 A the imposed model forced on every ball, a spread of 212.9 % of the mean; moving half the load to one corner cell widens it to 281.8 %"
   },
   {
    "id": "elec.pkg_rdl_return_solved",
    "area": "PkgRDL",
    "gate": "package return RDL network solved",
-   "status": "OPEN",
-   "evidence": "_supply_sites() returns both arrays but solve_case() only solves supply"
+   "status": "IMPLEMENTED",
+   "evidence": "supply and return are two separate sheets, each with its own sites, solved separately and added in series. Z1 R_supply 0.4204 + R_return 0.1776 = 0.5980 mOhm; Z2 1.0318 + 1.1716 = 2.2034 mOhm. The return leg was previously computed and DISCARDED, so every earlier package RDL resistance understated the loop by 42 % (Z1) and 114 % (Z2)"
   },
   {
    "id": "elec.cutout_penalty_isolated",
    "area": "PkgRDL",
    "gate": "cutout penalty isolated from BGA-placement penalty",
    "status": "SPECIFIED",
+   "evidence": "CTRL_FULL is BIT-IDENTICAL to Z1 and CTRL_CUTOUT to Z2 (verified on R_supply and R_return), so dR_cutout IS the Z1/Z2 loop difference expressed as a difference -- which means it inherits Z1's convergence failure and cannot be called IMPLEMENTED. What survives that failure is the SIGN: Z1's worst R_eff drift over the final refinement is 0.6427 %, bounding its loop resistance to 0.00384 mOhm, against a cutout term of +1.6054 mOhm -- a factor of 418. re-run on the voltage-fed, loop-inclusive, contact-resolved model. dR_cutout = +1.6054 mOhm against dR_placement = +2.1490 mOhm (1.34x). THE SIGN OF THE CUTOUT TERM FLIPPED: the imposed-current model read -0.351 mOhm (the cutout appearing to HELP) and the corrected model reads +1.6054 mOhm. The earlier conclusion that the cutout penalty was a placement artefact 'in both magnitude and sign' was itself an artefact of imposing equal ball currents and discarding the return conductor. Placement still moves the answer more than the cutout does, but by 1.34x rather than 5.8x, and dR_placement contrasts two DELIBERATELY OPPOSITE rules (nearest-to-centroid against furthest), so it is a span, not a typical sensitivity"
+  },
+  {
+   "id": "elec.cutout_penalty_isolated_HISTORICAL",
+   "area": "PkgRDL",
+   "gate": "superseded imposed-current cutout decomposition",
+   "status": "SUPERSEDED",
    "evidence": "CTRL_FULL (1369 candidate sites) against CTRL_CUTOUT (528), with sheet, cells, ball count, allocation rule and grid all held identical: dR_cutout = -0.351 mOhm, i.e. the cutout slightly REDUCES resistance because nearest-to-centroid selection would otherwise cluster balls centrally. Changing only the rule on the same annulus moves R_eff 2.047 mOhm, so placement dominates the cutout by ~5.8x. SPECIFIED not IMPLEMENTED: Z1 remains unconverged and the sources are still current-fed"
   },
   {
    "id": "elec.pkg_rdl_network_converged",
    "area": "PkgRDL",
    "gate": "package RDL network converged",
+   "status": "SPECIFIED",
+   "evidence": "convergence is now declared on ALL of r_eff_ohm, p_loss_w, max_cell_drop_v, i_ball_max_a, ball_imax_over_imean between the two finest of five levels, threshold 1 % set before any value was read. 2 of 4 networks pass: Z2_return, Z2_supply. FAILING: Z1_return at 1.0211 %, Z1_supply at 1.1507 %. SPECIFIED not IMPLEMENTED because Z1 still fails, for the third successive phase. The threshold is NOT relaxed to admit it. The earlier study checked R_eff ONLY at grids where a 400 um ball was sub-grid (h = 0.3 mm); the grid here is n = 601 (h = 50 um, ball spanning 8 cells)"
+  },
+  {
+   "id": "elec.z1_network_nonconvergence_diagnosed",
+   "area": "PkgRDL",
+   "gate": "the cause of Z1's non-convergence is isolated, not just observed",
+   "status": "IMPLEMENTED",
+   "evidence": "Z1 draws sites from the full lattice by nearest-to-centroid, so 4/16 supply and 8/16 return balls land beneath a VR cell tile and couple to it through rho_c instead of through the sheet; Z2's 23.36 mm cutout removes exactly those central sites and it has 0 and 0. Removing ONLY the overlapping candidates, at the identical 501->601 step: CAUSE CONFIRMED: 1.1507 % -> 0.4056 % at the identical 501->601 step, crossing the 1 % threshold, with only the overlapping candidate sites removed. NOT EXPLAINED: 1.0211 % -> 1.3275 %, still failing, and the worst metric moves from max_cell_drop_v to p_loss_w while the peak ball current becomes exactly converged. A second cause is present and is NOT identified here. Corroborated by the rho_c sweep, where Z1's loop resistance moves 1.58x across three decades against Z2's 1.12x"
+  },
+  {
+   "id": "elec.pkg_rdl_network_converged_HISTORICAL",
+   "area": "PkgRDL",
+   "gate": "superseded imposed-current convergence study",
    "status": "OPEN",
    "evidence": "Z2 NOW CONVERGES at 0.430 % after the ball counts were matched, but Z1 does not at 2.168 %. A ratio is only as converged as its worse half, so no architecture ratio is reportable. Threshold 1 % on R_eff was declared before any result was read; four levels (41/61/81/101) give 0.43 % for Z2 and 2.17 % for Z1. Finite-area contacts already removed the point-source log singularity that made the first attempt diverge; the residual is reported rather than absorbed by loosening the threshold"
   },
@@ -809,6 +830,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 48,
+ "n_open": 46,
  "n_elems": 38623
 }

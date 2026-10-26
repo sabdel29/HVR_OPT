@@ -45,6 +45,26 @@ ARXIV = "arXiv:2606.28837"
 # --- Table III, RDL/Chiplet column. VERIFIED by direct read this phase. ---------------
 PAD_D_UM, PAD_H_UM, PAD_P_UM = 10.0, 10.0, 20.0
 PAD_A_UM2 = 100.0                 # SOURCE value; NOT pi*(d/2)^2
+# --- the BGA column of the SAME Table III, kept here so there is one owner --------
+# d_c 400 um | h_c 300 um | p_c 800 um | A_c 125663 um^2 | R_c 0.3 mOhm | solder 130 nOhm.m
+# (recorded in results/phase0h/board_stack_closure.md). A_c is consistent with a circular
+# ball: pi*(200 um)^2 = 125663.7 um^2, so unlike the square Cu pad the BGA IS circular.
+BGA_D_UM = 400.0
+BGA_H_UM = 300.0
+BGA_P_UM = 800.0
+BGA_A_UM2 = 125663.7
+BGA_R_SRC_MOHM = 0.3
+
+
+def bga_ball_resistance_ohm(T_c: float = 20.0) -> float:
+    """rho_solder(T) * h / A. At 20 C this is 0.3104 mOhm against the table's 0.3 --
+    the same pure-bulk agreement found for the Cu pad, so the published BGA resistance
+    likewise carries NO separate contact or IMC term. Anything we add for contact
+    resistance is therefore OUR model, not the source's, and must be declared as such."""
+    from interconnect import rho_solder
+    return rho_solder(T_c) * (BGA_H_UM * 1e-6) / (BGA_A_UM2 * 1e-12)
+
+
 PAD_R_SRC_MOHM = 1.7
 PAD_SHAPE = "source_effective_area"
 PAD_SHAPE_STATUS = ("The reported A_c = 100 um^2 is CONSISTENT with a 10x10 um square or "

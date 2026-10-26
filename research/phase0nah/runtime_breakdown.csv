@@ -2,5 +2,9 @@ stage,case,size,dof,wall_s,threads,reference_tool,error,speedup,provenance
 converter synthesis (HVR compile),shared,"3 SC stages, N=3, K=3; 90-device library",,4.564,1,none,,,HISTORICAL_FROZEN_R3C_RUNTIME
 rail-aware PPDN + intra-VR routing,shared,6 segments/cell x 49 cells,,0.0001,1,none,,,HISTORICAL_FROZEN_R3C_RUNTIME
 cooling boundary (correlation),shared,223 channels,,0.01121,1,MOOSE explicit fins,3.78 %,,HISTORICAL_FROZEN_R3C_RUNTIME
-full ETM evaluation (E-T fixed point + mechanics),Z1,3 E-T iterations,,134.62,48,none,,,HISTORICAL_FROZEN_R3C_RUNTIME
-full ETM evaluation (E-T fixed point + mechanics),Z2,3 E-T iterations,,204.23,48,none,,,HISTORICAL_FROZEN_R3C_RUNTIME
+full ETM evaluation (E-T fixed point + mechanics) [EXCLUDES the local solder submodel],Z1,3 E-T iterations,,134.62,48,none,,,HISTORICAL_FROZEN_R3C_RUNTIME
+full ETM evaluation (E-T fixed point + mechanics) [EXCLUDES the local solder submodel],Z2,3 E-T iterations,,204.23,48,none,,,HISTORICAL_FROZEN_R3C_RUNTIME
+critical-joint local solder response (SEPARATE stage),Z1,"488 elem, 4 cycles",,44.99,128,none,,,HISTORICAL_FROZEN_R3C_RUNTIME
+ETM + local solder arithmetic total,Z1,,,179.61,mixed (48 then 128),none,,,DERIVED_SERIAL_SUM -- not a measured wall interval; the two parts ran on different core counts
+critical-joint local solder response (SEPARATE stage),Z2,"488 elem, 4 cycles",,35.14,128,none,,,HISTORICAL_FROZEN_R3C_RUNTIME
+ETM + local solder arithmetic total,Z2,,,239.37,mixed (48 then 128),none,,,DERIVED_SERIAL_SUM -- not a measured wall interval; the two parts ran on different core counts

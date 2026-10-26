@@ -132,13 +132,50 @@ def test_bga_loss_is_nearly_equal_between_architectures(led):
     assert abs(a - b) / a < 0.01
 
 
+#: Phase 0N-AI gave the package HV RDL a solved physical network, so its loss
+#: maturity now follows CONVERGENCE per architecture: Z2's two networks pass
+#: the 1 % test and Z1's do not. Pinned per-architecture rather than relaxed,
+#: so neither a regression nor Z1 starting to converge can pass unnoticed.
+PKG_RDL_LOSS = {"Z1": "OPEN", "Z2": "SCENARIO"}
+N_LOSS_OPEN = {"Z1": 6, "Z2": 4}
+
+
 def test_ledger_marks_open_terms_open_not_zero(led):
     for a in ("Z1", "Z2"):
         t = led[a]["terms"]
-        for k in ("P_pkg_RDL_HV_supply", "P_intraVR_metal", "P_intraVR_vertical"):
+        for k in ("P_intraVR_metal", "P_intraVR_vertical"):
             assert t[k]["w"] is None and t[k]["maturity"]["loss"] == "OPEN", (
                 f"{k} must be OPEN, not a zero that reads as 'no loss'")
-        assert led[a]["n_loss_open"] == 6
+        for k in ("P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return"):
+            m = t[k]["maturity"]
+            assert t[k]["w"] is None, f"{k} must never carry a single value"
+            assert m["geometry"] == "CLOSED", f"{k} geometry is now solved"
+            assert m["loss"] == PKG_RDL_LOSS[a], (a, k, m)
+            if m["loss"] == "OPEN":
+                # an OPEN term must not smuggle a number out via scenario_w
+                assert t[k]["scenario_w"] is None
+                assert t[k]["converged"] is False
+            else:
+                assert t[k]["converged"] is True
+                assert set(t[k]["scenario_w"]) == {"HV_S0", "HV_S1", "HV_S2"}
+                assert all(v > 0 for v in t[k]["scenario_w"].values())
+        assert led[a]["n_loss_open"] == N_LOSS_OPEN[a]
+
+
+def test_pkg_rdl_loss_is_I_rms_squared_times_the_solved_resistance(led):
+    """The scenario losses must be derivable from the network resistance and
+    the named RMS scenarios -- not an independently typed number."""
+    import json
+    vf = json.loads((R / "research/phase0nai"
+                     / "voltage_fed_network.json").read_text())
+    a = "Z2"
+    t = led[a]["terms"]["P_pkg_RDL_HV_supply"]
+    rb = led[a]["rms"]
+    r_ohm = vf["loop"][a]["r_supply_ohm"]
+    assert t["r_ohm"] == r_ohm
+    for s in ("S0", "S1", "S2"):
+        expect = rb[f"hv_{s}_a"] ** 2 * r_ohm
+        assert t["scenario_w"][f"HV_{s}"] == pytest.approx(expect, rel=1e-12)
     # the source Cu pad replaced the arbitrary microbump bracket as the primary term,
     # but its FIELD COUNT has no criterion, so its loss is a scenario not a value
     pad = led["Z1"]["terms"]["P_pad_VDD"]
@@ -146,3 +183,20 @@ def test_ledger_marks_open_terms_open_not_zero(led):
                                "loss": "SCENARIO"}
     assert pad["w"] is None and pad["scenario_w"]
     assert "microbump_arbitrary_bracket" in led["Z1"]["legacy_sensitivity"]
+
+
+def test_ledger_main_runs_to_completion():
+    """It did not. main() printed sc['HV_S0'] for every scenario term, and the
+    pad terms are keyed PAD_DROP / PAD_GEOM_MAX, so it raised KeyError before
+    reaching the end -- a generator that cannot finish cannot be trusted to
+    have written what it claims."""
+    import io as _io
+    import contextlib as _c
+    buf = _io.StringIO()
+    with _c.redirect_stdout(buf):
+        IL.main()
+    out = buf.getvalue()
+    assert "P_pad_VDD" in out and "PAD_DROP" in out
+    assert "P_pkg_RDL_HV_supply" in out
+    for a in ("Z1", "Z2"):
+        assert f"=== {a}" in out

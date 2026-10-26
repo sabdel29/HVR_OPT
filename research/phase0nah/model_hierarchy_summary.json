@@ -1,8 +1,12 @@
 {
  "by_evidence": {
-  "CONVERGENCE": 4,
-  "VALIDATION": 6,
-  "VERIFICATION": 2
+  "CLOSED_FORM_VERIFICATION": 1,
+  "CONSERVATION_VERIFICATION": 2,
+  "INDEPENDENT_NUMERICAL_VALIDATION": 4,
+  "ITERATION_CONVERGENCE": 1,
+  "MESH_CONVERGENCE": 2,
+  "SOURCE_REPRODUCTION": 1,
+  "UNVALIDATED": 1
  },
  "by_type": {
   "ANALYTICAL": 3,
@@ -30,6 +34,26 @@
   "SYSTEM_SPECIFICATION": 6
  },
  "n_stages": 12,
+ "runtime_accounting": {
+  "correction": "an earlier version of MODEL_HIERARCHY.md said 'the three FE stages cost 135 s / 204 s', which folded the local solder submodel into a figure that EXCLUDES it. The manuscript was already correct: it calls local solder 'a further 45.0 s and 35.1 s'",
+  "derived_serial_sum_s": {
+   "Z1": 179.61,
+   "Z2": 239.37
+  },
+  "derived_serial_sum_status": "DERIVED_SERIAL_SUM -- no single benchmark measured this wall interval, and the two parts ran on different core counts",
+  "etm_covers": "E-T fixed point + global thermoelastic + overhead",
+  "etm_excludes": "the local solder submodel",
+  "etm_wall_s": {
+   "Z1": 134.62,
+   "Z2": 204.23
+  },
+  "local_solder_cores": 128,
+  "local_solder_wall_s": {
+   "Z1": 44.99,
+   "Z2": 35.14
+  },
+  "other_stage_cores": 48
+ },
  "runtime_caveat": "these timings belong to the frozen R3C geometry. The physical pair has changed substantially and has NOT been re-benchmarked; they must not be presented as timing of the corrected physical model",
  "runtime_provenance": "HISTORICAL_FROZEN_R3C_RUNTIME"
 }

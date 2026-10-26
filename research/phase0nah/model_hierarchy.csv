@@ -1,13 +1,13 @@
 stage,model,type,governing_quantity,independent_reference,error,evidence_class,historical_r3c_wall_s,threads
-converter synthesis,closed-form HVR loss/ripple equations + enumeration,ANALYTICAL,device/passive loss ledger,none,,VERIFICATION,4.564,1
-rail-aware power path,terminal/segment graph with one owner per conductor,NETWORK/ALGEBRAIC,current ownership,none,,VERIFICATION,0.0001,1
-BGA / pad / TSV bulk R,rho L / A with parallel allocation,ANALYTICAL,conductor resistance,DVPD Table III,"0.00 % pad, 3 % BGA, 1.6 % TSV",VALIDATION,<0.001,1
-TSV transition,bulk + two-ended constriction,ANALYTICAL,end/spreading resistance,MOOSE,0.25-0.73 %,VALIDATION,<0.001,1
-package RDL,"2-D resistive sheet, G V = I",REDUCED PDE / RESISTOR NETWORK,"R_eff, IR drop",MOOSE (historical geometry),"0.45-1.10 % power, 0.90-2.19 % IR",VALIDATION,~1,1
-detailed current crowding,cell-centred conservative finite volume,FVM,local current density,rho L / A exact; MOOSE,exact on uniform; +0.9 % spreading at 6 cells/radius,VALIDATION,,
-homogenised materials,explicit RVE homogenization,REDUCED MATERIAL MODEL,"effective k, E, CTE",numerical RVE,"k_z ~1 %, bump k_xy ~1.5 %",VALIDATION,,
-cooling,energy balance + fin efficiency + Nusselt correlation,ANALYTICAL / COMPACT,"h, T_fluid",MOOSE explicit fins,3.78 % in-domain (10.11 % off-design REJECTED),VALIDATION,0.01121,1
-package thermal field,CalculiX C3D8 conduction FE,FEM,T(x),none (commercial comparison not established),,CONVERGENCE,75.1 / 121.4,48
-electrothermal coupling,Picard fixed point,ITERATIVE COUPLING,self-consistent T and P,none,dT < 0.25 K in 3 iterations,CONVERGENCE,,48
-global mechanics,CalculiX C3D8I thermoelastic FE,FEM,"warpage, joint displacement",none,0.50 % mesh convergence,CONVERGENCE,49.5 / 67.6,48
-local solder,displacement-driven viscoplastic FE submodel,FEM (nonlinear),inelastic response,none,"1.9 % mesh, 0.04-0.06 % cycle",CONVERGENCE,45.0 / 35.1,48
+converter synthesis,closed-form HVR loss/ripple equations + enumeration,ANALYTICAL,device/passive loss ledger,none,,CONSERVATION_VERIFICATION,4.564,1
+rail-aware power path,terminal/segment graph with one owner per conductor,NETWORK/ALGEBRAIC,current ownership,none,,CONSERVATION_VERIFICATION,0.0001,1
+BGA / pad / TSV bulk R,rho L / A with parallel allocation,ANALYTICAL,conductor resistance,"DVPD Table III (the source's OWN rho, L, A)","0.00 % pad, 3 % BGA, 1.6 % TSV",SOURCE_REPRODUCTION,<0.001,1
+TSV transition,bulk + two-ended constriction,ANALYTICAL,end/spreading resistance,MOOSE,0.25-0.73 %,INDEPENDENT_NUMERICAL_VALIDATION,<0.001,1
+package RDL,"2-D resistive sheet, G V = I",REDUCED PDE / RESISTOR NETWORK,"R_eff, IR drop",MOOSE (HISTORICAL geometry),"0.45-1.10 % power, 0.90-2.19 % IR",INDEPENDENT_NUMERICAL_VALIDATION,~1,1
+detailed current crowding,cell-centred conservative finite volume,FVM,local current density,rho L / A exact; MOOSE,exact on uniform; +0.9 % spreading at 6 cells/radius,CLOSED_FORM_VERIFICATION,,
+homogenised materials,explicit RVE homogenization,REDUCED MATERIAL MODEL,"effective k, E, CTE",numerical RVE,"k_z ~1 %, bump k_xy ~1.5 %",INDEPENDENT_NUMERICAL_VALIDATION,,
+cooling,energy balance + fin efficiency + Nusselt correlation,ANALYTICAL / COMPACT,"h, T_fluid",MOOSE explicit fins,3.78 % in-domain (10.11 % off-design REJECTED),INDEPENDENT_NUMERICAL_VALIDATION,0.01121,1
+package thermal field,CalculiX C3D8 conduction FE,FEM,T(x),none (commercial comparison not established),,UNVALIDATED,75.1 / 121.4,48
+electrothermal coupling,Picard fixed point,ITERATIVE COUPLING,self-consistent T and P,none,dT < 0.25 K in 3 iterations,ITERATION_CONVERGENCE,,48
+global mechanics,CalculiX C3D8I thermoelastic FE,FEM,"warpage, joint displacement",none,0.50 % mesh convergence,MESH_CONVERGENCE,49.5 / 67.6,48
+local solder,displacement-driven viscoplastic FE submodel,FEM (nonlinear),inelastic response,none,"1.9 % mesh, 0.04-0.06 % cycle",MESH_CONVERGENCE,44.99 / 35.14,128

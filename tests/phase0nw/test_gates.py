@@ -106,6 +106,12 @@ CLOSED_IDS = {
     "mat.copper_resistivity_canonical",
     "mat.microbump_separate",
     "mat.rdl_tier_tensor",
+    # --- Phase 0N-AI: the package network. Listed here deliberately, because
+    # --- this test exists to stop a gate closing without someone saying so.
+    "elec.bga_voltage_fed_network",          # sharing is now an output
+    "elec.pkg_rdl_return_solved",            # return sheet solved, not discarded
+    "elec.pkg_rdl_network_converged",        # SPECIFIED only: Z1 still fails
+    "elec.z1_network_nonconvergence_diagnosed",
 }
 
 

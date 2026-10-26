@@ -1,0 +1,82 @@
+{
+  "hypothesis": "Z1's non-convergence is caused by supply/return balls landing beneath VR cell tiles, which Z2's cutout geometrically prevents",
+  "levels": [
+    401,
+    501,
+    601
+  ],
+  "overlapping_balls_of_16": {
+    "Z1": {
+      "supply": 4,
+      "return": 8
+    },
+    "Z2": {
+      "supply": 0,
+      "return": 0
+    }
+  },
+  "candidate_sites": {
+    "Z1": {
+      "all": 1369,
+      "non_overlapping": 928
+    },
+    "Z2": {
+      "all": 528,
+      "non_overlapping": 528
+    }
+  },
+  "baseline": {
+    "Z1_supply": {
+      "worst_metric": "i_ball_max_a",
+      "worst_delta": 0.011506942065664948,
+      "converged": false
+    },
+    "Z1_return": {
+      "worst_metric": "max_cell_drop_v",
+      "worst_delta": 0.010211343146814714,
+      "converged": false
+    },
+    "Z2_supply": {
+      "worst_metric": "max_cell_drop_v",
+      "worst_delta": 0.0015626881552597885,
+      "converged": true
+    },
+    "Z2_return": {
+      "worst_metric": "i_ball_max_a",
+      "worst_delta": 0.0019995769930696997,
+      "converged": true
+    }
+  },
+  "no_overlap": {
+    "Z1_supply": {
+      "worst_metric": "i_ball_max_a",
+      "worst_delta": 0.004055806371974074,
+      "converged": true,
+      "deltas": {
+        "r_eff_ohm": 0.0009999272187012586,
+        "p_loss_w": 0.0009999272187012588,
+        "max_cell_drop_v": 0.0034187105612851158,
+        "i_ball_max_a": 0.004055806371974074,
+        "ball_imax_over_imean": 0.004055806371974073
+      }
+    },
+    "Z1_return": {
+      "worst_metric": "p_loss_w",
+      "worst_delta": 0.013275018258868192,
+      "converged": false,
+      "deltas": {
+        "r_eff_ohm": 0.013275018258868189,
+        "p_loss_w": 0.013275018258868192,
+        "max_cell_drop_v": 0.0058702205362067324,
+        "i_ball_max_a": 1.3513986057612067e-06,
+        "ball_imax_over_imean": 1.3513986057612065e-06
+      }
+    }
+  },
+  "finding": {
+    "Z1_supply": "CAUSE CONFIRMED: 1.1507 % -> 0.4056 % at the identical 501->601 step, crossing the 1 % threshold, with only the overlapping candidate sites removed",
+    "Z1_return": "NOT EXPLAINED: 1.0211 % -> 1.3275 %, still failing, and the worst metric moves from max_cell_drop_v to p_loss_w while the peak ball current becomes exactly converged. A second cause is present and is NOT identified here",
+    "consequence": "no Z1 loop resistance and therefore no Z1/Z2 ratio is reportable from this phase; Z2 alone is converged"
+  },
+  "wall_s": 59.7
+}
