@@ -192,15 +192,25 @@ def test_the_Z1_diagnostic_isolates_a_cause_and_admits_what_it_does_not(art):
     assert d["overlapping_balls_of_16"]["Z2"] == {"supply": 0, "return": 0}
     assert d["overlapping_balls_of_16"]["Z1"]["supply"] > 0
     assert d["overlapping_balls_of_16"]["Z1"]["return"] > 0
-    # removing ONLY the overlapping sites fixes supply at the same grid step
-    assert d["no_overlap"]["Z1_supply"]["converged"] is True
-    assert d["no_overlap"]["Z1_supply"]["worst_delta"] < \
-        d["baseline"]["Z1_supply"]["worst_delta"]
-    # and does NOT fix return -- the artifact must say so rather than imply a
-    # single explanation covers both
-    assert d["no_overlap"]["Z1_return"]["converged"] is False
-    assert "NOT EXPLAINED" in d["finding"]["Z1_return"]
-    assert "is NOT identified here" in d["finding"]["Z1_return"]
+    # removing ONLY the overlapping sites must IMPROVE both rails
+    for rail in ("supply", "return"):
+        assert d["no_overlap"][f"Z1_{rail}"]["worst_delta"] < \
+            d["baseline"][f"Z1_{rail}"]["worst_delta"], rail
+    # the verdict wording must be DERIVED from the numbers, not asserted: an
+    # earlier version hard-coded "crossing the 1 % threshold" and "still
+    # failing", and after the lattice fix the two rails swapped roles and the
+    # prose contradicted its own data.
+    import pkg_rdl_network as _K
+    for rail in ("supply", "return"):
+        f = d["finding"][f"Z1_{rail}"]
+        conv = d["no_overlap"][f"Z1_{rail}"]["converged"]
+        delta = d["no_overlap"][f"Z1_{rail}"]["worst_delta"]
+        assert conv == (delta < _K.VF_CONV_THRESH)
+        assert ("CAUSE CONFIRMED" in f) == conv, (rail, f)
+        if not conv:
+            assert "does NOT reach" in f or "NOT A CAUSE" in f, f
+    # whatever remains open must be named, not glossed
+    assert "second_cause" in d["finding"]
 
 
 def test_the_converged_grid_actually_resolves_the_ball(art):
@@ -211,11 +221,31 @@ def test_the_converged_grid_actually_resolves_the_ball(art):
         assert c["levels"][-1]["min_ball_contact_nodes"] >= 8, key
 
 
-def test_peak_ball_current_is_usually_the_last_metric_to_settle(art):
-    worst = [c["worst_metric"] for c in art["convergence"].values()]
-    assert any(w in ("i_ball_max_a", "ball_imax_over_imean") for w in worst), (
-        "R_eff settling first is the reason convergence on R_eff alone was "
-        "not enough; if that is no longer true, re-justify the metric set")
+def test_the_extra_metrics_actually_change_a_verdict(art):
+    """R_eff alone was the old criterion. The five-metric set is justified only
+    if some metric other than R_eff binds -- otherwise it is decoration.
+
+    Concretely at HEAD: Z1_return drifts 0.849 % on r_eff_ohm (which would
+    PASS) but 1.069 % on max_cell_drop_v (which FAILS). Checking R_eff alone
+    would have declared that network converged.
+    """
+    thr = K.VF_CONV_THRESH
+    # the worst metric is, by construction, at least as large as R_eff's
+    for key, c in art["convergence"].items():
+        assert c["worst_delta"] >= c["deltas"]["r_eff_ohm"] - 1e-15, key
+    # some network must be decided by a metric other than R_eff
+    non_reff = [k for k, c in art["convergence"].items()
+                if c["worst_metric"] != "r_eff_ohm"]
+    assert non_reff, (
+        "every network's worst metric is R_eff again; if that is genuinely "
+        "stable, re-justify carrying five metrics instead of one")
+    # and at least one verdict must actually FLIP between the two criteria
+    flipped = [k for k, c in art["convergence"].items()
+               if c["deltas"]["r_eff_ohm"] < thr <= c["worst_delta"]]
+    assert flipped, (
+        "no network is passed by R_eff alone and failed by the full set, so "
+        "the multi-metric criterion changed no verdict at HEAD -- re-justify "
+        "it or record that it is now precautionary only")
 
 
 # --- C the controls must be real controls --------------------------------

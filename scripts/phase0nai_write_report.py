@@ -138,8 +138,10 @@ the overlap is discretised.
 
 Removing only the overlapping candidate sites and changing nothing else:
 
-- **Z1 supply --- {DG['finding']['Z1_supply']}**
-- **Z1 return --- {DG['finding']['Z1_return']}**
+- **Z1 supply** --- {DG['finding']['Z1_supply']}
+- **Z1 return** --- {DG['finding']['Z1_return']}
+
+{DG['finding']['second_cause']}
 
 The same geometry also shows up in the contact sensitivity of section 6: Z1's
 loop resistance moves {rho_c_span('Z1'):.2f}x across the three `rho_c` decades
@@ -155,7 +157,7 @@ monotone in h, so the correction read 1.15, 0.95, 0.43, 0.79, 0.46, 0.46 mOhm
 down a refinement sweep while dominating 84--94 % of the ball path. Refinement
 solves the problem the correction was invented for.
 
-## 4. The cutout term changed sign
+## 4. The cutout term, twice corrected and now small
 
 {ctl['note']}
 
@@ -165,28 +167,37 @@ solves the problem the correction was invented for.
 | `delta_R_placement` | {mm(ctl['delta_R_placement_ohm']):+.4f} mOhm |
 | ratio | {ctl['placement_over_cutout']:.2f}x |
 
-`CTRL_FULL` is **bit-identical** to Z1 and `CTRL_CUTOUT` to Z2 --- which is the
-design (everything but the candidate set is matched), but it also means
-`delta_R_cutout` *is* the Z1/Z2 loop difference written as a difference, and it
-inherits Z1's convergence failure. What survives that failure is the **sign**:
-Z1's worst `R_eff` drift over the final refinement is
+This number has now been wrong twice, for two different reasons, and both
+corrections went the same way: the cutout matters less than it appeared.
+
+1. The imposed-current, supply-only model gave **-0.351 mOhm** --- the cutout
+   apparently *reducing* resistance. That was an artefact of forcing equal ball
+   currents and discarding the return conductor.
+2. Making the balls voltage-fed and adding the return gave **+1.6054 mOhm**.
+   That was an artefact too: the BGA lattice was not closed under negation, so
+   the mirror-symmetric placement rule could only see about 21 % of the legal
+   sites, and both architectures were being placed on an arbitrary subset.
+
+With the lattice repaired, `delta_R_cutout` is
+{mm(ctl['delta_R_cutout_ohm']):+.4f} mOhm against a placement span of
+{mm(ctl['delta_R_placement_ohm']):+.4f} mOhm --- the cutout is now
+**{ctl['placement_over_cutout']:.0f} times smaller** than the span between two
+opposite placement rules on the *same* candidate set.
+
+`CTRL_FULL` is bit-identical to Z1 and `CTRL_CUTOUT` to Z2, which is the design
+--- everything but the candidate set is matched --- but it also means
+`delta_R_cutout` *is* the Z1/Z2 loop difference written as a difference, so it
+inherits Z1's convergence failure. Z1's worst `R_eff` drift over the final
+refinement is
 {100 * max(conv['Z1_supply']['deltas']['r_eff_ohm'], conv['Z1_return']['deltas']['r_eff_ohm']):.4f} %,
 bounding its loop resistance to
 {max(conv['Z1_supply']['deltas']['r_eff_ohm'], conv['Z1_return']['deltas']['r_eff_ohm']) * loop['Z1']['r_loop_ohm'] * 1e3:.5f} mOhm
 against a cutout term of {mm(ctl['delta_R_cutout_ohm']):+.4f} mOhm --- a factor
-of {abs(ctl['delta_R_cutout_ohm']) / (max(conv['Z1_supply']['deltas']['r_eff_ohm'], conv['Z1_return']['deltas']['r_eff_ohm']) * loop['Z1']['r_loop_ohm']):.0f}.
-The magnitude is provisional; the sign is not.
-
-The imposed-current model gave `delta_R_cutout` = **-0.351 mOhm** --- the cutout
-appearing to *reduce* resistance --- and this phase concluded from that number
-that the cutout penalty was mostly a placement artefact "in both magnitude and
-sign". **That conclusion was itself an artefact.** With the balls voltage-fed and
-the return conductor included, the cutout term is
-{mm(ctl['delta_R_cutout_ohm']):+.4f} mOhm. Placement still moves the answer
-further than the cutout does, but by {ctl['placement_over_cutout']:.2f}x rather
-than 5.8x --- and `delta_R_placement` contrasts two deliberately opposite rules
-(nearest-to-centroid against furthest-from-centroid), so it is the span of a
-sensitivity study, not a typical placement effect.
+of only {abs(ctl['delta_R_cutout_ohm']) / (max(conv['Z1_supply']['deltas']['r_eff_ohm'], conv['Z1_return']['deltas']['r_eff_ohm']) * loop['Z1']['r_loop_ohm']):.0f}.
+That margin was 418 before the lattice repair. **The sign is still positive and
+still outside the numerical bound, but the magnitude is provisional and the
+effect is no longer large enough to carry an architecture conclusion on its
+own.** No cutout penalty is frozen here.
 
 ## 5. A control that was a duplicate
 
@@ -214,9 +225,7 @@ can be quoted. Status: {m['rho_c_status']}
 - `P_pkg_RDL_LV_*` remains OPEN: this network is the BGA-fed HV path, and the
   low-voltage distribution is a different conductor.
 - **No Z1 loop resistance and no Z1/Z2 ratio is reportable from this phase.**
-  Z2 is converged; Z1 is not. One cause of Z1's failure is identified (ball/cell
-  contact overlap, which fixes the supply rail) and a second, affecting the
-  return rail, is not.
+  Z2 is converged; Z1 is not. {DG['finding']['second_cause']}
 - Even once Z1 converges, an architecture comparison must account for the
   placement rule, whose span ({mm(ctl['delta_R_placement_ohm']):+.4f} mOhm)
   exceeds the cutout term ({mm(ctl['delta_R_cutout_ohm']):+.4f} mOhm).

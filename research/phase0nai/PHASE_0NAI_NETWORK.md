@@ -14,12 +14,12 @@ made impossible.
 Each ball is now a branch from a common rail node through its own Table III
 series resistance (0.3104 mOhm, `rho_solder * h / A`) and a
 finite contact. Under a **uniform** load the balls carry
-0.0207--0.1538 A against the
+0.0311--0.0957 A against the
 0.0625 A the old model forced on every one of them
---- a spread of 212.9 % of the mean. Moving half the load
-onto one corner cell widens that to 281.8 %. Charge and
-energy close: KCL residual 1.15e-10 A, and
-`sum g dV^2` against `sum V I` to 1.40e-10 relative.
+--- a spread of 103.4 % of the mean. Moving half the load
+onto one corner cell widens that to 129.5 %. Charge and
+energy close: KCL residual 1.99e-10 A, and
+`sum g dV^2` against `sum V I` to 2.26e-10 relative.
 
 ## 2. The return conductor was being discarded
 
@@ -29,8 +29,8 @@ sites, solved separately and added in series.
 
 | arch | R_supply mOhm | R_return mOhm | R_loop mOhm | return as % of supply | status |
 |---|---|---|---|---|---|
-| Z1 | 0.4204 | 0.1776 | 0.5980 | 42 % | **NOT CONVERGED** |
-| Z2 | 1.0318 | 1.1716 | 2.2034 | 114 % | converged |
+| Z1 | 0.8063 | 0.4382 | 1.2445 | 54 % | **NOT CONVERGED** |
+| Z2 | 0.7666 | 0.5996 | 1.3662 | 78 % | converged |
 
 Every package-RDL resistance reported before this phase was the supply leg
 alone. **The Z1 row is not a result.** It is printed so the return leg's size
@@ -47,15 +47,15 @@ at a threshold of 1 % set before any value was read.
 
 | network | worst metric | worst change | R_eff mOhm | ball d/h |
 |---|---|---|---|---|
-| Z1_supply | `i_ball_max_a` | 1.1507 % | 0.4204 | 8.0 |
-| Z1_return | `max_cell_drop_v` | 1.0211 % | 0.1776 | 8.0 |
-| Z2_supply | `max_cell_drop_v` | 0.1563 % | 1.0318 | 8.0 |
-| Z2_return | `i_ball_max_a` | 0.2000 % | 1.1716 | 8.0 |
+| Z1_supply | `p_loss_w` | 1.4101 % | 0.8063 | 8.0 |
+| Z1_return | `max_cell_drop_v` | 1.0688 % | 0.4382 | 8.0 |
+| Z2_supply | `max_cell_drop_v` | 0.2145 % | 0.7666 | 8.0 |
+| Z2_return | `max_cell_drop_v` | 0.3380 % | 0.5996 | 8.0 |
 
 **2 of 4 networks pass: Z2_return, Z2_supply. The 2
 that fail are Z1_return, Z1_supply.** The threshold is not relaxed to admit
-them. The worst case is `i_ball_max_a` in Z1_supply at
-1.1507 %. The grid is n = 601
+them. The worst case is `p_loss_w` in Z1_supply at
+1.4101 %. The grid is n = 601
 (h = 50 um), where the ball spans eight cells.
 
 ### Why Z1 fails where Z2 passes
@@ -63,7 +63,7 @@ them. The worst case is `i_ball_max_a` in Z1_supply at
 Z1 has now failed this test in three successive phases, and previous phases
 recorded only the symptom. Z1 draws its sites from the full lattice by
 nearest-to-centroid, so balls land directly beneath VR cell tiles:
-**4 of 16 supply and
+**8 of 16 supply and
 8 of 16 return balls overlap a
 cell contact.** Z2 cannot do this --- the 23.36 mm cutout removes exactly the
 central sites --- and has
@@ -75,15 +75,17 @@ the overlap is discretised.
 
 Removing only the overlapping candidate sites and changing nothing else:
 
-- **Z1 supply --- CAUSE CONFIRMED: 1.1507 % -> 0.4056 % at the identical 501->601 step, crossing the 1 % threshold, with only the overlapping candidate sites removed**
-- **Z1 return --- NOT EXPLAINED: 1.0211 % -> 1.3275 %, still failing, and the worst metric moves from max_cell_drop_v to p_loss_w while the peak ball current becomes exactly converged. A second cause is present and is NOT identified here**
+- **Z1 supply** --- PARTIAL: removing the overlapping sites improves the worst metric but does NOT reach the 1 % threshold, so contact overlap is a contributing cause and not the whole cause: 1.4101 % -> 1.0902 % at the identical 501->601 step; worst metric p_loss_w -> p_loss_w; converged False -> False
+- **Z1 return** --- CAUSE CONFIRMED: removing only the overlapping candidate sites takes this rail across the 1 % threshold: 1.0688 % -> 0.7858 % at the identical 501->601 step; worst metric max_cell_drop_v -> max_cell_drop_v; converged False -> True
+
+A second, unidentified cause remains on: supply. Removing the ball/cell contact overlap does not bring supply under the threshold, so overlap is not a complete explanation and no further cause is claimed here.
 
 The same geometry also shows up in the contact sensitivity of section 6: Z1's
-loop resistance moves 1.58x across the three `rho_c` decades
-against Z2's 1.12x, which is what a contact-dominated
+loop resistance moves 1.43x across the three `rho_c` decades
+against Z2's 1.20x, which is what a contact-dominated
 near-short predicts.
 
-Consequence: no Z1 loop resistance and therefore no Z1/Z2 ratio is reportable from this phase; Z2 alone is converged.
+Consequence: Z1 as CONFIGURED (nearest-to-centroid on the full lattice) is not converged, so no Z1 loop resistance and no Z1/Z2 ratio is reportable. Z2 is converged..
 
 A first attempt added an analytic spreading resistance in series with each
 contact to let a coarse grid stand in for a resolved one. It was withdrawn, not
@@ -92,38 +94,47 @@ monotone in h, so the correction read 1.15, 0.95, 0.43, 0.79, 0.46, 0.46 mOhm
 down a refinement sweep while dominating 84--94 % of the ball path. Refinement
 solves the problem the correction was invented for.
 
-## 4. The cutout term changed sign
+## 4. The cutout term, twice corrected and now small
 
 delta_R_cutout is the ONLY quantity entitled to be called a cutout penalty; delta_R_placement is how far the same candidate set moves under a different allocation rule
 
 | quantity | value |
 |---|---|
-| `delta_R_cutout` | +1.6054 mOhm |
-| `delta_R_placement` | +2.1490 mOhm |
-| ratio | 1.34x |
+| `delta_R_cutout` | +0.1217 mOhm |
+| `delta_R_placement` | +3.6030 mOhm |
+| ratio | 29.60x |
 
-`CTRL_FULL` is **bit-identical** to Z1 and `CTRL_CUTOUT` to Z2 --- which is the
-design (everything but the candidate set is matched), but it also means
-`delta_R_cutout` *is* the Z1/Z2 loop difference written as a difference, and it
-inherits Z1's convergence failure. What survives that failure is the **sign**:
-Z1's worst `R_eff` drift over the final refinement is
-0.6427 %,
+This number has now been wrong twice, for two different reasons, and both
+corrections went the same way: the cutout matters less than it appeared.
+
+1. The imposed-current, supply-only model gave **-0.351 mOhm** --- the cutout
+   apparently *reducing* resistance. That was an artefact of forcing equal ball
+   currents and discarding the return conductor.
+2. Making the balls voltage-fed and adding the return gave **+1.6054 mOhm**.
+   That was an artefact too: the BGA lattice was not closed under negation, so
+   the mirror-symmetric placement rule could only see about 21 % of the legal
+   sites, and both architectures were being placed on an arbitrary subset.
+
+With the lattice repaired, `delta_R_cutout` is
++0.1217 mOhm against a placement span of
++3.6030 mOhm --- the cutout is now
+**30 times smaller** than the span between two
+opposite placement rules on the *same* candidate set.
+
+`CTRL_FULL` is bit-identical to Z1 and `CTRL_CUTOUT` to Z2, which is the design
+--- everything but the candidate set is matched --- but it also means
+`delta_R_cutout` *is* the Z1/Z2 loop difference written as a difference, so it
+inherits Z1's convergence failure. Z1's worst `R_eff` drift over the final
+refinement is
+1.4101 %,
 bounding its loop resistance to
-0.00384 mOhm
-against a cutout term of +1.6054 mOhm --- a factor
-of 418.
-The magnitude is provisional; the sign is not.
-
-The imposed-current model gave `delta_R_cutout` = **-0.351 mOhm** --- the cutout
-appearing to *reduce* resistance --- and this phase concluded from that number
-that the cutout penalty was mostly a placement artefact "in both magnitude and
-sign". **That conclusion was itself an artefact.** With the balls voltage-fed and
-the return conductor included, the cutout term is
-+1.6054 mOhm. Placement still moves the answer
-further than the cutout does, but by 1.34x rather
-than 5.8x --- and `delta_R_placement` contrasts two deliberately opposite rules
-(nearest-to-centroid against furthest-from-centroid), so it is the span of a
-sensitivity study, not a typical placement effect.
+0.01755 mOhm
+against a cutout term of +0.1217 mOhm --- a factor
+of only 7.
+That margin was 418 before the lattice repair. **The sign is still positive and
+still outside the numerical bound, but the magnitude is provisional and the
+effect is no longer large enough to carry an architecture conclusion on its
+own.** No cutout penalty is frozen here.
 
 ## 5. A control that was a duplicate
 
@@ -141,12 +152,12 @@ can be quoted. Status: BOUNDED_ENGINEERING -- the DVPD source's own BGA and pad 
 
 | arch | case | rho_c Ohm.mm^2 | R_loop mOhm |
 |---|---|---|---|
-| Z1 | `CONTACT_L` | 1e-06 | 0.5432 |
-| Z1 | `CONTACT_N` | 1e-05 | 0.5980 |
-| Z1 | `CONTACT_H` | 0.0001 | 0.8604 |
-| Z2 | `CONTACT_L` | 1e-06 | 2.1424 |
-| Z2 | `CONTACT_N` | 1e-05 | 2.2034 |
-| Z2 | `CONTACT_H` | 0.0001 | 2.3903 |
+| Z1 | `CONTACT_L` | 1e-06 | 1.1401 |
+| Z1 | `CONTACT_N` | 1e-05 | 1.2445 |
+| Z1 | `CONTACT_H` | 0.0001 | 1.6314 |
+| Z2 | `CONTACT_L` | 1e-06 | 1.3008 |
+| Z2 | `CONTACT_N` | 1e-05 | 1.3662 |
+| Z2 | `CONTACT_H` | 0.0001 | 1.5603 |
 
 ## 7. Still open
 
@@ -158,9 +169,7 @@ can be quoted. Status: BOUNDED_ENGINEERING -- the DVPD source's own BGA and pad 
 - `P_pkg_RDL_LV_*` remains OPEN: this network is the BGA-fed HV path, and the
   low-voltage distribution is a different conductor.
 - **No Z1 loop resistance and no Z1/Z2 ratio is reportable from this phase.**
-  Z2 is converged; Z1 is not. One cause of Z1's failure is identified (ball/cell
-  contact overlap, which fixes the supply rail) and a second, affecting the
-  return rail, is not.
+  Z2 is converged; Z1 is not. A second, unidentified cause remains on: supply. Removing the ball/cell contact overlap does not bring supply under the threshold, so overlap is not a complete explanation and no further cause is claimed here.
 - Even once Z1 converges, an architecture comparison must account for the
-  placement rule, whose span (+2.1490 mOhm)
-  exceeds the cutout term (+1.6054 mOhm).
+  placement rule, whose span (+3.6030 mOhm)
+  exceeds the cutout term (+0.1217 mOhm).

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import collections
 import csv
+import json
 import re
 import sys
 from pathlib import Path
@@ -43,12 +44,15 @@ def test_every_segment_carries_R_I_and_P(rows):
         assert r["feasible"] in ("True", "False")
 
 
-def test_R1_is_still_numerically_identical_to_R0(rows):
-    """A declared fidelity level that duplicates its baseline is not a level.
+def test_R1_reproduces_R0_in_the_committed_artifact(rows):
+    """R1 adds nothing for this layout -- now a RETIRED level, not a defect.
 
-    If this test starts FAILING, obstacle routing has begun to do something and
-    INTRA_VR_RESISTANCE_GRAPH.md must be updated -- the failure is the signal,
-    not a regression.
+    When written, R1 == R0 was a symptom: the obstacle router detected a
+    blockage via component EXTENT but sized the detour from component CENTRE,
+    so it could never charge one. That is fixed (tests/phase0naj proves the
+    router detours on a synthetic blocker). With it fixed, still no physical
+    net is obstructed, so R1 legitimately equals R0 and is retired rather than
+    given a manufactured difference.
     """
     key = lambda r: (r["n_layers"], r["t_cu_um"], r["via_policy"], r["j_max"])
     g = collections.defaultdict(lambda: collections.defaultdict(dict))
@@ -57,41 +61,31 @@ def test_R1_is_still_numerically_identical_to_R0(rows):
     assert len(g) >= 20
     for k, byl in g.items():
         if "R0" in byl and "R1" in byl:
-            assert byl["R0"] == byl["R1"], (
-                "R1 now differs from R0 at %s -- update the phase document" % (k,))
+            assert byl["R0"] == byl["R1"], k
 
 
-def test_the_obstacle_detour_can_detect_a_block_and_charge_nothing():
-    """Blockage uses component EXTENT; the detour size uses component CENTRE."""
+def test_the_router_defect_is_fixed_not_merely_documented():
+    src = (R / "scripts/phase0m/routing.py").read_text()
+    assert "THE DEFECT THIS REPLACES" in src
+    assert "ONE geometric test for both decisions" in src
     import routing as RT
-    comps = RT.tile_layout(RT.DESIGN["tile_side_mm"])
-    by = {c.name: c for c in comps}
-    blocked_but_free = 0
-    for nt in RT.nets():
-        a, b = by.get(nt.src), by.get(nt.dst)
-        if a is None or b is None:
-            continue
-        blks = [c for c in comps if c.blocks(nt.layer)
-                and c.name not in (a.name, b.name)]
-        p, q = (a.x_mm, a.y_mm), (b.x_mm, b.y_mm)
+    a = RT.Comp("A", -0.8, 0.0, 0.0, 0.05, 0.05, "HS_RDL", "t")
+    b = RT.Comp("B", 0.8, 0.6, 0.0, 0.05, 0.05, "HS_RDL", "t")
+    wall = RT.Comp("W", 0.0, 0.30, 0.0, 2.0, 0.20, "HS_RDL", "t")
+    assert RT.obstacle_manhattan(a, b, [a, b, wall], "HS_RDL") > RT.manhattan(a, b)
 
-        def clear(p0, p1, m=0.02):
-            for c in blks:
-                x0, x1 = sorted((p0[0], p1[0]))
-                y0, y1 = sorted((p0[1], p1[1]))
-                if (x0 - m <= c.x_mm + c.w_mm / 2 and x1 + m >= c.x_mm - c.w_mm / 2
-                        and y0 - m <= c.y_mm + c.h_mm / 2
-                        and y1 + m >= c.y_mm - c.h_mm / 2):
-                    return False
-            return True
 
-        corners_blocked = not any(clear(p, c) and clear(c, q)
-                                  for c in ((q[0], p[1]), (p[0], q[1])))
-        if corners_blocked and RT.obstacle_manhattan(
-                a, b, comps, nt.layer) == pytest.approx(RT.manhattan(a, b)):
-            blocked_but_free += 1
-    assert blocked_but_free > 0, (
-        "the centre/extent inconsistency appears fixed -- update the document")
+def test_the_fidelity_ladder_answers_its_own_question():
+    """R2 was computed and never compared with anything."""
+    L = json.loads((R / "research/phase0naj/fidelity_ladder.json").read_text())
+    assert L["meta"]["R1_status"] == "RETIRED"
+    assert L["R1_identical_to_R0_everywhere"] is True
+    assert not L["nets_detouring_after_router_fix"]
+    assert L["rows"], "no R0-vs-R2 comparison emitted"
+    for r in L["rows"]:
+        assert r["R2_w_per_vr"] > 0 and r["R0_w_per_vr"] > 0
+    assert L["meta"]["R0_vs_R2_max_abs_err_pct"] > 30.0
+    assert "never validation" in L["meta"]["R2_reference_status"]
 
 
 def test_the_output_plane_is_reported_infeasible_not_clipped(rows):

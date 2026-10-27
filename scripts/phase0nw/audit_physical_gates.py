@@ -55,6 +55,7 @@ REQUIRED_GATES = {
         "elec.power_path_graph", "elec.one_owner_per_conductor",
         "elec.contact_resistance_bounded", "elec.rdl10um_electrical_model",
         "elec.tsv_resistance_temperature_dependent", "elec.rdl_loss_recomputed",
+        "elec.rdl_loss_recomputed_HISTORICAL",
         "elec.energy_conservation_verified", "elec.loss_audit_frozen",
     ],
     "thermal": [
@@ -93,6 +94,9 @@ REQUIRED_GATES = {
                "elec.cutout_penalty_isolated", "geom.cell_coordinate_single_source",
                # Phase 0N-AI
                "elec.z1_network_nonconvergence_diagnosed",
+               "elec.bga_lattice_mirror_closed", "elec.bga_count_closed",
+               "elec.pad_count_admissible_region", "elec.intravr_fidelity_ladder",
+               "elec.hv_waveform_determination",
                "elec.cutout_penalty_isolated_HISTORICAL",
                "elec.pkg_rdl_network_converged_HISTORICAL",
                "geom.bga_lattice_single_source"],
@@ -342,12 +346,33 @@ def gates():
         "IMPLEMENTED",
         f"Z1 {L1['bga']['p_supply_w']*1e3:.3f} mW supply at equal sharing and I_avg; "
         f"single-ball bulk R {L1['bga']['r_supply_ohm']*16*1e3:.3f} mOhm, consistent "
-        f"with the source's ~0.3 mOhm")
+        f"with the source's ~0.3 mOhm. 'At equal sharing' is a DECLARED PROPERTY OF "
+        f"THIS BASELINE TERM, not a framework assumption: elec.bga_network_sharing "
+        f"solves the real split and finds it unequal, so this row is a reference "
+        f"figure and must not be used to size balls")
     add("elec.bga_rms_current", "RMS", "BGA loss uses RMS current", "OPEN",
         "blocked by elec.z1_hv_rms_current: the 48 V RMS is a bracket")
+    import json as _j2
+    net = _j2.loads((R / "research/phase0naf/pkg_rdl_network.json").read_text())
+    VF = _j2.loads((R / "research/phase0nai/voltage_fed_network.json").read_text())
+    DG = _j2.loads((R / "research/phase0nai/z1_convergence_diagnostic.json").read_text())
+    vfz1, vfz2 = VF["loop"]["Z1"], VF["loop"]["Z2"]
+    vfc = VF["controlled"]
+    vfconv = VF["convergence"]
+    vfa = VF["asymmetry"]
+    _worst = max(vfconv.values(), key=lambda c: c["worst_delta"])
+    _sh = vfa["UNIFORM"]
     add("elec.bga_network_sharing", "RMS", "BGA current sharing from the RDL network",
-        "OPEN", "equal sharing is assumed and flagged a lower bound; no package RDL "
-                "network exists to produce the real split")
+        "IMPLEMENTED",
+        f"SUPERSEDES the evidence 'equal sharing is assumed ... no package RDL "
+        f"network exists to produce the real split', which was true when written and "
+        f"is false at HEAD. The voltage-fed network solves the split: under a UNIFORM "
+        f"load the balls carry {_sh['i_ball_min_a']:.4f}-{_sh['i_ball_max_a']:.4f} A "
+        f"against the {_sh['imposed_value_would_be_a']:.4f} A equal sharing would "
+        f"give, a spread of {_sh['spread_pct_of_mean']:.1f} % of the mean, and the "
+        f"peak moves with the load. Equal sharing is therefore not merely unproven, "
+        f"it is DISPROVEN for this geometry, which invalidates any I_total/N_ball "
+        f"per-ball current used as a sizing criterion")
     add("mat.copper_resistivity_canonical", "RMS", "one canonical copper resistivity",
         "IMPLEMENTED" if abs(_TF.RHO_CU_20C - 17.0e-9) < 1e-18 else "OPEN",
         f"tsv_fields carried its own 16.8 nOhm.m ASSUMPTION against phase0m's "
@@ -362,15 +387,6 @@ def gates():
     import rms_currents as _R
     xc = PAD.source_cross_check()
     psys = L1["pad"]
-    import json as _j2
-    net = _j2.loads((R / "research/phase0naf/pkg_rdl_network.json").read_text())
-    VF = _j2.loads((R / "research/phase0nai/voltage_fed_network.json").read_text())
-    DG = _j2.loads((R / "research/phase0nai/z1_convergence_diagnostic.json").read_text())
-    vfz1, vfz2 = VF["loop"]["Z1"], VF["loop"]["Z2"]
-    vfc = VF["controlled"]
-    vfconv = VF["convergence"]
-    vfa = VF["asymmetry"]
-    _worst = max(vfconv.values(), key=lambda c: c["worst_delta"])
     nz1 = net["architectures"]["Z1"]["cases"]["RDL_T2_RDL_M"]
     nz2 = net["architectures"]["Z2"]["cases"]["RDL_T2_RDL_M"]
     cv2 = net["architectures"]["Z2"]["convergence"]
@@ -468,6 +484,69 @@ def gates():
         f"earlier study checked R_eff ONLY at grids where a 400 um ball was "
         f"sub-grid (h = 0.3 mm); the grid here is n = {VF['meta']['resolved_grid']} "
         f"(h = 50 um, ball spanning 8 cells)")
+    BG = _j2.loads((R / "research/phase0naj/bga_count_closure.json").read_text())
+    PD = _j2.loads((R / "research/phase0naj/pad_count_closure.json").read_text())
+    FL = _j2.loads((R / "research/phase0naj/fidelity_ladder.json").read_text())
+    import physical_coords as _PC
+    _lat = _PC.bga_lattice_sites()
+    _st = set(_lat)
+    _unpaired = sum(1 for q in _lat if (-q[0] + 0.0, -q[1] + 0.0) not in _st)
+    add("elec.bga_lattice_mirror_closed", "PkgRDL",
+        "the BGA lattice is closed under negation", "IMPLEMENTED",
+        f"`-14.4 + i*0.8` drifts, so the mirror of (-14.4,-12.8) existed as "
+        f"(14.4, 12.800000000000002) and select_power_sites' exact-equality "
+        f"`mirror not in cand` discarded 1080 of 1369 full-lattice and 408 of "
+        f"528 annulus sites -- about 79 % of the legal design space, chosen by "
+        f"floating-point luck. Every selection, package-RDL resistance and "
+        f"cutout experiment before this phase used that subset. Coordinates are "
+        f"snapped to {_PC.LATTICE_DECIMALS} decimals; unpaired sites now "
+        f"{_unpaired}")
+    _z1 = BG["closure"]["Z1__DC_AVERAGE"]
+    _z2 = BG["closure"]["Z2__DC_AVERAGE"]
+    add("elec.bga_count_closed", "PkgRDL",
+        "BGA count solved against a declared criterion", "SPECIFIED",
+        f"the adopted 16+16 came from I_total/N <= "
+        f"{BG['meta']['criterion_A_per_ball']} A/ball, which presumes equal "
+        f"sharing -- disproven by the network. Solved peak at N=16 is "
+        f"{_z1['peak_at_adopted_16']:.2f} A (Z1) and "
+        f"{_z2['peak_at_adopted_16']:.2f} A (Z2), so the adopted count FAILS its "
+        f"own criterion even at the DC average. Required: {_z1['required_n_per_rail']} "
+        f"per rail (Z1), {_z2['required_n_per_rail']} (Z2). HV-S1/S2 are not "
+        f"satisfiable for Z2 in the legal lattice. SPECIFIED not IMPLEMENTED: "
+        f"the criterion is {BG['meta']['criterion_classification']} with no "
+        f"source, and local crowding stays OPEN")
+    _reg = PD["admissible_region"]
+    add("elec.pad_count_admissible_region", "PadCount",
+        "source-pad count bounded as a region", "SPECIFIED",
+        f"no single count is adopted: loss falls monotonically with N and only "
+        f"geometry bounds it from above, so every available criterion is "
+        f"one-sided. Admissible N is [{_reg['J_1e5']['n_min']}, "
+        f"{_reg['J_1e5']['n_max']}] at 1e5 A/cm^2 and [{_reg['J_1e6']['n_min']}, "
+        f"{_reg['J_1e6']['n_max']}] at the ACCELERATED-stress 1e6 A/cm^2 marker. "
+        f"The old voltage-drop floor of {PD['meta']['n_drop_floor']} pads/rail/cell "
+        f"implies {PD['meta']['drop_floor_current_density_A_cm2']:.2e} A/cm^2 and is "
+        f"NON-PHYSICAL, so drop was never the binding constraint")
+    add("elec.intravr_fidelity_ladder", "Recompute",
+        "intra-VR fidelity levels compared, not merely listed", "SPECIFIED",
+        f"R1 is {FL['meta']['R1_status']}: the obstacle router was repaired "
+        f"(blockage and detour now use ONE geometric test; it detours on a "
+        f"synthetic blocker, asserted by test) and still no physical net is "
+        f"obstructed, so R1 reproduces R0 for a real reason. R2 was being "
+        f"computed and never compared; R0 overstates the output-net loss by "
+        f"{FL['meta']['R0_vs_R2_min_abs_err_pct']:.1f}-"
+        f"{FL['meta']['R0_vs_R2_max_abs_err_pct']:.1f} %, so R0 is NOT adequate "
+        f"for that net. SPECIFIED: the graph is still on frozen R3C geometry and "
+        f"is not wired into the ledger")
+    notrun("elec.hv_waveform_determination", "RMS",
+           "48 V input current waveform closed",
+           "DETERMINED UNRESOLVABLE from the present model, not merely unattempted. "
+           "The pinned generator HVR_FULL_OPT_EPC_V2.py builds every electrical "
+           "quantity from one scalar I_out_rms via the triangular-ripple identity; "
+           "it contains no switched-capacitor state sequence, no flying-capacitor "
+           "charge balance and no input-current variable, so the 48 V average comes "
+           "only from power balance and no RMS follows from it. Closing it needs the "
+           "per-state switch conduction table, the charge-transfer schedule, or a "
+           "netlist. See research/phase0naj/HV_WAVEFORM_DETERMINATION.md")
     add("elec.z1_network_nonconvergence_diagnosed", "PkgRDL",
         "the cause of Z1's non-convergence is isolated, not just observed",
         "IMPLEMENTED",
@@ -637,7 +716,22 @@ def gates():
     add("elec.tsv_resistance_temperature_dependent", "Electrical",
         "temperature-dependent TSV resistance in the fixed point", "OPEN",
         "rho(T) exists in the analytical model but is evaluated at 20 C; not yet coupled")
-    notrun("elec.rdl_loss_recomputed", "Electrical",
+    _rl = _j2.loads((R / "research/phase0nab/interconnect_loss.json").read_text())
+    _rl_ok = [a for a in ("Z1", "Z2")
+              if _rl[a]["terms"]["P_pkg_RDL_HV_supply"]["maturity"]["loss"] != "OPEN"]
+    _rl_no = [a for a in ("Z1", "Z2") if a not in _rl_ok]
+    add("elec.rdl_loss_recomputed", "Electrical",
+        "package RDL loss recomputed on the physical geometry",
+        "SPECIFIED" if _rl_ok else "OPEN",
+        ("SUPERSEDES 'no artifact exists', false at HEAD. Recomputed from the solved "
+         "voltage-fed network for %s: package HV supply/return carry I_rms^2 R "
+         "scenario losses in research/phase0nab/interconnect_loss.json. %s remains "
+         "OPEN because its networks fail the 1 %% convergence test, so a loss taken "
+         "from them would be a number resting on an unconverged resistance. "
+         "SPECIFIED, not IMPLEMENTED, while any architecture is still open."
+         % (", ".join(_rl_ok), ", ".join(_rl_no) or "nothing"))
+        if _rl_ok else "no architecture has a converged package RDL resistance")
+    notrun("elec.rdl_loss_recomputed_HISTORICAL", "Electrical",
            "RDL loss recomputed on the physical geometry")
     notrun("elec.energy_conservation_verified", "Electrical",
            "energy conservation verified on the physical heat map")
@@ -789,14 +883,18 @@ def main():
         "SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:",
         "",
         "| status | count |", "|---|---:|",
-        f"| IMPLEMENTED | {counts['IMPLEMENTED']} |",
-        f"| SPECIFIED | {counts['SPECIFIED']} |",
-        f"| VALIDATED | {counts['VALIDATED']} |",
-        f"| OPEN | {counts['OPEN']} |",
+        # EVERY status that occurs, not a hard-coded four. The table previously
+        # listed IMPLEMENTED/SPECIFIED/VALIDATED/OPEN only, so the SUPERSEDED
+        # row was invisible and the column summed to 108 against 109 gates.
+        *(f"| {k} | {v} |" for k, v in sorted(counts.items())),
+        f"| **total** | **{sum(counts.values())}** |",
         "",
         f"So **{len(g) - n_open} of {len(g)} are non-open**, of which only "
         f"{counts['IMPLEMENTED']} are IMPLEMENTED and **{counts['VALIDATED']} are "
-        "VALIDATED**. Nothing in this package has been validated against a solve yet.",
+        "VALIDATED**. Nothing in this package has been validated against a solve "
+        f"yet. {counts.get('SUPERSEDED', 0)} gate(s) are SUPERSEDED: the model they "
+        "describe has been replaced, and they are retained only so the replaced "
+        "result cannot quietly return as a current one.",
         "",
         "| status | meaning |",
         "|---|---|",

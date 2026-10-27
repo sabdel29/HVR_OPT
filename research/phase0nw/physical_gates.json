@@ -250,7 +250,7 @@
    "area": "RMS",
    "gate": "source-backed bulk BGA DC lower bound",
    "status": "IMPLEMENTED",
-   "evidence": "Z1 10.889 mW supply at equal sharing and I_avg; single-ball bulk R 0.310 mOhm, consistent with the source's ~0.3 mOhm"
+   "evidence": "Z1 10.889 mW supply at equal sharing and I_avg; single-ball bulk R 0.310 mOhm, consistent with the source's ~0.3 mOhm. 'At equal sharing' is a DECLARED PROPERTY OF THIS BASELINE TERM, not a framework assumption: elec.bga_network_sharing solves the real split and finds it unequal, so this row is a reference figure and must not be used to size balls"
   },
   {
    "id": "elec.bga_rms_current",
@@ -263,8 +263,8 @@
    "id": "elec.bga_network_sharing",
    "area": "RMS",
    "gate": "BGA current sharing from the RDL network",
-   "status": "OPEN",
-   "evidence": "equal sharing is assumed and flagged a lower bound; no package RDL network exists to produce the real split"
+   "status": "IMPLEMENTED",
+   "evidence": "SUPERSEDES the evidence 'equal sharing is assumed ... no package RDL network exists to produce the real split', which was true when written and is false at HEAD. The voltage-fed network solves the split: under a UNIFORM load the balls carry 0.0311-0.0957 A against the 0.0625 A equal sharing would give, a spread of 103.4 % of the mean, and the peak moves with the load. Equal sharing is therefore not merely unproven, it is DISPROVEN for this geometry, which invalidates any I_total/N_ball per-ball current used as a sizing criterion"
   },
   {
    "id": "mat.copper_resistivity_canonical",
@@ -306,21 +306,21 @@
    "area": "PkgRDL",
    "gate": "BGA modelled as voltage-fed branches rather than imposed currents",
    "status": "IMPLEMENTED",
-   "evidence": "a rail node feeds each ball through its own Table III series resistance (0.3104 mOhm, rho_solder*h/A) and a finite contact, so the split is an OUTPUT. Under a UNIFORM load the balls carry 0.0207-0.1538 A against the 0.0625 A the imposed model forced on every ball, a spread of 212.9 % of the mean; moving half the load to one corner cell widens it to 281.8 %"
+   "evidence": "a rail node feeds each ball through its own Table III series resistance (0.3104 mOhm, rho_solder*h/A) and a finite contact, so the split is an OUTPUT. Under a UNIFORM load the balls carry 0.0311-0.0957 A against the 0.0625 A the imposed model forced on every ball, a spread of 103.4 % of the mean; moving half the load to one corner cell widens it to 129.5 %"
   },
   {
    "id": "elec.pkg_rdl_return_solved",
    "area": "PkgRDL",
    "gate": "package return RDL network solved",
    "status": "IMPLEMENTED",
-   "evidence": "supply and return are two separate sheets, each with its own sites, solved separately and added in series. Z1 R_supply 0.4204 + R_return 0.1776 = 0.5980 mOhm; Z2 1.0318 + 1.1716 = 2.2034 mOhm. The return leg was previously computed and DISCARDED, so every earlier package RDL resistance understated the loop by 42 % (Z1) and 114 % (Z2)"
+   "evidence": "supply and return are two separate sheets, each with its own sites, solved separately and added in series. Z1 R_supply 0.8063 + R_return 0.4382 = 1.2445 mOhm; Z2 0.7666 + 0.5996 = 1.3662 mOhm. The return leg was previously computed and DISCARDED, so every earlier package RDL resistance understated the loop by 54 % (Z1) and 78 % (Z2)"
   },
   {
    "id": "elec.cutout_penalty_isolated",
    "area": "PkgRDL",
    "gate": "cutout penalty isolated from BGA-placement penalty",
    "status": "SPECIFIED",
-   "evidence": "CTRL_FULL is BIT-IDENTICAL to Z1 and CTRL_CUTOUT to Z2 (verified on R_supply and R_return), so dR_cutout IS the Z1/Z2 loop difference expressed as a difference -- which means it inherits Z1's convergence failure and cannot be called IMPLEMENTED. What survives that failure is the SIGN: Z1's worst R_eff drift over the final refinement is 0.6427 %, bounding its loop resistance to 0.00384 mOhm, against a cutout term of +1.6054 mOhm -- a factor of 418. re-run on the voltage-fed, loop-inclusive, contact-resolved model. dR_cutout = +1.6054 mOhm against dR_placement = +2.1490 mOhm (1.34x). THE SIGN OF THE CUTOUT TERM FLIPPED: the imposed-current model read -0.351 mOhm (the cutout appearing to HELP) and the corrected model reads +1.6054 mOhm. The earlier conclusion that the cutout penalty was a placement artefact 'in both magnitude and sign' was itself an artefact of imposing equal ball currents and discarding the return conductor. Placement still moves the answer more than the cutout does, but by 1.34x rather than 5.8x, and dR_placement contrasts two DELIBERATELY OPPOSITE rules (nearest-to-centroid against furthest), so it is a span, not a typical sensitivity"
+   "evidence": "CTRL_FULL is BIT-IDENTICAL to Z1 and CTRL_CUTOUT to Z2 (verified on R_supply and R_return), so dR_cutout IS the Z1/Z2 loop difference expressed as a difference -- which means it inherits Z1's convergence failure and cannot be called IMPLEMENTED. What survives that failure is the SIGN: Z1's worst R_eff drift over the final refinement is 1.4101 %, bounding its loop resistance to 0.01755 mOhm, against a cutout term of +0.1217 mOhm -- a factor of 7. re-run on the voltage-fed, loop-inclusive, contact-resolved model. dR_cutout = +0.1217 mOhm against dR_placement = +3.6030 mOhm (29.60x). THE SIGN OF THE CUTOUT TERM FLIPPED: the imposed-current model read -0.351 mOhm (the cutout appearing to HELP) and the corrected model reads +0.1217 mOhm. The earlier conclusion that the cutout penalty was a placement artefact 'in both magnitude and sign' was itself an artefact of imposing equal ball currents and discarding the return conductor. Placement still moves the answer more than the cutout does, but by 29.60x rather than 5.8x, and dR_placement contrasts two DELIBERATELY OPPOSITE rules (nearest-to-centroid against furthest), so it is a span, not a typical sensitivity"
   },
   {
    "id": "elec.cutout_penalty_isolated_HISTORICAL",
@@ -334,14 +334,49 @@
    "area": "PkgRDL",
    "gate": "package RDL network converged",
    "status": "SPECIFIED",
-   "evidence": "convergence is now declared on ALL of r_eff_ohm, p_loss_w, max_cell_drop_v, i_ball_max_a, ball_imax_over_imean between the two finest of five levels, threshold 1 % set before any value was read. 2 of 4 networks pass: Z2_return, Z2_supply. FAILING: Z1_return at 1.0211 %, Z1_supply at 1.1507 %. SPECIFIED not IMPLEMENTED because Z1 still fails, for the third successive phase. The threshold is NOT relaxed to admit it. The earlier study checked R_eff ONLY at grids where a 400 um ball was sub-grid (h = 0.3 mm); the grid here is n = 601 (h = 50 um, ball spanning 8 cells)"
+   "evidence": "convergence is now declared on ALL of r_eff_ohm, p_loss_w, max_cell_drop_v, i_ball_max_a, ball_imax_over_imean between the two finest of five levels, threshold 1 % set before any value was read. 2 of 4 networks pass: Z2_return, Z2_supply. FAILING: Z1_return at 1.0688 %, Z1_supply at 1.4101 %. SPECIFIED not IMPLEMENTED because Z1 still fails, for the third successive phase. The threshold is NOT relaxed to admit it. The earlier study checked R_eff ONLY at grids where a 400 um ball was sub-grid (h = 0.3 mm); the grid here is n = 601 (h = 50 um, ball spanning 8 cells)"
+  },
+  {
+   "id": "elec.bga_lattice_mirror_closed",
+   "area": "PkgRDL",
+   "gate": "the BGA lattice is closed under negation",
+   "status": "IMPLEMENTED",
+   "evidence": "`-14.4 + i*0.8` drifts, so the mirror of (-14.4,-12.8) existed as (14.4, 12.800000000000002) and select_power_sites' exact-equality `mirror not in cand` discarded 1080 of 1369 full-lattice and 408 of 528 annulus sites -- about 79 % of the legal design space, chosen by floating-point luck. Every selection, package-RDL resistance and cutout experiment before this phase used that subset. Coordinates are snapped to 9 decimals; unpaired sites now 0"
+  },
+  {
+   "id": "elec.bga_count_closed",
+   "area": "PkgRDL",
+   "gate": "BGA count solved against a declared criterion",
+   "status": "SPECIFIED",
+   "evidence": "the adopted 16+16 came from I_total/N <= 1.5 A/ball, which presumes equal sharing -- disproven by the network. Solved peak at N=16 is 4.01 A (Z1) and 1.96 A (Z2), so the adopted count FAILS its own criterion even at the DC average. Required: 40 per rail (Z1), 24 (Z2). HV-S1/S2 are not satisfiable for Z2 in the legal lattice. SPECIFIED not IMPLEMENTED: the criterion is ENGINEERING_CRITERION with no source, and local crowding stays OPEN"
+  },
+  {
+   "id": "elec.pad_count_admissible_region",
+   "area": "PadCount",
+   "gate": "source-pad count bounded as a region",
+   "status": "SPECIFIED",
+   "evidence": "no single count is adopted: loss falls monotonically with N and only geometry bounds it from above, so every available criterion is one-sided. Admissible N is [256, 4908] at 1e5 A/cm^2 and [32, 4908] at the ACCELERATED-stress 1e6 A/cm^2 marker. The old voltage-drop floor of 4 pads/rail/cell implies 5.14e+06 A/cm^2 and is NON-PHYSICAL, so drop was never the binding constraint"
+  },
+  {
+   "id": "elec.intravr_fidelity_ladder",
+   "area": "Recompute",
+   "gate": "intra-VR fidelity levels compared, not merely listed",
+   "status": "SPECIFIED",
+   "evidence": "R1 is RETIRED: the obstacle router was repaired (blockage and detour now use ONE geometric test; it detours on a synthetic blocker, asserted by test) and still no physical net is obstructed, so R1 reproduces R0 for a real reason. R2 was being computed and never compared; R0 overstates the output-net loss by 37.2-258.3 %, so R0 is NOT adequate for that net. SPECIFIED: the graph is still on frozen R3C geometry and is not wired into the ledger"
+  },
+  {
+   "id": "elec.hv_waveform_determination",
+   "area": "RMS",
+   "gate": "48 V input current waveform closed",
+   "status": "OPEN",
+   "evidence": "DETERMINED UNRESOLVABLE from the present model, not merely unattempted. The pinned generator HVR_FULL_OPT_EPC_V2.py builds every electrical quantity from one scalar I_out_rms via the triangular-ripple identity; it contains no switched-capacitor state sequence, no flying-capacitor charge balance and no input-current variable, so the 48 V average comes only from power balance and no RMS follows from it. Closing it needs the per-state switch conduction table, the charge-transfer schedule, or a netlist. See research/phase0naj/HV_WAVEFORM_DETERMINATION.md"
   },
   {
    "id": "elec.z1_network_nonconvergence_diagnosed",
    "area": "PkgRDL",
    "gate": "the cause of Z1's non-convergence is isolated, not just observed",
    "status": "IMPLEMENTED",
-   "evidence": "Z1 draws sites from the full lattice by nearest-to-centroid, so 4/16 supply and 8/16 return balls land beneath a VR cell tile and couple to it through rho_c instead of through the sheet; Z2's 23.36 mm cutout removes exactly those central sites and it has 0 and 0. Removing ONLY the overlapping candidates, at the identical 501->601 step: CAUSE CONFIRMED: 1.1507 % -> 0.4056 % at the identical 501->601 step, crossing the 1 % threshold, with only the overlapping candidate sites removed. NOT EXPLAINED: 1.0211 % -> 1.3275 %, still failing, and the worst metric moves from max_cell_drop_v to p_loss_w while the peak ball current becomes exactly converged. A second cause is present and is NOT identified here. Corroborated by the rho_c sweep, where Z1's loop resistance moves 1.58x across three decades against Z2's 1.12x"
+   "evidence": "Z1 draws sites from the full lattice by nearest-to-centroid, so 8/16 supply and 8/16 return balls land beneath a VR cell tile and couple to it through rho_c instead of through the sheet; Z2's 23.36 mm cutout removes exactly those central sites and it has 0 and 0. Removing ONLY the overlapping candidates, at the identical 501->601 step: PARTIAL: removing the overlapping sites improves the worst metric but does NOT reach the 1 % threshold, so contact overlap is a contributing cause and not the whole cause: 1.4101 % -> 1.0902 % at the identical 501->601 step; worst metric p_loss_w -> p_loss_w; converged False -> False. CAUSE CONFIRMED: removing only the overlapping candidate sites takes this rail across the 1 % threshold: 1.0688 % -> 0.7858 % at the identical 501->601 step; worst metric max_cell_drop_v -> max_cell_drop_v; converged False -> True. Corroborated by the rho_c sweep, where Z1's loop resistance moves 1.58x across three decades against Z2's 1.12x"
   },
   {
    "id": "elec.pkg_rdl_network_converged_HISTORICAL",
@@ -513,6 +548,13 @@
   },
   {
    "id": "elec.rdl_loss_recomputed",
+   "area": "Electrical",
+   "gate": "package RDL loss recomputed on the physical geometry",
+   "status": "SPECIFIED",
+   "evidence": "SUPERSEDES 'no artifact exists', false at HEAD. Recomputed from the solved voltage-fed network for Z2: package HV supply/return carry I_rms^2 R scenario losses in research/phase0nab/interconnect_loss.json. Z1 remains OPEN because its networks fail the 1 % convergence test, so a loss taken from them would be a number resting on an unconverged resistance. SPECIFIED, not IMPLEMENTED, while any architecture is still open."
+  },
+  {
+   "id": "elec.rdl_loss_recomputed_HISTORICAL",
    "area": "Electrical",
    "gate": "RDL loss recomputed on the physical geometry",
    "status": "OPEN",

@@ -38,37 +38,65 @@ estimate. Widths are DERIVED from the current-density rule and feasibility is
 reported rather than clipped: the output plane needs 8.6x the width the tile can
 give it at one layer of 10 um Cu, and only reaches feasibility at nine layers.
 
-## 2. Four defects in the graph as it stands
+## 2. Defects: two fixed in Phase 0N-AJ, two still open
 
-**R1 is numerically identical to R0.** The fidelity ladder advertises R1 as
-"obstacle-aware Manhattan: components are blockages, routes detour around them".
-Across all 28 parameter combinations, all 16 nets have **identical** R0 and R1
-lengths, so the R0 -> R1 step supplies no fidelity evidence whatever. Two of the
-sixteen nets do have *both* L-corner routes blocked, so the blockage is detected —
-but the detour magnitude is then computed only from blocking components whose
-**centre** lies inside the route bounding box, while the blockage test uses each
-component's **extent**. A component can therefore block the route and contribute a
-zero-length detour. This is the same defect class as `allocation_rule='inner_edge'`
-in the package network: a declared control that is numerically a duplicate of its
-baseline. Until it is fixed, R1 must not be cited as an independent level.
+**R1 was never charging a detour --- FIXED, and the level is now RETIRED.** The
+ladder advertised R1 as "obstacle-aware Manhattan: components are blockages,
+routes detour around them", yet all 16 nets had identical R0 and R1 lengths in
+all 28 parameter combinations. The cause was a split geometric criterion:
+blockage was tested against each component's **extent**, while the detour
+magnitude was sized only from blockers whose **centre** fell inside the route
+bounding box, so a component could block a route and contribute a zero-length
+detour. Two further errors sat underneath it --- a component *containing* a
+terminal was counted as obstructing the route that starts inside it, and the
+`vout_plane` self-net (src == dst, Manhattan length 0) was fed to a
+point-to-point router at all.
 
-**R2 and R3 are absent from the artifact.** The ladder declares four levels; the
-CSV contains two. `r2_sheet()` exists in the module but its results are not in this
-file, and R3 (the 3-D crowding extraction) is a separate module.
+The router now applies one geometric test to both decisions and falls back to
+offset Z-routes drawn from the blockers' own edges. It detours correctly on a
+synthetic obstruction (+0.48 mm on a deliberately walled test case, asserted in
+`tests/phase0naj`), and with that capability proven, **zero of the 16 physical
+nets are obstructed**. R1 therefore reproduces R0 for a real reason rather than
+a broken one, and is **retired** as a fidelity level instead of having a
+difference manufactured for it.
 
-**The geometry is frozen R3C.** Every length derives from the `DESIGN` dict, whose
-`tile_side_mm` is 2.3685438564654024. That is the VR tile, and it is still correct,
-but the graph has not been re-derived since the cell pitch was corrected from a
-hard-coded 3.0 mm to the actual 3.165243 mm, nor since the Z1/Z2 stacks were fixed.
-Tile-internal lengths should be unaffected by the pitch correction — the tile did
-not move — but that is an argument, not a check, and no test asserts it.
+**R2 was computed and never compared --- FIXED.** `r2_sheet()` had been
+emitting 16 rows into `results/phase0m/intra_vr_routing_model.csv` all along,
+but nothing compared them with R0, so the ladder's own question --- "the
+cheapest level that reproduces R2 is what the optimizer should use" --- had no
+answer anywhere. It does now
+(`research/phase0naj/fidelity_ladder.json`), and the answer is that **R0 is not
+good enough for the output net**:
 
-**It is not wired into the Phase-0N ledger.** `interconnect_loss.ledger()` lists
-`P_intraVR_metal` and `P_intraVR_vertical` as `MAT(OPEN, OPEN, OPEN)` while the
-manuscript reports `Intra-cell metal` as 3.601 W (Z1) and 3.627 W (Z2) from this
-very model. The ledger and the manuscript therefore disagree about whether this
-term is known. The ledger is the stricter of the two and should stay OPEN until the
-migration above is done, but the disagreement must be visible rather than silent.
+| t_Cu | layers | R0 (W/VR) | R2 (W/VR) | R0 error vs R2 |
+|---|---|---|---|---|
+| 5 um | 1 | 0.59260 | 0.43185 | +37.2 % |
+| 10 um | 1 | 0.29630 | 0.21592 | +37.2 % |
+| 10 um | 2 | 0.14815 | 0.10796 | +37.2 % |
+| 10 um | 4 | 0.10581 | 0.05398 | +96.0 % |
+| 10 um | 9 | 0.08597 | 0.02399 | +258.3 % |
+| 20 um | 1 | 0.14815 | 0.10796 | +37.2 % |
+| 40 um | 1 | 0.10581 | 0.05398 | +96.0 % |
+
+At the nominal single layer of 10 um Cu the width-rule Manhattan estimate
+overstates the output-net loss by **+37.2 %**, and the error grows to
+**+258.3 %** at nine layers because R0's conductor width saturates against the
+available tile width while R2's sheet keeps conducting. R2 is the
+higher-fidelity model here, not the truth: it solves the same 2-D sheet physics
+with real terminal footprints, so agreement with it is model consistency, never
+validation.
+
+**The geometry is still frozen R3C.** Every length derives from the `DESIGN`
+dict. Tile-internal lengths should be unaffected by the cell-pitch correction
+because the tile did not move, but that remains an argument rather than a
+check, and no test asserts it.
+
+**It is still not wired into the Phase-0N ledger.** `interconnect_loss.ledger()`
+lists `P_intraVR_metal` and `P_intraVR_vertical` as `MAT(OPEN, OPEN, OPEN)`
+while the manuscript reports `Intra-cell metal` as 3.601 W (Z1) and 3.627 W
+(Z2) from this model, and `Vertical transitions` as 0.011 W. The ledger is the
+stricter of the two and stays OPEN; the manuscript must label those values
+historical frozen R3C rather than current physical results.
 
 ## 3. What closing this item requires
 

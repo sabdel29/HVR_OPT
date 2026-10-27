@@ -7,7 +7,7 @@
   ],
   "overlapping_balls_of_16": {
     "Z1": {
-      "supply": 4,
+      "supply": 8,
       "return": 8
     },
     "Z2": {
@@ -27,56 +27,57 @@
   },
   "baseline": {
     "Z1_supply": {
-      "worst_metric": "i_ball_max_a",
-      "worst_delta": 0.011506942065664948,
+      "worst_metric": "p_loss_w",
+      "worst_delta": 0.014101296912759314,
       "converged": false
     },
     "Z1_return": {
       "worst_metric": "max_cell_drop_v",
-      "worst_delta": 0.010211343146814714,
+      "worst_delta": 0.010688218724579607,
       "converged": false
     },
     "Z2_supply": {
       "worst_metric": "max_cell_drop_v",
-      "worst_delta": 0.0015626881552597885,
+      "worst_delta": 0.002144593078655641,
       "converged": true
     },
     "Z2_return": {
-      "worst_metric": "i_ball_max_a",
-      "worst_delta": 0.0019995769930696997,
+      "worst_metric": "max_cell_drop_v",
+      "worst_delta": 0.003380215097635607,
       "converged": true
     }
   },
   "no_overlap": {
     "Z1_supply": {
-      "worst_metric": "i_ball_max_a",
-      "worst_delta": 0.004055806371974074,
-      "converged": true,
+      "worst_metric": "p_loss_w",
+      "worst_delta": 0.010901797382332318,
+      "converged": false,
       "deltas": {
-        "r_eff_ohm": 0.0009999272187012586,
-        "p_loss_w": 0.0009999272187012588,
-        "max_cell_drop_v": 0.0034187105612851158,
-        "i_ball_max_a": 0.004055806371974074,
-        "ball_imax_over_imean": 0.004055806371974073
+        "r_eff_ohm": 0.010901797382332316,
+        "p_loss_w": 0.010901797382332318,
+        "max_cell_drop_v": 0.005656577900649038,
+        "i_ball_max_a": 0.009280703715642172,
+        "ball_imax_over_imean": 0.00928070371564217
       }
     },
     "Z1_return": {
-      "worst_metric": "p_loss_w",
-      "worst_delta": 0.013275018258868192,
-      "converged": false,
+      "worst_metric": "max_cell_drop_v",
+      "worst_delta": 0.007858427838192331,
+      "converged": true,
       "deltas": {
-        "r_eff_ohm": 0.013275018258868189,
-        "p_loss_w": 0.013275018258868192,
-        "max_cell_drop_v": 0.0058702205362067324,
-        "i_ball_max_a": 1.3513986057612067e-06,
-        "ball_imax_over_imean": 1.3513986057612065e-06
+        "r_eff_ohm": 0.004123387280847835,
+        "p_loss_w": 0.0041233872808478355,
+        "max_cell_drop_v": 0.007858427838192331,
+        "i_ball_max_a": 0.00011283433977309927,
+        "ball_imax_over_imean": 0.00011283433977309925
       }
     }
   },
   "finding": {
-    "Z1_supply": "CAUSE CONFIRMED: 1.1507 % -> 0.4056 % at the identical 501->601 step, crossing the 1 % threshold, with only the overlapping candidate sites removed",
-    "Z1_return": "NOT EXPLAINED: 1.0211 % -> 1.3275 %, still failing, and the worst metric moves from max_cell_drop_v to p_loss_w while the peak ball current becomes exactly converged. A second cause is present and is NOT identified here",
-    "consequence": "no Z1 loop resistance and therefore no Z1/Z2 ratio is reportable from this phase; Z2 alone is converged"
+    "Z1_supply": "PARTIAL: removing the overlapping sites improves the worst metric but does NOT reach the 1 % threshold, so contact overlap is a contributing cause and not the whole cause: 1.4101 % -> 1.0902 % at the identical 501->601 step; worst metric p_loss_w -> p_loss_w; converged False -> False",
+    "Z1_return": "CAUSE CONFIRMED: removing only the overlapping candidate sites takes this rail across the 1 % threshold: 1.0688 % -> 0.7858 % at the identical 501->601 step; worst metric max_cell_drop_v -> max_cell_drop_v; converged False -> True",
+    "second_cause": "A second, unidentified cause remains on: supply. Removing the ball/cell contact overlap does not bring supply under the threshold, so overlap is not a complete explanation and no further cause is claimed here.",
+    "consequence": "Z1 as CONFIGURED (nearest-to-centroid on the full lattice) is not converged, so no Z1 loop resistance and no Z1/Z2 ratio is reportable. Z2 is converged."
   },
-  "wall_s": 59.7
+  "wall_s": 52.3
 }

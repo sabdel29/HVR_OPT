@@ -75,24 +75,52 @@ def main():
             "worst_metric": c["worst_metric"], "worst_delta": c["worst_delta"],
             "converged": c["converged"], "deltas": c["deltas"]}
 
-    s = res["no_overlap"]["Z1_supply"]
-    r = res["no_overlap"]["Z1_return"]
+    # The verdict wording is DERIVED. An earlier version hard-coded "crossing
+    # the 1 % threshold" and "still failing"; after the lattice fix the two
+    # rails swapped roles and the prose contradicted its own numbers.
+    def verdict(rail):
+        base = res["baseline"][f"Z1_{rail}"]
+        new_ = res["no_overlap"][f"Z1_{rail}"]
+        b0, n0 = base["worst_delta"], new_["worst_delta"]
+        thr = K.VF_CONV_THRESH
+        moved = "improves" if n0 < b0 else "worsens"
+        crossed = (b0 >= thr) and (n0 < thr)
+        if crossed:
+            head = ("CAUSE CONFIRMED: removing only the overlapping candidate "
+                    "sites takes this rail across the %.0f %% threshold"
+                    % (100 * thr))
+        elif n0 < b0:
+            head = ("PARTIAL: removing the overlapping sites %s the worst "
+                    "metric but does NOT reach the %.0f %% threshold, so "
+                    "contact overlap is a contributing cause and not the whole "
+                    "cause" % (moved, 100 * thr))
+        else:
+            head = ("NOT A CAUSE: removing the overlapping sites %s the worst "
+                    "metric" % moved)
+        return ("%s: %.4f %% -> %.4f %% at the identical %d->%d step; worst "
+                "metric %s -> %s; converged %s -> %s"
+                % (head, 100 * b0, 100 * n0, LEVELS[-2], LEVELS[-1],
+                   base["worst_metric"], new_["worst_metric"],
+                   base["converged"], new_["converged"]))
+
+    still_open = [r for r in K.RAILS
+                  if not res["no_overlap"][f"Z1_{r}"]["converged"]]
     res["finding"] = {
-        "Z1_supply": ("CAUSE CONFIRMED: %.4f %% -> %.4f %% at the identical "
-                      "501->601 step, crossing the 1 %% threshold, with only "
-                      "the overlapping candidate sites removed"
-                      % (100 * res["baseline"]["Z1_supply"]["worst_delta"],
-                         100 * s["worst_delta"])),
-        "Z1_return": ("NOT EXPLAINED: %.4f %% -> %.4f %%, still failing, and "
-                      "the worst metric moves from %s to %s while the peak "
-                      "ball current becomes exactly converged. A second cause "
-                      "is present and is NOT identified here"
-                      % (100 * res["baseline"]["Z1_return"]["worst_delta"],
-                         100 * r["worst_delta"],
-                         res["baseline"]["Z1_return"]["worst_metric"],
-                         r["worst_metric"])),
-        "consequence": ("no Z1 loop resistance and therefore no Z1/Z2 ratio is "
-                        "reportable from this phase; Z2 alone is converged"),
+        "Z1_supply": verdict("supply"),
+        "Z1_return": verdict("return"),
+        "second_cause": (
+            "A second, unidentified cause remains on: %s. Removing the ball/cell "
+            "contact overlap does not bring %s under the threshold, so overlap "
+            "is not a complete explanation and no further cause is claimed here."
+            % (", ".join(still_open), ", ".join(still_open))
+            if still_open else
+            "No rail remains unconverged once the overlapping candidate sites "
+            "are removed, so contact overlap accounts for the whole of Z1's "
+            "non-convergence in this configuration."),
+        "consequence": (
+            "Z1 as CONFIGURED (nearest-to-centroid on the full lattice) is not "
+            "converged, so no Z1 loop resistance and no Z1/Z2 ratio is "
+            "reportable. Z2 is converged."),
     }
     res["wall_s"] = round(time.time() - t0, 1)
     (OUT / "z1_convergence_diagnostic.json").write_text(json.dumps(res, indent=2))

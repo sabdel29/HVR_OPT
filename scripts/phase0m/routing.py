@@ -168,30 +168,86 @@ def manhattan(a: Comp, b: Comp) -> float:
 
 def obstacle_manhattan(a: Comp, b: Comp, comps: list[Comp], layer: str,
                        margin_mm: float = 0.02) -> float:
-    """L-shaped Manhattan route detoured around blocking components on `layer` (level R1)."""
-    blocks = [c for c in comps if c.blocks(layer) and c.name not in (a.name, b.name)]
+    """Obstacle-aware Manhattan length (level R1).
 
-    def clear(p0, p1) -> bool:
+    THE DEFECT THIS REPLACES. The previous implementation tested blockage with
+    each component's EXTENT but then sized the detour by looking for blocking
+    components whose CENTRE fell inside the route bounding box. A component can
+    straddle a route without its centre lying inside that box, so the function
+    could detect that both L-corners were blocked and still return the plain
+    Manhattan length. Across all 28 parameter combinations every one of the 16
+    nets came out numerically identical to R0, so R1 supplied no fidelity
+    evidence at all while being advertised as a distinct level.
+
+    The replacement uses ONE geometric test for both decisions. If either
+    L-shaped route is clear the length is Manhattan. Otherwise a Z-route with a
+    single offset leg is tried, with candidate offsets taken from the blockers'
+    own edges, and the shortest clear one is returned. A Z-route through an
+    offset that lies between the endpoints costs exactly Manhattan; one that
+    overshoots costs Manhattan + 2 * overshoot, which is where a real detour
+    penalty comes from.
+    """
+    p, q = (a.x_mm, a.y_mm), (b.x_mm, b.y_mm)
+    base = manhattan(a, b)
+
+    def contains(c, pt):
+        return (abs(pt[0] - c.x_mm) <= c.w_mm / 2
+                and abs(pt[1] - c.y_mm) <= c.h_mm / 2)
+
+    # A component that CONTAINS a terminal is not an obstruction to that route:
+    # the route starts inside it. Counting it blocked every segment leaving the
+    # terminal and made the net look enclosed. Likewise a self-net (src == dst)
+    # is a plane, not a routed segment, and has no Manhattan length to detour.
+    blocks = [c for c in comps
+              if c.blocks(layer) and c.name not in (a.name, b.name)
+              and not contains(c, p) and not contains(c, q)]
+    if a.name == b.name or base == 0.0:
+        return base
+
+    def seg_clear(p0, p1) -> bool:
+        x0, x1 = sorted((p0[0], p1[0]))
+        y0, y1 = sorted((p0[1], p1[1]))
         for c in blocks:
-            x0, x1 = sorted((p0[0], p1[0]))
-            y0, y1 = sorted((p0[1], p1[1]))
-            if (x0 - margin_mm <= c.x_mm + c.w_mm / 2 and x1 + margin_mm >= c.x_mm - c.w_mm / 2
+            if (x0 - margin_mm <= c.x_mm + c.w_mm / 2
+                    and x1 + margin_mm >= c.x_mm - c.w_mm / 2
                     and y0 - margin_mm <= c.y_mm + c.h_mm / 2
                     and y1 + margin_mm >= c.y_mm - c.h_mm / 2):
                 return False
         return True
 
-    p, q = (a.x_mm, a.y_mm), (b.x_mm, b.y_mm)
-    base = manhattan(a, b)
+    def path_clear(pts) -> bool:
+        return all(seg_clear(pts[i], pts[i + 1]) for i in range(len(pts) - 1))
+
     for corner in ((q[0], p[1]), (p[0], q[1])):
-        if clear(p, corner) and clear(corner, q):
+        if path_clear((p, corner, q)):
             return base
-    extra = 0.0
-    for c in blocks:
-        lo, hi = sorted((p[1], q[1]))
-        if min(p[0], q[0]) <= c.x_mm <= max(p[0], q[0]) and lo <= c.y_mm <= hi:
-            extra = max(extra, c.h_mm + 2 * margin_mm)
-    return base + extra
+
+    # Z-routes: offsets drawn from the blockers' edges, same geometry as the test
+    best = None
+    # 2 * margin, not 1: seg_clear() also relaxes the segment by margin_mm, so
+    # an offset placed at exactly edge + margin still tests as touching and no
+    # Z-route could ever be found. Verified on a synthetic blocker.
+    off = 2.0 * margin_mm
+    ys = [c.y_mm + c.h_mm / 2 + off for c in blocks] + \
+         [c.y_mm - c.h_mm / 2 - off for c in blocks]
+    xs = [c.x_mm + c.w_mm / 2 + off for c in blocks] + \
+         [c.x_mm - c.w_mm / 2 - off for c in blocks]
+    for y in ys:
+        pts = (p, (p[0], y), (q[0], y), q)
+        if path_clear(pts):
+            L = abs(y - p[1]) + abs(q[0] - p[0]) + abs(q[1] - y)
+            best = L if best is None else min(best, L)
+    for x in xs:
+        pts = (p, (x, p[1]), (x, q[1]), q)
+        if path_clear(pts):
+            L = abs(x - p[0]) + abs(q[1] - p[1]) + abs(x - q[0])
+            best = L if best is None else min(best, L)
+    if best is not None:
+        return max(best, base)
+    # No clear single-offset route. Report the plain Manhattan length rather
+    # than infinity -- an unroutable flag belongs in the routability audit, not
+    # in a resistance that would poison every downstream loss sum.
+    return base
 
 
 # ---------------------------------------------------------------------------

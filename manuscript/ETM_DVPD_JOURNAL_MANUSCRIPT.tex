@@ -470,12 +470,23 @@ the ratio $n_{\mathrm{req}}/n_{\mathrm{avail}}$ \emph{improves} as $r$ increases
 the opposite of the intuition that finer vias relieve a congested field.
 
 \begin{table}[!t]
-\caption{Final comparison on the frozen repartitioned pair. The corner-joint displacement
-driver $\du$ and the local inelastic response $\Delta\varepsilon_{\mathrm{in}}$ are separate
-quantities and are reported separately: $\du$ is the in-plane displacement the global solve
-imposes on the joint, $\Delta\varepsilon_{\mathrm{in}}$ the dimensionless per-cycle strain
-increment the viscoplastic submodel returns for it. Both architectures are geometrically
-realizable and process-conditional; neither is qualified.}
+\caption{Comparison on the frozen repartitioned pair. \textbf{Every value in this
+table is a frozen Phase-0M-R3C result and is retained as the historical baseline
+against which the physical hardening is measured; none of it is a current physical
+result.} The interconnect rows in particular predate the corrected package model:
+the package redistribution network was subsequently rebuilt with voltage-fed BGA
+branches, a separately solved return conductor and finite contacts, which showed
+that equal ball-current sharing --- assumed when these rows were produced --- does
+not hold. The superseded rows are \emph{Intra-cell metal}, \emph{Vertical
+transitions} and \emph{Bumps + package RDL}; the corresponding terms are presently
+carried as \textsc{open} in the physical loss ledger rather than replaced by new
+numbers, because their currents are defined only per named scenario. The
+corner-joint displacement driver $\du$ and the local inelastic response
+$\Delta\varepsilon_{\mathrm{in}}$ are separate quantities and are reported
+separately: $\du$ is the in-plane displacement the global solve imposes on the
+joint, $\Delta\varepsilon_{\mathrm{in}}$ the dimensionless per-cycle strain
+increment the viscoplastic submodel returns for it. Both architectures are
+geometrically realizable and process-conditional; neither is qualified.}
 \label{tab:final}
 \centering
 \footnotesize

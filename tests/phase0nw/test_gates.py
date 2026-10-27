@@ -112,6 +112,13 @@ CLOSED_IDS = {
     "elec.pkg_rdl_return_solved",            # return sheet solved, not discarded
     "elec.pkg_rdl_network_converged",        # SPECIFIED only: Z1 still fails
     "elec.z1_network_nonconvergence_diagnosed",
+    # --- Phase 0N-AJ: gate-consistency pass against HEAD
+    "elec.bga_network_sharing",   # the network now solves the split
+    "elec.rdl_loss_recomputed",   # SPECIFIED: closed for Z2, open for Z1
+    "elec.bga_lattice_mirror_closed",
+    "elec.bga_count_closed",
+    "elec.pad_count_admissible_region",
+    "elec.intravr_fidelity_ladder",
 }
 
 
@@ -190,3 +197,89 @@ def test_audit_document_does_not_claim_the_package_is_closed():
     assert "physically closed" not in t
     assert re.search(r"no physical etm result lineage may be created|"
                      r"gates are open", t)
+
+
+# ===================================================================
+# Phase 0N-AJ: a gate must describe HEAD, not the phase it was written in.
+# ===================================================================
+
+#: phrases that assert something does NOT exist. Any gate carrying one is
+#: making a claim about HEAD that can be checked against HEAD.
+NONEXISTENCE = (
+    "does not exist", "no artifact exists", "not run", "has NOT been built",
+    "no package rdl network", "cannot be solved", "is assumed",
+)
+
+#: things that DID NOT exist in an earlier phase and DO exist now. A gate may
+#: not claim otherwise, whatever its status.
+NOW_EXISTS = {
+    "the voltage-fed package network": "research/phase0nai/voltage_fed_network.json",
+    "the Z1 convergence diagnostic": "research/phase0nai/z1_convergence_diagnostic.json",
+    "the intra-VR resistance graph": "results/phase0m/intra_vr_routing_nets.csv",
+}
+
+
+def test_every_named_artifact_that_now_exists_really_does(g):
+    for what, rel in NOW_EXISTS.items():
+        assert (R / rel).exists(), f"{what} is missing: {rel}"
+
+
+def test_no_gate_claims_a_model_absent_that_now_exists(g):
+    """The exact contradiction this phase was asked to resolve: one gate said
+    'no package RDL network exists to produce the real split' while another
+    said the voltage-fed network was IMPLEMENTED. Both cannot describe HEAD."""
+    bad = []
+    for r in g["gates"]:
+        e = r["evidence"].lower()
+        if "no package rdl network" in e and "supersedes" not in e:
+            bad.append(r["id"])
+        # equal sharing is DISPROVEN at HEAD; no gate may present it as the
+        # framework's current behaviour
+        if "equal sharing is assumed" in e and "supersedes" not in e:
+            bad.append(r["id"])
+    assert not bad, f"gates describing a superseded model as current: {bad}"
+
+
+def test_nonexistence_claims_are_either_true_or_marked_superseded(g):
+    """A closed gate may not rest on 'not run' / 'no artifact exists'."""
+    offenders = []
+    for r in g["gates"]:
+        e = r["evidence"].lower()
+        if r["status"] in ("IMPLEMENTED", "VALIDATED") and \
+                any(p in e for p in NONEXISTENCE) and "supersedes" not in e:
+            offenders.append((r["id"], r["status"]))
+    assert not offenders, (
+        "closed gates whose evidence says the thing does not exist: %s"
+        % offenders)
+
+
+def test_bga_sharing_gate_describes_the_solved_split(g):
+    row = {r["id"]: r for r in g["gates"]}["elec.bga_network_sharing"]
+    assert row["status"] == "IMPLEMENTED"
+    e = row["evidence"]
+    assert "SUPERSEDES" in e, "the retracted wording must be named, not deleted"
+    assert "DISPROVEN" in e, (
+        "equal sharing is not merely unproven here -- the network disproves it, "
+        "which is what invalidates I_total/N_ball as a sizing criterion")
+
+
+def test_package_rdl_geometry_gates_do_not_quote_the_withdrawn_ratio(g):
+    """5.13x and 0.55x were withdrawn; they may be NAMED as withdrawn but must
+    never read as a current result."""
+    for gid in ("elec.z1_pkg_hv_rdl_geometry", "elec.z2_pkg_hv_rdl_geometry"):
+        e = {r["id"]: r for r in g["gates"]}[gid]["evidence"]
+        for bad in ("5.13x", "0.55", "-0.351"):
+            if bad in e:
+                assert any(w in e for w in ("WITHDRAWN", "SUPERSEDED",
+                                            "HISTORICAL")), (gid, bad)
+
+
+def test_status_counts_sum_to_the_gate_total(g):
+    import collections
+    c = collections.Counter(r["status"] for r in g["gates"])
+    assert sum(c.values()) == len(g["gates"])
+    md = (R / "research/PHYSICAL_Z1_Z2_IMPLEMENTATION_AUDIT.md").read_text()
+    # every status that occurs must appear as its own row, SUPERSEDED included
+    for k, v in c.items():
+        assert f"| {k} | {v} |" in md, f"status {k}={v} missing from the table"
+    assert f"| **total** | **{len(g['gates'])}** |" in md

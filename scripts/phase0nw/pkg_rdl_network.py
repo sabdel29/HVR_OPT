@@ -92,8 +92,7 @@ def _supply_sites(arch: str, cells=None, n_supply: int = N_SUPPLY_DEFAULT,
     if bga_case == "BGA_P0":
         sup, ret = PCO.annulus_supply_return()
         return sup, ret, "BGA_P0 historical frozen allocation (reproduction only)"
-    cand = (PCO.bga_lattice_sites(23.36) if arch == "Z2"
-            else PCO.bga_lattice_sites())
+    cand = PCO.bga_lattice_sites(architecture_cutout_mm(arch))
     sel = PCO.select_power_sites(cand, cells, n_supply, n_return, allocation_rule)
     where = "annulus (cutout removes the interior)" if arch == "Z2" else "full lattice"
     return (sel["supply"], sel["return"],
@@ -366,6 +365,34 @@ if __name__ == "__main__":
 # pad_interface.bga_ball_resistance_ohm), so the source supplies no contact
 # term at all. These are declared engineering cases and every result says
 # which one produced it.
+#: ---------------------------------------------------------------------------
+#: Minimal ArchitectureSpec. The solver previously branched on the LITERAL
+#: string "Z2" to decide whether a PCB cutout removed the central BGA sites, so
+#: architecture geometry was keyed to a name rather than to a specification and
+#: no third architecture could be expressed at all. The cutout is now looked up
+#: here; an unknown name is an error rather than a silent "no cutout", because
+#: a typo must not quietly produce the Z1 geometry.
+ARCHITECTURE_CUTOUT_MM = {
+    "Z1": None,        # package-embedded: no land-side opening
+    "Z2": 23.36,       # backside: PCB cutout removes the interior lattice
+    "CTRL": None,      # controlled experiment: candidate set passed explicitly
+}
+
+
+def register_architecture(name: str, cutout_mm: float | None) -> None:
+    """Declare a new architecture's land-side opening."""
+    ARCHITECTURE_CUTOUT_MM[name] = cutout_mm
+
+
+def architecture_cutout_mm(arch: str):
+    if arch not in ARCHITECTURE_CUTOUT_MM:
+        raise KeyError(
+            f"unknown architecture {arch!r}; register it with "
+            f"register_architecture(name, cutout_mm) rather than relying on a "
+            f"default, which would silently give it the Z1 geometry")
+    return ARCHITECTURE_CUTOUT_MM[arch]
+
+
 #: the VR cell contact is the SQUARE tile footprint, not a disc of that width
 VR_TILE_SIDE_MM = 2.3685438564654024
 
