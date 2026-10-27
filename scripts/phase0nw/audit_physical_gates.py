@@ -232,19 +232,43 @@ def gates():
         f"18+18. Stays SPECIFIED until the physical ledger replaces the placeholder")
     add("elec.bga_loss_recomputed", "Electrical",
         "BGA loss recomputed on the physical geometry", "OPEN",
-        "a source-backed bulk-BGA DC/equal-sharing LOWER BOUND now exists "
-        f"({L1['bga']['p_total_w']*1e3:.2f} mW for Z1), but the final physical BGA loss "
-        "remains open pending RMS-current and network-sharing closure")
+        "SUPERSEDES the evidence 'remains open pending RMS-current AND "
+        "network-sharing closure'. Network sharing is CLOSED: "
+        "elec.bga_network_sharing is IMPLEMENTED and the voltage-fed network "
+        "produces the per-ball split, so sharing no longer blocks this gate. "
+        "A source-backed bulk-BGA DC/equal-sharing reference exists "
+        f"({L1['bga']['p_total_w']*1e3:.2f} mW for Z1). The ONE remaining blocker "
+        "is the 48 V RMS waveform, which elec.hv_waveform_determination shows is "
+        "not derivable from the pinned converter model")
+    import json as _j0
+    _led0 = _j0.loads((R / "research/phase0nab/interconnect_loss.json").read_text())
+    _hv_ok = [a for a in ("Z1", "Z2")
+              if _led0[a]["terms"]["P_pkg_RDL_HV_supply"]["maturity"]["loss"]
+              != "OPEN"]
+    _hv_no = [a for a in ("Z1", "Z2") if a not in _hv_ok]
+    add("elec.package_rdl_hv_recomputed", "Electrical",
+        "package RDL loss, HV rail recomputed on the physical geometry",
+        "SPECIFIED" if _hv_ok else "OPEN",
+        ("SUPERSEDES 'still has only the Phase-0M-R3C value', which is false at "
+         "HEAD. The HV rail is recomputed from the solved voltage-fed network "
+         "for %s, with supply and return as separate conductors and per-scenario "
+         "I_rms^2 R losses in research/phase0nab/interconnect_loss.json. %s is "
+         "still OPEN because its network fails the 1 %% convergence test. "
+         "SPECIFIED, not IMPLEMENTED, while any architecture remains open and "
+         "while the RMS waveform stays scenario-defined."
+         % (", ".join(_hv_ok), ", ".join(_hv_no) or "nothing"))
+        if _hv_ok else "no architecture has a converged package HV RDL network")
     for gid, what in (
             ("elec.microbump_loss_recomputed", "microbump loss"),
-            ("elec.package_rdl_hv_recomputed", "package RDL loss, HV rail"),
             ("elec.package_rdl_lv_recomputed", "package RDL loss, LV rail"),
             ("elec.intravr_horizontal_recomputed", "intra-VR horizontal routing loss"),
             ("elec.intravr_vertical_recomputed", "intra-VR vertical via-stack loss")):
         notrun(gid, "Electrical", what + " recomputed on the physical geometry",
-               f"{what} still has only the Phase-0M-R3C value, which was computed on the "
-               f"OLD geometry and may be used as a reference but never as a physical "
-               f"result")
+               f"{what} still has only the Phase-0M-R3C value, computed on the OLD "
+               f"geometry; usable as a reference, never as a physical result. The HV "
+               f"package rail is NOT in this list any more -- it is recomputed "
+               f"(elec.package_rdl_hv_recomputed) -- so this gate no longer implies "
+               f"that nothing has been recomputed")
     notrun("elec.contact_resistance_bounded", "Electrical",
            "contact / UBM / IMC resistance modelled or bounded",
            "the power-path library carries R_contact = 0 with status OPEN; zero is "
@@ -351,7 +375,12 @@ def gates():
         f"solves the real split and finds it unequal, so this row is a reference "
         f"figure and must not be used to size balls")
     add("elec.bga_rms_current", "RMS", "BGA loss uses RMS current", "OPEN",
-        "blocked by elec.z1_hv_rms_current: the 48 V RMS is a bracket")
+        "SUPERSEDES the evidence 'the 48 V RMS is a bracket'. HV-S0/S1/S2 are "
+        "NAMED SCENARIOS, not a bracket and not lower/nominal/upper: from an "
+        "average current alone there is no finite RMS upper bound, because a "
+        "narrower, taller pulse of the same average has strictly higher RMS "
+        "without limit. Blocked by elec.hv_waveform_determination, which proves "
+        "the waveform is not derivable from the pinned converter model")
     import json as _j2
     net = _j2.loads((R / "research/phase0naf/pkg_rdl_network.json").read_text())
     VF = _j2.loads((R / "research/phase0nai/voltage_fed_network.json").read_text())
@@ -559,8 +588,8 @@ def gates():
         f"the identical 501->601 step: {DG['finding']['Z1_supply']}. "
         f"{DG['finding']['Z1_return']}. Corroborated by the rho_c sweep, where "
         f"Z1's loop resistance moves 1.58x across three decades against Z2's 1.12x")
-    notrun("elec.pkg_rdl_network_converged_HISTORICAL", "PkgRDL",
-           "superseded imposed-current convergence study",
+    add("elec.pkg_rdl_network_converged_HISTORICAL", "PkgRDL",
+        "superseded imposed-current convergence study", "SUPERSEDED",
            f"Z2 NOW CONVERGES at "
            f"{net['architectures']['Z2']['convergence']['delta_r_eff']*100:.3f} % after "
            f"the ball counts were matched, but Z1 does not at "
@@ -731,7 +760,13 @@ def gates():
          "SPECIFIED, not IMPLEMENTED, while any architecture is still open."
          % (", ".join(_rl_ok), ", ".join(_rl_no) or "nothing"))
         if _rl_ok else "no architecture has a converged package RDL resistance")
-    notrun("elec.rdl_loss_recomputed_HISTORICAL", "Electrical",
+    add("elec.rdl_loss_recomputed_HISTORICAL", "Electrical",
+        "superseded pre-network RDL loss status", "SUPERSEDED",
+        "retained so the pre-network wording 'no artifact exists for RDL loss "
+        "recomputed on the physical geometry' cannot return as a current claim; "
+        "elec.package_rdl_hv_recomputed now carries the live status")
+    _unused_notrun = lambda *a, **k: None
+    _unused_notrun("elec.rdl_loss_recomputed_HISTORICAL_OLD", "Electrical",
            "RDL loss recomputed on the physical geometry")
     notrun("elec.energy_conservation_verified", "Electrical",
            "energy conservation verified on the physical heat map")

@@ -96,42 +96,42 @@
    "area": "Electrical",
    "gate": "BGA loss recomputed on the physical geometry",
    "status": "OPEN",
-   "evidence": "a source-backed bulk-BGA DC/equal-sharing LOWER BOUND now exists (21.78 mW for Z1), but the final physical BGA loss remains open pending RMS-current and network-sharing closure"
+   "evidence": "SUPERSEDES the evidence 'remains open pending RMS-current AND network-sharing closure'. Network sharing is CLOSED: elec.bga_network_sharing is IMPLEMENTED and the voltage-fed network produces the per-ball split, so sharing no longer blocks this gate. A source-backed bulk-BGA DC/equal-sharing reference exists (21.78 mW for Z1). The ONE remaining blocker is the 48 V RMS waveform, which elec.hv_waveform_determination shows is not derivable from the pinned converter model"
+  },
+  {
+   "id": "elec.package_rdl_hv_recomputed",
+   "area": "Electrical",
+   "gate": "package RDL loss, HV rail recomputed on the physical geometry",
+   "status": "SPECIFIED",
+   "evidence": "SUPERSEDES 'still has only the Phase-0M-R3C value', which is false at HEAD. The HV rail is recomputed from the solved voltage-fed network for Z2, with supply and return as separate conductors and per-scenario I_rms^2 R losses in research/phase0nab/interconnect_loss.json. Z1 is still OPEN because its network fails the 1 % convergence test. SPECIFIED, not IMPLEMENTED, while any architecture remains open and while the RMS waveform stays scenario-defined."
   },
   {
    "id": "elec.microbump_loss_recomputed",
    "area": "Electrical",
    "gate": "microbump loss recomputed on the physical geometry",
    "status": "OPEN",
-   "evidence": "microbump loss still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
-  },
-  {
-   "id": "elec.package_rdl_hv_recomputed",
-   "area": "Electrical",
-   "gate": "package RDL loss, HV rail recomputed on the physical geometry",
-   "status": "OPEN",
-   "evidence": "package RDL loss, HV rail still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+   "evidence": "microbump loss still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed"
   },
   {
    "id": "elec.package_rdl_lv_recomputed",
    "area": "Electrical",
    "gate": "package RDL loss, LV rail recomputed on the physical geometry",
    "status": "OPEN",
-   "evidence": "package RDL loss, LV rail still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+   "evidence": "package RDL loss, LV rail still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed"
   },
   {
    "id": "elec.intravr_horizontal_recomputed",
    "area": "Electrical",
    "gate": "intra-VR horizontal routing loss recomputed on the physical geometry",
    "status": "OPEN",
-   "evidence": "intra-VR horizontal routing loss still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+   "evidence": "intra-VR horizontal routing loss still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed"
   },
   {
    "id": "elec.intravr_vertical_recomputed",
    "area": "Electrical",
    "gate": "intra-VR vertical via-stack loss recomputed on the physical geometry",
    "status": "OPEN",
-   "evidence": "intra-VR vertical via-stack loss still has only the Phase-0M-R3C value, which was computed on the OLD geometry and may be used as a reference but never as a physical result"
+   "evidence": "intra-VR vertical via-stack loss still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed"
   },
   {
    "id": "elec.contact_resistance_bounded",
@@ -257,7 +257,7 @@
    "area": "RMS",
    "gate": "BGA loss uses RMS current",
    "status": "OPEN",
-   "evidence": "blocked by elec.z1_hv_rms_current: the 48 V RMS is a bracket"
+   "evidence": "SUPERSEDES the evidence 'the 48 V RMS is a bracket'. HV-S0/S1/S2 are NAMED SCENARIOS, not a bracket and not lower/nominal/upper: from an average current alone there is no finite RMS upper bound, because a narrower, taller pulse of the same average has strictly higher RMS without limit. Blocked by elec.hv_waveform_determination, which proves the waveform is not derivable from the pinned converter model"
   },
   {
    "id": "elec.bga_network_sharing",
@@ -382,7 +382,7 @@
    "id": "elec.pkg_rdl_network_converged_HISTORICAL",
    "area": "PkgRDL",
    "gate": "superseded imposed-current convergence study",
-   "status": "OPEN",
+   "status": "SUPERSEDED",
    "evidence": "Z2 NOW CONVERGES at 0.430 % after the ball counts were matched, but Z1 does not at 2.168 %. A ratio is only as converged as its worse half, so no architecture ratio is reportable. Threshold 1 % on R_eff was declared before any result was read; four levels (41/61/81/101) give 0.43 % for Z2 and 2.17 % for Z1. Finite-area contacts already removed the point-source log singularity that made the first attempt diverge; the residual is reported rather than absorbed by loosening the threshold"
   },
   {
@@ -556,9 +556,9 @@
   {
    "id": "elec.rdl_loss_recomputed_HISTORICAL",
    "area": "Electrical",
-   "gate": "RDL loss recomputed on the physical geometry",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'RDL loss recomputed on the physical geometry'"
+   "gate": "superseded pre-network RDL loss status",
+   "status": "SUPERSEDED",
+   "evidence": "retained so the pre-network wording 'no artifact exists for RDL loss recomputed on the physical geometry' cannot return as a current claim; elec.package_rdl_hv_recomputed now carries the live status"
   },
   {
    "id": "elec.energy_conservation_verified",
@@ -872,6 +872,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 46,
+ "n_open": 43,
  "n_elems": 38623
 }

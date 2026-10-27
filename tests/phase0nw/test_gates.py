@@ -119,6 +119,7 @@ CLOSED_IDS = {
     "elec.bga_count_closed",
     "elec.pad_count_admissible_region",
     "elec.intravr_fidelity_ladder",
+    "elec.package_rdl_hv_recomputed",   # SPECIFIED: recomputed for Z2
 }
 
 
@@ -283,3 +284,81 @@ def test_status_counts_sum_to_the_gate_total(g):
     for k, v in c.items():
         assert f"| {k} | {v} |" in md, f"status {k}={v} missing from the table"
     assert f"| **total** | **{len(g['gates'])}** |" in md
+
+
+# ===================================================================
+# Phase 0N-AK: contradictions between a gate and the gates it depends on.
+# ===================================================================
+
+def test_no_gate_blocks_on_a_dependency_that_is_already_closed(g):
+    """elec.bga_loss_recomputed said it waited on 'RMS-current AND
+    network-sharing closure' while elec.bga_network_sharing was IMPLEMENTED."""
+    by = {r["id"]: r for r in g["gates"]}
+    closed = {"IMPLEMENTED", "VALIDATED", "SPECIFIED"}
+    deps = {
+        "network-sharing": "elec.bga_network_sharing",
+        "network sharing": "elec.bga_network_sharing",
+    }
+    bad = []
+    for r in g["gates"]:
+        e = r["evidence"].lower()
+        for phrase, dep in deps.items():
+            if phrase in e and "supersedes" not in e:
+                if by.get(dep, {}).get("status") in closed:
+                    bad.append((r["id"], phrase, dep))
+    assert not bad, f"gates blocking on an already-closed dependency: {bad}"
+
+
+def _strip_retractions(text):
+    """Remove the wording a gate explicitly says it SUPERSEDES, so quoting a
+    retracted phrase is not mistaken for asserting it."""
+    return re.sub(r"SUPERSEDES[^.]*?'[^']*'", " ", text)
+
+
+def test_no_gate_calls_the_hv_scenarios_a_bracket(g):
+    """HV-S0/S1/S2 are named scenarios. From an average current alone there is
+    no finite RMS upper bound, so 'bracket' is not loose here, it is wrong.
+
+    A material or geometry range legitimately IS a bracket; only the HV RMS
+    scenarios may not be called one.
+    """
+    bad = []
+    for r in g["gates"]:
+        e = _strip_retractions(r["evidence"])
+        for m in re.finditer(r"bracket", e, re.I):
+            window = e[max(0, m.start() - 160):m.end() + 160]
+            about_hv = re.search(r"\bRMS\b|HV-S[012]", window, re.I)
+            negated = re.search(r"not a bracket|NAMED SCENARIOS", window, re.I)
+            if about_hv and not negated:
+                bad.append((r["id"], window.strip()[:90]))
+    assert not bad, f"gates calling the HV RMS scenarios a bracket: {bad}"
+
+
+def test_no_gate_says_only_the_old_R3C_value_exists_when_one_was_recomputed(g):
+    import json
+    led = json.loads(
+        (R / "research/phase0nab/interconnect_loss.json").read_text())
+    hv_live = any(led[a]["terms"]["P_pkg_RDL_HV_supply"]["maturity"]["loss"]
+                  != "OPEN" for a in ("Z1", "Z2"))
+    by = {r["id"]: r for r in g["gates"]}
+    row = by["elec.package_rdl_hv_recomputed"]
+    if hv_live:
+        assert "SUPERSEDES" in row["evidence"], (
+            "the retracted wording must be named, not deleted")
+        live = _strip_retractions(row["evidence"]).lower()
+        assert "still has only the phase-0m-r3c value" not in live
+        assert by["elec.package_rdl_hv_recomputed"]["status"] != "OPEN"
+
+
+def test_historical_gates_are_superseded_not_open(g):
+    """A gate kept only to stop an old claim returning is not 'work to do'."""
+    for r in g["gates"]:
+        if r["id"].endswith("_HISTORICAL"):
+            assert r["status"] == "SUPERSEDED", (r["id"], r["status"])
+
+
+def test_superseded_gates_exist_and_are_counted(g):
+    import collections
+    c = collections.Counter(r["status"] for r in g["gates"])
+    assert c["SUPERSEDED"] >= 3
+    assert sum(c.values()) == len(g["gates"])
