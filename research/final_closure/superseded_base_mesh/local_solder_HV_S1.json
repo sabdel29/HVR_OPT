@@ -1,0 +1,96 @@
+{
+ "scenario": "HV_S1",
+ "control_deviation_pct": 0.0,
+ "control_tolerance_pct": 0.5,
+ "cetol": 0.05,
+ "local_family": {
+  "n_xy": 6,
+  "n_z_solder": 8,
+  "n_cycles": 4,
+  "dwell_s": 300.0,
+  "T_off_C": 25.0,
+  "procedure": "VISCO",
+  "material": "EPC"
+ },
+ "norton_T_range_C": [
+  -40.0,
+  125.0
+ ],
+ "cases": {
+  "Z1": {
+   "critical_joint": {
+    "rank": 1,
+    "x_mm": 14.4,
+    "y_mm": 14.4,
+    "du_um": 2.7925221328835685,
+    "T_C": 138.62481818181817
+   },
+   "du_c_um": 2.7925221328835685,
+   "T_joint_C": 138.62481818181817,
+   "T_outside_norton_calibration": true,
+   "response": {
+    "n_core": 128,
+    "n_elem": 488,
+    "wall_s": 414.1156711578369,
+    "stab_change_pct": 0.3300622146803876,
+    "prev_cycle_d_eps": 0.008421539660156224,
+    "d_peeq_per_cycle": 0.008393743339843725,
+    "range_eq_inelastic": 0.0041001485894722875,
+    "inelastic_work_MJ_per_m3": 0.6954301001818077
+   },
+   "fine_mesh": {
+    "n_xy": 8,
+    "n_z_solder": 10,
+    "response": {
+     "n_core": 360,
+     "n_elem": 928,
+     "wall_s": 355.2244050502777,
+     "stab_change_pct": 0.3490084578087301,
+     "prev_cycle_d_eps": 0.00827226498155186,
+     "d_peeq_per_cycle": 0.008243394077113895,
+     "range_eq_inelastic": 0.004028638312543263,
+     "inelastic_work_MJ_per_m3": 0.6849273775472735
+    }
+   },
+   "mesh_change_pct": 1.7912063383704728
+  },
+  "Z2": {
+   "critical_joint": {
+    "rank": 1,
+    "x_mm": 14.4,
+    "y_mm": 14.4,
+    "du_um": 4.28414047354978,
+    "T_C": 108.90472727272729
+   },
+   "du_c_um": 4.28414047354978,
+   "T_joint_C": 108.90472727272729,
+   "T_outside_norton_calibration": false,
+   "response": {
+    "n_core": 128,
+    "n_elem": 488,
+    "wall_s": 296.98954820632935,
+    "stab_change_pct": 0.026787010920675782,
+    "prev_cycle_d_eps": 0.012760994769531207,
+    "d_peeq_per_cycle": 0.012764413058593709,
+    "range_eq_inelastic": 0.006259870474470027,
+    "inelastic_work_MJ_per_m3": 0.9624966585558543
+   },
+   "fine_mesh": {
+    "n_xy": 8,
+    "n_z_solder": 10,
+    "response": {
+     "n_core": 360,
+     "n_elem": 928,
+     "wall_s": 84.71058583259583,
+     "stab_change_pct": 0.0598288103764664,
+     "prev_cycle_d_eps": 0.012136602611903188,
+     "d_peeq_per_cycle": 0.012129341426940367,
+     "range_eq_inelastic": 0.005939829881384481,
+     "inelastic_work_MJ_per_m3": 0.9112497971523323
+    }
+   },
+   "mesh_change_pct": 4.9753296821257
+  }
+ },
+ "wall_s": 1670.4
+}

@@ -1,0 +1,106 @@
+{
+ "orderings": {
+  "P_loss_w": {
+   "per_scenario": {
+    "HV_S0": "Z2 lower",
+    "HV_S1": "Z2 lower",
+    "HV_S2": "Z2 lower"
+   },
+   "relative_gap": {
+    "HV_S0": 0.025948466866437012,
+    "HV_S1": 0.10948754500052348,
+    "HV_S2": 0.30693625573305955
+   },
+   "mesh_change": 0.0021502458989490943,
+   "favoured": [
+    "Z2"
+   ],
+   "robust_across_scenarios": true,
+   "favoured_where_resolved": "Z2",
+   "unresolved": [],
+   "hv_s0_within_mesh_uncertainty": false
+  },
+  "T_max_C": {
+   "per_scenario": {
+    "HV_S0": "unresolved",
+    "HV_S1": "Z2 lower",
+    "HV_S2": "Z2 lower"
+   },
+   "relative_gap": {
+    "HV_S0": 0.008109953199154377,
+    "HV_S1": 0.15789473684210528,
+    "HV_S2": 0.4341991733296081
+   },
+   "mesh_change": 0.006366563690155205,
+   "favoured": [
+    "Z2"
+   ],
+   "robust_across_scenarios": false,
+   "favoured_where_resolved": "Z2",
+   "unresolved": [
+    "HV_S0"
+   ],
+   "hv_s0_within_mesh_uncertainty": true
+  },
+  "die_warpage_pv_um": {
+   "per_scenario": {
+    "HV_S0": "Z1 lower",
+    "HV_S1": "Z1 lower",
+    "HV_S2": "Z1 lower"
+   },
+   "relative_gap": {
+    "HV_S0": 0.6009757407185551,
+    "HV_S1": 0.5221935138987883,
+    "HV_S2": 0.2691435275713727
+   },
+   "mesh_change": 0.012985399369759976,
+   "favoured": [
+    "Z1"
+   ],
+   "robust_across_scenarios": true,
+   "favoured_where_resolved": "Z1",
+   "unresolved": [],
+   "hv_s0_within_mesh_uncertainty": false
+  },
+  "du_c_um": {
+   "per_scenario": {
+    "HV_S0": "Z1 lower",
+    "HV_S1": "Z1 lower",
+    "HV_S2": "Z1 lower"
+   },
+   "relative_gap": {
+    "HV_S0": 0.3991692252973527,
+    "HV_S1": 0.31615420912289066,
+    "HV_S2": 0.049680342900438754
+   },
+   "mesh_change": 0.006742204171743447,
+   "favoured": [
+    "Z1"
+   ],
+   "robust_across_scenarios": true,
+   "favoured_where_resolved": "Z1",
+   "unresolved": [],
+   "hv_s0_within_mesh_uncertainty": false
+  },
+  "d_eps_in_per_cycle": {
+   "per_scenario": {
+    "HV_S0": "Z1 lower",
+    "HV_S1": "Z1 lower",
+    "HV_S2": "n/a"
+   },
+   "relative_gap": {
+    "HV_S0": 0.42016884979844665,
+    "HV_S1": 0.28267347741530346
+   },
+   "mesh_change": null,
+   "favoured": [
+    "Z1"
+   ],
+   "robust_across_scenarios": false,
+   "favoured_where_resolved": "Z1",
+   "unresolved": [],
+   "hv_s0_within_mesh_uncertainty": false
+  }
+ },
+ "rule": "a scenario's ordering is claimed only where the Z1/Z2 gap exceeds twice the largest measured mesh change (or declared bound) of that observable"
+}

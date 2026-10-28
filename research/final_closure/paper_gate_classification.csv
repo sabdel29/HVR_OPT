@@ -1,0 +1,27 @@
+id,area,gate,class,rationale
+board.h1_meshed,Board,PCB-H1 meshed as FE depth blocks,B,H0 homogenised board is the production board; H1 is the check of that choice
+board.h1_thermal_validated,Board,PCB-H1 thermal validation,B,see board.h1_meshed
+board.eta_sensitivity_run,Board,eta coverage sensitivity completed,B,board Cu coverage sensitivity
+board.t_only_comparison_run,Board,2.4/3.2 T-only comparison completed,B,2.4 vs 3.2 mm board thickness
+elec.microbump_loss_recomputed,Electrical,microbump loss recomputed on the physical geometry,C,microbump is the ALTERNATIVE interface technology; the primary path is the source Cu pad
+elec.contact_resistance_bounded,Electrical,contact / UBM / IMC resistance modelled or bounded,B,rho_c swept over three declared decades
+elec.rdl10um_electrical_model,Electrical,10 um RDL electrical (resistance) model closed or bounded,B,Cu thickness and occupancy swept over declared cases; the source defers trace dimensions to process technology
+tsv.density_sensitivity_run,TSV,thermal/mechanical sensitivity to TSV density,B,electrical minimum vs adopted vs high density
+elec.individual_branch_waveforms,RMS,individual branch waveforms,B,branch ripple needs the switch schedule; the HV side is carried per scenario and the LV side uses the output-ripple RMS
+elec.hv_input_waveform,RMS,48 V input waveform,B,"not derivable from the pinned converter model; carried as named scenarios HV-S0/S1/S2, each solved"
+elec.z1_hv_rms_current,RMS,48 V rail RMS current,B,"scenario-conditioned, see elec.hv_input_waveform"
+elec.bga_rms_current,RMS,BGA loss uses RMS current,B,"scenario-conditioned, see elec.hv_input_waveform"
+elec.hv_waveform_determination,RMS,48 V input current waveform closed,B,determined unresolvable from available sources; the paper is scenario-conditioned
+elec.pad_count_criterion,PadCount,a physical criterion selects the pad count,B,no transferable EM allowable; bounded by a terminal footprint sweep anchored on the DVPD source's own VIC count
+elec.pad_loss_closed,PadCount,pad interface loss closed,B,bounded over the footprint sweep
+elec.microbump_geometry_closed,Recompute,microbump field geometry defined,C,alternative interface technology only
+lit.microbump_contact_bounded,Literature,microbump contact/UBM/IMC resistance bounded from literature,C,alternative interface technology only
+lit.tsv_allowable,Literature,TSV current-density allowable sourced or explicitly refused,C,an EM-safe TSV current density is a qualification quantity; no transferable value exists and none is claimed
+therm.z2_cooled,Thermal,Z2-COOLED case implemented,B,see therm.z2_passive
+therm.mot_tg_evaluated,Thermal,PCB MOT/Tg checks evaluated,C,"board maximum-operating-temperature check is a qualification screen; reported if computed, never used to rank"
+therm.h0_h1_compared,Thermal,H0 vs H1 thermal comparison run,B,see board.h1_meshed
+mech.f1_f2_bracket_run,Mechanical,F1/F2 out-of-cell bracket run,B,out-of-cell fill: encapsulated vs void
+mech.t_only_mechanical,Mechanical,2.4/3.2 T-only mechanical comparison,B,"2.4 vs 3.2 mm board thickness, mechanics"
+mat.gan_bounded,Material,GaN epi contribution bounded,B,"GaN epi thermal contribution, material range"
+mat.mlcc_bounded,Material,MLCC tier material bounded,B,"flying-cap tier material, material range"
+mat.inductor_tier_bounded,Material,inductor/Cout tier bounded,B,"inductor/Cout tier material, material range"

@@ -2,19 +2,19 @@
 
 Phase 0N-W. **Every row is evaluated at run time** by `scripts/phase0nw/audit_physical_gates.py`: the config is loaded, the mesh is built, and the measured geometry decides the status. Nothing here is typed by hand, because a hand-typed status table goes stale a phase after it is written.
 
-**43 of 115 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
+**26 of 115 gates are OPEN.** No physical ETM result lineage may be created while that number is non-zero.
 
 Maturity is reported by status rather than collapsed into "closed", because SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:
 
 | status | count |
 |---|---:|
-| IMPLEMENTED | 47 |
-| OPEN | 43 |
-| SPECIFIED | 22 |
+| IMPLEMENTED | 59 |
+| OPEN | 26 |
+| SPECIFIED | 27 |
 | SUPERSEDED | 3 |
 | **total** | **115** |
 
-So **72 of 115 are non-open**, of which only 47 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet. 3 gate(s) are SUPERSEDED: the model they describe has been replaced, and they are retained only so the replaced result cannot quietly return as a current one.
+So **89 of 115 are non-open**, of which only 59 are IMPLEMENTED and **0 are VALIDATED**. Nothing in this package has been validated against a solve yet. 3 gate(s) are SUPERSEDED: the model they describe has been replaced, and they are retained only so the replaced result cannot quietly return as a current one.
 
 | status | meaning |
 |---|---|
@@ -40,18 +40,18 @@ So **72 of 115 are non-open**, of which only 47 are IMPLEMENTED and **0 are VALI
 | Electrical | Z2 1 V rail-specific VDD/GND model | **SPECIFIED** | 1 V rail, I = 1000 A load current, 20.408 A per cell |
 | Electrical | TSV minimum from an exact integer lattice sweep | **IMPLEMENTED** | every n from 2 upward is enumerated. Z2 minimum is 64 (8x8, 9.83 mV vs a 10 mV budget); 7x7 = 49 fails at 12.71 mV. The previous sparse-pitch search reported 81 because its pitch set landed on n = 9 and n = 6 and skipped n = 8 entirely |
 | Electrical | BGA power-ball count recomputed from the ledger current | **SPECIFIED** | I_in 23.6936 A at 1.5 A/ball needs 16+16; 16+16 gives 24.0 A, margin 1.28 %. Recomputed dynamically, NOT frozen: +20 W of additional loss already requires 18+18. Stays SPECIFIED until the physical ledger replaces the placeholder |
-| Electrical | BGA loss recomputed on the physical geometry | **OPEN** | SUPERSEDES the evidence 'remains open pending RMS-current AND network-sharing closure'. Network sharing is CLOSED: elec.bga_network_sharing is IMPLEMENTED and the voltage-fed network produces the per-ball split, so sharing no longer blocks this gate. A source-backed bulk-BGA DC/equal-sharing reference exists (21.78 mW for Z1). The ONE remaining blocker is the 48 V RMS waveform, which elec.hv_waveform_determination shows is not derivable from the pinned converter model |
+| Electrical | BGA loss recomputed on the physical geometry | **SPECIFIED** | per named scenario from the solved per-ball split at the matched N = 54; SPECIFIED because the 48 V RMS waveform is scenario-defined |
 | Electrical | package RDL loss, HV rail recomputed on the physical geometry | **SPECIFIED** | SUPERSEDES 'still has only the Phase-0M-R3C value', which is false at HEAD. The HV rail is recomputed from the solved voltage-fed network for Z2, with supply and return as separate conductors and per-scenario I_rms^2 R losses in research/phase0nab/interconnect_loss.json. Z1 is still OPEN because its network fails the 1 % convergence test. SPECIFIED, not IMPLEMENTED, while any architecture remains open and while the RMS waveform stays scenario-defined. |
 | Electrical | microbump loss recomputed on the physical geometry | **OPEN** | microbump loss still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed |
-| Electrical | package RDL loss, LV rail recomputed on the physical geometry | **OPEN** | package RDL loss, LV rail still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed |
-| Electrical | intra-VR horizontal routing loss recomputed on the physical geometry | **OPEN** | intra-VR horizontal routing loss still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed |
-| Electrical | intra-VR vertical via-stack loss recomputed on the physical geometry | **OPEN** | intra-VR vertical via-stack loss still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed |
+| Electrical | package RDL loss, LV rail recomputed on the physical geometry | **SPECIFIED** | STRUCTURALLY ABSENT in the production geometry: the source-pad field sits over each tile, so 1 V leaves the package above the cell and the in-tile collection is owned by the R2 output plane. The alternative (pads over the full pitch) is quantified, not asserted: about 0.59 W for both rails |
+| Electrical | intra-VR horizontal routing loss recomputed on the physical geometry | **SPECIFIED** | recomputed on the physical tiers under the declared fidelity policy: R0 width rule for point-to-point traces, R0 via stacks, R2 refined sheet for the output plane (R0 overstates it 37-258 %). HV nets carried per named scenario. SPECIFIED: via heights come from the layout model's tier spacing |
+| Electrical | intra-VR vertical via-stack loss recomputed on the physical geometry | **SPECIFIED** | recomputed on the physical tiers under the declared fidelity policy: R0 width rule for point-to-point traces, R0 via stacks, R2 refined sheet for the output plane (R0 overstates it 37-258 %). HV nets carried per named scenario. SPECIFIED: via heights come from the layout model's tier spacing |
 | Electrical | contact / UBM / IMC resistance modelled or bounded | **OPEN** | the power-path library carries R_contact = 0 with status OPEN; zero is 'not modelled because unsourced', NOT 'physically negligible', and the distinction must survive into the manuscript |
 | Electrical | 10 um RDL electrical (resistance) model closed or bounded | **OPEN** | the mechanical/thermal tensor is bracketed, but the electrical sheet resistance of the actual 10 um tier -- Cu thickness, occupancy, routing layer count, supply/ground split -- is not yet defined |
 | Electrical | Z1-specific TSV sizing | **SPECIFIED** | 48 V rail, 480 mV budget. N_electrical = 2 (1 VDD + 1 return, 7.51 mV); N_checkerboard = 4. The second is a SYMMETRY floor, not a requirement -- Z2's bracket does not apply to Z1 |
 | Electrical | Z2-specific TSV sizing | **SPECIFIED** | 1 V rail, 10 mV budget: 64 / 729 / 1444 vias/cell |
 | TSV | thermal/mechanical sensitivity to TSV density | **OPEN** | the adopted field is 1444 vias/cell, 23x the electrically required minimum, so Cu volume fraction -- and therefore substrate k, E and CTE -- depends strongly on a choice no solve has tested |
-| TSV | TSV copper represented consistently in the FE model | **OPEN** | the substrate currently carries the historical tsv_homog fraction, which is not tied to the adopted TSV density; electrical rails are separated analytically while thermal/mechanical Cu would be one co-located homogenized field, and that is not yet implemented or stated in the mesh |
+| TSV | TSV copper represented consistently in the FE model | **IMPLEMENTED** | sub_lower and tile_band hold the adopted 1444-via field: 18.2 % Cu inside the 49 tiles, plain silicon outside, replacing a 19.6 % fraction smeared over the whole 900 mm^2 |
 | Electrical | complete rail-aware power-path graph for both architectures | **IMPLEMENTED** | Z1 15 segments, Z2 15, 48 V board to 1 V die with supply and return enumerated separately; chain continuity and rail assignment checked. Z1 and Z2 draw INDEPENDENT 48 V currents (23.6936 A and 23.7429 A, from their own loss totals); the substrate TSVs carry 48 V in Z1 and 1000 A at 1 V in Z2. Return chains are continuity-checked end to end and must terminate at PCB ground |
 | Electrical | every physical conductor has exactly one ledger owner | **IMPLEMENTED** | 19 declared owners (7 converter-intrinsic + 12 interconnect); every interconnect owner has at least one segment, no segment has two, converter-intrinsic terms are forbidden from owning a conductor, and an unknown owner raises. STRUCTURE only -- 10 Z1 and 10 Z2 segments still have OPEN loss values and 5 carry Phase-0M-R3C references |
 | RMS | avg, RMS and peak current defined per rail | **IMPLEMENTED** | branch I_avg 6.8027 A (= I_cell*B_i/sum(B), NOT 20.4) is KNOWN; cell output rms/avg 1.00808 is KNOWN from the model's own aggregate ripple. Individual branch ripple and RMS are WITHDRAWN and OPEN |
@@ -104,23 +104,23 @@ So **72 of 115 are non-open**, of which only 47 are IMPLEMENTED and **0 are VALI
 | Literature | TSV current-density allowable sourced or explicitly refused | **OPEN** | the 1 MA/cm2 in 10.1016/j.microrel.2015.05.019 is an accelerated stress condition, not an allowable; 10.1109/TED.2023.3307505 and 10.1016/j.ijmecsci.2025.110758 both show J alone is insufficient without T and stress. No allowable is asserted |
 | Configuration | Z1 YAML drives the Z1 mesh | **IMPLEMENTED** | build_physical_z1 takes a Z1Package from configs/phase0nx/z1_physical.yaml (300 um substrate, 9 tiers, 48 V rail) and REFUSES a Z2 PhysicalPackage |
 | Electrical | TSV count justified by a design criterion | **SPECIFIED** | three-point study: N_min_drop 64, N_mid 729, N_max_density 1444; adopted = max_density |
-| Electrical | temperature-dependent TSV resistance in the fixed point | **OPEN** | rho(T) exists in the analytical model but is evaluated at 20 C; not yet coupled |
+| Electrical | temperature-dependent TSV resistance in the fixed point | **IMPLEMENTED** | the TSV rows are evaluated at the converged substrate temperature inside the E-T loop; resetting only T_sub to 20 C changes the HV-S0 TSV loss by a factor 1.388 (Z1, T_sub 118.6 C) and 1.297 (Z2, T_sub 95.7 C) (research/final_closure/coupling_checks.json) |
 | Electrical | package RDL loss recomputed on the physical geometry | **SPECIFIED** | SUPERSEDES 'no artifact exists', false at HEAD. Recomputed from the solved voltage-fed network for Z2: package HV supply/return carry I_rms^2 R scenario losses in research/phase0nab/interconnect_loss.json. Z1 remains OPEN because its networks fail the 1 % convergence test, so a loss taken from them would be a number resting on an unconverged resistance. SPECIFIED, not IMPLEMENTED, while any architecture is still open. |
 | Electrical | superseded pre-network RDL loss status | **SUPERSEDED** | retained so the pre-network wording 'no artifact exists for RDL loss recomputed on the physical geometry' cannot return as a current claim; elec.package_rdl_hv_recomputed now carries the live status |
-| Electrical | energy conservation verified on the physical heat map | **OPEN** | not run -- no artifact exists for 'energy conservation verified on the physical heat map' |
-| Electrical | physical Z1/Z2 loss audit frozen | **OPEN** | not run -- no artifact exists for 'physical Z1/Z2 loss audit frozen' |
-| Thermal | tier-aware converter heat deposition | **OPEN** | production heat map still targets a single converter layer |
-| Thermal | physical thermal BC selected | **OPEN** | not run -- no artifact exists for 'physical thermal BC selected' |
-| Thermal | Z2-PASSIVE case implemented | **OPEN** | not run -- no artifact exists for 'Z2-PASSIVE case implemented' |
+| Electrical | energy conservation verified on the physical heat map | **IMPLEMENTED** | heat-map deposition and the COMPUTED thermal heat balance close to 1e-06 in every case: True. The historical production path never computed the bottom heat flow -- it set q_bot = Q - q_top, so every earlier energy residual was zero by construction |
+| Electrical | physical Z1/Z2 loss audit frozen | **IMPLEMENTED** | research/final_closure/electrical_ledger.json: 96 rows -- every conductor, both architectures, every named scenario, at the converged E-T temperatures, one owner each, no silent zeros; HV-S0 totals Z1 146.472 W, Z2 142.672 W |
+| Thermal | tier-aware converter heat deposition | **IMPLEMENTED** | HS, LS, inductor and capacitor losses deposited in their own GaN / inductor / flying-cap tiers, confined to the 49 cell footprints. The first physical deposition spread each tier's loss over the out-of-cell encapsulant as well and produced a 362 C corner hot spot in an element carrying no device; confinement removed it |
+| Thermal | physical thermal BC selected | **SPECIFIED** | one declared boundary for both: the same top Si microchannel cold plate (27 g/s, staggered fluid temperature) and the board-bottom film; Z2's converter underside faces the cutout and is adiabatic (Z2-PASSIVE). Z2-COOLED remains a B-class sensitivity |
+| Thermal | Z2-PASSIVE case implemented | **IMPLEMENTED** | the physical Z2 lineage is the Z2-PASSIVE case: the bottom film sits only on the board underside (1632 faces, 0 inside the 23.36 mm cutout), so the converter underside in the cutout is adiabatic (research/final_closure/coupling_checks.json) |
 | Thermal | Z2-COOLED case implemented | **OPEN** | not run -- no artifact exists for 'Z2-COOLED case implemented' |
-| Thermal | ET fixed point converged | **OPEN** | not run -- no artifact exists for 'ET fixed point converged' |
+| Thermal | ET fixed point converged | **IMPLEMENTED** | every case met the DECLARED 0.25 K / 1e-3 criteria within 8 iterations; worst final max|dT| 0.058 K |
 | Thermal | PCB MOT/Tg checks evaluated | **OPEN** | not run -- no artifact exists for 'PCB MOT/Tg checks evaluated' |
 | Thermal | H0 vs H1 thermal comparison run | **OPEN** | not run -- no artifact exists for 'H0 vs H1 thermal comparison run' |
 | Mechanical | F1/F2 out-of-cell bracket run | **OPEN** | both cases BUILD; neither has been solved |
-| Mechanical | physical mesh convergence | **OPEN** | not run -- no artifact exists for 'physical mesh convergence' |
-| Mechanical | critical-joint search over all 528 surviving sites | **OPEN** | not run -- no artifact exists for 'critical-joint search over all 528 surviving sites' |
+| Mechanical | physical mesh convergence | **IMPLEMENTED** | nested refinement of the production mesh (every in-plane interval split in two, and separately every layer split in two through the thickness): worst relative change of T_max, die warpage, critical du and loss = 1.299 % against the 2 % tolerance declared before the refined runs were read (PASS). Refined-mesh structural solves use ITERATIVE CHOLESKY, verified against SPOOLES on the production mesh. The earlier h_xy 1.1 -> 0.8 pair is not nested and is kept only as a re-meshing sensitivity. Mesh convergence, not validation |
+| Mechanical | critical-joint search over all 528 surviving sites | **IMPLEMENTED** | every legal site searched (Z1 1369, Z2 528); the critical joint is the outermost lattice corner in both, (14.4, 14.4) mm, du = 2.374 (Z1) and 3.951 um (Z2) at HV-S0 -- found, not assumed |
 | Mechanical | 2.4/3.2 T-only mechanical comparison | **OPEN** | not run -- no artifact exists for '2.4/3.2 T-only mechanical comparison' |
-| Local | local solder rerun at the new critical site | **OPEN** | not run -- no artifact exists for 'local solder rerun at the new critical site' |
+| Local | local solder rerun at the new critical site | **IMPLEMENTED** | validated local family rerun at the new critical joints after the harness reproduced the published control to 0.0000 %; response only, no life |
 | Z2 geometry | 23.36 mm conforming cutout | **IMPLEMENTED** | cutout 23.36 mm, edges are grid breakpoints |
 | Z2 geometry | 49 discrete cells | **IMPLEMENTED** | 49 tile footprints in the mesh |
 | Z2 geometry | full 1.963 mm stack | **IMPLEMENTED** | 8 tiers measured, total 1963.0 um |
@@ -140,8 +140,8 @@ So **72 of 115 are non-open**, of which only 47 are IMPLEMENTED and **0 are VALI
 | Material | GaN epi contribution bounded | **OPEN** | devices meshed as the Si carrier; the epi contribution is not yet bounded |
 | Material | MLCC tier material bounded | **OPEN** | flying-cap tier meshed at hvr_effective; no ceramic/Ni bracket yet |
 | Material | inductor/Cout tier bounded | **OPEN** | hvr_effective is generic; occupancy-based bracket not built |
-| Material | 10 um RDL tier tensor transfer validated | **OPEN** | NOT transferable as-is: the tensor is a four-metal-layer STACK property (source stack height 55 um, recorded in code as 40 um -- rdl_mechanical.RDL says t_um = 40 (metal only) while the source row's stack_height_um is 55 (metal + dielectric)), applied to a 10 um single-layer tier. Across the sweep k_x spans 92.5-140.6 and k_z 0.80-2.46 W/mK. Carried as BOUNDED; closes on recomputation for the actual tier or demonstrated insensitivity |
-| Results | physical ETM result lineage | **OPEN** | BLOCKED: no physical ETM result may be generated until every gate above closes |
+| Material | 10 um RDL tier tensor transfer validated | **IMPLEMENTED** | single-tier tensor from an explicit RVE in AEDT 2026 R1 Mechanical: k_x 34.28, k_z 0.620 W/mK; the analytic grid laminate agrees in-plane to -3.7 % and overstates k_z by +12.5 % (constriction), so the RVE values are adopted. The earlier Voigt in-plane value was 76 % too high |
+| Results | physical ETM result lineage | **IMPLEMENTED** | final physical lineage executed for Z1 and Z2 in every named 48 V scenario: E-T fixed point, global thermoelastic FE, all-site joint search, local solder rerun. HV-S0: Z1 146.472 W / 121.58 C / 27.64 um warp; Z2 142.672 W / 120.59 C / 69.28 um warp (research/final_closure/final_results.json) |
 
 ## Measured Z2 converter tiers
 

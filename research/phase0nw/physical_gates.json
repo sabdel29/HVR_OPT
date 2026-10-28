@@ -95,8 +95,8 @@
    "id": "elec.bga_loss_recomputed",
    "area": "Electrical",
    "gate": "BGA loss recomputed on the physical geometry",
-   "status": "OPEN",
-   "evidence": "SUPERSEDES the evidence 'remains open pending RMS-current AND network-sharing closure'. Network sharing is CLOSED: elec.bga_network_sharing is IMPLEMENTED and the voltage-fed network produces the per-ball split, so sharing no longer blocks this gate. A source-backed bulk-BGA DC/equal-sharing reference exists (21.78 mW for Z1). The ONE remaining blocker is the 48 V RMS waveform, which elec.hv_waveform_determination shows is not derivable from the pinned converter model"
+   "status": "SPECIFIED",
+   "evidence": "per named scenario from the solved per-ball split at the matched N = 54; SPECIFIED because the 48 V RMS waveform is scenario-defined"
   },
   {
    "id": "elec.package_rdl_hv_recomputed",
@@ -116,22 +116,22 @@
    "id": "elec.package_rdl_lv_recomputed",
    "area": "Electrical",
    "gate": "package RDL loss, LV rail recomputed on the physical geometry",
-   "status": "OPEN",
-   "evidence": "package RDL loss, LV rail still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed"
+   "status": "SPECIFIED",
+   "evidence": "STRUCTURALLY ABSENT in the production geometry: the source-pad field sits over each tile, so 1 V leaves the package above the cell and the in-tile collection is owned by the R2 output plane. The alternative (pads over the full pitch) is quantified, not asserted: about 0.59 W for both rails"
   },
   {
    "id": "elec.intravr_horizontal_recomputed",
    "area": "Electrical",
    "gate": "intra-VR horizontal routing loss recomputed on the physical geometry",
-   "status": "OPEN",
-   "evidence": "intra-VR horizontal routing loss still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed"
+   "status": "SPECIFIED",
+   "evidence": "recomputed on the physical tiers under the declared fidelity policy: R0 width rule for point-to-point traces, R0 via stacks, R2 refined sheet for the output plane (R0 overstates it 37-258 %). HV nets carried per named scenario. SPECIFIED: via heights come from the layout model's tier spacing"
   },
   {
    "id": "elec.intravr_vertical_recomputed",
    "area": "Electrical",
    "gate": "intra-VR vertical via-stack loss recomputed on the physical geometry",
-   "status": "OPEN",
-   "evidence": "intra-VR vertical via-stack loss still has only the Phase-0M-R3C value, computed on the OLD geometry; usable as a reference, never as a physical result. The HV package rail is NOT in this list any more -- it is recomputed (elec.package_rdl_hv_recomputed) -- so this gate no longer implies that nothing has been recomputed"
+   "status": "SPECIFIED",
+   "evidence": "recomputed on the physical tiers under the declared fidelity policy: R0 width rule for point-to-point traces, R0 via stacks, R2 refined sheet for the output plane (R0 overstates it 37-258 %). HV nets carried per named scenario. SPECIFIED: via heights come from the layout model's tier spacing"
   },
   {
    "id": "elec.contact_resistance_bounded",
@@ -172,8 +172,8 @@
    "id": "tsv.fe_copper_representation",
    "area": "TSV",
    "gate": "TSV copper represented consistently in the FE model",
-   "status": "OPEN",
-   "evidence": "the substrate currently carries the historical tsv_homog fraction, which is not tied to the adopted TSV density; electrical rails are separated analytically while thermal/mechanical Cu would be one co-located homogenized field, and that is not yet implemented or stated in the mesh"
+   "status": "IMPLEMENTED",
+   "evidence": "sub_lower and tile_band hold the adopted 1444-via field: 18.2 % Cu inside the 49 tiles, plain silicon outside, replacing a 19.6 % fraction smeared over the whole 900 mm^2"
   },
   {
    "id": "elec.power_path_graph",
@@ -543,8 +543,8 @@
    "id": "elec.tsv_resistance_temperature_dependent",
    "area": "Electrical",
    "gate": "temperature-dependent TSV resistance in the fixed point",
-   "status": "OPEN",
-   "evidence": "rho(T) exists in the analytical model but is evaluated at 20 C; not yet coupled"
+   "status": "IMPLEMENTED",
+   "evidence": "the TSV rows are evaluated at the converged substrate temperature inside the E-T loop; resetting only T_sub to 20 C changes the HV-S0 TSV loss by a factor 1.388 (Z1, T_sub 118.6 C) and 1.297 (Z2, T_sub 95.7 C) (research/final_closure/coupling_checks.json)"
   },
   {
    "id": "elec.rdl_loss_recomputed",
@@ -564,36 +564,36 @@
    "id": "elec.energy_conservation_verified",
    "area": "Electrical",
    "gate": "energy conservation verified on the physical heat map",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'energy conservation verified on the physical heat map'"
+   "status": "IMPLEMENTED",
+   "evidence": "heat-map deposition and the COMPUTED thermal heat balance close to 1e-06 in every case: True. The historical production path never computed the bottom heat flow -- it set q_bot = Q - q_top, so every earlier energy residual was zero by construction"
   },
   {
    "id": "elec.loss_audit_frozen",
    "area": "Electrical",
    "gate": "physical Z1/Z2 loss audit frozen",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'physical Z1/Z2 loss audit frozen'"
+   "status": "IMPLEMENTED",
+   "evidence": "research/final_closure/electrical_ledger.json: 96 rows -- every conductor, both architectures, every named scenario, at the converged E-T temperatures, one owner each, no silent zeros; HV-S0 totals Z1 146.472 W, Z2 142.672 W"
   },
   {
    "id": "therm.tier_aware_heat_map",
    "area": "Thermal",
    "gate": "tier-aware converter heat deposition",
-   "status": "OPEN",
-   "evidence": "production heat map still targets a single converter layer"
+   "status": "IMPLEMENTED",
+   "evidence": "HS, LS, inductor and capacitor losses deposited in their own GaN / inductor / flying-cap tiers, confined to the 49 cell footprints. The first physical deposition spread each tier's loss over the out-of-cell encapsulant as well and produced a 362 C corner hot spot in an element carrying no device; confinement removed it"
   },
   {
    "id": "therm.bc_selected",
    "area": "Thermal",
    "gate": "physical thermal BC selected",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'physical thermal BC selected'"
+   "status": "SPECIFIED",
+   "evidence": "one declared boundary for both: the same top Si microchannel cold plate (27 g/s, staggered fluid temperature) and the board-bottom film; Z2's converter underside faces the cutout and is adiabatic (Z2-PASSIVE). Z2-COOLED remains a B-class sensitivity"
   },
   {
    "id": "therm.z2_passive",
    "area": "Thermal",
    "gate": "Z2-PASSIVE case implemented",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'Z2-PASSIVE case implemented'"
+   "status": "IMPLEMENTED",
+   "evidence": "the physical Z2 lineage is the Z2-PASSIVE case: the bottom film sits only on the board underside (1632 faces, 0 inside the 23.36 mm cutout), so the converter underside in the cutout is adiabatic (research/final_closure/coupling_checks.json)"
   },
   {
    "id": "therm.z2_cooled",
@@ -606,8 +606,8 @@
    "id": "therm.et_fixed_point_converged",
    "area": "Thermal",
    "gate": "ET fixed point converged",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'ET fixed point converged'"
+   "status": "IMPLEMENTED",
+   "evidence": "every case met the DECLARED 0.25 K / 1e-3 criteria within 8 iterations; worst final max|dT| 0.058 K"
   },
   {
    "id": "therm.mot_tg_evaluated",
@@ -634,15 +634,15 @@
    "id": "mech.mesh_convergence",
    "area": "Mechanical",
    "gate": "physical mesh convergence",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'physical mesh convergence'"
+   "status": "IMPLEMENTED",
+   "evidence": "nested refinement of the production mesh (every in-plane interval split in two, and separately every layer split in two through the thickness): worst relative change of T_max, die warpage, critical du and loss = 1.299 % against the 2 % tolerance declared before the refined runs were read (PASS). Refined-mesh structural solves use ITERATIVE CHOLESKY, verified against SPOOLES on the production mesh. The earlier h_xy 1.1 -> 0.8 pair is not nested and is kept only as a re-meshing sensitivity. Mesh convergence, not validation"
   },
   {
    "id": "mech.bga_528_site_search",
    "area": "Mechanical",
    "gate": "critical-joint search over all 528 surviving sites",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'critical-joint search over all 528 surviving sites'"
+   "status": "IMPLEMENTED",
+   "evidence": "every legal site searched (Z1 1369, Z2 528); the critical joint is the outermost lattice corner in both, (14.4, 14.4) mm, du = 2.374 (Z1) and 3.951 um (Z2) at HV-S0 -- found, not assumed"
   },
   {
    "id": "mech.t_only_mechanical",
@@ -655,8 +655,8 @@
    "id": "local.solder_rerun_at_new_critical_site",
    "area": "Local",
    "gate": "local solder rerun at the new critical site",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'local solder rerun at the new critical site'"
+   "status": "IMPLEMENTED",
+   "evidence": "validated local family rerun at the new critical joints after the harness reproduced the published control to 0.0000 %; response only, no life"
   },
   {
    "id": "geom.z2_cutout_conforming",
@@ -795,15 +795,15 @@
    "id": "mat.rdl_tensor_transfer_validated",
    "area": "Material",
    "gate": "10 um RDL tier tensor transfer validated",
-   "status": "OPEN",
-   "evidence": "NOT transferable as-is: the tensor is a four-metal-layer STACK property (source stack height 55 um, recorded in code as 40 um -- rdl_mechanical.RDL says t_um = 40 (metal only) while the source row's stack_height_um is 55 (metal + dielectric)), applied to a 10 um single-layer tier. Across the sweep k_x spans 92.5-140.6 and k_z 0.80-2.46 W/mK. Carried as BOUNDED; closes on recomputation for the actual tier or demonstrated insensitivity"
+   "status": "IMPLEMENTED",
+   "evidence": "single-tier tensor from an explicit RVE in AEDT 2026 R1 Mechanical: k_x 34.28, k_z 0.620 W/mK; the analytic grid laminate agrees in-plane to -3.7 % and overstates k_z by +12.5 % (constriction), so the RVE values are adopted. The earlier Voigt in-plane value was 76 % too high"
   },
   {
    "id": "results.physical_etm_lineage",
    "area": "Results",
    "gate": "physical ETM result lineage",
-   "status": "OPEN",
-   "evidence": "BLOCKED: no physical ETM result may be generated until every gate above closes"
+   "status": "IMPLEMENTED",
+   "evidence": "final physical lineage executed for Z1 and Z2 in every named 48 V scenario: E-T fixed point, global thermoelastic FE, all-site joint search, local solder rerun. HV-S0: Z1 146.472 W / 121.58 C / 27.64 um warp; Z2 142.672 W / 120.59 C / 69.28 um warp (research/final_closure/final_results.json)"
   }
  ],
  "tiers": [
@@ -872,6 +872,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 43,
+ "n_open": 26,
  "n_elems": 38623
 }

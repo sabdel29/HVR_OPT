@@ -1,0 +1,67 @@
+{
+ "scenario": "HV_S2",
+ "control_deviation_pct": 0.0,
+ "control_tolerance_pct": 0.5,
+ "cetol": 0.05,
+ "local_family": {
+  "n_xy": 6,
+  "n_z_solder": 8,
+  "n_cycles": 4,
+  "dwell_s": 300.0,
+  "T_off_C": 25.0,
+  "procedure": "VISCO",
+  "material": "EPC"
+ },
+ "norton_T_range_C": [
+  -40.0,
+  125.0
+ ],
+ "cases": {
+  "Z1": {
+   "critical_joint": {
+    "rank": 1,
+    "x_mm": 14.4,
+    "y_mm": 14.4,
+    "du_um": 4.251162134664656,
+    "T_C": 211.05990909090912
+   },
+   "du_c_um": 4.251162134664656,
+   "T_joint_C": 211.05990909090912,
+   "T_outside_norton_calibration": true,
+   "response": null,
+   "fine_mesh": {
+    "n_xy": 8,
+    "n_z_solder": 10,
+    "response": null
+   }
+  },
+  "Z2": {
+   "critical_joint": {
+    "rank": 1,
+    "x_mm": 14.4,
+    "y_mm": 14.4,
+    "du_um": 5.008787974027278,
+    "T_C": 134.1760909090909
+   },
+   "du_c_um": 5.008787974027278,
+   "T_joint_C": 134.1760909090909,
+   "T_outside_norton_calibration": true,
+   "response": {
+    "n_core": 128,
+    "n_elem": 488,
+    "wall_s": 37.492677450180054,
+    "stab_change_pct": 0.03212017006533096,
+    "prev_cycle_d_eps": 0.015789302394531194,
+    "d_peeq_per_cycle": 0.015794373945312447,
+    "range_eq_inelastic": 0.007708370630527419,
+    "inelastic_work_MJ_per_m3": 1.3570675259110931
+   },
+   "fine_mesh": {
+    "n_xy": 8,
+    "n_z_solder": 10,
+    "response": null
+   }
+  }
+ },
+ "wall_s": 151.4
+}
