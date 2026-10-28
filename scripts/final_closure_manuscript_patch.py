@@ -12,6 +12,7 @@ historical, because it motivated the physical closure and its values stay tracea
 from __future__ import annotations
 
 import io
+import re
 import json
 from pathlib import Path
 
@@ -34,14 +35,22 @@ def facts():
     mech = (o("die_warpage_pv_um").get("robust_across_scenarios")
             and o("du_c_um").get("robust_across_scenarios")
             and o("die_warpage_pv_um").get("favoured") == o("du_c_um").get("favoured"))
-    return {"mech_robust": bool(mech),
+    oj = J("ordering.json")
+    cb = J("classB_resolution.json")
+    return {"scen": oj.get("scenario_classes", {}),
+            "local_stmt": o("d_eps_in_per_cycle").get("statement", ""),
+            "local_per": o("d_eps_in_per_cycle").get("per_scenario", {}),
+            "therm_stmt": o("T_max_C").get("statement", ""),
+            "classb": cb.get("summary") or {}, "classb_gates": cb.get("gates") or [],
+            "mech_robust": bool(mech),
             "mech_fav": o("du_c_um").get("favoured_where_resolved") if mech else None,
             "warp": o("die_warpage_pv_um"), "du": o("du_c_um"),
             "loss": o("P_loss_w"), "therm": o("T_max_C"),
             "aedt_thermal": ok("thermal_column_aedt_Z1") or ok("thermal_column_aedt_Z2"),
             "aedt_thermal_both": ok("thermal_column_aedt_Z1") and ok("thermal_column_aedt_Z2"),
             "aedt_mech": ok("mech_bilayer_aedt"),
-            "moose_thermal": ok("thermal_column_moose_Z1") and ok("thermal_column_moose_Z2")}
+            "moose_thermal": ok("thermal_column_moose_Z1") and ok("thermal_column_moose_Z2"),
+            "icepak": ok("cooling_icepak")}
 
 
 SCEN_NAME = {"HV_S0": "the continuous-input scenario", "HV_S1": "the buck-duty pulse",
@@ -50,7 +59,9 @@ SCEN_NAME = {"HV_S0": "the continuous-input scenario", "HV_S1": "the buck-duty p
 
 def _ordering_sentence(o, verb, what):
     """'<arch> <verb> in every scenario' only where every scenario is resolved; scenarios
-    inside the discretisation uncertainty are named and no ranking is drawn for them."""
+    inside the discretisation uncertainty are named and no ranking is drawn for them. A
+    scenario with a physically inadmissible operating point is excluded here and named once
+    by inadmissible_sentence()."""
     fav, unres = o.get("favoured_where_resolved"), o.get("unresolved") or []
     if o.get("robust_across_scenarios"):
         return f"the {NAME[fav]} architecture {verb} in every scenario"
@@ -59,6 +70,8 @@ def _ordering_sentence(o, verb, what):
         return (f"the {NAME[fav]} architecture {verb} wherever the difference is resolved, "
                 f"while in {names} the {what} difference lies within the measured "
                 f"discretisation uncertainty, so no ranking is drawn there")
+    if fav:
+        return f"the {NAME[fav]} architecture {verb} in every scenario that admits a valid comparison"
     return f"the {what} ordering depends on the scenario"
 
 
@@ -71,11 +84,28 @@ def _mech_sentence(F):
     if fav and fav == d.get("favoured_where_resolved"):
         parts = [f"the {what} difference in " + " and ".join(SCEN_NAME[u] for u in o_["unresolved"])
                  for o_, what in ((w, "die-warpage"), (d, "joint-driver")) if o_.get("unresolved")]
+        if not parts:
+            return (f"the {NAME[fav]} architecture carries the lower die warpage and joint "
+                    "displacement driver in every scenario that admits a valid comparison")
         return (f"the {NAME[fav]} architecture carries the lower die warpage and joint "
                 f"displacement driver wherever the difference is resolved; "
                 + " and ".join(parts) + (" lies" if len(parts) == 1 else " lie")
                 + " within the measured discretisation uncertainty")
     return "the mechanical ordering changes with the scenario"
+
+
+def inadmissible_sentence(F):
+    """The scenarios ordering.json marks inadmissible (a critical joint at or above the solder
+    melting onset): an infeasibility result, for which no ordering of any quantity is drawn."""
+    sc = F.get("scen") or {}
+    bad = [(s, c.get("inadmissible")) for s, c in sc.items() if c.get("inadmissible")]
+    if not bad:
+        return ""
+    return " ".join(
+        f"Under {SCEN_NAME[s]} the {' and '.join(NAME[a] for a in who)} operating point leaves "
+        "the valid solid-solder domain under the assumed cooling; that scenario is an "
+        "infeasibility result, and no architecture ordering of any quantity is drawn there."
+        for s, who in bad)
 
 
 def sentences(F):
@@ -118,8 +148,8 @@ reach \TmaxZone\ and \TmaxZtwo\,$^\circ$C, yet the backside architecture carries
 \DuRatio-fold joint displacement driver, a \EpsRatio-fold local inelastic response and a
 \WarpRatio-fold die warpage. {mech[0].upper() + mech[1:]}, reversing the ordering of an
 earlier, physically unclosed representation. Thermally, {therm}; peak temperature therefore
-does not rank local mechanical response. No absolute life, manufacturing qualification or
-commercial end-to-end speedup is claimed."""
+does not rank local mechanical response. {scen_sentence(F)} {sens_sentence_short(F)} No absolute
+life, manufacturing qualification or commercial end-to-end speedup is claimed."""
 
 
 CONTRIB_ADD = r"""
@@ -198,6 +228,13 @@ def matched_section(F):
                   "\\ErrThermMooseZone\\,\\% (Z1) and \\ErrThermMooseZtwo\\,\\% (Z2), inside "
                   "that reference's own mesh dependence")
     thermal = ("For the package thermal solver, " + "; ".join(th) + ".") if th else ""
+    if F.get("icepak"):
+        thermal += (" The cold-plate correlation that sets the top boundary was checked against "
+                    "a conjugate computational-fluid-dynamics solution of one microchannel "
+                    "half-pitch at the production heat load: the correlation overstates the "
+                    "mean base temperature rise by \\ErrCoolingIcepak\\,\\%, so it is "
+                    "conservative, and halving the cross-section mesh moves the CFD value by "
+                    "less than 0.4\\,\\%.")
     mech = ("The thermoelastic element and its minimal supports reproduce the bimaterial "
             "closed form to \\ErrMechClosed\\,\\%, the expected free-edge difference, "
             + ("and a commercial structural solution of the same bilayer to "
@@ -241,22 +278,259 @@ outermost lattice corner in both. There the backside architecture carries a join
 displacement driver of \DuZtwo\,$\mu$m against \DuZone\,$\mu$m, a local inelastic strain
 increment per stabilised cycle of \EpsZtwo\ against \EpsZone, and a die warpage of
 \WarpZtwo\ against \WarpZone\,$\mu$m. {mech[0].upper() + mech[1:]}. Electrically, {loss}.
-Thermally, {therm}. Peak temperature therefore does not rank the local mechanical response on
+Thermally, {therm}. {inadmissible_sentence(F)} Peak temperature therefore does not rank the local mechanical response on
 the physically closed pair either. The frozen pair of the following subsection showed the opposite mechanical
 ordering; the physical closure reverses it. Fig.~\ref{{fig:physical}} shows the per-scenario
 results, the joint driver at every legal site and the matched-reference errors.
 \begin{{figure*}}[!t]
 \centering
 \includegraphics[width=\textwidth]{{fig9_physical.pdf}}
-\caption{{Physical lineage on the production mesh. (a) Loss (bars) and peak temperature
-(markers) per named scenario. (b) Die warpage (bars) and critical-joint displacement driver
-(markers). (c) In-plane joint displacement driver at every legal ball site in the
-continuous-input scenario; circles mark the critical joint. (d) Error of each production
-model against its matched reference versus the reference-to-production runtime ratio; the
-stages are not averaged.}}
+\caption{{Physical lineage on the production mesh, one quantity per panel: (a) loss, (b) peak
+temperature, (c) die warpage, (d) critical-joint displacement driver, per named scenario, with
+whiskers at the measured discretisation uncertainty (hatched: critical joint at or above the
+solder melting onset, an infeasibility result shown but not ranked); (e) local inelastic strain per cycle on the
+production local mesh with its uncertainty $U$ (open marker: joint beyond the constitutive
+calibration, extrapolated; cross: joint at or above the solder melting onset, no valid
+response); (f) in-plane joint displacement driver at every legal ball site in the
+continuous-input scenario, critical joint circled. Matched-reference errors and runtimes are in
+Table~\ref{{tab:accspeed}}.}}
 \label{{fig:physical}}
 \end{{figure*}}
 \input{{final_physical_table}}
+"""
+
+
+def scen_sentence(F):
+    """The scenario hierarchy in one sentence, from ordering.json's scenario classes."""
+    sc = F.get("scen") or {}
+    ext = (sc.get("HV_S1") or {}).get("extrapolated") or []
+    melt = (sc.get("HV_S2") or {}).get("inadmissible") or []
+    out = "The continuous-input scenario is the headline comparison"
+    loc = (F.get("local_per") or {}).get("HV_S1")
+    if ext:
+        out += (f"; in the buck-duty pulse the {' and '.join(NAME[a] for a in ext)} joint lies "
+                "beyond the constitutive calibration, so its local response is extrapolated"
+                + (" and the local difference lies within its discretisation bound"
+                   if loc == "unresolved" else ""))
+    if melt:
+        out += (f"; under the overall-ratio pulse the {' and '.join(NAME[a] for a in melt)} "
+                "architecture exits the valid solid-solder operating domain under the assumed "
+                "cooling, and no architecture comparison is drawn there")
+    return out + "."
+
+
+def _moved(F):
+    out = []
+    for g in F.get("classb_gates") or []:
+        for r in g.get("rows") or []:
+            if r.get("robust") is False:
+                out.append((g["gate"], r))
+    return out
+
+
+CASE_PLAIN = {"tsv_min": "the electrically minimal through-silicon via field",
+              "tsv_mid": "a half-density through-silicon via field",
+              "conv_k_tenth": "a tenfold lower converter-tier conductivity",
+              "f2_void": "void instead of encapsulated space between the cells",
+              "f1_clearance": "opening the specified 1\\,mm sidewall clearance",
+              "z2_cooled": "a second cold plate under the backside converter",
+              "board_h1": "the five-block board model", "board_t3p2": "a 3.2\\,mm board",
+              "board_eta025": "low board copper coverage",
+              "board_eta075": "high board copper coverage",
+              "gan_k_half": "halved device-tier conductivity",
+              "pad_drop": "the minimum pad count"}
+OBS_PLAIN = {"P_loss_w": "loss", "T_max_C": "peak-temperature", "die_warpage_pv_um":
+             "die-warpage", "du_c_um": "joint-driver", "d_eps_in_per_cycle": "local-response"}
+
+
+def _effects(rows):
+    """What one variant does to the orderings, grouped by kind of effect."""
+    kinds = {}
+    for r in rows:
+        p, v = r.get("production_verdict"), r.get("verdict")
+        o = OBS_PLAIN.get(r["observable"], r["observable"])
+        if p and v and p.endswith("lower") and v.endswith("lower"):
+            kinds.setdefault("reverses the {} ordering", []).append(o)
+        elif p == "unresolved" and v and v.endswith("lower"):
+            kinds.setdefault("creates a {} ranking (" + v + ")", []).append(o)
+        elif p and p.endswith("lower") and v in ("unresolved", "not rankable"):
+            kinds.setdefault("leaves the {} ordering unresolved", []).append(o)
+        else:
+            kinds.setdefault("changes the {} verdict", []).append(o)
+    out = []
+    for k, obs in kinds.items():
+        names = obs[0] if len(obs) == 1 else ", ".join(obs[:-1]) + " and " + obs[-1]
+        out.append(k.format(names).replace("ordering", "orderings") if len(obs) > 1
+                   else k.format(names))
+    return out
+
+
+def sens_sentence(F):
+    """All open sensitivity inputs and, grouped BY CAUSE, what each does to the orderings."""
+    sm = F.get("classb") or {}
+    if not sm:
+        return ""
+    by = {}
+    for _g, r in _moved(F):
+        by.setdefault(r["case"], {})[r["observable"]] = r
+    base = (f"All {sm.get('n_gates')} open sensitivity inputs were run on the production mesh "
+            "or bounded")
+    if not by:
+        return base + ", and none moves an ordering."
+    parts = []
+    for case, rows in by.items():
+        eff = _effects(rows.values())
+        parts.append(f"{CASE_PLAIN.get(case, case.replace('_', ' '))} "
+                     + ", ".join(eff[:-1]) + (" and " if len(eff) > 1 else "") + eff[-1])
+    return base + "; " + "; ".join(parts) + "."
+
+
+def sens_sentence_short(F):
+    """The abstract's version: which inputs reverse loss and mechanics, and how fragile the
+    local ordering is."""
+    sm = F.get("classb") or {}
+    if not sm:
+        return ""
+    rev = lambda obs: [c for c, r in _moved_by_case(F).items()
+                       if any(k in obs and x["production_verdict"].endswith("lower")
+                              and x["verdict"].endswith("lower") for k, x in r.items())]
+    loss, mech = rev({"P_loss_w"}), rev({"die_warpage_pv_um", "du_c_um"})
+    loc = [c for c, r in _moved_by_case(F).items() if "d_eps_in_per_cycle" in r]
+    out = [f"All {sm.get('n_gates')} open sensitivity inputs were run on the production mesh "
+           "or bounded"]
+    if loss:
+        out.append("the loss ordering reverses with " + " or ".join(
+            CASE_PLAIN.get(c, c) for c in loss))
+    mv = _moved_by_case(F)
+    for c in mech:                    # name exactly which mechanical ordering each reverses
+        ks = [w for k, w in (("die_warpage_pv_um", "die-warpage"), ("du_c_um", "joint-driver"))
+              if k in mv[c] and mv[c][k]["production_verdict"].endswith("lower")
+              and mv[c][k]["verdict"].endswith("lower")]
+        out.append(f"the {' and '.join(ks)} ordering{'s reverse' if len(ks) > 1 else ' reverses'}"
+                   f" with {CASE_PLAIN.get(c, c)}")
+    if loc:
+        words = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+        n = words[len(loc)] if len(loc) < 10 else str(len(loc))
+        out.append(f"the narrowly resolved local-response ordering does not survive {n} "
+                   "of them")
+    return "; ".join(out) + "."
+
+
+def _moved_by_case(F):
+    by = {}
+    for _g, r in _moved(F):
+        by.setdefault(r["case"], {})[r["observable"]] = r
+    return by
+
+
+def local_conv_sentence():
+    """Which architectures' declared local mesh families converge, from the study."""
+    lm, pol = J("local_mesh_study.json"), J("local_mesh_policy.json")
+    by = {}
+    for a, s_ in pol.get("cases", []):
+        by.setdefault(a, set()).add(((lm.get("cases") or {}).get(f"{a}_{s_}") or {}).get("status"))
+    conv = [NAME[a] for a, st in by.items() if st == {"converged"}]
+    bnd = [NAME[a] for a, st in by.items() if st and st != {"converged"}]
+    parts = []
+    if conv:
+        parts.append(f"its declared mesh family converges for the {' and '.join(conv)} "
+                     "architecture")
+    if bnd:
+        parts.append(f"is bounded by Richardson extrapolation for the {' and '.join(bnd)} one")
+    return " and ".join(parts) if parts else "its declared mesh family is incomplete"
+
+
+def localmesh_section(F):
+    return r"""
+\subsubsection{Local solder discretisation}\label{sec:localmesh}
+The local response is computed on a declared family of four solder meshes at each production
+critical joint (L0 to L3; L3 halves every L0 interval in plane and through the solder), and the
+rule that classifies it was declared before the finer levels were read: converged if the change
+between the two finest levels is below 2\,\%, otherwise bounded by Richardson extrapolation
+over the three finest levels, or by their range if the sequence is not monotone. Three
+amendments to the procedure were needed, each declared before the results it governs. The
+solver will not cut a time increment below $10^{-6}$ of the step period, which blocked the
+cutbacks the finest meshes need at a load reversal; a first change made to work around it failed
+its own acceptance test, the published harness control moving by $10.2\,\%$. The cause was a
+post-processing defect, not the time integration: the solver prints output times to seven
+significant digits, increments shorter than about 1\,ms at a load step print the same time as
+the step boundary, and the time-keyed parser averaged them, biasing only the last cycle---the
+reported one. An extraction that keeps every increment in file order reproduces the published
+control to all ten printed digits, leaves every earlier production value unchanged, and puts
+the first-increment sensitivity below \UtimeMax\,\% and the change from 4 to 16 cycles below
+\UcycMax\,\%. Writing each load change as its own 3\,s step lifts the increment floor
+without changing the load history and completes the finest level in every case.
+Table~\ref{tab:localmesh} gives the response on every level, the rule outcome and the
+uncertainty $U = U_{\mathrm{mesh}} + U_{\mathrm{time}} + U_{\mathrm{cyc}}$; \LocalNconverged\
+of the \LocalNcases\ policy cases converge, and the local response is therefore reported as
+\LocalMeshPhrase. A local ordering is drawn only where the Z1/Z2 gap exceeds twice the larger
+$U$ of the pair. """ + F.get("local_stmt", "").replace("%", "\\%") + r"""
+\input{final_localmesh_table}
+"""
+
+
+def _rows_for(F, case):
+    out = {}
+    for g in F.get("classb_gates") or []:
+        for r in g.get("rows") or []:
+            if r.get("case") == case:
+                out[r["observable"]] = r
+    return out
+
+
+def fill_paragraph(F):
+    """The out-of-cell construction and DEFECT #66, from the class-B rows."""
+    f1c, f2 = _rows_for(F, "f1_clearance"), _rows_for(F, "f2_void")
+    if not (f1c or f2):
+        return ""
+
+    def ch(rows, k, a):
+        v = ((rows.get(k) or {}).get("change_rel") or {}).get(a)
+        return f"{100 * v:+.0f}\\,\\%" if isinstance(v, (int, float)) else "n/a"
+
+    def verdict(rows, k):
+        r = rows.get(k) or {}
+        return r.get("verdict", "n/a")
+    txt = (r" The out-of-cell construction of the backside converter needs a specific word. "
+           r"The production encapsulated model fills the PCB opening with encapsulant up to "
+           r"the board sidewall, so the converter block is bonded laterally to the board, "
+           r"although the stack specifies a 1\,mm clearance between the cell grid and the "
+           r"opening; the inconsistency was found when the architecture was drawn from the "
+           r"solver mesh. ")
+    if f1c:
+        txt += (r"With the clearance open and the encapsulant kept between the cells, the "
+                f"backside die warpage changes by {ch(f1c, 'die_warpage_pv_um', 'Z2')} and "
+                f"its joint driver by {ch(f1c, 'du_c_um', 'Z2')}, and the Z1/Z2 verdicts "
+                f"become: warpage {verdict(f1c, 'die_warpage_pv_um')}, joint driver "
+                f"{verdict(f1c, 'du_c_um')}" + (f", local response "
+                f"{verdict(f1c, 'd_eps_in_per_cycle')}" if 'd_eps_in_per_cycle' in f1c else "")
+                + ". ")
+    if f2:
+        txt += (r"With the out-of-cell volume void in both architectures, the embedded joint "
+                f"driver changes by {ch(f2, 'du_c_um', 'Z1')} and the backside one by "
+                f"{ch(f2, 'du_c_um', 'Z2')}, and the verdicts become: warpage "
+                f"{verdict(f2, 'die_warpage_pv_um')}, joint driver {verdict(f2, 'du_c_um')}"
+                + (f", local response {verdict(f2, 'd_eps_in_per_cycle')}"
+                   if 'd_eps_in_per_cycle' in f2 else "") + ". ")
+    txt += (r"The mechanical orderings of this paper are therefore stated for the production "
+            r"encapsulated construction and are conditioned on it.")
+    return txt
+
+
+def sens_section(F):
+    sm = F.get("classb") or {}
+    return r"""
+\subsubsection{Sensitivity of the orderings}\label{sec:classb}
+Every input that has no single defensible value---the board representation, copper coverage
+and thickness, the through-silicon via density, the out-of-cell fill, a backside cooling path,
+the device and converter-tier materials, contact and redistribution construction, the pad count
+and the 48\,V waveform---was classified by whether it can move an ordering (\NbOne\ of the
+\NgatesB\ inputs) or only a magnitude (\NbTwo), and then run on the production mesh in the
+continuous-input scenario or bounded from the network sensitivity, with every variant judged
+by the same ordering rule as the production pair (Table~\ref{tab:classb}). Stress tests on
+unsourced material cards are declared as bounds, not as property claims. """ + \
+        sens_sentence(F) + fill_paragraph(F) + r"""
+\input{final_classb_table}
 """
 
 
@@ -296,14 +570,18 @@ changed a tensor used in every thermal result.
 Three conclusions are drawn. Physical realizability cannot be separated from system-level
 architecture selection: equivalent tier orderings can differ sixfold in worst via aspect ratio,
 and the ball count is a solved design variable whose peak loading is not monotone in the
-count. Physical closure changes architecture conclusions: on the physically closed pair the
-backside architecture carries a \DuRatio-fold joint displacement driver and a \EpsRatio-fold
-local inelastic response in the continuous-input scenario, the reverse of the ordering found
-on an earlier unclosed representation. And peak temperature does not rank local mechanical
+count. Physical closure changes architecture conclusions: on the physically closed pair, in
+its declared encapsulated construction, the backside architecture carries a \DuRatio-fold joint
+displacement driver and a \EpsRatio-fold local inelastic response in the continuous-input
+scenario, the reverse of the ordering found on an earlier unclosed representation---and the
+sensitivities show that the out-of-cell construction and backside cooling are architecture
+variables in their own right. And peak temperature does not rank local mechanical
 response, because the latter depends on geometry, stiffness distribution, boundary conditions
-and local joint loading: {mech}. Thermally, {therm}.
+and local joint loading: {mech}. Thermally, {therm}. {inadmissible_sentence(F)}
 
-The results are conditioned on named input-current scenarios, because the switching schedule
+{sens_sentence(F)} The local response is \LocalMeshPhrase{{}}: {local_conv_sentence()}, and a local
+ordering is drawn only beyond twice that bound. The results are conditioned on named input-current
+scenarios, because the switching schedule
 of the regulator is not derivable from its loss model; on an engineering ball-provisioning
 rule rather than a reliability allowable; and on solder response rather than life. Closing
 those requires the switch-state schedule of the converter, qualified electromigration and
@@ -378,6 +656,12 @@ def main():
         s = s.replace(r"\subsection{Final architecture comparison}",
                       r"\subsection{Historical frozen pair}", 1)
     s = block(s, "physical", phys_section(F), before=r"\subsection{Historical frozen pair}")
+    s = block(s, "localmesh", localmesh_section(F), before=r"\subsection{Historical frozen pair}")
+    s = block(s, "sens", sens_section(F), before=r"\subsection{Historical frozen pair}")
+    s = re.sub(r"displacement-driven,\s+mesh-\s+and\s+cycle-converged local solder\s+"
+               r"inelastic-response submodel",
+               r"displacement-driven local solder inelastic-response submodel "
+               r"(\\LocalMeshPhrase)", s)
     s = s.replace(r"\caption{Final cross-domain comparison on the frozen repartitioned pair.",
                   r"\caption{Historical cross-domain comparison on the frozen repartitioned "
                   r"pair, superseded by the physical lineage of Table~\ref{tab:physical}.")
