@@ -103,17 +103,24 @@ def test_every_referenced_figure_exists():
 
 
 def test_deck_does_not_claim_a_commercial_speedup():
+    """Final closure measured stage-level runtimes against matched references, so the old
+    blanket 'no controlled speedup' line became false; what stays unclaimed is the
+    end-to-end commercial flow, and the deck must say exactly that."""
     html = (DECK / "index.html").read_text()
-    assert "NO CONTROLLED COMMERCIAL SPEEDUP IS CLAIMED" in html
+    assert "No end-to-end commercial flow speedup is claimed." in html
+    assert "NO CONTROLLED COMMERCIAL SPEEDUP IS CLAIMED" not in html
 
 
 def test_deck_labels_historical_results_as_historical():
     html = (DECK / "index.html").read_text()
     assert "HISTORICAL / FROZEN R3C" in html
-    assert "HISTORICAL FROZEN R3C RUNTIME" in html
-    # the frozen temperatures may appear ONLY under a historical banner
+    # the frozen temperatures, and the frozen pair's runtimes, may appear ONLY under a
+    # historical banner (the runtime slide now shows the physical lineage)
     i = html.find("118.32")
     assert i > 0 and "HISTORICAL" in html[max(0, i - 1500):i]
+    for frozen_runtime in ("134.6", "204.2"):
+        for m in re.finditer(re.escape(frozen_runtime), html):
+            assert "HISTORICAL" in html[max(0, m.start() - 1500):m.start()], frozen_runtime
 
 
 def test_deck_keeps_the_scenarios_out_of_bracket_language():

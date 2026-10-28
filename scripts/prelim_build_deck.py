@@ -306,6 +306,48 @@ S(f"<h2>How one architecture is evaluated</h2>{PIPE}"
   "thermoelastic deformation does not change the loss, so it is a one-way coupling.")
 
 
+
+# ============ FINAL LINEAGE: electrical validation, results, thermal ==========
+sys.path.insert(0, str(R / "scripts"))
+import prelim_deck_final_sections as FS                              # noqa: E402
+FS.electrical_validation(S)
+
+S("""<h2>BGA current sharing — assumption vs solve</h2>
+<div class="figwrap"><img src="figs/sharing.svg" alt="ball current sharing"></div>
+<div class="callout" style="margin-top:.3em">Even with a perfectly <strong>uniform</strong>
+load the balls do not share equally, so a count sized from I<sub>total</sub>/N understates the
+worst ball. The count is therefore <strong>solved</strong>: every legal even count, the network
+re-solved at each, verified on the resolved grid.</div>""",
+  "The load is uniform across all 49 cells; the non-uniformity is pure network geometry.",
+  "network re-solved at n=301 for the figure · current HEAD")
+
+S("""<h2>The cutout penalty is smaller than where you put the balls</h2>
+<div class="figwrap"><img src="figs/final_cutout.svg" alt="cutout vs placement"></div>
+<p><strong>Controlled experiment</strong> on the production network: same count, sheet,
+contacts, load, rule and grid — only the candidate sites change. The cutout term has been
+corrected three times across the project; placement still dominates it.</p>""",
+  "Earlier versions of this number were artefacts of imposed sharing, a missing return "
+  "conductor and a floating-point lattice bug. Say that no cutout penalty is frozen.",
+  "research/final_closure/package_network.json · controlled")
+
+S("""<h2>Choosing a pad count needs more than voltage drop</h2>
+<div class="figwrap"><img src="figs/pads.svg" alt="pad count"></div>
+<p>The voltage-drop floor of 4 pads implies 5e6 A/cm² — above the <em>accelerated</em> Cu–Cu EM
+test regime. The paper carries the pad term over a terminal-footprint sweep anchored on the DVPD
+source's own VIC count; the interface loss stays below 0.06 W across it.</p>""",
+  "Current density, not voltage drop, bounds the pad count from below.",
+  "research/phase0naj/pad_count_closure.json · CONTEXT_ONLY current densities")
+
+S("""<h2>Model fidelity should follow the quantity, not the budget</h2>
+<div class="figwrap"><img src="figs/ladder.svg" alt="fidelity ladder"></div>
+<p><span class="chip hist">R1 RETIRED</span> after its router bug was fixed and no physical net was
+obstructed. Production policy: R0 for point-to-point traces and via stacks, <strong>R2</strong>
+for the distributed output plane (R0 overstates it 37–258 %).</p>""",
+  "Fidelity chosen per interconnect class, declared before the final numbers were read.",
+  "research/phase0naj/fidelity_ladder.json")
+
+FS.thermal_validation(S)
+
 # ============ 5. MECHANICS FROM ZERO =================================
 S("""<h2 style="border:none">&nbsp;</h2>
 <div style="text-align:center;margin-top:1.2em">
@@ -473,7 +515,9 @@ silently from a solver default.</div>""",
   "Short slide, but it pre-empts the classic reviewer question 'what was your reference "
   "temperature'. Having an answer ready signals rigour.")
 
-# ============ 6. PHYSICAL HARDENING ==================================
+
+FS.mechanics_validation(S)
+# ---- hardening (history) ----
 S("""<h2 style="border:none">&nbsp;</h2>
 <div style="text-align:center;margin-top:1.0em">
 <div class="big" style="color:var(--z2)">From a plausible model<br>to a defensible one</div>
@@ -530,227 +574,17 @@ the surviving 21 %.</p></div>""",
   "permanent closure assertion.")
 
 
-# ============ 7. RESULTS =============================================
-S("""<h2>BGA current sharing — assumption vs solve</h2>
-<div class="figwrap"><img src="figs/sharing.svg" alt="ball current sharing"></div>
-<div class="callout" style="margin-top:.3em">Even with a perfectly <strong>uniform</strong>
-load, the balls do not share equally. Sizing a ball count from
-I<sub>total</sub>/N therefore understates the worst ball.</div>""",
-  "The load here is uniform across all 49 cells, so every bit of the non-uniformity comes "
-  "from the network geometry. This is the slide that invalidates the old sizing rule.",
-  "research/phase0nai/voltage_fed_network.json · re-solved at n=301 · current HEAD")
 
-_bl = BGA.get("closure", {})
-def _c(k, f, d="--"):
-    v = _bl.get(k, {})
-    return v.get(f, d) if v.get(f) is not None else d
-_exh = bool(BGX)
-def _num(k, f):
-    v = _bl.get(k, {}).get(f)
-    return "--" if v is None else f"{v:.3f}"
-
-
-def _stat(k):
-    st = _bl.get(k, {}).get("status", "--")
-    if st == "CLOSED":
-        return "<span class='chip ok'>CLOSED</span>"
-    if st.startswith("NOT_SATISFIABLE"):
-        return "<span class='chip open'>NOT SATISFIABLE at any legal count</span>"
-    return f"<span class='chip warn'>{st.replace('_', ' ')}</span>"
-
-
-_rows_bga = "".join(
-    f"<tr><td>{k.replace('__',' / ').replace('HV_S','HV-S')}</td>"
-    f"<td class='num'>{_c(k,'n_min_verified' if _exh else 'required_n_per_rail')}</td>"
-    f"<td class='num'>{_num(k,'peak_at_n_min_A' if _exh else 'peak_at_adopted_16')}</td>"
-    f"<td class='num'>{_num(k,'peak_at_lower_A') if _exh else ''}</td>"
-    f"<td>{_stat(k)}</td></tr>"
-    for k in sorted(_bl) if "DC_AVERAGE" not in k)
-S(f"""<h2>How many BGA balls does each architecture actually need?</h2>
-<div class="figwrap"><img src="figs/bga_count.svg" alt="bga count"></div>
-<p style="margin-top:.2em"><span class="chip warn">ENGINEERING CRITERION</span>
-1.5 A/ball has <strong>no source</strong>. It appears repo-wide as a provisioning rule,
-never as an EM-safe limit, and the solder-EM literature is explicit that an allowable
-depends on alloy, temperature, waveform, joint geometry, grain structure and crowding.</p>""",
-  "Three things to point at: the curves are not 1/N because changing N changes which "
-  "sites are selected; the 1.5 A line is ours, not a datasheet; and the higher-RMS "
-  "scenarios do not come down to the line at any legal count for Z2.",
-  "research/phase0nak · exhaustive even counts, screened at n=201, verified at n=601")
-
-S(f"""<h2>BGA count — the closure</h2>
-<table><tr><th>architecture / scenario</th><th>balls per rail</th>
-<th>peak at N (A)</th><th>peak at N&minus;2 (A)</th><th>status</th></tr>
-{_rows_bga}</table>
-<p class="sub" style="margin:.2em 0">A count is CLOSED only if it passes at the
-resolved n=601 grid <em>and</em> the next lower legal count fails there.</p>
-<div class="banner open">The adopted design used <strong>16+16</strong>. At 16 the solved
-peak exceeds 1.5 A for both architectures even at the DC average — so the adopted count
-fails the very criterion it was derived from.</div>
-<p class="sub">Scenarios are reported separately and never merged. HV-S0/S1/S2 are
-<strong>named scenarios</strong>, not a lower/nominal/upper bracket: from an average
-current alone there is no finite RMS upper bound at all.</p>""",
-  "If asked why not simply pick the largest count: more balls is not free — it consumes "
-  "lattice sites, routing area and board real estate, and for Z2 the cutout limits what "
-  "is geometrically available.",
-  "research/phase0nak/bga_exhaustive_closure.json · current HEAD")
-
-S("""<h2>The cutout penalty is smaller than where you put the balls</h2>
-<div class="figwrap"><img src="figs/cutout.svg" alt="cutout vs placement"></div>
-<p><strong>Controlled experiment:</strong> same sheet, same contacts, same loading, same
-count, same placement rule, same grid — the <em>only</em> change is which candidate
-sites exist.</p>""",
-  "This number has now been corrected twice, both times downward in significance: -0.351 "
-  "(imposed current, supply only), then +1.6054 (voltage-fed but on the broken lattice), "
-  "now the value shown. Say plainly that no cutout penalty is frozen as final.",
-  "research/phase0nai/voltage_fed_network.json · controlled experiment · current HEAD")
-
-S("""<h2>Choosing a pad count needs more than voltage drop</h2>
-<div class="figwrap"><img src="figs/pads.svg" alt="pad count"></div>
-<p>The old automatic selector was <code>min(n_geom, max(n_drop, n_geom))</code> — which
-is identically <code>n_geom</code>. It always chose maximum density and called it closed.
-It was withdrawn; no single count replaces it.</p>""",
-  "The key insight is that the voltage-drop floor of 4 pads is not a design point at all: "
-  "it implies 5e6 A/cm2, five times the ACCELERATED Cu-Cu electromigration test regime. "
-  "Current density, not voltage drop, bounds the count from below.",
-  "research/phase0naj/pad_count_closure.json · current density cases CONTEXT_ONLY")
-
-S("""<h2>Model fidelity should follow the quantity, not the budget</h2>
-<div class="figwrap"><img src="figs/ladder.svg" alt="fidelity ladder"></div>
-<div class="cols" style="margin-top:.2em">
-<div><p><strong>R0</strong> width-rule Manhattan · <strong>R1</strong> obstacle-aware ·
-<strong>R2</strong> 2-D sheet · <strong>R3</strong> 3-D crowding</p></div>
-<div><p><span class="chip hist">R1 RETIRED</span> its router had a real bug — blockage
-used component extents, the detour size used centres, so it could detect a blockage and
-charge nothing. Fixed; it now detours on a synthetic obstacle. With it working,
-<strong>no physical net is obstructed</strong>, so R1 is retired rather than given a
-manufactured difference.</p></div></div>""",
-  "The honest outcome here is a retirement, not a new result. Emphasise that the router "
-  "was fixed FIRST and proven capable, because otherwise 'R1 equals R0' would be "
-  "indistinguishable from 'R1 is broken'.",
-  "research/phase0naj/fidelity_ladder.json · current HEAD")
-
-# ============ 8. VALIDATION / SPEED ==================================
-S("""<h2>"Validated" is not one thing</h2>
-<table><tr><th>Evidence class</th><th>What it actually establishes</th></tr>
-<tr><td><span class="chip lit">SOURCE_REPRODUCTION</span></td>
-<td>we recomputed a paper's own &rho;, L, A and got its own table back — internal
-consistency of that table, nothing more</td></tr>
-<tr><td><span class="chip ok">CLOSED_FORM_VERIFICATION</span></td>
-<td>agrees with an exact expression</td></tr>
-<tr><td><span class="chip ok">CONSERVATION_VERIFICATION</span></td>
-<td>an identity closes — energy or charge balances</td></tr>
-<tr><td><span class="chip ok">INDEPENDENT_NUMERICAL_VALIDATION</span></td>
-<td>checked against a <em>separate solver</em> (MOOSE, numerical RVE)</td></tr>
-<tr><td><span class="chip warn">MESH_CONVERGENCE</span></td>
-<td>the discretisation stopped moving. <strong>Says nothing about reality.</strong></td></tr>
-<tr><td><span class="chip warn">ITERATION_CONVERGENCE</span></td>
-<td>the fixed point settled</td></tr>
-<tr><td><span class="chip open">UNVALIDATED</span></td>
-<td>no external reference exists for this stage</td></tr></table>
-<div class="banner open">An earlier version of this project counted 6 of 12 stages as
-"VALIDATION". Split properly, only <strong>4</strong> carry independent-solver evidence —
-reproducing a paper's own arithmetic was being counted as validating it.</div>""",
-  "This is the slide that will earn credit. Convergence is not accuracy. Source "
-  "reproduction is not validation. If a committee member conflates them, point here.",
-  "research/phase0nah/model_hierarchy.csv · evidence classes · current HEAD")
-
-S("""<h2>Where the computational effort goes</h2>
-<div class="banner">HISTORICAL FROZEN R3C RUNTIME — not the corrected physical model</div>
-<div class="figwrap"><img src="figs/runtime.svg" alt="runtime"></div>
-<p class="sub">The electrothermal evaluation figure covers the E–T fixed point plus one
-global thermoelastic solve. The local solder submodel is a <strong>further</strong>
-45.0 s / 35.1 s on 128 cores, not inside it — an earlier version of this accounting
-folded a third stage into a figure that excludes it.</p>""",
-  "Be explicit that these timings belong to the frozen geometry and the corrected pair "
-  "has not been re-benchmarked. Do not let anyone quote these as current.",
-  "research/phase0nah/runtime_breakdown.csv · HISTORICAL_FROZEN_R3C_RUNTIME")
-
-S("""<h2>Is it faster than a commercial tool?</h2>
-<div class="banner open">NO CONTROLLED COMMERCIAL SPEEDUP IS CLAIMED</div>
-<p>No matched commercial benchmark has been run: the same geometry, same materials, same
-heat map, same boundary conditions, same observable and same convergence target, on the
-same hardware. Without that, a ratio would be a comparison of two different problems.</p>
-<div class="cols"><div class="callout" style="border-color:var(--ok)">
-<strong>What <em>is</em> established</strong>
-<ul style="font-size:.86em"><li>TSV end/spreading resistance vs MOOSE — 0.25–0.73 %</li>
-<li>package RDL vs MOOSE (historical geometry) — power 0.45–1.10 %, IR 0.90–2.19 %</li>
-<li>homogenised conductivity vs numerical RVE — ~1 %, bump k<sub>xy</sub> ~1.5 %</li>
-<li>compact cooling vs explicit-fin MOOSE — 3.78 % in-domain</li></ul></div>
-<div class="callout" style="border-color:var(--open)"><strong>What is not</strong>
-<ul style="font-size:.86em"><li>no package-level thermal FEM validation against an
-independent solver</li>
-<li>no commercial tool comparison of any stage</li>
-<li>no single "framework accuracy" figure — the stages have different references and
-different error definitions, so one number would be meaningless</li></ul></div></div>""",
-  "Expect to be pushed here. The defensible position: literature speedups from other "
-  "frameworks are context only and are never transferred, and absent a matched run we "
-  "report absolute runtime instead of a ratio. Say you would run the matched comparison "
-  "given solver access.",
-  "research/phase0nah/commercial_benchmark_status.md · current HEAD")
-
-# ============ 9. HISTORICAL + STATUS =================================
-S("""<h2>The historical frozen result</h2>
-<div class="banner">HISTORICAL / FROZEN R3C — NOT A CURRENT PHYSICAL RESULT</div>
-<div class="cols"><div><table>
-<tr><th></th><th>Z1 embedded</th><th>Z2 backside</th></tr>
-<tr><td>peak temperature</td><td class="num">118.32 °C</td>
-<td class="num"><strong>126.46 °C</strong></td></tr>
-<tr><td>joint displacement &Delta;u<sub>c</sub></td><td class="num">4.625 µm</td>
-<td class="num"><strong>3.871 µm</strong></td></tr>
-<tr><td>inelastic strain range</td><td class="num">1.407e-2</td>
-<td class="num"><strong>1.148e-2</strong></td></tr></table></div>
-<div class="callout"><strong>The interesting part</strong><br>
-Z2 ran <em>hotter</em> and yet showed the <em>smaller</em> local mechanical response.
-<p class="sub" style="margin-top:.4em">Peak temperature alone cannot rank local
-mechanical response — the stack stiffness and where the regulator sits matter as much as
-how hot it gets. That conceptual lesson stands as a demonstrated counterexample within
-the historical model, even though the numbers themselves are superseded.</p></div></div>""",
-  "Be careful and precise: the counterexample is valid INSIDE the historical model. The "
-  "corrected physical pair has not been re-run, so do not assert the ordering survives. "
-  "That honesty is the point.",
-  "results/phase0mr3c · HISTORICAL FROZEN R3C")
-
-S(f"""<h2>Where the project stands</h2>
-<div class="figwrap"><img src="figs/gates.svg" alt="gate state"></div>
-<div class="cols"><div><p><strong>Blocking the final physical comparison:</strong></p>
-<ul><li>Z1 package network still fails the 1 % convergence test</li>
-<li>the 48 V RMS waveform is not derivable from the converter model</li>
-<li>intra-VR losses not yet migrated onto current geometry</li></ul></div>
-<div><p><strong>Closed in this work:</strong></p>
-<ul><li>voltage-fed sharing, return conductor, finite contacts</li>
-<li>BGA count as a solved design variable</li>
-<li>lattice closure, R1 retirement, R2 comparison</li></ul></div></div>""",
-  "Frame this as a map, not a confession. The gates exist so that nothing can be quietly "
-  "declared done. Point out that zero gates are VALIDATED and that this is deliberate "
-  "honesty, not an absence of work.",
-  "research/phase0nw/physical_gates.json · generated at build time")
-
-S("""<h2>The path to a final architecture comparison</h2>
-<div class="cols"><div>
-<p><span class="chip ok">1</span> adopted-count package network<br>
-<span class="chip ok">2</span> Z1 convergence root cause<br>
-<span class="chip ok">3</span> pad / landing-geometry closure<br>
-<span class="chip warn">4</span> intra-VR R2/R3 migration<br>
-<span class="chip warn">5</span> electrical loss fixed point<br>
-<span class="chip warn">6</span> energy conservation audit</p></div>
-<div><p><span class="chip warn">7</span> TSV density &harr; FE material consistency<br>
-<span class="chip open">8</span> PCB H0/H1 comparison<br>
-<span class="chip open">9</span> tier-aware heat map<br>
-<span class="chip open">10</span> physical E–T fixed point<br>
-<span class="chip open">11</span> global mechanics + all-site joint search<br>
-<span class="chip open">12</span> local solder rerun &rarr; final comparison</p></div></div>
-<div class="callout" style="margin-top:.5em">The electrical foundation has to be coherent
-<em>before</em> the thermal run, or the temperatures would simply inherit whatever the
-ledger got wrong.</div>""",
-  "End the technical portion here. The message: the remaining work is sequenced, not "
-  "open-ended, and the sequencing is a deliberate methodological choice.")
+FS.hardening(S)
+FS.final_results(S)
+FS.closing(S)
 
 S("""<div style="text-align:center;margin-top:1.4em">
 <div class="big">Thank you</div>
 <p style="margin-top:1em;max-width:72%;margin-left:auto;margin-right:auto">
 <strong>Contribution:</strong> a hierarchical electrothermal–mechanical framework for
-distributed vertical power delivery, and a demonstration that physical closure
-changes architectural conclusions — several of which this work withdrew.</p>
+distributed vertical power delivery, checked stage by stage against matched reference
+solvers, and a demonstration that physical closure reverses an architecture conclusion.</p>
 <p class="sub" style="margin-top:1.2em">Questions</p></div>""", "")
 
 # ============ APPENDIX ===============================================
@@ -769,17 +603,6 @@ R<sub>ball</sub>.</p>
 I<sub>total</sub> to ~1e-10 A, and &Sigma;g&Delta;V² = V&middot;I to ~1e-10 relative,
 with R<sub>eff</sub> = P / I².</p>""", "")
 
-S("""<h2>Appendix — convergence criterion</h2>
-<p>Declared <strong>before</strong> any value was inspected: 1 % between the two finest
-grids on <em>all five</em> of</p>
-<p><code>r_eff_ohm · p_loss_w · max_cell_drop_v · i_ball_max_a · ball_imax_over_imean</code></p>
-<p>R<sub>eff</sub> is an integral of the field and settles first; local quantities settle
-last. At HEAD, Z1 return drifts 0.849 % on R<sub>eff</sub> — which would
-<strong>pass</strong> — but 1.069 % on maximum cell drop, which <strong>fails</strong>.
-Checking R<sub>eff</sub> alone would have declared that network converged.</p>
-<p>A 400 µm ball needs h &le; 50 µm, so the resolved grid is n = 601 over the 30 mm
-substrate. The earlier study stopped at h = 0.3 mm, where the ball was sub-grid.</p>""", "")
-
 S("""<h2>Appendix — why the 48 V RMS cannot be closed</h2>
 <p>The pinned generator builds every electrical quantity from one scalar,
 <code>I_out_rms = sqrt(I_out² + &Delta;i²/12)</code>, the triangular-ripple identity on
@@ -793,6 +616,9 @@ charge-transfer schedule, or a netlist of the adopted topology.</p>
 <p class="sub">Hybrid/SC RMS papers derive input RMS correctly for <em>their</em>
 topologies — methodology context only. Importing their ratio would be transferring a
 different converter's waveform.</p>""", "")
+
+
+FS.appendix(S)
 
 # ============ assemble ===============================================
 HTML = """<!doctype html>
@@ -848,6 +674,18 @@ PRINT = ("<!doctype html><html lang='en'><head><meta charset='utf-8'>"
          + "\n".join(_pages) + "</body></html>")
 (D / "print.html").write_text(PRINT)
 print("print page written:", len(_pages), "pages")
+# --- speaker notes, derived from each slide's own <aside class='notes'> -----
+import html as _html
+_notes = ["# HVR_OPT prelim — speaker notes", "",
+          "Generated by `scripts/prelim_build_deck.py`. Do not edit by hand.", ""]
+for _i, _sec in enumerate(SLIDES, 1):
+    _t = _re.search(r"<h[12][^>]*>(.*?)</h[12]>", _sec, _re.S)
+    _title = _re.sub(r"<[^>]+>", "", _re.sub(r"<br\s*/?>", " ", _t.group(1))) if _t else ""
+    _title = _html.unescape(_title).replace("\xa0", " ").strip() or "(untitled)"
+    _n = _re.search(r"<aside class='notes'>(.*?)</aside>", _sec, _re.S)
+    _txt = _html.unescape(_re.sub(r"<[^>]+>", "", _n.group(1))).strip() if _n else ""
+    _notes += [f"## Slide {_i} — {_title}", _txt or "_(no notes)_", ""]
+(D / "SPEAKER_NOTES.md").write_text("\n".join(_notes))
 for f in ("_slides_part1.html",):
     (D / f).unlink(missing_ok=True)
 print("deck written:", len(SLIDES), "slides ->", D / "index.html")
