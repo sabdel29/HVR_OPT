@@ -4,34 +4,51 @@
    "per_scenario": {
     "HV_S0": "Z2 lower",
     "HV_S1": "Z2 lower",
-    "HV_S2": "Z2 lower"
+    "HV_S2": "not rankable"
    },
    "relative_gap": {
     "HV_S0": 0.025948466866437012,
-    "HV_S1": 0.10948754500052348,
-    "HV_S2": 0.30693625573305955
+    "HV_S1": 0.10948754500052348
+   },
+   "uncertainty_rel": {
+    "HV_S0": 0.0021502458989490943,
+    "HV_S1": 0.0021502458989490943
    },
    "mesh_change": 0.0021502458989490943,
+   "reasons": {
+    "HV_S2": "the Z1 operating point is physically inadmissible for the solid-solder model"
+   },
    "favoured": [
     "Z2"
    ],
-   "robust_across_scenarios": true,
+   "robust_across_scenarios": false,
    "favoured_where_resolved": "Z2",
    "unresolved": [],
-   "hv_s0_within_mesh_uncertainty": false
+   "not_rankable": [
+    "HV_S2"
+   ],
+   "hv_s0_within_mesh_uncertainty": false,
+   "statement": "Z2 has lower loss in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model."
   },
   "T_max_C": {
    "per_scenario": {
     "HV_S0": "unresolved",
     "HV_S1": "Z2 lower",
-    "HV_S2": "Z2 lower"
+    "HV_S2": "not rankable"
    },
    "relative_gap": {
     "HV_S0": 0.008109953199154377,
-    "HV_S1": 0.15789473684210528,
-    "HV_S2": 0.4341991733296081
+    "HV_S1": 0.15789473684210528
+   },
+   "uncertainty_rel": {
+    "HV_S0": 0.006366563690155205,
+    "HV_S1": 0.006366563690155205
    },
    "mesh_change": 0.006366563690155205,
+   "reasons": {
+    "HV_S0": "the difference lies within the measured discretisation uncertainty",
+    "HV_S2": "the Z1 operating point is physically inadmissible for the solid-solder model"
+   },
    "favoured": [
     "Z2"
    ],
@@ -40,67 +57,132 @@
    "unresolved": [
     "HV_S0"
    ],
-   "hv_s0_within_mesh_uncertainty": true
+   "not_rankable": [
+    "HV_S2"
+   ],
+   "hv_s0_within_mesh_uncertainty": true,
+   "statement": "Z2 has lower peak temperature in HV-S1, where the gap exceeds twice the measured discretisation uncertainty. The approximately 1 C difference lies within the measured discretization uncertainty; therefore no thermal architecture ranking is drawn for HV-S0. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model."
   },
   "die_warpage_pv_um": {
    "per_scenario": {
     "HV_S0": "Z1 lower",
     "HV_S1": "Z1 lower",
-    "HV_S2": "Z1 lower"
+    "HV_S2": "not rankable"
    },
    "relative_gap": {
     "HV_S0": 0.6009757407185551,
-    "HV_S1": 0.5221935138987883,
-    "HV_S2": 0.2691435275713727
+    "HV_S1": 0.5221935138987883
+   },
+   "uncertainty_rel": {
+    "HV_S0": 0.012985399369759976,
+    "HV_S1": 0.012985399369759976
    },
    "mesh_change": 0.012985399369759976,
-   "favoured": [
-    "Z1"
-   ],
-   "robust_across_scenarios": true,
-   "favoured_where_resolved": "Z1",
-   "unresolved": [],
-   "hv_s0_within_mesh_uncertainty": false
-  },
-  "du_c_um": {
-   "per_scenario": {
-    "HV_S0": "Z1 lower",
-    "HV_S1": "Z1 lower",
-    "HV_S2": "Z1 lower"
+   "reasons": {
+    "HV_S2": "the Z1 operating point is physically inadmissible for the solid-solder model"
    },
-   "relative_gap": {
-    "HV_S0": 0.3991692252973527,
-    "HV_S1": 0.31615420912289066,
-    "HV_S2": 0.049680342900438754
-   },
-   "mesh_change": 0.006742204171743447,
-   "favoured": [
-    "Z1"
-   ],
-   "robust_across_scenarios": true,
-   "favoured_where_resolved": "Z1",
-   "unresolved": [],
-   "hv_s0_within_mesh_uncertainty": false
-  },
-  "d_eps_in_per_cycle": {
-   "per_scenario": {
-    "HV_S0": "Z1 lower",
-    "HV_S1": "Z1 lower",
-    "HV_S2": "n/a"
-   },
-   "relative_gap": {
-    "HV_S0": 0.42016884979844665,
-    "HV_S1": 0.28267347741530346
-   },
-   "mesh_change": null,
    "favoured": [
     "Z1"
    ],
    "robust_across_scenarios": false,
    "favoured_where_resolved": "Z1",
    "unresolved": [],
-   "hv_s0_within_mesh_uncertainty": false
+   "not_rankable": [
+    "HV_S2"
+   ],
+   "hv_s0_within_mesh_uncertainty": false,
+   "statement": "Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model."
+  },
+  "du_c_um": {
+   "per_scenario": {
+    "HV_S0": "Z1 lower",
+    "HV_S1": "Z1 lower",
+    "HV_S2": "not rankable"
+   },
+   "relative_gap": {
+    "HV_S0": 0.3991692252973527,
+    "HV_S1": 0.31615420912289066
+   },
+   "uncertainty_rel": {
+    "HV_S0": 0.006742204171743447,
+    "HV_S1": 0.006742204171743447
+   },
+   "mesh_change": 0.006742204171743447,
+   "reasons": {
+    "HV_S2": "the Z1 operating point is physically inadmissible for the solid-solder model"
+   },
+   "favoured": [
+    "Z1"
+   ],
+   "robust_across_scenarios": false,
+   "favoured_where_resolved": "Z1",
+   "unresolved": [],
+   "not_rankable": [
+    "HV_S2"
+   ],
+   "hv_s0_within_mesh_uncertainty": false,
+   "statement": "Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model."
+  },
+  "d_eps_in_per_cycle": {
+   "per_scenario": {
+    "HV_S0": "Z1 lower",
+    "HV_S1": "unresolved",
+    "HV_S2": "not rankable"
+   },
+   "relative_gap": {
+    "HV_S0": 0.3778262014890441,
+    "HV_S1": 0.23199369805584108
+   },
+   "uncertainty_rel": {
+    "HV_S0": 0.18234288969593335,
+    "HV_S1": 0.15625042164797176
+   },
+   "mesh_change": null,
+   "reasons": {
+    "HV_S1": "the difference lies within the measured discretisation uncertainty",
+    "HV_S2": "the Z1 operating point is physically inadmissible for the solid-solder model"
+   },
+   "favoured": [
+    "Z1"
+   ],
+   "robust_across_scenarios": false,
+   "favoured_where_resolved": "Z1",
+   "unresolved": [
+    "HV_S1"
+   ],
+   "not_rankable": [
+    "HV_S2"
+   ],
+   "hv_s0_within_mesh_uncertainty": false,
+   "statement": "Z1 has lower local inelastic response in HV-S0, where the gap exceeds twice the measured discretisation uncertainty. In HV-S1 the difference lies within the measured discretisation uncertainty (and the Z1 response is extrapolated), so no ranking is drawn. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model."
   }
  },
- "rule": "a scenario's ordering is claimed only where the Z1/Z2 gap exceeds twice the largest measured mesh change (or declared bound) of that observable"
+ "scenario_classes": {
+  "HV_S0": {
+   "class": "headline",
+   "statement": "HV-S0 is the headline comparison: both architectures solve, both critical joints lie inside the constitutive calibration and the solder stays solid.",
+   "extrapolated": [],
+   "inadmissible": []
+  },
+  "HV_S1": {
+   "class": "sensitivity",
+   "statement": "HV-S1 is a sensitivity case: the Z1 joint lies beyond the Norton card's temperature calibration, so its local response is EXTRAPOLATED.",
+   "extrapolated": [
+    "Z1"
+   ],
+   "inadmissible": []
+  },
+  "HV_S2": {
+   "class": "stress / inadmissible",
+   "statement": "Under HV-S2, Z1 exits the valid solid-solder operating domain under the assumed cooling.",
+   "extrapolated": [
+    "Z1",
+    "Z2"
+   ],
+   "inadmissible": [
+    "Z1"
+   ]
+  }
+ },
+ "rule": "an ordering is claimed in a scenario only where the Z1/Z2 gap exceeds twice the measured discretisation uncertainty of that observable; a scenario in which either critical joint is at or above the solder melting onset is not rankable for any observable (every model carries solid-solder properties); 'unresolved' and 'not rankable' scenarios count for neither architecture"
 }

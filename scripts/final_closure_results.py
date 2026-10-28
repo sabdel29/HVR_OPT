@@ -56,6 +56,7 @@ def main():
             crit = mm["joint_search"]["critical"]
             lc = (loc or {}).get("cases", {}).get(arch, {})
             resp = lc.get("response") or {}
+            lm = local_production(arch, scen, resp)
             final.append({
                 "arch": arch, "scenario": scen,
                 "P_loss_w": r["P_loss_w"], "I_48_avg_a": r["i_hv_avg_a"],
@@ -65,11 +66,14 @@ def main():
                 "pkg_warpage_pv_um": mm.get("pkg_warpage_pv_um"),
                 "critical_joint_xy_mm": [crit["x_mm"], crit["y_mm"]],
                 "du_c_um": crit["du_um"], "T_joint_C": crit["T_C"],
-                "d_eps_in_per_cycle": resp.get("d_peeq_per_cycle"),
+                "d_eps_in_per_cycle": lm["value"],
+                "d_eps_in_L0": resp.get("d_peeq_per_cycle"),
+                "local_mesh_level": lm["level"], "local_mesh_status": lm["status"],
+                "local_mesh_U_rel": lm["U"],
                 "inelastic_strain_range": resp.get("range_eq_inelastic"),
                 "inelastic_work_MJ_m3": resp.get("inelastic_work_MJ_per_m3"),
                 "local_stab_change_pct": resp.get("stab_change_pct"),
-                "local_mesh_change_pct": lc.get("mesh_change_pct"),
+                "local_mesh_change_pct_L0_L1": lc.get("mesh_change_pct"),
                 "T_joint_outside_norton_calibration": crit["T_C"] > NORTON_T_MAX_C,
                 "T_joint_at_or_above_solder_solidus": crit["T_C"] >= SAC305_SOLIDUS_C,
                 "et_iterations": len(r["et_history"]), "et_converged": r["et_converged"],
@@ -303,52 +307,165 @@ def mesh_convergence():
             "structural_solver_checks": checks, "cases": cases}
 
 
-def ordering(final, mc):
-    """Per-scenario Z1/Z2 ordering of each observable. A scenario's ordering is
-    'unresolved' where the Z1/Z2 gap does not exceed twice the measured discretisation
-    change (or declared bound) of that observable on the production mesh."""
+def local_production(arch, scen, resp_L0):
+    """Local response on the production local mesh of the DECLARED policy
+    (local_mesh_study.json). A case outside the study keeps its single L0 value, labelled."""
+    st = (J("local_mesh_study.json") or {}).get("cases", {}).get(f"{arch}_{scen}")
+    if st and st.get("production_value"):
+        return {"value": st["production_value"], "level": st["production_level"],
+                "status": st["status"], "U": st["U"]}
+    v = resp_L0.get("d_peeq_per_cycle")
+    return {"value": v, "level": "L0" if v else None,
+            "status": ("single mesh (L0): finer levels not available" if v else "no response"),
+            "U": None}
+
+
+OBS = (("P_loss_w", "loss"), ("T_max_C", "peak temperature"),
+       ("die_warpage_pv_um", "die warpage"), ("du_c_um", "joint displacement driver"),
+       ("d_eps_in_per_cycle", "local inelastic response"))
+SCEN_LABEL = {"HV_S0": "HV-S0", "HV_S1": "HV-S1", "HV_S2": "HV-S2"}
+
+
+def scenario_classes(final):
+    """Evidentiary weight of each scenario, derived from the joint states."""
     out = {}
-    for key in ("P_loss_w", "T_max_C", "die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle"):
+    for s in SCEN:
+        rows = [x for x in final if x["scenario"] == s]
+        melt = [x["arch"] for x in rows if x.get("T_joint_at_or_above_solder_solidus")]
+        ext = [x["arch"] for x in rows if x.get("T_joint_outside_norton_calibration")]
+        if melt:
+            out[s] = {"class": "stress / inadmissible",
+                      "statement": f"Under {SCEN_LABEL[s]}, {', '.join(melt)} exits the valid "
+                                   "solid-solder operating domain under the assumed cooling."}
+        elif ext:
+            out[s] = {"class": "sensitivity",
+                      "statement": f"{SCEN_LABEL[s]} is a sensitivity case: the "
+                                   f"{', '.join(ext)} joint lies beyond the Norton card's "
+                                   "temperature calibration, so its local response is "
+                                   "EXTRAPOLATED."}
+        else:
+            out[s] = {"class": "headline",
+                      "statement": f"{SCEN_LABEL[s]} is the headline comparison: both "
+                                   "architectures solve, both critical joints lie inside the "
+                                   "constitutive calibration and the solder stays solid."}
+        out[s]["extrapolated"] = ext
+        out[s]["inadmissible"] = melt
+    return out
+
+
+def ordering(final, mc):
+    """THE single source of every Z1/Z2 ordering claim. Per observable and scenario the
+    verdict is 'Z1 lower', 'Z2 lower', 'unresolved' (gap within twice the measured
+    discretisation uncertainty) or 'not rankable' (one architecture has no valid value).
+    'not rankable' and 'unresolved' never count for either architecture.
+
+    A scenario in which either critical joint is at or above the solder melting onset is
+    not rankable for EVERY observable, not only the local one: the electrical, thermal and
+    structural models all carry solid-solder properties, so that operating point is an
+    infeasibility result (brief Part 5), never a normal operating comparison."""
+    rows = {(x["arch"], x["scenario"]): x for x in final}
+    sc = scenario_classes(final)
+    ls = (J("local_mesh_study.json") or {}).get("cases", {})
+    out = {}
+    for key, name in OBS:
         mesh = None
         if key in MESH_KEYS and mc.get("cases"):
             mesh = max([(c["checks"][t].get(key) or 0.0) for c in mc["cases"].values()
                         for t in c["checks"]]
                        + [c.get("uncertainty_bound_rel", {}).get(key, 0.0)
                           for c in mc["cases"].values()])
-        per, gaps = {}, {}
+        per, gaps, unc, why = {}, {}, {}, {}
         for s in SCEN:
-            try:
-                b, va, vb = _order(final, key, s)
-            except StopIteration:
+            a, b = rows.get(("Z1", s)), rows.get(("Z2", s))
+            if not (a and b):
                 continue
-            if b == "n/a":
-                per[s] = "n/a"
+            va, vb = a[key], b[key]
+            melt = [x["arch"] for x in (a, b) if x.get("T_joint_at_or_above_solder_solidus")]
+            if melt or va is None or vb is None:
+                per[s] = "not rankable"
+                why[s] = (f"the {', '.join(melt)} operating point is physically inadmissible "
+                          "for the solid-solder model" if melt else
+                          "no converged response for one architecture")
                 continue
+            if key == "d_eps_in_per_cycle":
+                us = [ls.get(f"{x}_{s}", {}).get("U") for x in ("Z1", "Z2")]
+                u = max(us) if all(x is not None for x in us) else None
+            else:
+                u = mesh
             gap = abs(va - vb) / max(abs(va), abs(vb))
-            gaps[s] = gap
-            per[s] = ("unresolved" if (mesh is not None and gap <= 2 * mesh)
-                      else f"{b} lower")
-        resolved = [v for v in per.values() if v.endswith("lower")]
-        fav = sorted({v.split()[0] for v in resolved})
-        out[key] = {"per_scenario": per, "relative_gap": gaps, "mesh_change": mesh,
-                    "favoured": fav,
-                    "robust_across_scenarios": len(fav) == 1 and len(resolved) == len(per),
-                    "favoured_where_resolved": fav[0] if len(fav) == 1 else None,
-                    "unresolved": [s for s, v in per.items() if v == "unresolved"],
-                    "hv_s0_within_mesh_uncertainty": per.get("HV_S0") == "unresolved"}
-    return {"orderings": out,
-            "rule": "a scenario's ordering is claimed only where the Z1/Z2 gap exceeds twice "
-                    "the largest measured mesh change (or declared bound) of that observable"}
+            gaps[s], unc[s] = gap, u
+            fav = "Z1" if va < vb else "Z2"
+            if u is None:
+                per[s], why[s] = "unresolved", "no quantified discretisation uncertainty"
+            elif gap > 2 * u:
+                per[s] = f"{fav} lower"
+            else:
+                per[s] = "unresolved"
+                why[s] = "the difference lies within the measured discretisation uncertainty"
+        resolved = {k: v for k, v in per.items() if v.endswith("lower")}
+        fav = sorted({v.split()[0] for v in resolved.values()})
+        o = {"per_scenario": per, "relative_gap": gaps, "uncertainty_rel": unc,
+             "mesh_change": mesh, "reasons": why, "favoured": fav,
+             "robust_across_scenarios": len(fav) == 1 and len(resolved) == len(per),
+             "favoured_where_resolved": fav[0] if len(fav) == 1 else None,
+             "unresolved": [k for k, v in per.items() if v == "unresolved"],
+             "not_rankable": [k for k, v in per.items() if v == "not rankable"],
+             "hv_s0_within_mesh_uncertainty": per.get("HV_S0") == "unresolved"}
+        o["statement"] = _statement(key, name, o, rows)
+        out[key] = o
+    return {"orderings": out, "scenario_classes": sc,
+            "rule": "an ordering is claimed in a scenario only where the Z1/Z2 gap exceeds "
+                    "twice the measured discretisation uncertainty of that observable; a "
+                    "scenario in which either critical joint is at or above the solder melting "
+                    "onset is not rankable for any observable (every model carries "
+                    "solid-solder properties); 'unresolved' and 'not rankable' scenarios count "
+                    "for neither architecture"}
 
 
-def _order(final, key, scen, lower_is_better=True):
-    a = next(x for x in final if x["arch"] == "Z1" and x["scenario"] == scen)
-    b = next(x for x in final if x["arch"] == "Z2" and x["scenario"] == scen)
-    va, vb = a[key], b[key]
-    if va is None or vb is None:
-        return "n/a", va, vb
-    better = "Z1" if (va < vb) == lower_is_better else "Z2"
-    return better, va, vb
+def _statement(key, name, o, rows):
+    """The one sentence set every text (decision, paper, slides) uses for an ordering.
+
+    The brief's wordings are used where they are TRUE: 'in every scenario for which a valid
+    two-architecture comparison can be made' only when every comparable scenario is
+    resolved; the HV-S0 thermal sentence verbatim when HV-S0 is unresolved. When a
+    comparable scenario is inside the uncertainty, the resolved scenarios are named instead,
+    because the general sentence would then overstate the result."""
+    per, fav = o["per_scenario"], o["favoured_where_resolved"]
+    what = "response comparison" if key == "d_eps_in_per_cycle" else "comparison"
+    resolved = [s for s, v in per.items() if v.endswith("lower")]
+    unres = [s for s, v in per.items() if v == "unresolved"]
+    notr = [s for s, v in per.items() if v == "not rankable"]
+    lab = lambda xs: " and ".join(SCEN_LABEL[x] for x in xs)
+    why_nr = [f"{SCEN_LABEL[s]} is not rankable because {o['reasons'].get(s)}" for s in notr]
+    if o["robust_across_scenarios"]:
+        head = f"{fav} has lower {name} in every named scenario."
+    elif fav and not unres:
+        head = (f"{fav} has lower {name} in every scenario for which a valid two-architecture "
+                f"{what} can be made" + ("; " + "; ".join(why_nr) if why_nr else "") + ".")
+        why_nr = []
+    elif fav:
+        head = (f"{fav} has lower {name} in {lab(resolved)}, where the gap exceeds twice the "
+                "measured discretisation uncertainty.")
+    elif not resolved:
+        head = f"No {name} ranking can be drawn."
+    else:
+        head = f"The {name} ordering changes with the scenario."
+    tail = []
+    for s in unres:
+        if key == "T_max_C":
+            d = abs(rows[("Z1", s)]["T_max_C"] - rows[("Z2", s)]["T_max_C"])
+            tail.append(f"The approximately {d:.0f} C difference lies within the measured "
+                        "discretization uncertainty; therefore no thermal architecture "
+                        f"ranking is drawn for {SCEN_LABEL[s]}.")
+        else:
+            ext = [a for a in ("Z1", "Z2") if key == "d_eps_in_per_cycle"
+                   and rows[(a, s)].get("T_joint_outside_norton_calibration")]
+            tail.append(f"In {SCEN_LABEL[s]} the difference lies within the measured "
+                        "discretisation uncertainty" + (f" (and the {' and '.join(ext)} "
+                        "response is extrapolated)" if ext else "") + ", so no ranking is "
+                        "drawn.")
+    tail += [w + "." for w in why_nr]
+    return " ".join([head] + tail)
 
 
 def write_decision(final, audit_pass):
@@ -375,26 +492,22 @@ def write_decision(final, audit_pass):
                      f"{f['T_max_C']:.2f} | {f['die_warpage_pv_um']:.2f} | {f['du_c_um']:.4f} | "
                      f"{f['T_joint_C']:.1f}{' (extrap.)' if f['T_joint_outside_norton_calibration'] else ''} | "
                      f"{'%.4e' % de if de else 'n/a'} |")
+    od_all = J("ordering.json") or {}
+    od = od_all.get("orderings", {})
+    lines += ["", "## Scenario evidentiary weight", ""]
+    for s_, c in (od_all.get("scenario_classes") or {}).items():
+        lines.append(f"- **{s_}** ({c['class']}): {c['statement']}")
     lines += ["", "## Architecture ordering per scenario", "",
+              "Rendered from `ordering.json`, the single source of every ordering claim.", "",
               "| scenario | loss | T_max | die warpage | joint driver | local response |",
               "|---|---|---|---|---|---|"]
-    robust = {}
-    for s in SCEN:
-        cells = []
-        for key in ("P_loss_w", "T_max_C", "die_warpage_pv_um", "du_c_um",
-                    "d_eps_in_per_cycle"):
-            try:
-                b, va, vb = _order(final, key, s)
-            except StopIteration:
-                b, va, vb = "n/a", None, None
-            robust.setdefault(key, set()).add(b)
-            cells.append(f"{b} lower" if b != "n/a" else "n/a")
-        lines.append(f"| {s} | " + " | ".join(cells) + " |")
+    for s_ in SCEN:
+        cells = [(od.get(k) or {}).get("per_scenario", {}).get(s_, "n/a") for k, _ in OBS]
+        lines.append(f"| {s_} | " + " | ".join(cells) + " |")
     lines += ["", "## Robustness", ""]
-    for key, s in robust.items():
-        lines.append(f"- `{key}`: favoured architecture across scenarios = {sorted(s)} -> "
-                     + ("ORDERING HOLDS IN EVERY SCENARIO" if len(s - {'n/a'}) == 1
-                        else "ORDERING IS SCENARIO-DEPENDENT"))
+    for k, name in OBS:
+        if k in od:
+            lines.append(f"- {name}: {od[k]['statement']}")
     lines += ["", "## Accuracy and runtime (stage by stage)", "",
               "| stage | reference | error | speedup | status |", "|---|---|---|---|---|"]
     for r in acc["rows"]:
@@ -456,15 +569,102 @@ def write_decision(final, audit_pass):
                 f"{s} gap {100 * g:.2f} % -> {o['per_scenario'][s]}"
                 for s, g in o["relative_gap"].items()))
     lines.append("")
-    ready = audit_pass and manuscript_on_lineage and mesh_ok and \
-        all(f["et_converged"] for f in final) and \
-        all(L["converged"] for L in pn.get("loop", {}).values())
+    lm = J("local_mesh_study.json") or {}
+    lines += ["## Local solder discretisation (declared policy)", "",
+              f"Policy: `research/final_closure/local_mesh_policy.json` with amendments "
+              f"{', '.join(str(a) for a in lm.get('amendments_applied', [])) or 'none'}; "
+              f"pass {lm.get('pass', '?')}; first increment {lm.get('initial_increment_s')} s"
+              f"{', load change as its own 3 s step' if lm.get('split_steps') else ''}; "
+              f"extraction: {lm.get('extraction', 'time-keyed')}. Wording: "
+              f"**{local_wording(lm)}**.", ""]
+    for k, c in (lm.get("cases") or {}).items():
+        u = c.get("U")
+        lines.append(f"- {k}: {c.get('status')} ({c.get('rule', c.get('note', ''))}); "
+                     f"production {c.get('production_level')} = "
+                     + (f"{c['production_value']:.4e}" if c.get("production_value") else "n/a")
+                     + (f"; U = {100 * u:.2f} % (mesh {100 * c['U_mesh']:.2f} + time "
+                        f"{100 * c['U_time']:.2f} + cycles {100 * c['U_cyc']:.2f})"
+                        if u is not None else "; U not quantified"))
+    acc = lm.get("acceptance") or {}
+    if acc:
+        lines.append(f"- acceptance ({acc.get('rule')}): **{acc.get('pass')}**")
+    lines.append("")
+    lines += ["## Defects found in this closure", "",
+              "- **DEFECT #65** (local solder post-processing): the validated .dat parser keyed "
+              "output by its 7-significant-digit printed time and averaged blocks sharing a "
+              "key; sub-millisecond increments at a load step biased the LAST cycle (up to "
+              "-17 %). Found by the acceptance test of policy amendment 1; fixed by block-order "
+              "extraction (scripts/final_closure_local_extract.py), which reproduces the "
+              "published control to all ten printed digits and leaves every earlier production "
+              "value unchanged (local_mesh_policy.json amendment 3).",
+              "- **DEFECT #66** (Z2 out-of-cell construction): the production encapsulated model "
+              "fills the PCB opening up to the board sidewall, bonding the backside converter to "
+              "the board although the stack specifies a 1.0 mm clearance. Found when the "
+              "architecture was drawn from the solver mesh. It is now a DECLARED assumption of "
+              "the production construction; its effect is measured by the clearance-open "
+              "(f1_clearance) and void (f2_void) variants in classB_resolution.csv; the "
+              "mechanical orderings are "
+              "stated conditional on it.", ""]
+    cb = J("classB_resolution.json") or {}
+    sm = cb.get("summary") or {}
+    lines += ["## Class-B resolution", "",
+              f"{sm.get('n_gates', 0)} open Class-B gates: subtypes {sm.get('subtypes')}; "
+              f"B1 resolved {sm.get('b1_resolved')} / {sm.get('b1_total')}. Orderings that "
+              f"move under a sensitivity: {', '.join(sm.get('orderings_that_move') or []) or 'none'}. "
+              "Full table: `research/final_closure/classB_resolution.csv`.", ""]
+    for g in cb.get("gates", []):
+        lines.append(f"- `{g['gate']}` ({g['new_subtype']}): {g['final_status']}")
+    lines.append("")
+    ready, why = paper_ready(audit_pass, manuscript_on_lineage, mesh_ok,
+                             all(f["et_converged"] for f in final),
+                             all(L["converged"] for L in pn.get("loop", {}).values()),
+                             cb, lm)
     lines += ["## Decision", "",
               f"**{'PAPER_READY' if ready else 'PAPER_NOT_READY'}** -- "
               + ("the active manuscript must carry this lineage; the decision is re-evaluated "
                  "by the manuscript stale-number guard." if ready else
-                 "a convergence or conservation check failed; see above."), ""]
+                 "not ready: " + "; ".join(why)), ""]
     (D / "FINAL_PAPER_DECISION.md").write_text("\n".join(lines))
+
+
+def local_wording(lm):
+    """The ONLY wording the paper may use for the local response, from the policy."""
+    pol = json.loads((D / "local_mesh_policy.json").read_text())
+    cases = [f"{a}_{s}" for a, s in pol["cases"]]
+    st = [((lm.get("cases") or {}).get(k) or {}).get("status") for k in cases]
+    return pol["wording"]["converged" if st and all(x == "converged" for x in st)
+                          else "bounded_or_unresolved"]
+
+
+def paper_ready(audit_pass, manuscript_on_lineage, mesh_ok, et_ok, loops_ok, classb, lm):
+    """PAPER_READY and, if not, every reason. PAPER_READY requires every B1 gate resolved
+    and the local solder study accepted with a quantified U for every policy case."""
+    why = []
+    if not audit_pass:
+        why.append("conservation audit failed")
+    if not manuscript_on_lineage:
+        why.append("manuscript not on the physical lineage")
+    if not mesh_ok:
+        why.append("global mesh neither converged nor bounded")
+    if not et_ok:
+        why.append("an E-T fixed point did not converge")
+    if not loops_ok:
+        why.append("a package network did not converge")
+    gates = (classb or {}).get("gates") or []
+    b1 = [g for g in gates if g.get("new_subtype") == "B1"]
+    if not gates:
+        why.append("no Class-B resolution record")
+    for g in b1:
+        if not g.get("resolved"):
+            why.append(f"B1 gate {g['gate']} unresolved")
+    pol = json.loads((D / "local_mesh_policy.json").read_text())
+    if not (lm or {}).get("acceptance", {}).get("pass"):
+        why.append("local solder study not accepted")
+    for a, s in pol["cases"]:
+        c = ((lm or {}).get("cases") or {}).get(f"{a}_{s}") or {}
+        if c.get("U") is None or not c.get("production_value"):
+            why.append(f"local response {a} {s} has no quantified uncertainty")
+    return (not why), why
 
 
 if __name__ == "__main__":

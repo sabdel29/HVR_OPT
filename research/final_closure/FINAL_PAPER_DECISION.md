@@ -11,28 +11,36 @@ Matched BGA construction: **54 balls per rail** for both architectures (smallest
 
 | arch | scenario | P_loss (W) | T_max (C) | die warp (um) | du_c (um) | T_joint (C) | d_eps_in / cycle |
 |---|---|---|---|---|---|---|---|
-| Z1 | HV_S0 | 146.472 | 121.58 | 27.64 | 2.3740 | 120.8 | 6.4849e-03 |
-| Z2 | HV_S0 | 142.672 | 120.59 | 69.28 | 3.9512 | 99.0 | 1.1184e-02 |
-| Z1 | HV_S1 | 185.860 | 147.95 | 34.86 | 2.9211 | 147.7 (extrap.) | 9.1352e-03 |
-| Z2 | HV_S1 | 165.510 | 124.59 | 72.96 | 4.2716 | 109.8 | 1.2735e-02 |
+| Z1 | HV_S0 | 146.472 | 121.58 | 27.64 | 2.3740 | 120.8 | 6.2035e-03 |
+| Z2 | HV_S0 | 142.672 | 120.59 | 69.28 | 3.9512 | 99.0 | 9.9706e-03 |
+| Z1 | HV_S1 | 185.860 | 147.95 | 34.86 | 2.9211 | 147.7 (extrap.) | 8.7931e-03 |
+| Z2 | HV_S1 | 165.510 | 124.59 | 72.96 | 4.2716 | 109.8 | 1.1449e-02 |
 | Z1 | HV_S2 | 322.923 | 243.39 | 60.18 | 4.8406 | 242.5 (extrap.) | n/a |
-| Z2 | HV_S2 | 223.806 | 137.71 | 82.34 | 5.0936 | 137.4 (extrap.) | 1.6164e-02 |
+| Z2 | HV_S2 | 223.806 | 137.71 | 82.34 | 5.0936 | 137.4 (extrap.) | 1.4715e-02 |
+
+## Scenario evidentiary weight
+
+- **HV_S0** (headline): HV-S0 is the headline comparison: both architectures solve, both critical joints lie inside the constitutive calibration and the solder stays solid.
+- **HV_S1** (sensitivity): HV-S1 is a sensitivity case: the Z1 joint lies beyond the Norton card's temperature calibration, so its local response is EXTRAPOLATED.
+- **HV_S2** (stress / inadmissible): Under HV-S2, Z1 exits the valid solid-solder operating domain under the assumed cooling.
 
 ## Architecture ordering per scenario
 
+Rendered from `ordering.json`, the single source of every ordering claim.
+
 | scenario | loss | T_max | die warpage | joint driver | local response |
 |---|---|---|---|---|---|
-| HV_S0 | Z2 lower | Z2 lower | Z1 lower | Z1 lower | Z1 lower |
-| HV_S1 | Z2 lower | Z2 lower | Z1 lower | Z1 lower | Z1 lower |
-| HV_S2 | Z2 lower | Z2 lower | Z1 lower | Z1 lower | n/a |
+| HV_S0 | Z2 lower | unresolved | Z1 lower | Z1 lower | Z1 lower |
+| HV_S1 | Z2 lower | Z2 lower | Z1 lower | Z1 lower | unresolved |
+| HV_S2 | not rankable | not rankable | not rankable | not rankable | not rankable |
 
 ## Robustness
 
-- `P_loss_w`: favoured architecture across scenarios = ['Z2'] -> ORDERING HOLDS IN EVERY SCENARIO
-- `T_max_C`: favoured architecture across scenarios = ['Z2'] -> ORDERING HOLDS IN EVERY SCENARIO
-- `die_warpage_pv_um`: favoured architecture across scenarios = ['Z1'] -> ORDERING HOLDS IN EVERY SCENARIO
-- `du_c_um`: favoured architecture across scenarios = ['Z1'] -> ORDERING HOLDS IN EVERY SCENARIO
-- `d_eps_in_per_cycle`: favoured architecture across scenarios = ['Z1', 'n/a'] -> ORDERING HOLDS IN EVERY SCENARIO
+- loss: Z2 has lower loss in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.
+- peak temperature: Z2 has lower peak temperature in HV-S1, where the gap exceeds twice the measured discretisation uncertainty. The approximately 1 C difference lies within the measured discretization uncertainty; therefore no thermal architecture ranking is drawn for HV-S0. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.
+- die warpage: Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.
+- joint displacement driver: Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.
+- local inelastic response: Z1 has lower local inelastic response in HV-S0, where the gap exceeds twice the measured discretisation uncertainty. In HV-S1 the difference lies within the measured discretisation uncertainty (and the Z1 response is extrapolated), so no ranking is drawn. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.
 
 ## Accuracy and runtime (stage by stage)
 
@@ -58,7 +66,7 @@ Matched BGA construction: **54 balls per rail** for both architectures (smallest
 | rdl_plane_historical | MOOSE | power 0.45-1.10 %, IR 0.90-2.19 % |  | HISTORICAL_REFERENCE_NOT_RERUN |
 | cooling_compact | MOOSE explicit fins | 3.78 % in validated domain |  | HISTORICAL_REFERENCE_NOT_RERUN |
 | homogenised_k_historical | numerical RVE | k_z ~1 %, bump k_xy ~1.5 % |  | HISTORICAL_REFERENCE_NOT_RERUN |
-| cooling_icepak | Ansys Icepak (licensed) | None |  | NOT_EXECUTED |
+| cooling_icepak | Ansys Icepak 2026 R1 conjugate CFD, one channel half-pitch (430080 cells, finest of 4 levels) | +16.484 % | 98222435.4x | EXECUTED |
 | converter_waveform | none available | None |  | NOT_EXECUTED |
 | pkg_rdl_convergence |  | +0.045 % |  | EXECUTED |
 
@@ -87,10 +95,52 @@ Production mesh: graded h_xy = 1.1 mm grid, every in-plane interval split in 2. 
 - Z2, in-plane: largest relative change 0.674 % (declared 2 %)
 - Z2, through-thickness: largest relative change 0.036 % (declared 2 %)
 - Z2: PASS
-- `P_loss_w` (mesh change 0.215 %): HV_S0 gap 2.59 % -> Z2 lower, HV_S1 gap 10.95 % -> Z2 lower, HV_S2 gap 30.69 % -> Z2 lower
-- `T_max_C` (mesh change 0.637 %): HV_S0 gap 0.81 % -> unresolved, HV_S1 gap 15.79 % -> Z2 lower, HV_S2 gap 43.42 % -> Z2 lower
-- `die_warpage_pv_um` (mesh change 1.299 %): HV_S0 gap 60.10 % -> Z1 lower, HV_S1 gap 52.22 % -> Z1 lower, HV_S2 gap 26.91 % -> Z1 lower
-- `du_c_um` (mesh change 0.674 %): HV_S0 gap 39.92 % -> Z1 lower, HV_S1 gap 31.62 % -> Z1 lower, HV_S2 gap 4.97 % -> Z1 lower
+- `P_loss_w` (mesh change 0.215 %): HV_S0 gap 2.59 % -> Z2 lower, HV_S1 gap 10.95 % -> Z2 lower
+- `T_max_C` (mesh change 0.637 %): HV_S0 gap 0.81 % -> unresolved, HV_S1 gap 15.79 % -> Z2 lower
+- `die_warpage_pv_um` (mesh change 1.299 %): HV_S0 gap 60.10 % -> Z1 lower, HV_S1 gap 52.22 % -> Z1 lower
+- `du_c_um` (mesh change 0.674 %): HV_S0 gap 39.92 % -> Z1 lower, HV_S1 gap 31.62 % -> Z1 lower
+
+## Local solder discretisation (declared policy)
+
+Policy: `research/final_closure/local_mesh_policy.json` with amendments 1, 2, 3; pass 3; first increment 0.002 s, load change as its own 3 s step; extraction: block order (DEFECT #65). Wording: **mesh-refined with a quantified discretisation bound**.
+
+- Z1_HV_S0: converged (A); production L3 = 6.2035e-03; U = 2.03 % (mesh 1.19 + time 0.02 + cycles 0.82)
+- Z2_HV_S0: bounded (B (Richardson)); production L3 = 9.9706e-03; U = 18.23 % (mesh 18.11 + time 0.03 + cycles 0.10)
+- Z1_HV_S1: converged (A); production L3 = 8.7931e-03; U = 1.57 % (mesh 1.14 + time 0.03 + cycles 0.41)
+- Z2_HV_S1: bounded (B (Richardson)); production L3 = 1.1449e-02; U = 15.63 % (mesh 15.51 + time 0.03 + cycles 0.08)
+- Z2_HV_S2: bounded (B (Richardson)); production L3 = 1.4715e-02; U = 27.95 % (mesh 27.88 + time 0.02 + cycles 0.05)
+- acceptance (pass 3 is accepted only if its L0 value reproduces the plain-form pass-1 L0 value of every case, and the harness control, within 0.1 %): **True**
+
+## Defects found in this closure
+
+- **DEFECT #65** (local solder post-processing): the validated .dat parser keyed output by its 7-significant-digit printed time and averaged blocks sharing a key; sub-millisecond increments at a load step biased the LAST cycle (up to -17 %). Found by the acceptance test of policy amendment 1; fixed by block-order extraction (scripts/final_closure_local_extract.py), which reproduces the published control to all ten printed digits and leaves every earlier production value unchanged (local_mesh_policy.json amendment 3).
+- **DEFECT #66** (Z2 out-of-cell construction): the production encapsulated model fills the PCB opening up to the board sidewall, bonding the backside converter to the board although the stack specifies a 1.0 mm clearance. Found when the architecture was drawn from the solver mesh. It is now a DECLARED assumption of the production construction; its effect is measured by the clearance-open (f1_clearance) and void (f2_void) variants in classB_resolution.csv; the mechanical orderings are stated conditional on it.
+
+## Class-B resolution
+
+21 open Class-B gates: subtypes {'B1': 18, 'B2': 3, 'B3': 0}; B1 resolved 18 / 18. Orderings that move under a sensitivity: P_loss_w under tsv_min, T_max_C under conv_k_tenth, T_max_C under f2_void, T_max_C under z2_cooled, d_eps_in_per_cycle under board_t3p2, d_eps_in_per_cycle under conv_k_tenth, d_eps_in_per_cycle under f1_clearance, d_eps_in_per_cycle under f2_void, d_eps_in_per_cycle under z2_cooled, die_warpage_pv_um under z2_cooled, du_c_um under f2_void, du_c_um under z2_cooled. Full table: `research/final_closure/classB_resolution.csv`.
+
+- `board.h1_meshed` (B1): RESOLVED -- ordering robust
+- `board.h1_thermal_validated` (B1): RESOLVED -- ordering robust
+- `therm.h0_h1_compared` (B1): RESOLVED -- ordering robust
+- `board.eta_sensitivity_run` (B1): RESOLVED -- ordering robust
+- `board.t_only_comparison_run` (B1): RESOLVED -- ordering robust
+- `mech.t_only_mechanical` (B1): RESOLVED -- ordering changes in: d_eps_in_per_cycle under board_t3p2 (Z1 lower -> unresolved) -- the claim is narrowed accordingly
+- `tsv.density_sensitivity_run` (B1): RESOLVED -- ordering changes in: P_loss_w under tsv_min (Z2 lower -> Z1 lower) -- the claim is narrowed accordingly
+- `mech.f1_f2_bracket_run` (B1): RESOLVED -- ordering changes in: T_max_C under f2_void (unresolved -> Z2 lower); du_c_um under f2_void (Z1 lower -> Z2 lower); d_eps_in_per_cycle under f2_void (Z1 lower -> unresolved); d_eps_in_per_cycle under f1_clearance (Z1 lower -> unresolved) -- the claim is narrowed accordingly
+- `therm.z2_cooled` (B1): RESOLVED -- ordering changes in: T_max_C under z2_cooled (unresolved -> Z2 lower); die_warpage_pv_um under z2_cooled (Z1 lower -> Z2 lower); du_c_um under z2_cooled (Z1 lower -> Z2 lower); d_eps_in_per_cycle under z2_cooled (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly
+- `mat.gan_bounded` (B1): RESOLVED -- ordering robust
+- `mat.mlcc_bounded` (B1): RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (unresolved -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> unresolved) -- the claim is narrowed accordingly
+- `mat.inductor_tier_bounded` (B1): RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (unresolved -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> unresolved) -- the claim is narrowed accordingly
+- `elec.contact_resistance_bounded` (B1): RESOLVED -- ordering robust
+- `elec.rdl10um_electrical_model` (B1): RESOLVED -- ordering robust
+- `elec.hv_input_waveform` (B1): RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario
+- `elec.hv_waveform_determination` (B1): RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario
+- `elec.z1_hv_rms_current` (B1): RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario
+- `elec.bga_rms_current` (B1): RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario
+- `elec.individual_branch_waveforms` (B2): BOUNDED -- magnitude only
+- `elec.pad_count_criterion` (B2): BOUNDED -- magnitude only
+- `elec.pad_loss_closed` (B2): BOUNDED -- magnitude only
 
 ## Decision
 
