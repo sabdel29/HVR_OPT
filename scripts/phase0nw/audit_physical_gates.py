@@ -1179,6 +1179,17 @@ def main():
 
 
 
+#: Class-B gates that name an unknown (a criterion, a waveform) rather than a run or a
+#: bound: resolving the paper's dependence on them does not determine them
+KEEP_OPEN = {"elec.pad_count_criterion", "elec.individual_branch_waveforms",
+             "elec.hv_input_waveform", "elec.hv_waveform_determination",
+             "elec.z1_hv_rms_current", "elec.bga_rms_current"}
+#: material gates with no sourced card: the class-B runs bracket them with ASSUMED ranges
+#: (k/2, k/10, E/CTE corners), which resolves the paper's dependence on them but does not
+#: bound the property itself -- so the gate stays OPEN, with the evidence attached
+PROPERTY_OPEN = {"mat.gan_bounded", "mat.mlcc_bounded", "mat.inductor_tier_bounded"}
+
+
 def _final_closure_overrides(g):
     import json as _j
     D = R / "research" / "final_closure"
@@ -1308,6 +1319,44 @@ def _final_closure_overrides(g):
          "each tile, so 1 V leaves the package above the cell and the in-tile collection "
          "is owned by the R2 output plane. The alternative (pads over the full pitch) "
          "is quantified, not asserted: about 0.59 W for both rails")
+    cb = J("classB_resolution.json")
+    for g in (cb or {}).get("gates", []):
+        if not g.get("resolved"):
+            continue
+        st, gid = g["final_status"], g["gate"]
+        mx = g.get("max_change_rel")
+        ev = (f"Class-B {g['new_subtype']} ({g['range_source']}): " + st
+              + (f"; largest relative change of any observable {100 * mx:.1f} %"
+                 if isinstance(mx, (int, float)) else "")
+              + " (research/final_closure/classB_resolution.csv)")
+        if gid in KEEP_OPEN:            # the gate names an unknown that a bound does
+            set_(gid, "OPEN", "not determinable here; the paper's dependence on it is "
+                 "resolved -- " + ev)  # not determine: it stays OPEN, with the evidence
+            continue
+        if gid in PROPERTY_OPEN:
+            set_(gid, "OPEN", "no sourced material card; an assumed sensitivity bracket "
+                 "resolves the paper's dependence on it but does not bound the property -- "
+                 + ev)
+            continue
+        if g["method"] == "runs":
+            if gid == "board.h1_thermal_validated":
+                ctl = [r for r in g["rows"] if r["case"] == "board_h1 vs board_h0_h1grid"
+                       and r["observable"] == "T_max_C"]
+                ok = bool(ctl) and ctl[0].get("within_mesh_tolerance")
+                set_(gid, "IMPLEMENTED" if ok else "OPEN",
+                     ev + ("; H1 vs H0 on the same grid within the 2 % mesh tolerance -- "
+                           "H0 is adequate" if ok else
+                           "; H1 differs from H0 on the same grid by more than the 2 % mesh "
+                           "tolerance -- H0 is NOT validated"))
+            elif g["new_subtype"] == "B2":     # magnitude only: bounded, not closed
+                set_(gid, "SPECIFIED", "bounded by a run on the production mesh at HV-S0: "
+                     + ev)
+            else:
+                set_(gid, "IMPLEMENTED", "run on the production mesh at HV-S0: " + ev)
+        elif g["method"] in ("network", "common_mode"):
+            set_(gid, "SPECIFIED", "bounded: " + ev)
+        else:                          # scenario-conditioned: the input stays unknown
+            set_(gid, "OPEN", "scenario-conditioned, not determinable: " + ev)
     if pn:
         set_("elec.bga_loss_recomputed", "SPECIFIED",
              "per named scenario from the solved per-ball split at the matched N = %d; "

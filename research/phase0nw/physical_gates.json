@@ -25,22 +25,22 @@
    "id": "board.h1_meshed",
    "area": "Board",
    "gate": "PCB-H1 meshed as FE depth blocks",
-   "status": "OPEN",
-   "evidence": "five-block model defined and 1-D consistent with H0 (k_xy exact, k_z 7.9e-07), but not yet built into the mesh"
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (PCB-H1: the 18-layer schedule as five depth blocks (pcb_h1.py), against H0 on the same z grid): RESOLVED -- ordering robust; largest relative change of any observable 4.9 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "board.h1_thermal_validated",
    "area": "Board",
    "gate": "PCB-H1 thermal validation",
-   "status": "OPEN",
-   "evidence": "no H0-vs-H1 solve exists"
+   "status": "IMPLEMENTED",
+   "evidence": "Class-B B1 (H1 vs H0 on the H1 z grid): RESOLVED -- ordering robust; largest relative change of any observable 0.1 % (research/final_closure/classB_resolution.csv); H1 vs H0 on the same grid within the 2 % mesh tolerance -- H0 is adequate"
   },
   {
    "id": "board.eta_sensitivity_run",
    "area": "Board",
    "gate": "eta coverage sensitivity completed",
-   "status": "OPEN",
-   "evidence": "material tensors exist for eta 0.25/0.50/0.75; no solve run"
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (copper coverage eta 0.25 / 0.50 / 0.75 (config eta_sensitivity)): RESOLVED -- ordering robust; largest relative change of any observable 18.7 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "board.t_only_material_identical",
@@ -53,8 +53,8 @@
    "id": "board.t_only_comparison_run",
    "area": "Board",
    "gate": "2.4/3.2 T-only comparison completed",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for '2.4/3.2 T-only comparison completed'"
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (PCB 2.4 vs 3.2 mm, one material dict): RESOLVED -- ordering robust; largest relative change of any observable 0.0 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.z1_power_bookkeeping",
@@ -137,15 +137,15 @@
    "id": "elec.contact_resistance_bounded",
    "area": "Electrical",
    "gate": "contact / UBM / IMC resistance modelled or bounded",
-   "status": "OPEN",
-   "evidence": "the power-path library carries R_contact = 0 with status OPEN; zero is 'not modelled because unsourced', NOT 'physically negligible', and the distinction must survive into the manuscript"
+   "status": "SPECIFIED",
+   "evidence": "bounded: Class-B B1 (rho_c 1e-6 / 1e-5 / 1e-4 ohm mm^2 on the package 48 V RDL (package_network sensitivity)): RESOLVED -- ordering robust; largest relative change of any observable 0.1 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.rdl10um_electrical_model",
    "area": "Electrical",
    "gate": "10 um RDL electrical (resistance) model closed or bounded",
-   "status": "OPEN",
-   "evidence": "the mechanical/thermal tensor is bracketed, but the electrical sheet resistance of the actual 10 um tier -- Cu thickness, occupancy, routing layer count, supply/ground split -- is not yet defined"
+   "status": "SPECIFIED",
+   "evidence": "bounded: Class-B B1 (package 48 V RDL t_Cu 2 / 5 / 10 um x occupancy 0.3 / 0.8 (package_network sensitivity)): RESOLVED -- ordering robust; largest relative change of any observable 1.8 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.z1_tsv_sizing",
@@ -165,8 +165,8 @@
    "id": "tsv.density_sensitivity_run",
    "area": "TSV",
    "gate": "thermal/mechanical sensitivity to TSV density",
-   "status": "OPEN",
-   "evidence": "the adopted field is 1444 vias/cell, 23x the electrically required minimum, so Cu volume fraction -- and therefore substrate k, E and CTE -- depends strongly on a choice no solve has tested"
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (TSV sizing study: 64 / 729 / 1444 vias per cell, in the FE substrate AND the ledger): RESOLVED -- ordering changes in: P_loss_w under tsv_min (Z2 lower -> Z1 lower) -- the claim is narrowed accordingly; largest relative change of any observable 9.3 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "tsv.fe_copper_representation",
@@ -215,14 +215,14 @@
    "area": "RMS",
    "gate": "individual branch waveforms",
    "status": "OPEN",
-   "evidence": "WITHDRAWN in Phase 0N-AD. Decomposing the summed output ripple into per-branch terms over D*T does not give a branch's periodic waveform; volt-second balance on a conventional branch gives 4.6574 A on both ramps against the 0.310 A previously claimed for phase B. The pinned source has no switch-state sequence to settle it"
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B2 (converter-internal branch RMS: identical converter model in both architectures): BOUNDED -- magnitude only (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.hv_input_waveform",
    "area": "RMS",
    "gate": "48 V input waveform",
    "status": "OPEN",
-   "evidence": "no SC charge-transfer sequence, phase displacement or dead time in the pinned source; see research/phase0nad/HVR_SWITCH_STATE_SOURCE_AUDIT.md"
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B1 (named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each scenario solved through the full lineage): RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.rms_current_model",
@@ -236,7 +236,7 @@
    "area": "RMS",
    "gate": "48 V rail RMS current",
    "status": "OPEN",
-   "evidence": "THREE named SCENARIOS, not a bracket: HV-S0 continuous 23.69 A, HV-S1 square pulse at the buck duty 94.77 A, HV-S2 square pulse at the overall ratio 164.15 A (the duty the DVPD source's Eq.(5) assumes). S1 and S2 are MINIMUM RMS values for their supports, NOT upper bounds; NONE EXISTS from average current alone. Z1 BGA supply spans 10.9 / 174 / 523 mW"
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B1 (named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each scenario solved through the full lineage): RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.z2_lv_rms_current",
@@ -257,7 +257,7 @@
    "area": "RMS",
    "gate": "BGA loss uses RMS current",
    "status": "OPEN",
-   "evidence": "SUPERSEDES the evidence 'the 48 V RMS is a bracket'. HV-S0/S1/S2 are NAMED SCENARIOS, not a bracket and not lower/nominal/upper: from an average current alone there is no finite RMS upper bound, because a narrower, taller pulse of the same average has strictly higher RMS without limit. Blocked by elec.hv_waveform_determination, which proves the waveform is not derivable from the pinned converter model"
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B1 (named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each scenario solved through the full lineage): RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.bga_network_sharing",
@@ -369,7 +369,7 @@
    "area": "RMS",
    "gate": "48 V input current waveform closed",
    "status": "OPEN",
-   "evidence": "DETERMINED UNRESOLVABLE from the present model, not merely unattempted. The pinned generator HVR_FULL_OPT_EPC_V2.py builds every electrical quantity from one scalar I_out_rms via the triangular-ripple identity; it contains no switched-capacitor state sequence, no flying-capacitor charge balance and no input-current variable, so the 48 V average comes only from power balance and no RMS follows from it. Closing it needs the per-state switch conduction table, the charge-transfer schedule, or a netlist. See research/phase0naj/HV_WAVEFORM_DETERMINATION.md"
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B1 (named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each scenario solved through the full lineage): RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.z1_network_nonconvergence_diagnosed",
@@ -425,7 +425,7 @@
    "area": "PadCount",
    "gate": "a physical criterion selects the pad count",
    "status": "OPEN",
-   "evidence": "NONE EXISTS. The previous logic min(n_geom, max(n_drop, n_geom)) is identically n_geom, so it always chose maximum density and called it closed. Voltage drop gives a floor of 4, geometry a ceiling of 4908, and the source's allocation semantics are ambiguous"
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B2 (pad sweep end: the voltage-drop floor, 4 pads per rail per cell (vs 2040)): BOUNDED -- magnitude only; largest relative change of any observable 16.5 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.pad_density_sensitivity",
@@ -438,8 +438,8 @@
    "id": "elec.pad_loss_closed",
    "area": "PadCount",
    "gate": "pad interface loss closed",
-   "status": "OPEN",
-   "evidence": "loss is a COUNT SCENARIO spanning 1227x. The 14.37 mW previously reported as CLOSED was the maximum-density end of that span"
+   "status": "SPECIFIED",
+   "evidence": "bounded by a run on the production mesh at HV-S0: Class-B B2 (pad sweep end: the voltage-drop floor, 4 pads per rail per cell (vs 2040)): BOUNDED -- magnitude only; largest relative change of any observable 16.5 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.source_pad_count",
@@ -599,8 +599,8 @@
    "id": "therm.z2_cooled",
    "area": "Thermal",
    "gate": "Z2-COOLED case implemented",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'Z2-COOLED case implemented'"
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (bounding Z2-COOLED: a top-type cold plate on the Z2 converter underside; Z1 unchanged): RESOLVED -- ordering changes in: T_max_C under z2_cooled (unresolved -> Z2 lower); die_warpage_pv_um under z2_cooled (Z1 lower -> Z2 lower); du_c_um under z2_cooled (Z1 lower -> Z2 lower); d_eps_in_per_cycle under z2_cooled (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly; largest relative change of any observable 96.3 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "therm.et_fixed_point_converged",
@@ -620,15 +620,15 @@
    "id": "therm.h0_h1_compared",
    "area": "Thermal",
    "gate": "H0 vs H1 thermal comparison run",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for 'H0 vs H1 thermal comparison run'"
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (H1 vs H0 on the H1 z grid): RESOLVED -- ordering robust; largest relative change of any observable 0.1 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "mech.f1_f2_bracket_run",
    "area": "Mechanical",
    "gate": "F1/F2 out-of-cell bracket run",
-   "status": "OPEN",
-   "evidence": "both cases BUILD; neither has been solved"
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (out-of-cell converter volume encapsulated (F1, production: fills the PCB opening to the sidewall) vs void (F2), and F1 with the specified 1 mm sidewall clearance open (DEFECT #66)): RESOLVED -- ordering changes in: T_max_C under f2_void (unresolved -> Z2 lower); du_c_um under f2_void (Z1 lower -> Z2 lower); d_eps_in_per_cycle under f2_void (Z1 lower -> unresolved); d_eps_in_per_cycle under f1_clearance (Z1 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 72.7 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "mech.mesh_convergence",
@@ -648,8 +648,8 @@
    "id": "mech.t_only_mechanical",
    "area": "Mechanical",
    "gate": "2.4/3.2 T-only mechanical comparison",
-   "status": "OPEN",
-   "evidence": "not run -- no artifact exists for '2.4/3.2 T-only mechanical comparison'"
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (PCB 2.4 vs 3.2 mm, one material dict): RESOLVED -- ordering changes in: d_eps_in_per_cycle under board_t3p2 (Z1 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 15.4 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "local.solder_rerun_at_new_critical_site",
@@ -775,21 +775,21 @@
    "area": "Material",
    "gate": "GaN epi contribution bounded",
    "status": "OPEN",
-   "evidence": "devices meshed as the Si carrier; the epi contribution is not yet bounded"
+   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (GaN tiers at half the Si carrier conductivity (stress bound on the unresolved epi)): RESOLVED -- ordering robust; largest relative change of any observable 3.0 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "mat.mlcc_bounded",
    "area": "Material",
    "gate": "MLCC tier material bounded",
    "status": "OPEN",
-   "evidence": "flying-cap tier meshed at hvr_effective; no ceramic/Ni bracket yet"
+   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (converter medium k/10, and the card's own E 80-160 GPa x CTE 4-10 ppm/K corners): RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (unresolved -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 94.4 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "mat.inductor_tier_bounded",
    "area": "Material",
    "gate": "inductor/Cout tier bounded",
    "status": "OPEN",
-   "evidence": "hvr_effective is generic; occupancy-based bracket not built"
+   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (converter medium k/10, and the card's own E 80-160 GPa x CTE 4-10 ppm/K corners): RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (unresolved -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 94.4 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "mat.rdl_tensor_transfer_validated",
@@ -872,6 +872,6 @@
    "z1_um": 0.0
   }
  ],
- "n_open": 26,
+ "n_open": 14,
  "n_elems": 38623
 }

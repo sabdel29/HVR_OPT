@@ -1,211 +1,181 @@
 {
   "summary": {
     "A": 0,
-    "B": 21,
+    "B": 9,
     "C": 5
   },
-  "n_open": 26,
+  "n_open": 14,
   "classified_but_no_longer_open": [
+    "board.eta_sensitivity_run",
+    "board.h1_meshed",
+    "board.h1_thermal_validated",
+    "board.t_only_comparison_run",
     "elec.bga_loss_recomputed",
+    "elec.contact_resistance_bounded",
     "elec.energy_conservation_verified",
     "elec.intravr_horizontal_recomputed",
     "elec.intravr_vertical_recomputed",
     "elec.loss_audit_frozen",
     "elec.package_rdl_lv_recomputed",
+    "elec.pad_loss_closed",
+    "elec.rdl10um_electrical_model",
     "elec.tsv_resistance_temperature_dependent",
     "local.solder_rerun_at_new_critical_site",
     "mat.rdl_tensor_transfer_validated",
     "mech.bga_528_site_search",
+    "mech.f1_f2_bracket_run",
     "mech.mesh_convergence",
+    "mech.t_only_mechanical",
     "results.physical_etm_lineage",
     "therm.bc_selected",
     "therm.et_fixed_point_converged",
+    "therm.h0_h1_compared",
     "therm.tier_aware_heat_map",
+    "therm.z2_cooled",
     "therm.z2_passive",
+    "tsv.density_sensitivity_run",
     "tsv.fe_copper_representation"
   ],
   "rows": [
-    {
-      "id": "board.h1_meshed",
-      "area": "Board",
-      "gate": "PCB-H1 meshed as FE depth blocks",
-      "class": "B",
-      "rationale": "H0 homogenised board is the production board; H1 is the check of that choice"
-    },
-    {
-      "id": "board.h1_thermal_validated",
-      "area": "Board",
-      "gate": "PCB-H1 thermal validation",
-      "class": "B",
-      "rationale": "see board.h1_meshed"
-    },
-    {
-      "id": "board.eta_sensitivity_run",
-      "area": "Board",
-      "gate": "eta coverage sensitivity completed",
-      "class": "B",
-      "rationale": "board Cu coverage sensitivity"
-    },
-    {
-      "id": "board.t_only_comparison_run",
-      "area": "Board",
-      "gate": "2.4/3.2 T-only comparison completed",
-      "class": "B",
-      "rationale": "2.4 vs 3.2 mm board thickness"
-    },
     {
       "id": "elec.microbump_loss_recomputed",
       "area": "Electrical",
       "gate": "microbump loss recomputed on the physical geometry",
       "class": "C",
-      "rationale": "microbump is the ALTERNATIVE interface technology; the primary path is the source Cu pad"
-    },
-    {
-      "id": "elec.contact_resistance_bounded",
-      "area": "Electrical",
-      "gate": "contact / UBM / IMC resistance modelled or bounded",
-      "class": "B",
-      "rationale": "rho_c swept over three declared decades"
-    },
-    {
-      "id": "elec.rdl10um_electrical_model",
-      "area": "Electrical",
-      "gate": "10 um RDL electrical (resistance) model closed or bounded",
-      "class": "B",
-      "rationale": "Cu thickness and occupancy swept over declared cases; the source defers trace dimensions to process technology"
-    },
-    {
-      "id": "tsv.density_sensitivity_run",
-      "area": "TSV",
-      "gate": "thermal/mechanical sensitivity to TSV density",
-      "class": "B",
-      "rationale": "electrical minimum vs adopted vs high density"
+      "rationale": "microbump is the ALTERNATIVE interface technology; the primary path is the source Cu pad",
+      "b_subtype": null,
+      "b_resolved": null,
+      "b_status": null
     },
     {
       "id": "elec.individual_branch_waveforms",
       "area": "RMS",
       "gate": "individual branch waveforms",
       "class": "B",
-      "rationale": "branch ripple needs the switch schedule; the HV side is carried per scenario and the LV side uses the output-ripple RMS"
+      "rationale": "branch ripple needs the switch schedule; the HV side is carried per scenario and the LV side uses the output-ripple RMS",
+      "b_subtype": "B2",
+      "b_resolved": true,
+      "b_status": "BOUNDED -- magnitude only"
     },
     {
       "id": "elec.hv_input_waveform",
       "area": "RMS",
       "gate": "48 V input waveform",
       "class": "B",
-      "rationale": "not derivable from the pinned converter model; carried as named scenarios HV-S0/S1/S2, each solved"
+      "rationale": "not derivable from the pinned converter model; carried as named scenarios HV-S0/S1/S2, each solved",
+      "b_subtype": "B1",
+      "b_resolved": true,
+      "b_status": "RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario"
     },
     {
       "id": "elec.z1_hv_rms_current",
       "area": "RMS",
       "gate": "48 V rail RMS current",
       "class": "B",
-      "rationale": "scenario-conditioned, see elec.hv_input_waveform"
+      "rationale": "scenario-conditioned, see elec.hv_input_waveform",
+      "b_subtype": "B1",
+      "b_resolved": true,
+      "b_status": "RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario"
     },
     {
       "id": "elec.bga_rms_current",
       "area": "RMS",
       "gate": "BGA loss uses RMS current",
       "class": "B",
-      "rationale": "scenario-conditioned, see elec.hv_input_waveform"
+      "rationale": "scenario-conditioned, see elec.hv_input_waveform",
+      "b_subtype": "B1",
+      "b_resolved": true,
+      "b_status": "RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario"
     },
     {
       "id": "elec.hv_waveform_determination",
       "area": "RMS",
       "gate": "48 V input current waveform closed",
       "class": "B",
-      "rationale": "determined unresolvable from available sources; the paper is scenario-conditioned"
+      "rationale": "determined unresolvable from available sources; the paper is scenario-conditioned",
+      "b_subtype": "B1",
+      "b_resolved": true,
+      "b_status": "RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario"
     },
     {
       "id": "elec.pad_count_criterion",
       "area": "PadCount",
       "gate": "a physical criterion selects the pad count",
       "class": "B",
-      "rationale": "no transferable EM allowable; bounded by a terminal footprint sweep anchored on the DVPD source's own VIC count"
-    },
-    {
-      "id": "elec.pad_loss_closed",
-      "area": "PadCount",
-      "gate": "pad interface loss closed",
-      "class": "B",
-      "rationale": "bounded over the footprint sweep"
+      "rationale": "no transferable EM allowable; bounded by a terminal footprint sweep anchored on the DVPD source's own VIC count",
+      "b_subtype": "B2",
+      "b_resolved": true,
+      "b_status": "BOUNDED -- magnitude only"
     },
     {
       "id": "elec.microbump_geometry_closed",
       "area": "Recompute",
       "gate": "microbump field geometry defined",
       "class": "C",
-      "rationale": "alternative interface technology only"
+      "rationale": "alternative interface technology only",
+      "b_subtype": null,
+      "b_resolved": null,
+      "b_status": null
     },
     {
       "id": "lit.microbump_contact_bounded",
       "area": "Literature",
       "gate": "microbump contact/UBM/IMC resistance bounded from literature",
       "class": "C",
-      "rationale": "alternative interface technology only"
+      "rationale": "alternative interface technology only",
+      "b_subtype": null,
+      "b_resolved": null,
+      "b_status": null
     },
     {
       "id": "lit.tsv_allowable",
       "area": "Literature",
       "gate": "TSV current-density allowable sourced or explicitly refused",
       "class": "C",
-      "rationale": "an EM-safe TSV current density is a qualification quantity; no transferable value exists and none is claimed"
-    },
-    {
-      "id": "therm.z2_cooled",
-      "area": "Thermal",
-      "gate": "Z2-COOLED case implemented",
-      "class": "B",
-      "rationale": "see therm.z2_passive"
+      "rationale": "an EM-safe TSV current density is a qualification quantity; no transferable value exists and none is claimed",
+      "b_subtype": null,
+      "b_resolved": null,
+      "b_status": null
     },
     {
       "id": "therm.mot_tg_evaluated",
       "area": "Thermal",
       "gate": "PCB MOT/Tg checks evaluated",
       "class": "C",
-      "rationale": "board maximum-operating-temperature check is a qualification screen; reported if computed, never used to rank"
-    },
-    {
-      "id": "therm.h0_h1_compared",
-      "area": "Thermal",
-      "gate": "H0 vs H1 thermal comparison run",
-      "class": "B",
-      "rationale": "see board.h1_meshed"
-    },
-    {
-      "id": "mech.f1_f2_bracket_run",
-      "area": "Mechanical",
-      "gate": "F1/F2 out-of-cell bracket run",
-      "class": "B",
-      "rationale": "out-of-cell fill: encapsulated vs void"
-    },
-    {
-      "id": "mech.t_only_mechanical",
-      "area": "Mechanical",
-      "gate": "2.4/3.2 T-only mechanical comparison",
-      "class": "B",
-      "rationale": "2.4 vs 3.2 mm board thickness, mechanics"
+      "rationale": "board maximum-operating-temperature check is a qualification screen; reported if computed, never used to rank",
+      "b_subtype": null,
+      "b_resolved": null,
+      "b_status": null
     },
     {
       "id": "mat.gan_bounded",
       "area": "Material",
       "gate": "GaN epi contribution bounded",
       "class": "B",
-      "rationale": "GaN epi thermal contribution, material range"
+      "rationale": "GaN epi thermal contribution, material range",
+      "b_subtype": "B1",
+      "b_resolved": true,
+      "b_status": "RESOLVED -- ordering robust"
     },
     {
       "id": "mat.mlcc_bounded",
       "area": "Material",
       "gate": "MLCC tier material bounded",
       "class": "B",
-      "rationale": "flying-cap tier material, material range"
+      "rationale": "flying-cap tier material, material range",
+      "b_subtype": "B1",
+      "b_resolved": true,
+      "b_status": "RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (unresolved -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> unresolved) -- the claim is narrowed accordingly"
     },
     {
       "id": "mat.inductor_tier_bounded",
       "area": "Material",
       "gate": "inductor/Cout tier bounded",
       "class": "B",
-      "rationale": "inductor/Cout tier material, material range"
+      "rationale": "inductor/Cout tier material, material range",
+      "b_subtype": "B1",
+      "b_resolved": true,
+      "b_status": "RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (unresolved -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> unresolved) -- the claim is narrowed accordingly"
     }
   ]
 }

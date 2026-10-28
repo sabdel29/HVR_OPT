@@ -96,13 +96,22 @@ CLASSES = {
 
 
 def classify(gates):
+    """Every OPEN gate gets A/B/C; a B gate also carries its subtype (B1 ordering-
+    relevant, B2 magnitude-only, B3 reclassify to C) and resolution status from
+    classB_resolution.json, the single record of how each B gate was run or bounded."""
+    cb = OUT / "classB_resolution.json"
+    sub = {g["gate"]: g for g in json.loads(cb.read_text())["gates"]} if cb.exists() else {}
     rows = []
     for g in gates:
         if g["status"] != "OPEN":
             continue
         cls, why = CLASSES.get(g["id"], (None, None))
+        b = sub.get(g["id"], {})
         rows.append({"id": g["id"], "area": g["area"], "gate": g["gate"],
-                     "class": cls, "rationale": why})
+                     "class": cls, "rationale": why,
+                     "b_subtype": b.get("new_subtype") if cls == "B" else None,
+                     "b_resolved": b.get("resolved") if cls == "B" else None,
+                     "b_status": b.get("final_status") if cls == "B" else None})
     return rows
 
 
