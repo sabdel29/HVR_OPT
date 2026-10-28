@@ -120,6 +120,25 @@ CLOSED_IDS = {
     "elec.pad_count_admissible_region",
     "elec.intravr_fidelity_ladder",
     "elec.package_rdl_hv_recomputed",   # SPECIFIED: recomputed for Z2
+    # --- Final closure: the physical lineage. Each closes on a measured artifact in
+    # --- research/final_closure; listed so that none closes without being named.
+    "results.physical_etm_lineage",
+    "therm.et_fixed_point_converged",
+    "therm.tier_aware_heat_map",
+    "therm.bc_selected",                       # SPECIFIED: one declared boundary
+    "therm.z2_passive",                        # counted: no film inside the cutout
+    "elec.energy_conservation_verified",
+    "elec.loss_audit_frozen",
+    "elec.tsv_resistance_temperature_dependent",
+    "mech.bga_528_site_search",
+    "mech.mesh_convergence",                   # IMPLEMENTED converged / SPECIFIED bounded
+    "local.solder_rerun_at_new_critical_site",
+    "tsv.fe_copper_representation",
+    "mat.rdl_tensor_transfer_validated",
+    "elec.intravr_horizontal_recomputed",      # SPECIFIED
+    "elec.intravr_vertical_recomputed",        # SPECIFIED
+    "elec.package_rdl_lv_recomputed",          # SPECIFIED: absent, alternative quantified
+    "elec.bga_loss_recomputed",                # SPECIFIED: scenario-defined RMS
 }
 
 
