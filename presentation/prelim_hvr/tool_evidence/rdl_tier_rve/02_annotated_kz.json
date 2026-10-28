@@ -1,0 +1,56 @@
+{
+  "source_image": "presentation/prelim_hvr/tool_evidence/rdl_tier_rve/01_geometry_kz.png",
+  "source_sha256": "248b8163e55bebda4f189bee3136f617b8d4b1c5f7e702b9e2da339b3010abda",
+  "source_size_px": [
+    1400,
+    900
+  ],
+  "crop_box_px_xywh": [
+    38,
+    4,
+    1362,
+    896
+  ],
+  "crop_rule": "bounding box of all non-background pixels (model, Ansys mark, axis triad, ruler, CS label) + 10 px pad",
+  "bands_added": "title band above and key band below, plus white side bands where labels need room; all outside the screenshot",
+  "labels": [
+    {
+      "text": "observable: tier effective kz (W/mK)",
+      "source_fields": [
+        "setup.json rdl_tier_kz.observable"
+      ],
+      "kind": "caption (no position)"
+    },
+    {
+      "text": "production model: laminate (grid in-plane, series through-thickness)",
+      "source_fields": [
+        "setup.json rdl_tier_kz.production_model"
+      ],
+      "kind": "caption (no position)"
+    },
+    {
+      "text": "reference: AEDT 2026 R1 Mechanical (thermal FEM)",
+      "source_fields": [
+        "setup.json rdl_tier_kz.reference_tool"
+      ],
+      "kind": "caption (no position)"
+    }
+  ],
+  "setup_json_sha256": "d1787420f9dd6256b40b8b8a17beb40fbe5a1479150ed76f38a2869aa7431caf",
+  "verification": {
+    "overlay_fraction_of_crop": 0.0,
+    "untouched_pixels_identical_to_original": true,
+    "label_box_collisions": [],
+    "labels_clipped": 0,
+    "side_bands_px": {
+      "left": 0,
+      "right": 0
+    },
+    "screenshot_offset_in_output_px": [
+      0,
+      92
+    ]
+  },
+  "generator": "scripts/reference_tools/aedt_annotate_screenshots.py",
+  "output_sha256": "d28e106d73419a4de798075467f88c00993a8914e0df67236c77f9faa0eeb12d"
+}

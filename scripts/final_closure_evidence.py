@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import glob
 import json
+import sys
 import shutil
 from pathlib import Path
 
@@ -19,6 +20,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt                                     # noqa: E402
 import numpy as np                                                  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hvr_scratch import path as scratch                             # noqa: E402
 
 R = Path(__file__).resolve().parents[1]
 FC = R / "research" / "final_closure"
@@ -166,7 +169,7 @@ def pkg_rdl_stages(status):
         if not m:
             readme(d, d.name, ["No MOOSE result exists for this stage."])
             continue
-        wd = Path(f"/tmp/moose_rdl_{arch}")
+        wd = scratch(f"moose_rdl_{arch}")
         for f in ("rdl.i", "moose_log_tail.txt"):
             if (wd / f).exists():
                 shutil.copy(wd / f, d / f)
@@ -210,7 +213,7 @@ def column_stages(status):
         d.mkdir(parents=True, exist_ok=True)
         status[d.name] = ("MOOSE", bool(mo))
         if mo:
-            exo = sorted(glob.glob(f"/tmp/col_moose_{arch}_m2/column_out*.e"))
+            exo = sorted(glob.glob(str(scratch(f"col_moose_{arch}_m2") / "column_out*.e")))
             if exo:
                 field_png_column(d, exo[-1], f"MOOSE temperature, unit cell {arch}, y = 0")
             dump(d, "setup.json", mo["spec"])
@@ -286,6 +289,31 @@ def bilayer_stage(status):
         "01_geometry.png is exported from the AEDT session that ran the model."])
 
 
+def _icepak_line():
+    ice = FC / "reference_cooling_icepak.json"
+    if ice.exists():
+        j = json.loads(ice.read_text())
+        st = str(j.get("status", ""))
+        if st.upper().startswith("EXECUTED"):
+            return ("- AEDT Icepak: licensed; the matched conjugate-CFD benchmark of one cold-"
+                    "plate channel was EXECUTED (research/final_closure/"
+                    "reference_cooling_icepak.json, tool_evidence/cooling_icepak/).")
+        return f"- AEDT Icepak: {st or 'status unknown'} (reference_cooling_icepak.json)."
+    return "- AEDT Icepak: licensed; the matched CFD cooling benchmark was not executed."
+
+
+def _q3d_line():
+    rp = FC / "aedt_licence_reprobe.json"
+    when = ""
+    if rp.exists():
+        j = json.loads(rp.read_text())
+        q = (j.get("probes") or {}).get("q3d_extractor_dc") or {}
+        when = (f" Re-probed {j.get('date')}: solved = {q.get('solved')}." if q else "")
+    return ("- Q3D Extractor and Maxwell DC conduction: installed, not licensed (licence error "
+            "at solve). `scripts/reference_tools/q3d_dc_reference.py` is READY_NOT_EXECUTED -- "
+            "LICENSE UNAVAILABLE." + when)
+
+
 def top_readme(status):
     rows = [f"| `{k}` | {tool} | {'solved, compared' if ok else 'NOT solved'} |"
             for k, (tool, ok) in sorted(status.items())]
@@ -300,9 +328,8 @@ def top_readme(status):
         "", "## Licensing on this host", "",
         "- AEDT 2026 R1 Mechanical (thermal, structural): licensed. Solves requesting more "
         "than 4 cores fail without HPC licences; every reported AEDT solve uses 4 cores.",
-        "- AEDT Icepak: licensed; the matched CFD cooling benchmark was not executed.",
-        "- Q3D Extractor and Maxwell DC conduction: installed, not licensed (licence error "
-        "at solve). `scripts/reference_tools/q3d_dc_reference.py` is READY_NOT_EXECUTED.",
+        _icepak_line(),
+        _q3d_line(),
         "- MOOSE heat_transfer-opt: executed.",
         "- No circuit simulator (LTspice, PLECS, PSIM, ngspice) is installed, and no "
         "switch-state schedule exists for the converter; no waveform is simulated.", ""]))

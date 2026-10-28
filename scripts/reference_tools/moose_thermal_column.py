@@ -27,6 +27,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import thermal_column_benchmark as TC                               # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from hvr_scratch import path as scratch                             # noqa: E402
 
 R = TC.R
 OUT = R / "research" / "final_closure"
@@ -257,8 +259,8 @@ def main():
     stage = f"thermal_column_moose_{arch}"
     spec = TC.column_spec(arch, "HV_S0")
     load0 = _load()
-    ccx = run_ccx(spec, Path(f"/tmp/col_ccx_{arch}_f"))
-    mo = {tag: run_moose(spec, Path(f"/tmp/col_moose_{arch}_{tag}"), mesh)
+    ccx = run_ccx(spec, scratch(f"col_ccx_{arch}_f"))
+    mo = {tag: run_moose(spec, scratch(f"col_moose_{arch}_{tag}"), mesh)
           for tag, mesh in MOOSE_MESHES.items()}
     ref = mo["m2"]
     common = sorted(set(ccx["means"]) & set(ref["means"]))
@@ -279,7 +281,7 @@ def main():
     (OUT / f"reference_{stage}.json").write_text(json.dumps(res, indent=1, default=float))
     d = EVID / stage
     d.mkdir(parents=True, exist_ok=True)
-    wd = Path(f"/tmp/col_moose_{arch}_m2")
+    wd = scratch(f"col_moose_{arch}_m2")
     for f in ("column.i", "log_tail.txt"):
         shutil.copy(wd / f, d / f)
     print(json.dumps({k: res[k] for k in ("T_max_err_K", "T_rise_rel_err",

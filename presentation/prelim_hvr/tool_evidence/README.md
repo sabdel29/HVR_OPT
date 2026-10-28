@@ -22,7 +22,7 @@ or documentation image is presented as a validation run.
 ## Licensing on this host
 
 - AEDT 2026 R1 Mechanical (thermal, structural): licensed. Solves requesting more than 4 cores fail without HPC licences; every reported AEDT solve uses 4 cores.
-- AEDT Icepak: licensed; the matched CFD cooling benchmark was not executed.
-- Q3D Extractor and Maxwell DC conduction: installed, not licensed (licence error at solve). `scripts/reference_tools/q3d_dc_reference.py` is READY_NOT_EXECUTED.
+- AEDT Icepak: licensed; the matched conjugate-CFD benchmark of one cold-plate channel was EXECUTED (research/final_closure/reference_cooling_icepak.json, tool_evidence/cooling_icepak/).
+- Q3D Extractor and Maxwell DC conduction: installed, not licensed (licence error at solve). `scripts/reference_tools/q3d_dc_reference.py` is READY_NOT_EXECUTED -- LICENSE UNAVAILABLE. Re-probed 2026-10-27: solved = False.
 - MOOSE heat_transfer-opt: executed.
 - No circuit simulator (LTspice, PLECS, PSIM, ngspice) is installed, and no switch-state schedule exists for the converter; no waveform is simulated.

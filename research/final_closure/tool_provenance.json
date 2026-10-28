@@ -1,0 +1,964 @@
+{
+ "meta": {
+  "title": "Software provenance of the HVR_OPT final-closure study",
+  "date": "2026-10-27",
+  "method": "Every developer / what-it-is statement is backed by an official page fetched with curl on the date given; each quote is verbatim (whitespace collapsed) and was machine-checked against the fetched copy. In-house tools are quoted from their repository source file. Versions were probed on this host with the commands listed in version_probe. Usage claims are backed by evidence_paths (repository files).",
+  "status_vocabulary": [
+   "EXECUTED",
+   "NOT EXECUTED IN THIS STUDY",
+   "NOT EXECUTED IN THIS STUDY — LICENSE UNAVAILABLE",
+   "NOT INSTALLED"
+  ],
+  "lanes": {
+   "inputs": "inputs & geometry",
+   "production": "production solvers",
+   "reference": "independent references",
+   "platform": "host platform",
+   "not_executed": "not executed",
+   "visualisation": "visualisation, deck and documents",
+   "support": "numerical support libraries",
+   "documents": "document build (manuscript PDF)",
+   "considered": "considered, not used"
+  },
+  "repo_head": "185beb5 (working tree has uncommitted changes in final_closure and reference_tools scripts)",
+  "untracked_evidence_paths": [
+   "presentation/prelim_hvr/figs/tool_map.svg",
+   "scripts/figstyle.py",
+   "scripts/final_closure_package_figs.py",
+   "scripts/final_closure_tool_map.py"
+  ],
+  "quotes_checked": 61,
+  "not_listed_here": "Visual tools probed as absent or unused (PyVista, Blender, Inkscape, Plotly, Kaleido, Playwright, Mermaid CLI, Chromium, ImageMagick, Figma/Canva) are recorded with their probe commands in presentation/prelim_hvr/VISUAL_TOOL_INVENTORY.md; no developer claim is made for them."
+ },
+ "tools": [
+  {
+   "name": "CalculiX (ccx)",
+   "version_used": "CalculiX CrunchiX 2.23",
+   "version_short": "2.23",
+   "version_probe": [
+    {
+     "command": "/home/beams0/MGHARIB/envs/etm/bin/ccx -v",
+     "output": "This is Version 2.23"
+    }
+   ],
+   "developer": "Guido Dhondt (finite element solver, CalculiX CrunchiX) and Klaus Wittig (pre- and post-processor, CalculiX GraphiX)",
+   "what_it_is": "A free, open-source three-dimensional finite element program whose solver (ccx) does linear and non-linear static, dynamic and thermal analyses.",
+   "official_url": "http://www.calculix.de/",
+   "quote": "Copyright (C) 1998 Guido Dhondt and Klaus Wittig",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "http://www.calculix.de/",
+     "quote": "A Free Software Three-Dimensional Structural Finite Element Program",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "http://www.calculix.de/",
+     "quote": "CalculiX is a package designed to solve field problems. The method used is the finite element method.",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "http://www.calculix.de/",
+     "quote": "The solver is able to do linear and non-linear calculations. Static, dynamic and thermal solutions are available.",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "http://www.dhondt.de/",
+     "quote": "Authors: Guido Dhondt (Finite Element Solver) Klaus Wittig(Pre- and Postprocessor)",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "http://www.dhondt.de/",
+     "quote": "Available downloads for the solver (CalculiX CrunchiX: ccx)",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Production solver for every package thermal and mechanical result: the steady conjugate thermal FE solve (C3D8) inside the electrothermal fixed point; one thermoelastic structural solve (C3D8I) on the converged temperature field (ITERATIVE CHOLESKY on the refined production mesh, checked against the SPOOLES direct solver on the base mesh); and the local solder viscoplastic submodel (*VISCO with *CREEP, LAW=NORTON) at the critical joint. Also the production side of the thermal-column and bilayer benchmarks.",
+   "status": "EXECUTED",
+   "lane": "production",
+   "evidence_paths": [
+    "scripts/phase0b/etm/ccxio.py",
+    "scripts/final_closure_physical_etm.py",
+    "scripts/final_closure_local_solder.py",
+    "scripts/phase0mr3c/run_final_local_response.py",
+    "scripts/phase0i/joint.py",
+    "scripts/phase0ir/decompose.py",
+    "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json",
+    "research/final_closure/etm_Z2_HV_S0_h1.1_r21.json",
+    "research/final_closure/local_solder_HV_S0.json",
+    "research/final_closure/solver_check/Z1_HV_S0_h1.1_ITERATIVE_CHOLESKY_t10.json",
+    "research/final_closure/solver_check/Z1_HV_S0_h1.1_SPOOLES_t1.json",
+    "research/final_closure/accuracy_speed_matrix.json"
+   ]
+  },
+  {
+   "name": "In-house package-network FV solver",
+   "version_used": "this repository (HEAD 185beb5, working tree)",
+   "version_short": "in-house",
+   "developer": "this study (in-house Python in this repository)",
+   "what_it_is": "A cell-centred finite-volume model of the package high-voltage redistribution sheet and BGA balls, solved with SciPy sparse direct solves.",
+   "official_url": null,
+   "quote": "A cell-centred finite-volume discretisation on a tensor grid whose control-volume FACES lie exactly on every tile edge",
+   "quote_source": "scripts/phase0nw/pkg_rdl_refined.py",
+   "fetched": "2026-10-27",
+   "source_note": "in-house code: quoted from the repository source file, read on the date given",
+   "role_in_study": "Production model of the package HV network: per-ball current split, effective resistance, pad drops and the exhaustive ball-count screen; its output feeds the electrical ledger.",
+   "status": "EXECUTED",
+   "lane": "production",
+   "evidence_paths": [
+    "scripts/final_closure_pkg_network.py",
+    "scripts/phase0nw/pkg_rdl_refined.py",
+    "scripts/phase0nw/pkg_rdl_network.py",
+    "research/final_closure/package_network.json",
+    "research/final_closure/bga_count_screen.csv"
+   ]
+  },
+  {
+   "name": "In-house electrical ledger",
+   "version_used": "this repository (HEAD 185beb5, working tree)",
+   "version_short": "in-house",
+   "developer": "this study (in-house Python in this repository)",
+   "what_it_is": "A Python bookkeeping model that lists every conductor in the power path once, with its resistance at its own temperature and the loss it deposits in each FE tier.",
+   "official_url": null,
+   "quote": "Every conductor in the Z1/Z2 power path appears exactly once, with its geometry, current type, scenario, resistance model, resistance at its own temperature, loss, the FE tier its heat is deposited in, and its evidence class.",
+   "quote_source": "scripts/final_closure_ledger.py",
+   "fetched": "2026-10-27",
+   "source_note": "in-house code: quoted from the repository source file, read on the date given",
+   "role_in_study": "Production electrical model: supplies the tier-by-tier heat map to the CalculiX thermal solve at every electrothermal iteration and takes the temperatures back; the 48 V current is solved self-consistently.",
+   "status": "EXECUTED",
+   "lane": "production",
+   "evidence_paths": [
+    "scripts/final_closure_ledger.py",
+    "research/final_closure/electrical_ledger.json",
+    "research/final_closure/electrical_ledger.csv",
+    "research/final_closure/energy_audit.json"
+   ]
+  },
+  {
+   "name": "In-house E-T fixed-point driver",
+   "version_used": "this repository (HEAD 185beb5, working tree)",
+   "version_short": "in-house",
+   "developer": "this study (in-house Python in this repository)",
+   "what_it_is": "The Python driver that alternates the electrical ledger and the CalculiX thermal solve until temperature and loss stop changing, then runs the mechanics once.",
+   "official_url": null,
+   "quote": "ledger(T) -> tier-aware heat map -> conjugate thermal FE -> T (repeat to a fixed point)",
+   "quote_source": "scripts/final_closure_physical_etm.py",
+   "fetched": "2026-10-27",
+   "source_note": "in-house code: quoted from the repository source file, read on the date given",
+   "role_in_study": "Orchestrates the production chain: ledger(T) -> heat map -> CalculiX thermal -> T to the declared tolerances (ET_TOL_K, ET_TOL_P_REL in the script); then one CalculiX thermoelastic solve, the all-site joint search, and the hand-off of the critical joint to the local solder submodel.",
+   "status": "EXECUTED",
+   "lane": "production",
+   "evidence_paths": [
+    "scripts/final_closure_physical_etm.py",
+    "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json",
+    "research/final_closure/coupling_checks.json"
+   ]
+  },
+  {
+   "name": "In-house package builders + YAML configs",
+   "version_used": "this repository (HEAD 185beb5, working tree)",
+   "version_short": "in-house",
+   "developer": "this study (in-house Python and YAML in this repository)",
+   "what_it_is": "YAML files that describe the physical Z1 and Z2 packages, and the Python loader/builder that validates them and lays out layers, tiles and conductors.",
+   "official_url": null,
+   "quote": "So: ONE loader, ONE builder, and every physical number comes out of the YAML.",
+   "quote_source": "scripts/phase0nw/physical_package.py",
+   "fetched": "2026-10-27",
+   "source_note": "in-house code: quoted from the repository source file, read on the date given",
+   "role_in_study": "Inputs: the physical package descriptions from which the FE meshes, the electrical ledger and the package network take their geometry.",
+   "status": "EXECUTED",
+   "lane": "inputs",
+   "evidence_paths": [
+    "configs/phase0nx/z1_physical.yaml",
+    "configs/phase0nt/z2_2p4mm_cutout.yaml",
+    "scripts/phase0nw/physical_package.py",
+    "scripts/phase0nw/z1_package.py"
+   ]
+  },
+  {
+   "name": "In-house structured hex mesher (etm.mesh)",
+   "version_used": "this repository (HEAD 185beb5, working tree)",
+   "version_short": "in-house",
+   "developer": "this study (in-house Python in this repository)",
+   "what_it_is": "A Python mesher that builds conforming structured brick (hexahedral) meshes whose faces follow every material boundary and tile edge.",
+   "official_url": null,
+   "quote": "identical mesh for the thermal and structural passes, so the temperature field transfers node-to-node with zero interpolation error.",
+   "quote_source": "scripts/phase0b/etm/mesh.py",
+   "fetched": "2026-10-27",
+   "source_note": "in-house code: quoted from the repository source file, read on the date given",
+   "role_in_study": "Builds the C3D8 (thermal) / C3D8I (structural) meshes of the physical packages; production uses the h_xy = 1.1 mm grid with every in-plane interval split in two (r21), judged by a nested refinement study.",
+   "status": "EXECUTED",
+   "lane": "inputs",
+   "evidence_paths": [
+    "scripts/phase0b/etm/mesh.py",
+    "scripts/final_closure_physical_etm.py",
+    "research/final_closure/mesh_convergence.json"
+   ]
+  },
+  {
+   "name": "Gmsh",
+   "version_used": "Gmsh 4.15.2 (Python API, etm env)",
+   "version_short": "4.15.2",
+   "version_probe": [
+    {
+     "command": "/home/beams0/MGHARIB/envs/etm/bin/gmsh --version",
+     "output": "4.15.2"
+    },
+    {
+     "command": "python -c \"import gmsh; print(gmsh.__version__)\"",
+     "output": "4.15.2"
+    }
+   ],
+   "developer": "Christophe Geuzaine and Jean-François Remacle",
+   "what_it_is": "An open-source 3-D finite element mesh generator with a built-in CAD engine and post-processor.",
+   "official_url": "https://gmsh.info/",
+   "quote": "Gmsh is an open source 3D finite element mesh generator with a built-in CAD engine and post-processor.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://gmsh.info/",
+     "quote": "Gmsh is copyright (C) 1997-2026 by C. Geuzaine and J.-F. Remacle",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Generated the unstructured 2-D triangle meshes (MSH 2.2, three resolutions) of the package-RDL sheet for the MOOSE DC-analogue reference. Not used for the production meshes (etm.mesh), and not for the MOOSE thermal-column mesh, which in-house code writes directly in Gmsh's MSH 2.2 file format.",
+   "status": "EXECUTED",
+   "lane": "inputs",
+   "evidence_paths": [
+    "scripts/reference_tools/moose_pkg_rdl_reference.py",
+    "presentation/prelim_hvr/tool_evidence/pkg_rdl_moose_Z1/rdl.i",
+    "research/final_closure/reference_pkg_rdl_moose_Z1.json"
+   ]
+  },
+  {
+   "name": "MOOSE heat_transfer module (heat_transfer-opt)",
+   "version_used": "heat_transfer-opt, local build of MOOSE commit 09515f92aa (2026-07-09), in another user's tree",
+   "version_short": "build 09515f92aa",
+   "version_probe": [
+    {
+     "command": "/home/beams0/LPOPRYHO/projects/moose/modules/heat_transfer/heat_transfer-opt --version",
+     "output": "Application Version: 09515f92aa"
+    },
+    {
+     "command": "git -C /home/beams0/LPOPRYHO/projects/moose log -1 --format='%H %cd' --date=iso",
+     "output": "09515f92aa8fc9d0e40002cb00d00eb4d24261bb 2026-07-09 20:41:36 -0700"
+    }
+   ],
+   "developer": "Idaho National Laboratory (primary developer)",
+   "what_it_is": "An open-source, parallel finite element multiphysics framework; its heat transfer module implements the heat conduction equation and its boundary conditions.",
+   "official_url": "https://mooseframework.inl.gov/",
+   "quote": "An open-source, parallel finite element framework",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://github.com/idaholab/moose",
+     "quote": "The Multiphysics Object-Oriented Simulation Environment (MOOSE) is a finite-element, multiphysics framework primarily developed by Idaho National Laboratory.",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "https://mooseframework.inl.gov/modules/heat_transfer/index.html",
+     "quote": "The heat transfer module provides various implementations of the heat conduction equation, as well as associated boundary/interface conditions",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Independent open-source FE reference, never in the production path: (a) 3-D thermal column of one interior package cell (Z1, Z2) on MOOSE's own hex meshes at two resolutions, compared with CalculiX; (b) 2-D package-RDL DC conduction solved as the analogous heat-conduction problem on Gmsh meshes, compared with the in-house FV network.",
+   "status": "EXECUTED",
+   "lane": "reference",
+   "evidence_paths": [
+    "scripts/reference_tools/moose_thermal_column.py",
+    "scripts/reference_tools/moose_pkg_rdl_reference.py",
+    "research/final_closure/reference_thermal_column_moose_Z1.json",
+    "research/final_closure/reference_thermal_column_moose_Z2.json",
+    "research/final_closure/reference_pkg_rdl_moose_Z1.json",
+    "research/final_closure/reference_pkg_rdl_moose_Z2.json",
+    "presentation/prelim_hvr/tool_evidence/thermal_column_moose_Z1/column.i",
+    "presentation/prelim_hvr/tool_evidence/thermal_column_moose_Z1/log_tail.txt",
+    "presentation/prelim_hvr/tool_evidence/pkg_rdl_moose_Z1/rdl.i",
+    "presentation/prelim_hvr/tool_evidence/pkg_rdl_moose_Z1/moose_log_tail.txt"
+   ]
+  },
+  {
+   "name": "Ansys Electronics Desktop 2026 R1",
+   "version_used": "AEDT 2026 R1 (26.1, build 2026-02-02)",
+   "version_short": "2026 R1",
+   "version_probe": [
+    {
+     "command": "cat $ANSYSEM_ROOT261/product.info   (= /local/ansys/electronics/ansys_inc/v261/AnsysEM/product.info)",
+     "output": "AnsProductName=\"ANSYS Electromagnetics\" AnsProductVersion=\"26.1\" AnsProductBuildDate=\"2026-02-02 02:03:27\""
+    }
+   ],
+   "developer": "Ansys (product pages now served from ansys.synopsys.com; page footer: \"Copyright © 2026 Synopsys, Inc. and ANSYS, Inc.\")",
+   "what_it_is": "Ansys's desktop platform for electronics simulation that hosts solvers such as HFSS, Maxwell, Q3D Extractor and Icepak.",
+   "official_url": "https://www.ansys.com/products/electronics/ansys-electronics-desktop",
+   "fetched_final_url": "https://ansys.synopsys.com/products/electronics",
+   "quote": "The Ansys Electronics Desktop (AEDT) is a platform that enables true electronics system design.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://www.ansys.com/products/electronics/ansys-electronics-desktop",
+     "quote": "AEDT provides access to the Ansys gold-standard electromagnetics simulation solutions such as Ansys HFSS, Ansys Maxwell, Ansys Q3D Extractor, Ansys SIwave, and Ansys Icepak",
+     "fetched": "2026-10-27",
+     "fetched_final_url": "https://ansys.synopsys.com/products/electronics"
+    },
+    {
+     "url": "https://www.ansys.com/products/electronics/ansys-electronics-desktop",
+     "quote": "Copyright © 2026 Synopsys, Inc. and ANSYS, Inc.",
+     "fetched": "2026-10-27",
+     "fetched_final_url": "https://ansys.synopsys.com/products/electronics"
+    }
+   ],
+   "role_in_study": "Commercial platform hosting the Mechanical design used for every Ansys reference solve (4 cores: solves requesting more fail without HPC licences). Q3D Extractor and Maxwell DC conduction are installed but not licensed; Icepak is licensed but its matched benchmark was not run.",
+   "status": "EXECUTED",
+   "lane": "platform",
+   "evidence_paths": [
+    "scripts/reference_tools/aedt_common.py",
+    "presentation/prelim_hvr/tool_evidence/README.md",
+    "research/final_closure/accuracy_speed_matrix.json"
+   ],
+   "notes": "The ansys.com product URL for Electronics Desktop redirected to the Ansys Electronics overview page on ansys.synopsys.com; the quotes are from its 'Ansys Electronics Desktop (AEDT)' section."
+  },
+  {
+   "name": "AEDT Mechanical (thermal, structural)",
+   "version_used": "Mechanical design type of AEDT 2026 R1, solution types Thermal and Structural",
+   "version_short": "2026 R1",
+   "version_probe": [
+    {
+     "command": "cat $ANSYSEM_ROOT261/product.info   (= /local/ansys/electronics/ansys_inc/v261/AnsysEM/product.info)",
+     "output": "AnsProductName=\"ANSYS Electromagnetics\" AnsProductVersion=\"26.1\" AnsProductBuildDate=\"2026-02-02 02:03:27\""
+    }
+   ],
+   "developer": "Ansys (Mechanical design type inside Ansys Electronics Desktop)",
+   "what_it_is": "The Mechanical (thermal and structural finite element) application of Ansys Electronics Desktop, scripted through PyAEDT's Mechanical class.",
+   "official_url": "https://aedt.docs.pyansys.com/version/stable/API/_autosummary/ansys.aedt.core.mechanical.Mechanical.html",
+   "quote": "Provides the Mechanical application interface.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://aedt.docs.pyansys.com/version/stable/API/_autosummary/ansys.aedt.core.mechanical.Mechanical.html",
+     "quote": "Assign a heat generation boundary condition to an object list.",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "https://www.ansys.com/products/structures/ansys-mechanical",
+     "quote": "Ansys Mechanical is a best-in-class finite element solver with structural, thermal, acoustics, transient and nonlinear capabilities to improve your modeling.",
+     "fetched": "2026-10-27",
+     "fetched_final_url": "https://ansys.synopsys.com/products/structures/ansys-mechanical"
+    }
+   ],
+   "role_in_study": "Independent commercial FE reference (never production). Thermal: single-TSV DC resistance through the exact k<->sigma conduction analogy, TSV-tile k_z and k_xy, RDL-tier k_x and k_z unit cells, and the thermal column of one interior cell for Z1 and Z2. Structural: bilayer CTE-mismatch warpage from two solved temperature levels. Warm-up plus 3 timed repeats on 4 cores.",
+   "status": "EXECUTED",
+   "lane": "reference",
+   "evidence_paths": [
+    "scripts/reference_tools/aedt_rve_references.py",
+    "scripts/reference_tools/thermal_column_benchmark.py",
+    "scripts/reference_tools/mech_bilayer_benchmark.py",
+    "research/final_closure/reference_rve.json",
+    "research/final_closure/reference_rve_timing.json",
+    "research/final_closure/reference_thermal_column_Z1.json",
+    "research/final_closure/reference_thermal_column_Z2.json",
+    "research/final_closure/reference_mech_bilayer.json",
+    "presentation/prelim_hvr/tool_evidence/tsv_bulk/01_geometry.png",
+    "presentation/prelim_hvr/tool_evidence/thermal_column_Z1/01_geometry.png",
+    "presentation/prelim_hvr/tool_evidence/mech_bilayer/01_geometry.png"
+   ],
+   "notes": "The ansys.com 'Ansys Mechanical' page describes Ansys's Mechanical product line; this study ran the Mechanical design type inside AEDT through PyAEDT. That page is recorded for context only and is not used to characterise the AEDT design type."
+  },
+  {
+   "name": "PyAEDT (ansys.aedt.core)",
+   "version_used": "PyAEDT 1.1.0",
+   "version_short": "1.1.0",
+   "version_probe": [
+    {
+     "command": "python -c \"import ansys.aedt.core as a; print(a.__version__)\"",
+     "output": "1.1.0"
+    }
+   ],
+   "developer": "Ansys, PyAnsys project (documentation: \"© Copyright 2026 Synopsys, Inc. and ANSYS, Inc.\")",
+   "what_it_is": "A Python client library that drives the Ansys Electronics Desktop API so simulations can be scripted.",
+   "official_url": "https://aedt.docs.pyansys.com/version/stable/",
+   "quote": "PyAEDT is a Python client library that interacts directly with the Ansys Electronics Desktop (AEDT) API, enabling straightforward and efficient automation in your workflow.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://aedt.docs.pyansys.com/version/stable/",
+     "quote": "© Copyright 2026 Synopsys, Inc. and ANSYS, Inc. All rights reserved.",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Builds, meshes, solves and post-processes every AEDT Mechanical reference model from Python; geometry images are exported from the same sessions with the native ExportModelImageToFile call.",
+   "status": "EXECUTED",
+   "lane": "reference",
+   "evidence_paths": [
+    "scripts/reference_tools/aedt_common.py",
+    "scripts/reference_tools/aedt_rve_references.py",
+    "scripts/reference_tools/thermal_column_benchmark.py",
+    "scripts/reference_tools/mech_bilayer_benchmark.py"
+   ],
+   "notes": "The fetched documentation is the 'stable' PyAEDT 1.9.0 docs; the study used 1.1.0."
+  },
+  {
+   "name": "Closed-form references (in-house)",
+   "version_used": "this repository (HEAD 185beb5, working tree)",
+   "version_short": "in-house",
+   "developer": "this study (in-house Python in this repository)",
+   "what_it_is": "Textbook formulas coded in Python, used as hand-checks on the FE solvers.",
+   "official_url": null,
+   "quote": "The Timoshenko bimaterial curvature is reported as a third, closed-form check",
+   "quote_source": "scripts/reference_tools/mech_bilayer_benchmark.py",
+   "fetched": "2026-10-27",
+   "source_note": "in-house code: quoted from the repository source file, read on the date given",
+   "role_in_study": "Timoshenko bimaterial curvature as the closed-form check of the CalculiX bilayer warpage (stage mech_bilayer_closed_form of the accuracy matrix).",
+   "status": "EXECUTED",
+   "lane": "reference",
+   "evidence_paths": [
+    "scripts/reference_tools/mech_bilayer_benchmark.py",
+    "research/final_closure/reference_mech_bilayer.json",
+    "research/final_closure/accuracy_speed_matrix.json"
+   ]
+  },
+  {
+   "name": "Ansys Q3D Extractor",
+   "version_used": "installed with AEDT 2026 R1; not licensed on this host",
+   "version_short": "2026 R1",
+   "version_probe": [
+    {
+     "command": "cat $ANSYSEM_ROOT261/product.info   (= /local/ansys/electronics/ansys_inc/v261/AnsysEM/product.info)",
+     "output": "AnsProductName=\"ANSYS Electromagnetics\" AnsProductVersion=\"26.1\" AnsProductBuildDate=\"2026-02-02 02:03:27\""
+    }
+   ],
+   "developer": "Ansys",
+   "what_it_is": "An Ansys tool that computes resistance, inductance, capacitance and conductance (RLCG) of interconnect structures from quasi-static field simulations.",
+   "official_url": "https://www.ansys.com/products/electronics/ansys-q3d-extractor",
+   "fetched_final_url": "https://ansys.synopsys.com/products/electronics/ansys-q3d-extractor",
+   "quote": "Ansys Q3D Extractor efficiently performs the 3D and 2D quasi-static electromagnetic field simulations required for the extraction of RLCG parameters from an interconnect structure.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://www.ansys.com/products/electronics/ansys-q3d-extractor",
+     "quote": "Copyright © 2026 Synopsys, Inc. and ANSYS, Inc.",
+     "fetched": "2026-10-27",
+     "fetched_final_url": "https://ansys.synopsys.com/products/electronics/ansys-q3d-extractor"
+    }
+   ],
+   "role_in_study": "Intended DC-resistance reference (single TSV, package RDL sheet). The scripts are kept READY_NOT_EXECUTED: the desktop builds the models but the solve fails the licence check. No Q3D result appears anywhere in the repository.",
+   "status": "NOT EXECUTED IN THIS STUDY — LICENSE UNAVAILABLE",
+   "lane": "not_executed",
+   "evidence_paths": [
+    "scripts/reference_tools/q3d_dc_reference.py",
+    "scripts/reference_tools/q3d_smoke.py",
+    "presentation/prelim_hvr/tool_evidence/README.md"
+   ]
+  },
+  {
+   "name": "Ansys Maxwell (DC conduction)",
+   "version_used": "installed with AEDT 2026 R1; DC conduction not licensed on this host",
+   "version_short": "2026 R1",
+   "version_probe": [
+    {
+     "command": "cat $ANSYSEM_ROOT261/product.info   (= /local/ansys/electronics/ansys_inc/v261/AnsysEM/product.info)",
+     "output": "AnsProductName=\"ANSYS Electromagnetics\" AnsProductVersion=\"26.1\" AnsProductBuildDate=\"2026-02-02 02:03:27\""
+    }
+   ],
+   "developer": "Ansys",
+   "what_it_is": "An Ansys electromagnetic field solver for electromechanical devices and power-conversion systems.",
+   "official_url": "https://www.ansys.com/products/electronics/ansys-maxwell",
+   "fetched_final_url": "https://ansys.synopsys.com/products/electronics/ansys-maxwell",
+   "quote": "Ansys Maxwell is a fast, easy-to-use, and high-fidelity electromagnetic field solver for electromechanical devices, electrical power conversion & power systems.",
+   "fetched": "2026-10-27",
+   "role_in_study": "Considered as a DC-conduction reference; licence probes show it is not licensed, so AEDT Mechanical thermal is used through the exact conduction analogy instead.",
+   "status": "NOT EXECUTED IN THIS STUDY — LICENSE UNAVAILABLE",
+   "lane": "not_executed",
+   "evidence_paths": [
+    "presentation/prelim_hvr/tool_evidence/README.md",
+    "scripts/reference_tools/aedt_licence_probe.py",
+    "scripts/reference_tools/aedt_licence_probe2.py",
+    "scripts/reference_tools/aedt_licence_probe3.py",
+    "scripts/reference_tools/aedt_common.py"
+   ]
+  },
+  {
+   "name": "Ansys Icepak",
+   "version_used": "installed and licensed with AEDT 2026 R1; not run for any study result",
+   "version_short": "2026 R1",
+   "version_probe": [
+    {
+     "command": "cat $ANSYSEM_ROOT261/product.info   (= /local/ansys/electronics/ansys_inc/v261/AnsysEM/product.info)",
+     "output": "AnsProductName=\"ANSYS Electromagnetics\" AnsProductVersion=\"26.1\" AnsProductBuildDate=\"2026-02-02 02:03:27\""
+    }
+   ],
+   "developer": "Ansys",
+   "what_it_is": "An Ansys electronics-cooling simulator (fluid flow and heat transfer) integrated in Electronics Desktop.",
+   "official_url": "https://www.ansys.com/products/electronics/ansys-icepak",
+   "fetched_final_url": "https://ansys.synopsys.com/products/electronics/ansys-icepak",
+   "quote": "Ansys Icepak delivers high fidelity electrothermal and system level thermal simulation, along with structural analysis, using industry leading CFD and FEA solvers.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://www.ansys.com/products/electronics/ansys-icepak",
+     "quote": "Ansys Icepak simulates electronics cooling strategies and overall electronic dynamic thermal management for IC packages, PCB and electronic assemblies.",
+     "fetched": "2026-10-27",
+     "fetched_final_url": "https://ansys.synopsys.com/products/electronics/ansys-icepak",
+     "quote_location": "meta description"
+    }
+   ],
+   "role_in_study": "Independent reference for the production cold-plate correlation: a conjugate CFD of one microchannel half-pitch (silicon fins, laminar water) at the production heat load; the correlation's temperature rise is 16.5 % above the CFD value (conservative), with a mesh change below 0.4 %.",
+   "status": "EXECUTED",
+   "status_detail": "Executed in the final closure: the matched conjugate-CFD benchmark of one cold-plate channel half-pitch, four mesh levels (research/final_closure/reference_cooling_icepak.json). An older manuscript sentence about a discarded earlier attempt refers to a different, historical setup.",
+   "lane": "not_executed",
+   "evidence_paths": [
+    "research/final_closure/reference_cooling_icepak.json",
+    "presentation/prelim_hvr/tool_evidence/cooling_icepak/README.md",
+    "scripts/reference_tools/icepak_cooling_benchmark.py"
+   ]
+  },
+  {
+   "name": "Ansys HFSS",
+   "version_used": "AEDT 2026 R1 (earlier-phase attempt only)",
+   "version_short": "2026 R1",
+   "version_probe": [
+    {
+     "command": "cat $ANSYSEM_ROOT261/product.info   (= /local/ansys/electronics/ansys_inc/v261/AnsysEM/product.info)",
+     "output": "AnsProductName=\"ANSYS Electromagnetics\" AnsProductVersion=\"26.1\" AnsProductBuildDate=\"2026-02-02 02:03:27\""
+    }
+   ],
+   "developer": "Ansys",
+   "what_it_is": "An Ansys 3-D electromagnetic simulator for high-frequency electronic products.",
+   "official_url": "https://www.ansys.com/products/electronics/ansys-hfss",
+   "fetched_final_url": "https://ansys.synopsys.com/products/electronics/ansys-hfss",
+   "quote": "Ansys HFSS is a 3D electromagnetic simulation software solution for designing and simulating high-frequency electronic products such as antennas, RF and microwave components, high-speed interconnects, filters, connectors, IC components and packages and printed circuit boards.",
+   "fetched": "2026-10-27",
+   "role_in_study": "Not part of the final-closure lineage. The manuscript states that a full-wave check of the via AC resistance was attempted and did not converge within budget, and claims no HFSS result; via frequency dependence comes from the analytic skin-depth model.",
+   "status": "NOT EXECUTED IN THIS STUDY",
+   "status_detail": "An earlier-phase HFSS script and outputs exist (scripts/phase0e/em_hfss.py, results/phase0e/aedt/); none is used in the final-closure results.",
+   "lane": "not_executed",
+   "evidence_paths": [
+    "manuscript/VALIDATION_MATRIX.md",
+    "manuscript/ETM_DVPD_JOURNAL_MANUSCRIPT.tex",
+    "scripts/phase0e/em_hfss.py"
+   ]
+  },
+  {
+   "name": "Matplotlib",
+   "version_used": "Matplotlib 3.10.8",
+   "version_short": "3.10.8",
+   "version_probe": [
+    {
+     "command": "python -c \"import matplotlib; print(matplotlib.__version__)\"",
+     "output": "3.10.8"
+    }
+   ],
+   "developer": "The Matplotlib development team (community project, NumFOCUS fiscally sponsored)",
+   "what_it_is": "A Python library for static, animated and interactive plots.",
+   "official_url": "https://matplotlib.org/",
+   "quote": "Matplotlib is a comprehensive library for creating static, animated, and interactive visualizations in Python.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://matplotlib.org/",
+     "quote": "© 2012 – 2026 The Matplotlib development team",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "https://matplotlib.org/",
+     "quote": "NumFOCUS Fiscally Sponsored Project",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Draws every conventional chart: the deck charts in presentation/prelim_hvr/figs (all but tool_map.svg carry 'Matplotlib v3.10.8'), the evidence comparison bars and the MOOSE field contour images (PNG metadata 'Matplotlib version3.10.8'), and the manuscript figure. It draws solver results; it is not a solver.",
+   "status": "EXECUTED",
+   "lane": "visualisation",
+   "evidence_paths": [
+    "scripts/prelim_make_figs.py",
+    "scripts/prelim_make_figs_final.py",
+    "scripts/final_closure_evidence.py",
+    "scripts/final_closure_manuscript_figure.py",
+    "presentation/prelim_hvr/figs/final_accuracy_speed.svg",
+    "presentation/prelim_hvr/tool_evidence/thermal_column_moose_Z1/04_field.png"
+   ]
+  },
+  {
+   "name": "VTK",
+   "version_used": "VTK 9.6.2 (Python)",
+   "version_short": "9.6.2",
+   "version_probe": [
+    {
+     "command": "python -c \"import vtk; print(vtk.vtkVersion.GetVTKVersion())\"",
+     "output": "9.6.2"
+    },
+    {
+     "command": "env -u DISPLAY python -c '<offscreen sphere render>'",
+     "output": "vtkXOpenGLRenderWindow: bad X server connection -> render window class: vtkEGLRenderWindow; PNG written"
+    }
+   ],
+   "developer": "Kitware, Inc. (open source; VTK is part of Kitware's supported platforms)",
+   "what_it_is": "Open-source software for manipulating and displaying scientific data, with 3-D rendering and data readers.",
+   "official_url": "https://vtk.org/",
+   "quote": "The Visualization Toolkit (VTK) is open source software for manipulating and displaying scientific data.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://vtk.org/",
+     "quote": "VTK is part of Kitware’s collection of supported platforms for software development.",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "https://www.kitware.com/platforms/",
+     "quote": "The Visualization Toolkit (VTK) transforms data into interactive graphical representations that can be used to understand, query, modify, and transform complex information.",
+     "fetched": "2026-10-27",
+     "fetched_final_url": "https://www.kitware.com/open-source/"
+    }
+   ],
+   "role_in_study": "Reads MOOSE's Exodus result files (vtkExodusIIReader, last stored time step) and RENDERS two kinds of figure: the annotated MOOSE package-RDL field (scripts/visualize_rdl_geometry.py; field pixels are VTK's own output, annotations an overlay) and the exact-geometry re-renders of the AEDT reference models (scripts/reference_tools/aedt_geometry_rerender.py). The older tool-evidence field images are drawn by Matplotlib from VTK-read arrays. It draws solver results; it is not a solver.",
+   "status": "EXECUTED",
+   "lane": "visualisation",
+   "evidence_paths": [
+    "presentation/prelim_hvr/figs/rdl_reference_annotated_Z2.png",
+    "presentation/prelim_hvr/figs/rerender_thermal_column_Z2.json",
+    "presentation/prelim_hvr/tool_evidence/pkg_rdl_moose_Z2/04_field.png",
+    "presentation/prelim_hvr/tool_evidence/pkg_rdl_moose_Z2/06_annotated_render.json",
+    "presentation/prelim_hvr/tool_evidence/thermal_column_moose_Z1/04_field.png",
+    "scripts/final_closure_evidence.py",
+    "scripts/reference_tools/aedt_geometry_rerender.py",
+    "scripts/visualize_rdl_geometry.py"
+   ]
+  },
+  {
+   "name": "Native SVG via Python",
+   "version_used": "SVG 1.1 text written by Python (scripts/figstyle.py helpers; inline SVG in scripts/prelim_build_deck.py)",
+   "version_short": "SVG 1.1",
+   "version_probe": [
+    {
+     "command": "grep -c \"<svg\" scripts/prelim_build_deck.py",
+     "output": "6"
+    }
+   ],
+   "developer": "this study writes the SVG; the SVG 1.1 format is a W3C Recommendation",
+   "what_it_is": "Diagrams written directly as SVG, the W3C XML language for two-dimensional vector graphics, by Python scripts without a drawing library.",
+   "official_url": "https://www.w3.org/TR/SVG11/",
+   "quote": "This specification defines the features and syntax for Scalable Vector Graphics (SVG) Version 1.1, a modularized language for describing two-dimensional vector and mixed vector/raster graphics in XML.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://www.w3.org/TR/SVG11/",
+     "quote": "W3C Recommendation 16 August 2011",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "repo_quote": {
+    "path": "scripts/figstyle.py",
+    "quote": "SVG helpers write plain SVG 1.1 text (no external library)"
+   },
+   "role_in_study": "Schematic diagrams: the inline SVG diagrams of the deck (scripts/prelim_build_deck.py) and presentation/prelim_hvr/figs/tool_map.svg (scripts/final_closure_tool_map.py with scripts/figstyle.py). It draws diagrams; it is not a solver.",
+   "status": "EXECUTED",
+   "lane": "visualisation",
+   "evidence_paths": [
+    "scripts/prelim_build_deck.py",
+    "scripts/figstyle.py",
+    "scripts/final_closure_tool_map.py",
+    "presentation/prelim_hvr/figs/tool_map.svg",
+    "presentation/prelim_hvr/index.html"
+   ]
+  },
+  {
+   "name": "Reveal.js",
+   "version_used": "reveal.js 5.1.0 (vendored)",
+   "version_short": "5.1.0",
+   "version_probe": [
+    {
+     "command": "grep '\"version\"' presentation/prelim_hvr/vendor/reveal.js/package.json",
+     "output": "\"version\": \"5.1.0\","
+    }
+   ],
+   "developer": "Hakim El Hattab and contributors",
+   "what_it_is": "An open-source HTML presentation framework.",
+   "official_url": "https://revealjs.com/",
+   "quote": "reveal.js is an open source HTML presentation framework.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://revealjs.com/",
+     "quote": "Created by Hakim El Hattab and contributors",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Slide framework of the preliminary-exam deck (index.html); vendored copy in presentation/prelim_hvr/vendor, no node_modules.",
+   "status": "EXECUTED",
+   "lane": "visualisation",
+   "evidence_paths": [
+    "presentation/prelim_hvr/vendor/reveal.js/package.json",
+    "presentation/prelim_hvr/vendor/reveal.js/dist/reveal.js",
+    "presentation/prelim_hvr/index.html",
+    "scripts/prelim_build_deck.py"
+   ]
+  },
+  {
+   "name": "Google Chrome (headless)",
+   "version_used": "Google Chrome 151.0.7922.71",
+   "version_short": "151",
+   "version_probe": [
+    {
+     "command": "google-chrome --version",
+     "output": "Google Chrome 151.0.7922.71"
+    },
+    {
+     "command": "pdfinfo presentation/prelim_hvr/HVR_OPT_Prelim.pdf",
+     "output": "Creator: ... HeadlessChrome/151.0.0.0 ...; Producer: Skia/PDF m151"
+    }
+   ],
+   "developer": "Google",
+   "what_it_is": "Google's web browser; its headless mode runs it without a visible window and can print a page to PDF.",
+   "official_url": "https://developer.chrome.com/docs/chromium/headless",
+   "fetched_final_url": "https://developer.chrome.com/docs/automation-and-testing/headless",
+   "quote": "With Chrome Headless mode, you can run the browser in an unattended environment, without any visible UI.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://developer.chrome.com/docs/automation-and-testing/headless-cli",
+     "quote": "The --print-to-pdf flag saves the target page as a PDF named output.pdf in the current working directory.",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "https://www.google.com/chrome/",
+     "quote": "Chrome is the official web browser from Google, built to be fast, secure, and customizable.",
+     "fetched": "2026-10-27",
+     "quote_location": "meta description"
+    }
+   ],
+   "role_in_study": "Prints print.html to presentation/prelim_hvr/HVR_OPT_Prelim.pdf (--headless=new --print-to-pdf --no-pdf-header-footer). It renders the slides; it is not a solver.",
+   "status": "EXECUTED",
+   "lane": "visualisation",
+   "evidence_paths": [
+    "scripts/prelim_qa_slides.py",
+    "presentation/prelim_hvr/HVR_OPT_Prelim.pdf",
+    "presentation/prelim_hvr/print.html"
+   ]
+  },
+  {
+   "name": "rsvg-convert (librsvg)",
+   "version_used": "rsvg-convert 2.62.3 (etm env)",
+   "version_short": "2.62.3",
+   "version_probe": [
+    {
+     "command": "/home/beams0/MGHARIB/envs/etm/bin/rsvg-convert --version",
+     "output": "rsvg-convert version 2.62.3"
+    }
+   ],
+   "developer": "the GNOME project's librsvg",
+   "what_it_is": "The command-line renderer of librsvg, a library that renders SVG images; it turns SVG into PNG (or PDF/PS).",
+   "official_url": "https://gitlab.gnome.org/GNOME/librsvg",
+   "quote": "A library to render SVG images to Cairo surfaces. GNOME uses this to render SVG icons.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://gitlab.gnome.org/GNOME/librsvg/-/raw/main/rsvg-convert.rst",
+     "quote": "``rsvg-convert`` renders SVG documents into PNG raster images, or converts them to PDF or PS as vector objects.",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "https://gitlab.gnome.org/GNOME/librsvg/-/raw/main/README.md",
+     "quote": "A small library to render Scalable Vector Graphics ([SVG][svg]), associated with the [GNOME Project][gnome].",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "SVG-to-PNG rasteriser: renders figs/tool_map.svg for visual checks (scripts/final_closure_tool_map.py --png) and is called by the in-progress, untracked scripts/final_closure_package_figs.py for its package figure. No tracked script calls it; scripts/figstyle.py names it as a target renderer. It draws; it is not a solver.",
+   "status": "EXECUTED",
+   "lane": "visualisation",
+   "evidence_paths": [
+    "scripts/final_closure_tool_map.py",
+    "scripts/figstyle.py",
+    "scripts/final_closure_package_figs.py"
+   ]
+  },
+  {
+   "name": "pdfLaTeX + BibTeX (TeX Live 2018)",
+   "version_used": "pdfTeX 3.14159265-2.6-1.40.19, BibTeX 0.99d (TeX Live 2018)",
+   "version_short": "TeX Live 2018",
+   "version_probe": [
+    {
+     "command": "pdflatex --version",
+     "output": "pdfTeX 3.14159265-2.6-1.40.19 (TeX Live 2018)"
+    },
+    {
+     "command": "bibtex --version",
+     "output": "BibTeX 0.99d (TeX Live 2018)"
+    }
+   ],
+   "developer": "distributed in TeX Live, which is supported by the TeX Users Group",
+   "what_it_is": "TeX document-production programs from the TeX Live distribution.",
+   "official_url": "https://tug.org/texlive/",
+   "quote": "TeX Live is intended to be a straightforward way to get up and running with the TeX document production system.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://tug.org/texlive/",
+     "quote": "TeX Live is supported by the TeX Users Group and many other user groups around the world.",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Builds the journal manuscript PDF (pdflatex, bibtex, pdflatex twice) in scripts/final_closure_rebuild.sh. It typesets; it is not a solver.",
+   "status": "EXECUTED",
+   "lane": "documents",
+   "evidence_paths": [
+    "scripts/final_closure_rebuild.sh",
+    "manuscript/ETM_DVPD_JOURNAL_MANUSCRIPT.tex",
+    "manuscript/ETM_DVPD_JOURNAL_MANUSCRIPT.log"
+   ]
+  },
+  {
+   "name": "Python (CPython)",
+   "version_used": "Python 3.12.14 (/home/beams0/MGHARIB/envs/etm)",
+   "version_short": "3.12.14",
+   "version_probe": [
+    {
+     "command": "python --version",
+     "output": "Python 3.12.14"
+    }
+   ],
+   "developer": "the Python language, stewarded by the Python Software Foundation",
+   "what_it_is": "A general-purpose programming language.",
+   "official_url": "https://www.python.org/",
+   "quote": "Python is a programming language that lets you work quickly and integrate systems more effectively.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://www.python.org/",
+     "quote": "The mission of the Python Software Foundation is to promote, protect, and advance the Python programming language",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Language and runtime of all in-house solvers, drivers, reference scripts and figure/deck builders.",
+   "status": "EXECUTED",
+   "lane": "support",
+   "evidence_paths": [
+    "manuscript/COMPUTATIONAL_SETUP.md",
+    "scripts/final_closure_rebuild.sh"
+   ]
+  },
+  {
+   "name": "NumPy",
+   "version_used": "NumPy 2.5.2",
+   "version_short": "2.5.2",
+   "version_probe": [
+    {
+     "command": "python -c \"import numpy; print(numpy.__version__)\"",
+     "output": "2.5.2"
+    }
+   ],
+   "developer": "an open-source community, developed publicly on GitHub",
+   "what_it_is": "The fundamental Python package for N-dimensional arrays and numerical computing.",
+   "official_url": "https://numpy.org/",
+   "quote": "The fundamental package for scientific computing with Python",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://numpy.org/",
+     "quote": "Distributed under a liberal BSD license, NumPy is developed and maintained publicly on GitHub by a vibrant, responsive, and diverse community.",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Array arithmetic in every in-house solver, driver and figure script.",
+   "status": "EXECUTED",
+   "lane": "support",
+   "evidence_paths": [
+    "scripts/final_closure_ledger.py",
+    "scripts/final_closure_physical_etm.py",
+    "manuscript/COMPUTATIONAL_SETUP.md"
+   ]
+  },
+  {
+   "name": "SciPy",
+   "version_used": "SciPy 1.16.3",
+   "version_short": "1.16.3",
+   "version_probe": [
+    {
+     "command": "python -c \"import scipy; print(scipy.__version__)\"",
+     "output": "1.16.3"
+    }
+   ],
+   "developer": "an open-source community, developed publicly on GitHub",
+   "what_it_is": "A Python library of scientific algorithms (linear algebra, interpolation, optimisation and more).",
+   "official_url": "https://scipy.org/",
+   "quote": "SciPy provides algorithms for optimization, integration, interpolation, eigenvalue problems, algebraic equations, differential equations, statistics and many other classes of problems.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://scipy.org/",
+     "quote": "Distributed under a liberal BSD license, SciPy is developed and maintained publicly on GitHub by a vibrant, responsive, and diverse community.",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Sparse direct linear solves (scipy.sparse.linalg.spsolve) inside the package-network FV solver and the electrical ledger; LinearNDInterpolator in the joint search of the physical ETM.",
+   "status": "EXECUTED",
+   "lane": "support",
+   "evidence_paths": [
+    "scripts/phase0nw/pkg_rdl_refined.py",
+    "scripts/phase0nw/pkg_rdl_network.py",
+    "scripts/final_closure_ledger.py",
+    "scripts/final_closure_physical_etm.py"
+   ]
+  },
+  {
+   "name": "ParaView",
+   "version_used": "not installed",
+   "version_short": "—",
+   "version_probe": [
+    {
+     "command": "command -v paraview pvpython pvbatch",
+     "output": "(nothing found)"
+    },
+    {
+     "command": "python -c \"import paraview\"",
+     "output": "ModuleNotFoundError: No module named 'paraview'"
+    }
+   ],
+   "developer": "Kitware, Inc.",
+   "what_it_is": "Kitware's open-source post-processing visualisation application, which uses VTK as its data processing and rendering engine.",
+   "official_url": "https://www.paraview.org/",
+   "quote": "ParaView is the world’s leading open source post-processing visualization engine.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://www.paraview.org/",
+     "quote": "Kitware–the developers behind ParaView–also offers Customization services.",
+     "fetched": "2026-10-27"
+    },
+    {
+     "url": "https://www.paraview.org/about/",
+     "quote": "Under the hood, ParaView uses the Visualization Toolkit (VTK) as the data processing and rendering engine and has a user interface written using Qt®.",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Not used (not installed). VTK, ParaView's engine, was used directly as an Exodus reader.",
+   "status": "NOT INSTALLED",
+   "lane": "considered",
+   "evidence_paths": []
+  },
+  {
+   "name": "Graphviz",
+   "version_used": "dot 2.40.1 installed; not used",
+   "version_short": "2.40.1",
+   "version_probe": [
+    {
+     "command": "dot -V",
+     "output": "dot - graphviz version 2.40.1 (0)"
+    }
+   ],
+   "developer": "The Graphviz Authors",
+   "what_it_is": "Open-source graph visualisation software that lays out diagrams of abstract graphs and networks.",
+   "official_url": "https://graphviz.org/",
+   "quote": "Graphviz is open source graph visualization software.",
+   "fetched": "2026-10-27",
+   "supplementary_sources": [
+    {
+     "url": "https://graphviz.org/",
+     "quote": "The Graphviz Authors",
+     "fetched": "2026-10-27"
+    }
+   ],
+   "role_in_study": "Installed but no repository script calls it; diagrams are hand-placed native SVG instead.",
+   "status": "NOT EXECUTED IN THIS STUDY",
+   "lane": "considered",
+   "evidence_paths": []
+  }
+ ]
+}

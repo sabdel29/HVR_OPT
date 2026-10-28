@@ -1,0 +1,93 @@
+{
+ "source": "research/final_closure/reference_pkg_rdl_moose_Z2.json",
+ "source_sha256": "793a9860328a700ef779586e8c18c1eeb560223c03b4d5c330eff85fa3006b20",
+ "generated_by": "scripts/visualize_rdl_geometry.py render (values copied, not typed)",
+ "arch": "Z2",
+ "observables_at": "1 A total rail current (linear problem)",
+ "production": {
+  "label": "production finite-volume sheet, level L3",
+  "R_eff_ohm": 0.0007984962994387148,
+  "max_pad_drop_V": 0.0011971579525166347,
+  "n_control_volumes": 986049,
+  "runtime_s": {
+   "median_s": 24.38913106918335,
+   "min_s": 22.478031158447266,
+   "max_s": 25.83769464492798,
+   "repeats": 3,
+   "walls_s": [
+    22.478031158447266,
+    25.83769464492798,
+    24.38913106918335
+   ]
+  },
+  "cores": 1
+ },
+ "reference": {
+  "label": "MOOSE heat_transfer-opt FEM, mesh m3",
+  "R_eff_ohm": 0.000797632140324044,
+  "max_pad_drop_V": 0.0011963986819507,
+  "n_elements": 847378,
+  "h_fine_mm": 0.01,
+  "runtime_s": {
+   "median_s": 60.84171271324158,
+   "min_s": 54.776777505874634,
+   "max_s": 77.87951469421387,
+   "repeats": 3,
+   "walls_s": [
+    54.776777505874634,
+    60.84171271324158,
+    77.87951469421387
+   ]
+  },
+  "mpi_ranks": 1,
+  "R_eff_extrapolated_ohm": 0.0007978898627772113
+ },
+ "rel_err_R_eff": 0.0010834055838318485,
+ "rel_err_max_drop": 0.0006346300588503109,
+ "rel_err_R_eff_vs_extrapolated": 0.0007600505906826346,
+ "runtime_ratio_moose_over_production": 2.494624041367244,
+ "reference_mesh_sensitivity": {
+  "meshes": {
+   "m2_h_fine_mm": 0.02,
+   "m3_h_fine_mm": 0.01,
+   "m2_n_elements": 216384,
+   "m3_n_elements": 847378
+  },
+  "R_eff_ohm": {
+   "rel_change_m2_to_m3": 0.0007815683821683671,
+   "production_rel_err_vs_m3": 0.0010834055838318485,
+   "error_over_mesh_change": 1.3861942327120123,
+   "difference_exceeds_reference_mesh_change": true
+  },
+  "max_pad_drop_V": {
+   "rel_change_m2_to_m3": 0.0005092545922957588,
+   "production_rel_err_vs_m3": 0.0006346300588503109,
+   "error_over_mesh_change": 1.2461940814109302,
+   "difference_exceeds_reference_mesh_change": true
+  }
+ },
+ "timing_method": "1 warm-up + 3 timed repeats, median and range",
+ "load_average": {
+  "before": [
+   223.1,
+   223.2,
+   201.4
+  ],
+  "after": [
+   159.6,
+   191.5,
+   196.8
+  ]
+ },
+ "display": {
+  "R_eff_production_mOhm": "0.7985",
+  "R_eff_moose_mOhm": "0.7976",
+  "rel_err_R_eff_pct": "+0.108",
+  "max_pad_drop_production_mV": "1.1972",
+  "max_pad_drop_moose_mV": "1.1964",
+  "rel_err_max_drop_pct": "+0.063",
+  "runtime_production_median_s": "24.4",
+  "runtime_moose_median_s": "60.8",
+  "runtime_ratio": "2.49"
+ }
+}

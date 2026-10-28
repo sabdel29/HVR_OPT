@@ -1,0 +1,133 @@
+{
+  "source_image": "presentation/prelim_hvr/tool_evidence/thermal_column_Z2/01_geometry.png",
+  "source_sha256": "27459fe5bf756430f8a88035fde4a445ef631fb3c941adab2cad35ef52f2953a",
+  "source_size_px": [
+    1400,
+    900
+  ],
+  "crop_box_px_xywh": [
+    38,
+    4,
+    1362,
+    896
+  ],
+  "crop_rule": "bounding box of all non-background pixels (model, Ansys mark, axis triad, ruler, CS label) + 10 px pad",
+  "bands_added": "title band above and key band below, plus white side bands where labels need room; all outside the screenshot",
+  "labels": [
+    {
+      "text": "converter tiers \u00b7 1.96 mm / tile: hvr_effective, rdl_tier, / silicon  \u00b7  gap: underfill_homog",
+      "source_fields": [
+        "setup.json layers[0] (conv_7_gan_hs_EPC2014C): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[1] (conv_6_interlayer_rdl): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[2] (conv_5_flying_caps): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[3] (conv_4_interlayer_rdl): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[4] (conv_3_gan_ls_EPC2057): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[5] (conv_2_interlayer_rdl): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[6] (conv_1_inductor_plus_cout): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[7] (conv_0_land_side_attach_rdl): z0, z1, mat_tile, mat_gap"
+      ],
+      "kind": "material stack"
+    },
+    {
+      "text": "substrate \u00b7 300 \u00b5m / tile: tsv_tile  \u00b7  gap: silicon",
+      "source_fields": [
+        "setup.json layers[8] (sub_lower): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[9] (tile_band): z0, z1, mat_tile, mat_gap"
+      ],
+      "kind": "material stack"
+    },
+    {
+      "text": "die (silicon) \u00b7 300 \u00b5m / material: silicon",
+      "source_fields": [
+        "setup.json layers[12] (die): z0, z1, mat_tile, mat_gap"
+      ],
+      "kind": "material stack"
+    },
+    {
+      "text": "TIM \u00b7 50 \u00b5m / material: tim",
+      "source_fields": [
+        "setup.json layers[13] (tim): z0, z1, mat_tile, mat_gap"
+      ],
+      "kind": "material stack"
+    },
+    {
+      "text": "COOLED FACE: top of TIM / film h = 115 553 W/m\u00b2K / to fluid at 30.06 \u00b0C",
+      "source_fields": [
+        "setup.json h_top",
+        "setup.json T_fluid_C",
+        "setup.json layers[-1] (tim) z1"
+      ],
+      "kind": "boundary condition / source"
+    },
+    {
+      "text": "HEAT INPUT: die layer / 20.41 W in the whole die volume",
+      "source_fields": [
+        "setup.json sources[layers == ['die']].W",
+        "setup.json layers (die) z0, z1"
+      ],
+      "kind": "boundary condition / source"
+    },
+    {
+      "text": "HEAT INPUT: converter tile / GaN LS 2.02 W \u00b7 GaN HS 0.42 W / inductor + C_out 0.30 W \u00b7 RDL tiers 0.08 W / flying caps 0.03 W / + 0.012 W in smaller tile tiers",
+      "source_fields": [
+        "setup.json sources[in_tile == true].W, layers",
+        "setup.json tile_mm"
+      ],
+      "kind": "boundary condition / source"
+    },
+    {
+      "text": "SIDES: adiabatic / (README.md in this folder)",
+      "source_fields": [
+        "README.md: 'adiabatic sides'"
+      ],
+      "kind": "boundary condition / source"
+    },
+    {
+      "text": "UNDERSIDE (hidden): no film / (bottom_film = false)",
+      "source_fields": [
+        "setup.json bottom_film = false"
+      ],
+      "kind": "boundary condition / source"
+    }
+  ],
+  "setup_json_sha256": "c84a139a6d904a5b42fc1103b25180252cdc8c6ba7efcb33eb9755011a589b77",
+  "verification": {
+    "overlay_fraction_of_crop": 0.09810857850849591,
+    "untouched_pixels_identical_to_original": true,
+    "label_box_collisions": [],
+    "labels_clipped": 0,
+    "side_bands_px": {
+      "left": 52,
+      "right": 118
+    },
+    "screenshot_offset_in_output_px": [
+      52,
+      92
+    ],
+    "thin_layers_not_bracketed": [
+      "z2_top_rdl",
+      "interface"
+    ]
+  },
+  "generator": "scripts/reference_tools/aedt_annotate_screenshots.py",
+  "output_sha256": "09cefe5b736f8f736a6cf66fb6430bab4c42e73b4b7ec2f3a3bb5d229b025ff8",
+  "projection": {
+    "model": "orthographic isometric, viewer along (+1,-1,+1)",
+    "fitted_px_per_mm": 170.89029319995524,
+    "cu_px": 699.4999999999999,
+    "cv_px": 359.292988617915,
+    "fit_residual_px": [
+      0.01936290906235172,
+      -0.019362909062465405,
+      -0.0183080410624612,
+      0.018308041062141456
+    ],
+    "silhouette_extremes_px": {
+      "u_left": 317,
+      "u_right": 1082,
+      "v_top": 45,
+      "v_bottom": 854,
+      "pixels": 451840
+    }
+  }
+}

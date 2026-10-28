@@ -1,0 +1,96 @@
+{
+  "source_image": "presentation/prelim_hvr/tool_evidence/mech_bilayer/01_geometry.png",
+  "source_sha256": "dd6950b55b67437de47a9789365c66ca31693b6fd944962056da249d253678eb",
+  "source_size_px": [
+    1400,
+    900
+  ],
+  "crop_box_px_xywh": [
+    38,
+    4,
+    1362,
+    896
+  ],
+  "crop_rule": "bounding box of all non-background pixels (model, Ansys mark, axis triad, ruler, CS label) + 10 px pad",
+  "bands_added": "title band above and key band below, plus white side bands where labels need room; all outside the screenshot",
+  "labels": [
+    {
+      "text": "SYMMETRY: x = 0 / (back-left face, hidden; / its top edge marked)",
+      "source_fields": [
+        "setup.json supports"
+      ],
+      "kind": "label"
+    },
+    {
+      "text": "LOAD: uniform \u0394T = 100 K / on both layers (no heat input, / no cooled face)",
+      "source_fields": [
+        "setup.json load"
+      ],
+      "kind": "label"
+    },
+    {
+      "text": "Si \u00b7 0.3 mm (upper layer; / its top face)",
+      "source_fields": [
+        "setup.json geometry"
+      ],
+      "kind": "label"
+    },
+    {
+      "text": "organic \u00b7 0.3 mm (lower layer)",
+      "source_fields": [
+        "setup.json geometry"
+      ],
+      "kind": "label"
+    },
+    {
+      "text": "Z-RESTRAINED PATCH (0.1 mm) / at the plate centre: origin, / on the underside (hidden)",
+      "source_fields": [
+        "setup.json supports",
+        "setup.json geometry: quarter plate, so the plate centre is the corner where the symmetry planes x = 0 and y = 0 meet"
+      ],
+      "kind": "label"
+    },
+    {
+      "text": "SYMMETRY: y = 0 / (this front-left face)",
+      "source_fields": [
+        "setup.json supports"
+      ],
+      "kind": "label"
+    }
+  ],
+  "setup_json_sha256": "90a3e472fa3a5447b362993e3c2f0cd6e606254ac279bf0ea4e854594c6bdd07",
+  "verification": {
+    "overlay_fraction_of_crop": 0.06235577931613174,
+    "untouched_pixels_identical_to_original": true,
+    "label_box_collisions": [],
+    "labels_clipped": 0,
+    "side_bands_px": {
+      "left": 0,
+      "right": 0
+    },
+    "screenshot_offset_in_output_px": [
+      0,
+      92
+    ]
+  },
+  "generator": "scripts/reference_tools/aedt_annotate_screenshots.py",
+  "output_sha256": "ca148879fa332d46ace7648c12aedb646416a45094b4b1c608abc2dea702a0be",
+  "projection": {
+    "model": "orthographic isometric, viewer along (+1,-1,+1)",
+    "fitted_px_per_mm": 145.4384534777513,
+    "cu_px": 184.59483300597927,
+    "cv_px": 485.1250000000001,
+    "fit_residual_px": [
+      6.821210263296962e-13,
+      -1.8474111129762605e-13,
+      3.410605131648481e-13
+    ],
+    "silhouette_extremes_px": {
+      "u_left": 180,
+      "u_right": 1213,
+      "v_top": 117,
+      "v_bottom": 782,
+      "pixels": 379747
+    }
+  }
+}

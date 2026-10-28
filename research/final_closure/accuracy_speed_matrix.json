@@ -465,11 +465,31 @@
   },
   {
    "stage": "cooling_icepak",
-   "production_model": "microchannel h correlation",
-   "reference_tool": "Ansys Icepak (licensed)",
-   "status": "NOT_EXECUTED",
-   "evidence_class": "UNVALIDATED",
-   "limitations": "the matched conjugate-CFD benchmark of the cold plate was not run; only the historical explicit-fin MOOSE check exists"
+   "production_model": "laminar microchannel correlation (Shah & London Nu, fin efficiency, caloric + base resistance)",
+   "reference_tool": "Ansys Icepak 2026 R1 conjugate CFD, one channel half-pitch (430080 cells, finest of 4 levels)",
+   "status": "EXECUTED",
+   "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
+   "observable": "mean base temperature rise above the inlet",
+   "production_value": 19.79583598312762,
+   "reference_value": 16.9944,
+   "error": 0.16484465371696688,
+   "error_metric": "relative difference",
+   "production_runtime_s": 1.329040341079235e-05,
+   "production_runtime_range_s": [
+    1.2664088048040866e-05,
+    2.3684797808527947e-05
+   ],
+   "reference_runtime_s": 1305.4157901853323,
+   "speedup": 98222435.37959738,
+   "timing_method": "correlation: warm-up + 3 timed repeats of 1000 evaluations, median per call; CFD: n = 1 solve per mesh level (a long CFD run), wall clock incl. meshing, 4 cores; shared host",
+   "machine": "Intel(R) Xeon(R) Gold 6342 CPU @ 2.80GHz",
+   "cores": "correlation 1 / Icepak 4",
+   "mesh_sensitivity": {
+    "mesh_change_baseline_to_fine_rel": 0.0037734516191696215,
+    "mesh_change_fine_to_fine_x_rel": 0.00042955326460485517,
+    "mesh_change_baseline_to_baseline_x_rel": 0.00015952072883232364
+   },
+   "limitations": "one channel half-pitch with symmetry walls; the correlation is conservative (higher temperature rise) and part of the gap is the developing-flow entrance region the fully developed Nu ignores; constant water properties; no convergence order is claimed (two cross-section levels)"
   },
   {
    "stage": "converter_waveform",

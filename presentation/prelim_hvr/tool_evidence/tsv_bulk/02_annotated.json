@@ -1,0 +1,56 @@
+{
+  "source_image": "presentation/prelim_hvr/tool_evidence/tsv_bulk/01_geometry.png",
+  "source_sha256": "108d73324f29ea5b054f245e68fca5adaeaa3653d19f176d60124907212d93cf",
+  "source_size_px": [
+    1400,
+    900
+  ],
+  "crop_box_px_xywh": [
+    38,
+    4,
+    1362,
+    896
+  ],
+  "crop_rule": "bounding box of all non-background pixels (model, Ansys mark, axis triad, ruler, CS label) + 10 px pad",
+  "bands_added": "title band above and key band below, plus white side bands where labels need room; all outside the screenshot",
+  "labels": [
+    {
+      "text": "observable: single-TSV DC resistance (Ohm)",
+      "source_fields": [
+        "setup.json tsv_bulk.observable"
+      ],
+      "kind": "caption (no position)"
+    },
+    {
+      "text": "production model: rho L / A",
+      "source_fields": [
+        "setup.json tsv_bulk.production_model"
+      ],
+      "kind": "caption (no position)"
+    },
+    {
+      "text": "reference: AEDT 2026 R1 Mechanical (thermal FEM, conduction analogy)",
+      "source_fields": [
+        "setup.json tsv_bulk.reference_tool"
+      ],
+      "kind": "caption (no position)"
+    }
+  ],
+  "setup_json_sha256": "3fd70e2890fcd635a3efa098a7cfc0b54dc7123d9891d42665f6817b3046e06a",
+  "verification": {
+    "overlay_fraction_of_crop": 0.0,
+    "untouched_pixels_identical_to_original": true,
+    "label_box_collisions": [],
+    "labels_clipped": 0,
+    "side_bands_px": {
+      "left": 0,
+      "right": 0
+    },
+    "screenshot_offset_in_output_px": [
+      0,
+      92
+    ]
+  },
+  "generator": "scripts/reference_tools/aedt_annotate_screenshots.py",
+  "output_sha256": "61c6395c0fe75ddb474208c93136865572ebbbff3c67876c79135eb0b81c01b5"
+}

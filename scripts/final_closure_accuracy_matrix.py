@@ -45,6 +45,63 @@ def _tm(d):
     return t.get("median_s"), ([t["min_s"], t["max_s"]] if "min_s" in t else None)
 
 
+def icepak_row():
+    """The cold-plate correlation against the matched Icepak conjugate CFD of one channel
+    half-pitch (research/final_closure/reference_cooling_icepak.json). Error convention as
+    every other row: (production - reference) / reference, here on the mean base temperature
+    rise above the inlet at the CFD's exact per-pitch loading; the reference is the finest
+    CFD level. The correlation's runtime is measured here (warm-up + repeats)."""
+    j = J("reference_cooling_icepak.json")
+    if not j or not str(j.get("status", "")).upper().startswith("EXECUTED"):
+        return {"stage": "cooling_icepak", "production_model": "microchannel h correlation",
+                "reference_tool": "Ansys Icepak (licensed)", "status": "NOT_EXECUTED",
+                "evidence_class": "UNVALIDATED",
+                "limitations": "the matched conjugate-CFD benchmark of the cold plate was not "
+                               "run; only the historical explicit-fin MOOSE check exists"}
+    import statistics
+    import time as _t
+    _sys.path.insert(0, str(R / "scripts" / "phase0mr"))
+    _sys.path.insert(0, str(R / "scripts" / "phase0m"))
+    from cooling_production import CANDIDATES
+    des = CANDIDATES["TOP_SI_MICROCHANNEL_27"]
+    q = j["inputs"]["Q_W"]
+    des.compact(q)                                         # warm-up
+    walls = []
+    for _ in range(3):
+        t0 = _t.perf_counter()
+        for _k in range(1000):
+            des.compact(q)
+        walls.append((_t.perf_counter() - t0) / 1000)
+    lv = j["levels"]
+    finest = max((k for k in lv if lv[k].get("solved")), key=lambda k: lv[k]["cells"])
+    ref, prod = lv[finest]["dT_base_mean_K"], j["correlation_dT_matched_loading_K"]
+    rt = lv[finest]["solve_wall_s"]
+    return {"stage": "cooling_icepak",
+            "production_model": "laminar microchannel correlation (Shah & London Nu, fin "
+                                "efficiency, caloric + base resistance)",
+            "reference_tool": "Ansys Icepak 2026 R1 conjugate CFD, one channel half-pitch "
+                              f"({lv[finest]['cells']} cells, finest of {len(lv)} levels)",
+            "status": "EXECUTED", "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
+            "observable": "mean base temperature rise above the inlet",
+            "production_value": prod, "reference_value": ref,
+            "error": (prod - ref) / ref, "error_metric": "relative difference",
+            "production_runtime_s": statistics.median(walls),
+            "production_runtime_range_s": [min(walls), max(walls)],
+            "reference_runtime_s": rt, "speedup": rt / statistics.median(walls),
+            "timing_method": "correlation: warm-up + 3 timed repeats of 1000 evaluations, "
+                             "median per call; CFD: n = 1 solve per mesh level (a long CFD "
+                             "run), wall clock incl. meshing, 4 cores; shared host",
+            # the CPU the Icepak run recorded, not assumed equal to this one
+            "machine": (j.get("hardware") or {}).get("cpu"),
+            "cores": "correlation 1 / Icepak 4",
+            "mesh_sensitivity": {k: j.get(k) for k in j if k.startswith("mesh_change")},
+            "limitations": "one channel half-pitch with symmetry walls; the correlation is "
+                           "conservative (higher temperature rise) and part of the gap is the "
+                           "developing-flow entrance region the fully developed Nu ignores; "
+                           "constant water properties; no convergence order is claimed (two "
+                           "cross-section levels)"}
+
+
 def rows():
     out, mach = [], machine()
     AEDT = "Ansys Electronics Desktop 2026 R1, Mechanical"
@@ -287,11 +344,7 @@ def rows():
                     "status": "HISTORICAL_REFERENCE_NOT_RERUN",
                     "limitations": "earlier geometry; carried as history, not re-run on the "
                                    "physical lineage"})
-    out.append({"stage": "cooling_icepak", "production_model": "microchannel h correlation",
-                "reference_tool": "Ansys Icepak (licensed)", "status": "NOT_EXECUTED",
-                "evidence_class": "UNVALIDATED",
-                "limitations": "the matched conjugate-CFD benchmark of the cold plate was not "
-                               "run; only the historical explicit-fin MOOSE check exists"})
+    out.append(icepak_row())
     out.append({"stage": "converter_waveform", "production_model": "closed-form loss model",
                 "reference_tool": "none available", "status": "NOT_EXECUTED",
                 "evidence_class": "UNVALIDATED",

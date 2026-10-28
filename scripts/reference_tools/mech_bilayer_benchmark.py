@@ -24,6 +24,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import aedt_common as C                                              # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from hvr_scratch import path as scratch                             # noqa: E402
 
 R = C.R
 OUT = R / "research" / "final_closure"
@@ -45,7 +47,8 @@ def timoshenko_warp():
     return {"curvature_per_mm": k, "warp_pv_mm": k * r2 / 2.0}
 
 
-def ccx_bilayer(n_xy=40, n_z=8, wd=Path("/tmp/mech_ccx")):
+def ccx_bilayer(n_xy=40, n_z=8, wd=None):
+    wd = wd or scratch("mech_ccx")
     wd.mkdir(parents=True, exist_ok=True)
     xs = np.linspace(0, L_HALF, n_xy + 1)
     zs = np.unique(np.concatenate([np.linspace(0, H2, n_z + 1),
@@ -226,7 +229,7 @@ def main():
         c30 = ccx_bilayer(30, 6)
         walls, c50 = [], None
         for rep in range(4):                          # warm-up + 3 timed repeats
-            c50 = ccx_bilayer(50, 8, Path("/tmp/mech_ccx_f"))   # production-comparison level
+            c50 = ccx_bilayer(50, 8, scratch("mech_ccx_f"))   # production-comparison level
             if rep:
                 walls.append(c50["wall_s"])
         c50["timing"] = {"median_s": statistics.median(walls), "min_s": min(walls),

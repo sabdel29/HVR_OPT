@@ -39,11 +39,13 @@ import pkg_rdl_network as K                                          # noqa: E40
 import pkg_rdl_refined as RF                                         # noqa: E402
 import physical_coords as PCO                                        # noqa: E402
 import pad_interface as PI                                           # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from hvr_scratch import path as scratch                             # noqa: E402
 
 MOOSE = Path("/home/beams0/LPOPRYHO/projects/moose/modules/heat_transfer/heat_transfer-opt")
 OUT = R / "research" / "final_closure"
 EVID = R / "presentation" / "prelim_hvr" / "tool_evidence" / "pkg_rdl_moose"
-WD = Path("/tmp/moose_rdl")
+WD = scratch("moose_rdl")
 REPEATS = 3
 
 
@@ -63,7 +65,7 @@ def timed(fn, *a):
 
 def set_wd(arch):
     global WD
-    WD = Path(f"/tmp/moose_rdl_{arch}")
+    WD = scratch(f"moose_rdl_{arch}")
     WD.mkdir(parents=True, exist_ok=True)
 
 

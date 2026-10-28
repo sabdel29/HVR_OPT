@@ -29,6 +29,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import aedt_common as C                                              # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from hvr_scratch import path as scratch                             # noqa: E402
 
 R = C.R
 for _p in ("scripts/phase0nw", "scripts/phase0m", "scripts/phase0mr", "scripts/phase0i",
@@ -96,7 +98,8 @@ def column_spec(arch, scen):
 
 
 # ------------------------- CalculiX on a structured column ---------------------
-def ccx_column(spec, n_gap=3, n_tile=12, dz_max=0.08, wd=Path("/tmp/col_ccx")):
+def ccx_column(spec, n_gap=3, n_tile=12, dz_max=0.08, wd=None):
+    wd = wd or scratch("col_ccx")
     wd.mkdir(parents=True, exist_ok=True)
     p, s = spec["pitch_mm"], spec["tile_mm"]
     xs = np.unique(np.concatenate([np.linspace(-p / 2, -s / 2, n_gap + 1),
@@ -295,10 +298,10 @@ def main():
     arch, scen = (sys.argv[1], sys.argv[2]) if len(sys.argv) > 2 else ("Z2", "HV_S0")
     stage = f"thermal_column_{arch}"
     spec = column_spec(arch, scen)
-    coarse = ccx_column(spec, 3, 12, 0.08, Path(f"/tmp/col_ccx_{arch}_c"))
+    coarse = ccx_column(spec, 3, 12, 0.08, scratch(f"col_ccx_{arch}_c"))
     walls, fine = [], None
     for rep in range(4):                                   # warm-up + 3 timed repeats
-        fine = ccx_column(spec, 6, 24, 0.04, Path(f"/tmp/col_ccx_{arch}_f"))
+        fine = ccx_column(spec, 6, 24, 0.04, scratch(f"col_ccx_{arch}_f"))
         if rep:
             walls.append(fine["wall_s"])
     fine["timing"] = {"median_s": float(np.median(walls)), "min_s": min(walls),

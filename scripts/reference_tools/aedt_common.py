@@ -10,14 +10,17 @@ reference for every DC-conduction stage under the exact analogy
 from __future__ import annotations
 
 import json
+import sys
 import os
 import platform
 import time
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from hvr_scratch import path as scratch                             # noqa: E402
 
 R = Path(__file__).resolve().parents[2]
 EVID = R / "presentation" / "prelim_hvr" / "tool_evidence"
-WORK = Path(os.environ.get("AEDT_WORK", "/tmp/aedt_ref"))
+WORK = Path(os.environ["AEDT_WORK"]) if "AEDT_WORK" in os.environ else scratch("aedt_ref")
 VERSION = "2026.1"
 #: sigma [S/m] is mapped to k [W/mK] = sigma * K_SCALE, so copper (5.8e7 S/m) maps
 #: to 58 W/mK. R_electrical = R_thermal * K_SCALE exactly, because the problem is linear.

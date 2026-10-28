@@ -1,0 +1,538 @@
+{
+  "stage": "cooling_icepak",
+  "status": "EXECUTED",
+  "date": "2026-10-28",
+  "production_model": "scripts/phase0mr/cooling_production.py CoolingDesign TOP_SI_MICROCHANNEL_27 -> scripts/phase0m/cooling.py Microchannel.solve()",
+  "reference_tool": "Ansys Electronics Desktop 2026 R1 Icepak (steady, laminar conjugate CFD), PyAEDT 1.1",
+  "inputs": {
+    "Q_W": 1146.472402957813,
+    "Q_source": "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json thermal.Q_ledger_W (Z1 HV-S0, converged)",
+    "design": "TOP_SI_MICROCHANNEL_27",
+    "w_ch_um": 50,
+    "h_ch_um": 300,
+    "t_fin_um": 50,
+    "t_base_um": 100.0,
+    "k_solid": 130.0,
+    "length_mm": 22.36,
+    "width_mm": 22.36,
+    "n_channels": 223,
+    "m_dot_total_g_s": 27.0,
+    "t_in_c": 25.0,
+    "rho": 988.0,
+    "cp": 4181.0,
+    "k_f": 0.644,
+    "mu": 0.000547,
+    "A_foot_m2": 0.0004999696,
+    "q_flux_W_m2": 2293084.2254365324,
+    "m_dot_half_channel_kg_s": 6.053811659192825e-05,
+    "P_half_pitch_W": 2.563668164038043,
+    "u_mean_m_s": 8.169786314700168,
+    "Q_Z2_HV_S0_W": 1142.6716686628147
+  },
+  "correlation": {
+    "w_ch_um": 50,
+    "h_ch_um": 300,
+    "t_fin_um": 50,
+    "m_dot_g_s": 27.0,
+    "n_channels": 223,
+    "aspect_ratio": 0.16666666666666666,
+    "D_h_um": 85.71428571428572,
+    "velocity_m_s": 8.16978631470017,
+    "Re": 1264.8339846837978,
+    "regime": "laminar",
+    "Nu": 4.602666666666667,
+    "h_channel_W_m2K": 34581.36888888889,
+    "fin_efficiency": 0.7689174847183996,
+    "area_amplification": 5.099783517679868,
+    "R_conv_K_W": 0.011341290635280301,
+    "R_caloric_K_W": 0.004429207969030978,
+    "R_base_K_W": 0.001538555082610561,
+    "R_total_K_W": 0.01730905368692184,
+    "h_effective_W_m2K": 115553.49261554122,
+    "h_eff_over_calibrated": 0.6961053772020556,
+    "dT_fluid_K": 10.15592940690968,
+    "dT_junction_K": 19.844352373371077,
+    "T_j_C": 44.84435237337108,
+    "dp_kPa": 537.7743292423885,
+    "pump_W": 14.696262033951912,
+    "pump_frac_of_load_pct": 1.4696262033951912,
+    "q_w": 1146.472402957813
+  },
+  "correlation_dT_K": 19.844352373371077,
+  "correlation_dT_matched_loading_K": 19.79583598312762,
+  "matched_loading_note": "Q/A_foot over one pitch carries Q*pitch/width = Q/223.6 per channel whereas the correlation divides Q by n = 223 (n*pitch = 22.30 mm < 22.36 mm); the 'matched loading' value evaluates the same correlation terms for exactly the CFD loading.",
+  "levels": {
+    "baseline": {
+      "solved": true,
+      "mesh_settings_um": {
+        "dx": 200.0,
+        "dy": 4.166666666666667,
+        "dz": 10.0,
+        "iters": 5000
+      },
+      "cells": 53760,
+      "solve_wall_s": 105.94048651214689,
+      "session_s": 165.93944753427058,
+      "profile": {
+        "total_cells": 53760,
+        "total_nodes": 60229,
+        "total_faces": 17312,
+        "profile_total_elapsed_s": 99,
+        "profile_file": "DV34_S21_V0.profile"
+      },
+      "iterations": 572,
+      "iteration_cap": 5000,
+      "final_scaled_residuals": {
+        "iter": 572.0,
+        "continuity": 8.4682e-07,
+        "x_vel": 2.3694e-07,
+        "y_vel": 1.9045e-11,
+        "z_vel": 2.709e-09,
+        "energy": 9.9296e-13
+      },
+      "underside_monitors": {
+        "x=0.5mm": {
+          "final_C": 32.8535095214844,
+          "n": 572,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=2mm": {
+          "final_C": 35.97271118164065,
+          "n": 572,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=6mm": {
+          "final_C": 39.5291687011719,
+          "n": 572,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=11.18mm": {
+          "final_C": 42.44109497070315,
+          "n": 572,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=21.5mm": {
+          "final_C": 47.35305175781252,
+          "n": 572,
+          "change_last_10pct_K": 0.000244140625,
+          "change_last_100_K": 0.0005493164063068434
+        }
+      },
+      "load_average_after_solve": [
+        43.2,
+        45.5,
+        51.6
+      ],
+      "heat_source_stored": [
+        "Total Power",
+        "2.56366816W"
+      ],
+      "Q_conv_fin_to_fluid_W": 2.42074,
+      "Q_conv_base_to_fluid_W": 0.142925,
+      "Q_conv_region_W": 0.0,
+      "Q_heatflow_fin_W": 1.20854e-08,
+      "Q_heatflow_base_W": 2.56367,
+      "T_base_mean_C": 41.923,
+      "T_base_max_C": 47.6407,
+      "dT_base_mean_K": 16.923000000000002,
+      "h_eff_cfd_W_m2K": 135501.0474169197,
+      "dT_rel_diff_cfd_vs_correlation": -0.14721328861763242,
+      "dT_rel_diff_cfd_vs_correlation_matched_loading": -0.14512324640273808,
+      "Q_into_base_W": 0.0,
+      "T_outlet_area_mean_C": 36.6913,
+      "m_dot_outlet_kg_s": 0.0,
+      "m_dot_inlet_kg_s": -6.1e-05,
+      "p_inlet_mean_Pa": 558328.0,
+      "p_outlet_mean_Pa": 245.465,
+      "dp_kPa": 558.082535
+    },
+    "fine": {
+      "solved": true,
+      "mesh_settings_um": {
+        "dx": 200.0,
+        "dy": 2.0833333333333335,
+        "dz": 5.0,
+        "iters": 6000
+      },
+      "cells": 215040,
+      "solve_wall_s": 638.8236704049632,
+      "session_s": 705.8894034037367,
+      "profile": {
+        "total_cells": 215040,
+        "total_nodes": 228825,
+        "total_faces": 36544,
+        "profile_total_elapsed_s": 634,
+        "profile_file": "DV34_S21_V0.profile"
+      },
+      "iterations": 1175,
+      "iteration_cap": 6000,
+      "final_scaled_residuals": {
+        "iter": 1175.0,
+        "continuity": 6.5605e-07,
+        "x_vel": 9.9792e-07,
+        "y_vel": 2.8992e-11,
+        "z_vel": 4.5792e-09,
+        "energy": 8.2318e-13
+      },
+      "underside_monitors": {
+        "x=0.5mm": {
+          "final_C": 32.82915649414065,
+          "n": 1175,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=2mm": {
+          "final_C": 36.09600219726565,
+          "n": 1175,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=6mm": {
+          "final_C": 39.60897216796883,
+          "n": 1175,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=11.18mm": {
+          "final_C": 42.50112304687502,
+          "n": 1175,
+          "change_last_10pct_K": 0.000213623046875,
+          "change_last_100_K": 0.00018310546880684342
+        },
+        "x=21.5mm": {
+          "final_C": 47.40090332031252,
+          "n": 1175,
+          "change_last_10pct_K": 0.001068115234375,
+          "change_last_100_K": 0.0008544921875
+        }
+      },
+      "load_average_after_solve": [
+        41.2,
+        43.6,
+        47.5
+      ],
+      "heat_source_stored": [
+        "Total Power",
+        "2.56366816W"
+      ],
+      "Q_conv_fin_to_fluid_W": 2.42398,
+      "Q_conv_base_to_fluid_W": 0.139693,
+      "Q_conv_region_W": 0.0,
+      "Q_heatflow_fin_W": 5.76338e-08,
+      "Q_heatflow_base_W": 2.56367,
+      "T_base_mean_C": 41.9871,
+      "T_base_max_C": 47.688,
+      "dT_base_mean_K": 16.987099999999998,
+      "h_eff_cfd_W_m2K": 134989.74077014514,
+      "dT_rel_diff_cfd_vs_correlation": -0.14398315045066398,
+      "dT_rel_diff_cfd_vs_correlation_matched_loading": -0.14188519168988686,
+      "Q_into_base_W": 0.0,
+      "T_outlet_area_mean_C": 36.6729,
+      "m_dot_outlet_kg_s": 0.0,
+      "m_dot_inlet_kg_s": -6.1e-05,
+      "p_inlet_mean_Pa": 568140.0,
+      "p_outlet_mean_Pa": 122.477,
+      "dp_kPa": 568.0175230000001
+    },
+    "baseline_x": {
+      "solved": true,
+      "mesh_settings_um": {
+        "dx": 100.0,
+        "dy": 4.166666666666667,
+        "dz": 10.0,
+        "iters": 5000
+      },
+      "cells": 107520,
+      "solve_wall_s": 205.62911939900368,
+      "session_s": 270.9956020032987,
+      "profile": {
+        "total_cells": 107520,
+        "total_nodes": 119925,
+        "total_faces": 33664,
+        "profile_total_elapsed_s": 200,
+        "profile_file": "DV34_S21_V0.profile"
+      },
+      "iterations": 791,
+      "iteration_cap": 5000,
+      "final_scaled_residuals": {
+        "iter": 791.0,
+        "continuity": 5.4942e-07,
+        "x_vel": 2.5266e-07,
+        "y_vel": 1.7445e-11,
+        "z_vel": 2.5291e-09,
+        "energy": 9.9083e-13
+      },
+      "underside_monitors": {
+        "x=0.5mm": {
+          "final_C": 32.92681274414065,
+          "n": 791,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=2mm": {
+          "final_C": 35.9863220214844,
+          "n": 791,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=6mm": {
+          "final_C": 39.53035888671883,
+          "n": 791,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=11.18mm": {
+          "final_C": 42.44027099609383,
+          "n": 791,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=21.5mm": {
+          "final_C": 47.35149536132815,
+          "n": 791,
+          "change_last_10pct_K": 0.00030517578125,
+          "change_last_100_K": 0.0004577636719318434
+        }
+      },
+      "load_average_after_solve": [
+        41.0,
+        42.5,
+        46.1
+      ],
+      "heat_source_stored": [
+        "Total Power",
+        "2.56366816W"
+      ],
+      "Q_conv_fin_to_fluid_W": 2.4207,
+      "Q_conv_base_to_fluid_W": 0.142973,
+      "Q_conv_region_W": 0.0,
+      "Q_heatflow_fin_W": 6.46105e-09,
+      "Q_heatflow_base_W": 2.56367,
+      "T_base_mean_C": 41.9257,
+      "T_base_max_C": 47.6539,
+      "dT_base_mean_K": 16.9257,
+      "h_eff_cfd_W_m2K": 135479.4321910782,
+      "dT_rel_diff_cfd_vs_correlation": -0.14707722975568535,
+      "dT_rel_diff_cfd_vs_correlation_matched_loading": -0.1449868540825401,
+      "Q_into_base_W": 0.0,
+      "T_outlet_area_mean_C": 36.69,
+      "m_dot_outlet_kg_s": 0.0,
+      "m_dot_inlet_kg_s": -6.1e-05,
+      "p_inlet_mean_Pa": 558142.0,
+      "p_outlet_mean_Pa": 128.006,
+      "dp_kPa": 558.0139939999999
+    },
+    "fine_x": {
+      "solved": true,
+      "mesh_settings_um": {
+        "dx": 100.0,
+        "dy": 2.0833333333333335,
+        "dz": 5.0,
+        "iters": 4000
+      },
+      "cells": 430080,
+      "solve_wall_s": 1305.4157901853323,
+      "session_s": 1373.0420306045562,
+      "profile": {
+        "total_cells": 430080,
+        "total_nodes": 455625,
+        "total_faces": 69248,
+        "profile_total_elapsed_s": 1301,
+        "profile_file": "DV34_S21_V0.profile"
+      },
+      "iterations": 1321,
+      "iteration_cap": 4000,
+      "final_scaled_residuals": {
+        "iter": 1321.0,
+        "continuity": 3.9122e-07,
+        "x_vel": 9.9757e-07,
+        "y_vel": 2.8933e-11,
+        "z_vel": 4.4555e-09,
+        "energy": 8.193e-13
+      },
+      "underside_monitors": {
+        "x=0.5mm": {
+          "final_C": 32.99346313476565,
+          "n": 1321,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=2mm": {
+          "final_C": 36.11434326171883,
+          "n": 1321,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=6mm": {
+          "final_C": 39.6104675292969,
+          "n": 1321,
+          "change_last_10pct_K": 0.0,
+          "change_last_100_K": 0.0
+        },
+        "x=11.18mm": {
+          "final_C": 42.50081787109383,
+          "n": 1321,
+          "change_last_10pct_K": 0.000244140625,
+          "change_last_100_K": 0.00015258789068184342
+        },
+        "x=21.5mm": {
+          "final_C": 47.40023193359383,
+          "n": 1321,
+          "change_last_10pct_K": 0.0011291503906818434,
+          "change_last_100_K": 0.0007934570313068434
+        }
+      },
+      "load_average_after_solve": [
+        40.5,
+        40.9,
+        42.3
+      ],
+      "heat_source_stored": [
+        "Total Power",
+        "2.56366816W"
+      ],
+      "Q_conv_fin_to_fluid_W": 2.42389,
+      "Q_conv_base_to_fluid_W": 0.139777,
+      "Q_conv_region_W": 0.0,
+      "Q_heatflow_fin_W": 8.00392e-08,
+      "Q_heatflow_base_W": 2.56367,
+      "T_base_mean_C": 41.9944,
+      "T_base_max_C": 47.7024,
+      "dT_base_mean_K": 16.9944,
+      "h_eff_cfd_W_m2K": 134931.75548630918,
+      "dT_rel_diff_cfd_vs_correlation": -0.14361528760169562,
+      "dT_rel_diff_cfd_vs_correlation_matched_loading": -0.14151642726861047,
+      "Q_into_base_W": 0.0,
+      "T_outlet_area_mean_C": 36.6722,
+      "m_dot_outlet_kg_s": 0.0,
+      "m_dot_inlet_kg_s": -6.1e-05,
+      "p_inlet_mean_Pa": 567787.0,
+      "p_outlet_mean_Pa": 62.7196,
+      "dp_kPa": 567.7242804
+    }
+  },
+  "cfd_problem": {
+    "domain": "half pitch (25 um half fin + 25 um half channel), symmetry walls on both sides, full 22.36 mm length",
+    "fluid": "water, constant rho, cp, k, mu = cooling.py values",
+    "solid": "silicon k = 130 W/mK (base 100 um + fin 300 um)",
+    "inlet": "mass flow per half channel, 25 C, normal to the sheet",
+    "outlet": "static gauge pressure 0",
+    "heat": "uniform flux q'' = Q/A_foot on the base underside",
+    "walls": "lid (top) adiabatic no-slip; silicon end faces adiabatic",
+    "flow": "laminar, steady, no gravity, no radiation",
+    "discretisation": "second-order momentum and energy",
+    "convergence_criteria": {
+      "flow": 1e-06,
+      "energy": 1e-12
+    }
+  },
+  "caveats": [
+    "The correlation is fully developed (Shah & London Nu, constant along the channel). At Re ~ 1265 and Pr ~ 3.6 the hydrodynamic entry length 0.05 Re D_h is ~5.4 mm and the thermal entry length 0.05 Re Pr D_h is ~19 mm, i.e. most of the 22.36 mm channel is thermally developing; the CFD includes that entrance enhancement and the correlation does not.",
+    "Fin efficiency in the correlation assumes a uniform h on the fin flanks; the CFD resolves the true conjugate distribution.",
+    "Constant fluid properties at the correlation's values (no temperature dependence of viscosity), so the comparison isolates the heat-transfer model, not property variation.",
+    "One periodic channel with uniform flux: manifold maldistribution, header losses and the non-uniform heat map of the package are outside this test."
+  ],
+  "timing_method": "wall clock (time.perf_counter) around PyAEDT analyze_setup on 4 cores, including Icepak meshing and the solver; one solve per mesh level (no repeats: each is a long CFD run); the machine was shared with CalculiX jobs, load average recorded",
+  "hardware": {
+    "cpu": "Intel(R) Xeon(R) Gold 6342 CPU @ 2.80GHz",
+    "logical_cpus": 96,
+    "host_os": "Linux-4.18.0-553.150.1.el8_10.x86_64-x86_64-with-glibc2.28"
+  },
+  "generator": "scripts/reference_tools/icepak_cooling_benchmark.py",
+  "project_files": {
+    "baseline": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/cooling_baseline.aedt",
+    "fine": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/cooling_fine.aedt",
+    "baseline_x": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/cooling_baseline_x.aedt",
+    "fine_x": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/cooling_fine_x.aedt",
+    "smoke": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/smoke/cooling_smoke.aedt"
+  },
+  "convergence_criteria_sensitivity": {
+    "first_pass": {
+      "flow": 1e-05,
+      "energy": 1e-10
+    },
+    "final": {
+      "flow": 1e-06,
+      "energy": 1e-12
+    },
+    "per_level": {
+      "baseline": {
+        "dT_K_crit_1e-5": 16.9215,
+        "dT_K_final": 16.923000000000002,
+        "rel_change": 8.86367665307603e-05
+      },
+      "fine": {
+        "dT_K_crit_1e-5": 16.9816,
+        "dT_K_final": 16.987099999999998,
+        "rel_change": 0.00032377509992864234
+      },
+      "baseline_x": {
+        "dT_K_crit_1e-5": 16.923099999999998,
+        "dT_K_final": 16.9257,
+        "rel_change": 0.0001536125536906034
+      }
+    }
+  },
+  "along_channel_check": {
+    "level": "fine_x",
+    "correlation_fully_developed_wall_minus_bulk_K": 14.73149730302731,
+    "bulk_rise_per_pitch_K": 10.128677360200617,
+    "stations": [
+      {
+        "x_mm": 0.5,
+        "T_underside_C": 32.99346313476565,
+        "T_bulk_energy_balance_C": 25.22649099642667,
+        "wall_minus_bulk_K": 7.7669721383389785,
+        "vs_fully_developed_rel": -0.47276424259040717
+      },
+      {
+        "x_mm": 2.0,
+        "T_underside_C": 36.11434326171883,
+        "T_bulk_energy_balance_C": 25.905963985706673,
+        "wall_minus_bulk_K": 10.208379276012156,
+        "vs_fully_developed_rel": -0.3070372233028653
+      },
+      {
+        "x_mm": 6.0,
+        "T_underside_C": 39.6104675292969,
+        "T_bulk_energy_balance_C": 27.717891957120024,
+        "wall_minus_bulk_K": 11.892575572176874,
+        "vs_fully_developed_rel": -0.19271101045967953
+      },
+      {
+        "x_mm": 11.18,
+        "T_underside_C": 42.50081787109383,
+        "T_bulk_energy_balance_C": 30.06433868010031,
+        "wall_minus_bulk_K": 12.43647919099352,
+        "vs_fully_developed_rel": -0.15578987422834245
+      },
+      {
+        "x_mm": 21.5,
+        "T_underside_C": 47.40023193359383,
+        "T_bulk_energy_balance_C": 34.73911284634675,
+        "wall_minus_bulk_K": 12.66111908724708,
+        "vs_fully_developed_rel": -0.14054092216103314
+      }
+    ],
+    "note": "point monitors, not face means; T_bulk(x) from the energy balance with uniform heating. The correlation's wall-to-bulk difference is constant along the channel; the CFD value grows from the inlet and is still below it at the outlet end, so the CFD-correlation gap is not only the entrance effect; this points to the fully developed model itself (Nu table and its wall boundary condition, uniform-h fin efficiency) for the remainder. This benchmark does not separate those terms."
+  },
+  "levels_defined_not_run": {
+    "finer": {
+      "mesh_settings_um": {
+        "dx": 200.0,
+        "dy": 1.0416666666666667,
+        "dz": 2.5,
+        "iters": 4000
+      },
+      "cells_expected": 860160,
+      "reason": "stopped before launch to bound runtime: ~860k cells at the measured ~2.4 us per cell-iteration (4 cores) and ~2x the fine level's iterations is an estimated 80 min, for a refinement of a baseline-to-fine change already below 0.4 %; the observed order of convergence is therefore not estimated"
+    }
+  },
+  "mesh_change_baseline_to_fine_rel": 0.0037734516191696215,
+  "mesh_change_fine_to_fine_x_rel": 0.00042955326460485517,
+  "mesh_change_baseline_to_baseline_x_rel": 0.00015952072883232364
+}

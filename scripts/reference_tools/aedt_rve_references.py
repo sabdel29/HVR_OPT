@@ -272,7 +272,7 @@ CASES = {"tsv_bulk": case_tsv_bulk,
 def retime(names):
     """Re-solve and time; compare the re-solved value with the adopted one."""
     import statistics
-    C.EVID = Path("/tmp/rve_retime_evidence")       # never overwrite the evidence images
+    C.EVID = C.scratch("rve_retime_evidence")       # never overwrite the evidence images
     adopted = json.loads((R / "research" / "final_closure" / "reference_rve.json").read_text())
     out = R / "research" / "final_closure" / "reference_rve_timing.json"
     res = {}

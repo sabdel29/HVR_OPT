@@ -2,8 +2,10 @@
 import json, sys, time
 from pathlib import Path
 from ansys.aedt.core import Q3d
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from hvr_scratch import path as scratch                             # noqa: E402
 
-work = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/aedt_work")
+work = Path(sys.argv[1] if len(sys.argv) > 1 else str(scratch("aedt_work")))
 work.mkdir(parents=True, exist_ok=True)
 t0 = time.time()
 q = Q3d(project=str(work / "smoke.aedt"), design="bar", non_graphical=True,

@@ -1,0 +1,63 @@
+{
+  "source_image": "presentation/prelim_hvr/tool_evidence/tsv_tile_rve/01_geometry_kz.png",
+  "source_sha256": "8bdf552b5b353165488862ffdf3ab61ce05d46803907655e4fac06128de268eb",
+  "source_size_px": [
+    1400,
+    900
+  ],
+  "crop_box_px_xywh": [
+    38,
+    4,
+    1362,
+    896
+  ],
+  "crop_rule": "bounding box of all non-background pixels (model, Ansys mark, axis triad, ruler, CS label) + 10 px pad",
+  "bands_added": "title band above and key band below, plus white side bands where labels need room; all outside the screenshot",
+  "labels": [
+    {
+      "text": "observable: tile effective kz (W/mK)",
+      "source_fields": [
+        "setup.json tsv_tile_kz.observable"
+      ],
+      "kind": "caption (no position)"
+    },
+    {
+      "text": "production model: Voigt",
+      "source_fields": [
+        "setup.json tsv_tile_kz.production_model"
+      ],
+      "kind": "caption (no position)"
+    },
+    {
+      "text": "reference: AEDT 2026 R1 Mechanical (thermal FEM)",
+      "source_fields": [
+        "setup.json tsv_tile_kz.reference_tool"
+      ],
+      "kind": "caption (no position)"
+    },
+    {
+      "text": "Cu fraction 0.1821",
+      "source_fields": [
+        "setup.json tsv_tile_kz.cu_fraction"
+      ],
+      "kind": "caption (no position)"
+    }
+  ],
+  "setup_json_sha256": "a1174266beb9a32149bd1aaa2ded3b301d21ad9291deef53b129bd0a56522dad",
+  "verification": {
+    "overlay_fraction_of_crop": 0.0,
+    "untouched_pixels_identical_to_original": true,
+    "label_box_collisions": [],
+    "labels_clipped": 0,
+    "side_bands_px": {
+      "left": 0,
+      "right": 0
+    },
+    "screenshot_offset_in_output_px": [
+      0,
+      92
+    ]
+  },
+  "generator": "scripts/reference_tools/aedt_annotate_screenshots.py",
+  "output_sha256": "03d6b88b162761bb979235f573a84ee62a5862feb767e08d6ac73d646f65e187"
+}

@@ -1,0 +1,149 @@
+{
+  "source_image": "presentation/prelim_hvr/tool_evidence/thermal_column_Z1/01_geometry.png",
+  "source_sha256": "efe9fee3e9a4bd1857b734f65c19bf39aab272749ab5ff02b6018d2b42e8e269",
+  "source_size_px": [
+    1400,
+    900
+  ],
+  "crop_box_px_xywh": [
+    38,
+    4,
+    1362,
+    896
+  ],
+  "crop_rule": "bounding box of all non-background pixels (model, Ansys mark, axis triad, ruler, CS label) + 10 px pad",
+  "bands_added": "title band above and key band below, plus white side bands where labels need room; all outside the screenshot",
+  "labels": [
+    {
+      "text": "board \u00b7 2.40 mm / material: board_fr4",
+      "source_fields": [
+        "setup.json layers[0] (board): z0, z1, mat_tile, mat_gap"
+      ],
+      "kind": "material stack"
+    },
+    {
+      "text": "BGA layer \u00b7 300 \u00b5m / material: bga_homog",
+      "source_fields": [
+        "setup.json layers[1] (bga): z0, z1, mat_tile, mat_gap"
+      ],
+      "kind": "material stack"
+    },
+    {
+      "text": "substrate \u00b7 300 \u00b5m / tile: tsv_tile  \u00b7  gap: silicon",
+      "source_fields": [
+        "setup.json layers[2] (sub_lower): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[3] (tile_band): z0, z1, mat_tile, mat_gap"
+      ],
+      "kind": "material stack"
+    },
+    {
+      "text": "converter tiers \u00b7 1.97 mm / tile: hvr_effective, rdl_tier, / silicon  \u00b7  gap: underfill_homog",
+      "source_fields": [
+        "setup.json layers[4] (z1conv_0_bottom_substrate_rdl): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[5] (z1conv_1_gan_hs_EPC2014C): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[6] (z1conv_2_interlayer_rdl): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[7] (z1conv_3_gan_ls_EPC2057): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[8] (z1conv_4_interlayer_rdl): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[9] (z1conv_5_flying_caps): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[10] (z1conv_6_interlayer_rdl): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[11] (z1conv_7_inductor_plus_cout): z0, z1, mat_tile, mat_gap",
+        "setup.json layers[12] (z1conv_8_output_rdl): z0, z1, mat_tile, mat_gap"
+      ],
+      "kind": "material stack"
+    },
+    {
+      "text": "die (silicon) \u00b7 300 \u00b5m / material: silicon",
+      "source_fields": [
+        "setup.json layers[14] (die): z0, z1, mat_tile, mat_gap"
+      ],
+      "kind": "material stack"
+    },
+    {
+      "text": "TIM \u00b7 50 \u00b5m / material: tim",
+      "source_fields": [
+        "setup.json layers[15] (tim): z0, z1, mat_tile, mat_gap"
+      ],
+      "kind": "material stack"
+    },
+    {
+      "text": "COOLED FACE: top of TIM / film h = 115 553 W/m\u00b2K / to fluid at 30.07 \u00b0C",
+      "source_fields": [
+        "setup.json h_top",
+        "setup.json T_fluid_C",
+        "setup.json layers[-1] (tim) z1"
+      ],
+      "kind": "boundary condition / source"
+    },
+    {
+      "text": "HEAT INPUT: die layer / 20.41 W in the whole die volume",
+      "source_fields": [
+        "setup.json sources[layers == ['die']].W",
+        "setup.json layers (die) z0, z1"
+      ],
+      "kind": "boundary condition / source"
+    },
+    {
+      "text": "HEAT INPUT: converter tile / GaN LS 2.06 W \u00b7 GaN HS 0.42 W / inductor + C_out 0.30 W \u00b7 RDL tiers 0.09 W / flying caps 0.03 W / + 0.001 W in smaller tile tiers",
+      "source_fields": [
+        "setup.json sources[in_tile == true].W, layers",
+        "setup.json tile_mm"
+      ],
+      "kind": "boundary condition / source"
+    },
+    {
+      "text": "SIDES: adiabatic / (README.md in this folder)",
+      "source_fields": [
+        "README.md: 'adiabatic sides'"
+      ],
+      "kind": "boundary condition / source"
+    },
+    {
+      "text": "UNDERSIDE (hidden): film / h = 10 W/m\u00b2K to 25 \u00b0C",
+      "source_fields": [
+        "setup.json bottom_film = true",
+        "setup.json h_bot",
+        "setup.json T_amb_C"
+      ],
+      "kind": "boundary condition / source"
+    }
+  ],
+  "setup_json_sha256": "30f421b334c8c3cc046ba0e10906c02b0c010052a782e6740c60f5c4d57c64f7",
+  "verification": {
+    "overlay_fraction_of_crop": 0.11626071821900566,
+    "untouched_pixels_identical_to_original": true,
+    "label_box_collisions": [],
+    "labels_clipped": 0,
+    "side_bands_px": {
+      "left": 0,
+      "right": 0
+    },
+    "screenshot_offset_in_output_px": [
+      0,
+      92
+    ],
+    "thin_layers_not_bracketed": [
+      "interface"
+    ]
+  },
+  "generator": "scripts/reference_tools/aedt_annotate_screenshots.py",
+  "output_sha256": "9a14471d30f5cba0c214f2dd35038b6b20230b6b826ab07b02b843b8dd2197c7",
+  "projection": {
+    "model": "orthographic isometric, viewer along (+1,-1,+1)",
+    "fitted_px_per_mm": 116.66322840696233,
+    "cu_px": 699.4999999999999,
+    "cv_px": 446.3089532416719,
+    "fit_residual_px": [
+      0.3884699614276883,
+      -0.3884699614279725,
+      -0.250608606499199,
+      0.2506086064994406
+    ],
+    "silhouette_extremes_px": {
+      "u_left": 438,
+      "u_right": 961,
+      "v_top": 45,
+      "v_bottom": 854,
+      "pixels": 345683
+    }
+  }
+}

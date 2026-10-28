@@ -1,0 +1,143 @@
+{
+ "figure": "presentation/prelim_hvr/figs/rdl_reference_annotated_Z1.png",
+ "figure_sha256": "e861ffa723bf8ceba9ebb8b6f7024b91e1419dd8415c9ecddc1639cad5cf2d1e",
+ "generated_by": "scripts/visualize_rdl_geometry.py render",
+ "exodus": {
+  "path": "/home/beams/MGHARIB/claude_scratch/hvr_work/moose_rdl_Z1/rdl_out.e",
+  "bytes": 27323072,
+  "sha256": "c88b612ca54202bce57ca3901ac9b9c465437dbf15321b78c35faa13986d7197"
+ },
+ "time_step": {
+  "index_used": 1,
+  "n_steps": 2,
+  "time_values": [
+   0.0,
+   1.0
+  ],
+  "time_used": 1.0,
+  "step0_V_min_max": [
+   0.0,
+   0.0
+  ],
+  "why_last": "MOOSE Steady stores the initial condition as step 0"
+ },
+ "variable": "V (nodal)",
+ "units": "V at 1 A total rail current (= ohm-equivalent)",
+ "V_min_V": -0.0022107530264231924,
+ "V_max_V": -5.517640295927215e-09,
+ "colour_bar_range_V": [
+  -0.0022107530264231924,
+  -5.517640295927215e-09
+ ],
+ "colour_bar_range_equals_exodus_min_max": true,
+ "n_cells": 797828,
+ "n_points_rendered": 410039,
+ "geometry_hash": "15f4ade6dd0b27332888d8ad20c42f3e4738afdda0fec420d61d068ce7201be6",
+ "supply_rail_hash": "7b397d027b1bdc7a5a6f99232b1481ade6c1abb7425dc44461a61029252ef606",
+ "geometry_file": "research/final_closure/rdl_geometry_Z1.json",
+ "render": {
+  "tool": "VTK",
+  "version": "9.6.2",
+  "window": "vtkXOpenGLRenderWindow",
+  "reader": "vtkExodusIIReader -> vtkCompositeDataGeometryFilter -> vtkPolyDataMapper",
+  "colormap": "viridis (matplotlib 256-entry table, perceptually uniform)",
+  "lighting": "off",
+  "interpolate_scalars_before_mapping": true,
+  "multisamples": 0,
+  "image_px": [
+   1100,
+   1000
+  ],
+  "field_viewport_px": {
+   "x": 74,
+   "y": 116,
+   "size": 716,
+   "half": 15.4
+  },
+  "colour_bar_viewport_px": {
+   "x": 826,
+   "y": 178,
+   "w": 28,
+   "h": 320
+  },
+  "px_per_mm": 23.246753246753247,
+  "overlay": {
+   "overlay_renderer": "rsvg-convert 2.62.3 (/home/beams0/MGHARIB/envs/etm/bin/rsvg-convert)",
+   "overlay_svg": "/home/beams/MGHARIB/claude_scratch/rdlfigs/rdl_reference_annotated_Z1_overlay.svg",
+   "field_viewport_pixels_untouched_fraction": 0.8978808401735277,
+   "untouched_pixels_identical_to_vtk": true
+  }
+ },
+ "registration": {
+  "camera_vs_overlay_transform_max_px": 1.1368683772161603e-13,
+  "method": "the Exodus ball/pad blocks are rendered as masks through the same VTK camera; their pixel centroids are compared with problem() centres mapped by the overlay transform",
+  "ball": {
+   "n": 54,
+   "max_centroid_offset_px": 0.1580234826705738,
+   "mask_px_min_max": [
+    66,
+    70
+   ]
+  },
+  "pad": {
+   "n": 49,
+   "max_centroid_offset_px": 0.4301857665921772,
+   "mask_px_min_max": [
+    16,
+    25
+   ]
+  },
+  "px_per_mm": 23.246753246753247
+ },
+ "colour_check": {
+  "n_pixels": 600,
+  "max_abs_rgb_diff": 0.0,
+  "p95_abs_rgb_diff": 0.0,
+  "median_abs_rgb_diff": 0.0,
+  "note": "8-bit levels between each rendered pixel and lut.GetColor(V) with V interpolated barycentrically on the mesh at the pixel centre"
+ },
+ "arrows": {
+  "method": "-grad V of the P1 field in the containing triangle",
+  "spacing_mm": 2.0,
+  "exclude_near_terminal_mm": 0.55,
+  "threshold": "|grad V| >= 0.01 x its 95th percentile over the samples",
+  "threshold_V_per_mm": 2.6311128509310327e-06,
+  "n_candidates": 213,
+  "n_after_threshold": 204,
+  "length": "fixed (direction only)",
+  "n_arrows_drawn": 187,
+  "n_arrows_hidden_by_labels": 17
+ },
+ "consistency_with_solve": {
+  "rdl_i_mesh_file": "/tmp/moose_rdl_Z1/rdl_m3.msh",
+  "rdl_i_mesh_file_exists": false,
+  "mesh_tag": "m3",
+  "reference_json_n_elements": 797828,
+  "exodus_n_triangles": 797828,
+  "cell_type": "VTK_TRIANGLE (linear, 3-node)",
+  "blocks": {
+   "ball": 54,
+   "pad": 49,
+   "sheet": 1
+  },
+  "rdl_i_constants_equal_problem": true,
+  "ball_block_centroid_max_offset_mm": 3.46617971459355e-07,
+  "pad_block_centroid_max_offset_mm": 6.789243508029495e-07,
+  "ball_block_area_rel_deficit_max": 0.00041473556644311405,
+  "pad_block_area_max_abs_err_mm2": 1.144409998155016e-07,
+  "exodus_globals_vs_csv_max_abs_V": 4.8138576458356397e-17,
+  "pad_average_recomputed_from_nodal_V_max_rel_err": 1.1311408286803237e-07,
+  "R_eff_from_csv_ohm": 0.001418938345293407,
+  "reference_json_R_eff_ohm": 0.001418938345293407,
+  "max_pad_drop_from_csv_V": 0.002201310500498,
+  "reference_json_max_pad_drop_V": 0.002201310500498,
+  "worst_pad_index": 0,
+  "worst_pad_mm": [
+   -10.561573,
+   -10.561573
+  ]
+ },
+ "credit_label": "MOOSE heat_transfer-opt (INL) \u2014 DC-conduction analogue; rendered with VTK 9.6.2",
+ "render_key": "08c6df493d95ccdaa9732a46f20b680fcc232e848b185312769f5a481ec669dd",
+ "render_key_scope": "SHA-256 over geometry hash, Exodus SHA-256, VTK and rsvg versions, colormap, viewports, arrow parameters and this script's SHA-256: the figure is a different artefact if any of them changes (idea of Omelet Assembly.solver_cache_key, pkgintc/geom/assembly.py:459-488; no Omelet code or value used)"
+}

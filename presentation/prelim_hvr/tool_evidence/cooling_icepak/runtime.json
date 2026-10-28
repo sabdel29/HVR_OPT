@@ -1,0 +1,55 @@
+{
+  "timing_method": "wall clock (time.perf_counter) around PyAEDT analyze_setup on 4 cores, including Icepak meshing and the solver; one solve per mesh level (no repeats: each is a long CFD run); the machine was shared with CalculiX jobs, load average recorded",
+  "cores": 4,
+  "per_level": {
+    "baseline": {
+      "solve_wall_s": 105.94048651214689,
+      "session_s": 165.93944753427058,
+      "cells": 53760,
+      "iterations": 572,
+      "load_average_after_solve": [
+        43.2,
+        45.5,
+        51.6
+      ]
+    },
+    "fine": {
+      "solve_wall_s": 638.8236704049632,
+      "session_s": 705.8894034037367,
+      "cells": 215040,
+      "iterations": 1175,
+      "load_average_after_solve": [
+        41.2,
+        43.6,
+        47.5
+      ]
+    },
+    "baseline_x": {
+      "solve_wall_s": 205.62911939900368,
+      "session_s": 270.9956020032987,
+      "cells": 107520,
+      "iterations": 791,
+      "load_average_after_solve": [
+        41.0,
+        42.5,
+        46.1
+      ]
+    },
+    "fine_x": {
+      "solve_wall_s": 1305.4157901853323,
+      "session_s": 1373.0420306045562,
+      "cells": 430080,
+      "iterations": 1321,
+      "load_average_after_solve": [
+        40.5,
+        40.9,
+        42.3
+      ]
+    }
+  },
+  "hardware": {
+    "cpu": "Intel(R) Xeon(R) Gold 6342 CPU @ 2.80GHz",
+    "logical_cpus": 96,
+    "host_os": "Linux-4.18.0-553.150.1.el8_10.x86_64-x86_64-with-glibc2.28"
+  }
+}

@@ -14,6 +14,8 @@ Q3D's DC solution is a finite-element DC conduction solve for potential and curr
 """
 import json, sys, time
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from hvr_scratch import path as scratch                             # noqa: E402
 
 R = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(R / "scripts" / "phase0nw"))
@@ -45,7 +47,7 @@ def rdl(out):
 
 
 if __name__ == "__main__":
-    out = Path(sys.argv[2] if len(sys.argv) > 2 else "/tmp/q3d_ref")
+    out = Path(sys.argv[2] if len(sys.argv) > 2 else str(scratch("q3d_ref")))
     out.mkdir(parents=True, exist_ok=True)
     res = {"tsv": tsv, "rdl": rdl}[sys.argv[1]](out)
     print(json.dumps(res))

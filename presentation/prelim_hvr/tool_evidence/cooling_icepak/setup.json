@@ -1,0 +1,83 @@
+{
+  "production_model": "scripts/phase0mr/cooling_production.py CoolingDesign TOP_SI_MICROCHANNEL_27 -> scripts/phase0m/cooling.py Microchannel.solve()",
+  "reference_tool": "Ansys Electronics Desktop 2026 R1 Icepak (steady, laminar conjugate CFD), PyAEDT 1.1",
+  "cfd_problem": {
+    "domain": "half pitch (25 um half fin + 25 um half channel), symmetry walls on both sides, full 22.36 mm length",
+    "fluid": "water, constant rho, cp, k, mu = cooling.py values",
+    "solid": "silicon k = 130 W/mK (base 100 um + fin 300 um)",
+    "inlet": "mass flow per half channel, 25 C, normal to the sheet",
+    "outlet": "static gauge pressure 0",
+    "heat": "uniform flux q'' = Q/A_foot on the base underside",
+    "walls": "lid (top) adiabatic no-slip; silicon end faces adiabatic",
+    "flow": "laminar, steady, no gravity, no radiation",
+    "discretisation": "second-order momentum and energy",
+    "convergence_criteria": {
+      "flow": 1e-06,
+      "energy": 1e-12
+    }
+  },
+  "inputs": {
+    "Q_W": 1146.472402957813,
+    "Q_source": "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json thermal.Q_ledger_W (Z1 HV-S0, converged)",
+    "design": "TOP_SI_MICROCHANNEL_27",
+    "w_ch_um": 50,
+    "h_ch_um": 300,
+    "t_fin_um": 50,
+    "t_base_um": 100.0,
+    "k_solid": 130.0,
+    "length_mm": 22.36,
+    "width_mm": 22.36,
+    "n_channels": 223,
+    "m_dot_total_g_s": 27.0,
+    "t_in_c": 25.0,
+    "rho": 988.0,
+    "cp": 4181.0,
+    "k_f": 0.644,
+    "mu": 0.000547,
+    "A_foot_m2": 0.0004999696,
+    "q_flux_W_m2": 2293084.2254365324,
+    "m_dot_half_channel_kg_s": 6.053811659192825e-05,
+    "P_half_pitch_W": 2.563668164038043,
+    "u_mean_m_s": 8.169786314700168,
+    "Q_Z2_HV_S0_W": 1142.6716686628147
+  },
+  "mesh_levels_um": {
+    "baseline": {
+      "dx": 200.0,
+      "dy": 4.166666666666667,
+      "dz": 10.0,
+      "iters": 5000
+    },
+    "fine": {
+      "dx": 200.0,
+      "dy": 2.0833333333333335,
+      "dz": 5.0,
+      "iters": 6000
+    },
+    "baseline_x": {
+      "dx": 100.0,
+      "dy": 4.166666666666667,
+      "dz": 10.0,
+      "iters": 5000
+    },
+    "fine_x": {
+      "dx": 100.0,
+      "dy": 2.0833333333333335,
+      "dz": 5.0,
+      "iters": 4000
+    }
+  },
+  "cells": {
+    "baseline": 53760,
+    "fine": 215040,
+    "baseline_x": 107520,
+    "fine_x": 430080
+  },
+  "project_files_scratch": {
+    "baseline": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/cooling_baseline.aedt",
+    "fine": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/cooling_fine.aedt",
+    "baseline_x": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/cooling_baseline_x.aedt",
+    "fine_x": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/cooling_fine_x.aedt",
+    "smoke": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/smoke/cooling_smoke.aedt"
+  }
+}

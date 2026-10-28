@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-27",
+  "started_local": "2026-10-27T22:37:02",
+  "aedt_version": "2026.1 (AEDT 2026 R1)",
+  "pyaedt": "ansys.aedt.core 1.1.0",
+  "host_os": "Linux-4.18.0-553.150.1.el8_10.x86_64-x86_64-with-glibc2.28",
+  "policy": "Each probe ran once, as an unchanged existing script, in a tracked subprocess. Raw AEDT/PyAEDT logs are kept in scratch only because they contain licence-server details; error classes are paraphrased from keyword flags over the PyAEDT log and AEDT's batch.log, never copied.",
+  "probes": {
+    "q3d_extractor_dc": {
+      "script": "scripts/reference_tools/q3d_smoke.py (unchanged)",
+      "model": "copper bar 1 x 0.1 x 0.01 mm, source/sink on the end faces, DC only",
+      "desktop_launched_and_project_written": true,
+      "solved": false,
+      "dcr_value": null,
+      "dcr_units": null,
+      "error_class": "FlexNet: feature not available -- the solver's licence feature does not exist on the licence server, so AEDT terminated the solve with a licence error; desktop launch and model build were unaffected",
+      "flags": {
+        "pyaedt_log_present": true,
+        "batch_log_present": true,
+        "aedt_error_lines": 5,
+        "no_such_feature": true,
+        "terminated_by_licence_error": true,
+        "flexnet_error_line": true,
+        "aedt_execution_error": true,
+        "aedt_normal_completion": false,
+        "pyaedt_solve_started": true,
+        "pyaedt_solve_error": true,
+        "python_exception_in_probe": false,
+        "pyaedt_api_mismatch": false
+      },
+      "wall_s": 73.9,
+      "exit_code": 0,
+      "timed_out": false,
+      "own_processes_cleaned_up": 0
+    },
+    "maxwell3d_dc_conduction": {
+      "script": "scripts/reference_tools/aedt_licence_probe2.py (unchanged)",
+      "model": "copper bar 1 x 0.1 x 0.01 mm, current/voltage on the end faces",
+      "solved": false,
+      "error_class": "not a licence result: the existing probe script raised an exception before reaching the solve (PyAEDT 1.1 API mismatch in that branch); no licence request for this solver was made",
+      "licence_messages_counted_by_probe": null,
+      "build_s": null,
+      "solve_s": null,
+      "flags": {
+        "pyaedt_log_present": true,
+        "batch_log_present": true,
+        "pyaedt_segment_split_found": true,
+        "aedt_error_lines": 0,
+        "no_such_feature": false,
+        "terminated_by_licence_error": false,
+        "flexnet_error_line": false,
+        "aedt_execution_error": false,
+        "aedt_normal_completion": false,
+        "pyaedt_solve_started": false,
+        "pyaedt_solve_error": false,
+        "python_exception_in_probe": true,
+        "pyaedt_api_mismatch": true
+      },
+      "note": "Not asked for by this re-probe; probe2 simply runs it before Icepak. Its result here is not a licence result (see error_class). The Maxwell DC licence status therefore rests on the earlier probe recorded in aedt_common.py / tool_evidence/README.md and was not re-tested now."
+    },
+    "icepak": {
+      "script": "scripts/reference_tools/aedt_licence_probe2.py (unchanged)",
+      "model": "10 x 10 x 1 mm Al-Extruded block, 1 W solid block, steady, conduction only (flow and gravity off)",
+      "solved": true,
+      "error_class": null,
+      "licence_messages_counted_by_probe": 0,
+      "build_s": 57.3,
+      "solve_s": 66.47,
+      "flags": {
+        "pyaedt_log_present": true,
+        "batch_log_present": true,
+        "pyaedt_segment_split_found": true,
+        "aedt_error_lines": 0,
+        "no_such_feature": false,
+        "terminated_by_licence_error": false,
+        "flexnet_error_line": false,
+        "aedt_execution_error": false,
+        "aedt_normal_completion": true,
+        "pyaedt_solve_started": true,
+        "pyaedt_solve_error": false,
+        "python_exception_in_probe": false,
+        "pyaedt_api_mismatch": false
+      }
+    }
+  },
+  "probe2_run": {
+    "wall_s": 191.2,
+    "exit_code": 0,
+    "timed_out": false,
+    "own_processes_cleaned_up": 0
+  },
+  "q3d_dc_reference": {
+    "status": "READY_NOT_EXECUTED \u2014 LICENSE UNAVAILABLE",
+    "script": "scripts/reference_tools/q3d_dc_reference.py",
+    "reason": "the Q3D probe did not solve (licence feature not available)"
+  },
+  "finished_local": "2026-10-27T22:41:37",
+  "reclassified_local": "2026-10-27T22:44:35",
+  "reclassification_note": "Classes re-derived from the same scratch logs after the run; no probe was re-run. The first pass scanned only the PyAEDT stdout log (AEDT's licence message is written to batch.log) and miscounted the probe's own file name, aedt_licence_probe2.py, as a licence keyword.",
+  "summary": {
+    "q3d_extractor_dc": {
+      "solved": false,
+      "error_class": "FlexNet: feature not available -- the solver's licence feature does not exist on the licence server, so AEDT terminated the solve with a licence error; desktop launch and model build were unaffected"
+    },
+    "maxwell3d_dc_conduction": {
+      "solved": false,
+      "error_class": "not a licence result: the existing probe script raised an exception before reaching the solve (PyAEDT 1.1 API mismatch in that branch); no licence request for this solver was made"
+    },
+    "icepak": {
+      "solved": true,
+      "error_class": null
+    }
+  }
+}
