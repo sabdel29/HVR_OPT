@@ -33,12 +33,19 @@ mm = lambda x: x * 1e3
 conv = VF.get("convergence", {})
 arch_ok = lambda a: all(conv[f"{a}_{r}"]["converged"] for r in ("supply", "return"))
 SLIDES = []
+#: every slide defined below is COLLECTED here; the main flow (scripts/prelim_deck_main.py)
+#: takes the ones it reuses, and everything it does not take becomes the appendix
+LEGACY = []
+
+
+def section(body, notes="", prov="", cls=""):
+    n = f"<aside class='notes'>{notes}</aside>" if notes else ""
+    p = f"<div class='prov'>{prov}</div>" if prov else ""
+    return f"<section class='{cls}'>{body}{p}{n}</section>"
 
 
 def S(body, notes="", prov="", cls=""):
-    n = f"<aside class='notes'>{notes}</aside>" if notes else ""
-    p = f"<div class='prov'>{prov}</div>" if prov else ""
-    SLIDES.append(f"<section class='{cls}'>{body}{p}{n}</section>")
+    LEGACY.append({"html": section(body, notes, prov, cls), "used": False})
 
 
 # ============ 1. opening =============================================
@@ -529,7 +536,7 @@ That process is the contribution, not an embarrassment.</p></div>""",
   "had already been written up. Do not rush these slides — a committee respects a "
   "candidate who found their own errors.")
 
-S("""<h2>What physical closure actually changed</h2>
+S("""<h2>Closure history — earlier phases, fix by fix</h2>
 <table><tr><th>Found</th><th>Consequence</th></tr>
 <tr><td>Z2 homogenised slab replaced by 49 real cells</td><td>geometry was not the
 architecture being claimed</td></tr>
@@ -619,6 +626,54 @@ different converter's waveform.</p>""", "")
 
 
 FS.appendix(S)
+
+# ============ main flow, then the appendix ==============================
+import re as _re0                                                     # noqa: E402
+import prelim_deck_main as M                                          # noqa: E402
+
+
+def _title(h):
+    m = _re0.search(r"<h[12][^>]*>(.*?)</h[12]>", h, _re0.S)
+    return _re0.sub(r"<[^>]+>", "", m.group(1)).replace("&nbsp;", " ").strip() if m else ""
+
+
+def take(substr):
+    """The first unused legacy slide whose title (or, for title-less slides, whose text)
+    contains substr; marked used so it does not reappear in the appendix."""
+    for e in LEGACY:
+        if not e["used"] and (substr in _title(e["html"]) or
+                              (not _title(e["html"]) and substr in e["html"])):
+            e["used"] = True
+            return e["html"]
+    raise KeyError(f"no legacy slide titled {substr!r}")
+
+
+def S_main(body, notes="", prov="", cls=""):
+    SLIDES.append(section(body, notes, prov, cls))
+
+
+M.build(S_main, take, SLIDES.append)
+N_MAIN = len(SLIDES)
+SLIDES.append(section("""<div style="text-align:center;margin-top:2.2em">
+<div class="big">Appendix</div><p class="sub" style="margin-top:1em">Derivations, defect
+history, intermediate results and every validation case in detail.</p></div>"""))
+SLIDES.append(section("""<h2>Appendix — the two stacks, exploded</h2>
+<div style="text-align:center"><img src="figs/z1_z2_exploded.png" alt="Z1 and Z2 stacks,
+exploded, illustrative and not to scale" style="max-height:80vh;max-width:100%"></div>""",
+    "Every slab is a layer of the solved model, in the model's order; only thicknesses and gaps "
+    "are illustrative, and each label gives the true thickness. Z1 stacks the converter "
+    "between substrate and die; Z2 hangs it below the substrate inside the PCB opening.",
+    "figs/z1_z2_exploded.png — architecture_geometry.json (ILLUSTRATIVE — NOT TO SCALE)"))
+for e in LEGACY:
+    if e["used"] or not _title(e["html"]) or _title(e["html"]) in ("",):
+        continue
+    h = e["html"]
+    if not _title(h).startswith("Appendix"):
+        h = _re0.sub(r"<h2([^>]*)>", r"<h2\1>Appendix — ", h, count=1)
+    SLIDES.append(h)
+(D / "slide_values.json").write_text(json.dumps(
+    {"generator": "scripts/prelim_build_deck.py + prelim_deck_main.py",
+     "n_main": N_MAIN, "values": M.VALUES, "figures": M.FIGS}, indent=1))
 
 # ============ assemble ===============================================
 HTML = """<!doctype html>

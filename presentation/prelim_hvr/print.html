@@ -14,7 +14,7 @@ aside.notes { display:none !important; }
 <h3 style="text-align:center;font-size:1.15em;color:var(--muted);margin-top:.5em">
 From Converter Architecture to Physical Package Feasibility</h3>
 <p class="sub" style="margin-top:1.6em">PhD Preliminary Examination · HiPerCAS Lab,
-University of Illinois Chicago</p></div><aside class='notes'>Open by saying the talk has three parts: why vertical power delivery is forced on us, how the framework evaluates a package across three physics domains, and what physical closure changed about the conclusions. Say explicitly that several earlier numerical results were withdrawn during this work and that this is the point of the talk.</aside><div class='pgnum'>1 / 54</div></div>
+University of Illinois Chicago</p></div><aside class='notes'>Open by saying the talk has three parts: why vertical power delivery is forced on us, how the framework evaluates a package across three physics domains, and what physical closure changed about the conclusions. Say explicitly that several earlier numerical results were withdrawn during this work and that this is the point of the talk.</aside><div class='pgnum'>1 / 67</div></div>
 <div class='pg reveal'><h2>Start with one number</h2>
 <div class="cols" style="align-items:center">
 <div style="text-align:center">
@@ -25,7 +25,7 @@ University of Illinois Chicago</p></div><aside class='notes'>Open by saying the 
 <p>Current, not power, is what the package has to survive. Every conductor between the
 board and the die carries some share of that 1000 A.</p></div></div>
 <div class="callout" style="margin-top:.5em">The engineering problem is not generating
-the power. It is <strong>delivering</strong> it.</div><aside class='notes'>Anchor the audience in a number they can feel. 1000 A is comparable to an arc welder. Do not move on until they accept that the current, not the wattage, is the problem.</aside><div class='pgnum'>2 / 54</div></div>
+the power. It is <strong>delivering</strong> it.</div><aside class='notes'>Anchor the audience in a number they can feel. 1000 A is comparable to an arc welder. Do not move on until they accept that the current, not the wattage, is the problem.</aside><div class='pgnum'>2 / 67</div></div>
 <div class='pg reveal'><h2>Why low-voltage lateral delivery is so expensive</h2>
 <p style="text-align:center;font-size:1.5em;margin:.3em"><em class="q">P<sub>loss</sub> = I<sub>rms</sub><sup>2</sup> R</em></p>
 <p>Loss grows with the <strong>square</strong> of current. Halving the delivery voltage
@@ -37,7 +37,7 @@ Even 1 mΩ of path resistance burns 1 kW — as much as the chip uses.</div>
 <strong>Deliver at 48 V</strong><br>~21 A for the same power. The same 1 mΩ burns
 under half a watt.</div></div>
 <p style="margin-top:.4em">So: carry 48 V as far as possible, and convert to 1 V
-<strong>as close to the die as physically possible</strong>.</p><aside class='notes'>This slide is the whole motivation. The 48x voltage ratio is a 2300x loss ratio in the same conductor. Everything afterwards is a consequence of wanting the conversion point closer to the die.</aside><div class='pgnum'>3 / 54</div></div>
+<strong>as close to the die as physically possible</strong>.</p><aside class='notes'>This slide is the whole motivation. The 48x voltage ratio is a 2300x loss ratio in the same conductor. Everything afterwards is a consequence of wanting the conversion point closer to the die.</aside><div class='pgnum'>3 / 67</div></div>
 <div class='pg reveal'><h2>Three ways to deliver the power</h2>
 <div class="cols">
 <div><h3>Lateral</h3>
@@ -53,7 +53,7 @@ through the package instead of laterally.</p>
 region. The 1 V rail is split 49 ways before it travels anywhere.</p>
 <p><span class="chip ok">SHORT <em>AND</em> SPLIT</span></p></div></div>
 <div class="callout" style="margin-top:.6em">This work studies <strong>DVPD</strong>:
-49 regulator cells on a 7×7 grid, each delivering about 20 A.</div><aside class='notes'>Make clear DVPD is not just 'closer' but 'divided'. Splitting the current 49 ways cuts I^2R by 49 in the distributed segment even before shortening it.</aside><div class='pgnum'>4 / 54</div></div>
+49 regulator cells on a 7×7 grid, each delivering about 20 A.</div><aside class='notes'>Make clear DVPD is not just 'closer' but 'divided'. Splitting the current 49 ways cuts I^2R by 49 in the distributed segment even before shortening it.</aside><div class='pgnum'>4 / 67</div></div>
 <div class='pg reveal'><h2>Packaging 101 — the physical stack</h2><svg viewBox="0 0 1180 430" width="100%" style="max-height:50vh">
 <defs>
 <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="4"
@@ -93,8 +93,39 @@ region. The 1 V rail is split 49 ways before it travels anywhere.</p>
  marker-end="url(#arb)" opacity=".8"/>
 <text x="500" y="262" font-size="16" fill="#d1442f">1 V out — ~1000 A in total</text>
 <text x="500" y="282" font-size="14" fill="#d1442f">(split across 49 VR cells)</text>
-</svg><p class='sub'>Arrow width suggests current magnitude: thin at 48 V, thick at 1 V.</p><aside class='notes'>Walk bottom to top once, slowly. PCB, BGA balls, substrate, RDL, micro-pads, die, TSVs, TIM, heat sink. Then trace the current: 48 V enters through a few balls, a VR cell converts it, and 1 V goes up into the die over a very short, very wide path. The audience must hold this picture for the rest of the talk.</aside><div class='pgnum'>5 / 54</div></div>
-<div class='pg reveal'><h2>The conductors this work has to account for</h2>
+</svg><p class='sub'>Arrow width suggests current magnitude: thin at 48 V, thick at 1 V.</p><aside class='notes'>Walk bottom to top once, slowly. PCB, BGA balls, substrate, RDL, micro-pads, die, TSVs, TIM, heat sink. Then trace the current: 48 V enters through a few balls, a VR cell converts it, and 1 V goes up into the die over a very short, very wide path. The audience must hold this picture for the rest of the talk.</aside><div class='pgnum'>5 / 67</div></div>
+<div class='pg reveal'><h2>Two ways to put 49 converters under one die</h2>
+<div style="text-align:center"><img src="figs/z1_z2_package_comparison.svg" alt="Z1 and Z2 cross sections" style="max-height:77vh;max-width:100%"></div><div class='prov'>figs/z1_z2_package_comparison.svg — generated from research/final_closure/architecture_geometry.json (layer heights measured on the solver mesh)</div><aside class='notes'>Point at the converter in each picture. Z1: sandwiched between substrate and die. Z2: hanging below the substrate, inside the hole in the board. Then trace the orange 48 V arrow and the purple 1 V arrow in each. Z1 converts inside the package and then has a very short 1 V path; Z2 converts below the substrate and sends about 1000 A at 1 V up through the TSV field. Everything else in the talk is a consequence of where that conversion happens.</aside><div class='pgnum'>6 / 67</div></div>
+<div class='pg reveal'><h2>Inside one regulator cell</h2><div class="cols" style="align-items:center">
+<div style="flex:1.3;text-align:center"><img src="figs/regulator_cell_zoom.svg" alt="one regulator cell" style="max-height:62vh;max-width:100%"></div>
+<div><p>48 V → 3:1 switched capacitor → 16 V → two-phase buck → 1 V.</p>
+<p>Each of the 49 cells carries about 20 A at 1 V. The same 11 components and the same
+tier heights are used in Z1 and Z2 — only location, support and cooling differ.</p></div>
+</div><div class='prov'>figs/regulator_cell_zoom.svg — research/final_closure/architecture_geometry.json</div><aside class='notes'>Keep it short: the converter is identical in both architectures; this is a packaging comparison, not a converter comparison.</aside><div class='pgnum'>7 / 67</div></div>
+<div class='pg reveal'><h2>What is being compared</h2>
+<p>Each architecture is pushed through the same chain, and five quantities are compared:</p>
+<table><tr><th>quantity</th><th>why it matters</th><th>unit</th></tr>
+<tr><td><strong>electrical loss</strong></td><td>energy wasted between the board and the die</td><td>W</td></tr>
+<tr><td><strong>peak temperature</strong></td><td>the hottest point anywhere in the package</td><td>°C</td></tr>
+<tr><td><strong>die warpage</strong></td><td>how much the die surface bows</td><td>µm</td></tr>
+<tr><td><strong>joint displacement driver</strong></td><td>how far the worst solder ball is sheared</td><td>µm</td></tr>
+<tr><td><strong>local inelastic strain</strong></td><td>how much that ball deforms permanently per cycle</td><td>–</td></tr></table>
+<div class="callout" style="margin-top:.5em">A ranking is claimed only where the Z1/Z2 gap is
+larger than <strong>twice the measured discretisation uncertainty</strong>. Otherwise:
+"no ranking".</div><div class='prov'>research/final_closure/ordering.json (rule field)</div><aside class='notes'>Say the rule out loud: no ranking unless the gap exceeds twice the measured numerical uncertainty. This rule is applied by one generator and every slide and the paper read its output.</aside><div class='pgnum'>8 / 67</div></div>
+<div class='pg reveal'><h2>How one architecture is evaluated</h2><svg viewBox="0 0 980 230" width="100%" style="max-height:38vh">
+<defs><marker id="a2" markerWidth="9" markerHeight="9" refX="7" refY="3"
+ orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5a6672"/></marker></defs>
+<g font-size="14" text-anchor="middle"><rect x="12" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="74" y="78">converter</text><text x="74" y="96">synthesis</text><rect x="148" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="210" y="78">physical</text><text x="210" y="96">components</text><rect x="284" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="346" y="78">package</text><text x="346" y="96">stack</text><rect x="420" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="482" y="78">rail-aware</text><text x="482" y="96">current paths</text><rect x="556" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="618" y="78">interconnect</text><text x="618" y="96">loss</text><rect x="692" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="754" y="78">heat</text><text x="754" y="96">deposition</text><rect x="828" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="890" y="78">thermal</text><text x="890" y="96">FEM</text><line x1="136" y1="82" x2="144" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/><line x1="272" y1="82" x2="280" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/><line x1="408" y1="82" x2="416" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/><line x1="544" y1="82" x2="552" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/><line x1="680" y1="82" x2="688" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/><line x1="816" y1="82" x2="824" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/>
+<path d="M 890 108 C 890 170, 520 180, 520 150" stroke="#d1442f" stroke-width="3"
+ fill="none" marker-end="url(#a2)"/>
+<text x="700" y="186" font-size="14" fill="#d1442f" text-anchor="middle">
+update ρ(T) and repeat until ΔT &lt; 0.25 K  (3 iterations)</text>
+<g><rect x="200" y="4" width="190" height="34" rx="6" fill="#f6eefb" stroke="#6639ba"/><text x="295" y="26">global mechanics</text><rect x="410" y="4" width="190" height="34" rx="6" fill="#f6eefb" stroke="#6639ba"/><text x="505" y="26">critical joint</text><rect x="620" y="4" width="190" height="34" rx="6" fill="#f6eefb" stroke="#6639ba"/><text x="715" y="26">local solder submodel</text></g>
+<line x1="760" y1="56" x2="760" y2="42" stroke="#6639ba" stroke-width="2"
+ marker-end="url(#a2)"/></svg><p style='margin-top:.3em'>Mechanics runs <strong>once, after</strong> the electrical–thermal loop converges — the mechanical field does not feed back into the temperature, so putting it inside the loop would cost three solves for one answer.</p><aside class='notes'>The loop-vs-once point is a real design decision and a likely question. Say that thermoelastic deformation does not change the loss, so it is a one-way coupling.</aside><div class='pgnum'>9 / 67</div></div>
+<div class='pg reveal'><h2>What software is doing what?</h2><div style="text-align:center"><img src="figs/tool_map.svg" alt="tool map" style="max-height:74vh;max-width:100%"></div><div class='prov'>presentation/prelim_hvr/tool_intro.json · research/final_closure/tool_provenance.json</div><aside class='notes'>Name each tool once, plainly: CalculiX computes all production temperatures, stresses and the solder joint; Ansys Mechanical and MOOSE are used only as independent references; Q3D could not be run because the licence is not available. VTK and matplotlib draw results — they are not solvers.</aside><div class='pgnum'>10 / 67</div></div>
+<div class='pg reveal'><h2>The electrical path — every conductor has one owner</h2><div class='naive'><span class='nq'>The question:</span> How much power is lost carrying 1 kW from the board to the die, and in which conductor does it turn into heat?</div>
 <div class="cols"><div>
 <ul><li><strong>BGA ball</strong> — solder sphere joining package to board. 400 µm
 diameter here.</li>
@@ -110,8 +141,156 @@ electrical model is this expression applied honestly to real geometry — plus a
 solve wherever current can choose between parallel paths.</p></div>
 <p style="margin-top:.5em"><span class="chip ok">KEY IDEA</span> if a conductor exists
 physically, it must have exactly one owner in the loss ledger — no double counting,
-and no conductor silently set to zero.</p></div></div><aside class='notes'>This slide sets up the discipline used later: every physical conductor has one owner. A reviewer asking 'what carries the return current?' should be answered by the ledger.</aside><div class='pgnum'>6 / 54</div></div>
-<div class='pg reveal'><h2>Two architectures under comparison</h2><svg viewBox="0 0 980 300" width="100%" style="max-height:44vh">
+and no conductor silently set to zero.</p></div></div><aside class='notes'>This slide sets up the discipline used later: every physical conductor has one owner. A reviewer asking 'what carries the return current?' should be answered by the ledger.</aside><div class='pgnum'>11 / 67</div></div>
+<div class='pg reveal'><h2>The package 48 V RDL, seen from above</h2><div class="cols" style="align-items:flex-start">
+<div style="flex:1.05;text-align:center"><img src="figs/rdl_model_explained_Z2.svg" alt="RDL model Z2" style="max-height:64vh;max-width:100%"></div>
+<div style="flex:.95;text-align:center"><img src="figs/rdl_model_explained_Z1.svg" alt="RDL model Z1" style="max-height:64vh;max-width:100%"></div></div><div class='prov'>figs/rdl_model_explained_Z*.svg — exact solver geometry, research/final_closure/rdl_geometry_Z*.json (geometry hash)</div><aside class='notes'>The solver looks down on ONE copper layer: the 48 V sheet between the BGA and the substrate. Balls feed it, the 49 regulator input pads drain it. In Z2 the balls can only sit outside the opening, so current must flow inward.</aside><div class='pgnum'>12 / 67</div></div>
+<div class='pg reveal'><h2>RDL model vs MOOSE (independent finite elements)</h2>
+<div class="val" style="grid-template-columns:0.95fr 1.6fr 0.75fr">
+<div class="col"><h3>Our model (cartoon)</h3><img src="figs/rdl_model_explained_Z2.svg" alt="model cartoon" style="max-height:60vh;max-width:100%"></div>
+<div class="col"><h3>MOOSE field — matched run</h3><img src="figs/rdl_reference_annotated_Z2.png" alt="MOOSE field" style="max-height:60vh;max-width:100%">
+<div class="toolcap">Open-source simulation framework, primarily developed by Idaho National Laboratory. Here it is an independent check: it re-solves our heat-flow and current-flow test problems on separate meshes, for comparison.</div></div>
+<div class="col"><h3>Numbers</h3><table><tr><td>production R<sub>eff</sub> (Z2, supply)</td><td class='num'>0.7985 mΩ</td></tr><tr><td>MOOSE R<sub>eff</sub>, finest mesh</td><td class='num'>0.7976 mΩ</td></tr><tr><td>difference</td><td class='num'>+0.11 %</td></tr><tr><td>production runtime</td><td class='num'>24.4 s (22.5 s–25.8 s)</td></tr><tr><td>MOOSE runtime</td><td class='num'>60.8 s (54.8 s–77.9 s)</td></tr><tr><td>runtime ratio</td><td class='num'>2.49×</td></tr></table>
+<p class="sub">Same formulation in both solvers; mesh sequence m1–m3 in MOOSE.</p></div>
+</div><div class='prov'>research/final_closure/reference_pkg_rdl_moose_Z2.json · tool_evidence/pkg_rdl_moose_Z2/</div><aside class='notes'>Left: what the model is. Centre: the actual MOOSE solution, rendered from its own output file; the outlines and labels are an overlay. Right: the numbers. The agreement is a model-to-model check on the same problem, not a measurement.</aside><div class='pgnum'>13 / 67</div></div>
+<div class='pg reveal'><h2>BGA current sharing — assumption vs solve</h2><p class='sub'>Matched construction: <strong>54 balls per rail</strong> for both architectures.</p>
+<div class="figwrap"><img src="figs/ball_sharing.svg" alt="ball current sharing"></div>
+<div class="callout" style="margin-top:.3em">Even with a perfectly <strong>uniform</strong>
+load the balls do not share equally, so a count sized from I<sub>total</sub>/N understates the
+worst ball. The count is therefore <strong>solved</strong>: every legal even count, the network
+re-solved at each, verified on the resolved grid.</div><div class='prov'>network re-solved at n=301 for the figure · current HEAD</div><aside class='notes'>The load is uniform across all 49 cells; the non-uniformity is pure network geometry.</aside><div class='pgnum'>14 / 67</div></div>
+<div class='pg reveal'><h2>The heat map: losses go where they are produced</h2><div class='naive'><span class='nq'>The question:</span> Where is the ~145 W of loss produced, and where does that heat leave the package?</div>
+<div class="figwrap"><img src="figs/final_ledger.svg" alt="ledger"></div>
+<p>High-side and low-side GaN, inductor and capacitor losses are deposited in <strong>their own
+tiers</strong>, inside the 49 cell footprints. Package, BGA, TSV and pad losses go in their own
+layers. Deposited heat equals the electrical ledger to machine precision.</p><div class='prov'>research/final_closure/final_results.json · electrical_ledger.json</div><aside class='notes'>Mention the defect: the first physical deposition spread device loss into the encapsulant out to the package corners and produced a phantom corner hot spot. Confining deposits to the cell footprints removed it.</aside><div class='pgnum'>15 / 67</div></div>
+<div class='pg reveal'><h2>Thermal model vs AEDT and MOOSE</h2>
+<div class="val">
+<div class="col"><h3>Exact geometry, re-rendered</h3><img src="figs/rerender_thermal_column_Z2.png" alt="re-render" style="max-height:60vh;max-width:100%"></div>
+<div class="col"><h3>Ansys screenshot — matched run</h3><img src="tool_evidence/thermal_column_Z2/02_annotated.png" alt="AEDT screenshot" style="max-height:60vh;max-width:100%">
+<div class="toolcap">Ansys's heat and structural solver inside Electronics Desktop. Here it is the commercial cross-check: it re-solves our via, wiring-layer, unit-cell temperature and two-layer bending tests for comparison.</div></div>
+<div class="col"><h3>Numbers (Z2 unit cell)</h3><table><tr><td>vs AEDT Mechanical</td><td class='num'>-0.11 %</td></tr><tr><td>vs MOOSE</td><td class='num'>-0.12 %</td></tr><tr><td>runtime ratio vs AEDT</td><td class='num'>3.41×</td></tr><tr><td>runtime ratio vs MOOSE</td><td class='num'>0.61×</td></tr></table>
+<p class="sub">Error = difference in temperature rise above the coolant.</p></div></div><div class='prov'>accuracy_speed_matrix.json · tool_evidence/thermal_column_Z2/</div><aside class='notes'>The middle image is the real Ansys session; the left image re-draws the exact same geometry from the project file so it can be read. CalculiX, Ansys and MOOSE agree to about a tenth of a percent on this matched problem.</aside><div class='pgnum'>16 / 67</div></div>
+<div class='pg reveal'><h2>The electrothermal fixed point converges</h2>
+<div class="figwrap"><img src="figs/et_convergence.svg" alt="ET convergence"></div>
+<p>Resistance rises with temperature, loss rises with resistance, temperature rises with loss.
+Iterated until max&nbsp;|&Delta;T| &lt; 0.25 K and |&Delta;P|/P &lt; 10<sup>-3</sup> — both declared
+before any physical result was read.</p><div class='prov'>final_results.json · et_history</div><aside class='notes'>The initial 85 C guess under-estimates GaN on-resistance; the first iteration raises the Z1 loss by 13.9 W before settling.</aside><div class='pgnum'>17 / 67</div></div>
+<div class='pg reveal'><h2>Why packages warp — and what Z1 and Z2 actually do</h2>
+<div class='naive'><span class='nq'>The question:</span> Does the package bend, and how hard is the worst solder ball pushed sideways?</div>
+<div class="cols" style="align-items:center"><div style="flex:.8">
+<p>Silicon expands about 2.6 ppm/K, the board about 15 ppm/K, copper about 17 ppm/K.
+Bonded together and heated, they cannot all grow freely, so the stack <strong>bends</strong>
+and the solder balls between them are <strong>sheared</strong>.</p>
+<p class="sub">Right: the production thermoelastic solution itself — the die-top surface
+of each architecture, one colour scale.</p></div>
+<div style="flex:1.2;text-align:center"><img src="figs/die_warpage_maps.png" alt="die warpage maps" style="max-height:56vh;max-width:100%"></div></div><div class='prov'>figs/die_warpage_maps.png — production structural solution (r21 mesh); peak-to-valley checked against final_results.json</div><aside class='notes'>Do the physics in one sentence, then show the real result: Z2's die bows about 2.5 times more than Z1's under the same scenario.</aside><div class='pgnum'>18 / 67</div></div>
+<div class='pg reveal'><h2>Global mechanics vs AEDT and the closed form</h2>
+<div class="val">
+<div class="col"><h3>Exact geometry, re-rendered</h3><img src="figs/rerender_mech_bilayer.png" alt="re-render" style="max-height:60vh;max-width:100%"></div>
+<div class="col"><h3>Ansys screenshot — matched run</h3><img src="tool_evidence/mech_bilayer/02_annotated.png" alt="AEDT screenshot" style="max-height:60vh;max-width:100%">
+<div class="toolcap">Ansys's heat and structural solver inside Electronics Desktop. Here it is the commercial cross-check: it re-solves our via, wiring-layer, unit-cell temperature and two-layer bending tests for comparison.</div></div>
+<div class="col"><h3>Numbers (curvature)</h3><table><tr><td>vs AEDT Mechanical</td><td class='num'>+0.01 %</td></tr><tr><td>vs bimaterial closed form</td><td class='num'>-0.43 %</td></tr><tr><td>runtime ratio vs AEDT</td><td class='num'>3.99×</td></tr></table>
+<p class="sub">The closed form ignores free-edge effects, so a few tenths of a percent
+are expected; the matched FE agrees to a hundredth.</p></div></div><div class='prov'>accuracy_speed_matrix.json · tool_evidence/mech_bilayer/</div><aside class='notes'>Same layout as the thermal check. The production element reproduces the commercial solution of the same bilayer to about one hundredth of a percent.</aside><div class='pgnum'>19 / 67</div></div>
+<div class='pg reveal'><h2>Global driver &rarr; local response</h2><svg viewBox="0 0 950 250" width="100%" style="max-height:38vh">
+<rect x="30" y="60" width="380" height="110" fill="#eef2f6" stroke="#9aa3ad"/>
+<text x="40" y="84" font-size="17" font-weight="700">GLOBAL model</text>
+<path d="M 60 150 Q 220 110 390 150" stroke="#1f6feb" stroke-width="9" fill="none"/>
+<g><circle cx="70" cy="160" r="7" fill="#9aa3ad"/><circle cx="106" cy="155" r="7" fill="#9aa3ad"/><circle cx="142" cy="151" r="7" fill="#9aa3ad"/><circle cx="178" cy="148" r="7" fill="#9aa3ad"/><circle cx="214" cy="147" r="7" fill="#9aa3ad"/><circle cx="250" cy="147" r="7" fill="#9aa3ad"/><circle cx="286" cy="148" r="7" fill="#9aa3ad"/><circle cx="322" cy="151" r="7" fill="#9aa3ad"/><circle cx="358" cy="155" r="7" fill="#9aa3ad"/><circle cx="394" cy="160" r="7" fill="#9aa3ad"/></g>
+<rect x="352" y="138" width="30" height="30" fill="none" stroke="#cf222e"
+ stroke-width="3"/>
+<text x="40" y="190" font-size="15" fill="#5a6672">whole package deforms; each joint is
+a few elements</text>
+<path d="M 420 130 L 500 130" stroke="#10151c" stroke-width="3"
+ marker-end="url(#ar2)"/>
+<defs><marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="3"
+ orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#10151c"/></marker></defs>
+<text x="424" y="120" font-size="15" fill="#cf222e">&Delta;u<tspan font-size="11"
+ dy="4">c</tspan><tspan dy="-4">, T</tspan></text>
+<rect x="520" y="40" width="400" height="160" fill="#faf8ff" stroke="#6639ba"/>
+<text x="532" y="64" font-size="17" font-weight="700">LOCAL submodel</text>
+<rect x="640" y="86" width="150" height="80" fill="#e8c07a" stroke="#8a6d2f"/>
+<g stroke="#8a6d2f" stroke-width="1" opacity=".55"><line x1="640.0" y1="86" x2="640.0" y2="166"/><line x1="658.7" y1="86" x2="658.7" y2="166"/><line x1="677.4" y1="86" x2="677.4" y2="166"/><line x1="696.1" y1="86" x2="696.1" y2="166"/><line x1="714.8" y1="86" x2="714.8" y2="166"/><line x1="733.5" y1="86" x2="733.5" y2="166"/><line x1="752.2" y1="86" x2="752.2" y2="166"/><line x1="770.9" y1="86" x2="770.9" y2="166"/><line x1="789.6" y1="86" x2="789.6" y2="166"/><line x1="640" y1="86" x2="790" y2="86"/><line x1="640" y1="96" x2="790" y2="96"/><line x1="640" y1="106" x2="790" y2="106"/><line x1="640" y1="116" x2="790" y2="116"/><line x1="640" y1="126" x2="790" y2="126"/><line x1="640" y1="136" x2="790" y2="136"/><line x1="640" y1="146" x2="790" y2="146"/><line x1="640" y1="156" x2="790" y2="156"/><line x1="640" y1="166" x2="790" y2="166"/></g>
+<text x="532" y="190" font-size="15" fill="#5a6672">one joint, 488 elements,
+nonlinear viscoplastic</text></svg><div class='cols' style='margin-top:.3em'><div class='callout' style='border-color:var(--z1)'><strong>GLOBAL DRIVER</strong><br>&Delta;u<sub>c</sub>, the relative in-plane displacement imposed across the critical joint, plus its temperature. Units: &micro;m.</div><div class='callout' style='border-color:var(--accent)'><strong>LOCAL RESPONSE</strong><br>inelastic strain, strain range, inelastic work density returned by the viscoplastic joint model. Dimensionless / MJ·m<sup>-3</sup>.</div></div><p style='margin-top:.3em;text-align:center'><strong>These are different quantities and are never reported as one.</strong></p><aside class='notes'>This is the most commonly confused point in the whole project. The global model cannot resolve a solder joint; the local model cannot know the package. Say explicitly that a larger displacement driver does not automatically mean a larger local response.</aside><div class='pgnum'>20 / 67</div></div>
+<div class='pg reveal'><h2>Where is the critical joint? Searched, not assumed</h2>
+<div class="figwrap"><img src="figs/joint_map.svg" alt="joint map"></div>
+<p>In-plane relative displacement across the BGA layer at <strong>every legal site</strong> —
+1369 for Z1, 528 for Z2. The outermost lattice corner is critical in both.</p><div class='prov'>final_results.json · joint_search</div><aside class='notes'>The corner being critical is a RESULT here. The +x corners rank first: they are the hotter, downstream end of the cold plate.</aside><div class='pgnum'>21 / 67</div></div>
+<div class='pg reveal'><h2>Local solder response and how well it is resolved</h2>
+<div class='naive'><span class='nq'>The question:</span> Inside that one ball, how much does the solder deform permanently per cycle — and is the number converged?</div>
+<div style="text-align:center"><img src="figs/local_convergence.svg" alt="local convergence" style="max-height:46vh;max-width:100%"></div>
+<div class="cols"><div><table class="small"><tr><th>case</th><th>Δε<sub>in</sub>/cycle (×10<sup>-3</sup>)</th>
+<th>status</th><th>U</th></tr><tr><td>Z1 HV-S0</td><td class='num'>6.203</td><td>converged</td><td class='num'>2.03 %</td></tr><tr><td>Z2 HV-S0</td><td class='num'>9.971</td><td>bounded</td><td class='num'>18.23 %</td></tr><tr><td>Z1 HV-S1</td><td class='num'>8.793</td><td>converged</td><td class='num'>1.57 %</td></tr><tr><td>Z2 HV-S1</td><td class='num'>11.449</td><td>bounded</td><td class='num'>15.63 %</td></tr></table></div>
+<div class="callout" style="font-size:.72em">The mesh rule was declared before the finer
+levels were read. Its own acceptance test exposed a parser defect (seven-digit output
+times merged increments, biasing the last cycle); fixed and verified — the published
+control is reproduced to all ten printed digits.</div></div><div class='prov'>research/final_closure/local_mesh_study.json · local_time_study.json · local_cycle_study.json · local_mesh_policy.json</div><aside class='notes'>Two points. First, the local number is reported with a measured uncertainty: mesh plus time step plus cycle count. Second, the declared-policy process caught a post-processing defect that would otherwise have shifted the answer by up to 17 %.</aside><div class='pgnum'>22 / 67</div></div>
+<div class='pg reveal'><h2>What physical closure changed</h2>
+<table><tr><th>before closure</th><th>after closure</th><th>effect</th></tr>
+<tr><td>BGA current shared equally — an input</td><td>voltage-fed network: the sharing is solved</td>
+<td>ball count becomes a solved design variable</td></tr>
+<tr><td>Z2 converter as a full-area slab</td><td>49 physical cells in the PCB opening</td>
+<td>geometry is the architecture being claimed</td></tr>
+<tr><td>RDL tier conductivity from a series formula</td><td>explicit RVE in Ansys</td>
+<td>through-thickness k was 12.5 % too high</td></tr>
+<tr><td>earlier mechanical ranking</td><td>physical lineage</td>
+<td>the mechanical ordering reversed</td></tr></table>
+<p class="sub" style="margin-top:.4em">The full defect history (floating-point lattice,
+intermediate counts, obsolete resistances) is in the appendix.</p><div class='prov'>appendix · research/final_closure/README.md</div><aside class='notes'>Four examples only. The point: physical closure changed answers, including the architecture ordering. Details are in the appendix if asked.</aside><div class='pgnum'>23 / 67</div></div>
+<div class='pg reveal'><h2>HV-S0 result (headline scenario)</h2>
+<div style="text-align:center"><img src="figs/s0_cards.svg" alt="S0 cards" style="max-height:50vh;max-width:100%"></div>
+<div class="callout" style="margin-top:.3em">HV-S0 is the headline comparison: both architectures solve, both critical joints lie inside the constitutive calibration and the solder stays solid.
+Z2 has lower peak temperature in HV-S1, where the gap exceeds twice the measured discretisation uncertainty. The approximately 1 C difference lies within the measured discretization uncertainty; therefore no thermal architecture ranking is drawn for HV-S0. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.</div><div class='prov'>figs/s0_cards.svg — final_results.json · ordering.json</div><aside class='notes'>Read the verdict line under each card, not the bars. Loss: Z2 lower. Peak temperature: no ranking — the difference is inside the measured uncertainty. Warpage, joint driver and local response: Z1 lower, by wide margins.</aside><div class='pgnum'>24 / 67</div></div>
+<div class='pg reveal'><h2>Scenario robustness</h2>
+<div style="text-align:center"><img src="figs/scenario_small_multiples.svg" alt="scenario small multiples" style="max-height:58vh;max-width:100%"></div>
+<p class="sub">HV-S1 is a sensitivity case: the Z1 joint lies beyond the Norton card's temperature calibration, so its local response is EXTRAPOLATED. Under HV-S2, Z1 exits the valid solid-solder operating domain under the assumed cooling. Z1 has lower local inelastic response in HV-S0, where the gap exceeds twice the measured discretisation uncertainty. In HV-S1 the difference lies within the measured discretisation uncertainty (and the Z1 response is extrapolated), so no ranking is drawn. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.</p><div class='prov'>figs/scenario_small_multiples.svg — final_results.json · ordering.json</div><aside class='notes'>HV-S0 is the headline. HV-S1 is a sensitivity: Z1's joint is above the constitutive calibration, so its local response is extrapolated. HV-S2 is a stress case: Z1's joint reaches the solder melting onset, so it is an infeasibility result and no architecture comparison of any quantity is drawn there (hollow squares).</aside><div class='pgnum'>25 / 67</div></div>
+<div class='pg reveal'><h2>Which inputs could move an ordering?</h2>
+<p class="sub">21 open sensitivity inputs: 18 could move
+an ordering (B1), 3 only a magnitude (B2); all
+18 B1 resolved. Each variant run on the production mesh at HV-S0;
+verdicts by the production ordering rule. The 48 V waveform is handled by the scenarios
+(slide 25); contact and RDL construction are bounded from the network sweep (loss holds).</p>
+<table class="small"><tr><th>input changed (production value)</th><th>loss</th><th>peak T</th><th>warpage</th><th>joint driver</th><th>local</th><th>largest change</th></tr>
+<tr><td>board as five depth blocks (H1)</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>5 %</td></tr><tr><td>board 3.2 mm (2.4)</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip open'>→ no rank</span></td><td class='num'>15 %</td></tr><tr><td>board copper coverage 0.25 (0.50)</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>19 %</td></tr><tr><td>board copper coverage 0.75 (0.50)</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>14 %</td></tr><tr><td>TSV field 729/cell (1444)</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>2 %</td></tr><tr><td>TSV field 64/cell (1444)</td><td><span class='chip open'>→ Z1</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>9 %</td></tr><tr><td>Z2: sidewall clearance open (filled)</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip open'>→ no rank</span></td><td class='num'>28 %</td></tr><tr><td>void between cells (encapsulated)</td><td><span class='chip ok'>holds</span></td><td><span class='chip open'>→ Z2</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip open'>→ Z2</span></td><td><span class='chip open'>→ no rank</span></td><td class='num'>73 %</td></tr><tr><td>Z2: cold plate under the converter</td><td><span class='chip ok'>holds</span></td><td><span class='chip open'>→ Z2</span></td><td><span class='chip open'>→ Z2</span></td><td><span class='chip open'>→ Z2</span></td><td><span class='chip open'>→ Z2</span></td><td class='num'>96 %</td></tr><tr><td>GaN tiers at k/2 (bound)</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>3 %</td></tr><tr><td>converter tiers at k/10 (bound)</td><td><span class='chip ok'>holds</span></td><td><span class='chip open'>→ Z2</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip open'>→ no rank</span></td><td class='num'>94 %</td></tr><tr><td>converter medium 80 GPa, 4 ppm/K</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>4 %</td></tr><tr><td>converter medium 80 GPa, 10 ppm/K</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>4 %</td></tr><tr><td>converter medium 160 GPa, 4 ppm/K</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>3 %</td></tr><tr><td>converter medium 160 GPa, 10 ppm/K</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>9 %</td></tr><tr><td>1 V pads at the drop floor (2040)</td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td><span class='chip ok'>holds</span></td><td class='num'>16 %</td></tr></table><div class='prov'>research/final_closure/classB_resolution.csv</div><aside class='notes'>Read across a row: green means that ordering survives the change; red says what it becomes. Mechanical orderings that reverse: joint-driver under void out-of-cell volume; joint-driver and warpage under a cold plate under the Z2 converter. The local ordering, resolved only narrowly in production, is the fragile one.</aside><div class='pgnum'>26 / 67</div></div>
+<div class='pg reveal'><h2>Accuracy and runtime, stage by stage</h2><div style="text-align:center"><img src="figs/accuracy_runtime_split.svg" alt="accuracy and runtime" style="max-height:64vh;max-width:100%"></div><div class='prov'>figs/accuracy_runtime_split.svg — accuracy_speed_matrix.json</div><aside class='notes'>Two different claims, two panels. Closed forms are ten million times cheaper than a finite-element solve of the same small problem — that is expected. The production finite-element stages are between 0.6 and 4 times the speed of the reference solvers on the same machine. No end-to-end speedup is claimed.</aside><div class='pgnum'>27 / 67</div></div>
+<div class='pg reveal'><h2>What we can claim — and what we cannot</h2><div class="cols"><div><h3>Can claim (production model; each gap &gt; 2U)</h3><ul>
+<li>Loss: Z2 lower in HV-S0 and HV-S1</li><li>Peak temperature: Z2 lower in HV-S1</li><li>Die warpage: Z1 lower in HV-S0 and HV-S1</li><li>Joint driver: Z1 lower in HV-S0 and HV-S1</li><li>Local response: Z1 lower in HV-S0</li></ul>
+<h3>Conditioned on — orderings that move under a sensitivity</h3><ul class="sub"><li>a 3.2 mm board — local response: Z1 lower → unresolved</li><li>the electrically minimal TSV field (64 vias/cell) — loss: Z2 lower → Z1 lower</li><li>void instead of encapsulated space between the cells — joint driver: Z1 lower → Z2 lower; local response: Z1 lower → unresolved; peak temperature: unresolved → Z2 lower</li><li>encapsulated cells with the PCB sidewall clearance open — local response: Z1 lower → unresolved</li><li>a cold plate under the Z2 converter — joint driver: Z1 lower → Z2 lower; local response: Z1 lower → Z2 lower; peak temperature: unresolved → Z2 lower; warpage: Z1 lower → Z2 lower</li><li>a tenfold lower converter-tier conductivity — local response: Z1 lower → unresolved; peak temperature: unresolved → Z2 lower</li></ul></div>
+<div><h3>Cannot claim</h3><ul>
+<li>a thermal ranking at HV-S0 (inside the measured uncertainty);</li>
+<li>any ordering under HV-S2: Z1 leaves the valid solid-solder domain there;</li>
+<li>any absolute solder life (response only — Darveaux);</li>
+<li>the 48 V waveform (results are scenario-conditioned);</li>
+<li>an electromigration-safe current density;</li>
+<li>a commercial end-to-end speedup;</li>
+<li>any statement about which architecture a company uses or should use.</li></ul></div></div><div class='prov'>ordering.json statements · FINAL_PAPER_DECISION.md</div><aside class='notes'>Read the left column as the paper's claims, the right as its explicit non-claims.</aside><div class='pgnum'>28 / 67</div></div>
+<div class='pg reveal'><h2>Contributions and future work</h2><div class="cols"><div><h3>Contributions</h3><ol>
+<li>A hierarchical electrothermal–mechanical framework for DVPD in which converter synthesis
+propagates into an explicit physical package, evaluated in one lineage.</li>
+<li>A voltage-fed, return-inclusive package network on an aligned graded grid, with the BGA
+count solved as a design variable.</li>
+<li>Stage-by-stage checks against commercial and open-source FEM, with model-specific errors
+and runtimes instead of one framework accuracy.</li>
+<li>Convergence and sensitivity rules declared before results were read; every ordering is
+gated by measured uncertainty.</li>
+<li>Physical closure reverses an architecture conclusion.</li></ol></div>
+<div><h3>Future work</h3><ul><li>the converter's switch-state schedule, so one 48 V waveform replaces the named scenarios;</li><li>Z2 backside cooling as a co-designed architecture state;</li><li>TSV density as a co-design variable: the HV-S0 loss ordering depends on it;</li><li>the Icepak conjugate-CFD check extended from one channel to the full cold plate;</li><li>qualified electromigration and fatigue data, for absolute reliability statements;</li><li>a full-package commercial FE benchmark beyond the unit cell.</li></ul></div></div><aside class='notes'>End on contribution 5. Each future-work item replaces a declared assumption or a scenario with data; none is needed for the comparison itself.</aside><div class='pgnum'>29 / 67</div></div>
+<div class='pg reveal'><div style="text-align:center;margin-top:1.4em">
+<div class="big">Thank you</div>
+<p style="margin-top:1em;max-width:72%;margin-left:auto;margin-right:auto">
+<strong>Contribution:</strong> a hierarchical electrothermal–mechanical framework for
+distributed vertical power delivery, checked stage by stage against matched reference
+solvers, and a demonstration that physical closure reverses an architecture conclusion.</p>
+<p class="sub" style="margin-top:1.2em">Questions</p></div><div class='pgnum'>30 / 67</div></div>
+<div class='pg reveal'><div style="text-align:center;margin-top:2.2em">
+<div class="big">Appendix</div><p class="sub" style="margin-top:1em">Derivations, defect
+history, intermediate results and every validation case in detail.</p></div><div class='pgnum'>31 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — the two stacks, exploded</h2>
+<div style="text-align:center"><img src="figs/z1_z2_exploded.png" alt="Z1 and Z2 stacks,
+exploded, illustrative and not to scale" style="max-height:80vh;max-width:100%"></div><div class='prov'>figs/z1_z2_exploded.png — architecture_geometry.json (ILLUSTRATIVE — NOT TO SCALE)</div><aside class='notes'>Every slab is a layer of the solved model, in the model's order; only thicknesses and gaps are illustrative, and each label gives the true thickness. Z1 stacks the converter between substrate and die; Z2 hangs it below the substrate inside the PCB opening.</aside><div class='pgnum'>32 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Two architectures under comparison</h2><svg viewBox="0 0 980 300" width="100%" style="max-height:44vh">
 <g><text x="20" y="24" font-size="21" font-weight="700" fill="#1f6feb">Z1 — EMBEDDED</text>
 <rect x="20" y="210" width="430" height="34" fill="#2f6f3e" opacity=".82"/>
 <text x="30" y="233" font-size="15" fill="#fff">PCB (solid)</text>
@@ -141,8 +320,8 @@ No board opening.</text></g>
 <line x1="48" y1="200" x2="48" y2="150" stroke="#d1442f" stroke-width="4"/>
 <line x1="235" y1="196" x2="235" y2="100" stroke="#d1442f" stroke-width="10"/>
 <text x="20" y="272" font-size="14" fill="#5a6672">VR sits in a 23.36 mm board opening.
-48 V must reach it laterally.</text></g></svg><p class='sub'>The cutout removes 841 of 1369 legal BGA sites — the central ones.</p><aside class='notes'>The single most important visual difference: Z2's cutout deletes exactly the BGA sites nearest the die centre. That turns out to matter for convergence later, because Z1's placement rule puts balls underneath regulator cells and Z2's geometrically cannot.</aside><div class='pgnum'>7 / 54</div></div>
-<div class='pg reveal'><h2>The converter inside each cell</h2>
+48 V must reach it laterally.</text></g></svg><p class='sub'>The cutout removes 841 of 1369 legal BGA sites — the central ones.</p><aside class='notes'>The single most important visual difference: Z2's cutout deletes exactly the BGA sites nearest the die centre. That turns out to matter for convergence later, because Z1's placement rule puts balls underneath regulator cells and Z2's geometrically cannot.</aside><div class='pgnum'>33 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — The converter inside each cell</h2>
 <div style="text-align:center;font-size:1.0em;margin:.5em 0">
 <span style="padding:.3em .7em;border:3px solid var(--z1);border-radius:.3em">48 V</span>
 <span style="font-size:1.4em;color:var(--muted)"> → </span>
@@ -164,127 +343,78 @@ with no magnetics; the buck stage then regulates over a sane ratio.</p></div>
 <li>switching at 805 kHz</li><li>250 nH inductors</li>
 <li>tile 2.3685 mm square</li></ul></div></div>
 <div class="banner open">The switching-state sequence is <strong>not</strong> in the
-converter model — this becomes the single largest open item in the talk.</div><aside class='notes'>Do not teach SC operation in detail. The one thing they must retain is that the model gives average currents and an output ripple, but never an input current waveform. Flag it here so the later OPEN item is not a surprise.</aside><div class='pgnum'>8 / 54</div></div>
-<div class='pg reveal'><h2 style="border:none">&nbsp;</h2>
-<div class="callout" style="font-size:1.25em;text-align:center;margin-top:.2em">
-Electrical efficiency alone does not tell us whether the package can actually be
-<strong>built</strong> — or <strong>survive</strong>.</div>
-<div class="cols" style="margin-top:1.0em;text-align:center">
-<div><div class="chip ok" style="font-size:.8em">ELECTRICAL</div>
-<p class="sub">where does the current go, and what does it dissipate?</p></div>
-<div><div class="chip warn" style="font-size:.8em">THERMAL</div>
-<p class="sub">where does that heat go, and how hot does it get?</p></div>
-<div><div class="chip open" style="font-size:.8em">MECHANICAL</div>
-<p class="sub">what does the temperature field do to the structure?</p></div>
-<div><div class="chip lit" style="font-size:.8em">REALIZABILITY</div>
-<p class="sub">can the geometry be built at all?</p></div></div>
-<p style="text-align:center;margin-top:.9em">Electrical and thermal are
-<strong>two-way coupled</strong>: resistance rises with temperature, which raises loss,
-which raises temperature.</p><aside class='notes'>This is the thesis statement slide. Pause here. The feedback arrow between electrical and thermal is why a fixed-point iteration is needed rather than a single pass.</aside><div class='pgnum'>9 / 54</div></div>
-<div class='pg reveal'><h2>The model hierarchy — what is analytical, what is FEM</h2>
+converter model — this becomes the single largest open item in the talk.</div><aside class='notes'>Do not teach SC operation in detail. The one thing they must retain is that the model gives average currents and an output ripple, but never an input current waveform. Flag it here so the later OPEN item is not a surprise.</aside><div class='pgnum'>34 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — The model hierarchy — what is analytical, what is FEM</h2>
 <table><tr><th>Stage</th><th>Model</th><th>Numerical type</th></tr><tr><td>converter synthesis</td><td>closed-form HVR loss/ripple equations + enumeration</td><td>ANALYTICAL</td></tr><tr><td>rail-aware power path</td><td>terminal/segment graph with one owner per conductor</td><td>NETWORK/ALGEBRAIC</td></tr><tr><td>BGA / pad / TSV bulk R</td><td>rho L / A with parallel allocation</td><td>ANALYTICAL</td></tr><tr><td>TSV transition</td><td>bulk + two-ended constriction</td><td>ANALYTICAL</td></tr><tr><td>package RDL</td><td>2-D resistive sheet, G V = I</td><td>REDUCED PDE / RESISTOR NETWORK</td></tr><tr><td>detailed current crowding</td><td>cell-centred conservative finite volume</td><td>FVM</td></tr><tr><td>homogenised materials</td><td>explicit RVE homogenization</td><td>REDUCED MATERIAL MODEL</td></tr><tr><td>cooling</td><td>energy balance + fin efficiency + Nusselt correlation</td><td>ANALYTICAL / COMPACT</td></tr><tr><td>package thermal field</td><td>CalculiX C3D8 conduction FE</td><td>FEM</td></tr><tr><td>electrothermal coupling</td><td>Picard fixed point</td><td>ITERATIVE COUPLING</td></tr><tr><td>global mechanics</td><td>CalculiX C3D8I thermoelastic FE</td><td>FEM</td></tr><tr><td>local solder</td><td>displacement-driven viscoplastic FE submodel</td><td>FEM (nonlinear)</td></tr></table>
 <div class="callout" style="margin-top:.4em">This is <strong>not</strong> "an analytical
 framework replacing FEM". It is a hierarchy: analytical and reduced-order models where
 they are defensible, and FEM retained wherever a full spatial field is genuinely needed.
-MOOSE is used as an <strong>independent reference</strong>, not as a production stage.</div><div class='prov'>research/phase0nah/model_hierarchy.csv · current HEAD</div><aside class='notes'>Expect the question 'why not just use Ansys for everything'. The answer is on this slide: the expensive stages are kept, the cheap ones are only used where a reduced model has been checked. Do not claim the framework replaces FEM.</aside><div class='pgnum'>10 / 54</div></div>
-<div class='pg reveal'><h2>How one architecture is evaluated</h2><svg viewBox="0 0 980 230" width="100%" style="max-height:38vh">
-<defs><marker id="a2" markerWidth="9" markerHeight="9" refX="7" refY="3"
- orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5a6672"/></marker></defs>
-<g font-size="14" text-anchor="middle"><rect x="12" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="74" y="78">converter</text><text x="74" y="96">synthesis</text><rect x="148" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="210" y="78">physical</text><text x="210" y="96">components</text><rect x="284" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="346" y="78">package</text><text x="346" y="96">stack</text><rect x="420" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="482" y="78">rail-aware</text><text x="482" y="96">current paths</text><rect x="556" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="618" y="78">interconnect</text><text x="618" y="96">loss</text><rect x="692" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="754" y="78">heat</text><text x="754" y="96">deposition</text><rect x="828" y="56" width="124" height="52" rx="6" fill="#eef2f6" stroke="#9aa3ad"/><text x="890" y="78">thermal</text><text x="890" y="96">FEM</text><line x1="136" y1="82" x2="144" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/><line x1="272" y1="82" x2="280" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/><line x1="408" y1="82" x2="416" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/><line x1="544" y1="82" x2="552" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/><line x1="680" y1="82" x2="688" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/><line x1="816" y1="82" x2="824" y2="82" stroke="#5a6672" stroke-width="2" marker-end="url(#a2)"/>
-<path d="M 890 108 C 890 170, 520 180, 520 150" stroke="#d1442f" stroke-width="3"
- fill="none" marker-end="url(#a2)"/>
-<text x="700" y="186" font-size="14" fill="#d1442f" text-anchor="middle">
-update ρ(T) and repeat until ΔT &lt; 0.25 K  (3 iterations)</text>
-<g><rect x="200" y="4" width="190" height="34" rx="6" fill="#f6eefb" stroke="#6639ba"/><text x="295" y="26">global mechanics</text><rect x="410" y="4" width="190" height="34" rx="6" fill="#f6eefb" stroke="#6639ba"/><text x="505" y="26">critical joint</text><rect x="620" y="4" width="190" height="34" rx="6" fill="#f6eefb" stroke="#6639ba"/><text x="715" y="26">local solder submodel</text></g>
-<line x1="760" y1="56" x2="760" y2="42" stroke="#6639ba" stroke-width="2"
- marker-end="url(#a2)"/></svg><p style='margin-top:.3em'>Mechanics runs <strong>once, after</strong> the electrical–thermal loop converges — the mechanical field does not feed back into the temperature, so putting it inside the loop would cost three solves for one answer.</p><aside class='notes'>The loop-vs-once point is a real design decision and a likely question. Say that thermoelastic deformation does not change the loss, so it is a one-way coupling.</aside><div class='pgnum'>11 / 54</div></div>
-<div class='pg reveal'><h2>How every reduced model is checked in this work</h2>
+MOOSE is used as an <strong>independent reference</strong>, not as a production stage.</div><div class='prov'>research/phase0nah/model_hierarchy.csv · current HEAD</div><aside class='notes'>Expect the question 'why not just use Ansys for everything'. The answer is on this slide: the expensive stages are kept, the cheap ones are only used where a reduced model has been checked. Do not claim the framework replaces FEM.</aside><div class='pgnum'>35 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — How every reduced model is checked in this work</h2>
 <table class="small"><tr><th>Stage</th><th>Production model</th><th>Reference actually run</th>
-<th>Outcome (production vs reference)</th></tr><tr><td>TSV conductor</td><td>&rho; L / A</td><td>Ansys Electronics Desktop 2026 R1, Mechanical</td><td><span class='chip ok'> -1.15 %</span></td></tr><tr><td>TSV-field homogenisation</td><td>Voigt / Maxwell-Garnett</td><td>Ansys Electronics Desktop 2026 R1, Mechanical</td><td><span class='chip ok'> +0.71 %</span> <span class='chip ok'> +0.25 %</span></td></tr><tr><td>RDL tier homogenisation</td><td>grid laminate</td><td>Ansys Electronics Desktop 2026 R1, Mechanical</td><td><span class='chip ok'> -3.69 %</span> <span class='chip ok'> +12.49 %</span></td></tr><tr><td>Package HV RDL network</td><td>voltage-fed refined FV sheet</td><td>MOOSE heat_transfer-opt</td><td><span class='chip ok'>Z1 +0.08 %</span> <span class='chip ok'>Z2 +0.11 %</span></td></tr><tr><td>Package thermal FE</td><td>CalculiX C3D8</td><td>Ansys Electronics Desktop 2026 R1, Mechanical thermal; MOOSE heat_transfer-opt</td><td><span class='chip ok'>Z1 -0.14 %</span> <span class='chip ok'>Z2 -0.11 %</span> <span class='chip ok'>Z1 -0.16 %</span> <span class='chip ok'>Z2 -0.12 %</span></td></tr><tr><td>Thermoelastic bending</td><td>CalculiX C3D8I</td><td>Ansys Electronics Desktop 2026 R1, Mechanical structural; Timoshenko bimaterial curvature</td><td><span class='chip ok'> +0.01 %</span> <span class='chip ok'> -0.43 %</span></td></tr><tr><td>Structural linear solver</td><td>ITERATIVE CHOLESKY</td><td>CalculiX SPOOLES</td><td><span class='chip ok'> -0.01 %</span></td></tr><tr><td>Cooling correlation</td><td>microchannel compact</td><td>Ansys Icepak; MOOSE explicit fins</td><td><span class='chip open'>NOT EXECUTED</span> <span class='chip hist'>HISTORICAL 3.78 % in validated domain</span></td></tr><tr><td>Converter waveform</td><td>closed-form loss model</td><td>none available</td><td><span class='chip open'>NOT EXECUTED</span></td></tr></table>
+<th>Outcome (production vs reference)</th></tr><tr><td>TSV conductor</td><td>&rho; L / A</td><td>Ansys Electronics Desktop 2026 R1, Mechanical</td><td><span class='chip ok'> -1.15 %</span></td></tr><tr><td>TSV-field homogenisation</td><td>Voigt / Maxwell-Garnett</td><td>Ansys Electronics Desktop 2026 R1, Mechanical</td><td><span class='chip ok'> +0.71 %</span> <span class='chip ok'> +0.25 %</span></td></tr><tr><td>RDL tier homogenisation</td><td>grid laminate</td><td>Ansys Electronics Desktop 2026 R1, Mechanical</td><td><span class='chip ok'> -3.69 %</span> <span class='chip ok'> +12.49 %</span></td></tr><tr><td>Package HV RDL network</td><td>voltage-fed refined FV sheet</td><td>MOOSE heat_transfer-opt</td><td><span class='chip ok'>Z1 +0.08 %</span> <span class='chip ok'>Z2 +0.11 %</span></td></tr><tr><td>Package thermal FE</td><td>CalculiX C3D8</td><td>Ansys Electronics Desktop 2026 R1, Mechanical thermal; MOOSE heat_transfer-opt</td><td><span class='chip ok'>Z1 -0.14 %</span> <span class='chip ok'>Z2 -0.11 %</span> <span class='chip ok'>Z1 -0.16 %</span> <span class='chip ok'>Z2 -0.12 %</span></td></tr><tr><td>Thermoelastic bending</td><td>CalculiX C3D8I</td><td>Ansys Electronics Desktop 2026 R1, Mechanical structural; Timoshenko bimaterial curvature</td><td><span class='chip ok'> +0.01 %</span> <span class='chip ok'> -0.43 %</span></td></tr><tr><td>Structural linear solver</td><td>ITERATIVE CHOLESKY</td><td>CalculiX SPOOLES</td><td><span class='chip ok'> -0.01 %</span></td></tr><tr><td>Cooling correlation</td><td>microchannel compact</td><td>Ansys Icepak 2026 R1 conjugate CFD, one channel half-pitch; MOOSE explicit fins</td><td><span class='chip ok'> +16.48 %</span> <span class='chip hist'>HISTORICAL 3.78 % in validated domain</span></td></tr><tr><td>Converter waveform</td><td>closed-form loss model</td><td>none available</td><td><span class='chip open'>NOT EXECUTED</span></td></tr></table>
 <p class="sub">Q3D Extractor and Maxwell DC conduction are installed but <strong>not licensed</strong>
 here. Steady conduction &nabla;&middot;(k&nabla;T)=0 is the same operator as
 &nabla;&middot;(&sigma;&nabla;V)=0, so AEDT Mechanical and MOOSE serve as the DC-conduction references
-under the exact analogy.</p><div class='prov'>research/final_closure/accuracy_speed_matrix.json</div><aside class='notes'>Every row is read from the accuracy-speed matrix. Point out the gaps — cooling CFD and the converter waveform — before anyone asks.</aside><div class='pgnum'>12 / 54</div></div>
-<div class='pg reveal'><h2>TSV conductor: &rho;L/A against commercial FEM</h2>
+under the exact analogy.</p><div class='prov'>research/final_closure/accuracy_speed_matrix.json</div><aside class='notes'>Every row is read from the accuracy-speed matrix. Point out the gaps — cooling CFD and the converter waveform — before anyone asks.</aside><div class='pgnum'>36 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — TSV conductor: &rho;L/A against commercial FEM</h2>
 <div class="val">
 <div class="col"><h3>Our model</h3><p style='font-size:1.15em;text-align:center'><em class='q'>R = &rho; L / A</em></p><p class='sub'>one 30 µm Cu via, 300 µm long — the compact model the ledger uses for every via in both TSV fields.</p></div>
 <div class="col"><h3>Reference tool — matched run</h3><img src="tool_evidence/tsv_bulk/01_geometry.png" alt="reference tool">
 <div class="toolcap">AEDT 2026 R1 Mechanical: Cu cylinder, electrode, flux in, T = 0 out</div></div>
 <div class="col"><h3>Error and runtime</h3><table><tr><td>&rho;L/A</td><td class='num'>7.2150 mΩ</td></tr><tr><td>AEDT FEM</td><td class='num'>7.2987 mΩ</td></tr><tr><td>error</td><td class='num'>-1.15 %</td></tr><tr><td>closed form</td><td class='num'>0.63 µs (0.62 µs–0.64 µs)</td></tr><tr><td>AEDT</td><td class='num'>10.0 s (10.0 s–10.0 s)</td></tr><tr><td>runtime ratio</td><td class='num'>1.6×10<sup>7</sup></td></tr></table></div>
-<div class="bottom callout">The residual is AEDT's faceted circular section, not physics: a square-bar probe agreed to ~1e-9. A closed form is the right production model here.</div></div><div class='prov'>reference_rve.json · reference_rve_timing.json · AEDT 2026 R1</div><aside class='notes'>Calibration slide: it shows the reference harness itself is trustworthy.</aside><div class='pgnum'>13 / 54</div></div>
-<div class='pg reveal'><h2>TSV-field homogenisation against an explicit unit cell</h2>
+<div class="bottom callout">The residual is AEDT's faceted circular section, not physics: a square-bar probe agreed to ~1e-9. A closed form is the right production model here.</div></div><div class='prov'>reference_rve.json · reference_rve_timing.json · AEDT 2026 R1</div><aside class='notes'>Calibration slide: it shows the reference harness itself is trustworthy.</aside><div class='pgnum'>37 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — TSV-field homogenisation against an explicit unit cell</h2>
 <div class="val">
 <div class="col"><h3>Our model</h3><p>1444 Cu vias per tile → 18.2 % Cu. Through-thickness: <strong>Voigt</strong>. In-plane: <strong>Maxwell-Garnett</strong>.</p><p class='sub'>The FE substrate holds exactly this field inside the 49 tiles and plain Si outside.</p></div>
 <div class="col"><h3>Reference tool — matched run</h3><img src="tool_evidence/tsv_tile_rve/01_geometry_kz.png" alt="reference tool">
 <div class="toolcap">AEDT Mechanical: one Cu via in Si, electrode + isothermal face</div></div>
 <div class="col"><h3>Error and runtime</h3><table><tr><td>k_z Voigt / AEDT</td><td class='num'>179.16 / 177.89</td></tr><tr><td>error k_z</td><td class='num'>+0.71 %</td></tr><tr><td>k_xy MG / AEDT</td><td class='num'>156.58 / 156.18</td></tr><tr><td>error k_xy</td><td class='num'>+0.25 %</td></tr><tr><td>closed forms</td><td class='num'>0.72 µs (0.65 µs–0.72 µs)</td></tr><tr><td>AEDT k_z</td><td class='num'>36.1 s (35.2 s–38.0 s)</td></tr></table></div>
-<div class="bottom callout">Both closed forms agree with the explicit unit cell to under one percent, in microseconds instead of minutes.</div></div><div class='prov'>reference_rve.json · W/mK</div><aside class='notes'>Homogenisation is cheap AND checked, which is what lets the package mesh stay small.</aside><div class='pgnum'>14 / 54</div></div>
-<div class='pg reveal'><h2>RDL tier: the check that changed the model</h2>
+<div class="bottom callout">Both closed forms agree with the explicit unit cell to under one percent, in microseconds instead of minutes.</div></div><div class='prov'>reference_rve.json · W/mK</div><aside class='notes'>Homogenisation is cheap AND checked, which is what lets the package mesh stay small.</aside><div class='pgnum'>38 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — RDL tier: the check that changed the model</h2>
 <div class="val">
 <div class="col"><h3>Our model</h3><p>One 10 µm tier: square Cu grid at the declared occupancy on dielectric.</p><p class='sub'>Laminate: grid formula in-plane, series through-thickness.</p></div>
 <div class="col"><h3>Reference tool — matched run</h3><img src="tool_evidence/rdl_tier_rve/01_geometry_kx.png" alt="reference tool">
 <div class="toolcap">AEDT Mechanical explicit RVE: Cu grid lines in dielectric</div></div>
 <div class="col"><h3>Error and runtime</h3><table><tr><td>k_x laminate / RVE</td><td class='num'>33.02 / 34.28</td></tr><tr><td>error k_x</td><td class='num'>-3.69 %</td></tr><tr><td>k_z laminate / RVE</td><td class='num'>0.698 / 0.620</td></tr><tr><td>error k_z</td><td class='num'>+12.49 %</td></tr><tr><td>earlier Voigt k_x</td><td class='num'>+76 %</td></tr><tr><td>AEDT k_x</td><td class='num'>34.1 s (34.0 s–34.1 s)</td></tr></table></div>
-<div class="bottom callout"><strong>The series k_z overstates the RVE and the earlier Voigt in-plane value was far too high.</strong> The production tensor now ADOPTS the RVE values, and every thermal result was re-run on it.</div></div><div class='prov'>reference_rve.json · W/mK</div><aside class='notes'>Validation doing its job: it moved a number in the paper.</aside><div class='pgnum'>15 / 54</div></div>
-<div class='pg reveal'><h2>Package HV RDL network against MOOSE FEM</h2>
+<div class="bottom callout"><strong>The series k_z overstates the RVE and the earlier Voigt in-plane value was far too high.</strong> The production tensor now ADOPTS the RVE values, and every thermal result was re-run on it.</div></div><div class='prov'>reference_rve.json · W/mK</div><aside class='notes'>Validation doing its job: it moved a number in the paper.</aside><div class='pgnum'>39 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Package HV RDL network against MOOSE FEM</h2>
 <div class="val">
 <div class="col"><h3>Our model</h3><p>Voltage-fed 2-D resistive sheet on an <strong>aligned, graded</strong> finite-volume grid; the matched BGA count and 49 traced 0.2 mm VIN pads.</p><p class='sub'>Same formulation in both solvers: sheet, areal ball conductance to the rail, uniform pad draw.</p></div>
 <div class="col"><h3>Reference tool — matched run</h3><img src="tool_evidence/pkg_rdl_moose_Z2/04_field.png" alt="reference tool">
 <div class="toolcap">MOOSE heat_transfer-opt on its own gmsh mesh — field rendered from MOOSE's Exodus output (Z2)</div></div>
 <div class="col"><h3>Error and runtime</h3><table><tr><td>Z1 R_eff ours / MOOSE</td><td class='num'>1.4201 / 1.4189 mΩ</td></tr><tr><td>Z1 error</td><td class='num'>+0.079 %</td></tr><tr><td>Z2 R_eff ours / MOOSE</td><td class='num'>0.7985 / 0.7976 mΩ</td></tr><tr><td>Z2 error</td><td class='num'>+0.108 %</td></tr><tr><td>ours (Z2)</td><td class='num'>24.4 s (22.5 s–25.8 s)</td></tr><tr><td>MOOSE (Z2)</td><td class='num'>60.8 s (54.8 s–77.9 s)</td></tr></table></div>
-<div class="bottom callout">The reduced network reproduces the FE reference to about 0.1 % for both architectures. Both are 2-D, so the runtime ratio is solver-to-solver — the value of the reduced model is exactness on the sheet problem.</div></div><div class='prov'>reference_pkg_rdl_moose_Z1/Z2.json · MOOSE</div><aside class='notes'>Do not oversell speed here; the point is that the sheet abstraction is accurate.</aside><div class='pgnum'>16 / 54</div></div>
-<div class='pg reveal'><h2>BGA current sharing — assumption vs solve</h2>
-<div class="figwrap"><img src="figs/sharing.svg" alt="ball current sharing"></div>
-<div class="callout" style="margin-top:.3em">Even with a perfectly <strong>uniform</strong>
-load the balls do not share equally, so a count sized from I<sub>total</sub>/N understates the
-worst ball. The count is therefore <strong>solved</strong>: every legal even count, the network
-re-solved at each, verified on the resolved grid.</div><div class='prov'>network re-solved at n=301 for the figure · current HEAD</div><aside class='notes'>The load is uniform across all 49 cells; the non-uniformity is pure network geometry.</aside><div class='pgnum'>17 / 54</div></div>
-<div class='pg reveal'><h2>The cutout penalty is smaller than where you put the balls</h2>
+<div class="bottom callout">The reduced network reproduces the FE reference to about 0.1 % for both architectures. Both are 2-D, so the runtime ratio is solver-to-solver — the value of the reduced model is exactness on the sheet problem.</div></div><div class='prov'>reference_pkg_rdl_moose_Z1/Z2.json · MOOSE</div><aside class='notes'>Do not oversell speed here; the point is that the sheet abstraction is accurate.</aside><div class='pgnum'>40 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — The cutout penalty is smaller than where you put the balls</h2>
 <div class="figwrap"><img src="figs/final_cutout.svg" alt="cutout vs placement"></div>
 <p><strong>Controlled experiment</strong> on the production network: same count, sheet,
 contacts, load, rule and grid — only the candidate sites change. The cutout term has been
-corrected three times across the project; placement still dominates it.</p><div class='prov'>research/final_closure/package_network.json · controlled</div><aside class='notes'>Earlier versions of this number were artefacts of imposed sharing, a missing return conductor and a floating-point lattice bug. Say that no cutout penalty is frozen.</aside><div class='pgnum'>18 / 54</div></div>
-<div class='pg reveal'><h2>Choosing a pad count needs more than voltage drop</h2>
+corrected three times across the project; placement still dominates it.</p><div class='prov'>research/final_closure/package_network.json · controlled</div><aside class='notes'>Earlier versions of this number were artefacts of imposed sharing, a missing return conductor and a floating-point lattice bug. Say that no cutout penalty is frozen.</aside><div class='pgnum'>41 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Choosing a pad count needs more than voltage drop</h2>
 <div class="figwrap"><img src="figs/pads.svg" alt="pad count"></div>
 <p>The voltage-drop floor of 4 pads implies 5e6 A/cm² — above the <em>accelerated</em> Cu–Cu EM
 test regime. The paper carries the pad term over a terminal-footprint sweep anchored on the DVPD
-source's own VIC count; the interface loss stays below 0.06 W across it.</p><div class='prov'>research/phase0naj/pad_count_closure.json · CONTEXT_ONLY current densities</div><aside class='notes'>Current density, not voltage drop, bounds the pad count from below.</aside><div class='pgnum'>19 / 54</div></div>
-<div class='pg reveal'><h2>Model fidelity should follow the quantity, not the budget</h2>
+source's own VIC count; the interface loss stays below 0.06 W across it.</p><div class='prov'>research/phase0naj/pad_count_closure.json · CONTEXT_ONLY current densities</div><aside class='notes'>Current density, not voltage drop, bounds the pad count from below.</aside><div class='pgnum'>42 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Model fidelity should follow the quantity, not the budget</h2>
 <div class="figwrap"><img src="figs/ladder.svg" alt="fidelity ladder"></div>
 <p><span class="chip hist">R1 RETIRED</span> after its router bug was fixed and no physical net was
 obstructed. Production policy: R0 for point-to-point traces and via stacks, <strong>R2</strong>
-for the distributed output plane (R0 overstates it 37–258 %).</p><div class='prov'>research/phase0naj/fidelity_ladder.json</div><aside class='notes'>Fidelity chosen per interconnect class, declared before the final numbers were read.</aside><div class='pgnum'>20 / 54</div></div>
-<div class='pg reveal'><h2>The heat map: losses go where they are produced</h2>
-<div class="figwrap"><img src="figs/final_ledger.svg" alt="ledger"></div>
-<p>High-side and low-side GaN, inductor and capacitor losses are deposited in <strong>their own
-tiers</strong>, inside the 49 cell footprints. Package, BGA, TSV and pad losses go in their own
-layers. Deposited heat equals the electrical ledger to machine precision.</p><div class='prov'>research/final_closure/final_results.json · electrical_ledger.json</div><aside class='notes'>Mention the defect: the first physical deposition spread device loss into the encapsulant out to the package corners and produced a phantom corner hot spot. Confining deposits to the cell footprints removed it.</aside><div class='pgnum'>21 / 54</div></div>
-<div class='pg reveal'><h2>Package thermal FE against commercial FEM</h2>
+for the distributed output plane (R0 overstates it 37–258 %).</p><div class='prov'>research/phase0naj/fidelity_ladder.json</div><aside class='notes'>Fidelity chosen per interconnect class, declared before the final numbers were read.</aside><div class='pgnum'>43 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Package thermal FE against commercial FEM</h2>
 <div class="val">
 <div class="col"><h3>Our model</h3><p>CalculiX C3D8 on a structured hex mesh — the production thermal solver.</p><p class='sub'>Interior unit cell of the physical package: every layer, tile and gap materials, the converged heat map, the cold-plate film, symmetry sides.</p></div>
 <div class="col"><h3>Reference tool — matched run</h3><img src="tool_evidence/thermal_column_Z2/01_geometry.png" alt="reference tool">
 <div class="toolcap">AEDT 2026 R1 Mechanical thermal (Z2 unit cell as built in AEDT); same sources and films</div></div>
 <div class="col"><h3>Error and runtime</h3><table><tr><td>Z2 T_max ccx / AEDT</td><td class='num'>119.94 / 120.04 °C</td></tr><tr><td>Z2 error / rise</td><td class='num'>-0.11 %</td></tr><tr><td>Z1 T_max ccx / AEDT</td><td class='num'>122.09 / 122.22 °C</td></tr><tr><td>Z1 error / rise</td><td class='num'>-0.14 %</td></tr><tr><td>CalculiX (Z2)</td><td class='num'>22.7 s (22.0 s–25.2 s)</td></tr><tr><td>AEDT (Z2)</td><td class='num'>77.3 s (71.2 s–90.8 s)</td></tr></table></div>
-<div class="bottom callout">Same problem, two independent FE codes, same machine: solver verification on a matched problem, not experimental validation.</div></div><div class='prov'>reference_thermal_column_Z1/Z2.json</div><aside class='notes'>Why a unit cell? 10 µm tiers over 30 mm make a tetrahedral mesh of the full package impractical; the unit cell keeps every tier.</aside><div class='pgnum'>22 / 54</div></div>
-<div class='pg reveal'><h2>Package thermal FE against an independent open-source FEM</h2>
+<div class="bottom callout">Same problem, two independent FE codes, same machine: solver verification on a matched problem, not experimental validation.</div></div><div class='prov'>reference_thermal_column_Z1/Z2.json</div><aside class='notes'>Why a unit cell? 10 µm tiers over 30 mm make a tetrahedral mesh of the full package impractical; the unit cell keeps every tier.</aside><div class='pgnum'>44 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Package thermal FE against an independent open-source FEM</h2>
 <div class="val">
 <div class="col"><h3>Our model</h3><p>The same CalculiX unit-cell problem, solved by MOOSE on its own hex meshes at two resolutions.</p><p class='sub'>Shows that the agreement is not one discretisation checked against itself.</p></div>
 <div class="col"><h3>Reference tool — matched run</h3><img src="tool_evidence/thermal_column_moose_Z1/04_field.png" alt="reference tool">
 <div class="toolcap">MOOSE heat_transfer-opt, temperature on the y = 0 section of the Z1 unit cell (rendered from its Exodus output)</div></div>
 <div class="col"><h3>Error and runtime</h3><table><tr><td>Z1 T_max ccx / MOOSE</td><td class='num'>122.09 / 122.24 °C</td></tr><tr><td>Z1 error / rise</td><td class='num'>-0.16 %</td></tr><tr><td>Z2 T_max ccx / MOOSE</td><td class='num'>119.94 / 120.05 °C</td></tr><tr><td>Z2 error / rise</td><td class='num'>-0.12 %</td></tr><tr><td>MOOSE own mesh change (Z1)</td><td class='num'>+0.27 K</td></tr><tr><td>runtime ratio (Z1)</td><td class='num'>0.55×</td></tr></table></div>
-<div class="bottom callout">Three solvers agree on the unit cell to a fraction of a kelvin; the remaining difference is inside the reference's own mesh dependence.</div></div><div class='prov'>reference_thermal_column_moose_Z1/Z2.json</div><aside class='notes'>If asked: the runtime ratio is FE against FE, so it is not a model-reduction speedup.</aside><div class='pgnum'>23 / 54</div></div>
-<div class='pg reveal'><h2>The electrothermal fixed point converges</h2>
-<div class="figwrap"><img src="figs/final_et_convergence.svg" alt="ET convergence"></div>
-<p>Resistance rises with temperature, loss rises with resistance, temperature rises with loss.
-Iterated until max&nbsp;|&Delta;T| &lt; 0.25 K and |&Delta;P|/P &lt; 10<sup>-3</sup> — both declared
-before any physical result was read.</p><div class='prov'>final_results.json · et_history</div><aside class='notes'>The initial 85 C guess under-estimates GaN on-resistance; the first iteration raises the Z1 loss by 13.9 W before settling.</aside><div class='pgnum'>24 / 54</div></div>
-<div class='pg reveal'><h2 style="border:none">&nbsp;</h2>
-<div style="text-align:center;margin-top:1.2em">
-<div class="big" style="color:var(--accent)">Why a power-delivery talk<br>needs mechanics</div>
-<p style="text-align:center;font-size:.95em;margin-top:1em;max-width:70%;margin-left:auto;margin-right:auto">
-Current makes heat. Heat makes materials expand. Materials expand by different amounts.
-The package bends, and the solder joints holding it together deform — permanently.</p></div><aside class='notes'>Transition slide. The committee may be electrical engineers. Tell them the next six slides are deliberately first-principles and they should stop you if anything is unclear.</aside><div class='pgnum'>25 / 54</div></div>
-<div class='pg reveal'><h2>Thermal expansion mismatch (CTE)</h2><svg viewBox="0 0 900 250" width="100%" style="max-height:38vh">
+<div class="bottom callout">Three solvers agree on the unit cell to a fraction of a kelvin; the remaining difference is inside the reference's own mesh dependence.</div></div><div class='prov'>reference_thermal_column_moose_Z1/Z2.json</div><aside class='notes'>If asked: the runtime ratio is FE against FE, so it is not a model-reduction speedup.</aside><div class='pgnum'>45 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Thermal expansion mismatch (CTE)</h2><svg viewBox="0 0 900 250" width="100%" style="max-height:38vh">
 <text x="20" y="22" font-size="17" fill="#5a6672">cold — bonded, relaxed</text>
 <rect x="30" y="40" width="330" height="26" fill="#8fb4d9"/>
 <text x="40" y="58" font-size="14">silicon   alpha ~ 2.6 ppm/K</text>
@@ -298,8 +428,8 @@ The package bends, and the solder joints holding it together deform — permanen
 <path d="M 60 200 Q 450 140 840 200" stroke="#8fb4d9" stroke-width="22" fill="none"/>
 <path d="M 60 222 Q 450 162 840 222" stroke="#c8b48a" stroke-width="22" fill="none"/>
 <text x="330" y="247" font-size="15" fill="#cf222e">the layer that wants to grow more
-ends up on the outside of the curve</text></svg><p style='text-align:center;font-size:1.2em;margin:.2em'><em class='q'>&epsilon;<sub>thermal</sub> = &alpha; &Delta;T</em></p><p>Every material has a coefficient of thermal expansion &alpha;. Silicon and organic package material differ by roughly <strong>6&times;</strong>. Bonded together and heated, they cannot both have the length they want — so the assembly carries internal stress and bends.</p><aside class='notes'>This is the root cause of every mechanical result later. The 6x mismatch between silicon and organic substrate is the number to remember.</aside><div class='pgnum'>26 / 54</div></div>
-<div class='pg reveal'><h2>Mismatch alone does not predict bending</h2>
+ends up on the outside of the curve</text></svg><p style='text-align:center;font-size:1.2em;margin:.2em'><em class='q'>&epsilon;<sub>thermal</sub> = &alpha; &Delta;T</em></p><p>Every material has a coefficient of thermal expansion &alpha;. Silicon and organic package material differ by roughly <strong>6&times;</strong>. Bonded together and heated, they cannot both have the length they want — so the assembly carries internal stress and bends.</p><aside class='notes'>This is the root cause of every mechanical result later. The 6x mismatch between silicon and organic substrate is the number to remember.</aside><div class='pgnum'>46 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Mismatch alone does not predict bending</h2>
 <div class="cols"><div>
 <p><strong>Young's modulus E</strong> measures how hard a material resists being
 deformed. A compliant layer can absorb mismatch; a stiff one forces the neighbour
@@ -311,8 +441,8 @@ to move instead.</p>
 <div class="callout"><strong>Why this matters here</strong><br>
 Z1 and Z2 move the regulator between the substrate and the board side. That changes
 the <em>thickness and stiffness distribution</em> of the stack, not just where the heat
-is made. Two architectures at the same temperature can bend differently.</div></div><aside class='notes'>Pre-empt the naive expectation that the hotter architecture must be mechanically worse. That expectation is wrong and the historical result shows it.</aside><div class='pgnum'>27 / 54</div></div>
-<div class='pg reveal'><h2>Warpage</h2><svg viewBox="0 0 900 210" width="100%" style="max-height:32vh">
+is made. Two architectures at the same temperature can bend differently.</div></div><aside class='notes'>Pre-empt the naive expectation that the hotter architecture must be mechanically worse. That expectation is wrong and the historical result shows it.</aside><div class='pgnum'>47 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Warpage</h2><svg viewBox="0 0 900 210" width="100%" style="max-height:32vh">
 <line x1="40" y1="120" x2="860" y2="120" stroke="#d7dde4" stroke-width="2"
  stroke-dasharray="7 6"/>
 <path d="M 60 160 Q 450 60 840 160" stroke="#1f6feb" stroke-width="13" fill="none"/>
@@ -321,8 +451,8 @@ is made. Two architectures at the same temperature can bend differently.</div></
  opacity=".55"/>
 <text x="400" y="200" font-size="16" fill="#d1442f">concave / "cry"</text>
 <line x1="450" y1="92" x2="450" y2="120" stroke="#10151c" stroke-width="3"/>
-<text x="462" y="112" font-size="16">peak-to-valley warpage</text></svg><p><strong>Warpage</strong> is global out-of-plane bowing of the package. It is measured peak-to-valley, in micrometres.</p><p>It matters because it controls whether the package sits flat enough to assemble, how much load each BGA ball takes, and how far the corner joints are stretched.</p><aside class='notes'>Keep this short and visual. Mention that warpage sign conventions differ between vendors, so always state what is being measured.</aside><div class='pgnum'>28 / 54</div></div>
-<div class='pg reveal'><h2>Stress, strain, and the three kinds of deformation</h2>
+<text x="462" y="112" font-size="16">peak-to-valley warpage</text></svg><p><strong>Warpage</strong> is global out-of-plane bowing of the package. It is measured peak-to-valley, in micrometres.</p><p>It matters because it controls whether the package sits flat enough to assemble, how much load each BGA ball takes, and how far the corner joints are stretched.</p><aside class='notes'>Keep this short and visual. Mention that warpage sign conventions differ between vendors, so always state what is being measured.</aside><div class='pgnum'>48 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Stress, strain, and the three kinds of deformation</h2>
 <div class="cols"><div>
 <p><strong>Strain</strong> — how much something deformed, relative to its original
 size. Dimensionless.</p>
@@ -336,29 +466,8 @@ as a function of time and temperature.</li></ul>
 <div class="callout" style="margin-top:.4em">Solder at operating temperature is at a
 large fraction of its melting point. It creeps continuously. Treating it as elastic
 would miss the damage mechanism entirely — so it is modelled as
-<strong>viscoplastic</strong>.</div></div></div><aside class='notes'>The viscoplastic point justifies the separate nonlinear local solder model. If asked why a 488-element submodel is worth a separate solve, this is the answer.</aside><div class='pgnum'>29 / 54</div></div>
-<div class='pg reveal'><h2>Global driver &rarr; local response</h2><svg viewBox="0 0 950 250" width="100%" style="max-height:38vh">
-<rect x="30" y="60" width="380" height="110" fill="#eef2f6" stroke="#9aa3ad"/>
-<text x="40" y="84" font-size="17" font-weight="700">GLOBAL model</text>
-<path d="M 60 150 Q 220 110 390 150" stroke="#1f6feb" stroke-width="9" fill="none"/>
-<g><circle cx="70" cy="160" r="7" fill="#9aa3ad"/><circle cx="106" cy="155" r="7" fill="#9aa3ad"/><circle cx="142" cy="151" r="7" fill="#9aa3ad"/><circle cx="178" cy="148" r="7" fill="#9aa3ad"/><circle cx="214" cy="147" r="7" fill="#9aa3ad"/><circle cx="250" cy="147" r="7" fill="#9aa3ad"/><circle cx="286" cy="148" r="7" fill="#9aa3ad"/><circle cx="322" cy="151" r="7" fill="#9aa3ad"/><circle cx="358" cy="155" r="7" fill="#9aa3ad"/><circle cx="394" cy="160" r="7" fill="#9aa3ad"/></g>
-<rect x="352" y="138" width="30" height="30" fill="none" stroke="#cf222e"
- stroke-width="3"/>
-<text x="40" y="190" font-size="15" fill="#5a6672">whole package deforms; each joint is
-a few elements</text>
-<path d="M 420 130 L 500 130" stroke="#10151c" stroke-width="3"
- marker-end="url(#ar2)"/>
-<defs><marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="3"
- orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#10151c"/></marker></defs>
-<text x="424" y="120" font-size="15" fill="#cf222e">&Delta;u<tspan font-size="11"
- dy="4">c</tspan><tspan dy="-4">, T</tspan></text>
-<rect x="520" y="40" width="400" height="160" fill="#faf8ff" stroke="#6639ba"/>
-<text x="532" y="64" font-size="17" font-weight="700">LOCAL submodel</text>
-<rect x="640" y="86" width="150" height="80" fill="#e8c07a" stroke="#8a6d2f"/>
-<g stroke="#8a6d2f" stroke-width="1" opacity=".55"><line x1="640.0" y1="86" x2="640.0" y2="166"/><line x1="658.7" y1="86" x2="658.7" y2="166"/><line x1="677.4" y1="86" x2="677.4" y2="166"/><line x1="696.1" y1="86" x2="696.1" y2="166"/><line x1="714.8" y1="86" x2="714.8" y2="166"/><line x1="733.5" y1="86" x2="733.5" y2="166"/><line x1="752.2" y1="86" x2="752.2" y2="166"/><line x1="770.9" y1="86" x2="770.9" y2="166"/><line x1="789.6" y1="86" x2="789.6" y2="166"/><line x1="640" y1="86" x2="790" y2="86"/><line x1="640" y1="96" x2="790" y2="96"/><line x1="640" y1="106" x2="790" y2="106"/><line x1="640" y1="116" x2="790" y2="116"/><line x1="640" y1="126" x2="790" y2="126"/><line x1="640" y1="136" x2="790" y2="136"/><line x1="640" y1="146" x2="790" y2="146"/><line x1="640" y1="156" x2="790" y2="156"/><line x1="640" y1="166" x2="790" y2="166"/></g>
-<text x="532" y="190" font-size="15" fill="#5a6672">one joint, 488 elements,
-nonlinear viscoplastic</text></svg><div class='cols' style='margin-top:.3em'><div class='callout' style='border-color:var(--z1)'><strong>GLOBAL DRIVER</strong><br>&Delta;u<sub>c</sub>, the relative in-plane displacement imposed across the critical joint, plus its temperature. Units: &micro;m.</div><div class='callout' style='border-color:var(--accent)'><strong>LOCAL RESPONSE</strong><br>inelastic strain, strain range, inelastic work density returned by the viscoplastic joint model. Dimensionless / MJ·m<sup>-3</sup>.</div></div><p style='margin-top:.3em;text-align:center'><strong>These are different quantities and are never reported as one.</strong></p><aside class='notes'>This is the most commonly confused point in the whole project. The global model cannot resolve a solder joint; the local model cannot know the package. Say explicitly that a larger displacement driver does not automatically mean a larger local response.</aside><div class='pgnum'>30 / 54</div></div>
-<div class='pg reveal'><h2>Response is not damage, and damage is not life</h2>
+<strong>viscoplastic</strong>.</div></div></div><aside class='notes'>The viscoplastic point justifies the separate nonlinear local solder model. If asked why a 488-element submodel is worth a separate solve, this is the answer.</aside><div class='pgnum'>49 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Response is not damage, and damage is not life</h2>
 <table>
 <tr><th>Quantity</th><th>What it is</th><th>Status here</th></tr>
 <tr><td>warpage</td><td>global bowing, peak-to-valley</td>
@@ -377,8 +486,8 @@ nonlinear viscoplastic</text></svg><div class='cols' style='margin-top:.3em'><di
 (<span class="chip lit">10.1115/1.1413764</span>) showed that solder-life constants are
 tied to the <em>exact</em> simulation procedure used to calibrate them. Applying them to
 FE output produced a different way is not valid. This work therefore reports
-<strong>response and relative ordering</strong>, and refuses absolute life.</div><div class='prov'>10.1115/1.1413764 · 10.1109/ECTC.2004.1319419 — CONTEXT / METHODOLOGY</div><aside class='notes'>This is the defensive slide for the mechanics. If someone asks 'how many cycles will it survive', the answer is that no absolute life is claimed and why — Darveaux is the citation. Relative ordering between two architectures is still meaningful.</aside><div class='pgnum'>31 / 54</div></div>
-<div class='pg reveal'><h2>Two modelling choices that can flip the answer</h2>
+<strong>response and relative ordering</strong>, and refuses absolute life.</div><div class='prov'>10.1115/1.1413764 · 10.1109/ECTC.2004.1319419 — CONTEXT / METHODOLOGY</div><aside class='notes'>This is the defensive slide for the mechanics. If someone asks 'how many cycles will it survive', the answer is that no absolute life is claimed and why — Darveaux is the citation. Relative ordering between two architectures is still meaningful.</aside><div class='pgnum'>50 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Two modelling choices that can flip the answer</h2>
 <div class="cols"><div><h3>Stress-free temperature</h3>
 <p>The temperature at which the assembly is assumed mechanically relaxed. All
 differential thermal strain is measured <em>from</em> it.</p>
@@ -390,15 +499,15 @@ assumption, not a measurement, and must be stated.</p></div>
 <p class="sub">A warpage number without its constraint description is not interpretable.</p>
 </div></div>
 <div class="banner">Both are declared explicitly in this framework rather than inherited
-silently from a solver default.</div><aside class='notes'>Short slide, but it pre-empts the classic reviewer question 'what was your reference temperature'. Having an answer ready signals rigour.</aside><div class='pgnum'>32 / 54</div></div>
-<div class='pg reveal'><h2>Thermoelastic bending: element and supports</h2>
+silently from a solver default.</div><aside class='notes'>Short slide, but it pre-empts the classic reviewer question 'what was your reference temperature'. Having an answer ready signals rigour.</aside><div class='pgnum'>51 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Thermoelastic bending: element and supports</h2>
 <div class="val">
 <div class="col"><h3>Our model</h3><p>CalculiX C3D8I — the production element for package warpage.</p><p class='sub'>Si on organic, &Delta;T = 100 K, symmetry planes and one 0.1 mm patch held in z: supports remove rigid motion without suppressing bending.</p></div>
 <div class="col"><h3>Reference tool — matched run</h3><img src="tool_evidence/mech_bilayer/01_geometry.png" alt="reference tool">
 <div class="toolcap">AEDT 2026 R1 Mechanical structural model as built — warpage per kelvin from two solved temperature levels</div></div>
 <div class="col"><h3>Error and runtime</h3><table><tr><td>CalculiX C3D8I</td><td class='num'>122.13 µm</td></tr><tr><td>Timoshenko closed form</td><td class='num'>122.67 µm</td></tr><tr><td>error vs closed form</td><td class='num'>-0.43 %</td></tr><tr><td>AEDT structural</td><td class='num'>122.12 µm</td></tr><tr><td>error vs AEDT</td><td class='num'>+0.01 %</td></tr><tr><td>CalculiX / AEDT</td><td class='num'>65.9 s / 262.7 s</td></tr></table></div>
-<div class="bottom callout">CTE-mismatch bending is the mechanism behind every warpage number in the paper. The closed form ignores free-edge effects, so a few-tenths-percent gap to it is expected; the commercial FE agrees as well.</div></div><div class='prov'>reference_mech_bilayer.json</div><aside class='notes'>Verification of the element and supports, not validation of the package.</aside><div class='pgnum'>33 / 54</div></div>
-<div class='pg reveal'><h2>Discretisation and solver checks behind the results</h2>
+<div class="bottom callout">CTE-mismatch bending is the mechanism behind every warpage number in the paper. The closed form ignores free-edge effects, so a few-tenths-percent gap to it is expected; the commercial FE agrees as well.</div></div><div class='prov'>reference_mech_bilayer.json</div><aside class='notes'>Verification of the element and supports, not validation of the package.</aside><div class='pgnum'>52 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Discretisation and solver checks behind the results</h2>
 <table class="small"><tr><th>arch</th><th>nested refinement</th>
 <th>largest change (T_max, warpage, du<sub>c</sub>, loss)</th><th>declared tolerance</th></tr>
 <tr><td>Z1</td><td>in-plane</td><td class='num'>1.30 % (die warpage)</td><td>within 2 %</td></tr><tr><td>Z1</td><td>through-thickness</td><td class='num'>0.37 % (&Delta;u<sub>c</sub>)</td><td>within 2 %</td></tr><tr><td>Z2</td><td>in-plane</td><td class='num'>0.67 % (&Delta;u<sub>c</sub>)</td><td>within 2 %</td></tr><tr><td>Z2</td><td>through-thickness</td><td class='num'>0.04 % (&Delta;u<sub>c</sub>)</td><td>within 2 %</td></tr></table>
@@ -407,27 +516,16 @@ silently from a solver default.</div><aside class='notes'>Short slide, but it pr
 <li>Refined structural solves use ITERATIVE CHOLESKY: on the base mesh it matches the direct solver
 to -0.010 % in warpage (direct SPOOLES solves 38.6k C3D8I elements and segfaults
 at 43k in this build).</li>
-<li>Local solder model, n<sub>xy</sub> 6&rarr;8, n<sub>z</sub> 8&rarr;10: response change
-1.6–5.5 % where both meshes converge.</li></ul><div class='prov'>mesh_convergence.json · solver_check/ · local_solder_HV_S*.json</div><aside class='notes'>Say plainly that the first 'refinement' was not a refinement — lowering h_xy re-graded the grid — and that the nested study replaced it.</aside><div class='pgnum'>34 / 54</div></div>
-<div class='pg reveal'><h2>Where is the critical joint? Searched, not assumed</h2>
-<div class="figwrap"><img src="figs/final_joint_map.svg" alt="joint map"></div>
-<p>In-plane relative displacement across the BGA layer at <strong>every legal site</strong> —
-1369 for Z1, 528 for Z2. The outermost lattice corner is critical in both.</p><div class='prov'>final_results.json · joint_search</div><aside class='notes'>The corner being critical is a RESULT here. The +x corners rank first: they are the hotter, downstream end of the cold plate.</aside><div class='pgnum'>35 / 54</div></div>
-<div class='pg reveal'><h2>Local solder response at the critical joint</h2>
+<li>Local solder model: declared family L0&rarr;L3 (6&times;8 to 12&times;16), rule declared before the finer levels were read: Z1 HV-S0 converged (U 2.0 %); Z2 HV-S0 bounded (U 18.2 %); Z1 HV-S1 converged (U 1.6 %); Z2 HV-S1 bounded (U 15.6 %); Z2 HV-S2 bounded (U 28.0 %)</li></ul><div class='prov'>mesh_convergence.json · solver_check/ · local_solder_HV_S*.json</div><aside class='notes'>Say plainly that the first 'refinement' was not a refinement — lowering h_xy re-graded the grid — and that the nested study replaced it.</aside><div class='pgnum'>53 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Local solder response at the critical joint</h2>
 <table><tr><th>scenario</th><th>arch</th><th>&Delta;u<sub>c</sub> (µm)</th><th>T joint (°C)</th>
-<th>&Delta;&epsilon;<sub>in</sub> per cycle</th></tr><tr><td>HV-S0</td><td>Z1</td><td class='num'>2.374</td><td class='num'>120.8</td><td class='num'>6.485e-03</td></tr><tr><td>HV-S0</td><td>Z2</td><td class='num'>3.951</td><td class='num'>99.0</td><td class='num'>1.118e-02</td></tr><tr><td>HV-S1</td><td>Z1</td><td class='num'>2.921</td><td class='num'>147.7 †</td><td class='num'>9.135e-03</td></tr><tr><td>HV-S1</td><td>Z2</td><td class='num'>4.272</td><td class='num'>109.8</td><td class='num'>1.274e-02</td></tr><tr><td>HV-S2</td><td>Z1</td><td class='num'>4.841</td><td class='num'>242.5 † ‡</td><td class='num'>no convergence</td></tr><tr><td>HV-S2</td><td>Z2</td><td class='num'>5.094</td><td class='num'>137.4 †</td><td class='num'>1.616e-02</td></tr></table>
-<p class="sub">Validated viscoplastic local family, re-run unchanged after reproducing its
-published control exactly. † joint above the Norton card's 125 °C calibration — extrapolation.
+<th>&Delta;&epsilon;<sub>in</sub> per cycle</th></tr><tr><td>HV-S0</td><td>Z1</td><td class='num'>2.374</td><td class='num'>120.8</td><td class='num'>6.203e-03</td></tr><tr><td>HV-S0</td><td>Z2</td><td class='num'>3.951</td><td class='num'>99.0</td><td class='num'>9.971e-03</td></tr><tr><td>HV-S1</td><td>Z1</td><td class='num'>2.921</td><td class='num'>147.7 †</td><td class='num'>8.793e-03</td></tr><tr><td>HV-S1</td><td>Z2</td><td class='num'>4.272</td><td class='num'>109.8</td><td class='num'>1.145e-02</td></tr><tr><td>HV-S2</td><td>Z1</td><td class='num'>4.841</td><td class='num'>242.5 † ‡</td><td class='num'>no convergence</td></tr><tr><td>HV-S2</td><td>Z2</td><td class='num'>5.094</td><td class='num'>137.4 †</td><td class='num'>1.472e-02</td></tr></table>
+<p class="sub">Validated viscoplastic local family on its declared production mesh (L3), each
+load change written as its own 3 s step, block-order extraction (DEFECT #65); the harness still
+reproduces its published control. † joint above the Norton card's 125 °C calibration — extrapolation.
 ‡ at or above the SAC305 melting onset (about 217 °C): not an admissible operating point.
-<strong>Response only; no cycles to failure are computed</strong> (Darveaux, 10.1115/1.1413764).</p><div class='prov'>local_solder_HV_S*.json · final_results.json</div><aside class='notes'>Z2's response is larger wherever both converge. Not converged, reported as such: Z1 HV-S2 (243 °C).</aside><div class='pgnum'>36 / 54</div></div>
-<div class='pg reveal'><h2 style="border:none">&nbsp;</h2>
-<div style="text-align:center;margin-top:1.0em">
-<div class="big" style="color:var(--z2)">From a plausible model<br>to a defensible one</div>
-<p style="text-align:center;margin-top:1em;max-width:72%;margin-left:auto;margin-right:auto">
-The framework produced self-consistent numbers long before it produced
-<em>physically closed</em> numbers. Several published-quality results were withdrawn.
-That process is the contribution, not an embarrassment.</p></div><aside class='notes'>Set the tone: this is a methods contribution. Each defect below changed a number that had already been written up. Do not rush these slides — a committee respects a candidate who found their own errors.</aside><div class='pgnum'>37 / 54</div></div>
-<div class='pg reveal'><h2>What physical closure actually changed</h2>
+<strong>Response only; no cycles to failure are computed</strong> (Darveaux, 10.1115/1.1413764).</p><div class='prov'>local_solder_HV_S*.json · final_results.json</div><aside class='notes'>Z2's response is larger wherever both converge. Not converged, reported as such: Z1 HV-S2 (243 °C).</aside><div class='pgnum'>54 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Closure history — earlier phases, fix by fix</h2>
 <table><tr><th>Found</th><th>Consequence</th></tr>
 <tr><td>Z2 homogenised slab replaced by 49 real cells</td><td>geometry was not the
 architecture being claimed</td></tr>
@@ -443,8 +541,8 @@ architecture being claimed</td></tr>
 <tr><td>BGA "sites" that were not on the lattice; 3.0 mm pitch vs 3.165243 mm</td>
 <td>every RDL result on the wrong grid</td></tr>
 <tr><td>Z1 given 8 balls against Z2's 16</td><td>the comparison measured ball count</td></tr>
-</table><aside class='notes'>Do not read every row. Pick three: the RMS bound inversion, the pad tautology, and the mismatched ball count. Say each one had already produced a number that was reported.</aside><div class='pgnum'>38 / 54</div></div>
-<div class='pg reveal'><h2>Three defects found in the last two phases</h2>
+</table><aside class='notes'>Do not read every row. Pick three: the RMS bound inversion, the pad tautology, and the mismatched ball count. Say each one had already produced a number that was reported.</aside><div class='pgnum'>55 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Three defects found in the last two phases</h2>
 <div class="cols"><div class="callout" style="border-color:var(--z2)">
 <strong>1 · Equal current sharing was an input</strong>
 <p class="sub">The solver injected I<sub>total</sub>/N at every ball, so the "result"
@@ -462,8 +560,8 @@ loop resistance substantially — every earlier package resistance was the suppl
 drifts. The mirror of (-14.4, -12.8) existed as (14.4, <strong>12.800000000000002</strong>).
 The placement rule tests membership with exact equality, so it silently discarded
 <strong>1080 of 1369</strong> legal sites. Two headline numbers had been computed inside
-the surviving 21 %.</p></div><aside class='notes'>Defect 3 is the best story in the talk. It produced no error, no warning, and no failing test — the design space was simply smaller than anyone thought, and the subset was selected by floating-point luck. Mention that the fix is a picometre snap plus a permanent closure assertion.</aside><div class='pgnum'>39 / 54</div></div>
-<div class='pg reveal'><h2>What physical closure changed in this final phase</h2>
+the surviving 21 %.</p></div><aside class='notes'>Defect 3 is the best story in the talk. It produced no error, no warning, and no failing test — the design space was simply smaller than anyone thought, and the subset was selected by floating-point luck. Mention that the fix is a picometre snap plus a permanent closure assertion.</aside><div class='pgnum'>56 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Closure history — the final phase, fix by fix</h2>
 <table class="small"><tr><th>Found</th><th>Consequence</th></tr>
 <tr><td>Z1 network never converged on a uniform grid — tile edges fell between nodes</td>
 <td>aligned graded FV grid: converges on all five metrics</td></tr>
@@ -476,8 +574,8 @@ the surviving 21 %.</p></div><aside class='notes'>Defect 3 is the best story in 
 <tr><td>RDL tier tensor from Voigt / series formulas</td>
 <td>explicit RVE disagreed; RVE values adopted, thermal re-run</td></tr>
 <tr><td>the h<sub>xy</sub> 1.1&rarr;0.8 "refinement" re-graded the grid (Z2's largest element grew)</td>
-<td>nested refinement instead. The unrefined grid fails the declared tolerance: splitting its in-plane intervals in two changed T_max by 4.7 % (Z1) and 3.3 % (Z2), so production uses the split grid.</td></tr></table><div class='prov'>final_closure artifacts</div><aside class='notes'>Each row moved a result: physical closure changes conclusions, so it is the contribution.</aside><div class='pgnum'>40 / 54</div></div>
-<div class='pg reveal'><h2>CURRENT physical result — HV-S0</h2>
+<td>nested refinement instead. The unrefined grid fails the declared tolerance: splitting its in-plane intervals in two changed T_max by 4.7 % (Z1) and 3.3 % (Z2), so production uses the split grid.</td></tr></table><div class='prov'>final_closure artifacts</div><aside class='notes'>Each row moved a result: physical closure changes conclusions, so it is the contribution.</aside><div class='pgnum'>57 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — CURRENT physical result — HV-S0</h2>
 <div class="kpi">
 <div><div class="v" style="color:var(--z1)">146.5 W</div><div class="l">Z1 loss</div></div>
 <div><div class="v" style="color:var(--z2)">142.7 W</div><div class="l">Z2 loss</div></div>
@@ -490,70 +588,51 @@ the surviving 21 %.</p></div><aside class='notes'>Defect 3 is the best story in 
 <div><div class="v" style="color:var(--z2)">3.95 µm</div><div class="l">Z2 joint driver</div></div></div>
 <p style="margin-top:.6em">Matched 54 balls per rail, converged package
 networks, converged E–T fixed point, all-site joint search, production mesh
-graded h<sub>xy</sub> = 1.1 mm grid, every in-plane interval split in 2. <span class="chip ok">CURRENT</span></p><div class='prov'>final_results.json · physical lineage</div><aside class='notes'>Read the four pairs left to right. Electrically and thermally the two are close at HV-S0; mechanically they are not.</aside><div class='pgnum'>41 / 54</div></div>
-<div class='pg reveal'><h2>Across the named 48 V scenarios</h2>
+graded h<sub>xy</sub> = 1.1 mm grid, every in-plane interval split in 2. <span class="chip ok">CURRENT</span></p><div class='prov'>final_results.json · physical lineage</div><aside class='notes'>Read the four pairs left to right. Electrically and thermally the two are close at HV-S0; mechanically they are not.</aside><div class='pgnum'>58 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Across the named 48 V scenarios</h2>
 <div class="figwrap"><img src="figs/final_scenarios.svg" alt="scenarios"></div>
 <p class="sub">HV-S0/S1/S2 are named scenarios — continuous, buck-duty pulse, overall-ratio pulse
 — not a lower/nominal/upper bracket:
 from an average current alone there is no finite RMS upper bound at all.
 The waveform is not derivable from the converter model, so every HV-side result is conditioned
-on one of them.</p><div class='prov'>final_results.json · ordering.json</div><aside class='notes'>Loss: Z2 lower in every scenario. Peak temperature: Z2 lower wherever resolved (HV-S0 unresolved, HV-S1 Z2 lower, HV-S2 Z2 lower; 'unresolved' = inside the discretisation uncertainty). Die warpage: Z1 lower in every scenario. Joint driver: Z1 lower in every scenario.</aside><div class='pgnum'>42 / 54</div></div>
-<div class='pg reveal'><h2>Architecture conclusion</h2>
+on one of them. Under HV-S2, Z1 exits the valid solid-solder operating domain under the assumed cooling.</p><div class='prov'>final_results.json · ordering.json</div><aside class='notes'>Loss: Z2 has lower loss in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model. Peak temperature: Z2 has lower peak temperature in HV-S1, where the gap exceeds twice the measured discretisation uncertainty. The approximately 1 C difference lies within the measured discretization uncertainty; therefore no thermal architecture ranking is drawn for HV-S0. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model. Die warpage: Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model. Joint driver: Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.</aside><div class='pgnum'>59 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Architecture conclusion</h2>
 <div class="callout" style="font-size:1.0em">In the physically closed lineage, the backside
 architecture (Z2) is <strong>not</strong> mechanically better: its joint displacement driver is
 1.66&times; and its local inelastic response
-1.72&times; that of Z1 at HV-S0, with
+1.61&times; that of Z1 at HV-S0, with
 2.5&times; the die warpage.</div>
 <ul style="margin-top:.6em">
 <li><span class="chip hist">HISTORICAL</span> the frozen R3C pair showed the opposite — Z2 hotter but
 mechanically better. Physical closure reversed it.</li>
-<li>Electrical loss: Z2 lower in every scenario.</li><li>Peak temperature: Z2 lower wherever resolved (HV-S0 unresolved, HV-S1 Z2 lower, HV-S2 Z2 lower; 'unresolved' = inside the discretisation uncertainty).</li>
+<li>Electrical loss: Z2 has lower loss in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.</li><li>Peak temperature: Z2 has lower peak temperature in HV-S1, where the gap exceeds twice the measured discretisation uncertainty. The approximately 1 C difference lies within the measured discretization uncertainty; therefore no thermal architecture ranking is drawn for HV-S0. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.</li>
 <li>What survives: <strong>peak temperature alone does not rank mechanical response</strong> —
-now demonstrated on the physical pair as well.</li></ul><div class='prov'>final_results.json · ordering.json · FINAL_PAPER_DECISION.md</div><aside class='notes'>The reversal is a result of the physical lineage under declared assumptions — no qualification or life claim.</aside><div class='pgnum'>43 / 54</div></div>
-<div class='pg reveal'><h2>Accuracy and runtime, stage by stage</h2>
-<div class="figwrap"><img src="figs/final_accuracy_speed.svg" alt="accuracy vs runtime"></div>
-<p class="sub">Each point is one production model against its own matched reference: same problem,
-same machine, medians of three timed repeats after a warm-up. There is no single framework
-accuracy.</p><div class='prov'>accuracy_speed_matrix.json</div><aside class='notes'>Closed forms sit far right: microseconds against minutes. FE stages are compared solver-to-solver. Do not average these.</aside><div class='pgnum'>44 / 54</div></div>
-<div class='pg reveal'><h2>Where the time goes — the physical pair</h2>
+now demonstrated on the physical pair as well.</li>
+<li>Conditioned on the declared construction (cavity encapsulant, one top cold plate): void out-of-cell volume reverses the joint-driver ordering; a cold plate under the Z2 converter reverses the joint-driver and warpage orderings,
+and the narrowly resolved local ordering does not survive several sensitivities (class-B slide).</li>
+</ul><div class='prov'>final_results.json · ordering.json · FINAL_PAPER_DECISION.md</div><aside class='notes'>The reversal is a result of the physical lineage under declared assumptions — no qualification or life claim.</aside><div class='pgnum'>60 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Where the time goes — the physical pair</h2>
 <div class="figwrap"><img src="figs/final_runtime.svg" alt="runtime"></div>
-<p class="sub">Measured on the current lineage, production mesh. The E–T fixed point and the single
-thermoelastic solve dominate; the local submodel is separate.</p><div class='prov'>final_results.json · local_solder_HV_S0.json</div><aside class='notes'>If asked for one end-to-end number, give it with its thread count and say it is this machine only.</aside><div class='pgnum'>45 / 54</div></div>
-<div class='pg reveal'><h2>The historical frozen result, for context</h2>
+<p class="sub">Measured on the current lineage, production meshes (global grid h<sub>xy</sub> 1.1 mm
+split in two; local submodel on its declared production level). The local wall time was measured
+while the other local cases ran, so it includes contention.</p><div class='prov'>final_results.json · local_mesh_study.json</div><aside class='notes'>If asked for one end-to-end number, give it with its thread count and say it is this machine only.</aside><div class='pgnum'>61 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — The historical frozen result, for context</h2>
 <div class="banner">HISTORICAL / FROZEN R3C — NOT A CURRENT PHYSICAL RESULT</div>
 <table><tr><th></th><th>Z1</th><th>Z2</th></tr>
 <tr><td>peak temperature</td><td class="num">118.32 °C</td><td class="num">126.46 °C</td></tr>
 <tr><td>joint driver &Delta;u<sub>c</sub></td><td class="num">4.625 µm</td><td class="num">3.871 µm</td></tr>
 <tr><td>inelastic strain increment</td><td class="num">1.407e-2</td><td class="num">1.148e-2</td></tr></table>
 <p>This pair motivated the hardening. Its mechanical ordering does <strong>not</strong> survive the
-physical lineage — but its conceptual lesson does: peak temperature does not rank local response.</p><div class='prov'>results/phase0mr3c · HISTORICAL FROZEN R3C</div><aside class='notes'>Shown only to explain why the hardening was necessary. Never call it the final pair.</aside><div class='pgnum'>46 / 54</div></div>
-<div class='pg reveal'><h2>Limitations — what the paper does not claim</h2>
+physical lineage — but its conceptual lesson does: peak temperature does not rank local response.</p><div class='prov'>results/phase0mr3c · HISTORICAL FROZEN R3C</div><aside class='notes'>Shown only to explain why the hardening was necessary. Never call it the final pair.</aside><div class='pgnum'>62 / 67</div></div>
+<div class='pg reveal'><h2>Appendix — Limitations — what the paper does not claim</h2>
 <div class="cols small"><div>
-<p><span class="chip warn">CLASS B</span> sensitivity, 21 open</p><ul><li>PCB-H1 meshed as FE depth blocks</li><li>PCB-H1 thermal validation</li><li>eta coverage sensitivity completed</li><li>2.4/3.2 T-only comparison completed</li><li>contact / UBM / IMC resistance modelled or bounded</li><li>10 um RDL electrical (resistance) model closed or bounded</li><li>thermal/mechanical sensitivity to TSV density</li><li>… and 14 more</li></ul></div>
+<p><span class="chip warn">CLASS B</span> sensitivity: 21 inputs, all
+18 B1 resolved, 3 B2
+bounded. The quantity itself stays undetermined for 9; the claims are conditioned on
+them:</p><ul><li>individual branch waveforms — B2 bounded, magnitude only</li><li>48 V input waveform — B1 resolved, scenario-conditioned</li><li>48 V rail RMS current — B1 resolved, scenario-conditioned</li><li>BGA loss uses RMS current — B1 resolved, scenario-conditioned</li><li>48 V input current waveform closed — B1 resolved, scenario-conditioned</li><li>a physical criterion selects the pad count — B2 bounded, magnitude only</li><li>GaN epi contribution bounded — B1 resolved, ordering robust</li><li>MLCC tier material bounded — B1 resolved; an ordering moves under its bound, the claim is narrowed</li><li>inductor/Cout tier bounded — B1 resolved; an ordering moves under its bound, the claim is narrowed</li></ul></div>
 <div><p><span class="chip hist">CLASS C</span> qualification, 5 open</p><ul><li>microbump loss recomputed on the physical geometry</li><li>microbump field geometry defined</li><li>microbump contact/UBM/IMC resistance bounded from literature</li><li>TSV current-density allowable sourced or explicitly refused</li><li>PCB MOT/Tg checks evaluated</li></ul>
 <p class="sub">Class A (paper-critical) still open: 0. 1.5 A/ball is an engineering
-provisioning rule, never an allowable.</p></div></div><div class='prov'>paper_gate_classification.json · FINAL_PAPER_SCOPE.md</div><aside class='notes'>Frame limitations as boundaries of the claim, not weaknesses of the work.</aside><div class='pgnum'>47 / 54</div></div>
-<div class='pg reveal'><h2>Contribution</h2>
-<ol><li>A hierarchical electrothermal–mechanical framework for DVPD in which converter synthesis
-propagates into an explicit physical package, evaluated in one lineage.</li>
-<li>A voltage-fed, return-inclusive package network on an aligned graded grid that converges
-where a uniform grid cannot — with the BGA count solved as a design variable.</li>
-<li>Stage-by-stage checks against commercial and open-source FEM, with model-specific errors and
-runtimes instead of one framework accuracy.</li>
-<li>A demonstration that physical closure reverses an architecture conclusion.</li></ol><aside class='notes'>End on point 4.</aside><div class='pgnum'>48 / 54</div></div>
-<div class='pg reveal'><h2>Future work</h2>
-<ul><li>obtain the switch-state schedule → replace the named scenarios with one waveform</li>
-<li>Z2 backside cooling as a co-designed architecture state</li>
-<li>Icepak conjugate-CFD check of the cooling correlation on the physical geometry</li>
-<li>qualified EM and fatigue data for this metallurgy → absolute reliability statements</li>
-<li>full-package commercial FE benchmark beyond the unit cell</li></ul><aside class='notes'>Each item replaces a declared assumption or a scenario with data; none of them is needed for the comparison itself, only for absolute statements.</aside><div class='pgnum'>49 / 54</div></div>
-<div class='pg reveal'><div style="text-align:center;margin-top:1.4em">
-<div class="big">Thank you</div>
-<p style="margin-top:1em;max-width:72%;margin-left:auto;margin-right:auto">
-<strong>Contribution:</strong> a hierarchical electrothermal–mechanical framework for
-distributed vertical power delivery, checked stage by stage against matched reference
-solvers, and a demonstration that physical closure reverses an architecture conclusion.</p>
-<p class="sub" style="margin-top:1.2em">Questions</p></div><div class='pgnum'>50 / 54</div></div>
+provisioning rule, never an allowable.</p></div></div><div class='prov'>paper_gate_classification.json · FINAL_PAPER_SCOPE.md</div><aside class='notes'>Frame limitations as boundaries of the claim, not weaknesses of the work.</aside><div class='pgnum'>63 / 67</div></div>
 <div class='pg reveal'><h2>Appendix — the voltage-fed network</h2>
 <p>Unknowns: sheet node voltages, one node per ball, one per cell pad, one rail node
 held at a fixed potential. Conductances:</p>
@@ -567,7 +646,7 @@ h / A = 0.3104 m&Omega; from Table III geometry</li>
 R<sub>ball</sub>.</p>
 <p><strong>Identities checked every solve:</strong> &Sigma;I<sub>ball</sub> =
 I<sub>total</sub> to ~1e-10 A, and &Sigma;g&Delta;V² = V&middot;I to ~1e-10 relative,
-with R<sub>eff</sub> = P / I².</p><div class='pgnum'>51 / 54</div></div>
+with R<sub>eff</sub> = P / I².</p><div class='pgnum'>64 / 67</div></div>
 <div class='pg reveal'><h2>Appendix — why the 48 V RMS cannot be closed</h2>
 <p>The pinned generator builds every electrical quantity from one scalar,
 <code>I_out_rms = sqrt(I_out² + &Delta;i²/12)</code>, the triangular-ripple identity on
@@ -580,11 +659,11 @@ energy balance while RMS closes conduction loss. One does not give the other.</p
 charge-transfer schedule, or a netlist of the adopted topology.</p>
 <p class="sub">Hybrid/SC RMS papers derive input RMS correctly for <em>their</em>
 topologies — methodology context only. Importing their ratio would be transferring a
-different converter's waveform.</p><div class='pgnum'>52 / 54</div></div>
+different converter's waveform.</p><div class='pgnum'>65 / 67</div></div>
 <div class='pg reveal'><h2>Appendix — BGA count closure, production model</h2>
 <div class="figwrap"><img src="figs/final_count_closure.svg" alt="count closure"></div>
-<table class="small"><tr><th>case</th><th>minimum per rail</th><th>status</th></tr><tr><td>Z1 / DC_AVERAGE</td><td class='num'>54</td><td>CLOSED</td></tr><tr><td>Z1 / HV-S0</td><td class='num'>54</td><td>CLOSED</td></tr><tr><td>Z1 / HV-S1</td><td class='num'>—</td><td>NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT</td></tr><tr><td>Z1 / HV-S2</td><td class='num'>—</td><td>NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT</td></tr><tr><td>Z2 / DC_AVERAGE</td><td class='num'>36</td><td>CLOSED</td></tr><tr><td>Z2 / HV-S0</td><td class='num'>36</td><td>CLOSED</td></tr><tr><td>Z2 / HV-S1</td><td class='num'>—</td><td>NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT</td></tr><tr><td>Z2 / HV-S2</td><td class='num'>—</td><td>NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT</td></tr></table><div class='prov'>research/final_closure/package_network.json</div><div class='pgnum'>53 / 54</div></div>
+<table class="small"><tr><th>case</th><th>minimum per rail</th><th>status</th></tr><tr><td>Z1 / DC_AVERAGE</td><td class='num'>54</td><td>CLOSED</td></tr><tr><td>Z1 / HV-S0</td><td class='num'>54</td><td>CLOSED</td></tr><tr><td>Z1 / HV-S1</td><td class='num'>—</td><td>NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT</td></tr><tr><td>Z1 / HV-S2</td><td class='num'>—</td><td>NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT</td></tr><tr><td>Z2 / DC_AVERAGE</td><td class='num'>36</td><td>CLOSED</td></tr><tr><td>Z2 / HV-S0</td><td class='num'>36</td><td>CLOSED</td></tr><tr><td>Z2 / HV-S1</td><td class='num'>—</td><td>NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT</td></tr><tr><td>Z2 / HV-S2</td><td class='num'>—</td><td>NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT</td></tr></table><div class='prov'>research/final_closure/package_network.json</div><div class='pgnum'>66 / 67</div></div>
 <div class='pg reveal'><h2>Appendix — accuracy and runtime matrix</h2>
 <table class="tiny"><tr><th>stage</th><th>reference</th><th>error</th><th>ours</th><th>reference</th>
-<th>status</th></tr><tr><td>tsv_bulk</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>-1.147 %</td><td class='num'>0.63 µs</td><td class='num'>10.0 s</td><td>EXECUTED</td></tr><tr><td>tsv_tile_kz</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>+0.711 %</td><td class='num'>0.72 µs</td><td class='num'>36.1 s</td><td>EXECUTED</td></tr><tr><td>tsv_tile_kx</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>+0.255 %</td><td class='num'>0.80 µs</td><td class='num'>36.0 s</td><td>EXECUTED</td></tr><tr><td>rdl_tier_kx</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>-3.694 %</td><td class='num'>0.63 µs</td><td class='num'>34.1 s</td><td>EXECUTED</td></tr><tr><td>rdl_tier_kz</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>+12.490 %</td><td class='num'>1.31 µs</td><td class='num'>34.1 s</td><td>EXECUTED</td></tr><tr><td>pkg_rdl_Z1</td><td>MOOSE heat_transfer-opt (2-D FEM, gmsh</td><td class='num'>+0.079 %</td><td class='num'>15.8 s</td><td class='num'>55.0 s</td><td>EXECUTED</td></tr><tr><td>pkg_rdl_Z2</td><td>MOOSE heat_transfer-opt (2-D FEM, gmsh</td><td class='num'>+0.108 %</td><td class='num'>24.4 s</td><td class='num'>60.8 s</td><td>EXECUTED</td></tr><tr><td>thermal_column_aedt_Z1</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>-0.140 %</td><td class='num'>44.4 s</td><td class='num'>124.0 s</td><td>EXECUTED</td></tr><tr><td>thermal_column_moose_Z1</td><td>MOOSE heat_transfer-opt (3-D FEM, own </td><td class='num'>-0.161 %</td><td class='num'>38.9 s</td><td class='num'>21.5 s</td><td>EXECUTED</td></tr><tr><td>thermal_column_aedt_Z2</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>-0.109 %</td><td class='num'>22.7 s</td><td class='num'>77.3 s</td><td>EXECUTED</td></tr><tr><td>thermal_column_moose_Z2</td><td>MOOSE heat_transfer-opt (3-D FEM, own </td><td class='num'>-0.118 %</td><td class='num'>23.0 s</td><td class='num'>14.0 s</td><td>EXECUTED</td></tr><tr><td>mech_bilayer_closed_form</td><td>Timoshenko bimaterial curvature</td><td class='num'>-0.433 %</td><td class='num'>65.9 s</td><td class='num'>n/a</td><td>EXECUTED</td></tr><tr><td>mech_bilayer_aedt</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>+0.014 %</td><td class='num'>65.9 s</td><td class='num'>262.7 s</td><td>EXECUTED</td></tr><tr><td>structural_solver_iterative_vs_direct</td><td>CalculiX SPOOLES (direct), same mesh a</td><td class='num'>-0.010 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>EXECUTED</td></tr><tr><td>mesh_convergence_Z1</td><td></td><td class='num'>+1.299 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>EXECUTED</td></tr><tr><td>mesh_convergence_Z2</td><td></td><td class='num'>+0.674 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>EXECUTED</td></tr><tr><td>tsv_transition</td><td>MOOSE</td><td class='num'>0.25-0.73 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>HISTORICAL_REFERENCE_NOT_RERUN</td></tr><tr><td>rdl_plane_historical</td><td>MOOSE</td><td class='num'>power 0.45-1.10 %, IR 0.90-2.19 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>HISTORICAL_REFERENCE_NOT_RERUN</td></tr><tr><td>cooling_compact</td><td>MOOSE explicit fins</td><td class='num'>3.78 % in validated domain</td><td class='num'>n/a</td><td class='num'>n/a</td><td>HISTORICAL_REFERENCE_NOT_RERUN</td></tr><tr><td>homogenised_k_historical</td><td>numerical RVE</td><td class='num'>k_z ~1 %, bump k_xy ~1.5 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>HISTORICAL_REFERENCE_NOT_RERUN</td></tr><tr><td>cooling_icepak</td><td>Ansys Icepak (licensed)</td><td class='num'></td><td class='num'>n/a</td><td class='num'>n/a</td><td>NOT_EXECUTED</td></tr><tr><td>converter_waveform</td><td>none available</td><td class='num'></td><td class='num'>n/a</td><td class='num'>n/a</td><td>NOT_EXECUTED</td></tr><tr><td>pkg_rdl_convergence</td><td></td><td class='num'>+0.045 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>EXECUTED</td></tr></table>
-<p class="sub">No end-to-end commercial flow speedup is claimed.</p><div class='prov'>accuracy_speed_matrix.csv</div><aside class='notes'>Full matrix for questions; medians of three timed repeats after a warm-up.</aside><div class='pgnum'>54 / 54</div></div></body></html>
+<th>status</th></tr><tr><td>tsv_bulk</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>-1.147 %</td><td class='num'>0.63 µs</td><td class='num'>10.0 s</td><td>EXECUTED</td></tr><tr><td>tsv_tile_kz</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>+0.711 %</td><td class='num'>0.72 µs</td><td class='num'>36.1 s</td><td>EXECUTED</td></tr><tr><td>tsv_tile_kx</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>+0.255 %</td><td class='num'>0.80 µs</td><td class='num'>36.0 s</td><td>EXECUTED</td></tr><tr><td>rdl_tier_kx</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>-3.694 %</td><td class='num'>0.63 µs</td><td class='num'>34.1 s</td><td>EXECUTED</td></tr><tr><td>rdl_tier_kz</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>+12.490 %</td><td class='num'>1.31 µs</td><td class='num'>34.1 s</td><td>EXECUTED</td></tr><tr><td>pkg_rdl_Z1</td><td>MOOSE heat_transfer-opt (2-D FEM, gmsh</td><td class='num'>+0.079 %</td><td class='num'>15.8 s</td><td class='num'>55.0 s</td><td>EXECUTED</td></tr><tr><td>pkg_rdl_Z2</td><td>MOOSE heat_transfer-opt (2-D FEM, gmsh</td><td class='num'>+0.108 %</td><td class='num'>24.4 s</td><td class='num'>60.8 s</td><td>EXECUTED</td></tr><tr><td>thermal_column_aedt_Z1</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>-0.140 %</td><td class='num'>44.4 s</td><td class='num'>124.0 s</td><td>EXECUTED</td></tr><tr><td>thermal_column_moose_Z1</td><td>MOOSE heat_transfer-opt (3-D FEM, own </td><td class='num'>-0.161 %</td><td class='num'>38.9 s</td><td class='num'>21.5 s</td><td>EXECUTED</td></tr><tr><td>thermal_column_aedt_Z2</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>-0.109 %</td><td class='num'>22.7 s</td><td class='num'>77.3 s</td><td>EXECUTED</td></tr><tr><td>thermal_column_moose_Z2</td><td>MOOSE heat_transfer-opt (3-D FEM, own </td><td class='num'>-0.118 %</td><td class='num'>23.0 s</td><td class='num'>14.0 s</td><td>EXECUTED</td></tr><tr><td>mech_bilayer_closed_form</td><td>Timoshenko bimaterial curvature</td><td class='num'>-0.433 %</td><td class='num'>65.9 s</td><td class='num'>n/a</td><td>EXECUTED</td></tr><tr><td>mech_bilayer_aedt</td><td>Ansys Electronics Desktop 2026 R1, Mec</td><td class='num'>+0.014 %</td><td class='num'>65.9 s</td><td class='num'>262.7 s</td><td>EXECUTED</td></tr><tr><td>structural_solver_iterative_vs_direct</td><td>CalculiX SPOOLES (direct), same mesh a</td><td class='num'>-0.010 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>EXECUTED</td></tr><tr><td>mesh_convergence_Z1</td><td></td><td class='num'>+1.299 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>EXECUTED</td></tr><tr><td>mesh_convergence_Z2</td><td></td><td class='num'>+0.674 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>EXECUTED</td></tr><tr><td>tsv_transition</td><td>MOOSE</td><td class='num'>0.25-0.73 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>HISTORICAL_REFERENCE_NOT_RERUN</td></tr><tr><td>rdl_plane_historical</td><td>MOOSE</td><td class='num'>power 0.45-1.10 %, IR 0.90-2.19 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>HISTORICAL_REFERENCE_NOT_RERUN</td></tr><tr><td>cooling_compact</td><td>MOOSE explicit fins</td><td class='num'>3.78 % in validated domain</td><td class='num'>n/a</td><td class='num'>n/a</td><td>HISTORICAL_REFERENCE_NOT_RERUN</td></tr><tr><td>homogenised_k_historical</td><td>numerical RVE</td><td class='num'>k_z ~1 %, bump k_xy ~1.5 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>HISTORICAL_REFERENCE_NOT_RERUN</td></tr><tr><td>cooling_icepak</td><td>Ansys Icepak 2026 R1 conjugate CFD, on</td><td class='num'>+16.484 %</td><td class='num'>13.29 µs</td><td class='num'>1305.4 s</td><td>EXECUTED</td></tr><tr><td>converter_waveform</td><td>none available</td><td class='num'></td><td class='num'>n/a</td><td class='num'>n/a</td><td>NOT_EXECUTED</td></tr><tr><td>pkg_rdl_convergence</td><td></td><td class='num'>+0.045 %</td><td class='num'>n/a</td><td class='num'>n/a</td><td>EXECUTED</td></tr></table>
+<p class="sub">No end-to-end commercial flow speedup is claimed.</p><div class='prov'>accuracy_speed_matrix.csv</div><aside class='notes'>Full matrix for questions; medians of three timed repeats after a warm-up.</aside><div class='pgnum'>67 / 67</div></div></body></html>

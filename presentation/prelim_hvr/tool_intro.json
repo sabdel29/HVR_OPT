@@ -1,0 +1,177 @@
+{
+ "meta": {
+  "date": "2026-10-27",
+  "derived_from": "research/final_closure/tool_provenance.json",
+  "rule": "beginner wording; every claim is supported by the provenance entry of the same name"
+ },
+ "tools": [
+  {
+   "name": "CalculiX (ccx)",
+   "one_liner": "Free simulation program by Guido Dhondt and Klaus Wittig. Here it computes the production heat and mechanics results: how hot the package gets, how much it warps, and how hard the solder joints are strained.",
+   "status": "EXECUTED",
+   "source_url": "http://www.calculix.de/"
+  },
+  {
+   "name": "In-house package-network FV solver",
+   "one_liner": "Our own Python solver, using SciPy, for how current spreads through the package's power wiring sheet and solder balls. It decides how much current each ball carries.",
+   "status": "EXECUTED",
+   "source_url": "scripts/phase0nw/pkg_rdl_refined.py"
+  },
+  {
+   "name": "In-house electrical ledger",
+   "one_liner": "Our own Python bookkeeping of every conductor in the power path: its resistance at its own temperature and the heat it produces, layer by layer.",
+   "status": "EXECUTED",
+   "source_url": "scripts/final_closure_ledger.py"
+  },
+  {
+   "name": "In-house E-T fixed-point driver",
+   "one_liner": "Our own Python loop: losses heat the package, heat raises resistance, resistance raises losses. It repeats ledger and CalculiX until the numbers settle, then computes warping once.",
+   "status": "EXECUTED",
+   "source_url": "scripts/final_closure_physical_etm.py"
+  },
+  {
+   "name": "In-house package builders + YAML configs",
+   "one_liner": "Our own settings files and Python loader that describe the two package designs, Z1 and Z2: layers, materials, converter tiles. The meshes and the electrical ledger are built from them.",
+   "status": "EXECUTED",
+   "source_url": "scripts/phase0nw/physical_package.py"
+  },
+  {
+   "name": "In-house structured hex mesher (etm.mesh)",
+   "one_liner": "Our own Python mesher. It cuts each package into small brick-shaped cells that follow every layer and tile edge; the same mesh carries the heat and the warping calculations.",
+   "status": "EXECUTED",
+   "source_url": "scripts/phase0b/etm/mesh.py"
+  },
+  {
+   "name": "Gmsh",
+   "one_liner": "Free mesh generator by Christophe Geuzaine and Jean-François Remacle. Here it cuts the flat package wiring sheet into small triangles so MOOSE can solve on it.",
+   "status": "EXECUTED",
+   "source_url": "https://gmsh.info/"
+  },
+  {
+   "name": "MOOSE heat_transfer module (heat_transfer-opt)",
+   "one_liner": "Open-source simulation framework, primarily developed by Idaho National Laboratory. Here it is an independent check: it re-solves our heat-flow and current-flow test problems on separate meshes, for comparison.",
+   "status": "EXECUTED",
+   "source_url": "https://mooseframework.inl.gov/"
+  },
+  {
+   "name": "Ansys Electronics Desktop 2026 R1",
+   "one_liner": "Ansys's commercial platform for electronics simulation. Here it only hosts the Mechanical solver used as a commercial cross-check.",
+   "status": "EXECUTED",
+   "source_url": "https://www.ansys.com/products/electronics/ansys-electronics-desktop"
+  },
+  {
+   "name": "AEDT Mechanical (thermal, structural)",
+   "one_liner": "Ansys's heat and structural solver inside Electronics Desktop. Here it is the commercial cross-check: it re-solves our via, wiring-layer, unit-cell temperature and two-layer bending tests for comparison.",
+   "status": "EXECUTED",
+   "source_url": "https://aedt.docs.pyansys.com/version/stable/API/_autosummary/ansys.aedt.core.mechanical.Mechanical.html"
+  },
+  {
+   "name": "PyAEDT (ansys.aedt.core)",
+   "one_liner": "Python library from Ansys (PyAnsys) that operates Electronics Desktop by script. Here it builds, solves and reads back every Ansys Mechanical check, so each check is a re-runnable script.",
+   "status": "EXECUTED",
+   "source_url": "https://aedt.docs.pyansys.com/version/stable/"
+  },
+  {
+   "name": "Closed-form references (in-house)",
+   "one_liner": "Textbook formulas coded in our Python scripts, such as Timoshenko's formula for how a heated two-layer strip bends, used as a hand-check on CalculiX.",
+   "status": "EXECUTED",
+   "source_url": "scripts/reference_tools/mech_bilayer_benchmark.py"
+  },
+  {
+   "name": "Ansys Q3D Extractor",
+   "one_liner": "Ansys tool that computes resistance, inductance and capacitance of wiring. NOT EXECUTED IN THIS STUDY — LICENSE UNAVAILABLE. Scripts are ready; no Q3D number appears anywhere.",
+   "status": "NOT EXECUTED IN THIS STUDY — LICENSE UNAVAILABLE",
+   "source_url": "https://www.ansys.com/products/electronics/ansys-q3d-extractor"
+  },
+  {
+   "name": "Ansys Maxwell (DC conduction)",
+   "one_liner": "Ansys electromagnetic field solver; its DC current-flow mode was considered as a cross-check. NOT EXECUTED IN THIS STUDY — LICENSE UNAVAILABLE. Ansys Mechanical was used instead.",
+   "status": "NOT EXECUTED IN THIS STUDY — LICENSE UNAVAILABLE",
+   "source_url": "https://www.ansys.com/products/electronics/ansys-maxwell"
+  },
+  {
+   "name": "Ansys Icepak",
+   "one_liner": "Ansys electronics-cooling simulator. Here it re-solves one channel of the cold plate with real water flow (CFD), to check the simple cooling formula the production model uses.",
+   "status": "EXECUTED",
+   "source_url": "https://www.ansys.com/products/electronics/ansys-icepak"
+  },
+  {
+   "name": "Ansys HFSS",
+   "one_liner": "Ansys high-frequency electromagnetic simulator. NOT EXECUTED IN THIS STUDY. The paper reports an earlier attempt that did not converge; no HFSS number is used.",
+   "status": "NOT EXECUTED IN THIS STUDY",
+   "source_url": "https://www.ansys.com/products/electronics/ansys-hfss"
+  },
+  {
+   "name": "Matplotlib",
+   "one_liner": "Open-source Python plotting library by the Matplotlib development team. It draws every chart and field picture in the deck from saved results; it draws solver results; it is not the solver.",
+   "status": "EXECUTED",
+   "source_url": "https://matplotlib.org/"
+  },
+  {
+   "name": "VTK",
+   "one_liner": "Open-source visualisation toolkit from Kitware. Here it reads MOOSE's result files and renders the RDL field and the re-drawn reference geometry; it draws solver results; it is not the solver.",
+   "status": "EXECUTED",
+   "source_url": "https://vtk.org/"
+  },
+  {
+   "name": "Native SVG via Python",
+   "one_liner": "Diagrams typed directly in SVG, the W3C standard text format for vector drawings, by our Python scripts, including this map. It draws diagrams; it is not the solver.",
+   "status": "EXECUTED",
+   "source_url": "https://www.w3.org/TR/SVG11/"
+  },
+  {
+   "name": "Reveal.js",
+   "one_liner": "Open-source web slide framework created by Hakim El Hattab and contributors. This talk is a Reveal.js web page, version 5.1.0, stored inside the repository; it shows slides; it is not the solver.",
+   "status": "EXECUTED",
+   "source_url": "https://revealjs.com/"
+  },
+  {
+   "name": "Google Chrome (headless)",
+   "one_liner": "Google's web browser, run without a window. Here it prints the slide web page into the PDF handout; it draws slides; it is not the solver.",
+   "status": "EXECUTED",
+   "source_url": "https://developer.chrome.com/docs/chromium/headless"
+  },
+  {
+   "name": "rsvg-convert (librsvg)",
+   "one_liner": "Command-line tool from the GNOME librsvg project that turns SVG drawings into PNG pictures. Here it renders this map for checking; it draws; it is not the solver.",
+   "status": "EXECUTED",
+   "source_url": "https://gitlab.gnome.org/GNOME/librsvg"
+  },
+  {
+   "name": "pdfLaTeX + BibTeX (TeX Live 2018)",
+   "one_liner": "Typesetting programs from TeX Live, supported by the TeX Users Group. They build the journal manuscript PDF; they typeset text; they are not solvers.",
+   "status": "EXECUTED",
+   "source_url": "https://tug.org/texlive/"
+  },
+  {
+   "name": "Python (CPython)",
+   "one_liner": "The programming language, stewarded by the Python Software Foundation, in which all our own code, drivers and figure scripts are written (version 3.12.14).",
+   "status": "EXECUTED",
+   "source_url": "https://www.python.org/"
+  },
+  {
+   "name": "NumPy",
+   "one_liner": "The basic open-source Python library for arrays of numbers, developed publicly by a community. Every in-house script stores and processes its numbers with it.",
+   "status": "EXECUTED",
+   "source_url": "https://numpy.org/"
+  },
+  {
+   "name": "SciPy",
+   "one_liner": "Open-source Python library of scientific algorithms. Its sparse equation solver does the number crunching inside our electrical network and ledger codes.",
+   "status": "EXECUTED",
+   "source_url": "https://scipy.org/"
+  },
+  {
+   "name": "ParaView",
+   "one_liner": "Kitware's open-source visualisation application, built on VTK. NOT INSTALLED here, so not used; VTK, its engine, was used directly to read result files.",
+   "status": "NOT INSTALLED",
+   "source_url": "https://www.paraview.org/"
+  },
+  {
+   "name": "Graphviz",
+   "one_liner": "Open-source software that lays out graph diagrams automatically. NOT EXECUTED IN THIS STUDY: installed, but diagrams were written directly as SVG instead.",
+   "status": "NOT EXECUTED IN THIS STUDY",
+   "source_url": "https://graphviz.org/"
+  }
+ ]
+}

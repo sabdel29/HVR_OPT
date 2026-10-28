@@ -14,6 +14,17 @@ FC = R / "research" / "final_closure"
 EVID = "tool_evidence"
 
 
+def _local_line():
+    """The declared local mesh study in one line, from local_mesh_study.json."""
+    lm = J("local_mesh_study.json") or {}
+    parts = []
+    for k, c in (lm.get("cases") or {}).items():
+        if c.get("U") is not None:
+            parts.append(f"{k.replace('_HV_', ' HV-')} {c['status']} (U {100 * c['U']:.1f} %)")
+    return ("declared family L0&rarr;L3 (6&times;8 to 12&times;16), rule declared before the "
+            "finer levels were read: " + "; ".join(parts)) if parts else "n/a"
+
+
 def J(n):
     f = FC / n
     return json.loads(f.read_text()) if f.exists() else None
@@ -341,8 +352,7 @@ def mechanics_validation(S):
 <li>Refined structural solves use ITERATIVE CHOLESKY: on the base mesh it matches the direct solver
 to {pct(sv['error'], 3) if sv else 'n/a'} in warpage (direct SPOOLES solves 38.6k C3D8I elements and segfaults
 at 43k in this build).</li>
-<li>Local solder model, n<sub>xy</sub> 6&rarr;8, n<sub>z</sub> 8&rarr;10: response change
-{(f"{min(lm):.1f}–{max(lm):.1f} %" if lm else "n/a")} where both meshes converge.</li></ul>""",
+<li>Local solder model: {_local_line()}</li></ul>""",
           "Say plainly that the first 'refinement' was not a refinement — lowering h_xy "
           "re-graded the grid — and that the nested study replaced it.",
           "mesh_convergence.json · solver_check/ · local_solder_HV_S*.json")
@@ -374,8 +384,9 @@ at 43k in this build).</li>
     S(f"""<h2>Local solder response at the critical joint</h2>
 <table><tr><th>scenario</th><th>arch</th><th>&Delta;u<sub>c</sub> (µm)</th><th>T joint (°C)</th>
 <th>&Delta;&epsilon;<sub>in</sub> per cycle</th></tr>{rows}</table>
-<p class="sub">Validated viscoplastic local family, re-run unchanged after reproducing its
-published control exactly. † joint above the Norton card's 125 °C calibration — extrapolation.
+<p class="sub">Validated viscoplastic local family on its declared production mesh (L3), each
+load change written as its own 3 s step, block-order extraction (DEFECT #65); the harness still
+reproduces its published control. † joint above the Norton card's 125 °C calibration — extrapolation.
 ‡ at or above the SAC305 melting onset (about 217 °C): not an admissible operating point.
 <strong>Response only; no cycles to failure are computed</strong> (Darveaux, 10.1115/1.1413764).</p>""",
       "Z2's response is larger wherever both converge." +
@@ -411,26 +422,35 @@ networks, converged E–T fixed point, all-site joint search, production mesh
     order = (J("ordering.json") or {}).get("orderings", {})
 
     def say(key, what):
-        o = order.get(key) or {}
-        if o.get("robust_across_scenarios"):
-            return f"{what}: {o['favoured'][0]} lower in every scenario."
-        per = ", ".join(f"{s.replace('_', '-')} {v}"
-                        for s, v in (o.get("per_scenario") or {}).items())
-        if o.get("favoured_where_resolved"):
-            return (f"{what}: {o['favoured_where_resolved']} lower wherever resolved ({per}; "
-                    "'unresolved' = inside the discretisation uncertainty).")
-        return f"{what}: scenario-dependent ({per})."
+        # the ordering.json statement verbatim: the one sentence every text uses
+        return f"{what}: {(order.get(key) or {}).get('statement', 'no ordering recorded')}"
     S("""<h2>Across the named 48 V scenarios</h2>
 <div class="figwrap"><img src="figs/final_scenarios.svg" alt="scenarios"></div>
 <p class="sub">HV-S0/S1/S2 are named scenarios — continuous, buck-duty pulse, overall-ratio pulse
 — not a lower/nominal/upper bracket:
 from an average current alone there is no finite RMS upper bound at all.
 The waveform is not derivable from the converter model, so every HV-side result is conditioned
-on one of them.</p>""",
+on one of them. """ + " ".join(c["statement"] for c in (J("ordering.json") or {}).get(
+        "scenario_classes", {}).values() if c.get("inadmissible")) + """</p>""",
       " ".join([say("P_loss_w", "Loss"), say("T_max_C", "Peak temperature"),
                 say("die_warpage_pv_um", "Die warpage"), say("du_c_um", "Joint driver")]),
       "final_results.json · ordering.json")
     z1e, z2e = g("Z1", "HV_S0", "d_eps_in_per_cycle"), g("Z2", "HV_S0", "d_eps_in_per_cycle")
+    # which mechanical ordering each class-B variant reverses, from classB_resolution.json
+    plain = {"f2_void": "void out-of-cell volume", "z2_cooled": "a cold plate under the Z2 converter",
+             "f1_clearance": "an open sidewall clearance", "tsv_min": "the minimal TSV field"}
+    mv = {}
+    for g_ in (J("classB_resolution.json") or {}).get("gates", []):
+        for r in g_.get("rows", []):
+            if (r.get("observable") in ("die_warpage_pv_um", "du_c_um") and r.get("robust") is False
+                    and str(r.get("production_verdict", "")).endswith("lower")
+                    and str(r.get("verdict", "")).endswith("lower")):
+                mv.setdefault(r["case"], set()).add(
+                    {"die_warpage_pv_um": "warpage", "du_c_um": "joint-driver"}[r["observable"]])
+    mech_moves = "; ".join(
+        f"{plain.get(c, c.replace('_', ' '))} reverses the {' and '.join(sorted(v))} "
+        f"ordering{'s' if len(v) > 1 else ''}" for c, v in mv.items()) or \
+        "no class-B input reverses a mechanical ordering"
     bullets = [say("P_loss_w", "Electrical loss"), say("T_max_C", "Peak temperature")]
 
     S(f"""<h2>Architecture conclusion</h2>
@@ -444,7 +464,10 @@ architecture (Z2) is <strong>not</strong> mechanically better: its joint displac
 mechanically better. Physical closure reversed it.</li>
 {''.join(f'<li>{b}</li>' for b in bullets)}
 <li>What survives: <strong>peak temperature alone does not rank mechanical response</strong> —
-now demonstrated on the physical pair as well.</li></ul>""",
+now demonstrated on the physical pair as well.</li>
+<li>Conditioned on the declared construction (cavity encapsulant, one top cold plate): {mech_moves},
+and the narrowly resolved local ordering does not survive several sensitivities (class-B slide).</li>
+</ul>""",
       "The reversal is a result of the physical lineage under declared assumptions — no "
       "qualification or life claim.",
       "final_results.json · ordering.json · FINAL_PAPER_DECISION.md")
@@ -457,15 +480,16 @@ accuracy.</p>""",
       "solver-to-solver. Do not average these.", "accuracy_speed_matrix.json")
     S("""<h2>Where the time goes — the physical pair</h2>
 <div class="figwrap"><img src="figs/final_runtime.svg" alt="runtime"></div>
-<p class="sub">Measured on the current lineage, production mesh. The E–T fixed point and the single
-thermoelastic solve dominate; the local submodel is separate.</p>""",
+<p class="sub">Measured on the current lineage, production meshes (global grid h<sub>xy</sub> 1.1 mm
+split in two; local submodel on its declared production level). The local wall time was measured
+while the other local cases ran, so it includes contention.</p>""",
       "If asked for one end-to-end number, give it with its thread count and say it is this "
-      "machine only.", "final_results.json · local_solder_HV_S0.json")
+      "machine only.", "final_results.json · local_mesh_study.json")
 
 
 def hardening(S):
     mc = J("mesh_convergence.json") or {}
-    S(f"""<h2>What physical closure changed in this final phase</h2>
+    S(f"""<h2>Closure history — the final phase, fix by fix</h2>
 <table class="small"><tr><th>Found</th><th>Consequence</th></tr>
 <tr><td>Z1 network never converged on a uniform grid — tile edges fell between nodes</td>
 <td>aligned graded FV grid: converges on all five metrics</td></tr>
@@ -496,16 +520,27 @@ physical lineage — but its conceptual lesson does: peak temperature does not r
       "Shown only to explain why the hardening was necessary. Never call it the final pair.",
       "results/phase0mr3c · HISTORICAL FROZEN R3C")
     rows = cls.get("rows", [])
-    b = [r["gate"] for r in rows if r["class"] == "B"]
     c = [r["gate"] for r in rows if r["class"] == "C"]
     a = [r["gate"] for r in rows if r["class"] == "A"]
+    sm = (J("classB_resolution.json") or {}).get("summary", {})
+
+    def bst(r):
+        # 'RESOLVED -- scenario-conditioned: ...' -> 'resolved, scenario-conditioned'
+        head, _, rest = (r.get("b_status") or "open").partition(" -- ")
+        if rest.startswith("ordering changes"):
+            return f"{head.lower()}; an ordering moves under its bound, the claim is narrowed"
+        return f"{head.lower()}, {rest.split(':')[0]}" if rest else head.lower()
+    b = [f"{r['gate']} — {r.get('b_subtype', 'B')} {bst(r)}" for r in rows if r["class"] == "B"]
 
     def li(xs, n):
         return "".join(f"<li>{x}</li>" for x in xs[:n]) + (
             f"<li>… and {len(xs) - n} more</li>" if len(xs) > n else "")
     S(f"""<h2>Limitations — what the paper does not claim</h2>
 <div class="cols small"><div>
-<p><span class="chip warn">CLASS B</span> sensitivity, {len(b)} open</p><ul>{li(b, 7)}</ul></div>
+<p><span class="chip warn">CLASS B</span> sensitivity: {sm.get('n_gates', '?')} inputs, all
+{sm.get('b1_resolved', '?')} B1 resolved, {(sm.get('subtypes') or {}).get('B2', '?')} B2
+bounded. The quantity itself stays undetermined for {len(b)}; the claims are conditioned on
+them:</p><ul>{li(b, 12)}</ul></div>
 <div><p><span class="chip hist">CLASS C</span> qualification, {len(c)} open</p><ul>{li(c, 6)}</ul>
 <p class="sub">Class A (paper-critical) still open: {len(a)}. 1.5 A/ball is an engineering
 provisioning rule, never an allowable.</p></div></div>""",
