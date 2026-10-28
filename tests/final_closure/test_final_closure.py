@@ -235,12 +235,25 @@ def test_temperature_couplings_are_live_not_pinned():
 
 
 # ------------------------------------------------------------------ scenarios
+def _bracket_prose(text):
+    """Prose that uses 'bracket' without negating it. Inline-code identifiers (a gate id such
+    as `mech.f1_f2_bracket_run`) are names, not prose, and are skipped."""
+    t = re.sub(r"`[^`\n]*`", "", text.lower())
+    bad = []
+    for m in re.finditer(r"bracket", t):
+        w = t[max(0, m.start() - 80):m.end() + 40]
+        if not ("not a bracket" in w or "never a bracket" in w or "not" in w):
+            bad.append(w)
+    return bad
+
+
 def test_scenarios_are_never_called_a_bracket():
     for f in ("FINAL_PAPER_SCOPE.md", "FINAL_PAPER_DECISION.md"):
-        t = (D / f).read_text().lower()
-        for m in re.finditer(r"bracket", t):
-            w = t[max(0, m.start() - 80):m.end() + 40]
-            assert "not a bracket" in w or "never a bracket" in w or "not" in w, w
+        assert _bracket_prose((D / f).read_text()) == [], f
+    # the guard still fires on prose, and on a gate id written outside code formatting
+    assert _bracket_prose("The three scenarios bracket the 48 V input waveform.")
+    assert _bracket_prose("- mech.f1_f2_bracket_run (B1): RESOLVED -- ordering changes")
+    assert not _bracket_prose("- `mech.f1_f2_bracket_run` (B1): RESOLVED -- ordering changes")
 
 
 # ------------------------------------------------------------------ gates

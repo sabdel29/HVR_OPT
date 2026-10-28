@@ -95,9 +95,24 @@ def test_bottom_layers_are_deepest_first_and_sum_to_the_board():
     assert sum(t for _n, t, _m, _z in ls) == pytest.approx(2.4, abs=1e-9)
 
 
-def test_h1_thermal_validation_has_not_been_run():
-    """The MODEL exists; the H0-vs-H1 solve does not. The gate must stay open."""
+def test_h1_thermal_validation_closes_only_on_an_actual_comparison():
+    """Until the final closure the H0-vs-H1 solve did not exist and this asserted the gate
+    OPEN. The class-B runs now solve both boards on the SAME grid (board_h1 vs
+    board_h0_h1grid, production mesh, HV-S0). The gate may be closed only on that evidence:
+    both runs on disk, and the T_max change within the declared 2 % mesh tolerance for both
+    architectures. Without it, the gate must stay open."""
     g = json.loads((R / "research/phase0nw/physical_gates.json").read_text())
     row = next(r for r in g["gates"] if r["gate"] == "PCB-H1 thermal validation")
-    assert row["status"] == "OPEN", (
+    if row["status"] == "OPEN":
+        return
+    fc = R / "research" / "final_closure"
+    for a in ("Z1", "Z2"):
+        for v in ("board_h1", "board_h0_h1grid"):
+            assert (fc / "sensitivity" / f"etm_{a}_HV_S0__{v}.json").is_file(), (a, v)
+    cb = json.loads((fc / "classB_resolution.json").read_text())
+    rows = [r for gt in cb["gates"] if gt["gate"] == "board.h1_thermal_validated"
+            for r in gt["rows"] if r["case"] == "board_h1 vs board_h0_h1grid"
+            and r["observable"] == "T_max_C"]
+    assert rows and rows[0]["within_mesh_tolerance"], (
         "do not close the H1 gate until an actual H0-vs-H1 thermal comparison exists")
+    assert all(abs(x) <= 0.02 for x in rows[0]["change_rel"].values()), rows[0]

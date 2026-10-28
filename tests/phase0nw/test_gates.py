@@ -139,6 +139,22 @@ CLOSED_IDS = {
     "elec.intravr_vertical_recomputed",        # SPECIFIED
     "elec.package_rdl_lv_recomputed",          # SPECIFIED: absent, alternative quantified
     "elec.bga_loss_recomputed",                # SPECIFIED: scenario-defined RMS
+    # --- Final closure, class B: each closes on a run on the production mesh at HV-S0
+    # --- (or a network bound) recorded in research/final_closure/classB_resolution.csv.
+    # --- The material gates mat.gan/mlcc/inductor_tier_bounded deliberately stay OPEN:
+    # --- an assumed bracket resolves the paper's dependence, it does not bound the property.
+    "board.h1_meshed",
+    "board.h1_thermal_validated",              # only on H1 vs H0 same grid within 2 %
+    "board.eta_sensitivity_run",
+    "board.t_only_comparison_run",
+    "therm.h0_h1_compared",
+    "therm.z2_cooled",
+    "tsv.density_sensitivity_run",
+    "mech.f1_f2_bracket_run",
+    "mech.t_only_mechanical",
+    "elec.contact_resistance_bounded",         # SPECIFIED: network sweep
+    "elec.rdl10um_electrical_model",           # SPECIFIED: network sweep
+    "elec.pad_loss_closed",                    # SPECIFIED: B2, magnitude bounded by a run
 }
 
 
