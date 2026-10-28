@@ -473,12 +473,13 @@ def test_manuscript_never_calls_the_driver_an_inelastic_response():
     # the exact abstract and results wordings that attached the driver's 16.3 % to a strain
     ("an $18.4$\\,\\% lower stabilised local\ninelastic response",
      "a $16.3$\\,\\% lower local inelastic response"),
-    # Phase 0N reworded the abstract; the anchor follows the text it guards.
-    ("an $18.4$\\,\\% lower fatigue-relevant inelastic response",
-     "an $16.3$\\,\\% lower fatigue-relevant inelastic response"),
-    # Phase 0N: the reversed wording, which the original pattern could not see
-    ("an $18.4$\\,\\% lower fatigue-relevant inelastic response",
-     "a fatigue-relevant inelastic response lower by $16.3$\\,\\%"),
+    # The physical lineage replaced the frozen-pair abstract, so the anchor follows the
+    # guarded claim into the historical frozen-pair section, where it still lives.
+    ("It nevertheless carries $18.4$\\,\\% lower local inelastic response,",
+     "It nevertheless carries $16.3$\\,\\% lower local inelastic response,"),
+    # the reversed wording, which the original pattern could not see
+    ("It nevertheless carries $18.4$\\,\\% lower local inelastic response,",
+     "It nevertheless carries a local inelastic response lower by $16.3$\\,\\%,"),
 ])
 def test_conflation_guard_fires_on_the_real_defect(old, new):
     """Each probe is the real text this pass removed, not a paraphrase."""
@@ -514,12 +515,16 @@ def test_every_manuscript_figure_is_built_from_the_generator():
     """No figure may be a stale file: each one the .tex includes must be regenerated."""
     import hashlib
     figs = re.findall(r"\\includegraphics\[[^\]]*\]\{([^}]+)\}", MANUSCRIPT.read_text())
-    assert len(figs) == 8, figs
+    # eight figures from the manuscript generator, plus the physical-lineage figure that
+    # the final-closure generator draws from research/final_closure
+    assert len(figs) == 9 and "fig9_physical.pdf" in figs, figs
     d = R / "manuscript" / "figs"
     before = {f: hashlib.md5((d / f).read_bytes()).hexdigest() for f in figs}
-    p = subprocess.run([sys.executable, str(R / "scripts/phase0mr3c/make_manuscript_figures.py")],
-                       capture_output=True, text=True, cwd=str(R))
-    assert p.returncode == 0, p.stderr[-2000:]
+    for gen in ("scripts/phase0mr3c/make_manuscript_figures.py",
+                "scripts/final_closure_manuscript_figure.py"):
+        p = subprocess.run([sys.executable, str(R / gen)], capture_output=True, text=True,
+                           cwd=str(R))
+        assert p.returncode == 0, p.stderr[-2000:]
     missing = [f for f in figs if not (d / f).exists()]
     assert not missing, f"the generator does not produce {missing}"
     assert set(x.name for x in d.glob("*.pdf")) == set(figs), \

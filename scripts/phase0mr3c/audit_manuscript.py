@@ -8,8 +8,19 @@ import yaml
 R = Path(__file__).resolve().parents[2]
 M = R / "manuscript" / "ETM_DVPD_JOURNAL_MANUSCRIPT.tex"
 C3 = R / "results" / "phase0mr3c"
-TEX = M.read_text()
-_NOCOMMENT = re.sub(r"%.*", "", TEX)
+
+
+def _expand_inputs(t: str) -> str:
+    """Inline every \\input{...} found next to the manuscript, so the audit reads the
+    document a reader gets -- generated tables and macro definitions included."""
+    def sub(m):
+        f = M.parent / (m.group(1) if m.group(1).endswith(".tex") else m.group(1) + ".tex")
+        return f.read_text() if f.exists() else m.group(0)
+    return re.sub(r"\\input\{([^}]+)\}", sub, t)
+
+
+TEX = _expand_inputs(M.read_text())
+_NOCOMMENT = re.sub(r"(?<!\\)%.*", "", TEX)
 PROSE = _NOCOMMENT
 
 
@@ -238,6 +249,14 @@ def _ablation_cells_are_all_accounted_for(guarded):
             if len(v.replace(".", "").lstrip("0")) >= 4 and not _rounds_to(v)]
 
 
+def value_hits(h: str, text: str) -> list:
+    """Offsets of the number `h` in `text`, trailing zeros allowed ("12.4", "12.40").
+
+    A plain substring search also matched every LONGER number sharing the digits
+    ("12.4" inside "12.49"), flagging current values as stale historical ones."""
+    return [m.start() for m in re.finditer(rf"(?<![\d.]){re.escape(h)}0*(?![\d])", text)]
+
+
 def _frame(i: int) -> str:
     """Text a reader sees as the frame for the value at PROSE[i].
 
@@ -299,7 +318,7 @@ def main() -> int:
     print("B. HISTORICAL VALUES NOT PRESENTED AS CURRENT")
     for h in ("1.1943", "118.68", "126.91", "4.6401", "3.8851", "138.796", "141.189",
               "35.8", "12.4"):
-        hits = [m.start() for m in re.finditer(re.escape(h), PROSE)]
+        hits = value_hits(h, PROSE)
         for i in hits:
             win = _frame(i)
             if not re.search(r"historical|earlier|initial|successive|reconstruct|"
