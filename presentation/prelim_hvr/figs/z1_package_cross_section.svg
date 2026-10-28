@@ -1,0 +1,393 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="900" viewBox="0 0 1500 900" font-family="'Source Sans 3', 'Segoe UI', Arial, Helvetica, sans-serif" data-spec-sha256="4f2df35c94971df759641c90bd0d72e0ddac290a4950b434c9b8d0a03d71bc37" data-architecture="Z1" data-figure="package-cross-section" data-px-per-mm-x="30" data-px-per-mm-z="90" data-vertical-exaggeration="3" data-z-floor-um="80" data-y-datum-px="720.07" data-x-left-px="196.00" data-datum="PCB backside (lowest knot of the shared z-mapping)">
+<title>Z1 — converter embedded between substrate and die</title><desc>Z1 converts inside the package, then a short 1 V vertical path to the die</desc>
+<defs><marker id="a48" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e36209"/></marker><marker id="a1v" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8250df"/></marker><marker id="aret" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3d464f"/></marker><marker id="aink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#10151c"/></marker><marker id="amuted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5a6672"/></marker><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#5a6672" stroke-width="1"/></pattern></defs>
+<rect width="1500" height="900" fill="#ffffff"/>
+<defs><marker id="pk48" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#e36209"/></marker><marker id="pk1v" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#8250df"/></marker><marker id="pkret" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#3d464f"/></marker><pattern id="tsvp" width="4" height="8" patternUnits="userSpaceOnUse"><rect width="4" height="8" fill="#9aa5b8"/><rect x="1" width="1.8" height="8" fill="#c4783c"/></pattern><pattern id="bump" width="6" height="8" patternUnits="userSpaceOnUse"><rect width="6" height="8" fill="#efe6d2"/><rect x="1.5" y="0" width="3" height="8" rx="1.2" fill="#b9bec6"/></pattern><pattern id="chan" width="14" height="28.0" patternUnits="userSpaceOnUse"><rect width="14" height="28.0" fill="#a9cdea"/><rect x="4" y="7" width="6" height="14.0" rx="2" fill="#ffffff" opacity="0.85"/></pattern></defs>
+<metadata id="package-figure-spec"><![CDATA[
+{
+ "architecture": "Z1",
+ "label": "Z1 -- converter embedded between substrate and die",
+ "items": {
+  "bga": {
+   "layer": "bga",
+   "pitch_mm": 0.8,
+   "sites_legal": 1369,
+   "height_um": 300.0,
+   "balls_on_section_row": 37,
+   "peripheral_only": false
+  },
+  "pcb": {
+   "layer": "board",
+   "thickness_um": 2400.0,
+   "z0_um": -2700.0,
+   "z1_um": -300.0,
+   "annular_frame": false
+  },
+  "tsv_field": {
+   "n_per_cell": 1444,
+   "d_um": 30.0,
+   "pitch_um": 60.0,
+   "rail_carried": "48 V input (low current)",
+   "layers": [
+    "sub_lower",
+    "tile_band"
+   ],
+   "per_row": 38
+  },
+  "cell_arrangement": {
+   "n": 49,
+   "grid": 7,
+   "arrangement": "7x7",
+   "side_mm": 2.368543856465402,
+   "centres_x_mm_on_section": [
+    -9.495728,
+    -6.330485,
+    -3.165243,
+    0.0,
+    3.165243,
+    6.330485,
+    9.495728
+   ]
+  },
+  "embedded_hvr": {
+   "what": "converter embedded between substrate and die",
+   "tiers": 9,
+   "layers": [
+    "z1conv_0_bottom_substrate_rdl",
+    "z1conv_1_gan_hs_EPC2014C",
+    "z1conv_2_interlayer_rdl",
+    "z1conv_3_gan_ls_EPC2057",
+    "z1conv_4_interlayer_rdl",
+    "z1conv_5_flying_caps",
+    "z1conv_6_interlayer_rdl",
+    "z1conv_7_inductor_plus_cout",
+    "z1conv_8_output_rdl"
+   ],
+   "z0_um": 300.0,
+   "z1_um": 2273.0,
+   "height_um": 1973.0
+  },
+  "substrate": {
+   "layers": [
+    "sub_lower",
+    "tile_band"
+   ],
+   "z0_um": 0.0,
+   "z1_um": 300.0,
+   "thickness_um": 300.0,
+   "width_mm": 30.0
+  },
+  "package_rdl": {
+   "what": "48 V package RDL sheet",
+   "fe_layer": false,
+   "model": "2-D resistor network over the substrate underside",
+   "z_um": 0.0,
+   "width_mm": 30.0
+  }
+ },
+ "spec_sha256": "4f2df35c94971df759641c90bd0d72e0ddac290a4950b434c9b8d0a03d71bc37"
+}
+]]></metadata>
+<text x="24.00" y="38.00" font-size="26" text-anchor="start" font-weight="bold"  fill="#10151c">Z1 — converter embedded between substrate and die</text>
+<text x="24.00" y="67.00" font-size="18" text-anchor="start" font-weight="bold"  fill="#1f6feb">Z1 converts inside the package, then a short 1 V vertical path to the die</text>
+<text x="24.00" y="92.00" font-size="14" text-anchor="start" font-weight="normal"  fill="#5a6672">Section at y = 0 through the middle row of cells. Horizontal 30 px/mm; vertical scale ×3 (vertical exaggeration).</text>
+<text x="24.00" y="110.00" font-size="14" text-anchor="start" font-weight="normal"  fill="#5a6672">Layers thinner than 80 µm are drawn at a minimum height (as 80 µm thick); true thickness labelled. Z1 and Z2 share one z-mapping.</text>
+<rect x="196.00" y="485.17" width="900.00" height="234.90" fill="#4f7f5a" stroke="#10151c" stroke-width="0.6" data-layer="board" data-z0-um="-2700.0" data-z1-um="-300.0" data-t-um="2400.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="pcb" data-piece="0"/>
+<rect x="196.00" y="451.87" width="900.00" height="33.30" fill="#f3f4f6" stroke="#10151c" stroke-width="0.6" data-layer="bga" data-z0-um="-300.0" data-z1-um="0.0" data-t-um="300.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="bga" data-piece="0"/>
+<rect x="196.00" y="426.67" width="900.00" height="25.20" fill="#9aa5b8" stroke="#10151c" stroke-width="0.6" data-layer="sub_lower" data-z0-um="0.0" data-z1-um="280.0" data-t-um="280.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="substrate" data-piece="0"/>
+<rect x="325.60" y="426.67" width="71.06" height="25.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="sub_lower" data-cx-mm="-9.495728"/>
+<rect x="420.56" y="426.67" width="71.06" height="25.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="sub_lower" data-cx-mm="-6.330485"/>
+<rect x="515.51" y="426.67" width="71.06" height="25.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="sub_lower" data-cx-mm="-3.165243"/>
+<rect x="610.47" y="426.67" width="71.06" height="25.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="sub_lower" data-cx-mm="0.0"/>
+<rect x="705.43" y="426.67" width="71.06" height="25.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="sub_lower" data-cx-mm="3.165243"/>
+<rect x="800.39" y="426.67" width="71.06" height="25.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="sub_lower" data-cx-mm="6.330485"/>
+<rect x="895.34" y="426.67" width="71.06" height="25.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="sub_lower" data-cx-mm="9.495728"/>
+<rect x="196.00" y="419.47" width="900.00" height="7.20" fill="#9aa5b8" stroke="#10151c" stroke-width="0.6" data-layer="tile_band" data-z0-um="280.0" data-z1-um="300.0" data-t-um="20.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="substrate" data-piece="0"/>
+<rect x="325.60" y="419.47" width="71.06" height="7.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="tile_band" data-cx-mm="-9.495728"/>
+<rect x="420.56" y="419.47" width="71.06" height="7.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="tile_band" data-cx-mm="-6.330485"/>
+<rect x="515.51" y="419.47" width="71.06" height="7.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="tile_band" data-cx-mm="-3.165243"/>
+<rect x="610.47" y="419.47" width="71.06" height="7.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="tile_band" data-cx-mm="0.0"/>
+<rect x="705.43" y="419.47" width="71.06" height="7.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="tile_band" data-cx-mm="3.165243"/>
+<rect x="800.39" y="419.47" width="71.06" height="7.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="tile_band" data-cx-mm="6.330485"/>
+<rect x="895.34" y="419.47" width="71.06" height="7.20" fill="url(#tsvp)" stroke="#10151c" stroke-width="0.5" data-tsv-field-of="tile_band" data-cx-mm="9.495728"/>
+<rect x="196.00" y="412.27" width="900.00" height="7.20" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" data-layer="z1conv_0_bottom_substrate_rdl" data-z0-um="300.0" data-z1-um="310.0" data-t-um="10.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="tier_rdl" data-piece="0"/>
+<rect x="325.60" y="412.27" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_0_bottom_substrate_rdl" data-cx-mm="-9.495728" data-side-mm="2.368543856465402"/>
+<rect x="420.56" y="412.27" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_0_bottom_substrate_rdl" data-cx-mm="-6.330485" data-side-mm="2.368543856465402"/>
+<rect x="515.51" y="412.27" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_0_bottom_substrate_rdl" data-cx-mm="-3.165243" data-side-mm="2.368543856465402"/>
+<rect x="610.47" y="412.27" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_0_bottom_substrate_rdl" data-cx-mm="0.0" data-side-mm="2.368543856465402"/>
+<rect x="705.43" y="412.27" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_0_bottom_substrate_rdl" data-cx-mm="3.165243" data-side-mm="2.368543856465402"/>
+<rect x="800.39" y="412.27" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_0_bottom_substrate_rdl" data-cx-mm="6.330485" data-side-mm="2.368543856465402"/>
+<rect x="895.34" y="412.27" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_0_bottom_substrate_rdl" data-cx-mm="9.495728" data-side-mm="2.368543856465402"/>
+<rect x="196.00" y="341.62" width="900.00" height="70.65" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" data-layer="z1conv_1_gan_hs_EPC2014C" data-z0-um="310.0" data-z1-um="995.0" data-t-um="685.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="tier_gan" data-piece="0"/>
+<rect x="325.60" y="341.62" width="71.06" height="70.65" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_1_gan_hs_EPC2014C" data-cx-mm="-9.495728" data-side-mm="2.368543856465402"/>
+<rect x="420.56" y="341.62" width="71.06" height="70.65" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_1_gan_hs_EPC2014C" data-cx-mm="-6.330485" data-side-mm="2.368543856465402"/>
+<rect x="515.51" y="341.62" width="71.06" height="70.65" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_1_gan_hs_EPC2014C" data-cx-mm="-3.165243" data-side-mm="2.368543856465402"/>
+<rect x="610.47" y="341.62" width="71.06" height="70.65" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_1_gan_hs_EPC2014C" data-cx-mm="0.0" data-side-mm="2.368543856465402"/>
+<rect x="705.43" y="341.62" width="71.06" height="70.65" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_1_gan_hs_EPC2014C" data-cx-mm="3.165243" data-side-mm="2.368543856465402"/>
+<rect x="800.39" y="341.62" width="71.06" height="70.65" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_1_gan_hs_EPC2014C" data-cx-mm="6.330485" data-side-mm="2.368543856465402"/>
+<rect x="895.34" y="341.62" width="71.06" height="70.65" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_1_gan_hs_EPC2014C" data-cx-mm="9.495728" data-side-mm="2.368543856465402"/>
+<rect x="196.00" y="334.42" width="900.00" height="7.20" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" data-layer="z1conv_2_interlayer_rdl" data-z0-um="995.0" data-z1-um="1005.0" data-t-um="10.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="tier_rdl" data-piece="0"/>
+<rect x="325.60" y="334.42" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_2_interlayer_rdl" data-cx-mm="-9.495728" data-side-mm="2.368543856465402"/>
+<rect x="420.56" y="334.42" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_2_interlayer_rdl" data-cx-mm="-6.330485" data-side-mm="2.368543856465402"/>
+<rect x="515.51" y="334.42" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_2_interlayer_rdl" data-cx-mm="-3.165243" data-side-mm="2.368543856465402"/>
+<rect x="610.47" y="334.42" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_2_interlayer_rdl" data-cx-mm="0.0" data-side-mm="2.368543856465402"/>
+<rect x="705.43" y="334.42" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_2_interlayer_rdl" data-cx-mm="3.165243" data-side-mm="2.368543856465402"/>
+<rect x="800.39" y="334.42" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_2_interlayer_rdl" data-cx-mm="6.330485" data-side-mm="2.368543856465402"/>
+<rect x="895.34" y="334.42" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_2_interlayer_rdl" data-cx-mm="9.495728" data-side-mm="2.368543856465402"/>
+<rect x="196.00" y="277.00" width="900.00" height="57.42" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" data-layer="z1conv_3_gan_ls_EPC2057" data-z0-um="1005.0" data-z1-um="1643.0" data-t-um="638.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="tier_gan" data-piece="0"/>
+<rect x="325.60" y="277.00" width="71.06" height="57.42" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_3_gan_ls_EPC2057" data-cx-mm="-9.495728" data-side-mm="2.368543856465402"/>
+<rect x="420.56" y="277.00" width="71.06" height="57.42" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_3_gan_ls_EPC2057" data-cx-mm="-6.330485" data-side-mm="2.368543856465402"/>
+<rect x="515.51" y="277.00" width="71.06" height="57.42" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_3_gan_ls_EPC2057" data-cx-mm="-3.165243" data-side-mm="2.368543856465402"/>
+<rect x="610.47" y="277.00" width="71.06" height="57.42" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_3_gan_ls_EPC2057" data-cx-mm="0.0" data-side-mm="2.368543856465402"/>
+<rect x="705.43" y="277.00" width="71.06" height="57.42" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_3_gan_ls_EPC2057" data-cx-mm="3.165243" data-side-mm="2.368543856465402"/>
+<rect x="800.39" y="277.00" width="71.06" height="57.42" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_3_gan_ls_EPC2057" data-cx-mm="6.330485" data-side-mm="2.368543856465402"/>
+<rect x="895.34" y="277.00" width="71.06" height="57.42" fill="#6d58a8" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_3_gan_ls_EPC2057" data-cx-mm="9.495728" data-side-mm="2.368543856465402"/>
+<rect x="196.00" y="269.80" width="900.00" height="7.20" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" data-layer="z1conv_4_interlayer_rdl" data-z0-um="1643.0" data-z1-um="1653.0" data-t-um="10.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="tier_rdl" data-piece="0"/>
+<rect x="325.60" y="269.80" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_4_interlayer_rdl" data-cx-mm="-9.495728" data-side-mm="2.368543856465402"/>
+<rect x="420.56" y="269.80" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_4_interlayer_rdl" data-cx-mm="-6.330485" data-side-mm="2.368543856465402"/>
+<rect x="515.51" y="269.80" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_4_interlayer_rdl" data-cx-mm="-3.165243" data-side-mm="2.368543856465402"/>
+<rect x="610.47" y="269.80" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_4_interlayer_rdl" data-cx-mm="0.0" data-side-mm="2.368543856465402"/>
+<rect x="705.43" y="269.80" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_4_interlayer_rdl" data-cx-mm="3.165243" data-side-mm="2.368543856465402"/>
+<rect x="800.39" y="269.80" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_4_interlayer_rdl" data-cx-mm="6.330485" data-side-mm="2.368543856465402"/>
+<rect x="895.34" y="269.80" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_4_interlayer_rdl" data-cx-mm="9.495728" data-side-mm="2.368543856465402"/>
+<rect x="196.00" y="260.80" width="900.00" height="9.00" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" data-layer="z1conv_5_flying_caps" data-z0-um="1653.0" data-z1-um="1753.0" data-t-um="100.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="tier_caps" data-piece="0"/>
+<rect x="325.60" y="260.80" width="71.06" height="9.00" fill="#d8b24a" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_5_flying_caps" data-cx-mm="-9.495728" data-side-mm="2.368543856465402"/>
+<rect x="420.56" y="260.80" width="71.06" height="9.00" fill="#d8b24a" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_5_flying_caps" data-cx-mm="-6.330485" data-side-mm="2.368543856465402"/>
+<rect x="515.51" y="260.80" width="71.06" height="9.00" fill="#d8b24a" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_5_flying_caps" data-cx-mm="-3.165243" data-side-mm="2.368543856465402"/>
+<rect x="610.47" y="260.80" width="71.06" height="9.00" fill="#d8b24a" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_5_flying_caps" data-cx-mm="0.0" data-side-mm="2.368543856465402"/>
+<rect x="705.43" y="260.80" width="71.06" height="9.00" fill="#d8b24a" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_5_flying_caps" data-cx-mm="3.165243" data-side-mm="2.368543856465402"/>
+<rect x="800.39" y="260.80" width="71.06" height="9.00" fill="#d8b24a" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_5_flying_caps" data-cx-mm="6.330485" data-side-mm="2.368543856465402"/>
+<rect x="895.34" y="260.80" width="71.06" height="9.00" fill="#d8b24a" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_5_flying_caps" data-cx-mm="9.495728" data-side-mm="2.368543856465402"/>
+<rect x="196.00" y="253.60" width="900.00" height="7.20" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" data-layer="z1conv_6_interlayer_rdl" data-z0-um="1753.0" data-z1-um="1763.0" data-t-um="10.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="tier_rdl" data-piece="0"/>
+<rect x="325.60" y="253.60" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_6_interlayer_rdl" data-cx-mm="-9.495728" data-side-mm="2.368543856465402"/>
+<rect x="420.56" y="253.60" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_6_interlayer_rdl" data-cx-mm="-6.330485" data-side-mm="2.368543856465402"/>
+<rect x="515.51" y="253.60" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_6_interlayer_rdl" data-cx-mm="-3.165243" data-side-mm="2.368543856465402"/>
+<rect x="610.47" y="253.60" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_6_interlayer_rdl" data-cx-mm="0.0" data-side-mm="2.368543856465402"/>
+<rect x="705.43" y="253.60" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_6_interlayer_rdl" data-cx-mm="3.165243" data-side-mm="2.368543856465402"/>
+<rect x="800.39" y="253.60" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_6_interlayer_rdl" data-cx-mm="6.330485" data-side-mm="2.368543856465402"/>
+<rect x="895.34" y="253.60" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_6_interlayer_rdl" data-cx-mm="9.495728" data-side-mm="2.368543856465402"/>
+<rect x="196.00" y="208.60" width="900.00" height="45.00" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" data-layer="z1conv_7_inductor_plus_cout" data-z0-um="1763.0" data-z1-um="2263.0" data-t-um="500.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="tier_inductor" data-piece="0"/>
+<rect x="325.60" y="208.60" width="71.06" height="45.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_7_inductor_plus_cout" data-cx-mm="-9.495728" data-side-mm="2.368543856465402"/>
+<rect x="420.56" y="208.60" width="71.06" height="45.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_7_inductor_plus_cout" data-cx-mm="-6.330485" data-side-mm="2.368543856465402"/>
+<rect x="515.51" y="208.60" width="71.06" height="45.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_7_inductor_plus_cout" data-cx-mm="-3.165243" data-side-mm="2.368543856465402"/>
+<rect x="610.47" y="208.60" width="71.06" height="45.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_7_inductor_plus_cout" data-cx-mm="0.0" data-side-mm="2.368543856465402"/>
+<rect x="705.43" y="208.60" width="71.06" height="45.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_7_inductor_plus_cout" data-cx-mm="3.165243" data-side-mm="2.368543856465402"/>
+<rect x="800.39" y="208.60" width="71.06" height="45.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_7_inductor_plus_cout" data-cx-mm="6.330485" data-side-mm="2.368543856465402"/>
+<rect x="895.34" y="208.60" width="71.06" height="45.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_7_inductor_plus_cout" data-cx-mm="9.495728" data-side-mm="2.368543856465402"/>
+<rect x="196.00" y="201.40" width="900.00" height="7.20" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" data-layer="z1conv_8_output_rdl" data-z0-um="2263.0" data-z1-um="2273.0" data-t-um="10.0" data-x0-mm="-15.0" data-x1-mm="15.0" data-kind="tier_rdl" data-piece="0"/>
+<rect x="325.60" y="201.40" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_8_output_rdl" data-cx-mm="-9.495728" data-side-mm="2.368543856465402"/>
+<rect x="420.56" y="201.40" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_8_output_rdl" data-cx-mm="-6.330485" data-side-mm="2.368543856465402"/>
+<rect x="515.51" y="201.40" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_8_output_rdl" data-cx-mm="-3.165243" data-side-mm="2.368543856465402"/>
+<rect x="610.47" y="201.40" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_8_output_rdl" data-cx-mm="0.0" data-side-mm="2.368543856465402"/>
+<rect x="705.43" y="201.40" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_8_output_rdl" data-cx-mm="3.165243" data-side-mm="2.368543856465402"/>
+<rect x="800.39" y="201.40" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_8_output_rdl" data-cx-mm="6.330485" data-side-mm="2.368543856465402"/>
+<rect x="895.34" y="201.40" width="71.06" height="7.20" fill="#d9893f" stroke="#10151c" stroke-width="0.6" data-cell-of="z1conv_8_output_rdl" data-cx-mm="9.495728" data-side-mm="2.368543856465402"/>
+<rect x="310.60" y="194.20" width="670.80" height="7.20" fill="url(#bump)" stroke="#10151c" stroke-width="0.6" data-layer="interface" data-z0-um="2273.0" data-z1-um="2283.0" data-t-um="10.0" data-x0-mm="-11.18" data-x1-mm="11.18" data-kind="interface" data-piece="0"/>
+<rect x="310.60" y="167.20" width="670.80" height="27.00" fill="#4c5d70" stroke="#10151c" stroke-width="0.6" data-layer="die" data-z0-um="2283.0" data-z1-um="2583.0" data-t-um="300.0" data-x0-mm="-11.18" data-x1-mm="11.18" data-kind="die" data-piece="0"/>
+<rect x="310.60" y="160.00" width="670.80" height="7.20" fill="#e8c46a" stroke="#10151c" stroke-width="0.6" data-layer="tim" data-z0-um="2583.0" data-z1-um="2633.0" data-t-um="50.0" data-x0-mm="-11.18" data-x1-mm="11.18" data-kind="tim" data-piece="0"/>
+<ellipse cx="214.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-14.4"/>
+<ellipse cx="238.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-13.6"/>
+<ellipse cx="262.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-12.8"/>
+<ellipse cx="286.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-12.0"/>
+<ellipse cx="310.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-11.2"/>
+<ellipse cx="334.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-10.4"/>
+<ellipse cx="358.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-9.6"/>
+<ellipse cx="382.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-8.8"/>
+<ellipse cx="406.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-8.0"/>
+<ellipse cx="430.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-7.2"/>
+<ellipse cx="454.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-6.4"/>
+<ellipse cx="478.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-5.6"/>
+<ellipse cx="502.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-4.8"/>
+<ellipse cx="526.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-4.0"/>
+<ellipse cx="550.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-3.2"/>
+<ellipse cx="574.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-2.4"/>
+<ellipse cx="598.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-1.6"/>
+<ellipse cx="622.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="-0.8"/>
+<ellipse cx="646.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="0.0"/>
+<ellipse cx="670.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="0.8"/>
+<ellipse cx="694.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="1.6"/>
+<ellipse cx="718.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="2.4"/>
+<ellipse cx="742.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="3.2"/>
+<ellipse cx="766.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="4.0"/>
+<ellipse cx="790.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="4.8"/>
+<ellipse cx="814.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="5.6"/>
+<ellipse cx="838.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="6.4"/>
+<ellipse cx="862.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="7.2"/>
+<ellipse cx="886.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="8.0"/>
+<ellipse cx="910.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="8.8"/>
+<ellipse cx="934.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="9.6"/>
+<ellipse cx="958.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="10.4"/>
+<ellipse cx="982.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="11.2"/>
+<ellipse cx="1006.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="12.0"/>
+<ellipse cx="1030.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="12.8"/>
+<ellipse cx="1054.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="13.6"/>
+<ellipse cx="1078.00" cy="468.52" rx="6.00" ry="16.05" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" data-bga-x-mm="14.4"/>
+<rect x="196.00" y="450.37" width="900.00" height="3.00" fill="#e36209" stroke="#10151c" stroke-width="0.5" data-feature="pkg-48v-rdl-sheet" data-fe-layer="false" data-z-um="0.0"/>
+<rect x="310.60" y="132.00" width="670.80" height="28.00" fill="url(#chan)" stroke="#10151c" stroke-width="0.8" data-feature="cold-plate" data-schematic="true" data-fe-layer="false"/>
+<polyline points="406.00,720.07 406.00,451.87 438.32,451.87 438.32,373.39" fill="none" stroke="#ffffff" stroke-width="6.0" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="406.00,720.07 406.00,451.87 438.32,451.87 438.32,373.39" fill="none" stroke="#e36209" stroke-width="2.6" stroke-linejoin="round" marker-end="url(#pk48)" data-current="48v-in"/>
+<polyline points="473.85,373.39 473.85,457.87 502.00,457.87 502.00,720.07" fill="none" stroke="#ffffff" stroke-width="5.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="473.85,373.39 473.85,457.87 502.00,457.87 502.00,720.07" fill="none" stroke="#3d464f" stroke-width="2.2" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" data-current="48v-return"/>
+<polyline points="346.92,231.10 346.92,180.70" fill="none" stroke="#ffffff" stroke-width="5.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="346.92,231.10 346.92,180.70" fill="none" stroke="#8250df" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#pk1v)" data-current="1v-out"/>
+<polyline points="375.34,180.70 375.34,231.10" fill="none" stroke="#ffffff" stroke-width="5.0" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="375.34,180.70 375.34,231.10" fill="none" stroke="#3d464f" stroke-width="1.6" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" data-current="1v-return"/>
+<polyline points="441.87,231.10 441.87,180.70" fill="none" stroke="#ffffff" stroke-width="5.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="441.87,231.10 441.87,180.70" fill="none" stroke="#8250df" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#pk1v)" data-current="1v-out"/>
+<polyline points="470.30,180.70 470.30,231.10" fill="none" stroke="#ffffff" stroke-width="5.0" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="470.30,180.70 470.30,231.10" fill="none" stroke="#3d464f" stroke-width="1.6" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" data-current="1v-return"/>
+<polyline points="536.83,231.10 536.83,180.70" fill="none" stroke="#ffffff" stroke-width="5.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="536.83,231.10 536.83,180.70" fill="none" stroke="#8250df" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#pk1v)" data-current="1v-out"/>
+<polyline points="565.25,180.70 565.25,231.10" fill="none" stroke="#ffffff" stroke-width="5.0" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="565.25,180.70 565.25,231.10" fill="none" stroke="#3d464f" stroke-width="1.6" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" data-current="1v-return"/>
+<polyline points="631.79,231.10 631.79,180.70" fill="none" stroke="#ffffff" stroke-width="5.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="631.79,231.10 631.79,180.70" fill="none" stroke="#8250df" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#pk1v)" data-current="1v-out"/>
+<polyline points="660.21,180.70 660.21,231.10" fill="none" stroke="#ffffff" stroke-width="5.0" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="660.21,180.70 660.21,231.10" fill="none" stroke="#3d464f" stroke-width="1.6" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" data-current="1v-return"/>
+<polyline points="726.75,231.10 726.75,180.70" fill="none" stroke="#ffffff" stroke-width="5.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="726.75,231.10 726.75,180.70" fill="none" stroke="#8250df" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#pk1v)" data-current="1v-out"/>
+<polyline points="755.17,180.70 755.17,231.10" fill="none" stroke="#ffffff" stroke-width="5.0" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="755.17,180.70 755.17,231.10" fill="none" stroke="#3d464f" stroke-width="1.6" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" data-current="1v-return"/>
+<polyline points="821.70,231.10 821.70,180.70" fill="none" stroke="#ffffff" stroke-width="5.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="821.70,231.10 821.70,180.70" fill="none" stroke="#8250df" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#pk1v)" data-current="1v-out"/>
+<polyline points="850.13,180.70 850.13,231.10" fill="none" stroke="#ffffff" stroke-width="5.0" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="850.13,180.70 850.13,231.10" fill="none" stroke="#3d464f" stroke-width="1.6" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" data-current="1v-return"/>
+<polyline points="916.66,231.10 916.66,180.70" fill="none" stroke="#ffffff" stroke-width="5.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="916.66,231.10 916.66,180.70" fill="none" stroke="#8250df" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#pk1v)" data-current="1v-out"/>
+<polyline points="945.08,180.70 945.08,231.10" fill="none" stroke="#ffffff" stroke-width="5.0" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<polyline points="945.08,180.70 945.08,231.10" fill="none" stroke="#3d464f" stroke-width="1.6" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" data-current="1v-return"/>
+<rect x="351.14" y="725.57" width="60.86" height="23.00" fill="#ffffff" stroke="#e36209" stroke-width="1.5" rx="4" />
+<text x="381.57" y="742.11" font-size="14" text-anchor="middle" font-weight="bold"  fill="#e36209">48 V in</text>
+<rect x="496.00" y="725.57" width="89.62" height="23.00" fill="#ffffff" stroke="#3d464f" stroke-width="1.5" rx="4" stroke-dasharray="7,4"/>
+<text x="540.81" y="742.11" font-size="14" text-anchor="middle" font-weight="bold"  fill="#3d464f">48 V return</text>
+<polyline points="406.00,722.07 406.00,731.07" fill="none" stroke="#e36209" stroke-width="1.2" stroke-linejoin="round" />
+<polyline points="502.00,722.07 502.00,731.07" fill="none" stroke="#3d464f" stroke-width="1.2" stroke-dasharray="3,2" stroke-linejoin="round" />
+<polyline points="301.60,180.70 346.92,180.70" fill="none" stroke="#8250df" stroke-width="1.2" stroke-linejoin="round" />
+<polyline points="301.60,246.10 375.34,246.10 375.34,236.10" fill="none" stroke="#3d464f" stroke-width="1.2" stroke-dasharray="3,2" stroke-linejoin="round" />
+<rect x="239.18" y="169.20" width="62.42" height="23.00" fill="#ffffff" stroke="#8250df" stroke-width="1.5" rx="4" />
+<text x="270.39" y="185.74" font-size="14" text-anchor="middle" font-weight="bold"  fill="#8250df">1 V out</text>
+<rect x="220.31" y="234.60" width="81.29" height="23.00" fill="#ffffff" stroke="#3d464f" stroke-width="1.5" rx="4" stroke-dasharray="7,4"/>
+<text x="260.95" y="251.14" font-size="14" text-anchor="middle" font-weight="bold"  fill="#3d464f">1 V return</text>
+<polyline points="188.00,201.40 182.00,201.40 182.00,419.47 188.00,419.47" fill="none" stroke="#10151c" stroke-width="1.4" stroke-linejoin="round" />
+<text x="174.00" y="289.98" font-size="14" text-anchor="end" font-weight="bold"  fill="#10151c">converter</text>
+<text x="174.00" y="306.98" font-size="14" text-anchor="end" font-weight="normal"  fill="#10151c">1973 µm</text>
+<text x="174.00" y="323.98" font-size="14" text-anchor="end" font-weight="normal"  fill="#10151c">9 tiers</text>
+<text x="174.00" y="340.98" font-size="14" text-anchor="end" font-weight="normal"  fill="#10151c">49 cells (7 × 7)</text>
+<text x="188.00" y="715.07" font-size="14" text-anchor="end" font-weight="normal"  fill="#5a6672">PCB backside</text>
+<polyline points="1038.70,666.07 1110.00,666.07 1139.00,666.07" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="1038.70,666.07 1110.00,666.07 1139.00,666.07" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="1038.70" cy="666.07" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="671.11" font-size="14" text-anchor="start" fill="#10151c">PCB<tspan dx="7" font-weight="bold">2400 µm</tspan></text>
+<polyline points="1030.00,471.67 1110.00,471.67 1139.00,556.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="1030.00,471.67 1110.00,471.67 1139.00,556.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="1030.00" cy="471.67" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="561.04" font-size="14" text-anchor="start" fill="#10151c">BGA balls (48 V supply + return)<tspan dx="7" font-weight="bold">300 µm</tspan></text>
+<polyline points="1038.70,445.57 1110.00,445.57 1139.00,495.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="1038.70,445.57 1110.00,445.57 1139.00,495.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="1038.70" cy="445.57" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="500.04" font-size="14" text-anchor="start" fill="#10151c">Si power substrate<tspan dx="7" font-weight="bold">280 µm</tspan></text>
+<polyline points="1038.70,423.07 1110.00,423.07 1139.00,434.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="1038.70,423.07 1110.00,423.07 1139.00,434.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="1038.70" cy="423.07" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="439.04" font-size="14" text-anchor="start" fill="#10151c">substrate top band (Si + TSV)<tspan dx="7" font-weight="bold">20 µm</tspan></text>
+<polyline points="948.64,415.87 1110.00,415.87 1139.00,412.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="948.64,415.87 1110.00,415.87 1139.00,412.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="948.64" cy="415.87" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="417.04" font-size="14" text-anchor="start" fill="#10151c">bottom-substrate RDL (high-side landing)<tspan dx="7" font-weight="bold">10 µm</tspan></text>
+<polyline points="948.64,373.39 1110.00,373.39 1139.00,390.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="948.64,373.39 1110.00,373.39 1139.00,390.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="948.64" cy="373.39" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="395.04" font-size="14" text-anchor="start" fill="#10151c">high-side GaN (EPC2014C)<tspan dx="7" font-weight="bold">685 µm</tspan></text>
+<polyline points="948.64,338.02 1110.00,338.02 1139.00,368.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="948.64,338.02 1110.00,338.02 1139.00,368.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="948.64" cy="338.02" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="373.04" font-size="14" text-anchor="start" fill="#10151c">interlayer RDL<tspan dx="7" font-weight="bold">10 µm</tspan></text>
+<polyline points="948.64,305.71 1110.00,305.71 1139.00,346.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="948.64,305.71 1110.00,305.71 1139.00,346.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="948.64" cy="305.71" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="351.04" font-size="14" text-anchor="start" fill="#10151c">low-side GaN (EPC2057)<tspan dx="7" font-weight="bold">638 µm</tspan></text>
+<polyline points="948.64,273.40 1110.00,273.40 1139.00,324.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="948.64,273.40 1110.00,273.40 1139.00,324.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="948.64" cy="273.40" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="329.04" font-size="14" text-anchor="start" fill="#10151c">interlayer RDL<tspan dx="7" font-weight="bold">10 µm</tspan></text>
+<polyline points="948.64,265.30 1110.00,265.30 1139.00,302.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="948.64,265.30 1110.00,265.30 1139.00,302.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="948.64" cy="265.30" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="307.04" font-size="14" text-anchor="start" fill="#10151c">flying capacitors<tspan dx="7" font-weight="bold">100 µm</tspan></text>
+<polyline points="948.64,257.20 1110.00,257.20 1139.00,280.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="948.64,257.20 1110.00,257.20 1139.00,280.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="948.64" cy="257.20" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="285.04" font-size="14" text-anchor="start" fill="#10151c">interlayer RDL<tspan dx="7" font-weight="bold">10 µm</tspan></text>
+<polyline points="948.64,231.10 1110.00,231.10 1139.00,258.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="948.64,231.10 1110.00,231.10 1139.00,258.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="948.64" cy="231.10" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="263.04" font-size="14" text-anchor="start" fill="#10151c">inductors + output caps<tspan dx="7" font-weight="bold">500 µm</tspan></text>
+<polyline points="948.64,205.00 1110.00,205.00 1139.00,236.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="948.64,205.00 1110.00,205.00 1139.00,236.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="948.64" cy="205.00" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="241.04" font-size="14" text-anchor="start" fill="#10151c">output RDL (1 V + ground)<tspan dx="7" font-weight="bold">10 µm</tspan></text>
+<polyline points="963.64,197.80 1110.00,197.80 1139.00,214.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="963.64,197.80 1110.00,197.80 1139.00,214.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="963.64" cy="197.80" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="219.04" font-size="14" text-anchor="start" fill="#10151c">microbumps / Cu pads + underfill (die side)<tspan dx="7" font-weight="bold">10 µm</tspan></text>
+<polyline points="963.64,180.70 1110.00,180.70 1139.00,192.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="963.64,180.70 1110.00,180.70 1139.00,192.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="963.64" cy="180.70" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="197.04" font-size="14" text-anchor="start" fill="#10151c">compute die (22.36 mm wide)<tspan dx="7" font-weight="bold">300 µm</tspan></text>
+<polyline points="963.64,163.60 1110.00,163.60 1139.00,170.00" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="963.64,163.60 1110.00,163.60 1139.00,170.00" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="963.64" cy="163.60" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="175.04" font-size="14" text-anchor="start" fill="#10151c">TIM (no lid in the model)<tspan dx="7" font-weight="bold">50 µm</tspan></text>
+<polyline points="930.87,432.97 1110.00,432.97 1139.00,464.50" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="930.87,432.97 1110.00,432.97 1139.00,464.50" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="930.87" cy="432.97" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="461.04" font-size="14" text-anchor="start" fill="#10151c">Cu TSV field under each cell — 48 V input (low</text>
+<text x="1144.00" y="478.04" font-size="14" text-anchor="start" fill="#10151c">current); 1444 vias (38 × 38), Ø30 µm at 60 µm pitch</text>
+<polyline points="1072.31,451.87 1110.00,451.87 1139.00,525.50" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="1072.31,451.87 1110.00,451.87 1139.00,525.50" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="1072.31" cy="451.87" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="522.04" font-size="14" text-anchor="start" fill="#10151c">48 V package RDL sheet — modelled as a 2-D</text>
+<text x="1144.00" y="539.04" font-size="14" text-anchor="start" fill="#10151c">network sheet; not a separate FE layer</text>
+<polyline points="963.64,146.00 1110.00,146.00 1139.00,139.50" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" opacity="0.85"/>
+<polyline points="963.64,146.00 1110.00,146.00 1139.00,139.50" fill="none" stroke="#5a6672" stroke-width="1.1" stroke-linejoin="round" />
+<circle cx="963.64" cy="146.00" r="2.8" fill="#10151c" stroke="#ffffff" stroke-width="1"/>
+<text x="1144.00" y="136.04" font-size="14" text-anchor="start" fill="#10151c">cold plate (schematic) — top cooling boundary:</text>
+<text x="1144.00" y="153.04" font-size="14" text-anchor="start" fill="#10151c">convective film on the TIM top, not meshed</text>
+<line x1="24.00" y1="812.07" x2="174.00" y2="812.07" stroke="#10151c" stroke-width="2"/><line x1="24.00" y1="808.07" x2="24.00" y2="816.07" stroke="#10151c"/><line x1="174.00" y1="808.07" x2="174.00" y2="816.07" stroke="#10151c"/>
+<text x="99.00" y="805.07" font-size="14" text-anchor="middle" font-weight="normal"  fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linejoin="round">5 mm</text><text x="99.00" y="805.07" font-size="14" text-anchor="middle" font-weight="normal"  fill="#10151c">5 mm</text>
+<line x1="208.00" y1="818.07" x2="208.00" y2="773.07" stroke="#10151c" stroke-width="2"/><line x1="204.00" y1="818.07" x2="212.00" y2="818.07" stroke="#10151c"/><line x1="204.00" y1="773.07" x2="212.00" y2="773.07" stroke="#10151c"/>
+<text x="216.00" y="793.57" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">0.5 mm vertical</text>
+<text x="216.00" y="810.57" font-size="14" text-anchor="start" font-weight="normal"  fill="#5a6672">(valid for layers ≥ 80 µm)</text>
+<rect x="420.00" y="760.07" width="15.00" height="15.00" fill="#4f7f5a" stroke="#10151c" stroke-width="0.8" />
+<text x="443.00" y="772.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">PCB laminate</text>
+<rect x="420.00" y="782.07" width="15.00" height="15.00" fill="#b9bec6" stroke="#10151c" stroke-width="0.8" />
+<text x="443.00" y="794.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">solder: BGA balls</text>
+<rect x="420.00" y="804.07" width="15.00" height="15.00" fill="#9aa5b8" stroke="#10151c" stroke-width="0.8" />
+<text x="443.00" y="816.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">silicon</text>
+<rect x="420.00" y="826.07" width="15.00" height="15.00" fill="#c4783c" stroke="#10151c" stroke-width="0.8" />
+<text x="443.00" y="838.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">Cu TSV field (vias schematic)</text>
+<rect x="688.00" y="760.07" width="15.00" height="15.00" fill="#d9893f" stroke="#10151c" stroke-width="0.8" />
+<text x="711.00" y="772.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">Cu RDL tier</text>
+<rect x="688.00" y="782.07" width="15.00" height="15.00" fill="#6d58a8" stroke="#10151c" stroke-width="0.8" />
+<text x="711.00" y="794.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">GaN-on-Si device tier</text>
+<rect x="688.00" y="804.07" width="15.00" height="15.00" fill="#d8b24a" stroke="#10151c" stroke-width="0.8" />
+<text x="711.00" y="816.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">flying capacitors</text>
+<rect x="688.00" y="826.07" width="15.00" height="15.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.8" />
+<text x="711.00" y="838.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">inductors + output caps</text>
+<rect x="956.00" y="760.07" width="15.00" height="15.00" fill="#efe6d2" stroke="#10151c" stroke-width="0.8" />
+<text x="979.00" y="772.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">underfill (outside the cells)</text>
+<rect x="956.00" y="782.07" width="15.00" height="15.00" fill="#4c5d70" stroke="#10151c" stroke-width="0.8" />
+<text x="979.00" y="794.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">compute die</text>
+<rect x="956.00" y="804.07" width="15.00" height="15.00" fill="#e8c46a" stroke="#10151c" stroke-width="0.8" />
+<text x="979.00" y="816.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">TIM</text>
+<rect x="956.00" y="826.07" width="15.00" height="15.00" fill="#a9cdea" stroke="#10151c" stroke-width="0.8" />
+<text x="979.00" y="838.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">cold plate (schematic)</text>
+<rect x="1222.00" y="766.07" width="19.00" height="3.00" fill="#e36209" stroke="#10151c" stroke-width="0.5" />
+<text x="1247.00" y="772.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">48 V package sheet (2-D, not FE)</text>
+<polyline points="1222.00,789.57 1248.00,789.57" fill="none" stroke="#e36209" stroke-width="2.3" stroke-linejoin="round" marker-end="url(#pk48)" />
+<text x="1256.00" y="794.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">48 V in</text>
+<polyline points="1222.00,811.57 1248.00,811.57" fill="none" stroke="#8250df" stroke-width="2.3" stroke-linejoin="round" marker-end="url(#pk1v)" />
+<text x="1256.00" y="816.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">1 V out</text>
+<polyline points="1222.00,833.57 1248.00,833.57" fill="none" stroke="#3d464f" stroke-width="2.3" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" />
+<text x="1256.00" y="838.37" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">return (dashed)</text>
+</svg>

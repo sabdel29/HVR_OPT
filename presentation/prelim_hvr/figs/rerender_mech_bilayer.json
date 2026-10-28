@@ -1,0 +1,225 @@
+{
+  "figure": "presentation/prelim_hvr/figs/rerender_mech_bilayer.png",
+  "banner": "EXACT GEOMETRY RE-RENDERED FROM REFERENCE MODEL",
+  "source_project": "/home/beams/MGHARIB/claude_scratch/hvr_work/aedt_ref/mech_bilayer2.aedt",
+  "source_project_sha256": "2c30124cd86486518d8c73d934112c1980604b8fc7f51bda02ccb75b01d57104",
+  "opened_copy": "/home/beams/MGHARIB/claude_scratch/aedt_work/rerender/mech_bilayer2.aedt",
+  "design": "structural",
+  "designs_in_project": [
+    "structural"
+  ],
+  "solution_type": "Structural",
+  "model_units": "mm",
+  "export_method": "AEDT oEditor.ExportModelMeshToFile(path, [object]) -- the native call used by PyAEDT post.export_model_obj(export_as_multiple_objects=True); one OBJ per object",
+  "exported_objects": [
+    "org",
+    "patch",
+    "si"
+  ],
+  "objects_not_exported": [],
+  "exported_geometry_files": {
+    "org": {
+      "file": "/home/beams/MGHARIB/claude_scratch/aedt_work/rerender/mech_bilayer/org.obj",
+      "sha256": "4089c4bfa3074f4042557ce42f7651a233d85b6d401ad54c07bd03251fe6cc94"
+    },
+    "si": {
+      "file": "/home/beams/MGHARIB/claude_scratch/aedt_work/rerender/mech_bilayer/si.obj",
+      "sha256": "8f877f267e38db2321567949404849c0c54b50d0c09f46ce13360ffedcf79798"
+    },
+    "patch": {
+      "file": "/home/beams/MGHARIB/claude_scratch/aedt_work/rerender/mech_bilayer/patch.obj",
+      "sha256": "c59110643c1060f8070f6ae34eb84b8281787a9284b0b91d29e58b5cd3ece3d1"
+    }
+  },
+  "geometry_check": {
+    "rule": "each OBJ's bounds equal AEDT's own bounding box of that body (max deviation recorded per object)",
+    "obj_scale_to_model_units": 1.0,
+    "per_object": {
+      "org": {
+        "obj_bounds_raw": [
+          0.0,
+          5.0,
+          0.0,
+          5.0,
+          0.0,
+          0.3
+        ],
+        "aedt_bounding_box": [
+          0.0,
+          0.0,
+          0.0,
+          5.0,
+          5.0,
+          0.3
+        ],
+        "obj_scale_to_model_units": 1.0,
+        "max_abs_dev_model_units": 0.0,
+        "n_triangles": 18
+      },
+      "si": {
+        "obj_bounds_raw": [
+          0.0,
+          5.0,
+          0.0,
+          5.0,
+          0.3,
+          0.6
+        ],
+        "aedt_bounding_box": [
+          0.0,
+          0.0,
+          0.3,
+          5.0,
+          5.0,
+          0.6
+        ],
+        "obj_scale_to_model_units": 1.0,
+        "max_abs_dev_model_units": 0.0,
+        "n_triangles": 12
+      },
+      "patch": {
+        "obj_bounds_raw": [
+          0.0,
+          0.1,
+          0.0,
+          0.1,
+          0.0,
+          0.0
+        ],
+        "aedt_bounding_box": [
+          0.0,
+          0.0,
+          0.0,
+          0.1,
+          0.1,
+          0.0
+        ],
+        "obj_scale_to_model_units": 1.0,
+        "max_abs_dev_model_units": 0.0,
+        "n_triangles": 2
+      }
+    }
+  },
+  "view": {
+    "projection": "parallel (orthographic), exact isometric",
+    "view_direction": [
+      1.0,
+      -1.0,
+      1.0
+    ],
+    "cutaway": "none (whole model shown)",
+    "cutaway_method": null,
+    "world_to_pixel_fit_err_px": 2.8421709430404007e-13
+  },
+  "objects": {
+    "org": {
+      "aedt_material": "org_m",
+      "plain": "organic build-up",
+      "layer": "org",
+      "part": "",
+      "figstyle_key": "pcb",
+      "kind": "solid",
+      "bounds_mm": [
+        0.0,
+        5.0,
+        0.0,
+        5.0,
+        0.0,
+        0.3
+      ],
+      "volume_obj_mm3": 7.50000000000001,
+      "volume_aedt_model_units3": 7.499999999999999
+    },
+    "si": {
+      "aedt_material": "si_m",
+      "plain": "silicon",
+      "layer": "si",
+      "part": "",
+      "figstyle_key": "silicon",
+      "kind": "solid",
+      "bounds_mm": [
+        0.0,
+        5.0,
+        0.0,
+        5.0,
+        0.3,
+        0.6
+      ],
+      "volume_obj_mm3": 7.500000000000012,
+      "volume_aedt_model_units3": 7.500000000000003
+    },
+    "patch": {
+      "aedt_material": "",
+      "plain": "support patch (sheet)",
+      "layer": "patch",
+      "part": "",
+      "figstyle_key": "solder",
+      "kind": "sheet",
+      "bounds_mm": [
+        0.0,
+        0.1,
+        0.0,
+        0.1,
+        0.0,
+        0.0
+      ],
+      "volume_obj_mm3": null,
+      "volume_aedt_model_units3": null
+    }
+  },
+  "labels": [
+    {
+      "text": "support patch ('patch', sheet) / 100 x 100 \u00b5m at the origin, / on the underside (hidden)",
+      "objects": [
+        "patch"
+      ],
+      "anchor_mm": [
+        0.05,
+        0.05,
+        0.0
+      ],
+      "anchor_px": [
+        359.0,
+        687.2
+      ]
+    },
+    {
+      "text": "silicon ('si') / 300 \u00b5m, upper",
+      "objects": [
+        "si"
+      ],
+      "anchor_mm": [
+        5.0,
+        3.1,
+        0.45
+      ],
+      "anchor_px": [
+        1079.0,
+        739.1
+      ]
+    },
+    {
+      "text": "organic build-up ('org') / 300 \u00b5m, lower",
+      "objects": [
+        "org"
+      ],
+      "anchor_mm": [
+        5.0,
+        1.9,
+        0.15
+      ],
+      "anchor_px": [
+        971.0,
+        832.7
+      ]
+    }
+  ],
+  "label_box_collisions": [],
+  "label_sources": "every label names AEDT bodies (see 'objects'); plain words from the AEDT material and, for the unit cells, from the layer list of the same benchmark run (tool_evidence/<stage>/setup.json; body L<i>_* = layer i)",
+  "scale_bar_mm": 2.0,
+  "scale_bar_meaning": "length in the view plane (as AEDT's ruler); edges along x, y or z appear at sqrt(2/3) = 0.816 of it",
+  "colours": "scripts/figstyle.py MAT palette (unmodified), by layer role",
+  "renderer": "VTK 9.6.2 offscreen (EGL)",
+  "generator": "scripts/reference_tools/aedt_geometry_rerender.py",
+  "png_sha256": "da3460671f2ca393c27fae0cf48665be1e0411261eadb1dfcb0c40706c993102"
+}

@@ -149,33 +149,39 @@ def fig_cutout():
 
 # --- 4. pad count admissible region -------------------------------------
 def fig_pads():
+    """Two panels on one shared x-axis -- never a second y-axis: both quantities fall
+    monotonically with N, so on twin axes their curves lie on top of each other."""
     pd_ = jload("research/phase0naj/pad_count_closure.json")
     if not pd_:
         return
     rows = pd_["rows"]
     n = [r["n_per_rail"] for r in rows]
-    fig, ax = plt.subplots(figsize=(11.5, 5.0))
-    ax.loglog(n, [r["p_system_both_rails_w"] for r in rows], "o-",
-              color=C["z1"], lw=2.2, label="interface loss (W)")
-    ax2 = ax.twinx()
-    ax2.loglog(n, [r["j_per_pad_A_cm2"] for r in rows], "s--",
-               color=C["open"], lw=2.2, label="average J (A/cm²)")
-    ax2.axhline(1e6, color=C["warn"], lw=2)
-    ax2.text(n[-1], 1.1e6, "1e6 A/cm²  accelerated-stress regime (CONTEXT ONLY)",
-             ha="right", fontsize=11.5, color=C["warn"])
     lo = pd_["admissible_region"]["J_1e5"]["n_min"]
-    ax.axvspan(lo, n[-1], color=C["ok"], alpha=.10)
-    ax.text(lo * 1.3, max(r["p_system_both_rails_w"] for r in rows) * .4,
+    floor = pd_["meta"]["n_drop_floor"]
+    ink = "#24292f"
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(13.5, 5.0), sharex=True)
+    ax.loglog(n, [r["p_system_both_rails_w"] for r in rows], "o-", color=ink, lw=2.2)
+    ax.set_ylabel("system interface loss (W)")
+    ax.set_title("interface loss", loc="left")
+    bx.loglog(n, [r["j_per_pad_A_cm2"] for r in rows], "s-", color=ink, lw=2.2)
+    bx.set_ylabel("average current density per pad (A/cm²)")
+    bx.set_title("current density", loc="left")
+    bx.axhline(1e6, color=C["warn"], lw=2)
+    bx.text(n[-1], 1.3e6, "1e6 A/cm²: accelerated-stress\nregime (CONTEXT ONLY)",
+            ha="right", va="bottom", fontsize=11.5, color=C["warn"])
+    bx.axhline(1e5, color=C["ok"], lw=1.6, ls="--")
+    bx.text(n[-1], 1.25e5, "1e5 A/cm²", ha="right", fontsize=11.5, color=C["ok"])
+    for a_ in (ax, bx):
+        a_.axvspan(lo, n[-1], color=C["ok"], alpha=.10)
+        a_.axvline(floor, color=C["hist"], ls=":", lw=2)
+        a_.set_xlabel("source pads per rail per cell")
+        a_.grid(alpha=.25, which="both")
+    ax.text(lo * 1.15, max(r["p_system_both_rails_w"] for r in rows) * .3,
             f"admissible at 1e5 A/cm²\nN ≥ {lo}", color=C["ok"], fontsize=13)
-    ax.axvline(pd_["meta"]["n_drop_floor"], color=C["hist"], ls=":", lw=2)
-    ax.text(pd_["meta"]["n_drop_floor"] * 1.1, 1e-2,
-            "voltage-drop floor N=4\nNON-PHYSICAL (5e6 A/cm²)",
+    ax.text(floor * 1.15, min(r["p_system_both_rails_w"] for r in rows) * 1.6,
+            f"voltage-drop floor N = {floor}:\nNON-PHYSICAL (5e6 A/cm²)",
             fontsize=12, color=C["hist"])
-    ax.set_xlabel("source pads per rail per cell")
-    ax.set_ylabel("system interface loss (W)", color=C["z1"])
-    ax2.set_ylabel("average current density (A/cm²)", color=C["open"])
-    ax.set_title("Voltage drop alone does not select a pad count")
-    ax.grid(alpha=.25, which="both")
+    fig.suptitle("Voltage drop alone does not select a pad count", fontsize=17)
     save(fig, "pads.svg")
 
 
@@ -190,12 +196,12 @@ def fig_ladder():
     fig, ax = plt.subplots(figsize=(11.5, 4.8))
     ax.bar(x - .2, [r["R0_w_per_vr"] for r in rows], .4,
            color=C["hist"], label="R0  width-rule Manhattan")
-    ax.bar(x + .2, [r["R2_w_per_vr"] for r in rows], .4,
-           color=C["z1"], label="R2  2-D resistive sheet")
+    ax.bar(x + .2, [r["R2_w_per_vr"] for r in rows], .4,       # not the Z1 blue: no
+           color="#0b7285", label="R2  2-D resistive sheet")   # architecture is shown
     for i, r in enumerate(rows):
         ax.text(i, max(r["R0_w_per_vr"], r["R2_w_per_vr"]) * 1.05,
                 f"+{r['R0_err_vs_R2_pct']:.0f}%", ha="center", fontsize=12,
-                color=C["open"])
+                color="#24292f")
     ax.set_xticks(x, lab)
     ax.set_ylabel("output-net loss per VR (W)")
     ax.set_title("R0 overstates the output plane — R1 retired, R2 required")

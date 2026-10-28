@@ -52,7 +52,9 @@ def fig_ledger():
               ("pkg HV RDL", ("P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return")),
               ("BGA + TSV + pads", ("P_BGA_supply", "P_BGA_return", "P_TSV_VDD",
                                     "P_TSV_GND", "P_pad_VDD", "P_pad_GND"))]
-    cols = ["#24292f", "#57606a", "#8250df", "#bf8700", "#1a7f37", "#d1442f", "#1f6feb"]
+    # never the Z1 blue / Z2 red: a red segment inside the Z1 bar would read as "Z2".
+    # The 48 V package RDL takes the deck's 48 V orange.
+    cols = ["#24292f", "#57606a", "#8250df", "#bf8700", "#1a7f37", "#e36209", "#0b7285"]
     fig, ax = plt.subplots(figsize=(12.5, 3.9))
     for yi, a in enumerate(("Z2", "Z1")):
         r = etm(a, "HV_S0")
@@ -83,14 +85,18 @@ def fig_scenarios():
     x = np.arange(3)
     for ax, (k, lab) in zip(axes, keys):
         for i, a in enumerate(("Z1", "Z2")):
-            v = [next(f[k] for f in fin if f["arch"] == a and f["scenario"] == s)
-                 for s in SCEN]
-            ax.bar(x + (i - 0.5) * 0.38, v, 0.38, color=C[a], label=a)
+            rs = [next(f for f in fin if f["arch"] == a and f["scenario"] == s) for s in SCEN]
+            bars = ax.bar(x + (i - 0.5) * 0.38, [r[k] for r in rs], 0.38, color=C[a], label=a)
+            for b, r in zip(bars, rs):
+                if r.get("T_joint_at_or_above_solder_solidus"):
+                    # infeasibility result, not an operating point: hatched, never ranked
+                    b.set_facecolor("white"); b.set_edgecolor(C[a]); b.set_hatch("///")
         ax.set_xticks(x, ["S0", "S1", "S2"])
         ax.set_title(lab, fontsize=14)
         ax.grid(axis="y", alpha=.25)
     axes[0].legend(frameon=False)
-    fig.suptitle("Physical lineage, per named 48 V scenario (HV-S0/S1/S2 are not a bracket)",
+    fig.suptitle("Physical lineage, per named 48 V scenario (HV-S0/S1/S2 are not a bracket); "
+                 "hatched = joint at/above the solder melting onset, infeasible, not ranked",
                  fontsize=14, y=1.03)
     save(fig, "final_scenarios.svg")
 
@@ -138,9 +144,9 @@ def fig_count():
         sub = sorted([r for r in rows if r["arch"] == a], key=lambda r: int(r["n_per_rail"]))
         ax.plot([int(r["n_per_rail"]) for r in sub],
                 [float(r["i_ball_max_A__HV_S0"]) for r in sub], "-", color=C[a], lw=2, label=a)
-    ax.axhline(1.5, color=C["open"], lw=2)
+    ax.axhline(1.5, color="#57606a", lw=2)                 # neutral: red would read as Z2
     ax.text(200, 1.62, "1.5 A ENGINEERING CRITERION — not a lifetime limit",
-            color=C["open"], fontsize=12, ha="right")
+            color="#57606a", fontsize=12, ha="right")
     ax.axvline(pn["matched_count"], color=C["acc"], ls="--")
     ax.text(pn["matched_count"] + 3, 6, f"matched count\nN = {pn['matched_count']}/rail",
             color=C["acc"], fontsize=12)
@@ -194,16 +200,20 @@ def fig_acc_speed():
 
 def fig_runtime():
     r1 = etm("Z1", "HV_S0"); r2 = etm("Z2", "HV_S0")
-    loc = J("local_solder_HV_S0.json") or {"cases": {}}
+    # the PRODUCTION local response is the declared local-mesh level (local_mesh_study.json),
+    # not the single-mesh run of local_solder_HV_S0.json
+    ls = (J("local_mesh_study.json") or {}).get("cases", {})
     items = []
     for a, r in (("Z1", r1), ("Z2", r2)):
         th = [h["wall_s"] for h in r["et_history"]]
         items.append((f"{a} thermal FE, per E–T iteration (median)", float(np.median(th))))
         items.append((f"{a} E–T fixed point, total ({len(th)} iterations)", r["et_wall_s"]))
         items.append((f"{a} global thermoelastic FE", r["mechanics"]["wall_s"]))
-        lr = loc["cases"].get(a, {}).get("response") or {}
-        if lr.get("wall_s"):
-            items.append((f"{a} local nonlinear solder", lr["wall_s"]))
+        c = ls.get(f"{a}_HV_S0") or {}
+        lv = (c.get("levels") or {}).get(c.get("production_level"), {})
+        if lv.get("wall_s"):
+            items.append((f"{a} local solder submodel ({c['production_level']}, "
+                          f"{lv.get('n_cycles')} cycles)*", lv["wall_s"]))
     items = [(k, v) for k, v in items if v and np.isfinite(v)]
     fig, ax = plt.subplots(figsize=(12.5, 5.0))
     lab = [k for k, _ in items]; val = [v for _, v in items]
@@ -213,6 +223,9 @@ def fig_runtime():
     ax.set_xscale("log"); ax.set_xlabel("measured wall time (s, log)")
     ax.set_title(f"CURRENT physical lineage runtime — thermal CalculiX {r1['threads']} threads; "
                  "structural iterative solver single-threaded")
+    ax.text(0, -0.2, "* local submodel: CalculiX, 6 threads, run while the other local cases "
+            "ran concurrently, so its wall time includes contention",
+            transform=ax.transAxes, fontsize=11.5, color="#57606a", va="top")
     ax.grid(axis="x", alpha=.25, which="both")
     save(fig, "final_runtime.svg")
 
