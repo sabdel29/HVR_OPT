@@ -1,0 +1,182 @@
+{
+  "arch": "Z2",
+  "scenario": "HV_S0",
+  "pitch_mm": 3.1652429999999994,
+  "tile_mm": 2.368543856465402,
+  "layers": [
+    {
+      "name": "conv_7_gan_hs_EPC2014C",
+      "z0": -1.963,
+      "z1": -1.278,
+      "mat_tile": "silicon",
+      "mat_gap": "underfill_homog"
+    },
+    {
+      "name": "conv_6_interlayer_rdl",
+      "z0": -1.278,
+      "z1": -1.268,
+      "mat_tile": "rdl_tier",
+      "mat_gap": "underfill_homog"
+    },
+    {
+      "name": "conv_5_flying_caps",
+      "z0": -1.268,
+      "z1": -1.168,
+      "mat_tile": "hvr_effective",
+      "mat_gap": "underfill_homog"
+    },
+    {
+      "name": "conv_4_interlayer_rdl",
+      "z0": -1.168,
+      "z1": -1.158,
+      "mat_tile": "rdl_tier",
+      "mat_gap": "underfill_homog"
+    },
+    {
+      "name": "conv_3_gan_ls_EPC2057",
+      "z0": -1.158,
+      "z1": -0.52,
+      "mat_tile": "silicon",
+      "mat_gap": "underfill_homog"
+    },
+    {
+      "name": "conv_2_interlayer_rdl",
+      "z0": -0.52,
+      "z1": -0.51,
+      "mat_tile": "rdl_tier",
+      "mat_gap": "underfill_homog"
+    },
+    {
+      "name": "conv_1_inductor_plus_cout",
+      "z0": -0.51,
+      "z1": -0.01,
+      "mat_tile": "hvr_effective",
+      "mat_gap": "underfill_homog"
+    },
+    {
+      "name": "conv_0_land_side_attach_rdl",
+      "z0": -0.01,
+      "z1": 0.0,
+      "mat_tile": "rdl_tier",
+      "mat_gap": "underfill_homog"
+    },
+    {
+      "name": "sub_lower",
+      "z0": 0.0,
+      "z1": 0.27999999999999997,
+      "mat_tile": "tsv_tile",
+      "mat_gap": "silicon"
+    },
+    {
+      "name": "tile_band",
+      "z0": 0.27999999999999997,
+      "z1": 0.3,
+      "mat_tile": "tsv_tile",
+      "mat_gap": "silicon"
+    },
+    {
+      "name": "z2_top_rdl",
+      "z0": 0.3,
+      "z1": 0.31,
+      "mat_tile": "rdl_tier",
+      "mat_gap": "rdl_tier"
+    },
+    {
+      "name": "interface",
+      "z0": 0.31,
+      "z1": 0.32,
+      "mat_tile": "microbump",
+      "mat_gap": "microbump"
+    },
+    {
+      "name": "die",
+      "z0": 0.32,
+      "z1": 0.62,
+      "mat_tile": "silicon",
+      "mat_gap": "silicon"
+    },
+    {
+      "name": "tim",
+      "z0": 0.62,
+      "z1": 0.67,
+      "mat_tile": "tim",
+      "mat_gap": "tim"
+    }
+  ],
+  "sources": [
+    {
+      "layers": [
+        "die"
+      ],
+      "in_tile": false,
+      "W": 20.408163265306122
+    },
+    {
+      "layers": [
+        "conv_7_gan_hs_EPC2014C"
+      ],
+      "in_tile": true,
+      "W": 0.4197993233619353
+    },
+    {
+      "layers": [
+        "conv_3_gan_ls_EPC2057"
+      ],
+      "in_tile": true,
+      "W": 2.021507072380507
+    },
+    {
+      "layers": [
+        "conv_1_inductor_plus_cout"
+      ],
+      "in_tile": true,
+      "W": 0.295111968867691
+    },
+    {
+      "layers": [
+        "conv_5_flying_caps"
+      ],
+      "in_tile": true,
+      "W": 0.029392332518940197
+    },
+    {
+      "layers": [
+        "conv_0_land_side_attach_rdl",
+        "conv_2_interlayer_rdl",
+        "conv_4_interlayer_rdl",
+        "conv_6_interlayer_rdl"
+      ],
+      "in_tile": true,
+      "W": 0.08456915020802706
+    },
+    {
+      "layers": [
+        "sub_lower"
+      ],
+      "in_tile": true,
+      "W": 0.011267906846967995
+    },
+    {
+      "layers": [
+        "interface"
+      ],
+      "in_tile": true,
+      "W": 0.0009020796234623944
+    }
+  ],
+  "omitted_sources": [
+    {
+      "layers": [
+        "bga"
+      ],
+      "in_tile": false,
+      "W": 0.02346876084518302
+    }
+  ],
+  "Q_cell_W": 23.270713099113653,
+  "h_top": 115553.49261554122,
+  "T_fluid_C": 30.055564020383137,
+  "h_bot": 10.0,
+  "T_amb_C": 25.0,
+  "bottom_film": false
+}

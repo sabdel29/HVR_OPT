@@ -1,0 +1,390 @@
+{
+ "stage": "thermal_column_Z1",
+ "spec": {
+  "arch": "Z1",
+  "scenario": "HV_S0",
+  "pitch_mm": 3.1652429999999994,
+  "tile_mm": 2.368543856465402,
+  "layers": [
+   {
+    "name": "board",
+    "z0": -2.6999999999999997,
+    "z1": -0.2999999999999998,
+    "mat_tile": "board_fr4",
+    "mat_gap": "board_fr4"
+   },
+   {
+    "name": "bga",
+    "z0": -0.2999999999999998,
+    "z1": 1.6653345369377348e-16,
+    "mat_tile": "bga_homog",
+    "mat_gap": "bga_homog"
+   },
+   {
+    "name": "sub_lower",
+    "z0": 0.0,
+    "z1": 0.27999999999999997,
+    "mat_tile": "tsv_tile",
+    "mat_gap": "silicon"
+   },
+   {
+    "name": "tile_band",
+    "z0": 0.27999999999999997,
+    "z1": 0.3,
+    "mat_tile": "tsv_tile",
+    "mat_gap": "silicon"
+   },
+   {
+    "name": "z1conv_0_bottom_substrate_rdl",
+    "z0": 0.3,
+    "z1": 0.31,
+    "mat_tile": "rdl_tier",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "z1conv_1_gan_hs_EPC2014C",
+    "z0": 0.31,
+    "z1": 0.9950000000000001,
+    "mat_tile": "silicon",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "z1conv_2_interlayer_rdl",
+    "z0": 0.9950000000000001,
+    "z1": 1.0050000000000001,
+    "mat_tile": "rdl_tier",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "z1conv_3_gan_ls_EPC2057",
+    "z0": 1.0050000000000001,
+    "z1": 1.6430000000000002,
+    "mat_tile": "silicon",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "z1conv_4_interlayer_rdl",
+    "z0": 1.6430000000000002,
+    "z1": 1.6530000000000002,
+    "mat_tile": "rdl_tier",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "z1conv_5_flying_caps",
+    "z0": 1.6530000000000002,
+    "z1": 1.7530000000000003,
+    "mat_tile": "hvr_effective",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "z1conv_6_interlayer_rdl",
+    "z0": 1.7530000000000003,
+    "z1": 1.7630000000000003,
+    "mat_tile": "rdl_tier",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "z1conv_7_inductor_plus_cout",
+    "z0": 1.7630000000000003,
+    "z1": 2.2630000000000003,
+    "mat_tile": "hvr_effective",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "z1conv_8_output_rdl",
+    "z0": 2.2630000000000003,
+    "z1": 2.273,
+    "mat_tile": "rdl_tier",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "interface",
+    "z0": 2.273,
+    "z1": 2.283,
+    "mat_tile": "microbump",
+    "mat_gap": "microbump"
+   },
+   {
+    "name": "die",
+    "z0": 2.283,
+    "z1": 2.5829999999999997,
+    "mat_tile": "silicon",
+    "mat_gap": "silicon"
+   },
+   {
+    "name": "tim",
+    "z0": 2.5829999999999997,
+    "z1": 2.6329999999999996,
+    "mat_tile": "tim",
+    "mat_gap": "tim"
+   }
+  ],
+  "sources": [
+   {
+    "layers": [
+     "die"
+    ],
+    "in_tile": false,
+    "W": 20.408163265306122
+   },
+   {
+    "layers": [
+     "z1conv_1_gan_hs_EPC2014C"
+    ],
+    "in_tile": true,
+    "W": 0.424208345222885
+   },
+   {
+    "layers": [
+     "z1conv_3_gan_ls_EPC2057"
+    ],
+    "in_tile": true,
+    "W": 2.061326051062208
+   },
+   {
+    "layers": [
+     "z1conv_7_inductor_plus_cout"
+    ],
+    "in_tile": true,
+    "W": 0.2988084927959112
+   },
+   {
+    "layers": [
+     "z1conv_5_flying_caps"
+    ],
+    "in_tile": true,
+    "W": 0.029392332518940197
+   },
+   {
+    "layers": [
+     "z1conv_0_bottom_substrate_rdl",
+     "z1conv_2_interlayer_rdl",
+     "z1conv_4_interlayer_rdl",
+     "z1conv_6_interlayer_rdl",
+     "z1conv_8_output_rdl"
+    ],
+    "in_tile": true,
+    "W": 0.08561276351592735
+   },
+   {
+    "layers": [
+     "bga"
+    ],
+    "in_tile": false,
+    "W": 0.036083260825591525
+   },
+   {
+    "layers": [
+     "sub_lower"
+    ],
+    "in_tile": true,
+    "W": 6.62544851535758e-06
+   },
+   {
+    "layers": [
+     "interface"
+    ],
+    "in_tile": true,
+    "W": 0.0009021620109922548
+   }
+  ],
+  "omitted_sources": [],
+  "Q_cell_W": 23.344503298707092,
+  "h_top": 115553.49261554122,
+  "T_fluid_C": 30.06648534214147,
+  "h_bot": 10.0,
+  "T_amb_C": 25.0,
+  "bottom_film": true
+ },
+ "ccx_coarse": {
+  "T_max_C": 121.474,
+  "means": {
+   "bga:tile": 121.46004253472223,
+   "bga:gap": 121.46383811836392,
+   "board:tile": 119.00421006944447,
+   "board:gap": 119.00430147544236,
+   "die:tile": 91.455078125,
+   "die:gap": 90.24367271053272,
+   "interface:tile": 92.92098854166667,
+   "interface:gap": 91.26321343664308,
+   "sub_lower:tile": 121.43472222222223,
+   "sub_lower:gap": 121.44029011583173,
+   "tile_band:tile": 121.43199305555554,
+   "tile_band:gap": 121.43816348090475,
+   "tim:tile": 69.94243263888889,
+   "tim:gap": 69.23870023968146,
+   "z1conv_0_bottom_substrate_rdl:tile": 121.39022569444444,
+   "z1conv_0_bottom_substrate_rdl:gap": 121.42749638147085,
+   "z1conv_1_gan_hs_EPC2014C:tile": 121.26361805555557,
+   "z1conv_1_gan_hs_EPC2014C:gap": 120.82415405655426,
+   "z1conv_2_interlayer_rdl:tile": 120.4987326388889,
+   "z1conv_2_interlayer_rdl:gap": 119.73357266538407,
+   "z1conv_3_gan_ls_EPC2057:tile": 119.37872786458331,
+   "z1conv_3_gan_ls_EPC2057:gap": 116.98647813456085,
+   "z1conv_4_interlayer_rdl:tile": 115.27565625,
+   "z1conv_4_interlayer_rdl:gap": 111.8247289919472,
+   "z1conv_5_flying_caps:tile": 111.5947829861111,
+   "z1conv_5_flying_caps:gap": 109.91549988729243,
+   "z1conv_6_interlayer_rdl:tile": 107.85640277777777,
+   "z1conv_6_interlayer_rdl:gap": 107.96743457829055,
+   "z1conv_7_inductor_plus_cout:tile": 102.53839816468253,
+   "z1conv_7_inductor_plus_cout:gap": 100.52999285191024,
+   "z1conv_8_output_rdl:tile": 96.82260208333334,
+   "z1conv_8_output_rdl:gap": 91.84391289182189
+  },
+  "wall_s": 2.3843517303466797,
+  "n_elems": 18144,
+  "n_nodes": 20577,
+  "deposited_W": 23.344503298707092
+ },
+ "ccx_fine": {
+  "T_max_C": 122.095,
+  "means": {
+   "bga:tile": 122.08131174045137,
+   "bga:gap": 122.08558748353553,
+   "board:tile": 119.60918125,
+   "board:gap": 119.60927863030531,
+   "die:tile": 91.49730389539931,
+   "die:gap": 90.23131009597067,
+   "interface:tile": 92.95696319444444,
+   "interface:gap": 91.21705471391752,
+   "sub_lower:tile": 122.05560602678571,
+   "sub_lower:gap": 122.06183092939825,
+   "tile_band:tile": 122.05275694444448,
+   "tile_band:gap": 122.05973581653181,
+   "tim:tile": 69.95684835069446,
+   "tim:gap": 69.22012294378409,
+   "z1conv_0_bottom_substrate_rdl:tile": 122.01003211805559,
+   "z1conv_0_bottom_substrate_rdl:gap": 122.05028678991643,
+   "z1conv_1_gan_hs_EPC2014C:tile": 121.88273897569445,
+   "z1conv_1_gan_hs_EPC2014C:gap": 121.42412143526542,
+   "z1conv_2_interlayer_rdl:tile": 121.10067187500005,
+   "z1conv_2_interlayer_rdl:gap": 120.30162476032191,
+   "z1conv_3_gan_ls_EPC2057:tile": 119.96463376736112,
+   "z1conv_3_gan_ls_EPC2057:gap": 117.47729794204086,
+   "z1conv_4_interlayer_rdl:tile": 115.77022829861114,
+   "z1conv_4_interlayer_rdl:gap": 112.17507192837803,
+   "z1conv_5_flying_caps:tile": 111.99904137731482,
+   "z1conv_5_flying_caps:gap": 110.24471560373239,
+   "z1conv_6_interlayer_rdl:tile": 108.1710763888889,
+   "z1conv_6_interlayer_rdl:gap": 108.26869887444182,
+   "z1conv_7_inductor_plus_cout:tile": 102.76521953125,
+   "z1conv_7_inductor_plus_cout:gap": 100.66727323801578,
+   "z1conv_8_output_rdl:tile": 96.95796467013888,
+   "z1conv_8_output_rdl:gap": 91.68495266343034
+  },
+  "wall_s": 44.43613934516907,
+  "n_elems": 97200,
+  "n_nodes": 104044,
+  "deposited_W": 23.344503298707092,
+  "timing": {
+   "median_s": 44.43613934516907,
+   "min_s": 43.316020488739014,
+   "max_s": 44.51004076004028,
+   "repeats": 3,
+   "walls_s": [
+    43.316020488739014,
+    44.51004076004028,
+    44.43613934516907
+   ]
+  }
+ },
+ "aedt": {
+  "T_max_C": 122.224259,
+  "means": {
+   "board:all": 119.73444064144923,
+   "bga:all": 122.21006634627054,
+   "sub_lower:tile": 122.18408544917553,
+   "sub_lower:gap": 122.19047429940301,
+   "tile_band:tile": 122.18125171538624,
+   "tile_band:gap": 122.18839633901753,
+   "z1conv_0_bottom_substrate_rdl:tile": 122.13833068147908,
+   "z1conv_0_bottom_substrate_rdl:gap": 122.17668413854575,
+   "z1conv_1_gan_hs_EPC2014C:tile": 122.0098901349568,
+   "z1conv_1_gan_hs_EPC2014C:gap": 121.54919765971835,
+   "z1conv_2_interlayer_rdl:tile": 121.22509820378426,
+   "z1conv_2_interlayer_rdl:gap": 120.41820092241599,
+   "z1conv_3_gan_ls_EPC2057:tile": 120.08057483652019,
+   "z1conv_3_gan_ls_EPC2057:gap": 117.58786748824328,
+   "z1conv_4_interlayer_rdl:tile": 115.8713421098425,
+   "z1conv_4_interlayer_rdl:gap": 112.31326742037959,
+   "z1conv_5_flying_caps:tile": 112.07873724302273,
+   "z1conv_5_flying_caps:gap": 110.31597067604099,
+   "z1conv_6_interlayer_rdl:tile": 108.2331405104153,
+   "z1conv_6_interlayer_rdl:gap": 108.3145298301437,
+   "z1conv_7_inductor_plus_cout:tile": 102.80686203569971,
+   "z1conv_7_inductor_plus_cout:gap": 100.70793102262262,
+   "z1conv_8_output_rdl:tile": 96.98013875500376,
+   "z1conv_8_output_rdl:gap": 91.90837971266241,
+   "interface:all": 92.19766775216355,
+   "die:all": 90.89169956580082,
+   "tim:all": 69.63253244230556
+  },
+  "wall_s": 132.74841141700745,
+  "solved": true,
+  "cores": 4,
+  "T_max_repeat_C": 122.224259,
+  "timing": {
+   "median_s": 123.99744057655334,
+   "min_s": 105.07166910171509,
+   "max_s": 125.82174062728882,
+   "repeats": 3,
+   "walls_s": [
+    123.99744057655334,
+    105.07166910171509,
+    125.82174062728882
+   ],
+   "includes": "meshing + solve, solution cleared before each"
+  }
+ },
+ "T_max_err_K": -0.12925900000000468,
+ "T_rise_rel_err": -0.0014025837959138069,
+ "layer_mean_err_K": {
+  "sub_lower:gap": -0.12864337000475246,
+  "sub_lower:tile": -0.12847942238981602,
+  "tile_band:gap": -0.1286605224857169,
+  "tile_band:tile": -0.12849477094175654,
+  "z1conv_0_bottom_substrate_rdl:gap": -0.12639734862932528,
+  "z1conv_0_bottom_substrate_rdl:tile": -0.12829856342348478,
+  "z1conv_1_gan_hs_EPC2014C:gap": -0.12507622445292554,
+  "z1conv_1_gan_hs_EPC2014C:tile": -0.12715115926235399,
+  "z1conv_2_interlayer_rdl:gap": -0.11657616209407706,
+  "z1conv_2_interlayer_rdl:tile": -0.12442632878421023,
+  "z1conv_3_gan_ls_EPC2057:gap": -0.110569546202413,
+  "z1conv_3_gan_ls_EPC2057:tile": -0.11594106915906366,
+  "z1conv_4_interlayer_rdl:gap": -0.13819549200155734,
+  "z1conv_4_interlayer_rdl:tile": -0.10111381123135743,
+  "z1conv_5_flying_caps:gap": -0.07125507230860251,
+  "z1conv_5_flying_caps:tile": -0.07969586570790455,
+  "z1conv_6_interlayer_rdl:gap": -0.04583095570187368,
+  "z1conv_6_interlayer_rdl:tile": -0.06206412152639018,
+  "z1conv_7_inductor_plus_cout:gap": -0.04065778460683589,
+  "z1conv_7_inductor_plus_cout:tile": -0.04164250444971174,
+  "z1conv_8_output_rdl:gap": -0.2234270492320718,
+  "z1conv_8_output_rdl:tile": -0.022174084864886368
+ },
+ "max_abs_layer_err_K": 0.2234270492320718,
+ "ccx_mesh_change_K": 0.6209999999999951,
+ "speedup_ccx_fine_vs_aedt": 2.7904638522570906,
+ "load_average": {
+  "before_aedt": [
+   52.9,
+   61.9,
+   114.4
+  ],
+  "after": [
+   50.4,
+   54.1,
+   86.2
+  ]
+ },
+ "threads": {
+  "ccx": 8,
+  "aedt_cores": 4
+ },
+ "hardware": {
+  "cpu": "Intel(R) Xeon(R) Gold 6342 CPU @ 2.80GHz",
+  "logical_cpus": 96,
+  "host_os": "Linux-4.18.0-553.150.1.el8_10.x86_64-x86_64-with-glibc2.28"
+ }
+}

@@ -1,0 +1,398 @@
+{
+ "stage": "thermal_column_moose_Z2",
+ "scenario": "HV_S0",
+ "spec": {
+  "arch": "Z2",
+  "scenario": "HV_S0",
+  "pitch_mm": 3.1652429999999994,
+  "tile_mm": 2.368543856465402,
+  "layers": [
+   {
+    "name": "conv_7_gan_hs_EPC2014C",
+    "z0": -1.963,
+    "z1": -1.278,
+    "mat_tile": "silicon",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "conv_6_interlayer_rdl",
+    "z0": -1.278,
+    "z1": -1.268,
+    "mat_tile": "rdl_tier",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "conv_5_flying_caps",
+    "z0": -1.268,
+    "z1": -1.168,
+    "mat_tile": "hvr_effective",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "conv_4_interlayer_rdl",
+    "z0": -1.168,
+    "z1": -1.158,
+    "mat_tile": "rdl_tier",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "conv_3_gan_ls_EPC2057",
+    "z0": -1.158,
+    "z1": -0.52,
+    "mat_tile": "silicon",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "conv_2_interlayer_rdl",
+    "z0": -0.52,
+    "z1": -0.51,
+    "mat_tile": "rdl_tier",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "conv_1_inductor_plus_cout",
+    "z0": -0.51,
+    "z1": -0.01,
+    "mat_tile": "hvr_effective",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "conv_0_land_side_attach_rdl",
+    "z0": -0.01,
+    "z1": 0.0,
+    "mat_tile": "rdl_tier",
+    "mat_gap": "underfill_homog"
+   },
+   {
+    "name": "sub_lower",
+    "z0": 0.0,
+    "z1": 0.27999999999999997,
+    "mat_tile": "tsv_tile",
+    "mat_gap": "silicon"
+   },
+   {
+    "name": "tile_band",
+    "z0": 0.27999999999999997,
+    "z1": 0.3,
+    "mat_tile": "tsv_tile",
+    "mat_gap": "silicon"
+   },
+   {
+    "name": "z2_top_rdl",
+    "z0": 0.3,
+    "z1": 0.31,
+    "mat_tile": "rdl_tier",
+    "mat_gap": "rdl_tier"
+   },
+   {
+    "name": "interface",
+    "z0": 0.31,
+    "z1": 0.32,
+    "mat_tile": "microbump",
+    "mat_gap": "microbump"
+   },
+   {
+    "name": "die",
+    "z0": 0.32,
+    "z1": 0.62,
+    "mat_tile": "silicon",
+    "mat_gap": "silicon"
+   },
+   {
+    "name": "tim",
+    "z0": 0.62,
+    "z1": 0.67,
+    "mat_tile": "tim",
+    "mat_gap": "tim"
+   }
+  ],
+  "sources": [
+   {
+    "layers": [
+     "die"
+    ],
+    "in_tile": false,
+    "W": 20.408163265306122
+   },
+   {
+    "layers": [
+     "conv_7_gan_hs_EPC2014C"
+    ],
+    "in_tile": true,
+    "W": 0.4197993233619353
+   },
+   {
+    "layers": [
+     "conv_3_gan_ls_EPC2057"
+    ],
+    "in_tile": true,
+    "W": 2.021507072380507
+   },
+   {
+    "layers": [
+     "conv_1_inductor_plus_cout"
+    ],
+    "in_tile": true,
+    "W": 0.295111968867691
+   },
+   {
+    "layers": [
+     "conv_5_flying_caps"
+    ],
+    "in_tile": true,
+    "W": 0.029392332518940197
+   },
+   {
+    "layers": [
+     "conv_0_land_side_attach_rdl",
+     "conv_2_interlayer_rdl",
+     "conv_4_interlayer_rdl",
+     "conv_6_interlayer_rdl"
+    ],
+    "in_tile": true,
+    "W": 0.08456915020802706
+   },
+   {
+    "layers": [
+     "sub_lower"
+    ],
+    "in_tile": true,
+    "W": 0.011267906846967995
+   },
+   {
+    "layers": [
+     "interface"
+    ],
+    "in_tile": true,
+    "W": 0.0009020796234623944
+   }
+  ],
+  "omitted_sources": [
+   {
+    "layers": [
+     "bga"
+    ],
+    "in_tile": false,
+    "W": 0.02346876084518302
+   }
+  ],
+  "Q_cell_W": 23.270713099113653,
+  "h_top": 115553.49261554122,
+  "T_fluid_C": 30.055564020383137,
+  "h_bot": 10.0,
+  "T_amb_C": 25.0,
+  "bottom_film": false
+ },
+ "ccx": {
+  "T_max_C": 119.94,
+  "means": {
+   "conv_0_land_side_attach_rdl:tile": 101.54316996527777,
+   "conv_0_land_side_attach_rdl:gap": 96.9206129682354,
+   "conv_1_inductor_plus_cout:tile": 107.22352786458336,
+   "conv_1_inductor_plus_cout:gap": 104.62934281139177,
+   "conv_2_interlayer_rdl:tile": 112.51673958333336,
+   "conv_2_interlayer_rdl:gap": 110.68073608892925,
+   "conv_3_gan_ls_EPC2057:tile": 116.69324288194444,
+   "conv_3_gan_ls_EPC2057:gap": 114.98775823110964,
+   "conv_4_interlayer_rdl:tile": 117.83037326388892,
+   "conv_4_interlayer_rdl:gap": 117.52847058269967,
+   "conv_5_flying_caps:tile": 118.5321032986111,
+   "conv_5_flying_caps:gap": 117.92021899682186,
+   "conv_6_interlayer_rdl:tile": 119.16619184027782,
+   "conv_6_interlayer_rdl:gap": 118.29295336747313,
+   "conv_7_gan_hs_EPC2014C:tile": 119.86336892361112,
+   "conv_7_gan_hs_EPC2014C:gap": 119.2772433884948,
+   "die:tile": 90.85016409505207,
+   "die:gap": 90.64227895267491,
+   "interface:tile": 92.11627465277779,
+   "interface:gap": 91.85117799074011,
+   "sub_lower:tile": 97.50446788194445,
+   "sub_lower:gap": 96.37748067003143,
+   "tile_band:tile": 97.20395894097224,
+   "tile_band:gap": 96.15635604900045,
+   "tim:tile": 69.56692356770833,
+   "tim:gap": 69.4427234218723,
+   "z2_top_rdl:tile": 94.7165973090278,
+   "z2_top_rdl:gap": 94.0493956865101
+  },
+  "wall_s": 40.06213569641113,
+  "n_elems": 73872,
+  "n_nodes": 79402,
+  "deposited_W": 23.270713099113653,
+  "timing": {
+   "median_s": 23.038983583450317,
+   "min_s": 21.952043056488037,
+   "max_s": 40.06213569641113,
+   "repeats": 3,
+   "walls_s": [
+    21.952043056488037,
+    23.038983583450317,
+    40.06213569641113
+   ]
+  },
+  "mesh": [
+   6,
+   24,
+   0.04
+  ],
+  "threads": 8
+ },
+ "moose": {
+  "m1": {
+   "T_max_C": 119.85525666239,
+   "means": {
+    "conv_0_land_side_attach_rdl:gap": 96.946516031674,
+    "conv_0_land_side_attach_rdl:tile": 101.52116119515,
+    "conv_1_inductor_plus_cout:gap": 104.6079978641,
+    "conv_1_inductor_plus_cout:tile": 107.1844888271,
+    "conv_2_interlayer_rdl:gap": 110.63421873673,
+    "conv_2_interlayer_rdl:tile": 112.46067604679,
+    "conv_3_gan_ls_EPC2057:gap": 114.92724754185,
+    "conv_3_gan_ls_EPC2057:tile": 116.62040108625,
+    "conv_4_interlayer_rdl:gap": 117.4537066407,
+    "conv_4_interlayer_rdl:tile": 117.75382541735,
+    "conv_5_flying_caps:gap": 117.84381821423,
+    "conv_5_flying_caps:tile": 118.4522769373,
+    "conv_6_interlayer_rdl:gap": 118.21474648311,
+    "conv_6_interlayer_rdl:tile": 119.08342625019,
+    "conv_7_gan_hs_EPC2014C:gap": 119.19597338171,
+    "conv_7_gan_hs_EPC2014C:tile": 119.7777084696,
+    "die:gap": 90.638416749385,
+    "die:tile": 90.844697928768,
+    "interface:gap": 91.852359963975,
+    "interface:tile": 92.115343392469,
+    "sub_lower:gap": 96.382168654661,
+    "sub_lower:tile": 97.500842258555,
+    "tile_band:gap": 96.160754943561,
+    "tile_band:tile": 97.200497779873,
+    "tim:gap": 69.443294662559,
+    "tim:tile": 69.56647240275,
+    "z2_top_rdl:gap": 94.052231217597,
+    "z2_top_rdl:tile": 94.714365329038
+   },
+   "n_elems": 52200,
+   "n_nodes": 56699,
+   "mesh": [
+    5,
+    20,
+    0.05
+   ],
+   "deposited_W": 23.270713099113653,
+   "timing": {
+    "median_s": 6.20994758605957,
+    "min_s": 5.772199392318726,
+    "max_s": 8.10516619682312,
+    "repeats": 3,
+    "walls_s": [
+     5.772199392318726,
+     8.10516619682312,
+     6.20994758605957
+    ]
+   }
+  },
+  "m2": {
+   "T_max_C": 120.04645335243,
+   "means": {
+    "conv_0_land_side_attach_rdl:gap": 96.889050246092,
+    "conv_0_land_side_attach_rdl:tile": 101.57001069819,
+    "conv_1_inductor_plus_cout:gap": 104.65693494438,
+    "conv_1_inductor_plus_cout:tile": 107.27126287173,
+    "conv_2_interlayer_rdl:gap": 110.73224611896,
+    "conv_2_interlayer_rdl:tile": 112.5859291401,
+    "conv_3_gan_ls_EPC2057:gap": 115.06659686287,
+    "conv_3_gan_ls_EPC2057:tile": 116.78473974265,
+    "conv_4_interlayer_rdl:gap": 117.62101963529,
+    "conv_4_interlayer_rdl:tile": 117.92554701789,
+    "conv_5_flying_caps:gap": 118.01461065974,
+    "conv_5_flying_caps:tile": 118.63147768845,
+    "conv_6_interlayer_rdl:gap": 118.3883655329,
+    "conv_6_interlayer_rdl:tile": 119.26929001471,
+    "conv_7_gan_hs_EPC2014C:gap": 119.37949165948,
+    "conv_7_gan_hs_EPC2014C:tile": 119.97030894603,
+    "die:gap": 90.644598263286,
+    "die:tile": 90.854414620671,
+    "interface:gap": 91.849775126637,
+    "interface:tile": 92.117374753263,
+    "sub_lower:gap": 96.371978778216,
+    "sub_lower:tile": 97.508752950332,
+    "tile_band:gap": 96.151056596727,
+    "tile_band:tile": 97.208122676822,
+    "tim:gap": 69.442058757432,
+    "tim:tile": 69.567443670489,
+    "z2_top_rdl:gap": 94.045993218882,
+    "z2_top_rdl:tile": 94.719267620863
+   },
+   "n_elems": 172800,
+   "n_nodes": 182476,
+   "mesh": [
+    8,
+    32,
+    0.025
+   ],
+   "deposited_W": 23.270713099113653,
+   "timing": {
+    "median_s": 14.038691759109497,
+    "min_s": 13.908918380737305,
+    "max_s": 14.370908737182617,
+    "repeats": 3,
+    "walls_s": [
+     14.038691759109497,
+     14.370908737182617,
+     13.908918380737305
+    ]
+   }
+  }
+ },
+ "T_max_err_K": -0.10645335243000886,
+ "T_rise_rel_err": -0.0011829347750661634,
+ "moose_mesh_change_K": 0.19119669004000173,
+ "layer_mean_err_K": {
+  "conv_0_land_side_attach_rdl:gap": 0.03156272214340561,
+  "conv_0_land_side_attach_rdl:tile": -0.02684073291223399,
+  "conv_1_inductor_plus_cout:gap": -0.027592132988232265,
+  "conv_1_inductor_plus_cout:tile": -0.047735007146641806,
+  "conv_2_interlayer_rdl:gap": -0.05151003003075516,
+  "conv_2_interlayer_rdl:tile": -0.06918955676664496,
+  "conv_3_gan_ls_EPC2057:gap": -0.07883863176036243,
+  "conv_3_gan_ls_EPC2057:tile": -0.09149686070556129,
+  "conv_4_interlayer_rdl:gap": -0.09254905259032853,
+  "conv_4_interlayer_rdl:tile": -0.09517375400108108,
+  "conv_5_flying_caps:gap": -0.0943916629181416,
+  "conv_5_flying_caps:tile": -0.0993743898388999,
+  "conv_6_interlayer_rdl:gap": -0.0954121654268647,
+  "conv_6_interlayer_rdl:tile": -0.10309817443217639,
+  "conv_7_gan_hs_EPC2014C:gap": -0.10224827098519995,
+  "conv_7_gan_hs_EPC2014C:tile": -0.10694002241888256,
+  "die:gap": -0.002319310611085257,
+  "die:tile": -0.004250525618928691,
+  "interface:gap": 0.0014028641031131883,
+  "interface:tile": -0.0011001004852033702,
+  "sub_lower:gap": 0.005501891815427484,
+  "sub_lower:tile": -0.004285068387545721,
+  "tile_band:gap": 0.005299452273447969,
+  "tile_band:tile": -0.0041637358497581545,
+  "tim:gap": 0.0006646644403076607,
+  "tim:tile": -0.0005201027806691627,
+  "z2_top_rdl:gap": 0.003402467628092154,
+  "z2_top_rdl:tile": -0.0026703118351889543
+ },
+ "max_abs_layer_err_K": 0.10694002241888256,
+ "speedup_ccx_vs_moose_median": 0.6093451001542431,
+ "cores": {
+  "ccx_threads": 8,
+  "moose_mpi_ranks": 1
+ },
+ "load_average": {
+  "before": [
+   57.8,
+   122.1,
+   165.7
+  ],
+  "after": [
+   48.5,
+   86.5,
+   143.4
+  ]
+ },
+ "timing_method": "1 warm-up + 3 timed repeats, median and range"
+}
