@@ -20,11 +20,13 @@ import numpy as np
 R = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(R / "scripts"))
 import final_closure_physical_etm as E                              # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hvr_scratch import path as scratch                             # noqa: E402
 
 
 def converged_field(m, arch, scen, h):
     import production_et as PE
-    wd = Path(f"/tmp/fc_etm/{arch}_{scen}_h{h}")
+    wd = E.WD / f"{arch}_{scen}_h{h}"
     last_it = sorted(wd.glob("et*"), key=lambda p: int(p.name[2:]))[-1]
     frd = sorted(last_it.glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))[-1]
     return PE.ccxio.read_frd(frd)["NDTEMP"][1:m.n_nodes + 1, 0]
@@ -63,7 +65,7 @@ def main():
            "solver": solver, "threads": threads}
     try:
         out.update(solve(m, mats, st, Tn, arch, tiles,
-                         Path(f"/tmp/fc_solver/{arch}_{scen}_h{h}_{tag}"), solver, threads))
+                         scratch("fc_solver", f"{arch}_{scen}_h{h}_{tag}"), solver, threads))
         out["ok"] = True
     except Exception as e:                                # a crash IS the finding
         out["ok"] = False

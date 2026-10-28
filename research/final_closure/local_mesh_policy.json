@@ -1,0 +1,144 @@
+{
+ "declared_at": "2026-10-27T21:06:00-0500",
+ "declared_before_any_result_of_levels": [
+  "L2",
+  "L3"
+ ],
+ "existing_results_known_when_declared": {
+  "note": "L0 -> L1 changes on the production joints: Z1 HV-S0 1.96 %, Z2 HV-S0 5.49 %, Z1 HV-S1 1.56 %, Z2 HV-S1 4.93 %. These motivated the study; they do not set the tolerance.",
+  "source": "research/final_closure/local_solder_HV_S0.json, local_solder_HV_S1.json"
+ },
+ "observable": {
+  "name": "d_peeq_per_cycle",
+  "definition": "increment of volume-averaged equivalent inelastic strain over the last (stabilised) thermal-displacement cycle, solder core region ESOLCORE, validated Phase-0I/0I-R local family (Norton/EPC card, VISCO, CETOL 5e-2, 4 cycles, 300 s dwells)",
+  "inputs": "du_c and T_joint of the production-mesh critical joint (final_closure_physical_etm.case_path)"
+ },
+ "levels": {
+  "L0": {
+   "n_xy": 6,
+   "n_z_solder": 8
+  },
+  "L1": {
+   "n_xy": 8,
+   "n_z_solder": 10
+  },
+  "L2": {
+   "n_xy": 10,
+   "n_z_solder": 12
+  },
+  "L3": {
+   "n_xy": 12,
+   "n_z_solder": 16,
+   "note": "nested in L0: every L0 interval split in two in-plane (solder and pad overhang) and through the solder"
+  }
+ },
+ "characteristic_size": "h = 6 / n_xy (relative to L0)",
+ "cases": [
+  [
+   "Z1",
+   "HV_S0"
+  ],
+  [
+   "Z2",
+   "HV_S0"
+  ],
+  [
+   "Z1",
+   "HV_S1"
+  ],
+  [
+   "Z2",
+   "HV_S1"
+  ]
+ ],
+ "optional_cases": {
+  "cases": [
+   [
+    "Z2",
+    "HV_S2"
+   ]
+  ],
+  "note": "HV-S2 is not rankable (Z1 joint at or above the SAC305 melting onset); Z2 HV-S2 is run for information only"
+ },
+ "tolerance_rel": 0.02,
+ "rule": {
+  "A_converged": "relative change between the two finest levels (L2 -> L3) below the tolerance: production value = L3, uncertainty U = that change",
+  "B_bounded": "otherwise, if L1, L2, L3 are monotone: Richardson extrapolation with the observed order p from the three levels (non-uniform ratios); if 0.5 <= p <= 4, U = 1.25 |v_L3 - v_ext| / |v_ext| and production value = L3 with U; if p falls outside [0.5, 4] the sequence is treated as pre-asymptotic and U = |v_L3 - v_L1| / |v_L3|",
+  "C_unresolved": "if L1, L2, L3 are non-monotone: U = (max - min) / |v_L3| over the three finest levels, production value = L3 with U, status 'unresolved'",
+  "solver_failure": "a level whose solve does not complete is recorded as failed; the rule is applied to the finest three completed levels and the case is flagged"
+ },
+ "production_mesh": "L3 for every case in 'cases'; the response is reported with its status and U",
+ "wording": {
+  "converged": "mesh-converged (L2 -> L3 change below 2 %)",
+  "bounded_or_unresolved": "mesh-refined with a quantified discretisation bound",
+  "forbidden_unless_all_converged": "mesh-converged / mesh- and cycle-converged"
+ },
+ "ordering_propagation": "a Z1/Z2 local-response ordering is claimed in a scenario only if the relative gap |v_Z2 - v_Z1| / max(v_Z1, v_Z2) exceeds 2 * max(U_Z1, U_Z2); otherwise that scenario is 'unresolved'. A scenario with no valid response for one architecture (n/a, non-convergence, solder at or above melting onset) is 'not rankable' and is never counted for either architecture.",
+ "amendments": [
+  {
+   "id": 1,
+   "declared_at": "2026-10-27T21:45:00-0500",
+   "declared_after": "pass 1 (research/final_closure/local_mesh_study_pass1.json)",
+   "declared_before_any_result_of": "pass 2",
+   "finding": "CalculiX 2.23 does not cut an increment below one millionth of the step period (3e-4 s for the 300 s half-cycles), whatever minimum the step card declares (here 1e-6 s). Five of the twenty pass-1 solves needed one cutback below that floor at a load reversal and stopped with '*ERROR: increment size smaller than minimum': Z1 HV-S1 L3, Z2 HV-S0 L3, Z2 HV-S1 L3, Z2 HV-S2 L1, L2 and L3. Shown on copies of the exact inputs: lowering the declared minimum to 1e-9 s fails identically; starting each step at 3e-4 s fails (no cutback is possible at the floor); starting each step at 1e-4 s runs.",
+   "change": "every step of every level, every case and the harness control starts at 1e-4 s instead of 2e-3 s. Minimum and maximum increment, CETOL, the step schedule, the mesh family, the material card and the extraction are unchanged. CalculiX prints a non-fatal notice that 1e-4 s is below one millionth of the step period and proceeds with it.",
+   "initial_increment_s": 0.0001,
+   "acceptance": "the harness control must still reproduce the published Phase-0I value within 0.5 %; for every level that completed in both passes the pass-1 / pass-2 difference is reported as the time-integration sensitivity",
+   "rule": "unchanged: the declared A/B/C rule is applied to pass 2",
+   "outcome": "REJECTED by its own acceptance test: at 1e-4 s the harness control gives 5.846226693e-03 against the published 6.513193434e-03 (-10.24 %), with nothing else changed. Pass 2 stopped at the control; no pass-2 level result exists.",
+   "outcome_root_cause": "the -10.24 % was DEFECT #65 (amendment 3), a post-processing collision, not a property of the 1e-4 s start"
+  },
+  {
+   "id": 2,
+   "declared_at": "2026-10-27T21:50:00-0500",
+   "declared_after": "the amendment-1 control failure; no level of pass 2 ran",
+   "declared_before_any_result_of": [
+    "temporal study",
+    "pass 3"
+   ],
+   "finding": "each half-cycle is a STEP change of joint temperature and displacement (the .dat shows the new joint temperature at the first increment, t = 2e-3 s), so the first increment integrates the creep at the stress spike and the stabilised d_eps depends on its size. The historical 2e-3 s start, including the published Phase-0I control, carries an unquantified temporal discretisation error.",
+   "temporal_study": {
+    "observable": "d_peeq_per_cycle, same extraction",
+    "initial_increments_s": [
+     0.002,
+     0.001,
+     0.0005,
+     0.00025,
+     0.000125,
+     6.25e-05,
+     3.125e-05,
+     1.5625e-05
+    ],
+    "cases": "the harness control and every policy case (and the optional case), at L0",
+    "criterion": "converged at the coarsest dt0 whose next halving changes d_eps by less than 1 % (half the spatial tolerance); the case's U_time is that change. If no halving passes, Richardson in dt0 over the three finest completed values with U_time = 1.25 |v_finest - v_ext| / |v_ext| (0.5 <= p <= 4), otherwise the range of the three finest",
+    "production_dt0": "the largest per-case converged dt0 that passes for EVERY case",
+    "other_controls": "at the production dt0, on the control: maximum increment 15 -> 5 s and CETOL 5e-2 -> 1e-2; a change of 1 % or more is added to U_time"
+   },
+   "pass3": "the declared L0-L3 family at the production dt0 with the declared A/B/C rule; the uncertainty carried into the ordering is U = U_mesh + U_time",
+   "control_role": "the published Phase-0I value was computed at 2e-3 s; pass 1 reproduced it to 0.0000 %, which verifies the harness. Its distance from the temporally converged control is reported as the historical setting's temporal error; it is not an acceptance test at any other dt0.",
+   "outcome": "its study ran (local_time_study_amend2.json). Applied mechanically, the criterion gave 2e-3 s for the four policy cases and 1.25e-4 s for the optional Z2 HV-S2 (its 1e-3 s run hit the floor), hence a 1.25e-4 s production value -- but every value below 5e-4 s was corrupted by DEFECT #65 (amendment 3), so the study is re-extracted in block order before any decision is taken from it"
+  },
+  {
+   "id": 3,
+   "declared_at": "2026-10-27T22:17:00-0500",
+   "declared_after": "the amendment-2 study and the 16-cycle diagnostic; no pass-3 result exists",
+   "declared_before_any_result_of": [
+    "pass 3"
+   ],
+   "defect": "DEFECT #65: the validated .dat parser (phase0ir/decompose.parse_tensors) keys output by its 7-significant-digit printed time and AVERAGES every block sharing a key. Increments under ~1 ms at a load step print the same time as the step boundary (up to four blocks print 0.9300000E+04), so the boundary state mixes pre- and post-jump states. Interior cycles carry the same bias at both ends and it cancels; the LAST cycle, whose end time is clean, does not.",
+   "evidence": [
+    "16-cycle runs at four first increments: cycles 3-15 agree to 0.05 % across 2e-3 ... 3.1e-5 s; only cycle 16 drops (up to -17 %)",
+    "direct .dat inspection: boundary collisions only where the first increment is below ~5e-4 s",
+    "block-order extraction (scripts/final_closure_local_extract.py) reproduces the published control to all ten printed digits, and turns the first-increment sequence 2e-3 ... 1.5625e-5 s into a smooth monotone one (-0.046 % in total)"
+   ],
+   "change": [
+    "(a) every local metric is extracted in block order: each printed increment is its own state; a cycle runs from the FIRST block printed at its start time to the first block printed at its end time (or the last block). Identical to the historical extraction wherever no boundary collision exists",
+    "(b) the amendment-2 criterion is re-applied, unchanged, to block-order values",
+    "(c) to remove the CalculiX cutback floor without changing the load history, each 300 s half-cycle is written as a 3 s step that applies the load change (first increment 2e-3 s, minimum 1e-9 s, maximum 3 s; floor 3e-6 s) followed by a 297 s hold at the same loads (first increment 0.5 s, maximum 15 s)",
+    "(d) U = U_mesh + U_time + U_cyc; U_cyc = |d_eps(16 cycles) - d_eps(4 cycles)| / d_eps(16 cycles) at the production first increment, from the 16-cycle runs (L0, per case; the optional case takes the largest policy-case value)",
+    "(e) pass 3 = the declared L0-L3 family under (a)-(c); rule A/B/C unchanged"
+   ],
+   "acceptance": "pass 3 is accepted only if its L0 value reproduces the plain-form pass-1 L0 value of every case, and the harness control, within 0.1 %"
+  }
+ ]
+}

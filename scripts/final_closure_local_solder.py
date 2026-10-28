@@ -26,9 +26,11 @@ sys.path.insert(0, str(R / "scripts" / "phase0mr3c"))
 sys.path.insert(0, str(R / "scripts" / "phase0ir"))
 sys.path.insert(0, str(R / "scripts" / "phase0i"))
 import run_final_local_response as LR                                # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hvr_scratch import path as scratch                             # noqa: E402
 
 OUT = R / "research" / "final_closure"
-LR.WD = Path("/tmp/fc_local")
+LR.WD = scratch("fc_local")
 LR.WD.mkdir(parents=True, exist_ok=True)
 #: the Norton/EPC card's calibrated temperature span. A joint temperature above it
 #: is an extrapolation and is FLAGGED, not hidden.
@@ -47,7 +49,7 @@ def critical(arch, scen):
 
 def main():
     scen = sys.argv[1] if len(sys.argv) > 1 else "HV_S0"
-    LR.WD = Path(f"/tmp/fc_local_{scen}")
+    LR.WD = scratch(f"fc_local_{scen}")
     LR.WD.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     dev = LR.run_control()

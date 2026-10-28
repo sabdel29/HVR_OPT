@@ -40,9 +40,11 @@ for _p in ("scripts/phase0nw", "scripts/phase0m", "scripts/phase0mr", "scripts/p
         sys.path.insert(0, str(R / _p))
 
 import final_closure_ledger as FL                                   # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hvr_scratch import path as scratch                             # noqa: E402
 
 OUT = R / "research" / "final_closure"
-WD = Path(os.environ.get("FC_WORKDIR", "/tmp/fc_etm"))
+WD = Path(os.environ["FC_WORKDIR"]) if "FC_WORKDIR" in os.environ else scratch("fc_etm")
 ET_TOL_K = 0.25            # declared before any physical result was read
 #: mechanical mesh convergence, DECLARED before the h = 0.8 mm runs were read:
 #: relative change of T_max, die warpage and critical-joint du between h_xy 1.1 and 0.8
@@ -71,6 +73,15 @@ ET_TOL_P_REL = 1e-3
 ET_MAX_ITER = 8
 THREADS = int(os.environ.get("FC_THREADS", "12"))
 COOLER = "TOP_SI_MICROCHANNEL_27"
+#: Class-B sensitivity hooks, set only by final_closure_sensitivity.py. On the production
+#: path BUILD_HOOKS is empty and EXTRA_FILM is None, so nothing below changes.
+#:   BUILD_HOOKS  callables (mesh, stack, tiles) -> dict, applied after the TSV/RDL
+#:                material assignment and before the material cards are built
+#:   EXTRA_FILM   callable (mesh, tiles, Q_W) -> {"elems", "h_W_m2K", "T_C", "label"}: one
+#:                more convective face set (bottom faces, F1), whose heat flow is
+#:                COMPUTED from the solved field and enters the heat balance
+BUILD_HOOKS: list = []
+EXTRA_FILM = None
 
 # --- material corrections -------------------------------------------------
 TSV_N_PER_CELL = 1444      # the adopted 'A_same_field' fabric (tsv_fields)
@@ -236,9 +247,12 @@ def build(arch, h_xy=1.1, refine=(1, 1)):
         n_out += not inside
     m.elem_material = np.array(mat, dtype=object) if isinstance(
         m.elem_material, np.ndarray) else mat
+    info = {"tsv_tile_cu_fraction": f, "sub_lower_in_tiles": n_in,
+            "sub_lower_outside_tiles": n_out}
+    for hook in BUILD_HOOKS:
+        info.update(hook(m, st, tiles) or {})
     mats = PE.build_materials(st)
-    return m, mats, st, tiles, {"tsv_tile_cu_fraction": f, "sub_lower_in_tiles": n_in,
-                                "sub_lower_outside_tiles": n_out}
+    return m, mats, st, tiles, info
 
 
 def layer_mean_T(m, Tn, layers):
@@ -314,10 +328,17 @@ def write_thermal(m, mats, st, deposits, h_face, t_face, path, tiles):
         L.append(f"{int(e)},F2,{t_i:.6f},{h_i * PE.W_M2K_TO_W_MM2K:.9g}")
     for e in bot:
         L.append(f"{int(e)},F1,{t_amb},{h_bot * PE.W_M2K_TO_W_MM2K:.9g}")
+    extra = EXTRA_FILM(m, tiles, sum(deposits.values())) if EXTRA_FILM else None
+    if extra is not None:
+        if set(map(int, extra["elems"])) & set(map(int, bot)):
+            raise ValueError("extra film faces overlap the board-bottom film")
+        for e in extra["elems"]:
+            L.append(f"{int(e)},F1,{extra['T_C']:.6f},"
+                     f"{extra['h_W_m2K'] * PE.W_M2K_TO_W_MM2K:.9g}")
     L += ["*NODE FILE", "NT", "*END STEP"]
     path.write_text("\n".join(L) + "\n")
     return {"top": top, "bot": bot, "deposited_w": deposited,
-            "h_bot": h_bot, "t_amb": t_amb}
+            "h_bot": h_bot, "t_amb": t_amb, "extra": extra}
 
 
 def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02):
@@ -362,13 +383,24 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
     ab = np.array([ccxio.face_area(m, e) for e in bot])
     q_bot = float(np.sum(info["h_bot"] * PE.W_M2K_TO_W_MM2K * ab * (tb - info["t_amb"])))
     q_top = float(q_face.sum())
-    return {"T_node": Tnode, "T_max_C": float(np.nanmax(Tnode)),
-            "T_mean_C": float(np.nanmean(Tnode)), "q_top_W": q_top, "q_bot_W": q_bot,
-            "Q_deposited_W": info["deposited_w"], "Q_ledger_W": Q,
-            "deposit_residual_rel": (info["deposited_w"] - Q) / Q,
-            "energy_residual_rel": (q_top + q_bot - Q) / Q,
-            "fluid_iters": len(hist), "fluid_hist": hist,
-            "wall_s": time.time() - t0, "n_elems": m.n_elems, "n_nodes": m.n_nodes}
+    out = {"T_node": Tnode, "T_max_C": float(np.nanmax(Tnode)),
+           "T_mean_C": float(np.nanmean(Tnode)), "q_top_W": q_top, "q_bot_W": q_bot,
+           "Q_deposited_W": info["deposited_w"], "Q_ledger_W": Q,
+           "deposit_residual_rel": (info["deposited_w"] - Q) / Q,
+           "energy_residual_rel": (q_top + q_bot - Q) / Q,
+           "fluid_iters": len(hist), "fluid_hist": hist,
+           "wall_s": time.time() - t0, "n_elems": m.n_elems, "n_nodes": m.n_nodes}
+    ex = info.get("extra")
+    if ex is not None:                    # sensitivity only: the extra film's heat flow,
+        tx = np.array([float(np.nanmean(Tn[m.elems[int(e) - 1][:4], 0]))   # computed too
+                       for e in ex["elems"]])
+        ax = np.array([ccxio.face_area(m, e) for e in ex["elems"]])
+        q_x = float(np.sum(ex["h_W_m2K"] * PE.W_M2K_TO_W_MM2K * ax * (tx - ex["T_C"])))
+        out.update({"q_extra_W": q_x, "extra_film": {k: v for k, v in ex.items()
+                                                     if k != "elems"},
+                    "extra_film_faces": int(len(ex["elems"])),
+                    "energy_residual_rel": (q_top + q_bot + q_x - Q) / Q})
+    return out
 
 
 def run_et(arch, scen, h_xy=1.1, refine=(1, 1)):
