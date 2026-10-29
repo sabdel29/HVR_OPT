@@ -515,9 +515,13 @@ def test_every_manuscript_figure_is_built_from_the_generator():
     """No figure may be a stale file: each one the .tex includes must be regenerated."""
     import hashlib
     figs = re.findall(r"\\includegraphics\[[^\]]*\]\{([^}]+)\}", MANUSCRIPT.read_text())
-    # eight figures from the manuscript generator, plus the physical-lineage figure that
-    # the final-closure generator draws from research/final_closure
-    assert len(figs) == 9 and "fig9_physical.pdf" in figs, figs
+    # eight figures from the manuscript generator, plus the physical-lineage figures that
+    # the final-closure generator draws from research/final_closure: the lineage, the
+    # direct-feed crossover and the two architecture drawings (converted from the measured
+    # presentation SVGs)
+    final = {"fig9_physical.pdf", "fig10_crossover.pdf", "fig11_power_path.pdf",
+             "fig12_package_sections.pdf"}
+    assert len(figs) == 12 and final <= set(figs), figs
     d = R / "manuscript" / "figs"
     before = {f: hashlib.md5((d / f).read_bytes()).hexdigest() for f in figs}
     for gen in ("scripts/phase0mr3c/make_manuscript_figures.py",
