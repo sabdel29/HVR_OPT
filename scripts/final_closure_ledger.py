@@ -47,9 +47,24 @@ LAYERS = {
            "caps": "conv_5_flying_caps", "ind": "conv_1_inductor_plus_cout",
            "rdl": ["conv_0_land_side_attach_rdl", "conv_2_interlayer_rdl",
                    "conv_4_interlayer_rdl", "conv_6_interlayer_rdl"],
+           "attach": "conv_attach_vr_substrate",
            "lv": "z2_top_rdl", "tsv": "sub_lower", "pads": "interface",
            "bga": "bga", "pkg_hv": "bga", "die": "die"},
 }
+#: the BGA-fed CONTROL shares Z2's geometry (attach, clearance) and differs only in its
+#: 48 V path (Z2_DIRECT_FEED_ARCHITECTURE.md section 8)
+LAYERS["Z2BF"] = dict(LAYERS["Z2"])
+
+#: architecture identity, carried into every artifact so the two Z2s can never be confused
+VARIANT = {"Z1": "Z1_EMBEDDED", "Z2": "Z2_DIRECT_FEED", "Z2BF": "Z2_BGA_FED_CONTROL"}
+HV_FEED = {"Z1": "BGA_FED", "Z2": "DIRECT_FEED", "Z2BF": "BGA_FED"}
+#: the package-level 48 V network of a BGA-fed architecture; package_network.json keys its
+#: BGA-fed Z2 network as "Z2"
+NETWORK_KEY = {"Z1": "Z1", "Z2BF": "Z2"}
+#: terms a direct-fed architecture can NEVER carry: its 48 V never enters the package
+FORBIDDEN_DIRECT_FEED_TERMS = ("P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return",
+                               "P_BGA_supply", "P_BGA_return")
+ARCH_SPEC = R / "research" / "final_closure" / "z2_direct_feed_architecture.json"
 
 #: the intra-VR fidelity policy, declared before the R0/R2/reference differences
 #: were read: point-to-point traces -> R0 width rule; via stacks -> R0 via model;
@@ -195,12 +210,32 @@ def pad_count(case):
     raise ValueError(case)
 
 
+@lru_cache(maxsize=1)
+def attach_spec():
+    return json.loads(ARCH_SPEC.read_text())["vr_attach"]
+
+
+def vr_attach_r_per_rail_cell(t_c, spec=None):
+    """Resistance of ONE rail of ONE cell's VR attach: n Cu-pillar + solder-cap bumps in
+    parallel, R_bump = (rho_Cu h_Cu + rho_solder h_cap) / A at the attach temperature.
+    Contact and IMC resistance are not resolved (the all-solder class-B bound brackets
+    them). Returns (R_ohm, n_bumps, R_bump_ohm)."""
+    from interconnect import rho_cu, rho_solder
+    sp = dict(spec or attach_spec())
+    a = math.pi * (sp["d_um"] * 1e-6 / 2.0) ** 2
+    r_b = (rho_cu(t_c) * sp["h_cu_um"] * 1e-6 + rho_solder(t_c) * sp["h_cap_um"] * 1e-6) / a
+    n = int(math.floor(sp["cell_side_mm"] / (sp["pitch_um"] * 1e-3)) ** 2 // 2)
+    return r_b / n, n, r_b
+
+
 def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
     """All terms for one architecture and scenario at the given temperatures."""
     import pad_interface as PAD
     import rms_currents as RMS
     import tsv_fields as TF
     import physical_package as PPK
+    if arch not in VARIANT:
+        raise KeyError(f"unknown architecture {arch!r}; known {sorted(VARIANT)}")
     t_conv, t_bga, t_sub, t_if = (temps["conv"], temps["bga"], temps["sub"],
                                   temps["interface"])
     lay = LAYERS[arch]
@@ -216,14 +251,19 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
                      "model": model, "deposit_layer": layer, "evidence": evidence,
                      "maturity": maturity, "note": note})
 
-    ct = converter_terms(t_conv)
-    for k, layer, comp in (("P_conv_hs", lay["hs"], "high-side GaN (cond+sw+gate+Coss)"),
-                           ("P_conv_ls", lay["ls"], "low-side GaN conduction"),
-                           ("P_conv_inductor_dcr", lay["ind"], "inductor DCR"),
-                           ("P_conv_cap_esr", lay["caps"], "capacitor ESR")):
-        add(k, comp, "converter", ct[k], None, None, "converter model RMS",
-            "HVR_FULL_OPT_EPC_V2 closed form at T_conv", layer,
-            "CONSERVATION_VERIFICATION", "CLOSED")
+    # each device term at the in-cell temperature of its OWN tier, the region its loss is
+    # deposited in (final_closure_physical_etm.temperature_regions; DEFECT #68). Without
+    # per-tier keys (an older caller) every term falls back to the converter mean.
+    ct_at = lru_cache(maxsize=8)(converter_terms)
+    for k, layer, comp, key in (
+            ("P_conv_hs", lay["hs"], "high-side GaN (cond+sw+gate+Coss)", "hs"),
+            ("P_conv_ls", lay["ls"], "low-side GaN conduction", "ls"),
+            ("P_conv_inductor_dcr", lay["ind"], "inductor DCR", "ind"),
+            ("P_conv_cap_esr", lay["caps"], "capacitor ESR", "caps")):
+        t_k = float(temps.get(key, t_conv))
+        add(k, comp, "converter", ct_at(t_k)[k], None, None, "converter model RMS",
+            f"HVR_FULL_OPT_EPC_V2 closed form at its tier's in-cell temperature "
+            f"({t_k:.2f} C)", layer, "CONSERVATION_VERIFICATION", "CLOSED")
 
     iv = intra_vr(t_conv, scen)
     add("P_intraVR_metal", "cell traces (R0) + output plane (R2)", "mixed",
@@ -234,24 +274,43 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
         None, None, "converter-model RMS", "R0 via stack, footprint-filling policy",
         ",".join(lay["rdl"]), "CLOSED_FORM_VERIFICATION", "CLOSED")
 
-    pn = package_network()
-    loop = pn["loop"][arch]
-    kt_bga = rho_ratio_cu(t_bga)
-    from interconnect import rho_solder
-    kt_sol = rho_solder(t_bga) / rho_solder(20.0)
-    for rail in ("supply", "return"):
-        r20 = loop[f"r_{rail}_ohm"]
-        add(f"P_pkg_RDL_HV_{rail}", f"package HV RDL {rail} sheet", "48V",
-            i_hv_rms ** 2 * r20 * kt_bga, r20 * kt_bga, i_hv_rms, f"HV RMS, {scen}",
-            "voltage-fed refined FV sheet, N=%d/rail" % loop["n_per_rail"],
-            lay["pkg_hv"], "MESH_CONVERGENCE", "SCENARIO" if scen != "HV_S0" else "CLOSED")
-        f = np.asarray(pn["convergence"][f"{arch}_{rail}"]["i_ball_frac"])
-        r_ball = PAD.bga_ball_resistance_ohm(20.0) * kt_sol
-        add(f"P_BGA_{rail}", f"BGA {rail} balls (N=%d)" % len(f), "48V",
-            r_ball * i_hv_rms ** 2 * float(np.sum(f ** 2)),
-            r_ball / max(1e-30, 1.0 / float(np.sum(f ** 2))), i_hv_rms,
-            f"HV RMS, {scen}, solved per-ball split", "Table III rho_solder h / A",
-            lay["bga"], "SOURCE_REPRODUCTION", "SCENARIO" if scen != "HV_S0" else "CLOSED")
+    if HV_FEED[arch] == "BGA_FED":
+        # the package-level 48 V network: BGA balls + package 48 V RDL sheet (Z1, and the
+        # Z2_BGA_FED_CONTROL). A direct-fed architecture has no such network.
+        pn = package_network()
+        nk = NETWORK_KEY[arch]
+        loop = pn["loop"][nk]
+        kt_bga = rho_ratio_cu(t_bga)
+        from interconnect import rho_solder
+        kt_sol = rho_solder(t_bga) / rho_solder(20.0)
+        for rail in ("supply", "return"):
+            r20 = loop[f"r_{rail}_ohm"]
+            add(f"P_pkg_RDL_HV_{rail}", f"package HV RDL {rail} sheet", "48V",
+                i_hv_rms ** 2 * r20 * kt_bga, r20 * kt_bga, i_hv_rms, f"HV RMS, {scen}",
+                "voltage-fed refined FV sheet, N=%d/rail" % loop["n_per_rail"],
+                lay["pkg_hv"], "MESH_CONVERGENCE",
+                "SCENARIO" if scen != "HV_S0" else "CLOSED")
+            f = np.asarray(pn["convergence"][f"{nk}_{rail}"]["i_ball_frac"])
+            r_ball = PAD.bga_ball_resistance_ohm(20.0) * kt_sol
+            add(f"P_BGA_{rail}", f"BGA {rail} balls (N=%d)" % len(f), "48V",
+                r_ball * i_hv_rms ** 2 * float(np.sum(f ** 2)),
+                r_ball / max(1e-30, 1.0 / float(np.sum(f ** 2))), i_hv_rms,
+                f"HV RMS, {scen}, solved per-ball split", "Table III rho_solder h / A",
+                lay["bga"], "SOURCE_REPRODUCTION",
+                "SCENARIO" if scen != "HV_S0" else "CLOSED")
+
+    if "attach" in lay:
+        # the explicit VR-to-substrate attach: Cu pillar + solder cap per bump, one
+        # VDD/GND checkerboard over each cell, carrying only the 1 V output current
+        t_att = temps.get("attach", t_sub)
+        r_rc, n_b, r_b = vr_attach_r_per_rail_cell(t_att)
+        for rail in ("VDD", "GND"):
+            add(f"P_VR_attach_{rail}", f"VR attach {rail}: {n_b} Cu-pillar bumps/cell",
+                "1V", N_VR * i_cell_rms ** 2 * r_rc, r_rc / N_VR, i_cell_rms,
+                "cell output RMS", "(rho_Cu h_Cu + rho_solder h_cap) / A per bump, "
+                "n in parallel", lay["attach"], "GEOMETRY_CLOSE_ANALOG", "BOUNDED",
+                "Au et al. ECTC 2016 geometry (CLOSE_ANALOG); R_bump = %.4g mOhm at %.1f C"
+                % (r_b * 1e3, t_att))
 
     cfg = PPK.load_physical_package_config(R / "configs/phase0nt/z2_2p4mm_cutout.yaml")
     if arch == "Z1":
@@ -293,9 +352,30 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
             "spreading at %.4f W per rail (lv_alternative_r_ohm, periodic unit cell)"
             % p_lv_alt)
         rows[-1]["alternative_P_w"] = p_lv_alt
+    check_direct_feed(arch, rows)
     total = sum(r["P_w"] for r in rows)
-    return {"rows": rows, "P_loss_w": total, "intra_vr_nets": iv["nets"],
-            "n_pad": n_pad, "i_hv_avg_a": i_hv_avg_a, "i_hv_rms_a": i_hv_rms}
+    out = {"rows": rows, "P_loss_w": total, "intra_vr_nets": iv["nets"],
+           "n_pad": n_pad, "i_hv_avg_a": i_hv_avg_a, "i_hv_rms_a": i_hv_rms,
+           "architecture_variant": VARIANT[arch], "hv_feed": HV_FEED[arch]}
+    if HV_FEED[arch] == "DIRECT_FEED":
+        # OUTSIDE the package-internal boundary: the external feed is a swept parameter
+        # (R_Z2_direct_feed_loop), so only its scaling is recorded here
+        out["external_feed"] = {"parameter": "R_Z2_direct_feed_loop",
+                                "i_48_avg_a": i_hv_avg_a, "i_48_rms_a": i_hv_rms,
+                                "P_feed_per_mohm_w": i_hv_rms ** 2 * 1e-3,
+                                "in_package_internal_total": False}
+    return out
+
+
+def check_direct_feed(arch, rows):
+    """A direct-fed architecture's 48 V never enters the package: refuse any package 48 V
+    BGA or RDL term in its ledger (Z2_DIRECT_FEED_ARCHITECTURE.md section 2)."""
+    if HV_FEED.get(arch) != "DIRECT_FEED":
+        return
+    bad = sorted({r["term"] for r in rows if r["term"] in FORBIDDEN_DIRECT_FEED_TERMS})
+    if bad:
+        raise RuntimeError(f"{VARIANT[arch]} acquired package 48 V terms {bad}: its 48 V "
+                           "never enters the package")
 
 
 def self_consistent(arch, scen, temps, tol_w=1e-6, max_iter=50, **kw):

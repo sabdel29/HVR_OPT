@@ -30,7 +30,11 @@ import sys
 import time
 from pathlib import Path
 
-import numpy as np
+# Every pool worker would otherwise start a full-width OpenBLAS pool (64-96 idle threads);
+# on this shared host that reached the per-user thread limit and killed CalculiX
+# runs mid-solve (DEFECT #69). The solvers set their own thread counts.
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+import numpy as np  # noqa: E402
 
 R = Path(__file__).resolve().parents[1]
 for _p in ("scripts/phase0nw", "scripts/phase0m", "scripts/phase0mr", "scripts/phase0i",
@@ -42,6 +46,9 @@ for _p in ("scripts/phase0nw", "scripts/phase0m", "scripts/phase0mr", "scripts/p
 import final_closure_ledger as FL                                   # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from hvr_scratch import path as scratch                             # noqa: E402
+import pkg_rdl_network as _K                                        # noqa: E402
+# the BGA-fed CONTROL shares Z2's cutout and therefore its 528-site mechanical BGA field
+_K.register_architecture("Z2BF", _K.architecture_cutout_mm("Z2"))
 
 OUT = R / "research" / "final_closure"
 WD = Path(os.environ["FC_WORKDIR"]) if "FC_WORKDIR" in os.environ else scratch("fc_etm")
@@ -82,6 +89,10 @@ COOLER = "TOP_SI_MICROCHANNEL_27"
 #:                COMPUTED from the solved field and enters the heat balance
 BUILD_HOOKS: list = []
 EXTRA_FILM = None
+#:   EXTRA_DEPOSITS callable (arch, scen, L) -> {(layers tuple, in_tiles): W}: heat that is
+#:                NOT in the package-internal ledger but deposited in the FE domain (the
+#:                direct-feed heat-location sensitivity); None on the production path
+EXTRA_DEPOSITS = None
 
 # --- material corrections -------------------------------------------------
 TSV_N_PER_CELL = 1444      # the adopted 'A_same_field' fabric (tsv_fields)
@@ -210,6 +221,15 @@ def case_path(arch, scen, h_xy=None, refine=None):
     return OUT / f"etm_{arch}_{scen}_h{h_xy}{refine_tag(refine)}.json"
 
 
+def current_lineage(r):
+    """True for a case of the corrected lineage: the named architecture variant (direct-fed
+    Z2) and the in-cell E-T temperatures of DEFECT #68. A file of an older lineage keeps its
+    name until a rerun overwrites it, so a reader must check this, never the name."""
+    h = (r.get("et_history") or [{}])[-1]
+    return (r.get("architecture_variant") == FL.VARIANT.get(r.get("arch"))
+            and "T_hs_C" in h)
+
+
 def production_label():
     r = tuple(PRODUCTION_REFINE)
     base = f"graded h_xy = {PRODUCTION_H_XY} mm grid"
@@ -267,7 +287,7 @@ def layer_mean_T(m, Tn, layers):
 #: loss over every element of the layer put GaN device loss into the underfill out
 #: to the package corners, where it has almost no path to the cold plate, and
 #: produced a 362 C hot spot at (15, 15) mm in an element carrying no device at all.
-IN_TILE_KEYS = ("hs", "ls", "caps", "ind", "rdl", "lv", "tsv", "pads")
+IN_TILE_KEYS = ("hs", "ls", "caps", "ind", "rdl", "lv", "tsv", "pads", "attach")
 
 
 def deposits_from_ledger(arch, L):
@@ -275,6 +295,8 @@ def deposits_from_ledger(arch, L):
     lay = FL.LAYERS[arch]
     tile_layers = set()
     for k in IN_TILE_KEYS:
+        if k not in lay:
+            continue
         v = lay[k]
         tile_layers.update(v if isinstance(v, list) else [v])
     dep = {((lay["die"],), False): FL.P_LOAD_W}
@@ -403,23 +425,58 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
     return out
 
 
+def temperature_regions(arch):
+    """Ledger temperature key -> (layers, in_tiles): the region whose node mean sets the
+    resistance (or the device on-resistance) of the terms that key controls. It contains
+    the region those terms deposit their heat in (deposits_from_ledger, IN_TILE_KEYS) --
+    each device tier exactly; the converter's internal metal, deposited in its RDL tiers,
+    at the in-cell mean of all converter tiers it connects -- so a conductor's resistance
+    is evaluated where its loss is produced, never over another region. DEFECT #68: the
+    converter key used to average every node of the converter tiers, encapsulant included,
+    while the device losses were deposited only inside the 49 cells -- 7.8 K below the
+    in-cell mean for the direct-fed Z2 and 1.2 K above it for Z1 at HV-S0."""
+    lay = FL.LAYERS[arch]
+    conv_layers = [lay["hs"], lay["ls"], lay["caps"], lay["ind"]] + lay["rdl"]
+    reg = {"conv": (conv_layers, True),
+           "hs": ([lay["hs"]], True), "ls": ([lay["ls"]], True),
+           "ind": ([lay["ind"]], True), "caps": ([lay["caps"]], True),
+           "bga": ([lay["bga"]], False),
+           "sub": ([lay["tsv"]], True),
+           "interface": ([lay["pads"]], True)}
+    if "attach" in lay:
+        reg["attach"] = ([lay["attach"]], True)
+    return reg
+
+
+def region_nodes(m, tiles, layers, in_tiles):
+    """1-based node ids of the elements of `layers` (inside the cell footprints if asked)."""
+    ids = _region_elems(m, layers, in_tiles, tiles)
+    return np.unique(m.elems[ids - 1].ravel())
+
+
+def temps_from_history(h):
+    """The ledger temperatures of one recorded E-T iteration (keys present in it)."""
+    return {k: h[f"T_{k}_C"] for k in ("conv", "hs", "ls", "ind", "caps", "bga", "sub",
+                                         "interface", "attach") if f"T_{k}_C" in h}
+
+
 def run_et(arch, scen, h_xy=1.1, refine=(1, 1)):
     t0 = time.time()
     m, mats, st, tiles, minfo = build(arch, h_xy, refine)
     lay = FL.LAYERS[arch]
-    conv_layers = [lay["hs"], lay["ls"], lay["caps"], lay["ind"]] + lay["rdl"]
-    temps = {"conv": 85.0, "bga": 60.0, "sub": 85.0, "interface": 85.0}
+    regions = {k: region_nodes(m, tiles, *v) for k, v in temperature_regions(arch).items()}
+    temps = {k: (60.0 if k == "bga" else 85.0) for k in regions}
     hist, th, L = [], None, None
     wd = WD / f"{arch}_{scen}_h{h_xy}{refine_tag(refine)}"
     for it in range(ET_MAX_ITER):
         L = FL.self_consistent(arch, scen, temps)
         dep = deposits_from_ledger(arch, L)
+        if EXTRA_DEPOSITS is not None:
+            for key, w in EXTRA_DEPOSITS(arch, scen, L).items():
+                dep[key] = dep.get(key, 0.0) + w
         th = solve_thermal(m, mats, st, dep, wd / f"et{it}", tiles)
         Tn = th["T_node"]
-        new = {"conv": layer_mean_T(m, Tn, conv_layers),
-               "bga": layer_mean_T(m, Tn, [lay["bga"]]),
-               "sub": layer_mean_T(m, Tn, [lay["tsv"]]),
-               "interface": layer_mean_T(m, Tn, [lay["pads"]])}
+        new = {k: float(np.nanmean(Tn[nd - 1])) for k, nd in regions.items()}
         d_t = max(abs(new[k] - temps[k]) for k in temps)
         d_p = (abs(L["P_loss_w"] - hist[-1]["P_loss_w"]) / L["P_loss_w"]) if hist else 1.0
         hist.append({"iter": it, "P_loss_w": L["P_loss_w"], "T_max_C": th["T_max_C"],
@@ -500,6 +557,8 @@ def run_case(arch, scen, h_xy=1.1, do_mech=True, refine=(1, 1), solver="", threa
         do_mech = False
     m, mats, st, tiles, minfo, L, th, hist, t_et, wd = run_et(arch, scen, h_xy, refine)
     res = {"arch": arch, "scenario": scen, "h_xy_mm": h_xy, "refine": list(refine),
+           "architecture_variant": FL.VARIANT[arch], "hv_feed": FL.HV_FEED[arch],
+           "external_feed": L.get("external_feed"),
            "materials": minfo,
            "ledger_rows": L["rows"], "P_loss_w": L["P_loss_w"],
            "i_hv_avg_a": L["i_hv_avg_a"], "energy_ledger": L["energy"],
