@@ -54,7 +54,11 @@ OUT = {"Z1": FIGS / "z1_package_cross_section.svg",
        "Z2": FIGS / "z2_package_cross_section.svg",
        "pair": FIGS / "z1_z2_package_comparison.svg",
        "exploded": FIGS / "z1_z2_exploded.png",
-       "cell": FIGS / "regulator_cell_zoom.svg"}
+       "cell": FIGS / "regulator_cell_zoom.svg",
+       "power_path": FIGS / "z1_z2_power_path_final.svg",
+       "power_path_48": FIGS / "z1_z2_power_path_48v.svg",
+       "power_path_1v": FIGS / "z1_z2_power_path_1v.svg",
+       "attach": FIGS / "z2_vr_attach_detail.svg"}
 STAMP = "ILLUSTRATIVE — NOT TO SCALE"
 
 # ------------------------------------------------------------------ mapping (pixels only)
@@ -68,10 +72,15 @@ FS = 14                     # smallest text anywhere
 LINE = 17                   # label line pitch
 
 KEY_MESSAGE = {
-    "Z1": "Z1 converts inside the package, then a short 1 V vertical path to the die",
-    "Z2": ("Z2 converts below the substrate, in the PCB opening, and sends 1 V vertically "
-           "through the substrate TSVs"),
+    "Z1": ("Z1 brings 48 V through the BGA and the substrate, converts inside the package, "
+           "then a short 1 V path to the die"),
+    "Z2": ("Z2 feeds 48 V straight into the backside regulator through the PCB opening, "
+           "converts below the substrate, and sends only 1 V up through the attach and TSVs"),
 }
+FEED_TEXT = "ILLUSTRATIVE DIRECT 48-V FEED — exact connector geometry not specified"
+CLEARANCE_TEXT = "1.0 mm sidewall clearance — void"
+PILLAR = "#b87333"          # Cu pillar of the VR attach (schematic)
+BGA_SIGNAL = "#d0d7de"      # a BGA ball that carries no HVR input current
 SHEET_TEXT = ("48 V package RDL sheet — modelled as a 2-D network sheet; "
               "not a separate FE layer")
 
@@ -96,9 +105,19 @@ def load_spec(path=SPEC_PATH) -> dict:
 
 
 def tiers(a) -> list:
-    """Converter tiers: the layers whose out-of-cell volume is the underfill medium."""
-    return sorted((L for L in a["layers"] if "underfill_homog" in L["materials"]),
-                  key=lambda L: L["z0_um"])
+    """Converter tiers: the layers whose out-of-cell volume is the underfill medium (the
+    VR attach is not a converter tier; it is drawn on its own)."""
+    return sorted((L for L in a["layers"] if "underfill_homog" in L["materials"]
+                   and "attach" not in L["roles"]), key=lambda L: L["z0_um"])
+
+
+def attach_layer(a):
+    hit = [L for L in a["layers"] if "attach" in L["roles"]]
+    return hit[0] if hit else None
+
+
+def direct_fed(a) -> bool:
+    return a.get("hv_feed") == "DIRECT_FEED"
 
 
 def by_role(a, role) -> dict:
@@ -136,6 +155,8 @@ def kind(L) -> str:
         return "bga"
     if "tsv_tile" in m:
         return "substrate"
+    if "attach" in r:
+        return "attach"
     if "underfill_homog" in m:
         for role, k in (("hs", "gan"), ("ls", "gan"), ("caps", "caps"), ("ind", "inductor"),
                         ("rdl", "rdl")):
@@ -157,14 +178,15 @@ TIER_FILL = {"tier_gan": F.MAT["gan"], "tier_caps": F.MAT["caps"],
              "tier_inductor": F.MAT["inductor"], "tier_rdl": F.MAT["rdl"]}
 BAND_FILL = {"pcb": F.MAT["pcb"], "bga": "#f3f4f6", "substrate": F.MAT["silicon"],
              "interface": F.MAT["fill"], "die": F.MAT["die"], "tim": F.MAT["tim"],
-             "top_rdl": F.MAT["rdl"]}
+             "top_rdl": F.MAT["rdl"], "attach": F.MAT["fill"]}
 
 #: plain words for the layer names; the thickness is always appended FROM THE SPEC
 PLAIN = {"board": "PCB", "sub_lower": "Si power substrate",
          "tile_band": "substrate top band (Si + TSV)",
          "bottom_substrate_rdl": "bottom-substrate RDL (high-side landing)",
          "interlayer_rdl": "interlayer RDL", "output_rdl": "output RDL (1 V + ground)",
-         "land_side_attach_rdl": "land-side attach RDL (48 V in, 1 V out)",
+         "land_side_attach_rdl": "1 V output / attach RDL (top of the regulator)",
+         "attach_vr_substrate": "Cu-pillar attach: regulator → substrate (1 V only)",
          "flying_caps": "flying capacitors", "inductor_plus_cout": "inductors + output caps",
          "z2_top_rdl": "top RDL (1 V + ground)",
          "interface": "microbumps / Cu pads + underfill (die side)",
@@ -177,6 +199,8 @@ def plain_name(a, L) -> str:
     if m:
         return f"{'high' if m.group(1) == 'hs' else 'low'}-side GaN ({m.group(2)})"
     if nm == "bga":
+        if direct_fed(a):
+            return "BGA balls, peripheral (signals, aux, mechanical — NOT the 48 V feed)"
         where = ", peripheral only" if a["cutout_mm"] else ""
         return f"BGA balls{where} (48 V supply + return)"
     if nm == "die":
@@ -226,6 +250,10 @@ def lateral(a, L) -> list:
     half = (a["substrate_mm"][0] if L["footprint"] == "substrate" else a["die_mm"][0]) / 2
     c = a["cutout_mm"]
     if L["region"] == "inside_cutout":
+        ooc = a.get("out_of_cell") or {}
+        if ooc.get("ring") == "VOID" and ooc.get("extent_x_mm"):
+            # the fill stops at the measured cell-grid bounding box; the ring is void
+            return [tuple(ooc["extent_x_mm"])]
         return [(-c / 2, c / 2)]
     if c and any(I["region"] == "inside_cutout" and I["z0_um"] < L["z1_um"]
                  and L["z0_um"] < I["z1_um"] for I in a["layers"]):
@@ -452,6 +480,8 @@ def legend_block(x, y, items, cols, col_w, size=FS) -> str:
         elif k == "sheet":
             out.append(F.rect(cx - 2, cy + box / 2 - SHEET_PX / 2, box + 4, SHEET_PX, F.I48,
                               F.INK, 0.5))
+        elif k == "feed":
+            out.append(F.rect(cx - 2, cy + 2, box + 4, box - 4, "#fff4e5", F.I48, 1.4, 'rx="3"'))
         else:
             out.append(arrow([(cx - 2, cy + box / 2), (cx + box + 9, cy + box / 2)], k, 2.3))
         dx = box + (17 if k in ("48", "1v", "ret") else 8)
@@ -474,9 +504,14 @@ def legend_items(archs) -> list:
              ("fill", F.MAT["tim"], "TIM"),
              ("fill", F.MAT["coldplate"], "cold plate (schematic)")]
     if has_air:
-        items.append(("air", None, "air (PCB opening)"))
-    items += [("sheet", None, "48 V package sheet (2-D, not FE)"),
-              ("48", None, "48 V in"), ("1v", None, "1 V out"),
+        items.append(("air", None, "air / void (PCB opening, clearance)"))
+    if any(direct_fed(a) for a in archs):
+        items += [("fill", PILLAR, "Cu-pillar VR attach (1 V only)"),
+                  ("fill", BGA_SIGNAL, "BGA ball: signals / mechanical only"),
+                  ("feed", None, "direct 48 V feed (illustrative)")]
+    if any(not direct_fed(a) for a in archs):
+        items.append(("sheet", None, "48 V package sheet (2-D, not FE)"))
+    items += [("48", None, "48 V in"), ("1v", None, "1 V out"),
               ("ret", None, "return (dashed)")]
     return items
 
@@ -488,6 +523,9 @@ def patterns() -> str:
             f'<pattern id="tsvp" width="4" height="8" patternUnits="userSpaceOnUse">'
             f'<rect width="4" height="8" fill="{si}"/><rect x="1" width="1.8" height="8" '
             f'fill="{cu}"/></pattern>'
+            f'<pattern id="pillar" width="5" height="8" patternUnits="userSpaceOnUse">'
+            f'<rect width="5" height="8" fill="{F.MAT["fill"]}"/>'
+            f'<rect x="1.4" y="0" width="2.2" height="8" fill="{PILLAR}"/></pattern>'
             f'<pattern id="bump" width="6" height="8" patternUnits="userSpaceOnUse">'
             f'<rect width="6" height="8" fill="{F.MAT["fill"]}"/>'
             f'<rect x="1.5" y="0" width="3" height="8" rx="1.2" fill="{F.MAT["solder"]}"/>'
@@ -570,6 +608,29 @@ class Section:
                     out.append(F.rect(self.X(x0), y1, self.side_mm * self.s, y0 - y1,
                                       "url(#tsvp)", F.INK, 0.5,
                                       attrs(data_tsv_field_of=L["name"], data_cx_mm=repr(cx))))
+            if k == "attach":
+                for cx in self.cells:
+                    x0 = cx - self.side_mm / 2
+                    out.append(F.rect(self.X(x0), y1, self.side_mm * self.s, y0 - y1,
+                                      "url(#pillar)", F.INK, 0.5,
+                                      attrs(data_vr_attach_of=L["name"], data_cx_mm=repr(cx))))
+        return "".join(out)
+
+    def clearance(self) -> str:
+        """The void ring between the cell-grid bounding box and the PCB sidewall."""
+        ooc = self.a.get("out_of_cell") or {}
+        if not (self.C and ooc.get("ring") == "VOID" and ooc.get("extent_x_mm")):
+            return ""
+        t = tiers(self.a)
+        att = attach_layer(self.a)
+        z0, z1 = t[0]["z0_um"], (att or t[-1])["z1_um"]
+        y1, y0 = self.Y(z1), self.Y(z0)
+        out = []
+        for xa, xb in ((-self.C / 2, ooc["extent_x_mm"][0]), (ooc["extent_x_mm"][1], self.C / 2)):
+            out.append(F.rect(self.X(xa), y1, (xb - xa) * self.s, y0 - y1, "#ffffff", F.MUTED,
+                              1.0, 'stroke-dasharray="3,2" ' + attrs(
+                                  data_feature="sidewall-clearance-void",
+                                  data_x0_mm=repr(xa), data_x1_mm=repr(xb))))
         return "".join(out)
 
     def balls(self) -> str:
@@ -577,11 +638,14 @@ class Section:
         y1, y0 = self.Y(L["z1_um"]), self.Y(L["z0_um"])
         rx = self.a["bga"]["pitch_mm"] / 4 * self.s       # outline schematic: half the pitch
         out = []
+        # a direct-fed Z2's balls carry no HVR input current: drawn in the signal colour
+        col = BGA_SIGNAL if direct_fed(self.a) else F.MAT["solder"]
+        role = "signal-mechanical" if direct_fed(self.a) else "48v-power-and-signal"
         for x in self.sites:
             out.append(f'<ellipse cx="{num(self.X(x))}" cy="{num((y0 + y1) / 2)}" '
                        f'rx="{num(rx)}" ry="{num((y0 - y1) / 2 - 0.6)}" '
-                       f'fill="{F.MAT["solder"]}" stroke="{F.INK}" stroke-width="0.6" '
-                       f'{attrs(data_bga_x_mm=repr(x))}/>\n')
+                       f'fill="{col}" stroke="{F.INK}" stroke-width="0.6" '
+                       f'{attrs(data_bga_x_mm=repr(x), data_bga_role=role)}/>\n')
         return "".join(out)
 
     def air(self) -> str:
@@ -599,17 +663,30 @@ class Section:
         adiabatic = (coupling_fact("z2_cutout_underside") or {}).get("adiabatic")
         mid = (y_top + y_bot) / 2
         cx = self.X(0.0)
-        line1 = f"PCB opening {self.C:g} mm — empty air"
+        max_w = w - 24
+        line1 = f"PCB opening {self.C:g} mm — air"
         line2 = (f"{fmt_um(gap)} clear of the PCB backside"
                  + ("; converter underside adiabatic in the model" if adiabatic else ""))
-        max_w = w - 24
         lines = [line1] + wrap(line2, max_w, FS)
+        if direct_fed(self.a):
+            # the feed sits under the second-outermost cell on the arrow side: centre the
+            # text in the free span beyond it, in three short lines that fit the gap
+            m = self.mirror()
+            cs = sorted(self.cells, key=lambda x: -m * x)
+            xa = cs[1] - m * self.side_mm
+            xb = -m * self.C / 2
+            cx = self.X((xa + xb) / 2)
+            lines = [line1, f"{fmt_um(gap)} clear of the PCB backside"]
+            if adiabatic:
+                lines.append("underside adiabatic in the model")
         for j, s in enumerate(lines):
             out.append(F.text(cx, mid + (j - (len(lines) - 1) / 2) * LINE + FS * 0.36, s, FS,
                               "middle", "bold" if j == 0 else "normal", F.MUTED, halo=False))
         return "".join(out)
 
     def sheet(self) -> str:
+        if direct_fed(self.a):                 # no package 48 V network in a direct-fed Z2
+            return ""
         z = substrate(self.a)[0]["z0_um"]
         y = self.Y(z)
         return F.rect(self.X(-self.W / 2), y - SHEET_PX / 2, self.W * self.s, SHEET_PX, F.I48,
@@ -644,6 +721,20 @@ class Section:
             sup = [(xb_s, y_pcb), (xb_s, y_sheet), (xs_, y_sheet), (xs_, self.Y(z_hs))]
             ret = [(xr_, self.Y(z_hs)), (xr_, y_sheet + off), (xb_r, y_sheet + off),
                    (xb_r, y_pcb)]
+        elif direct_fed(a):
+            # the DIRECT FEED: a dedicated connection reaches the regulator's 48 V input
+            # terminals from the opening side; no BGA ball or package sheet carries it
+            c = cs[1]
+            xs_, xr_ = c + m * side / 4, c - m * side / 4
+            xb_s, xb_r = xs_, xr_
+            sup = [(xs_, y_pcb + 4), (xs_, self.Y(z_hs))]
+            ret = [(xr_, self.Y(z_hs)), (xr_, y_pcb + 4)]
+            z_bot = min(L["z0_um"] for L in tiers(a))
+            yb = self.Y(z_bot)
+            cw, chh = 1.6 * side * self.s, 13.0
+            arrows.append(F.rect(self.X(c) - cw / 2, yb + 3, cw, chh, "#fff4e5", F.I48, 1.4,
+                                 'rx="3" ' + attrs(data_feature="direct-48v-feed",
+                                                   data_illustrative="true")))
         else:
             outer = sorted((s for s in self.sites if m * s > 0), key=lambda s: -m * s)
             xb_s, xb_r = outer[1], outer[2]
@@ -671,6 +762,7 @@ class Section:
         tags.append(poly([(self.X(xb_s), y_pcb + 2), (self.X(xb_s), ty - 6)], F.I48, 1.2))
         tags.append(poly([(self.X(xb_r), y_pcb + 2), (self.X(xb_r), ty - 6)], F.IRET, 1.2,
                          dash="3,2"))
+
         c0 = cs[0]
         x_tag = self.X(m * self.D / 2) + m * 9
         t_anchor = "start" if m > 0 else "end"
@@ -707,7 +799,7 @@ class Section:
         for L in a["layers"]:
             k, z0, z1 = kind(L), L["z0_um"], L["z1_um"]
             zc = mid(z0, z1)
-            if k.startswith("tier_"):
+            if k.startswith("tier_") or k == "attach":
                 x = x_cell
                 if self.C and z0 < bga["z0_um"] < z1:     # keep the leader off the BGA row
                     zc = mid(z0, bga["z0_um"])
@@ -727,15 +819,29 @@ class Section:
         tz = sub[0]["z0_um"] + 3 * (sub[0]["z1_um"] - sub[0]["z0_um"]) / 4
         n = tsv_grid(a)
         t = a["tsv"]
-        tsv_txt = (f"Cu TSV field under each cell — {t['rail_carried']}"
+        land = "; lands on the Cu-pillar attach" if attach_layer(a) else ""
+        tsv_txt = (f"Cu TSV field under each cell — {t['rail_carried']}{land}"
                    if compact else
                    f"Cu TSV field under each cell — {t['rail_carried']}; {t['n_per_cell']} "
                    f"vias ({n} × {n}), Ø{t['d_um']:g} µm at {t['pitch_um']:g} µm pitch")
         reqs.append({"name": tsv_txt, "thick": None,
                      "dot": (self.X(sg * max(abs(c) for c in self.cells)), self.Y(tz))})
-        reqs.append({"name": SHEET_TEXT, "thick": None,
-                     "dot": (self.X(sg * (self.W / 2 - self.side_mm / 3)),
-                             self.Y(sub[0]["z0_um"]))})
+        if not direct_fed(a):
+            reqs.append({"name": SHEET_TEXT, "thick": None,
+                         "dot": (self.X(sg * (self.W / 2 - self.side_mm / 3)),
+                                 self.Y(sub[0]["z0_um"]))})
+        if direct_fed(a):
+            m_ = self.mirror()
+            c_ = sorted(self.cells, key=lambda x: -m_ * x)[1]
+            z_b = min(L["z0_um"] for L in tiers(a))
+            reqs.append({"name": FEED_TEXT, "thick": None,
+                         "dot": (self.X(c_), self.Y(z_b) + 9)})
+        ooc = a.get("out_of_cell") or {}
+        if self.C and ooc.get("ring") == "VOID" and ooc.get("extent_x_mm"):
+            t_ = tiers(a)
+            reqs.append({"name": CLEARANCE_TEXT, "thick": None,
+                         "dot": (self.X(sg * (ooc["extent_x_mm"][1] + self.C / 2) / 2),
+                                 self.Y((t_[0]["z0_um"] + t_[-1]["z1_um"]) / 2))})
         tim = named(a, "tim")
         reqs.append({"name": ("cold plate (schematic) — top cooling boundary: convective "
                               "film on the TIM top, not meshed"),
@@ -778,7 +884,10 @@ class Section:
             "bga": {"layer": bga["name"], "pitch_mm": a["bga"]["pitch_mm"],
                     "sites_legal": a["bga"]["sites_legal"], "height_um": a["bga"]["height_um"],
                     "balls_on_section_row": len(self.sites),
-                    "peripheral_only": bool(self.C)},
+                    "peripheral_only": bool(self.C),
+                    "electrical_role": ("signals, auxiliary rails, mechanical -- NOT the 48 V "
+                                        "HVR feed" if direct_fed(a) else
+                                        "48 V supply + return, signals, mechanical")},
             "pcb": {"layer": board["name"], "thickness_um": board["t_um"],
                     "z0_um": board["z0_um"], "z1_um": board["z1_um"],
                     "annular_frame": bool(self.C)},
@@ -792,14 +901,27 @@ class Section:
         if self.embedded:
             items.update(embedded_hvr=hvr, substrate=sub_d, package_rdl=rdl)
         else:
-            items.update(backside_hvr=hvr, thin_substrate=sub_d, package_hv_rdl=rdl,
+            items.update(backside_hvr=hvr, thin_substrate=sub_d,
                          pcb_cutout={"width_mm": self.C, "air_below_converter_um":
                                      t[0]["z0_um"] - a["z_min_um"]})
+            if direct_fed(a):
+                att = attach_layer(a)
+                items.update(
+                    direct_48v_feed={"what": FEED_TEXT, "illustrative": True,
+                                     "parameter": "R_Z2_direct_feed_loop (swept)"},
+                    vr_attach={"layer": att["name"], "t_um": att["t_um"],
+                               "z0_um": att["z0_um"], "z1_um": att["z1_um"],
+                               "technology": (a.get("attach") or {}).get("technology")}
+                    if att else None,
+                    sidewall_clearance=a.get("out_of_cell"))
+            else:
+                items.update(package_hv_rdl=rdl)
         return {"architecture": a["arch"], "label": a["label"], "items": items}
 
     def draw(self) -> tuple:
         """(geometry svg, arrows svg, tags svg)."""
-        geo = (self.bands() + self.balls() + self.air() + self.sheet() + self.cold_plate())
+        geo = (self.bands() + self.clearance() + self.balls() + self.air() + self.sheet()
+               + self.cold_plate())
         arr, tg = self.currents()
         return geo, arr, tg
 
@@ -945,7 +1067,7 @@ def exploded_svg(spec) -> str:
                                                     data_figure="exploded",
                                                     data_stamp=STAMP)),
            patterns()]
-    out.append(F.text(28, 40, "Z1 and Z2 stacks, exploded — layer order and component "
+    out.append(F.text(28, 42, "Z1 and Z2 stacks, exploded — layer order and component "
                       "ownership from the measured spec", 24, weight="bold", halo=False))
     out.append(stamp(28, 56, STAMP))
     out.append(F.text(28, 108, "Slab thicknesses and gaps are illustrative; every label gives "
@@ -987,7 +1109,8 @@ def exploded_svg(spec) -> str:
         sub0 = substrate(a)[0]
         seq = [("layer", L) for L in sorted(a["layers"], key=lambda L: (L["z0_um"], L["z1_um"]))]
         i_sub = next(i for i, (_, L) in enumerate(seq) if L is sub0)
-        seq.insert(i_sub, ("sheet", sub0))
+        if not direct_fed(a):                  # a direct-fed Z2 has no package 48 V sheet
+            seq.insert(i_sub, ("sheet", sub0))
         seq.append(("cold", None))
         hs = [sheet_h if t == "sheet" else cold_h if t == "cold" else slab_h(L["t_um"])
               for t, L in seq]
@@ -1020,6 +1143,18 @@ def exploded_svg(spec) -> str:
                 pieces = lateral(a, L)
                 hw = max(abs(v) for pc in pieces for v in pc)
                 fill = F.MAT["fill"] if k.startswith("tier_") else BAND_FILL[k]
+                if direct_fed(a) and "hs" in L["roles"] and order > 0:
+                    # the direct 48 V feed, in the gap below the deepest (high-side) tier
+                    fx0, fy0 = P(cx, 0.0, 0.0, zb - gap)
+                    fx1, fy1 = P(cx, 0.0, 0.0, zb)
+                    out.append(f'<line x1="{num(fx0)}" y1="{num(fy0)}" x2="{num(fx1)}" '
+                               f'y2="{num(fy1)}" stroke="{F.I48}" stroke-width="3" '
+                               f'{attrs(data_feature="direct-48v-feed")}/>\n')
+                    out.append(F.rect(fx1 - 16, (fy0 + fy1) / 2 - 7, 32, 14, "#fff4e5", F.I48,
+                                      1.4, 'rx="3"'))
+                    labels.append((((fx0 + fx1) / 2 + 16, (fy0 + fy1) / 2),
+                                   "direct 48 V feed through the PCB opening (illustrative; "
+                                   "connector not specified)", None))
                 if k == "interface":
                     fill = F.MAT["solder"]
                 ex = attrs(data_layer=L["name"], data_order=order,
@@ -1047,6 +1182,11 @@ def exploded_svg(spec) -> str:
                         for yc in cells:
                             out.append(pg(quad(cx, xc - side / 2, xc + side / 2, yc - side / 2,
                                                yc + side / 2, zb + h), cf, sw=0.4))
+                elif k == "attach":
+                    for xc in cells:
+                        for yc in cells:
+                            out.append(pg(quad(cx, xc - side / 2, xc + side / 2, yc - side / 2,
+                                               yc + side / 2, zb + h), PILLAR, sw=0.4))
                 elif k == "bga":
                     pitch = a["bga"]["pitch_mm"]
                     n = int(Wm / 2 / pitch + 1e-9)
@@ -1063,7 +1203,7 @@ def exploded_svg(spec) -> str:
         out.append("</g>\n")
         reqs = [{"name": n, "thick": t, "dot": d} for d, n, t in labels]
         x_edge = cx + Wm * s_iso * cos30 + 16
-        out.append(leaders(reqs, "right", x_edge, x_edge + 30, 330, y_top - 12, base + 6))
+        out.append(leaders(reqs, "right", x_edge, x_edge + 31, 330, y_top - 12, base + 6))
         for j, s in enumerate(wrap(key_message(a), 640, FS + 1, True)):
             out.append(F.text(cx + 150, Hc - 34 + j * 18, s, FS + 1, "middle", "bold", colc,
                               halo=False))
@@ -1140,12 +1280,19 @@ def cell_zoom_svg(spec) -> str:
             h = max(L["t_um"], Z_FLOOR_UM) * k
             ys[L["name"]] = (cum - h, cum)
             cum -= h
+        att = attach_layer(a)
+        if att is not None:                     # the VR attach above the land-side RDL
+            h = max(att["t_um"], Z_FLOOR_UM) * k
+            ys[att["name"]] = (cum - h, cum)
+            cum -= h
         y_top = cum
         colc = F.Z1 if emb else F.Z2
         out.append(F.text(x0 + w / 2 + 120, 150, a["label"].replace(" -- ", " — "), 17, "middle",
                           "bold", colc, halo=False))
         up = ("↑ microbumps, then the die" if emb else "↑ substrate TSVs, then the die")
-        dn = ("↓ substrate TSVs" if emb else "↓ air in the PCB opening")
+        dn = ("↓ substrate TSVs" if emb else
+              "↓ direct 48 V feed through the PCB opening (illustrative)" if direct_fed(a)
+              else "↓ air in the PCB opening")
         out.append(F.text(x0 + w / 2 + 24, y_top - 12, up, FS, "middle", fill=F.MUTED, halo=False))
         out.append(F.text(x0 + w / 2 + 24, y_base + 22, dn, FS, "middle", fill=F.MUTED,
                           halo=False))
@@ -1169,24 +1316,333 @@ def cell_zoom_svg(spec) -> str:
             nm = plain_name(a, L)
             reqs.append({"name": f"{n} × {nm}" if n else nm, "thick": fmt_um(L["t_um"]),
                          "dot": (x0 + w - 6, (y1 + y2) / 2)})
+        if att is not None:
+            y1, y2 = ys[att["name"]]
+            out.append(F.rect(x0, y1, w, y2 - y1, "url(#pillar)", F.INK, 0.7,
+                              attrs(data_layer=att["name"], data_z0_um=repr(float(att["z0_um"])),
+                                    data_z1_um=repr(float(att["z1_um"])))))
+            reqs.append({"name": plain_name(a, att), "thick": fmt_um(att["t_um"]),
+                         "dot": (x0 + w - 6, (y1 + y2) / 2)})
         out.append("</g>\n")
         # where 48 V enters and 1 V leaves (schematic, inside the cell's free left margin)
         hs_y = sum(ys[by_role(a, "hs")["name"]]) / 2
         ind_y = sum(ys[by_role(a, "ind")["name"]]) / 2
         x48, x1v = x0 + 14, x0 + 32
-        if emb:
+        if emb or direct_fed(a):
+            # Z1 (from the substrate TSVs) and the direct-fed Z2 (from the external feed)
+            # both take 48 V at the high-side RDL, from below
             out.append(harrow([(x48, y_base + 34), (x48, hs_y)], "48", 2.5))
             out.append(tag(x48 + 8, y_base + 46, "48 V in", F.I48, "end"))
         else:
-            out.append(harrow([(x48, y_top - 30), (x48, hs_y)], "48", 2.5))
+            out.append(harrow([(x48, y_top - 31), (x48, hs_y)], "48", 2.5))
             out.append(tag(x48 + 8, y_top - 42, "48 V in", F.I48, "end"))
-        out.append(harrow([(x1v, ind_y), (x1v, y_top - 30)], "1v", 2.5))
-        out.append(tag(x1v - 6, y_top - 42 - (0 if emb else 28), "1 V out", F.I1V,
-                       "start" if emb else "end"))
+        out.append(harrow([(x1v, ind_y), (x1v, y_top - 31)], "1v", 2.5))
+        out.append(tag(x1v - 6, y_top - 42, "1 V out", F.I1V, "start" if emb else "end"))
         xe = x0 + w + 14
-        out.append(leaders(reqs, "right", xe, xe + 30, (Wc - 12 if col else x0 + 690) - xe - 30,
+        out.append(leaders(reqs, "right", xe, xe + 31, (Wc - 12 if col else x0 + 690) - xe - 31,
                            y_top - 4, y_base + 4))
         out.append(F.scale_bar(x0, y_base + 66, w, f"cell side {side:.4g} mm (from the spec)", FS))
+    out.append(F.svg_close())
+    return "".join(out)
+
+
+# =================================================================== power path
+def _pp_numbers():
+    """Currents and counts for the power-path figure, from the artifacts (never typed)."""
+    D = R / "research" / "final_closure"
+    out = {"i48": None, "n_bga": None, "attach": None}
+    try:
+        fin = json.loads((D / "final_results.json").read_text())
+        z1 = next(f for f in fin if f["arch"] == "Z1" and f["scenario"] == "HV_S0")
+        out["i48"] = z1["I_48_avg_a"]
+    except (OSError, StopIteration, KeyError, ValueError):
+        pass
+    try:
+        out["n_bga"] = json.loads((D / "package_network.json").read_text())["matched_count"]
+    except (OSError, KeyError, ValueError):
+        pass
+    try:
+        out["attach"] = json.loads((D / "z2_direct_feed_architecture.json").read_text())[
+            "vr_attach"]
+    except (OSError, KeyError, ValueError):
+        pass
+    return out
+
+
+def power_path_svg(spec, focus=None) -> str:
+    """Z1 vs Z2 power paths, schematic. Layer ORDER and roles come from the spec; heights
+    are schematic (stamped). It answers: where 48 V enters, what crosses the substrate,
+    where conversion happens, where 1 V begins and how the load returns.
+
+    Layout per panel: supply arrows in a channel LEFT of the stack (48 V up to the
+    converter input, 1 V up from its output; the converter height between them carries
+    the conversion bracket), the return in a channel RIGHT of the stack, and, for Z2, the
+    PCB frame with its signal/mechanical BGA beyond the return channel."""
+    num_ = _pp_numbers()
+    A = spec["architectures"]
+    if not (not direct_fed(A["Z1"]) and direct_fed(A["Z2"])):
+        raise ValueError("power-path figure expects a BGA-fed Z1 and a direct-fed Z2")
+    i48 = num_["i48"]
+    i48_txt = f"about {i48:.0f} A" if i48 else "low current"
+    nb = num_["n_bga"]
+    att = num_["attach"] or {}
+    Wc, Hc = 1600, 900
+    mk = "".join(f'<marker id="pp{k}" viewBox="0 0 12 12" refX="10.2" refY="6" '
+                 f'markerWidth="3.6" markerHeight="3.6" orient="auto">'
+                 f'<path d="M0,0 L12,6 L0,12 z" fill="{c}"/></marker>'
+                 for k, (c, _m) in ARROW_KINDS.items())
+    out = [F.svg_open(Wc, Hc, "Z1 vs Z2 power paths",
+                      "Where 48 V enters, what crosses the substrate, where conversion happens",
+                      attrs(data_spec_sha256=spec["sha256"], data_figure="power-path",
+                            data_schematic="true")),
+           patterns(), f"<defs>{mk}</defs>\n"]
+    title = {None: "Where does the power go? Z1 vs Z2",
+             "48": "Where does 48 V go? Z1 vs Z2",
+             "1v": "After conversion, where does 1 V go? Z1 vs Z2"}[focus]
+    out.append(F.text(24, 42, title, 28, weight="bold", halo=False))
+    out.append(stamp(24, 54, "SCHEMATIC — NOT TO SCALE (layer order from the measured spec)", FS))
+    BH = 60.0
+    THIN = ("rdl_out", "rdl_hv", "attach", "top")
+    y0 = 800.0
+
+    def stack(x, w, blocks, hi=None):
+        pos, y = {}, y0
+        for key, lab, fill, tcol in blocks:
+            h = BH * (0.6 if key in THIN else 1.0)
+            border = (F.I48 if hi == "48" else F.I1V) if key == "sub" else F.INK
+            sw_ = 3.2 if key == "sub" else 0.9
+            out.append(F.rect(x, y - h, w, h, fill, border, sw_, attrs(data_block=key)))
+            if key == "attach":                 # label on a white plate over the pattern
+                tw_ = tw(lab, FS, True) + 16
+                out.append(F.rect(x + w / 2 - tw_ / 2, y - h / 2 - 11, tw_, 21, "#ffffff",
+                                  "none", 0, 'opacity="0.92" rx="3"'))
+            lines = wrap(lab, w - 16, FS + 1)
+            for j, ln in enumerate(lines):
+                out.append(F.text(x + w / 2, y - h / 2 + (j - (len(lines) - 1) / 2) * 17 + 5,
+                                  ln, FS + 1 if key != "attach" else FS, "middle",
+                                  "bold" if j == 0 else "normal", tcol, halo=False))
+            pos[key] = (y - h, y)
+            y -= h
+        return pos
+
+    def arr(x, ya, yb, k, sw=5.0):
+        col = ARROW_KINDS[k][0]
+        dash = 'stroke-dasharray="9,6" ' if k == "ret" else ""
+        # a focused figure keeps its own rail at full strength and fades the others
+        op = "" if (focus is None or k == focus) else 'opacity="0.18" '
+        return (f'<path d="M{num(x)},{num(ya)} L{num(x)},{num(yb)}" stroke="{col}" '
+                f'stroke-width="{sw}" fill="none" {dash}{op}marker-end="url(#pp{k})" '
+                f'{attrs(data_current=k, data_focus=str(focus))}/>\n')
+
+    def lab(x, y, t_, col, anc="end", width=170, k=None):
+        if focus is not None and k is not None and k != focus:
+            return
+        for j, ln in enumerate(wrap(t_, width, FS + 1, True)):
+            out.append(F.text(x, y + j * 18, ln, FS + 1, anc, "bold", col, halo=False))
+
+    def bracket(x, ya, yb, txt):
+        out.append(poly([(x + 8, ya), (x, ya), (x, yb), (x + 8, yb)], F.INK, 1.6))
+        out.append(F.text(x - 8, (ya + yb) / 2 + 5, txt, FS + 1, "end", "bold", halo=False))
+
+    # ---------------- Z1 (panel 0 .. 800)
+    x1, w1 = 260, 400
+    out.append(F.text(x1 + w1 / 2, 104, "Z1 — converter embedded above the substrate", 21,
+                      "middle", "bold", F.Z1, halo=False))
+    out.append(F.text(x1 + w1 / 2, 128, "48 V crosses the package and the substrate BEFORE "
+                      "conversion", FS + 1, "middle", "bold", F.I48, halo=False))
+    p1 = stack(x1, w1, [
+        ("pcb", "PCB — 48 V platform supply", F.MAT["pcb"], "#ffffff"),
+        ("bga", (f"BGA 48 V power field: {nb} + {nb} balls (plus signals)" if nb
+                 else "BGA 48 V power field"), F.MAT["solder"], F.INK),
+        ("rdl_hv", "package 48 V RDL sheet", "#fde2c8", F.INK),
+        ("sub", f"Si substrate — 48 V TSV field ({i48_txt})", F.MAT["silicon"], F.INK),
+        ("hs", "high-side GaN", F.MAT["gan"], "#ffffff"),
+        ("caps", "flying capacitors", F.MAT["caps"], F.INK),
+        ("ls", "low-side GaN", F.MAT["gan"], "#ffffff"),
+        ("ind", "inductors + Cout", F.MAT["inductor"], "#ffffff"),
+        ("rdl_out", "1 V output RDL", F.MAT["rdl"], F.INK),
+        ("top", "microbumps", F.MAT["fill"], F.INK),
+        ("die", "compute die — 1 V, about 1 kA", F.MAT["die"], "#ffffff")], hi="48")
+    a1 = x1 - 34
+    out.append(arr(a1, p1["pcb"][1] - 6, p1["hs"][1] - 2, "48"))
+    out.append(arr(a1, p1["ind"][0] + 2, p1["die"][1] - 4, "1v"))
+    out.append(arr(x1 + w1 + 34, p1["die"][1] - 2, p1["pcb"][1] - 6, "ret", 3.6))
+    lab(a1 - 14, (p1["pcb"][1] + p1["hs"][1]) / 2, "48 V in", F.I48, k="48")
+    lab(a1 - 14, (p1["ind"][0] + p1["die"][1]) / 2 - 8, "1 V out to the die", F.I1V, k="1v")
+    lab(x1 + w1 + 48, (p1["die"][1] + p1["pcb"][1]) / 2, "return", F.IRET, "start", 90,
+        k="ret")
+    bracket(a1 - 4, p1["ind"][0], p1["hs"][1], "conversion")
+
+    # ---------------- Z2 (panel 800 .. 1600)
+    x2, w2 = 1010, 400
+    out.append(F.text(x2 + w2 / 2, 104, "Z2 — direct-fed converter below the substrate", 21,
+                      "middle", "bold", F.Z2, halo=False))
+    out.append(F.text(x2 + w2 / 2, 128, "only 1 V crosses the substrate, AFTER conversion",
+                      FS + 1, "middle", "bold", F.I1V, halo=False))
+    p2 = stack(x2, w2, [
+        ("feed", "direct 48 V feed through the PCB opening (ILLUSTRATIVE — connector not "
+                 "specified)", "#fff4e5", F.I48),
+        ("hs", "high-side GaN (deepest)", F.MAT["gan"], "#ffffff"),
+        ("caps", "flying capacitors", F.MAT["caps"], F.INK),
+        ("ls", "low-side GaN", F.MAT["gan"], "#ffffff"),
+        ("ind", "inductors + Cout (nearest the substrate)", F.MAT["inductor"], "#ffffff"),
+        ("rdl_out", "1 V output / attach RDL", F.MAT["rdl"], F.INK),
+        ("attach", "Cu-pillar attach: regulator → substrate (1 V only)", "url(#pillar)",
+         F.INK),
+        ("sub", "Si substrate — 1 V VDD + GND TSV fields (about 1 kA)", F.MAT["silicon"],
+         F.INK),
+        ("top", "top 1 V RDL + microbumps", F.MAT["fill"], F.INK),
+        ("die", "compute die — 1 V, about 1 kA", F.MAT["die"], "#ffffff")], hi="1v")
+    a2 = x2 - 34
+    out.append(arr(a2, p2["feed"][1] - 4, p2["hs"][1] - 2, "48"))
+    out.append(arr(a2, p2["ind"][0] + 2, p2["die"][1] - 4, "1v"))
+    out.append(arr(x2 + w2 + 34, p2["die"][1] - 2, p2["feed"][1] - 6, "ret", 3.6))
+    lab(a2 - 14, (p2["feed"][0] + p2["hs"][1]) / 2, "48 V in, directly", F.I48, k="48")
+    lab(a2 - 14, (p2["ind"][0] + p2["die"][1]) / 2 - 8, "1 V out to the die", F.I1V, k="1v")
+    lab(x2 + w2 + 48, p2["die"][0] + 18, "return: TSVs → regulator → feed", F.IRET, "start",
+        130, k="ret")
+    bracket(a2 - 4, p2["ind"][0], p2["hs"][1], "conversion")
+    # PCB frame + signal/mechanical BGA beside the opening (beyond the return channel)
+    fx, fw = x2 + w2 + 62, 112
+    f_top = p2["ind"][0]
+    out.append(F.rect(fx, f_top, fw, p2["feed"][1] - f_top, F.MAT["pcb"], F.INK, 0.9,
+                      attrs(data_block="pcb-frame")))
+    for j in range(3):
+        out.append(f'<circle cx="{num(fx + 21 + j * 36)}" cy="{num(f_top - 9)}" r="8.5" '
+                   f'fill="{BGA_SIGNAL}" stroke="{F.INK}" stroke-width="0.8" '
+                   f'{attrs(data_bga_role="signal-mechanical")}/>\n')
+    out.append(F.text(fx + fw / 2, f_top + 31, "PCB frame", FS, "middle", "bold", "#ffffff",
+                      halo=False))
+    out.append(F.text(fx + fw / 2, f_top + 48, "around the", FS, "middle", "normal", "#ffffff",
+                      halo=False))
+    out.append(F.text(fx + fw / 2, f_top + 64, "opening", FS, "middle", "normal", "#ffffff",
+                      halo=False))
+    for j, ln in enumerate(wrap("BGA: signals, auxiliary rails, mechanical support — NOT the "
+                                "48 V feed", 150, FS, True)):
+        out.append(F.text(fx + fw / 2, f_top - 92 + j * 17, ln, FS, "middle", "bold",
+                          F.MUTED, halo=False))
+    # legend
+    lg = [("48", None, "48 V supply"), ("1v", None, "1 V supply"),
+          ("ret", None, "return (dashed)"), ("fill", BGA_SIGNAL, "BGA ball: signal / mechanical"),
+          ("fill", F.MAT["solder"], "BGA ball in Z1's 48 V power field"),
+          ("fill", PILLAR, "Cu pillar (Z2 regulator attach)")]
+    out.append(legend_block(260, 830, lg, 3, 360))
+    out.append(F.text(24, Hc - 11, "Arrows show where current flows, not an electrical series "
+                      "chain: the converter has switch-node, flying-capacitor and phase "
+                      "connections between its tiers.", FS, fill=F.MUTED, halo=False))
+    out.append(F.svg_close())
+    return "".join(out)
+
+
+# =================================================================== VR attach detail
+#: how much of the TSV depth the magnified attach view shows (a drawing choice, um)
+WIN_TSV_UM = 48.0
+
+
+def attach_detail_svg(spec) -> str:
+    """The Z2 VR-to-substrate attach, magnified. Pillar diameter, pitch and heights come
+    from the architecture spec (CLOSE_ANALOG literature geometry); the TSV diameter and
+    pitch from the spec's TSV field. Schematic in that the landing pads are drawn but not
+    resolved in the model (their spreading sits in the TSV two-end spreading term), and
+    only the top WIN_TSV_UM of the substrate-deep TSVs is shown."""
+    a = spec["architectures"]["Z2"]
+    att = a.get("attach") or {}
+    t = a["tsv"]
+    if not att:
+        raise ValueError("Z2 has no VR attach in the spec")
+    d, pitch = float(att["d_um"]), float(att["pitch_um"])
+    h_cu, h_cap = float(att["h_cu_um"]), float(att["h_cap_um"])
+    tsv_d, tsv_p = float(t["d_um"]), float(t["pitch_um"])
+    lay = {L["name"]: L for L in a["layers"]}
+    t_rdl = float(next(L["t_um"] for n, L in lay.items() if "land_side_attach_rdl" in n))
+    t_sub = sum(float(L["t_um"]) for L in a["layers"] if "tsv_tile" in L["materials"])
+    side = float(a["cells"]["side_mm"])
+    i_pillar = 1000.0 / a["cells"]["n"] / float(att["bumps_per_rail_per_cell"])
+    k = 6.0                                       # px per um, both axes
+    Wc, Hc = 1600, 900
+    x0, win = 90.0, 2 * tsv_p                     # one VDD and one GND TSV
+    X = (lambda um: x0 + um * k)
+    out = [F.svg_open(Wc, Hc, "Z2 regulator-to-substrate attach",
+                      "Cu pillar + solder cap + underfill; 1 V supply and return only",
+                      attrs(data_spec_sha256=spec["sha256"], data_figure="vr-attach-detail",
+                            data_px_per_um=f"{k:g}", data_schematic="true")),
+           patterns()]
+    out.append(F.text(24, 42, "The electrical bridge: regulator → package substrate (Z2)", 26,
+                      weight="bold", halo=False))
+    out.append(F.text(24, 68, "Only the 1 V supply and its return cross here, about 1 kA in "
+                      "total; the 48 V input never does — it enters the regulator from below.",
+                      FS + 2, fill=F.Z2, weight="bold", halo=False))
+    out.append(stamp(24, 82, f"SCHEMATIC MAGNIFICATION — dimensions from the spec; "
+                     f"{WIN_TSV_UM:g} of the {t_sub:g} µm TSV shown; landing pads not resolved "
+                     "in the model", FS))
+    y_ind = 790.0
+    y_rdl_bot = y_ind - 46
+    y_rdl_top = y_rdl_bot - t_rdl * k
+    y_cap_top = y_rdl_top - h_cap * k             # the solder cap wets the regulator RDL
+    y_cu_top = y_cap_top - h_cu * k               # the Cu pillar rises to the substrate pad
+    y_pad_top = y_cu_top - 4 * k                  # landing pad (schematic)
+    y_sub_top = y_pad_top - WIN_TSV_UM * k
+    out.append(F.rect(X(0), y_rdl_bot, win * k, y_ind - y_rdl_bot, F.MAT["inductor"], F.INK, 0.8))
+    out.append(F.text(X(win / 2), y_rdl_bot + 29, "regulator: inductors + output capacitors",
+                      FS + 1, "middle", "bold", "#ffffff", halo=False))
+    out.append(F.rect(X(0), y_rdl_top, win * k, y_rdl_bot - y_rdl_top, F.MAT["rdl"], F.INK, 0.8))
+    out.append(F.rect(X(0), y_cu_top, win * k, y_rdl_top - y_cu_top, F.MAT["fill"], F.INK, 0.6))
+    out.append(F.rect(X(0), y_sub_top, win * k, y_pad_top - y_sub_top, F.MAT["silicon"], F.INK,
+                      0.8))
+    for i in range(2):
+        xc = (i + 0.5) * tsv_p
+        pol = "VDD" if i == 0 else "GND"
+        out.append(F.rect(X(xc - tsv_d / 2), y_sub_top, tsv_d * k, y_pad_top - y_sub_top,
+                          F.MAT["tsv"], F.INK, 0.6, attrs(data_tsv=pol)))
+        out.append(F.rect(X(xc - tsv_p / 2 + 2), y_pad_top, (tsv_p - 4) * k, y_cu_top - y_pad_top,
+                          F.MAT["rdl"], F.INK, 0.5, attrs(data_landing_pad=pol)))
+        out.append(F.text(X(xc), y_sub_top + 42, f"{pol} TSV", FS + 2, "middle", "bold",
+                          "#ffffff", halo=False))
+        for j in (-1, 1):                        # 2 of the 2 x 2 pillars under each TSV
+            px_ = xc + j * pitch / 2
+            out.append(F.rect(X(px_ - d / 2), y_cu_top, d * k, h_cu * k, PILLAR, F.INK, 0.6,
+                              attrs(data_pillar=pol)))
+            out.append(F.rect(X(px_ - d / 2) - 3, y_cap_top, d * k + 6, h_cap * k,
+                              F.MAT["solder"], F.INK, 0.6, 'rx="8" ' + attrs(data_cap=pol)))
+            kk = "1v" if pol == "VDD" else "ret"
+            ya, yb = (y_rdl_top - 6, y_sub_top + 70) if pol == "VDD" else \
+                (y_sub_top + 70, y_rdl_top - 6)
+            out.append(arrow([(X(px_), ya), (X(px_), yb)], kk, 3.0))
+    xr = X(win) + 34
+
+    def dim(y_a, y_b, txt, at=None):
+        out.append(poly([(xr, y_a), (xr + 11, y_a)], F.INK, 1.0))
+        out.append(poly([(xr, y_b), (xr + 11, y_b)], F.INK, 1.0))
+        out.append(poly([(xr + 5.5, y_a), (xr + 5.5, y_b)], F.INK, 1.2))
+        lines = wrap(txt, Wc - xr - 42, FS + 1)
+        yc = (y_a + y_b) / 2 if at is None else at
+        for j, ln in enumerate(lines):
+            out.append(F.text(xr + 21, yc + 5 + (j - (len(lines) - 1) / 2) * 18,
+                              ln, FS + 1, halo=False))
+    dim(y_sub_top, y_pad_top, f"Si package substrate: 1 V VDD and GND TSVs, Ø{tsv_d:g} µm at "
+        f"{tsv_p:g} µm pitch, {t['n_per_cell']} per cell", at=y_pad_top - 42)
+    dim(y_pad_top, y_cu_top, "TSV landing pads (schematic)")
+    dim(y_cu_top, y_cap_top, f"Cu pillar {h_cu:g} µm tall, Ø{d:g} µm, {pitch:g} µm pitch")
+    dim(y_cap_top, y_rdl_top, f"solder cap {h_cap:g} µm; underfill between the pillars")
+    dim(y_rdl_top, y_rdl_bot, f"regulator 1 V output / attach RDL, {t_rdl:g} µm")
+    facts = [f"{att.get('bumps_per_rail_per_cell')} pillars per rail in each {side:.2f} mm cell "
+             f"(VDD/GND checkerboard): about {round((tsv_p / pitch) ** 2):d} under every TSV",
+             f"1 kA / {a['cells']['n']} cells / {att.get('bumps_per_rail_per_cell')} ≈ "
+             f"{1e3 * i_pillar:.0f} mA per pillar; no current-density allowable is claimed",
+             f"geometry from Au et al., ECTC 2016 (Ø{d:g} µm Cu pillars at {pitch:g} µm pitch, "
+             f"{h_cap:g} µm cap): a CLOSE ANALOG, not this package",
+             f"height = the {att.get('h_total_um'):g} µm attach allowance of the clearance "
+             "budget; other heights and all-solder bumps are class-B cases"]
+    yf = 200.0
+    for j, ln in enumerate(facts):
+        for jj, l2 in enumerate(wrap(ln, Wc - xr - 60, FS + 1)):
+            out.append(F.text(xr + 24, yf + j * 48 + jj * 18, ("• " if jj == 0 else "   ") + l2,
+                              FS + 1, halo=False))
+    lg = [("1v", None, "1 V supply (up the VDD pillars)"),
+          ("ret", None, "1 V return (down the GND pillars)"),
+          ("fill", PILLAR, "Cu pillar"), ("fill", F.MAT["solder"], "solder cap"),
+          ("fill", F.MAT["fill"], "underfill"), ("fill", F.MAT["tsv"], "Cu TSV")]
+    out.append(legend_block(xr, 830, lg, 3, 270))
     out.append(F.svg_close())
     return "".join(out)
 
@@ -1197,14 +1653,17 @@ def build_all(spec=None) -> dict:
     spec = spec or load_spec()
     return {"Z1": cross_section_svg(spec, "Z1"), "Z2": cross_section_svg(spec, "Z2"),
             "pair": comparison_svg(spec), "exploded_svg": exploded_svg(spec),
-            "cell": cell_zoom_svg(spec)}
+            "cell": cell_zoom_svg(spec), "power_path": power_path_svg(spec),
+            "power_path_48": power_path_svg(spec, "48"), "power_path_1v": power_path_svg(spec, "1v"),
+            "attach": attach_detail_svg(spec)}
 
 
 def main():
     spec = load_spec()
     figs = build_all(spec)
     FIGS.mkdir(parents=True, exist_ok=True)
-    for k in ("Z1", "Z2", "pair", "cell"):
+    for k in ("Z1", "Z2", "pair", "cell", "power_path", "power_path_48", "power_path_1v",
+              "attach"):
         OUT[k].write_text(figs[k])
         print("wrote", OUT[k].relative_to(R))
     png = render_png(figs["exploded_svg"], 1600)

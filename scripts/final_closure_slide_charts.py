@@ -202,7 +202,7 @@ LABEL = {"tsv_bulk": "TSV field, bulk k", "tsv_tile_kz": "TSV tile k_z",
          "tsv_tile_kx": "TSV tile k_x", "rdl_tier_kx": "RDL tier k_x (grid laminate)",
          "rdl_tier_kz": "RDL tier k_z (series form)",
          "pkg_rdl_Z1": "Package 48 V RDL, Z1 (MOOSE)",
-         "pkg_rdl_Z2": "Package 48 V RDL, Z2 (MOOSE)",
+         "pkg_rdl_Z2": "Package 48 V RDL, Z2 BGA-fed control (MOOSE)",
          "thermal_column_aedt_Z1": "Thermal unit cell, Z1 (AEDT)",
          "thermal_column_aedt_Z2": "Thermal unit cell, Z2 (AEDT)",
          "thermal_column_moose_Z1": "Thermal unit cell, Z1 (MOOSE)",
@@ -217,6 +217,16 @@ SUP = str.maketrans("0123456789-", "⁰¹²³⁴⁵⁶⁷⁸⁹⁻")
 def sci(v):
     e = int(math.floor(math.log10(v)))
     return f"{v / 10 ** e:.1f}×10{str(e).translate(SUP)}"
+
+
+def _tfmt(v):
+    if v < 1e-3:
+        return f"{v * 1e6:.1f} µs"
+    if v < 1.0:
+        return f"{v * 1e3:.0f} ms"
+    if v < 120:
+        return f"{v:.0f} s"
+    return f"{v / 60:.0f} min"
 
 
 def accuracy_runtime_split():
@@ -253,15 +263,31 @@ def accuracy_runtime_split():
                ha="left", color=S.INK)
         b = ax[row, 1]
         vv = [s if isinstance(s, float) else np.nan for s in sp]
-        b.barh(y, vv, height=0.45, color=S.ACCENT, left=0 if not log else None)
         if log:
+            # model reduction: both ABSOLUTE runtimes on one log time axis, no ratio
+            # (a closed form against a field solve is not a speedup claim; Part 35)
+            pt = [r.get("production_runtime_s") for r in grp][::-1]
+            rt_ = [r.get("reference_runtime_s") for r in grp][::-1]
+            for yi, a_, b_ in zip(y, pt, rt_):
+                if isinstance(a_, (int, float)) and isinstance(b_, (int, float)):
+                    b.plot([a_, b_], [yi, yi], color="#c3cad3", lw=1.2, zorder=1)
+                    b.scatter([a_], [yi], s=55, color=S.ACCENT, zorder=3)
+                    b.scatter([b_], [yi], s=55, color=S.INK, marker="s", zorder=3)
+                    b.text(a_, yi + 0.28, _tfmt(a_), ha="center", fontsize=9.5,
+                           color=S.ACCENT)
+                    b.text(b_, yi + 0.28, _tfmt(b_), ha="center", fontsize=9.5,
+                           color=S.INK)
             b.set_xscale("log")
-            b.set_xlim(1, max(v for v in vv if v == v) * 30)
-            for yi, v in zip(y, vv):
-                if v == v:
-                    b.text(v * 1.4, yi, sci(v) + "×", va="center", fontsize=10.5)
-            b.set_xlabel("runtime ratio, reference / model (log scale)")
+            b.set_xlim(1e-7, 1e4)
+            b.set_xlabel("absolute runtime (s, log scale)")
+            # marker key as real legend handles (the font has no square glyph)
+            from matplotlib.lines import Line2D
+            b.legend([Line2D([], [], ls="", marker="o", ms=7, color=S.ACCENT),
+                      Line2D([], [], ls="", marker="s", ms=7, color=S.INK)],
+                     ["reduced model", "reference solver"], frameon=False, fontsize=10,
+                     loc="lower right", bbox_to_anchor=(1.0, 1.0), ncol=2)
         else:
+            b.barh(y, vv, height=0.45, color=S.ACCENT)
             b.axvline(1, color=S.MUTED, lw=1)
             b.text(1, len(grp) - 0.35, " equal runtime", color=S.MUTED, fontsize=10)
             b.set_xlim(0, max(v for v in vv if v == v) * 1.35)
@@ -271,10 +297,10 @@ def accuracy_runtime_split():
             b.set_xlabel("runtime ratio, reference / production (>1: production faster)")
         b.set_yticks(y, [""] * len(y))
     fig.text(0.01, -0.02, "Timing: warm-up + 3 timed repeats, median wall time, 4 cores "
-             "(AEDT limit); closed-form ratios compare an analytic evaluation with an FE "
-             "solve and are shown on their own log axis. Source: "
-             "research/final_closure/accuracy_speed_matrix.json", fontsize=10,
-             color=S.MUTED)
+             "(AEDT limit; the conjugate CFD is one solve per level). Panel A shows absolute "
+             "runtimes only: a closed form against a field solve is model reduction, not a "
+             "speedup. Source: research/final_closure/accuracy_speed_matrix.json",
+             fontsize=10, color=S.MUTED)
     save(fig, "accuracy_runtime_split.svg", ["accuracy_speed_matrix.json"])
 
 
@@ -465,11 +491,14 @@ def ball_sharing():
         return
     fig, ax = plt.subplots(figsize=(12.5, 4.4))
     n = pn["matched_count"]
+    # package_network.json keys the BGA-fed Z2 network "Z2": it is the CONTROL's network
+    # (the primary, direct-fed Z2 has no package 48 V network)
+    name = {"Z1": "Z1", "Z2": "Z2 BGA-fed control"}
     for k, a in enumerate(("Z1", "Z2")):
         fr = np.sort(np.array(pn["convergence"][f"{a}_supply"]["i_ball_frac"]))[::-1]
         x = np.arange(len(fr)) + (k - 0.5) * 0.38
         ax.bar(x, 100 * fr, width=0.36, color=COL[a],
-               label=f"{a} (solved): peak {100 * fr[0]:.1f} % = "
+               label=f"{name[a]} (solved): peak {100 * fr[0]:.1f} % = "
                      f"{fr[0] * len(fr):.2f}× the equal share")
     ax.axhline(100 / n, color=S.MUTED, lw=1.2)
     ax.text(n - 0.5, 100 / n * 1.06, f"equal sharing 1/{n} = {100 / n:.2f} %", ha="right",
@@ -482,10 +511,78 @@ def ball_sharing():
     save(fig, "ball_sharing.svg", ["package_network.json"])
 
 
+# ------------------------------------------------------------ direct-feed crossover
+def direct_feed_crossover():
+    """Platform-inclusive loss, efficiency and feed loss against the unsourced external
+    loop resistance of the direct-fed Z2 (direct_feed_crossover.json). One quantity per
+    panel on a shared log axis; Z1 as reference lines; scenario by line style; each
+    crossover marked with a dot and named in the legend. The loss and efficiency panels are
+    scaled to the crossover region (curves leave the frame above it). HV-S2 is not drawn:
+    there Z1's operating point is inadmissible and no comparison is made."""
+    cx = J("direct_feed_crossover.json")
+    if not cx:
+        return
+    sc = {k: v for k, v in cx["scenarios"].items()
+          if not v.get("Z1_operating_point_inadmissible")}
+    style = {"HV_S0": "-", "HV_S1": "--"}
+    fig, axes = plt.subplots(1, 3, figsize=(17.5, 5.2), sharex=True)
+    p_lo, p_hi, e_lo = [], [], []
+    for s_, c in sc.items():
+        if s_ not in style:
+            continue
+        sw = [q for q in c["sweep"] if q.get("feasible", True)]   # no operating point above
+        r = np.array([q["R_mohm"] for q in sw])                     # R_max: not drawn
+        rs = c.get("R_star_mohm")
+        lab = SLAB[s_] + (" (headline)" if s_ == "HV_S0" else " (sensitivity)")
+        axes[0].plot(r, [q["P_total_w"] for q in sw], style[s_], color=COL["Z2"], lw=2.4,
+                     label=f"Z2, {lab}" + (f": R* = {rs:.3g} mΩ" if rs else ": no R*"))
+        axes[0].axhline(c["P_Z1_w"], color=COL["Z1"], ls=style[s_], lw=1.8,
+                        label=f"Z1, {lab}")
+        axes[1].plot(r, [100 * q["efficiency"] for q in sw], style[s_],
+                     color=COL["Z2"], lw=2.4)
+        axes[1].axhline(100 * c["efficiency_Z1"], color=COL["Z1"], ls=style[s_], lw=1.8)
+        axes[2].plot(r, [q["P_feed_w"] for q in sw], style[s_], color=COL["Z2"], lw=2.4)
+        p_lo += [c["P_Z1_w"], sw[0]["P_total_w"]]
+        p_hi.append(c["P_Z1_w"])
+        e_lo.append(100 * c["efficiency_Z1"])
+        if rs:
+            for ax in axes[:2]:
+                ax.axvline(rs, color=S.MUTED, ls=style[s_], lw=1.0)
+            axes[0].plot([rs], [c["P_Z1_w"]], "o", ms=9, color=COL["Z2"],
+                         markeredgecolor="white", markeredgewidth=2, zorder=5)
+            axes[1].plot([rs], [100 * c["efficiency_Z1"]], "o", ms=9, color=COL["Z2"],
+                         markeredgecolor="white", markeredgewidth=2, zorder=5)
+    if p_lo:
+        lo, hi = min(p_lo), max(p_hi)
+        axes[0].set_ylim(lo - 0.15 * (hi - lo) - 5, hi + 0.9 * (hi - lo) + 10)
+        axes[1].set_ylim(min(e_lo) - 6, 100 * max(sc[k]["efficiency_Z1"] for k in sc) + 3)
+    axes[0].set_ylabel("platform-to-load loss (W)")
+    axes[0].set_title("total loss (curves leave the frame above R*)", loc="left", fontsize=13)
+    axes[1].set_ylabel("system efficiency (%)")
+    axes[1].set_title("efficiency", loc="left", fontsize=13)
+    axes[2].set_ylabel("external feed loss (W)")
+    axes[2].set_title("feed loss alone", loc="left", fontsize=13)
+    axes[2].set_yscale("log")
+    for ax in axes:
+        ax.set_xscale("log")
+        ax.set_xlabel("R_Z2_direct_feed_loop (mΩ)")
+    # one legend for all three panels (shared colour and line semantics), below them, clear
+    # of every curve and R* line
+    h, lab = axes[0].get_legend_handles_labels()
+    fig.legend(h, lab, frameon=False, fontsize=11, loc="upper center", ncol=4,
+               bbox_to_anchor=(0.5, -0.02))
+    fig.suptitle("Z2 keeps its electrical advantage only while the external 48 V feed loop "
+                 "stays below R* (swept, no value assumed; HV-S2 not drawn: Z1 is "
+                 "inadmissible there)", x=0.01, ha="left", fontsize=14.5, fontweight="bold",
+                 y=1.03)
+    fig.subplots_adjust(wspace=0.32)
+    save(fig, "direct_feed_crossover.svg", ["direct_feed_crossover.json"])
+
+
 def main():
     FIG.mkdir(parents=True, exist_ok=True)
     for f in (s0_cards, scenario_small_multiples, accuracy_runtime_split, local_convergence,
-              die_warpage_maps, et_convergence, joint_map, ball_sharing):
+              die_warpage_maps, et_convergence, joint_map, ball_sharing, direct_feed_crossover):
         f()
         print("wrote", f.__name__)
 

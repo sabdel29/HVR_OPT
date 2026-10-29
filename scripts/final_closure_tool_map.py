@@ -73,10 +73,11 @@ BOXES = [
     dict(id="mesh", lane="inputs", y=438, tools=["In-house structured hex mesher (etm.mesh)"],
          title="etm.mesh (in-house)", body=["one brick mesh for both the",
                                             "thermal and structural runs"]),
-    dict(id="net", lane="production", y=212,
+    dict(id="net", lane="production", y=196,
          tools=["In-house package-network FV solver", "In-house electrical ledger", "SciPy"],
-         title="Electrical network + ledger", body=["in-house Python + SciPy:",
-                                                    "currents and losses per layer"]),
+         title="Electrical network + ledger", body=["in-house FV: Z1 48 V RDL",
+                                                    "and the BGA-fed control;",
+                                                    "ledger: every rail's loss"]),
     dict(id="ccx_t", lane="production", y=366,
          tools=["CalculiX (ccx)", "In-house E-T fixed-point driver"],
          title="CalculiX {v0} · thermal FE", body=["package temperature field,",
@@ -90,7 +91,8 @@ BOXES = [
     dict(id="moose", lane="reference", y=150,
          tools=["MOOSE heat_transfer module (heat_transfer-opt)"],
          title="MOOSE heat_transfer", body=["open-source FE from INL;",
-                                            "re-solves heat + current tests"]),
+                                            "independent current + heat",
+                                            "re-solves of the FV RDL"]),
     dict(id="aedt", lane="reference", y=304,
          tools=["AEDT Mechanical (thermal, structural)", "PyAEDT (ansys.aedt.core)",
                 "Ansys Electronics Desktop 2026 R1"],
@@ -100,7 +102,7 @@ BOXES = [
          title="Closed forms (in-house)", body=["Timoshenko bilayer bending,",
                                                 "a hand-check of CalculiX"]),
     dict(id="vtk", lane="visualisation", y=150, tools=["VTK"], title="VTK {v0}",
-         body=["reads Exodus results; renders", "the RDL field + re-renders"]),
+         body=["visualisation only: renders", "the MOOSE Exodus fields"]),
     dict(id="mpl", lane="visualisation", y=304, tools=["Matplotlib"], title="Matplotlib {v0}",
          body=["draws every chart and field", "image from saved results"]),
     dict(id="deck", lane="visualisation", y=458, tools=["Reveal.js", "Google Chrome (headless)"],
@@ -195,6 +197,10 @@ class LayoutError(ValueError):
 
 
 _GENERIC = {"serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui"}
+#: the exact stack scripts/figstyle.py once set (presentation/prelim_hvr/
+#: VISUAL_TOOL_INVENTORY.md, "Issue found during this inventory"): both renderers fell
+#: back to serif on it
+UNQUOTED_FONT_REAL = "Source Sans 3, Segoe UI, Helvetica, Arial, sans-serif"
 
 
 def css_font_family(stack):
@@ -580,13 +586,15 @@ def selftest():
     except LayoutError as e:
         caught += 1
         print(f"  caught: missing named file: {str(e)[:110]}")
-    # 9. figstyle's own, unquoted font stack must be rejected; the quoted one accepted
+    # 9. the REAL unquoted stack figstyle once carried (VISUAL_TOOL_INVENTORY.md) must be
+    #    rejected; figstyle's current, quoted one accepted
     try:
-        check_font_family(F.FONT)
+        check_font_family(UNQUOTED_FONT_REAL)
         print("  MISSED: unquoted font-family")
     except LayoutError as e:
         caught += 1
         print(f"  caught: unquoted font-family: {str(e)[:110]}")
+    check_font_family(F.FONT)
     check_font_family(css_font_family(F.FONT))
     total = len(cases) + 3
     print(f"real table passes; {caught}/{total} injected violations caught")

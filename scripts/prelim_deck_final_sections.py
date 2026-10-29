@@ -7,12 +7,38 @@ rows the manuscript table prints -- so the deck and the paper cannot disagree.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
 FC = R / "research" / "final_closure"
 EVID = "tool_evidence"
 
+
+
+_FEED_CASE = re.compile(r"R_feed = (\S+) (R\*|mOhm) = (\S+) mOhm")
+
+
+_RDL_CASE = re.compile(r"t_cu=([0-9.]+), occupancy=([0-9.]+)$")
+_RHO_CASE = re.compile(r"rho_c=([0-9.e+-]+)$")
+
+
+def case_plain(plain, c):
+    """Plain words for a class-B case: the direct-feed rows name the loop resistance, the
+    package-network rows the RDL copper or the ball contact resistivity they swept."""
+    m = _FEED_CASE.match(c)
+    if m:
+        k, unit, r = m.groups()
+        return (f"a direct-feed loop of {k} R* ({r} mΩ)" if unit == "R*"
+                else f"a direct-feed loop of {r} mΩ")
+    m = _RDL_CASE.match(c)
+    if m:
+        return (f"a {1000 * float(m.group(1)):g} µm package 48 V RDL at "
+                f"{100 * float(m.group(2)):g} % copper occupancy")
+    m = _RHO_CASE.match(c)
+    if m:
+        return f"a ball contact resistivity of {float(m.group(1)):g} Ω·mm²"
+    return plain.get(c, c.replace("_", " "))
 
 def _local_line():
     """The declared local mesh study in one line, from local_mesh_study.json."""
@@ -201,18 +227,20 @@ under the exact analogy.</p>""",
                "to the rail, uniform pad draw.</p>",
                img_or_note(f"{EVID}/pkg_rdl_moose_Z2/04_field.png", "MOOSE render missing"),
                "MOOSE heat_transfer-opt on its own gmsh mesh — field rendered from MOOSE's "
-               "Exodus output (Z2)",
+               "Exodus output (opening geometry, BGA-fed control)",
                [("Z1 R_eff ours / MOOSE", f"{p1['production_value'] * 1e3:.4f} / "
                                           f"{p1['reference_value'] * 1e3:.4f} mΩ"),
                 ("Z1 error", pct(p1["error"], 3)),
-                ("Z2 R_eff ours / MOOSE", f"{p2['production_value'] * 1e3:.4f} / "
-                                          f"{p2['reference_value'] * 1e3:.4f} mΩ"),
-                ("Z2 error", pct(p2["error"], 3)),
-                ("ours (Z2)", rt(p2, "production")),
-                ("MOOSE (Z2)", rt(p2, "reference"))],
-               "The reduced network reproduces the FE reference to about 0.1 % for both "
-               "architectures. Both are 2-D, so the runtime ratio is solver-to-solver — the "
-               "value of the reduced model is exactness on the sheet problem.",
+                ("control R_eff ours / MOOSE", f"{p2['production_value'] * 1e3:.4f} / "
+                                               f"{p2['reference_value'] * 1e3:.4f} mΩ"),
+                ("control error", pct(p2["error"], 3)),
+                ("ours (control)", rt(p2, "production")),
+                ("MOOSE (control)", rt(p2, "reference"))],
+               "The reduced network reproduces the FE reference to about 0.1 % on both "
+               "geometries: Z1's sheet and the opening geometry that only the BGA-fed control "
+               "uses (the direct-fed Z2 has no package 48 V sheet). Both are 2-D, so the runtime "
+               "ratio is solver-to-solver — the value of the reduced model is exactness on the "
+               "sheet problem.",
                "Do not oversell speed here; the point is that the sheet abstraction is accurate.",
                "reference_pkg_rdl_moose_Z1/Z2.json · MOOSE")
 
@@ -361,12 +389,18 @@ at 43k in this build).</li>
         return
     n1 = next((f.get("n_joint_sites") for f in fin if f["arch"] == "Z1"), "?")
     n2 = next((f.get("n_joint_sites") for f in fin if f["arch"] == "Z2"), "?")
+    xy = {f["arch"]: f.get("critical_joint_xy_mm") for f in fin if f["scenario"] == "HV_S0"}
+    corner = all(v and abs(abs(v[0]) - abs(v[1])) < 1e-9 and abs(v[0]) > 14.0
+                 for v in xy.values())
+    where = ("The outermost lattice corner is critical in both." if corner else
+             "Critical sites (HV-S0): " + "; ".join(
+                 f"{a} at ({v[0]:.1f}, {v[1]:.1f}) mm" for a, v in sorted(xy.items()) if v))
     S(f"""<h2>Where is the critical joint? Searched, not assumed</h2>
 <div class="figwrap"><img src="figs/final_joint_map.svg" alt="joint map"></div>
 <p>In-plane relative displacement across the BGA layer at <strong>every legal site</strong> —
-{n1} for Z1, {n2} for Z2. The outermost lattice corner is critical in both.</p>""",
-      "The corner being critical is a RESULT here. The +x corners rank first: they are the "
-      "hotter, downstream end of the cold plate.", "final_results.json · joint_search")
+{n1} for Z1, {n2} for Z2 (the mechanical BGA field: every physically present site). {where}</p>""",
+      "Where the critical joint sits is a RESULT of the all-site search, read from the "
+      "production case files.", "final_results.json · joint_search")
 
     def g(a, s, k):
         return next((x.get(k) for x in fin if x["arch"] == a and x["scenario"] == s), None)
@@ -389,7 +423,12 @@ load change written as its own 3 s step, block-order extraction (DEFECT #65); th
 reproduces its published control. † joint above the Norton card's 125 °C calibration — extrapolation.
 ‡ at or above the SAC305 melting onset (about 217 °C): not an admissible operating point.
 <strong>Response only; no cycles to failure are computed</strong> (Darveaux, 10.1115/1.1413764).</p>""",
-      "Z2's response is larger wherever both converge." +
+      ("; ".join(f"{s.replace('_', '-')}: "
+                 + ("Z2 larger" if g('Z2', s, 'd_eps_in_per_cycle') > g('Z1', s, 'd_eps_in_per_cycle')
+                    else "Z1 larger")
+                 for s in ("HV_S0", "HV_S1", "HV_S2")
+                 if g('Z1', s, 'd_eps_in_per_cycle') and g('Z2', s, 'd_eps_in_per_cycle'))
+       + " (point values; the ranking rule with U is on the main slide).") +
       (f" Not converged, reported as such: {', '.join(nc)}." if nc else ""),
       "local_solder_HV_S*.json · final_results.json")
 
@@ -413,11 +452,12 @@ def final_results(S):
 <div><div class="v" style="color:var(--z2)">{g('Z2','HV_S0','die_warpage_pv_um'):.1f} µm</div><div class="l">Z2 die warpage</div></div>
 <div><div class="v" style="color:var(--z1)">{g('Z1','HV_S0','du_c_um'):.2f} µm</div><div class="l">Z1 joint driver</div></div>
 <div><div class="v" style="color:var(--z2)">{g('Z2','HV_S0','du_c_um'):.2f} µm</div><div class="l">Z2 joint driver</div></div></div>
-<p style="margin-top:.6em">Matched {pn.get('matched_count')} balls per rail, converged package
-networks, converged E–T fixed point, all-site joint search, production mesh
+<p style="margin-top:.6em">Z1: matched {pn.get('matched_count')} balls per rail on the converged
+package network. Z2: direct-fed, package-internal loss (its external feed is the requirement
+R*). Converged E–T fixed point, all-site joint search, production mesh
 {fin[0].get('mesh_label', '').replace('h_xy', 'h<sub>xy</sub>')}. <span class="chip ok">CURRENT</span></p>""",
-      "Read the four pairs left to right. Electrically and thermally the two are close at "
-      "HV-S0; mechanically they are not.",
+      "Read the four pairs left to right; the verdicts with their uncertainties are on the "
+      "main result slide.",
       "final_results.json · physical lineage")
     order = (J("ordering.json") or {}).get("orderings", {})
 
@@ -438,7 +478,15 @@ on one of them. """ + " ".join(c["statement"] for c in (J("ordering.json") or {}
     z1e, z2e = g("Z1", "HV_S0", "d_eps_in_per_cycle"), g("Z2", "HV_S0", "d_eps_in_per_cycle")
     # which mechanical ordering each class-B variant reverses, from classB_resolution.json
     plain = {"f2_void": "void out-of-cell volume", "z2_cooled": "a cold plate under the Z2 converter",
-             "f1_clearance": "an open sidewall clearance", "tsv_min": "the minimal TSV field"}
+             "z2_cooled_tim": "that plate behind a TIM",
+             "f1_sidewall_filled": "an opening filled to the board sidewall",
+             "tsv_min": "the minimal TSV field",
+             "icepak_equivalent": "the Icepak-matched cooling coefficient",
+             "attach_sn": "all-Sn attach bumps", "attach_stiff": "a column-stiffened attach",
+             "attach_uf_soft": "a soft attach underfill", "attach_uf_stiff": "a stiff attach underfill",
+             "attach_h20": "a 20 µm attach", "attach_h40": "a 40 µm attach",
+             "bga_depop": "a depopulated BGA field",
+             "feed_heat_at_crossover": "the feed loss deposited in the package"}
     mv = {}
     for g_ in (J("classB_resolution.json") or {}).get("gates", []):
         for r in g_.get("rows", []):
@@ -454,19 +502,20 @@ on one of them. """ + " ".join(c["statement"] for c in (J("ordering.json") or {}
     bullets = [say("P_loss_w", "Electrical loss"), say("T_max_C", "Peak temperature")]
 
     S(f"""<h2>Architecture conclusion</h2>
-<div class="callout" style="font-size:1.0em">In the physically closed lineage, the backside
-architecture (Z2) is <strong>not</strong> mechanically better: its joint displacement driver is
-{g('Z2','HV_S0','du_c_um')/g('Z1','HV_S0','du_c_um'):.2f}&times; and its local inelastic response
-{(z2e/z1e if z1e and z2e else float('nan')):.2f}&times; that of Z1 at HV-S0, with
-{g('Z2','HV_S0','die_warpage_pv_um')/g('Z1','HV_S0','die_warpage_pv_um'):.1f}&times; the die warpage.</div>
+<div class="callout" style="font-size:1.0em">In the physically closed lineage at HV-S0, the
+direct-fed backside architecture (Z2) carries
+{g('Z2','HV_S0','du_c_um')/g('Z1','HV_S0','du_c_um'):.2f}&times; the joint displacement driver,
+{(z2e/z1e if z1e and z2e else float('nan')):.2f}&times; the local inelastic response and
+{g('Z2','HV_S0','die_warpage_pv_um')/g('Z1','HV_S0','die_warpage_pv_um'):.1f}&times; the die warpage
+of Z1 — in its declared construction. No architecture wins unconditionally (class-B slide).</div>
 <ul style="margin-top:.6em">
 <li><span class="chip hist">HISTORICAL</span> the frozen R3C pair showed the opposite — Z2 hotter but
 mechanically better. Physical closure reversed it.</li>
 {''.join(f'<li>{b}</li>' for b in bullets)}
 <li>What survives: <strong>peak temperature alone does not rank mechanical response</strong> —
 now demonstrated on the physical pair as well.</li>
-<li>Conditioned on the declared construction (cavity encapsulant, one top cold plate): {mech_moves},
-and the narrowly resolved local ordering does not survive several sensitivities (class-B slide).</li>
+<li>Conditioned on the declared construction (encapsulant between the cells, 1 mm clearance void,
+one top cold plate): {mech_moves}.</li>
 </ul>""",
       "The reversal is a result of the physical lineage under declared assumptions — no "
       "qualification or life claim.",
@@ -502,7 +551,17 @@ def hardening(S):
 <tr><td>RDL tier tensor from Voigt / series formulas</td>
 <td>explicit RVE disagreed; RVE values adopted, thermal re-run</td></tr>
 <tr><td>the h<sub>xy</sub> 1.1&rarr;0.8 "refinement" re-graded the grid (Z2's largest element grew)</td>
-<td>nested refinement instead. {mc.get('production_reason', '')}</td></tr></table>""",
+<td>nested refinement instead. {mc.get('production_reason', '')}</td></tr>
+<tr><td>the primary Z2 took its 48 V through peripheral package balls and a 48 V RDL</td>
+<td>direct backside feed (construction precedent); the BGA-fed Z2 is now a control</td></tr>
+<tr><td>the Z2 regulator touched the substrate: no attach in the solver stack</td>
+<td>explicit 30 µm Cu-pillar attach tier, in the mesh and the ledger</td></tr>
+<tr><td>the Z2 encapsulant filled the opening to the board sidewall, against the 1 mm clearance</td>
+<td>clearance void in the baseline; the filled case is a class-B sensitivity</td></tr>
+<tr><td>device losses were evaluated at the whole tier's mean temperature, encapsulant included</td>
+<td>each device at its own tier's in-cell temperature; every case re-run</td></tr>
+<tr><td>a solver killed at the host's thread limit left a cut-off file the local runner still read</td>
+<td>a solve counts only if it reaches the schedule end; every affected solve re-run</td></tr></table>""",
       "Each row moved a result: physical closure changes conclusions, so it is the "
       "contribution.", "final_closure artifacts")
 

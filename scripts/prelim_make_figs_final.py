@@ -51,14 +51,21 @@ def fig_ledger():
               ("intra-VR", ("P_intraVR_metal", "P_intraVR_vertical")),
               ("pkg HV RDL", ("P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return")),
               ("BGA + TSV + pads", ("P_BGA_supply", "P_BGA_return", "P_TSV_VDD",
-                                    "P_TSV_GND", "P_pad_VDD", "P_pad_GND"))]
+                                    "P_TSV_GND", "P_pad_VDD", "P_pad_GND")),
+              ("attach + LV RDL", ("P_VR_attach_VDD", "P_VR_attach_GND",
+                                   "P_pkg_RDL_LV_supply", "P_pkg_RDL_LV_return"))]
     # never the Z1 blue / Z2 red: a red segment inside the Z1 bar would read as "Z2".
     # The 48 V package RDL takes the deck's 48 V orange.
-    cols = ["#24292f", "#57606a", "#8250df", "#bf8700", "#1a7f37", "#e36209", "#0b7285"]
+    cols = ["#24292f", "#57606a", "#8250df", "#bf8700", "#1a7f37", "#e36209", "#0b7285",
+            "#b87333"]
     fig, ax = plt.subplots(figsize=(12.5, 3.9))
     for yi, a in enumerate(("Z2", "Z1")):
         r = etm(a, "HV_S0")
         t = {x["term"]: x["P_w"] for x in r["ledger_rows"]}
+        drawn = {k for _, keys in groups for k in keys}
+        if set(t) - drawn or abs(sum(t.values()) - r["P_loss_w"]) > 1e-9 * r["P_loss_w"]:
+            raise RuntimeError(f"{a}: ledger terms not drawn {sorted(set(t) - drawn)}; the "
+                               "bar must equal the ledger total")      # never silently dropped
         left = 0.0
         for (lab, keys), c in zip(groups, cols):
             v = sum(t.get(k, 0.0) for k in keys)

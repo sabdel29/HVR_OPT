@@ -99,6 +99,9 @@ def expected_pieces(a, L) -> list:
     W, D, C = a["substrate_mm"][0], a["die_mm"][0], a["cutout_mm"]
     half = (W if L["footprint"] == "substrate" else D) / 2
     if L["region"] == "inside_cutout":
+        oc = a.get("out_of_cell") or {}
+        if oc.get("ring") == "VOID":                 # the 1 mm sidewall clearance is empty
+            return [tuple(oc["extent_x_mm"])]
         return [(-C / 2, C / 2)]
     if C and any(I["region"] == "inside_cutout" and I["z0_um"] < L["z1_um"]
                  and L["z0_um"] < I["z1_um"] for I in a["layers"]):
@@ -192,7 +195,8 @@ def metadata(root) -> dict:
 REQUIRED_ITEMS = {"Z1": ("embedded_hvr", "substrate", "package_rdl", "bga", "pcb", "tsv_field",
                          "cell_arrangement"),
                   "Z2": ("backside_hvr", "pcb_cutout", "thin_substrate", "tsv_field",
-                         "package_hv_rdl", "bga", "pcb", "cell_arrangement")}
+                         "direct_48v_feed", "vr_attach", "sidewall_clearance", "bga", "pcb",
+                         "cell_arrangement")}
 
 
 def check_metadata(md, a, sp) -> list:
@@ -207,12 +211,9 @@ def check_metadata(md, a, sp) -> list:
     tiers = converter_tiers(a)
     hvr = items["embedded_hvr" if arch == "Z1" else "backside_hvr"]
     sub_md = items["substrate" if arch == "Z1" else "thin_substrate"]
-    rdl = items["package_rdl" if arch == "Z1" else "package_hv_rdl"]
     checks = [(sub_md["thickness_um"], t_sub, "substrate thickness"),
               (hvr["tiers"], len(tiers), "converter tiers"),
               (hvr["height_um"], tiers[-1]["z1_um"] - tiers[0]["z0_um"], "converter height"),
-              (rdl["fe_layer"], False, "package RDL is not an FE layer"),
-              (rdl["z_um"], sub[0]["z0_um"], "package RDL at the substrate underside"),
               (items["pcb"]["thickness_um"], board["t_um"], "PCB thickness"),
               (items["bga"]["pitch_mm"], a["bga"]["pitch_mm"], "BGA pitch"),
               (items["bga"]["sites_legal"], a["bga"]["sites_legal"], "BGA sites"),
@@ -221,8 +222,22 @@ def check_metadata(md, a, sp) -> list:
               (items["cell_arrangement"]["n"], a["cells"]["n"], "cell count"),
               (items["cell_arrangement"]["arrangement"],
                f"{a['cells']['grid']}x{a['cells']['grid']}", "cell arrangement")]
+    if arch == "Z1":
+        rdl = items["package_rdl"]
+        checks += [(rdl["fe_layer"], False, "package RDL is not an FE layer"),
+                   (rdl["z_um"], sub[0]["z0_um"], "package RDL at the substrate underside")]
     if arch == "Z2":
-        checks.append((items["pcb_cutout"]["width_mm"], a["cutout_mm"], "PCB cutout"))
+        att, oc = a["attach"], a["out_of_cell"]
+        att_layer = next(L for L in a["layers"] if L["name"] == att["layer"])
+        checks += [(items["pcb_cutout"]["width_mm"], a["cutout_mm"], "PCB cutout"),
+                   (items["direct_48v_feed"]["illustrative"], True, "feed is illustrative"),
+                   (items["vr_attach"]["t_um"], att["h_total_um"], "attach height"),
+                   (items["vr_attach"]["z0_um"], att_layer["z0_um"], "attach bottom"),
+                   (items["sidewall_clearance"]["clearance_mm"], oc["clearance_mm"],
+                    "sidewall clearance"),
+                   (items["sidewall_clearance"]["ring"], "VOID", "clearance ring void"),
+                   (items["bga"]["electrical_role"].endswith("NOT the 48 V HVR feed"), True,
+                    "BGA not the 48 V feed")]
     return [f"{what}: figure {got!r} != spec {want!r}" for got, want, what in checks
             if got != want]
 
@@ -240,6 +255,14 @@ def forbidden_values(sp) -> set:
     return v
 
 
+#: layout constants that coincide with a spec value since the attach (30 um) entered the
+#: stack: (token, unique text of the line). Each is a pixel offset, a typographic width
+#: factor or an angle, never a height; anything else on a matching line is still scanned.
+LAYOUT_LITERALS = {("30.0", "PX_PER_MM_X_SINGLE = 30.0"), ("0.54", "em += 0.54"),
+                   ("40", "legend_block(420, y_datum + 40"), ("40", "legend_block(36, y_datum + 40"),
+                   ("30", "F.text(Wc / 2, 30,"), ("30", "math.radians(30)")}
+
+
 def forbidden_literals(src, sp) -> list:
     """(c) standalone numbers equal to a spec thickness or z value, in um or in mm.
 
@@ -248,7 +271,10 @@ def forbidden_literals(src, sp) -> list:
     500 um itself is still caught."""
     bad, hits = forbidden_values(sp), []
     for i, line in enumerate(src.splitlines(), 1):
+        exempt = {tok for tok, txt in LAYOUT_LITERALS if txt in line}
         for m in NUM.finditer(line):
+            if m.group(1) in exempt:
+                continue
             tok = m.group(1)
             val = float(tok)
             mm = round(val * 1e3, 6) if "." in tok else None
@@ -427,7 +453,10 @@ def test_cell_zoom_tiers_are_the_spec_tiers_in_order():
     panels = {g.get("data-panel"): g for g in root.iter() if g.get("data-panel")}
     for arch, a in sp["architectures"].items():
         names = [el.get("data-layer") for el in panels[arch].iter() if el.get("data-layer")]
-        assert names == [L["name"] for L in converter_tiers(a)], arch
+        want = converter_tiers(a) + ([L for L in a["layers"]
+                                      if L["name"] == a["attach"]["layer"]]
+                                     if a.get("attach") else [])
+        assert names == [L["name"] for L in sorted(want, key=lambda L: L["z0_um"])], arch
 
 
 # ================================================================ content and freshness
@@ -446,8 +475,12 @@ def test_key_message_title_and_current_labels_are_visible(arch):
     txt = visible_text(svg(SECTIONS[arch]))
     assert G.KEY_MESSAGE[arch] in txt
     assert spec()["architectures"][arch]["label"].replace(" -- ", " — ") in txt
-    for lab in ("48 V in", "1 V out", "48 V return", "1 V return", G.SHEET_TEXT):
+    labs = ("48 V in", "1 V out", "48 V return", "1 V return",
+            G.SHEET_TEXT if arch == "Z1" else "ILLUSTRATIVE DIRECT 48-V FEED")
+    for lab in labs:
         assert any(lab in t for t in txt) or lab in " ".join(txt), lab
+    if arch == "Z2":                       # the superseded package sheet must not come back
+        assert not any(G.SHEET_TEXT in t for t in txt)
 
 
 @pytest.mark.parametrize("path", [SECTIONS["Z1"], SECTIONS["Z2"], PAIR, CELL])

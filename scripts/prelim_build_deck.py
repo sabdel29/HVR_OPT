@@ -132,30 +132,33 @@ STACK = """<svg viewBox="0 0 1180 430" width="100%" style="max-height:50vh">
 <rect x="340" y="38" width="560" height="30" fill="#7d8894"/>
 <rect x="395" y="82" width="450" height="14" fill="#cfd6dd"/>
 <rect x="395" y="110" width="450" height="68" fill="#8fb4d9"/>
-<g stroke="#b8761f" stroke-width="8"><line x1="425" y1="110" x2="425" y2="178"/><line x1="473" y1="110" x2="473" y2="178"/><line x1="521" y1="110" x2="521" y2="178"/><line x1="569" y1="110" x2="569" y2="178"/><line x1="617" y1="110" x2="617" y2="178"/><line x1="665" y1="110" x2="665" y2="178"/><line x1="713" y1="110" x2="713" y2="178"/><line x1="761" y1="110" x2="761" y2="178"/><line x1="809" y1="110" x2="809" y2="178"/></g>
 <g fill="#6a6a6a"><rect x="418" y="178" width="16" height="9"/><rect x="463" y="178" width="16" height="9"/><rect x="508" y="178" width="16" height="9"/><rect x="553" y="178" width="16" height="9"/><rect x="598" y="178" width="16" height="9"/><rect x="643" y="178" width="16" height="9"/><rect x="688" y="178" width="16" height="9"/><rect x="733" y="178" width="16" height="9"/><rect x="778" y="178" width="16" height="9"/><rect x="823" y="178" width="16" height="9"/></g>
 <rect x="260" y="196" width="720" height="22" fill="#e0a33c"/>
 <rect x="260" y="226" width="720" height="70" fill="#c8b48a"/>
+<g stroke="#b8761f" stroke-width="7"><line x1="520" y1="226" x2="520" y2="296"/><line x1="568" y1="226" x2="568" y2="296"/><line x1="616" y1="226" x2="616" y2="296"/><line x1="664" y1="226" x2="664" y2="296"/><line x1="712" y1="226" x2="712" y2="296"/><line x1="760" y1="226" x2="760" y2="296"/><line x1="808" y1="226" x2="808" y2="296"/><line x1="856" y1="226" x2="856" y2="296"/><line x1="904" y1="226" x2="904" y2="296"/><line x1="952" y1="226" x2="952" y2="296"/></g>
 <rect x="296" y="238" width="150" height="46" fill="#b36ad1"/>
 <text x="371" y="266" font-size="15" fill="#fff" text-anchor="middle">VR cell</text>
 <g fill="#9aa3ad"><circle cx="300" cy="330" r="15"/><circle cx="352" cy="330" r="15"/><circle cx="404" cy="330" r="15"/><circle cx="456" cy="330" r="15"/><circle cx="508" cy="330" r="15"/><circle cx="560" cy="330" r="15"/><circle cx="612" cy="330" r="15"/><circle cx="664" cy="330" r="15"/><circle cx="716" cy="330" r="15"/><circle cx="768" cy="330" r="15"/><circle cx="820" cy="330" r="15"/><circle cx="872" cy="330" r="15"/><circle cx="924" cy="330" r="15"/></g>
 <rect x="260" y="356" width="720" height="40" fill="#2f6f3e" opacity=".85"/>
-<text x="1000" y="150" font-size="16" fill="#1f6feb">TSVs through silicon</text>
+<line x1="958" y1="250" x2="992" y2="250" stroke="#1f6feb" stroke-width="1.5"/>
+<text x="998" y="246" font-size="16" fill="#1f6feb">TSVs through the</text>
+<text x="998" y="266" font-size="16" fill="#1f6feb">silicon substrate</text>
 <line x1="330" y1="330" x2="330" y2="296" stroke="#d1442f" stroke-width="4"
  marker-end="url(#ar)"/>
-<text x="296" y="324" font-size="16" fill="#d1442f" text-anchor="end">48 V in</text>
-<text x="296" y="342" font-size="14" fill="#d1442f" text-anchor="end">low current</text>
+<text x="340" y="311" font-size="14" fill="#d1442f">48 V in, low current</text>
 <line x1="470" y1="238" x2="470" y2="126" stroke="#d1442f" stroke-width="18"
  marker-end="url(#arb)" opacity=".8"/>
-<text x="500" y="262" font-size="16" fill="#d1442f">1 V out — ~1000 A in total</text>
-<text x="500" y="282" font-size="14" fill="#d1442f">(split across 49 VR cells)</text>
+<text x="500" y="140" font-size="16" fill="#b3261e">1 V out — ~1000 A in total</text>
+<text x="500" y="160" font-size="14" fill="#b3261e">(split across 49 VR cells)</text>
 </svg>"""
 S(f"<h2>Packaging 101 — the physical stack</h2>{STACK}"
   "<p class='sub'>Arrow width suggests current magnitude: thin at 48 V, thick at 1 V.</p>",
   "Walk bottom to top once, slowly. PCB, BGA balls, substrate, RDL, micro-pads, die, TSVs, "
   "TIM, heat sink. Then trace the current: 48 V enters through a few balls, a VR cell "
-  "converts it, and 1 V goes up into the die over a very short, very wide path. The "
-  "audience must hold this picture for the rest of the talk.")
+  "converts it, and 1 V goes up into the die over a very short, very wide path. This is the "
+  "generic picture and Z1's; the next slides show that Z2 instead feeds its 48 V straight "
+  "into a regulator below the substrate. The audience must hold this picture for the rest "
+  "of the talk.")
 
 S("""<h2>The conductors this work has to account for</h2>
 <div class="cols"><div>
@@ -165,7 +168,11 @@ diameter here.</li>
 current sideways.</li>
 <li><strong>Source pad</strong> — the small copper landing where a regulator meets
 the die interface.</li>
-<li><strong>TSV</strong> — a copper via straight through the silicon.</li></ul></div>
+<li><strong>TSV</strong> — a copper via straight through the silicon.</li>
+<li><strong>Cu-pillar attach</strong> — the short pillars that join a backside regulator to
+the substrate (Z2 only).</li>
+<li><strong>Direct feed</strong> — Z2's own 48 V connection to the regulator; its
+resistance is unknown, so it is swept (Z2 only).</li></ul></div>
 <div><div class="callout"><strong>Every one of them obeys</strong>
 <p style="text-align:center;font-size:1.35em;margin:.35em"><em class="q">R = ρ L / A</em></p>
 <p class="sub" style="margin:0">resistivity × length ÷ cross-section. The entire
@@ -209,15 +216,17 @@ No board opening.</text></g>
 <rect x="20" y="140" width="430" height="52" fill="#c8b48a"/>
 <rect x="150" y="96" width="170" height="38" fill="#8fb4d9"/>
 <text x="164" y="120" font-size="15">die</text>
-<line x1="48" y1="200" x2="48" y2="150" stroke="#d1442f" stroke-width="4"/>
+<line x1="280" y1="262" x2="280" y2="242" stroke="#d1442f" stroke-width="4"/>
+<text x="288" y="258" font-size="13" fill="#d1442f">48 V (direct)</text>
 <line x1="235" y1="196" x2="235" y2="100" stroke="#d1442f" stroke-width="10"/>
-<text x="20" y="272" font-size="14" fill="#5a6672">VR sits in a 23.36 mm board opening.
-48 V must reach it laterally.</text></g></svg>"""
+<text x="20" y="284" font-size="14" fill="#5a6672">VR sits in a 23.36 mm board opening;
+its 48 V enters directly.</text></g></svg>"""
 S(f"<h2>Two architectures under comparison</h2>{ARCH}"
-  "<p class='sub'>The cutout removes 841 of 1369 legal BGA sites — the central ones.</p>",
-  "The single most important visual difference: Z2's cutout deletes exactly the BGA sites "
-  "nearest the die centre. That turns out to matter for convergence later, because Z1's "
-  "placement rule puts balls underneath regulator cells and Z2's geometrically cannot.")
+  "<p class='sub'>The cutout removes 841 of 1369 legal BGA sites — the central ones. The "
+  "remaining Z2 balls carry signals and mechanical load, not the 48 V.</p>",
+  "Z2's cutout deletes exactly the BGA sites nearest the die centre. In the primary Z2 the "
+  "48 V does not use the balls at all; in the BGA-fed control it must, and that is why the "
+  "control's network behaves differently from Z1's.")
 
 S("""<h2>The converter inside each cell</h2>
 <div style="text-align:center;font-size:1.0em;margin:.5em 0">
@@ -330,9 +339,10 @@ re-solved at each, verified on the resolved grid.</div>""",
 
 S("""<h2>The cutout penalty is smaller than where you put the balls</h2>
 <div class="figwrap"><img src="figs/final_cutout.svg" alt="cutout vs placement"></div>
-<p><strong>Controlled experiment</strong> on the production network: same count, sheet,
-contacts, load, rule and grid — only the candidate sites change. The cutout term has been
-corrected three times across the project; placement still dominates it.</p>""",
+<p><strong>Controlled experiment</strong> on the converged network (the BGA-fed construction:
+the control, not the primary direct-fed Z2): same count, sheet, contacts, load, rule and grid —
+only the candidate sites change. The cutout term has been corrected three times across the
+project; placement still dominates it.</p>""",
   "Earlier versions of this number were artefacts of imposed sharing, a missing return "
   "conductor and a floating-point lattice bug. Say that no cutout penalty is frozen.",
   "research/final_closure/package_network.json · controlled")
@@ -591,7 +601,8 @@ S("""<div style="text-align:center;margin-top:1.4em">
 <p style="margin-top:1em;max-width:72%;margin-left:auto;margin-right:auto">
 <strong>Contribution:</strong> a hierarchical electrothermal–mechanical framework for
 distributed vertical power delivery, checked stage by stage against matched reference
-solvers, and a demonstration that physical closure reverses an architecture conclusion.</p>
+solvers, and the result that no architecture can be ranked independently of its neighbouring
+design decisions.</p>
 <p class="sub" style="margin-top:1.2em">Questions</p></div>""", "")
 
 # ============ APPENDIX ===============================================
@@ -652,14 +663,23 @@ def S_main(body, notes="", prov="", cls=""):
     SLIDES.append(section(body, notes, prov, cls))
 
 
-M.build(S_main, take, SLIDES.append)
+APPX = []
+
+
+def S_appx(body, notes="", prov="", cls=""):
+    APPX.append(section(body, notes, prov, cls))
+
+
+M.build(S_main, take, SLIDES.append, S_appx)
 N_MAIN = len(SLIDES)
 SLIDES.append(section("""<div style="text-align:center;margin-top:2.2em">
 <div class="big">Appendix</div><p class="sub" style="margin-top:1em">Derivations, defect
-history, intermediate results and every validation case in detail.</p></div>"""))
+history, intermediate results, the BGA-fed control and every validation case in
+detail.</p></div>"""))
+SLIDES.extend(APPX)
 SLIDES.append(section("""<h2>Appendix — the two stacks, exploded</h2>
 <div style="text-align:center"><img src="figs/z1_z2_exploded.png" alt="Z1 and Z2 stacks,
-exploded, illustrative and not to scale" style="max-height:80vh;max-width:100%"></div>""",
+exploded, illustrative and not to scale" style="max-height:76vh;max-width:100%"></div>""",
     "Every slab is a layer of the solved model, in the model's order; only thicknesses and gaps "
     "are illustrative, and each label gives the true thickness. Z1 stacks the converter "
     "between substrate and die; Z2 hangs it below the substrate inside the PCB opening.",

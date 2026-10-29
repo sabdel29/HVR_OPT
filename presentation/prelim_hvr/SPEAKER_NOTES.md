@@ -15,190 +15,208 @@ This slide is the whole motivation. The 48x voltage ratio is a 2300x loss ratio 
 Make clear DVPD is not just 'closer' but 'divided'. Splitting the current 49 ways cuts I^2R by 49 in the distributed segment even before shortening it.
 
 ## Slide 5 — Packaging 101 — the physical stack
-Walk bottom to top once, slowly. PCB, BGA balls, substrate, RDL, micro-pads, die, TSVs, TIM, heat sink. Then trace the current: 48 V enters through a few balls, a VR cell converts it, and 1 V goes up into the die over a very short, very wide path. The audience must hold this picture for the rest of the talk.
+Walk bottom to top once, slowly. PCB, BGA balls, substrate, RDL, micro-pads, die, TSVs, TIM, heat sink. Then trace the current: 48 V enters through a few balls, a VR cell converts it, and 1 V goes up into the die over a very short, very wide path. This is the generic picture and Z1's; the next slides show that Z2 instead feeds its 48 V straight into a regulator below the substrate. The audience must hold this picture for the rest of the talk.
 
 ## Slide 6 — Two ways to put 49 converters under one die
-Point at the converter in each picture. Z1: sandwiched between substrate and die. Z2: hanging below the substrate, inside the hole in the board. Then trace the orange 48 V arrow and the purple 1 V arrow in each. Z1 converts inside the package and then has a very short 1 V path; Z2 converts below the substrate and sends about 1000 A at 1 V up through the TSV field. Everything else in the talk is a consequence of where that conversion happens.
+Point at the converter in each picture. Z1: sandwiched between substrate and die. Z2: hanging below the substrate, inside the hole in the board, with a 1 mm air gap to the board edge. Then trace the orange 48 V arrow in each: Z1 takes it up through the board's balls and the package; Z2 takes it straight into the regulator from below, through the opening (the connector drawn is illustrative). Then the purple 1 V arrow: Z1 has a very short 1 V path; Z2 sends about 1000 A at 1 V up through the pillar attach and the TSV field. The grey balls around Z2's opening carry signals and hold the package down; they do not carry the 48 V. Everything else in the talk is a consequence of where that conversion happens.
 
-## Slide 7 — Inside one regulator cell
+## Slide 7 — A. Where does the 48 V go?
+This is the first half of the electrical story. Z1 pays for 48 V inside the package: balls, a copper sheet, vias. Z2 pays nothing inside the package for 48 V, but needs its own connection from the board to the regulator, and that connection's resistance is unknown — no source gives it. We do not invent one; the direct-feed slide turns it into a requirement.
+
+## Slide 8 — B. After conversion, where does the 1 V go?
+Second half. The same TSV field is in both packages, but it carries a different rail: 48 V and almost no current in Z1, 1 V and the full kiloampere in Z2. That is why the TSV count matters so much more for Z2 (TSV provisioning slide).
+
+## Slide 9 — The bridge: backside regulator to substrate
+Before this correction the model glued the regulator straight onto the substrate. Now the joint is a real tier: pillars carry the current and heat, underfill carries the load. Its resistance enters the loss ledger and its height and material are tested as sensitivities.
+
+## Slide 10 — Inside one regulator cell
 Keep it short: the converter is identical in both architectures; this is a packaging comparison, not a converter comparison.
 
-## Slide 8 — What is being compared
-Say the rule out loud: no ranking unless the gap exceeds twice the measured numerical uncertainty. This rule is applied by one generator and every slide and the paper read its output.
-
-## Slide 9 — How one architecture is evaluated
+## Slide 11 — How one architecture is evaluated
 The loop-vs-once point is a real design decision and a likely question. Say that thermoelastic deformation does not change the loss, so it is a one-way coupling.
 
-## Slide 10 — What software is doing what?
+## Slide 12 — What software is doing what?
 Name each tool once, plainly: CalculiX computes all production temperatures, stresses and the solder joint; Ansys Mechanical and MOOSE are used only as independent references; Q3D could not be run because the licence is not available. VTK and matplotlib draw results — they are not solvers.
 
-## Slide 11 — The electrical path — every conductor has one owner
+## Slide 13 — The electrical path — every conductor has one owner
 This slide sets up the discipline used later: every physical conductor has one owner. A reviewer asking 'what carries the return current?' should be answered by the ledger.
 
-## Slide 12 — The package 48 V RDL, seen from above
-The solver looks down on ONE copper layer: the 48 V sheet between the BGA and the substrate. Balls feed it, the 49 regulator input pads drain it. In Z2 the balls can only sit outside the opening, so current must flow inward.
+## Slide 14 — Z1's package 48 V RDL: model vs MOOSE
+The solver looks down on ONE copper layer: Z1's 48 V sheet between the BGA and the substrate. Balls feed it, the 49 regulator input pads drain it. The centre image is MOOSE's own solution of the same problem. This is a model-to-model check, not a measurement — and it says nothing about the primary Z2, which has no such sheet.
 
-## Slide 13 — RDL model vs MOOSE (independent finite elements)
-Left: what the model is. Centre: the actual MOOSE solution, rendered from its own output file; the outlines and labels are an overlay. Right: the numbers. The agreement is a model-to-model check on the same problem, not a measurement.
+## Slide 15 — C. What did the equal-BGA experiment test?
+This used to be the main Z1 vs Z2 comparison. It is now a control: we deliberately force the backside regulator to take its 48 V through the package, like Z1, to see what the opening and the ball placement cost. Compare the middle and bottom rows: same mechanics, different loss. That difference is the price of feeding through the package.
 
-## Slide 14 — BGA current sharing — assumption vs solve
-The load is uniform across all 49 cells; the non-uniformity is pure network geometry.
+## Slide 16 — Z2's direct feed: how much resistance can it afford?
+Read the left panel: the blue line is Z1, fixed. The red curve is Z2 as the external feed gets worse; where they cross is R star. We do not claim either side of it, because nobody publishes this connector's resistance; the patent we cite names connector types only.
 
-## Slide 15 — The heat map: losses go where they are produced
+## Slide 17 — TSV provisioning decides the electrical preference
+Same TSVs, different job. In Z1 they carry 48 V at 20 A total and cost nothing. In Z2 they carry 1000 A at 1 V. Starve them and Z2 loses its electrical edge.
+
+## Slide 18 — The heat map: losses go where they are produced
 Mention the defect: the first physical deposition spread device loss into the encapsulant out to the package corners and produced a phantom corner hot spot. Confining deposits to the cell footprints removed it.
 
-## Slide 16 — Thermal model vs AEDT and MOOSE
+## Slide 19 — Thermal model vs AEDT and MOOSE
 The middle image is the real Ansys session; the left image re-draws the exact same geometry from the project file so it can be read. CalculiX, Ansys and MOOSE agree to about a tenth of a percent on this matched problem.
 
-## Slide 17 — The electrothermal fixed point converges
-The initial 85 C guess under-estimates GaN on-resistance; the first iteration raises the Z1 loss by 13.9 W before settling.
+## Slide 20 — Cooling model vs Icepak (conjugate CFD)
+The cold plate is a formula, not a CFD model. Here is the formula against a full conjugate CFD solve of one channel in Icepak at the same heat load: the formula overstates the temperature rise by about 16 percent, so it is on the safe side. We did not tune the formula to Icepak and call that validation; we ran the Icepak-matched cooling as a separate sensitivity instead. The formula takes microseconds, the CFD solve about twenty minutes on four cores.
 
-## Slide 18 — Why packages warp — and what Z1 and Z2 actually do
+## Slide 21 — The electrothermal fixed point converges
+The initial 85 C guess under-estimates GaN on-resistance; the first iteration raises the Z1 loss by 15.8 W before settling.
+
+## Slide 22 — Why packages warp — and what Z1 and Z2 actually do
 Do the physics in one sentence, then show the real result: Z2's die bows about 2.5 times more than Z1's under the same scenario.
 
-## Slide 19 — Global mechanics vs AEDT and the closed form
+## Slide 23 — Global mechanics vs AEDT and the closed form
 Same layout as the thermal check. The production element reproduces the commercial solution of the same bilayer to about one hundredth of a percent.
 
-## Slide 20 — Global driver → local response
-This is the most commonly confused point in the whole project. The global model cannot resolve a solder joint; the local model cannot know the package. Say explicitly that a larger displacement driver does not automatically mean a larger local response.
+## Slide 24 — Where is the critical joint? Searched, not assumed
+Where the critical joint sits is a RESULT of the all-site search, read from the production case files.
 
-## Slide 21 — Where is the critical joint? Searched, not assumed
-The corner being critical is a RESULT here. The +x corners rank first: they are the hotter, downstream end of the cold plate.
-
-## Slide 22 — Local solder response and how well it is resolved
+## Slide 25 — Local solder response and how well it is resolved
 Two points. First, the local number is reported with a measured uncertainty: mesh plus time step plus cycle count. Second, the declared-policy process caught a post-processing defect that would otherwise have shifted the answer by up to 17 %.
 
-## Slide 23 — What physical closure changed
-Four examples only. The point: physical closure changed answers, including the architecture ordering. Details are in the appendix if asked.
+## Slide 26 — HV-S0 result (headline scenario)
+Read the verdict line under each card, not the bars. Loss: Z2 lower; Peak temperature: Z1 lower; Warpage: Z1 lower; Joint driver: Z1 lower; Local response: no ranking — the difference is inside the measured uncertainty.
 
-## Slide 24 — HV-S0 result (headline scenario)
-Read the verdict line under each card, not the bars. Loss: Z2 lower. Peak temperature: no ranking — the difference is inside the measured uncertainty. Warpage, joint driver and local response: Z1 lower, by wide margins.
+## Slide 27 — Which neighbouring decisions reverse a ranking?
+Read across a row: green means that ordering survives the change; red says what it becomes. Mechanical orderings that reverse: joint-driver under void out-of-cell volume; joint-driver and warpage under z2 cooled tim; joint-driver and warpage under a cold plate under the Z2 converter; joint-driver under conv k tenth. The local response is not ranked even in production: its discretisation bound exceeds the gap, so a variant can create a local ranking but never reverse one.
 
-## Slide 25 — Scenario robustness
-HV-S0 is the headline. HV-S1 is a sensitivity: Z1's joint is above the constitutive calibration, so its local response is extrapolated. HV-S2 is a stress case: Z1's joint reaches the solder melting onset, so it is an infeasibility result and no architecture comparison of any quantity is drawn there (hollow squares).
+## Slide 28 — Accuracy and runtime, stage by stage
+Two different claims, two panels. Top: closed forms and the compact cooling correlation evaluate in microseconds, the matched commercial or CFD solve takes seconds to about twenty minutes — that is model reduction, so only the two times are shown, never a ratio. Bottom: production field solvers against reference field solvers on the same problem and machine, as a runtime ratio. No end-to-end speedup is claimed.
 
-## Slide 26 — Which inputs could move an ordering?
-Read across a row: green means that ordering survives the change; red says what it becomes. Mechanical orderings that reverse: joint-driver under void out-of-cell volume; joint-driver and warpage under a cold plate under the Z2 converter. The local ordering, resolved only narrowly in production, is the fragile one.
-
-## Slide 27 — Accuracy and runtime, stage by stage
-Two different claims, two panels. Closed forms are ten million times cheaper than a finite-element solve of the same small problem — that is expected. The production finite-element stages are between 0.6 and 4 times the speed of the reference solvers on the same machine. No end-to-end speedup is claimed.
-
-## Slide 28 — What we can claim — and what we cannot
+## Slide 29 — What we can claim — and what we cannot
 Read the left column as the paper's claims, the right as its explicit non-claims.
 
-## Slide 29 — Contributions and future work
+## Slide 30 — Contributions and future work
 End on contribution 5. Each future-work item replaces a declared assumption or a scenario with data; none is needed for the comparison itself.
 
-## Slide 30 — (untitled)
+## Slide 31 — The thesis in one sentence
+This is the one sentence to remember. Each bullet is backed by a result in this talk; a bullet appears only if its artifact supports it.
+
+## Slide 32 — (untitled)
 _(no notes)_
 
-## Slide 31 — (untitled)
+## Slide 33 — (untitled)
 _(no notes)_
 
-## Slide 32 — Appendix — the two stacks, exploded
+## Slide 34 — Appendix — the BGA-fed control's package 48 V RDL vs MOOSE
+The same solver check on the opening geometry, which only the BGA-fed control uses. Balls can only sit outside the opening, so current flows inward.
+
+## Slide 35 — Appendix — What physical closure changed
+Physical closure changed answers, including the architecture ordering and the way the backside regulator is fed.
+
+## Slide 36 — Appendix — Scenario robustness
+HV-S0 is the headline, HV-S1 a sensitivity, HV-S2 a stress case. The statements under the chart are generated from ordering.json: they name which joints are extrapolated beyond the constitutive calibration and which operating points are inadmissible (hollow squares), where no comparison is drawn.
+
+## Slide 37 — Appendix — the two stacks, exploded
 Every slab is a layer of the solved model, in the model's order; only thicknesses and gaps are illustrative, and each label gives the true thickness. Z1 stacks the converter between substrate and die; Z2 hangs it below the substrate inside the PCB opening.
 
-## Slide 33 — Appendix — Two architectures under comparison
-The single most important visual difference: Z2's cutout deletes exactly the BGA sites nearest the die centre. That turns out to matter for convergence later, because Z1's placement rule puts balls underneath regulator cells and Z2's geometrically cannot.
+## Slide 38 — Appendix — Two architectures under comparison
+Z2's cutout deletes exactly the BGA sites nearest the die centre. In the primary Z2 the 48 V does not use the balls at all; in the BGA-fed control it must, and that is why the control's network behaves differently from Z1's.
 
-## Slide 34 — Appendix — The converter inside each cell
+## Slide 39 — Appendix — The converter inside each cell
 Do not teach SC operation in detail. The one thing they must retain is that the model gives average currents and an output ripple, but never an input current waveform. Flag it here so the later OPEN item is not a surprise.
 
-## Slide 35 — Appendix — The model hierarchy — what is analytical, what is FEM
+## Slide 40 — Appendix — The model hierarchy — what is analytical, what is FEM
 Expect the question 'why not just use Ansys for everything'. The answer is on this slide: the expensive stages are kept, the cheap ones are only used where a reduced model has been checked. Do not claim the framework replaces FEM.
 
-## Slide 36 — Appendix — How every reduced model is checked in this work
+## Slide 41 — Appendix — How every reduced model is checked in this work
 Every row is read from the accuracy-speed matrix. Point out the gaps — cooling CFD and the converter waveform — before anyone asks.
 
-## Slide 37 — Appendix — TSV conductor: ρL/A against commercial FEM
+## Slide 42 — Appendix — TSV conductor: ρL/A against commercial FEM
 Calibration slide: it shows the reference harness itself is trustworthy.
 
-## Slide 38 — Appendix — TSV-field homogenisation against an explicit unit cell
+## Slide 43 — Appendix — TSV-field homogenisation against an explicit unit cell
 Homogenisation is cheap AND checked, which is what lets the package mesh stay small.
 
-## Slide 39 — Appendix — RDL tier: the check that changed the model
+## Slide 44 — Appendix — RDL tier: the check that changed the model
 Validation doing its job: it moved a number in the paper.
 
-## Slide 40 — Appendix — Package HV RDL network against MOOSE FEM
+## Slide 45 — Appendix — Package HV RDL network against MOOSE FEM
 Do not oversell speed here; the point is that the sheet abstraction is accurate.
 
-## Slide 41 — Appendix — The cutout penalty is smaller than where you put the balls
+## Slide 46 — Appendix — The cutout penalty is smaller than where you put the balls
 Earlier versions of this number were artefacts of imposed sharing, a missing return conductor and a floating-point lattice bug. Say that no cutout penalty is frozen.
 
-## Slide 42 — Appendix — Choosing a pad count needs more than voltage drop
+## Slide 47 — Appendix — Choosing a pad count needs more than voltage drop
 Current density, not voltage drop, bounds the pad count from below.
 
-## Slide 43 — Appendix — Model fidelity should follow the quantity, not the budget
+## Slide 48 — Appendix — Model fidelity should follow the quantity, not the budget
 Fidelity chosen per interconnect class, declared before the final numbers were read.
 
-## Slide 44 — Appendix — Package thermal FE against commercial FEM
+## Slide 49 — Appendix — Package thermal FE against commercial FEM
 Why a unit cell? 10 µm tiers over 30 mm make a tetrahedral mesh of the full package impractical; the unit cell keeps every tier.
 
-## Slide 45 — Appendix — Package thermal FE against an independent open-source FEM
+## Slide 50 — Appendix — Package thermal FE against an independent open-source FEM
 If asked: the runtime ratio is FE against FE, so it is not a model-reduction speedup.
 
-## Slide 46 — Appendix — Thermal expansion mismatch (CTE)
+## Slide 51 — Appendix — Thermal expansion mismatch (CTE)
 This is the root cause of every mechanical result later. The 6x mismatch between silicon and organic substrate is the number to remember.
 
-## Slide 47 — Appendix — Mismatch alone does not predict bending
+## Slide 52 — Appendix — Mismatch alone does not predict bending
 Pre-empt the naive expectation that the hotter architecture must be mechanically worse. That expectation is wrong and the historical result shows it.
 
-## Slide 48 — Appendix — Warpage
+## Slide 53 — Appendix — Warpage
 Keep this short and visual. Mention that warpage sign conventions differ between vendors, so always state what is being measured.
 
-## Slide 49 — Appendix — Stress, strain, and the three kinds of deformation
+## Slide 54 — Appendix — Stress, strain, and the three kinds of deformation
 The viscoplastic point justifies the separate nonlinear local solder model. If asked why a 488-element submodel is worth a separate solve, this is the answer.
 
-## Slide 50 — Appendix — Response is not damage, and damage is not life
+## Slide 55 — Appendix — Global driver → local response
+This is the most commonly confused point in the whole project. The global model cannot resolve a solder joint; the local model cannot know the package. Say explicitly that a larger displacement driver does not automatically mean a larger local response.
+
+## Slide 56 — Appendix — Response is not damage, and damage is not life
 This is the defensive slide for the mechanics. If someone asks 'how many cycles will it survive', the answer is that no absolute life is claimed and why — Darveaux is the citation. Relative ordering between two architectures is still meaningful.
 
-## Slide 51 — Appendix — Two modelling choices that can flip the answer
+## Slide 57 — Appendix — Two modelling choices that can flip the answer
 Short slide, but it pre-empts the classic reviewer question 'what was your reference temperature'. Having an answer ready signals rigour.
 
-## Slide 52 — Appendix — Thermoelastic bending: element and supports
+## Slide 58 — Appendix — Thermoelastic bending: element and supports
 Verification of the element and supports, not validation of the package.
 
-## Slide 53 — Appendix — Discretisation and solver checks behind the results
+## Slide 59 — Appendix — Discretisation and solver checks behind the results
 Say plainly that the first 'refinement' was not a refinement — lowering h_xy re-graded the grid — and that the nested study replaced it.
 
-## Slide 54 — Appendix — Local solder response at the critical joint
-Z2's response is larger wherever both converge. Not converged, reported as such: Z1 HV-S2 (243 °C).
+## Slide 60 — Appendix — Local solder response at the critical joint
+HV-S0: Z2 larger; HV-S1: Z1 larger (point values; the ranking rule with U is on the main slide). Not converged, reported as such: Z1 HV-S2 (239 °C).
 
-## Slide 55 — Appendix — Closure history — earlier phases, fix by fix
+## Slide 61 — Appendix — Closure history — earlier phases, fix by fix
 Do not read every row. Pick three: the RMS bound inversion, the pad tautology, and the mismatched ball count. Say each one had already produced a number that was reported.
 
-## Slide 56 — Appendix — Three defects found in the last two phases
+## Slide 62 — Appendix — Three defects found in the last two phases
 Defect 3 is the best story in the talk. It produced no error, no warning, and no failing test — the design space was simply smaller than anyone thought, and the subset was selected by floating-point luck. Mention that the fix is a picometre snap plus a permanent closure assertion.
 
-## Slide 57 — Appendix — Closure history — the final phase, fix by fix
+## Slide 63 — Appendix — Closure history — the final phase, fix by fix
 Each row moved a result: physical closure changes conclusions, so it is the contribution.
 
-## Slide 58 — Appendix — CURRENT physical result — HV-S0
-Read the four pairs left to right. Electrically and thermally the two are close at HV-S0; mechanically they are not.
+## Slide 64 — Appendix — CURRENT physical result — HV-S0
+Read the four pairs left to right; the verdicts with their uncertainties are on the main result slide.
 
-## Slide 59 — Appendix — Across the named 48 V scenarios
-Loss: Z2 has lower loss in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model. Peak temperature: Z2 has lower peak temperature in HV-S1, where the gap exceeds twice the measured discretisation uncertainty. The approximately 1 C difference lies within the measured discretization uncertainty; therefore no thermal architecture ranking is drawn for HV-S0. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model. Die warpage: Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model. Joint driver: Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.
+## Slide 65 — Appendix — Across the named 48 V scenarios
+Loss: Z2 has lower loss in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model. Peak temperature: Z1 has lower peak temperature in HV-S0; Z2 has lower peak temperature in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the peak temperature ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model. Die warpage: Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model. Joint driver: Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.
 
-## Slide 60 — Appendix — Architecture conclusion
+## Slide 66 — Appendix — Architecture conclusion
 The reversal is a result of the physical lineage under declared assumptions — no qualification or life claim.
 
-## Slide 61 — Appendix — Where the time goes — the physical pair
+## Slide 67 — Appendix — Where the time goes — the physical pair
 If asked for one end-to-end number, give it with its thread count and say it is this machine only.
 
-## Slide 62 — Appendix — The historical frozen result, for context
+## Slide 68 — Appendix — The historical frozen result, for context
 Shown only to explain why the hardening was necessary. Never call it the final pair.
 
-## Slide 63 — Appendix — Limitations — what the paper does not claim
+## Slide 69 — Appendix — Limitations — what the paper does not claim
 Frame limitations as boundaries of the claim, not weaknesses of the work.
 
-## Slide 64 — Appendix — the voltage-fed network
+## Slide 70 — Appendix — the voltage-fed network
 _(no notes)_
 
-## Slide 65 — Appendix — why the 48 V RMS cannot be closed
+## Slide 71 — Appendix — why the 48 V RMS cannot be closed
 _(no notes)_
 
-## Slide 66 — Appendix — BGA count closure, production model
+## Slide 72 — Appendix — BGA count closure, production model
 _(no notes)_
 
-## Slide 67 — Appendix — accuracy and runtime matrix
+## Slide 73 — Appendix — accuracy and runtime matrix
 Full matrix for questions; medians of three timed repeats after a warm-up.

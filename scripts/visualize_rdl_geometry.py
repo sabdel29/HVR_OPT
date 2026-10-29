@@ -70,6 +70,10 @@ OMELET_IDEA = ("mgharib5/Omelet-pkgintc@pkg-interconnect-physics "
                "pkgintc/geom/assembly.py:451-457 (Assembly._canonical, geometry_hash)")
 MINUS = "−"
 CAPTION = "The solver is looking down on this particular copper layer"
+#: the package 48 V sheet exists only in a BGA-fed package: for Z2 that is the controlled
+#: experiment, never the primary (direct-fed) Z2, whose 48 V does not enter the package
+CONTROL_LABEL = ("Z2_BGA_FED_CONTROL -- BGA-fed control, not the primary Z2 "
+                 "(which takes its 48 V directly)")
 # An UNQUOTED family name containing spaces or ending in a digit ("Source Sans 3") is not
 # a valid CSS identifier: Chrome and librsvg >= 2.5x then drop the WHOLE list and fall
 # back to serif (seen 2026-10-27 with the etm env's rsvg-convert 2.62.3 and Chrome 151;
@@ -336,7 +340,7 @@ def build_geometry(arch):
             "die_footprint_mm": die_side_mm(),
             "die_source": "configs/phase0b/package_stack.yaml functional_die (== "
                           "architecture_geometry.json die_mm)",
-            "architecture_label": arch_json["label"],
+            "architecture_label": CONTROL_LABEL if arch == "Z2" else arch_json["label"],
             "matched_count_source": "research/final_closure/package_network.json matched_count",
             "sheet_construction": {"t_cu_mm": c["t_cu_mm"], "occupancy": c["occupancy"],
                                    "R_sq_ohm": rsq,
@@ -473,6 +477,8 @@ def _layer_style(name):
         return FS.MAT["silicon"]
     if "rdl" in n:
         return FS.MAT["rdl"]
+    if "attach" in n:            # Cu pillars in underfill: drawn as the underfill it mostly is
+        return FS.MAT["fill"]
     if "gan" in n:
         return FS.MAT["gan"]
     if "caps" in n:

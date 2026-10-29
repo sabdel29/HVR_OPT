@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="'Source Sans 3', 'Segoe UI', Arial, Helvetica, sans-serif" data-spec-sha256="4729030cb06868e688c623a4dcc1e46cd8f10e9afd71b31ac6b9d1cdfade4704" data-figure="power-path" data-schematic="true">
+<title>Z1 vs Z2 power paths</title><desc>Where 48 V enters, what crosses the substrate, where conversion happens</desc>
+<defs><marker id="a48" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e36209"/></marker><marker id="a1v" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8250df"/></marker><marker id="aret" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3d464f"/></marker><marker id="aink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#10151c"/></marker><marker id="amuted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5a6672"/></marker><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#5a6672" stroke-width="1"/></pattern></defs>
+<rect width="1600" height="900" fill="#ffffff"/>
+<defs><marker id="pk48" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#e36209"/></marker><marker id="pk1v" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#8250df"/></marker><marker id="pkret" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#3d464f"/></marker><pattern id="tsvp" width="4" height="8" patternUnits="userSpaceOnUse"><rect width="4" height="8" fill="#9aa5b8"/><rect x="1" width="1.8" height="8" fill="#c4783c"/></pattern><pattern id="pillar" width="5" height="8" patternUnits="userSpaceOnUse"><rect width="5" height="8" fill="#efe6d2"/><rect x="1.4" y="0" width="2.2" height="8" fill="#b87333"/></pattern><pattern id="bump" width="6" height="8" patternUnits="userSpaceOnUse"><rect width="6" height="8" fill="#efe6d2"/><rect x="1.5" y="0" width="3" height="8" rx="1.2" fill="#b9bec6"/></pattern><pattern id="chan" width="14" height="28.0" patternUnits="userSpaceOnUse"><rect width="14" height="28.0" fill="#a9cdea"/><rect x="4" y="7" width="6" height="14.0" rx="2" fill="#ffffff" opacity="0.85"/></pattern></defs>
+<defs><marker id="pp48" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="3.6" markerHeight="3.6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#e36209"/></marker><marker id="pp1v" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="3.6" markerHeight="3.6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#8250df"/></marker><marker id="ppret" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="3.6" markerHeight="3.6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#3d464f"/></marker></defs>
+<text x="24.00" y="42.00" font-size="28" text-anchor="start" font-weight="bold"  fill="#10151c">Where does 48 V go? Z1 vs Z2</text>
+<rect x="24.00" y="54.00" width="495.56" height="26.00" fill="#ffffff" stroke="#cf222e" stroke-width="1.6" />
+<text x="33.00" y="70.00" font-size="14" text-anchor="start" font-weight="bold"  fill="#cf222e">SCHEMATIC — NOT TO SCALE (layer order from the measured spec)</text>
+<text x="460.00" y="104.00" font-size="21" text-anchor="middle" font-weight="bold"  fill="#1f6feb">Z1 — converter embedded above the substrate</text>
+<text x="460.00" y="128.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#e36209">48 V crosses the package and the substrate BEFORE conversion</text>
+<rect x="260.00" y="740.00" width="400.00" height="60.00" fill="#4f7f5a" stroke="#10151c" stroke-width="0.9" data-block="pcb"/>
+<text x="460.00" y="775.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#ffffff">PCB — 48 V platform supply</text>
+<rect x="260.00" y="680.00" width="400.00" height="60.00" fill="#b9bec6" stroke="#10151c" stroke-width="0.9" data-block="bga"/>
+<text x="460.00" y="715.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#10151c">BGA 48 V power field: 54 + 54 balls (plus signals)</text>
+<rect x="260.00" y="644.00" width="400.00" height="36.00" fill="#fde2c8" stroke="#10151c" stroke-width="0.9" data-block="rdl_hv"/>
+<text x="460.00" y="667.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#10151c">package 48 V RDL sheet</text>
+<rect x="260.00" y="584.00" width="400.00" height="60.00" fill="#9aa5b8" stroke="#e36209" stroke-width="3.2" data-block="sub"/>
+<text x="460.00" y="619.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#10151c">Si substrate — 48 V TSV field (about 24 A)</text>
+<rect x="260.00" y="524.00" width="400.00" height="60.00" fill="#6d58a8" stroke="#10151c" stroke-width="0.9" data-block="hs"/>
+<text x="460.00" y="559.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#ffffff">high-side GaN</text>
+<rect x="260.00" y="464.00" width="400.00" height="60.00" fill="#d8b24a" stroke="#10151c" stroke-width="0.9" data-block="caps"/>
+<text x="460.00" y="499.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#10151c">flying capacitors</text>
+<rect x="260.00" y="404.00" width="400.00" height="60.00" fill="#6d58a8" stroke="#10151c" stroke-width="0.9" data-block="ls"/>
+<text x="460.00" y="439.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#ffffff">low-side GaN</text>
+<rect x="260.00" y="344.00" width="400.00" height="60.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.9" data-block="ind"/>
+<text x="460.00" y="379.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#ffffff">inductors + Cout</text>
+<rect x="260.00" y="308.00" width="400.00" height="36.00" fill="#d9893f" stroke="#10151c" stroke-width="0.9" data-block="rdl_out"/>
+<text x="460.00" y="331.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#10151c">1 V output RDL</text>
+<rect x="260.00" y="272.00" width="400.00" height="36.00" fill="#efe6d2" stroke="#10151c" stroke-width="0.9" data-block="top"/>
+<text x="460.00" y="295.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#10151c">microbumps</text>
+<rect x="260.00" y="212.00" width="400.00" height="60.00" fill="#4c5d70" stroke="#10151c" stroke-width="0.9" data-block="die"/>
+<text x="460.00" y="247.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#ffffff">compute die — 1 V, about 1 kA</text>
+<path d="M226.00,794.00 L226.00,582.00" stroke="#e36209" stroke-width="5.0" fill="none" marker-end="url(#pp48)" data-current="48" data-focus="48"/>
+<path d="M226.00,346.00 L226.00,268.00" stroke="#8250df" stroke-width="5.0" fill="none" opacity="0.18" marker-end="url(#pp1v)" data-current="1v" data-focus="48"/>
+<path d="M694.00,270.00 L694.00,794.00" stroke="#3d464f" stroke-width="3.6" fill="none" stroke-dasharray="9,6" opacity="0.18" marker-end="url(#ppret)" data-current="ret" data-focus="48"/>
+<text x="212.00" y="692.00" font-size="15" text-anchor="end" font-weight="bold"  fill="#e36209">48 V in</text>
+<polyline points="230.00,344.00 222.00,344.00 222.00,584.00 230.00,584.00" fill="none" stroke="#10151c" stroke-width="1.6" stroke-linejoin="round" />
+<text x="214.00" y="469.00" font-size="15" text-anchor="end" font-weight="bold"  fill="#10151c">conversion</text>
+<text x="1210.00" y="104.00" font-size="21" text-anchor="middle" font-weight="bold"  fill="#d1442f">Z2 — direct-fed converter below the substrate</text>
+<text x="1210.00" y="128.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#8250df">only 1 V crosses the substrate, AFTER conversion</text>
+<rect x="1010.00" y="740.00" width="400.00" height="60.00" fill="#fff4e5" stroke="#10151c" stroke-width="0.9" data-block="feed"/>
+<text x="1210.00" y="766.50" font-size="15" text-anchor="middle" font-weight="bold"  fill="#e36209">direct 48 V feed through the PCB opening</text>
+<text x="1210.00" y="783.50" font-size="15" text-anchor="middle" font-weight="normal"  fill="#e36209">(ILLUSTRATIVE — connector not specified)</text>
+<rect x="1010.00" y="680.00" width="400.00" height="60.00" fill="#6d58a8" stroke="#10151c" stroke-width="0.9" data-block="hs"/>
+<text x="1210.00" y="715.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#ffffff">high-side GaN (deepest)</text>
+<rect x="1010.00" y="620.00" width="400.00" height="60.00" fill="#d8b24a" stroke="#10151c" stroke-width="0.9" data-block="caps"/>
+<text x="1210.00" y="655.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#10151c">flying capacitors</text>
+<rect x="1010.00" y="560.00" width="400.00" height="60.00" fill="#6d58a8" stroke="#10151c" stroke-width="0.9" data-block="ls"/>
+<text x="1210.00" y="595.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#ffffff">low-side GaN</text>
+<rect x="1010.00" y="500.00" width="400.00" height="60.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.9" data-block="ind"/>
+<text x="1210.00" y="535.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#ffffff">inductors + Cout (nearest the substrate)</text>
+<rect x="1010.00" y="464.00" width="400.00" height="36.00" fill="#d9893f" stroke="#10151c" stroke-width="0.9" data-block="rdl_out"/>
+<text x="1210.00" y="487.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#10151c">1 V output / attach RDL</text>
+<rect x="1010.00" y="428.00" width="400.00" height="36.00" fill="url(#pillar)" stroke="#10151c" stroke-width="0.9" data-block="attach"/>
+<rect x="1040.95" y="435.00" width="338.10" height="21.00" fill="#ffffff" stroke="none" stroke-width="0" opacity="0.92" rx="3"/>
+<text x="1210.00" y="451.00" font-size="14" text-anchor="middle" font-weight="bold"  fill="#10151c">Cu-pillar attach: regulator → substrate (1 V only)</text>
+<rect x="1010.00" y="368.00" width="400.00" height="60.00" fill="#9aa5b8" stroke="#8250df" stroke-width="3.2" data-block="sub"/>
+<text x="1210.00" y="403.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#10151c">Si substrate — 1 V VDD + GND TSV fields (about 1 kA)</text>
+<rect x="1010.00" y="332.00" width="400.00" height="36.00" fill="#efe6d2" stroke="#10151c" stroke-width="0.9" data-block="top"/>
+<text x="1210.00" y="355.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#10151c">top 1 V RDL + microbumps</text>
+<rect x="1010.00" y="272.00" width="400.00" height="60.00" fill="#4c5d70" stroke="#10151c" stroke-width="0.9" data-block="die"/>
+<text x="1210.00" y="307.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#ffffff">compute die — 1 V, about 1 kA</text>
+<path d="M976.00,796.00 L976.00,738.00" stroke="#e36209" stroke-width="5.0" fill="none" marker-end="url(#pp48)" data-current="48" data-focus="48"/>
+<path d="M976.00,502.00 L976.00,328.00" stroke="#8250df" stroke-width="5.0" fill="none" opacity="0.18" marker-end="url(#pp1v)" data-current="1v" data-focus="48"/>
+<path d="M1444.00,330.00 L1444.00,794.00" stroke="#3d464f" stroke-width="3.6" fill="none" stroke-dasharray="9,6" opacity="0.18" marker-end="url(#ppret)" data-current="ret" data-focus="48"/>
+<text x="962.00" y="740.00" font-size="15" text-anchor="end" font-weight="bold"  fill="#e36209">48 V in, directly</text>
+<polyline points="980.00,500.00 972.00,500.00 972.00,740.00 980.00,740.00" fill="none" stroke="#10151c" stroke-width="1.6" stroke-linejoin="round" />
+<text x="964.00" y="625.00" font-size="15" text-anchor="end" font-weight="bold"  fill="#10151c">conversion</text>
+<rect x="1472.00" y="500.00" width="112.00" height="300.00" fill="#4f7f5a" stroke="#10151c" stroke-width="0.9" data-block="pcb-frame"/>
+<circle cx="1493.00" cy="491.00" r="8.5" fill="#d0d7de" stroke="#10151c" stroke-width="0.8" data-bga-role="signal-mechanical"/>
+<circle cx="1529.00" cy="491.00" r="8.5" fill="#d0d7de" stroke="#10151c" stroke-width="0.8" data-bga-role="signal-mechanical"/>
+<circle cx="1565.00" cy="491.00" r="8.5" fill="#d0d7de" stroke="#10151c" stroke-width="0.8" data-bga-role="signal-mechanical"/>
+<text x="1528.00" y="531.00" font-size="14" text-anchor="middle" font-weight="bold"  fill="#ffffff">PCB frame</text>
+<text x="1528.00" y="548.00" font-size="14" text-anchor="middle" font-weight="normal"  fill="#ffffff">around the</text>
+<text x="1528.00" y="564.00" font-size="14" text-anchor="middle" font-weight="normal"  fill="#ffffff">opening</text>
+<text x="1528.00" y="408.00" font-size="14" text-anchor="middle" font-weight="bold"  fill="#5a6672">BGA: signals,</text>
+<text x="1528.00" y="425.00" font-size="14" text-anchor="middle" font-weight="bold"  fill="#5a6672">auxiliary rails,</text>
+<text x="1528.00" y="442.00" font-size="14" text-anchor="middle" font-weight="bold"  fill="#5a6672">mechanical support —</text>
+<text x="1528.00" y="459.00" font-size="14" text-anchor="middle" font-weight="bold"  fill="#5a6672">NOT the 48 V feed</text>
+<polyline points="258.00,837.50 284.00,837.50" fill="none" stroke="#e36209" stroke-width="2.3" stroke-linejoin="round" marker-end="url(#pk48)" />
+<text x="292.00" y="842.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">48 V supply</text>
+<polyline points="258.00,859.50 284.00,859.50" fill="none" stroke="#8250df" stroke-width="2.3" stroke-linejoin="round" marker-end="url(#pk1v)" />
+<text x="292.00" y="864.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">1 V supply</text>
+<polyline points="618.00,837.50 644.00,837.50" fill="none" stroke="#3d464f" stroke-width="2.3" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" />
+<text x="652.00" y="842.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">return (dashed)</text>
+<rect x="620.00" y="852.00" width="15.00" height="15.00" fill="#d0d7de" stroke="#10151c" stroke-width="0.8" />
+<text x="643.00" y="864.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">BGA ball: signal / mechanical</text>
+<rect x="980.00" y="830.00" width="15.00" height="15.00" fill="#b9bec6" stroke="#10151c" stroke-width="0.8" />
+<text x="1003.00" y="842.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">BGA ball in Z1&#x27;s 48 V power field</text>
+<rect x="980.00" y="852.00" width="15.00" height="15.00" fill="#b87333" stroke="#10151c" stroke-width="0.8" />
+<text x="1003.00" y="864.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">Cu pillar (Z2 regulator attach)</text>
+<text x="24.00" y="889.00" font-size="14" text-anchor="start" font-weight="normal"  fill="#5a6672">Arrows show where current flows, not an electrical series chain: the converter has switch-node, flying-capacitor and phase connections between its tiers.</text>
+</svg>
