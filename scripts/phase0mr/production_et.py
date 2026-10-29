@@ -138,6 +138,7 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
     # specified tiers, present only inside the 49 cell footprints. Passing None keeps
     # the historical slab, so results/phase0mr3c reproduces byte for byte.
     conv_names, explicit_bottom, iface_mat = ("conv",), None, "underfill_homog"
+    fill_extent = None
     if physical_z1 is not None:
         import sys as _sys
         _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "phase0nw"))
@@ -151,17 +152,29 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
         _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "phase0nw"))
         import z2_converter as Z2C
         cfg_phys, out_of_cell = physical_converter
-        extra, explicit_bottom, conv_names, conv_fill = Z2C.install(
+        extra, explicit_bottom, conv_names, conv_fill, ring_void = Z2C.install(
             cfg_phys, st, extra, out_of_cell)
         mid = mid + Z2C.mid_layers()
         iface_mat = "microbump"
+        if ring_void:
+            # the fill extent is the MEASURED cell-grid bounding box, cross-checked against
+            # the cutout rule (bbox + 2 x clearance = opening) rather than trusted
+            fill_extent = (min(t.x0 for t in tiles), max(t.x1 for t in tiles),
+                           min(t.y0 for t in tiles), max(t.y1 for t in tiles))
+            clr = getattr(cfg_phys, "clearance_mm", None)
+            if clr is not None and cut is not None:
+                for a, b in ((fill_extent[0], fill_extent[1]), (fill_extent[2], fill_extent[3])):
+                    if abs((b - a) + 2.0 * clr - cut) > 1e-6:
+                        raise ValueError(f"cell-grid bbox {b - a:.6f} mm + 2 x {clr} mm "
+                                         f"clearance != cutout {cut} mm")
     m = build(tiles, st, h_sub_mm, h_xy=h_xy, z_scale=1.4, support_layer=False,
               extra_bottom_layers=extra, explicit_bottom_layers=explicit_bottom,
               extra_mid_layers=mid,
               tile_band_is_converter=(physical_z1 is None
                                       and ZG.CONV_PLACE.get(arch) == "in"),
               conv_fill_material=conv_fill, conv_layer_names=conv_names,
-              interface_material=iface_mat, cutout_mm=cut)
+              interface_material=iface_mat, cutout_mm=cut,
+              conv_fill_extent=fill_extent)
     return m, build_materials(st), st, tiles
 
 

@@ -67,6 +67,16 @@ class PhysicalPackage:
     cell_side_mm: float
     conv_total_um: float
     tiers: tuple
+    # FINAL CLOSURE: the primary Z2 is direct-fed with an explicit VR attach and a void
+    # sidewall clearance. Defaults keep any older YAML loadable; the guard in the loader
+    # refuses a Z2_DIRECT_FEED file that omits any of the three.
+    variant: str = ""
+    hv_feed: str = ""
+    attach_um: float = 0.0
+    attach: tuple = ()
+    clearance_mm: float | None = None
+    clearance_void: bool = False
+    out_of_cell_primary: str = "F1_encapsulated"
     source_path: Path = field(compare=False, default=None)
 
     # ---- derived, never stored twice -------------------------------------------------
@@ -151,6 +161,28 @@ def load_physical_package_config(path) -> PhysicalPackage:
                 f"small for {n}x{n} cells of {side} mm")
 
     sub = need(c, "substrate", "root")
+    variant = c.get("variant", "")
+    feed = (c.get("hv_feed") or {}).get("mode", "")
+    va = c.get("vr_attach") or {}
+    attach_um = float(va.get("thickness_um", 0.0))
+    if va:
+        parts = float(va.get("cu_height_um", 0.0)) + float(va.get("cap_height_um", 0.0))
+        if abs(parts - attach_um) > 1e-9:
+            raise PhysicalConfigError(
+                f"{path.name}: vr_attach Cu {va.get('cu_height_um')} + cap "
+                f"{va.get('cap_height_um')} um does not add up to {attach_um} um")
+    ooc = (c.get("out_of_cell") or {}).get("primary", "F1_encapsulated")
+    clr = cut.get("sidewall_clearance_mm")
+    clr_void = str(cut.get("sidewall_content", "")).upper() == "VOID"
+    # --- cross-check 4: a direct-fed Z2 must carry ALL of its defining features --------
+    if variant == "Z2_DIRECT_FEED":
+        missing = [k for k, ok in (("hv_feed.mode = DIRECT_FEED", feed == "DIRECT_FEED"),
+                                   ("vr_attach.thickness_um > 0", attach_um > 0),
+                                   ("cutout.sidewall_content = VOID", clr_void),
+                                   ("out_of_cell.primary = F1_clearance",
+                                    ooc == "F1_clearance")) if not ok]
+        if missing:
+            raise PhysicalConfigError(f"{path.name}: Z2_DIRECT_FEED lacks {missing}")
     return PhysicalPackage(
         label=c.get("label", path.stem),
         architecture=need(c, "architecture", "root"),
@@ -165,13 +197,17 @@ def load_physical_package_config(path) -> PhysicalPackage:
         cutout_mm=cut_mm,
         cells=cells, cell_area_mm2=area, cell_side_mm=side,
         conv_total_um=stated, tiers=tiers,
+        variant=variant, hv_feed=feed, attach_um=attach_um,
+        attach=tuple(sorted((k, v) for k, v in va.items() if not isinstance(v, (dict, list)))),
+        clearance_mm=float(clr) if clr is not None else None, clearance_void=clr_void,
+        out_of_cell_primary=ooc,
         source_path=path,
     )
 
 
 def build_physical_package(cfg: PhysicalPackage, h_xy: float = 1.1,
                            discrete_cells: bool = True,
-                           out_of_cell: str = "F1_encapsulated"):
+                           out_of_cell: str | None = None):
     """Mesh a physical package. Every geometric argument comes from `cfg`.
 
     This is the only supported entry point for the physical path: calling
@@ -181,6 +217,7 @@ def build_physical_package(cfg: PhysicalPackage, h_xy: float = 1.1,
     import production_et as PE
     if cfg.board_case in FORBIDDEN_BOARD_CASES:
         raise PhysicalConfigError(f"refusing to build on legacy board {cfg.board_case}")
+    out_of_cell = out_of_cell or cfg.out_of_cell_primary
     if not discrete_cells:
         return PE.build_global(cfg.architecture, cfg.substrate_mm, h_xy=h_xy,
                                board_case=cfg.board_case, cutout_mm=cfg.cutout_mm)

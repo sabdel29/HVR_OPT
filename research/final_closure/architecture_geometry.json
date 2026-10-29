@@ -5,6 +5,15 @@
   "Z1": {
    "arch": "Z1",
    "label": "Z1 -- converter embedded between substrate and die",
+   "variant": "Z1_EMBEDDED",
+   "hv_feed": "BGA_FED",
+   "bga_48v_power_field": {
+    "supply": 54,
+    "return": 54,
+    "source": "package_network.json matched count"
+   },
+   "out_of_cell": null,
+   "attach": null,
    "layers": [
     {
      "name": "board",
@@ -39,7 +48,7 @@
       "bga",
       "pkg_hv"
      ],
-     "role_text": "BGA ball field (48 V supply + return)"
+     "role_text": "BGA ball field (48 V supply + return, plus signals and mechanical support)"
     },
     {
      "name": "sub_lower",
@@ -344,7 +353,7 @@
     "rail_carried": "48 V input (low current)"
    },
    "rails": {
-    "input": "48 V enters through the PCB and BGA",
+    "input": "48 V enters through the PCB and the 48 V BGA power field",
     "output": "1 V delivered to the compute die",
     "return": "ground return through the same BGA field"
    },
@@ -356,7 +365,75 @@
   },
   "Z2": {
    "arch": "Z2",
-   "label": "Z2 -- converter on the substrate backside, inside the PCB opening",
+   "label": "Z2 -- direct-fed converter on the substrate backside, inside the PCB opening",
+   "variant": "Z2_DIRECT_FEED",
+   "hv_feed": "DIRECT_FEED",
+   "bga_48v_power_field": null,
+   "out_of_cell": {
+    "fill": "underfill_homog",
+    "extent_x_mm": [
+     -10.68,
+     10.68
+    ],
+    "clearance_mm": 1.0,
+    "ring": "VOID"
+   },
+   "attach": {
+    "layer": "conv_attach_vr_substrate",
+    "technology": "Cu pillar + SnAg solder cap + underfill",
+    "carries": "1 V VDD and GND only",
+    "pattern": "VDD/GND checkerboard over each cell footprint",
+    "h_total_um": 30.0,
+    "h_cu_um": 14.0,
+    "h_cap_um": 16.0,
+    "d_um": 15.0,
+    "pitch_um": 30.0,
+    "cell_side_mm": 2.3685438564654024,
+    "bumps_per_rail_per_cell": 3042,
+    "area_fraction": 0.19634954084936207,
+    "underfill_material": "underfill_homog",
+    "k_underfill_W_mK": 0.6,
+    "mechanical_convention": "underfill-dominated card (as the interface microbump layer); column-stiffened Voigt card is a class-B bound",
+    "thermal_method": "Voigt through thickness (Cu + solder columns in series), Maxwell-Garnett in plane (Phase 0M-R validated, <~0.6 % vs RVE)",
+    "bounds": {
+     "h_total_um": [
+      20.0,
+      40.0
+     ],
+     "d_pitch_um": [
+      [
+       15.0,
+       30.0
+      ],
+      [
+       30.0,
+       80.0
+      ]
+     ],
+     "material": [
+      "Cu pillar + solder cap",
+      "all-solder (pure Sn) microbump"
+     ]
+    },
+    "sources": [
+     {
+      "ref": "Au et al., ECTC 2016, 10.1109/ECTC.2016.127",
+      "class": "CLOSE_ANALOG",
+      "quote": "30\u03bcm pitch micro Cu pillar bump (15\u03bcm diameter) ... sufficient solder cap volume (16mm height)"
+     },
+     {
+      "ref": "Na et al., Electronics 12(1):144, 2022, 10.3390/electronics12010144",
+      "class": "CLOSE_ANALOG",
+      "quote": "bumps with a diameter of 30 \u00b5m, a height of 40 \u00b5m, and a space of 50 \u00b5m"
+     },
+     {
+      "ref": "framework allowance, research/PCB_THICKNESS_Z2_AUDIT.md",
+      "class": "BOUNDED",
+      "quote": "cell-to-substrate attach solder + underfill | 30"
+     }
+    ],
+    "measured_layer": true
+   },
    "layers": [
     {
      "name": "board",
@@ -376,17 +453,17 @@
     },
     {
      "name": "conv_7_gan_hs_EPC2014C",
-     "z0_um": -1963.0,
-     "z1_um": -1278.0,
+     "z0_um": -1993.0,
+     "z1_um": -1308.0,
      "t_um": 685.0,
      "footprint": "substrate",
      "region": "inside_cutout",
      "plan_extent": "within_opening_footprint",
-     "n_elems_inside_cutout": 2883,
+     "n_elems_inside_cutout": 2187,
      "n_elems_outside_cutout": 0,
      "materials": {
       "silicon": 1323,
-      "underfill_homog": 1560
+      "underfill_homog": 864
      },
      "roles": [
       "hs"
@@ -395,17 +472,17 @@
     },
     {
      "name": "conv_6_interlayer_rdl",
-     "z0_um": -1278.0,
-     "z1_um": -1268.0,
+     "z0_um": -1308.0,
+     "z1_um": -1298.0,
      "t_um": 10.0,
      "footprint": "substrate",
      "region": "inside_cutout",
      "plan_extent": "within_opening_footprint",
-     "n_elems_inside_cutout": 961,
+     "n_elems_inside_cutout": 729,
      "n_elems_outside_cutout": 0,
      "materials": {
       "rdl_tier": 441,
-      "underfill_homog": 520
+      "underfill_homog": 288
      },
      "roles": [
       "rdl"
@@ -414,17 +491,17 @@
     },
     {
      "name": "conv_5_flying_caps",
-     "z0_um": -1268.0,
-     "z1_um": -1168.0,
+     "z0_um": -1298.0,
+     "z1_um": -1198.0,
      "t_um": 100.0,
      "footprint": "substrate",
      "region": "inside_cutout",
      "plan_extent": "within_opening_footprint",
-     "n_elems_inside_cutout": 1922,
+     "n_elems_inside_cutout": 1458,
      "n_elems_outside_cutout": 0,
      "materials": {
       "hvr_effective": 882,
-      "underfill_homog": 1040
+      "underfill_homog": 576
      },
      "roles": [
       "caps"
@@ -433,17 +510,17 @@
     },
     {
      "name": "conv_4_interlayer_rdl",
-     "z0_um": -1168.0,
-     "z1_um": -1158.0,
+     "z0_um": -1198.0,
+     "z1_um": -1188.0,
      "t_um": 10.0,
      "footprint": "substrate",
      "region": "inside_cutout",
      "plan_extent": "within_opening_footprint",
-     "n_elems_inside_cutout": 961,
+     "n_elems_inside_cutout": 729,
      "n_elems_outside_cutout": 0,
      "materials": {
       "rdl_tier": 441,
-      "underfill_homog": 520
+      "underfill_homog": 288
      },
      "roles": [
       "rdl"
@@ -452,17 +529,17 @@
     },
     {
      "name": "conv_3_gan_ls_EPC2057",
-     "z0_um": -1158.0,
-     "z1_um": -520.0,
+     "z0_um": -1188.0,
+     "z1_um": -550.0,
      "t_um": 638.0,
      "footprint": "substrate",
      "region": "inside_cutout",
      "plan_extent": "within_opening_footprint",
-     "n_elems_inside_cutout": 1922,
+     "n_elems_inside_cutout": 1458,
      "n_elems_outside_cutout": 0,
      "materials": {
       "silicon": 882,
-      "underfill_homog": 1040
+      "underfill_homog": 576
      },
      "roles": [
       "ls"
@@ -471,17 +548,17 @@
     },
     {
      "name": "conv_2_interlayer_rdl",
-     "z0_um": -520.0,
-     "z1_um": -510.0,
+     "z0_um": -550.0,
+     "z1_um": -540.0,
      "t_um": 10.0,
      "footprint": "substrate",
      "region": "inside_cutout",
      "plan_extent": "within_opening_footprint",
-     "n_elems_inside_cutout": 961,
+     "n_elems_inside_cutout": 729,
      "n_elems_outside_cutout": 0,
      "materials": {
       "rdl_tier": 441,
-      "underfill_homog": 520
+      "underfill_homog": 288
      },
      "roles": [
       "rdl"
@@ -490,17 +567,17 @@
     },
     {
      "name": "conv_1_inductor_plus_cout",
-     "z0_um": -510.0,
-     "z1_um": -10.0,
+     "z0_um": -540.0,
+     "z1_um": -40.0,
      "t_um": 500.0,
      "footprint": "substrate",
      "region": "inside_cutout",
      "plan_extent": "within_opening_footprint",
-     "n_elems_inside_cutout": 3844,
+     "n_elems_inside_cutout": 2916,
      "n_elems_outside_cutout": 0,
      "materials": {
       "hvr_effective": 1764,
-      "underfill_homog": 2080
+      "underfill_homog": 1152
      },
      "roles": [
       "ind"
@@ -516,34 +593,53 @@
      "region": "all",
      "plan_extent": "outside_opening_footprint",
      "n_elems_inside_cutout": 0,
-     "n_elems_outside_cutout": 1632,
+     "n_elems_outside_cutout": 2040,
      "materials": {
-      "bga_homog": 1632
+      "bga_homog": 2040
      },
      "roles": [
       "bga",
       "pkg_hv"
      ],
-     "role_text": "BGA ball field (48 V supply + return)"
+     "role_text": "BGA ball field (signals, auxiliary rails, mechanical support -- NOT the 48 V HVR feed)"
     },
     {
      "name": "conv_0_land_side_attach_rdl",
-     "z0_um": -10.0,
-     "z1_um": 0.0,
+     "z0_um": -40.0,
+     "z1_um": -30.0,
      "t_um": 10.0,
      "footprint": "substrate",
      "region": "inside_cutout",
      "plan_extent": "within_opening_footprint",
-     "n_elems_inside_cutout": 961,
+     "n_elems_inside_cutout": 729,
      "n_elems_outside_cutout": 0,
      "materials": {
       "rdl_tier": 441,
-      "underfill_homog": 520
+      "underfill_homog": 288
      },
      "roles": [
       "rdl"
      ],
      "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "conv_attach_vr_substrate",
+     "z0_um": -30.0,
+     "z1_um": 0.0,
+     "t_um": 30.0,
+     "footprint": "substrate",
+     "region": "inside_cutout",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 729,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "underfill_homog": 288,
+      "vr_attach": 441
+     },
+     "roles": [
+      "attach"
+     ],
+     "role_text": "VR-to-substrate attach (Cu pillar + solder cap + underfill, 1 V only)"
     },
     {
      "name": "sub_lower",
@@ -694,16 +790,16 @@
     "rail_carried": "1 V output (about 1 kA total)"
    },
    "rails": {
-    "input": "48 V enters through the PCB and BGA",
-    "output": "1 V delivered to the compute die",
-    "return": "ground return through the same BGA field"
+    "input": "48 V enters the backside HVR directly through a dedicated external connection on the cutout side (no package 48 V path)",
+    "output": "1 V through the VR attach and the substrate TSVs to the die",
+    "return": "ground through the substrate GND TSVs and the VR attach to the HVR, then the direct-feed return"
    },
    "mesh": {
     "builder": "final_closure_physical_etm.build",
     "h_xy_mm": 1.1,
-    "n_elems_base": 38623
+    "n_elems_base": 36280
    }
   }
  },
- "sha256": "4f2df35c94971df759641c90bd0d72e0ddac290a4950b434c9b8d0a03d71bc37"
+ "sha256": "4729030cb06868e688c623a4dcc1e46cd8f10e9afd71b31ac6b9d1cdfade4704"
 }

@@ -13,8 +13,29 @@
 # nothing checked them.
 # =====================================================================================
 
-architecture: ARCH_Z2_BACKSIDE
+architecture: ARCH_Z2_BACKSIDE   # geometry family (backside converter in a PCB cutout)
 label: Z2-2.4mm-CUTOUT
+# FINAL CLOSURE (research/final_closure/Z2_DIRECT_FEED_ARCHITECTURE.md). The PRIMARY Z2 is
+# DIRECT-FED: 48 V reaches the backside HVR through a dedicated external connection on the
+# cutout side; only the 1 V supply/return cross the substrate, through the explicit VR attach
+# below. The BGA-fed construction survives only as Z2_BGA_FED_CONTROL (code key Z2BF), which
+# shares this geometry and differs only in its 48 V path.
+variant: Z2_DIRECT_FEED
+hv_feed:
+  mode: DIRECT_FEED            # BGA_FED only for Z2_BGA_FED_CONTROL
+  input_terminals: "VIN pad on the high-side RDL of each cell, reached from the cutout side"
+  external_loop_parameter: R_Z2_direct_feed_loop     # swept, never assumed
+  precedent: "ARM US20260059645A1 claims 6-9, 14-15, [0038], [0040] (DIRECT construction precedent)"
+vr_attach:
+  layer: conv_attach_vr_substrate
+  technology: "Cu pillar + SnAg solder cap + underfill"
+  carries: "1 V VDD and GND only"
+  thickness_um: 30.0           # the clearance budget's 'cell-to-substrate attach' allowance
+  cu_height_um: 14.0
+  cap_height_um: 16.0          # Au et al., ECTC 2016 (CLOSE_ANALOG)
+  diameter_um: 15.0            # Au et al., ECTC 2016 (CLOSE_ANALOG)
+  pitch_um: 30.0               # Au et al., ECTC 2016 (CLOSE_ANALOG)
+  status: CLOSE_ANALOG
 
 board:
   case: it968g_2p4mm           # PHASE 0N-V. The legacy fr4_2p4mm is UNSOURCED and is
@@ -46,6 +67,8 @@ cutout:
   rule: "49-cell grid bbox 21.36 mm + 2 x 1.0 mm sidewall clearance"
   sidewall_clearance_mm: 1.0
   sidewall_status: BOUNDED     # unsourced; 0.5-1.0 mm carried as a range
+  sidewall_content: VOID       # DEFECT #66: the ring between the cell grid and the PCB wall is
+                               # empty in the baseline; the sidewall-filled F1 is a class-B variant
   mesh_conforming: true
   breakpoints_mm: [-11.68, 11.68]
   removed_layers: [board, bga]
@@ -61,7 +84,10 @@ bga:
   lattice: centred             # (n-1)*p/2 about the origin, NOT -L/2 + (i+0.5)p
   sites_total: 1369
   sites_surviving: 528
-  allocation:
+  mechanical_field_sites: 528  # BGA_MECHANICAL_FIELD: every surviving site stays in the mechanics
+  power_field_48v: none        # BGA_48V_POWER_FIELD of the primary (direct-fed) Z2
+  allocation:                  # LEGACY Phase 0N-T interim allocation; superseded by
+                               # package_network.json (54/rail) and used only by Z2BF
     rule: "mirror-symmetric pairs per side; whole pairs alternate supply/return"
     supply_balls: 16
     return_balls: 16
@@ -115,10 +141,12 @@ out_of_cell:
   # converter exists only inside the cutout, 49.6 % is the governing number.
   fraction_of_opening_pct: 49.6
   fraction_of_substrate_pct: 69.5
-  primary: F1_encapsulated
+  primary: F1_clearance        # encapsulant between the cells, 1.0 mm clearance ring VOID
   cases:
+    F1_clearance:    {material: underfill_homog, ring: VOID, status: PROVISIONAL,
+                      note: "production: fill only inside the 21.36 mm cell-grid bounding box"}
     F1_encapsulated: {material: underfill_homog, status: PROVISIONAL,
-                      note: mold/underfill medium already in the stack}
+                      note: "SENSITIVITY ONLY (f1_sidewall_filled): fills the whole opening and bonds the converter to the PCB sidewall"}
     F2_void:         {material: null, status: BOUNDED,
                       note: "elements are never created; genuinely no material, not an
                              air-property relabel"}

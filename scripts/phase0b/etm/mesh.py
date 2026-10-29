@@ -164,7 +164,8 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
           conv_layer_names: tuple = ("conv",),
           interface_material: str = "underfill_homog",
           cutout_mm: float | None = None,
-          cutout_layers: tuple = ("board", "bga")) -> Mesh:
+          cutout_layers: tuple = ("board", "bga"),
+          conv_fill_extent: tuple | None = None) -> Mesh:
     """Build the mesh.
 
     `h_xy`    in-plane element size at material boundaries (mm)
@@ -357,6 +358,15 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
                 if conv_fill_material and L.name in conv_layer_names and ti < 0:
                     if conv_fill_material == "VOID":
                         continue
+                    # FINAL CLOSURE (DEFECT #66). With an extent, the out-of-cell fill
+                    # stops at the cell-grid bounding box: the clearance ring between the
+                    # grid and the PCB opening holds NO material, so nothing bonds the
+                    # converter to the PCB sidewall. None keeps the historical full fill.
+                    if conv_fill_extent is not None:
+                        ex0, ex1, ey0, ey1 = conv_fill_extent
+                        if not (ex0 - 1e-9 <= xc[i] <= ex1 + 1e-9
+                                and ey0 - 1e-9 <= yc[j] <= ey1 + 1e-9):
+                            continue
                     mat = conv_fill_material
                 if L.footprint == "substrate" and ti >= 0:
                     if L.name == "tile_band" and tile_band_is_converter:

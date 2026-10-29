@@ -29,7 +29,12 @@ ROLE_TEXT = {"hs": "high-side GaN device tier", "ls": "low-side GaN device tier"
              "caps": "flying-capacitor tier", "ind": "inductor + output-capacitor tier",
              "rdl": "converter RDL tier (10 um)", "lv": "1 V output RDL",
              "tsv": "through-silicon via field", "pads": "die-to-package interface (Cu pads)",
-             "bga": "BGA ball field (48 V supply + return)", "die": "compute die"}
+             "bga": "BGA ball field (48 V supply + return)", "die": "compute die",
+             "attach": "VR-to-substrate attach (Cu pillar + solder cap + underfill, 1 V only)"}
+#: the BGA's ELECTRICAL role differs by architecture; its mechanical role does not
+BGA_ROLE = {"Z1": "BGA ball field (48 V supply + return, plus signals and mechanical support)",
+            "Z2": "BGA ball field (signals, auxiliary rails, mechanical support -- NOT the 48 V "
+                  "HVR feed)"}
 
 
 def _layers(m, materials, cut=None):
@@ -83,14 +88,35 @@ def spec_for(arch):
     layers = _layers(m, m.elem_material, cut)
     for o in layers:
         o["roles"] = roles.get(o["name"], [])
-        o["role_text"] = "; ".join(dict.fromkeys(ROLE_TEXT[r] for r in o["roles"]
-                                                 if r in ROLE_TEXT)) or None
+        o["role_text"] = "; ".join(dict.fromkeys(
+            (BGA_ROLE[arch] if r == "bga" else ROLE_TEXT[r]) for r in o["roles"]
+            if r in ROLE_TEXT)) or None
+    # the out-of-cell fill extent, MEASURED: the converter-tier elements' x range
+    cen = m.elem_centroids()
+    lay_a = np.array(m.elem_layer, dtype=object)
+    conv = np.array([str(x).startswith("conv") for x in lay_a])
+    fill_extent = ([float(m.xs[np.searchsorted(m.xs, cen[conv, 0].min()) - 1]),
+                    float(m.xs[np.searchsorted(m.xs, cen[conv, 0].max())])]
+                   if conv.any() else None)
+    import physical_package as _PP
+    cfg2 = _PP.load_physical_package_config(R / "configs/phase0nt/z2_2p4mm_cutout.yaml")
+    spec_df = json.loads((R / "research/final_closure/z2_direct_feed_architecture.json")
+                         .read_text())
     xs = sorted({round(t.cx, 6) for t in tiles})
     return {
         "arch": arch,
         "label": {"Z1": "Z1 -- converter embedded between substrate and die",
-                  "Z2": "Z2 -- converter on the substrate backside, inside the PCB "
-                        "opening"}[arch],
+                  "Z2": "Z2 -- direct-fed converter on the substrate backside, inside the "
+                        "PCB opening"}[arch],
+        "variant": FL.VARIANT[arch], "hv_feed": FL.HV_FEED[arch],
+        "bga_48v_power_field": (spec_df["architectures"][arch]["bga_48v_power_field"]),
+        "out_of_cell": (None if arch == "Z1" else
+                        {"fill": "underfill_homog", "extent_x_mm": fill_extent,
+                         "clearance_mm": cfg2.clearance_mm,
+                         "ring": "VOID" if cfg2.clearance_void else "FILLED"}),
+        "attach": (None if arch == "Z1" else
+                   dict(spec_df["vr_attach"], measured_layer=next(
+                       (o for o in layers if "attach" in o["roles"]), None) is not None)),
         "layers": layers,
         "z_min_um": round(float(m.zs.min()) * 1e3, 3),
         "z_max_um": round(float(m.zs.max()) * 1e3, 3),
@@ -110,9 +136,14 @@ def spec_for(arch):
                 "pitch_um": TF.P_TSV_MM * 1e3,
                 "rail_carried": {"Z1": "48 V input (low current)",
                                  "Z2": "1 V output (about 1 kA total)"}[arch]},
-        "rails": {"input": "48 V enters through the PCB and BGA",
-                  "output": "1 V delivered to the compute die",
-                  "return": "ground return through the same BGA field"},
+        "rails": ({"input": "48 V enters through the PCB and the 48 V BGA power field",
+                   "output": "1 V delivered to the compute die",
+                   "return": "ground return through the same BGA field"} if arch == "Z1" else
+                  {"input": "48 V enters the backside HVR directly through a dedicated "
+                            "external connection on the cutout side (no package 48 V path)",
+                   "output": "1 V through the VR attach and the substrate TSVs to the die",
+                   "return": "ground through the substrate GND TSVs and the VR attach to the "
+                             "HVR, then the direct-feed return"}),
         "mesh": {"builder": "final_closure_physical_etm.build", "h_xy_mm": E.PRODUCTION_H_XY,
                  "n_elems_base": int(m.n_elems)},
     }

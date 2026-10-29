@@ -63,12 +63,24 @@ def test_board_thickness_in_the_config_changes_the_meshed_board(tmp_path):
 
 
 def test_cutout_width_in_the_config_changes_the_mesh(tmp_path):
+    """The opening is the 21.36 mm cell grid plus a clearance on each side, so a consistent
+    edit changes both: a 2.0 mm clearance makes a 25.36 mm opening."""
     base = load_physical_package_config(CFG)
     n0 = build_physical_package(base)[0].n_elems
-    edited = load_physical_package_config(_tmp_cfg(tmp_path, **{"cutout.width_mm": 18.0}))
+    edited = load_physical_package_config(_tmp_cfg(tmp_path, **{
+        "cutout.width_mm": 25.36, "cutout.sidewall_clearance_mm": 2.0,
+        "cutout.breakpoints_mm": [-12.68, 12.68]}))
     n1 = build_physical_package(edited)[0].n_elems
-    assert n1 != n0, "narrowing the cutout removed no elements; the config is inert"
-    assert edited.cutout_mm == 18.0
+    assert n1 != n0, "widening the cutout changed no element; the config is inert"
+    assert edited.cutout_mm == 25.36
+
+
+def test_an_opening_that_cannot_hold_the_cells_and_the_clearance_is_refused(tmp_path):
+    """NEGATIVE, with the edit this test used to make before the clearance became the
+    baseline: an 18 mm opening cannot hold the 21.36 mm cell grid and two 1.0 mm rings."""
+    edited = load_physical_package_config(_tmp_cfg(tmp_path, **{"cutout.width_mm": 18.0}))
+    with pytest.raises(ValueError, match="clearance"):
+        build_physical_package(edited)
 
 
 def test_substrate_thickness_in_the_config_reaches_the_mesh(tmp_path):
@@ -176,11 +188,16 @@ def test_material_mapping_is_declared_with_status(cfg):
     assert {"mat.mlcc_bounded", "mat.gan_bounded"} <= opens
 
 
-def test_out_of_cell_is_declared_with_both_cases(cfg):
+def test_out_of_cell_is_declared_with_every_case(cfg):
+    """Production: encapsulant between the cells with the specified 1.0 mm clearance ring
+    VOID (F1_clearance). The sidewall-filled F1_encapsulated (the earlier, mistaken
+    baseline) and F2 void are sensitivities."""
     import yaml as _y
     o = _y.safe_load(CFG.read_text())["out_of_cell"]
-    assert set(o["cases"]) == {"F1_encapsulated", "F2_void"}
-    assert o["primary"] == "F1_encapsulated"
+    assert set(o["cases"]) == {"F1_clearance", "F1_encapsulated", "F2_void"}
+    assert o["primary"] == "F1_clearance"
+    assert o["cases"]["F1_clearance"]["ring"] == "VOID"
+    assert "SENSITIVITY ONLY" in o["cases"]["F1_encapsulated"]["note"]
     assert o["bracket_required"] is True
     # the governing fraction is of the OPENING, not of the substrate
     assert abs(o["fraction_of_opening_pct"] - 100 * (1 - 49 * 5.61 / 23.36 ** 2)) < 0.2
@@ -192,13 +209,16 @@ import numpy as np  # noqa: E402
 import z2_converter as Z2C  # noqa: E402
 
 # The specified Z2 table, in the PCB-backside frame, from
-# research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md section 6.
+# research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md section 6, shifted down by the explicit
+# 30 um VR-to-substrate attach (Z2_DIRECT_FEED_ARCHITECTURE.md section 4) that now sits
+# between the land-side attach RDL and the substrate.
+ATTACH_UM = 30.0
 SPEC_Z = {
-    "land_side_attach_rdl": (2700.0, 2690.0),
-    "inductor_plus_cout":   (2690.0, 2190.0),
-    "gan_ls_EPC2057":       (2180.0, 1542.0),
-    "flying_caps":          (1532.0, 1432.0),
-    "gan_hs_EPC2014C":      (1422.0, 737.0),
+    "land_side_attach_rdl": (2700.0 - ATTACH_UM, 2690.0 - ATTACH_UM),
+    "inductor_plus_cout":   (2690.0 - ATTACH_UM, 2190.0 - ATTACH_UM),
+    "gan_ls_EPC2057":       (2180.0 - ATTACH_UM, 1542.0 - ATTACH_UM),
+    "flying_caps":          (1532.0 - ATTACH_UM, 1432.0 - ATTACH_UM),
+    "gan_hs_EPC2014C":      (1422.0 - ATTACH_UM, 737.0 - ATTACH_UM),
 }
 
 
@@ -249,7 +269,17 @@ def test_high_side_is_deepest_and_clears_the_pcb_backside(built):
     deepest = min(rows, key=lambda r: r["z0_um"])
     assert "gan_hs" in deepest["tier"], (
         f"the deepest tier is {deepest['tier']}, not the high-side device")
-    assert deepest["z0_um"] - off == pytest.approx(737.0, abs=0.5)
+    assert deepest["z0_um"] - off == pytest.approx(737.0 - ATTACH_UM, abs=0.5)
+
+
+def test_the_attach_tier_sits_between_the_converter_and_the_substrate(built):
+    """The converter no longer touches the substrate: the explicit attach fills 0..-30 um."""
+    cfg, m, _ = built
+    lay = measure_layers(m)
+    a = lay["conv_attach_vr_substrate"]
+    assert a["z1_um"] == pytest.approx(0.0, abs=1e-6)
+    assert a["z0_um"] == pytest.approx(-ATTACH_UM, abs=1e-6)
+    assert cfg.attach_um == pytest.approx(ATTACH_UM)
 
 
 def test_converter_descends_into_the_cutout_not_in_series_below_the_bga(built):

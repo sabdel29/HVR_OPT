@@ -54,9 +54,65 @@ TIER_MATERIAL = {
 
 # Out-of-cell region (brief section 15).
 OUT_OF_CELL = {
-    "F1_encapsulated": "underfill_homog",   # mold/underfill medium already in the stack
+    "F1_encapsulated": "underfill_homog",   # SENSITIVITY: fills the WHOLE opening, bonding the
+                                            # converter to the PCB sidewall (DEFECT #66)
+    "F1_clearance":    "underfill_homog",   # PRODUCTION: encapsulant between the cells only;
+                                            # the 1.0 mm clearance ring to the PCB wall is void
     "F2_void":         "VOID",              # elements are never created
 }
+#: out-of-cell cases whose fill stops at the cell-grid bounding box (clearance ring void)
+CLEARANCE_RING_VOID = {"F1_clearance"}
+
+#: the explicit VR-to-substrate attach (Z2_DIRECT_FEED_ARCHITECTURE.md section 4)
+ATTACH_LAYER = "conv_attach_vr_substrate"
+#: the inputs of the validated microbump homogenisation (results/phase0mr/
+#: bump_layer_effective_tensor.csv: k_matrix 0.6, solder inclusion 57 W/mK) and the
+#: framework copper card (k 400 W/mK)
+K_UNDERFILL, K_SOLDER, K_COPPER = 0.6, 57.0, 400.0
+
+
+def _maxwell_garnett_2d(k_i, k_m, f):
+    """Transverse conductivity of aligned cylinders (Maxwell-Garnett, 2-D)."""
+    return k_m * ((k_i + k_m) + f * (k_i - k_m)) / ((k_i + k_m) - f * (k_i - k_m))
+
+
+def vr_attach_material(att: dict, column_stiffened: bool = False) -> dict:
+    """Card of the Cu-pillar + solder-cap + underfill attach, homogenised by the method
+    Phase 0M-R validated for the existing microbump row (Voigt through thickness, within
+    0.55 % of an explicit RVE; Maxwell-Garnett in plane, within 0.61 %).
+
+    Through thickness each pillar is Cu (h_cu) and solder (h_cap) in SERIES; columns and
+    underfill act in PARALLEL. In plane each z-slice is a Maxwell-Garnett array of its own
+    inclusion, and the slices act in parallel. The MECHANICAL card follows the convention of
+    the existing `microbump` card (underfill-dominated: E 8 GPa, nu 0.32, CTE 30 ppm/K);
+    `column_stiffened=True` gives the Voigt (column-carried) bound used as a class-B case.
+    """
+    import math
+    h_cu, h_cap = float(att["cu_height_um"]), float(att["cap_height_um"])
+    h = h_cu + h_cap
+    f = math.pi * (float(att["diameter_um"]) / 2.0) ** 2 / float(att["pitch_um"]) ** 2
+    k_col = h / (h_cu / K_COPPER + h_cap / K_SOLDER)
+    kz = f * k_col + (1.0 - f) * K_UNDERFILL
+    kxy = (h_cu * _maxwell_garnett_2d(K_COPPER, K_UNDERFILL, f)
+           + h_cap * _maxwell_garnett_2d(K_SOLDER, K_UNDERFILL, f)) / h
+    E, nu, cte = 8000.0, 0.32, 30.0e-6
+    if column_stiffened:
+        e_cu, e_sol, cte_cu, cte_sol = 110000.0, 50000.0, 16.66e-6, 22.0e-6
+        e_col = h / (h_cu / e_cu + h_cap / e_sol)
+        cte_col = (h_cu * cte_cu + h_cap * cte_sol) / h
+        E_v = f * e_col + (1.0 - f) * E
+        cte = (f * e_col * cte_col + (1.0 - f) * E * cte) / E_v
+        E = E_v
+    return {"status": "DERIVED", "elastic_type": "iso",
+            "E": {"value": E, "status": "DERIVED"},
+            "nu": {"value": nu, "status": "ASSUMPTION"},
+            "cte": {"value": cte, "status": "DERIVED"},
+            "k": {"value": kz, "status": "DERIVED"},
+            "k_ortho": {"value": [kxy, kxy, kz], "status": "DERIVED"},
+            "provenance": ("Cu pillar + solder cap + underfill (Au et al. ECTC 2016 geometry, "
+                           "CLOSE_ANALOG), Voigt/Maxwell-Garnett as Phase 0M-R"),
+            "geometry": {"f": f, "h_um": h, "h_cu_um": h_cu, "h_cap_um": h_cap,
+                         "column_stiffened": column_stiffened}}
 
 
 def rdl_tier_material() -> dict:
@@ -140,6 +196,10 @@ def install(cfg, stack: dict, extra_bottom: list, out_of_cell: str = "F1_encapsu
         raise ValueError("a backside converter needs a cutout to descend into")
     stack["materials"]["rdl_tier"] = rdl_tier_material()
     stack["materials"]["microbump"] = microbump_material()
+    att = dict(getattr(cfg, "attach", ()) or ())
+    t_att = float(getattr(cfg, "attach_um", 0.0) or 0.0) / 1e3
+    if t_att > 0:
+        stack["materials"]["vr_attach"] = vr_attach_material(att)
     kept = [e for e in extra_bottom if e[0] != "conv"]
     if len(kept) == len(extra_bottom):
         raise ValueError("no full-area 'conv' layer found to replace")
@@ -153,10 +213,17 @@ def install(cfg, stack: dict, extra_bottom: list, out_of_cell: str = "F1_encapsu
     # bottom of the hole -- the mesh still totals 1963 um, so only a per-tier coordinate
     # audit catches it.
     explicit, z = [], 0.0
+    if t_att > 0:
+        # the explicit VR-to-substrate attach: between the substrate underside (z = 0) and
+        # the converter's land-side (1 V output/attach) RDL. It carries only the 1 V
+        # supply/return of each cell and takes the out-of-cell rule of the other tiers.
+        explicit.append((ATTACH_LAYER, -t_att, 0.0, "vr_attach", 1, "inside_cutout"))
+        z = -t_att
     for nm, t_mm, mat, nz in reversed(converter_layers(cfg)):
         explicit.append((nm, z - t_mm, z, mat, nz, "inside_cutout"))
         z -= t_mm
-    return kept, explicit, tuple(e[0] for e in explicit), OUT_OF_CELL[out_of_cell]
+    return (kept, explicit, tuple(e[0] for e in explicit), OUT_OF_CELL[out_of_cell],
+            out_of_cell in CLEARANCE_RING_VOID)
 
 
 # Above the substrate, Z2 carries a 10 um top RDL (1 V + ground plane) between the
