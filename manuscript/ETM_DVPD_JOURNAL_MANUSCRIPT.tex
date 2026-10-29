@@ -9,9 +9,7 @@
 
 \begin{document}
 
-\title{Electrothermal--Mechanical Co-Design of Distributed Vertical Power
-Delivery: Architecture-Dependent Inelastic Response and Physical
-Realizability}
+\title{Electrothermal--Mechanical Closure of Distributed Vertical Power Delivery: Architecture Preference Is Conditional on the Coupled Implementation}
 
 \author{Mohamed~Gharib and Inna~Partin-Vaisband% author list to be confirmed
 \thanks{Manuscript prepared September 2026.}}
@@ -19,31 +17,17 @@ Realizability}
 \maketitle
 
 \begin{abstract}
-Power delivery at the kilowatt scale is increasingly limited by what the package can
-physically accommodate rather than by converter efficiency alone. A hierarchical
-electrothermal--mechanical framework for distributed vertical power delivery (DVPD) is
-presented in which converter synthesis is propagated into an explicit physical package: a
-voltage-fed, return-inclusive package power network solved on an aligned graded grid, a
-frozen electrical ledger in which every conductor has one owner, a tier-aware heat map, a
-converged electrothermal fixed point, a thermoelastic package solution, an all-site search
-for the critical solder joint, and a displacement-driven viscoplastic local submodel. Each
-reduced model is checked against a matched reference on the same problem: closed-form via and
-homogenisation models against commercial finite-element analysis (errors \ErrTsvBulk,
-\ErrTsvKz\ and \ErrTsvKx\,\%), the package power network against an open-source
-finite-element solution (\ErrPkgRdlZone\ and \ErrPkgRdlZtwo\,\% on effective resistance),
-the production thermal solver against commercial and open-source finite elements on a matched unit cell (\ErrThermAedtZtwo\ and \ErrThermMooseZtwo\,\% of the temperature rise), and the thermoelastic element against a closed form and commercial finite elements (\ErrMechClosed\ and \ErrMechAedt\,\%). One check changed the model: the series through-thickness conductivity of a
-redistribution tier was \ErrRdlKz\,\% high, and the representative-volume value is adopted.
-The framework is applied to embedded (Z1) and backside (Z2) integration of a 1\,kW,
-48\,V-to-1\,V system distributed over 49 regulator cells, with a matched \NballMatched\
-ball-grid-array balls per rail. Because the 48\,V input waveform is not derivable from the
-converter model, every 48\,V-side result is conditioned on named scenarios. In the
-continuous-input scenario the two architectures dissipate \PlossZone\ and \PlossZtwo\,W and
-reach \TmaxZone\ and \TmaxZtwo\,$^\circ$C, yet the backside architecture carries a
-\DuRatio-fold joint displacement driver, a \EpsRatio-fold local inelastic response and a
-\WarpRatio-fold die warpage. The embedded architecture carries the lower die warpage and joint displacement driver in every scenario that admits a valid comparison, reversing the ordering of an
-earlier, physically unclosed representation. Thermally, the backside architecture runs cooler wherever the difference is resolved, while in the continuous-input scenario the peak-temperature difference lies within the measured discretisation uncertainty, so no ranking is drawn there; peak temperature therefore
-does not rank local mechanical response. The continuous-input scenario is the headline comparison; in the buck-duty pulse the embedded joint lies beyond the constitutive calibration, so its local response is extrapolated and the local difference lies within its discretisation bound; under the overall-ratio pulse the embedded architecture exits the valid solid-solder operating domain under the assumed cooling, and no architecture comparison is drawn there. All 21 open sensitivity inputs were run on the production mesh or bounded; the loss ordering reverses with the electrically minimal through-silicon via field; the joint-driver ordering reverses with void instead of encapsulated space between the cells; the die-warpage and joint-driver orderings reverse with a second cold plate under the backside converter; the narrowly resolved local-response ordering does not survive five of them. No absolute
-life, manufacturing qualification or commercial end-to-end speedup is claimed.
+Kilowatt-scale power delivery is increasingly limited by what the package can physically
+accommodate. A hierarchical electrothermal--mechanical framework for distributed vertical power
+delivery carries converter synthesis into an explicit physical package---conductor-level
+electrical ledger, tier-resolved heat map, converged electrothermal fixed point, thermoelastic
+package solution, all-site critical-joint search and viscoplastic local solder submodel---each
+checked against a matched reference. It is applied to a 1\,kW, 48\,V-to-1\,V
+system of 49 regulator cells in two physically closed architectures: a regulator embedded between
+substrate and die (Z1), fed through the ball-grid array, and a backside regulator in a board
+opening (Z2), fed directly at 48\,V so that only 1\,V crosses the substrate. Physically closing the architectures reveals that no architecture can be ranked independently of its neighboring design decisions: converter placement changes the high-voltage entry path, through-silicon-via provisioning can reverse the electrical preference, cooling can reverse the mechanical preference, and local construction determines the solder response.
+Inside the package the backside regulator dissipates \PlossZtwo\,W against \PlossZone\,W in the continuous-input scenario, an advantage it keeps only while its external 48\,V feed loop stays below \RstarSzero\,m$\Omega$ (\RstarSone\,m$\Omega$ under the buck-duty pulse). The embedded architecture has the lower die warpage and joint displacement driver; the peak temperature ordering reverses between scenarios (embedded lower in the continuous-input scenario, backside lower in the buck-duty pulse); the local solder response difference lies within the measured discretisation uncertainty.
+The overall-ratio pulse drives the embedded joints to the solder melting onset; no comparison is drawn there. No absolute life, qualification or commercial speedup is claimed.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -107,6 +91,18 @@ explicit package stack, and in which the electrical, thermal, mechanical and rea
 questions are asked of the same geometry. Establishing that connection, and reporting what
 it changes, is the subject of this paper.
 
+% BEGIN final-lineage:intro-claim
+Recent DVPD work has established design considerations for the distributed
+regulators themselves~\cite{ISCAS2024DVPD}, buck-derived vertical delivery~\cite{Sriharini_ECTC_24},
+a comprehensive electrical and thermal design framework~\cite{Krishnakumar2026DVPD},
+self-consistent electrothermal models with embedded microfluidic
+cooling~\cite{Choi2024ITherm,Choi2025SelfConsistent}, and system perspectives on the path from
+lateral to vertical delivery~\cite{VPD2023Architectures,Ye2026TenKiloAmp,Swaminathan2026IVPDReview}.
+The present paper does not re-derive that design flow. Its subject is narrower: what happens to
+an architecture comparison when both alternatives are closed as physical packages---every
+conductor owned, every interface explicit, every heat source in its own tier---and the
+electrical, thermal and mechanical questions are asked of the same geometry. Physically closing the architectures reveals that no architecture can be ranked independently of its neighboring design decisions: converter placement changes the high-voltage entry path, through-silicon-via provisioning can reverse the electrical preference, cooling can reverse the mechanical preference, and local construction determines the solder response. A coupled electrothermal--mechanical framework is therefore required to make an architecture-level decision.
+% END final-lineage:intro-claim
 The following contributions are made.
 
 \begin{enumerate}
@@ -145,10 +141,21 @@ where a uniform grid cannot; the ball-grid-array count is treated as a solved in
 variable rather than sized from an equal-sharing assumption that the network disproves
 (Section~\ref{sec:pdnclosure}).
 
+\item The backside architecture is closed as a physical package: its 48\,V input enters the
+regulator directly through the board opening, only 1\,V crosses the substrate through an
+explicit converter-to-substrate attach, and the converter clears the opening sidewall. The
+unsourced external feed is swept rather than assumed, which turns it into a design
+requirement---a maximum loop resistance---instead of an invented connector
+(Sections~\ref{sec:physarch} and~\ref{sec:directfeed}).
+
 \item Every reduced model is checked stage by stage against a matched reference on the same
-problem and machine---commercial and open-source finite elements and closed forms---and
-model-specific errors and runtimes are reported in place of a single framework accuracy
-(Section~\ref{sec:matched}).
+problem and machine---commercial and open-source finite elements, closed forms and a conjugate
+fluid-dynamics solution---and model-specific errors and runtimes are reported in place of a
+single framework accuracy (Section~\ref{sec:matched}).
+
+\item Every ordering-relevant input without a single defensible value is run on the production
+mesh and judged by the same uncertainty-aware rule as the production pair; the orderings that
+reverse are reported as a central result, not as a caveat (Section~\ref{sec:classb}).
 % END final-lineage:contrib
 \end{enumerate}
 
@@ -253,10 +260,118 @@ $\mathbf{B} = [1,1,1]$ gives $6.803$\,A in every branch. The implementation cont
 time-domain model of the two states---no phase displacement, dead time or per-state
 capacitor solve---so no claim of interleaving is made.
 
+% BEGIN final-lineage:physarch
+\subsection{Physical architectures}\label{sec:physarch}
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\textwidth]{fig2_stack.pdf}
-\caption{Physical stack and power path for the two integration alternatives. (a) Embedded:
+\includegraphics[width=\textwidth]{fig12_package_sections.pdf}
+\caption{The two physical architectures at one scale, drawn from the solver mesh (layer heights
+measured, not typed). Z1: the converter is embedded between substrate and die, and its 48\,V
+arrives through the ball-grid array and the package 48\,V redistribution layer. Z2: the converter
+hangs below a \SubZtwoUM\,$\mu$m substrate inside a \CutoutMM\,mm opening of the 2.4\,mm board,
+with a \ClearanceMM\,mm void between the cell grid and the opening sidewall; its 48\,V enters
+through an illustrative direct feed (the exact connector geometry is not specified), and only
+1\,V crosses the substrate through the pillar attach and the TSV fields. The BGA balls of Z2
+carry signals, auxiliary rails and mechanical support, not the 48\,V input.}
+\label{fig:package}
+\end{figure*}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig11_power_path.pdf}
+\caption{Power paths, schematic (layer order from the measured specification, not to scale).
+The Z2 stack is drawn in the order energy flows---direct input, high-side device, flying
+capacitors, low-side stage, inductors and output capacitors, output and attach
+redistribution, attach, substrate, top redistribution, die---which is not a series circuit:
+switch-node, flying-capacitor, ground and phase connections run between non-adjacent tiers.}
+\label{fig:powerpath}
+\end{figure*}
+Two physical integration alternatives are compared (Figs.~\ref{fig:package}
+and~\ref{fig:powerpath}). Both were frozen in an architecture specification before any result in
+this paper was computed, and their layer heights are measured on the solver mesh.
+
+In the \emph{embedded} architecture (Z1), the platform 48\,V reaches the package through the
+48\,V field of the ball-grid array (BGA), spreads in a package 48\,V redistribution layer (RDL)
+and crosses the substrate through the through-silicon-via (TSV) field to the converter embedded
+beneath the die; the 1\,V output then travels tens of micrometres through the output RDL and the
+die-interface pads.
+
+In the \emph{backside} architecture (Z2), the converter hangs below the substrate inside the
+board opening. Its 48\,V input does not cross the package: it enters the regulator directly
+through the opening by a dedicated external connection, and only the 1\,V output crosses the
+substrate---through an explicit converter-to-substrate attach and the VDD and GND TSV fields---to
+the top RDL and the die. This construction has a direct precedent~\cite{ArmCutoutVR2026}: a
+vertical integrated regulator coupled to the side of the package substrate opposite the die,
+located at least partly inside a circuit-board cutout, whose input power is provided by a
+separate wire rather than through the board and substrate, and whose bumps to the substrate are
+dedicated to the regulated output. That source is a construction precedent only: it states no
+dimension, no performance figure and no qualification, and none is taken from it. A
+die-backside regulator family~\cite{GoogleBacksideIVR2021} supplies the backside-RDL-to-TSV
+output path as a close analog; it feeds its regulator through the package, so it is not a
+precedent for the direct feed.
+
+The BGA has two functions that an earlier representation of this study conflated. Its
+\emph{mechanical field}---every package-to-board site that physically survives, \NsitesZone\
+for Z1 and \NsitesZtwo\ for Z2 around the opening---carries signals, auxiliary rails, ground and
+mechanical support, and the critical-joint search runs over all of it. Its \emph{48\,V power
+field} is the subset that carries the regulator input: it exists in Z1 and is empty in Z2, a
+property enforced by a regression test on the ledger.
+
+The attach is a Cu pillar with a solder cap, \AttachH\,$\mu$m high (\AttachCu\,$\mu$m Cu and
+\AttachCap\,$\mu$m cap), \AttachD\,$\mu$m in diameter at \AttachPitch\,$\mu$m pitch, in a VDD/GND
+checkerboard under every cell footprint, with underfill: \AttachNbump\ pillars per rail per cell.
+The geometry is that of a 30\,$\mu$m-pitch Cu-pillar microbump process on an organic
+substrate~\cite{Au2016CuPillar30um}, a close analog; all-solder microbumps~\cite{Na2022SnMicrobump}
+and heights of 20 and 40\,$\mu$m are carried as sensitivities (Table~\ref{tab:sources}). The
+converter cells occupy $\pm$\FillExtentMM\,mm; the \ClearanceMM\,mm ring between them and the
+opening sidewall is void, so the converter is not bonded to the board, and encapsulant fills only
+the space between the cells. The previous construction filled the opening to its sidewall,
+contradicting the stack specification; it is retained only as a sensitivity.
+
+From the direct input upward, the Z2 stack runs high-side device, interlayer redistribution,
+flying capacitors, interlayer redistribution, low-side stage, interlayer redistribution,
+inductors and output capacitors, output and attach redistribution, attach, substrate with its
+TSV fields, top redistribution, die interface and die. That sequence is the order in which
+energy flows, not a series circuit: the switch-node, flying-capacitor, ground and phase
+connections run between non-adjacent tiers inside the regulator, and the ledger assigns each
+of them to its own conductor.
+
+Finally, a control is kept to separate the effect of the opening and the ball placement from the
+effect of the feed: \emph{a controlled experiment that forces both architectures to use an
+identical package-level 48\,V feed}. In it, the backside converter takes its 48\,V through the
+same matched BGA count and a package 48\,V RDL. It is an experiment, not a construction, and is
+reported separately (Sec.~\ref{sec:control}).
+
+\begin{table}[!t]
+\caption{Source hierarchy of the architecture definition (DIRECT: describes this
+construction; CLOSE\_ANALOG: bounds a value here; CONTEXT\_ONLY: no value taken). No
+dimension is copied from a drawing.}
+\label{tab:sources}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}L{3.0cm}L{2.2cm}L{2.6cm}@{}}
+\toprule
+Statement & Source & Class \\
+\midrule
+Regulator on the substrate backside, in a board cutout, fed by a separate wire, bumps dedicated to the regulated output & \cite{ArmCutoutVR2026} & DIRECT (construction only; no dimension, no performance) \\
+Backside RDL carrying regulated power into substrate TSVs & \cite{GoogleBacksideIVR2021} & CLOSE\_ANALOG (fed through the package) \\
+Attach: 15\,$\mu$m Cu pillar, 30\,$\mu$m pitch, solder cap & \cite{Au2016CuPillar30um} & CLOSE\_ANALOG \\
+Attach bound: 30\,$\mu$m Sn microbump, 80\,$\mu$m pitch, 40\,$\mu$m high & \cite{Na2022SnMicrobump} & CLOSE\_ANALOG (bound) \\
+Fine-pitch bonding and material systems & \cite{Lee2017CuPillarNCF,Dai2018MicroBump30um,Xu2026CuPillarReview} & CONTEXT\_ONLY \\
+External feed loop resistance & none & swept, not assumed \\
+Embedded-microchannel DVPD cooling & \cite{Choi2024ITherm,Choi2025SelfConsistent} & CONTEXT\_ONLY \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Historical frozen representation}\label{sec:histrep}
+The comparison that motivated this work was carried out on a frozen, physically unclosed
+representation of the two alternatives (Fig.~\ref{fig:stack}). Its results are kept in
+Sec.~\ref{sec:arch} only to show what the physical closure changed; no current result uses it.
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.94\textwidth]{fig2_stack.pdf}
+\caption{Historical frozen representation, superseded by Figs.~\ref{fig:package} and~\ref{fig:powerpath}: stack and power path for the two integration alternatives. (a) Embedded:
 the low-side devices, flying capacitors and inductors---$1226$\,\textmu m of the
 $1921$\,\textmu m component stack at the frozen device heights, $1258$ of $1953$\,\textmu m
 at the selected ones---are embedded in the $1.30$\,mm substrate, which they fill
@@ -284,9 +399,10 @@ deposited in the embedded band. In the \emph{backside} architecture (Z2) the con
 lies below the substrate and is connected through the full $0.30$\,mm, so the identical field
 carries the 1\,V output rail at the full cell current. That medium is represented as a
 continuous layer rather than as 49 discrete cells, and the interface between it and the board
-is not defined; both are limitations of the present geometry rather than properties of the
-architecture, and Sec.~\ref{sec:backside-limit} quantifies their effect. The vertical interconnect is therefore not common mode between the two and cannot be
+is not defined; both were limitations of that frozen geometry rather than properties of the
+architecture, and the physical architectures above resolve them, and Sec.~\ref{sec:backside-limit} quantifies their effect. The vertical interconnect is therefore not common mode between the two and cannot be
 treated as such. Both are shown in Fig.~\ref{fig:stack}.
+% END final-lineage:physarch
 
 A power-die variant and a 2.5-D lateral variant were also formulated. Neither is reported
 here: no source available to this work establishes the power-die construction, and its
@@ -416,7 +532,7 @@ inherits its uncertainty.
 \includegraphics[width=\textwidth]{fig3_loss.pdf}
 \caption{(a) Converter loss mechanisms evaluated by \eqref{eq:pcond}--\eqref{eq:pcoss} for
 one cell, showing the dominance of low-side conduction at a duty cycle of $0.0625$. (b)
-Electronics-scope loss breakdown for the final pair, separating converter losses from package
+Electronics-scope loss breakdown for the frozen pair, separating converter losses from package
 losses. (c) Segment current and the resulting vertical interconnect loss: the same
 through-substrate field dissipates essentially nothing carrying 48\,V and $0.991$\,W carrying
 1\,V, which is why the interconnect is not common mode across architectures.}
@@ -594,28 +710,56 @@ considered, so $n_{\mathrm{req}}$ is never presented as a statement of what manu
 requires.
 % BEGIN final-lineage:pdn
 \subsection{Package power-delivery network closure}\label{sec:pdnclosure}
-The 48\,V package redistribution network is solved as two separate resistive sheets, supply
-and return, each fed from a rail node through the individual series resistance of every
-ball-grid-array (BGA) ball and a finite-area contact. Ball currents are therefore an output of
-the solution rather than an imposed equal share, and under a uniform cell load they are
-markedly unequal, so a count sized from the total current divided by the ball count
-understates the most heavily loaded ball. Each regulator cell draws its input through the
-0.2\,mm input pad of the converter layout, not through the whole cell footprint. The sheet is
-discretised by cell-centred finite volumes on a tensor grid whose faces coincide with every
-pad edge and are graded toward every ball edge; on a uniform grid the pad boundaries fall
-between nodes, the resulting error is first order, and the embedded network failed to
-converge, whereas on the aligned grid all four networks converge to within 1\,\% on effective
-resistance, dissipation, maximum cell drop, peak ball current and peak-to-mean ball current
-between the two finest levels. The ball count is selected by enumerating every legal
-mirror-symmetric even count, solving the network at each, and verifying the candidate minimum
-on the resolved grid; the peak ball current is not monotone in the count, because the
-selected sites change with it. A matched count of \NballMatched\ balls per rail satisfies the
-1.5\,A-per-ball provisioning criterion for both architectures in the continuous-input
-scenario; that criterion is an engineering provisioning rule, not a reliability allowable.
-The resulting loop resistances are \RloopZone\,m$\Omega$ (Z1) and \RloopZtwo\,m$\Omega$
-(Z2). The frozen electrical ledger at the converged electrothermal state is given in
-Table~\ref{tab:ledger}.
+Only Z1 carries its 48\,V input through the package. Its 48\,V package redistribution network is
+solved as two separate resistive sheets, supply and return, each fed from a rail node through
+the individual series resistance of every ball-grid-array ball and a finite-area contact. Ball
+currents are therefore an output of the solution rather than an imposed equal share, and under a
+uniform cell load they are markedly unequal, so a count sized from the total current divided by
+the ball count understates the most heavily loaded ball. Each regulator cell draws its input
+through the 0.2\,mm input pad of the converter layout, not through the whole cell footprint. The
+sheet is discretised by cell-centred finite volumes on a tensor grid whose faces coincide with
+every pad edge and are graded toward every ball edge; on a uniform grid the pad boundaries fall
+between nodes, the resulting error is first order, and the embedded network failed to converge,
+whereas on the aligned grid every network converges to within 1\,\% on effective resistance,
+dissipation, maximum cell drop, peak ball current and peak-to-mean ball current between the two
+finest levels. The ball count is selected by enumerating every legal mirror-symmetric even count,
+solving the network at each, and verifying the candidate minimum on the resolved grid; the peak
+ball current is not monotone in the count, because the selected sites change with it. A matched
+count of \NballMatched\ balls per rail satisfies the 1.5\,A-per-ball provisioning criterion in
+the continuous-input scenario; that criterion is an engineering provisioning rule, not a
+reliability allowable. The resulting loop resistance is \RloopZone\,m$\Omega$ for Z1; the same
+network on the opening geometry, which only the BGA-fed control uses, gives
+\RloopZtwo\,m$\Omega$. The direct-fed Z2 has no package 48\,V network, and its ledger carries no
+package 48\,V ball or RDL term. The frozen electrical ledger at the converged electrothermal state
+is given in Table~\ref{tab:ledger}.
 \input{final_ledger_table}
+
+\subsection{Direct-feed boundary and requirement}\label{sec:directfeed}
+Two boundaries are used. The \emph{package-internal} ledger of Z2 starts at the regulator's 48\,V
+input terminals and contains the converter losses, the regulator's internal redistribution and
+vias, the output plane, the attach, the TSV fields, the top RDL and the die-interface pads; that
+of Z1 starts at its BGA pads on the board and contains the 48\,V balls, the package 48\,V RDL and
+the 48\,V TSVs. The \emph{platform-inclusive} comparison adds the complete external 48\,V supply
+and return loop of Z2, $R_{\mathrm{Z2,feed}}$, between the board-level 48\,V node common to both
+architectures---where the board distribution of Z1 meets its balls---and the regulator's 49 input
+terminals. Board distribution upstream of that node is common to both and excluded from both. No
+source gives this loop resistance: the construction precedent names connector types only. No
+value is therefore assumed; $R_{\mathrm{Z2,feed}}$ is swept from \FeedSweepLo\ to
+\FeedSweepHi\,m$\Omega$ (\FeedSweepN\ log-spaced points), and the total Z2 loss
+\begin{equation}
+P_{\mathrm{Z2}}(R) = P_{\mathrm{int}}(I) + (k I)^{2} R,\qquad
+48\,\mathrm{V}\cdot I = P_{\mathrm{load}} + P_{\mathrm{Z2}}(R),
+\label{eq:feed}
+\end{equation}
+is solved for the self-consistent input current $I$ at the converged temperatures, with $k$ the
+RMS-to-average ratio of the named scenario. For a fixed $P_{\mathrm{int}}$ the balance is a
+quadratic in $I$ whose lower root is the operating point; $P_{\mathrm{int}}$ is re-evaluated at
+that current until the balance closes, and above
+$48^{2}/(4k^{2}(P_{\mathrm{load}}+P_{\mathrm{int}}))$ no operating point exists.
+The crossover $R^{*}$ at which $P_{\mathrm{Z2}} = P_{\mathrm{Z1}}$ is found by bisection. It is
+reported as a requirement on the feed, not as a property of any connector. The nominal analysis
+deposits the feed loss outside the package; depositing it in the deepest converter tier is a
+class-B variant (Sec.~\ref{sec:classb}).
 % END final-lineage:pdn
 \section{Thermal and Mechanical Formulation}\label{sec:thermech}
 
@@ -735,14 +879,20 @@ within the package and its dissipation is not deposited in the thermal mesh.
 \subsection{Physical heat map, energy accounting and discretisation}\label{sec:heatmap}
 Each converter loss is deposited in the tier that produces it---high-side and low-side
 gallium-nitride devices, inductor and capacitor tiers---and only inside the 49 cell
-footprints; package, ball, via and pad losses are deposited in their own layers. The
+footprints; package, ball, attach, via and pad losses are deposited in their own layers. The
 substrate carries the copper fraction of the adopted through-substrate via field inside each
 cell and plain silicon outside it, so the electrical and thermal models describe the same
 copper, and each 10\,$\mu$m redistribution tier carries the tensor of an explicit
-representative volume (Section~\ref{sec:matched}). Two conservation checks are applied: the
-volumetric sources integrate to the ledger total, and the heat leaving through the cold-plate
-film and the board film, both integrated from the solved temperature field, balances the
-deposited power to better than \EnergyTol\ in every case.
+representative volume (Section~\ref{sec:matched}). In Z2 the attach is its own
+\AttachH\,$\mu$m tier: its through-thickness conductivity, \AttachKz\,W\,m$^{-1}$K$^{-1}$, is the
+series copper--solder column in parallel with the underfill at the \AttachAreaPct\,\% pillar area
+fraction, and its in-plane conductivity, \AttachKxy\,W\,m$^{-1}$K$^{-1}$, follows from the
+two-dimensional Maxwell-Garnett relation; its mechanical card is the underfill's
+(\AttachEgpa\,GPa, \AttachCte\,ppm\,K$^{-1}$), with a column-stiffened card as a class-B bound.
+The ring between the cell grid and the opening sidewall carries no element. Two conservation
+checks are applied: the volumetric sources integrate to the ledger total, and the heat leaving
+through the cold-plate film and the board film, both integrated from the solved temperature
+field, balances the deposited power to better than \EnergyTol\ in every case.
 
 The mesh is selected by nested refinement, in which every coarser node survives. Splitting
 each in-plane interval of the base graded grid in two changed the peak temperature by
@@ -755,13 +905,23 @@ critical-joint displacement and loss on the production grid is \MeshWorstProd\,\
 direct solver on the base grid to \ErrSolverIter\,\% in die warpage.
 % END final-lineage:heatmap
 \subsection{Electrical--thermal fixed point}
+% BEGIN final-lineage:et-fixed-point
 The dominant loss terms are temperature dependent through \eqref{eq:tdep}, and the
 temperature field depends on those losses, so the two are iterated. Starting from the
-reference-temperature loss set, each iteration evaluates the electrical model at the current
-layer temperatures, deposits the resulting sources, solves \eqref{eq:cond} with the cooling
-boundary, and updates the temperatures. The iteration terminates when the change in the
-converter-layer temperature between successive iterations falls below $0.25$\,K. Three
-iterations are required for both architectures reported here.
+reference-temperature loss set, each iteration evaluates the electrical ledger at the current
+temperatures, deposits the resulting sources, solves \eqref{eq:cond} with the cooling
+boundary, and updates the temperatures. Every resistance is evaluated inside the region its
+loss is deposited in: each converter device and passive at the in-cell temperature of its own
+tier, the converter's internal redistribution and via stacks at the in-cell mean of the
+converter tiers they connect, the substrate vias, pads and attach inside the cell footprints,
+and the ball field over its layer. Averaging a converter tier over the encapsulant between the cells
+as well, as an earlier version of the coupling did, put the device temperatures 7.8\,K too
+low in the backside architecture and 1.2\,K too high in the embedded one, a bias of opposite
+sign that alone moved the loss comparison. The iteration stops when every coupled temperature
+changes by less than $0.25$\,K and the loss by less than $0.1$\,\% between successive
+iterations; at most \EtIters\ iterations are needed in the physical lineage.
+% END final-lineage:et-fixed-point
+
 
 \subsection{Global thermoelastic model}
 The converged temperature field is applied as a thermal load to a finite-element model of the
@@ -831,7 +991,7 @@ $300$\,s dwell at $25\,^{\circ}$C, with the stress-free reference at $25\,^{\cir
 creep strain-increment tolerance of the time integrator is $5\times10^{-2}$. That tolerance
 is a numerical control rather than a material property; at the tolerance used, the published
 lower-stress reference case is reproduced to within the printed precision. Its influence on
-the final pair was measured directly over a five-value ladder spanning $10^{-5}$ to
+the frozen pair was measured directly over a five-value ladder spanning $10^{-5}$ to
 $10^{-1}$, with every other model input held fixed. Three tolerances tighter than the one
 used admit no solution at this operating point: the solver completes zero increments at
 $10^{-5}$, $10^{-4}$ and $10^{-2}$. The two that converge, $5\times10^{-2}$ and $10^{-1}$,
@@ -946,7 +1106,7 @@ architecture \emph{ratio} is converged an order better because the residual erro
 common mode. The per-cycle increment stabilises from $15.9$\,\% to $1.9$\,\% and then
 $0.7$\,\% cycle-to-cycle, below the $5$\,\% criterion by the fourth cycle. An independent
 integration route for the inelastic energy agrees to $0.79$--$1.56$\,\%.
-Integration-tolerance sensitivity, measured separately on the final pair, is zero to twelve
+Integration-tolerance sensitivity, measured separately on the frozen pair, is zero to twelve
 digits across the tolerances that admit a solution, against $1.9$\,\% for the mesh.
 
 \begin{table}[!t]
@@ -978,7 +1138,7 @@ PEEQ identity & CalculiX & creep-only test & $1.0000$ \\
 Global warpage & 4 mesh levels & refinement & $0.50$\,\% \\
 Local response & 3 mesh levels & refinement & $1.9$\,\% \\
 Local integration tolerance & \textsc{cetol} $5{\times}10^{-2}$ & published case at the same tolerance & $0.0000$\,\% \\
-Local response, final pair & 4 cycles & cycle-to-cycle & $0.04$, $0.06$\,\% \\
+Local response, frozen pair & 4 cycles & cycle-to-cycle & $0.04$, $0.06$\,\% \\
 E--T fixed point & Picard & iterate difference & $<0.25$\,K, 3 iters \\
 \midrule
 Conjugate CFD & --- & ANSYS Icepak & discarded; \emph{not claimed} \\
@@ -1003,7 +1163,8 @@ agrees to \ErrRdlKx\,\% in plane but overstates the through-thickness conductivi
 \ErrRdlKz\,\%, because the series form ignores constriction onto the copper grid; the
 representative-volume values are therefore adopted and every thermal result uses them. The
 package power network agrees with an open-source finite-element solution to
-\ErrPkgRdlZone\,\% (Z1) and \ErrPkgRdlZtwo\,\% (Z2) on effective resistance. For the package thermal solver, a commercial finite-element solution of the same interior unit cell agrees with the production thermal solver to \ErrThermAedtZtwo\,\% (Z2) and \ErrThermAedtZone\,\% (Z1) of the temperature rise; an open-source finite-element solution on independent meshes agrees to \ErrThermMooseZone\,\% (Z1) and \ErrThermMooseZtwo\,\% (Z2), inside that reference's own mesh dependence. The cold-plate correlation that sets the top boundary was checked against a conjugate computational-fluid-dynamics solution of one microchannel half-pitch at the production heat load: the correlation overstates the mean base temperature rise by \ErrCoolingIcepak\,\%, so it is conservative, and halving the cross-section mesh moves the CFD value by less than 0.4\,\%.
+\ErrPkgRdlZone\,\% for Z1 and \ErrPkgRdlZtwo\,\% on the opening geometry of the BGA-fed control
+on effective resistance; the direct-fed Z2 has no such network to check. For the package thermal solver, on the unit cell of each production stack (for Z2 the direct-fed stack with its explicit attach), a commercial finite-element solution of the same interior unit cell agrees with the production thermal solver to \ErrThermAedtZtwo\,\% (Z2) and \ErrThermAedtZone\,\% (Z1) of the temperature rise; an open-source finite-element solution on independent meshes agrees to \ErrThermMooseZone\,\% (Z1) and \ErrThermMooseZtwo\,\% (Z2), inside that reference's own mesh dependence. The cold-plate correlation that sets the top boundary was checked against a conjugate computational-fluid-dynamics solution of one microchannel half-pitch at the production heat load: the correlation overstates the mean base temperature rise by \ErrCoolingIcepak\,\%, so it is conservative, and halving the cross-section mesh moves the CFD value by less than 0.4\,\%. The correlation is not recalibrated to that solution: the coefficient that would reproduce the conjugate solution's mean base rise, \IcepakFactor\ times the compact one, is applied instead as a class-B sensitivity to both architectures; it changes the peak temperature by -2.7\,\% (Z1) and -2.6\,\% (Z2) and moves no ordering.
 The thermoelastic element and its minimal supports reproduce the bimaterial closed form to \ErrMechClosed\,\%, the expected free-edge difference, and a commercial structural solution of the same bilayer to \ErrMechAedt\,\%. Runtimes are medians of three timed repeats after a warm-up on one machine; the
 closed forms run in microseconds against minutes for the finite-element references, while
 the finite-element-to-finite-element ratios compare solvers rather than model reduction.
@@ -1260,7 +1421,7 @@ with deformation being driven by the mismatch of the stack rather than by the gr
 the heat source.
 
 Global die warpage and the local corner-joint driver track in direction but not in
-magnitude. In the final pair the architecture with the larger die warpage carries the larger
+magnitude. In the frozen pair the architecture with the larger die warpage carries the larger
 local driver, so the direction is consistent; the warpage differs by $6.5$\,\%, the
 corner-joint driver $\du$ by $16.3$\,\% and the local inelastic response
 $\Delta\varepsilon_{\mathrm{in}}$ by $18.4$\,\%. Global warpage is therefore a useful screen and an
@@ -1319,7 +1480,7 @@ Fig.~\ref{fig:realize}.
 
 % BEGIN final-lineage:physical
 \subsection{Physical architecture comparison}\label{sec:physical}
-The physical lineage is evaluated for both architectures in every named 48\,V scenario
+The physical lineage is evaluated for both architectures---Z1 and the direct-fed Z2---in every named 48\,V scenario
 (Table~\ref{tab:physical}); the electrothermal fixed point converges within \EtIters\
 iterations in every case. In the continuous-input scenario the two architectures dissipate
 \PlossZone\,W (Z1) and \PlossZtwo\,W (Z2) and reach \TmaxZone\ and \TmaxZtwo\,$^\circ$C. The
@@ -1328,10 +1489,9 @@ at every legal site (\NjointZone\ for Z1 and \NjointZtwo\ for Z2) rather than as
 outermost lattice corner in both. There the backside architecture carries a joint
 displacement driver of \DuZtwo\,$\mu$m against \DuZone\,$\mu$m, a local inelastic strain
 increment per stabilised cycle of \EpsZtwo\ against \EpsZone, and a die warpage of
-\WarpZtwo\ against \WarpZone\,$\mu$m. The embedded architecture carries the lower die warpage and joint displacement driver in every scenario that admits a valid comparison. Electrically, the backside architecture dissipates less in every scenario that admits a valid comparison.
-Thermally, the backside architecture runs cooler wherever the difference is resolved, while in the continuous-input scenario the peak-temperature difference lies within the measured discretisation uncertainty, so no ranking is drawn there. Under the overall-ratio pulse the embedded operating point leaves the valid solid-solder domain under the assumed cooling; that scenario is an infeasibility result, and no architecture ordering of any quantity is drawn there. Peak temperature therefore does not rank the local mechanical response on
-the physically closed pair either. The frozen pair of the following subsection showed the opposite mechanical
-ordering; the physical closure reverses it. Fig.~\ref{fig:physical} shows the per-scenario
+\WarpZtwo\ against \WarpZone\,$\mu$m. The embedded architecture carries the lower die warpage and joint displacement driver in every scenario that admits a valid comparison. Electrically, inside the package-internal boundary, the backside architecture dissipates less in every scenario that admits a valid comparison.
+Thermally, the embedded architecture runs cooler in the continuous-input scenario, the backside architecture runs cooler in the buck-duty pulse---the peak-temperature ordering reverses with the scenario. Under the overall-ratio pulse the embedded operating point leaves the valid solid-solder domain under the assumed cooling; that scenario is an infeasibility result, and no architecture ordering of any quantity is drawn there. Peak temperature therefore does not rank the local mechanical response on
+the physically closed pair either. The frozen pair of Sec.~\ref{sec:histrep} showed the opposite mechanical ordering; the physical closure reverses it. Fig.~\ref{fig:physical} shows the per-scenario
 results, the joint driver at every legal site and the matched-reference errors.
 \begin{figure*}[!t]
 \centering
@@ -1349,6 +1509,33 @@ Table~\ref{tab:accspeed}.}
 \end{figure*}
 \input{final_physical_table}
 % END final-lineage:physical
+% BEGIN final-lineage:crossover
+\subsubsection{Direct-feed requirement}\label{sec:crossover}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig10_crossover.pdf}
+\caption{Direct-feed crossover. Z2 total loss (a), system efficiency (b) and external feed loss
+(c) against the swept loop resistance $R_{\mathrm{Z2,feed}}$ of \eqref{eq:feed}; Z1's converged
+package-internal loss and efficiency are the horizontal references. Open marker: $R^{*}$, where
+the two losses are equal. A scenario in which the embedded operating point is inadmissible has no
+valid reference and is not drawn.}
+\label{fig:crossover}
+\end{figure}
+In the continuous-input scenario the package-internal losses are \PlossZone\,W (Z1) and \PlossZtwo\,W (Z2); at $I_{48,\mathrm{rms}} = \IrmsSzero$\,A each milliohm of external loop dissipates a further \PfeedPerMohmSzero\,W in Z2. Z2's advantage of \AdvZeroFeedSzero\,W with a lossless feed is gone at $R^{*} = \RstarSzero$\,m$\Omega$, where the feed dissipates \PfeedRstarSzero\,W. Under the buck-duty pulse the input RMS current is \IrmsSone\,A and Z1's own package 48\,V path grows with its square, so Z2 is ahead by \AdvZeroFeedSone\,W with a lossless feed and keeps that advantage up to $R^{*} = \RstarSone$\,m$\Omega$. Under the overall-ratio pulse the embedded operating point is inadmissible, so no crossover is defined there. For Z2 to preserve its electrical advantage, the direct-feed loop resistance must remain below \RstarSzero\,m$\Omega$ under the continuous-input scenario and below \RstarSone\,m$\Omega$ under the buck-duty pulse (Fig.~\ref{fig:crossover}). This is a requirement on the connector, its cable or bus and its contacts, including the distribution to the 49 input terminals; no source available to this work gives such a loop resistance, so whether it is met is not claimed. Depositing the feed loss at the largest loop resistance any requirement admits, at the continuous-input current, inside the package in the deepest converter tier---the worst place it could land---changes the Z2 peak temperature by +0.7\,\%, its die warpage by +0.8\,\% and its joint driver by +0.4\,\%, and moves the loss verdict.
+% END final-lineage:crossover
+% BEGIN final-lineage:control
+\subsubsection{Controlled BGA-fed experiment}\label{sec:control}
+This controlled experiment isolates the effect of BGA placement and the opening when both
+architectures are forced to use an identical package-level 48\,V feed; it is not the primary Z2
+construction. On the same corrected geometry---explicit attach, open sidewall clearance---the
+BGA-fed control dissipates \PlossCtrl\,W, \CtrlMinusZtwo\,W more than the direct-fed Z2, of which
+\CtrlPkgHV\,W are its package 48\,V RDL and ball terms (Table~\ref{tab:ledger}); it reaches
+\TmaxCtrl\,$^\circ$C, a die warpage of \WarpCtrl\,$\mu$m and a joint driver of \DuCtrl\,$\mu$m. Its mechanical response differs from the direct-fed Z2 by +0.3\,\% in die warpage and +0.8\,\% in joint driver, so the feed choice is electrical: the opening and the ball placement, not the 48\,V path, set the mechanics. Z1, which uses the same package feed, dissipates \PlossZone\,W. The
+control places its 48\,V input at the
+high-side redistribution tier, as Z1 and the direct-fed Z2 do, although its feed arrives at the
+land-side tier; the roughly 1.3\,mm traverse between the two is not modelled, so the control
+understates its own loss slightly. The defect affects the control only.
+% END final-lineage:control
 % BEGIN final-lineage:localmesh
 \subsubsection{Local solder discretisation}\label{sec:localmesh}
 The local response is computed on a declared family of four solder meshes at each production
@@ -1372,19 +1559,22 @@ Table~\ref{tab:localmesh} gives the response on every level, the rule outcome an
 uncertainty $U = U_{\mathrm{mesh}} + U_{\mathrm{time}} + U_{\mathrm{cyc}}$; \LocalNconverged\
 of the \LocalNcases\ policy cases converge, and the local response is therefore reported as
 \LocalMeshPhrase. A local ordering is drawn only where the Z1/Z2 gap exceeds twice the larger
-$U$ of the pair. Z1 has lower local inelastic response in HV-S0, where the gap exceeds twice the measured discretisation uncertainty. In HV-S1 the difference lies within the measured discretisation uncertainty (and the Z1 response is extrapolated), so no ranking is drawn. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.
+$U$ of the pair. No local inelastic response ranking can be drawn. In HV-S0 the difference lies within the measured discretisation uncertainty, so no ranking is drawn. In HV-S1 the difference lies within the measured discretisation uncertainty (and the Z1 response is extrapolated), so no ranking is drawn. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.
 \input{final_localmesh_table}
 % END final-lineage:localmesh
 % BEGIN final-lineage:sens
 \subsubsection{Sensitivity of the orderings}\label{sec:classb}
 Every input that has no single defensible value---the board representation, copper coverage
-and thickness, the through-silicon via density, the out-of-cell fill, a backside cooling path,
-the device and converter-tier materials, contact and redistribution construction, the pad count
-and the 48\,V waveform---was classified by whether it can move an ordering (\NbOne\ of the
+and thickness, the through-silicon via density, the out-of-cell fill and the sidewall clearance,
+the attach height, material and underfill, the direct-feed loop resistance and where its heat
+lands, a backside cooling path and its interface, the cooling model form, the BGA population, the
+device and converter-tier materials, contact and redistribution construction, the pad count and
+the 48\,V waveform---was classified by whether it can move an ordering (\NbOne\ of the
 \NgatesB\ inputs) or only a magnitude (\NbTwo), and then run on the production mesh in the
-continuous-input scenario or bounded from the network sensitivity, with every variant judged
-by the same ordering rule as the production pair (Table~\ref{tab:classb}). Stress tests on
-unsourced material cards are declared as bounds, not as property claims. All 21 open sensitivity inputs were run on the production mesh or bounded; a 3.2\,mm board leaves the local-response ordering unresolved; the electrically minimal through-silicon via field reverses the loss ordering; void instead of encapsulated space between the cells creates a peak-temperature ranking (Z2 lower), reverses the joint-driver ordering and leaves the local-response ordering unresolved; opening the specified 1\,mm sidewall clearance leaves the local-response ordering unresolved; a second cold plate under the backside converter creates a peak-temperature ranking (Z2 lower) and reverses the die-warpage, joint-driver and local-response orderings; a tenfold lower converter-tier conductivity creates a peak-temperature ranking (Z2 lower) and leaves the local-response ordering unresolved. The out-of-cell construction of the backside converter needs a specific word. The production encapsulated model fills the PCB opening with encapsulant up to the board sidewall, so the converter block is bonded laterally to the board, although the stack specifies a 1\,mm clearance between the cell grid and the opening; the inconsistency was found when the architecture was drawn from the solver mesh. With the clearance open and the encapsulant kept between the cells, the backside die warpage changes by -1\,\% and its joint driver by -22\,\%, and the Z1/Z2 verdicts become: warpage Z1 lower, joint driver Z1 lower, local response unresolved. With the out-of-cell volume void in both architectures, the embedded joint driver changes by +58\,\% and the backside one by -24\,\%, and the verdicts become: warpage Z1 lower, joint driver Z2 lower, local response unresolved. The mechanical orderings of this paper are therefore stated for the production encapsulated construction and are conditioned on it.
+continuous-input scenario or bounded analytically, with every variant judged by the same
+ordering rule as the production pair (Table~\ref{tab:classb}). Stress tests on unsourced
+material cards are declared as bounds, not as property claims. The reversals are a result, not a
+caveat: they say which neighbouring design decisions an architecture ranking depends on. All 30 open sensitivity inputs were run on the production mesh or bounded; the electrically minimal through-silicon via field reverses the loss ordering; a half-density through-silicon via field leaves the loss ordering unresolved; void instead of encapsulated space between the cells leaves the peak-temperature and die-warpage orderings unresolved and reverses the joint-driver ordering; filling the opening to the board sidewall leaves the peak-temperature ordering unresolved; a 40\,$\mu$m attach leaves the loss ordering unresolved; an all-solder attach leaves the loss ordering unresolved; a direct-feed loop of 1\,$R^{*}$ (1.77\,m$\Omega$) leaves the loss ordering unresolved; a direct-feed loop of 10\,$R^{*}$ (17.7\,m$\Omega$) reverses the loss ordering; the feed loss deposited in the package leaves the loss ordering unresolved; the backside plate behind a thermal interface reverses the peak-temperature, die-warpage and joint-driver orderings; a second cold plate under the backside converter reverses the peak-temperature, die-warpage and joint-driver orderings; a tenfold lower converter-tier conductivity leaves the peak-temperature ordering unresolved and reverses the joint-driver ordering; a 5\,$\mu$m package 48\,V RDL at 80\,\% copper occupancy leaves the loss ordering unresolved; a 10\,$\mu$m package 48\,V RDL at 30\,\% copper occupancy leaves the loss ordering unresolved; a 10\,$\mu$m package 48\,V RDL at 80\,\% copper occupancy leaves the loss ordering unresolved. The out-of-cell construction of the backside converter is an architecture variable in its own right. The production model voids the specified \ClearanceMM\,mm ring between the cell grid and the opening sidewall and keeps encapsulant between the cells. Filling the ring as well, which bonds the converter laterally to the board---the construction an earlier version of this model used by mistake---changes the backside die warpage by +2\,\% and its joint driver by +29\,\%; the verdicts become: warpage Z1 lower, joint driver Z1 lower, local response unresolved. With the out-of-cell volume void in both architectures, the embedded joint driver changes by +59\,\% and the backside one by -2\,\%, and the verdicts become: warpage unresolved, joint driver Z2 lower, local response unresolved. 
 \input{final_classb_table}
 % END final-lineage:sens
 \subsection{Historical frozen pair}
@@ -1498,6 +1688,13 @@ making the via spans architecture-aware then moves the driver ratio by a further
 $-4.9$\,\%, and the interconnect and partition corrections move it by $+0.04$\,\%. Each block
 changes the absolute quantities substantially; none changes the ordering.
 \section{Discussion and Limitations}\label{sec:discuss}
+% BEGIN final-lineage:conditional
+\subsection{Architecture preference is conditional}\label{sec:conditional}
+The comparison does not produce a universal winner, and the reason is structural rather than
+numerical. Moving the converter to the backside changes where the 48\,V enters, so the
+electrical comparison becomes a comparison of a package path against an external feed whose
+resistance is a design requirement (Sec.~\ref{sec:crossover}). The electrical preference also depends on the electrically minimal through-silicon via field and on a half-density through-silicon via field and on an all-solder attach, which change the loss verdict. The mechanical and local preferences depend on what surrounds and cools the converter: under void instead of encapsulated space between the cells, the backside plate behind a thermal interface, a second cold plate under the backside converter and a tenfold lower converter-tier conductivity, at least one mechanical or local verdict moves, because such choices decide which materials expand together. A ranking stated without these neighbouring decisions is therefore not a property of either architecture; the sensitivity matrix of Table~\ref{tab:classb} states which decisions matter.
+% END final-lineage:conditional
 
 \subsection{When mechanics matters in DVPD design}
 The results support a specific and bounded role for mechanics. It is not established that
@@ -1519,6 +1716,9 @@ deferred to a later packaging step, because the remedy is a change of component 
 which is a synthesis variable.
 
 \subsection{Lateral extent of the backside converter}\label{sec:backside-limit}
+% BEGIN final-lineage:backside-limit-frame
+This subsection concerns the historical frozen representation (Sec.~\ref{sec:histrep}); the physical architectures of Sec.~\ref{sec:physarch} resolve the lateral structure of the backside converter explicitly.
+% END final-lineage:backside-limit-frame
 The backside architecture is represented by a converter medium occupying a continuous layer
 below the substrate, whereas the embedded architecture carries converter medium only inside
 the 49 cell footprints, which cover $30.5$\,\% of the substrate area. The two architectures
@@ -1564,10 +1764,26 @@ substrate silicon, $130$\,GPa     & $115.55$ & $4.4591$ & $-3.59$\,\% \\
 
 \subsection{Limitations}
 Each limitation below is stated with its effect on the claims.
+% BEGIN final-lineage:limit-feed
+\emph{The direct feed is specified as a requirement, not as a part.} No connector, cable, bus or
+contact resistance for a kilowatt-class direct regulator feed is available to this work; the
+construction precedent names connector types only. The platform-inclusive comparison is
+therefore stated as a maximum loop resistance, and whether a real feed meets it is not claimed.
+The connector drawn in the figures is illustrative.
+
+\emph{The attach is a close analog, not a qualified joint.} Its geometry follows a published
+30\,$\mu$m-pitch Cu-pillar process on an organic substrate; its current-carrying capability,
+electromigration margin and fatigue are not evaluated, and its mechanical card is the
+underfill's, bounded by a column-stiffened card.
+
+\emph{The BGA population is smeared.} The mechanical BGA field is a homogenised layer; the
+depopulated field is a uniform scaling of it, and a discrete ball-by-ball depopulation pattern is
+not resolved.
+% END final-lineage:limit-feed
 
 \emph{Solder constitutive extrapolation.} The creep card is fitted on Sn3.9Ag0.6Cu over
 $7.51$--$15.92$\,MPa, whereas $99.8$\,\% of the accumulated inelastic-strain contribution in
-this package is generated above that window. The final pair is well outside it: the imposed
+this package is generated above that window. The frozen pair is well outside it: the imposed
 corner displacement produces an elastic trial shear of $195$ and $159$\,MPa on joints whose
 yield stress at temperature is $11.6$ and $10.7$\,MPa, so the joint operates at fifteen to
 seventeen times yield and roughly an order of magnitude above the top of the fitted stress
@@ -1580,7 +1796,7 @@ admitted, under all three local metrics returned by the same solves, and under t
 sequence of geometric corrections in Fig.~\ref{fig:sens}.
 
 \emph{The integration tolerance cannot be bracketed from below.} Of five tolerances evaluated
-on the final pair, only $5\times10^{-2}$ and $10^{-1}$ admit a solution, and they agree to
+on the frozen pair, only $5\times10^{-2}$ and $10^{-1}$ admit a solution, and they agree to
 twelve digits, so the response is not a product of the tolerance. No tighter tolerance
 converges here, so the magnitude is not corroborated against a tight-tolerance reference;
 this follows from the stress regime above, not from the integration scheme.
@@ -1599,11 +1815,11 @@ provisioning quantity is kept separate from a manufacturing requirement.
 and the realizability verdict is evaluated across it, so the verdict does not depend on a
 particular value within that envelope.
 
-\emph{Conjugate CFD has not been completed.} The cooling model is validated at its laminar
-operating point against an explicitly meshed fin solution, and the transitional Reynolds band
-is refused rather than interpolated. Absolute temperatures inherit this limitation; the
-temperature \emph{difference} between the two architectures arises from where the 1\,V rail
-runs and is not sensitive to the cooling correlation in the same way.
+\emph{The cooling model is a compact correlation.} A matched conjugate
+computational-fluid-dynamics solution of one microchannel half-pitch shows the correlation to be
+\ErrCoolingIcepak\,\% conservative in mean base temperature rise at the production load; the
+correlation is not recalibrated to it, and the equivalent coefficient is run as a class-B
+sensitivity instead. The transitional Reynolds band is refused rather than interpolated.
 
 \emph{Inductor core loss and capacitor dielectric loss are not evaluated.} Only the winding
 resistance and the equivalent series resistance are consumed by the loss model. Both
@@ -1626,31 +1842,27 @@ failure modes.
 
 An electrothermal--mechanical framework for distributed vertical power delivery has been
 presented in which converter synthesis is propagated into an explicit physical package and
-evaluated in one lineage: a voltage-fed, return-inclusive package network on an aligned
-graded grid, a frozen electrical ledger, a tier-aware converged electrothermal fixed point, a
-thermoelastic package solution, an all-site critical-joint search and a viscoplastic local
-submodel. Each reduced model is checked against a matched reference, and one such check
-changed a tensor used in every thermal result.
+evaluated in one lineage: a conductor-level electrical ledger, a voltage-fed package network on
+an aligned graded grid, a tier-aware converged electrothermal fixed point, a thermoelastic package
+solution, an all-site critical-joint search and a viscoplastic local submodel. Each reduced model
+is checked against a matched reference, and one such check changed a tensor used in every
+thermal result.
 
-Three conclusions are drawn. Physical realizability cannot be separated from system-level
-architecture selection: equivalent tier orderings can differ sixfold in worst via aspect ratio,
-and the ball count is a solved design variable whose peak loading is not monotone in the
-count. Physical closure changes architecture conclusions: on the physically closed pair, in
-its declared encapsulated construction, the backside architecture carries a \DuRatio-fold joint
-displacement driver and a \EpsRatio-fold local inelastic response in the continuous-input
-scenario, the reverse of the ordering found on an earlier unclosed representation---and the
-sensitivities show that the out-of-cell construction and backside cooling are architecture
-variables in their own right. And peak temperature does not rank local mechanical
-response, because the latter depends on geometry, stiffness distribution, boundary conditions
-and local joint loading: the embedded architecture carries the lower die warpage and joint displacement driver in every scenario that admits a valid comparison. Thermally, the backside architecture runs cooler wherever the difference is resolved, while in the continuous-input scenario the peak-temperature difference lies within the measured discretisation uncertainty, so no ranking is drawn there. Under the overall-ratio pulse the embedded operating point leaves the valid solid-solder domain under the assumed cooling; that scenario is an infeasibility result, and no architecture ordering of any quantity is drawn there.
+Physically closing the architectures reveals that no architecture can be ranked independently of its neighboring design decisions: converter placement changes the high-voltage entry path, through-silicon-via provisioning can reverse the electrical preference, cooling can reverse the mechanical preference, and local construction determines the solder response. A coupled electrothermal--mechanical framework is therefore required to make an architecture-level decision.
 
-All 21 open sensitivity inputs were run on the production mesh or bounded; a 3.2\,mm board leaves the local-response ordering unresolved; the electrically minimal through-silicon via field reverses the loss ordering; void instead of encapsulated space between the cells creates a peak-temperature ranking (Z2 lower), reverses the joint-driver ordering and leaves the local-response ordering unresolved; opening the specified 1\,mm sidewall clearance leaves the local-response ordering unresolved; a second cold plate under the backside converter creates a peak-temperature ranking (Z2 lower) and reverses the die-warpage, joint-driver and local-response orderings; a tenfold lower converter-tier conductivity creates a peak-temperature ranking (Z2 lower) and leaves the local-response ordering unresolved. The local response is \LocalMeshPhrase{}: its declared mesh family converges for the embedded architecture and is bounded by Richardson extrapolation for the backside one, and a local
-ordering is drawn only beyond twice that bound. The results are conditioned on named input-current
-scenarios, because the switching schedule
-of the regulator is not derivable from its loss model; on an engineering ball-provisioning
-rule rather than a reliability allowable; and on solder response rather than life. Closing
-those requires the switch-state schedule of the converter, qualified electromigration and
-fatigue data for the package metallurgy, and a required life for the application.
+The nominal results are reported separately from that conclusion. Inside the package the direct-fed backside regulator dissipates \PlossZtwo\,W against \PlossZone\,W for the embedded one in the continuous-input scenario, an advantage it keeps only while its external 48\,V feed loop stays below \RstarSzero\,m$\Omega$ (\RstarSone\,m$\Omega$ under the buck-duty pulse), a requirement on the feed that no available source shows to be met or missed. Mechanically, the embedded architecture carries the lower die warpage and joint displacement driver in every scenario that admits a valid comparison; thermally,
+the embedded architecture runs cooler in the continuous-input scenario, the backside architecture runs cooler in the buck-duty pulse---the peak-temperature ordering reverses with the scenario. Under the overall-ratio pulse the embedded operating point leaves the valid solid-solder domain under the assumed cooling; that scenario is an infeasibility result, and no architecture ordering of any quantity is drawn there. Physical realizability cannot be separated from architecture
+selection either: equivalent tier orderings can differ sixfold in worst via aspect ratio, and the
+ball count is a solved design variable whose peak loading is not monotone in the count.
+
+All 30 open sensitivity inputs were run on the production mesh or bounded; the electrically minimal through-silicon via field reverses the loss ordering; void instead of encapsulated space between the cells reverses the joint-driver ordering; a direct-feed loop of 10\,$R^{*}$ (17.7\,m$\Omega$) reverses the loss ordering; the backside plate behind a thermal interface reverses the peak-temperature, die-warpage and joint-driver orderings; a second cold plate under the backside converter reverses the peak-temperature, die-warpage and joint-driver orderings; a tenfold lower converter-tier conductivity reverses the joint-driver ordering; nine further inputs only make a resolved ranking unresolved (Sec.~\ref{sec:classb}). The local response is \LocalMeshPhrase{}: its declared mesh family converges for the embedded architecture and is bounded by Richardson extrapolation for the backside one, and a
+local ordering is drawn only beyond twice that bound. The results are conditioned on named
+input-current scenarios, because the switching schedule of the regulator is not derivable from its
+loss model; on an engineering ball-provisioning rule rather than a reliability allowable; on a
+direct-feed requirement rather than a specified connector; and on solder response rather than
+life. Closing those requires the switch-state schedule of the converter, a characterised direct
+feed, qualified electromigration and fatigue data for the package metallurgy, and a required
+life for the application.
 
 \section*{Acknowledgment}
 The authors thank the members of the Center for Heterogeneous Integration of Micro Electronic

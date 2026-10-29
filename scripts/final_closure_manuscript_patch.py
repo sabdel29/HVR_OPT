@@ -72,6 +72,12 @@ def _ordering_sentence(o, verb, what):
                 f"discretisation uncertainty, so no ranking is drawn there")
     if fav:
         return f"the {NAME[fav]} architecture {verb} in every scenario that admits a valid comparison"
+    res = {s: v.split()[0] for s, v in (o.get("per_scenario") or {}).items()
+           if v.endswith("lower")}
+    if len(set(res.values())) > 1:                 # resolved, but opposite per scenario
+        return ("the " + ", the ".join(f"{NAME[a]} architecture {verb} in {SCEN_NAME[s]}"
+                                       for s, a in res.items())
+                + f"---the {what} ordering reverses with the scenario")
     return f"the {what} ordering depends on the scenario"
 
 
@@ -319,11 +325,43 @@ def scen_sentence(F):
     return out + "."
 
 
+_FEED_CASE = re.compile(r"R_feed = (\S+) (R\*|mOhm) = (\S+) mOhm")
+
+
+_RDL_CASE = re.compile(r"t_cu=([0-9.]+), occupancy=([0-9.]+)$")
+_RHO_CASE = re.compile(r"rho_c=([0-9.e+-]+)$")
+
+
+def case_plain(c):
+    """Plain words for a class-B case: the direct-feed rows name the loop resistance, the
+    package-network rows the RDL copper or the ball contact resistivity they swept."""
+    m = _FEED_CASE.match(c)
+    if m:
+        k, unit, r = m.groups()
+        return (f"a direct-feed loop of {k}\\,$R^{{*}}$ ({r}\\,m$\\Omega$)" if unit == "R*"
+                else f"a direct-feed loop of {r}\\,m$\\Omega$")
+    m = _RDL_CASE.match(c)
+    if m:
+        t, occ = float(m.group(1)), float(m.group(2))
+        return (f"a {1000 * t:g}\\,$\\mu$m package 48\\,V RDL at {100 * occ:g}\\,\\% "
+                "copper occupancy")
+    m = _RHO_CASE.match(c)
+    if m:
+        mant, ex = f"{float(m.group(1)):.2e}".split("e")
+        mant = f"{float(mant):g}"
+        num = (f"10^{{{int(ex)}}}" if mant == "1" else f"{mant}\\times10^{{{int(ex)}}}")
+        return f"a ball contact resistivity of ${num}$\\,$\\Omega$\\,mm$^2$"
+    return CASE_PLAIN.get(c, c.replace("_", " "))
+
+
 def _moved(F):
+    """Single-input rows whose verdict differs from production. A row without a production
+    verdict (the converter-rescaling threshold) is a sign statement, not a reversal by one
+    input, and is reported by the decision report instead."""
     out = []
     for g in F.get("classb_gates") or []:
         for r in g.get("rows") or []:
-            if r.get("robust") is False:
+            if r.get("robust") is False and r.get("production_verdict") is not None:
                 out.append((g["gate"], r))
     return out
 
@@ -380,9 +418,50 @@ def sens_sentence(F):
     parts = []
     for case, rows in by.items():
         eff = _effects(rows.values())
-        parts.append(f"{CASE_PLAIN.get(case, case.replace('_', ' '))} "
+        parts.append(f"{case_plain(case)} "
                      + ", ".join(eff[:-1]) + (" and " if len(eff) > 1 else "") + eff[-1])
     return base + "; " + "; ".join(parts) + "."
+
+
+def sens_summary(F):
+    """The conclusion's version: the inputs that REVERSE an ordering are named; inputs that
+    only withdraw a ranking (to within the uncertainty) or only create one are counted. The
+    full list is the sensitivity section's."""
+    sm = F.get("classb") or {}
+    if not sm:
+        return ""
+    names = {"P_loss_w": "loss", "T_max_C": "peak-temperature",
+             "die_warpage_pv_um": "die-warpage", "du_c_um": "joint-driver",
+             "d_eps_in_per_cycle": "local-response"}
+    rev, gone, made = {}, set(), set()
+    for c, rows in _moved_by_case(F).items():
+        for k, x in rows.items():
+            pv, av = x["production_verdict"], x["verdict"]
+            if pv.endswith("lower") and av.endswith("lower"):
+                rev.setdefault(c, []).append(names.get(k, k))
+            elif pv.endswith("lower"):
+                gone.add(c)
+            else:
+                made.add(c)
+    gone, made = gone - set(rev), made - set(rev) - gone
+    base = (f"All {sm.get('n_gates')} open sensitivity inputs were run on the production mesh "
+            "or bounded")
+    if not (rev or gone or made):
+        return base + ", and none moves an ordering."
+    words = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+             "ten", "eleven", "twelve")
+    num = lambda n: words[n] if n < len(words) else str(n)              # noqa: E731
+    parts = [f"{case_plain(c)} reverses the {_and(v)} ordering" + ("s" if len(v) > 1 else "")
+             for c, v in rev.items()]
+    if gone:
+        parts.append(f"{num(len(gone))} further input" + ("s only make" if len(gone) > 1
+                                                          else " only makes")
+                     + " a resolved ranking unresolved")
+    if made:
+        parts.append(f"{num(len(made))} input" + ("s only create" if len(made) > 1
+                                                  else " only creates")
+                     + " a ranking that production does not resolve")
+    return base + "; " + "; ".join(parts) + " (Sec.~\\ref{sec:classb})."
 
 
 def sens_sentence_short(F):
@@ -400,18 +479,21 @@ def sens_sentence_short(F):
            "or bounded"]
     if loss:
         out.append("the loss ordering reverses with " + " or ".join(
-            CASE_PLAIN.get(c, c) for c in loss))
+            case_plain(c) for c in loss))
     mv = _moved_by_case(F)
     for c in mech:                    # name exactly which mechanical ordering each reverses
         ks = [w for k, w in (("die_warpage_pv_um", "die-warpage"), ("du_c_um", "joint-driver"))
               if k in mv[c] and mv[c][k]["production_verdict"].endswith("lower")
               and mv[c][k]["verdict"].endswith("lower")]
         out.append(f"the {' and '.join(ks)} ordering{'s reverse' if len(ks) > 1 else ' reverses'}"
-                   f" with {CASE_PLAIN.get(c, c)}")
+                   f" with {case_plain(c)}")
     if loc:
         words = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
         n = words[len(loc)] if len(loc) < 10 else str(len(loc))
-        out.append(f"the narrowly resolved local-response ordering does not survive {n} "
+        prod = ((F.get("local_per") or {}).get("HV_S0") or "")
+        out.append(f"the local-response ordering does not survive {n} of them"
+                   if prod.endswith("lower") else
+                   f"the local response, unranked in production, gains a ranking under {n} "
                    "of them")
     return "; ".join(out) + "."
 
@@ -588,6 +670,933 @@ those requires the switch-state schedule of the converter, qualified electromigr
 fatigue data for the package metallurgy, and a required life for the application."""
 
 
+# ============================================================ direct-fed Z2 (2026-10-28)
+# Blocks for the corrected architecture: the primary Z2 takes its 48 V directly into the
+# backside regulator, crosses the substrate only at 1 V through an explicit attach, and
+# clears the opening sidewall. Every number enters through a macro; every sentence that
+# depends on a result is chosen here from the artifact.
+
+TITLE = (r"Electrothermal--Mechanical Closure of Distributed Vertical Power Delivery: "
+         r"Architecture Preference Is Conditional on the Coupled Implementation")
+
+
+def df_facts():
+    cx = J("direct_feed_crossover.json")
+    ctrl = J("control_results.json")
+    return {"cx": cx.get("scenarios") or {}, "ctrl": ctrl}
+
+
+def _cb_reversals(F):
+    """{case: {observable: row}} of every class-B row that REVERSES a resolved ordering."""
+    out = {}
+    for _g, r in _moved(F):
+        p, v = str(r.get("production_verdict", "")), str(r.get("verdict", ""))
+        if p.endswith("lower") and v.endswith("lower") and p != v:
+            out.setdefault(r["case"], {})[r["observable"]] = r
+    return out
+
+
+def central_claim(F):
+    """Part 24's claim, clause by clause, each clause only where an artifact supports it:
+    'reverse' where a resolved ordering flips, 'change' where a verdict is created or
+    withdrawn."""
+    rev = _cb_reversals(F)
+    mov = _moved_by_case(F)
+    def verb(cases, obs):
+        if any(c in rev and any(o in rev[c] for o in obs) for c in cases):
+            return "reverse"
+        if any(c in mov and any(o in mov[c] for o in obs) for c in cases):
+            return "change"
+        return None
+    cl = ["converter placement changes the high-voltage entry path"]
+    v = verb(("tsv_min", "tsv_mid"), ("P_loss_w",))
+    if v:
+        cl.append(f"through-silicon-via provisioning can {v} the electrical preference")
+    v = verb(("z2_cooled", "z2_cooled_tim", "icepak_equivalent"),
+             ("die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle"))
+    if v:
+        cl.append(f"cooling can {v} the mechanical preference")
+    loc_cases = ("f2_void", "f1_sidewall_filled", "attach_h20", "attach_h40", "attach_sn",
+                 "attach_stiff", "attach_uf_soft", "attach_uf_stiff", "bga_depop")
+    if verb(loc_cases, ("du_c_um", "d_eps_in_per_cycle")):
+        cl.append("local construction determines the solder response")
+    body = ", ".join(cl[:-1]) + (", and " if len(cl) > 1 else "") + cl[-1]
+    return ("Physically closing the architectures reveals that no architecture can be ranked "
+            "independently of its neighboring design decisions: " + body + ". A coupled "
+            "electrothermal--mechanical framework is therefore required to make an "
+            "architecture-level decision.")
+
+
+SCEN_TAG = {"HV_S0": "Szero", "HV_S1": "Sone", "HV_S2": "Stwo"}
+
+
+def feed_status(F):
+    """Per scenario: 'ahead' (Z2 ahead at zero feed, R* > 0), 'not_ahead' (R* = 0: Z2 is not
+    ahead even with a lossless feed), 'inadmissible' (no valid Z1 reference), with the loss
+    verdict at zero feed from ordering.json (a gap within 2U is 'unresolved')."""
+    out = {}
+    for s, c in df_facts()["cx"].items():
+        verdict = ((F.get("loss") or {}).get("per_scenario") or {}).get(s)
+        if c.get("Z1_operating_point_inadmissible"):
+            st = "inadmissible"
+        elif c.get("R_star_mohm"):
+            st = "ahead"
+        else:
+            st = "not_ahead"
+        out[s] = {"status": st, "verdict": verdict, "tag": SCEN_TAG[s]}
+    return out
+
+
+def _requirement_scenarios(F):
+    return [s for s, v in feed_status(F).items() if v["status"] == "ahead"
+            and v["verdict"] == "Z2 lower"]
+
+
+def feed_sentence(F, short=False):
+    fs = feed_status(F)
+    s0 = fs.get("HV_S0")
+    if not s0:
+        return ""
+    req = _requirement_scenarios(F)
+    if short:
+        if s0["status"] == "ahead" and s0["verdict"] == "Z2 lower":
+            more = [x for x in req if x != "HV_S0"]
+            return (r"inside the package the direct-fed backside regulator dissipates "
+                    r"\PlossZtwo\,W against \PlossZone\,W for the embedded one in the "
+                    r"continuous-input scenario, an advantage it keeps only while its external "
+                    r"48\,V feed loop stays below \RstarSzero\,m$\Omega$"
+                    + "".join(f" (\\Rstar{SCEN_TAG[x]}\\,m$\\Omega$ under {SCEN_NAME[x]})"
+                              for x in more))
+        out = (r"inside the package the two architectures dissipate \PlossZone\,W (embedded) "
+               r"and \PlossZtwo\,W (direct-fed backside) in the continuous-input scenario, "
+               + ("a difference within the discretisation uncertainty, "
+                  if s0["verdict"] == "unresolved" else "")
+               + "so the backside regulator's external feed can only add to its loss there")
+        if req:
+            s = req[0]
+            out += (f"; under {SCEN_NAME[s]}, where the embedded architecture's package 48\\,V "
+                    f"path costs more, the backside one keeps an advantage while its feed loop "
+                    f"stays below \\Rstar{SCEN_TAG[s]}\\,m$\\Omega$")
+        return out
+    out = (r"In the continuous-input scenario the package-internal losses are \PlossZone\,W "
+           r"(Z1) and \PlossZtwo\,W (Z2); at $I_{48,\mathrm{rms}} = \IrmsSzero$\,A each "
+           r"milliohm of external loop dissipates a further \PfeedPerMohmSzero\,W in Z2.")
+    if s0["status"] == "ahead" and s0["verdict"] == "Z2 lower":
+        out += (r" Z2's advantage of \AdvZeroFeedSzero\,W with a lossless feed is gone at "
+                r"$R^{*} = \RstarSzero$\,m$\Omega$, where the feed dissipates "
+                r"\PfeedRstarSzero\,W.")
+    elif s0["status"] == "ahead":
+        out += (r" Z2 is ahead by \AdvZeroFeedSzero\,W with a lossless feed, within the "
+                r"discretisation uncertainty of the loss, so its crossover "
+                r"$R^{*} = \RstarSzero$\,m$\Omega$ is not a resolved requirement.")
+    else:
+        out += (" Z2 is not ahead even with a lossless feed, so no feed resistance preserves "
+                "an advantage there.")
+    for s in ("HV_S1", "HV_S2"):
+        v = fs.get(s)
+        if not v:
+            continue
+        tag = SCEN_TAG[s]
+        if v["status"] == "inadmissible":
+            out += (f" Under {SCEN_NAME[s]} the embedded operating point is inadmissible, so no "
+                    "crossover is defined there.")
+        elif v["status"] == "ahead":
+            out += (f" Under {SCEN_NAME[s]} the input RMS current is \\Irms{tag}\\,A and "
+                    f"Z1's own package 48\\,V path grows with its square, so Z2 is ahead by "
+                    f"\\AdvZeroFeed{tag}\\,W with a lossless feed and keeps that advantage up "
+                    f"to $R^{{*}} = \\Rstar{tag}$\\,m$\\Omega$"
+                    + ("" if v["verdict"] == "Z2 lower" else
+                       ", a difference not resolved against the loss uncertainty") + ".")
+        else:
+            out += f" Under {SCEN_NAME[s]} Z2 is not ahead even with a lossless feed."
+    return out
+
+
+def requirement_sentence(F):
+    req = _requirement_scenarios(F)
+    if not req:
+        return ("No scenario with a valid comparison leaves Z2 a resolved package-internal "
+                "advantage to preserve, so the direct feed sets no resistance requirement; any "
+                "feed resistance adds to Z2's loss.")
+    parts = [f"below \\Rstar{SCEN_TAG[s]}\\,m$\\Omega$ under {SCEN_NAME[s]}" for s in req]
+    return ("For Z2 to preserve its electrical advantage, the direct-feed loop resistance must "
+            "remain " + " and ".join(parts) + " (Fig.~\\ref{fig:crossover}). This is a "
+            "requirement on the connector, its cable or bus and its contacts, including the "
+            "distribution to the 49 input terminals; no source available to this work gives "
+            "such a loop resistance, so whether it is met is not claimed.")
+
+
+SCEN_SHORT = {"HV_S0": "continuous-input scenario", "HV_S1": "buck-duty pulse",
+              "HV_S2": "overall-ratio pulse"}
+
+
+def _and(xs):
+    return ", ".join(xs[:-1]) + (" and " if len(xs) > 1 else "") + xs[-1]
+
+
+def orderings_abstract(F):
+    """All four field observables in one clause, grouped by the architecture that is lower
+    where the gap is resolved (ordering.json). An observable resolved in only some valid
+    scenarios is marked with them; one whose resolved verdicts differ between scenarios is
+    named per scenario; one resolved nowhere is said to lie within the uncertainty. An
+    inadmissible scenario is left to scen_sentence_short()."""
+    obs = (("die warpage", F["warp"]), ("joint displacement driver", F["du"]),
+           ("local solder response", {"per_scenario": F.get("local_per") or {}}),
+           ("peak temperature", F["therm"]))
+    by, none, mixed, partial = {}, [], [], False
+    for what, o in obs:
+        per = {s: v for s, v in (o.get("per_scenario") or {}).items() if v != "not rankable"}
+        res = {s: v for s, v in per.items() if v.endswith("lower")}
+        favs = sorted({v.split()[0] for v in res.values()})
+        if not res:
+            none.append(what)
+        elif len(favs) > 1:
+            mixed.append((what, res))
+        else:
+            only = [s for s in per if s in res] if len(res) < len(per) else []
+            partial |= bool(only)
+            by.setdefault(favs[0], []).append(
+                what + (" (" + " and ".join(SCEN_SHORT[s] for s in only) + " only)"
+                        if only else ""))
+    parts = [f"the {NAME[a]} architecture has the lower {_and(by[a])}"
+             for a in ("Z1", "Z2") if a in by]
+    for what, res in mixed:
+        parts.append(f"the {what} ordering reverses between scenarios ("
+                     + ", ".join(f"{NAME[v.split()[0]]} lower in the {SCEN_SHORT[s]}"
+                                 for s, v in res.items()) + ")")
+    if none or partial:
+        subj = (f"the {_and(none)} difference" + ("s" if len(none) > 1 else "")
+                + (", and the remaining ones," if partial else "") if none
+                else "the remaining differences")
+        one = len(none) == 1 and not partial
+        parts.append(subj + (" lies" if one else " lie")
+                     + " within the measured discretisation uncertainty")
+    return "; ".join(parts)
+
+
+def feed_sentence_abstract(F):
+    fs = feed_status(F)
+    s0 = fs.get("HV_S0")
+    if not s0:
+        return ""
+    req = [s for s in _requirement_scenarios(F) if s != "HV_S0"]
+    if s0["status"] == "ahead" and s0["verdict"] == "Z2 lower":
+        out = ("Inside the package the backside regulator dissipates \\PlossZtwo\\,W against "
+               "\\PlossZone\\,W in the continuous-input scenario, an advantage it keeps only "
+               "while its external 48\\,V feed loop stays below \\RstarSzero\\,m$\\Omega$")
+    elif s0["status"] == "inadmissible":
+        out = ("In the continuous-input scenario the embedded operating point is inadmissible, "
+               "so no feed requirement is defined there")
+    elif s0["verdict"] == "unresolved":
+        out = ("The package-internal losses, \\PlossZone\\,W and \\PlossZtwo\\,W, agree "
+               "within the discretisation uncertainty in the continuous-input scenario")
+    else:
+        out = ("In the continuous-input scenario the backside regulator (\\PlossZtwo\\,W) is "
+               "not ahead of the embedded one (\\PlossZone\\,W) even with a lossless external "
+               "feed")
+    if req and s0["status"] == "ahead" and s0["verdict"] == "Z2 lower":
+        out += " (" + ", ".join(f"\\Rstar{SCEN_TAG[s]}\\,m$\\Omega$ under {SCEN_NAME[s]}"
+                                for s in req) + ")"
+    elif req:
+        s = req[0]
+        out += (f"; under {SCEN_NAME[s]} the backside regulator stays ahead only while its "
+                f"external feed loop is below \\Rstar{SCEN_TAG[s]}\\,m$\\Omega$")
+    return out + "."
+
+
+def scen_sentence_short(F):
+    melt = ((F.get("scen") or {}).get("HV_S2") or {}).get("inadmissible") or []
+    return (f"The overall-ratio pulse drives the {' and '.join(NAME[a] for a in melt)} joints "
+            "to the solder melting onset; no comparison is drawn there. " if melt else "")
+
+
+def abstract_df(F):
+    """At most about 250 words (IEEE): the framework, the two closed architectures, the
+    central claim, the feed requirement and one clause for the field observables; the
+    scenario hierarchy and the sensitivity table are in the body."""
+    claim = central_claim(F).split(". A coupled")[0]
+    return rf"""Kilowatt-scale power delivery is increasingly limited by what the package can physically
+accommodate. A hierarchical electrothermal--mechanical framework for distributed vertical power
+delivery carries converter synthesis into an explicit physical package---conductor-level
+electrical ledger, tier-resolved heat map, converged electrothermal fixed point, thermoelastic
+package solution, all-site critical-joint search and viscoplastic local solder submodel---each
+checked against a matched reference. It is applied to a 1\,kW, 48\,V-to-1\,V
+system of 49 regulator cells in two physically closed architectures: a regulator embedded between
+substrate and die (Z1), fed through the ball-grid array, and a backside regulator in a board
+opening (Z2), fed directly at 48\,V so that only 1\,V crosses the substrate. {claim}.
+{feed_sentence_abstract(F)} {orderings_abstract(F)[0].upper() + orderings_abstract(F)[1:]}.
+{scen_sentence_short(F)}No absolute life, qualification or commercial speedup is claimed."""
+
+
+CONTRIB_ADD_DF = r"""
+\item A voltage-fed, return-inclusive package power-delivery network is solved on a
+finite-volume grid whose faces are aligned with every regulator terminal, which converges
+where a uniform grid cannot; the ball-grid-array count is treated as a solved integer design
+variable rather than sized from an equal-sharing assumption that the network disproves
+(Section~\ref{sec:pdnclosure}).
+
+\item The backside architecture is closed as a physical package: its 48\,V input enters the
+regulator directly through the board opening, only 1\,V crosses the substrate through an
+explicit converter-to-substrate attach, and the converter clears the opening sidewall. The
+unsourced external feed is swept rather than assumed, which turns it into a design
+requirement---a maximum loop resistance---instead of an invented connector
+(Sections~\ref{sec:physarch} and~\ref{sec:directfeed}).
+
+\item Every reduced model is checked stage by stage against a matched reference on the same
+problem and machine---commercial and open-source finite elements, closed forms and a conjugate
+fluid-dynamics solution---and model-specific errors and runtimes are reported in place of a
+single framework accuracy (Section~\ref{sec:matched}).
+
+\item Every ordering-relevant input without a single defensible value is run on the production
+mesh and judged by the same uncertainty-aware rule as the production pair; the orderings that
+reverse are reported as a central result, not as a caveat (Section~\ref{sec:classb}).
+"""
+
+
+def intro_claim(F):
+    return (r"""Recent DVPD work has established design considerations for the distributed
+regulators themselves~\cite{ISCAS2024DVPD}, buck-derived vertical delivery~\cite{Sriharini_ECTC_24},
+a comprehensive electrical and thermal design framework~\cite{Krishnakumar2026DVPD},
+self-consistent electrothermal models with embedded microfluidic
+cooling~\cite{Choi2024ITherm,Choi2025SelfConsistent}, and system perspectives on the path from
+lateral to vertical delivery~\cite{VPD2023Architectures,Ye2026TenKiloAmp,Swaminathan2026IVPDReview}.
+The present paper does not re-derive that design flow. Its subject is narrower: what happens to
+an architecture comparison when both alternatives are closed as physical packages---every
+conductor owned, every interface explicit, every heat source in its own tier---and the
+electrical, thermal and mechanical questions are asked of the same geometry. """
+            + central_claim(F) + "\n")
+
+
+ARCH_SOURCES_TABLE = r"""
+\begin{table}[!t]
+\caption{Source hierarchy of the architecture definition (DIRECT: describes this
+construction; CLOSE\_ANALOG: bounds a value here; CONTEXT\_ONLY: no value taken). No
+dimension is copied from a drawing.}
+\label{tab:sources}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}L{3.0cm}L{2.2cm}L{2.6cm}@{}}
+\toprule
+Statement & Source & Class \\
+\midrule
+Regulator on the substrate backside, in a board cutout, fed by a separate wire, bumps dedicated to the regulated output & \cite{ArmCutoutVR2026} & DIRECT (construction only; no dimension, no performance) \\
+Backside RDL carrying regulated power into substrate TSVs & \cite{GoogleBacksideIVR2021} & CLOSE\_ANALOG (fed through the package) \\
+Attach: 15\,$\mu$m Cu pillar, 30\,$\mu$m pitch, solder cap & \cite{Au2016CuPillar30um} & CLOSE\_ANALOG \\
+Attach bound: 30\,$\mu$m Sn microbump, 80\,$\mu$m pitch, 40\,$\mu$m high & \cite{Na2022SnMicrobump} & CLOSE\_ANALOG (bound) \\
+Fine-pitch bonding and material systems & \cite{Lee2017CuPillarNCF,Dai2018MicroBump30um,Xu2026CuPillarReview} & CONTEXT\_ONLY \\
+External feed loop resistance & none & swept, not assumed \\
+Embedded-microchannel DVPD cooling & \cite{Choi2024ITherm,Choi2025SelfConsistent} & CONTEXT\_ONLY \\
+\bottomrule
+\end{tabular}
+\end{table}
+"""
+
+
+def physarch_section(F, hist_text):
+    return (r"""
+\subsection{Physical architectures}\label{sec:physarch}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig12_package_sections.pdf}
+\caption{The two physical architectures at one scale, drawn from the solver mesh (layer heights
+measured, not typed). Z1: the converter is embedded between substrate and die, and its 48\,V
+arrives through the ball-grid array and the package 48\,V redistribution layer. Z2: the converter
+hangs below a \SubZtwoUM\,$\mu$m substrate inside a \CutoutMM\,mm opening of the 2.4\,mm board,
+with a \ClearanceMM\,mm void between the cell grid and the opening sidewall; its 48\,V enters
+through an illustrative direct feed (the exact connector geometry is not specified), and only
+1\,V crosses the substrate through the pillar attach and the TSV fields. The BGA balls of Z2
+carry signals, auxiliary rails and mechanical support, not the 48\,V input.}
+\label{fig:package}
+\end{figure*}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig11_power_path.pdf}
+\caption{Power paths, schematic (layer order from the measured specification, not to scale).
+The Z2 stack is drawn in the order energy flows---direct input, high-side device, flying
+capacitors, low-side stage, inductors and output capacitors, output and attach
+redistribution, attach, substrate, top redistribution, die---which is not a series circuit:
+switch-node, flying-capacitor, ground and phase connections run between non-adjacent tiers.}
+\label{fig:powerpath}
+\end{figure*}
+Two physical integration alternatives are compared (Figs.~\ref{fig:package}
+and~\ref{fig:powerpath}). Both were frozen in an architecture specification before any result in
+this paper was computed, and their layer heights are measured on the solver mesh.
+
+In the \emph{embedded} architecture (Z1), the platform 48\,V reaches the package through the
+48\,V field of the ball-grid array (BGA), spreads in a package 48\,V redistribution layer (RDL)
+and crosses the substrate through the through-silicon-via (TSV) field to the converter embedded
+beneath the die; the 1\,V output then travels tens of micrometres through the output RDL and the
+die-interface pads.
+
+In the \emph{backside} architecture (Z2), the converter hangs below the substrate inside the
+board opening. Its 48\,V input does not cross the package: it enters the regulator directly
+through the opening by a dedicated external connection, and only the 1\,V output crosses the
+substrate---through an explicit converter-to-substrate attach and the VDD and GND TSV fields---to
+the top RDL and the die. This construction has a direct precedent~\cite{ArmCutoutVR2026}: a
+vertical integrated regulator coupled to the side of the package substrate opposite the die,
+located at least partly inside a circuit-board cutout, whose input power is provided by a
+separate wire rather than through the board and substrate, and whose bumps to the substrate are
+dedicated to the regulated output. That source is a construction precedent only: it states no
+dimension, no performance figure and no qualification, and none is taken from it. A
+die-backside regulator family~\cite{GoogleBacksideIVR2021} supplies the backside-RDL-to-TSV
+output path as a close analog; it feeds its regulator through the package, so it is not a
+precedent for the direct feed.
+
+The BGA has two functions that an earlier representation of this study conflated. Its
+\emph{mechanical field}---every package-to-board site that physically survives, \NsitesZone\
+for Z1 and \NsitesZtwo\ for Z2 around the opening---carries signals, auxiliary rails, ground and
+mechanical support, and the critical-joint search runs over all of it. Its \emph{48\,V power
+field} is the subset that carries the regulator input: it exists in Z1 and is empty in Z2, a
+property enforced by a regression test on the ledger.
+
+The attach is a Cu pillar with a solder cap, \AttachH\,$\mu$m high (\AttachCu\,$\mu$m Cu and
+\AttachCap\,$\mu$m cap), \AttachD\,$\mu$m in diameter at \AttachPitch\,$\mu$m pitch, in a VDD/GND
+checkerboard under every cell footprint, with underfill: \AttachNbump\ pillars per rail per cell.
+The geometry is that of a 30\,$\mu$m-pitch Cu-pillar microbump process on an organic
+substrate~\cite{Au2016CuPillar30um}, a close analog; all-solder microbumps~\cite{Na2022SnMicrobump}
+and heights of 20 and 40\,$\mu$m are carried as sensitivities (Table~\ref{tab:sources}). The
+converter cells occupy $\pm$\FillExtentMM\,mm; the \ClearanceMM\,mm ring between them and the
+opening sidewall is void, so the converter is not bonded to the board, and encapsulant fills only
+the space between the cells. The previous construction filled the opening to its sidewall,
+contradicting the stack specification; it is retained only as a sensitivity.
+
+From the direct input upward, the Z2 stack runs high-side device, interlayer redistribution,
+flying capacitors, interlayer redistribution, low-side stage, interlayer redistribution,
+inductors and output capacitors, output and attach redistribution, attach, substrate with its
+TSV fields, top redistribution, die interface and die. That sequence is the order in which
+energy flows, not a series circuit: the switch-node, flying-capacitor, ground and phase
+connections run between non-adjacent tiers inside the regulator, and the ledger assigns each
+of them to its own conductor.
+
+Finally, a control is kept to separate the effect of the opening and the ball placement from the
+effect of the feed: \emph{a controlled experiment that forces both architectures to use an
+identical package-level 48\,V feed}. In it, the backside converter takes its 48\,V through the
+same matched BGA count and a package 48\,V RDL. It is an experiment, not a construction, and is
+reported separately (Sec.~\ref{sec:control}).
+""" + ARCH_SOURCES_TABLE + r"""
+\subsection{Historical frozen representation}\label{sec:histrep}
+The comparison that motivated this work was carried out on a frozen, physically unclosed
+representation of the two alternatives (Fig.~\ref{fig:stack}). Its results are kept in
+Sec.~\ref{sec:arch} only to show what the physical closure changed; no current result uses it.
+""" + hist_text)
+
+
+def pdn_section_df(F):
+    return r"""
+\subsection{Package power-delivery network closure}\label{sec:pdnclosure}
+Only Z1 carries its 48\,V input through the package. Its 48\,V package redistribution network is
+solved as two separate resistive sheets, supply and return, each fed from a rail node through
+the individual series resistance of every ball-grid-array ball and a finite-area contact. Ball
+currents are therefore an output of the solution rather than an imposed equal share, and under a
+uniform cell load they are markedly unequal, so a count sized from the total current divided by
+the ball count understates the most heavily loaded ball. Each regulator cell draws its input
+through the 0.2\,mm input pad of the converter layout, not through the whole cell footprint. The
+sheet is discretised by cell-centred finite volumes on a tensor grid whose faces coincide with
+every pad edge and are graded toward every ball edge; on a uniform grid the pad boundaries fall
+between nodes, the resulting error is first order, and the embedded network failed to converge,
+whereas on the aligned grid every network converges to within 1\,\% on effective resistance,
+dissipation, maximum cell drop, peak ball current and peak-to-mean ball current between the two
+finest levels. The ball count is selected by enumerating every legal mirror-symmetric even count,
+solving the network at each, and verifying the candidate minimum on the resolved grid; the peak
+ball current is not monotone in the count, because the selected sites change with it. A matched
+count of \NballMatched\ balls per rail satisfies the 1.5\,A-per-ball provisioning criterion in
+the continuous-input scenario; that criterion is an engineering provisioning rule, not a
+reliability allowable. The resulting loop resistance is \RloopZone\,m$\Omega$ for Z1; the same
+network on the opening geometry, which only the BGA-fed control uses, gives
+\RloopZtwo\,m$\Omega$. The direct-fed Z2 has no package 48\,V network, and its ledger carries no
+package 48\,V ball or RDL term. The frozen electrical ledger at the converged electrothermal state
+is given in Table~\ref{tab:ledger}.
+\input{final_ledger_table}
+
+\subsection{Direct-feed boundary and requirement}\label{sec:directfeed}
+Two boundaries are used. The \emph{package-internal} ledger of Z2 starts at the regulator's 48\,V
+input terminals and contains the converter losses, the regulator's internal redistribution and
+vias, the output plane, the attach, the TSV fields, the top RDL and the die-interface pads; that
+of Z1 starts at its BGA pads on the board and contains the 48\,V balls, the package 48\,V RDL and
+the 48\,V TSVs. The \emph{platform-inclusive} comparison adds the complete external 48\,V supply
+and return loop of Z2, $R_{\mathrm{Z2,feed}}$, between the board-level 48\,V node common to both
+architectures---where the board distribution of Z1 meets its balls---and the regulator's 49 input
+terminals. Board distribution upstream of that node is common to both and excluded from both. No
+source gives this loop resistance: the construction precedent names connector types only. No
+value is therefore assumed; $R_{\mathrm{Z2,feed}}$ is swept from \FeedSweepLo\ to
+\FeedSweepHi\,m$\Omega$ (\FeedSweepN\ log-spaced points), and the total Z2 loss
+\begin{equation}
+P_{\mathrm{Z2}}(R) = P_{\mathrm{int}}(I) + (k I)^{2} R,\qquad
+48\,\mathrm{V}\cdot I = P_{\mathrm{load}} + P_{\mathrm{Z2}}(R),
+\label{eq:feed}
+\end{equation}
+is solved for the self-consistent input current $I$ at the converged temperatures, with $k$ the
+RMS-to-average ratio of the named scenario. For a fixed $P_{\mathrm{int}}$ the balance is a
+quadratic in $I$ whose lower root is the operating point; $P_{\mathrm{int}}$ is re-evaluated at
+that current until the balance closes, and above
+$48^{2}/(4k^{2}(P_{\mathrm{load}}+P_{\mathrm{int}}))$ no operating point exists.
+The crossover $R^{*}$ at which $P_{\mathrm{Z2}} = P_{\mathrm{Z1}}$ is found by bisection. It is
+reported as a requirement on the feed, not as a property of any connector. The nominal analysis
+deposits the feed loss outside the package; depositing it in the deepest converter tier is a
+class-B variant (Sec.~\ref{sec:classb}).
+"""
+
+
+HEAT_SECTION_DF = r"""
+\subsection{Physical heat map, energy accounting and discretisation}\label{sec:heatmap}
+Each converter loss is deposited in the tier that produces it---high-side and low-side
+gallium-nitride devices, inductor and capacitor tiers---and only inside the 49 cell
+footprints; package, ball, attach, via and pad losses are deposited in their own layers. The
+substrate carries the copper fraction of the adopted through-substrate via field inside each
+cell and plain silicon outside it, so the electrical and thermal models describe the same
+copper, and each 10\,$\mu$m redistribution tier carries the tensor of an explicit
+representative volume (Section~\ref{sec:matched}). In Z2 the attach is its own
+\AttachH\,$\mu$m tier: its through-thickness conductivity, \AttachKz\,W\,m$^{-1}$K$^{-1}$, is the
+series copper--solder column in parallel with the underfill at the \AttachAreaPct\,\% pillar area
+fraction, and its in-plane conductivity, \AttachKxy\,W\,m$^{-1}$K$^{-1}$, follows from the
+two-dimensional Maxwell-Garnett relation; its mechanical card is the underfill's
+(\AttachEgpa\,GPa, \AttachCte\,ppm\,K$^{-1}$), with a column-stiffened card as a class-B bound.
+The ring between the cell grid and the opening sidewall carries no element. Two conservation
+checks are applied: the volumetric sources integrate to the ledger total, and the heat leaving
+through the cold-plate film and the board film, both integrated from the solved temperature
+field, balances the deposited power to better than \EnergyTol\ in every case.
+
+The mesh is selected by nested refinement, in which every coarser node survives. Splitting
+each in-plane interval of the base graded grid in two changed the peak temperature by
+\MeshBaseTmaxZone\,\% (Z1) and \MeshBaseTmaxZtwo\,\% (Z2), above the declared
+\MeshTol\,\% tolerance, because the base grid resolves a 2.37\,mm converter tile with three
+elements; all reported results therefore use the split grid. Against a further in-plane
+level and a through-thickness split, the largest change of peak temperature, die warpage,
+critical-joint displacement and loss on the production grid is \MeshWorstProd\,\%.
+\MeshBoundSentence The refined thermoelastic solves use a preconditioned iterative solver, verified against the
+direct solver on the base grid to \ErrSolverIter\,\% in die warpage.
+"""
+
+
+def crossover_section(F):
+    return r"""
+\subsubsection{Direct-feed requirement}\label{sec:crossover}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig10_crossover.pdf}
+\caption{Direct-feed crossover. Z2 total loss (a), system efficiency (b) and external feed loss
+(c) against the swept loop resistance $R_{\mathrm{Z2,feed}}$ of \eqref{eq:feed}; Z1's converged
+package-internal loss and efficiency are the horizontal references. Open marker: $R^{*}$, where
+the two losses are equal. A scenario in which the embedded operating point is inadmissible has no
+valid reference and is not drawn.}
+\label{fig:crossover}
+\end{figure}
+""" + feed_sentence(F) + " " + requirement_sentence(F) + " " + feed_heat_sentence(F) + "\n"
+
+
+def feed_heat_sentence(F):
+    rows = _rows_for(F, "feed_heat_at_crossover")
+    if not rows:
+        return ""
+    def ch(k):
+        v = ((rows.get(k) or {}).get("change_rel") or {}).get("Z2")
+        return f"{100 * v:+.1f}\\,\\%" if isinstance(v, (int, float)) else "n/a"
+    moved = [OBS_PLAIN.get(k, k) for k, r in rows.items() if r.get("robust") is False]
+    return ("Depositing the feed loss at the largest loop resistance any requirement admits, "
+            "at the continuous-input current, inside the package in the deepest converter "
+            f"tier---the worst place it could land---changes the Z2 peak temperature by "
+            f"{ch('T_max_C')}, its die warpage by {ch('die_warpage_pv_um')} and its joint "
+            f"driver by {ch('du_c_um')}" + (", and moves the " + " and ".join(moved)
+                                             + " verdict" + ("s" if len(moved) > 1 else "")
+                                             if moved else ", and moves no ordering") + ".")
+
+
+def control_section(F):
+    c = df_facts()["ctrl"] or {}
+    k = (c.get("cases") or {}).get("Z2BF_HV_S0")
+    if not k:
+        return ""
+    z2 = (c.get("cases") or {}).get("Z2_HV_S0") or {}
+    mech = ""
+    if k.get("du_c_um") is not None and z2.get("du_c_um") is not None:
+        d = 100 * (k["du_c_um"] - z2["du_c_um"]) / z2["du_c_um"]
+        w = 100 * (k["die_warpage_pv_um"] - z2["die_warpage_pv_um"]) / z2["die_warpage_pv_um"]
+        mech = (f" Its mechanical response differs from the direct-fed Z2 by {w:+.1f}\\,\\% in die "
+                f"warpage and {d:+.1f}\\,\\% in joint driver"
+                + (", so the feed choice is electrical: the opening and the ball placement, "
+                   "not the 48\\,V path, set the mechanics." if max(abs(w), abs(d)) < 2.0 else
+                   ", so the feed path also moves the mechanics."))
+    return (r"""
+\subsubsection{Controlled BGA-fed experiment}\label{sec:control}
+This controlled experiment isolates the effect of BGA placement and the opening when both
+architectures are forced to use an identical package-level 48\,V feed; it is not the primary Z2
+construction. On the same corrected geometry---explicit attach, open sidewall clearance---the
+BGA-fed control dissipates \PlossCtrl\,W, \CtrlMinusZtwo\,W more than the direct-fed Z2, of which
+\CtrlPkgHV\,W are its package 48\,V RDL and ball terms (Table~\ref{tab:ledger}); it reaches
+\TmaxCtrl\,$^\circ$C, a die warpage of \WarpCtrl\,$\mu$m and a joint driver of \DuCtrl\,$\mu$m.""" +
+            mech + r""" Z1, which uses the same package feed, dissipates \PlossZone\,W. The
+control places its 48\,V input at the
+high-side redistribution tier, as Z1 and the direct-fed Z2 do, although its feed arrives at the
+land-side tier; the roughly 1.3\,mm traverse between the two is not modelled, so the control
+understates its own loss slightly. The defect affects the control only.
+""")
+
+
+def icepak_sentence(F):
+    if not F.get("icepak"):
+        return ""
+    rows = _rows_for(F, "icepak_equivalent")
+    base = (r" The correlation is not recalibrated to that solution: the coefficient that would "
+            r"reproduce the conjugate solution's mean base rise, \IcepakFactor\ times the compact "
+            r"one, is applied instead as a class-B sensitivity to both architectures")
+    if not rows:
+        return base + "."
+    moved = [OBS_PLAIN.get(k, k) for k, r in rows.items() if r.get("robust") is False]
+    def ch(k, a):
+        v = ((rows.get(k) or {}).get("change_rel") or {}).get(a)
+        return f"{100 * v:+.1f}\\,\\%" if isinstance(v, (int, float)) else "n/a"
+    return (base + f"; it changes the peak temperature by {ch('T_max_C', 'Z1')} (Z1) and "
+            f"{ch('T_max_C', 'Z2')} (Z2) and " + ("moves the " + " and ".join(moved)
+                                                   + " ordering" if moved
+                                                   else "moves no ordering") + ".")
+
+
+def phys_section_df(F):
+    s = phys_section(F)
+    s = s.replace("The physical lineage is evaluated for both architectures in every named 48\\,V "
+                  "scenario",
+                  "The physical lineage is evaluated for both architectures---Z1 and the "
+                  "direct-fed Z2---in every named 48\\,V scenario")
+    crit = _crit_location()
+    s = s.replace("is the\noutermost lattice corner in both.", crit)
+    s = s.replace("The frozen pair of the following subsection showed the opposite mechanical\n"
+                  "ordering; the physical closure reverses it. ",
+                  "The frozen pair of Sec.~\\ref{sec:histrep} showed the opposite mechanical "
+                  "ordering; the physical closure reverses it. ")
+    s = s.replace("Electrically, ", "Electrically, inside the package-internal boundary, ")
+    return s
+
+
+def _crit_location():
+    """Where the all-site search put the critical joint, from the production case files."""
+    import sys as _s
+    _s.path.insert(0, str(R / "scripts"))
+    import final_closure_physical_etm as E
+    loc = {}
+    for a in ("Z1", "Z2"):
+        f = E.case_path(a, "HV_S0")
+        if not f.exists():
+            return "is reported in Table~\\ref{tab:physical}."
+        c = json.loads(f.read_text())["mechanics"]["joint_search"]["critical"]
+        loc[a] = (abs(c["x_mm"]), abs(c["y_mm"]))
+    corner = {a: abs(x - y) < 1e-9 and x > 14.0 for a, (x, y) in loc.items()}
+    if all(corner.values()):
+        return "is the\noutermost lattice corner in both."
+    return ("lies at (" + "), (".join(f"{loc[a][0]:.1f}, {loc[a][1]:.1f}" for a in ("Z1", "Z2"))
+            + ") mm for Z1 and Z2 (absolute in-plane coordinates).")
+
+
+CASE_PLAIN.update({
+    "f1_sidewall_filled": "filling the opening to the board sidewall",
+    "z2_cooled_tim": "the backside plate behind a thermal interface",
+    "attach_h20": "a 20\\,$\\mu$m attach", "attach_h40": "a 40\\,$\\mu$m attach",
+    "attach_sn": "an all-solder attach", "attach_stiff": "a column-stiffened attach card",
+    "attach_uf_soft": "a soft attach underfill", "attach_uf_stiff": "a stiff attach underfill",
+    "feed_heat_at_crossover": "the feed loss deposited in the package",
+    "icepak_equivalent": "the Icepak-equivalent cooling coefficient",
+    "bga_depop": "a depopulated BGA field"})
+
+
+def fill_paragraph_df(F):
+    """The out-of-cell construction, now that the specified clearance is the production
+    baseline and the sidewall-filled construction (DEFECT #66) is a sensitivity."""
+    fs, f2 = _rows_for(F, "f1_sidewall_filled"), _rows_for(F, "f2_void")
+    if not (fs or f2):
+        return ""
+
+    def ch(rows, k, a):
+        v = ((rows.get(k) or {}).get("change_rel") or {}).get(a)
+        return f"{100 * v:+.0f}\\,\\%" if isinstance(v, (int, float)) else "n/a"
+
+    def verdict(rows, k):
+        return (rows.get(k) or {}).get("verdict", "n/a")
+    txt = (r" The out-of-cell construction of the backside converter is an architecture variable "
+           r"in its own right. The production model voids the specified \ClearanceMM\,mm ring "
+           r"between the cell grid and the opening sidewall and keeps encapsulant between the "
+           r"cells. ")
+    if fs:
+        txt += (r"Filling the ring as well, which bonds the converter laterally to the board---the "
+                r"construction an earlier version of this model used by mistake---changes the "
+                f"backside die warpage by {ch(fs, 'die_warpage_pv_um', 'Z2')} and its joint driver "
+                f"by {ch(fs, 'du_c_um', 'Z2')}; the verdicts become: warpage "
+                f"{verdict(fs, 'die_warpage_pv_um')}, joint driver {verdict(fs, 'du_c_um')}"
+                + (f", local response {verdict(fs, 'd_eps_in_per_cycle')}"
+                   if 'd_eps_in_per_cycle' in fs else "") + ". ")
+    if f2:
+        txt += (r"With the out-of-cell volume void in both architectures, the embedded joint "
+                f"driver changes by {ch(f2, 'du_c_um', 'Z1')} and the backside one by "
+                f"{ch(f2, 'du_c_um', 'Z2')}, and the verdicts become: warpage "
+                f"{verdict(f2, 'die_warpage_pv_um')}, joint driver {verdict(f2, 'du_c_um')}"
+                + (f", local response {verdict(f2, 'd_eps_in_per_cycle')}"
+                   if 'd_eps_in_per_cycle' in f2 else "") + ". ")
+    return txt
+
+
+def sens_section_df(F):
+    return r"""
+\subsubsection{Sensitivity of the orderings}\label{sec:classb}
+Every input that has no single defensible value---the board representation, copper coverage
+and thickness, the through-silicon via density, the out-of-cell fill and the sidewall clearance,
+the attach height, material and underfill, the direct-feed loop resistance and where its heat
+lands, a backside cooling path and its interface, the cooling model form, the BGA population, the
+device and converter-tier materials, contact and redistribution construction, the pad count and
+the 48\,V waveform---was classified by whether it can move an ordering (\NbOne\ of the
+\NgatesB\ inputs) or only a magnitude (\NbTwo), and then run on the production mesh in the
+continuous-input scenario or bounded analytically, with every variant judged by the same
+ordering rule as the production pair (Table~\ref{tab:classb}). Stress tests on unsourced
+material cards are declared as bounds, not as property claims. The reversals are a result, not a
+caveat: they say which neighbouring design decisions an architecture ranking depends on. """ + \
+        sens_sentence(F) + fill_paragraph_df(F) + r"""
+\input{final_classb_table}
+"""
+
+
+def discuss_df(F):
+    """The 'no universal winner' paragraph, naming only the decisions that the class-B
+    runs show to move an ordering."""
+    mv = _moved_by_case(F)
+    elec = [c for c in ("tsv_min", "tsv_mid", "pad_drop", "attach_sn") if c in mv
+            and "P_loss_w" in mv[c]]
+    mech = [c for c, r in mv.items() if set(r) & {"die_warpage_pv_um", "du_c_um",
+                                                  "d_eps_in_per_cycle"}]
+    s = (r"""
+\subsection{Architecture preference is conditional}\label{sec:conditional}
+The comparison does not produce a universal winner, and the reason is structural rather than
+numerical. Moving the converter to the backside changes where the 48\,V enters, so the
+electrical comparison becomes a comparison of a package path against an external feed whose
+resistance is a design requirement (Sec.~\ref{sec:crossover}).""")
+    if elec:
+        s += (" The electrical preference also depends on " + " and on ".join(
+            case_plain(c) for c in elec) + ", which change the loss verdict.")
+    if mech:
+        names = [case_plain(c) for c in mech]
+        lst = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+        s += (" The mechanical and local preferences depend on what surrounds and cools the "
+              f"converter: under {lst}, at least one mechanical or local verdict moves, because "
+              "such choices decide which materials expand together.")
+    s += (" A ranking stated without these neighbouring decisions is therefore not a property "
+          "of either architecture; the sensitivity matrix of Table~\\ref{tab:classb} states "
+          "which decisions matter.\n")
+    return s
+
+
+LIMIT_FEED = r"""
+\emph{The direct feed is specified as a requirement, not as a part.} No connector, cable, bus or
+contact resistance for a kilowatt-class direct regulator feed is available to this work; the
+construction precedent names connector types only. The platform-inclusive comparison is
+therefore stated as a maximum loop resistance, and whether a real feed meets it is not claimed.
+The connector drawn in the figures is illustrative.
+
+\emph{The attach is a close analog, not a qualified joint.} Its geometry follows a published
+30\,$\mu$m-pitch Cu-pillar process on an organic substrate; its current-carrying capability,
+electromigration margin and fatigue are not evaluated, and its mechanical card is the
+underfill's, bounded by a column-stiffened card.
+
+\emph{The BGA population is smeared.} The mechanical BGA field is a homogenised layer; the
+depopulated field is a uniform scaling of it, and a discrete ball-by-ball depopulation pattern is
+not resolved.
+"""
+
+STALE_CFD = r"""\emph{Conjugate CFD has not been completed.} The cooling model is validated at its laminar
+operating point against an explicitly meshed fin solution, and the transitional Reynolds band
+is refused rather than interpolated. Absolute temperatures inherit this limitation; the
+temperature \emph{difference} between the two architectures arises from where the 1\,V rail
+runs and is not sensitive to the cooling correlation in the same way."""
+
+NEW_CFD = r"""\emph{The cooling model is a compact correlation.} A matched conjugate
+computational-fluid-dynamics solution of one microchannel half-pitch shows the correlation to be
+\ErrCoolingIcepak\,\% conservative in mean base temperature rise at the production load; the
+correlation is not recalibrated to it, and the equivalent coefficient is run as a class-B
+sensitivity instead. The transitional Reynolds band is refused rather than interpolated."""
+
+
+def conclusion_df(F):
+    mech, loss, therm = sentences(F)
+    return rf"""An electrothermal--mechanical framework for distributed vertical power delivery has been
+presented in which converter synthesis is propagated into an explicit physical package and
+evaluated in one lineage: a conductor-level electrical ledger, a voltage-fed package network on
+an aligned graded grid, a tier-aware converged electrothermal fixed point, a thermoelastic package
+solution, an all-site critical-joint search and a viscoplastic local submodel. Each reduced model
+is checked against a matched reference, and one such check changed a tensor used in every
+thermal result.
+
+{central_claim(F)}
+
+The nominal results are reported separately from that conclusion. {feed_sentence(F, True)[0].upper() + feed_sentence(F, True)[1:]}{", a requirement on the feed that no available source shows to be met or missed" if _requirement_scenarios(F) else ""}. Mechanically, {mech}; thermally,
+{therm}. {inadmissible_sentence(F)} Physical realizability cannot be separated from architecture
+selection either: equivalent tier orderings can differ sixfold in worst via aspect ratio, and the
+ball count is a solved design variable whose peak loading is not monotone in the count.
+
+{sens_summary(F)} The local response is \LocalMeshPhrase{{}}: {local_conv_sentence()}, and a
+local ordering is drawn only beyond twice that bound. The results are conditioned on named
+input-current scenarios, because the switching schedule of the regulator is not derivable from its
+loss model; on an engineering ball-provisioning rule rather than a reliability allowable; on a
+direct-feed requirement rather than a specified connector; and on solder response rather than
+life. Closing those requires the switch-state schedule of the converter, a characterised direct
+feed, qualified electromigration and fatigue data for the package metallurgy, and a required
+life for the application."""
+
+
+#: the original Sec. II stack figure and paragraph (historical frozen pair), verbatim from the
+#: manuscript before the direct-fed revision; the physarch block supersedes it on first insertion
+HIST_ORIG = r"""\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig2_stack.pdf}
+\caption{Physical stack and power path for the two integration alternatives. (a) Embedded:
+the low-side devices, flying capacitors and inductors---$1226$\,\textmu m of the
+$1921$\,\textmu m component stack at the frozen device heights, $1258$ of $1953$\,\textmu m
+at the selected ones---are embedded in the $1.30$\,mm substrate, which they fill
+together with the $74$\,\textmu m through-substrate field; that field carries the 48\,V input
+rail. The $685$\,\textmu m high-side device is flip-chipped below the substrate and is outside
+the modelled domain. (b) Backside: the converter medium occupies a continuous layer below a
+$0.30$\,mm substrate and the field carries the 1\,V output rail at the full cell current; the
+lateral subdivision of that layer into cells, and the board interface beneath it, are not
+resolved. Arrow width indicates segment current on a logarithmic scale. The two are
+electrically distinct despite sharing the same converter.}
+\label{fig:stack}
+\end{figure*}
+
+The distinction between the two integration alternatives is electrical as well as geometric.
+In the \emph{embedded} architecture (Z1) the low-side devices, flying capacitors and
+inductors are embedded in the package substrate beneath the compute die. They occupy
+$1226$\,\textmu m of the $1.30$\,mm substrate at the frozen device heights ($1258$ at the
+selected ones, which the $1.30$\,mm substrate no longer accommodates) and the remaining
+$74$\,\textmu m is the
+through-substrate field, which carries the 48\,V input rail at low current; the substrate
+budget therefore closes exactly. Following the reference
+architecture~\cite{Krishnakumar2026DVPD}, the $685$\,\textmu m high-side device is
+flip-chipped below the substrate; it lies outside the modelled domain, and its loss is
+deposited in the embedded band. In the \emph{backside} architecture (Z2) the converter medium
+lies below the substrate and is connected through the full $0.30$\,mm, so the identical field
+carries the 1\,V output rail at the full cell current. That medium is represented as a
+continuous layer rather than as 49 discrete cells, and the interface between it and the board
+is not defined; both are limitations of the present geometry rather than properties of the
+architecture, and Sec.~\ref{sec:backside-limit} quantifies their effect. The vertical interconnect is therefore not common mode between the two and cannot be
+treated as such. Both are shown in Fig.~\ref{fig:stack}.
+"""
+HIST_ADJ = r"""\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.94\textwidth]{fig2_stack.pdf}
+\caption{Historical frozen representation, superseded by Figs.~\ref{fig:package} and~\ref{fig:powerpath}: stack and power path for the two integration alternatives. (a) Embedded:
+the low-side devices, flying capacitors and inductors---$1226$\,\textmu m of the
+$1921$\,\textmu m component stack at the frozen device heights, $1258$ of $1953$\,\textmu m
+at the selected ones---are embedded in the $1.30$\,mm substrate, which they fill
+together with the $74$\,\textmu m through-substrate field; that field carries the 48\,V input
+rail. The $685$\,\textmu m high-side device is flip-chipped below the substrate and is outside
+the modelled domain. (b) Backside: the converter medium occupies a continuous layer below a
+$0.30$\,mm substrate and the field carries the 1\,V output rail at the full cell current; the
+lateral subdivision of that layer into cells, and the board interface beneath it, are not
+resolved. Arrow width indicates segment current on a logarithmic scale. The two are
+electrically distinct despite sharing the same converter.}
+\label{fig:stack}
+\end{figure*}
+
+The distinction between the two integration alternatives is electrical as well as geometric.
+In the \emph{embedded} architecture (Z1) the low-side devices, flying capacitors and
+inductors are embedded in the package substrate beneath the compute die. They occupy
+$1226$\,\textmu m of the $1.30$\,mm substrate at the frozen device heights ($1258$ at the
+selected ones, which the $1.30$\,mm substrate no longer accommodates) and the remaining
+$74$\,\textmu m is the
+through-substrate field, which carries the 48\,V input rail at low current; the substrate
+budget therefore closes exactly. Following the reference
+architecture~\cite{Krishnakumar2026DVPD}, the $685$\,\textmu m high-side device is
+flip-chipped below the substrate; it lies outside the modelled domain, and its loss is
+deposited in the embedded band. In the \emph{backside} architecture (Z2) the converter medium
+lies below the substrate and is connected through the full $0.30$\,mm, so the identical field
+carries the 1\,V output rail at the full cell current. That medium is represented as a
+continuous layer rather than as 49 discrete cells, and the interface between it and the board
+is not defined; both were limitations of that frozen geometry rather than properties of the
+architecture, and the physical architectures above resolve them, and Sec.~\ref{sec:backside-limit} quantifies their effect. The vertical interconnect is therefore not common mode between the two and cannot be
+treated as such. Both are shown in Fig.~\ref{fig:stack}.
+"""
+
+
+ET_OLD = r"""The dominant loss terms are temperature dependent through \eqref{eq:tdep}, and the
+temperature field depends on those losses, so the two are iterated. Starting from the
+reference-temperature loss set, each iteration evaluates the electrical model at the current
+layer temperatures, deposits the resulting sources, solves \eqref{eq:cond} with the cooling
+boundary, and updates the temperatures. The iteration terminates when the change in the
+converter-layer temperature between successive iterations falls below $0.25$\,K. Three
+iterations are required for both architectures reported here."""
+
+ET_NEW = r"""
+The dominant loss terms are temperature dependent through \eqref{eq:tdep}, and the
+temperature field depends on those losses, so the two are iterated. Starting from the
+reference-temperature loss set, each iteration evaluates the electrical ledger at the current
+temperatures, deposits the resulting sources, solves \eqref{eq:cond} with the cooling
+boundary, and updates the temperatures. Every resistance is evaluated inside the region its
+loss is deposited in: each converter device and passive at the in-cell temperature of its own
+tier, the converter's internal redistribution and via stacks at the in-cell mean of the
+converter tiers they connect, the substrate vias, pads and attach inside the cell footprints,
+and the ball field over its layer. Averaging a converter tier over the encapsulant between the cells
+as well, as an earlier version of the coupling did, put the device temperatures 7.8\,K too
+low in the backside architecture and 1.2\,K too high in the embedded one, a bias of opposite
+sign that alone moved the loss comparison. The iteration stops when every coupled temperature
+changes by less than $0.25$\,K and the loss by less than $0.1$\,\% between successive
+iterations; at most \EtIters\ iterations are needed in the physical lineage.
+"""
+
+
+def main_df():
+    """The direct-fed revision on top of the physical-lineage migration (main_physical)."""
+    F = facts()
+    s = io.open(TEX, encoding="utf-8").read()
+    s = re.sub(r"\\title\{.*?\}\n\n\\author", lambda m_: "\\title{" + TITLE + "}\n\n\\author",
+               s, count=1, flags=re.S)
+    # every "final pair" in the static text is the historical frozen pair: say so
+    s = s.replace("the final pair", "the frozen pair").replace("final pair", "frozen pair")
+    a, b = s.index(r"\begin{abstract}") + len(r"\begin{abstract}"), s.index(r"\end{abstract}")
+    s = s[:a] + "\n" + abstract_df(F) + "\n" + s[b:]
+    s = block(s, "contrib", CONTRIB_ADD_DF)
+    s = block(s, "intro-claim", intro_claim(F), before="The following contributions are made.")
+    if "% BEGIN final-lineage:physarch" in s:
+        s = block(s, "physarch", physarch_section(F, HIST_ADJ))
+    else:
+        s = block(s, "physarch", physarch_section(F, HIST_ADJ), replace=HIST_ORIG)
+    s = block(s, "pdn", pdn_section_df(F))
+    s = block(s, "heatmap", HEAT_SECTION_DF)
+    if "% BEGIN final-lineage:et-fixed-point" in s:
+        s = block(s, "et-fixed-point", ET_NEW)
+    else:
+        s = block(s, "et-fixed-point", ET_NEW, replace=ET_OLD)
+    m = matched_section(F)
+    m = m.replace(r"""The
+package power network agrees with an open-source finite-element solution to
+\ErrPkgRdlZone\,\% (Z1) and \ErrPkgRdlZtwo\,\% (Z2) on effective resistance.""",
+                  r"""The
+package power network agrees with an open-source finite-element solution to
+\ErrPkgRdlZone\,\% for Z1 and \ErrPkgRdlZtwo\,\% on the opening geometry of the BGA-fed control
+on effective resistance; the direct-fed Z2 has no such network to check.""")
+    m = m.replace("For the package thermal solver, ",
+                  "For the package thermal solver, on the unit cell of each production stack "
+                  "(for Z2 the direct-fed stack with its explicit attach), ")
+    m = m.replace("less than 0.4\\,\\%.", "less than 0.4\\,\\%." + icepak_sentence(F), 1)
+    s = block(s, "matched", m)
+    s = block(s, "physical", phys_section_df(F))
+    s = block(s, "crossover", crossover_section(F), after="% END final-lineage:physical")
+    ctl = control_section(F)
+    if ctl:
+        s = block(s, "control", ctl, after="% END final-lineage:crossover")
+    s = block(s, "sens", sens_section_df(F))
+    s = block(s, "conditional", discuss_df(F),
+              after=r"\section{Discussion and Limitations}\label{sec:discuss}")
+    if STALE_CFD in s:
+        s = s.replace(STALE_CFD, NEW_CFD, 1)
+    s = block(s, "limit-feed", LIMIT_FEED,
+              after="Each limitation below is stated with its effect on the claims.")
+    s = block(s, "backside-limit-frame",
+              r"This subsection concerns the historical frozen representation "
+              r"(Sec.~\ref{sec:histrep}); the physical architectures of Sec.~\ref{sec:physarch} "
+              r"resolve the lateral structure of the backside converter explicitly.",
+              after=r"\subsection{Lateral extent of the backside converter}\label{sec:backside-limit}")
+    a = s.index(r"\section{Conclusion}\label{sec:concl}") + len(r"\section{Conclusion}\label{sec:concl}")
+    b = s.index(r"\section*{Acknowledgment}")
+    s = s[:a] + "\n\n" + conclusion_df(F) + "\n\n" + s[b:]
+    io.open(TEX, "w", encoding="utf-8").write(s)
+    print("manuscript revised (direct-fed Z2)")
+
+
 def block(s, name, text, before=None, after=None, replace=None):
     """Insert or refresh a marked block. `before`/`after` anchor a first insertion;
     `replace` names original text the block supersedes on its first insertion."""
@@ -684,4 +1693,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()          # physical-lineage migration (idempotent: marked blocks are refreshed)
+    main_df()       # direct-fed Z2 revision on top of it

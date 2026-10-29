@@ -1,9 +1,14 @@
-"""manuscript/figs/fig9_physical.pdf -- the physical lineage, read from the artifacts.
+"""Manuscript figures of the physical lineage, read from the artifacts.
 
-Small multiples, one quantity per panel (no second y-axis): (a) loss, (b) peak temperature,
-(c) die warpage, (d) critical-joint displacement driver, (e) local inelastic strain per
-cycle with its measured discretisation uncertainty, per named scenario; (f) the joint
-driver at every legal site at HV-S0. No value is typed here; a rerun redraws the figure.
+fig9_physical.pdf: small multiples, one quantity per panel (no second y-axis): (a) loss,
+(b) peak temperature, (c) die warpage, (d) critical-joint displacement driver, (e) local
+inelastic strain per cycle with its measured discretisation uncertainty, per named scenario;
+(f) the joint driver at every legal site at HV-S0.
+fig10_crossover.pdf: the direct-feed crossover (direct_feed_crossover.json): total loss,
+system efficiency and feed loss against the swept external loop resistance, one panel each.
+fig11_power_path.pdf, fig12_package_sections.pdf: the presentation's generated
+architecture SVGs (measured layer order), converted to vector PDF by rsvg-convert.
+No value is typed here; a rerun redraws every figure.
 """
 from __future__ import annotations
 
@@ -19,6 +24,10 @@ import numpy as np                                                   # noqa: E40
 R = Path(__file__).resolve().parents[1]
 D = R / "research" / "final_closure"
 OUT = R / "manuscript" / "figs" / "fig9_physical.pdf"
+OUT_X = R / "manuscript" / "figs" / "fig10_crossover.pdf"
+SVG_PDF = {"fig11_power_path.pdf": "z1_z2_power_path_final.svg",
+           "fig12_package_sections.pdf": "z1_z2_package_comparison.svg"}
+PRES_FIGS = R / "presentation" / "prelim_hvr" / "figs"
 sys.path.insert(0, str(R / "scripts"))
 COL = {"Z1": "#1f6feb", "Z2": "#d1442f"}
 SCEN = ("HV_S0", "HV_S1", "HV_S2")
@@ -106,6 +115,80 @@ def main():
     fig.savefig(OUT)
     plt.close(fig)
     print("wrote", OUT)
+    crossover_figure()
+    svg_figures()
+
+
+def crossover_figure():
+    """Total loss, efficiency and feed loss vs R_Z2_direct_feed_loop, shared log x. Z2 lines
+    per scenario; Z1's converged loss as a horizontal reference; R* marked. A scenario whose
+    Z1 operating point is inadmissible has no valid reference and is not drawn."""
+    cx = J("direct_feed_crossover.json")
+    sty = {"HV_S0": "-", "HV_S1": "--", "HV_S2": ":"}
+    fig, ax = plt.subplots(3, 1, figsize=(3.5, 4.6), sharex=True)
+    drawn, p_lo, p_hi, e_lo, e_hi = [], [], [], [], []
+    for s_, c in cx["scenarios"].items():
+        if c.get("Z1_operating_point_inadmissible"):
+            continue
+        sw = [p for p in c["sweep"] if p.get("feasible", True)]   # none above R_max
+        r = np.array([p["R_mohm"] for p in sw])
+        ax[0].plot(r, [p["P_total_w"] for p in sw], sty[s_], color=COL["Z2"], lw=1.0,
+                   label=f"Z2, {LAB[s_]}")
+        ax[0].axhline(c["P_Z1_w"], ls=sty[s_], color=COL["Z1"], lw=0.8,
+                      label=f"Z1, {LAB[s_]}")
+        ax[1].plot(r, [100 * p["efficiency"] for p in sw], sty[s_], color=COL["Z2"], lw=1.0)
+        ax[1].axhline(100 * c["efficiency_Z1"], ls=sty[s_], color=COL["Z1"], lw=0.8)
+        ax[2].plot(r, [p["P_feed_w"] for p in sw], sty[s_], color=COL["Z2"], lw=1.0)
+        p_lo += [c["P_Z1_w"], sw[0]["P_total_w"]]
+        p_hi.append(c["P_Z1_w"])
+        e_lo.append(100 * c["efficiency_Z1"])
+        e_hi.append(100 * sw[0]["efficiency"])
+        if c.get("R_star_mohm"):
+            for a_ in ax[:2]:
+                a_.axvline(c["R_star_mohm"], color="0.55", lw=0.6, ls=sty[s_])
+            ax[0].plot(c["R_star_mohm"], c["P_Z1_w"], "o", ms=3.5, mfc="white",
+                       mec="k", mew=0.7)
+            # left of its R* line, above (HV-S1) or below (HV-S0) its Z1 reference, on a
+            # white ground so no line runs through the text
+            up = s_ != "HV_S0"
+            ax[0].annotate(f"$R^*$ = {c['R_star_mohm']:.3g} m$\\Omega$ ({LAB[s_]})",
+                           (c["R_star_mohm"], c["P_Z1_w"]), xytext=(-5, 6 if up else -7),
+                           textcoords="offset points", fontsize=6.5, ha="right",
+                           va="bottom" if up else "top",
+                           bbox=dict(boxstyle="square,pad=0.15", fc="white", ec="none"))
+        drawn.append(s_)
+    if p_lo:                       # scaled to the crossover region; curves leave the frame
+        lo, hi = min(p_lo), max(p_hi)
+        ax[0].set_ylim(lo - 0.45 * (hi - lo) - 5, hi + 0.9 * (hi - lo) + 10)   # room for labels
+        ax[1].set_ylim(min(e_lo) - 6, max(e_hi) + 2)
+    ax[2].set_xscale("log")
+    ax[2].set_yscale("log")
+    ax[0].set_ylabel("loss (W)")
+    ax[1].set_ylabel("efficiency (%)")
+    ax[2].set_ylabel("feed loss (W)")
+    ax[2].set_xlabel(r"$R_{\mathrm{Z2,\,direct\ feed\ loop}}$ (m$\Omega$)")
+    for a_, t_ in zip(ax, ("(a) platform-to-load loss (crossover region)",
+                           "(b) system efficiency", "(c) external feed loss")):
+        a_.set_title(t_, loc="left")
+    # the legend sits in the empty upper-left corner of (c), clear of the R* labels in (a)
+    h, lab = ax[0].get_legend_handles_labels()
+    ax[2].legend(h, lab, frameon=False, fontsize=6, ncol=2, loc="upper left")
+    fig.tight_layout()
+    fig.savefig(OUT_X)
+    plt.close(fig)
+    print("wrote", OUT_X, "scenarios", drawn)
+
+
+def svg_figures():
+    import shutil
+    import subprocess
+    exe = shutil.which("rsvg-convert")
+    if exe is None:
+        raise SystemExit("rsvg-convert not found: cannot convert the architecture figures")
+    for pdf, svg in SVG_PDF.items():
+        src = PRES_FIGS / svg
+        subprocess.run([exe, "-f", "pdf", "-o", str(OUT.parent / pdf), str(src)], check=True)
+        print("wrote", OUT.parent / pdf, "from", src.name)
 
 
 if __name__ == "__main__":

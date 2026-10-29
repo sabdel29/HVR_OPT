@@ -10,42 +10,44 @@
 \toprule
 Scen. & Arch. & $P_{\mathrm{loss}}$ (W) & $T_{\max}$ ($^\circ$C) & warp ($\mu$m) & $\du$ ($\mu$m) & $\Delta\varepsilon_{\mathrm{in}}$ ($10^{-3}$) \\
 \midrule
-S0 & Z1 & 146.47 & 121.58 & 27.64 & 2.374 & 6.203{} \\
-S0 & Z2 & 142.67 & 120.59 & 69.28 & 3.951 & 9.971{} \\
-S1 & Z1 & 185.86 & 147.95 & 34.86 & 2.921 & 8.793{}$^\dagger$ \\
-S1 & Z2 & 165.51 & 124.59 & 72.96 & 4.272 & 11.449{} \\
-S2 & Z1$^\ddagger$ & 322.92 & 243.39 & 60.18 & 4.841 & \emph{n.c.}{}$^\dagger$ \\
-S2 & Z2 & 223.81 & 137.71 & 82.34 & 5.094 & 14.715{}$^\dagger$ \\
+S0 & Z1 & 149.06 & 122.32 & 27.90 & 2.394 & 6.284{} \\
+S0 & Z2 & 148.04 & 124.60 & 68.81 & 3.090 & 7.241{} \\
+S1 & Z1 & 186.78 & 148.35 & 34.99 & 2.932 & 8.838{}$^\dagger$ \\
+S1 & Z2 & 150.02 & 125.10 & 69.14 & 3.098 & 7.271{} \\
+S2 & Z1$^\ddagger$ & 314.15 & 239.92 & 59.19 & 4.764 & \emph{n.c.}{}$^\dagger$ \\
+S2 & Z2 & 154.28 & 126.15 & 69.84 & 3.115 & 7.333{} \\
 \bottomrule
 \end{tabular}
 \par\smallskip\raggedright $^\dagger$joint temperature above the 125\,$^\circ$C calibration of the Norton card (extrapolation); $^\ddagger$joint at or above the SAC305 melting onset (about 217\,$^\circ$C): not an admissible operating point, so the row is an infeasibility result and none of its values is ranked. n.c.: no converged local response at that operating point.
 \end{table}
 \begin{table}[!t]
-\caption{Frozen physical electrical ledger at the converged E--T state, HV-S0. Every conductor has exactly one owner; the package LV lateral term is structurally absent in this geometry (pads over each tile).}
+\caption{Frozen physical electrical ledger at the converged E--T state, HV-S0, inside the package-internal boundary (Z2 from the regulator's 48\,V input terminals, Z1 from the BGA pads). Every conductor has exactly one owner; --: structurally absent (no package 48\,V path in the direct-fed Z2, no attach tier in Z1). The control is the BGA-fed Z2 of Sec.~\ref{sec:control}. The direct-fed Z2's external feed adds $I_{48,\mathrm{rms}}^{2}R$ outside this boundary, 0.572\,W per m$\Omega$ of loop resistance here (Sec.~\ref{sec:directfeed}).}
 \label{tab:ledger}
 \centering
 \footnotesize
-\begin{tabular}{@{}lrr@{}}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}L{4.1cm}rrr@{}}
 \toprule
-Term (W) & Z1 & Z2 \\
+Term (W) & Z1 & Z2 & control \\
 \midrule
-High-side GaN (cond.+sw.+gate+$C_{\mathrm{oss}}$) & 21.016 & 20.683 \\
-Low-side GaN conduction & 103.080 & 100.071 \\
-Inductor DCR & 14.834 & 14.555 \\
-Capacitor ESR & 1.440 & 1.440 \\
-Intra-VR metal (R0 traces + R2 plane) & 1.899 & 1.864 \\
-Intra-VR via stacks & 2.350 & 2.307 \\
-Package HV RDL, supply + return & 1.791 & 1.144 \\
-BGA, supply + return & 0.017 & 0.011 \\
-TSV field, VDD + GND & 0.000 & 0.553 \\
-Source Cu pads, VDD + GND & 0.044 & 0.044 \\
+High-side GaN (cond.+sw.+gate+$C_{\mathrm{oss}}$) & 21.404 & 21.438 & 21.447 \\
+Low-side GaN conduction & 105.732 & 105.418 & 105.493 \\
+Inductor DCR & 14.376 & 14.635 & 14.641 \\
+Capacitor ESR & 1.440 & 1.440 & 1.440 \\
+Intra-VR metal (R0 traces + R2 plane) & 1.895 & 1.910 & 1.911 \\
+Intra-VR via stacks & 2.346 & 2.364 & 2.365 \\
+Package 48\,V RDL, supply + return & 1.802 & -- & 1.159 \\
+48\,V BGA balls, supply + return & 0.017 & -- & 0.011 \\
+VR-to-substrate attach, VDD + GND & -- & 0.234 & 0.234 \\
+TSV field (Z1: 48\,V; Z2: 1\,V), VDD + GND & 0.000 & 0.555 & 0.555 \\
+Source Cu pads, VDD + GND & 0.044 & 0.044 & 0.044 \\
 \midrule
-Total & 146.472 & 142.672 \\
+Total (package-internal) & 149.057 & 148.038 & 149.301 \\
 \bottomrule
 \end{tabular}
 \end{table}
 \begin{table*}[!t]
-\caption{Each production model against a matched reference on the same problem and machine. Runtimes are medians of three timed repeats after a warm-up; the ratio is reference over production. Finite-element against finite-element ratios compare solvers, not model reduction. No single framework accuracy is defined and no end-to-end commercial speedup is claimed.}
+\caption{Each production model against a matched reference on the same problem and machine. Runtimes are medians of three timed repeats after a warm-up (one solve per level for the conjugate CFD); the ratio is reference over production and is given only between field solvers, where it compares solvers, not model reduction. For a closed form, a homogenisation rule or the compact cooling correlation both runtimes are given and no ratio is printed. No single framework accuracy is defined and no end-to-end commercial speedup is claimed.}
 \label{tab:accspeed}
 \centering
 \scriptsize
@@ -53,21 +55,21 @@ Total & 146.472 & 142.672 \\
 \toprule
 Stage & Production model & Reference & Error & Production & Reference & Ratio \\
 \midrule
-tsv bulk & rho L / A & AEDT Mechanical & -1.147\,\% & 0.6\,$\mu$s & 10.0\,s & $1.6\times10^{7}$ \\
-tsv tile kz & Voigt & AEDT Mechanical & +0.711\,\% & 0.7\,$\mu$s & 36.1\,s & $5.0\times10^{7}$ \\
-tsv tile kx & Maxwell-Garnett & AEDT Mechanical & +0.255\,\% & 0.8\,$\mu$s & 36.0\,s & $4.5\times10^{7}$ \\
-rdl tier kx & laminate, grid in-plane & AEDT Mechanical & -3.694\,\% & 0.6\,$\mu$s & 34.1\,s & $5.4\times10^{7}$ \\
-rdl tier kz & laminate, series & AEDT Mechanical & +12.490\,\% & 1.3\,$\mu$s & 34.1\,s & $2.6\times10^{7}$ \\
-pkg rdl Z1 & voltage-fed aligned graded FV sheet (L3) & MOOSE & +0.079\,\% & 15.8\,s & 55.0\,s & 3.47$\times$ \\
-pkg rdl Z2 & voltage-fed aligned graded FV sheet (L3) & MOOSE & +0.108\,\% & 24.4\,s & 60.8\,s & 2.49$\times$ \\
-thermal column aedt Z1 & CalculiX C3D8 structured hex & AEDT Mechanical & -0.140\,\% & 44.4\,s & 124.0\,s & 2.79$\times$ \\
-thermal column moose Z1 & CalculiX C3D8 structured hex & MOOSE & -0.161\,\% & 38.9\,s & 21.5\,s & 0.55$\times$ \\
-thermal column aedt Z2 & CalculiX C3D8 structured hex & AEDT Mechanical & -0.109\,\% & 22.7\,s & 77.3\,s & 3.41$\times$ \\
-thermal column moose Z2 & CalculiX C3D8 structured hex & MOOSE & -0.118\,\% & 23.0\,s & 14.0\,s & 0.61$\times$ \\
+tsv bulk & rho L / A & AEDT Mechanical & -1.147\,\% & 0.6\,$\mu$s & 10.0\,s & -- \\
+tsv tile kz & Voigt & AEDT Mechanical & +0.711\,\% & 0.7\,$\mu$s & 36.1\,s & -- \\
+tsv tile kx & Maxwell-Garnett & AEDT Mechanical & +0.255\,\% & 0.8\,$\mu$s & 36.0\,s & -- \\
+rdl tier kx & laminate, grid in-plane & AEDT Mechanical & -3.694\,\% & 0.6\,$\mu$s & 34.1\,s & -- \\
+rdl tier kz & laminate, series & AEDT Mechanical & +12.490\,\% & 1.3\,$\mu$s & 34.1\,s & -- \\
+pkg 48 V RDL, Z1 & voltage-fed aligned graded FV sheet (L3) & MOOSE & +0.079\,\% & 15.8\,s & 55.0\,s & 3.47$\times$ \\
+pkg 48 V RDL, Z2 control & voltage-fed aligned graded FV sheet (L3) & MOOSE & +0.108\,\% & 24.4\,s & 60.8\,s & 2.49$\times$ \\
+thermal column aedt Z1 & CalculiX C3D8 structured hex & AEDT Mechanical & -0.141\,\% & 70.7\,s & 154.7\,s & 2.19$\times$ \\
+thermal column moose Z1 & CalculiX C3D8 structured hex & MOOSE & -0.163\,\% & 67.2\,s & 28.7\,s & 0.43$\times$ \\
+thermal column aedt Z2 & CalculiX C3D8 structured hex & AEDT Mechanical & -0.111\,\% & 41.9\,s & 126.9\,s & 3.03$\times$ \\
+thermal column moose Z2 & CalculiX C3D8 structured hex & MOOSE & -0.125\,\% & 42.7\,s & 28.2\,s & 0.66$\times$ \\
 mech bilayer closed form & CalculiX C3D8I & Timoshenko bimaterial curvature & -0.433\,\% & 65.9\,s & -- & -- \\
 mech bilayer aedt & CalculiX C3D8I & AEDT Mechanical & +0.014\,\% & 65.9\,s & 262.7\,s & 3.99$\times$ \\
 structural solver iterative vs direct & CalculiX ITERATIVE CHOLESKY & CalculiX SPOOLES (direct) & -0.010\,\% & -- & -- & -- \\
-cooling icepak & laminar microchannel correlation (Shah \& London Nu, fin efficiency, caloric + base resistance) & Ansys Icepak 2026 R1 conjugate CFD & +16.484\,\% & 13.3\,$\mu$s & 1305.4\,s & $9.8\times10^{7}$ \\
+cooling icepak & laminar microchannel correlation (Shah \& London Nu, fin efficiency, caloric + base resistance) & Ansys Icepak 2026 R1 conjugate CFD & +16.484\,\% & 12.1\,$\mu$s & 1305.4\,s & -- \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -81,11 +83,11 @@ cooling icepak & laminar microchannel correlation (Shah \& London Nu, fin effici
 \toprule
 Case & L0 & L1 & L2 & L3 & status & $U_{\mathrm{m}}$ & $U_{\mathrm{t}}$ & $U_{\mathrm{c}}$ & $U$ \\
 \midrule
-Z1 S0 & 6.487 & 6.359 & 6.277 & 6.203 & conv. & 1.19 & 0.02 & 0.82 & 2.03 \\
-Z2 S0 & 11.186 & 10.572 & 10.212 & 9.971 & bound. & 18.11 & 0.03 & 0.10 & 18.23 \\
-Z1 S1 & 9.137 & 8.994 & 8.893 & 8.793 & conv. & 1.14 & 0.03 & 0.41 & 1.57 \\
-Z2 S1 & 12.737 & 12.109 & 11.712 & 11.449 & bound. & 15.51 & 0.03 & 0.08 & 15.63 \\
-Z2 S2 & 16.166 & 15.489 & 15.039 & 14.715 & bound. & 27.88 & 0.02 & 0.05 & 27.95 \\
+Z1 S0 & 6.571 & 6.442 & 6.359 & 6.284 & conv. & 1.19 & 0.02 & 0.80 & 2.01 \\
+Z2 S0 & 8.037 & 7.635 & 7.406 & 7.241 & bound. & 29.08 & 0.01 & 0.12 & 29.22 \\
+Z1 S1 & 9.184 & 9.041 & 8.939 & 8.838 & conv. & 1.14 & 0.03 & 0.40 & 1.57 \\
+Z2 S1 & 8.069 & 7.666 & 7.436 & 7.271 & bound. & 29.18 & 0.01 & 0.12 & 29.31 \\
+Z2 S2 & 8.137 & 7.731 & 7.500 & 7.333 & bound. & 29.37 & 0.01 & 0.11 & 29.50 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -99,24 +101,34 @@ Z2 S2 & 16.166 & 15.489 & 15.039 & 14.715 & bound. & 27.88 & 0.02 & 0.05 & 27.95
 \toprule
 Variant (production) & $P_{\mathrm{loss}}$ & $T_{\max}$ & warp & $\du$ & $\Delta\varepsilon_{\mathrm{in}}$ & verdicts that change \\
 \midrule
-PCB-H1 five blocks & -0.0/+0.1 & +0.1/+0.0 & -1.8/+0.6 & -2.5/-0.3 & -4.9/-0.4 & none \\
-H0 on the H1 grid (control) & -0.0/+0.1 & +0.0/+0.0 & -2.8/-0.0 & -2.1/-0.0 & -4.4/-0.0 & none \\
-H1 vs H0, same grid (material) & -0.0/+0.0 & +0.0/+0.0 & +1.1/+0.6 & -0.4/-0.3 & -0.5/-0.4 & none \\
-PCB Cu coverage 0.25 (0.50) & -0.0/+0.0 & +0.1/+0.0 & -13.3/+1.6 & -17.9/-4.5 & -18.7/-5.8 & none \\
-PCB Cu coverage 0.75 (0.50) & +0.0/-0.0 & -0.1/-0.0 & +8.8/-1.5 & +12.1/+3.2 & +13.8/+4.1 & none \\
-PCB 3.2 mm (2.4 mm) & +0.0/+0.0 & -0.0/-0.0 & -7.8/-15.4 & -1.3/-11.3 & -1.4/-14.5 & local Z1$\to$n.r. \\
-TSV 64/cell (1444) & +0.0/+9.3 & +0.0/+1.4 & -0.6/+4.4 & +0.5/+3.1 & +0.5/+4.5 & loss Z2$\to$Z1 \\
-TSV 729/cell (1444) & +0.0/+0.4 & +0.0/+0.1 & -0.3/+1.5 & +0.2/+0.9 & +0.3/+1.1 & none \\
-out-of-cell void (encapsulated) & +1.1/-0.2 & +4.5/+3.2 & +36.4/-44.0 & +58.3/-23.5 & +72.7/-30.2 & $T_{\max}$ n.r.$\to$Z2; $\du$ Z1$\to$Z2; local Z1$\to$n.r. \\
-sidewall clearance open (filled) & +0.0/-0.5 & +0.0/+1.3 & +0.0/-1.5 & +0.0/-21.6 & +0.0/-27.9 & local Z1$\to$n.r. \\
-Z2 underside cold plate (bound) & +0.0/-21.1 & +0.0/-34.5 & +0.0/-89.9 & +0.0/-79.2 & +0.0/-96.3 & $T_{\max}$ n.r.$\to$Z2; warp Z1$\to$Z2; $\du$ Z1$\to$Z2; local Z1$\to$Z2 \\
-GaN tiers $k/2$ (bound) & +0.4/+0.2 & +1.3/+1.3 & +2.4/+1.3 & +2.1/+0.8 & +3.0/+1.0 & none \\
-conv.\ medium $k/10$ (bound) & +16.4/+8.0 & +41.4/+32.0 & +63.7/+40.2 & +58.8/+24.3 & +94.4/+33.2 & $T_{\max}$ n.r.$\to$Z2; local Z1$\to$n.r. \\
-conv.\ medium 80 GPa, 4 ppm/K & +0.0/+0.0 & +0.0/+0.0 & +4.2/+0.3 & +1.3/+0.3 & +1.4/+0.4 & none \\
-conv.\ medium 80 GPa, 10 ppm/K & +0.0/+0.0 & +0.0/+0.0 & -4.3/-1.0 & -1.2/-0.8 & -1.3/-1.0 & none \\
-conv.\ medium 160 GPa, 4 ppm/K & +0.0/+0.0 & +0.0/+0.0 & +3.0/+0.5 & +0.9/+0.5 & +1.0/+0.6 & none \\
-conv.\ medium 160 GPa, 10 ppm/K & +0.0/+0.0 & +0.0/+0.0 & -8.8/-0.8 & -2.7/-1.0 & -3.0/-1.3 & none \\
-1 V pads at drop floor (2040) & +16.1/+16.5 & +1.5/+1.4 & +1.8/+1.7 & +1.8/+1.8 & +2.9/+3.1 & none \\
+PCB-H1 five blocks & +0.0/-0.1 & +0.1/-0.0 & -1.8/+0.4 & -2.5/-0.3 & -4.8/-0.4 & none \\
+H0 on the H1 grid (control) & +0.0/-0.1 & +0.0/-0.0 & -2.8/-0.1 & -2.1/-0.0 & -4.4/-0.0 & none \\
+H1 vs H0, same grid (material) & +0.0/+0.0 & +0.0/+0.0 & +1.1/+0.4 & -0.4/-0.3 & -0.5/-0.4 & none \\
+PCB Cu coverage 0.25 (0.50) & +0.0/+0.0 & +0.1/+0.0 & -13.3/+0.3 & -17.9/-7.7 & -18.6/-10.4 & none \\
+PCB Cu coverage 0.75 (0.50) & -0.0/-0.0 & -0.1/-0.0 & +8.8/-0.2 & +12.1/+5.6 & +13.7/+7.7 & none \\
+PCB 3.2 mm (2.4 mm) & +0.0/+0.0 & -0.0/-0.0 & -7.8/-7.4 & -1.3/-13.1 & -1.4/-17.7 & none \\
+TSV 64/cell (1444) & +0.0/+9.1 & +0.0/+1.4 & -0.6/+4.3 & +0.5/+3.4 & +0.5/+4.9 & loss Z2$\to$Z1 \\
+TSV 729/cell (1444) & +0.0/+0.4 & +0.0/+0.1 & -0.3/+1.5 & +0.2/+1.0 & +0.3/+1.4 & loss Z2$\to$n.r. \\
+out-of-cell void (encapsulated) & +2.1/+1.2 & +4.9/+2.3 & +37.1/-43.1 & +59.1/-2.0 & +73.7/-2.7 & $T_{\max}$ Z1$\to$n.r.; warp Z1$\to$n.r.; $\du$ Z1$\to$Z2 \\
+opening filled to the PCB sidewall (1 mm void) & +0.0/-0.3 & +0.0/-1.5 & +0.0/+1.9 & +0.0/+28.9 & +0.0/+40.7 & $T_{\max}$ Z1$\to$n.r. \\
+attach 20\,$\mu$m (30) & +0.0/-0.2 & +0.0/-0.3 & +0.0/+0.1 & +0.0/+0.1 & +0.0/+0.1 & none \\
+attach 40\,$\mu$m (30) & +0.0/+0.2 & +0.0/+0.3 & +0.0/-0.1 & +0.0/-0.0 & +0.0/-0.1 & loss Z2$\to$n.r. \\
+all-Sn microbumps, 80\,$\mu$m pitch (Cu pillar) & +0.0/+1.0 & +0.0/+1.4 & +0.0/+1.8 & +0.0/+0.3 & +0.0/+0.5 & loss Z2$\to$n.r. \\
+attach column-stiffened card (underfill card) & +0.0/+0.0 & +0.0/+0.0 & +0.0/+0.3 & +0.0/+0.1 & +0.0/+0.2 & none \\
+attach underfill 4\,GPa, 40\,ppm/K (8, 30) & -- & -- & +0.0/-0.4 & +0.0/-0.1 & +0.0/-0.2 & none \\
+attach underfill 12\,GPa, 20\,ppm/K (8, 30) & -- & -- & +0.0/+0.3 & +0.0/+0.1 & +0.0/+0.1 & none \\
+feed loss at the largest $R^*$ in the HS tier (outside) & +0.0/+0.2 & +0.0/+0.7 & +0.0/+0.8 & +0.0/+0.4 & +0.0/+0.5 & loss Z2$\to$n.r. \\
+Icepak-equivalent top coefficient (compact) & -1.3/-1.3 & -2.7/-2.6 & -3.1/-3.5 & -3.3/-4.1 & -5.3/-6.3 & none \\
+Z2 underside plate via 50\,$\mu$m TIM (bound) & +0.0/-21.5 & +0.0/-34.5 & +0.0/-74.4 & +0.0/-32.0 & +0.0/-48.3 & $T_{\max}$ Z1$\to$Z2; warp Z1$\to$Z2; $\du$ Z1$\to$Z2 \\
+BGA field 420/528 sites (528), smeared & +0.0/+0.0 & +0.0/+0.0 & +0.0/+0.3 & +0.0/+4.2 & +0.0/+5.8 & none \\
+Z2 underside cold plate (bound) & +0.0/-23.9 & +0.0/-35.7 & +0.0/-81.2 & +0.0/-35.3 & +0.0/-53.6 & $T_{\max}$ Z1$\to$Z2; warp Z1$\to$Z2; $\du$ Z1$\to$Z2 \\
+GaN tiers $k/2$ (bound) & +0.3/+0.4 & +1.3/+1.5 & +2.4/+1.4 & +2.1/+0.3 & +3.0/+0.4 & none \\
+conv.\ medium $k/10$ (bound) & +20.8/+17.7 & +45.1/+40.7 & +69.0/+49.5 & +63.8/+8.1 & +102.2/+11.7 & $T_{\max}$ Z1$\to$n.r.; $\du$ Z1$\to$Z2 \\
+conv.\ medium 80 GPa, 4 ppm/K & +0.0/+0.0 & +0.0/+0.0 & +4.2/-0.3 & +1.3/+0.7 & +1.4/+1.0 & none \\
+conv.\ medium 80 GPa, 10 ppm/K & +0.0/+0.0 & +0.0/+0.0 & -4.3/-0.4 & -1.2/-1.0 & -1.3/-1.3 & none \\
+conv.\ medium 160 GPa, 4 ppm/K & +0.0/+0.0 & +0.0/+0.0 & +3.0/+0.0 & +0.9/+0.6 & +1.0/+0.9 & none \\
+conv.\ medium 160 GPa, 10 ppm/K & +0.0/+0.0 & +0.0/+0.0 & -8.7/+0.7 & -2.7/-1.7 & -3.0/-2.3 & none \\
+1 V pads at drop floor (2040) & +15.9/+15.9 & +1.5/+1.3 & +1.8/+1.7 & +1.8/+1.9 & +2.9/+3.0 & none \\
 \bottomrule
 \end{tabular}
 \end{table*}

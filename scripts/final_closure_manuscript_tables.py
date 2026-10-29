@@ -141,6 +141,9 @@ def main():
     # TeX swallows the space after \MeshBoundSentence, so a non-empty sentence carries its own
     mac.update(local_macros(S))
     mac.update(classb_macros())
+    mac.update(direct_feed_macros())
+    mac.update(architecture_macros(z2))
+    mac.update(control_macros())
     M = list(L) + [f"\\newcommand{{\\{k}}}{{{v}}}" for k, v in mac.items()]
     OUT_MAC.write_text("\n".join(M) + "\n")
     tables = {}
@@ -185,36 +188,52 @@ def main():
     import final_closure_physical_etm as E
     rows = {a: {r["term"]: r["P_w"] for r in
                 json.loads(E.case_path(a, "HV_S0").read_text())["ledger_rows"]}
-            for a in ("Z1", "Z2")}
+            for a in ("Z1", "Z2", "Z2BF") if E.case_path(a, "HV_S0").exists()}
+    ext = json.loads(E.case_path("Z2", "HV_S0").read_text()).get("external_feed") or {}
     groups = [("High-side GaN (cond.+sw.+gate+$C_{\\mathrm{oss}}$)", ("P_conv_hs",)),
               ("Low-side GaN conduction", ("P_conv_ls",)),
               ("Inductor DCR", ("P_conv_inductor_dcr",)), ("Capacitor ESR", ("P_conv_cap_esr",)),
               ("Intra-VR metal (R0 traces + R2 plane)", ("P_intraVR_metal",)),
               ("Intra-VR via stacks", ("P_intraVR_vertical",)),
-              ("Package HV RDL, supply + return", ("P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return")),
-              ("BGA, supply + return", ("P_BGA_supply", "P_BGA_return")),
-              ("TSV field, VDD + GND", ("P_TSV_VDD", "P_TSV_GND")),
+              ("Package 48\\,V RDL, supply + return", ("P_pkg_RDL_HV_supply",
+                                                        "P_pkg_RDL_HV_return")),
+              ("48\\,V BGA balls, supply + return", ("P_BGA_supply", "P_BGA_return")),
+              ("VR-to-substrate attach, VDD + GND", ("P_VR_attach_VDD", "P_VR_attach_GND")),
+              ("TSV field (Z1: 48\\,V; Z2: 1\\,V), VDD + GND", ("P_TSV_VDD", "P_TSV_GND")),
               ("Source Cu pads, VDD + GND", ("P_pad_VDD", "P_pad_GND"))]
+    cols = [a for a in ("Z1", "Z2", "Z2BF") if a in rows]
+    head = {"Z1": "Z1", "Z2": "Z2", "Z2BF": "control"}
     L += [r"\begin{table}[!t]",
-          r"\caption{Frozen physical electrical ledger at the converged E--T state, HV-S0. "
-          r"Every conductor has exactly one owner; the package LV lateral term is "
-          r"structurally absent in this geometry (pads over each tile).}",
+          r"\caption{Frozen physical electrical ledger at the converged E--T state, HV-S0, "
+          r"inside the package-internal boundary (Z2 from the regulator's 48\,V input "
+          r"terminals, Z1 from the BGA pads). Every conductor has exactly one owner; --: "
+          r"structurally absent (no package 48\,V path in the direct-fed Z2, no attach tier "
+          r"in Z1). The control is the BGA-fed Z2 of Sec.~\ref{sec:control}. The direct-fed "
+          r"Z2's external feed adds $I_{48,\mathrm{rms}}^{2}R$ outside this boundary, "
+          + f"{ext.get('P_feed_per_mohm_w', float('nan')):.3f}" +
+          r"\,W per m$\Omega$ of loop resistance here (Sec.~\ref{sec:directfeed}).}",
           r"\label{tab:ledger}", r"\centering", r"\footnotesize",
-          r"\begin{tabular}{@{}lrr@{}}", r"\toprule", r"Term (W) & Z1 & Z2 \\", r"\midrule"]
+          r"\setlength{\tabcolsep}{3pt}",
+          r"\begin{tabular}{@{}L{4.1cm}" + "r" * len(cols) + "@{}}", r"\toprule",
+          r"Term (W) & " + " & ".join(head[a] for a in cols) + r" \\", r"\midrule"]
     for lab, keys in groups:
-        v1 = sum(rows["Z1"].get(k, 0.0) for k in keys)
-        v2 = sum(rows["Z2"].get(k, 0.0) for k in keys)
-        L.append(f"{lab} & {v1:.3f} & {v2:.3f} \\\\")
-    L += [r"\midrule", f"Total & {sum(rows['Z1'].values()):.3f} & "
-          f"{sum(rows['Z2'].values()):.3f} \\\\", r"\bottomrule", r"\end{tabular}",
-          r"\end{table}"]
+        cells = []
+        for a in cols:
+            have = [k for k in keys if k in rows[a]]
+            cells.append(f"{sum(rows[a][k] for k in have):.3f}" if have else "--")
+        L.append(f"{lab} & " + " & ".join(cells) + " \\\\")
+    L += [r"\midrule", "Total (package-internal) & "
+          + " & ".join(f"{sum(rows[a].values()):.3f}" for a in cols) + " \\\\",
+          r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     tables["ledger"] = L[mark:]; mark = len(L)
     # ---- accuracy / runtime table --------------------------------------------
     L += [r"\begin{table*}[!t]",
           r"\caption{Each production model against a matched reference on the same problem and "
-          r"machine. Runtimes are medians of three timed repeats after a warm-up; the ratio is "
-          r"reference over production. Finite-element against finite-element ratios compare "
-          r"solvers, not model reduction. No single framework accuracy is defined and no "
+          r"machine. Runtimes are medians of three timed repeats after a warm-up (one solve per "
+          r"level for the conjugate CFD); the ratio is reference over production and is given "
+          r"only between field solvers, where it compares solvers, not model reduction. For a "
+          r"closed form, a homogenisation rule or the compact cooling correlation both runtimes "
+          r"are given and no ratio is printed. No single framework accuracy is defined and no "
           r"end-to-end commercial speedup is claimed.}", r"\label{tab:accspeed}", r"\centering",
           r"\scriptsize", r"\begin{tabular}{@{}L{3.3cm}L{3.0cm}L{3.6cm}rrrr@{}}", r"\toprule",
           r"Stage & Production model & Reference & Error & Production & Reference & Ratio \\",
@@ -227,12 +246,13 @@ def main():
         ref = ("AEDT Mechanical" if "Electronics Desktop" in tool else
                "MOOSE" if "MOOSE" in tool else tool.split(",")[0])
         sp, pt, rt_ = r.get("speedup"), r.get("production_runtime_s"), r.get("reference_runtime_s")
-        L.append(f"{r['stage'].replace('_', ' ')} & {tex(r.get('production_model', ''))} & "
+        L.append(f"{STAGE_LABEL.get(r['stage'], r['stage'].replace('_', ' '))} & "
+                 f"{tex(r.get('production_model', ''))} & "
                  f"{tex(ref)} & "
                  f"{100 * r['error']:+.3f}\\,\\% & "
                  f"{secs(pt) if isinstance(pt, (int, float)) else '--'} & "
                  f"{secs(rt_) if isinstance(rt_, (int, float)) else '--'} & "
-                 f"{tex_ratio(sp) if isinstance(sp, (int, float)) else '--'} \\\\")
+                 f"{tex_ratio(sp) if isinstance(sp, (int, float)) and r.get('runtime_ratio_kind') == 'solver_to_solver' else '--'} \\\\")
     L += [r"\bottomrule", r"\end{tabular}", r"\end{table*}"]
     tables["accspeed"] = L[mark:]; mark = len(L)
     L += localmesh_table(); tables["localmesh"] = L[mark:]; mark = len(L)
@@ -245,6 +265,89 @@ def main():
 
 
 LOCAL_POL = None
+
+SCEN_TAG = {"HV_S0": "Szero", "HV_S1": "Sone", "HV_S2": "Stwo"}
+
+
+def direct_feed_macros():
+    """The direct-feed crossover (direct_feed_crossover.json): R*, the feed loss there,
+    the zero-feed advantage and the 48 V RMS current, per scenario with a valid reference."""
+    cx = J("direct_feed_crossover.json") or {}
+    out = {}
+    for s, c in (cx.get("scenarios") or {}).items():
+        tag = SCEN_TAG[s]
+        ok = c.get("R_star_mohm") is not None and not c.get("Z1_operating_point_inadmissible")
+        out[f"Rstar{tag}"] = f"{c['R_star_mohm']:.2f}" if ok else "n/a"
+        out[f"PfeedRstar{tag}"] = f"{c['P_feed_at_R_star_w']:.2f}" if ok else "n/a"
+        out[f"AdvZeroFeed{tag}"] = f"{c['advantage_at_zero_feed_w']:.2f}"
+        out[f"Irms{tag}"] = f"{c['I_48_rms_a']:.1f}"
+        out[f"PfeedPerMohm{tag}"] = f"{c['I_48_rms_a'] ** 2 * 1e-3:.3f}"
+    sw = [p for c in (cx.get("scenarios") or {}).values() for p in c.get("sweep", [])]
+    out["FeedSweepLo"] = f"{cx['sweep_mohm'][0]:g}" if cx else "n/a"
+    out["FeedSweepHi"] = f"{cx['sweep_mohm'][1]:g}" if cx else "n/a"
+    out["FeedSweepN"] = str(len((next(iter(cx["scenarios"].values()))["sweep"]))) if cx else "n/a"
+    return out
+
+
+def architecture_macros(z2row):
+    """Frozen architecture numbers (z2_direct_feed_architecture.json, measured
+    architecture_geometry.json) and the attach's own ledger rows."""
+    import sys as _sys
+    _sys.path.insert(0, str(R / "scripts"))
+    import final_closure_physical_etm as E
+    spec = J("z2_direct_feed_architecture.json") or {}
+    geo = (J("architecture_geometry.json") or {}).get("architectures") or {}
+    att = spec.get("vr_attach") or {}
+    z2 = geo.get("Z2") or {}
+    oc = z2.get("out_of_cell") or {}
+    rows = {r["term"]: r["P_w"] for r in
+            json.loads(E.case_path("Z2", "HV_S0").read_text())["ledger_rows"]}
+    import z2_converter as Z2C
+    card = Z2C.vr_attach_material({"cu_height_um": att["h_cu_um"],
+                                   "cap_height_um": att["h_cap_um"],
+                                   "diameter_um": att["d_um"], "pitch_um": att["pitch_um"]})
+    val = lambda c, k: c[k]["value"] if isinstance(c[k], dict) else c[k]
+    kxy = val(card, "k_ortho")[0] if card.get("k_ortho") else None
+    return {"AttachH": f"{att['h_total_um']:.0f}", "AttachCu": f"{att['h_cu_um']:.0f}",
+            "AttachCap": f"{att['h_cap_um']:.0f}", "AttachD": f"{att['d_um']:.0f}",
+            "AttachPitch": f"{att['pitch_um']:.0f}",
+            "AttachNbump": str(att["bumps_per_rail_per_cell"]),
+            "AttachAreaPct": f"{100 * att['area_fraction']:.1f}",
+            "AttachKz": f"{val(card, 'k'):.1f}",
+            "AttachKxy": f"{kxy:.2f}" if kxy else "n/a",
+            "AttachEgpa": f"{val(card, 'E') / 1e3:.0f}",
+            "AttachCte": f"{val(card, 'cte') * 1e6:.0f}",
+            "AttachPw": f"{rows.get('P_VR_attach_VDD', 0) + rows.get('P_VR_attach_GND', 0):.3f}",
+            "TsvPwZtwo": f"{rows.get('P_TSV_VDD', 0) + rows.get('P_TSV_GND', 0):.3f}",
+            "CutoutMM": f"{z2.get('cutout_mm', 0):.2f}",
+            "ClearanceMM": f"{oc.get('clearance_mm', 0):.1f}",
+            "FillExtentMM": f"{oc['extent_x_mm'][1]:.2f}" if oc.get("extent_x_mm") else "n/a",
+            "NsitesZone": str((geo.get("Z1") or {}).get("bga", {}).get("sites_legal", "n/a")),
+            "NsitesZtwo": str(z2.get("bga", {}).get("sites_legal", "n/a")),
+            "SubZtwoUM": f"{next(L['t_um'] for L in z2['layers'] if L['name'] == 'sub_lower') + next(L['t_um'] for L in z2['layers'] if L['name'] == 'tile_band'):.0f}" if z2 else "n/a",
+            "IcepakFactor": f"{_icepak_factor():.3f}"}
+
+
+def _icepak_factor():
+    j = J("reference_cooling_icepak.json")
+    lv = {k: v for k, v in j["levels"].items() if v.get("solved")}
+    fin = max(lv, key=lambda k: lv[k]["cells"])
+    return j["correlation_dT_matched_loading_K"] / lv[fin]["dT_base_mean_K"]
+
+
+def control_macros():
+    """CONTROLLED_BGA_FED_Z1_VS_Z2_EXPERIMENT (control_results.json)."""
+    c = J("control_results.json") or {}
+    k = (c.get("cases") or {}).get("Z2BF_HV_S0") or {}
+    if not k:
+        return {}
+    pkg = sum((k.get("package_48v_terms_w") or {}).values())
+    fmt = lambda v, n=2: f"{v:.{n}f}" if isinstance(v, (int, float)) else "n/a"
+    return {"PlossCtrl": fmt(k.get("P_loss_w")), "TmaxCtrl": fmt(k.get("T_max_C")),
+            "WarpCtrl": fmt(k.get("die_warpage_pv_um")), "DuCtrl": fmt(k.get("du_c_um"), 3),
+            "CtrlPkgHV": fmt(pkg, 3),
+            "CtrlMinusZtwo": fmt(-c["direct_feed_minus_control_w"])
+            if isinstance(c.get("direct_feed_minus_control_w"), (int, float)) else "n/a"}
 
 
 def _pol():
@@ -312,13 +415,25 @@ CASE_TEXT = {"board_t3p2": "PCB 3.2 mm (2.4 mm)", "board_eta025": "PCB Cu covera
              "board_h1 vs board_h0_h1grid": "H1 vs H0, same grid (material)",
              "tsv_min": "TSV 64/cell (1444)", "tsv_mid": "TSV 729/cell (1444)",
              "f2_void": "out-of-cell void (encapsulated)",
-             "f1_clearance": "sidewall clearance open (filled)",
+             "f1_sidewall_filled": "opening filled to the PCB sidewall (1 mm void)",
              "z2_cooled": "Z2 underside cold plate (bound)",
+             "z2_cooled_tim": "Z2 underside plate via 50\\,$\\mu$m TIM (bound)",
+             "attach_h20": "attach 20\\,$\\mu$m (30)", "attach_h40": "attach 40\\,$\\mu$m (30)",
+             "attach_sn": "all-Sn microbumps, 80\\,$\\mu$m pitch (Cu pillar)",
+             "attach_stiff": "attach column-stiffened card (underfill card)",
+             "attach_uf_soft": "attach underfill 4\\,GPa, 40\\,ppm/K (8, 30)",
+             "attach_uf_stiff": "attach underfill 12\\,GPa, 20\\,ppm/K (8, 30)",
+             "feed_heat_at_crossover": "feed loss at the largest $R^*$ in the HS tier (outside)",
+             "icepak_equivalent": "Icepak-equivalent top coefficient (compact)",
+             "bga_depop": "BGA field 420/528 sites (528), smeared",
              "gan_k_half": "GaN tiers $k/2$ (bound)", "conv_k_tenth": "conv.\\ medium $k/10$ (bound)",
              "conv_E80_a4": "conv.\\ medium 80 GPa, 4 ppm/K", "conv_E80_a10": "conv.\\ medium 80 GPa, 10 ppm/K",
              "conv_E160_a4": "conv.\\ medium 160 GPa, 4 ppm/K",
              "conv_E160_a10": "conv.\\ medium 160 GPa, 10 ppm/K",
              "pad_drop": "1 V pads at drop floor (2040)"}
+#: the package 48 V RDL reference of "Z2" is the BGA-fed CONTROL's sheet: the primary,
+#: direct-fed Z2 has no package 48 V RDL
+STAGE_LABEL = {"pkg_rdl_Z1": "pkg 48 V RDL, Z1", "pkg_rdl_Z2": "pkg 48 V RDL, Z2 control"}
 OBS_COL = ("P_loss_w", "T_max_C", "die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle")
 VSHORT = {"Z1 lower": "Z1", "Z2 lower": "Z2", "unresolved": "n.r.", "not rankable": "n.a."}
 SHORT = {"P_loss_w": "loss", "T_max_C": "$T_{\\max}$", "die_warpage_pv_um": "warp",

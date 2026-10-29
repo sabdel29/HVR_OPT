@@ -89,3 +89,24 @@ over the three nested levels r11, r21, r31 with the observed order and a safety 
 formed (non-monotone sequence), the observable is unbounded and the paper is not ready.
 A bounded observable is reported with U, and any Z1/Z2 ordering involving it is claimed only
 where the gap exceeds 2U. This extends the rule above; it can only withdraw claims.
+
+**2026-10-28 — the primary Z2 is direct-fed.** This amendment restates the architecture
+frozen in `Z2_DIRECT_FEED_ARCHITECTURE.md` (commit 30d92b5) before any result of the
+corrected lineage existed; none of its rules depends on a corrected-lineage number.
+
+- The **Z2** described above ("48 V reaches them laterally through the package RDL") is
+  superseded as the primary construction. The primary Z2 takes its 48 V directly into the
+  backside regulator through a dedicated external connection in the PCB opening; only 1 V
+  crosses the substrate, through an explicit VR-to-substrate attach; the converter clears
+  the opening sidewall by the specified 1 mm. The BGA-fed Z2 survives only as the control
+  of `CONTROLLED_BGA_FED_Z1_VS_Z2_EXPERIMENT` and is reported as such.
+- The paper MAY claim the platform-inclusive crossover R* as a **requirement** on the
+  external feed loop ("for Z2 to keep its electrical advantage, R_Z2_direct_feed_loop < R*").
+- The paper MUST NOT claim a value of that loop resistance, that any connector meets or
+  misses the requirement, or manufacturability of the attach; it MUST NOT use the ARM
+  construction precedent for any dimension or performance number.
+- Item 8 above ("robustness of the architecture ordering") is replaced by: **which class-B
+  inputs preserve and which reverse each ordering**. Reversals are reported as a central
+  result, not hidden as caveats; no universal winner is claimed.
+- The cold-plate correlation is not recalibrated to the Icepak benchmark; the
+  Icepak-equivalent coefficient is a class-B sensitivity.
