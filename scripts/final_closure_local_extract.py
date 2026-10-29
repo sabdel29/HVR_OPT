@@ -37,6 +37,32 @@ HDR = re.compile(r"\s*(equivalent plastic strain|volume|stresses|strains|tempera
                  r".*for set (\S+) and time\s+([0-9.E+-]+)")
 
 
+def end_time(dat, tail_bytes=4_000_000):
+    """Printed time of the LAST block in a .dat (read from the tail), or None.
+
+    DEFECT #69 (2026-10-28): the historical runner accepts whatever a .dat holds. When the
+    user thread limit was reached, CalculiX died mid-run and left a .dat ending at
+    t = 1800.517 s of a 2400 s schedule; the time-keyed cycle window (t_end - 2 dwell,
+    t_end] then held a few post-1800 s increments, and the runner reported
+    d_eps = 2.695e-3 for a case whose published value is 6.513e-3. A run is complete only
+    if its last block sits at the schedule end."""
+    with open(dat, "rb") as fh:
+        fh.seek(0, 2)
+        fh.seek(max(0, fh.tell() - tail_bytes))
+        tail = fh.read().decode("ascii", "replace")
+    hits = HDR.findall(tail)
+    return float(hits[-1][2]) if hits else None
+
+
+def complete(dat, t_end):
+    """True when the .dat exists and its last block is at the schedule end t_end."""
+    try:
+        t = end_time(dat)
+    except OSError:
+        return False
+    return t is not None and abs(t - t_end) <= 1e-6 * t_end
+
+
 def parse_blocks(dat, core):
     """[(t_printed, {elem: {'P','S','E'}}, T, V)] in file order, one entry per increment.
     An increment starts at its 'equivalent plastic strain' block for the core set."""

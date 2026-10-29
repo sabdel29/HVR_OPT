@@ -28,6 +28,7 @@ sys.path.insert(0, str(R / "scripts" / "phase0i"))
 import run_final_local_response as LR                                # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from hvr_scratch import path as scratch                             # noqa: E402
+import final_closure_local_extract as X                             # noqa: E402
 
 OUT = R / "research" / "final_closure"
 LR.WD = scratch("fc_local")
@@ -35,6 +36,43 @@ LR.WD.mkdir(parents=True, exist_ok=True)
 #: the Norton/EPC card's calibrated temperature span. A joint temperature above it
 #: is an extrapolation and is FLAGGED, not hidden.
 NORTON_T_RANGE_C = (-40.0, 125.0)
+#: SAC305 melting onset (final_closure_results.SAC305_SOLIDUS_C): at or above it the joint
+#: is not solid solder and a missing response is an outcome, not a failure
+SOLIDUS_C = 217.0
+INCOMPLETE = {}
+
+
+def _complete_case(case, du_um, t_hot, _run=LR.run_case):
+    """LR.run_case refused unless the solve reached the end of its schedule (DEFECT #69).
+    Old outputs of the same name are removed first, so a previous .dat can never stand in
+    for a solve that did not run."""
+    for ext in (".dat", ".frd", ".sta", ".cvg"):
+        (LR.WD / f"{case}{ext}").unlink(missing_ok=True)
+    r = _run(case, du_um, t_hot)
+    t_end = 2 * LR.N_CYC * LR.DWELL
+    dat = LR.WD / f"{case}.dat"
+    if X.complete(dat, t_end):
+        return r
+    t = X.end_time(dat) if dat.exists() else None
+    INCOMPLETE[case] = {"t_last_s": t, "t_end_s": t_end}
+    print(f"  {case}: INCOMPLETE solve -- the .dat ends at t = {t} s of {t_end:g} s; "
+          "no response is reported", flush=True)
+    return None
+
+
+def install():
+    """Route the harness (run_control included) through the completeness check."""
+    if LR.run_case is not _complete_case:
+        LR.run_case = _complete_case
+
+
+def lost_responses(cases):
+    """Solves without a response at a solid-solder joint. There an incomplete solve is a
+    failed run to repeat, never a 'no response' result."""
+    return [f"{a}{tag}" for a, c in cases.items() if c["T_joint_C"] < SOLIDUS_C
+            for tag, rr in (("", c["response"]),
+                            ("_fine", (c.get("fine_mesh") or {}).get("response")))
+            if rr is None]
 
 
 def critical(arch, scen):
@@ -51,6 +89,7 @@ def main():
     scen = sys.argv[1] if len(sys.argv) > 1 else "HV_S0"
     LR.WD = scratch(f"fc_local_{scen}")
     LR.WD.mkdir(parents=True, exist_ok=True)
+    install()
     t0 = time.time()
     dev = LR.run_control()
     res = {"scenario": scen, "control_deviation_pct": dev,
@@ -82,6 +121,11 @@ def main():
                 100 * abs(rf["d_peeq_per_cycle"] - base["d_peeq_per_cycle"])
                 / base["d_peeq_per_cycle"])
     LR.N_XY, LR.N_Z_SOL = keep
+    lost = lost_responses(res["cases"])
+    if lost:
+        raise SystemExit(f"  {scen}: no response at an admissible joint for {lost} "
+                         f"({INCOMPLETE}) -- nothing written; rerun")
+    res["incomplete_solves"] = INCOMPLETE
     res["wall_s"] = round(time.time() - t0, 1)
     (OUT / f"local_solder_{scen}.json").write_text(json.dumps(res, indent=1, default=float))
     print("wrote local_solder", scen, "in", res["wall_s"], "s")

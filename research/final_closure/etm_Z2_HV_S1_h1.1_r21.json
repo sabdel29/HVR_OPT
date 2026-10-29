@@ -6,6 +6,15 @@
   2,
   1
  ],
+ "architecture_variant": "Z2_DIRECT_FEED",
+ "hv_feed": "DIRECT_FEED",
+ "external_feed": {
+  "parameter": "R_Z2_direct_feed_loop",
+  "i_48_avg_a": 23.9588305187355,
+  "i_48_rms_a": 95.835322074942,
+  "P_feed_per_mohm_w": 9.184408957207864,
+  "in_package_internal_total": false
+ },
  "materials": {
   "tsv_tile_cu_fraction": 0.1819435745367779,
   "sub_lower_in_tiles": 12348,
@@ -18,11 +27,11 @@
    "term": "P_conv_hs",
    "conductor": "high-side GaN (cond+sw+gate+Coss)",
    "rail": "converter",
-   "P_w": 20.930281795767943,
+   "P_w": 21.46301628902585,
    "R_ohm": null,
    "I_a": null,
    "current_type": "converter model RMS",
-   "model": "HVR_FULL_OPT_EPC_V2 closed form at T_conv",
+   "model": "HVR_FULL_OPT_EPC_V2 closed form at its tier's in-cell temperature (120.43 C)",
    "deposit_layer": "conv_7_gan_hs_EPC2014C",
    "evidence": "CONSERVATION_VERIFICATION",
    "maturity": "CLOSED",
@@ -34,11 +43,11 @@
    "term": "P_conv_ls",
    "conductor": "low-side GaN conduction",
    "rail": "converter",
-   "P_w": 102.30613469816262,
+   "P_w": 105.6138050486563,
    "R_ohm": null,
    "I_a": null,
    "current_type": "converter model RMS",
-   "model": "HVR_FULL_OPT_EPC_V2 closed form at T_conv",
+   "model": "HVR_FULL_OPT_EPC_V2 closed form at its tier's in-cell temperature (117.22 C)",
    "deposit_layer": "conv_3_gan_ls_EPC2057",
    "evidence": "CONSERVATION_VERIFICATION",
    "maturity": "CLOSED",
@@ -50,11 +59,11 @@
    "term": "P_conv_inductor_dcr",
    "conductor": "inductor DCR",
    "rail": "converter",
-   "P_w": 14.762406849463021,
+   "P_w": 14.648443704546192,
    "R_ohm": null,
    "I_a": null,
    "current_type": "converter model RMS",
-   "model": "HVR_FULL_OPT_EPC_V2 closed form at T_conv",
+   "model": "HVR_FULL_OPT_EPC_V2 closed form at its tier's in-cell temperature (107.53 C)",
    "deposit_layer": "conv_1_inductor_plus_cout",
    "evidence": "CONSERVATION_VERIFICATION",
    "maturity": "CLOSED",
@@ -70,7 +79,7 @@
    "R_ohm": null,
    "I_a": null,
    "current_type": "converter model RMS",
-   "model": "HVR_FULL_OPT_EPC_V2 closed form at T_conv",
+   "model": "HVR_FULL_OPT_EPC_V2 closed form at its tier's in-cell temperature (119.15 C)",
    "deposit_layer": "conv_5_flying_caps",
    "evidence": "CONSERVATION_VERIFICATION",
    "maturity": "CLOSED",
@@ -82,7 +91,7 @@
    "term": "P_intraVR_metal",
    "conductor": "cell traces (R0) + output plane (R2)",
    "rail": "mixed",
-   "P_w": 3.6156790643159287,
+   "P_w": 3.657890377550718,
    "R_ohm": null,
    "I_a": null,
    "current_type": "converter-model RMS; HV nets per scenario",
@@ -98,7 +107,7 @@
    "term": "P_intraVR_vertical",
    "conductor": "cell via stacks",
    "rail": "mixed",
-   "P_w": 2.33924968388345,
+   "P_w": 2.366559298311153,
    "R_ohm": null,
    "I_a": null,
    "current_type": "converter-model RMS",
@@ -111,66 +120,34 @@
   {
    "arch": "Z2",
    "scenario": "HV_S1",
-   "term": "P_pkg_RDL_HV_supply",
-   "conductor": "package HV RDL supply sheet",
-   "rail": "48V",
-   "P_w": 9.938365917603848,
-   "R_ohm": 0.0010535260864537905,
-   "I_a": 97.1258526881674,
-   "current_type": "HV RMS, HV_S1",
-   "model": "voltage-fed refined FV sheet, N=54/rail",
-   "deposit_layer": "bga",
-   "evidence": "MESH_CONVERGENCE",
-   "maturity": "SCENARIO",
-   "note": ""
+   "term": "P_VR_attach_VDD",
+   "conductor": "VR attach VDD: 3042 Cu-pillar bumps/cell",
+   "rail": "1V",
+   "P_w": 0.11724368033561577,
+   "R_ohm": 1.153720842221579e-07,
+   "I_a": 20.573030604962867,
+   "current_type": "cell output RMS",
+   "model": "(rho_Cu h_Cu + rho_solder h_cap) / A per bump, n in parallel",
+   "deposit_layer": "conv_attach_vr_substrate",
+   "evidence": "GEOMETRY_CLOSE_ANALOG",
+   "maturity": "BOUNDED",
+   "note": "Au et al. ECTC 2016 geometry (CLOSE_ANALOG); R_bump = 17.2 mOhm at 97.9 C"
   },
   {
    "arch": "Z2",
    "scenario": "HV_S1",
-   "term": "P_BGA_supply",
-   "conductor": "BGA supply balls (N=54)",
-   "rail": "48V",
-   "P_w": 0.10269392943083332,
-   "R_ohm": 1.0886169262915658e-05,
-   "I_a": 97.1258526881674,
-   "current_type": "HV RMS, HV_S1, solved per-ball split",
-   "model": "Table III rho_solder h / A",
-   "deposit_layer": "bga",
-   "evidence": "SOURCE_REPRODUCTION",
-   "maturity": "SCENARIO",
-   "note": ""
-  },
-  {
-   "arch": "Z2",
-   "scenario": "HV_S1",
-   "term": "P_pkg_RDL_HV_return",
-   "conductor": "package HV RDL return sheet",
-   "rail": "48V",
-   "P_w": 9.382552932579912,
-   "R_ohm": 0.000994606593675279,
-   "I_a": 97.1258526881674,
-   "current_type": "HV RMS, HV_S1",
-   "model": "voltage-fed refined FV sheet, N=54/rail",
-   "deposit_layer": "bga",
-   "evidence": "MESH_CONVERGENCE",
-   "maturity": "SCENARIO",
-   "note": ""
-  },
-  {
-   "arch": "Z2",
-   "scenario": "HV_S1",
-   "term": "P_BGA_return",
-   "conductor": "BGA return balls (N=54)",
-   "rail": "48V",
-   "P_w": 0.08863176944977096,
-   "R_ohm": 9.395496400318178e-06,
-   "I_a": 97.1258526881674,
-   "current_type": "HV RMS, HV_S1, solved per-ball split",
-   "model": "Table III rho_solder h / A",
-   "deposit_layer": "bga",
-   "evidence": "SOURCE_REPRODUCTION",
-   "maturity": "SCENARIO",
-   "note": ""
+   "term": "P_VR_attach_GND",
+   "conductor": "VR attach GND: 3042 Cu-pillar bumps/cell",
+   "rail": "1V",
+   "P_w": 0.11724368033561577,
+   "R_ohm": 1.153720842221579e-07,
+   "I_a": 20.573030604962867,
+   "current_type": "cell output RMS",
+   "model": "(rho_Cu h_Cu + rho_solder h_cap) / A per bump, n in parallel",
+   "deposit_layer": "conv_attach_vr_substrate",
+   "evidence": "GEOMETRY_CLOSE_ANALOG",
+   "maturity": "BOUNDED",
+   "note": "Au et al. ECTC 2016 geometry (CLOSE_ANALOG); R_bump = 17.2 mOhm at 97.9 C"
   },
   {
    "arch": "Z2",
@@ -178,8 +155,8 @@
    "term": "P_TSV_VDD",
    "conductor": "TSV field VDD, 722/cell, incl. two-end spreading",
    "rail": "1V",
-   "P_w": 0.27979947890464224,
-   "R_ohm": 2.7533295571323074e-07,
+   "P_w": 0.27757600569625906,
+   "R_ohm": 2.731449764760644e-07,
    "I_a": 1008.0784996431805,
    "current_type": "cell output RMS",
    "model": "rho L/A per via + compact spreading",
@@ -194,8 +171,8 @@
    "term": "P_TSV_GND",
    "conductor": "TSV field GND, 722/cell, incl. two-end spreading",
    "rail": "1V",
-   "P_w": 0.27979947890464224,
-   "R_ohm": 2.7533295571323074e-07,
+   "P_w": 0.27757600569625906,
+   "R_ohm": 2.731449764760644e-07,
    "I_a": 1008.0784996431805,
    "current_type": "cell output RMS",
    "model": "rho L/A per via + compact spreading",
@@ -210,8 +187,8 @@
    "term": "P_pad_VDD",
    "conductor": "source Cu pads, 2040/rail/cell (SOURCE_ANCHORED)",
    "rail": "1V",
-   "P_w": 0.02220620685655315,
-   "R_ohm": 2.1851722501162773e-08,
+   "P_w": 0.022143257860968532,
+   "R_ohm": 2.178977837931757e-08,
    "I_a": 20.573030604962867,
    "current_type": "cell output RMS",
    "model": "Table III rho_Cu h / A",
@@ -226,8 +203,8 @@
    "term": "P_pad_GND",
    "conductor": "source Cu pads, 2040/rail/cell (SOURCE_ANCHORED)",
    "rail": "1V",
-   "P_w": 0.02220620685655315,
-   "R_ohm": 2.1851722501162773e-08,
+   "P_w": 0.022143257860968532,
+   "R_ohm": 2.178977837931757e-08,
    "I_a": 20.573030604962867,
    "current_type": "cell output RMS",
    "model": "Table III rho_Cu h / A",
@@ -250,8 +227,8 @@
    "deposit_layer": "z2_top_rdl",
    "evidence": "STRUCTURAL",
    "maturity": "STRUCTURALLY_ABSENT",
-   "note": "the source-pad field sits over the tile footprint (the pad model's own geometric capacity), so 1 V leaves the package directly above each cell; the in-tile collection is owned by P_intraVR_metal (R2 output plane) and the lateral spreading beyond the tile happens in the die's power grid, outside package scope. ALTERNATIVE, quantified: if the pad field were spread over the whole cell pitch, a 10 um / 80 % plane would carry the spreading at 0.3020 W per rail (lv_alternative_r_ohm, periodic unit cell)",
-   "alternative_P_w": 0.30202789179385353
+   "note": "the source-pad field sits over the tile footprint (the pad model's own geometric capacity), so 1 V leaves the package directly above each cell; the in-tile collection is owned by P_intraVR_metal (R2 output plane) and the lateral spreading beyond the tile happens in the die's power grid, outside package scope. ALTERNATIVE, quantified: if the pad field were spread over the whole cell pitch, a 10 um / 80 % plane would carry the spreading at 0.3012 W per rail (lv_alternative_r_ohm, periodic unit cell)",
+   "alternative_P_w": 0.3011717188981502
   },
   {
    "arch": "Z2",
@@ -267,118 +244,143 @@
    "deposit_layer": "z2_top_rdl",
    "evidence": "STRUCTURAL",
    "maturity": "STRUCTURALLY_ABSENT",
-   "note": "the source-pad field sits over the tile footprint (the pad model's own geometric capacity), so 1 V leaves the package directly above each cell; the in-tile collection is owned by P_intraVR_metal (R2 output plane) and the lateral spreading beyond the tile happens in the die's power grid, outside package scope. ALTERNATIVE, quantified: if the pad field were spread over the whole cell pitch, a 10 um / 80 % plane would carry the spreading at 0.3020 W per rail (lv_alternative_r_ohm, periodic unit cell)",
-   "alternative_P_w": 0.30202789179385353
+   "note": "the source-pad field sits over the tile footprint (the pad model's own geometric capacity), so 1 V leaves the package directly above each cell; the in-tile collection is owned by P_intraVR_metal (R2 output plane) and the lateral spreading beyond the tile happens in the die's power grid, outside package scope. ALTERNATIVE, quantified: if the pad field were spread over the whole cell pitch, a 10 um / 80 % plane would carry the spreading at 0.3012 W per rail (lv_alternative_r_ohm, periodic unit cell)",
+   "alternative_P_w": 0.3011717188981502
   }
  ],
- "P_loss_w": 165.5102323056078,
- "i_hv_avg_a": 24.281463173033497,
+ "P_loss_w": 150.02386489930396,
+ "i_hv_avg_a": 23.9588305187355,
  "energy_ledger": {
-  "P_input_w": 1165.5102323056078,
+  "P_input_w": 1150.023864899304,
   "P_load_w": 1000.0,
-  "P_loss_w": 165.5102323056078,
-  "residual_w": 2.842170943040401e-14,
-  "residual_rel": 2.438563698765672e-17
+  "P_loss_w": 150.02386489930396,
+  "residual_w": 8.526512829121202e-14,
+  "residual_rel": 7.414205121619614e-17
  },
  "thermal": {
-  "T_max_C": 124.592,
-  "T_mean_C": 102.12974130693404,
-  "q_top_W": 1165.2278293775657,
-  "q_bot_W": 0.2824203909503803,
-  "Q_deposited_W": 1165.5102323056083,
-  "Q_ledger_W": 1165.5102323056078,
-  "deposit_residual_rel": 3.9017019180250753e-16,
-  "energy_residual_rel": 1.4983058778528593e-08,
+  "T_max_C": 125.096,
+  "T_mean_C": 97.79730263123191,
+  "q_top_W": 1149.790807791657,
+  "q_bot_W": 0.2331001804504641,
+  "Q_deposited_W": 1150.023864899304,
+  "Q_ledger_W": 1150.023864899304,
+  "deposit_residual_rel": 0.0,
+  "energy_residual_rel": 3.745383446295257e-08,
   "fluid_iters": 1,
   "fluid_hist": [
    {
     "iter": 0,
-    "max_dT_fluid_K": 0.017420367927517333,
-    "T_max_C": 124.592
+    "max_dT_fluid_K": 0.012480000964991689,
+    "T_max_C": 125.096
    }
   ],
-  "wall_s": 95.00112009048462,
-  "n_elems": 154492,
-  "n_nodes": 164752
+  "wall_s": 124.57444977760315,
+  "n_elems": 145120,
+  "n_nodes": 159241
  },
  "et_history": [
   {
    "iter": 0,
-   "P_loss_w": 147.82487503177424,
-   "T_max_C": 120.527,
-   "T_die_mean_C": 90.05642168916978,
-   "T_conv_C": 107.11347753222222,
-   "T_bga_C": 101.60869250133334,
-   "T_sub_C": 97.82261902666666,
-   "T_interface_C": 91.40474856363114,
-   "max_dT_K": 41.60869250133334,
+   "P_loss_w": 131.58824168744584,
+   "T_max_C": 120.289,
+   "T_die_mean_C": 89.0532881413387,
+   "T_conv_C": 110.26196727925863,
+   "T_hs_C": 115.79218002915452,
+   "T_ls_C": 112.86868554768846,
+   "T_ind_C": 104.43244369012912,
+   "T_caps_C": 114.6241006525059,
+   "T_bga_C": 97.56319466423209,
+   "T_sub_C": 95.32508279883382,
+   "T_interface_C": 90.43485531028738,
+   "T_attach_C": 95.99376314035818,
+   "max_dT_K": 37.563194664232086,
    "dP_rel": 1.0,
-   "energy_residual_rel": 2.2400387269986133e-08,
-   "wall_s": 96.09961414337158
+   "energy_residual_rel": -2.0788798466590584e-08,
+   "wall_s": 116.2080249786377
   },
   {
    "iter": 1,
-   "P_loss_w": 163.53627535579665,
-   "T_max_C": 124.133,
-   "T_die_mean_C": 90.96929501292733,
-   "T_conv_C": 109.82341137666667,
-   "T_bga_C": 103.78957586488889,
-   "T_sub_C": 99.58976009777778,
-   "T_interface_C": 92.36955119218615,
-   "max_dT_K": 2.70993384444445,
-   "dP_rel": 0.09607287612390585,
-   "energy_residual_rel": 1.1529021913701625e-09,
-   "wall_s": 95.8458604812622
+   "P_loss_w": 147.54148225159358,
+   "T_max_C": 124.45,
+   "T_die_mean_C": 89.96848548118358,
+   "T_conv_C": 113.65537587984174,
+   "T_hs_C": 119.81199437734278,
+   "T_ls_C": 116.63829765375539,
+   "T_ind_C": 107.1184474052478,
+   "T_caps_C": 118.54967818964322,
+   "T_bga_C": 99.41628597078514,
+   "T_sub_C": 96.89617953977509,
+   "T_interface_C": 91.4123721990837,
+   "T_attach_C": 97.6461870054144,
+   "max_dT_K": 4.019814348188262,
+   "dP_rel": 0.10812715394131418,
+   "energy_residual_rel": -2.3322834044663786e-08,
+   "wall_s": 111.68814635276794
   },
   {
    "iter": 2,
-   "P_loss_w": 165.29761313380604,
-   "T_max_C": 124.542,
-   "T_die_mean_C": 91.07114849755817,
-   "T_conv_C": 110.11925839111109,
-   "T_bga_C": 104.01820783999999,
-   "T_sub_C": 99.7730355688889,
-   "T_interface_C": 92.47716213731688,
-   "max_dT_K": 0.2958470144444192,
-   "dP_rel": 0.01065555481786427,
-   "energy_residual_rel": 1.2526220948102717e-08,
-   "wall_s": 94.9174907207489
+   "P_loss_w": 149.6943757427661,
+   "T_max_C": 125.011,
+   "T_die_mean_C": 90.09199165182419,
+   "T_conv_C": 114.11284033475636,
+   "T_hs_C": 120.3533545397751,
+   "T_ls_C": 117.14672844648064,
+   "T_ind_C": 107.48087896709704,
+   "T_caps_C": 119.0787358045259,
+   "T_bga_C": 99.66634440048692,
+   "T_sub_C": 97.1081992607247,
+   "T_interface_C": 91.54428875468554,
+   "T_attach_C": 97.86917811328614,
+   "max_dT_K": 0.5413601624323121,
+   "dP_rel": 0.014381926378263224,
+   "energy_residual_rel": 3.7158263193870445e-08,
+   "wall_s": 120.85122394561768
   },
   {
    "iter": 3,
-   "P_loss_w": 165.48937330757673,
-   "T_max_C": 124.587,
-   "T_die_mean_C": 91.08223586900316,
-   "T_conv_C": 110.15144185,
-   "T_bga_C": 104.04304569244444,
-   "T_sub_C": 99.79293591999999,
-   "T_interface_C": 92.48887609882217,
-   "max_dT_K": 0.032183458888908945,
-   "dP_rel": 0.0011587461474899994,
-   "energy_residual_rel": -1.4734504511083052e-09,
-   "wall_s": 97.49585342407227
+   "P_loss_w": 149.98471045988077,
+   "T_max_C": 125.086,
+   "T_die_mean_C": 90.10864751508187,
+   "T_conv_C": 114.17453202571845,
+   "T_hs_C": 120.42635558100791,
+   "T_ls_C": 117.21529598778287,
+   "T_ind_C": 107.52975676801333,
+   "T_caps_C": 119.15008052200471,
+   "T_bga_C": 99.70006708933522,
+   "T_sub_C": 97.13679544981257,
+   "T_interface_C": 91.56207855060391,
+   "T_attach_C": 97.89925576842981,
+   "max_dT_K": 0.07300104123281415,
+   "dP_rel": 0.0019357620935123378,
+   "energy_residual_rel": 3.282142208960753e-08,
+   "wall_s": 124.43766331672668
   },
   {
    "iter": 4,
-   "P_loss_w": 165.5102323056078,
-   "T_max_C": 124.592,
-   "T_die_mean_C": 91.08344222924447,
-   "T_conv_C": 110.15494276666666,
-   "T_bga_C": 104.04574691911111,
-   "T_sub_C": 99.79510040444445,
-   "T_interface_C": 92.49015068945707,
-   "max_dT_K": 0.0035009166666668534,
-   "dP_rel": 0.00012602844996642803,
-   "energy_residual_rel": 1.4983058778528593e-08,
-   "wall_s": 95.00112009048462
+   "P_loss_w": 150.02386489930396,
+   "T_max_C": 125.096,
+   "T_die_mean_C": 90.11089347888536,
+   "T_conv_C": 114.18285191586835,
+   "T_hs_C": 120.43620189504371,
+   "T_ls_C": 117.22454296820769,
+   "T_ind_C": 107.53634943773427,
+   "T_caps_C": 119.15970081910315,
+   "T_bga_C": 99.70461493879759,
+   "T_sub_C": 97.14065192628073,
+   "T_interface_C": 91.56447730112453,
+   "T_attach_C": 97.90330982923781,
+   "max_dT_K": 0.009846314035797832,
+   "dP_rel": 0.0002609880731273402,
+   "energy_residual_rel": 3.745383446295257e-08,
+   "wall_s": 124.57444977760315
   }
  ],
  "et_converged": true,
- "et_wall_s": 1377.7383034229279,
- "threads": 12,
+ "et_wall_s": 2010.2094340324402,
+ "threads": 2,
  "mechanics": {
-  "die_warpage_pv_um": 72.95599999999999,
-  "pkg_warpage_pv_um": 124.98592000000001,
+  "die_warpage_pv_um": 69.13669999999999,
+  "pkg_warpage_pv_um": 103.25441000000001,
   "joint_search": {
    "n_sites": 528,
    "n_evaluated": 528,
@@ -387,3709 +389,3709 @@
      "rank": 1,
      "x_mm": 14.4,
      "y_mm": 14.4,
-     "du_um": 4.271565318571922,
-     "T_C": 109.77763636363636
+     "du_um": 3.098099628297885,
+     "T_C": 97.41916363636362
     },
     {
      "rank": 2,
      "x_mm": 14.4,
      "y_mm": -14.4,
-     "du_um": 4.268938906326771,
-     "T_C": 109.64045454545456
+     "du_um": 3.0960168869128584,
+     "T_C": 97.28513636363637
     },
     {
      "rank": 3,
      "x_mm": -14.4,
      "y_mm": 14.4,
-     "du_um": 4.128361561671208,
-     "T_C": 103.13336363636364
+     "du_um": 3.0015208606817025,
+     "T_C": 90.9445090909091
     },
     {
      "rank": 4,
      "x_mm": -14.4,
      "y_mm": -14.4,
-     "du_um": 4.124867653634477,
-     "T_C": 102.99545454545455
+     "du_um": 2.9981725966008477,
+     "T_C": 90.8104909090909
     },
     {
      "rank": 5,
      "x_mm": 14.4,
      "y_mm": 13.6,
-     "du_um": 4.031711967760846,
-     "T_C": 109.64346103896104
+     "du_um": 2.8902627330627064,
+     "T_C": 97.44916558441557
     },
     {
      "rank": 6,
-     "x_mm": 14.4,
-     "y_mm": -13.6,
-     "du_um": 4.029352770513864,
-     "T_C": 109.50690584415584
+     "x_mm": 13.6,
+     "y_mm": 14.4,
+     "du_um": 2.888883717661613,
+     "T_C": 97.41031103896103
     },
     {
      "rank": 7,
-     "x_mm": 13.6,
-     "y_mm": 14.4,
-     "du_um": 4.029045184463792,
-     "T_C": 109.60410389610388
+     "x_mm": 14.4,
+     "y_mm": -13.6,
+     "du_um": 2.888317528381745,
+     "T_C": 97.31582337662337
     },
     {
      "rank": 8,
      "x_mm": 13.6,
      "y_mm": -14.4,
-     "du_um": 4.026746163130638,
-     "T_C": 109.4651038961039
+     "du_um": 2.8882897516464983,
+     "T_C": 97.27502987012987
     },
     {
      "rank": 9,
      "x_mm": -13.6,
      "y_mm": 14.4,
-     "du_um": 3.9044077977007663,
-     "T_C": 102.9887305194805
+     "du_um": 2.8082597650692422,
+     "T_C": 90.96219512987012
     },
     {
      "rank": 10,
      "x_mm": -14.4,
      "y_mm": 13.6,
-     "du_um": 3.901324049721515,
-     "T_C": 102.94737337662337
+     "du_um": 2.8079006592187956,
+     "T_C": 90.92166525974027
     },
     {
      "rank": 11,
      "x_mm": -13.6,
      "y_mm": -14.4,
-     "du_um": 3.901193318802612,
-     "T_C": 102.85010389610389
+     "du_um": 2.8054720483143316,
+     "T_C": 90.82697954545453
     },
     {
      "rank": 12,
      "x_mm": -14.4,
      "y_mm": -13.6,
-     "du_um": 3.8981695600472053,
-     "T_C": 102.81028246753246
+     "du_um": 2.8038092421452983,
+     "T_C": 90.78811396103896
     },
     {
      "rank": 13,
      "x_mm": 14.4,
      "y_mm": 12.8,
-     "du_um": 3.869900842815339,
-     "T_C": 109.42836688311688
+     "du_um": 2.733058104197772,
+     "T_C": 97.49908214285713
     },
     {
      "rank": 14,
      "x_mm": 14.4,
      "y_mm": -12.8,
-     "du_um": 3.8676425582609837,
-     "T_C": 109.29236688311688
+     "du_um": 2.73132915413154,
+     "T_C": 97.36697727272728
     },
     {
      "rank": 15,
      "x_mm": 12.8,
      "y_mm": 14.4,
-     "du_um": 3.864562419767135,
-     "T_C": 109.32113311688312
+     "du_um": 2.730008327956887,
+     "T_C": 97.39435551948051
     },
     {
      "rank": 16,
      "x_mm": 12.8,
      "y_mm": -14.4,
-     "du_um": 3.862393863997619,
-     "T_C": 109.18029545454544
+     "du_um": 2.7285775682489337,
+     "T_C": 97.25721818181817
     },
     {
      "rank": 17,
-     "x_mm": 14.4,
-     "y_mm": 12.0,
-     "du_um": 3.788723190348466,
-     "T_C": 109.13512727272726
+     "x_mm": -12.8,
+     "y_mm": 14.4,
+     "du_um": 2.6600746220078353,
+     "T_C": 90.99533701298702
     },
     {
      "rank": 18,
-     "x_mm": 14.4,
-     "y_mm": -12.0,
-     "du_um": 3.7872258144181306,
-     "T_C": 109.00350909090909
+     "x_mm": -12.8,
+     "y_mm": -14.4,
+     "du_um": 2.657949640177423,
+     "T_C": 90.85820324675323
     },
     {
      "rank": 19,
-     "x_mm": 12.0,
-     "y_mm": 14.4,
-     "du_um": 3.781413113938287,
-     "T_C": 108.92963636363636
+     "x_mm": -14.4,
+     "y_mm": 12.8,
+     "du_um": 2.6570120366730534,
+     "T_C": 90.88535324675324
     },
     {
      "rank": 20,
-     "x_mm": 12.0,
-     "y_mm": -14.4,
-     "du_um": 3.7791166567343004,
-     "T_C": 108.7858
+     "x_mm": -14.4,
+     "y_mm": -12.8,
+     "du_um": 2.654407173264473,
+     "T_C": 90.75333214285715
     },
     {
      "rank": 21,
-     "x_mm": 14.4,
-     "y_mm": 9.6,
-     "du_um": 3.770882838722066,
-     "T_C": 108.15140000000001
+     "x_mm": 13.6,
+     "y_mm": 13.6,
+     "du_um": 2.6198965054458654,
+     "T_C": 97.44148928571428
     },
     {
      "rank": 22,
-     "x_mm": 14.4,
-     "y_mm": -9.6,
-     "du_um": 3.7687667301090464,
-     "T_C": 108.03016363636362
+     "x_mm": 13.6,
+     "y_mm": -13.6,
+     "du_um": 2.618421204016916,
+     "T_C": 97.30686071428572
     },
     {
      "rank": 23,
      "x_mm": 14.4,
-     "y_mm": 10.4,
-     "du_um": 3.7682929769010762,
-     "T_C": 108.4718
+     "y_mm": 12.0,
+     "du_um": 2.6140666829423864,
+     "T_C": 97.57107272727272
     },
     {
      "rank": 24,
      "x_mm": 14.4,
-     "y_mm": -10.4,
-     "du_um": 3.7658404746351075,
-     "T_C": 108.34650909090908
+     "y_mm": -12.0,
+     "du_um": 2.612589097240794,
+     "T_C": 97.44123818181818
     },
     {
      "rank": 25,
-     "x_mm": 14.4,
-     "y_mm": 11.2,
-     "du_um": 3.764333221503535,
-     "T_C": 108.80994909090907
+     "x_mm": 12.0,
+     "y_mm": 14.4,
+     "du_um": 2.6105025881891297,
+     "T_C": 97.36804545454544
     },
     {
      "rank": 26,
-     "x_mm": 14.4,
-     "y_mm": -11.2,
-     "du_um": 3.7621306639268672,
-     "T_C": 108.6782290909091
+     "x_mm": 12.0,
+     "y_mm": -14.4,
+     "du_um": 2.6085545146544207,
+     "T_C": 97.22824
     },
     {
      "rank": 27,
-     "x_mm": 14.4,
-     "y_mm": 8.8,
-     "du_um": 3.7596736060936795,
-     "T_C": 107.86608213600002
+     "x_mm": -13.6,
+     "y_mm": 13.6,
+     "du_um": 2.5582311771869075,
+     "T_C": 90.93584285714286
     },
     {
      "rank": 28,
-     "x_mm": 14.4,
-     "y_mm": -8.8,
-     "du_um": 3.7572784100847096,
-     "T_C": 107.7508226464
+     "x_mm": -13.6,
+     "y_mm": -13.6,
+     "du_um": 2.5558575030367163,
+     "T_C": 90.80122142857144
     },
     {
      "rank": 29,
-     "x_mm": 10.4,
+     "x_mm": -12.0,
      "y_mm": 14.4,
-     "du_um": 3.7550167277236413,
-     "T_C": 107.98189090909091
+     "du_um": 2.547662600394968,
+     "T_C": 91.05247272727274
     },
     {
      "rank": 30,
-     "x_mm": 9.6,
-     "y_mm": 14.4,
-     "du_um": 3.754611513381007,
-     "T_C": 107.48292727272727
+     "x_mm": -12.0,
+     "y_mm": -14.4,
+     "du_um": 2.5456293837519803,
+     "T_C": 90.91250363636364
     },
     {
      "rank": 31,
-     "x_mm": 11.2,
-     "y_mm": 14.4,
-     "du_um": 3.7537637880565025,
-     "T_C": 108.47620727272727
+     "x_mm": -14.4,
+     "y_mm": 12.0,
+     "du_um": 2.542904158685075,
+     "T_C": 90.83953818181818
     },
     {
      "rank": 32,
-     "x_mm": -12.8,
-     "y_mm": 14.4,
-     "du_um": 3.7517046353044816,
-     "T_C": 102.76032467532467
+     "x_mm": -14.4,
+     "y_mm": -12.0,
+     "du_um": 2.540544085927689,
+     "T_C": 90.7091490909091
     },
     {
      "rank": 33,
-     "x_mm": 10.4,
-     "y_mm": -14.4,
-     "du_um": 3.75158085317872,
-     "T_C": 107.83263636363637
+     "x_mm": 14.4,
+     "y_mm": 11.2,
+     "du_um": 2.5236103620221138,
+     "T_C": 97.65776799999999
     },
     {
      "rank": 34,
-     "x_mm": 9.6,
-     "y_mm": -14.4,
-     "du_um": 3.751324641540388,
-     "T_C": 107.329
+     "x_mm": 14.4,
+     "y_mm": -11.2,
+     "du_um": 2.5220266777672893,
+     "T_C": 97.530616
     },
     {
      "rank": 35,
      "x_mm": 11.2,
-     "y_mm": -14.4,
-     "du_um": 3.7509646848875624,
-     "T_C": 108.32864727272727
+     "y_mm": 14.4,
+     "du_um": 2.518013108493046,
+     "T_C": 97.33102945454544
     },
     {
      "rank": 36,
-     "x_mm": -12.8,
+     "x_mm": 11.2,
      "y_mm": -14.4,
-     "du_um": 3.7492328389534553,
-     "T_C": 102.62003896103896
+     "du_um": 2.516261658966125,
+     "T_C": 97.18790436363636
     },
     {
      "rank": 37,
-     "x_mm": -14.4,
-     "y_mm": 12.8,
-     "du_um": 3.745716880305346,
-     "T_C": 102.64741558441558
+     "x_mm": -11.2,
+     "y_mm": 14.4,
+     "du_um": 2.461161198182413,
+     "T_C": 91.1341229090909
     },
     {
      "rank": 38,
-     "x_mm": -14.4,
-     "y_mm": -12.8,
-     "du_um": 3.74289700365732,
-     "T_C": 102.51225324675323
+     "x_mm": -11.2,
+     "y_mm": -14.4,
+     "du_um": 2.459372630935991,
+     "T_C": 90.99095781818181
     },
     {
      "rank": 39,
-     "x_mm": 8.8,
-     "y_mm": 14.4,
-     "du_um": 3.7399364806724,
-     "T_C": 106.994866824
+     "x_mm": 14.4,
+     "y_mm": 10.4,
+     "du_um": 2.4556240466406236,
+     "T_C": 97.7555490909091
     },
     {
      "rank": 40,
-     "x_mm": 8.8,
-     "y_mm": -14.4,
-     "du_um": 3.736386871332995,
-     "T_C": 106.83764334711272
+     "x_mm": -14.4,
+     "y_mm": 11.2,
+     "du_um": 2.45540318782722,
+     "T_C": 90.79158218181819
     },
     {
      "rank": 41,
      "x_mm": 14.4,
-     "y_mm": 8.0,
-     "du_um": 3.736125025799794,
-     "T_C": 107.6214126510026
+     "y_mm": -10.4,
+     "du_um": 2.4549388035960567,
+     "T_C": 97.63208545454546
     },
     {
      "rank": 42,
-     "x_mm": 14.4,
-     "y_mm": -8.0,
-     "du_um": 3.7339862441996123,
-     "T_C": 107.5134492087027
+     "x_mm": -14.4,
+     "y_mm": -11.2,
+     "du_um": 2.4531003453990134,
+     "T_C": 90.66413236363636
     },
     {
      "rank": 43,
-     "x_mm": 8.0,
+     "x_mm": 10.4,
      "y_mm": 14.4,
-     "du_um": 3.7129214426332093,
-     "T_C": 106.52667979894385
+     "du_um": 2.4483060237776906,
+     "T_C": 97.27575636363636
     },
     {
      "rank": 44,
-     "x_mm": 8.0,
+     "x_mm": 10.4,
      "y_mm": -14.4,
-     "du_um": 3.709062319120038,
-     "T_C": 106.36689793224609
+     "du_um": 2.4472851305858847,
+     "T_C": 97.12900727272728
     },
     {
      "rank": 45,
      "x_mm": 13.6,
-     "y_mm": 13.6,
-     "du_um": 3.7074204928929406,
-     "T_C": 109.45446428571428
+     "y_mm": 12.8,
+     "du_um": 2.4055892118243944,
+     "T_C": 97.49467142857142
     },
     {
      "rank": 46,
-     "x_mm": 14.4,
-     "y_mm": 7.2,
-     "du_um": 3.705881931466517,
-     "T_C": 107.41938375354184
+     "x_mm": 12.8,
+     "y_mm": 13.6,
+     "du_um": 2.404578540805655,
+     "T_C": 97.42827857142856
     },
     {
      "rank": 47,
      "x_mm": 13.6,
-     "y_mm": -13.6,
-     "du_um": 3.7054972548741807,
-     "T_C": 109.31646428571428
+     "y_mm": -12.8,
+     "du_um": 2.403855535071712,
+     "T_C": 97.36108928571429
     },
     {
      "rank": 48,
      "x_mm": 14.4,
-     "y_mm": -7.2,
-     "du_um": 3.7037544155465034,
-     "T_C": 107.31972656054907
+     "y_mm": 9.6,
+     "du_um": 2.4033039954670947,
+     "T_C": 97.85567090909092
     },
     {
      "rank": 49,
-     "x_mm": 7.2,
-     "y_mm": 14.4,
-     "du_um": 3.67838758856522,
-     "T_C": 106.08375832586728
+     "x_mm": 12.8,
+     "y_mm": -13.6,
+     "du_um": 2.403275612801035,
+     "T_C": 97.2915107142857
     },
     {
      "rank": 50,
-     "x_mm": 7.2,
-     "y_mm": -14.4,
-     "du_um": 3.6748439349066806,
-     "T_C": 105.92095055872727
+     "x_mm": 14.4,
+     "y_mm": -9.6,
+     "du_um": 2.4027339285292895,
+     "T_C": 97.73690909090908
     },
     {
      "rank": 51,
-     "x_mm": -12.0,
+     "x_mm": -10.4,
      "y_mm": 14.4,
-     "du_um": 3.674135124541794,
-     "T_C": 102.45969090909091
+     "du_um": 2.3963957699990712,
+     "T_C": 91.25096909090908
     },
     {
      "rank": 52,
-     "x_mm": 14.4,
-     "y_mm": 6.4,
-     "du_um": 3.674029012530165,
-     "T_C": 107.2512823605108
+     "x_mm": -10.4,
+     "y_mm": -14.4,
+     "du_um": 2.3946577165270004,
+     "T_C": 91.10426000000001
     },
     {
      "rank": 53,
-     "x_mm": 14.4,
-     "y_mm": -6.4,
-     "du_um": 3.672140130551862,
-     "T_C": 107.16128236051081
+     "x_mm": 9.6,
+     "y_mm": 14.4,
+     "du_um": 2.3944524598895436,
+     "T_C": 97.20085818181819
     },
     {
      "rank": 54,
-     "x_mm": -12.0,
+     "x_mm": 9.6,
      "y_mm": -14.4,
-     "du_um": 3.6709861651164006,
-     "T_C": 102.31585454545456
+     "du_um": 2.3933994075373235,
+     "T_C": 97.05060363636363
     },
     {
      "rank": 55,
      "x_mm": -14.4,
-     "y_mm": 12.0,
-     "du_um": 3.6645027473409604,
-     "T_C": 102.2398
+     "y_mm": 10.4,
+     "du_um": 2.3885151448152016,
+     "T_C": 90.74779090909091
     },
     {
      "rank": 56,
      "x_mm": -14.4,
-     "y_mm": -12.0,
-     "du_um": 3.663033178409966,
-     "T_C": 102.10830909090909
+     "y_mm": -10.4,
+     "du_um": 2.387782601347781,
+     "T_C": 90.62441272727273
     },
     {
      "rank": 57,
-     "x_mm": -9.6,
-     "y_mm": 14.4,
-     "du_um": 3.6497590542463074,
-     "T_C": 101.55079999999998
+     "x_mm": 14.4,
+     "y_mm": 8.8,
+     "du_um": 2.3670706234665304,
+     "T_C": 97.95071472129453
     },
     {
      "rank": 58,
-     "x_mm": -10.4,
-     "y_mm": 14.4,
-     "du_um": 3.649330936703348,
-     "T_C": 101.81967272727272
+     "x_mm": 14.4,
+     "y_mm": -8.8,
+     "du_um": 2.366481331092444,
+     "T_C": 97.83805106582399
     },
     {
      "rank": 59,
-     "x_mm": -11.2,
-     "y_mm": 14.4,
-     "du_um": 3.6482449163029407,
-     "T_C": 102.13323272727273
+     "x_mm": -12.8,
+     "y_mm": 13.6,
+     "du_um": 2.357791099923846,
+     "T_C": 90.96105357142855
     },
     {
      "rank": 60,
-     "x_mm": -9.6,
-     "y_mm": -14.4,
-     "du_um": 3.6463424573338385,
-     "T_C": 101.3978181818182
+     "x_mm": -13.6,
+     "y_mm": 12.8,
+     "du_um": 2.3566821814983516,
+     "T_C": 90.89132857142857
     },
     {
      "rank": 61,
-     "x_mm": -10.4,
-     "y_mm": -14.4,
-     "du_um": 3.6458892250390984,
-     "T_C": 101.66923636363636
+     "x_mm": 8.8,
+     "y_mm": 14.4,
+     "du_um": 2.356412387134612,
+     "T_C": 97.09732761665165
     },
     {
      "rank": 62,
-     "x_mm": -11.2,
-     "y_mm": -14.4,
-     "du_um": 3.644839491252635,
-     "T_C": 101.98551272727272
+     "x_mm": -12.8,
+     "y_mm": -13.6,
+     "du_um": 2.3557897608572156,
+     "T_C": 90.82403928571429
     },
     {
      "rank": 63,
-     "x_mm": 6.4,
-     "y_mm": 14.4,
-     "du_um": 3.642324010549346,
-     "T_C": 105.66110640316127
+     "x_mm": 8.8,
+     "y_mm": -14.4,
+     "du_um": 2.355227369565321,
+     "T_C": 96.94373842046545
     },
     {
      "rank": 64,
-     "x_mm": 14.4,
-     "y_mm": 5.6,
-     "du_um": 3.6414454225893205,
-     "T_C": 107.11862791030183
+     "x_mm": -13.6,
+     "y_mm": -12.8,
+     "du_um": 2.354615202262791,
+     "T_C": 90.75795357142857
     },
     {
      "rank": 65,
-     "x_mm": 14.4,
-     "y_mm": -5.6,
-     "du_um": 3.6395928210645287,
-     "T_C": 107.03784556052727
+     "x_mm": -9.6,
+     "y_mm": 14.4,
+     "du_um": 2.3475565002750147,
+     "T_C": 91.39665636363638
     },
     {
      "rank": 66,
-     "x_mm": 6.4,
+     "x_mm": -9.6,
      "y_mm": -14.4,
-     "du_um": 3.6384040184055824,
-     "T_C": 105.49610640316126
+     "du_um": 2.3459728354405116,
+     "T_C": 91.2463109090909
     },
     {
      "rank": 67,
-     "x_mm": -8.8,
-     "y_mm": 14.4,
-     "du_um": 3.637929339745463,
-     "T_C": 101.35354583668365
+     "x_mm": 14.4,
+     "y_mm": 8.0,
+     "du_um": 2.342152183575354,
+     "T_C": 98.03646742914364
     },
     {
      "rank": 68,
-     "x_mm": -14.4,
-     "y_mm": 11.2,
-     "du_um": 3.6362312349005137,
-     "T_C": 101.78282181818183
+     "x_mm": 14.4,
+     "y_mm": -8.0,
+     "du_um": 2.341827971356742,
+     "T_C": 97.93089124016461
     },
     {
      "rank": 69,
      "x_mm": -14.4,
-     "y_mm": 10.4,
-     "du_um": 3.634608576992453,
-     "T_C": 101.3058
+     "y_mm": 9.6,
+     "du_um": 2.3376287476369138,
+     "T_C": 90.71027090909091
     },
     {
      "rank": 70,
-     "x_mm": -8.8,
-     "y_mm": -14.4,
-     "du_um": 3.634435484756771,
-     "T_C": 101.19632235979635
+     "x_mm": -14.4,
+     "y_mm": -9.6,
+     "du_um": 2.33650815938572,
+     "T_C": 90.59163272727272
     },
     {
      "rank": 71,
-     "x_mm": -14.4,
-     "y_mm": -11.2,
-     "du_um": 3.6342023112544806,
-     "T_C": 101.65168
+     "x_mm": 8.0,
+     "y_mm": 14.4,
+     "du_um": 2.3297204292025766,
+     "T_C": 96.96487654566607
     },
     {
      "rank": 72,
-     "x_mm": -14.4,
-     "y_mm": 9.6,
-     "du_um": 3.6323137296082835,
-     "T_C": 100.84983636363636
+     "x_mm": 8.0,
+     "y_mm": -14.4,
+     "du_um": 2.3284314096309715,
+     "T_C": 96.80837284138013
     },
     {
      "rank": 73,
-     "x_mm": -14.4,
-     "y_mm": -10.4,
-     "du_um": 3.632294298593298,
-     "T_C": 101.18087272727273
+     "x_mm": 14.4,
+     "y_mm": 7.2,
+     "du_um": 2.325607231949466,
+     "T_C": 98.10988835186
     },
     {
      "rank": 74,
-     "x_mm": -14.4,
-     "y_mm": -9.6,
-     "du_um": 3.629688863068612,
-     "T_C": 100.72898181818182
+     "x_mm": 14.4,
+     "y_mm": -7.2,
+     "du_um": 2.3251494184663244,
+     "T_C": 98.01234397439126
     },
     {
      "rank": 75,
-     "x_mm": -14.4,
-     "y_mm": 8.8,
-     "du_um": 3.6172672965249317,
-     "T_C": 100.43919381012363
+     "x_mm": 14.4,
+     "y_mm": 6.4,
+     "du_um": 2.3142741020596302,
+     "T_C": 98.17200657817824
     },
     {
      "rank": 76,
-     "x_mm": -8.0,
-     "y_mm": 14.4,
-     "du_um": 3.615777516225393,
-     "T_C": 101.23143408338784
+     "x_mm": 14.4,
+     "y_mm": -6.4,
+     "du_um": 2.314104585912446,
+     "T_C": 98.0833089662654
     },
     {
      "rank": 77,
-     "x_mm": -14.4,
-     "y_mm": -8.8,
-     "du_um": 3.6144103008738373,
-     "T_C": 100.32492522961456
+     "x_mm": -8.8,
+     "y_mm": 14.4,
+     "du_um": 2.31259032203164,
+     "T_C": 91.57457824651637
     },
     {
      "rank": 78,
-     "x_mm": -8.0,
+     "x_mm": -8.8,
      "y_mm": -14.4,
-     "du_um": 3.6123252389755725,
-     "T_C": 101.07156130759918
+     "du_um": 2.3112821807006196,
+     "T_C": 91.42077787648581
     },
     {
      "rank": 79,
-     "x_mm": 14.4,
-     "y_mm": 4.8,
-     "du_um": 3.6115708147623575,
-     "T_C": 107.01168584632595
+     "x_mm": 7.2,
+     "y_mm": 14.4,
+     "du_um": 2.311059162706408,
+     "T_C": 96.80237545740817
     },
     {
      "rank": 80,
-     "x_mm": 14.4,
-     "y_mm": -4.8,
-     "du_um": 3.6101111041965854,
-     "T_C": 106.94194053733165
+     "x_mm": 7.2,
+     "y_mm": -14.4,
+     "du_um": 2.3096570101666147,
+     "T_C": 96.64329988803328
     },
     {
      "rank": 81,
-     "x_mm": 5.6,
-     "y_mm": 14.4,
-     "du_um": 3.6047792884784178,
-     "T_C": 105.26002001463455
+     "x_mm": 14.4,
+     "y_mm": 5.6,
+     "du_um": 2.306771156945644,
+     "T_C": 98.220886294664
     },
     {
      "rank": 82,
-     "x_mm": -13.6,
-     "y_mm": 13.6,
-     "du_um": 3.6019771368585287,
-     "T_C": 102.78424999999999
+     "x_mm": 14.4,
+     "y_mm": -5.6,
+     "du_um": 2.306678157692821,
+     "T_C": 98.14184719315672
     },
     {
      "rank": 83,
-     "x_mm": 5.6,
-     "y_mm": -14.4,
-     "du_um": 3.6010821157687256,
-     "T_C": 105.09375417199273
+     "x_mm": 14.4,
+     "y_mm": 4.8,
+     "du_um": 2.3019448321369596,
+     "T_C": 98.25957433343291
     },
     {
      "rank": 84,
-     "x_mm": -13.6,
-     "y_mm": -13.6,
-     "du_um": 3.5991430620988267,
-     "T_C": 102.64524999999999
+     "x_mm": 14.4,
+     "y_mm": -4.8,
+     "du_um": 2.3017538705260656,
+     "T_C": 98.19088466662429
     },
     {
      "rank": 85,
      "x_mm": -14.4,
-     "y_mm": 8.0,
-     "du_um": 3.5908571140678576,
-     "T_C": 100.08459194635627
+     "y_mm": 8.8,
+     "du_um": 2.3012583055631914,
+     "T_C": 90.67998586591126
     },
     {
      "rank": 86,
      "x_mm": -14.4,
-     "y_mm": -8.0,
-     "du_um": 3.588497507864302,
-     "T_C": 99.97676845068882
+     "y_mm": -8.8,
+     "du_um": 2.300157346758399,
+     "T_C": 90.5673907718429
     },
     {
      "rank": 87,
-     "x_mm": -7.2,
-     "y_mm": 14.4,
-     "du_um": 3.587835357212219,
-     "T_C": 101.18697758109273
+     "x_mm": 14.4,
+     "y_mm": -4.0,
+     "du_um": 2.29879505017741,
+     "T_C": 98.23075031149565
     },
     {
      "rank": 88,
      "x_mm": 14.4,
      "y_mm": 4.0,
-     "du_um": 3.5862157842259,
-     "T_C": 106.9294095269309
+     "du_um": 2.298688350643239,
+     "T_C": 98.28869329396382
     },
     {
      "rank": 89,
-     "x_mm": 14.4,
-     "y_mm": -4.0,
-     "du_um": 3.585145206583036,
-     "T_C": 106.86958428502547
+     "x_mm": 6.4,
+     "y_mm": 14.4,
+     "du_um": 2.2975439159171365,
+     "T_C": 96.61527004283442
     },
     {
      "rank": 90,
-     "x_mm": -7.2,
-     "y_mm": -14.4,
-     "du_um": 3.5847149997500387,
-     "T_C": 101.02476893144001
+     "x_mm": 14.4,
+     "y_mm": -3.2,
+     "du_um": 2.2971608625150783,
+     "T_C": 98.26356688337168
     },
     {
      "rank": 91,
-     "x_mm": 4.8,
-     "y_mm": 14.4,
-     "du_um": 3.5700991384038203,
-     "T_C": 104.87546358907538
+     "x_mm": 14.4,
+     "y_mm": 3.2,
+     "du_um": 2.2968963345699946,
+     "T_C": 98.31039817778498
     },
     {
      "rank": 92,
-     "x_mm": 4.8,
+     "x_mm": 6.4,
      "y_mm": -14.4,
-     "du_um": 3.566717240914284,
-     "T_C": 104.70750355996516
+     "du_um": 2.2957946294540332,
+     "T_C": 96.45388047430791
     },
     {
      "rank": 93,
      "x_mm": 14.4,
-     "y_mm": 3.2,
-     "du_um": 3.5657078604559835,
-     "T_C": 106.863201926612
+     "y_mm": -2.4,
+     "du_um": 2.2957289671585537,
+     "T_C": 98.288631223864
     },
     {
      "rank": 94,
      "x_mm": 14.4,
-     "y_mm": -3.2,
-     "du_um": 3.5646689643115295,
-     "T_C": 106.8157894842979
+     "y_mm": 2.4,
+     "du_um": 2.2956091010603146,
+     "T_C": 98.32404437641672
     },
     {
      "rank": 95,
-     "x_mm": -6.4,
-     "y_mm": 14.4,
-     "du_um": 3.5593022490436668,
-     "T_C": 101.20496648589034
+     "x_mm": 14.4,
+     "y_mm": 1.6,
+     "du_um": 2.2949236467937872,
+     "T_C": 98.33192766256057
     },
     {
      "rank": 96,
-     "x_mm": -14.4,
-     "y_mm": 7.2,
-     "du_um": 3.558795287874275,
-     "T_C": 99.78848027304927
+     "x_mm": 14.4,
+     "y_mm": -1.6,
+     "du_um": 2.2948832221008812,
+     "T_C": 98.30823899544382
     },
     {
      "rank": 97,
-     "x_mm": -14.4,
-     "y_mm": -7.2,
-     "du_um": 3.5564293579327337,
-     "T_C": 99.688774942364
+     "x_mm": 14.4,
+     "y_mm": 0.0,
+     "du_um": 2.294536363636364,
+     "T_C": 98.33085454545454
     },
     {
      "rank": 98,
-     "x_mm": -6.4,
-     "y_mm": -14.4,
-     "du_um": 3.5557850368436505,
-     "T_C": 101.03996648589032
+     "x_mm": 14.4,
+     "y_mm": -0.8,
+     "du_um": 2.294392614803455,
+     "T_C": 98.32194446727709
     },
     {
      "rank": 99,
      "x_mm": 14.4,
-     "y_mm": 2.4,
-     "du_um": 3.54859462640894,
-     "T_C": 106.81538870804727
+     "y_mm": 0.8,
+     "du_um": 2.29438759625843,
+     "T_C": 98.33381532216872
     },
     {
      "rank": 100,
-     "x_mm": 14.4,
-     "y_mm": -2.4,
-     "du_um": 3.5477309896309595,
-     "T_C": 106.77929373731271
+     "x_mm": -8.0,
+     "y_mm": 14.4,
+     "du_um": 2.2892782719049425,
+     "T_C": 91.7779469414636
     },
     {
      "rank": 101,
-     "x_mm": 4.0,
+     "x_mm": 5.6,
      "y_mm": 14.4,
-     "du_um": 3.5398799959402507,
-     "T_C": 104.5074924724891
+     "du_um": 2.2876146781252804,
+     "T_C": 96.40169769194472
     },
     {
      "rank": 102,
-     "x_mm": 4.0,
+     "x_mm": -8.0,
      "y_mm": -14.4,
-     "du_um": 3.5367512311173908,
-     "T_C": 104.33776608227274
+     "du_um": 2.2873284137376073,
+     "T_C": 91.62147050990495
     },
     {
      "rank": 103,
-     "x_mm": 14.4,
-     "y_mm": 1.6,
-     "du_um": 3.5360860991710994,
-     "T_C": 106.77956349082504
+     "x_mm": 5.6,
+     "y_mm": -14.4,
+     "du_um": 2.2857228252031745,
+     "T_C": 96.23815003112108
     },
     {
      "rank": 104,
-     "x_mm": 14.4,
-     "y_mm": -1.6,
-     "du_um": 3.5356436632037758,
-     "T_C": 106.75525444842881
+     "x_mm": 4.8,
+     "y_mm": 14.4,
+     "du_um": 2.28045515297198,
+     "T_C": 96.16852926315521
     },
     {
      "rank": 105,
-     "x_mm": -5.6,
-     "y_mm": 14.4,
-     "du_um": 3.530686657525376,
-     "T_C": 101.28690377498181
+     "x_mm": 4.8,
+     "y_mm": -14.4,
+     "du_um": 2.2780415668830627,
+     "T_C": 96.00392087914169
     },
     {
      "rank": 106,
-     "x_mm": 14.4,
-     "y_mm": 0.8,
-     "du_um": 3.5292173016556667,
-     "T_C": 106.75682629988364
+     "x_mm": -14.4,
+     "y_mm": 8.0,
+     "du_um": 2.2752133068292886,
+     "T_C": 90.65554672449731
     },
     {
      "rank": 107,
-     "x_mm": 14.4,
-     "y_mm": -0.8,
-     "du_um": 3.5291440923944237,
-     "T_C": 106.74511438597818
+     "x_mm": 4.0,
+     "y_mm": 14.4,
+     "du_um": 2.274767016391869,
+     "T_C": 95.91792787269054
     },
     {
      "rank": 108,
-     "x_mm": 14.4,
-     "y_mm": 0.0,
-     "du_um": 3.5274092275486013,
-     "T_C": 106.745
+     "x_mm": -14.4,
+     "y_mm": -8.0,
+     "du_um": 2.2741207414440443,
+     "T_C": 90.54994872218805
     },
     {
      "rank": 109,
-     "x_mm": -5.6,
-     "y_mm": -14.4,
-     "du_um": 3.527027415229057,
-     "T_C": 101.11936520506728
+     "x_mm": -7.2,
+     "y_mm": 14.4,
+     "du_um": 2.273417121464132,
+     "T_C": 92.0045797785651
     },
     {
      "rank": 110,
-     "x_mm": -14.4,
-     "y_mm": 6.4,
-     "du_um": 3.5257434625732778,
-     "T_C": 99.54021914183247
+     "x_mm": 4.0,
+     "y_mm": -14.4,
+     "du_um": 2.2721459196660714,
+     "T_C": 95.75212857869927
     },
     {
      "rank": 111,
-     "x_mm": -14.4,
-     "y_mm": -6.4,
-     "du_um": 3.52364237609966,
-     "T_C": 99.44962152991963
+     "x_mm": -7.2,
+     "y_mm": -14.4,
+     "du_um": 2.2713961691069975,
+     "T_C": 91.8455887105191
     },
     {
      "rank": 112,
      "x_mm": 3.2,
      "y_mm": 14.4,
-     "du_um": 3.5141824103594526,
-     "T_C": 104.15098763834985
+     "du_um": 2.2700805534877238,
+     "T_C": 95.65508608899385
     },
     {
      "rank": 113,
      "x_mm": 3.2,
      "y_mm": -14.4,
-     "du_um": 3.5109464103116026,
-     "T_C": 103.98089672925894
+     "du_um": 2.2675041006150387,
+     "T_C": 95.48814063444838
     },
     {
      "rank": 114,
-     "x_mm": -4.8,
+     "x_mm": 2.4,
      "y_mm": 14.4,
-     "du_um": 3.5052261441596304,
-     "T_C": 101.41548573230028
+     "du_um": 2.2659219238626096,
+     "T_C": 95.37995243106619
     },
     {
      "rank": 115,
-     "x_mm": -4.8,
+     "x_mm": 2.4,
      "y_mm": -14.4,
-     "du_um": 3.501871541606636,
-     "T_C": 101.24661661228096
+     "du_um": 2.263258325960941,
+     "T_C": 95.21232644701418
     },
     {
      "rank": 116,
-     "x_mm": -14.4,
-     "y_mm": 5.6,
-     "du_um": 3.492375774166156,
-     "T_C": 99.342152333288
+     "x_mm": -6.4,
+     "y_mm": 14.4,
+     "du_um": 2.26282796911823,
+     "T_C": 92.24784964794607
     },
     {
      "rank": 117,
-     "x_mm": 2.4,
+     "x_mm": 1.6,
      "y_mm": 14.4,
-     "du_um": 3.491650902365621,
-     "T_C": 103.80795768134546
+     "du_um": 2.2623412581599895,
+     "T_C": 95.09757497616835
     },
     {
      "rank": 118,
-     "x_mm": -14.4,
-     "y_mm": -5.6,
-     "du_um": 3.49045626443071,
-     "T_C": 99.26120414087163
+     "x_mm": -6.4,
+     "y_mm": -14.4,
+     "du_um": 2.260657686592259,
+     "T_C": 92.08636850004646
     },
     {
      "rank": 119,
-     "x_mm": 2.4,
+     "x_mm": 1.6,
      "y_mm": -14.4,
-     "du_um": 3.488286420319286,
-     "T_C": 103.63653773450547
+     "du_um": 2.2595731398007097,
+     "T_C": 94.9294382469551
     },
     {
      "rank": 120,
-     "x_mm": -4.0,
+     "x_mm": 0.8,
      "y_mm": 14.4,
-     "du_um": 3.4849876035068057,
-     "T_C": 101.58806885678545
+     "du_um": 2.258880759623034,
+     "T_C": 94.80891123192146
     },
     {
      "rank": 121,
-     "x_mm": -4.0,
-     "y_mm": -14.4,
-     "du_um": 3.4818066122068685,
-     "T_C": 101.41806973929636
+     "x_mm": -14.4,
+     "y_mm": 7.2,
+     "du_um": 2.2571289038025393,
+     "T_C": 90.63561110262691
     },
     {
      "rank": 122,
-     "x_mm": 1.6,
+     "x_mm": -5.6,
      "y_mm": 14.4,
-     "du_um": 3.4738273851279784,
-     "T_C": 103.47570022695973
+     "du_um": 2.256271620635677,
+     "T_C": 92.50660030659184
     },
     {
      "rank": 123,
-     "x_mm": 13.6,
-     "y_mm": 12.8,
-     "du_um": 3.4722503000116776,
-     "T_C": 109.20164285714286
+     "x_mm": 0.8,
+     "y_mm": -14.4,
+     "du_um": 2.2562424485476833,
+     "T_C": 94.64050500066182
     },
     {
      "rank": 124,
-     "x_mm": 1.6,
-     "y_mm": -14.4,
-     "du_um": 3.470381529241333,
-     "T_C": 103.30456569120776
+     "x_mm": 0.0,
+     "y_mm": 14.4,
+     "du_um": 2.256228816205126,
+     "T_C": 94.51655454545454
     },
     {
      "rank": 125,
-     "x_mm": 13.6,
-     "y_mm": -12.8,
-     "du_um": 3.4695465780701027,
-     "T_C": 109.06417857142857
+     "x_mm": -14.4,
+     "y_mm": -7.2,
+     "du_um": 2.2559292910704007,
+     "T_C": 90.53795763424908
     },
     {
      "rank": 126,
-     "x_mm": -3.2,
-     "y_mm": 14.4,
-     "du_um": 3.469310911182183,
-     "T_C": 101.79151382677516
+     "x_mm": -5.6,
+     "y_mm": -14.4,
+     "du_um": 2.2537562985880157,
+     "T_C": 92.34349038633073
     },
     {
      "rank": 127,
-     "x_mm": 12.8,
-     "y_mm": 13.6,
-     "du_um": 3.4690297056377246,
-     "T_C": 109.13300000000001
+     "x_mm": 0.0,
+     "y_mm": -14.4,
+     "du_um": 2.253638228940518,
+     "T_C": 94.34810909090909
     },
     {
      "rank": 128,
-     "x_mm": 12.8,
-     "y_mm": -13.6,
-     "du_um": 3.4682592179242944,
-     "T_C": 108.99392857142855
+     "x_mm": -0.8,
+     "y_mm": 14.4,
+     "du_um": 2.2533442742644256,
+     "T_C": 94.22165231671127
     },
     {
      "rank": 129,
-     "x_mm": -3.2,
-     "y_mm": -14.4,
-     "du_um": 3.466450981507189,
-     "T_C": 101.62110138446101
+     "x_mm": -4.8,
+     "y_mm": 14.4,
+     "du_um": 2.2521328166216286,
+     "T_C": 92.77625886517133
     },
     {
      "rank": 130,
-     "x_mm": -14.4,
-     "y_mm": 4.8,
-     "du_um": 3.4619838376769727,
-     "T_C": 99.18096584002083
+     "x_mm": -1.6,
+     "y_mm": 14.4,
+     "du_um": 2.2515204943366047,
+     "T_C": 93.9263268759725
     },
     {
      "rank": 131,
-     "x_mm": 0.8,
-     "y_mm": 14.4,
-     "du_um": 3.4614474600633276,
-     "T_C": 103.15684180295273
+     "x_mm": -0.8,
+     "y_mm": -14.4,
+     "du_um": 2.2509581891397406,
+     "T_C": 94.0531642672698
     },
     {
      "rank": 132,
-     "x_mm": -14.4,
-     "y_mm": -4.8,
-     "du_um": 3.4604031968724165,
-     "T_C": 99.11071363357972
+     "x_mm": -4.0,
+     "y_mm": 14.4,
+     "du_um": 2.2503761145829975,
+     "T_C": 93.05605606561092
     },
     {
      "rank": 133,
-     "x_mm": 0.8,
-     "y_mm": -14.4,
-     "du_um": 3.4580961491379196,
-     "T_C": 102.98535866100363
+     "x_mm": -2.4,
+     "y_mm": 14.4,
+     "du_um": 2.2502871533809,
+     "T_C": 93.632635298892
     },
     {
      "rank": 134,
-     "x_mm": -2.4,
+     "x_mm": -3.2,
      "y_mm": 14.4,
-     "du_um": 3.4574222673021135,
-     "T_C": 102.02550358375272
+     "du_um": 2.249931788520402,
+     "T_C": 93.34178902637791
     },
     {
      "rank": 135,
-     "x_mm": -2.4,
+     "x_mm": -4.8,
      "y_mm": -14.4,
-     "du_um": 3.454634622775169,
-     "T_C": 101.85408363691273
+     "du_um": 2.2496442644143393,
+     "T_C": 92.6114919386143
     },
     {
      "rank": 136,
-     "x_mm": 0.0,
-     "y_mm": 14.4,
-     "du_um": 3.453746976093655,
-     "T_C": 102.85018181818182
+     "x_mm": -1.6,
+     "y_mm": -14.4,
+     "du_um": 2.2488560082286373,
+     "T_C": 93.75823742918908
     },
     {
      "rank": 137,
-     "x_mm": 0.0,
+     "x_mm": -4.0,
      "y_mm": -14.4,
-     "du_um": 3.450786361753331,
-     "T_C": 102.67818181818181
+     "du_um": 2.2474801554999817,
+     "T_C": 92.89005668336856
     },
     {
      "rank": 138,
-     "x_mm": -1.6,
-     "y_mm": 14.4,
-     "du_um": 3.450748994332804,
-     "T_C": 102.28096855346699
+     "x_mm": -2.4,
+     "y_mm": -14.4,
+     "du_um": 2.247375272921295,
+     "T_C": 93.46513658756727
     },
     {
      "rank": 139,
-     "x_mm": -0.8,
-     "y_mm": 14.4,
-     "du_um": 3.449873300795073,
-     "T_C": 102.55854318914908
+     "x_mm": -3.2,
+     "y_mm": -14.4,
+     "du_um": 2.247151213526644,
+     "T_C": 93.17488481606387
     },
     {
      "rank": 140,
-     "x_mm": -1.6,
-     "y_mm": -14.4,
-     "du_um": 3.4478178744827295,
-     "T_C": 102.10992127103715
+     "x_mm": -14.4,
+     "y_mm": 6.4,
+     "du_um": 2.244280814812552,
+     "T_C": 90.61830230388819
     },
     {
      "rank": 141,
-     "x_mm": -0.8,
-     "y_mm": -14.4,
-     "du_um": 3.4468560432809876,
-     "T_C": 102.38636137096728
+     "x_mm": -14.4,
+     "y_mm": -6.4,
+     "du_um": 2.2429187930691845,
+     "T_C": 90.52968718043935
     },
     {
      "rank": 142,
-     "x_mm": -14.4,
-     "y_mm": 4.0,
-     "du_um": 3.4364429490282022,
-     "T_C": 99.05598745892453
+     "x_mm": 13.6,
+     "y_mm": 12.0,
+     "du_um": 2.242573093806292,
+     "T_C": 97.5728746103896
     },
     {
      "rank": 143,
-     "x_mm": -14.4,
-     "y_mm": -4.0,
-     "du_um": 3.4352124094707013,
-     "T_C": 98.99678075184164
+     "x_mm": 13.6,
+     "y_mm": -12.0,
+     "du_um": 2.24129653661647,
+     "T_C": 97.44114474025974
     },
     {
      "rank": 144,
-     "x_mm": -14.4,
-     "y_mm": 3.2,
-     "du_um": 3.415585275940112,
-     "T_C": 98.95648470809984
+     "x_mm": 12.0,
+     "y_mm": -13.6,
+     "du_um": 2.241139647986539,
+     "T_C": 97.2656424025974
     },
     {
      "rank": 145,
-     "x_mm": -14.4,
-     "y_mm": -3.2,
-     "du_um": 3.4145789893385157,
-     "T_C": 98.90865341368652
+     "x_mm": 12.0,
+     "y_mm": 13.6,
+     "du_um": 2.237197554614775,
+     "T_C": 97.40683525974026
     },
     {
      "rank": 146,
      "x_mm": -14.4,
-     "y_mm": 2.4,
-     "du_um": 3.3982658649118584,
-     "T_C": 98.8836319764778
+     "y_mm": 5.6,
+     "du_um": 2.2349603008968173,
+     "T_C": 90.60310383301926
     },
     {
      "rank": 147,
      "x_mm": -14.4,
-     "y_mm": -2.4,
-     "du_um": 3.3975315823494654,
-     "T_C": 98.84753917692946
+     "y_mm": -5.6,
+     "du_um": 2.2335191508593955,
+     "T_C": 90.52406473151198
     },
     {
      "rank": 148,
      "x_mm": -14.4,
-     "y_mm": 1.6,
-     "du_um": 3.3857640206349413,
-     "T_C": 98.83044813659615
+     "y_mm": 4.8,
+     "du_um": 2.2283209573247067,
+     "T_C": 90.58929108059975
     },
     {
      "rank": 149,
      "x_mm": -14.4,
-     "y_mm": -1.6,
-     "du_um": 3.385236913228104,
-     "T_C": 98.80618164838677
+     "y_mm": -4.8,
+     "du_um": 2.2269336393619903,
+     "T_C": 90.52056505015477
     },
     {
      "rank": 150,
-     "x_mm": -12.8,
-     "y_mm": 13.6,
-     "du_um": 3.3799734156080032,
-     "T_C": 102.50639285714287
+     "x_mm": -14.4,
+     "y_mm": 4.0,
+     "du_um": 2.2238511553084654,
+     "T_C": 90.57729796917818
     },
     {
      "rank": 151,
      "x_mm": -14.4,
-     "y_mm": 0.8,
-     "du_um": 3.3786917121951268,
-     "T_C": 98.79836019144727
+     "y_mm": -4.0,
+     "du_um": 2.2225834798949973,
+     "T_C": 90.51924580754982
     },
     {
      "rank": 152,
      "x_mm": -14.4,
-     "y_mm": -0.8,
-     "du_um": 3.3785883209437397,
-     "T_C": 98.7862501132698
+     "y_mm": 3.2,
+     "du_um": 2.2205626819550894,
+     "T_C": 90.56636277745463
     },
     {
      "rank": 153,
-     "x_mm": -12.8,
-     "y_mm": -13.6,
-     "du_um": 3.378405466455748,
-     "T_C": 102.36707142857144
+     "x_mm": -14.4,
+     "y_mm": -3.2,
+     "du_um": 2.2197520502588284,
+     "T_C": 90.5195314830413
     },
     {
      "rank": 154,
-     "x_mm": -13.6,
-     "y_mm": 12.8,
-     "du_um": 3.3782845605806564,
-     "T_C": 102.43635714285713
+     "x_mm": -14.4,
+     "y_mm": 2.4,
+     "du_um": 2.2180486837262987,
+     "T_C": 90.55645779476946
     },
     {
      "rank": 155,
      "x_mm": -14.4,
-     "y_mm": 0.0,
-     "du_um": 3.3766365011393313,
-     "T_C": 98.78266363636364
+     "y_mm": -2.4,
+     "du_um": 2.217449715000361,
+     "T_C": 90.52105936417345
     },
     {
      "rank": 156,
-     "x_mm": -13.6,
-     "y_mm": -12.8,
-     "du_um": 3.37518706712483,
-     "T_C": 102.29810714285713
+     "x_mm": -14.4,
+     "y_mm": 1.6,
+     "du_um": 2.2165973139622603,
+     "T_C": 90.5475559592492
     },
     {
      "rank": 157,
-     "x_mm": 13.6,
-     "y_mm": 12.0,
-     "du_um": 3.35512154483152,
-     "T_C": 108.8710383116883
+     "x_mm": -14.4,
+     "y_mm": -1.6,
+     "du_um": 2.2161257383991835,
+     "T_C": 90.52388474279684
     },
     {
      "rank": 158,
-     "x_mm": 13.6,
-     "y_mm": -12.0,
-     "du_um": 3.3532779226311833,
-     "T_C": 108.73633896103897
+     "x_mm": -14.4,
+     "y_mm": 0.8,
+     "du_um": 2.2155472745514007,
+     "T_C": 90.5401463540829
     },
     {
      "rank": 159,
-     "x_mm": 12.0,
-     "y_mm": 13.6,
-     "du_um": 3.349149735336468,
-     "T_C": 108.68765129870128
+     "x_mm": -14.4,
+     "y_mm": 0.0,
+     "du_um": 2.215327356460212,
+     "T_C": 90.53370909090908
     },
     {
      "rank": 160,
-     "x_mm": 12.0,
-     "y_mm": -13.6,
-     "du_um": 3.347456511955716,
-     "T_C": 108.54435064935065
+     "x_mm": -14.4,
+     "y_mm": -0.8,
+     "du_um": 2.2152546904216575,
+     "T_C": 90.528205631568
     },
     {
      "rank": 161,
-     "x_mm": 13.6,
-     "y_mm": 9.6,
-     "du_um": 3.3178037740063915,
-     "T_C": 107.76062077922079
+     "x_mm": -12.0,
+     "y_mm": -13.6,
+     "du_um": 2.207460128043429,
+     "T_C": 90.87104090909091
     },
     {
      "rank": 162,
-     "x_mm": 13.6,
-     "y_mm": -9.6,
-     "du_um": 3.3159365119590447,
-     "T_C": 107.63740389610389
+     "x_mm": -13.6,
+     "y_mm": 12.0,
+     "du_um": 2.2072005481388666,
+     "T_C": 90.83717967532468
     },
     {
      "rank": 163,
-     "x_mm": 13.6,
-     "y_mm": 10.4,
-     "du_um": 3.315934541063106,
-     "T_C": 108.11453766233765
+     "x_mm": -12.0,
+     "y_mm": 13.6,
+     "du_um": 2.2057231713654715,
+     "T_C": 91.0108955844156
     },
     {
      "rank": 164,
-     "x_mm": 13.6,
-     "y_mm": 11.2,
-     "du_um": 3.314640067943735,
-     "T_C": 108.48671857142857
+     "x_mm": -13.6,
+     "y_mm": -12.0,
+     "du_um": 2.205380366958778,
+     "T_C": 90.7054451948052
     },
     {
      "rank": 165,
-     "x_mm": 13.6,
-     "y_mm": -10.4,
-     "du_um": 3.314361795492113,
-     "T_C": 107.98599350649351
+     "x_mm": 12.8,
+     "y_mm": 12.8,
+     "du_um": 2.142972072876255,
+     "T_C": 97.48537857142857
     },
     {
      "rank": 166,
-     "x_mm": 13.6,
-     "y_mm": -11.2,
-     "du_um": 3.312755750648441,
-     "T_C": 108.35568714285714
+     "x_mm": 12.8,
+     "y_mm": -12.8,
+     "du_um": 2.14156732639787,
+     "T_C": 97.34931785714286
     },
     {
      "rank": 167,
-     "x_mm": 9.6,
-     "y_mm": 13.6,
-     "du_um": 3.3101174584495507,
-     "T_C": 107.12222922077922
+     "x_mm": -12.8,
+     "y_mm": 12.8,
+     "du_um": 2.113029143501874,
+     "T_C": 90.90391428571428
     },
     {
      "rank": 168,
-     "x_mm": 11.2,
-     "y_mm": 13.6,
-     "du_um": 3.3093620984400487,
-     "T_C": 108.18883714285715
+     "x_mm": -12.8,
+     "y_mm": -12.8,
+     "du_um": 2.111409934288521,
+     "T_C": 90.76815
     },
     {
      "rank": 169,
-     "x_mm": 10.4,
-     "y_mm": 13.6,
-     "du_um": 3.309343371485654,
-     "T_C": 107.65853636363636
+     "x_mm": 13.6,
+     "y_mm": 11.2,
+     "du_um": 2.1104748564211757,
+     "T_C": 97.66732157142857
     },
     {
      "rank": 170,
-     "x_mm": 10.4,
-     "y_mm": -13.6,
-     "du_um": 3.308636035035632,
-     "T_C": 107.49640194805193
+     "x_mm": 13.6,
+     "y_mm": -11.2,
+     "du_um": 2.1102778156194546,
+     "T_C": 97.5378452857143
     },
     {
      "rank": 171,
-     "x_mm": 9.6,
-     "y_mm": -13.6,
-     "du_um": 3.307924762311685,
-     "T_C": 106.96842077922076
+     "x_mm": 11.2,
+     "y_mm": 13.6,
+     "du_um": 2.108088140154871,
+     "T_C": 97.37566257142858
     },
     {
      "rank": 172,
      "x_mm": 11.2,
      "y_mm": -13.6,
-     "du_um": 3.3072415568388736,
-     "T_C": 108.04319714285715
+     "du_um": 2.1075809941881256,
+     "T_C": 97.23218185714288
     },
     {
      "rank": 173,
-     "x_mm": 13.6,
-     "y_mm": 8.8,
-     "du_um": 3.3038146026748736,
-     "T_C": 107.46020391313039
+     "x_mm": -11.2,
+     "y_mm": 13.6,
+     "du_um": 2.080236837168344,
+     "T_C": 91.08522771428571
     },
     {
      "rank": 174,
-     "x_mm": 13.6,
-     "y_mm": -8.8,
-     "du_um": 3.3019049490025956,
-     "T_C": 107.34369117677713
+     "x_mm": -11.2,
+     "y_mm": -13.6,
+     "du_um": 2.0787085005214765,
+     "T_C": 90.94159742857143
     },
     {
      "rank": 175,
-     "x_mm": 8.8,
-     "y_mm": 13.6,
-     "du_um": 3.294310044293772,
-     "T_C": 106.61646047852466
+     "x_mm": -13.6,
+     "y_mm": 11.2,
+     "du_um": 2.0775337255162296,
+     "T_C": 90.77917471428572
     },
     {
      "rank": 176,
-     "x_mm": 8.8,
-     "y_mm": -13.6,
-     "du_um": 3.2917695422056314,
-     "T_C": 106.45870128735169
+     "x_mm": -13.6,
+     "y_mm": -11.2,
+     "du_um": 2.076428619469382,
+     "T_C": 90.65003042857143
     },
     {
      "rank": 177,
      "x_mm": 13.6,
-     "y_mm": 8.0,
-     "du_um": 3.281337118053775,
-     "T_C": 107.21137104404512
+     "y_mm": 10.4,
+     "du_um": 2.010897169774023,
+     "T_C": 97.7783362987013
     },
     {
      "rank": 178,
      "x_mm": 13.6,
-     "y_mm": -8.0,
-     "du_um": 3.2794042032456816,
-     "T_C": 107.1019627965504
+     "y_mm": -10.4,
+     "du_um": 2.0101491719129685,
+     "T_C": 97.65289214285713
     },
     {
      "rank": 179,
-     "x_mm": 8.0,
+     "x_mm": 10.4,
      "y_mm": 13.6,
-     "du_um": 3.269150908135923,
-     "T_C": 106.14121406898049
+     "du_um": 2.0083560704250196,
+     "T_C": 97.3307014935065
     },
     {
      "rank": 180,
-     "x_mm": -12.0,
-     "y_mm": 13.6,
-     "du_um": 3.2667256450210833,
-     "T_C": 102.13845064935066
+     "x_mm": 10.4,
+     "y_mm": -13.6,
+     "du_um": 2.0063959957849984,
+     "T_C": 97.18326175324675
     },
     {
      "rank": 181,
-     "x_mm": -12.0,
-     "y_mm": -13.6,
-     "du_um": 3.2664274994255114,
-     "T_C": 102.01271363636363
+     "x_mm": -10.4,
+     "y_mm": 13.6,
+     "du_um": 1.988952630454112,
+     "T_C": 91.20125071428572
     },
     {
      "rank": 182,
-     "x_mm": 8.0,
+     "x_mm": -10.4,
      "y_mm": -13.6,
-     "du_um": 3.26620396717701,
-     "T_C": 105.98057890701355
+     "du_um": 1.9869244104780657,
+     "T_C": 91.05395025974026
     },
     {
      "rank": 183,
      "x_mm": -13.6,
-     "y_mm": 12.0,
-     "du_um": 3.263909422138418,
-     "T_C": 101.97824415584415
+     "y_mm": -10.4,
+     "du_um": 1.9851152351162662,
+     "T_C": 90.60710740259739
     },
     {
      "rank": 184,
      "x_mm": -13.6,
-     "y_mm": -12.0,
-     "du_um": 3.2621924463994607,
-     "T_C": 101.8435448051948
+     "y_mm": 10.4,
+     "du_um": 1.983126427418008,
+     "T_C": 90.7324096103896
     },
     {
      "rank": 185,
      "x_mm": 13.6,
-     "y_mm": 7.2,
-     "du_um": 3.256710707891749,
-     "T_C": 107.0132839616361
+     "y_mm": 9.6,
+     "du_um": 1.938943739074198,
+     "T_C": 97.88706305194805
     },
     {
      "rank": 186,
      "x_mm": 13.6,
-     "y_mm": -7.2,
-     "du_um": 3.254745716721416,
-     "T_C": 106.91218196344856
+     "y_mm": -9.6,
+     "du_um": 1.9382854131730924,
+     "T_C": 97.76661525974026
     },
     {
      "rank": 187,
-     "x_mm": 7.2,
+     "x_mm": 9.6,
      "y_mm": 13.6,
-     "du_um": 3.241686347584266,
-     "T_C": 105.69653019569506
+     "du_um": 1.9359027381445495,
+     "T_C": 97.26225590909091
     },
     {
      "rank": 188,
-     "x_mm": 7.2,
+     "x_mm": 9.6,
      "y_mm": -13.6,
-     "du_um": 3.2368813151869933,
-     "T_C": 105.532422195393
+     "du_um": 1.9355276387450582,
+     "T_C": 97.11111824675325
     },
     {
      "rank": 189,
-     "x_mm": -11.2,
-     "y_mm": 13.6,
-     "du_um": 3.2277128918823097,
-     "T_C": 101.75631714285714
+     "x_mm": 12.8,
+     "y_mm": 12.0,
+     "du_um": 1.9287320551276363,
+     "T_C": 97.57049558441558
     },
     {
      "rank": 190,
-     "x_mm": 13.6,
-     "y_mm": 6.4,
-     "du_um": 3.22739074100237,
-     "T_C": 106.84948041245885
+     "x_mm": 12.0,
+     "y_mm": 12.8,
+     "du_um": 1.9285957490407282,
+     "T_C": 97.46862999999999
     },
     {
      "rank": 191,
-     "x_mm": -10.4,
-     "y_mm": 13.6,
-     "du_um": 3.225743549675095,
-     "T_C": 101.39939740259739
+     "x_mm": 12.0,
+     "y_mm": -12.8,
+     "du_um": 1.9284879031542554,
+     "T_C": 97.32886876623375
     },
     {
      "rank": 192,
-     "x_mm": 13.6,
-     "y_mm": -6.4,
-     "du_um": 3.2256388655957102,
-     "T_C": 106.75758409924731
+     "x_mm": 12.8,
+     "y_mm": -12.0,
+     "du_um": 1.928101148803319,
+     "T_C": 97.43563922077922
     },
     {
      "rank": 193,
-     "x_mm": -11.2,
-     "y_mm": -13.6,
-     "du_um": 3.225230860690206,
-     "T_C": 101.61091714285715
+     "x_mm": -9.6,
+     "y_mm": 13.6,
+     "du_um": 1.9173253439139468,
+     "T_C": 91.351145
     },
     {
      "rank": 194,
      "x_mm": -9.6,
-     "y_mm": 13.6,
-     "du_um": 3.2242715248405047,
-     "T_C": 101.08776428571429
+     "y_mm": -13.6,
+     "du_um": 1.9168751309012289,
+     "T_C": 91.19984467532467
     },
     {
      "rank": 195,
-     "x_mm": -10.4,
-     "y_mm": -13.6,
-     "du_um": 3.223907590407031,
-     "T_C": 101.23537922077922
+     "x_mm": -13.6,
+     "y_mm": 9.6,
+     "du_um": 1.914355869407259,
+     "T_C": 90.69554714285715
     },
     {
      "rank": 196,
-     "x_mm": -9.6,
-     "y_mm": -13.6,
-     "du_um": 3.2219624558982,
-     "T_C": 100.93402857142857
+     "x_mm": -13.6,
+     "y_mm": -9.6,
+     "du_um": 1.913588330256998,
+     "T_C": 90.57485207792207
     },
     {
      "rank": 197,
-     "x_mm": -13.6,
-     "y_mm": 11.2,
-     "du_um": 3.2214894105263103,
-     "T_C": 101.44374714285715
+     "x_mm": -12.8,
+     "y_mm": 12.0,
+     "du_um": 1.9126158683208188,
+     "T_C": 90.82853051948052
     },
     {
      "rank": 198,
-     "x_mm": -13.6,
-     "y_mm": -11.2,
-     "du_um": 3.2198558413365896,
-     "T_C": 101.31273142857142
+     "x_mm": -12.0,
+     "y_mm": 12.8,
+     "du_um": 1.9123530912910893,
+     "T_C": 90.9354035064935
     },
     {
      "rank": 199,
-     "x_mm": -13.6,
-     "y_mm": 10.4,
-     "du_um": 3.2182855096764986,
-     "T_C": 100.92092207792207
+     "x_mm": -12.8,
+     "y_mm": -12.0,
+     "du_um": 1.9113169240538062,
+     "T_C": 90.69385272727271
     },
     {
      "rank": 200,
-     "x_mm": -13.6,
-     "y_mm": -10.4,
-     "du_um": 3.2167473042362853,
-     "T_C": 100.79237792207792
+     "x_mm": -12.0,
+     "y_mm": -12.8,
+     "du_um": 1.9112464070467075,
+     "T_C": 90.79572188311688
     },
     {
      "rank": 201,
-     "x_mm": -13.6,
-     "y_mm": 9.6,
-     "du_um": 3.2158225274006687,
-     "T_C": 100.41993636363634
+     "x_mm": 13.6,
+     "y_mm": 8.8,
+     "du_um": 1.8901180055676214,
+     "T_C": 97.9886599263626
     },
     {
      "rank": 202,
-     "x_mm": -13.6,
-     "y_mm": -9.6,
-     "du_um": 3.213929604424618,
-     "T_C": 100.29549155844157
+     "x_mm": 13.6,
+     "y_mm": -8.8,
+     "du_um": 1.889986295815091,
+     "T_C": 97.87397841374919
     },
     {
      "rank": 203,
-     "x_mm": -8.8,
+     "x_mm": 8.8,
      "y_mm": 13.6,
-     "du_um": 3.209358146425637,
-     "T_C": 100.87582615563636
+     "du_um": 1.886965277942731,
+     "T_C": 97.16178197231417
     },
     {
      "rank": 204,
-     "x_mm": 6.4,
-     "y_mm": 13.6,
-     "du_um": 3.209099825975726,
-     "T_C": 105.27507718238203
+     "x_mm": 8.8,
+     "y_mm": -13.6,
+     "du_um": 1.8864248910809827,
+     "T_C": 97.00704456423064
     },
     {
      "rank": 205,
      "x_mm": -8.8,
-     "y_mm": -13.6,
-     "du_um": 3.2070862157426934,
-     "T_C": 100.71829044135066
+     "y_mm": 13.6,
+     "du_um": 1.8704414474371198,
+     "T_C": 91.53456328756778
     },
     {
      "rank": 206,
-     "x_mm": 6.4,
+     "x_mm": -8.8,
      "y_mm": -13.6,
-     "du_um": 3.2061572940125758,
-     "T_C": 105.10854146809632
+     "du_um": 1.8696498216943835,
+     "T_C": 91.37988174870607
     },
     {
      "rank": 207,
      "x_mm": -13.6,
      "y_mm": 8.8,
-     "du_um": 3.19880026446165,
-     "T_C": 99.99054835917256
+     "du_um": 1.8667668677688751,
+     "T_C": 90.66740596116196
     },
     {
      "rank": 208,
      "x_mm": -13.6,
      "y_mm": -8.8,
-     "du_um": 3.196893443099958,
-     "T_C": 99.8737141942479
+     "du_um": 1.8662233597575852,
+     "T_C": 90.55273562239293
     },
     {
      "rank": 209,
      "x_mm": 13.6,
-     "y_mm": 5.6,
-     "du_um": 3.1943657895475015,
-     "T_C": 106.72124440229427
+     "y_mm": -8.0,
+     "du_um": 1.8568591053939485,
+     "T_C": 97.96985553856933
     },
     {
      "rank": 210,
      "x_mm": 13.6,
-     "y_mm": -5.6,
-     "du_um": 3.192937138782932,
-     "T_C": 106.63945802351766
+     "y_mm": 8.0,
+     "du_um": 1.8563843536433653,
+     "T_C": 98.0774696660454
     },
     {
      "rank": 211,
-     "x_mm": -8.0,
+     "x_mm": 8.0,
      "y_mm": 13.6,
-     "du_um": 3.1873435815588644,
-     "T_C": 100.75259786529926
+     "du_um": 1.8528837343935811,
+     "T_C": 97.02826158634316
     },
     {
      "rank": 212,
-     "x_mm": -8.0,
+     "x_mm": 8.0,
      "y_mm": -13.6,
-     "du_um": 3.1849308306030846,
-     "T_C": 100.59149841761804
+     "du_um": 1.8525101811245397,
+     "T_C": 96.87052411582349
     },
     {
      "rank": 213,
-     "x_mm": 12.8,
-     "y_mm": 12.8,
-     "du_um": 3.1792633771421404,
-     "T_C": 108.82578571428571
+     "x_mm": -8.0,
+     "y_mm": 13.6,
+     "du_um": 1.8383852123995155,
+     "T_C": 91.74388912724359
     },
     {
      "rank": 214,
-     "x_mm": 12.8,
-     "y_mm": -12.8,
-     "du_um": 3.176961094636943,
-     "T_C": 108.68557142857144
+     "x_mm": -8.0,
+     "y_mm": -13.6,
+     "du_um": 1.837144443017707,
+     "T_C": 91.5868278699609
     },
     {
      "rank": 215,
-     "x_mm": -13.6,
-     "y_mm": 8.0,
-     "du_um": 3.173910160917092,
-     "T_C": 99.63065007480694
+     "x_mm": 13.6,
+     "y_mm": -7.2,
+     "du_um": 1.835874822812849,
+     "T_C": 98.052771216282
     },
     {
      "rank": 216,
-     "x_mm": 5.6,
-     "y_mm": 13.6,
-     "du_um": 3.172272856823994,
-     "T_C": 104.87389988476443
+     "x_mm": 13.6,
+     "y_mm": 7.2,
+     "du_um": 1.8351243369111325,
+     "T_C": 98.15234047140095
     },
     {
      "rank": 217,
      "x_mm": -13.6,
-     "y_mm": -8.0,
-     "du_um": 3.1720534293218536,
-     "T_C": 99.520842212071
+     "y_mm": 8.0,
+     "du_um": 1.8340105599368746,
+     "T_C": 90.64479765113023
     },
     {
      "rank": 218,
-     "x_mm": 5.6,
-     "y_mm": -13.6,
-     "du_um": 3.1695981165138187,
-     "T_C": 104.70618923692778
+     "x_mm": -13.6,
+     "y_mm": -8.0,
+     "du_um": 1.8333974311207537,
+     "T_C": 90.53732627219759
     },
     {
      "rank": 219,
-     "x_mm": 13.6,
-     "y_mm": 4.8,
-     "du_um": 3.1641047557703526,
-     "T_C": 106.61813938192967
+     "x_mm": 7.2,
+     "y_mm": 13.6,
+     "du_um": 1.831296337863307,
+     "T_C": 96.8634552485587
     },
     {
      "rank": 220,
-     "x_mm": -7.2,
-     "y_mm": 13.6,
-     "du_um": 3.1639652604032236,
-     "T_C": 100.71788685502831
+     "x_mm": 7.2,
+     "y_mm": -13.6,
+     "du_um": 1.830362108891551,
+     "T_C": 96.7030930766166
     },
     {
      "rank": 221,
      "x_mm": 13.6,
-     "y_mm": -4.8,
-     "du_um": 3.1629540218430763,
-     "T_C": 106.54694926774057
+     "y_mm": -6.4,
+     "du_um": 1.8215235405425039,
+     "T_C": 98.12414470148266
     },
     {
      "rank": 222,
-     "x_mm": -7.2,
-     "y_mm": -13.6,
-     "du_um": 3.1600592820695264,
-     "T_C": 100.55167685653869
+     "x_mm": 13.6,
+     "y_mm": 6.4,
+     "du_um": 1.8210427386167134,
+     "T_C": 98.21430207458678
     },
     {
      "rank": 223,
-     "x_mm": -13.6,
-     "y_mm": 7.2,
-     "du_um": 3.147690744881339,
-     "T_C": 99.33921900092615
+     "x_mm": -7.2,
+     "y_mm": 13.6,
+     "du_um": 1.8178493851433997,
+     "T_C": 91.97701956521604
     },
     {
      "rank": 224,
-     "x_mm": -13.6,
-     "y_mm": -7.2,
-     "du_um": 3.145827553754165,
-     "T_C": 99.23794914559576
+     "x_mm": 6.4,
+     "y_mm": 13.6,
+     "du_um": 1.8161037916338658,
+     "T_C": 96.67152280768937
     },
     {
      "rank": 225,
-     "x_mm": 13.6,
-     "y_mm": 4.0,
-     "du_um": 3.1402688396238982,
-     "T_C": 106.53920381567507
+     "x_mm": 6.4,
+     "y_mm": -13.6,
+     "du_um": 1.8154085702906502,
+     "T_C": 96.50899849890311
     },
     {
      "rank": 226,
-     "x_mm": 13.6,
-     "y_mm": -4.0,
-     "du_um": 3.140221104723702,
-     "T_C": 106.48021002589118
+     "x_mm": -7.2,
+     "y_mm": -13.6,
+     "du_um": 1.8151975078492384,
+     "T_C": 91.81866764899705
     },
     {
      "rank": 227,
-     "x_mm": 4.8,
-     "y_mm": 13.6,
-     "du_um": 3.1378820837190595,
-     "T_C": 104.48934345920526
+     "x_mm": 13.6,
+     "y_mm": -5.6,
+     "du_um": 1.8133842347635976,
+     "T_C": 98.18096698657574
     },
     {
      "rank": 228,
-     "x_mm": -6.4,
-     "y_mm": 13.6,
-     "du_um": 3.1369509634966364,
-     "T_C": 100.74540437894777
+     "x_mm": 13.6,
+     "y_mm": 5.6,
+     "du_um": 1.8127067590623227,
+     "T_C": 98.26128530886224
     },
     {
      "rank": 229,
-     "x_mm": 4.8,
-     "y_mm": -13.6,
-     "du_um": 3.1354668207292273,
-     "T_C": 104.31993862490023
+     "x_mm": -13.6,
+     "y_mm": 7.2,
+     "du_um": 1.8124837651780836,
+     "T_C": 90.62725222558086
     },
     {
      "rank": 230,
-     "x_mm": -6.4,
-     "y_mm": -13.6,
-     "du_um": 3.134293643544941,
-     "T_C": 100.57950806573623
+     "x_mm": -13.6,
+     "y_mm": -7.2,
+     "du_um": 1.811124080209847,
+     "T_C": 90.5288805696161
     },
     {
      "rank": 231,
      "x_mm": 13.6,
-     "y_mm": 3.2,
-     "du_um": 3.1211789021560263,
-     "T_C": 106.47774078299918
+     "y_mm": -4.8,
+     "du_um": 1.808932141875812,
+     "T_C": 98.22761345412778
     },
     {
      "rank": 232,
      "x_mm": 13.6,
-     "y_mm": -3.2,
-     "du_um": 3.1202290708732665,
-     "T_C": 106.42925691211363
+     "y_mm": 4.8,
+     "du_um": 1.808593008581786,
+     "T_C": 98.29744283231109
     },
     {
      "rank": 233,
-     "x_mm": -13.6,
-     "y_mm": 6.4,
-     "du_um": 3.1174012190671436,
-     "T_C": 99.09670736979459
+     "x_mm": 13.6,
+     "y_mm": 0.0,
+     "du_um": 1.808489285714289,
+     "T_C": 98.36416785714285
     },
     {
      "rank": 234,
-     "x_mm": -13.6,
-     "y_mm": -6.4,
-     "du_um": 3.115692015782491,
-     "T_C": 99.00480863733497
+     "x_mm": 13.6,
+     "y_mm": -0.8,
+     "du_um": 1.8080874561496103,
+     "T_C": 98.35460438228924
     },
     {
      "rank": 235,
-     "x_mm": 4.0,
-     "y_mm": 13.6,
-     "du_um": 3.109833041663858,
-     "T_C": 104.12137234261897
+     "x_mm": 13.6,
+     "y_mm": 0.8,
+     "du_um": 1.8079988152994295,
+     "T_C": 98.36661251241476
     },
     {
      "rank": 236,
-     "x_mm": 4.0,
-     "y_mm": -13.6,
-     "du_um": 3.1073960986022864,
-     "T_C": 103.95073686149348
+     "x_mm": 13.6,
+     "y_mm": -1.6,
+     "du_um": 1.8077581829404799,
+     "T_C": 98.34066726137928
     },
     {
      "rank": 237,
-     "x_mm": -5.6,
-     "y_mm": 13.6,
-     "du_um": 3.107212100848121,
-     "T_C": 100.83769441827636
+     "x_mm": 13.6,
+     "y_mm": 1.6,
+     "du_um": 1.8075757663598429,
+     "T_C": 98.36466792230084
     },
     {
      "rank": 238,
-     "x_mm": -12.8,
-     "y_mm": 12.8,
-     "du_um": 3.1055146763233425,
-     "T_C": 102.08996428571429
+     "x_mm": 13.6,
+     "y_mm": -4.0,
+     "du_um": 1.8074265166466532,
+     "T_C": 98.26654343339177
     },
     {
      "rank": 239,
-     "x_mm": -5.6,
-     "y_mm": -13.6,
-     "du_um": 3.1046453560564315,
-     "T_C": 100.66998377043973
+     "x_mm": 13.6,
+     "y_mm": -2.4,
+     "du_um": 1.8071246788792381,
+     "T_C": 98.32259332836608
     },
     {
      "rank": 240,
-     "x_mm": -12.8,
-     "y_mm": -12.8,
-     "du_um": 3.1028249184909993,
-     "T_C": 101.94842857142856
+     "x_mm": 13.6,
+     "y_mm": -3.2,
+     "du_um": 1.8070193764865692,
+     "T_C": 98.29883606014619
     },
     {
      "rank": 241,
-     "x_mm": 13.6,
-     "y_mm": 2.4,
-     "du_um": 3.102166812212168,
-     "T_C": 106.43124909765767
+     "x_mm": 5.6,
+     "y_mm": 13.6,
+     "du_um": 1.8069992858254358,
+     "T_C": 96.45117481957743
     },
     {
      "rank": 242,
      "x_mm": 13.6,
-     "y_mm": -2.4,
-     "du_um": 3.1009886118801644,
-     "T_C": 106.3943922555813
+     "y_mm": 2.4,
+     "du_um": 1.8067761164319174,
+     "T_C": 98.3581989632562
     },
     {
      "rank": 243,
      "x_mm": 13.6,
-     "y_mm": 1.6,
-     "du_um": 3.0877231445904076,
-     "T_C": 106.39686868563022
+     "y_mm": 3.2,
+     "du_um": 1.8065517281271708,
+     "T_C": 98.34635241949456
     },
     {
      "rank": 244,
      "x_mm": 13.6,
-     "y_mm": -1.6,
-     "du_um": 3.087218546141407,
-     "T_C": 106.37160692566385
+     "y_mm": 4.0,
+     "du_um": 1.8065228142105227,
+     "T_C": 98.32534234826689
     },
     {
      "rank": 245,
-     "x_mm": 3.2,
-     "y_mm": 13.6,
-     "du_um": 3.0866911314757592,
-     "T_C": 103.76540322276546
+     "x_mm": 5.6,
+     "y_mm": -13.6,
+     "du_um": 1.8062487641537324,
+     "T_C": 96.287668866075
     },
     {
      "rank": 246,
-     "x_mm": -13.6,
-     "y_mm": 5.6,
-     "du_um": 3.0840938992354388,
-     "T_C": 98.90485370642912
+     "x_mm": -6.4,
+     "y_mm": 13.6,
+     "du_um": 1.8031373525667118,
+     "T_C": 92.22759274603807
     },
     {
      "rank": 247,
-     "x_mm": 3.2,
+     "x_mm": -6.4,
      "y_mm": -13.6,
-     "du_um": 3.0839917163340242,
-     "T_C": 103.59386750847972
+     "du_um": 1.8020200073898605,
+     "T_C": 92.06502200868037
     },
     {
      "rank": 248,
-     "x_mm": 13.6,
-     "y_mm": 0.8,
-     "du_um": 3.082618610290369,
-     "T_C": 106.37590159949299
+     "x_mm": 4.8,
+     "y_mm": 13.6,
+     "du_um": 1.8017758047577455,
+     "T_C": 96.21201128218128
     },
     {
      "rank": 249,
-     "x_mm": -13.6,
-     "y_mm": -5.6,
-     "du_um": 3.082467407832306,
-     "T_C": 98.82355261170136
+     "x_mm": 4.8,
+     "y_mm": -13.6,
+     "du_um": 1.8007843288382837,
+     "T_C": 96.04577454394001
     },
     {
      "rank": 250,
-     "x_mm": 13.6,
-     "y_mm": 0.0,
-     "du_um": 3.081785792170907,
-     "T_C": 106.36482142857142
+     "x_mm": 4.0,
+     "y_mm": 13.6,
+     "du_um": 1.798453584698282,
+     "T_C": 95.95652422828402
     },
     {
      "rank": 251,
-     "x_mm": 13.6,
-     "y_mm": -0.8,
-     "du_um": 3.081689971521297,
-     "T_C": 106.36318968558753
+     "x_mm": 4.0,
+     "y_mm": -13.6,
+     "du_um": 1.7977850695309208,
+     "T_C": 95.7885301672189
     },
     {
      "rank": 252,
-     "x_mm": -4.8,
+     "x_mm": 3.2,
      "y_mm": 13.6,
-     "du_um": 3.080758282947238,
-     "T_C": 100.9772077385727
+     "du_um": 1.797531418219331,
+     "T_C": 95.68835138012966
     },
     {
      "rank": 253,
-     "x_mm": -4.8,
-     "y_mm": -13.6,
-     "du_um": 3.0785105613562966,
-     "T_C": 100.80833861855338
+     "x_mm": -13.6,
+     "y_mm": 6.4,
+     "du_um": 1.796862353979408,
+     "T_C": 90.61255161267445
     },
     {
      "rank": 254,
      "x_mm": 2.4,
      "y_mm": 13.6,
-     "du_um": 3.0627440191421402,
-     "T_C": 103.42034932255689
+     "du_um": 1.7962125120681915,
+     "T_C": 95.40850063596629
     },
     {
      "rank": 255,
-     "x_mm": -4.0,
-     "y_mm": 13.6,
-     "du_um": 3.062027190459589,
-     "T_C": 101.16156945600596
+     "x_mm": 3.2,
+     "y_mm": -13.6,
+     "du_um": 1.7961447887878859,
+     "T_C": 95.5204692372725
     },
     {
      "rank": 256,
-     "x_mm": 2.4,
-     "y_mm": -13.6,
-     "du_um": 3.060349591971708,
-     "T_C": 103.24882557987326
+     "x_mm": -13.6,
+     "y_mm": -6.4,
+     "du_um": 1.7960402332342378,
+     "T_C": 90.52237672803435
     },
     {
      "rank": 257,
-     "x_mm": -4.0,
-     "y_mm": -13.6,
-     "du_um": 3.059986436787088,
-     "T_C": 100.99103374172026
+     "x_mm": 1.6,
+     "y_mm": 13.6,
+     "du_um": 1.7956128549571677,
+     "T_C": 95.12002789824626
     },
     {
      "rank": 258,
-     "x_mm": -13.6,
-     "y_mm": 4.8,
-     "du_um": 3.053643582124519,
-     "T_C": 98.75066499631538
+     "x_mm": 0.8,
+     "y_mm": 13.6,
+     "du_um": 1.794720545591192,
+     "T_C": 94.8273129553255
     },
     {
      "rank": 259,
-     "x_mm": -13.6,
-     "y_mm": -4.8,
-     "du_um": 3.052339412909501,
-     "T_C": 98.67938918956062
+     "x_mm": 2.4,
+     "y_mm": -13.6,
+     "du_um": 1.7946651846802704,
+     "T_C": 95.23992324164587
     },
     {
      "rank": 260,
-     "x_mm": -3.2,
+     "x_mm": -5.6,
      "y_mm": 13.6,
-     "du_um": 3.046242433401051,
-     "T_C": 101.37317281303245
+     "du_um": 1.794641513655548,
+     "T_C": 92.49100520027326
     },
     {
      "rank": 261,
-     "x_mm": -3.2,
+     "x_mm": 1.6,
      "y_mm": -13.6,
-     "du_um": 3.0444244572800616,
-     "T_C": 101.20163709874674
+     "du_um": 1.7940391227490047,
+     "T_C": 94.95106162357847
     },
     {
      "rank": 262,
-     "x_mm": 1.6,
+     "x_mm": 0.0,
      "y_mm": 13.6,
-     "du_um": 3.043783725469596,
-     "T_C": 103.08566268478964
+     "du_um": 1.7934018743461098,
+     "T_C": 94.53186785714286
     },
     {
      "rank": 263,
-     "x_mm": 1.6,
+     "x_mm": 0.8,
      "y_mm": -13.6,
-     "du_um": 3.0411092425622765,
-     "T_C": 102.91317059716498
+     "du_um": 1.7933275075136281,
+     "T_C": 94.6580609448451
     },
     {
      "rank": 264,
-     "x_mm": 0.8,
-     "y_mm": 13.6,
-     "du_um": 3.033646772607056,
-     "T_C": 102.76478011464104
+     "x_mm": -5.6,
+     "y_mm": -13.6,
+     "du_um": 1.7932698202399142,
+     "T_C": 92.326623487653
     },
     {
      "rank": 265,
-     "x_mm": -2.4,
-     "y_mm": 13.6,
-     "du_um": 3.032146135435427,
-     "T_C": 101.61341054357973
+     "x_mm": 0.0,
+     "y_mm": -13.6,
+     "du_um": 1.792169722457778,
+     "T_C": 94.36253928571428
     },
     {
      "rank": 266,
-     "x_mm": 12.8,
-     "y_mm": 12.0,
-     "du_um": 3.0316237244542177,
-     "T_C": 108.40607922077922
+     "x_mm": -0.8,
+     "y_mm": 13.6,
+     "du_um": 1.7918811149006597,
+     "T_C": 94.23188738117342
     },
     {
      "rank": 267,
-     "x_mm": -13.6,
-     "y_mm": 4.0,
-     "du_um": 3.0305952587998317,
-     "T_C": 98.6324663615564
+     "x_mm": -0.8,
+     "y_mm": -13.6,
+     "du_um": 1.790743339105766,
+     "T_C": 94.06261907449829
     },
     {
      "rank": 268,
-     "x_mm": 12.0,
-     "y_mm": 12.8,
-     "du_um": 3.0305591137781502,
-     "T_C": 108.3020025974026
+     "x_mm": -1.6,
+     "y_mm": 13.6,
+     "du_um": 1.7905089426399154,
+     "T_C": 93.93233733074086
     },
     {
      "rank": 269,
-     "x_mm": 0.8,
-     "y_mm": -13.6,
-     "du_um": 3.0303723364969333,
-     "T_C": 102.59184704788986
+     "x_mm": -4.8,
+     "y_mm": 13.6,
+     "du_um": 1.790382929346471,
+     "T_C": 92.76520413297729
     },
     {
      "rank": 270,
-     "x_mm": 12.8,
-     "y_mm": -12.0,
-     "du_um": 3.0301521060590493,
-     "T_C": 108.266237012987
+     "x_mm": -1.6,
+     "y_mm": -13.6,
+     "du_um": 1.788902233901391,
+     "T_C": 93.76339164996833
     },
     {
      "rank": 271,
      "x_mm": -2.4,
-     "y_mm": -13.6,
-     "du_um": 3.029779766348834,
-     "T_C": 101.44236305821246
+     "y_mm": 13.6,
+     "du_um": 1.7888808179381268,
+     "T_C": 93.63549849773236
     },
     {
      "rank": 272,
-     "x_mm": -13.6,
-     "y_mm": -4.0,
-     "du_um": 3.029528017199052,
-     "T_C": 98.57239454290635
+     "x_mm": -4.8,
+     "y_mm": -13.6,
+     "du_um": 1.7887698217615071,
+     "T_C": 92.5996217946394
     },
     {
      "rank": 273,
-     "x_mm": 12.0,
-     "y_mm": -12.8,
-     "du_um": 3.0291390821118447,
-     "T_C": 108.15974805194806
+     "x_mm": -4.0,
+     "y_mm": 13.6,
+     "du_um": 1.7886019412268985,
+     "T_C": 93.05085787201767
     },
     {
      "rank": 274,
-     "x_mm": 0.0,
+     "x_mm": -3.2,
      "y_mm": 13.6,
-     "du_um": 3.0276470613202147,
-     "T_C": 102.45432142857143
+     "du_um": 1.7885700071375974,
+     "T_C": 93.34084643111929
     },
     {
      "rank": 275,
-     "x_mm": 0.0,
+     "x_mm": -2.4,
      "y_mm": -13.6,
-     "du_um": 3.0253043147338845,
-     "T_C": 102.28178571428572
+     "du_um": 1.787797895175476,
+     "T_C": 93.46653890039865
     },
     {
      "rank": 276,
-     "x_mm": -1.6,
-     "y_mm": 13.6,
-     "du_um": 3.0229666075875725,
-     "T_C": 101.87520556645401
+     "x_mm": -13.6,
+     "y_mm": 5.6,
+     "du_um": 1.7873519375101015,
+     "T_C": 90.5976245731276
     },
     {
      "rank": 277,
-     "x_mm": -0.8,
-     "y_mm": 13.6,
-     "du_um": 3.0226923689787877,
-     "T_C": 102.15744953225973
+     "x_mm": -4.0,
+     "y_mm": -13.6,
+     "du_um": 1.7872584404232323,
+     "T_C": 92.88248217253688
     },
     {
      "rank": 278,
-     "x_mm": -0.8,
+     "x_mm": -3.2,
      "y_mm": -13.6,
-     "du_um": 3.0210175036513114,
-     "T_C": 101.98611911304312
+     "du_um": 1.786808500464237,
+     "T_C": 93.1731240808478
     },
     {
      "rank": 279,
-     "x_mm": -1.6,
-     "y_mm": -13.6,
-     "du_um": 3.0209464892930082,
-     "T_C": 101.70258259884618
+     "x_mm": -13.6,
+     "y_mm": -5.6,
+     "du_um": 1.7866296472144332,
+     "T_C": 90.51735982226968
     },
     {
      "rank": 280,
      "x_mm": -13.6,
-     "y_mm": 3.2,
-     "du_um": 3.010383014676085,
-     "T_C": 98.53760737258149
+     "y_mm": 4.8,
+     "du_um": 1.7820684728667398,
+     "T_C": 90.58375786273156
     },
     {
      "rank": 281,
      "x_mm": -13.6,
-     "y_mm": -3.2,
-     "du_um": 3.0096547804860023,
-     "T_C": 98.48930956158735
+     "y_mm": -4.8,
+     "du_um": 1.78090720876338,
+     "T_C": 90.51392848454825
     },
     {
      "rank": 282,
-     "x_mm": 12.8,
-     "y_mm": 10.4,
-     "du_um": 3.000784423923204,
-     "T_C": 107.48756818181818
+     "x_mm": -13.6,
+     "y_mm": 4.0,
+     "du_um": 1.779255994954525,
+     "T_C": 90.57246296742913
     },
     {
      "rank": 283,
-     "x_mm": 10.4,
-     "y_mm": 12.8,
-     "du_um": 3.00060316352582,
-     "T_C": 107.08794155844156
+     "x_mm": -13.6,
+     "y_mm": -4.0,
+     "du_um": 1.7782835985938488,
+     "T_C": 90.51358117209513
     },
     {
      "rank": 284,
-     "x_mm": 10.4,
-     "y_mm": -12.8,
-     "du_um": 2.9994559921497554,
-     "T_C": 106.93523571428571
+     "x_mm": -13.6,
+     "y_mm": 3.2,
+     "du_um": 1.7777187016137888,
+     "T_C": 90.56264458517126
     },
     {
      "rank": 285,
-     "x_mm": 12.8,
-     "y_mm": -10.4,
-     "du_um": 2.9993939788296604,
-     "T_C": 107.35456883116882
+     "x_mm": -13.6,
+     "y_mm": 0.0,
+     "du_um": 1.7773323026105894,
+     "T_C": 90.53019285714285
     },
     {
      "rank": 286,
-     "x_mm": 9.6,
-     "y_mm": 12.8,
-     "du_um": 2.995711997381167,
-     "T_C": 106.50725454545454
+     "x_mm": -13.6,
+     "y_mm": 2.4,
+     "du_um": 1.7771601958167729,
+     "T_C": 90.55242359229325
     },
     {
      "rank": 287,
-     "x_mm": 12.8,
-     "y_mm": 9.6,
-     "du_um": 2.995577779024491,
-     "T_C": 107.0912409090909
+     "x_mm": -13.6,
+     "y_mm": 1.6,
+     "du_um": 1.7771165178171475,
+     "T_C": 90.54282330892828
     },
     {
      "rank": 288,
-     "x_mm": 9.6,
-     "y_mm": -12.8,
-     "du_um": 2.994311931274784,
-     "T_C": 106.35139935064934
+     "x_mm": -13.6,
+     "y_mm": -3.2,
+     "du_um": 1.7770708024738913,
+     "T_C": 90.5151282258229
     },
     {
      "rank": 289,
-     "x_mm": 12.8,
-     "y_mm": -9.6,
-     "du_um": 2.9939708502090485,
-     "T_C": 106.96588116883117
+     "x_mm": -13.6,
+     "y_mm": 0.8,
+     "du_um": 1.77700556919523,
+     "T_C": 90.53591645888707
     },
     {
      "rank": 290,
      "x_mm": -13.6,
-     "y_mm": 2.4,
-     "du_um": 2.991089364206501,
-     "T_C": 98.46790584949979
+     "y_mm": -0.8,
+     "du_um": 1.7768233213745577,
+     "T_C": 90.52386190019013
     },
     {
      "rank": 291,
      "x_mm": -13.6,
-     "y_mm": -2.4,
-     "du_um": 2.990841129711527,
-     "T_C": 98.43102870583003
+     "y_mm": -1.6,
+     "du_um": 1.776736289226951,
+     "T_C": 90.5188095600084
     },
     {
      "rank": 292,
-     "x_mm": 12.8,
-     "y_mm": 11.2,
-     "du_um": 2.9902474409887883,
-     "T_C": 107.93725
+     "x_mm": -13.6,
+     "y_mm": -2.4,
+     "du_um": 1.7764394448247212,
+     "T_C": 90.51636431579237
     },
     {
      "rank": 293,
      "x_mm": 11.2,
      "y_mm": 12.8,
-     "du_um": 2.9893476026159975,
-     "T_C": 107.70113571428571
+     "du_um": 1.742962946738412,
+     "T_C": 97.44787442857142
     },
     {
      "rank": 294,
-     "x_mm": 12.8,
-     "y_mm": -11.2,
-     "du_um": 2.989132973677479,
-     "T_C": 107.8004557142857
+     "x_mm": 11.2,
+     "y_mm": -12.8,
+     "du_um": 1.7429208304915889,
+     "T_C": 97.30377928571428
     },
     {
      "rank": 295,
-     "x_mm": 11.2,
-     "y_mm": -12.8,
-     "du_um": 2.9880631704636387,
-     "T_C": 107.55333142857143
+     "x_mm": 12.8,
+     "y_mm": 11.2,
+     "du_um": 1.7425654679423972,
+     "T_C": 97.67965185714286
     },
     {
      "rank": 296,
-     "x_mm": -13.6,
-     "y_mm": 1.6,
-     "du_um": 2.9771771810982592,
-     "T_C": 98.41648040215794
+     "x_mm": 12.8,
+     "y_mm": -11.2,
+     "du_um": 1.7413887080663322,
+     "T_C": 97.54727357142856
     },
     {
      "rank": 297,
-     "x_mm": -13.6,
-     "y_mm": -1.6,
-     "du_um": 2.976905155615986,
-     "T_C": 98.391923026577
+     "x_mm": -12.8,
+     "y_mm": 11.2,
+     "du_um": 1.7391795458081412,
+     "T_C": 90.75374228571428
     },
     {
      "rank": 298,
-     "x_mm": -13.6,
-     "y_mm": 0.8,
-     "du_um": 2.971435867263345,
-     "T_C": 98.38621604789964
+     "x_mm": -12.8,
+     "y_mm": -11.2,
+     "du_um": 1.7383112204587818,
+     "T_C": 90.62148814285715
     },
     {
      "rank": 299,
-     "x_mm": -13.6,
-     "y_mm": -0.8,
-     "du_um": 2.971337744106242,
-     "T_C": 98.37393135682598
+     "x_mm": -11.2,
+     "y_mm": 12.8,
+     "du_um": 1.7379431496164863,
+     "T_C": 90.99727228571427
     },
     {
      "rank": 300,
-     "x_mm": -13.6,
-     "y_mm": 0.0,
-     "du_um": 2.9711964610452073,
-     "T_C": 98.37185357142857
+     "x_mm": -11.2,
+     "y_mm": -12.8,
+     "du_um": 1.7373413962565187,
+     "T_C": 90.85338342857145
     },
     {
      "rank": 301,
-     "x_mm": 12.8,
-     "y_mm": 8.8,
-     "du_um": 2.9684290293229276,
-     "T_C": 106.77225695935584
+     "x_mm": 12.0,
+     "y_mm": 12.0,
+     "du_um": 1.7300073045429307,
+     "T_C": 97.55363272727273
     },
     {
      "rank": 302,
-     "x_mm": 8.8,
-     "y_mm": 12.8,
-     "du_um": 2.9674998659686795,
-     "T_C": 105.97567830941921
+     "x_mm": -12.0,
+     "y_mm": 12.0,
+     "du_um": 1.7286116165895287,
+     "T_C": 90.82903818181819
     },
     {
      "rank": 303,
-     "x_mm": 12.8,
-     "y_mm": -8.8,
-     "du_um": 2.96683380482318,
-     "T_C": 106.65206565157402
+     "x_mm": -12.0,
+     "y_mm": -12.0,
+     "du_um": 1.7277583084581827,
+     "T_C": 90.69026
     },
     {
      "rank": 304,
-     "x_mm": 8.8,
-     "y_mm": -12.8,
-     "du_um": 2.965822331772324,
-     "T_C": 105.81641452265974
+     "x_mm": 12.0,
+     "y_mm": -12.0,
+     "du_um": 1.7123922442309971,
+     "T_C": 97.4190781818182
     },
     {
      "rank": 305,
-     "x_mm": -12.0,
-     "y_mm": 12.8,
-     "du_um": 2.9645882359006794,
-     "T_C": 101.62380454545453
+     "x_mm": -12.8,
+     "y_mm": 10.4,
+     "du_um": 1.6054816432059773,
+     "T_C": 90.70271967532469
     },
     {
      "rank": 306,
      "x_mm": -12.8,
-     "y_mm": 12.0,
-     "du_um": 2.9632692036673505,
-     "T_C": 101.51494805194805
+     "y_mm": -10.4,
+     "du_um": 1.6042812143666083,
+     "T_C": 90.57379512987012
     },
     {
      "rank": 307,
-     "x_mm": -12.0,
+     "x_mm": -10.4,
      "y_mm": -12.8,
-     "du_um": 2.963062151552895,
-     "T_C": 101.48093246753245
+     "du_um": 1.6028868966291614,
+     "T_C": 90.96622766233767
     },
     {
      "rank": 308,
-     "x_mm": -12.8,
-     "y_mm": -12.0,
-     "du_um": 2.9618634866877187,
-     "T_C": 101.3745344155844
+     "x_mm": -10.4,
+     "y_mm": 12.8,
+     "du_um": 1.6027655956668156,
+     "T_C": 91.11486746753246
     },
     {
      "rank": 309,
      "x_mm": 10.4,
-     "y_mm": 12.0,
-     "du_um": 2.9420242990973624,
-     "T_C": 106.48987272727274
+     "y_mm": 12.8,
+     "du_um": 1.5999722440879156,
+     "T_C": 97.4197033116883
     },
     {
      "rank": 310,
-     "x_mm": 12.8,
-     "y_mm": 8.0,
-     "du_um": 2.9407716176045002,
-     "T_C": 106.51815675833083
+     "x_mm": 10.4,
+     "y_mm": -12.8,
+     "du_um": 1.5998086750272946,
+     "T_C": 97.27115370129872
     },
     {
      "rank": 311,
-     "x_mm": 10.4,
-     "y_mm": -12.0,
-     "du_um": 2.9404731239627213,
-     "T_C": 106.3395090909091
+     "x_mm": 12.8,
+     "y_mm": 10.4,
+     "du_um": 1.5983587493006048,
+     "T_C": 97.81168941558442
     },
     {
      "rank": 312,
-     "x_mm": 9.6,
-     "y_mm": 12.0,
-     "du_um": 2.939638963043703,
-     "T_C": 105.87398181818182
+     "x_mm": 12.8,
+     "y_mm": -10.4,
+     "du_um": 1.5969150536618872,
+     "T_C": 97.68329344155845
     },
     {
      "rank": 313,
-     "x_mm": 12.8,
-     "y_mm": -8.0,
-     "du_um": 2.9389211105476343,
-     "T_C": 106.40539136797895
+     "x_mm": -12.8,
+     "y_mm": -9.6,
+     "du_um": 1.5120761626015449,
+     "T_C": 90.5464924025974
     },
     {
      "rank": 314,
-     "x_mm": 9.6,
-     "y_mm": -12.0,
-     "du_um": 2.9383386564632237,
-     "T_C": 105.7165090909091
+     "x_mm": -12.8,
+     "y_mm": 9.6,
+     "du_um": 1.5120614008746254,
+     "T_C": 90.67081603896104
     },
     {
      "rank": 315,
-     "x_mm": 8.0,
-     "y_mm": 12.8,
-     "du_um": 2.937756079491688,
-     "T_C": 105.48815418317295
+     "x_mm": -9.6,
+     "y_mm": -12.8,
+     "du_um": 1.5091303333774535,
+     "T_C": 91.12135493506493
     },
     {
      "rank": 316,
-     "x_mm": 12.0,
-     "y_mm": 10.4,
-     "du_um": 2.9374505211821704,
-     "T_C": 106.82585454545453
+     "x_mm": -9.6,
+     "y_mm": 12.8,
+     "du_um": 1.5090117218296717,
+     "T_C": 91.27388883116882
     },
     {
      "rank": 317,
-     "x_mm": 8.0,
+     "x_mm": 9.6,
      "y_mm": -12.8,
-     "du_um": 2.935746938839516,
-     "T_C": 105.32544374504664
+     "du_um": 1.5025566021460666,
+     "T_C": 97.21687727272726
     },
     {
      "rank": 318,
-     "x_mm": 12.0,
-     "y_mm": -10.4,
-     "du_um": 2.935463058162154,
-     "T_C": 106.69214545454545
+     "x_mm": 9.6,
+     "y_mm": 12.8,
+     "du_um": 1.5022355051024805,
+     "T_C": 97.3699433116883
     },
     {
      "rank": 319,
-     "x_mm": 12.0,
+     "x_mm": 12.8,
      "y_mm": 9.6,
-     "du_um": 2.93429680620853,
-     "T_C": 106.39878181818182
+     "du_um": 1.4988332272055143,
+     "T_C": 97.94440577922077
     },
     {
      "rank": 320,
-     "x_mm": 12.0,
+     "x_mm": 12.8,
      "y_mm": -9.6,
-     "du_um": 2.932517054848146,
-     "T_C": 106.26829090909091
+     "du_um": 1.498569679276552,
+     "T_C": 97.82017857142857
     },
     {
      "rank": 321,
-     "x_mm": -10.4,
-     "y_mm": 12.8,
-     "du_um": 2.9276858613038033,
-     "T_C": 100.65841753246752
+     "x_mm": -12.0,
+     "y_mm": 11.2,
+     "du_um": 1.491102019323207,
+     "T_C": 90.71550545454545
     },
     {
      "rank": 322,
-     "x_mm": 11.2,
-     "y_mm": 12.0,
-     "du_um": 2.927423034517084,
-     "T_C": 107.17802545454546
+     "x_mm": -12.0,
+     "y_mm": -11.2,
+     "du_um": 1.4906820124794968,
+     "T_C": 90.57926472727272
     },
     {
      "rank": 323,
-     "x_mm": -12.8,
-     "y_mm": 10.4,
-     "du_um": 2.927157813238152,
-     "T_C": 100.23917402597402
+     "x_mm": -11.2,
+     "y_mm": 12.0,
+     "du_um": 1.4902625582440379,
+     "T_C": 90.88444872727273
     },
     {
      "rank": 324,
-     "x_mm": 11.2,
+     "x_mm": -11.2,
      "y_mm": -12.0,
-     "du_um": 2.9262012487609126,
-     "T_C": 107.03118545454545
+     "du_um": 1.488445417284414,
+     "T_C": 90.73989127272728
     },
     {
      "rank": 325,
-     "x_mm": -10.4,
-     "y_mm": -12.8,
-     "du_um": 2.9260753173339458,
-     "T_C": 100.50692597402599
+     "x_mm": 11.2,
+     "y_mm": 12.0,
+     "du_um": 1.4711405461461853,
+     "T_C": 97.52318072727272
     },
     {
      "rank": 326,
-     "x_mm": -12.8,
-     "y_mm": -10.4,
-     "du_um": 2.9257929537891987,
-     "T_C": 100.10588064935065
+     "x_mm": 11.2,
+     "y_mm": -12.0,
+     "du_um": 1.4707911864800236,
+     "T_C": 97.37880690909091
     },
     {
      "rank": 327,
      "x_mm": 12.0,
      "y_mm": 11.2,
-     "du_um": 2.923037307278535,
-     "T_C": 107.34161090909092
+     "du_um": 1.4699384303006384,
+     "T_C": 97.6842610909091
     },
     {
      "rank": 328,
-     "x_mm": -11.2,
-     "y_mm": 12.8,
-     "du_um": 2.9222682591179376,
-     "T_C": 101.11470142857144
+     "x_mm": 12.0,
+     "y_mm": -11.2,
+     "du_um": 1.4661207352535797,
+     "T_C": 97.54750836363635
     },
     {
      "rank": 329,
-     "x_mm": 12.8,
-     "y_mm": 7.2,
-     "du_um": 2.9221487101051173,
-     "T_C": 106.3273291078161
+     "x_mm": -12.8,
+     "y_mm": 8.8,
+     "du_um": 1.4481915587358754,
+     "T_C": 90.64626632092967
     },
     {
      "rank": 330,
-     "x_mm": 12.0,
-     "y_mm": -11.2,
-     "du_um": 2.9216576328306707,
-     "T_C": 107.20261090909091
+     "x_mm": -12.8,
+     "y_mm": -8.8,
+     "du_um": 1.4480764514374123,
+     "T_C": 90.52820669644635
     },
     {
      "rank": 331,
-     "x_mm": -12.8,
-     "y_mm": 11.2,
-     "du_um": 2.9207895087604463,
-     "T_C": 100.86755999999998
+     "x_mm": -8.8,
+     "y_mm": 12.8,
+     "du_um": 1.4442559739134977,
+     "T_C": 91.46686922243407
     },
     {
      "rank": 332,
-     "x_mm": -11.2,
+     "x_mm": -8.8,
      "y_mm": -12.8,
-     "du_um": 2.920672010905883,
-     "T_C": 100.96778142857141
+     "du_um": 1.4441529601129464,
+     "T_C": 91.31027696928665
     },
     {
      "rank": 333,
-     "x_mm": 12.8,
-     "y_mm": -7.2,
-     "du_um": 2.9202695181706146,
-     "T_C": 106.22383425248572
+     "x_mm": 8.8,
+     "y_mm": -12.8,
+     "du_um": 1.4360782950870303,
+     "T_C": 97.11709644186139
     },
     {
      "rank": 334,
-     "x_mm": -12.8,
-     "y_mm": -11.2,
-     "du_um": 2.919792054191598,
-     "T_C": 100.73059571428571
+     "x_mm": 8.8,
+     "y_mm": 12.8,
+     "du_um": 1.4356589311230807,
+     "T_C": 97.27361461412613
     },
     {
      "rank": 335,
-     "x_mm": -9.6,
-     "y_mm": 12.8,
-     "du_um": 2.91898924202456,
-     "T_C": 100.29625649350649
+     "x_mm": 12.8,
+     "y_mm": -8.8,
+     "du_um": 1.4313569081015098,
+     "T_C": 97.9377462314959
     },
     {
      "rank": 336,
-     "x_mm": -12.8,
-     "y_mm": 9.6,
-     "du_um": 2.918668288694094,
-     "T_C": 99.6807503896104
+     "x_mm": 12.8,
+     "y_mm": 8.8,
+     "du_um": 1.4309660891951814,
+     "T_C": 98.05585539642057
     },
     {
      "rank": 337,
-     "x_mm": -9.6,
-     "y_mm": -12.8,
-     "du_um": 2.917427272230483,
-     "T_C": 100.14040129870129
+     "x_mm": -12.8,
+     "y_mm": 8.0,
+     "du_um": 1.4022685253783973,
+     "T_C": 90.62620770449776
     },
     {
      "rank": 338,
      "x_mm": -12.8,
-     "y_mm": -9.6,
-     "du_um": 2.91714177233172,
-     "T_C": 99.55487642857142
+     "y_mm": -8.0,
+     "du_um": 1.4020097461773195,
+     "T_C": 90.51554984176181
     },
     {
      "rank": 339,
-     "x_mm": 7.2,
-     "y_mm": 12.8,
-     "du_um": 2.916746754149397,
-     "T_C": 105.04460505404623
+     "x_mm": -8.0,
+     "y_mm": -12.8,
+     "du_um": 1.3973659070296325,
+     "T_C": 91.52649775017531
     },
     {
      "rank": 340,
-     "x_mm": 7.2,
-     "y_mm": -12.8,
-     "du_um": 2.914799821791862,
-     "T_C": 104.87949619629921
+     "x_mm": -8.0,
+     "y_mm": 12.8,
+     "du_um": 1.3971606956679548,
+     "T_C": 91.68643445117743
     },
     {
      "rank": 341,
-     "x_mm": 12.0,
-     "y_mm": 12.0,
-     "du_um": 2.902932700886757,
-     "T_C": 107.8376909090909
+     "x_mm": 8.0,
+     "y_mm": -12.8,
+     "du_um": 1.3888800730820285,
+     "T_C": 96.97600862619399
     },
     {
      "rank": 342,
-     "x_mm": 12.0,
-     "y_mm": -12.0,
-     "du_um": 2.9016521388043897,
-     "T_C": 107.69585454545455
+     "x_mm": 8.0,
+     "y_mm": 12.8,
+     "du_um": 1.3882732876540198,
+     "T_C": 97.13574966814227
     },
     {
      "rank": 343,
      "x_mm": 12.8,
-     "y_mm": 6.4,
-     "du_um": 2.899259055449694,
-     "T_C": 106.1760483849616
+     "y_mm": -8.0,
+     "du_um": 1.3832577020986077,
+     "T_C": 98.03607504334677
     },
     {
      "rank": 344,
      "x_mm": 12.8,
-     "y_mm": -6.4,
-     "du_um": 2.8977220300126856,
-     "T_C": 106.08225921460718
+     "y_mm": 8.0,
+     "du_um": 1.3828887462033694,
+     "T_C": 98.14671862036842
     },
     {
      "rank": 345,
-     "x_mm": 8.8,
-     "y_mm": 12.0,
-     "du_um": 2.8970518690463054,
-     "T_C": 105.32244988602181
+     "x_mm": -12.8,
+     "y_mm": 7.2,
+     "du_um": 1.371410524051082,
+     "T_C": 90.61461636964631
     },
     {
      "rank": 346,
-     "x_mm": 8.8,
-     "y_mm": -12.0,
-     "du_um": 2.895734484616056,
-     "T_C": 105.16122640913454
+     "x_mm": -12.8,
+     "y_mm": -7.2,
+     "du_um": 1.3708208261735286,
+     "T_C": 90.51253954294776
     },
     {
      "rank": 347,
-     "x_mm": 12.0,
-     "y_mm": 8.8,
-     "du_um": 2.8929907375619397,
-     "T_C": 106.06467878661819
+     "x_mm": -7.2,
+     "y_mm": -12.8,
+     "du_um": 1.3656407337612477,
+     "T_C": 91.77100005286364
     },
     {
      "rank": 348,
-     "x_mm": 6.4,
+     "x_mm": -7.2,
      "y_mm": 12.8,
-     "du_um": 2.8915613978496286,
-     "T_C": 104.62822003952489
+     "du_um": 1.3654939561549952,
+     "T_C": 91.93331936766289
     },
     {
      "rank": 349,
-     "x_mm": -8.8,
-     "y_mm": 12.8,
-     "du_um": 2.891284483756918,
-     "T_C": 100.06225472706494
+     "x_mm": 7.2,
+     "y_mm": -12.8,
+     "du_um": 1.3578127643897417,
+     "T_C": 96.80333787604265
     },
     {
      "rank": 350,
-     "x_mm": 12.0,
-     "y_mm": -8.8,
-     "du_um": 2.8912495678737,
-     "T_C": 105.94034921728
+     "x_mm": 7.2,
+     "y_mm": 12.8,
+     "du_um": 1.3574361729954125,
+     "T_C": 96.96569639081167
     },
     {
      "rank": 351,
-     "x_mm": 6.4,
-     "y_mm": -12.8,
-     "du_um": 2.8897018468507043,
-     "T_C": 104.46025575381063
+     "x_mm": 12.8,
+     "y_mm": -7.2,
+     "du_um": 1.3515392778528765,
+     "T_C": 98.12210873120208
     },
     {
      "rank": 352,
-     "x_mm": -12.8,
-     "y_mm": 8.8,
-     "du_um": 2.889571732347921,
-     "T_C": 99.22680267903337
+     "x_mm": 12.8,
+     "y_mm": 7.2,
+     "du_um": 1.3509660710204112,
+     "T_C": 98.22418555790063
     },
     {
      "rank": 353,
-     "x_mm": -8.8,
-     "y_mm": -12.8,
-     "du_um": 2.8894522590246527,
-     "T_C": 99.90317043085132
+     "x_mm": -12.8,
+     "y_mm": 6.4,
+     "du_um": 1.3507651837753825,
+     "T_C": 90.60495806431786
     },
     {
      "rank": 354,
      "x_mm": -12.8,
-     "y_mm": -8.8,
-     "du_um": 2.888033205526713,
-     "T_C": 99.10635065696582
+     "y_mm": -6.4,
+     "du_um": 1.3501396652881594,
+     "T_C": 90.51230817967775
     },
     {
      "rank": 355,
-     "x_mm": -12.0,
-     "y_mm": 10.4,
-     "du_um": 2.868241685178399,
-     "T_C": 99.51510363636363
+     "x_mm": -6.4,
+     "y_mm": -12.8,
+     "du_um": 1.3443405119745653,
+     "T_C": 92.0315139443625
     },
     {
      "rank": 356,
-     "x_mm": -12.0,
-     "y_mm": -10.4,
-     "du_um": 2.866416291985288,
-     "T_C": 99.38505454545455
+     "x_mm": -6.4,
+     "y_mm": 12.8,
+     "du_um": 1.344304354806741,
+     "T_C": 92.19597039600592
     },
     {
      "rank": 357,
-     "x_mm": -8.0,
-     "y_mm": 12.8,
-     "du_um": 2.8640807221715163,
-     "T_C": 99.94176297016993
+     "x_mm": -12.8,
+     "y_mm": 5.6,
+     "du_um": 1.3390235025567778,
+     "T_C": 90.58888723925033
     },
     {
      "rank": 358,
-     "x_mm": -10.4,
-     "y_mm": 12.0,
-     "du_um": 2.8639273271430974,
-     "T_C": 99.8679490909091
+     "x_mm": -12.8,
+     "y_mm": -5.6,
+     "du_um": 1.3382427548325648,
+     "T_C": 90.50652496845768
     },
     {
      "rank": 359,
-     "x_mm": -8.0,
+     "x_mm": 6.4,
      "y_mm": -12.8,
-     "du_um": 2.8622925732054165,
-     "T_C": 99.77890445583759
+     "du_um": 1.337505877559081,
+     "T_C": 96.60385840661522
     },
     {
      "rank": 360,
-     "x_mm": -10.4,
-     "y_mm": -12.0,
-     "du_um": 2.862081151150087,
-     "T_C": 99.72041999999999
+     "x_mm": 6.4,
+     "y_mm": 12.8,
+     "du_um": 1.3371916295183774,
+     "T_C": 96.76842234672263
     },
     {
      "rank": 361,
-     "x_mm": -12.0,
-     "y_mm": 9.6,
-     "du_um": 2.861894008588262,
-     "T_C": 98.9114
+     "x_mm": -12.8,
+     "y_mm": 0.0,
+     "du_um": 1.335164654869295,
+     "T_C": 90.52619642857142
     },
     {
      "rank": 362,
-     "x_mm": 12.8,
-     "y_mm": 5.6,
-     "du_um": 2.861484478736872,
-     "T_C": 106.05461907004884
+     "x_mm": -12.8,
+     "y_mm": 0.8,
+     "du_um": 1.334499737532112,
+     "T_C": 90.52931158852073
     },
     {
      "rank": 363,
-     "x_mm": 12.0,
-     "y_mm": 7.2,
-     "du_um": 2.860706598461601,
-     "T_C": 105.6379090857691
+     "x_mm": -12.8,
+     "y_mm": -0.8,
+     "du_um": 1.334368663484476,
+     "T_C": 90.51696105078463
     },
     {
      "rank": 364,
-     "x_mm": -12.0,
-     "y_mm": -9.6,
-     "du_um": 2.860378890755155,
-     "T_C": 98.78073090909092
+     "x_mm": -12.8,
+     "y_mm": 1.6,
+     "du_um": 1.3334641424543063,
+     "T_C": 90.53320543006609
     },
     {
      "rank": 365,
-     "x_mm": 12.8,
-     "y_mm": -5.6,
-     "du_um": 2.860267568581053,
-     "T_C": 105.97091503347662
+     "x_mm": -12.8,
+     "y_mm": -1.6,
+     "du_um": 1.3333058959598445,
+     "T_C": 90.50863216457647
     },
     {
      "rank": 366,
      "x_mm": -12.8,
-     "y_mm": 8.0,
-     "du_um": 2.8601974875487666,
-     "T_C": 98.8614926557904
+     "y_mm": 4.8,
+     "du_um": 1.3329981155551769,
+     "T_C": 90.57274710500566
     },
     {
      "rank": 367,
-     "x_mm": 8.0,
-     "y_mm": 12.0,
-     "du_um": 2.859655668685047,
-     "T_C": 104.82066127751418
+     "x_mm": -12.8,
+     "y_mm": 2.4,
+     "du_um": 1.3321839462883112,
+     "T_C": 90.5455306248641
     },
     {
      "rank": 368,
-     "x_mm": 12.0,
-     "y_mm": -7.2,
-     "du_um": 2.8589827633884086,
-     "T_C": 105.53149690606546
+     "x_mm": -12.8,
+     "y_mm": -4.8,
+     "du_um": 1.3321759699004234,
+     "T_C": 90.5011594079691
     },
     {
      "rank": 369,
-     "x_mm": -12.8,
-     "y_mm": -8.0,
-     "du_um": 2.8587115290673166,
-     "T_C": 98.74868045210829
+     "x_mm": -5.6,
+     "y_mm": 12.8,
+     "du_um": 1.3321117096934252,
+     "T_C": 92.46587454410951
     },
     {
      "rank": 370,
-     "x_mm": 12.0,
-     "y_mm": 8.0,
-     "du_um": 2.858473104338031,
-     "T_C": 105.8054853297594
+     "x_mm": -5.6,
+     "y_mm": -12.8,
+     "du_um": 1.3318994562684163,
+     "T_C": 92.2996496105586
     },
     {
      "rank": 371,
-     "x_mm": 8.0,
-     "y_mm": -12.0,
-     "du_um": 2.858169956403165,
-     "T_C": 104.6556793623005
+     "x_mm": -12.8,
+     "y_mm": -2.4,
+     "du_um": 1.3316805337537891,
+     "T_C": 90.50891423558414
     },
     {
      "rank": 372,
-     "x_mm": 7.2,
-     "y_mm": -12.0,
-     "du_um": 2.857913077611828,
-     "T_C": 104.22488118603091
+     "x_mm": -12.8,
+     "y_mm": 3.2,
+     "du_um": 1.331215410347128,
+     "T_C": 90.55831958517128
     },
     {
      "rank": 373,
-     "x_mm": -11.2,
-     "y_mm": 12.0,
-     "du_um": 2.8579009957910717,
-     "T_C": 100.41881090909092
+     "x_mm": -12.8,
+     "y_mm": 4.0,
+     "du_um": 1.3309992691052674,
+     "T_C": 90.56486374315183
     },
     {
      "rank": 374,
-     "x_mm": -12.0,
-     "y_mm": 11.2,
-     "du_um": 2.8578834844960186,
-     "T_C": 100.24896363636364
+     "x_mm": 12.8,
+     "y_mm": -6.4,
+     "du_um": 1.3307351982798268,
+     "T_C": 98.1948671668747
     },
     {
      "rank": 375,
-     "x_mm": -9.6,
-     "y_mm": 12.0,
-     "du_um": 2.85677827046916,
-     "T_C": 99.46310545454546
+     "x_mm": -12.8,
+     "y_mm": -3.2,
+     "du_um": 1.3305430580986006,
+     "T_C": 90.5096532258229
     },
     {
      "rank": 376,
-     "x_mm": 12.0,
-     "y_mm": -8.0,
-     "du_um": 2.856745027746489,
-     "T_C": 105.68939466324812
+     "x_mm": -12.8,
+     "y_mm": -4.0,
+     "du_um": 1.330231467489723,
+     "T_C": 90.50448330644119
     },
     {
      "rank": 377,
-     "x_mm": -12.0,
-     "y_mm": -11.2,
-     "du_um": 2.8567244710767876,
-     "T_C": 100.11042363636363
+     "x_mm": 12.8,
+     "y_mm": 6.4,
+     "du_um": 1.3300554474440107,
+     "T_C": 98.28752419437195
     },
     {
      "rank": 378,
-     "x_mm": -11.2,
-     "y_mm": -12.0,
-     "du_um": 2.856463404546454,
-     "T_C": 100.27138909090908
+     "x_mm": 0.0,
+     "y_mm": 12.8,
+     "du_um": 1.3273694845954542,
+     "T_C": 94.55923571428572
     },
     {
      "rank": 379,
-     "x_mm": 7.2,
-     "y_mm": 12.0,
-     "du_um": 2.8559341100866034,
-     "T_C": 104.38700757624545
+     "x_mm": 0.0,
+     "y_mm": -12.8,
+     "du_um": 1.3271415802411985,
+     "T_C": 94.38847500000001
     },
     {
      "rank": 380,
-     "x_mm": -9.6,
-     "y_mm": -12.0,
-     "du_um": 2.8553649188585215,
-     "T_C": 99.30583090909091
+     "x_mm": -0.8,
+     "y_mm": 12.8,
+     "du_um": 1.3269248778005214,
+     "T_C": 94.25029573476446
     },
     {
      "rank": 381,
      "x_mm": 5.6,
-     "y_mm": 12.8,
-     "du_um": 2.8508185233921925,
-     "T_C": 104.22676430337688
+     "y_mm": -12.8,
+     "du_um": 1.3266444595073597,
+     "T_C": 96.36971149569273
     },
     {
      "rank": 382,
-     "x_mm": 12.0,
-     "y_mm": 6.4,
-     "du_um": 2.8503569533658544,
-     "T_C": 105.50875986395783
+     "x_mm": 0.8,
+     "y_mm": 12.8,
+     "du_um": 1.3265160075917928,
+     "T_C": 94.85895063043262
     },
     {
      "rank": 383,
      "x_mm": 5.6,
-     "y_mm": -12.8,
-     "du_um": 2.848901045336236,
-     "T_C": 104.05755365554025
+     "y_mm": 12.8,
+     "du_um": 1.3264531701525126,
+     "T_C": 96.53562965017426
     },
     {
      "rank": 384,
-     "x_mm": 12.0,
-     "y_mm": -6.4,
-     "du_um": 2.848732826611375,
-     "T_C": 105.41186702821932
+     "x_mm": -0.8,
+     "y_mm": -12.8,
+     "du_um": 1.3263860490081831,
+     "T_C": 94.07981314237507
     },
     {
      "rank": 385,
-     "x_mm": 6.4,
-     "y_mm": 12.0,
-     "du_um": 2.8472863499948198,
-     "T_C": 103.99036094861582
+     "x_mm": 0.8,
+     "y_mm": -12.8,
+     "du_um": 1.3263225047796985,
+     "T_C": 94.68822361995221
     },
     {
      "rank": 386,
-     "x_mm": -7.2,
+     "x_mm": -1.6,
      "y_mm": 12.8,
-     "du_um": 2.845994534176838,
-     "T_C": 99.92407568973192
+     "du_um": 1.3258291619179947,
+     "T_C": 93.94087864884732
     },
     {
      "rank": 387,
-     "x_mm": 6.4,
-     "y_mm": -12.0,
-     "du_um": 2.845863087326813,
-     "T_C": 103.8213609486158
+     "x_mm": -4.8,
+     "y_mm": 12.8,
+     "du_um": 1.3257126768420582,
+     "T_C": 92.74530430673795
     },
     {
      "rank": 388,
-     "x_mm": -7.2,
+     "x_mm": -1.6,
      "y_mm": -12.8,
-     "du_um": 2.8441130761215656,
-     "T_C": 99.75874208921839
+     "du_um": 1.32550025322181,
+     "T_C": 93.77040245113136
     },
     {
      "rank": 389,
-     "x_mm": -12.0,
-     "y_mm": 12.0,
-     "du_um": 2.8419453491148228,
-     "T_C": 100.97763636363638
+     "x_mm": -4.8,
+     "y_mm": -12.8,
+     "du_um": 1.3254591991477527,
+     "T_C": 92.57772926329778
     },
     {
      "rank": 390,
-     "x_mm": -12.0,
-     "y_mm": -12.0,
-     "du_um": 2.8406708074759908,
-     "T_C": 100.83621818181818
+     "x_mm": 1.6,
+     "y_mm": 12.8,
+     "du_um": 1.3253312119473752,
+     "T_C": 95.15590473516446
     },
     {
      "rank": 391,
-     "x_mm": -12.8,
-     "y_mm": 7.2,
-     "du_um": 2.8399123113221223,
-     "T_C": 98.58014460491358
+     "x_mm": 1.6,
+     "y_mm": -12.8,
+     "du_um": 1.3250523038398017,
+     "T_C": 94.98535631763953
     },
     {
      "rank": 392,
-     "x_mm": -12.8,
-     "y_mm": -7.2,
-     "du_um": 2.838501381684095,
-     "T_C": 98.47612143538811
+     "x_mm": -2.4,
+     "y_mm": 12.8,
+     "du_um": 1.3243520681066843,
+     "T_C": 93.63982115354207
     },
     {
      "rank": 393,
-     "x_mm": 12.8,
-     "y_mm": 4.8,
-     "du_um": 2.8279861359134224,
-     "T_C": 105.9569015762927
+     "x_mm": -2.4,
+     "y_mm": -12.8,
+     "du_um": 1.324239795110648,
+     "T_C": 93.46974971494463
     },
     {
      "rank": 394,
-     "x_mm": 12.8,
-     "y_mm": -4.8,
-     "du_um": 2.826880681944587,
-     "T_C": 105.88339003353215
+     "x_mm": -3.2,
+     "y_mm": 12.8,
+     "du_um": 1.3235355679959013,
+     "T_C": 93.3413525371594
     },
     {
      "rank": 395,
-     "x_mm": -6.4,
+     "x_mm": -4.0,
      "y_mm": 12.8,
-     "du_um": 2.824293655716912,
-     "T_C": 99.97604320416809
+     "du_um": 1.3234492094237185,
+     "T_C": 93.0404147794973
     },
     {
      "rank": 396,
-     "x_mm": -6.4,
-     "y_mm": -12.8,
-     "du_um": 2.8224092029346264,
-     "T_C": 99.80839389538184
+     "x_mm": 2.4,
+     "y_mm": 12.8,
+     "du_um": 1.3233820262742306,
+     "T_C": 95.45491218647528
     },
     {
      "rank": 397,
-     "x_mm": -12.0,
-     "y_mm": 8.8,
-     "du_um": 2.8193745949038096,
-     "T_C": 98.43861141447854
+     "x_mm": -3.2,
+     "y_mm": -12.8,
+     "du_um": 1.32330497928346,
+     "T_C": 93.17189539430225
     },
     {
      "rank": 398,
-     "x_mm": -12.0,
-     "y_mm": -8.8,
-     "du_um": 2.8170197605066822,
-     "T_C": 98.31417409710545
+     "x_mm": 2.4,
+     "y_mm": -12.8,
+     "du_um": 1.3232081397028768,
+     "T_C": 95.28485979215485
     },
     {
      "rank": 399,
-     "x_mm": -12.8,
-     "y_mm": 6.4,
-     "du_um": 2.8159412824901016,
-     "T_C": 98.35441866040695
+     "x_mm": -4.0,
+     "y_mm": -12.8,
+     "du_um": 1.3231039689888586,
+     "T_C": 92.87194851413804
     },
     {
      "rank": 400,
-     "x_mm": -8.8,
-     "y_mm": 12.0,
-     "du_um": 2.8156841975390186,
-     "T_C": 99.21794691480436
+     "x_mm": 3.2,
+     "y_mm": 12.8,
+     "du_um": 1.3218084188359405,
+     "T_C": 95.74591220953232
     },
     {
      "rank": 401,
-     "x_mm": -12.8,
-     "y_mm": -6.4,
-     "du_um": 2.814853974491351,
-     "T_C": 98.25997914444568
+     "x_mm": 3.2,
+     "y_mm": -12.8,
+     "du_um": 1.3217085820709666,
+     "T_C": 95.57645506667518
     },
     {
      "rank": 402,
-     "x_mm": -8.8,
-     "y_mm": -12.0,
-     "du_um": 2.814086524174016,
-     "T_C": 99.05668082547491
+     "x_mm": 4.8,
+     "y_mm": -12.8,
+     "du_um": 1.3216500264273154,
+     "T_C": 96.11468469350358
     },
     {
      "rank": 403,
      "x_mm": 4.8,
      "y_mm": 12.8,
-     "du_um": 2.8134701713372103,
-     "T_C": 103.8396886249002
+     "du_um": 1.321440149501634,
+     "T_C": 96.2823335609476
     },
     {
      "rank": 404,
-     "x_mm": 4.8,
+     "x_mm": 4.0,
      "y_mm": -12.8,
-     "du_um": 2.8117164358167552,
-     "T_C": 103.66972433918593
+     "du_um": 1.3205985859263987,
+     "T_C": 95.8507685225094
     },
     {
      "rank": 405,
-     "x_mm": 12.8,
-     "y_mm": 4.0,
-     "du_um": 2.8112413980096584,
-     "T_C": 105.88734550701662
+     "x_mm": 4.0,
+     "y_mm": 12.8,
+     "du_um": 1.3205177190172643,
+     "T_C": 96.01931409689897
     },
     {
      "rank": 406,
      "x_mm": 12.8,
-     "y_mm": -4.0,
-     "du_um": 2.809987408221891,
-     "T_C": 105.82588626571714
+     "y_mm": -5.6,
+     "du_um": 1.319578717978102,
+     "T_C": 98.24655237198047
     },
     {
      "rank": 407,
-     "x_mm": 12.0,
-     "y_mm": 5.6,
-     "du_um": 2.801217702541504,
-     "T_C": 105.39050946268728
+     "x_mm": 12.8,
+     "y_mm": 0.0,
+     "du_um": 1.3194499999999998,
+     "T_C": 98.42151428571428
     },
     {
      "rank": 408,
-     "x_mm": 12.0,
-     "y_mm": -5.6,
-     "du_um": 2.7985308693647797,
-     "T_C": 105.30344114797089
+     "x_mm": 12.8,
+     "y_mm": -0.8,
+     "du_um": 1.3188864487733412,
+     "T_C": 98.40933990905309
     },
     {
      "rank": 409,
      "x_mm": 12.8,
-     "y_mm": 3.2,
-     "du_um": 2.79623805719336,
-     "T_C": 105.8337407829992
+     "y_mm": 5.6,
+     "du_um": 1.3187250250858567,
+     "T_C": 98.32900429227517
     },
     {
      "rank": 410,
      "x_mm": 12.8,
-     "y_mm": -3.2,
-     "du_um": 2.795268385427752,
-     "T_C": 105.78432834068505
+     "y_mm": 0.8,
+     "du_um": 1.3185020374860643,
+     "T_C": 98.42159758964634
     },
     {
      "rank": 411,
-     "x_mm": 5.6,
-     "y_mm": 12.0,
-     "du_um": 2.794005418867295,
-     "T_C": 103.58420978063273
+     "x_mm": 12.8,
+     "y_mm": -1.6,
+     "du_um": 1.3177192432185865,
+     "T_C": 98.39316525070646
     },
     {
      "rank": 412,
-     "x_mm": 5.6,
-     "y_mm": -12.0,
-     "du_um": 2.7939236445799356,
-     "T_C": 103.41501613367092
+     "x_mm": 12.8,
+     "y_mm": 1.6,
+     "du_um": 1.316924836461856,
+     "T_C": 98.4176742304818
     },
     {
      "rank": 413,
-     "x_mm": 4.0,
-     "y_mm": 12.8,
-     "du_um": 2.7927999773146297,
-     "T_C": 103.47449307170962
+     "x_mm": 12.8,
+     "y_mm": -2.4,
+     "du_um": 1.3156801397737117,
+     "T_C": 98.37909793653843
     },
     {
      "rank": 414,
-     "x_mm": 4.0,
-     "y_mm": -12.8,
-     "du_um": 2.7908560877678017,
-     "T_C": 103.30278616201274
+     "x_mm": 12.8,
+     "y_mm": 2.4,
+     "du_um": 1.3149932569897662,
+     "T_C": 98.41568218296125
     },
     {
      "rank": 415,
-     "x_mm": -5.6,
-     "y_mm": 12.8,
-     "du_um": 2.78915868667524,
-     "T_C": 100.08682205941767
+     "x_mm": 12.8,
+     "y_mm": -4.8,
+     "du_um": 1.3144140114311262,
+     "T_C": 98.287349038093
     },
     {
      "rank": 416,
-     "x_mm": -5.6,
-     "y_mm": -12.8,
-     "du_um": 2.7876374613544876,
-     "T_C": 99.91699851456873
+     "x_mm": 12.8,
+     "y_mm": -3.2,
+     "du_um": 1.3140893211059999,
+     "T_C": 98.35951140575186
     },
     {
      "rank": 417,
-     "x_mm": -12.0,
-     "y_mm": 8.0,
-     "du_um": 2.7834529549787534,
-     "T_C": 98.06968113429723
+     "x_mm": 12.8,
+     "y_mm": 4.8,
+     "du_um": 1.3134161419277914,
+     "T_C": 98.35898673512958
     },
     {
      "rank": 418,
-     "x_mm": -12.0,
-     "y_mm": 7.2,
-     "du_um": 2.7832357593522907,
-     "T_C": 97.81704927724908
+     "x_mm": 12.8,
+     "y_mm": 3.2,
+     "du_um": 1.3133635146196299,
+     "T_C": 98.40816705081454
     },
     {
      "rank": 419,
-     "x_mm": -8.0,
-     "y_mm": 12.0,
-     "du_um": 2.782910878996906,
-     "T_C": 99.10268380500398
+     "x_mm": 12.8,
+     "y_mm": -4.0,
+     "du_um": 1.3131985218813846,
+     "T_C": 98.3263560107423
     },
     {
      "rank": 420,
-     "x_mm": -12.0,
-     "y_mm": -8.0,
-     "du_um": 2.781968750982156,
-     "T_C": 97.95362133806411
+     "x_mm": 12.8,
+     "y_mm": 4.0,
+     "du_um": 1.3122547085555265,
+     "T_C": 98.38665997224948
     },
     {
      "rank": 421,
-     "x_mm": -7.2,
-     "y_mm": 12.0,
-     "du_um": 2.7815826849322307,
-     "T_C": 99.1154632673531
+     "x_mm": -12.0,
+     "y_mm": -10.4,
+     "du_um": 1.3069384160948283,
+     "T_C": 90.52620363636363
     },
     {
      "rank": 422,
-     "x_mm": -8.0,
+     "x_mm": -10.4,
      "y_mm": -12.0,
-     "du_um": 2.7813028372172908,
-     "T_C": 98.93816009586645
+     "du_um": 1.2973744730247332,
+     "T_C": 90.86140181818182
     },
     {
      "rank": 423,
-     "x_mm": -7.2,
-     "y_mm": -12.0,
-     "du_um": 2.779892614393892,
-     "T_C": 98.94833851881782
+     "x_mm": -12.0,
+     "y_mm": 10.4,
+     "du_um": 1.282879289452363,
+     "T_C": 90.65917454545455
     },
     {
      "rank": 424,
-     "x_mm": -12.0,
-     "y_mm": -7.2,
-     "du_um": 2.778573283804141,
-     "T_C": 97.70318272859346
+     "x_mm": -10.4,
+     "y_mm": 12.0,
+     "du_um": 1.2763895639454157,
+     "T_C": 91.00751272727273
     },
     {
      "rank": 425,
-     "x_mm": -12.8,
-     "y_mm": 5.6,
-     "du_um": 2.7783498368932253,
-     "T_C": 98.17333247384049
+     "x_mm": 10.4,
+     "y_mm": -12.0,
+     "du_um": 1.2728134278592602,
+     "T_C": 97.36748727272727
     },
     {
      "rank": 426,
-     "x_mm": -12.8,
-     "y_mm": -5.6,
-     "du_um": 2.7771770216816876,
-     "T_C": 98.08939090404374
+     "x_mm": 12.0,
+     "y_mm": -10.4,
+     "du_um": 1.261498091045879,
+     "T_C": 97.72247454545453
     },
     {
      "rank": 427,
-     "x_mm": -6.4,
+     "x_mm": 10.4,
      "y_mm": 12.0,
-     "du_um": 2.774318615921565,
-     "T_C": 99.20858971265761
+     "du_um": 1.2423259675103049,
+     "T_C": 97.52351636363636
     },
     {
      "rank": 428,
-     "x_mm": 3.2,
-     "y_mm": 12.8,
-     "du_um": 2.7742556747574905,
-     "T_C": 103.12093893705115
+     "x_mm": 12.0,
+     "y_mm": 10.4,
+     "du_um": 1.2404769822895036,
+     "T_C": 97.84879636363635
     },
     {
      "rank": 429,
-     "x_mm": -6.4,
-     "y_mm": -12.0,
-     "du_um": 2.77267994251069,
-     "T_C": 99.0395732486444
+     "x_mm": -12.0,
+     "y_mm": 9.6,
+     "du_um": 1.1253249017840194,
+     "T_C": 90.64637454545455
     },
     {
      "rank": 430,
-     "x_mm": 3.2,
-     "y_mm": -12.8,
-     "du_um": 2.772325060279471,
-     "T_C": 102.94797465133686
+     "x_mm": -12.0,
+     "y_mm": -9.6,
+     "du_um": 1.123570269994953,
+     "T_C": 90.51795636363637
     },
     {
      "rank": 431,
-     "x_mm": 12.8,
-     "y_mm": 2.4,
-     "du_um": 2.7712908010883393,
-     "T_C": 105.78824909765765
+     "x_mm": -9.6,
+     "y_mm": 12.0,
+     "du_um": 1.1158346599076587,
+     "T_C": 91.19078545454545
     },
     {
      "rank": 432,
-     "x_mm": -12.0,
-     "y_mm": 6.4,
-     "du_um": 2.7711004303795725,
-     "T_C": 97.61781912565458
+     "x_mm": -9.6,
+     "y_mm": -12.0,
+     "du_um": 1.1149712583183633,
+     "T_C": 91.03598363636365
     },
     {
      "rank": 433,
-     "x_mm": 12.8,
-     "y_mm": -2.4,
-     "du_um": 2.7707206140938623,
-     "T_C": 105.7511541269231
+     "x_mm": 9.6,
+     "y_mm": 12.0,
+     "du_um": 1.078404731236712,
+     "T_C": 97.50160363636363
     },
     {
      "rank": 434,
-     "x_mm": -12.0,
-     "y_mm": -6.4,
-     "du_um": 2.7698501774773336,
-     "T_C": 97.52112801580995
+     "x_mm": 9.6,
+     "y_mm": -12.0,
+     "du_um": 1.0771199601170878,
+     "T_C": 97.34680181818183
     },
     {
      "rank": 435,
-     "x_mm": -4.8,
-     "y_mm": 12.8,
-     "du_um": 2.7597036635366146,
-     "T_C": 100.24188717880456
+     "x_mm": 12.0,
+     "y_mm": 9.6,
+     "du_um": 1.06977449457335,
+     "T_C": 98.01918727272728
     },
     {
      "rank": 436,
      "x_mm": 12.0,
-     "y_mm": -4.0,
-     "du_um": 2.75944065890073,
-     "T_C": 105.1770202977509
+     "y_mm": -9.6,
+     "du_um": 1.0674154105970945,
+     "T_C": 97.8907690909091
     },
     {
      "rank": 437,
-     "x_mm": 12.0,
-     "y_mm": 4.8,
-     "du_um": 2.7588111343065074,
-     "T_C": 105.28918786827938
+     "x_mm": -12.0,
+     "y_mm": 8.8,
+     "du_um": 0.9992636162229627,
+     "T_C": 90.62525651024873
     },
     {
      "rank": 438,
-     "x_mm": -4.8,
-     "y_mm": -12.8,
-     "du_um": 2.7582035180146565,
-     "T_C": 100.07131328964046
+     "x_mm": -12.0,
+     "y_mm": -8.8,
+     "du_um": 0.9963691035622322,
+     "T_C": 90.50266252939345
     },
     {
      "rank": 439,
-     "x_mm": 12.0,
-     "y_mm": 3.2,
-     "du_um": 2.7579012136690957,
-     "T_C": 105.20163158743831
+     "x_mm": -8.8,
+     "y_mm": 12.0,
+     "du_um": 0.9873966087360674,
+     "T_C": 91.39313418280145
     },
     {
      "rank": 440,
-     "x_mm": 12.0,
-     "y_mm": -4.8,
-     "du_um": 2.757494549470935,
-     "T_C": 105.21398440657713
+     "x_mm": -8.8,
+     "y_mm": -12.0,
+     "du_um": 0.987018417830522,
+     "T_C": 91.2342272290269
     },
     {
      "rank": 441,
-     "x_mm": 12.0,
-     "y_mm": 4.0,
-     "du_um": 2.757309394644035,
-     "T_C": 105.23556222225271
+     "x_mm": 8.8,
+     "y_mm": -12.0,
+     "du_um": 0.945112699655339,
+     "T_C": 97.24668345702399
     },
     {
      "rank": 442,
-     "x_mm": 12.0,
-     "y_mm": -3.2,
-     "du_um": 2.7568175929935452,
-     "T_C": 105.15080096330601
+     "x_mm": 8.8,
+     "y_mm": 12.0,
+     "du_um": 0.9443081078112376,
+     "T_C": 97.40546981110691
     },
     {
      "rank": 443,
-     "x_mm": 12.8,
-     "y_mm": 0.0,
-     "du_um": 2.756571458638732,
-     "T_C": 105.72846428571428
+     "x_mm": 12.0,
+     "y_mm": -8.8,
+     "du_um": 0.9339610539110691,
+     "T_C": 98.01544386328145
     },
     {
      "rank": 444,
-     "x_mm": 12.8,
-     "y_mm": 1.6,
-     "du_um": 2.7517232686087416,
-     "T_C": 105.75333297134452
+     "x_mm": 12.0,
+     "y_mm": 8.8,
+     "du_um": 0.9336415547154822,
+     "T_C": 98.13756854267345
     },
     {
      "rank": 445,
-     "x_mm": 12.8,
-     "y_mm": 0.8,
-     "du_um": 2.751710183128466,
-     "T_C": 105.73691059013818
+     "x_mm": -12.0,
+     "y_mm": 8.0,
+     "du_um": 0.9096769152627143,
+     "T_C": 90.60054140579645
     },
     {
      "rank": 446,
-     "x_mm": 12.8,
-     "y_mm": -0.8,
-     "du_um": 2.7516475410039836,
-     "T_C": 105.72419867623273
+     "x_mm": -12.0,
+     "y_mm": -8.0,
+     "du_um": 0.9094976593412908,
+     "T_C": 90.4862779683481
     },
     {
      "rank": 447,
-     "x_mm": 12.8,
-     "y_mm": -1.6,
-     "du_um": 2.751462404814301,
-     "T_C": 105.72807121137812
+     "x_mm": -8.0,
+     "y_mm": -12.0,
+     "du_um": 0.8962372667581109,
+     "T_C": 91.45469117942473
     },
     {
      "rank": 448,
-     "x_mm": 4.8,
+     "x_mm": -8.0,
      "y_mm": 12.0,
-     "du_um": 2.7478031039597752,
-     "T_C": 103.18703443994583
+     "du_um": 0.8938495907840085,
+     "T_C": 91.6170293660945
     },
     {
      "rank": 449,
-     "x_mm": -4.0,
-     "y_mm": 12.8,
-     "du_um": 2.7467662179566474,
-     "T_C": 100.44457954483558
+     "x_mm": 8.0,
+     "y_mm": 12.0,
+     "du_um": 0.8519118212607818,
+     "T_C": 97.2536850155713
     },
     {
      "rank": 450,
-     "x_mm": 4.8,
+     "x_mm": 8.0,
      "y_mm": -12.0,
-     "du_um": 2.7464515437125403,
-     "T_C": 103.01540153801173
+     "du_um": 0.8517723448216823,
+     "T_C": 97.0907360556552
     },
     {
      "rank": 451,
-     "x_mm": 2.4,
-     "y_mm": 12.8,
-     "du_um": 2.745469907068115,
-     "T_C": 102.7712539507813
+     "x_mm": -12.0,
+     "y_mm": -7.2,
+     "du_um": 0.8453844134357329,
+     "T_C": 90.49667066239854
     },
     {
      "rank": 452,
-     "x_mm": -4.0,
-     "y_mm": -12.8,
-     "du_um": 2.7452397425003165,
-     "T_C": 100.27222240197844
+     "x_mm": 12.0,
+     "y_mm": -8.0,
+     "du_um": 0.8401951512535631,
+     "T_C": 98.10759665104574
     },
     {
      "rank": 453,
-     "x_mm": -12.8,
-     "y_mm": 4.8,
-     "du_um": 2.7450574472815465,
-     "T_C": 98.02739402386567
+     "x_mm": -12.0,
+     "y_mm": 7.2,
+     "du_um": 0.8399719905151346,
+     "T_C": 90.60189348643927
     },
     {
      "rank": 454,
-     "x_mm": 4.0,
-     "y_mm": 12.0,
-     "du_um": 2.744934158934996,
-     "T_C": 102.83342910192546
+     "x_mm": 12.0,
+     "y_mm": 8.0,
+     "du_um": 0.8391777841302207,
+     "T_C": 98.2219019066759
     },
     {
      "rank": 455,
-     "x_mm": -12.8,
-     "y_mm": -4.8,
-     "du_um": 2.7438355948374267,
-     "T_C": 97.9546325245453
+     "x_mm": -7.2,
+     "y_mm": 12.0,
+     "du_um": 0.8309061980679247,
+     "T_C": 91.88202906506618
     },
     {
      "rank": 456,
-     "x_mm": 4.0,
+     "x_mm": -7.2,
      "y_mm": -12.0,
-     "du_um": 2.74343579479768,
-     "T_C": 102.66057632149273
+     "du_um": 0.8295593133401428,
+     "T_C": 91.72180249834909
     },
     {
      "rank": 457,
-     "x_mm": 2.4,
-     "y_mm": -12.8,
-     "du_um": 2.743388395815013,
-     "T_C": 102.59814680792415
+     "x_mm": -12.0,
+     "y_mm": 6.4,
+     "du_um": 0.7906447294527491,
+     "T_C": 90.60363579373102
     },
     {
      "rank": 458,
-     "x_mm": 3.2,
-     "y_mm": 12.0,
-     "du_um": 2.7392476939623074,
-     "T_C": 102.48991491107712
+     "x_mm": -12.0,
+     "y_mm": -6.4,
+     "du_um": 0.7897176971082593,
+     "T_C": 90.50814976119128
     },
     {
      "rank": 459,
-     "x_mm": 3.2,
-     "y_mm": -12.0,
-     "du_um": 2.7375722131638724,
-     "T_C": 102.31591491107712
+     "x_mm": 7.2,
+     "y_mm": 12.0,
+     "du_um": 0.786796710826319,
+     "T_C": 97.08154380669819
     },
     {
      "rank": 460,
-     "x_mm": -3.2,
-     "y_mm": 12.8,
-     "du_um": 2.735539918137091,
-     "T_C": 100.67449078554708
+     "x_mm": 7.2,
+     "y_mm": -12.0,
+     "du_um": 0.7821679563418557,
+     "T_C": 96.91686814907199
     },
     {
      "rank": 461,
-     "x_mm": -3.2,
-     "y_mm": -12.8,
-     "du_um": 2.7342435534148706,
-     "T_C": 100.50190322786119
+     "x_mm": -6.4,
+     "y_mm": -12.0,
+     "du_um": 0.771183135448338,
+     "T_C": 92.00115059509199
     },
     {
      "rank": 462,
-     "x_mm": -12.8,
-     "y_mm": 4.0,
-     "du_um": 2.727952638914712,
-     "T_C": 97.92105149072421
+     "x_mm": -6.4,
+     "y_mm": 12.0,
+     "du_um": 0.7706875529171255,
+     "T_C": 92.16782131151813
     },
     {
      "rank": 463,
-     "x_mm": -12.8,
-     "y_mm": -4.0,
-     "du_um": 2.727021922690242,
-     "T_C": 97.85990603069753
+     "x_mm": 12.0,
+     "y_mm": -7.2,
+     "du_um": 0.766416162634125,
+     "T_C": 98.19896918224435
     },
     {
      "rank": 464,
-     "x_mm": -5.6,
-     "y_mm": 12.0,
-     "du_um": 2.726843499994371,
-     "T_C": 99.33367663792853
+     "x_mm": 12.0,
+     "y_mm": 7.2,
+     "du_um": 0.7650067090114943,
+     "T_C": 98.3042338244669
     },
     {
      "rank": 465,
-     "x_mm": -5.6,
-     "y_mm": -12.0,
-     "du_um": 2.726596958400173,
-     "T_C": 99.16320179210727
+     "x_mm": -12.0,
+     "y_mm": 5.6,
+     "du_um": 0.7566489025650035,
+     "T_C": 90.58094259958946
     },
     {
      "rank": 466,
      "x_mm": -12.0,
-     "y_mm": 5.6,
-     "du_um": 2.722204208844576,
-     "T_C": 97.44485001808383
+     "y_mm": -5.6,
+     "du_um": 0.7552084587257438,
+     "T_C": 90.49495753314037
     },
     {
      "rank": 467,
-     "x_mm": 1.6,
-     "y_mm": 12.8,
-     "du_um": 2.7212842003982436,
-     "T_C": 102.43028565239747
+     "x_mm": -12.0,
+     "y_mm": 4.8,
+     "du_um": 0.7388274380264344,
+     "T_C": 90.5545716856095
     },
     {
      "rank": 468,
-     "x_mm": 12.0,
-     "y_mm": 0.0,
-     "du_um": 2.7205872892678142,
-     "T_C": 105.10607272727273
+     "x_mm": -12.0,
+     "y_mm": -4.8,
+     "du_um": 0.7380776104707496,
+     "T_C": 90.4807424523018
     },
     {
      "rank": 469,
-     "x_mm": 12.0,
-     "y_mm": 2.4,
-     "du_um": 2.7205656391968684,
-     "T_C": 105.15210715566548
+     "x_mm": -5.6,
+     "y_mm": -12.0,
+     "du_um": 0.7350500827568573,
+     "T_C": 92.27068530129273
     },
     {
      "rank": 470,
-     "x_mm": -12.0,
-     "y_mm": -5.6,
-     "du_um": 2.719883675171245,
-     "T_C": 97.3579577666371
+     "x_mm": -5.6,
+     "y_mm": 12.0,
+     "du_um": 0.7338453577381312,
+     "T_C": 92.43897841666183
     },
     {
      "rank": 471,
-     "x_mm": 12.0,
-     "y_mm": -2.4,
-     "du_um": 2.7197718465901306,
-     "T_C": 105.11359400311274
+     "x_mm": 6.4,
+     "y_mm": -12.0,
+     "du_um": 0.7323246094640691,
+     "T_C": 96.71619263976424
     },
     {
      "rank": 472,
-     "x_mm": 1.6,
-     "y_mm": -12.8,
-     "du_um": 2.719281955441845,
-     "T_C": 102.25636499334425
+     "x_mm": 6.4,
+     "y_mm": 12.0,
+     "du_um": 0.7309163396544544,
+     "T_C": 96.88290402647257
     },
     {
      "rank": 473,
-     "x_mm": 0.0,
-     "y_mm": 12.8,
-     "du_um": 2.716189790287537,
-     "T_C": 101.79410714285714
+     "x_mm": -12.0,
+     "y_mm": 4.0,
+     "du_um": 0.7297708902337794,
+     "T_C": 90.55694972673564
     },
     {
      "rank": 474,
-     "x_mm": 0.8,
-     "y_mm": 12.8,
-     "du_um": 2.7161210257857658,
-     "T_C": 102.10706133360416
+     "x_mm": -12.0,
+     "y_mm": -4.0,
+     "du_um": 0.729141608160433,
+     "T_C": 90.4951462147609
     },
     {
      "rank": 475,
-     "x_mm": -2.4,
-     "y_mm": 12.8,
-     "du_um": 2.7153032283441285,
-     "T_C": 100.9247917299013
+     "x_mm": -12.0,
+     "y_mm": 3.2,
+     "du_um": 0.7221436174865535,
+     "T_C": 90.55996756171908
     },
     {
      "rank": 476,
-     "x_mm": 0.0,
-     "y_mm": -12.8,
-     "du_um": 2.714181264104014,
-     "T_C": 101.62014285714287
+     "x_mm": -12.0,
+     "y_mm": -3.2,
+     "du_um": 0.7217547596606685,
+     "T_C": 90.5100392333884
     },
     {
      "rank": 477,
-     "x_mm": 0.8,
-     "y_mm": -12.8,
-     "du_um": 2.714061920895957,
-     "T_C": 101.93306133360416
+     "x_mm": -12.0,
+     "y_mm": 0.0,
+     "du_um": 0.7201011440917959,
+     "T_C": 90.52833818181819
     },
     {
      "rank": 478,
-     "x_mm": -2.4,
-     "y_mm": -12.8,
-     "du_um": 2.7138515955073848,
-     "T_C": 100.75182744418703
+     "x_mm": -12.0,
+     "y_mm": -0.8,
+     "du_um": 0.7198940875056683,
+     "T_C": 90.51013574795927
     },
     {
      "rank": 479,
-     "x_mm": -12.8,
-     "y_mm": 3.2,
-     "du_um": 2.7129883844223253,
-     "T_C": 97.8383436629616
+     "x_mm": -12.0,
+     "y_mm": 0.8,
+     "du_um": 0.7196705299495035,
+     "T_C": 90.52266895053964
     },
     {
      "rank": 480,
-     "x_mm": -12.8,
-     "y_mm": -3.2,
-     "du_um": 2.712158403668164,
-     "T_C": 97.78880230361324
+     "x_mm": -12.0,
+     "y_mm": -1.6,
+     "du_um": 0.7187477474636468,
+     "T_C": 90.49089815271044
     },
     {
      "rank": 481,
-     "x_mm": -0.8,
-     "y_mm": 12.8,
-     "du_um": 2.706998260557256,
-     "T_C": 101.48819740874598
+     "x_mm": -12.0,
+     "y_mm": 1.6,
+     "du_um": 0.7187039200490145,
+     "T_C": 90.51596502105056
     },
     {
      "rank": 482,
-     "x_mm": -0.8,
-     "y_mm": -12.8,
-     "du_um": 2.7051772589293783,
-     "T_C": 101.31398312303168
+     "x_mm": -12.0,
+     "y_mm": -2.4,
+     "du_um": 0.718544594712797,
+     "T_C": 90.50160042528
     },
     {
      "rank": 483,
-     "x_mm": 12.0,
-     "y_mm": -0.8,
-     "du_um": 2.7037379721903294,
-     "T_C": 105.09185172245819
+     "x_mm": -12.0,
+     "y_mm": 2.4,
+     "du_um": 0.7183852292963585,
+     "T_C": 90.53926160972873
     },
     {
      "rank": 484,
-     "x_mm": -1.6,
-     "y_mm": 12.8,
-     "du_um": 2.701547404390072,
-     "T_C": 101.19369380648763
+     "x_mm": -4.8,
+     "y_mm": -12.0,
+     "du_um": 0.714795690531982,
+     "T_C": 92.54770634167022
     },
     {
      "rank": 485,
-     "x_mm": 12.0,
-     "y_mm": 0.8,
-     "du_um": 2.7013274872003574,
-     "T_C": 105.10185172245818
+     "x_mm": -4.8,
+     "y_mm": 12.0,
+     "du_um": 0.7136873745979725,
+     "T_C": 92.71721726531624
     },
     {
      "rank": 486,
-     "x_mm": -1.6,
-     "y_mm": -12.8,
-     "du_um": 2.7000996518906604,
-     "T_C": 101.0197731474344
+     "x_mm": 12.0,
+     "y_mm": -6.4,
+     "du_um": 0.7113607865553243,
+     "T_C": 98.28052389704946
     },
     {
      "rank": 487,
-     "x_mm": 2.4,
-     "y_mm": 12.0,
-     "du_um": 2.6984947004331423,
-     "T_C": 102.13098398645091
+     "x_mm": 12.0,
+     "y_mm": 6.4,
+     "du_um": 0.7102552362818684,
+     "T_C": 98.37597490651723
     },
     {
      "rank": 488,
-     "x_mm": -3.2,
-     "y_mm": 12.0,
-     "du_um": 2.6971237298450856,
-     "T_C": 99.98828214300623
+     "x_mm": -4.0,
+     "y_mm": -12.0,
+     "du_um": 0.7037400046617853,
+     "T_C": 92.85759474498472
     },
     {
      "rank": 489,
-     "x_mm": 2.4,
-     "y_mm": -12.0,
-     "du_um": 2.6969398860919163,
-     "T_C": 101.95674585779273
+     "x_mm": -4.0,
+     "y_mm": 12.0,
+     "du_um": 0.7020943931770255,
+     "T_C": 93.03157350842272
     },
     {
      "rank": 490,
-     "x_mm": -3.2,
+     "x_mm": 5.6,
      "y_mm": -12.0,
-     "du_um": 2.6957408914126297,
-     "T_C": 99.81448721626249
+     "du_um": 0.6987843801470178,
+     "T_C": 96.4610794673971
     },
     {
      "rank": 491,
-     "x_mm": -4.0,
+     "x_mm": 5.6,
      "y_mm": 12.0,
-     "du_um": 2.6938301000882707,
-     "T_C": 99.7287058965731
+     "du_um": 0.6974922891628664,
+     "T_C": 96.631261865116
     },
     {
      "rank": 492,
-     "x_mm": -4.0,
+     "x_mm": -3.2,
      "y_mm": -12.0,
-     "du_um": 2.6926267935319643,
-     "T_C": 99.55555733517055
+     "du_um": 0.6928665285118742,
+     "T_C": 93.17710347146866
     },
     {
      "rank": 493,
-     "x_mm": -4.8,
+     "x_mm": -3.2,
      "y_mm": 12.0,
-     "du_um": 2.691078834931348,
-     "T_C": 99.49928269269638
+     "du_um": 0.6921815435594171,
+     "T_C": 93.34833801692321
     },
     {
      "rank": 494,
-     "x_mm": -4.8,
+     "x_mm": -2.4,
      "y_mm": -12.0,
-     "du_um": 2.6896589172159038,
-     "T_C": 99.32712012395365
+     "du_um": 0.687238465707168,
+     "T_C": 93.47367395705675
     },
     {
      "rank": 495,
-     "x_mm": -12.8,
-     "y_mm": 2.4,
-     "du_um": 2.6884248059669704,
-     "T_C": 97.77176060806255
+     "x_mm": -2.4,
+     "y_mm": 12.0,
+     "du_um": 0.686353786077256,
+     "T_C": 93.64547994110873
     },
     {
      "rank": 496,
-     "x_mm": 12.0,
-     "y_mm": 1.6,
-     "du_um": 2.6878178196707125,
-     "T_C": 105.10698893566791
+     "x_mm": -1.6,
+     "y_mm": -12.0,
+     "du_um": 0.684982220245678,
+     "T_C": 93.77171165757963
     },
     {
      "rank": 497,
-     "x_mm": -12.8,
-     "y_mm": -2.4,
-     "du_um": 2.6878118828032083,
-     "T_C": 97.73440613022852
+     "x_mm": -1.6,
+     "y_mm": 12.0,
+     "du_um": 0.684107349423777,
+     "T_C": 93.94383747770196
     },
     {
      "rank": 498,
-     "x_mm": 12.0,
-     "y_mm": -1.6,
-     "du_um": 2.6875200987386245,
-     "T_C": 105.0812653672223
+     "x_mm": -0.8,
+     "y_mm": -12.0,
+     "du_um": 0.6834650037992971,
+     "T_C": 94.09968319383128
     },
     {
      "rank": 499,
-     "x_mm": 0.0,
-     "y_mm": 12.0,
-     "du_um": 2.6820659990825564,
-     "T_C": 101.14898181818182
+     "x_mm": 4.8,
+     "y_mm": -12.0,
+     "du_um": 0.6832126341208518,
+     "T_C": 96.1851100801866
     },
     {
      "rank": 500,
-     "x_mm": 0.0,
-     "y_mm": -12.0,
-     "du_um": 2.6804071701037904,
-     "T_C": 100.97398181818181
+     "x_mm": -0.8,
+     "y_mm": 12.0,
+     "du_um": 0.6829451573402266,
+     "T_C": 94.26927361006835
     },
     {
      "rank": 501,
-     "x_mm": -12.0,
-     "y_mm": 4.8,
-     "du_um": 2.680162228622064,
-     "T_C": 97.2997694504268
+     "x_mm": 4.8,
+     "y_mm": 12.0,
+     "du_um": 0.6814516814685425,
+     "T_C": 96.35396660392925
     },
     {
      "rank": 502,
-     "x_mm": -12.0,
-     "y_mm": -4.8,
-     "du_um": 2.6790231604626893,
-     "T_C": 97.22537354940158
+     "x_mm": 0.0,
+     "y_mm": -12.0,
+     "du_um": 0.6806912945037733,
+     "T_C": 94.42355272727272
     },
     {
      "rank": 503,
-     "x_mm": -12.0,
-     "y_mm": 4.0,
-     "du_um": 2.6782722702106434,
-     "T_C": 97.21287951946655
+     "x_mm": 0.0,
+     "y_mm": 12.0,
+     "du_um": 0.6800106746877237,
+     "T_C": 94.59598727272727
     },
     {
      "rank": 504,
-     "x_mm": -12.0,
-     "y_mm": 3.2,
-     "du_um": 2.6782273297555537,
-     "T_C": 97.15336996595089
+     "x_mm": 0.8,
+     "y_mm": -12.0,
+     "du_um": 0.6777309254670087,
+     "T_C": 94.72130764819636
     },
     {
      "rank": 505,
-     "x_mm": -12.0,
-     "y_mm": -4.0,
-     "du_um": 2.6771882321367344,
-     "T_C": 97.15008674008055
+     "x_mm": 0.8,
+     "y_mm": 12.0,
+     "du_um": 0.6768628722692447,
+     "T_C": 94.89368401183273
     },
     {
      "rank": 506,
-     "x_mm": -12.0,
-     "y_mm": -3.2,
-     "du_um": 2.677150775958313,
-     "T_C": 97.10276651821526
+     "x_mm": 12.0,
+     "y_mm": -5.6,
+     "du_um": 0.6764992678199904,
+     "T_C": 98.32096274863744
     },
     {
      "rank": 507,
-     "x_mm": -12.8,
-     "y_mm": 0.0,
-     "du_um": 2.6739500000214633,
-     "T_C": 97.68591071428571
+     "x_mm": 4.0,
+     "y_mm": -12.0,
+     "du_um": 0.6750932318351396,
+     "T_C": 95.91724706036182
     },
     {
      "rank": 508,
-     "x_mm": -12.8,
-     "y_mm": 1.6,
-     "du_um": 2.669660444588486,
-     "T_C": 97.72171218197532
+     "x_mm": 12.0,
+     "y_mm": 5.6,
+     "du_um": 0.674446120466296,
+     "T_C": 98.40579325365054
     },
     {
      "rank": 509,
-     "x_mm": -12.8,
-     "y_mm": 0.8,
-     "du_um": 2.66964885822109,
-     "T_C": 97.69694712899991
+     "x_mm": 1.6,
+     "y_mm": -12.0,
+     "du_um": 0.6740683479530065,
+     "T_C": 95.01689231525316
     },
     {
      "rank": 510,
-     "x_mm": -12.8,
-     "y_mm": -0.8,
-     "du_um": 2.669292300930893,
-     "T_C": 97.6843041836532
+     "x_mm": 4.0,
+     "y_mm": 12.0,
+     "du_um": 0.6734609778955918,
+     "T_C": 96.08776289449165
     },
     {
      "rank": 511,
-     "x_mm": -12.8,
-     "y_mm": -1.6,
-     "du_um": 2.669155046560904,
-     "T_C": 97.69668534505712
+     "x_mm": 1.6,
+     "y_mm": 12.0,
+     "du_um": 0.672843257706287,
+     "T_C": 95.18921009268418
     },
     {
      "rank": 512,
-     "x_mm": 0.8,
+     "x_mm": 3.2,
      "y_mm": -12.0,
-     "du_um": 2.6677883618060454,
-     "T_C": 101.28167551905455
+     "du_um": 0.6713744459279155,
+     "T_C": 95.64448743358906
     },
     {
      "rank": 513,
-     "x_mm": 0.8,
-     "y_mm": 12.0,
-     "du_um": 2.6669886127004756,
-     "T_C": 101.4539636051491
+     "x_mm": 2.4,
+     "y_mm": -12.0,
+     "du_um": 0.6708564042214512,
+     "T_C": 95.336367546352
     },
     {
      "rank": 514,
-     "x_mm": -2.4,
+     "x_mm": 3.2,
      "y_mm": 12.0,
-     "du_um": 2.6624960580963237,
-     "T_C": 100.24030711379638
+     "du_um": 0.6700125448253349,
+     "T_C": 95.8157219790436
     },
     {
      "rank": 515,
-     "x_mm": -2.4,
-     "y_mm": -12.0,
-     "du_um": 2.6612182229159846,
-     "T_C": 100.06592494261018
+     "x_mm": 2.4,
+     "y_mm": 12.0,
+     "du_um": 0.6695373368557738,
+     "T_C": 95.50586368241963
     },
     {
      "rank": 516,
-     "x_mm": 1.6,
-     "y_mm": 12.0,
-     "du_um": 2.659863325793698,
-     "T_C": 101.77237651297553
+     "x_mm": 12.0,
+     "y_mm": -4.8,
+     "du_um": 0.6586220313495629,
+     "T_C": 98.34777457771733
     },
     {
      "rank": 517,
-     "x_mm": -0.8,
-     "y_mm": 12.0,
-     "du_um": 2.6587864994645587,
-     "T_C": 100.82386693703273
+     "x_mm": 12.0,
+     "y_mm": 4.8,
+     "du_um": 0.6559993798955784,
+     "T_C": 98.42093049329766
     },
     {
      "rank": 518,
-     "x_mm": 1.6,
-     "y_mm": -12.0,
-     "du_um": 2.6583602861066895,
-     "T_C": 101.5976382729419
+     "x_mm": 12.0,
+     "y_mm": -4.0,
+     "du_um": 0.6480710110510169,
+     "T_C": 98.39103244863746
     },
     {
      "rank": 519,
-     "x_mm": -0.8,
-     "y_mm": -12.0,
-     "du_um": 2.657252614131829,
-     "T_C": 100.64875007898182
+     "x_mm": 12.0,
+     "y_mm": 4.0,
+     "du_um": 0.6468778991708161,
+     "T_C": 98.45287777879399
     },
     {
      "rank": 520,
-     "x_mm": -12.0,
-     "y_mm": 2.4,
-     "du_um": 2.641581429761318,
-     "T_C": 97.08465483665054
+     "x_mm": 12.0,
+     "y_mm": -3.2,
+     "du_um": 0.6413203705273458,
+     "T_C": 98.43289913302459
     },
     {
      "rank": 521,
-     "x_mm": -12.0,
+     "x_mm": 12.0,
      "y_mm": 0.0,
-     "du_um": 2.6415072774634867,
-     "T_C": 97.01623272727272
+     "du_um": 0.639801819548462,
+     "T_C": 98.49120181818182
     },
     {
      "rank": 522,
-     "x_mm": -1.6,
-     "y_mm": 12.0,
-     "du_um": 2.6389486038113397,
-     "T_C": 100.51008861168243
+     "x_mm": 12.0,
+     "y_mm": -0.8,
+     "du_um": 0.639761180032185,
+     "T_C": 98.47065643694256
     },
     {
      "rank": 523,
-     "x_mm": -12.0,
-     "y_mm": -2.4,
-     "du_um": 2.6388479465115675,
-     "T_C": 97.0444722593
+     "x_mm": 12.0,
+     "y_mm": 3.2,
+     "du_um": 0.6395760046453848,
+     "T_C": 98.48274439894206
     },
     {
      "rank": 524,
-     "x_mm": -1.6,
-     "y_mm": -12.0,
-     "du_um": 2.6376209755562705,
-     "T_C": 100.33495773169925
+     "x_mm": 12.0,
+     "y_mm": -1.6,
+     "du_um": 0.6391565743090362,
+     "T_C": 98.44476040923847
     },
     {
      "rank": 525,
-     "x_mm": -12.0,
+     "x_mm": 12.0,
      "y_mm": 0.8,
-     "du_um": 2.6251768356700467,
-     "T_C": 97.01682633653672
+     "du_um": 0.6389998703502816,
+     "T_C": 98.48127285321746
     },
     {
      "rank": 526,
-     "x_mm": -12.0,
-     "y_mm": -0.8,
-     "du_um": 2.622445773084819,
-     "T_C": 97.00089910202327
+     "x_mm": 12.0,
+     "y_mm": -2.4,
+     "du_um": 0.6382441371694992,
+     "T_C": 98.44260388304801
     },
     {
      "rank": 527,
-     "x_mm": -12.0,
+     "x_mm": 12.0,
      "y_mm": 1.6,
-     "du_um": 2.6096812317356495,
-     "T_C": 97.02605029124712
+     "du_um": 0.6377167776255864,
+     "T_C": 98.46995634908251
     },
     {
      "rank": 528,
-     "x_mm": -12.0,
-     "y_mm": -1.6,
-     "du_um": 2.6090030869697807,
-     "T_C": 97.0002911242779
+     "x_mm": 12.0,
+     "y_mm": 2.4,
+     "du_um": 0.6362489585882635,
+     "T_C": 98.478508722976
     }
    ],
    "critical": {
     "rank": 1,
     "x_mm": 14.4,
     "y_mm": 14.4,
-    "du_um": 4.271565318571922,
-    "T_C": 109.77763636363636
+    "du_um": 3.098099628297885,
+    "T_C": 97.41916363636362
    }
   },
-  "wall_s": 1441.7601585388184,
+  "wall_s": 2754.6098189353943,
   "structural_solver": "ITERATIVE CHOLESKY",
-  "structural_threads": 10
+  "structural_threads": 1
  }
 }

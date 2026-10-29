@@ -27,6 +27,14 @@ NORTON_T_MAX_C = 125.0
 #: melting onset of the joint alloy (SAC305, near-eutectic Sn-Ag-Cu: about 217 C).
 #: Context only: it flags an operating point as physically inadmissible, it ranks nothing.
 SAC305_SOLIDUS_C = 217.0
+
+
+def hottest_joint_C(mech):
+    """The hottest of ALL searched joint sites. Admissibility is decided on it, not on the
+    critical (largest-du) joint: one joint at the melting onset makes the operating point
+    inadmissible whichever joint is critical."""
+    js = mech["joint_search"]
+    return max([r["T_C"] for r in js["ranked"]] + [js["critical"]["T_C"]])
 import sys as _sys                                                    # noqa: E402
 _sys.path.insert(0, str(R / "scripts"))
 import final_closure_physical_etm as E                              # noqa: E402
@@ -46,6 +54,10 @@ def main():
             r = json.loads(pf.read_text()) if pf.exists() else None
             if r is None or "mechanics" not in r:
                 continue
+            if not E.current_lineage(r):
+                raise RuntimeError(f"{pf.name} is not of the corrected lineage (variant "
+                                   f"{r.get('architecture_variant')}, no in-cell E-T "
+                                   "temperatures): rerun it before any decision")
             for x in r["ledger_rows"]:
                 rows.append(dict(x, T_converged=True))
             th, mm, h = r["thermal"], r["mechanics"], r["et_history"][-1]
@@ -59,6 +71,12 @@ def main():
             lm = local_production(arch, scen, resp)
             final.append({
                 "arch": arch, "scenario": scen,
+                "architecture_variant": r.get("architecture_variant"),
+                "hv_feed": r.get("hv_feed"),
+                "forbidden_terms": sorted({x["term"] for x in r["ledger_rows"]}
+                                          & {"P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return",
+                                             "P_BGA_supply", "P_BGA_return"})
+                if r.get("hv_feed") == "DIRECT_FEED" else [],
                 "P_loss_w": r["P_loss_w"], "I_48_avg_a": r["i_hv_avg_a"],
                 "T_max_C": th["T_max_C"], "T_die_mean_C": h["T_die_mean_C"],
                 "T_conv_mean_C": h["T_conv_C"],
@@ -75,7 +93,9 @@ def main():
                 "local_stab_change_pct": resp.get("stab_change_pct"),
                 "local_mesh_change_pct_L0_L1": lc.get("mesh_change_pct"),
                 "T_joint_outside_norton_calibration": crit["T_C"] > NORTON_T_MAX_C,
-                "T_joint_at_or_above_solder_solidus": crit["T_C"] >= SAC305_SOLIDUS_C,
+                "T_joint_hottest_C": hottest_joint_C(mm),
+                "T_joint_at_or_above_solder_solidus": (hottest_joint_C(mm)
+                                                       >= SAC305_SOLIDUS_C),
                 "et_iterations": len(r["et_history"]), "et_converged": r["et_converged"],
                 "et_final_max_dT_K": h["max_dT_K"], "et_final_dP_rel": h["dP_rel"],
                 "et_wall_s": r["et_wall_s"], "mech_wall_s": mm["wall_s"],
@@ -112,12 +132,46 @@ def main():
     (D / "coupling_checks.json").write_text(json.dumps(coupling_checks(), indent=1,
                                                        default=float))
     (D / "final_results.json").write_text(json.dumps(final, indent=1, default=float))
+    (D / "control_results.json").write_text(json.dumps(control_results(final), indent=1,
+                                                       default=float))
     (D / "ordering.json").write_text(json.dumps(ordering(final, mc), indent=1, default=float))
     write_decision(final, audit_pass)
     for f in final:
         print("%s %s P=%.3f Tmax=%.2f warp=%.2f du=%.4f d_eps=%s" % (
             f["arch"], f["scenario"], f["P_loss_w"], f["T_max_C"],
             f["die_warpage_pv_um"], f["du_c_um"], f["d_eps_in_per_cycle"]))
+
+
+def control_results(final):
+    """CONTROLLED_BGA_FED_Z1_VS_Z2_EXPERIMENT: the BGA-fed Z2 control (same corrected
+    geometry, only the 48 V path differs) against the direct-fed Z2 and Z1, at HV-S0."""
+    out = {"statement": ("This controlled experiment isolates the effect of BGA placement/cutout "
+                         "when both architectures are forced to use an identical package-level "
+                         "48-V feed. It is not the primary Z2 construction."), "cases": {}}
+    f = E.case_path("Z2BF", "HV_S0")
+    if not f.exists():
+        return out
+    r = json.loads(f.read_text())
+    if r.get("architecture_variant") != "Z2_BGA_FED_CONTROL" or not E.current_lineage(r):
+        raise RuntimeError(f"{f.name} is not the BGA-fed control of the corrected lineage")
+    mm = r.get("mechanics") or {}
+    crit = (mm.get("joint_search") or {}).get("critical") or {}
+    pkg = {x["term"]: x["P_w"] for x in r["ledger_rows"] if x["term"].startswith(("P_pkg_RDL_HV",
+                                                                                "P_BGA_"))}
+    out["cases"]["Z2BF_HV_S0"] = {
+        "architecture_variant": r["architecture_variant"], "P_loss_w": r["P_loss_w"],
+        "T_max_C": r["thermal"]["T_max_C"], "die_warpage_pv_um": mm.get("die_warpage_pv_um"),
+        "du_c_um": crit.get("du_um"), "T_joint_C": crit.get("T_C"),
+        "package_48v_terms_w": pkg, "case_file": f.name}
+    ref = {x["arch"]: x for x in final if x["scenario"] == "HV_S0"}
+    for a in ("Z1", "Z2"):
+        if a in ref:
+            out["cases"][f"{a}_HV_S0"] = {k: ref[a][k] for k in
+                                          ("architecture_variant", "P_loss_w", "T_max_C",
+                                           "die_warpage_pv_um", "du_c_um", "T_joint_C")}
+    if "Z2" in ref:
+        out["direct_feed_minus_control_w"] = ref["Z2"]["P_loss_w"] - r["P_loss_w"]
+    return out
 
 
 def _q(r):
@@ -147,8 +201,7 @@ def coupling_checks():
             continue
         r = json.loads(pf.read_text())
         h = r["et_history"][-1]
-        temps = {"conv": h["T_conv_C"], "bga": h["T_bga_C"], "sub": h["T_sub_C"],
-                 "interface": h["T_interface_C"]}
+        temps = E.temps_from_history(h)          # every converged temperature held
         tsv = lambda rows: sum(x["P_w"] for x in rows if x["term"].startswith("P_TSV_"))
         hot = tsv(r["ledger_rows"])
         cold_rows = FL.ledger(arch, "HV_S0", dict(temps, sub=20.0), r["i_hv_avg_a"])
@@ -161,7 +214,9 @@ def coupling_checks():
     # (Z2-PASSIVE). Counted on the production mesh, not asserted; the count is cached per
     # mesh level because building the production mesh takes minutes.
     prev = (J("coupling_checks.json") or {}).get("z2_cutout_underside") or {}
-    if prev.get("mesh_refine") == list(E.PRODUCTION_REFINE):
+    z2c = E.case_path("Z2", "HV_S0")
+    n_el = json.loads(z2c.read_text())["thermal"]["n_elems"] if z2c.exists() else None
+    if prev.get("mesh_refine") == list(E.PRODUCTION_REFINE) and prev.get("n_elems") == n_el:
         zc = prev
     else:
         import numpy as np
@@ -172,7 +227,8 @@ def coupling_checks():
         half = 0.5 * 23.36
         inside = int(np.sum((np.abs(c[:, 0]) < half) & (np.abs(c[:, 1]) < half)))
         zc = {"bottom_film_faces": int(len(bot)), "faces_inside_cutout": inside,
-              "adiabatic": inside == 0, "mesh_refine": list(E.PRODUCTION_REFINE)}
+              "adiabatic": inside == 0, "mesh_refine": list(E.PRODUCTION_REFINE),
+              "n_elems": int(m.n_elems)}
     return {"tsv_temperature_coupling": out, "z2_cutout_underside": zc,
             "note": "only T_sub changed; every other temperature held at its converged value"}
 
@@ -210,13 +266,17 @@ def mesh_convergence():
     only as a sensitivity because it is not nested."""
     tag = lambda r: "r11" if tuple(r) == (1, 1) else f"r{r[0]}{r[1]}"
     P = tuple(E.PRODUCTION_REFINE)
-    cases = {}
+    cases, stale = {}, []
     for arch in ("Z1", "Z2"):
         lv = {}
         for r in set(E.INPLANE_SEQUENCE) | set(E.THROUGH_THICKNESS):
             f = E.case_path(arch, "HV_S0", 1.1, r)
             if f.exists():
-                lv[tag(r)] = _q(json.loads(f.read_text()))
+                j = json.loads(f.read_text())
+                if not E.current_lineage(j):        # an older lineage never enters a ladder
+                    stale.append(f.name)
+                    continue
+                lv[tag(r)] = _q(j)
         if not lv:
             continue
         seq = [tag(r) for r in E.INPLANE_SEQUENCE if tag(r) in lv]
@@ -271,6 +331,9 @@ def mesh_convergence():
             else:
                 status[k] = "unbounded"
         rm = J(f"etm_{arch}_HV_S0_h0.8.json")
+        if rm and not E.current_lineage(rm):
+            stale.append(f"etm_{arch}_HV_S0_h0.8.json")
+            rm = None
         remesh = None
         if rm and "r11" in lv:
             qr = _q(rm)
@@ -299,6 +362,7 @@ def mesh_convergence():
     for f in sorted((D / "solver_check").glob("*.json")):
         checks[f.stem] = json.loads(f.read_text())
     return {"tolerance_rel": E.MESH_TOL_REL, "declared_before_reading": True,
+            "stale_lineage_files_skipped": stale,
             "production_refine": list(P), "production_label": E.production_label(),
             "production_reason": reason,
             "method": "nested refinement of the h_xy = 1.1 mm grid: rN1 splits every in-plane "
@@ -343,6 +407,11 @@ def scenario_classes(final):
                                    f"{', '.join(ext)} joint lies beyond the Norton card's "
                                    "temperature calibration, so its local response is "
                                    "EXTRAPOLATED."}
+        elif len({x["arch"] for x in rows}) < 2:
+            out[s] = {"class": "incomplete",
+                      "statement": f"{SCEN_LABEL[s]} is incomplete: "
+                                   f"{', '.join(sorted({'Z1', 'Z2'} - {x['arch'] for x in rows}))} "
+                                   "has no production result, so no comparison is drawn."}
         else:
             out[s] = {"class": "headline",
                       "statement": f"{SCEN_LABEL[s]} is the headline comparison: both "
@@ -448,8 +517,11 @@ def _statement(key, name, o, rows):
                 "measured discretisation uncertainty.")
     elif not resolved:
         head = f"No {name} ranking can be drawn."
-    else:
-        head = f"The {name} ordering changes with the scenario."
+    else:                       # resolved in several scenarios, but not for the same design
+        head = ("; ".join(f"{per[s].split()[0]} has lower {name} in {SCEN_LABEL[s]}"
+                          for s in resolved)
+                + f" (each gap exceeds twice the measured discretisation uncertainty): the "
+                f"{name} ordering reverses with the scenario.")
     tail = []
     for s in unres:
         if key == "T_max_C":
@@ -468,21 +540,84 @@ def _statement(key, name, o, rows):
     return " ".join([head] + tail)
 
 
+def _r31_contraction():
+    """max |dT| per E-T iterate (it1 onward) of the r31 ladder cases, from their files."""
+    out = []
+    for arch in ("Z2", "Z1"):
+        f = E.case_path(arch, "HV_S0", 1.1, (3, 1))
+        r = json.loads(f.read_text()) if f.exists() else {}
+        if r and E.current_lineage(r):
+            out.append(", ".join(f"{h['max_dT_K']:.2g}" for h in r["et_history"][1:])
+                       + f" K for {arch}")
+    return "; ".join(out) or "r31 not yet available"
+
+
 def write_decision(final, audit_pass):
     acc = J("accuracy_speed_matrix.json") or {"rows": []}
     pn = J("package_network.json") or {}
     lines = ["# Final paper decision", "",
              "Generated by `scripts/final_closure_results.py` from the run artifacts. "
              "Do not edit by hand.", ""]
+    spec = J("z2_direct_feed_architecture.json") or {}
+    ar = spec.get("architectures", {})
+    lines += ["## Architecture (frozen before these results)", "",
+              "`research/final_closure/Z2_DIRECT_FEED_ARCHITECTURE.md`.", ""]
+    for a in ("Z1", "Z2"):
+        x = ar.get(a) or {}
+        lines.append(f"- **{a} ({x.get('variant')})**: 48 V {x.get('hv_input')}; crosses the "
+                     f"substrate: {x.get('crosses_substrate')}; conversion "
+                     f"{x.get('conversion')}. Path: " + " -> ".join(x.get("power_path", [])))
+    va = spec.get("vr_attach") or {}
+    sw = spec.get("sidewall") or {}
+    lines += [f"- Z2 VR-to-substrate attach: {va.get('technology')}, {va.get('h_total_um')} um "
+              f"({va.get('h_cu_um')} Cu + {va.get('h_cap_um')} cap), {va.get('d_um')} um at "
+              f"{va.get('pitch_um')} um pitch, {va.get('bumps_per_rail_per_cell')} bumps/rail/cell "
+              "(CLOSE_ANALOG geometry); carries 1 V only.",
+              f"- Z2 sidewall: {sw.get('clearance_mm')} mm clearance {sw.get('clearance_content')} "
+              f"between the {sw.get('cell_grid_bbox_mm')} mm cell grid and the "
+              f"{sw.get('cutout_mm')} mm opening ({sw.get('defect_resolved')} resolved).",
+              "- BGA fields: Z1 mechanical %s sites, 48 V power %s; Z2 mechanical %s sites, 48 V "
+              "power none." % ((ar.get("Z1") or {}).get("bga_mechanical_field_sites"),
+                               (ar.get("Z1") or {}).get("bga_48v_power_field"),
+                               (ar.get("Z2") or {}).get("bga_mechanical_field_sites")), ""]
     lines += ["## Electrical", "",
-              f"Matched BGA construction: **{pn.get('matched_count')} balls per rail** for both "
-              "architectures (smallest legal count passing the 1.5 A/ball ENGINEERING "
-              "criterion at HV-S0 for both, verified on the resolved grid).", ""]
+              f"Z1 package 48 V network: **{pn.get('matched_count')} balls per rail** (smallest "
+              "legal count passing the 1.5 A/ball ENGINEERING criterion at HV-S0, verified on "
+              "the resolved grid). The primary Z2 is direct-fed and has NO package 48 V network; "
+              "the BGA-fed Z2 network belongs only to Z2_BGA_FED_CONTROL.", ""]
     if pn:
+        name = {"Z1": "Z1 (production)", "Z2": "Z2_BGA_FED_CONTROL (controlled experiment only)"}
         for a, L in pn["loop"].items():
-            lines.append(f"- {a}: R_supply {L['r_supply_ohm']*1e3:.4f} + R_return "
+            lines.append(f"- {name.get(a, a)}: R_supply {L['r_supply_ohm']*1e3:.4f} + R_return "
                          f"{L['r_return_ohm']*1e3:.4f} = R_loop {L['r_loop_ohm']*1e3:.4f} mOhm "
                          f"(20 C), converged on all five metrics: {L['converged']}")
+        lines.append("")
+    cx = J("direct_feed_crossover.json") or {}
+    if cx.get("scenarios"):
+        lines += ["## Direct-feed crossover (R_Z2_direct_feed_loop, swept, never assumed)", "",
+                  f"Boundary: {cx.get('boundary')}.", ""]
+        for s_, c in cx["scenarios"].items():
+            lines.append(f"- {s_}: P_Z1 {c['P_Z1_w']:.3f} W; P_Z2 at zero feed "
+                         f"{c['P_Z2_internal_recomputed_w']:.3f} W (advantage "
+                         f"{c['advantage_at_zero_feed_w']:+.3f} W); crossover R* = "
+                         + (f"{c['R_star_mohm']:.4g} mOhm" if c.get("R_star_mohm") is not None
+                            else "none in range")
+                         + (" -- Z1 operating point inadmissible: no comparison drawn"
+                            if c.get("Z1_operating_point_inadmissible") else
+                            (f"; requirement: {c['requirement']}" if c.get("requirement") else "")))
+        lines.append("")
+    ctl = J("control_results.json") or {}
+    if ctl.get("cases"):
+        lines += ["## Controlled BGA-fed experiment (CONTROLLED_BGA_FED_Z1_VS_Z2_EXPERIMENT)", "",
+                  ctl["statement"], ""]
+        _fmt = lambda v, d: "n/a" if v is None else f"{v:.{d}f}"        # noqa: E731
+        for k, c in ctl["cases"].items():
+            lines.append(f"- {k} ({c.get('architecture_variant')}): P_loss {c['P_loss_w']:.3f} W, "
+                         f"T_max {c['T_max_C']:.2f} C, warpage "
+                         f"{_fmt(c.get('die_warpage_pv_um'), 2)} um, du_c {_fmt(c.get('du_c_um'), 4)} um")
+        if "direct_feed_minus_control_w" in ctl:
+            lines.append(f"- direct feed minus BGA-fed control: "
+                         f"{ctl['direct_feed_minus_control_w']:+.3f} W (package-internal)")
         lines.append("")
     lines += ["| arch | scenario | P_loss (W) | T_max (C) | die warp (um) | du_c (um) | "
               "T_joint (C) | d_eps_in / cycle |", "|---|---|---|---|---|---|---|---|"]
@@ -509,13 +644,22 @@ def write_decision(final, audit_pass):
         if k in od:
             lines.append(f"- {name}: {od[k]['statement']}")
     lines += ["", "## Accuracy and runtime (stage by stage)", "",
-              "| stage | reference | error | speedup | status |", "|---|---|---|---|---|"]
+              "Absolute runtimes on one machine; a runtime ratio is given only between field "
+              "solvers. A closed form or compact correlation against a field solve is model "
+              "reduction, not a speedup, and no ratio is printed for it.", "",
+              "| stage | reference | error | production | reference | ratio (field solvers) "
+              "| status |", "|---|---|---|---|---|---|---|"]
+    tfmt = lambda v: ("" if not isinstance(v, (int, float)) else f"{v * 1e6:.1f} us"
+                      if v < 1e-3 else f"{v * 1e3:.1f} ms" if v < 1 else f"{v:.1f} s")
     for r in acc["rows"]:
         e = r.get("error")
         sp = r.get("speedup")
+        ratio = (f"{sp:.2f}x" if isinstance(sp, (int, float))
+                 and r.get("runtime_ratio_kind") == "solver_to_solver" else "")
         lines.append(f"| {r['stage']} | {r.get('reference_tool', '')} | "
                      f"{('%+.3f %%' % (100 * e)) if isinstance(e, float) else e} | "
-                     f"{('%.1fx' % sp) if isinstance(sp, float) else ''} | {r.get('status', '')} |")
+                     f"{tfmt(r.get('production_runtime_s'))} | "
+                     f"{tfmt(r.get('reference_runtime_s'))} | {ratio} | {r.get('status', '')} |")
     lines += ["", "## Conservation", "",
               f"Heat-map deposition and computed thermal heat balance close to 1e-6 in every "
               f"case: **{audit_pass}**. The electrical fixed-point residual is definitional "
@@ -597,14 +741,40 @@ def write_decision(final, audit_pass):
               "extraction (scripts/final_closure_local_extract.py), which reproduces the "
               "published control to all ten printed digits and leaves every earlier production "
               "value unchanged (local_mesh_policy.json amendment 3).",
-              "- **DEFECT #66** (Z2 out-of-cell construction): the production encapsulated model "
-              "fills the PCB opening up to the board sidewall, bonding the backside converter to "
-              "the board although the stack specifies a 1.0 mm clearance. Found when the "
-              "architecture was drawn from the solver mesh. It is now a DECLARED assumption of "
-              "the production construction; its effect is measured by the clearance-open "
-              "(f1_clearance) and void (f2_void) variants in classB_resolution.csv; the "
-              "mechanical orderings are "
-              "stated conditional on it.", ""]
+              "- **DEFECT #66** (Z2 out-of-cell construction), RESOLVED IN THE BASELINE: the "
+              "earlier encapsulated model filled the PCB opening up to the board sidewall, "
+              "bonding the backside converter to the board although the stack specifies a "
+              "1.0 mm clearance. The production geometry now voids that ring "
+              "(F1_clearance); the sidewall-filled construction survives only as the class-B "
+              "variant f1_sidewall_filled.",
+              "- **DEFECT #67** (BGA-fed control only): in Z2_BGA_FED_CONTROL the 48 V enters at "
+              "the land-side RDL but the intra-VR model places VIN on the high-side RDL, so a "
+              "~1.3 mm HV vertical traverse is not modelled. Z1 and the direct-fed Z2 take 48 V "
+              "at the high-side RDL, where the model places it.",
+              "- **DEFECT #68** (E-T coupling), FIXED IN EVERY CASE: the converter devices "
+              "deposit their loss only inside the 49 cell footprints, but the loss model was "
+              "fed the node mean of the WHOLE converter tiers, encapsulant included -- 7.8 K "
+              "below the in-cell mean for the direct-fed Z2 and 1.2 K above it for Z1 at HV-S0 "
+              "(found on the first corrected-lineage results). Every ledger temperature is now "
+              "the mean over the region its terms deposit in, each device term at its own "
+              "tier's in-cell temperature (final_closure_physical_etm.temperature_regions), "
+              "and every case was re-run. The pre-fix HV-S0 cases and the diagnostic are in "
+              "research/final_closure/superseded_pre_tile_temperature/.",
+              "- **DEFECT #69** (solver harness), FIXED: the production local-solder runner "
+              "accepted whatever a .dat held. When the per-user thread limit of the shared host "
+              "was reached, CalculiX died mid-run; a control solve cut off at 1800.5 s of 2400 s "
+              "returned d_eps = 2.695e-3 against its published 6.513e-3 (the control check "
+              "stopped that run), and one production solve returned no response. A local solve "
+              "is now accepted only if its last block sits at the schedule end, stale outputs "
+              "are removed before every solve, and a solid-solder joint without a response "
+              "stops the run. Every class-B and local solve that overlapped the exhaustion "
+              "window was discarded and re-run. The two r31 ladder cases had one intermediate "
+              "E-T iterate (it2) in it; their reported state comes from later solves, and the "
+              "iterate changes contract geometrically through it (" + _r31_contraction() + ").",
+              "- **Superseded primary Z2**: the earlier primary Z2 was BGA-fed (48 V through "
+              "peripheral package balls and a package 48 V RDL), had no explicit VR attach and "
+              "was sidewall-filled. Its case files not re-run here are kept in "
+              "research/final_closure/superseded_bga_fed_z2/ for provenance only.", ""]
     cb = J("classB_resolution.json") or {}
     sm = cb.get("summary") or {}
     lines += ["## Class-B resolution", "",
@@ -618,28 +788,66 @@ def write_decision(final, audit_pass):
     ready, why = paper_ready(audit_pass, manuscript_on_lineage, mesh_ok,
                              all(f["et_converged"] for f in final),
                              all(L["converged"] for L in pn.get("loop", {}).values()),
-                             cb, lm)
+                             cb, lm, final=final)
     lines += ["## Decision", "",
               f"**{'PAPER_READY' if ready else 'PAPER_NOT_READY'}** -- "
-              + ("the active manuscript must carry this lineage; the decision is re-evaluated "
-                 "by the manuscript stale-number guard." if ready else
-                 "not ready: " + "; ".join(why)), ""]
+              + ("every generator-checkable criterion of the readiness rule holds (direct-fed "
+                 "primary Z2, clearance and attach in the nominal mesh, no package 48 V term in "
+                 "the Z2 ledger, crossover computed, all B1 resolved, E-T and conservation, "
+                 "mesh, local U, provenance, manuscript on the lineage). The remaining "
+                 "criteria -- slides match artifacts, tests pass on the exact final SHA -- are "
+                 "checked by the test suite and recorded in final_test_report.txt."
+                 if ready else "not ready: " + "; ".join(why)), ""]
     (D / "FINAL_PAPER_DECISION.md").write_text("\n".join(lines))
 
 
 def local_wording(lm):
     """The ONLY wording the paper may use for the local response, from the policy."""
     pol = json.loads((D / "local_mesh_policy.json").read_text())
-    cases = [f"{a}_{s}" for a, s in pol["cases"]]
+    cases = [f"{a}_{s}" for a, s in local_cases(pol)]
     st = [((lm.get("cases") or {}).get(k) or {}).get("status") for k in cases]
     return pol["wording"]["converged" if st and all(x == "converged" for x in st)
                           else "bounded_or_unresolved"]
 
 
-def paper_ready(audit_pass, manuscript_on_lineage, mesh_ok, et_ok, loops_ok, classb, lm):
-    """PAPER_READY and, if not, every reason. PAPER_READY requires every B1 gate resolved
-    and the local solder study accepted with a quantified U for every policy case."""
+def local_cases(pol):
+    """The local cases of the CURRENT pass: amendment 4 re-declares them for the corrected
+    lineage; without it, the original declaration."""
+    a4 = [a for a in pol.get("amendments", []) if a.get("id") == 4]
+    return [tuple(c) for c in (a4[0]["cases"] if a4 else pol["cases"])]
+
+
+def paper_ready(audit_pass, manuscript_on_lineage, mesh_ok, et_ok, loops_ok, classb, lm,
+                final=None):
+    """PAPER_READY and, if not, every reason (final-closure readiness rule): the primary Z2
+    is the direct-fed construction with the clearance and the attach in the nominal mesh
+    and no package 48 V term; the direct-feed uncertainty is bounded by the crossover; every
+    B1 gate resolved; E-T converged; conservation; mesh; the local study accepted with a
+    quantified U for every declared case; tool provenance consistent; manuscript on the
+    lineage."""
     why = []
+    z2 = [f for f in (final or []) if f["arch"] == "Z2"]
+    if not z2 or any(f.get("architecture_variant") != "Z2_DIRECT_FEED" for f in z2):
+        why.append("primary Z2 is not the direct-fed construction in every case")
+    if any(f.get("forbidden_terms") for f in z2):
+        why.append("a package 48 V term in the primary Z2 ledger")
+    pg = {r["id"]: r["status"] for r in (J("../phase0nw/physical_gates.json") or {}).get(
+        "gates", [])} if (D.parent / "phase0nw" / "physical_gates.json").exists() else {}
+    for gid, what in (("geom.sidewall_clearance_baseline", "1.0 mm sidewall clearance"),
+                      ("geom.vr_attach_explicit", "explicit VR attach")):
+        if pg.get(gid) != "IMPLEMENTED":
+            why.append(f"{what} not measured in the nominal mesh ({gid})")
+    cx = J("direct_feed_crossover.json") or {}
+    s0x = (cx.get("scenarios") or {}).get("HV_S0") or {}
+    if s0x.get("R_star_mohm") is None or not s0x.get("sweep"):
+        why.append("direct-feed crossover not computed (direct-feed uncertainty unbounded)")
+    try:
+        import final_closure_provenance as _P
+        tp = json.loads((D / "tool_provenance.json").read_text())["tools"]
+        if _P.lane_violations(tp):
+            why.append("tool provenance inconsistent")
+    except FileNotFoundError:
+        why.append("no tool provenance")
     if not audit_pass:
         why.append("conservation audit failed")
     if not manuscript_on_lineage:
@@ -656,11 +864,11 @@ def paper_ready(audit_pass, manuscript_on_lineage, mesh_ok, et_ok, loops_ok, cla
         why.append("no Class-B resolution record")
     for g in b1:
         if not g.get("resolved"):
-            why.append(f"B1 gate {g['gate']} unresolved")
+            why.append(f"B1 gate `{g['gate']}` unresolved")
     pol = json.loads((D / "local_mesh_policy.json").read_text())
     if not (lm or {}).get("acceptance", {}).get("pass"):
         why.append("local solder study not accepted")
-    for a, s in pol["cases"]:
+    for a, s in local_cases(pol):
         c = ((lm or {}).get("cases") or {}).get(f"{a}_{s}") or {}
         if c.get("U") is None or not c.get("production_value"):
             why.append(f"local response {a} {s} has no quantified uncertainty")

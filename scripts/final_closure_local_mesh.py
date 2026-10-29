@@ -22,11 +22,17 @@ The history matters and is kept:
 from __future__ import annotations
 
 import json
+import os
 import multiprocessing as mp
 import re
 import sys
 import time
 from pathlib import Path
+
+# Every pool worker would otherwise start a full-width OpenBLAS pool (64-96 idle threads);
+# on this shared host that reached the per-user thread limit and killed CalculiX
+# runs mid-solve (DEFECT #69). The solvers set their own thread counts.
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
 R = Path(__file__).resolve().parents[1]
 for _p in ("scripts/phase0mr3c", "scripts/phase0ir", "scripts/phase0i", "scripts"):
@@ -50,9 +56,46 @@ STEP = re.compile(r"\*STEP, INC=5000\n\*VISCO, CETOL=(\S+)\n0\.002, 300, 1e-06, 
                   r"(\*TEMPERATURE\nNALL, \S+\n\*BOUNDARY\nNTOP,1,1,\S+\n)(.*?)\*END STEP", re.S)
 
 
+# Local CalculiX solves run with LOCAL_THREADS threads (default 6, the harness value). The
+# historical runner (phase0mr3c/run_final_local_response.py) is not edited: its module-
+# level `run` is wrapped here. Thread count changes speed only; the control-reproduction
+# acceptance check would expose any numerical difference.
+_LT = int(os.environ.get("LOCAL_THREADS", "6"))
+if _LT != 6 and not getattr(LR.run, "_wrapped", False):
+    _orig_run = LR.run
+    def _run(p, threads=6):
+        return _orig_run(p, threads=_LT)
+    _run._wrapped = True
+    LR.run = _run
+
+A4 = AMEND.get(4)
+PASS = 4 if A4 else 3
+#: pass-4 results of the corrected lineage live in their own scratch tree
+SCR_MESH = "fc_localmesh_p4" if A4 else "fc_localmesh_p3"
+SUPERSEDED = OUT / "superseded_bga_fed_z2"
+
+
 def policy_cases(optional=True):
+    """The cases of the CURRENT pass: amendment 4 re-declares them for the corrected
+    lineage (direct-fed Z2, explicit attach, sidewall clearance)."""
+    if A4:
+        c = [tuple(x) for x in A4["cases"]]
+        return c + ([tuple(x) for x in A4.get("optional_cases", [])] if optional else [])
     c = [tuple(x) for x in POLICY["cases"]]
     return c + ([tuple(x) for x in POLICY["optional_cases"]["cases"]] if optional else [])
+
+
+def keep_previous(path):
+    """Before pass 4 first overwrites a pass-3 file, keep it with the superseded lineage."""
+    if not (A4 and path.exists()):
+        return
+    j = json.loads(path.read_text())
+    if j.get("pass", 3) == 4 or j.get("corrected_lineage"):
+        return
+    SUPERSEDED.mkdir(exist_ok=True)
+    dst = SUPERSEDED / path.name.replace(".json", "_pass3.json")
+    if not dst.exists():
+        dst.write_text(path.read_text())
 
 
 def _use_steps(inc0, split):
@@ -107,6 +150,8 @@ def _solve(name, du, tj, wd, level, inc0, split, n_cyc=4):
     LR.WD.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     dat = wd / f"{name}.dat"
+    for ext in (".dat", ".frd", ".sta", ".cvg"):     # an old .dat never stands in (DEFECT #69)
+        (wd / f"{name}{ext}").unlink(missing_ok=True)
     try:
         r = LR.run_case(name, du, tj)
         err = None
@@ -122,7 +167,9 @@ def _solve(name, du, tj, wd, level, inc0, split, n_cyc=4):
             err = (err or "") + f" extraction: {str(e)[-200:]}"
     done = bool(x and x.get("d_peeq_per_cycle")) and bool(r)
     if not done and err is None:
-        err = "solve did not complete (time increment fell below the minimum)"
+        t_last = X.end_time(dat) if dat.exists() else None
+        err = (f"solve did not complete: the .dat ends at t = {t_last} s of "
+               f"{2 * n_cyc * LR.DWELL:g} s")
     return {"level": level, **lv, "initial_increment_s": inc0, "split_steps": split,
             "n_cycles": n_cyc, "du_um": du, "T_joint_C": tj, "wall_s": wall, "error": err,
             "d_peeq_per_cycle": x["d_peeq_per_cycle"] if done else None,
@@ -230,6 +277,8 @@ def temporal():
         f = min(fine, key=lambda r: r["initial_increment_s"])
         study["historical_control_vs_finest_dt0_rel"] = (pub - f["d_peeq_per_cycle"]) / \
             f["d_peeq_per_cycle"]
+    keep_previous(TIME_STUDY)
+    study["corrected_lineage"] = bool(A4)
     TIME_STUDY.write_text(json.dumps(study, indent=1, default=float))
     for k, c in study["cases"].items():
         print(k, c["status"], c.get("dt0"), c.get("U_time"), c.get("spread_all_completed_rel"),
@@ -261,6 +310,8 @@ def cycles():
     pol = [c["U_cyc"] for k, c in study["cases"].items()
            if k != "CONTROL" and tuple(k.split(":")) in policy_cases(optional=False)]
     study["U_cyc_max_policy"] = max(pol) if pol and None not in pol else None
+    keep_previous(CYCLE_STUDY)
+    study["corrected_lineage"] = bool(A4)
     CYCLE_STUDY.write_text(json.dumps(study, indent=1, default=float))
     for k, c in study["cases"].items():
         print(k, c.get("U_cyc"), c.get("d_eps_cycle4"), c.get("d_eps_cycle16"), flush=True)
@@ -271,7 +322,7 @@ def run_level(task):
     arch, scen, tag, inc0 = task
     du, tj, src = critical(arch, scen)
     r = _solve(f"{arch}_{scen}_{tag}", du, tj,
-               scratch("fc_localmesh_p3", f"{arch}_{scen}_{tag}"), tag, inc0, True)
+               scratch(SCR_MESH, f"{arch}_{scen}_{tag}"), tag, inc0, True)
     return dict(r, arch=arch, scenario=scen, source=src)
 
 
@@ -317,18 +368,21 @@ def main():
     tasks = [(a, s, tag, inc0) for a, s in cases for tag in LEVELS]
     du, tj, _ = _inputs("CONTROL")
     with mp.Pool(min(len(tasks) + 1, 22)) as pool:
-        ctl = pool.apply_async(_solve, ("CONTROL", du, tj, scratch("fc_localmesh_p3", "control"),
+        ctl = pool.apply_async(_solve, ("CONTROL", du, tj, scratch(SCR_MESH, "control"),
                                         "L0", inc0, True))
         rows = pool.map(run_level, tasks, chunksize=1)
         ctl = ctl.get()
     cs = json.loads(CYCLE_STUDY.read_text())        # read late: may run concurrently
     p1 = json.loads((OUT / "local_mesh_study_pass1.json").read_text())["cases"]
+    p3f = SUPERSEDED / "local_mesh_study_pass3.json"
+    p3 = (json.loads(p3f.read_text())["cases"] if (A4 and p3f.exists()) else {})
     pub = LR.CONTROL["d_eps_in_stab"]
-    acc = {"control": {"pass3": ctl["d_peeq_per_cycle"], "published": pub,
+    acc = {"control": {f"pass{PASS}": ctl["d_peeq_per_cycle"], "published": pub,
                        "dev_rel": (abs(ctl["d_peeq_per_cycle"] - pub) / pub
                                    if ctl["d_peeq_per_cycle"] else None)}}
+    keep_previous(OUT / "local_mesh_study.json")
     study = {"policy": "research/final_closure/local_mesh_policy.json",
-             "pass": 3, "amendments_applied": sorted(AMEND),
+             "pass": PASS, "corrected_lineage": bool(A4), "amendments_applied": sorted(AMEND),
              "initial_increment_s": inc0, "split_steps": True,
              "extraction": "block order (DEFECT #65)",
              "time_study": TIME_STUDY.name, "cycle_study": CYCLE_STUDY.name,
@@ -349,12 +403,22 @@ def main():
         old = (p1.get(f"{a}_{s}") or {}).get("levels", {})
         l0 = (c["levels"].get("L0") or {}).get("d_peeq_per_cycle")
         o0 = (old.get("L0") or {}).get("d_peeq_per_cycle")
-        acc[f"{a}_{s}"] = {"pass3_L0": l0, "pass1_L0": o0,
-                           "dev_rel": abs(l0 - o0) / o0 if (l0 and o0) else None}
+        if not A4:
+            acc[f"{a}_{s}"] = {"pass3_L0": l0, "pass1_L0": o0,
+                               "dev_rel": abs(l0 - o0) / o0 if (l0 and o0) else None}
+        else:
+            # NOT gating (not declared): a Z1 joint is unchanged by the Z2 correction, so
+            # its pass-4 L0 must reproduce pass 3; a Z2 joint moved, so no comparison
+            q = ((p3.get(f"{a}_{s}") or {}).get("levels", {}).get("L0") or {}).get(
+                "d_peeq_per_cycle")
+            c["pass3_L0_crosscheck"] = ({"pass3_L0": q, "pass4_L0": l0,
+                                         "dev_rel": abs(l0 - q) / q} if (a == "Z1" and q and l0)
+                                        else None)
         c["pass1_values"] = {t_: o["d_peeq_per_cycle"] for t_, o in old.items()}
         study["cases"][f"{a}_{s}"] = c
     devs = [v["dev_rel"] for v in acc.values()]
-    study["acceptance"] = {"rule": AMEND[3]["acceptance"], "checks": acc,
+    rule = (A4 or AMEND[3])["acceptance"]
+    study["acceptance"] = {"rule": rule, "checks": acc,
                            "pass": all(d is not None and d < 1e-3 for d in devs)}
     (OUT / "local_mesh_study.json").write_text(json.dumps(study, indent=1, default=float))
     print("acceptance:", study["acceptance"]["pass"], json.dumps(acc, default=float), flush=True)

@@ -1,0 +1,926 @@
+{
+ "policy": "research/final_closure/local_mesh_policy.json",
+ "pass": 3,
+ "amendments_applied": [
+  1,
+  2,
+  3
+ ],
+ "initial_increment_s": 0.002,
+ "split_steps": true,
+ "extraction": "block order (DEFECT #65)",
+ "time_study": "local_time_study.json",
+ "cycle_study": "local_cycle_study.json",
+ "previous_passes": [
+  "local_mesh_study_pass1.json"
+ ],
+ "cases": {
+  "Z1_HV_S0": {
+   "levels": {
+    "L0": {
+     "level": "L0",
+     "n_xy": 6,
+     "n_z_solder": 8,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 2.373988125479438,
+     "T_joint_C": 120.7779090909091,
+     "wall_s": 125.64890360832214,
+     "error": null,
+     "d_peeq_per_cycle": 0.006486635738281228,
+     "d_peeq_time_keyed": 0.006486635738281228,
+     "stab_change_pct": 0.6101101864029709,
+     "range_eq_inelastic": 0.0031920184133264777,
+     "inelastic_work_MJ_per_m3": 0.5104160630078383,
+     "per_cycle": [
+      null,
+      0.00664036183398435,
+      0.006526454300781229,
+      0.006486635738281228
+     ],
+     "collisions": {
+      "n_increments": 368,
+      "n_distinct_times": 368,
+      "boundary_collisions": {},
+      "interior_collisions": 0
+     },
+     "n_core": 128,
+     "n_elem": 488,
+     "arch": "Z1",
+     "scenario": "HV_S0",
+     "source": "etm_Z1_HV_S0_h1.1_r21.json"
+    },
+    "L1": {
+     "level": "L1",
+     "n_xy": 8,
+     "n_z_solder": 10,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 2.373988125479438,
+     "T_joint_C": 120.7779090909091,
+     "wall_s": 256.615736246109,
+     "error": null,
+     "d_peeq_per_cycle": 0.0063594361714324,
+     "d_peeq_time_keyed": 0.0063594361714324,
+     "stab_change_pct": 0.6345992699019931,
+     "range_eq_inelastic": 0.003131809132845348,
+     "inelastic_work_MJ_per_m3": 0.5014686705630095,
+     "per_cycle": [
+      null,
+      0.006511512981117455,
+      0.00640005084738325,
+      0.0063594361714324
+     ],
+     "collisions": {
+      "n_increments": 369,
+      "n_distinct_times": 369,
+      "boundary_collisions": {},
+      "interior_collisions": 0
+     },
+     "n_core": 360,
+     "n_elem": 928,
+     "arch": "Z1",
+     "scenario": "HV_S0",
+     "source": "etm_Z1_HV_S0_h1.1_r21.json"
+    },
+    "L2": {
+     "level": "L2",
+     "n_xy": 10,
+     "n_z_solder": 12,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 2.373988125479438,
+     "T_joint_C": 120.7779090909091,
+     "wall_s": 540.4120116233826,
+     "error": null,
+     "d_peeq_per_cycle": 0.0062774593071322415,
+     "d_peeq_time_keyed": 0.0062774593071322415,
+     "stab_change_pct": 0.6298005418240524,
+     "range_eq_inelastic": 0.003089426087508394,
+     "inelastic_work_MJ_per_m3": 0.49621476351514066,
+     "per_cycle": [
+      null,
+      0.00642579873146623,
+      0.006317245352591216,
+      0.0062774593071322415
+     ],
+     "collisions": {
+      "n_increments": 380,
+      "n_distinct_times": 380,
+      "boundary_collisions": {},
+      "interior_collisions": 0
+     },
+     "n_core": 768,
+     "n_elem": 1712,
+     "arch": "Z1",
+     "scenario": "HV_S0",
+     "source": "etm_Z1_HV_S0_h1.1_r21.json"
+    },
+    "L3": {
+     "level": "L3",
+     "n_xy": 12,
+     "n_z_solder": 16,
+     "note": "nested in L0: every L0 interval split in two in-plane (solder and pad overhang) and through the solder",
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 2.373988125479438,
+     "T_joint_C": 120.7779090909091,
+     "wall_s": 1147.7893002033234,
+     "error": null,
+     "d_peeq_per_cycle": 0.006203476016049382,
+     "d_peeq_time_keyed": 0.006203476016049382,
+     "stab_change_pct": 0.6337978950545647,
+     "range_eq_inelastic": 0.0030508313006072005,
+     "inelastic_work_MJ_per_m3": 0.4917995903960984,
+     "per_cycle": [
+      null,
+      0.006347946105663854,
+      0.006243044299406343,
+      0.006203476016049382
+     ],
+     "collisions": {
+      "n_increments": 387,
+      "n_distinct_times": 385,
+      "boundary_collisions": {},
+      "interior_collisions": 2
+     },
+     "n_core": 1600,
+     "n_elem": 3104,
+     "arch": "Z1",
+     "scenario": "HV_S0",
+     "source": "etm_Z1_HV_S0_h1.1_r21.json"
+    }
+   },
+   "levels_completed": [
+    "L0",
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "levels_failed": [],
+   "production_level": "L3",
+   "production_value": 0.006203476016049382,
+   "finest_change_rel": 0.011926102541777093,
+   "finest_three": [
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "status": "converged",
+   "U": 0.020317675010468148,
+   "rule": "A",
+   "U_mesh": 0.011926102541777093,
+   "U_time": 0.00017683284271796863,
+   "U_cyc": 0.008214739625973086,
+   "U_cyc_basis": "own 16-cycle run",
+   "pass1_values": {
+    "L0": 0.00648491752343748,
+    "L1": 0.006357742065075118,
+    "L2": 0.006275778491868566,
+    "L3": 0.006201944407045473
+   }
+  },
+  "Z2_HV_S0": {
+   "levels": {
+    "L0": {
+     "level": "L0",
+     "n_xy": 6,
+     "n_z_solder": 8,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 3.951175980714921,
+     "T_joint_C": 99.04880909090909,
+     "wall_s": 129.07455563545227,
+     "error": null,
+     "d_peeq_per_cycle": 0.011186005472656208,
+     "d_peeq_time_keyed": 0.011186005472656208,
+     "stab_change_pct": 0.0067623941089394535,
+     "range_eq_inelastic": 0.005501283011714811,
+     "inelastic_work_MJ_per_m3": 0.8861630823355581,
+     "per_cycle": [
+      null,
+      0.011248474984374967,
+      0.011185249082031215,
+      0.011186005472656208
+     ],
+     "collisions": {
+      "n_increments": 368,
+      "n_distinct_times": 368,
+      "boundary_collisions": {},
+      "interior_collisions": 0
+     },
+     "n_core": 128,
+     "n_elem": 488,
+     "arch": "Z2",
+     "scenario": "HV_S0",
+     "source": "etm_Z2_HV_S0_h1.1_r21.json"
+    },
+    "L1": {
+     "level": "L1",
+     "n_xy": 8,
+     "n_z_solder": 10,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 3.951175980714921,
+     "T_joint_C": 99.04880909090909,
+     "wall_s": 265.1235988140106,
+     "error": null,
+     "d_peeq_per_cycle": 0.010572242658447294,
+     "d_peeq_time_keyed": 0.010572242658447294,
+     "stab_change_pct": 0.16280528603671074,
+     "range_eq_inelastic": 0.005204191265083572,
+     "inelastic_work_MJ_per_m3": 0.8338213968610637,
+     "per_cycle": [
+      null,
+      0.010680866974373211,
+      0.010589482896366532,
+      0.010572242658447294
+     ],
+     "collisions": {
+      "n_increments": 384,
+      "n_distinct_times": 382,
+      "boundary_collisions": {},
+      "interior_collisions": 2
+     },
+     "n_core": 360,
+     "n_elem": 928,
+     "arch": "Z2",
+     "scenario": "HV_S0",
+     "source": "etm_Z2_HV_S0_h1.1_r21.json"
+    },
+    "L2": {
+     "level": "L2",
+     "n_xy": 10,
+     "n_z_solder": 12,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 3.951175980714921,
+     "T_joint_C": 99.04880909090909,
+     "wall_s": 492.98560070991516,
+     "error": null,
+     "d_peeq_per_cycle": 0.010212416306640739,
+     "d_peeq_time_keyed": 0.010212416306640739,
+     "stab_change_pct": 0.2827755650003983,
+     "range_eq_inelastic": 0.005033674121892636,
+     "inelastic_work_MJ_per_m3": 0.804003294317376,
+     "per_cycle": [
+      null,
+      0.010321991025390765,
+      0.010241376416666786,
+      0.010212416306640739
+     ],
+     "collisions": {
+      "n_increments": 400,
+      "n_distinct_times": 396,
+      "boundary_collisions": {},
+      "interior_collisions": 4
+     },
+     "n_core": 768,
+     "n_elem": 1712,
+     "arch": "Z2",
+     "scenario": "HV_S0",
+     "source": "etm_Z2_HV_S0_h1.1_r21.json"
+    },
+    "L3": {
+     "level": "L3",
+     "n_xy": 12,
+     "n_z_solder": 16,
+     "note": "nested in L0: every L0 interval split in two in-plane (solder and pad overhang) and through the solder",
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 3.951175980714921,
+     "T_joint_C": 99.04880909090909,
+     "wall_s": 1367.5334205627441,
+     "error": null,
+     "d_peeq_per_cycle": 0.0099706481225923,
+     "d_peeq_time_keyed": 0.0099706481225923,
+     "stab_change_pct": 0.20382937893059386,
+     "range_eq_inelastic": 0.004910934527522751,
+     "inelastic_work_MJ_per_m3": 0.9233468868835497,
+     "per_cycle": [
+      null,
+      0.010070313419710535,
+      0.009991012741812813,
+      0.0099706481225923
+     ],
+     "collisions": {
+      "n_increments": 432,
+      "n_distinct_times": 412,
+      "boundary_collisions": {},
+      "interior_collisions": 8
+     },
+     "n_core": 1600,
+     "n_elem": 3104,
+     "arch": "Z2",
+     "scenario": "HV_S0",
+     "source": "etm_Z2_HV_S0_h1.1_r21.json"
+    }
+   },
+   "levels_completed": [
+    "L0",
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "levels_failed": [],
+   "production_level": "L3",
+   "production_value": 0.0099706481225923,
+   "finest_change_rel": 0.02424799081020838,
+   "finest_three": [
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "richardson": {
+    "order": 0.9616681724165406,
+    "extrapolated": 0.008709091645621274
+   },
+   "status": "bounded",
+   "U": 0.18234288969593335,
+   "rule": "B (Richardson)",
+   "U_mesh": 0.18106889448185257,
+   "U_time": 0.0002810891574671657,
+   "U_cyc": 0.000992906056613615,
+   "U_cyc_basis": "own 16-cycle run",
+   "pass1_values": {
+    "L0": 0.011184148214843714,
+    "L1": 0.010570646233127447,
+    "L2": 0.01021104329427097,
+    "L3": null
+   }
+  },
+  "Z1_HV_S1": {
+   "levels": {
+    "L0": {
+     "level": "L0",
+     "n_xy": 6,
+     "n_z_solder": 8,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 2.921091963562047,
+     "T_joint_C": 147.74990909090909,
+     "wall_s": 139.17723059654236,
+     "error": null,
+     "d_peeq_per_cycle": 0.009137062605468725,
+     "d_peeq_time_keyed": 0.009137062605468725,
+     "stab_change_pct": 0.2808624285154635,
+     "range_eq_inelastic": 0.00444758708068251,
+     "inelastic_work_MJ_per_m3": 0.762210671515902,
+     "per_cycle": [
+      null,
+      0.009250134917968724,
+      0.009162797460937467,
+      0.009137062605468725
+     ],
+     "collisions": {
+      "n_increments": 372,
+      "n_distinct_times": 372,
+      "boundary_collisions": {},
+      "interior_collisions": 0
+     },
+     "n_core": 128,
+     "n_elem": 488,
+     "arch": "Z1",
+     "scenario": "HV_S1",
+     "source": "etm_Z1_HV_S1_h1.1_r21.json"
+    },
+    "L1": {
+     "level": "L1",
+     "n_xy": 8,
+     "n_z_solder": 10,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 2.921091963562047,
+     "T_joint_C": 147.74990909090909,
+     "wall_s": 269.5454640388489,
+     "error": null,
+     "d_peeq_per_cycle": 0.008994415765253705,
+     "d_peeq_time_keyed": 0.008994415765253705,
+     "stab_change_pct": 0.2892194039087775,
+     "range_eq_inelastic": 0.004378429964181108,
+     "inelastic_work_MJ_per_m3": 0.7530125897053324,
+     "per_cycle": [
+      null,
+      0.00910790981960257,
+      0.009020504815510687,
+      0.008994415765253705
+     ],
+     "collisions": {
+      "n_increments": 388,
+      "n_distinct_times": 386,
+      "boundary_collisions": {},
+      "interior_collisions": 2
+     },
+     "n_core": 360,
+     "n_elem": 928,
+     "arch": "Z1",
+     "scenario": "HV_S1",
+     "source": "etm_Z1_HV_S1_h1.1_r21.json"
+    },
+    "L2": {
+     "level": "L2",
+     "n_xy": 10,
+     "n_z_solder": 12,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 2.921091963562047,
+     "T_joint_C": 147.74990909090909,
+     "wall_s": 506.2336251735687,
+     "error": null,
+     "d_peeq_per_cycle": 0.00889307807542329,
+     "d_peeq_time_keyed": 0.00889307807542329,
+     "stab_change_pct": 0.2985459298670915,
+     "range_eq_inelastic": 0.004326631312346241,
+     "inelastic_work_MJ_per_m3": 0.8070226703483508,
+     "per_cycle": [
+      null,
+      0.009005349370607216,
+      0.008919707499117956,
+      0.00889307807542329
+     ],
+     "collisions": {
+      "n_increments": 392,
+      "n_distinct_times": 388,
+      "boundary_collisions": {},
+      "interior_collisions": 3
+     },
+     "n_core": 768,
+     "n_elem": 1712,
+     "arch": "Z1",
+     "scenario": "HV_S1",
+     "source": "etm_Z1_HV_S1_h1.1_r21.json"
+    },
+    "L3": {
+     "level": "L3",
+     "n_xy": 12,
+     "n_z_solder": 16,
+     "note": "nested in L0: every L0 interval split in two in-plane (solder and pad overhang) and through the solder",
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 2.921091963562047,
+     "T_joint_C": 147.74990909090909,
+     "wall_s": 1228.6566286087036,
+     "error": null,
+     "d_peeq_per_cycle": 0.008793091867845214,
+     "d_peeq_time_keyed": 0.008793091867845214,
+     "stab_change_pct": 0.2935780812325562,
+     "range_eq_inelastic": 0.00427775381314512,
+     "inelastic_work_MJ_per_m3": 0.8592513524873742,
+     "per_cycle": [
+      null,
+      0.008901838155696166,
+      0.008818982467357116,
+      0.008793091867845214
+     ],
+     "collisions": {
+      "n_increments": 408,
+      "n_distinct_times": 396,
+      "boundary_collisions": {
+       "1500.0": 4,
+       "2100.0": 4
+      },
+      "interior_collisions": 2
+     },
+     "n_core": 1600,
+     "n_elem": 3104,
+     "arch": "Z1",
+     "scenario": "HV_S1",
+     "source": "etm_Z1_HV_S1_h1.1_r21.json"
+    }
+   },
+   "levels_completed": [
+    "L0",
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "levels_failed": [],
+   "production_level": "L3",
+   "production_value": 0.008793091867845214,
+   "finest_change_rel": 0.011370995445152576,
+   "finest_three": [
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "status": "converged",
+   "U": 0.01570101227669475,
+   "rule": "A",
+   "U_mesh": 0.011370995445152576,
+   "U_time": 0.00026606876981945563,
+   "U_cyc": 0.0040639480617227185,
+   "U_cyc_basis": "own 16-cycle run",
+   "pass1_values": {
+    "L0": 0.00913518524218747,
+    "L1": 0.008992709443475326,
+    "L2": 0.008891372036123163,
+    "L3": null
+   }
+  },
+  "Z2_HV_S1": {
+   "levels": {
+    "L0": {
+     "level": "L0",
+     "n_xy": 6,
+     "n_z_solder": 8,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 4.271565318571922,
+     "T_joint_C": 109.77763636363636,
+     "wall_s": 138.95115780830383,
+     "error": null,
+     "d_peeq_per_cycle": 0.012736790652343712,
+     "d_peeq_time_keyed": 0.012736790652343712,
+     "stab_change_pct": 0.024641949595296475,
+     "range_eq_inelastic": 0.006245648508356981,
+     "inelastic_work_MJ_per_m3": 0.9642306103244132,
+     "per_cycle": [
+      null,
+      0.012773931749999953,
+      0.012733652832031202,
+      0.012736790652343712
+     ],
+     "collisions": {
+      "n_increments": 368,
+      "n_distinct_times": 368,
+      "boundary_collisions": {},
+      "interior_collisions": 0
+     },
+     "n_core": 128,
+     "n_elem": 488,
+     "arch": "Z2",
+     "scenario": "HV_S1",
+     "source": "etm_Z2_HV_S1_h1.1_r21.json"
+    },
+    "L1": {
+     "level": "L1",
+     "n_xy": 8,
+     "n_z_solder": 10,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 4.271565318571922,
+     "T_joint_C": 109.77763636363636,
+     "wall_s": 288.1793327331543,
+     "error": null,
+     "d_peeq_per_cycle": 0.01210861878334215,
+     "d_peeq_time_keyed": 0.01210861878334215,
+     "stab_change_pct": 0.06326527226589417,
+     "range_eq_inelastic": 0.005929029135756574,
+     "inelastic_work_MJ_per_m3": 0.9133116651578924,
+     "per_cycle": [
+      null,
+      0.012188606297733792,
+      0.012116284183519363,
+      0.01210861878334215
+     ],
+     "collisions": {
+      "n_increments": 400,
+      "n_distinct_times": 396,
+      "boundary_collisions": {},
+      "interior_collisions": 4
+     },
+     "n_core": 360,
+     "n_elem": 928,
+     "arch": "Z2",
+     "scenario": "HV_S1",
+     "source": "etm_Z2_HV_S1_h1.1_r21.json"
+    },
+    "L2": {
+     "level": "L2",
+     "n_xy": 10,
+     "n_z_solder": 12,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 4.271565318571922,
+     "T_joint_C": 109.77763636363636,
+     "wall_s": 563.8939230442047,
+     "error": null,
+     "d_peeq_per_cycle": 0.011711851042317869,
+     "d_peeq_time_keyed": 0.011711851042317869,
+     "stab_change_pct": 0.22855473744246102,
+     "range_eq_inelastic": 0.005738919080055567,
+     "inelastic_work_MJ_per_m3": 0.953209983012562,
+     "per_cycle": [
+      null,
+      0.011813115596191566,
+      0.011738680352376452,
+      0.011711851042317869
+     ],
+     "collisions": {
+      "n_increments": 403,
+      "n_distinct_times": 396,
+      "boundary_collisions": {},
+      "interior_collisions": 7
+     },
+     "n_core": 768,
+     "n_elem": 1712,
+     "arch": "Z2",
+     "scenario": "HV_S1",
+     "source": "etm_Z2_HV_S1_h1.1_r21.json"
+    },
+    "L3": {
+     "level": "L3",
+     "n_xy": 12,
+     "n_z_solder": 16,
+     "note": "nested in L0: every L0 interval split in two in-plane (solder and pad overhang) and through the solder",
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 4.271565318571922,
+     "T_joint_C": 109.77763636363636,
+     "wall_s": 1285.4194808006287,
+     "error": null,
+     "d_peeq_per_cycle": 0.011449244421023711,
+     "d_peeq_time_keyed": 0.011449244421023711,
+     "stab_change_pct": 0.17722287862463687,
+     "range_eq_inelastic": 0.005606584083299138,
+     "inelastic_work_MJ_per_m3": 1.117736747183574,
+     "per_cycle": [
+      null,
+      0.011536864824820029,
+      0.01146957112513758,
+      0.011449244421023711
+     ],
+     "collisions": {
+      "n_increments": 436,
+      "n_distinct_times": 414,
+      "boundary_collisions": {
+       "1500.0": 4,
+       "2100.0": 4
+      },
+      "interior_collisions": 6
+     },
+     "n_core": 1600,
+     "n_elem": 3104,
+     "arch": "Z2",
+     "scenario": "HV_S1",
+     "source": "etm_Z2_HV_S1_h1.1_r21.json"
+    }
+   },
+   "levels_completed": [
+    "L0",
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "levels_failed": [],
+   "production_level": "L3",
+   "production_value": 0.011449244421023711,
+   "finest_change_rel": 0.022936589668043492,
+   "finest_three": [
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "richardson": {
+    "order": 1.035411934984256,
+    "extrapolated": 0.0101853313715174
+   },
+   "status": "bounded",
+   "U": 0.15625042164797176,
+   "rule": "B (Richardson)",
+   "U_mesh": 0.15511437519852805,
+   "U_time": 0.0002934528725802648,
+   "U_cyc": 0.0008425935768634435,
+   "U_cyc_basis": "own 16-cycle run",
+   "pass1_values": {
+    "L0": 0.012735044578124959,
+    "L1": 0.012107234387887765,
+    "L2": 0.011710521411621247,
+    "L3": null
+   }
+  },
+  "Z2_HV_S2": {
+   "levels": {
+    "L0": {
+     "level": "L0",
+     "n_xy": 6,
+     "n_z_solder": 8,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 5.093645300342631,
+     "T_joint_C": 137.40654545454544,
+     "wall_s": 140.9079554080963,
+     "error": null,
+     "d_peeq_per_cycle": 0.01616559882812494,
+     "d_peeq_time_keyed": 0.01616559882812494,
+     "stab_change_pct": 0.031762770807800246,
+     "range_eq_inelastic": 0.007879904488027716,
+     "inelastic_work_MJ_per_m3": 1.3908665751737184,
+     "per_cycle": [
+      null,
+      0.016171888097656194,
+      0.016160465816406202,
+      0.01616559882812494
+     ],
+     "collisions": {
+      "n_increments": 384,
+      "n_distinct_times": 382,
+      "boundary_collisions": {},
+      "interior_collisions": 2
+     },
+     "n_core": 128,
+     "n_elem": 488,
+     "arch": "Z2",
+     "scenario": "HV_S2",
+     "source": "etm_Z2_HV_S2_h1.1_r21.json"
+    },
+    "L1": {
+     "level": "L1",
+     "n_xy": 8,
+     "n_z_solder": 10,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 5.093645300342631,
+     "T_joint_C": 137.40654545454544,
+     "wall_s": 285.66001439094543,
+     "error": null,
+     "d_peeq_per_cycle": 0.015488891366445932,
+     "d_peeq_time_keyed": 0.015488891366445932,
+     "stab_change_pct": 0.01110144829658106,
+     "range_eq_inelastic": 0.007522556494204146,
+     "inelastic_work_MJ_per_m3": 1.4575047583074188,
+     "per_cycle": [
+      null,
+      0.015527066236182422,
+      0.01549061104862232,
+      0.015488891366445932
+     ],
+     "collisions": {
+      "n_increments": 400,
+      "n_distinct_times": 390,
+      "boundary_collisions": {},
+      "interior_collisions": 4
+     },
+     "n_core": 360,
+     "n_elem": 928,
+     "arch": "Z2",
+     "scenario": "HV_S2",
+     "source": "etm_Z2_HV_S2_h1.1_r21.json"
+    },
+    "L2": {
+     "level": "L2",
+     "n_xy": 10,
+     "n_z_solder": 12,
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 5.093645300342631,
+     "T_joint_C": 137.40654545454544,
+     "wall_s": 541.4979174137115,
+     "error": null,
+     "d_peeq_per_cycle": 0.015039011138021032,
+     "d_peeq_time_keyed": 0.015039011138021032,
+     "stab_change_pct": 0.09003470254326768,
+     "range_eq_inelastic": 0.007288272574947816,
+     "inelastic_work_MJ_per_m3": 1.5503513876980066,
+     "per_cycle": [
+      null,
+      0.015104871254231995,
+      0.015052563668945503,
+      0.015039011138021032
+     ],
+     "collisions": {
+      "n_increments": 410,
+      "n_distinct_times": 396,
+      "boundary_collisions": {
+       "1500.0": 4,
+       "2100.0": 4
+      },
+      "interior_collisions": 3
+     },
+     "n_core": 768,
+     "n_elem": 1712,
+     "arch": "Z2",
+     "scenario": "HV_S2",
+     "source": "etm_Z2_HV_S2_h1.1_r21.json"
+    },
+    "L3": {
+     "level": "L3",
+     "n_xy": 12,
+     "n_z_solder": 16,
+     "note": "nested in L0: every L0 interval split in two in-plane (solder and pad overhang) and through the solder",
+     "initial_increment_s": 0.002,
+     "split_steps": true,
+     "n_cycles": 4,
+     "du_um": 5.093645300342631,
+     "T_joint_C": 137.40654545454544,
+     "wall_s": 1276.3921456336975,
+     "error": null,
+     "d_peeq_per_cycle": 0.014715243503924762,
+     "d_peeq_time_keyed": 0.014715243503924762,
+     "stab_change_pct": 0.13768756384466904,
+     "range_eq_inelastic": 0.007129110381278391,
+     "inelastic_work_MJ_per_m3": 1.6609666966271321,
+     "per_cycle": [
+      null,
+      0.014783066585662882,
+      0.01473553249964306,
+      0.014715243503924762
+     ],
+     "collisions": {
+      "n_increments": 423,
+      "n_distinct_times": 393,
+      "boundary_collisions": {
+       "300.0": 4,
+       "900.0": 2,
+       "1500.0": 8,
+       "2100.0": 8
+      },
+      "interior_collisions": 7
+     },
+     "n_core": 1600,
+     "n_elem": 3104,
+     "arch": "Z2",
+     "scenario": "HV_S2",
+     "source": "etm_Z2_HV_S2_h1.1_r21.json"
+    }
+   },
+   "levels_completed": [
+    "L0",
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "levels_failed": [],
+   "production_level": "L3",
+   "production_value": 0.014715243503924762,
+   "finest_change_rel": 0.02200219344042224,
+   "finest_three": [
+    "L1",
+    "L2",
+    "L3"
+   ],
+   "richardson": {
+    "order": 0.624679593418656,
+    "extrapolated": 0.012031308861584369
+   },
+   "status": "bounded",
+   "U": 0.27950407411442646,
+   "rule": "B (Richardson)",
+   "U_mesh": 0.2788489882125503,
+   "U_time": 0.00016794335597565774,
+   "U_cyc": 0.0004871425459005465,
+   "U_cyc_basis": "own 16-cycle run",
+   "pass1_values": {
+    "L0": 0.01616379113281245,
+    "L1": null,
+    "L2": null,
+    "L3": null
+   }
+  }
+ },
+ "acceptance": {
+  "rule": "pass 3 is accepted only if its L0 value reproduces the plain-form pass-1 L0 value of every case, and the harness control, within 0.1 %",
+  "checks": {
+   "control": {
+    "pass3": 0.00651488542578123,
+    "published": 0.006513193433593729,
+    "dev_rel": 0.0002597792012093979
+   },
+   "Z1_HV_S0": {
+    "pass3_L0": 0.006486635738281228,
+    "pass1_L0": 0.00648491752343748,
+    "dev_rel": 0.0002649555430024076
+   },
+   "Z2_HV_S0": {
+    "pass3_L0": 0.011186005472656208,
+    "pass1_L0": 0.011184148214843714,
+    "dev_rel": 0.00016606162372111144
+   },
+   "Z1_HV_S1": {
+    "pass3_L0": 0.009137062605468725,
+    "pass1_L0": 0.00913518524218747,
+    "dev_rel": 0.00020550905443985444
+   },
+   "Z2_HV_S1": {
+    "pass3_L0": 0.012736790652343712,
+    "pass1_L0": 0.012735044578124959,
+    "dev_rel": 0.0001371078214953638
+   },
+   "Z2_HV_S2": {
+    "pass3_L0": 0.01616559882812494,
+    "pass1_L0": 0.01616379113281245,
+    "dev_rel": 0.00011183609696746812
+   }
+  },
+  "pass": true
+ }
+}

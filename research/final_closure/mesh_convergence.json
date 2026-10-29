@@ -1,12 +1,13 @@
 {
  "tolerance_rel": 0.02,
  "declared_before_reading": true,
+ "stale_lineage_files_skipped": [],
  "production_refine": [
   2,
   1
  ],
  "production_label": "graded h_xy = 1.1 mm grid, every in-plane interval split in 2",
- "production_reason": "The unrefined grid fails the declared tolerance: splitting its in-plane intervals in two changed T_max by 4.7 % (Z1) and 3.3 % (Z2), so production uses the split grid.",
+ "production_reason": "The unrefined grid fails the declared tolerance: splitting its in-plane intervals in two changed T_max by 4.9 % (Z1) and 2.7 % (Z2), so production uses the split grid.",
  "method": "nested refinement of the h_xy = 1.1 mm grid: rN1 splits every in-plane interval in N, r12 every layer's elements in two through the thickness; every coarser node survives",
  "structural_solver_checks": {
   "Z1_HV_S0_h0.8_SPOOLES_t1": {
@@ -58,64 +59,64 @@
   "Z1": {
    "levels": {
     "r12": {
-     "T_max_C": 115.953,
-     "die_warpage_pv_um": 24.44218,
-     "du_c_um": 2.300665259340699,
-     "P_loss_w": 143.95198488722303,
+     "T_max_C": 116.376,
+     "die_warpage_pv_um": 24.577830000000002,
+     "du_c_um": 2.3124036224365874,
+     "P_loss_w": 145.6286539783579,
      "n_elems": 72256,
      "structural_solver": "ITERATIVE CHOLESKY"
     },
     "r21": {
-     "T_max_C": 121.579,
-     "die_warpage_pv_um": 27.64468,
-     "du_c_um": 2.373988125479438,
-     "P_loss_w": 146.47240295781302,
+     "T_max_C": 122.322,
+     "die_warpage_pv_um": 27.899020000000004,
+     "du_c_um": 2.3941403063064186,
+     "P_loss_w": 149.05716508309735,
      "n_elems": 144512,
      "structural_solver": "ITERATIVE CHOLESKY"
     },
     "r31": {
-     "T_max_C": 122.358,
-     "die_warpage_pv_um": 28.00838,
-     "du_c_um": 2.386108368711258,
-     "P_loss_w": 146.7880333244838,
+     "T_max_C": 123.155,
+     "die_warpage_pv_um": 28.28018,
+     "du_c_um": 2.4075465280022894,
+     "P_loss_w": 149.51224035199394,
      "n_elems": 325152,
      "structural_solver": "ITERATIVE CHOLESKY"
     },
     "r11": {
-     "T_max_C": 115.888,
-     "die_warpage_pv_um": 24.468700000000002,
-     "du_c_um": 2.309212176772717,
-     "P_loss_w": 143.88066163664757,
+     "T_max_C": 116.319,
+     "die_warpage_pv_um": 24.607459999999996,
+     "du_c_um": 2.3211687454013514,
+     "P_loss_w": 145.59970894983152,
      "n_elems": 36128,
      "structural_solver": "SPOOLES"
     }
    },
    "steps": {
     "r11->r21": {
-     "T_max_C": 0.04680907064542387,
-     "die_warpage_pv_um": 0.1148857574043179,
-     "du_c_um": 0.027285708808522116,
-     "P_loss_w": 0.01769440023396023
+     "T_max_C": 0.04907539118065434,
+     "die_warpage_pv_um": 0.1179812050745871,
+     "du_c_um": 0.030479233281713848,
+     "P_loss_w": 0.02319550443172817
     },
     "r21->r31": {
-     "T_max_C": 0.006366563690155205,
-     "die_warpage_pv_um": 0.012985399369759976,
-     "du_c_um": 0.005079502419400211,
-     "P_loss_w": 0.0021502458989490943
+     "T_max_C": 0.006763834192684003,
+     "die_warpage_pv_um": 0.013477990592704775,
+     "du_c_um": 0.0055684164521609,
+     "P_loss_w": 0.003043732525345199
     }
    },
    "checks": {
     "in-plane": {
-     "T_max_C": 0.006366563690155205,
-     "die_warpage_pv_um": 0.012985399369759976,
-     "du_c_um": 0.005079502419400211,
-     "P_loss_w": 0.0021502458989490943
+     "T_max_C": 0.006763834192684003,
+     "die_warpage_pv_um": 0.013477990592704775,
+     "du_c_um": 0.0055684164521609,
+     "P_loss_w": 0.003043732525345199
     },
     "through-thickness": {
-     "T_max_C": 0.0005605719558786554,
-     "die_warpage_pv_um": 0.0010850096022532126,
-     "du_c_um": 0.003714976525732014,
-     "P_loss_w": 0.0004954655584036407
+     "T_max_C": 0.0004897917096308703,
+     "die_warpage_pv_um": 0.001205558017123311,
+     "du_c_um": 0.003790481419298341,
+     "P_loss_w": 0.00019875915718263294
     }
    },
    "check_basis": {
@@ -132,7 +133,7 @@
      "P_loss_w": "r11 -> r12 (base in-plane resolution)"
     }
    },
-   "worst": 0.012985399369759976,
+   "worst": 0.013477990592704775,
    "complete": true,
    "pass": true,
    "observable_status": {
@@ -145,24 +146,24 @@
    "bounded_ok": true,
    "richardson": {
     "T_max_C": {
-     "order": 2.4991509871197852,
-     "extrapolated": 122.80194357630964,
-     "finest_error_estimate": -0.4439435763096374
+     "order": 2.4768039846612417,
+     "extrapolated": 123.63653633468441,
+     "finest_error_estimate": -0.48153633468440704
     },
     "die_warpage_pv_um": {
-     "order": 2.7896645313859763,
-     "extrapolated": 28.181644762166464,
-     "finest_error_estimate": -0.1732647621664651
+     "order": 2.7716018112370984,
+     "extrapolated": 28.46374016740044,
+     "finest_error_estimate": -0.18356016740043943
     },
     "du_c_um": {
-     "order": 1.9827531392475337,
-     "extrapolated": 2.3959277323970496,
-     "finest_error_estimate": -0.009819363685791492
+     "order": 2.013253706449065,
+     "extrapolated": 2.418168482116532,
+     "finest_error_estimate": -0.010621954114242863
     },
     "P_loss_w": {
-     "order": 2.6898027486913847,
-     "extrapolated": 146.94775541764108,
-     "finest_error_estimate": -0.1597220931572936
+     "order": 2.563225020915212,
+     "extrapolated": 149.76129200490286,
+     "finest_error_estimate": -0.2490516529089106
     }
    },
    "remesh_sensitivity": {
@@ -171,18 +172,18 @@
      0.8
     ],
     "values": {
-     "T_max_C": 116.306,
-     "die_warpage_pv_um": 24.94407,
-     "du_c_um": 2.241264822734025,
-     "P_loss_w": 144.4598454424795,
+     "T_max_C": 116.644,
+     "die_warpage_pv_um": 25.055639999999997,
+     "du_c_um": 2.25087952323641,
+     "P_loss_w": 145.7241736234949,
      "n_elems": 43232,
-     "structural_solver": "ITERATIVE CHOLESKY (direct solver crashed, rc=-11)"
+     "structural_solver": "ITERATIVE CHOLESKY"
     },
     "rel_change": {
-     "T_max_C": 0.0035939676370951813,
-     "die_warpage_pv_um": 0.019057435294240196,
-     "du_c_um": 0.030316521880625318,
-     "P_loss_w": 0.004009306558911795
+     "T_max_C": 0.002786255615376726,
+     "die_warpage_pv_um": 0.017887389825205054,
+     "du_c_um": 0.031227447510774168,
+     "P_loss_w": 0.0008541113706017344
     },
     "note": "re-graded, not nested: NOT a refinement (for Z2 the grid keeps 38 lines per axis and its largest element grows)"
    }
@@ -190,64 +191,64 @@
   "Z2": {
    "levels": {
     "r12": {
-     "T_max_C": 116.614,
-     "die_warpage_pv_um": 66.6947,
-     "du_c_um": 3.9661031589922926,
-     "P_loss_w": 141.41080707598047,
-     "n_elems": 77246,
+     "T_max_C": 121.288,
+     "die_warpage_pv_um": 66.18679999999999,
+     "du_c_um": 3.14721900573866,
+     "P_loss_w": 145.79260029523272,
+     "n_elems": 72560,
      "structural_solver": "ITERATIVE CHOLESKY"
     },
     "r21": {
-     "T_max_C": 120.593,
-     "die_warpage_pv_um": 69.2807,
-     "du_c_um": 3.951175980714921,
-     "P_loss_w": 142.6716686628148,
-     "n_elems": 154492,
+     "T_max_C": 124.603,
+     "die_warpage_pv_um": 68.8098,
+     "du_c_um": 3.089903403502321,
+     "P_loss_w": 148.0379345672572,
+     "n_elems": 145120,
      "structural_solver": "ITERATIVE CHOLESKY"
     },
     "r31": {
-     "T_max_C": 121.151,
-     "die_warpage_pv_um": 69.4387,
-     "du_c_um": 3.977996444941184,
-     "P_loss_w": 142.8608282773279,
-     "n_elems": 347607,
+     "T_max_C": 124.995,
+     "die_warpage_pv_um": 68.93430000000001,
+     "du_c_um": 3.1118941542790415,
+     "P_loss_w": 148.31827029747828,
+     "n_elems": 326520,
      "structural_solver": "ITERATIVE CHOLESKY"
     },
     "r11": {
-     "T_max_C": 116.609,
-     "die_warpage_pv_um": 66.70689999999999,
-     "du_c_um": 3.9675251034737284,
-     "P_loss_w": 141.41491113798298,
-     "n_elems": 38623,
+     "T_max_C": 121.275,
+     "die_warpage_pv_um": 66.1665,
+     "du_c_um": 3.148921516504889,
+     "P_loss_w": 145.75967621750164,
+     "n_elems": 36280,
      "structural_solver": "SPOOLES"
     }
    },
    "steps": {
     "r11->r21": {
-     "T_max_C": 0.03303674342623543,
-     "die_warpage_pv_um": 0.03715031747658447,
-     "du_c_um": 0.004137786532061607,
-     "P_loss_w": 0.008808739230505453
+     "T_max_C": 0.026708827235299222,
+     "die_warpage_pv_um": 0.038414586294394065,
+     "du_c_um": 0.0191003100406546,
+     "P_loss_w": 0.015389692894698508
     },
     "r21->r31": {
-     "T_max_C": 0.0046058224859885,
-     "die_warpage_pv_um": 0.002275388220113586,
-     "du_c_um": 0.006742204171743447,
-     "P_loss_w": 0.0013240831429725203
+     "T_max_C": 0.0031361254450178815,
+     "die_warpage_pv_um": 0.0018060675164614974,
+     "du_c_um": 0.007066676977583547,
+     "P_loss_w": 0.0018900957357365366
     }
    },
    "checks": {
     "in-plane": {
-     "T_max_C": 0.0046058224859885,
-     "die_warpage_pv_um": 0.002275388220113586,
-     "du_c_um": 0.006742204171743447,
-     "P_loss_w": 0.0013240831429725203
+     "T_max_C": 0.0031361254450178815,
+     "die_warpage_pv_um": 0.0018060675164614974,
+     "du_c_um": 0.007066676977583547,
+     "P_loss_w": 0.0018900957357365366
     },
     "through-thickness": {
-     "T_max_C": 4.287649853370661e-05,
-     "die_warpage_pv_um": 0.0001829230808443982,
-     "du_c_um": 0.0003585243309196051,
-     "P_loss_w": 2.9022265605954214e-05
+     "T_max_C": 0.00010718290350233345,
+     "die_warpage_pv_um": 0.00030670768189415066,
+     "du_c_um": 0.00054095719526503,
+     "P_loss_w": 0.00022582818102159956
     }
    },
    "check_basis": {
@@ -264,7 +265,7 @@
      "P_loss_w": "r11 -> r12 (base in-plane resolution)"
     }
    },
-   "worst": 0.006742204171743447,
+   "worst": 0.007066676977583547,
    "complete": true,
    "pass": true,
    "observable_status": {
@@ -277,20 +278,20 @@
    "bounded_ok": true,
    "richardson": {
     "T_max_C": {
-     "order": 2.461570261504704,
-     "extrapolated": 121.47673098871469,
-     "finest_error_estimate": -0.3257309887147008
+     "order": 2.7439744620659186,
+     "extrapolated": 125.18694843858589,
+     "finest_error_estimate": -0.1919484385858843
     },
     "die_warpage_pv_um": {
-     "order": 3.78429690760239,
-     "extrapolated": 69.48212397235494,
-     "finest_error_estimate": -0.04342397235494281
+     "order": 4.198654441332472,
+     "extrapolated": 68.9620459345517,
+     "finest_error_estimate": -0.027745934551684445
     },
     "du_c_um": null,
     "P_loss_w": {
-     "order": 2.3433546056118386,
-     "extrapolated": 142.98008958566817,
-     "finest_error_estimate": -0.11926130834028426
+     "order": 2.6729959355161252,
+     "extrapolated": 148.46159781129856,
+     "finest_error_estimate": -0.1433275138202848
     }
    },
    "remesh_sensitivity": {
@@ -299,18 +300,18 @@
      0.8
     ],
     "values": {
-     "T_max_C": 116.805,
-     "die_warpage_pv_um": 66.9962,
-     "du_c_um": 3.9051713182650505,
-     "P_loss_w": 141.456325568153,
-     "n_elems": 38623,
-     "structural_solver": "SPOOLES"
+     "T_max_C": 121.493,
+     "die_warpage_pv_um": 67.17960000000001,
+     "du_c_um": 3.104444601092119,
+     "P_loss_w": 145.86176331374207,
+     "n_elems": 36280,
+     "structural_solver": "ITERATIVE CHOLESKY"
     },
     "rel_change": {
-     "T_max_C": 0.0016780103591456886,
-     "die_warpage_pv_um": 0.004318155358065255,
-     "du_c_um": 0.015966978175077823,
-     "P_loss_w": 0.0002927718502773395
+     "T_max_C": 0.0017943420608593854,
+     "die_warpage_pv_um": 0.01508047085722464,
+     "du_c_um": 0.014326851056425153,
+     "P_loss_w": 0.0006998893604546246
     },
     "note": "re-graded, not nested: NOT a refinement (for Z2 the grid keeps 38 lines per axis and its largest element grows)"
    }
