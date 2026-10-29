@@ -140,12 +140,21 @@ def test_paper_ready_function_refuses_an_unresolved_b1():
     cb = {"gates": [{"gate": "board.h1_meshed", "new_subtype": "B1", "resolved": True},
                     {"gate": "tsv.density_sensitivity_run", "new_subtype": "B1",
                      "resolved": False}]}
-    ok, why = FR.paper_ready(True, True, True, True, True, cb, lm)
+    final = [{"arch": "Z2", "architecture_variant": "Z2_DIRECT_FEED", "forbidden_terms": []}]
+    ok, why = FR.paper_ready(True, True, True, True, True, cb, lm, final)
     assert not ok and any("tsv.density_sensitivity_run" in w for w in why)
     cb["gates"][1]["resolved"] = True
-    assert FR.paper_ready(True, True, True, True, True, cb, lm)[0]
+    ok, why = FR.paper_ready(True, True, True, True, True, cb, lm, final)
+    assert ok, why
     lm["acceptance"]["pass"] = False
-    assert not FR.paper_ready(True, True, True, True, True, cb, lm)[0]
+    assert not FR.paper_ready(True, True, True, True, True, cb, lm, final)[0]
+    lm["acceptance"]["pass"] = True
+    # NEGATIVE: the superseded BGA-fed primary Z2 (no direct-feed variant, package 48 V
+    # ball term in its ledger) can never be paper-ready
+    stale = [{"arch": "Z2", "architecture_variant": None, "forbidden_terms": ["P_BGA_supply"]}]
+    ok, why = FR.paper_ready(True, True, True, True, True, cb, lm, stale)
+    assert not ok
+    assert any("direct-fed" in w for w in why) and any("package 48 V term" in w for w in why)
 
 
 def test_every_open_b_gate_has_a_subtype_and_evidence():

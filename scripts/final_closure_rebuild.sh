@@ -9,8 +9,11 @@ export PATH=/home/beams0/MGHARIB/envs/etm/bin:$PATH
 SCR="${HVR_SCRATCH:-$HOME/claude_scratch/hvr_work}"
 mkdir -p "$SCR"
 python scripts/final_closure_literature_rules.py
+python scripts/final_closure_provenance.py                    # lane/version consistency
 python scripts/final_closure_accuracy_matrix.py
 python scripts/final_closure_architecture_spec.py > /dev/null
+python scripts/final_closure_package_figs.py                  # the manuscript converts some
+python scripts/final_closure_direct_feed.py                   # crossover R*, needs Z1 mechanics
 python scripts/final_closure_results.py
 python scripts/final_closure_classB.py > /dev/null
 python scripts/final_closure_results.py > /dev/null          # decision sees class B
@@ -32,7 +35,6 @@ python scripts/final_closure_evidence.py
 python scripts/prelim_make_figs.py > /dev/null
 python scripts/prelim_make_figs_final.py
 python scripts/final_closure_slide_charts.py
-python scripts/final_closure_package_figs.py
 python scripts/visualize_rdl_geometry.py > /dev/null
 python scripts/final_closure_tool_map.py
 python scripts/prelim_build_deck.py

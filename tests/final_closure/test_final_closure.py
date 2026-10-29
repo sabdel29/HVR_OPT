@@ -72,17 +72,26 @@ def test_terminal_is_the_traced_pad_not_the_untraced_tile():
 
 
 def test_ledger_has_one_owner_per_conductor_and_no_silent_zero():
+    """Z1 is BGA-fed: its 48 V crosses the package balls and RDL. The primary Z2 is
+    direct-fed: it may never carry those terms and must carry its explicit attach
+    (z2_direct_feed_architecture.json)."""
     led = J("electrical_ledger.json")
+    spec = J("z2_direct_feed_architecture.json")["architectures"]["Z2"]
+    common = ("P_conv_hs", "P_conv_ls", "P_intraVR_metal", "P_intraVR_vertical", "P_TSV_VDD",
+              "P_TSV_GND", "P_pad_VDD", "P_pad_GND", "P_pkg_RDL_LV_supply",
+              "P_pkg_RDL_LV_return")
+    need = {"Z1": common + ("P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return", "P_BGA_supply",
+                            "P_BGA_return"),
+            "Z2": common + tuple(spec["required_ledger_terms"])}
     for a in ("Z1", "Z2"):
         for s in SCEN:
             terms = [r["term"] for r in led["rows"] if r["arch"] == a and r["scenario"] == s]
             assert terms, (a, s)
             assert len(terms) == len(set(terms)), f"duplicated owner in {a} {s}"
-            for need in ("P_conv_hs", "P_conv_ls", "P_intraVR_metal", "P_intraVR_vertical",
-                         "P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return", "P_BGA_supply",
-                         "P_BGA_return", "P_TSV_VDD", "P_TSV_GND", "P_pad_VDD", "P_pad_GND",
-                         "P_pkg_RDL_LV_supply", "P_pkg_RDL_LV_return"):
-                assert need in terms, (a, s, need)
+            for n in need[a]:
+                assert n in terms, (a, s, n)
+            if a == "Z2":
+                assert not set(terms) & set(spec["forbidden_ledger_terms"]), (a, s)
     for r in led["rows"]:
         if r["P_w"] == 0.0:
             assert r["maturity"] == "STRUCTURALLY_ABSENT", r["term"]
@@ -344,7 +353,9 @@ def test_no_q3d_result_is_presented():
 def test_manuscript_uses_the_physical_lineage_macros():
     tex = TEX.read_text()
     assert r"\input{final_lineage_macros}" in tex
-    for m in (r"\PlossZone", r"\TmaxZtwo", r"\DuRatio", r"\NballMatched"):
+    # the driver enters as its two values with their uncertainty-aware ordering; the bare
+    # ratio phrase ('a 1.29-fold driver') left with the frozen-pair abstract
+    for m in (r"\PlossZone", r"\TmaxZtwo", r"\DuZone", r"\DuZtwo", r"\NballMatched"):
         assert m in tex, m
     for f in ("final_physical_table.tex", "final_ledger_table.tex", "final_accspeed_table.tex",
               "final_lineage_macros.tex"):
@@ -371,10 +382,15 @@ def test_frozen_values_only_appear_in_a_historical_frame():
 
 
 def test_conclusion_states_the_physical_result():
+    """The conclusion carries the central claim (no universal winner) and the physical
+    lineage's own numbers, never the frozen pair or an unclosed hedge."""
     tex = TEX.read_text()
     c = tex[tex.index(r"\section{Conclusion}"):tex.index(r"\section*{Acknowledgment}")]
-    assert r"\DuRatio" in c and "reverse" in c
+    assert "no architecture can be ranked independently" in c
+    assert r"\PlossZone" in c and r"\PlossZtwo" in c
     assert "neither architecture is yet dimensionally closed" not in c
+    for stale in ("118.32", "126.46", "4.6252", "3.8714"):
+        assert stale not in c, stale
 
 
 # ------------------------------------------------------------------ deck
@@ -420,9 +436,22 @@ def test_literature_rules_classify_every_listed_source_without_invention():
     listed = {"10.1109/TCPMT.2026.3724907", "10.1109/TCPMT.2026.3716571",
               "10.1016/j.mtelec.2026.100211", "10.3390/ma14216394", "10.1109/TED.2026.3724984",
               "10.1016/j.ijmecsci.2025.110758", "10.1109/ECTC.2004.1319419",
-              "10.1115/1.1413764"}
+              "10.1115/1.1413764",
+              # added with the direct-fed Z2 (Parts 2 and 25); each has a record below
+              "10.1109/TCPMT.2026.3716987", "10.1109/SOCC58585.2023.10256973",
+              "10.1109/ISCAS58744.2024.10558456", "10.1109/ECTC51529.2024.00364",
+              "10.1109/ITherm55375.2024.10709419", "10.1109/TCPMT.2025.3636391",
+              "US20260059645A1 (patent)", "US20210249384A1 (patent family)",
+              "10.1109/ECTC.2016.127", "10.3390/electronics12010144",
+              "10.1109/TCPMT.2016.2641040", "10.1109/ICEPT.2018.8480482",
+              "10.1016/j.mssp.2026.110744"}
     got = {s["doi"]: s for s in lr["sources"]}
     assert set(got) == listed
+    # a held source names a record committed with the repo (a held PDF stays local: literature
+    # PDFs are never committed, .gitignore research/**/*.pdf)
+    for doi, s in got.items():
+        for path in re.findall(r"(?:research|results)/[\w./-]+\.(?:json|md)", s["held"]):
+            assert (R / path).exists(), (doi, path)
     bib = (R / "manuscript" / "ETM_DVPD_REFERENCES.bib").read_text().lower()
     for doi, s in got.items():
         assert s["class"] in lr["rules"], doi
