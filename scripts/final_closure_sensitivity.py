@@ -28,7 +28,11 @@ import time
 from dataclasses import replace
 from pathlib import Path
 
-import numpy as np
+# Every pool worker would otherwise start a full-width OpenBLAS pool (64-96 idle threads);
+# on this shared host that reached the per-user thread limit and killed CalculiX
+# runs mid-solve (DEFECT #69). The solvers set their own thread counts.
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+import numpy as np  # noqa: E402
 
 R = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(R / "scripts"))
@@ -143,40 +147,119 @@ def v_out_of_cell(case):
                                  out_of_cell=None: o2(cfg, h_xy, discrete_cells, case))
 
 
-def v_f1_clearance():
-    """F1 with the specified 1.0 mm sidewall clearance OPEN (DEFECT #66). Production F1
-    fills the whole 23.36 mm PCB opening with encapsulant, bonding the Z2 converter block to
-    the PCB sidewall, although the stack specifies a clearance between the 21.36 mm cell
-    grid and the opening. Here the encapsulant stays between the cells (inside the cell-grid
-    bounding box) and the clearance ring is void; nodes are compacted as the F2 builder does.
-    Z2 only: Z1 has no opening."""
+def v_f1_sidewall_filled():
+    """The DEFECT #66 construction as a SENSITIVITY: the encapsulant fills the WHOLE PCB
+    opening, including the 1.0 mm clearance ring, bonding the converter block to the PCB
+    sidewall. Production voids that ring (F1_clearance). Z2 only: Z1 has no opening."""
+    v_out_of_cell("F1_encapsulated")
+
+
+# ------------------------------------------------------------------ VR attach (Z2)
+def _attach_override(**kw):
+    """Change the VR attach in the mesh (config) AND in the electrical ledger together."""
+    import physical_package as PP
+    import final_closure_ledger as FL
+    o = PP.load_physical_package_config
+    def load(path):
+        cfg = o(path)
+        att = dict(cfg.attach)
+        att.update(kw)
+        h = float(att["cu_height_um"]) + float(att["cap_height_um"])
+        return replace(cfg, attach=tuple(sorted(att.items())), attach_um=h)
+    PP.load_physical_package_config = load
+    sp = dict(FL.attach_spec())
+    sp.update({{"cu_height_um": "h_cu_um", "cap_height_um": "h_cap_um", "diameter_um": "d_um",
+                "pitch_um": "pitch_um"}[k]: v for k, v in kw.items()})
+    FL.attach_spec = lambda: sp
+
+
+def v_attach_height(h_um):
+    """Joint height bound (20 / 40 um) with the Cu/cap proportions of the nominal 14/16 um
+    split, so only the height (and with it the series resistance) changes."""
+    _attach_override(cu_height_um=14.0 * h_um / 30.0, cap_height_um=16.0 * h_um / 30.0)
+
+
+def v_attach_sn():
+    """All-solder alternative: pure-Sn microbumps of Na et al. 2022 (30 um diameter, 50 um
+    space, i.e. 80 um pitch) in the same 30 um envelope. Material AND density change
+    together because that is the alternative technology as published."""
+    _attach_override(cu_height_um=0.0, cap_height_um=30.0, diameter_um=30.0, pitch_um=80.0)
+
+
+def _attach_card(edit):
     def hook(m, st, tiles):
-        cen = m.elem_centroids()
-        lay = np.array(m.elem_layer, dtype=object)
-        x0 = min(t.cx - t.ax / 2 for t in tiles); x1 = max(t.cx + t.ax / 2 for t in tiles)
-        y0 = min(t.cy - t.ay / 2 for t in tiles); y1 = max(t.cy + t.ay / 2 for t in tiles)
-        conv = np.array([str(l).startswith("conv_") for l in lay])
-        ring = conv & ((cen[:, 0] < x0 - 1e-9) | (cen[:, 0] > x1 + 1e-9)
-                       | (cen[:, 1] < y0 - 1e-9) | (cen[:, 1] > y1 + 1e-9))
-        if ring.any() and set(np.array(m.elem_material, dtype=object)[ring]) != {"underfill_homog"}:
-            raise RuntimeError("the clearance ring holds something other than the encapsulant")
-        keep = ~ring
-        m.elems = m.elems[keep]
-        m.elem_material = np.array(m.elem_material, dtype=object)[keep]
-        m.elem_layer = lay[keep]
-        m.elem_tile = np.asarray(m.elem_tile)[keep]
-        used = np.unique(m.elems.ravel())
-        newid = np.zeros(len(m.nodes) + 1, dtype=m.elems.dtype)
-        newid[used] = np.arange(1, len(used) + 1)
-        n0 = len(m.nodes)
-        m.elems = newid[m.elems]
-        m.nodes = m.nodes[used - 1]
-        return {"variant_elements_removed": int(ring.sum()),
-                "variant_nodes_removed": int(n0 - len(m.nodes)),
-                "cell_grid_bbox_mm": [x0, x1, y0, y1]}
+        c = st["materials"]["vr_attach"]
+        edit(c)
+        c["status"] = "ASSUMPTION"
+        c["note"] = "class-B bound (final_closure_sensitivity.py), not a property"
+        return {"vr_attach_card": {k: c[k]["value"] for k in ("E", "cte", "k")}}
     E.BUILD_HOOKS.append(hook)
 
 
+def v_attach_stiff():
+    """Column-stiffened (Voigt) mechanical card of the attach instead of the
+    underfill-dominated production convention."""
+    import z2_converter as Z2C
+    def edit(c):
+        att = {"cu_height_um": 14.0, "cap_height_um": 16.0, "diameter_um": 15.0,
+               "pitch_um": 30.0}
+        st = Z2C.vr_attach_material(att, column_stiffened=True)
+        c["E"], c["cte"] = st["E"], st["cte"]
+    _attach_card(edit)
+
+
+def v_attach_underfill(E_mpa, cte):
+    """Declared stress corners of the attach underfill (E, CTE), not a sourced range."""
+    def edit(c):
+        c["E"] = {"value": E_mpa, "status": "ASSUMPTION"}
+        c["cte"] = {"value": cte, "status": "ASSUMPTION"}
+    _attach_card(edit)
+
+
+# ------------------------------------------------------------------ direct feed (Z2)
+def feed_bound_ohm():
+    """The largest external loop resistance any requirement admits: the largest crossover
+    R* over the scenarios that have a valid comparison (direct_feed_crossover.json). A
+    scenario in which Z2 is not ahead even with a lossless feed (R* = 0) admits none."""
+    cx = json.loads((R / "research/final_closure/direct_feed_crossover.json").read_text())
+    rs = [c["R_star_mohm"] for c in cx["scenarios"].values()
+          if c.get("R_star_mohm") and not c.get("Z1_operating_point_inadmissible")]
+    if not rs:
+        raise RuntimeError("no scenario admits a positive direct-feed loop resistance")
+    return max(rs) * 1e-3
+
+
+def v_feed_heat():
+    """The external direct-feed loss at the largest admissible loop resistance
+    (feed_bound_ohm), at the HV-S0 current, deposited INSIDE the package in the deepest
+    converter tier (in-cell): the worst place the feed's heat could land."""
+    import final_closure_ledger as FL
+    r_b = feed_bound_ohm()
+    def extra(arch, scen, L):
+        if FL.HV_FEED[arch] != "DIRECT_FEED":
+            return {}
+        p = L["i_hv_rms_a"] ** 2 * r_b
+        return {((FL.LAYERS[arch]["hs"],), True): p}
+    E.EXTRA_DEPOSITS = extra
+
+
+# ------------------------------------------------------------------ cooling model form
+def icepak_factor():
+    """h_eq / h_compact implied by the matched Icepak case: the compact model gives
+    dT = q''/h at the CFD's exact loading, so the coefficient that reproduces the CFD's
+    mean base rise is h * dT_compact / dT_CFD. A SENSITIVITY, never a recalibration."""
+    j = json.loads((R / "research/final_closure/reference_cooling_icepak.json").read_text())
+    lv = {k: v for k, v in j["levels"].items() if v.get("solved")}
+    fin = max(lv, key=lambda k: lv[k]["cells"])
+    return j["correlation_dT_matched_loading_K"] / lv[fin]["dT_base_mean_K"]
+
+
+def v_icepak_equivalent():
+    from cooling_production import CANDIDATES
+    c = CANDIDATES[E.COOLER]
+    f = icepak_factor()
+    orig = type(c).h_uniform
+    type(c).h_uniform = lambda self, q_w: orig(self, q_w) * f
 def v_z2_cooled():
     """Z2-COOLED, bounding: a second cold plate of the SAME kind as the top one (uniform
     h of the top microchannel plate at the dissipated power, fluid at the inlet
@@ -195,6 +278,41 @@ def v_z2_cooled():
                 "T_C": float(cooler.t_in_c), "layer": deepest.name,
                 "label": "second top-type cold plate on the converter underside"}
     E.EXTRA_FILM = film
+
+
+def v_z2_cooled_tim():
+    """Backside thermal interface: the Z2-COOLED plate, but through the stack's TIM card
+    (50 um at k = 3 W/mK, the top TIM) in series with the film."""
+    from cooling_production import CANDIDATES
+    cooler = CANDIDATES[E.COOLER]
+
+    def film(m, tiles, q_w):
+        inside = [L for L in m.layers if L.region == "inside_cutout"]
+        deepest = min(inside, key=lambda L: L.z0)
+        ids = m.elem_set(layer=deepest.name)
+        keep = [e for e in ids
+                if abs(m.nodes[m.elems[e - 1] - 1][:, 2].min() - deepest.z0) < 1e-9]
+        h = float(cooler.h_uniform(q_w))
+        r_tim = 50e-6 / 3.0
+        return {"elems": np.array(keep, int), "h_W_m2K": 1.0 / (1.0 / h + r_tim),
+                "T_C": float(cooler.t_in_c), "layer": deepest.name,
+                "label": "second cold plate on the converter underside through a 50 um TIM"}
+    E.EXTRA_FILM = film
+
+
+def v_bga_population(frac):
+    """BGA mechanical population: the homogenised BGA layer at a smaller populated
+    fraction (its stiffness and conductivity scale with the ball area fraction). For the
+    direct-fed Z2 the 54 + 54 balls the BGA-fed design used for 48 V are electrically
+    unnecessary; frac = 420/528 depopulates them. Uniform smearing is a simplification."""
+    def hook(m, st, tiles):
+        c = st["materials"]["bga_homog"]
+        for key in ("E", "k"):
+            v = c[key]["value"] if isinstance(c[key], dict) else c[key]
+            c[key] = {"value": v * frac, "status": "ASSUMPTION"}
+        c["note"] = f"class-B population {frac:.4f} of the sites"
+        return {"bga_population": frac}
+    E.BUILD_HOOKS.append(hook)
 
 
 # ------------------------------------------------------------------ pad count
@@ -308,11 +426,60 @@ VARIANTS = {
                     gates=["mech.f1_f2_bracket_run"],
                     nature="declared bracket (z2_converter.OUT_OF_CELL)",
                     what="out-of-cell converter-tier volume void instead of encapsulated"),
-    "f1_clearance": dict(kind="full", archs=("Z2",), apply=v_f1_clearance,
-                         gates=["mech.f1_f2_bracket_run"],
-                         nature="model-form check (DEFECT #66: specified sidewall clearance)",
-                         what="encapsulant between the cells, the 1.0 mm clearance to the PCB "
-                              "sidewall void"),
+    "f1_sidewall_filled": dict(kind="full", archs=("Z2",), apply=v_f1_sidewall_filled,
+                               gates=["mech.f1_f2_bracket_run", "geom.sidewall_clearance"],
+                               nature="the DEFECT #66 construction, kept as a sensitivity",
+                               what="encapsulant fills the whole opening, bonding the converter "
+                                    "to the PCB sidewall (production: 1.0 mm clearance void)"),
+    "attach_h20": dict(kind="full", archs=("Z2",), apply=lambda: v_attach_height(20.0),
+                       gates=["geom.vr_attach_height"], nature="declared bound (architecture spec)",
+                       what="VR attach joint 20 um instead of 30 um"),
+    "attach_h40": dict(kind="full", archs=("Z2",), apply=lambda: v_attach_height(40.0),
+                       gates=["geom.vr_attach_height"],
+                       nature="declared bound (Na et al. 2022, CLOSE_ANALOG)",
+                       what="VR attach joint 40 um instead of 30 um; the z grid loses one "
+                            "10 um sliver plane (at 40 um the inductor-tier midplane meets "
+                            "the BGA bottom at z = -0.30 mm), a discretisation change of "
+                            "the size the through-thickness mesh check bounds"),
+    "attach_sn": dict(kind="full", archs=("Z2",), apply=v_attach_sn,
+                      gates=["mat.vr_attach_material"],
+                      nature="alternative technology (Na et al. 2022, CLOSE_ANALOG)",
+                      what="all-solder (pure Sn) microbumps, 30 um at 80 um pitch, instead of "
+                           "15 um Cu pillars at 30 um pitch"),
+    "attach_stiff": dict(kind="mech", archs=("Z2",), apply=v_attach_stiff,
+                         gates=["mat.vr_attach_material"], nature="bounding model form",
+                         what="column-stiffened (Voigt) attach card instead of the "
+                              "underfill-dominated convention"),
+    "attach_uf_soft": dict(kind="mech", archs=("Z2",),
+                           apply=lambda: v_attach_underfill(4000.0, 40e-6),
+                           gates=["mat.vr_attach_underfill"], nature="declared stress corner",
+                           what="attach underfill E = 4 GPa, CTE = 40 ppm/K"),
+    "attach_uf_stiff": dict(kind="mech", archs=("Z2",),
+                            apply=lambda: v_attach_underfill(12000.0, 20e-6),
+                            gates=["mat.vr_attach_underfill"], nature="declared stress corner",
+                            what="attach underfill E = 12 GPa, CTE = 20 ppm/K"),
+    "feed_heat_at_crossover": dict(kind="full", archs=("Z2",), apply=v_feed_heat,
+                                   gates=["elec.direct_feed_heat_location"],
+                                   nature="bounding heat location (worst place)",
+                                   what="the external feed loss at the largest admissible "
+                                        "loop resistance (largest crossover R* over the "
+                                        "scenarios with a valid comparison), at the HV-S0 "
+                                        "current, deposited in the deepest converter tier"),
+    "icepak_equivalent": dict(kind="full", archs=("Z1", "Z2"), apply=v_icepak_equivalent,
+                              gates=["therm.cooling_model_form"],
+                              nature="ICEPAK_EQUIVALENT_COOLING_SENSITIVITY (not a "
+                                     "recalibration)",
+                              what="top-plate coefficient scaled by dT_compact/dT_CFD of the "
+                                   "matched Icepak case"),
+    "z2_cooled_tim": dict(kind="full", archs=("Z2",), apply=v_z2_cooled_tim,
+                          gates=["therm.backside_interface"],
+                          nature="backside thermal interface (bounding cooling)",
+                          what="Z2-COOLED plate through a 50 um TIM at k = 3 W/mK"),
+    "bga_depop": dict(kind="full", archs=("Z2",), apply=lambda: v_bga_population(420 / 528),
+                      gates=["mech.bga_population"],
+                      nature="BGA mechanical population (smeared)",
+                      what="BGA field populated at 420/528: the 54 + 54 48 V balls of the "
+                           "BGA-fed design removed"),
     "z2_cooled": dict(kind="full", archs=("Z2",), apply=v_z2_cooled,
                       gates=["therm.z2_cooled"],
                       nature="bounding case (strongest backside cooling the model states)",

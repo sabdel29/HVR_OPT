@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -37,7 +38,9 @@ SCEN = "HV_S0"
 H01 = ["board_h1", "board_h0_h1grid"]
 #: variants that exist only for Z2 (no PCB opening, no backside converter in Z1): Z1 keeps
 #: its production values
-Z2_ONLY = ("z2_cooled", "f1_clearance")
+Z2_ONLY = ("z2_cooled", "z2_cooled_tim", "f1_sidewall_filled", "attach_h20", "attach_h40",
+           "attach_sn", "attach_stiff", "attach_uf_soft", "attach_uf_stiff",
+           "feed_heat_at_crossover", "bga_depop")
 CONV = ["conv_k_tenth", "conv_E80_a4", "conv_E80_a10", "conv_E160_a4", "conv_E160_a10"]
 WAVE = ("named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each "
         "scenario solved through the full lineage")
@@ -64,10 +67,45 @@ GATES = {
                                     ["tsv_min", "tsv_mid"],
                                     "the adopted field is the maximum-density end"),
     "mech.f1_f2_bracket_run": ("B1", GLOBAL, "out-of-cell converter volume encapsulated "
-                               "(F1, production: fills the PCB opening to the sidewall) vs "
-                               "void (F2), and F1 with the specified 1 mm sidewall clearance "
-                               "open (DEFECT #66)", "runs", ["f2_void", "f1_clearance"],
+                               "between the cells (F1, production, 1.0 mm clearance void) vs "
+                               "void (F2), and F1 filled to the PCB sidewall (DEFECT #66 "
+                               "construction)", "runs", ["f2_void", "f1_sidewall_filled"],
                                "the fill carries heat and load between the cells"),
+    "geom.sidewall_clearance": ("B1", GLOBAL, "1.0 mm sidewall clearance void (production) "
+                                "vs encapsulant filled to the PCB sidewall", "runs",
+                                ["f1_sidewall_filled"],
+                                "a bonded sidewall is an extra heat and load path"),
+    "geom.vr_attach_height": ("B1", GLOBAL, "VR attach joint 20 / 40 um (production 30 um; "
+                              "Na et al. 2022 CLOSE_ANALOG)", "runs",
+                              ["attach_h20", "attach_h40"],
+                              "the attach carries 1 kA and sits in the converter heat path"),
+    "mat.vr_attach_material": ("B1", GLOBAL, "Cu pillar + solder cap (production) vs all-solder "
+                               "Sn microbumps (Na et al. 2022), and the column-stiffened card",
+                               "runs", ["attach_sn", "attach_stiff"],
+                               "attach conductivity, resistance and stiffness"),
+    "mat.vr_attach_underfill": ("B1", MECH, "attach underfill E 4 / 12 GPa, CTE 40 / 20 ppm/K "
+                                "(declared stress corners)", "runs",
+                                ["attach_uf_soft", "attach_uf_stiff"],
+                                "the attach couples the converter to the substrate"),
+    "elec.direct_feed_loop_resistance": ("B1", ("P_loss_w",), "R_Z2_direct_feed_loop swept "
+                                         "0.01-100 mOhm (direct_feed_crossover.json)",
+                                         "direct_feed", [],
+                                         "the external feed is unsourced: no value assumed"),
+    "elec.direct_feed_heat_location": ("B1", GLOBAL, "feed loss at the largest admissible "
+                                       "loop resistance (largest R*), at the HV-S0 current, "
+                                       "deposited in the deepest converter tier", "runs",
+                                       ["feed_heat_at_crossover"],
+                                       "where the feed's heat lands is unknown"),
+    "therm.cooling_model_form": ("B1", GLOBAL, "ICEPAK_EQUIVALENT_COOLING_SENSITIVITY: top "
+                                 "coefficient x dT_compact/dT_CFD of the matched Icepak case",
+                                 "runs", ["icepak_equivalent"],
+                                 "the compact cooling model is 16.5 % conservative in dT"),
+    "therm.backside_interface": ("B1", GLOBAL, "Z2-COOLED through a 50 um TIM (k 3 W/mK)",
+                                 "runs", ["z2_cooled_tim"],
+                                 "a backside interface weakens the extra Z2 heat path"),
+    "mech.bga_population": ("B1", GLOBAL, "Z2 BGA field populated at 420/528 (the 48 V balls "
+                            "of the BGA-fed design removed), smeared", "runs", ["bga_depop"],
+                            "the mechanical field need not carry the 48 V balls"),
     "therm.z2_cooled": ("B1", GLOBAL, "bounding Z2-COOLED: a top-type cold plate on the Z2 "
                         "converter underside; Z1 unchanged", "runs", ["z2_cooled"],
                         "an extra Z2 heat path could move any thermal ordering"),
@@ -82,11 +120,12 @@ GATES = {
                                   "inductor/Cout tier on the same generic card"),
     "elec.contact_resistance_bounded": ("B1", ("P_loss_w",), "rho_c 1e-6 / 1e-5 / 1e-4 "
                                         "ohm mm^2 on the package 48 V RDL (package_network "
-                                        "sensitivity)", "network", ["rho_c"],
+                                        "sensitivity; Z1 only: the direct-fed Z2 has no package "
+                                        "48 V RDL)", "network", ["rho_c"],
                                         "unsourced contact resistance in the 48 V path"),
     "elec.rdl10um_electrical_model": ("B1", ("P_loss_w",), "package 48 V RDL t_Cu 2 / 5 / 10 "
                                       "um x occupancy 0.3 / 0.8 (package_network "
-                                      "sensitivity)", "network", ["t_cu", "occupancy"],
+                                      "sensitivity; Z1 only)", "network", ["t_cu", "occupancy"],
                                       "the 10 um tier's sheet resistance is undefined"),
     "elec.hv_input_waveform": ("B1", tuple(OBS), WAVE, "scenarios", [],
                                "the 48 V waveform is not derivable from the pinned model"),
@@ -207,9 +246,13 @@ def judge_network(params, od):
     prod = {"rho_c_ohm_mm2": 1e-5, "t_cu_mm": 0.005, "occupancy": 0.3}
     key = {"rho_c": "rho_c_ohm_mm2", "t_cu": "t_cu_mm", "occupancy": "occupancy"}
     rows = []
+    import final_closure_ledger as FL
+    # only a BGA-FED architecture has a package 48 V network to perturb; the direct-fed
+    # Z2's 48 V never enters the package, so its loss does not move here (dp = 0)
+    fed = [a for a in ("Z1", "Z2") if FL.HV_FEED[a] == "BGA_FED"]
     p_hv = {a: sum(r["P_w"] for r in led if r["arch"] == a and r["scenario"] == SCEN
                    and r["term"].startswith("P_pkg_RDL_HV")) for a in ("Z1", "Z2")}
-    r0 = {a: pn["loop"][a]["r_loop_ohm"] for a in ("Z1", "Z2")}
+    r0 = {a: pn["loop"][FL.NETWORK_KEY[a]]["r_loop_ohm"] for a in fed}
     sens = [s for s in pn["sensitivity"] if s["terminal_mode"] == "VIN_PAD"]
     combos = sorted({tuple(s[key[p]] for p in params) for s in sens
                      if all(s[k] == prod[k] for k in prod if k not in [key[p] for p in params])})
@@ -217,9 +260,10 @@ def judge_network(params, od):
         sel = {s["arch"]: s for s in sens
                if tuple(s[key[p]] for p in params) == combo
                and all(s[k] == prod[k] for k in prod if k not in [key[p] for p in params])}
-        if set(sel) != {"Z1", "Z2"}:
+        if not all(FL.NETWORK_KEY[a] in sel for a in fed):
             continue
-        dp = {a: p_hv[a] * (sel[a]["r_loop_ohm"] / r0[a] - 1.0) for a in ("Z1", "Z2")}
+        dp = {a: (p_hv[a] * (sel[FL.NETWORK_KEY[a]]["r_loop_ohm"] / r0[a] - 1.0)
+                  if a in fed else 0.0) for a in ("Z1", "Z2")}
         loss = {a: fin[(a, SCEN)]["P_loss_w"] + dp[a] for a in ("Z1", "Z2")}
         u = (od.get("P_loss_w") or {}).get("uncertainty_rel", {}).get(SCEN)
         verdict, gap = _verdict(loss["Z1"], loss["Z2"], u)
@@ -251,15 +295,51 @@ def judge_common_mode():
                 and r["term"] in conv) for a in ("Z1", "Z2")}
     d_conv, d_rest = c["Z1"] - c["Z2"], (tot["Z1"] - c["Z1"]) - (tot["Z2"] - c["Z2"])
     k_flip = (-d_rest / d_conv) if d_conv and (d_rest / d_conv) < 0 else None
+    # Z1 - Z2 = d_rest + k d_conv is linear in k, so the sign it has at the modelled k = 1
+    # holds on ONE side of k_flip: above it when the converter difference has that sign,
+    # below it otherwise. (The text used to assume d_conv > 0 and printed 'k > 91.230' for
+    # an ordering that holds for every k BELOW 91.230.)
+    lead = "Z2" if d_rest + d_conv > 0 else "Z1"
+    side = ">" if (d_conv > 0) == (lead == "Z2") else "<"
     return [{"case": "common rescaling k of the converter terms", "observable": "P_loss_w",
              "converter_terms_W": c, "delta_converter_W": d_conv, "delta_rest_W": d_rest,
              "k_at_which_order_flips": k_flip,
-             "verdict": ("Z2 lower for every k > %.3f" % k_flip) if k_flip else
-             ("Z2 lower for every k > 0" if d_conv > 0 and d_rest >= 0 else "see deltas"),
-             "robust": (k_flip is None and d_conv > 0 and d_rest >= 0)
-             or (k_flip is not None and k_flip < 0.5),
+             "verdict": (f"{lead} lower for every k {side} {k_flip:.3f}" if k_flip
+                         else f"{lead} lower for every k > 0"),
+             "robust": k_flip is None or (side == ">" and k_flip < 0.5),
              "method": "ledger rows at the converged HV-S0 temperatures: the converter "
                        "and intra-VR rows are the same functions of T_conv in Z1 and Z2"}]
+
+
+def judge_direct_feed(od):
+    """The unsourced external feed of the direct-fed Z2, judged on the crossover sweep by
+    the ordering rule: at 0.1 R*, R* and 10 R* where Z2 is ahead at zero feed (above R* the
+    loss ordering reverses BY CONSTRUCTION; resolved as a design requirement), or at 0.1, 1
+    and 10 mOhm where it is not (R* = 0: every feed resistance only adds to Z2's loss)."""
+    cx = J(D / "direct_feed_crossover.json") or {}
+    sc = (cx.get("scenarios") or {}).get(SCEN)
+    if not sc or sc.get("R_star_mohm") is None or not sc.get("sweep"):
+        return []
+    u = (od.get("P_loss_w") or {}).get("uncertainty_rel", {}).get(SCEN)
+    prod = (od.get("P_loss_w") or {}).get("per_scenario", {}).get(SCEN)
+    sw = [q for q in sc["sweep"] if q.get("feasible", True)]     # no point above R_max
+    rows = []
+    # around R* where Z2 is ahead at zero feed; at declared loop resistances (0.1, 1 and
+    # 10 mOhm, inside the sweep) where it is not (R* = 0)
+    pts = ([(f"{fac:g} R*", sc["R_star_mohm"] * fac) for fac in (0.1, 1.0, 10.0)]
+           if sc["R_star_mohm"] else [(f"{r:g} mOhm", r) for r in (0.1, 1.0, 10.0)])
+    for lab, r in pts:
+        pt = min(sw, key=lambda q: abs(math.log(q["R_mohm"] / r)) if q["R_mohm"] > 0 else 9e9)
+        verdict, gap = _verdict(sc["P_Z1_w"], pt["P_total_w"], u)
+        rows.append({"case": f"R_feed = {lab} = {r:.4g} mOhm", "observable": "P_loss_w",
+                     "Z1": sc["P_Z1_w"], "Z2": pt["P_total_w"],
+                     "change_rel": {"Z1": 0.0, "Z2": (pt["P_total_w"] - sc["P_Z2_internal_w"])
+                                    / sc["P_Z2_internal_w"]},
+                     "gap_rel": gap, "uncertainty_rel": u, "verdict": verdict,
+                     "production_verdict": prod, "robust": verdict == prod,
+                     "R_star_mohm": sc["R_star_mohm"],
+                     "method": "self-consistent I_48 with the feed loss; sweep point nearest"})
+    return rows
 
 
 def judge_scenarios(od, sc):
@@ -291,6 +371,8 @@ def main():
             rows = judge_network(cases, od)
         elif method == "common_mode":
             rows = judge_common_mode()
+        elif method == "direct_feed":
+            rows = judge_direct_feed(od)
         else:
             rows = judge_scenarios(od, sc)
         complete = (not missing) and bool(rows)
@@ -309,8 +391,9 @@ def main():
                       else "BOUNDED -- magnitude only")
         else:
             status = ("RESOLVED -- ordering changes in: " + "; ".join(
-                f"{r['observable']} under {r['case']} ({r.get('production_verdict')} -> "
-                f"{r['verdict']})" for r in moved) + " -- the claim is narrowed accordingly")
+                f"{r['observable']} under {r['case']} ("
+                + (f"{r['production_verdict']} -> " if r.get("production_verdict") else "")
+                + f"{r['verdict']})" for r in moved) + " -- the claim is narrowed accordingly")
         mx = max((abs(x) for r in rows for x in (r.get("change_rel") or {}).values()
                   if isinstance(x, (int, float))), default=None)
         gaps = [r["gap_rel"] for r in rows if isinstance(r.get("gap_rel"), (int, float))]
@@ -324,6 +407,8 @@ def main():
                     "evidence_path": ("research/final_closure/sensitivity/" if method == "runs"
                                       else "research/final_closure/package_network.json"
                                       if method == "network" else
+                                      "research/final_closure/direct_feed_crossover.json"
+                                      if method == "direct_feed" else
                                       "research/final_closure/electrical_ledger.json"
                                       if method == "common_mode" else
                                       "research/final_closure/ordering.json"),
@@ -349,6 +434,35 @@ def main():
         w.writeheader()
         for g in out:
             w.writerow(dict(g, cases_run="; ".join(g["cases_run"])))
+    # every evidence row, as Part 15 asks: nominal, alternate, change, gap, uncertainty,
+    # and whether the ordering is preserved, reversed, created or withdrawn
+    rcols = ["gate", "case", "observable", "nominal_Z1", "nominal_Z2", "alternate_Z1",
+             "alternate_Z2", "change_Z1_rel", "change_Z2_rel", "architecture_gap_rel",
+             "uncertainty_rel", "production_verdict", "alternate_verdict", "outcome"]
+    with (D / "classB_sensitivity_rows.csv").open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=rcols)
+        w.writeheader()
+        for g in out:
+            for r in g["rows"]:
+                if "observable" not in r or "verdict" not in r:
+                    continue
+                ch = r.get("change_rel") or {}
+                pv, av = r.get("production_verdict"), r.get("verdict")
+                outcome = ("n/a" if r.get("robust") is None else "preserved" if pv == av
+                           else "reversed" if (str(pv).endswith("lower") and str(av).endswith("lower"))
+                           else "withdrawn (unresolved)" if str(pv).endswith("lower")
+                           else "created" if str(av).endswith("lower") else "changed")
+                nz = {a: ((r.get(a) / (1 + ch[a])) if isinstance(r.get(a), (int, float))
+                          and isinstance(ch.get(a), (int, float)) and ch[a] != -1 else None)
+                      for a in ("Z1", "Z2")}
+                w.writerow({"gate": g["gate"], "case": r["case"], "observable": r["observable"],
+                            "nominal_Z1": nz["Z1"], "nominal_Z2": nz["Z2"],
+                            "alternate_Z1": r.get("Z1"), "alternate_Z2": r.get("Z2"),
+                            "change_Z1_rel": ch.get("Z1"), "change_Z2_rel": ch.get("Z2"),
+                            "architecture_gap_rel": r.get("gap_rel"),
+                            "uncertainty_rel": r.get("uncertainty_rel"),
+                            "production_verdict": pv, "alternate_verdict": av,
+                            "outcome": outcome})
     print(json.dumps(summary, indent=1))
     for g in out:
         print(f"{g['gate']:36s} {g['new_subtype']} {g['final_status'][:110]}")
