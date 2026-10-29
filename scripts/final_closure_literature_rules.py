@@ -27,8 +27,97 @@ SOURCES = [
             "low-voltage lateral path), quoted from the held text; also the style reference "
             "the manuscript audit checks for zero ten-word overlap",
      "caveat": "a definition, not a numerical input"},
-    {"doi": "10.1109/TCPMT.2026.3716571", "title": None, "held": "NOTHING", "class": "NOT_HELD",
-     "use": "none", "caveat": "no claim, value or classification is drawn from it; not cited"},
+    {"doi": "10.1109/TCPMT.2026.3716571",
+     "title": "Towards 10kAmp AI Chip: A System Perspective from Lateral to Vertical Power "
+              "Delivery (Ye et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_TCPMT.2026.3716571.json",
+     "class": "CONTEXT_ONLY", "use": "positioning: a system view of the lateral-to-vertical move",
+     "caveat": "cited for context only; no value, choice or claim is drawn from it"},
+    {"doi": "10.1109/TCPMT.2026.3716987",
+     "title": "Integrated Vertical Power Delivery -- Review & Challenges (Swaminathan et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_TCPMT.2026.3716987.json",
+     "class": "CONTEXT_ONLY", "use": "positioning in the VPD literature",
+     "caveat": "cited for context only; no value is drawn from it"},
+    {"doi": "10.1109/SOCC58585.2023.10256973",
+     "title": "Vertical Power Delivery for Emerging Packaging and Integration Platforms "
+              "(Krishnakumar and Partin-Vaisband)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_SOCC58585.2023.10256973.json (the arXiv version was read earlier)",
+     "class": "CONTEXT_ONLY", "use": "the vertical-integration family of the two architectures",
+     "caveat": "no numerical input"},
+    {"doi": "10.1109/ISCAS58744.2024.10558456",
+     "title": "Design Considerations for DC-DC Voltage Regulators in DVPD (Krishnakumar et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_ISCAS58744.2024.10558456.json",
+     "class": "CONTEXT_ONLY", "use": "positioning of the regulator design question",
+     "caveat": "no numerical input"},
+    {"doi": "10.1109/ECTC51529.2024.00364",
+     "title": "VPD for HPC Systems with Buck-Derived Regulators (Krishnakumar et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_ECTC51529.2024.00364.json",
+     "class": "CONTEXT_ONLY", "use": "positioning; vertical routing models",
+     "caveat": "the interlayer RDL and via dimensions cited in Table I predate this phase"},
+    {"doi": "10.1109/ITherm55375.2024.10709419",
+     "title": "Thermal Analysis of High Current VPD with Embedded Microchannel Cooling "
+              "(Choi et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_ITherm55375.2024.10709419.json",
+     "class": "CONTEXT_ONLY", "use": "context for the cooling model-form sensitivity",
+     "caveat": "not a replacement of the production cooling model; no value taken"},
+    {"doi": "10.1109/TCPMT.2025.3636391",
+     "title": "Self-Consistent Electrothermal Modeling of DVPD with Substrate-Embedded "
+              "Microfluidic Cooling (Choi et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_TCPMT.2025.3636391.json",
+     "class": "CONTEXT_ONLY", "use": "context for the electrothermal fixed point and cooling",
+     "caveat": "no value taken"},
+    {"doi": "US20260059645A1 (patent)",
+     "title": "Vertical Integrated Voltage Regulator with Circuit Board Cutout (Arm Ltd.)",
+     "held": "TEXT: research/final_closure/literature_metadata/US20260059645A1.json; quotes in "
+             "z2_direct_feed_architecture.json",
+     "class": "DIRECT",
+     "use": "construction precedent of the direct-fed Z2: VR on the substrate side opposite the "
+            "die, in a board cutout, fed by a separate wire, bumps dedicated to the output",
+     "caveat": "no dimension, performance number or qualification is taken from it"},
+    {"doi": "US20210249384A1 (patent family)",
+     "title": "Backside Integrated Voltage Regulator for Integrated Circuits (Google LLC)",
+     "held": "TEXT: research/final_closure/literature_metadata/US20210249384A1.json and family",
+     "class": "CLOSE_ANALOG",
+     "use": "the backside-RDL-to-TSV output path of a backside regulator",
+     "caveat": "its input is fed through the package: not a direct-feed precedent"},
+    {"doi": "10.1109/ECTC.2016.127",
+     "title": "Thermal Compression Bonding of 30um Pitch Cu Pillar Microbump on Organic "
+              "Substrate (Au et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/oa_10.1109_ECTC.2016.127.json;"
+             " abstract quote in z2_direct_feed_architecture.json",
+     "class": "CLOSE_ANALOG",
+     "use": "the attach geometry (15 um Cu pillars, 30 um pitch, solder cap) as a modelling "
+            "choice",
+     "caveat": "not this package; no current or reliability limit is transferred"},
+    {"doi": "10.3390/electronics12010144",
+     "title": "Fabrication of 30 um Sn Microbumps by Electroplating (Na et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.3390_electronics12010144.json; quote in z2_direct_feed_architecture.json",
+     "class": "CLOSE_ANALOG", "use": "the all-solder attach bound and the 40 um height bound",
+     "caveat": "a bound, not a value of this design"},
+    {"doi": "10.1109/TCPMT.2016.2641040",
+     "title": "Cu Pillar/Sn-Ag Microbumps with Nonconductive Films (Lee et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_TCPMT.2016.2641040.json",
+     "class": "CONTEXT_ONLY", "use": "fine-pitch Cu-pillar construction", "caveat": "no value"},
+    {"doi": "10.1109/ICEPT.2018.8480482",
+     "title": "Material Systems of 30 um Pitch Micro Bumps (Dai et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_ICEPT.2018.8480482.json",
+     "class": "CONTEXT_ONLY", "use": "fine-pitch microbump material systems",
+     "caveat": "its single-bump resistance is not available here and is not used"},
+    {"doi": "10.1016/j.mssp.2026.110744",
+     "title": "Advances in Copper Pillar Bumps for High-Density Electronic Packaging (Xu et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1016_j.mssp.2026.110744.json",
+     "class": "CONTEXT_ONLY", "use": "Cu-pillar review", "caveat": "no value"},
     {"doi": "10.1016/j.mtelec.2026.100211", "title": None, "held": "NOTHING",
      "class": "NOT_HELD", "use": "none",
      "caveat": "no claim, value or classification is drawn from it; not cited"},

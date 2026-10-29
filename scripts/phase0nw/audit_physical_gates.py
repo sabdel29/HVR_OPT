@@ -112,6 +112,14 @@ REQUIRED_GATES = {
     "literature": ["lit.interconnect_matrix", "lit.bga_current_rule",
                    "lit.microbump_contact_bounded", "lit.tsv_allowable"],
     "results": ["results.physical_etm_lineage"],
+    # FINAL CLOSURE: the direct-fed Z2 (research/final_closure/Z2_DIRECT_FEED_ARCHITECTURE.md)
+    "direct_feed": ["arch.z2_direct_feed_power_path", "geom.vr_attach_explicit",
+                    "geom.sidewall_clearance_baseline", "elec.direct_feed_crossover",
+                    "geom.sidewall_clearance", "geom.vr_attach_height",
+                    "mat.vr_attach_material", "mat.vr_attach_underfill",
+                    "elec.direct_feed_loop_resistance", "elec.direct_feed_heat_location",
+                    "therm.cooling_model_form", "therm.backside_interface",
+                    "mech.bga_population"],
 }
 ALL_REQUIRED = [g for v in REQUIRED_GATES.values() for g in v]
 
@@ -883,7 +891,55 @@ def gates():
 
     # ---------------------------------------------------------------- results
     add("results.physical_etm_lineage", "Results", "physical ETM result lineage", "OPEN",
-        "BLOCKED: no physical ETM result may be generated until every gate above closes")
+        "no final-closure lineage artifact (research/final_closure/final_results.json) "
+        "exists yet")
+
+    # ------------------------------------------------- direct-fed Z2 (MEASURED here)
+    att_name = getattr(Z2C, "ATTACH_LAYER", "conv_attach_vr_substrate")
+    la = lay.get(att_name)
+    lay_all = np.array(m.elem_layer, dtype=object)
+    mat_all = np.array(m.elem_material, dtype=object)
+    att_ok = (la is not None and abs(la["z1_um"]) < 1e-6
+              and abs(la["t_um"] - cfg.attach_um) < 1e-6
+              and "vr_attach" in set(mat_all[lay_all == att_name]))
+    add("geom.vr_attach_explicit", "Z2 geometry", "explicit VR-to-substrate attach in the mesh",
+        "IMPLEMENTED" if att_ok else "OPEN",
+        (f"layer {att_name} measured {la['t_um']:.1f} um from z = {la['z0_um']:.1f} to "
+         f"{la['z1_um']:.1f} um (config {cfg.attach_um:.1f} um), Cu-pillar card in the 49 "
+         "cells; the land-side RDL sits below it, no longer against the substrate")
+        if la is not None else "no attach layer in the mesh")
+    cen_all = m.elem_centroids()
+    bb = (min(t.x0 for t in tiles), max(t.x1 for t in tiles),
+          min(t.y0 for t in tiles), max(t.y1 for t in tiles))
+    convm = np.array([str(x).startswith("conv") for x in lay_all])
+    ring = convm & ((cen_all[:, 0] < bb[0] - 1e-9) | (cen_all[:, 0] > bb[1] + 1e-9)
+                    | (cen_all[:, 1] < bb[2] - 1e-9) | (cen_all[:, 1] > bb[3] + 1e-9))
+    clr_ok = cfg.clearance_void and not ring.any() and cfg.cutout_mm is not None and abs(
+        (bb[1] - bb[0]) + 2 * (cfg.clearance_mm or 0) - cfg.cutout_mm) < 1e-6
+    add("geom.sidewall_clearance_baseline", "Z2 geometry",
+        "1.0 mm sidewall clearance void in the baseline (DEFECT #66)",
+        "IMPLEMENTED" if clr_ok else "OPEN",
+        f"cell-grid bbox {bb[1] - bb[0]:.3f} mm + 2 x {cfg.clearance_mm} mm = cutout "
+        f"{cfg.cutout_mm} mm; converter elements in the clearance ring: {int(ring.sum())}; "
+        "the sidewall-filled F1 survives only as class-B f1_sidewall_filled")
+    notrun("arch.z2_direct_feed_power_path", "Architecture",
+           "primary Z2 direct-fed: no package 48 V BGA/RDL term in its ledger")
+    notrun("elec.direct_feed_crossover", "Electrical",
+           "direct-feed loop-resistance crossover computed")
+    for gid, area, gate in (
+            ("geom.sidewall_clearance", "Z2 geometry", "sidewall clearance sensitivity run"),
+            ("geom.vr_attach_height", "Z2 geometry", "VR attach height sensitivity run"),
+            ("mat.vr_attach_material", "Material", "VR attach material bounded"),
+            ("mat.vr_attach_underfill", "Material", "VR attach underfill bounded"),
+            ("elec.direct_feed_loop_resistance", "Electrical",
+             "direct-feed loop resistance determined"),
+            ("elec.direct_feed_heat_location", "Electrical",
+             "direct-feed heat-location sensitivity run"),
+            ("therm.cooling_model_form", "Thermal",
+             "cooling model-form (Icepak-equivalent) sensitivity run"),
+            ("therm.backside_interface", "Thermal", "backside thermal interface sensitivity run"),
+            ("mech.bga_population", "Mechanical", "BGA mechanical population sensitivity run")):
+        notrun(gid, area, gate)
 
     # ---- the registry must cover the manifest ------------------------------------
     emitted = {r["id"] for r in g}
@@ -908,6 +964,11 @@ def main():
     from collections import Counter
     counts = Counter(r["status"] for r in g)
     n_open = counts["OPEN"]
+    lineage_on = any(r["id"] == "results.physical_etm_lineage" and r["status"] == "IMPLEMENTED"
+                     for r in g)
+    _acc = R / "research" / "final_closure" / "accuracy_speed_matrix.json"
+    n_ref = (sum(1 for r in json.loads(_acc.read_text())["rows"]
+                 if r.get("status") == "EXECUTED") if _acc.exists() else 0)
     lines = [
         "# Physical Z1/Z2 implementation audit",
         "",
@@ -916,8 +977,13 @@ def main():
         "built, and the measured geometry decides the status. Nothing here is typed by "
         "hand, because a hand-typed status table goes stale a phase after it is written.",
         "",
-        f"**{n_open} of {len(g)} gates are OPEN.** No physical ETM result lineage may "
-        "be created while that number is non-zero.",
+        f"**{n_open} of {len(g)} gates are OPEN.** " + (
+            "The physical ETM result lineage EXISTS (`results.physical_etm_lineage` is "
+            "IMPLEMENTED, research/final_closure/final_results.json). The open gates do not "
+            "block it: each is classified A/B/C in "
+            "research/final_closure/paper_gate_classification.json and conditions the claims "
+            "accordingly." if lineage_on else
+            "No physical ETM result lineage may be created while that number is non-zero."),
         "",
         "Maturity is reported by status rather than collapsed into \"closed\", because "
         "SPECIFIED and IMPLEMENTED are not the same claim and neither is VALIDATED:",
@@ -931,8 +997,12 @@ def main():
         "",
         f"So **{len(g) - n_open} of {len(g)} are non-open**, of which only "
         f"{counts['IMPLEMENTED']} are IMPLEMENTED and **{counts['VALIDATED']} are "
-        "VALIDATED**. Nothing in this package has been validated against a solve "
-        f"yet. {counts.get('SUPERSEDED', 0)} gate(s) are SUPERSEDED: the model they "
+        "VALIDATED**. " + (
+            f"Stage-level model checks against independent solvers exist ({n_ref} executed "
+            "rows in research/final_closure/accuracy_speed_matrix.json); they validate MODELS "
+            "stage by stage and do not promote gate rows to VALIDATED. " if n_ref else
+            "Nothing in this package has been validated against a solve yet. ") +
+        f"{counts.get('SUPERSEDED', 0)} gate(s) are SUPERSEDED: the model they "
         "describe has been replaced, and they are retained only so the replaced "
         "result cannot quietly return as a current one.",
         "",
@@ -1067,12 +1137,8 @@ def main():
               "",
               f"| ratio (Z2/Z1) | | **{z2t['i_total_a']/z1t['i_total_a']:.1f}x current, "
               f"{z2t['p_tsv_total_w']/z1t['p_tsv_total_w']:.0f}x loss** |", "",
-              f"Z1's current is **a placeholder**: {z1t['source']}. It is "
-              f"I = (P_load + P_loss)/48 V = ({z1t['p_load_w']:.0f} + "
-              f"{z1t['p_loss_w']:.3f})/48 = {z1t['i_total_a']:.4f} A, and cannot be "
-              "final until the physical electrical solution replaces the loss term. "
-              "Z2's is the 1 V load current and must still be updated self-consistently "
-              "with losses.", "",
+              _rail_current_paragraph(z1t), "",
+              "### History (Phase 0N-W)", "",
               "**A previous version divided the LOSS by 48 V**, giving 2.86 A -- low by "
               "8.3x in current and 69x in I^2 R. P_total_electronics_w in the frozen "
               "replay is exactly sum(L_P_*), i.e. a loss total, not an input power.", "",
@@ -1083,7 +1149,9 @@ def main():
               "about 10 % inconsistent with the framework's own losses. And the BGA "
               "supply allocation (16 balls x 1.5 A = 24.0 A) was sized against the "
               "eta-based 23.4346 A; against the ledger-derived 23.6936 A the margin is "
-              "only 1.3 %, so any further loss growth makes 16 balls insufficient.", "",
+              "only 1.3 %, so any further loss growth makes 16 balls insufficient. "
+              "(Both were superseded: the final ledger sets the current, and the "
+              "voltage-fed network sizes the balls -- elec.bga_count_closed.)", "",
               "### The TSV count is a choice, and the adopted one is the maximum", "",
               f"Declared budget: {100*sz['budget_frac']:.0f} % of the rail "
               f"({sz['budget_v']*1e3:.0f} mV). {sz['budget_status']}. "
@@ -1183,11 +1251,35 @@ def main():
 #: bound: resolving the paper's dependence on them does not determine them
 KEEP_OPEN = {"elec.pad_count_criterion", "elec.individual_branch_waveforms",
              "elec.hv_input_waveform", "elec.hv_waveform_determination",
-             "elec.z1_hv_rms_current", "elec.bga_rms_current"}
+             "elec.z1_hv_rms_current", "elec.bga_rms_current",
+             # the external direct-feed loop has no sourced value: the crossover turns it
+             # into a design requirement, it does not determine it
+             "elec.direct_feed_loop_resistance"}
 #: material gates with no sourced card: the class-B runs bracket them with ASSUMED ranges
 #: (k/2, k/10, E/CTE corners), which resolves the paper's dependence on them but does not
 #: bound the property itself -- so the gate stays OPEN, with the evidence attached
-PROPERTY_OPEN = {"mat.gan_bounded", "mat.mlcc_bounded", "mat.inductor_tier_bounded"}
+PROPERTY_OPEN = {"mat.gan_bounded", "mat.mlcc_bounded", "mat.inductor_tier_bounded",
+                 "mat.vr_attach_material", "mat.vr_attach_underfill"}
+
+
+def _rail_current_paragraph(z1t):
+    """Z1's 48 V current: from the final physical ledger once it exists (a placeholder
+    sentence would contradict HEAD), otherwise the historical placeholder statement."""
+    import json as _j
+    f = R / "research" / "final_closure" / "final_results.json"
+    fin = _j.loads(f.read_text()) if f.exists() else []
+    z1 = next((x for x in fin if x["arch"] == "Z1" and x["scenario"] == "HV_S0"), None)
+    if z1 is None:
+        return (f"Z1's current is **a placeholder**: {z1t['source']}. It is "
+                f"I = (P_load + P_loss)/48 V = ({z1t['p_load_w']:.0f} + "
+                f"{z1t['p_loss_w']:.3f})/48 = {z1t['i_total_a']:.4f} A, and cannot be final "
+                "until the physical electrical solution replaces the loss term.")
+    return (f"Z1's 48 V current is self-consistent with the final physical ledger: "
+            f"I = (P_load + P_loss)/48 V = (1000 + {z1['P_loss_w']:.3f})/48 = "
+            f"{(1000.0 + z1['P_loss_w']) / 48.0:.4f} A at HV-S0 "
+            "(research/final_closure/final_results.json). The table above is the analytical "
+            "TSV model's own rail report. The primary Z2's TSVs carry the 1 V output; its "
+            "48 V enters the regulator directly and crosses no package TSV.")
 
 
 def _final_closure_overrides(g):
@@ -1361,6 +1453,125 @@ def _final_closure_overrides(g):
         set_("elec.bga_loss_recomputed", "SPECIFIED",
              "per named scenario from the solved per-ball split at the matched N = %d; "
              "SPECIFIED because the 48 V RMS waveform is scenario-defined" % pn["matched_count"])
+
+    # ------------------------------------------- stale evidence, re-derived (Part 28)
+    # No row may contradict HEAD: each sentence below replaces one that was true when its
+    # phase wrote it and false afterwards.
+    s0r = {f["arch"]: f for f in fin if f["scenario"] == "HV_S0"}
+    if pn and all(c.get("converged") for c in pn["convergence"].values()):
+        worst = max(c["worst_delta"] for c in pn["convergence"].values())
+        z1 = s0r.get("Z1") or {}
+        set_("elec.rdl_loss_recomputed", "IMPLEMENTED",
+             "Z1's package 48 V RDL supply/return losses come from the CONVERGED voltage-fed "
+             "network (every network converges, worst change %.1e; "
+             "research/final_closure/package_network.json) and enter the final ledger per "
+             "named scenario. The primary Z2 is direct-fed and has no package 48 V RDL; "
+             "the BGA-fed Z2 network survives only in Z2_BGA_FED_CONTROL" % worst)
+        set_("elec.package_rdl_hv_recomputed", "IMPLEMENTED",
+             "SUPERSEDES 'still has only the Phase-0M-R3C value', which is false at HEAD. "
+             "Z1: supply and return are separate conductors of the converged voltage-fed "
+             "network, with I_rms^2 R losses per named scenario in the final ledger. The "
+             "primary Z2 has no package HV rail (direct feed); Z2_BGA_FED_CONTROL carries "
+             "the BGA-fed network")
+        set_("elec.z2_pkg_hv_rdl_geometry", "SUPERSEDED",
+             "the primary Z2 is DIRECT-FED (Z2_DIRECT_FEED_ARCHITECTURE.md): its 48 V never "
+             "enters the package, so no package 48 V RDL exists in it. The BGA-fed Z2 sheet "
+             "(54 + 54 balls, converged, R_loop %.3f mOhm) survives only in "
+             "Z2_BGA_FED_CONTROL and the controlled BGA-fed experiment"
+             % (pn["loop"]["Z2"]["r_loop_ohm"] * 1e3))
+        for gid in ("elec.cutout_penalty_isolated_HISTORICAL",
+                    "elec.pkg_rdl_network_converged_HISTORICAL"):
+            if gid in by and not by[gid]["evidence"].startswith("HISTORICAL"):
+                by[gid]["evidence"] = ("HISTORICAL (superseded; at the time:) "
+                                       + by[gid]["evidence"]
+                                       + " CURRENT: every voltage-fed network converges "
+                                       "(package_network.json, worst change %.1e)" % worst)
+        set_("elec.pkg_rdl_network_converged", "IMPLEMENTED",
+             "every voltage-fed network converges on the aligned graded grid: worst change "
+             "%.1e between the two finest levels on all of %s, against the 1 %% threshold "
+             "declared before any value was read, for Z1 supply/return and the opening "
+             "geometry of the BGA-fed control (research/final_closure/package_network.json). "
+             "Z1's earlier failure belonged to the uniform grid and is kept as "
+             "elec.pkg_rdl_network_converged_HISTORICAL"
+             % (worst, ", ".join(pn["meta"]["conv_metrics"])))
+        ct = pn.get("controlled") or {}
+        if "delta_R_cutout_ohm" in ct:
+            set_("elec.cutout_penalty_isolated", "IMPLEMENTED",
+                 "on the CONVERGED voltage-fed network (package_network.json controlled): "
+                 "dR_cutout = %+.4f mOhm against dR_placement = %+.4f mOhm, sheet, cells, "
+                 "count and grid held identical. It belongs to the controlled BGA-fed "
+                 "experiment: the primary, direct-fed Z2 has no package 48 V path"
+                 % (ct["delta_R_cutout_ohm"] * 1e3, ct["delta_R_placement_ohm"] * 1e3))
+        set_("elec.bga_power_ball_capacity", "SPECIFIED",
+             "the equal-sharing capacity check is superseded by the voltage-fed network: "
+             "%d supply + %d return balls per rail carry the self-consistent HV-S0 current "
+             "with a solved peak of %.3f A/ball (Z1) against the %.1f A/ball engineering "
+             "criterion (package_network.json); SPECIFIED because that criterion has no "
+             "source. The primary Z2 has no 48 V BGA field"
+             % (pn["matched_count"], pn["matched_count"], _peak_at(pn, "Z1", "HV_S0"),
+                pn["meta"]["criterion_A_per_ball"]))
+        cl = pn.get("closure") or {}
+        if "Z1__HV_S0" in cl:
+            set_("elec.bga_count_closed", "SPECIFIED",
+                 "matched %d balls per rail on the converged network: solved peak %.3f A/ball "
+                 "(Z1) and %.3f A/ball (opening geometry, BGA-fed control) at HV-S0 against "
+                 "the %.1f A/ball provisioning criterion, which is an %s without a source, "
+                 "hence SPECIFIED; HV-S1/S2 are scenario-conditioned "
+                 "(package_network.json closure). The primary Z2 has no 48 V BGA field"
+                 % (pn["matched_count"], _peak_at(pn, "Z1", "HV_S0"),
+                    _peak_at(pn, "Z2", "HV_S0"), pn["meta"]["criterion_A_per_ball"],
+                    pn["meta"]["criterion_classification"].replace("_", " ").lower()))
+    if s0r.get("Z1"):
+        set_("elec.z1_rail_model", "IMPLEMENTED",
+             "48 V rail current self-consistent with the final physical ledger: "
+             "I = (P_load + P_loss)/48 V = %.4f A at HV-S0 (research/final_closure/"
+             "final_results.json); the Phase-0M-R3C placeholder is no longer used"
+             % ((1000.0 + s0r["Z1"]["P_loss_w"]) / 48.0))
+    if cb:
+        runs = {c for gg in cb.get("gates", []) if gg.get("method") == "runs"
+                for c in gg.get("cases_run", [])}
+        if {"f2_void", "f1_sidewall_filled"} <= runs:
+            set_("geom.z2_out_of_cell_defined", "IMPLEMENTED",
+                 "F1_clearance (production: encapsulant between the cells, 1.0 mm clearance "
+                 "ring void), the sidewall-filled F1 and F2 void all build; the bracket is "
+                 "run as class-B cases f1_sidewall_filled and f2_void")
+    arch_spec = J("z2_direct_feed_architecture.json")
+    z2c = [f for f in fin if f["arch"] == "Z2"]
+    if arch_spec and z2c and all(f.get("architecture_variant") == "Z2_DIRECT_FEED"
+                                 and not f.get("forbidden_terms") for f in z2c):
+        set_("arch.z2_direct_feed_power_path", "IMPLEMENTED",
+             "every primary Z2 case is Z2_DIRECT_FEED: 48 V enters at the HVR input terminals "
+             "through the external feed (R_Z2_direct_feed_loop, swept); no package 48 V BGA "
+             "or RDL term in its ledger (guarded in final_closure_ledger.check_direct_feed); "
+             "only 1 V crosses the substrate, through the explicit attach")
+    cx = J("direct_feed_crossover.json")
+    sc = (cx or {}).get("scenarios") or {}
+    if sc and all(c.get("sweep") and "R_star_mohm" in c for c in sc.values()):
+        set_("elec.direct_feed_crossover", "IMPLEMENTED",
+             "self-consistent platform-inclusive sweep of R_Z2_direct_feed_loop over %g-%g "
+             "mOhm in every named scenario; crossover R*: %s (research/final_closure/"
+             "direct_feed_crossover.json)"
+             % (cx["sweep_mohm"][0], cx["sweep_mohm"][1], "; ".join(
+                 f"{s.replace('_', '-')} "
+                 + ("no comparison (Z1 inadmissible)" if c.get("Z1_operating_point_inadmissible")
+                    else "Z2 not ahead even at zero feed" if c["R_star_mohm"] == 0.0
+                    else f"{c['R_star_mohm']:.3g} mOhm")
+                 for s, c in sc.items())))
+
+
+def _peak_at(pn, arch, scen):
+    """Solved peak ball current at the MATCHED count and a named scenario: the network is
+    linear, so the finest converged level's peak per ampere (solved at the matched count)
+    times the scenario current, worst of supply and return. The closure record's own peak
+    is at its n_min, which for the opening geometry lies below the matched count."""
+    i = pn["loop"][arch]["i_scenario_a"][scen]
+    out = []
+    for rail in ("supply", "return"):
+        lv = pn["convergence"][f"{arch}_{rail}"]["levels"][-1]
+        if lv["n_per_rail"] != pn["matched_count"]:
+            raise ValueError(f"{arch} {rail}: finest level not at the matched count")
+        out.append(lv["i_ball_max_a"] / lv["i_total_a"] * i)
+    return max(out)
 
 
 if __name__ == "__main__":

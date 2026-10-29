@@ -1,0 +1,593 @@
+{
+ "study": "matched conjugate-CFD benchmark of the production cold-plate correlation",
+ "tool": "Ansys Electronics Desktop 2026 R1 Icepak (AnsProductVersion 26.1), PyAEDT",
+ "result_json": "research/final_closure/reference_cooling_icepak.json",
+ "generator": "scripts/reference_tools/icepak_cooling_benchmark.py",
+ "reproduce": "export PATH=/home/beams0/MGHARIB/envs/etm/bin:$PATH; python scripts/reference_tools/icepak_cooling_benchmark.py driver baseline fine baseline_x fine_x   (AEDT 2026 R1 with an Icepak licence; writes under $AEDT_WORK, default ~/claude_scratch/aedt_work)",
+ "cfd_problem": {
+  "domain": "half pitch (25 um half fin + 25 um half channel), symmetry walls on both sides, full 22.36 mm length",
+  "fluid": "water, constant rho, cp, k, mu = cooling.py values",
+  "solid": "silicon k = 130 W/mK (base 100 um + fin 300 um)",
+  "inlet": "mass flow per half channel, 25 C, normal to the sheet",
+  "outlet": "static gauge pressure 0",
+  "heat": "uniform flux q'' = Q/A_foot on the base underside",
+  "walls": "lid (top) adiabatic no-slip; silicon end faces adiabatic",
+  "flow": "laminar, steady, no gravity, no radiation",
+  "discretisation": "second-order momentum and energy",
+  "convergence_criteria": {
+   "flow": 1e-06,
+   "energy": 1e-12
+  }
+ },
+ "inputs": {
+  "Q_W": 1146.472402957813,
+  "Q_source": "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json thermal.Q_ledger_W (Z1 HV-S0, converged)",
+  "design": "TOP_SI_MICROCHANNEL_27",
+  "w_ch_um": 50,
+  "h_ch_um": 300,
+  "t_fin_um": 50,
+  "t_base_um": 100.0,
+  "k_solid": 130.0,
+  "length_mm": 22.36,
+  "width_mm": 22.36,
+  "n_channels": 223,
+  "m_dot_total_g_s": 27.0,
+  "t_in_c": 25.0,
+  "rho": 988.0,
+  "cp": 4181.0,
+  "k_f": 0.644,
+  "mu": 0.000547,
+  "A_foot_m2": 0.0004999696,
+  "q_flux_W_m2": 2293084.2254365324,
+  "m_dot_half_channel_kg_s": 6.053811659192825e-05,
+  "P_half_pitch_W": 2.563668164038043,
+  "u_mean_m_s": 8.169786314700168,
+  "Q_Z2_HV_S0_W": 1142.6716686628147
+ },
+ "evidence": "presentation/prelim_hvr/tool_evidence/cooling_icepak/",
+ "not_preserved": "the solved .aedtresults folders (solver scratch, 22-151 MB each) and the AEDT/PyAEDT logs (they carry licence-server details)",
+ "levels": {
+  "baseline": {
+   "project": {
+    "file": "research/final_closure/reference_artifacts/icepak/baseline/cooling_baseline.aedt",
+    "sha256": "0529bace6abaf1680da95943201b85d6c09ad0ef3eefc3fe69866610924fe694",
+    "bytes": 50020,
+    "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/cooling_baseline.aedt"
+   },
+   "flow_reports": [
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_Region_ConvectiveHeatFlow.csv",
+     "sha256": "2d65f52e12fe5535de76fd857bf14fb8c1d5d73d678dff32d877d5005cecf54a",
+     "bytes": 210,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_Region_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_Region_Speed.csv",
+     "sha256": "da5dc82c027917e5b2aa2ad46049976f27ee99d0443fcbb84c874fb0a08bd023",
+     "bytes": 235,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_Region_Speed.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_Region_Temperature.csv",
+     "sha256": "d63295bc676604e38631201ed22bc04f37169247fbf2433b28411072f90ccaf6",
+     "bytes": 240,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_Region_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_inlet_mflow_HeatFlowRate.csv",
+     "sha256": "e7ea13a32b5c6d12880f6d096ba90438879446b697ef2a13a6a3b26a693ed258",
+     "bytes": 236,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_inlet_mflow_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_inlet_mflow_MassFlowRate.csv",
+     "sha256": "78d77d090ad82078bf64d6bfb32bc03f3a939d43edb4a17cdd6575d8495609bf",
+     "bytes": 235,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_inlet_mflow_MassFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_inlet_mflow_Pressure.csv",
+     "sha256": "75377e21963105cec06256da0056e91ff7d2792971172667053fe195fc17f380",
+     "bytes": 265,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_inlet_mflow_Pressure.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_inlet_mflow_Ux.csv",
+     "sha256": "feb59f03357c9b10981ebf20c49862935a8eb1140c288de842e5e659fe80ed09",
+     "bytes": 254,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_inlet_mflow_Ux.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_outlet_p_HeatFlowRate.csv",
+     "sha256": "025ef423dea9d356f48531a10b90294d6faf873fd3e46230f0d38c4d1954051e",
+     "bytes": 222,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_outlet_p_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_outlet_p_MassFlowRate.csv",
+     "sha256": "1957d2a8ac400b54d972409de70d470533a82cfacaeea1441de9f387fbe3cc85",
+     "bytes": 225,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_outlet_p_MassFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_outlet_p_Pressure.csv",
+     "sha256": "ba9ced922a4d57db7d76bfebfd431597a7ab9681a8a0f9eabb2e60e78e78cd17",
+     "bytes": 258,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_outlet_p_Pressure.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_outlet_p_Temperature.csv",
+     "sha256": "d170b19de8c99cc51352b7376bed594644d313d78e46acacca85d27e406a7181",
+     "bytes": 264,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_outlet_p_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_outlet_p_Ux.csv",
+     "sha256": "bde3c69acb42a96b9ac58cfa6095c1092f77c83468794ba138ab5981e45e57cc",
+     "bytes": 251,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_outlet_p_Ux.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_q_base_HeatFlowRate.csv",
+     "sha256": "d8b76ea1f62e159c736918e3d042eecb832c4312b6a160db66f463a2d1ed68af",
+     "bytes": 223,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_q_base_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_q_base_Temperature.csv",
+     "sha256": "22e89ee5a014ba5c85cf9ef7ade6f0481d8cd11b4103e022a1d0316ba3e87351",
+     "bytes": 264,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_q_base_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_si_base_ConvectiveHeatFlow.csv",
+     "sha256": "22e3fdcdb14e34a884a22d3a21bc6c58105908c9499536244bc4396bc764f76a",
+     "bytes": 218,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_si_base_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_si_base_HeatFlowRate.csv",
+     "sha256": "6a7833628c49a30a070db72a925d587c2f41c2c23fed5482e71148579f6771c6",
+     "bytes": 211,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_si_base_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_si_base_Temperature.csv",
+     "sha256": "bbdb2581f3bd0e5d2fedfebe7fc48a38a2e3cfff2aa25d85c8ca1eb6b220b989",
+     "bytes": 245,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_si_base_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_si_fin_ConvectiveHeatFlow.csv",
+     "sha256": "6529fbcd13caceaa138e28665ca70f7bfcc29b1049cbe397534813700df543b2",
+     "bytes": 217,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_si_fin_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_si_fin_HeatFlowRate.csv",
+     "sha256": "4e5687e3089961f3dac64c7dd4b8a4296b78631a55878ca282f1e1325f2f3998",
+     "bytes": 215,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_si_fin_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline/fs_si_fin_Temperature.csv",
+     "sha256": "aff82d17b749a7a7475d8f231ae24d7122f45632b3e034ca4b36849e4999fc19",
+     "bytes": 244,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline/fs_si_fin_Temperature.csv"
+    }
+   ],
+   "cells": 53760,
+   "solved": true,
+   "dT_base_mean_K": 16.923000000000002,
+   "solve_wall_s": 105.94048651214689
+  },
+  "baseline_x": {
+   "project": {
+    "file": "research/final_closure/reference_artifacts/icepak/baseline_x/cooling_baseline_x.aedt",
+    "sha256": "734f8b7e8e829d80045d62d35fadcf36df468c392a6254ce650c57fe4a0ed084",
+    "bytes": 50026,
+    "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/cooling_baseline_x.aedt"
+   },
+   "flow_reports": [
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_Region_ConvectiveHeatFlow.csv",
+     "sha256": "2d65f52e12fe5535de76fd857bf14fb8c1d5d73d678dff32d877d5005cecf54a",
+     "bytes": 210,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_Region_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_Region_Speed.csv",
+     "sha256": "049175e85d8d7068842a3e6079093a739fd67a28e0f9c30104b4ac0e8ac5b112",
+     "bytes": 234,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_Region_Speed.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_Region_Temperature.csv",
+     "sha256": "3f0b1e8a7325fa1a6b9f0cc74949c69406661421892edde63939e09959c2e1b6",
+     "bytes": 239,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_Region_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_inlet_mflow_HeatFlowRate.csv",
+     "sha256": "ff3543a3a9d9afcfa1c2ae7c2d7e4dbf9d78842d9039dd44cde3486224f24d25",
+     "bytes": 236,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_inlet_mflow_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_inlet_mflow_MassFlowRate.csv",
+     "sha256": "78d77d090ad82078bf64d6bfb32bc03f3a939d43edb4a17cdd6575d8495609bf",
+     "bytes": 235,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_inlet_mflow_MassFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_inlet_mflow_Pressure.csv",
+     "sha256": "dbabbb85242dc50eb485b48fe8cbd8c0f7afe24807b718810e4132973dd2d526",
+     "bytes": 265,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_inlet_mflow_Pressure.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_inlet_mflow_Ux.csv",
+     "sha256": "feb59f03357c9b10981ebf20c49862935a8eb1140c288de842e5e659fe80ed09",
+     "bytes": 254,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_inlet_mflow_Ux.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_outlet_p_HeatFlowRate.csv",
+     "sha256": "025ef423dea9d356f48531a10b90294d6faf873fd3e46230f0d38c4d1954051e",
+     "bytes": 222,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_outlet_p_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_outlet_p_MassFlowRate.csv",
+     "sha256": "1957d2a8ac400b54d972409de70d470533a82cfacaeea1441de9f387fbe3cc85",
+     "bytes": 225,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_outlet_p_MassFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_outlet_p_Pressure.csv",
+     "sha256": "080c22e7d37e3ef012a95e59b9719781a5eb242149a9672e52ae1f456e977f66",
+     "bytes": 259,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_outlet_p_Pressure.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_outlet_p_Temperature.csv",
+     "sha256": "9bb326b7a2baf8da3980568847496d9eb62cc0916952cd4e19158c40453fa13d",
+     "bytes": 261,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_outlet_p_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_outlet_p_Ux.csv",
+     "sha256": "1a9d8a787c5be97cf4df140da37de813b0aee1126dd2330ca2a28ba126f20e28",
+     "bytes": 251,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_outlet_p_Ux.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_q_base_HeatFlowRate.csv",
+     "sha256": "d8b76ea1f62e159c736918e3d042eecb832c4312b6a160db66f463a2d1ed68af",
+     "bytes": 223,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_q_base_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_q_base_Temperature.csv",
+     "sha256": "165313e6f1fc8253c94bdd842e1649c9c2c0df36178371306e4b166caa1222c8",
+     "bytes": 265,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_q_base_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_si_base_ConvectiveHeatFlow.csv",
+     "sha256": "adb1a53cf355ca4dd61d42422f693d328610eebe1eb352a40dac69883e7e3f04",
+     "bytes": 218,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_si_base_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_si_base_HeatFlowRate.csv",
+     "sha256": "6a7833628c49a30a070db72a925d587c2f41c2c23fed5482e71148579f6771c6",
+     "bytes": 211,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_si_base_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_si_base_Temperature.csv",
+     "sha256": "29d1f9e6dcacdd755eb403a6a9b7d8cbe9e98005eeaa0a3a9d2404622beaddbb",
+     "bytes": 246,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_si_base_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_si_fin_ConvectiveHeatFlow.csv",
+     "sha256": "99c72298a00a7e1979b6d10b320c80b99770b336c20ce740c44f04db1cb52abc",
+     "bytes": 216,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_si_fin_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_si_fin_HeatFlowRate.csv",
+     "sha256": "886de0d3a3a1ea1d8eccc4f4024d61ffce22c6685e2f3115d3a02e69cdf62839",
+     "bytes": 215,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_si_fin_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/baseline_x/fs_si_fin_Temperature.csv",
+     "sha256": "184f6a657615703ed37919cc13325ec87f2f7d0838e7a799ac3b7522fa17e3d9",
+     "bytes": 245,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/baseline_x/fs_si_fin_Temperature.csv"
+    }
+   ],
+   "cells": 107520,
+   "solved": true,
+   "dT_base_mean_K": 16.9257,
+   "solve_wall_s": 205.62911939900368
+  },
+  "fine": {
+   "project": {
+    "file": "research/final_closure/reference_artifacts/icepak/fine/cooling_fine.aedt",
+    "sha256": "49ccd8b76b67e817f3ad75c18ea00fe5329a8b9dba0df38ce570ed669900e868",
+    "bytes": 50015,
+    "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/cooling_fine.aedt"
+   },
+   "flow_reports": [
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_Region_ConvectiveHeatFlow.csv",
+     "sha256": "2d65f52e12fe5535de76fd857bf14fb8c1d5d73d678dff32d877d5005cecf54a",
+     "bytes": 210,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_Region_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_Region_Speed.csv",
+     "sha256": "63543be7f481ac6cb4fac2295c2c417bda481bb2788c2325b50bc9eea81cbaa5",
+     "bytes": 235,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_Region_Speed.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_Region_Temperature.csv",
+     "sha256": "6cf29373acacd23b83075913361a3e82cee588ace3de936aaa4f16293f607d81",
+     "bytes": 240,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_Region_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_inlet_mflow_HeatFlowRate.csv",
+     "sha256": "32e4361d42f8ead92158e1076ee70f6f6b9c92ac7eb6597a7ae2d17e8e831fd1",
+     "bytes": 236,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_inlet_mflow_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_inlet_mflow_MassFlowRate.csv",
+     "sha256": "78d77d090ad82078bf64d6bfb32bc03f3a939d43edb4a17cdd6575d8495609bf",
+     "bytes": 235,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_inlet_mflow_MassFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_inlet_mflow_Pressure.csv",
+     "sha256": "8f54fe5d3e021a3258d820f841e252014efe376a846e3a890561cb1b868747de",
+     "bytes": 265,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_inlet_mflow_Pressure.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_inlet_mflow_Ux.csv",
+     "sha256": "56494761610a97727bf37cdaf69ceba8beab16055f0073c613418a03a093da8a",
+     "bytes": 254,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_inlet_mflow_Ux.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_outlet_p_HeatFlowRate.csv",
+     "sha256": "025ef423dea9d356f48531a10b90294d6faf873fd3e46230f0d38c4d1954051e",
+     "bytes": 222,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_outlet_p_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_outlet_p_MassFlowRate.csv",
+     "sha256": "1957d2a8ac400b54d972409de70d470533a82cfacaeea1441de9f387fbe3cc85",
+     "bytes": 225,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_outlet_p_MassFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_outlet_p_Pressure.csv",
+     "sha256": "e64b59d2001af4d37b9aea42eea8f10ae7ad43172e690676e032249505199777",
+     "bytes": 259,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_outlet_p_Pressure.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_outlet_p_Temperature.csv",
+     "sha256": "44c52d312d279206919ab56d24bc58869e5fe26391ea7e0d56abc0bf233b323d",
+     "bytes": 264,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_outlet_p_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_outlet_p_Ux.csv",
+     "sha256": "6b63874b2a92bd8f7cb8d0d9f1071bf9badf86f393f9a01bb56152fab910f1e9",
+     "bytes": 251,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_outlet_p_Ux.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_q_base_HeatFlowRate.csv",
+     "sha256": "d8b76ea1f62e159c736918e3d042eecb832c4312b6a160db66f463a2d1ed68af",
+     "bytes": 223,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_q_base_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_q_base_Temperature.csv",
+     "sha256": "af37368bc53e764431e0b201259766d011190c9fa121b2a82807c162a9ee15e6",
+     "bytes": 264,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_q_base_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_si_base_ConvectiveHeatFlow.csv",
+     "sha256": "6fc0faa2dde986abd0c1776e5e0d0e4ac402aebe6c1dd8ed10e378ccaacd3809",
+     "bytes": 218,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_si_base_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_si_base_HeatFlowRate.csv",
+     "sha256": "6a7833628c49a30a070db72a925d587c2f41c2c23fed5482e71148579f6771c6",
+     "bytes": 211,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_si_base_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_si_base_Temperature.csv",
+     "sha256": "7cc118a684d5d7ab7eabef6686691eb4ea01236f14f6baf4e8b829dc88c765e1",
+     "bytes": 245,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_si_base_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_si_fin_ConvectiveHeatFlow.csv",
+     "sha256": "4bb161a9df14e2b584afa4c1d228b845fac18aa2c6c815e31dd805920843c23b",
+     "bytes": 217,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_si_fin_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_si_fin_HeatFlowRate.csv",
+     "sha256": "708d84961be38709348d19d4d0f8f3fabdd10be2eedf0b6839ca7519763a1a57",
+     "bytes": 215,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_si_fin_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine/fs_si_fin_Temperature.csv",
+     "sha256": "d492837bf7b13f4c196d5fa754f6f654d74a8632f1c7b77c75a2fad46fd7d637",
+     "bytes": 245,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine/fs_si_fin_Temperature.csv"
+    }
+   ],
+   "cells": 215040,
+   "solved": true,
+   "dT_base_mean_K": 16.987099999999998,
+   "solve_wall_s": 638.8236704049632
+  },
+  "fine_x": {
+   "project": {
+    "file": "research/final_closure/reference_artifacts/icepak/fine_x/cooling_fine_x.aedt",
+    "sha256": "605aa8b6b74592ec2919bf0533ad98efa6c6dfac2f699d17cee2fdfd378f144b",
+    "bytes": 50021,
+    "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/cooling_fine_x.aedt"
+   },
+   "flow_reports": [
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_Region_ConvectiveHeatFlow.csv",
+     "sha256": "2d65f52e12fe5535de76fd857bf14fb8c1d5d73d678dff32d877d5005cecf54a",
+     "bytes": 210,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_Region_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_Region_Speed.csv",
+     "sha256": "d2bbd51f13e87a75d80e68adc3c6f6d0c5b3cefd5d0b9f761dec1aab72027311",
+     "bytes": 235,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_Region_Speed.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_Region_Temperature.csv",
+     "sha256": "5150d7bfeceb214f419ca47190bc97954b4f55491c7caef49683909f61979c7b",
+     "bytes": 240,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_Region_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_inlet_mflow_HeatFlowRate.csv",
+     "sha256": "4b5fdad48a40d2e816c10e8bb9ee37b33e4bad7523cd37869abff747edb97dcc",
+     "bytes": 236,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_inlet_mflow_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_inlet_mflow_MassFlowRate.csv",
+     "sha256": "78d77d090ad82078bf64d6bfb32bc03f3a939d43edb4a17cdd6575d8495609bf",
+     "bytes": 235,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_inlet_mflow_MassFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_inlet_mflow_Pressure.csv",
+     "sha256": "6e2eb37a5753c6beb63b1d3aeb49e35b450895273b7852801ee0d4c85acd496b",
+     "bytes": 265,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_inlet_mflow_Pressure.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_inlet_mflow_Ux.csv",
+     "sha256": "56494761610a97727bf37cdaf69ceba8beab16055f0073c613418a03a093da8a",
+     "bytes": 254,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_inlet_mflow_Ux.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_outlet_p_HeatFlowRate.csv",
+     "sha256": "025ef423dea9d356f48531a10b90294d6faf873fd3e46230f0d38c4d1954051e",
+     "bytes": 222,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_outlet_p_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_outlet_p_MassFlowRate.csv",
+     "sha256": "1957d2a8ac400b54d972409de70d470533a82cfacaeea1441de9f387fbe3cc85",
+     "bytes": 225,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_outlet_p_MassFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_outlet_p_Pressure.csv",
+     "sha256": "134816fd94ff5c99786a9aacff0af9eb894b79016818cc97245bff61930b6fb4",
+     "bytes": 259,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_outlet_p_Pressure.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_outlet_p_Temperature.csv",
+     "sha256": "0f4eea8711ee144fc5441dad2e61a736e6244d8a5689771ef9483a5bb8e77272",
+     "bytes": 264,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_outlet_p_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_outlet_p_Ux.csv",
+     "sha256": "d0e408ba9a3cc3b64073e35a8ce66e91cf1ce9676a0f7affbbd5fbad243f6537",
+     "bytes": 250,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_outlet_p_Ux.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_q_base_HeatFlowRate.csv",
+     "sha256": "d8b76ea1f62e159c736918e3d042eecb832c4312b6a160db66f463a2d1ed68af",
+     "bytes": 223,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_q_base_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_q_base_Temperature.csv",
+     "sha256": "83b8c30b57f5d59d70a0159a50072dd08145297b0ccaeeae3ddb938f08e55f40",
+     "bytes": 265,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_q_base_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_si_base_ConvectiveHeatFlow.csv",
+     "sha256": "7aa56c865cb40d79bffe34de215b5e00df0691197e311f50392caad15472a705",
+     "bytes": 218,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_si_base_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_si_base_HeatFlowRate.csv",
+     "sha256": "6a7833628c49a30a070db72a925d587c2f41c2c23fed5482e71148579f6771c6",
+     "bytes": 211,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_si_base_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_si_base_Temperature.csv",
+     "sha256": "889c64a64db495e3a2cbbaa96aaf5c68d176ec71eb23af7b4ee4559e39ca0370",
+     "bytes": 246,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_si_base_Temperature.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_si_fin_ConvectiveHeatFlow.csv",
+     "sha256": "f0a1304438ff061626596bbee513534e33ce1b608dead2e90d0ecac965581998",
+     "bytes": 217,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_si_fin_ConvectiveHeatFlow.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_si_fin_HeatFlowRate.csv",
+     "sha256": "75f009f4c7d394fb6aa21bc09f2627ef6fb76b7dfeeae747e9e77db07354df5c",
+     "bytes": 215,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_si_fin_HeatFlowRate.csv"
+    },
+    {
+     "file": "research/final_closure/reference_artifacts/icepak/fine_x/fs_si_fin_Temperature.csv",
+     "sha256": "bc1bb03cc4168d00a5fa389608c7405a4306815f250dff9afa07c71e55779c25",
+     "bytes": 243,
+     "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/fine_x/fs_si_fin_Temperature.csv"
+    }
+   ],
+   "cells": 430080,
+   "solved": true,
+   "dT_base_mean_K": 16.9944,
+   "solve_wall_s": 1305.4157901853323
+  }
+ },
+ "round1_convergence_criteria": {
+  "file": "research/final_closure/reference_artifacts/icepak/reference_cooling_icepak_round1.json",
+  "sha256": "c72953eb19d4ad44eed5a0500d47cf50b775fb02ccfd88ec48d06c57126e1dac",
+  "bytes": 11035,
+  "source": "/home/beams/MGHARIB/claude_scratch/aedt_work/icepak/round1_crit1e-5/reference_cooling_icepak_round1.json"
+ }
+}

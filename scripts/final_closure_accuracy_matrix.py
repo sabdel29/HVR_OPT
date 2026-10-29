@@ -21,7 +21,8 @@ FIELDS = ["stage", "production_model", "model_type", "reference_tool", "referenc
           "observable", "production_value", "reference_value", "error_metric", "error",
           "production_runtime_s", "production_runtime_range_s", "reference_runtime_s",
           "reference_runtime_range_s", "speedup", "timing_method", "machine", "cores",
-          "solver_version", "mesh_or_dof", "evidence_class", "status", "limitations"]
+          "solver_version", "mesh_or_dof", "evidence_class", "status", "limitations",
+          "runtime_ratio_kind"]
 TIMING = "warm-up + 3 timed repeats, median (range); same machine, shared host"
 CCX = "CalculiX 2.23"
 
@@ -362,8 +363,24 @@ def rows():
     return out
 
 
+#: a production model that is a closed form, a homogenisation rule or a compact correlation
+#: against a field solver: the runtime ratio is model reduction, not a solver speedup, and
+#: is never printed as one (final-closure Part 35); both absolute runtimes are reported
+MODEL_REDUCTION_TYPES = ("ANALYTICAL", "REDUCED MATERIAL MODEL")
+
+
+def ratio_kind(x):
+    if not isinstance(x.get("speedup"), (int, float)):
+        return None
+    if x.get("model_type") in MODEL_REDUCTION_TYPES or x["stage"] == "cooling_icepak":
+        return "model_reduction"
+    return "solver_to_solver"
+
+
 def main():
     r = rows()
+    for x in r:
+        x["runtime_ratio_kind"] = ratio_kind(x)
     with (D / "accuracy_speed_matrix.csv").open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=FIELDS)
         w.writeheader()

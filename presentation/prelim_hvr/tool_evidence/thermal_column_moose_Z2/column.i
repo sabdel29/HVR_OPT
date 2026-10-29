@@ -6,7 +6,7 @@
 []
 [Variables]
   [T]
-    initial_condition = 30.0556
+    initial_condition = 30.0748
   []
 []
 [Kernels]
@@ -23,19 +23,19 @@
   [src1]
     type = BodyForce
     variable = T
-    value = 1.092416626623e-01
+    value = 1.125693828926e-01
     block = 'conv_7_gan_hs_EPC2014C__tile'
   []
   [src2]
     type = BodyForce
     variable = T
-    value = 5.647961467097e-01
+    value = 5.903137630074e-01
     block = 'conv_3_gan_ls_EPC2057__tile'
   []
   [src3]
     type = BodyForce
     variable = T
-    value = 1.052092580633e-01
+    value = 1.057227127167e-01
     block = 'conv_1_inductor_plus_cout__tile'
   []
   [src4]
@@ -47,19 +47,25 @@
   [src5]
     type = BodyForce
     variable = T
-    value = 3.768678708023e-01
+    value = 3.847370558777e-01
     block = 'conv_6_interlayer_rdl__tile conv_4_interlayer_rdl__tile conv_2_interlayer_rdl__tile conv_0_land_side_attach_rdl__tile'
   []
   [src6]
     type = BodyForce
     variable = T
-    value = 7.173355517550e-03
-    block = 'sub_lower__tile'
+    value = 2.836447500515e-02
+    block = 'conv_attach_vr_substrate__tile'
   []
   [src7]
     type = BodyForce
     variable = T
-    value = 1.607985068560e-02
+    value = 7.196755468353e-03
+    block = 'sub_lower__tile'
+  []
+  [src8]
+    type = BodyForce
+    variable = T
+    value = 1.609377457927e-02
     block = 'interface__tile'
   []
 []
@@ -176,6 +182,20 @@
     specific_heat = 1
     thermal_conductivity = '3.428454136258e-02 0 0 0 3.428454136258e-02 0 0 0 6.204741529454e-04'
   []
+  [m_conv_attach_vr_substrate__gap]
+    type = AnisoHeatConductionMaterial
+    block = 'conv_attach_vr_substrate__gap'
+    temperature = T
+    specific_heat = 1
+    thermal_conductivity = '7.000000000000e-04 0 0 0 7.000000000000e-04 0 0 0 7.000000000000e-04'
+  []
+  [m_conv_attach_vr_substrate__tile]
+    type = AnisoHeatConductionMaterial
+    block = 'conv_attach_vr_substrate__tile'
+    temperature = T
+    specific_heat = 1
+    thermal_conductivity = '8.886438622034e-04 0 0 0 8.886438622034e-04 0 0 0 1.914057954209e-02'
+  []
   [m_sub_lower__gap]
     type = AnisoHeatConductionMaterial
     block = 'sub_lower__gap'
@@ -266,7 +286,7 @@
     type = ConvectiveHeatFluxBC
     variable = T
     boundary = top
-    T_infinity = 30.055564
+    T_infinity = 30.0748079
     heat_transfer_coefficient = 1.155534926155e-01
   []
 []
@@ -366,6 +386,16 @@
     type = ElementAverageValue
     variable = T
     block = 'conv_0_land_side_attach_rdl__tile'
+  []
+  [avg_conv_attach_vr_substrate__gap]
+    type = ElementAverageValue
+    variable = T
+    block = 'conv_attach_vr_substrate__gap'
+  []
+  [avg_conv_attach_vr_substrate__tile]
+    type = ElementAverageValue
+    variable = T
+    block = 'conv_attach_vr_substrate__tile'
   []
   [avg_sub_lower__gap]
     type = ElementAverageValue

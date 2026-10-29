@@ -28,7 +28,8 @@
    "solver_version": "AEDT 2026.1",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "AEDT meshes the circular section as facets; the square-bar probe agreed to ~1e-9, so the residual is geometric discretisation"
+   "limitations": "AEDT meshes the circular section as facets; the square-bar probe agreed to ~1e-9, so the residual is geometric discretisation",
+   "runtime_ratio_kind": "model_reduction"
   },
   {
    "stage": "tsv_tile_kz",
@@ -58,7 +59,8 @@
    "solver_version": "AEDT 2026.1",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "unit cell with adiabatic sides = square-lattice symmetry"
+   "limitations": "unit cell with adiabatic sides = square-lattice symmetry",
+   "runtime_ratio_kind": "model_reduction"
   },
   {
    "stage": "tsv_tile_kx",
@@ -88,7 +90,8 @@
    "solver_version": "AEDT 2026.1",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "MG is a dilute-limit form; error grows with Cu fraction"
+   "limitations": "MG is a dilute-limit form; error grows with Cu fraction",
+   "runtime_ratio_kind": "model_reduction"
   },
   {
    "stage": "rdl_tier_kx",
@@ -118,7 +121,8 @@
    "solver_version": "AEDT 2026.1",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "for the DECLARED grid pattern and occupancy; the production tensor ADOPTS the RVE value"
+   "limitations": "for the DECLARED grid pattern and occupancy; the production tensor ADOPTS the RVE value",
+   "runtime_ratio_kind": "model_reduction"
   },
   {
    "stage": "rdl_tier_kz",
@@ -148,7 +152,8 @@
    "solver_version": "AEDT 2026.1",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "for the DECLARED grid pattern and occupancy; the production tensor ADOPTS the RVE value"
+   "limitations": "for the DECLARED grid pattern and occupancy; the production tensor ADOPTS the RVE value",
+   "runtime_ratio_kind": "model_reduction"
   },
   {
    "stage": "pkg_rdl_Z1",
@@ -179,7 +184,8 @@
    "mesh_or_dof": "FV 783225 cells; FE 797828 triangles",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "max pad drop error +0.055%; vs the extrapolated MOOSE value +0.058%; both 2-D, so the runtime ratio is not a model-reduction speedup"
+   "limitations": "max pad drop error +0.055%; vs the extrapolated MOOSE value +0.058%; both 2-D, so the runtime ratio is not a model-reduction speedup",
+   "runtime_ratio_kind": "solver_to_solver"
   },
   {
    "stage": "pkg_rdl_Z2",
@@ -210,7 +216,8 @@
    "mesh_or_dof": "FV 986049 cells; FE 847378 triangles",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "max pad drop error +0.063%; vs the extrapolated MOOSE value +0.076%; both 2-D, so the runtime ratio is not a model-reduction speedup"
+   "limitations": "max pad drop error +0.063%; vs the extrapolated MOOSE value +0.076%; both 2-D, so the runtime ratio is not a model-reduction speedup",
+   "runtime_ratio_kind": "solver_to_solver"
   },
   {
    "stage": "thermal_column_aedt_Z1",
@@ -219,21 +226,21 @@
    "reference_tool": "Ansys Electronics Desktop 2026 R1, Mechanical thermal",
    "reference_type": "INDEPENDENT COMMERCIAL FEM",
    "observable": "T_max and layer-mean temperatures, interior unit cell of the physical package, converged HV-S0 heat map",
-   "production_value": 122.095,
-   "reference_value": 122.224259,
+   "production_value": 122.639,
+   "reference_value": 122.770053,
    "error_metric": "T_max difference / reference temperature rise",
-   "error": -0.0014025837959138069,
-   "production_runtime_s": 44.43613934516907,
+   "error": -0.0014137941825298807,
+   "production_runtime_s": 70.71394848823547,
    "production_runtime_range_s": [
-    43.316020488739014,
-    44.51004076004028
+    69.59574794769287,
+    71.00699806213379
    ],
-   "reference_runtime_s": 123.99744057655334,
+   "reference_runtime_s": 154.72991609573364,
    "reference_runtime_range_s": [
-    105.07166910171509,
-    125.82174062728882
+    153.01325821876526,
+    175.4027829170227
    ],
-   "speedup": 2.7904638522570906,
+   "speedup": 2.188110258352717,
    "timing_method": "warm-up + 3 timed repeats, median (range); same machine, shared host",
    "machine": "Intel(R) Xeon(R) Gold 6342 CPU @ 2.80GHz",
    "cores": "ccx 8 / AEDT 4",
@@ -241,7 +248,8 @@
    "mesh_or_dof": "97200 hex",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "max layer-mean difference 0.223 K; unit cell with symmetry sides, not the full package; both are FE codes, so the runtime ratio is solver-to-solver, not model reduction"
+   "limitations": "max layer-mean difference 0.226 K; unit cell with symmetry sides, not the full package; both are FE codes, so the runtime ratio is solver-to-solver, not model reduction",
+   "runtime_ratio_kind": "solver_to_solver"
   },
   {
    "stage": "thermal_column_moose_Z1",
@@ -250,21 +258,21 @@
    "reference_tool": "MOOSE heat_transfer-opt (3-D FEM, own hex mesh)",
    "reference_type": "INDEPENDENT OPEN-SOURCE FEM",
    "observable": "T_max of the same interior unit cell, HV-S0 heat map",
-   "production_value": 122.095,
-   "reference_value": 122.24370116374,
+   "production_value": 122.639,
+   "reference_value": 122.78977413993,
    "error_metric": "T_max difference / reference temperature rise",
-   "error": -0.0016132095378949083,
-   "production_runtime_s": 38.92673707008362,
+   "error": -0.0016261990250107164,
+   "production_runtime_s": 67.15716242790222,
    "production_runtime_range_s": [
-    38.877108097076416,
-    40.49995756149292
+    66.61871480941772,
+    68.35264992713928
    ],
-   "reference_runtime_s": 21.454803943634033,
+   "reference_runtime_s": 28.655768871307373,
    "reference_runtime_range_s": [
-    19.347954750061035,
-    22.674515962600708
+    27.961193084716797,
+    35.88638782501221
    ],
-   "speedup": 0.5511585495852593,
+   "speedup": 0.42669713602136317,
    "timing_method": "warm-up + 3 timed repeats, median (range); same machine, shared host",
    "machine": "Intel(R) Xeon(R) Gold 6342 CPU @ 2.80GHz",
    "cores": "ccx 8 threads / MOOSE 1 MPI rank",
@@ -272,7 +280,8 @@
    "mesh_or_dof": "ccx 97200 hex; MOOSE 225792 hex",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "T_max difference -0.149 K is within MOOSE's own mesh change +0.268 K; FE vs FE, so the runtime ratio is solver-to-solver"
+   "limitations": "T_max difference -0.151 K is within MOOSE's own mesh change +0.272 K; FE vs FE, so the runtime ratio is solver-to-solver",
+   "runtime_ratio_kind": "solver_to_solver"
   },
   {
    "stage": "thermal_column_aedt_Z2",
@@ -281,29 +290,30 @@
    "reference_tool": "Ansys Electronics Desktop 2026 R1, Mechanical thermal",
    "reference_type": "INDEPENDENT COMMERCIAL FEM",
    "observable": "T_max and layer-mean temperatures, interior unit cell of the physical package, converged HV-S0 heat map",
-   "production_value": 119.94,
-   "reference_value": 120.038243,
+   "production_value": 122.208,
+   "reference_value": 122.310471,
    "error_metric": "T_max difference / reference temperature rise",
-   "error": -0.0010917990119215146,
-   "production_runtime_s": 22.698262214660645,
+   "error": -0.0011109694075287547,
+   "production_runtime_s": 41.85715699195862,
    "production_runtime_range_s": [
-    21.95881676673889,
-    25.18953561782837
+    41.79249310493469,
+    42.231104135513306
    ],
-   "reference_runtime_s": 77.30649995803833,
+   "reference_runtime_s": 126.92789697647095,
    "reference_runtime_range_s": [
-    71.16299176216125,
-    90.79478359222412
+    114.10904216766357,
+    127.85110020637512
    ],
-   "speedup": 3.405833416978795,
+   "speedup": 3.0324060709822143,
    "timing_method": "warm-up + 3 timed repeats, median (range); same machine, shared host",
    "machine": "Intel(R) Xeon(R) Gold 6342 CPU @ 2.80GHz",
    "cores": "ccx 8 / AEDT 4",
    "solver_version": "CalculiX 2.23 / AEDT 2026.1",
-   "mesh_or_dof": "73872 hex",
+   "mesh_or_dof": "75168 hex",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "max layer-mean difference 0.168 K; unit cell with symmetry sides, not the full package; both are FE codes, so the runtime ratio is solver-to-solver, not model reduction"
+   "limitations": "max layer-mean difference 0.102 K; unit cell with symmetry sides, not the full package; both are FE codes, so the runtime ratio is solver-to-solver, not model reduction",
+   "runtime_ratio_kind": "solver_to_solver"
   },
   {
    "stage": "thermal_column_moose_Z2",
@@ -312,29 +322,30 @@
    "reference_tool": "MOOSE heat_transfer-opt (3-D FEM, own hex mesh)",
    "reference_type": "INDEPENDENT OPEN-SOURCE FEM",
    "observable": "T_max of the same interior unit cell, HV-S0 heat map",
-   "production_value": 119.94,
-   "reference_value": 120.04645335243,
+   "production_value": 122.208,
+   "reference_value": 122.32306310117,
    "error_metric": "T_max difference / reference temperature rise",
-   "error": -0.0011829347750661634,
-   "production_runtime_s": 23.038983583450317,
+   "error": -0.0012473200810653503,
+   "production_runtime_s": 42.739216327667236,
    "production_runtime_range_s": [
-    21.952043056488037,
-    40.06213569641113
+    42.450515270233154,
+    42.884297370910645
    ],
-   "reference_runtime_s": 14.038691759109497,
+   "reference_runtime_s": 28.15784740447998,
    "reference_runtime_range_s": [
-    13.908918380737305,
-    14.370908737182617
+    28.067209005355835,
+    28.784069299697876
    ],
-   "speedup": 0.6093451001542431,
+   "speedup": 0.6588292866346264,
    "timing_method": "warm-up + 3 timed repeats, median (range); same machine, shared host",
    "machine": "Intel(R) Xeon(R) Gold 6342 CPU @ 2.80GHz",
    "cores": "ccx 8 threads / MOOSE 1 MPI rank",
    "solver_version": "CalculiX 2.23 / MOOSE heat_transfer (local build)",
-   "mesh_or_dof": "ccx 73872 hex; MOOSE 172800 hex",
+   "mesh_or_dof": "ccx 75168 hex; MOOSE 177408 hex",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "T_max difference -0.106 K is within MOOSE's own mesh change +0.191 K; FE vs FE, so the runtime ratio is solver-to-solver"
+   "limitations": "T_max difference -0.115 K is within MOOSE's own mesh change +0.206 K; FE vs FE, so the runtime ratio is solver-to-solver",
+   "runtime_ratio_kind": "solver_to_solver"
   },
   {
    "stage": "mech_bilayer_closed_form",
@@ -359,7 +370,8 @@
    "mesh_or_dof": "40000 C3D8I; coarse level differs 0.019 %",
    "evidence_class": "CLOSED_FORM_VERIFICATION",
    "status": "EXECUTED",
-   "limitations": "the closed form ignores free-edge effects, so a few-tenths percent difference is expected, not identity"
+   "limitations": "the closed form ignores free-edge effects, so a few-tenths percent difference is expected, not identity",
+   "runtime_ratio_kind": null
   },
   {
    "stage": "mech_bilayer_aedt",
@@ -389,7 +401,8 @@
    "solver_version": "CalculiX 2.23 / AEDT 2026.1",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "EXECUTED",
-   "limitations": "AEDT warpage per kelvin from two solved temperature levels (reference-temperature independent); read on the surf of the silicon; FE vs FE runtime ratio"
+   "limitations": "AEDT warpage per kelvin from two solved temperature levels (reference-temperature independent); read on the surf of the silicon; FE vs FE runtime ratio",
+   "runtime_ratio_kind": "solver_to_solver"
   },
   {
    "stage": "structural_solver_iterative_vs_direct",
@@ -405,27 +418,30 @@
    "machine": "Intel(R) Xeon(R) Gold 6342 CPU @ 2.80GHz",
    "evidence_class": "SOLVER_VERIFICATION",
    "status": "EXECUTED",
-   "limitations": "du_c difference +0.0017%; needed because SPOOLES solves 38.6k C3D8I elements but segfaults at 43k in this build, so refined meshes use the iterative solver"
+   "limitations": "du_c difference +0.0017%; needed because SPOOLES solves 38.6k C3D8I elements but segfaults at 43k in this build, so refined meshes use the iterative solver",
+   "runtime_ratio_kind": null
   },
   {
    "stage": "mesh_convergence_Z1",
    "production_model": "physical ETM at h_xy = 1.1 mm",
    "observable": "T_max, die warpage, du_c, P_loss: base vs nested refinements r12, r21, r31, r11",
-   "error": 0.012985399369759976,
+   "error": 0.013477990592704775,
    "error_metric": "largest relative change",
    "evidence_class": "MESH_CONVERGENCE",
    "status": "EXECUTED",
-   "limitations": "declared tolerance 2%; pass = True; self-refinement says nothing about physical accuracy"
+   "limitations": "declared tolerance 2%; pass = True; self-refinement says nothing about physical accuracy",
+   "runtime_ratio_kind": null
   },
   {
    "stage": "mesh_convergence_Z2",
    "production_model": "physical ETM at h_xy = 1.1 mm",
    "observable": "T_max, die warpage, du_c, P_loss: base vs nested refinements r12, r21, r31, r11",
-   "error": 0.006742204171743447,
+   "error": 0.007066676977583547,
    "error_metric": "largest relative change",
    "evidence_class": "MESH_CONVERGENCE",
    "status": "EXECUTED",
-   "limitations": "declared tolerance 2%; pass = True; self-refinement says nothing about physical accuracy"
+   "limitations": "declared tolerance 2%; pass = True; self-refinement says nothing about physical accuracy",
+   "runtime_ratio_kind": null
   },
   {
    "stage": "tsv_transition",
@@ -434,7 +450,8 @@
    "error": "0.25-0.73 %",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "HISTORICAL_REFERENCE_NOT_RERUN",
-   "limitations": "earlier geometry; carried as history, not re-run on the physical lineage"
+   "limitations": "earlier geometry; carried as history, not re-run on the physical lineage",
+   "runtime_ratio_kind": null
   },
   {
    "stage": "rdl_plane_historical",
@@ -443,7 +460,8 @@
    "error": "power 0.45-1.10 %, IR 0.90-2.19 %",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "HISTORICAL_REFERENCE_NOT_RERUN",
-   "limitations": "earlier geometry; carried as history, not re-run on the physical lineage"
+   "limitations": "earlier geometry; carried as history, not re-run on the physical lineage",
+   "runtime_ratio_kind": null
   },
   {
    "stage": "cooling_compact",
@@ -452,7 +470,8 @@
    "error": "3.78 % in validated domain",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "HISTORICAL_REFERENCE_NOT_RERUN",
-   "limitations": "earlier geometry; carried as history, not re-run on the physical lineage"
+   "limitations": "earlier geometry; carried as history, not re-run on the physical lineage",
+   "runtime_ratio_kind": null
   },
   {
    "stage": "homogenised_k_historical",
@@ -461,7 +480,8 @@
    "error": "k_z ~1 %, bump k_xy ~1.5 %",
    "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
    "status": "HISTORICAL_REFERENCE_NOT_RERUN",
-   "limitations": "earlier geometry; carried as history, not re-run on the physical lineage"
+   "limitations": "earlier geometry; carried as history, not re-run on the physical lineage",
+   "runtime_ratio_kind": null
   },
   {
    "stage": "cooling_icepak",
@@ -474,13 +494,13 @@
    "reference_value": 16.9944,
    "error": 0.16484465371696688,
    "error_metric": "relative difference",
-   "production_runtime_s": 1.329040341079235e-05,
+   "production_runtime_s": 1.207030937075615e-05,
    "production_runtime_range_s": [
-    1.2664088048040866e-05,
-    2.3684797808527947e-05
+    1.1980782262980938e-05,
+    1.2083294801414013e-05
    ],
    "reference_runtime_s": 1305.4157901853323,
-   "speedup": 98222435.37959738,
+   "speedup": 108150980.23486319,
    "timing_method": "correlation: warm-up + 3 timed repeats of 1000 evaluations, median per call; CFD: n = 1 solve per mesh level (a long CFD run), wall clock incl. meshing, 4 cores; shared host",
    "machine": "Intel(R) Xeon(R) Gold 6342 CPU @ 2.80GHz",
    "cores": "correlation 1 / Icepak 4",
@@ -489,7 +509,8 @@
     "mesh_change_fine_to_fine_x_rel": 0.00042955326460485517,
     "mesh_change_baseline_to_baseline_x_rel": 0.00015952072883232364
    },
-   "limitations": "one channel half-pitch with symmetry walls; the correlation is conservative (higher temperature rise) and part of the gap is the developing-flow entrance region the fully developed Nu ignores; constant water properties; no convergence order is claimed (two cross-section levels)"
+   "limitations": "one channel half-pitch with symmetry walls; the correlation is conservative (higher temperature rise) and part of the gap is the developing-flow entrance region the fully developed Nu ignores; constant water properties; no convergence order is claimed (two cross-section levels)",
+   "runtime_ratio_kind": "model_reduction"
   },
   {
    "stage": "converter_waveform",
@@ -497,7 +518,8 @@
    "reference_tool": "none available",
    "status": "NOT_EXECUTED",
    "evidence_class": "UNVALIDATED",
-   "limitations": "no circuit simulator installed and no switch-state schedule exists; results are conditioned on named HV scenarios"
+   "limitations": "no circuit simulator installed and no switch-state schedule exists; results are conditioned on named HV scenarios",
+   "runtime_ratio_kind": null
   },
   {
    "stage": "pkg_rdl_convergence",
@@ -507,7 +529,8 @@
    "error_metric": "relative change between finest levels",
    "evidence_class": "MESH_CONVERGENCE",
    "status": "EXECUTED",
-   "limitations": "self-refinement; says nothing about physical accuracy"
+   "limitations": "self-refinement; says nothing about physical accuracy",
+   "runtime_ratio_kind": null
   }
  ],
  "note": "no overall framework accuracy is defined",

@@ -81,7 +81,8 @@ CLOSED_IDS = {
     "elec.z1_rail_model",
     "elec.z1_tsv_sizing",
     "elec.z2_lv_rms_current",
-    "elec.z2_pkg_hv_rdl_geometry",
+    # elec.z2_pkg_hv_rdl_geometry is SUPERSEDED, not closed: the primary Z2 is direct-fed and
+    # has no package 48 V RDL (the BGA-fed sheet belongs to the control only)
     "elec.z2_rail_model",
     "elec.z2_tsv_sizing",
     "geom.bga_lattice_single_source",
@@ -155,6 +156,18 @@ CLOSED_IDS = {
     "elec.contact_resistance_bounded",         # SPECIFIED: network sweep
     "elec.rdl10um_electrical_model",           # SPECIFIED: network sweep
     "elec.pad_loss_closed",                    # SPECIFIED: B2, magnitude bounded by a run
+    # --- Direct-fed Z2 (Z2_DIRECT_FEED_ARCHITECTURE.md): each closes on the corrected
+    # --- lineage's mesh, ledger, crossover sweep or a class-B run on the production mesh.
+    "arch.z2_direct_feed_power_path",          # no package 48 V term in any primary Z2 case
+    "elec.direct_feed_crossover",              # swept R*, a requirement, never a value
+    "elec.direct_feed_heat_location",          # class B: feed loss deposited in the package
+    "geom.sidewall_clearance_baseline",        # measured: 0 converter elements in the ring
+    "geom.sidewall_clearance",                 # class B: sidewall-filled construction run
+    "geom.vr_attach_explicit",                 # measured attach tier, 30 um
+    "geom.vr_attach_height",                   # class B: 20 / 40 um attach
+    "mech.bga_population",                     # class B: 420/528 Z2 BGA field
+    "therm.backside_interface",                # class B: backside plate behind a TIM
+    "therm.cooling_model_form",                # class B: Icepak-equivalent coefficient
 }
 
 

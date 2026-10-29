@@ -26,7 +26,7 @@
    "area": "Board",
    "gate": "PCB-H1 meshed as FE depth blocks",
    "status": "IMPLEMENTED",
-   "evidence": "run on the production mesh at HV-S0: Class-B B1 (PCB-H1: the 18-layer schedule as five depth blocks (pcb_h1.py), against H0 on the same z grid): RESOLVED -- ordering robust; largest relative change of any observable 4.9 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (PCB-H1: the 18-layer schedule as five depth blocks (pcb_h1.py), against H0 on the same z grid): RESOLVED -- ordering robust; largest relative change of any observable 4.8 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "board.h1_thermal_validated",
@@ -40,7 +40,7 @@
    "area": "Board",
    "gate": "eta coverage sensitivity completed",
    "status": "IMPLEMENTED",
-   "evidence": "run on the production mesh at HV-S0: Class-B B1 (copper coverage eta 0.25 / 0.50 / 0.75 (config eta_sensitivity)): RESOLVED -- ordering robust; largest relative change of any observable 18.7 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (copper coverage eta 0.25 / 0.50 / 0.75 (config eta_sensitivity)): RESOLVED -- ordering robust; largest relative change of any observable 18.6 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "board.t_only_material_identical",
@@ -67,8 +67,8 @@
    "id": "elec.z1_rail_model",
    "area": "Electrical",
    "gate": "Z1 48 V rail-specific VDD/GND model",
-   "status": "SPECIFIED",
-   "evidence": "48 V rail at 23.6936 A from (P_load + P_loss)/48. Source: Phase-0M-R3C electronics LOSS + load (PLACEHOLDER). Stays SPECIFIED, not IMPLEMENTED, until a physical loss ledger replaces the historical placeholder."
+   "status": "IMPLEMENTED",
+   "evidence": "48 V rail current self-consistent with the final physical ledger: I = (P_load + P_loss)/48 V = 23.9387 A at HV-S0 (research/final_closure/final_results.json); the Phase-0M-R3C placeholder is no longer used"
   },
   {
    "id": "elec.z2_rail_model",
@@ -89,7 +89,7 @@
    "area": "Electrical",
    "gate": "BGA power-ball count recomputed from the ledger current",
    "status": "SPECIFIED",
-   "evidence": "I_in 23.6936 A at 1.5 A/ball needs 16+16; 16+16 gives 24.0 A, margin 1.28 %. Recomputed dynamically, NOT frozen: +20 W of additional loss already requires 18+18. Stays SPECIFIED until the physical ledger replaces the placeholder"
+   "evidence": "the equal-sharing capacity check is superseded by the voltage-fed network: 54 supply + 54 return balls per rail carry the self-consistent HV-S0 current with a solved peak of 1.446 A/ball (Z1) against the 1.5 A/ball engineering criterion (package_network.json); SPECIFIED because that criterion has no source. The primary Z2 has no 48 V BGA field"
   },
   {
    "id": "elec.bga_loss_recomputed",
@@ -102,8 +102,8 @@
    "id": "elec.package_rdl_hv_recomputed",
    "area": "Electrical",
    "gate": "package RDL loss, HV rail recomputed on the physical geometry",
-   "status": "SPECIFIED",
-   "evidence": "SUPERSEDES 'still has only the Phase-0M-R3C value', which is false at HEAD. The HV rail is recomputed from the solved voltage-fed network for Z2, with supply and return as separate conductors and per-scenario I_rms^2 R losses in research/phase0nab/interconnect_loss.json. Z1 is still OPEN because its network fails the 1 % convergence test. SPECIFIED, not IMPLEMENTED, while any architecture remains open and while the RMS waveform stays scenario-defined."
+   "status": "IMPLEMENTED",
+   "evidence": "SUPERSEDES 'still has only the Phase-0M-R3C value', which is false at HEAD. Z1: supply and return are separate conductors of the converged voltage-fed network, with I_rms^2 R losses per named scenario in the final ledger. The primary Z2 has no package HV rail (direct feed); Z2_BGA_FED_CONTROL carries the BGA-fed network"
   },
   {
    "id": "elec.microbump_loss_recomputed",
@@ -138,14 +138,14 @@
    "area": "Electrical",
    "gate": "contact / UBM / IMC resistance modelled or bounded",
    "status": "SPECIFIED",
-   "evidence": "bounded: Class-B B1 (rho_c 1e-6 / 1e-5 / 1e-4 ohm mm^2 on the package 48 V RDL (package_network sensitivity)): RESOLVED -- ordering robust; largest relative change of any observable 0.1 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "bounded: Class-B B1 (rho_c 1e-6 / 1e-5 / 1e-4 ohm mm^2 on the package 48 V RDL (package_network sensitivity; Z1 only: the direct-fed Z2 has no package 48 V RDL)): RESOLVED -- ordering robust; largest relative change of any observable 0.1 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.rdl10um_electrical_model",
    "area": "Electrical",
    "gate": "10 um RDL electrical (resistance) model closed or bounded",
    "status": "SPECIFIED",
-   "evidence": "bounded: Class-B B1 (package 48 V RDL t_Cu 2 / 5 / 10 um x occupancy 0.3 / 0.8 (package_network sensitivity)): RESOLVED -- ordering robust; largest relative change of any observable 1.8 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "bounded: Class-B B1 (package 48 V RDL t_Cu 2 / 5 / 10 um x occupancy 0.3 / 0.8 (package_network sensitivity; Z1 only)): RESOLVED -- ordering changes in: P_loss_w under t_cu=0.005, occupancy=0.8 (Z2 lower -> unresolved); P_loss_w under t_cu=0.01, occupancy=0.3 (Z2 lower -> unresolved); P_loss_w under t_cu=0.01, occupancy=0.8 (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 1.8 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.z1_tsv_sizing",
@@ -166,7 +166,7 @@
    "area": "TSV",
    "gate": "thermal/mechanical sensitivity to TSV density",
    "status": "IMPLEMENTED",
-   "evidence": "run on the production mesh at HV-S0: Class-B B1 (TSV sizing study: 64 / 729 / 1444 vias per cell, in the FE substrate AND the ledger): RESOLVED -- ordering changes in: P_loss_w under tsv_min (Z2 lower -> Z1 lower) -- the claim is narrowed accordingly; largest relative change of any observable 9.3 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (TSV sizing study: 64 / 729 / 1444 vias per cell, in the FE substrate AND the ledger): RESOLVED -- ordering changes in: P_loss_w under tsv_min (Z2 lower -> Z1 lower); P_loss_w under tsv_mid (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 9.1 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "tsv.fe_copper_representation",
@@ -215,7 +215,7 @@
    "area": "RMS",
    "gate": "individual branch waveforms",
    "status": "OPEN",
-   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B2 (converter-internal branch RMS: identical converter model in both architectures): BOUNDED -- magnitude only (research/final_closure/classB_resolution.csv)"
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B1 (converter-internal branch RMS: identical converter model in both architectures): RESOLVED -- ordering changes in: P_loss_w under common rescaling k of the converter terms (Z2 lower for every k < 91.230) -- the claim is narrowed accordingly (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.hv_input_waveform",
@@ -291,8 +291,8 @@
    "id": "elec.z2_pkg_hv_rdl_geometry",
    "area": "PkgRDL",
    "gate": "continuous Z2 package HV RDL exists",
-   "status": "IMPLEMENTED",
-   "evidence": "same sheet but sources restricted to the BGA_P1/nearest_symmetric: 16+16 from annulus (cutout removes the interior) (528 candidates); R_eff 1.4337 mOhm. THE RATIO TO Z1 IS WITHDRAWN as a physical conclusion: it is unconverged (5.13x at 61x61 against 4.53x at 101x101) and contaminated by a hard-coded 3.0 mm cell pitch against the actual 3.165243 mm, synthetic non-lattice Z1 sources, BGA contacts smaller than the grid spacing, and imposed equal source currents. Preliminary unconverged network observation only"
+   "status": "SUPERSEDED",
+   "evidence": "the primary Z2 is DIRECT-FED (Z2_DIRECT_FEED_ARCHITECTURE.md): its 48 V never enters the package, so no package 48 V RDL exists in it. The BGA-fed Z2 sheet (54 + 54 balls, converged, R_loop 1.540 mOhm) survives only in Z2_BGA_FED_CONTROL and the controlled BGA-fed experiment"
   },
   {
    "id": "elec.pkg_rdl_sheet_model",
@@ -319,22 +319,22 @@
    "id": "elec.cutout_penalty_isolated",
    "area": "PkgRDL",
    "gate": "cutout penalty isolated from BGA-placement penalty",
-   "status": "SPECIFIED",
-   "evidence": "CTRL_FULL is BIT-IDENTICAL to Z1 and CTRL_CUTOUT to Z2 (verified on R_supply and R_return), so dR_cutout IS the Z1/Z2 loop difference expressed as a difference -- which means it inherits Z1's convergence failure and cannot be called IMPLEMENTED. What survives that failure is the SIGN: Z1's worst R_eff drift over the final refinement is 1.4101 %, bounding its loop resistance to 0.01755 mOhm, against a cutout term of +0.1217 mOhm -- a factor of 7. re-run on the voltage-fed, loop-inclusive, contact-resolved model. dR_cutout = +0.1217 mOhm against dR_placement = +3.6030 mOhm (29.60x). THE SIGN OF THE CUTOUT TERM FLIPPED: the imposed-current model read -0.351 mOhm (the cutout appearing to HELP) and the corrected model reads +0.1217 mOhm. The earlier conclusion that the cutout penalty was a placement artefact 'in both magnitude and sign' was itself an artefact of imposing equal ball currents and discarding the return conductor. Placement still moves the answer more than the cutout does, but by 29.60x rather than 5.8x, and dR_placement contrasts two DELIBERATELY OPPOSITE rules (nearest-to-centroid against furthest), so it is a span, not a typical sensitivity"
+   "status": "IMPLEMENTED",
+   "evidence": "on the CONVERGED voltage-fed network (package_network.json controlled): dR_cutout = -0.7224 mOhm against dR_placement = +2.6980 mOhm, sheet, cells, count and grid held identical. It belongs to the controlled BGA-fed experiment: the primary, direct-fed Z2 has no package 48 V path"
   },
   {
    "id": "elec.cutout_penalty_isolated_HISTORICAL",
    "area": "PkgRDL",
    "gate": "superseded imposed-current cutout decomposition",
    "status": "SUPERSEDED",
-   "evidence": "CTRL_FULL (1369 candidate sites) against CTRL_CUTOUT (528), with sheet, cells, ball count, allocation rule and grid all held identical: dR_cutout = -0.351 mOhm, i.e. the cutout slightly REDUCES resistance because nearest-to-centroid selection would otherwise cluster balls centrally. Changing only the rule on the same annulus moves R_eff 2.047 mOhm, so placement dominates the cutout by ~5.8x. SPECIFIED not IMPLEMENTED: Z1 remains unconverged and the sources are still current-fed"
+   "evidence": "HISTORICAL (superseded; at the time:) CTRL_FULL (1369 candidate sites) against CTRL_CUTOUT (528), with sheet, cells, ball count, allocation rule and grid all held identical: dR_cutout = -0.351 mOhm, i.e. the cutout slightly REDUCES resistance because nearest-to-centroid selection would otherwise cluster balls centrally. Changing only the rule on the same annulus moves R_eff 2.047 mOhm, so placement dominates the cutout by ~5.8x. SPECIFIED not IMPLEMENTED: Z1 remains unconverged and the sources are still current-fed CURRENT: every voltage-fed network converges (package_network.json, worst change 4.5e-04)"
   },
   {
    "id": "elec.pkg_rdl_network_converged",
    "area": "PkgRDL",
    "gate": "package RDL network converged",
-   "status": "SPECIFIED",
-   "evidence": "convergence is now declared on ALL of r_eff_ohm, p_loss_w, max_cell_drop_v, i_ball_max_a, ball_imax_over_imean between the two finest of five levels, threshold 1 % set before any value was read. 2 of 4 networks pass: Z2_return, Z2_supply. FAILING: Z1_return at 1.0688 %, Z1_supply at 1.4101 %. SPECIFIED not IMPLEMENTED because Z1 still fails, for the third successive phase. The threshold is NOT relaxed to admit it. The earlier study checked R_eff ONLY at grids where a 400 um ball was sub-grid (h = 0.3 mm); the grid here is n = 601 (h = 50 um, ball spanning 8 cells)"
+   "status": "IMPLEMENTED",
+   "evidence": "every voltage-fed network converges on the aligned graded grid: worst change 4.5e-04 between the two finest levels on all of r_eff_ohm, p_loss_w, max_cell_drop_v, i_ball_max_a, ball_imax_over_imean, against the 1 % threshold declared before any value was read, for Z1 supply/return and the opening geometry of the BGA-fed control (research/final_closure/package_network.json). Z1's earlier failure belonged to the uniform grid and is kept as elec.pkg_rdl_network_converged_HISTORICAL"
   },
   {
    "id": "elec.bga_lattice_mirror_closed",
@@ -348,7 +348,7 @@
    "area": "PkgRDL",
    "gate": "BGA count solved against a declared criterion",
    "status": "SPECIFIED",
-   "evidence": "the adopted 16+16 came from I_total/N <= 1.5 A/ball, which presumes equal sharing -- disproven by the network. Solved peak at N=16 is 4.01 A (Z1) and 1.96 A (Z2), so the adopted count FAILS its own criterion even at the DC average. Required: 40 per rail (Z1), 24 (Z2). HV-S1/S2 are not satisfiable for Z2 in the legal lattice. SPECIFIED not IMPLEMENTED: the criterion is ENGINEERING_CRITERION with no source, and local crowding stays OPEN"
+   "evidence": "matched 54 balls per rail on the converged network: solved peak 1.446 A/ball (Z1) and 1.219 A/ball (opening geometry, BGA-fed control) at HV-S0 against the 1.5 A/ball provisioning criterion, which is an engineering criterion without a source, hence SPECIFIED; HV-S1/S2 are scenario-conditioned (package_network.json closure). The primary Z2 has no 48 V BGA field"
   },
   {
    "id": "elec.pad_count_admissible_region",
@@ -383,7 +383,7 @@
    "area": "PkgRDL",
    "gate": "superseded imposed-current convergence study",
    "status": "SUPERSEDED",
-   "evidence": "Z2 NOW CONVERGES at 0.430 % after the ball counts were matched, but Z1 does not at 2.168 %. A ratio is only as converged as its worse half, so no architecture ratio is reportable. Threshold 1 % on R_eff was declared before any result was read; four levels (41/61/81/101) give 0.43 % for Z2 and 2.17 % for Z1. Finite-area contacts already removed the point-source log singularity that made the first attempt diverge; the residual is reported rather than absorbed by loosening the threshold"
+   "evidence": "HISTORICAL (superseded; at the time:) Z2 NOW CONVERGES at 0.430 % after the ball counts were matched, but Z1 does not at 2.168 %. A ratio is only as converged as its worse half, so no architecture ratio is reportable. Threshold 1 % on R_eff was declared before any result was read; four levels (41/61/81/101) give 0.43 % for Z2 and 2.17 % for Z1. Finite-area contacts already removed the point-source log singularity that made the first attempt diverge; the residual is reported rather than absorbed by loosening the threshold CURRENT: every voltage-fed network converges (package_network.json, worst change 4.5e-04)"
   },
   {
    "id": "elec.interface_primary_selected",
@@ -425,7 +425,7 @@
    "area": "PadCount",
    "gate": "a physical criterion selects the pad count",
    "status": "OPEN",
-   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B2 (pad sweep end: the voltage-drop floor, 4 pads per rail per cell (vs 2040)): BOUNDED -- magnitude only; largest relative change of any observable 16.5 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B2 (pad sweep end: the voltage-drop floor, 4 pads per rail per cell (vs 2040)): BOUNDED -- magnitude only; largest relative change of any observable 15.9 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.pad_density_sensitivity",
@@ -439,7 +439,7 @@
    "area": "PadCount",
    "gate": "pad interface loss closed",
    "status": "SPECIFIED",
-   "evidence": "bounded by a run on the production mesh at HV-S0: Class-B B2 (pad sweep end: the voltage-drop floor, 4 pads per rail per cell (vs 2040)): BOUNDED -- magnitude only; largest relative change of any observable 16.5 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "bounded by a run on the production mesh at HV-S0: Class-B B2 (pad sweep end: the voltage-drop floor, 4 pads per rail per cell (vs 2040)): BOUNDED -- magnitude only; largest relative change of any observable 15.9 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.source_pad_count",
@@ -544,14 +544,14 @@
    "area": "Electrical",
    "gate": "temperature-dependent TSV resistance in the fixed point",
    "status": "IMPLEMENTED",
-   "evidence": "the TSV rows are evaluated at the converged substrate temperature inside the E-T loop; resetting only T_sub to 20 C changes the HV-S0 TSV loss by a factor 1.388 (Z1, T_sub 118.6 C) and 1.297 (Z2, T_sub 95.7 C) (research/final_closure/coupling_checks.json)"
+   "evidence": "the TSV rows are evaluated at the converged substrate temperature inside the E-T loop; resetting only T_sub to 20 C changes the HV-S0 TSV loss by a factor 1.391 (Z1, T_sub 119.4 C) and 1.302 (Z2, T_sub 96.9 C) (research/final_closure/coupling_checks.json)"
   },
   {
    "id": "elec.rdl_loss_recomputed",
    "area": "Electrical",
    "gate": "package RDL loss recomputed on the physical geometry",
-   "status": "SPECIFIED",
-   "evidence": "SUPERSEDES 'no artifact exists', false at HEAD. Recomputed from the solved voltage-fed network for Z2: package HV supply/return carry I_rms^2 R scenario losses in research/phase0nab/interconnect_loss.json. Z1 remains OPEN because its networks fail the 1 % convergence test, so a loss taken from them would be a number resting on an unconverged resistance. SPECIFIED, not IMPLEMENTED, while any architecture is still open."
+   "status": "IMPLEMENTED",
+   "evidence": "Z1's package 48 V RDL supply/return losses come from the CONVERGED voltage-fed network (every network converges, worst change 4.5e-04; research/final_closure/package_network.json) and enter the final ledger per named scenario. The primary Z2 is direct-fed and has no package 48 V RDL; the BGA-fed Z2 network survives only in Z2_BGA_FED_CONTROL"
   },
   {
    "id": "elec.rdl_loss_recomputed_HISTORICAL",
@@ -572,7 +572,7 @@
    "area": "Electrical",
    "gate": "physical Z1/Z2 loss audit frozen",
    "status": "IMPLEMENTED",
-   "evidence": "research/final_closure/electrical_ledger.json: 96 rows -- every conductor, both architectures, every named scenario, at the converged E-T temperatures, one owner each, no silent zeros; HV-S0 totals Z1 146.472 W, Z2 142.672 W"
+   "evidence": "research/final_closure/electrical_ledger.json: 90 rows -- every conductor, both architectures, every named scenario, at the converged E-T temperatures, one owner each, no silent zeros; HV-S0 totals Z1 149.057 W, Z2 148.038 W"
   },
   {
    "id": "therm.tier_aware_heat_map",
@@ -600,14 +600,14 @@
    "area": "Thermal",
    "gate": "Z2-COOLED case implemented",
    "status": "IMPLEMENTED",
-   "evidence": "run on the production mesh at HV-S0: Class-B B1 (bounding Z2-COOLED: a top-type cold plate on the Z2 converter underside; Z1 unchanged): RESOLVED -- ordering changes in: T_max_C under z2_cooled (unresolved -> Z2 lower); die_warpage_pv_um under z2_cooled (Z1 lower -> Z2 lower); du_c_um under z2_cooled (Z1 lower -> Z2 lower); d_eps_in_per_cycle under z2_cooled (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly; largest relative change of any observable 96.3 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (bounding Z2-COOLED: a top-type cold plate on the Z2 converter underside; Z1 unchanged): RESOLVED -- ordering changes in: T_max_C under z2_cooled (Z1 lower -> Z2 lower); die_warpage_pv_um under z2_cooled (Z1 lower -> Z2 lower); du_c_um under z2_cooled (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly; largest relative change of any observable 81.2 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "therm.et_fixed_point_converged",
    "area": "Thermal",
    "gate": "ET fixed point converged",
    "status": "IMPLEMENTED",
-   "evidence": "every case met the DECLARED 0.25 K / 1e-3 criteria within 8 iterations; worst final max|dT| 0.058 K"
+   "evidence": "every case met the DECLARED 0.25 K / 1e-3 criteria within 7 iterations; worst final max|dT| 0.108 K"
   },
   {
    "id": "therm.mot_tg_evaluated",
@@ -628,28 +628,28 @@
    "area": "Mechanical",
    "gate": "F1/F2 out-of-cell bracket run",
    "status": "IMPLEMENTED",
-   "evidence": "run on the production mesh at HV-S0: Class-B B1 (out-of-cell converter volume encapsulated (F1, production: fills the PCB opening to the sidewall) vs void (F2), and F1 with the specified 1 mm sidewall clearance open (DEFECT #66)): RESOLVED -- ordering changes in: T_max_C under f2_void (unresolved -> Z2 lower); du_c_um under f2_void (Z1 lower -> Z2 lower); d_eps_in_per_cycle under f2_void (Z1 lower -> unresolved); d_eps_in_per_cycle under f1_clearance (Z1 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 72.7 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (out-of-cell converter volume encapsulated between the cells (F1, production, 1.0 mm clearance void) vs void (F2), and F1 filled to the PCB sidewall (DEFECT #66 construction)): RESOLVED -- ordering changes in: T_max_C under f2_void (Z1 lower -> unresolved); die_warpage_pv_um under f2_void (Z1 lower -> unresolved); du_c_um under f2_void (Z1 lower -> Z2 lower); T_max_C under f1_sidewall_filled (Z1 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 73.7 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "mech.mesh_convergence",
    "area": "Mechanical",
    "gate": "physical mesh convergence",
    "status": "IMPLEMENTED",
-   "evidence": "nested refinement of the production mesh (every in-plane interval split in two, and separately every layer split in two through the thickness): worst relative change of T_max, die warpage, critical du and loss = 1.299 % against the 2 % tolerance declared before the refined runs were read (PASS). Refined-mesh structural solves use ITERATIVE CHOLESKY, verified against SPOOLES on the production mesh. The earlier h_xy 1.1 -> 0.8 pair is not nested and is kept only as a re-meshing sensitivity. Mesh convergence, not validation"
+   "evidence": "nested refinement of the production mesh (every in-plane interval split in two, and separately every layer split in two through the thickness): worst relative change of T_max, die warpage, critical du and loss = 1.348 % against the 2 % tolerance declared before the refined runs were read (PASS). Refined-mesh structural solves use ITERATIVE CHOLESKY, verified against SPOOLES on the production mesh. The earlier h_xy 1.1 -> 0.8 pair is not nested and is kept only as a re-meshing sensitivity. Mesh convergence, not validation"
   },
   {
    "id": "mech.bga_528_site_search",
    "area": "Mechanical",
    "gate": "critical-joint search over all 528 surviving sites",
    "status": "IMPLEMENTED",
-   "evidence": "every legal site searched (Z1 1369, Z2 528); the critical joint is the outermost lattice corner in both, (14.4, 14.4) mm, du = 2.374 (Z1) and 3.951 um (Z2) at HV-S0 -- found, not assumed"
+   "evidence": "every legal site searched (Z1 1369, Z2 528); the critical joint is the outermost lattice corner in both, (14.4, 14.4) mm, du = 2.394 (Z1) and 3.090 um (Z2) at HV-S0 -- found, not assumed"
   },
   {
    "id": "mech.t_only_mechanical",
    "area": "Mechanical",
    "gate": "2.4/3.2 T-only mechanical comparison",
    "status": "IMPLEMENTED",
-   "evidence": "run on the production mesh at HV-S0: Class-B B1 (PCB 2.4 vs 3.2 mm, one material dict): RESOLVED -- ordering changes in: d_eps_in_per_cycle under board_t3p2 (Z1 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 15.4 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (PCB 2.4 vs 3.2 mm, one material dict): RESOLVED -- ordering robust; largest relative change of any observable 17.7 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "local.solder_rerun_at_new_critical_site",
@@ -684,7 +684,7 @@
    "area": "Z2 geometry",
    "gate": "no full-area converter slab",
    "status": "IMPLEMENTED",
-   "evidence": "0 of 38623 elements belong to a layer named 'conv'"
+   "evidence": "0 of 36280 elements belong to a layer named 'conv'"
   },
   {
    "id": "geom.z2_no_medium_outside_cells",
@@ -698,21 +698,21 @@
    "area": "Z2 geometry",
    "gate": "converter descends into the cutout",
    "status": "IMPLEMENTED",
-   "evidence": "HVR occupies 1422 -> 737 um inside the board's 0 -> 2400 um extent"
+   "evidence": "HVR occupies 1392 -> 707 um inside the board's 0 -> 2400 um extent"
   },
   {
    "id": "geom.z2_no_overlap",
    "area": "Z2 geometry",
    "gate": "no overlap",
    "status": "IMPLEMENTED",
-   "evidence": "the mesh builder raises if two layers claim one element; all 38623 elements were accepted"
+   "evidence": "the mesh builder raises if two layers claim one element; all 36280 elements were accepted"
   },
   {
    "id": "geom.z2_out_of_cell_defined",
    "area": "Z2 geometry",
    "gate": "out-of-cell material/void defined",
-   "status": "SPECIFIED",
-   "evidence": "F1 encapsulated (primary) and F2 void both build; bracket not run"
+   "status": "IMPLEMENTED",
+   "evidence": "F1_clearance (production: encapsulant between the cells, 1.0 mm clearance ring void), the sidewall-filled F1 and F2 void all build; the bracket is run as class-B cases f1_sidewall_filled and f2_void"
   },
   {
    "id": "geom.bga_symmetric_feed",
@@ -754,7 +754,7 @@
    "area": "Inventory",
    "gate": "1-D stack thickness conserves exactly",
    "status": "IMPLEMENTED",
-   "evidence": "Z2 cutout column 2633 um and periphery 3010 um; Z1 5333 um; no gaps, no overlaps"
+   "evidence": "Z2 cutout column 2663 um and periphery 3010 um; Z1 5333 um; no gaps, no overlaps"
   },
   {
    "id": "mat.rdl_tier_tensor",
@@ -782,14 +782,14 @@
    "area": "Material",
    "gate": "MLCC tier material bounded",
    "status": "OPEN",
-   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (converter medium k/10, and the card's own E 80-160 GPa x CTE 4-10 ppm/K corners): RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (unresolved -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 94.4 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (converter medium k/10, and the card's own E 80-160 GPa x CTE 4-10 ppm/K corners): RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (Z1 lower -> unresolved); du_c_um under conv_k_tenth (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly; largest relative change of any observable 102.2 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "mat.inductor_tier_bounded",
    "area": "Material",
    "gate": "inductor/Cout tier bounded",
    "status": "OPEN",
-   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (converter medium k/10, and the card's own E 80-160 GPa x CTE 4-10 ppm/K corners): RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (unresolved -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 94.4 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (converter medium k/10, and the card's own E 80-160 GPa x CTE 4-10 ppm/K corners): RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (Z1 lower -> unresolved); du_c_um under conv_k_tenth (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly; largest relative change of any observable 102.2 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "mat.rdl_tensor_transfer_validated",
@@ -803,7 +803,98 @@
    "area": "Results",
    "gate": "physical ETM result lineage",
    "status": "IMPLEMENTED",
-   "evidence": "final physical lineage executed for Z1 and Z2 in every named 48 V scenario: E-T fixed point, global thermoelastic FE, all-site joint search, local solder rerun. HV-S0: Z1 146.472 W / 121.58 C / 27.64 um warp; Z2 142.672 W / 120.59 C / 69.28 um warp (research/final_closure/final_results.json)"
+   "evidence": "final physical lineage executed for Z1 and Z2 in every named 48 V scenario: E-T fixed point, global thermoelastic FE, all-site joint search, local solder rerun. HV-S0: Z1 149.057 W / 122.32 C / 27.90 um warp; Z2 148.038 W / 124.60 C / 68.81 um warp (research/final_closure/final_results.json)"
+  },
+  {
+   "id": "geom.vr_attach_explicit",
+   "area": "Z2 geometry",
+   "gate": "explicit VR-to-substrate attach in the mesh",
+   "status": "IMPLEMENTED",
+   "evidence": "layer conv_attach_vr_substrate measured 30.0 um from z = -30.0 to 0.0 um (config 30.0 um), Cu-pillar card in the 49 cells; the land-side RDL sits below it, no longer against the substrate"
+  },
+  {
+   "id": "geom.sidewall_clearance_baseline",
+   "area": "Z2 geometry",
+   "gate": "1.0 mm sidewall clearance void in the baseline (DEFECT #66)",
+   "status": "IMPLEMENTED",
+   "evidence": "cell-grid bbox 21.360 mm + 2 x 1.0 mm = cutout 23.36 mm; converter elements in the clearance ring: 0; the sidewall-filled F1 survives only as class-B f1_sidewall_filled"
+  },
+  {
+   "id": "arch.z2_direct_feed_power_path",
+   "area": "Architecture",
+   "gate": "primary Z2 direct-fed: no package 48 V BGA/RDL term in its ledger",
+   "status": "IMPLEMENTED",
+   "evidence": "every primary Z2 case is Z2_DIRECT_FEED: 48 V enters at the HVR input terminals through the external feed (R_Z2_direct_feed_loop, swept); no package 48 V BGA or RDL term in its ledger (guarded in final_closure_ledger.check_direct_feed); only 1 V crosses the substrate, through the explicit attach"
+  },
+  {
+   "id": "elec.direct_feed_crossover",
+   "area": "Electrical",
+   "gate": "direct-feed loop-resistance crossover computed",
+   "status": "IMPLEMENTED",
+   "evidence": "self-consistent platform-inclusive sweep of R_Z2_direct_feed_loop over 0.01-100 mOhm in every named scenario; crossover R*: HV-S0 1.77 mOhm; HV-S1 3.76 mOhm; HV-S2 no comparison (Z1 inadmissible) (research/final_closure/direct_feed_crossover.json)"
+  },
+  {
+   "id": "geom.sidewall_clearance",
+   "area": "Z2 geometry",
+   "gate": "sidewall clearance sensitivity run",
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (1.0 mm sidewall clearance void (production) vs encapsulant filled to the PCB sidewall): RESOLVED -- ordering changes in: T_max_C under f1_sidewall_filled (Z1 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 40.7 % (research/final_closure/classB_resolution.csv)"
+  },
+  {
+   "id": "geom.vr_attach_height",
+   "area": "Z2 geometry",
+   "gate": "VR attach height sensitivity run",
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (VR attach joint 20 / 40 um (production 30 um; Na et al. 2022 CLOSE_ANALOG)): RESOLVED -- ordering changes in: P_loss_w under attach_h40 (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 0.3 % (research/final_closure/classB_resolution.csv)"
+  },
+  {
+   "id": "mat.vr_attach_material",
+   "area": "Material",
+   "gate": "VR attach material bounded",
+   "status": "OPEN",
+   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (Cu pillar + solder cap (production) vs all-solder Sn microbumps (Na et al. 2022), and the column-stiffened card): RESOLVED -- ordering changes in: P_loss_w under attach_sn (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 1.8 % (research/final_closure/classB_resolution.csv)"
+  },
+  {
+   "id": "mat.vr_attach_underfill",
+   "area": "Material",
+   "gate": "VR attach underfill bounded",
+   "status": "OPEN",
+   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (attach underfill E 4 / 12 GPa, CTE 40 / 20 ppm/K (declared stress corners)): RESOLVED -- ordering robust; largest relative change of any observable 0.4 % (research/final_closure/classB_resolution.csv)"
+  },
+  {
+   "id": "elec.direct_feed_loop_resistance",
+   "area": "Electrical",
+   "gate": "direct-feed loop resistance determined",
+   "status": "OPEN",
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B1 (R_Z2_direct_feed_loop swept 0.01-100 mOhm (direct_feed_crossover.json)): RESOLVED -- ordering changes in: P_loss_w under R_feed = 1 R* = 1.77 mOhm (Z2 lower -> unresolved); P_loss_w under R_feed = 10 R* = 17.7 mOhm (Z2 lower -> Z1 lower) -- the claim is narrowed accordingly; largest relative change of any observable 7.0 % (research/final_closure/classB_resolution.csv)"
+  },
+  {
+   "id": "elec.direct_feed_heat_location",
+   "area": "Electrical",
+   "gate": "direct-feed heat-location sensitivity run",
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (feed loss at the largest admissible loop resistance (largest R*), at the HV-S0 current, deposited in the deepest converter tier): RESOLVED -- ordering changes in: P_loss_w under feed_heat_at_crossover (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 0.8 % (research/final_closure/classB_resolution.csv)"
+  },
+  {
+   "id": "therm.cooling_model_form",
+   "area": "Thermal",
+   "gate": "cooling model-form (Icepak-equivalent) sensitivity run",
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (ICEPAK_EQUIVALENT_COOLING_SENSITIVITY: top coefficient x dT_compact/dT_CFD of the matched Icepak case): RESOLVED -- ordering robust; largest relative change of any observable 6.3 % (research/final_closure/classB_resolution.csv)"
+  },
+  {
+   "id": "therm.backside_interface",
+   "area": "Thermal",
+   "gate": "backside thermal interface sensitivity run",
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (Z2-COOLED through a 50 um TIM (k 3 W/mK)): RESOLVED -- ordering changes in: T_max_C under z2_cooled_tim (Z1 lower -> Z2 lower); die_warpage_pv_um under z2_cooled_tim (Z1 lower -> Z2 lower); du_c_um under z2_cooled_tim (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly; largest relative change of any observable 74.4 % (research/final_closure/classB_resolution.csv)"
+  },
+  {
+   "id": "mech.bga_population",
+   "area": "Mechanical",
+   "gate": "BGA mechanical population sensitivity run",
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (Z2 BGA field populated at 420/528 (the 48 V balls of the BGA-fed design removed), smeared): RESOLVED -- ordering robust; largest relative change of any observable 5.8 % (research/final_closure/classB_resolution.csv)"
   }
  ],
  "tiers": [
@@ -812,66 +903,66 @@
    "material": "silicon",
    "spec_um": 685.0,
    "mesh_um": 685.0,
-   "z0_um": -1963.0,
-   "z1_um": -1278.0
+   "z0_um": -1993.0,
+   "z1_um": -1308.0
   },
   {
    "tier": "conv_6_interlayer_rdl",
    "material": "rdl_tier",
    "spec_um": 10.0,
    "mesh_um": 10.0,
-   "z0_um": -1278.0,
-   "z1_um": -1268.0
+   "z0_um": -1308.0,
+   "z1_um": -1298.0
   },
   {
    "tier": "conv_5_flying_caps",
    "material": "hvr_effective",
    "spec_um": 100.0,
    "mesh_um": 100.0,
-   "z0_um": -1268.0,
-   "z1_um": -1168.0
+   "z0_um": -1298.0,
+   "z1_um": -1198.0
   },
   {
    "tier": "conv_4_interlayer_rdl",
    "material": "rdl_tier",
    "spec_um": 10.0,
    "mesh_um": 10.0,
-   "z0_um": -1168.0,
-   "z1_um": -1158.0
+   "z0_um": -1198.0,
+   "z1_um": -1188.0
   },
   {
    "tier": "conv_3_gan_ls_EPC2057",
    "material": "silicon",
    "spec_um": 638.0,
    "mesh_um": 638.0,
-   "z0_um": -1158.0,
-   "z1_um": -520.0
+   "z0_um": -1188.0,
+   "z1_um": -550.0
   },
   {
    "tier": "conv_2_interlayer_rdl",
    "material": "rdl_tier",
    "spec_um": 10.0,
    "mesh_um": 10.0,
-   "z0_um": -520.0,
-   "z1_um": -510.0
+   "z0_um": -550.0,
+   "z1_um": -540.0
   },
   {
    "tier": "conv_1_inductor_plus_cout",
    "material": "hvr_effective",
    "spec_um": 500.0,
    "mesh_um": 500.0,
-   "z0_um": -510.0,
-   "z1_um": -10.0
+   "z0_um": -540.0,
+   "z1_um": -40.0
   },
   {
    "tier": "conv_0_land_side_attach_rdl",
    "material": "rdl_tier",
    "spec_um": 10.0,
    "mesh_um": 10.0,
-   "z0_um": -10.0,
-   "z1_um": 0.0
+   "z0_um": -40.0,
+   "z1_um": -30.0
   }
  ],
- "n_open": 14,
- "n_elems": 38623
+ "n_open": 17,
+ "n_elems": 36280
 }

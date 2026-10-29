@@ -16,6 +16,26 @@ to the current working tree.
 
 ---
 
+## 0. Which package RDL structures still exist (Z2 correction, 2026-10-28)
+
+The primary Z2 is now direct-fed (`Z2_DIRECT_FEED_ARCHITECTURE.md`). Its 48 V enters the
+backside regulator through a dedicated external connection in the PCB opening, and only 1 V
+crosses the substrate. The package 48 V RDL this document cross-checks therefore survives in
+two places only:
+
+| Structure | Status after the correction | Model | What the MOOSE reference shows |
+|---|---|---|---|
+| Z1 package 48 V RDL, supply and return | **primary** (Z1 is unchanged) | DC plan-view sheet of section 2 | the production FV solver on a primary object |
+| BGA-fed Z2 package 48 V RDL (`rdl_geometry_Z2.json`, `pkg_rdl_moose_Z2`) | **control only**: `Z2_BGA_FED_CONTROL`, the controlled BGA-fed Z1 vs Z2 experiment | same DC sheet | the same solver on the control's geometry. It is **not** evidence about the primary Z2, which has no such sheet |
+| Z2_DIRECT_FEED 48 V input | **no package RDL**: the external loop `R_Z2_direct_feed_loop` is swept, never assumed (`direct_feed_crossover.json`) | ledger term `(I_48,rms)^2 R` outside the package boundary | nothing: no MOOSE comparison applies |
+| Z2_DIRECT_FEED 1 V path: HVR output RDL, VR attach, TSVs, top RDL | primary | DC ledger rows (`final_closure_ledger.py`) | not part of this cross-check |
+
+**No high-frequency physics migrates into the DC Z2 model.** Omelet's RLGC/S-parameter
+machinery (sections 1 and 3) describes signal interconnect at 10 MHz to 50 GHz. None of the
+structures above is modelled in the frequency domain. The 48 V waveform reaches the direct
+feed only through the named scenarios' RMS/average ratio (HV-S0/S1/S2), never through an RDL
+impedance.
+
 ## 1. What Omelet is
 
 * Upstream Omelet is a gem5/Garnet network simulator for 2.5D/3D chiplet systems
@@ -53,7 +73,8 @@ of the substrate (z = 0…300 µm), as recorded in `research/final_closure/archi
 * The 54 BGA balls per rail (0.4 mm discs) couple the sheet to the rail (V = 0) through an
   areal conductance g_a = 1/(ρ_c + R_ball·πr²).
 * The 49 converter VIN pads (0.2 mm squares) each draw I/49.
-* Z1 has no PCB opening. Z2's 23.36 mm opening leaves no ball inside it.
+* Z1 has no PCB opening. The BGA-fed control (the primary Z2 before the correction) has a
+  23.36 mm opening that leaves no ball inside it.
 * The observables are R_eff = P/I² and the largest pad-average drop, at I = 1 A, using
   linearity.
 * The formulation and the geometry are one function,

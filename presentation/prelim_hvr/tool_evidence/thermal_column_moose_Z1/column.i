@@ -6,7 +6,7 @@
 []
 [Variables]
   [T]
-    initial_condition = 30.0665
+    initial_condition = 30.0741
   []
 []
 [Kernels]
@@ -23,19 +23,19 @@
   [src1]
     type = BodyForce
     variable = T
-    value = 1.103889939037e-01
+    value = 1.118791880147e-01
     block = 'z1conv_1_gan_hs_EPC2014C__tile'
   []
   [src2]
     type = BodyForce
     variable = T
-    value = 5.759213146760e-01
+    value = 5.863190095175e-01
     block = 'z1conv_3_gan_ls_EPC2057__tile'
   []
   [src3]
     type = BodyForce
     variable = T
-    value = 1.065270919059e-01
+    value = 1.037581154094e-01
     block = 'z1conv_7_inductor_plus_cout__tile'
   []
   [src4]
@@ -47,25 +47,25 @@
   [src5]
     type = BodyForce
     variable = T
-    value = 3.052148431940e-01
+    value = 3.043310239524e-01
     block = 'z1conv_0_bottom_substrate_rdl__tile z1conv_2_interlayer_rdl__tile z1conv_4_interlayer_rdl__tile z1conv_6_interlayer_rdl__tile z1conv_8_output_rdl__tile'
   []
   [src6]
     type = BodyForce
     variable = T
-    value = 1.200522790043e-02
+    value = 1.205668722267e-02
     block = 'bga__gap bga__tile'
   []
   [src7]
     type = BodyForce
     variable = T
-    value = 4.217881662438e-06
+    value = 4.235102585576e-06
     block = 'sub_lower__tile'
   []
   [src8]
     type = BodyForce
     variable = T
-    value = 1.608131926902e-02
+    value = 1.609878906501e-02
     block = 'interface__tile'
   []
 []
@@ -300,7 +300,7 @@
     type = ConvectiveHeatFluxBC
     variable = T
     boundary = top
-    T_infinity = 30.0664853
+    T_infinity = 30.0740994
     heat_transfer_coefficient = 1.155534926155e-01
   []
   [bot]

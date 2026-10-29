@@ -1,17 +1,20 @@
 {
   "summary": {
     "A": 0,
-    "B": 9,
+    "B": 12,
     "C": 5
   },
-  "n_open": 14,
+  "n_open": 17,
   "classified_but_no_longer_open": [
+    "arch.z2_direct_feed_power_path",
     "board.eta_sensitivity_run",
     "board.h1_meshed",
     "board.h1_thermal_validated",
     "board.t_only_comparison_run",
     "elec.bga_loss_recomputed",
     "elec.contact_resistance_bounded",
+    "elec.direct_feed_crossover",
+    "elec.direct_feed_heat_location",
     "elec.energy_conservation_verified",
     "elec.intravr_horizontal_recomputed",
     "elec.intravr_vertical_recomputed",
@@ -20,14 +23,19 @@
     "elec.pad_loss_closed",
     "elec.rdl10um_electrical_model",
     "elec.tsv_resistance_temperature_dependent",
+    "geom.sidewall_clearance",
+    "geom.vr_attach_height",
     "local.solder_rerun_at_new_critical_site",
     "mat.rdl_tensor_transfer_validated",
     "mech.bga_528_site_search",
+    "mech.bga_population",
     "mech.f1_f2_bracket_run",
     "mech.mesh_convergence",
     "mech.t_only_mechanical",
     "results.physical_etm_lineage",
+    "therm.backside_interface",
     "therm.bc_selected",
+    "therm.cooling_model_form",
     "therm.et_fixed_point_converged",
     "therm.h0_h1_compared",
     "therm.tier_aware_heat_map",
@@ -53,9 +61,9 @@
       "gate": "individual branch waveforms",
       "class": "B",
       "rationale": "branch ripple needs the switch schedule; the HV side is carried per scenario and the LV side uses the output-ripple RMS",
-      "b_subtype": "B2",
+      "b_subtype": "B1",
       "b_resolved": true,
-      "b_status": "BOUNDED -- magnitude only"
+      "b_status": "RESOLVED -- ordering changes in: P_loss_w under common rescaling k of the converter terms (Z2 lower for every k < 91.230) -- the claim is narrowed accordingly"
     },
     {
       "id": "elec.hv_input_waveform",
@@ -165,7 +173,7 @@
       "rationale": "flying-cap tier material, material range",
       "b_subtype": "B1",
       "b_resolved": true,
-      "b_status": "RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (unresolved -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> unresolved) -- the claim is narrowed accordingly"
+      "b_status": "RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (Z1 lower -> unresolved); du_c_um under conv_k_tenth (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly"
     },
     {
       "id": "mat.inductor_tier_bounded",
@@ -175,7 +183,37 @@
       "rationale": "inductor/Cout tier material, material range",
       "b_subtype": "B1",
       "b_resolved": true,
-      "b_status": "RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (unresolved -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> unresolved) -- the claim is narrowed accordingly"
+      "b_status": "RESOLVED -- ordering changes in: T_max_C under conv_k_tenth (Z1 lower -> unresolved); du_c_um under conv_k_tenth (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly"
+    },
+    {
+      "id": "mat.vr_attach_material",
+      "area": "Material",
+      "gate": "VR attach material bounded",
+      "class": "B",
+      "rationale": "VR attach geometry is CLOSE_ANALOG literature; the all-solder alternative and the column-stiffened card bound it",
+      "b_subtype": "B1",
+      "b_resolved": true,
+      "b_status": "RESOLVED -- ordering changes in: P_loss_w under attach_sn (Z2 lower -> unresolved) -- the claim is narrowed accordingly"
+    },
+    {
+      "id": "mat.vr_attach_underfill",
+      "area": "Material",
+      "gate": "VR attach underfill bounded",
+      "class": "B",
+      "rationale": "attach underfill on declared stress corners; no sourced card",
+      "b_subtype": "B1",
+      "b_resolved": true,
+      "b_status": "RESOLVED -- ordering robust"
+    },
+    {
+      "id": "elec.direct_feed_loop_resistance",
+      "area": "Electrical",
+      "gate": "direct-feed loop resistance determined",
+      "class": "B",
+      "rationale": "the external 48 V feed has no sourced value (ARM names connector types only); swept, and turned into the requirement R < R*",
+      "b_subtype": "B1",
+      "b_resolved": true,
+      "b_status": "RESOLVED -- ordering changes in: P_loss_w under R_feed = 1 R* = 1.77 mOhm (Z2 lower -> unresolved); P_loss_w under R_feed = 10 R* = 17.7 mOhm (Z2 lower -> Z1 lower) -- the claim is narrowed accordingly"
     }
   ]
 }

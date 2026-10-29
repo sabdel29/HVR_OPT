@@ -155,6 +155,9 @@ def role(key, name, spec):
                     ("silicon", "silicon substrate", ly, part))
         if ly == "interface":
             return "solder", "microbump interface", ly, part
+        if "attach_vr" in ly:                            # Cu pillars + solder caps in underfill
+            return (("solder", "VR attach: Cu pillars in underfill", ly, part)
+                    if part != "gap" else ("fill", "underfill ring", ly, part))
         if ly == "die":
             return "die", "compute die (silicon)", ly, part
         if ly == "tim":

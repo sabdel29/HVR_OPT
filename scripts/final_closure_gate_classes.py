@@ -83,6 +83,23 @@ CLASSES = {
     "mat.gan_bounded": ("B", "GaN epi thermal contribution, material range"),
     "mat.mlcc_bounded": ("B", "flying-cap tier material, material range"),
     "mat.inductor_tier_bounded": ("B", "inductor/Cout tier material, material range"),
+    # ---------------- B: the direct-fed Z2 (Z2_DIRECT_FEED_ARCHITECTURE.md) ----------
+    "mat.vr_attach_material": ("B", "VR attach geometry is CLOSE_ANALOG literature; the all-"
+        "solder alternative and the column-stiffened card bound it"),
+    "mat.vr_attach_underfill": ("B", "attach underfill on declared stress corners; no "
+        "sourced card"),
+    "elec.direct_feed_loop_resistance": ("B", "the external 48 V feed has no sourced value "
+        "(ARM names connector types only); swept, and turned into the requirement R < R*"),
+    "geom.sidewall_clearance": ("B", "1.0 mm clearance (production) vs sidewall-filled"),
+    "geom.vr_attach_height": ("B", "attach joint height 20-40 um"),
+    "elec.direct_feed_heat_location": ("B", "where the external feed's heat lands"),
+    "therm.cooling_model_form": ("B", "compact cooling model vs matched Icepak CFD"),
+    "therm.backside_interface": ("B", "backside cooling through a TIM"),
+    "mech.bga_population": ("B", "BGA mechanical population of the direct-fed Z2"),
+    "elec.direct_feed_crossover": ("A", "the direct-feed requirement must be computed before "
+        "any platform-level electrical claim"),
+    "arch.z2_direct_feed_power_path": ("A", "the primary Z2 must be the direct-fed "
+        "construction"),
     # ---------------- C: qualification -----------------------------------
     "lit.tsv_allowable": ("C", "an EM-safe TSV current density is a qualification quantity; "
         "no transferable value exists and none is claimed"),
