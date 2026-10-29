@@ -1,0 +1,231 @@
+{
+ "title": "Z2 direct-feed architecture, frozen before any new result",
+ "declared_at": "2026-10-28T19:04:04-05:00",
+ "declared_before_any_result_of": [
+  "Z2_DIRECT_FEED ETM",
+  "Z2_DIRECT_FEED local solder",
+  "Z2_DIRECT_FEED class-B",
+  "direct-feed crossover"
+ ],
+ "document": "research/final_closure/Z2_DIRECT_FEED_ARCHITECTURE.md",
+ "document_sha256": "d32ef8c9b5614bec381462dbcded20bf0f35655d0915d9c202ecc08b57f29358",
+ "architectures": {
+  "Z1": {
+   "variant": "Z1_EMBEDDED",
+   "hv_input": "BGA_FED",
+   "crosses_substrate": "48 V (before conversion)",
+   "conversion": "above the substrate, between substrate and die",
+   "power_path": [
+    "platform 48 V",
+    "PCB 48 V distribution",
+    "BGA_48V_POWER_FIELD",
+    "package 48 V RDL sheet",
+    "48 V TSV field",
+    "bottom-substrate RDL (HS landing)",
+    "high-side GaN",
+    "flying capacitors",
+    "low-side GaN",
+    "inductor + Cout",
+    "output RDL",
+    "microbumps (interface)",
+    "compute die"
+   ],
+   "bga_48v_power_field": {
+    "supply": 54,
+    "return": 54,
+    "source": "package_network.json matched count"
+   },
+   "bga_mechanical_field_sites": 1369
+  },
+  "Z2": {
+   "variant": "Z2_DIRECT_FEED",
+   "primary": true,
+   "hv_input": "DIRECT_FEED",
+   "crosses_substrate": "1 V supply and return only (after conversion)",
+   "conversion": "below the substrate, inside the PCB cutout",
+   "power_path": [
+    "platform 48 V",
+    "external direct-feed connection (R_Z2_direct_feed_loop)",
+    "HVR 48 V input terminals (VIN pad on the high-side RDL)",
+    "high-side GaN",
+    "flying capacitors",
+    "low-side GaN",
+    "inductor + Cout",
+    "1 V output/attach RDL",
+    "VR-to-substrate attach (Cu pillar + SnAg cap + underfill)",
+    "substrate 1 V VDD TSV field",
+    "top 1 V RDL",
+    "microbumps (interface)",
+    "compute die"
+   ],
+   "return_path": [
+    "compute-die GND",
+    "die/package ground interface",
+    "top ground RDL",
+    "substrate GND TSV field",
+    "VR attach GND",
+    "backside-HVR ground",
+    "direct backside input-return connection",
+    "platform ground"
+   ],
+   "forbidden_ledger_terms": [
+    "P_pkg_RDL_HV_supply",
+    "P_pkg_RDL_HV_return",
+    "P_BGA_supply",
+    "P_BGA_return"
+   ],
+   "required_ledger_terms": [
+    "P_conv_hs",
+    "P_conv_ls",
+    "P_conv_inductor_dcr",
+    "P_conv_cap_esr",
+    "P_intraVR_metal",
+    "P_intraVR_vertical",
+    "P_VR_attach_VDD",
+    "P_VR_attach_GND",
+    "P_TSV_VDD",
+    "P_TSV_GND",
+    "P_pad_VDD",
+    "P_pad_GND"
+   ],
+   "bga_48v_power_field": null,
+   "bga_mechanical_field_sites": 528
+  },
+  "Z2BF": {
+   "variant": "Z2_BGA_FED_CONTROL",
+   "primary": false,
+   "hv_input": "BGA_FED",
+   "role": "CONTROLLED_BGA_FED_Z1_VS_Z2_EXPERIMENT and appendix comparison",
+   "statement": "This controlled experiment isolates the effect of BGA placement/cutout when both architectures are forced to use an identical package-level 48-V feed. It is not the primary Z2 construction.",
+   "geometry": "identical to Z2 (attach + clearance); only the 48 V path differs",
+   "bga_48v_power_field": {
+    "supply": 54,
+    "return": 54
+   },
+   "bga_mechanical_field_sites": 528,
+   "known_simplification": "DEFECT #67: VIN modelled on the high-side RDL; the ~1.3 mm HV vertical traverse from the land-side RDL is not modelled (control only)"
+  }
+ },
+ "vr_attach": {
+  "layer": "conv_attach_vr_substrate",
+  "technology": "Cu pillar + SnAg solder cap + underfill",
+  "carries": "1 V VDD and GND only",
+  "pattern": "VDD/GND checkerboard over each cell footprint",
+  "h_total_um": 30.0,
+  "h_cu_um": 14.0,
+  "h_cap_um": 16.0,
+  "d_um": 15.0,
+  "pitch_um": 30.0,
+  "cell_side_mm": 2.3685438564654024,
+  "bumps_per_rail_per_cell": 3042,
+  "area_fraction": 0.19634954084936207,
+  "underfill_material": "underfill_homog",
+  "k_underfill_W_mK": 0.6,
+  "mechanical_convention": "underfill-dominated card (as the interface microbump layer); column-stiffened Voigt card is a class-B bound",
+  "thermal_method": "Voigt through thickness (Cu + solder columns in series), Maxwell-Garnett in plane (Phase 0M-R validated, <~0.6 % vs RVE)",
+  "bounds": {
+   "h_total_um": [
+    20.0,
+    40.0
+   ],
+   "d_pitch_um": [
+    [
+     15.0,
+     30.0
+    ],
+    [
+     30.0,
+     80.0
+    ]
+   ],
+   "material": [
+    "Cu pillar + solder cap",
+    "all-solder (pure Sn) microbump"
+   ]
+  },
+  "sources": [
+   {
+    "ref": "Au et al., ECTC 2016, 10.1109/ECTC.2016.127",
+    "class": "CLOSE_ANALOG",
+    "quote": "30μm pitch micro Cu pillar bump (15μm diameter) ... sufficient solder cap volume (16mm height)"
+   },
+   {
+    "ref": "Na et al., Electronics 12(1):144, 2022, 10.3390/electronics12010144",
+    "class": "CLOSE_ANALOG",
+    "quote": "bumps with a diameter of 30 µm, a height of 40 µm, and a space of 50 µm"
+   },
+   {
+    "ref": "framework allowance, research/PCB_THICKNESS_Z2_AUDIT.md",
+    "class": "BOUNDED",
+    "quote": "cell-to-substrate attach solder + underfill | 30"
+   }
+  ]
+ },
+ "sidewall": {
+  "cutout_mm": 23.36,
+  "cell_grid_bbox_mm": 21.36,
+  "clearance_mm": 1.0,
+  "clearance_content": "VOID",
+  "between_cells": "F1 encapsulant (underfill_homog)",
+  "defect_resolved": "DEFECT #66",
+  "sensitivities": [
+   "f1_sidewall_filled",
+   "f2_void"
+  ]
+ },
+ "direct_feed": {
+  "parameter": "R_Z2_direct_feed_loop",
+  "definition": "complete external 48 V supply + return loop between the board-level 48 V reference node common to both architectures (where Z1's PCB distribution meets its BGA pads) and the HVR input terminals, including the per-cell distribution to the 49 input terminals",
+  "assumed_value": null,
+  "sweep_mohm": [
+   0.01,
+   100.0
+  ],
+  "sweep_points": 241,
+  "loss": "P_feed = I_48,rms^2 * R_feed, I_48 self-consistent",
+  "heat_location_nominal": "outside the package (no deposit)",
+  "heat_location_sensitivity": "feed loss at the crossover R* deposited in the deepest converter tier",
+  "connector_types_named_by_ARM": [
+   "pin and sleeve",
+   "bullet plug",
+   "banana plug"
+  ],
+  "connector_dimensions_or_resistance_sourced": false
+ },
+ "sources": [
+  {
+   "ref": "ARM Ltd., US20260059645A1",
+   "class": "DIRECT",
+   "items": [
+    "claim 1",
+    "claims 6-9",
+    "claims 14-15",
+    "[0038]",
+    "[0040]",
+    "[0042]",
+    "[0047]"
+   ],
+   "quotes": {
+    "claim 7": "the at least one electrical connection to be operable to couple the vertical integrated voltage regulator assembly to a power supply signal comprises at least one wire coupled to a power connector on the vertically integrated voltage regulator assembly.",
+    "claim 8": "the at least one electrical connection is operable to carry an electrical signal having power of a kilowatt or greater.",
+    "claim 9": "the vertically integrated voltage regulator assembly is operable to reduce a voltage of the power supply signal by at least a factor of ten.",
+    "[0038]": "one or more external electrical connections 322 provided by a separate wire 324 rather than via the printed circuit board 314 and substrate 304, such as a high voltage and/or high current wire coupled to a power source ... wires 324 such as may be used to provide external input power and ground signals.",
+    "[0040]": "Providing power via external power connectors 322 may further enable solder balls and/or bumps connecting the voltage regulator assembly to substrate 304 to be dedicated to providing power to integrated circuit 302. This may also simplify design of the voltage regulator circuit 308, the substrate 304, and the printed circuit board 314, allowing these devices to be more compact, as these components no longer need to carry a high voltage power signal to the voltage regulator circuit 308.",
+    "[0042]": "solder bumps and/or balls connecting the various elements shown here may comprise in various embodiments metal pillars, such as solder-coated copper pillars, designed to provide greater current-carrying capacity than solder alone",
+    "[0047]": "The substrate may further conduct electrical power signals to the vertically integrated voltage regulator"
+   },
+   "limits": "construction precedent only: no dimension, no performance number, no qualification"
+  },
+  {
+   "ref": "Google LLC, US20210249384A1 (family US20230402430A1, US20250006706A1, US20250349802A1)",
+   "class": "CLOSE_ANALOG",
+   "quotes": {
+    "[0036]": "Power may be carried from the packaging substrate 109 to the integrated voltage regulator die 105 by one or more TMVs.",
+    "[0037]": "The input power supply may be delivered to the integrated voltage regulator die 105 at a higher voltage level and lower current level than the input power supply delivered directly to the ASIC die.",
+    "[0038]": "power ... may be provided from the integrated voltage regulator die 105 to a backside redistribution layer 173. The redistribution layer 173 may direct power to one or more TSV 470"
+   },
+   "limits": "die-backside IVR fed through the package (not direct-fed); precedent for backside RDL -> TSV output only"
+  }
+ ],
+ "energy_flow_caveat": "the deep-to-up tier order is the energy-flow order, not an electrical series chain; the converter has switch-node, flying-capacitor, ground and phase connections between tiers"
+}

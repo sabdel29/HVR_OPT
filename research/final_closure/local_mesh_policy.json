@@ -139,6 +139,43 @@
     "(e) pass 3 = the declared L0-L3 family under (a)-(c); rule A/B/C unchanged"
    ],
    "acceptance": "pass 3 is accepted only if its L0 value reproduces the plain-form pass-1 L0 value of every case, and the harness control, within 0.1 %"
+  },
+  {
+   "id": 4,
+   "declared_at": "2026-10-28T19:04:18-05:00",
+   "declared_after": "the Z2 architecture correction (Z2_DIRECT_FEED_ARCHITECTURE.md): direct 48 V feed, explicit VR-to-substrate attach, 1.0 mm sidewall clearance",
+   "declared_before_any_result_of": [
+    "pass 4 (corrected geometry)"
+   ],
+   "finding": "every earlier local result belongs to the superseded Z2 (BGA-fed, sidewall-filled, no attach) or to Z1 critical joints taken from that lineage; none is carried forward",
+   "rule": "pass 4 repeats the declared policy UNCHANGED on the corrected lineage: levels L0-L3, 2 % tolerance, rule A/B/C, split steps (3 s load step + 297 s hold), initial increment 2e-3 s, block-order extraction (DEFECT #65), U = U_mesh + U_time + U_cyc with U_time from a dt0 study and U_cyc from each case's own 16-cycle run",
+   "cases": [
+    [
+     "Z1",
+     "HV_S0"
+    ],
+    [
+     "Z2",
+     "HV_S0"
+    ],
+    [
+     "Z1",
+     "HV_S1"
+    ],
+    [
+     "Z2",
+     "HV_S1"
+    ]
+   ],
+   "optional_cases": [
+    [
+     "Z2",
+     "HV_S2"
+    ]
+   ],
+   "excluded": "any case whose critical joint is at or above the SAC305 melting onset (about 217 C) is not run: no valid solid-solder response exists",
+   "acceptance": "pass 4 is accepted only if its harness control (the published control joint) is reproduced within 0.1 % by the same extraction",
+   "production_level": "L3 unless rule C applies"
   }
  ]
 }
