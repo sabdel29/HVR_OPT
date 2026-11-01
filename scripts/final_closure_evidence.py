@@ -160,6 +160,48 @@ def rve_stages(status):
             "runtime.json."])
 
 
+def attach_rve_stage(status):
+    """geom.vr_attach_density: the explicit attach unit cells of both published densities
+    (scripts/reference_tools/aedt_attach_rve.py), against the homogenised card at the same
+    infinite-lattice metal fraction."""
+    rve = J("reference_attach_rve.json") or {}
+    d = EV / "attach_rve"
+    d.mkdir(parents=True, exist_ok=True)
+    rows = {k: v for k, v in rve.items() if v.get("reference_value")}
+    status["attach_rve"] = ("AEDT", bool(rows))
+    if not rows:
+        readme(d, "attach_rve", ["No solved AEDT result exists for this stage."])
+        return
+    dump(d, "setup.json", {k: {kk: v.get(kk) for kk in (
+        "observable", "production_model", "reference_tool", "geometry", "f_unit_cell")}
+        for k, v in rows.items()})
+    dump(d, "runtime.json", {k: {"production_s": v["production_timing_s"],
+                                 "reference_first_solve_s": v["reference_wall_s"],
+                                 "reference_cores": 4, "hardware": v.get("hardware")}
+                             for k, v in rows.items()})
+    dump(d, "result.json", {k: {kk: v.get(kk) for kk in (
+        "production_value", "reference_value", "rel_error", "mesh_change_rel")}
+        for k, v in rows.items()})
+    comparison_png(d, "attach_rve: homogenised attach card vs AEDT unit cell",
+                   [k.replace("vr_attach_", "").replace("_", " ") for k in rows],
+                   [v["production_value"] for v in rows.values()],
+                   [v["reference_value"] for v in rows.values()],
+                   "conductivity (W/mK)", "homogenised card", "AEDT FEM")
+    imgs = sorted(p.name for p in d.glob("01_*.png"))
+    readme(d, "attach_rve", [
+        f"Reference: {AEDT}, steady conduction in one explicit unit cell of the periodic "
+        "attach lattice (Cu pillar under its solder cap, underfill around it), on AEDT's "
+        "default mesh and on a length-refined one.",
+        f"Images {', '.join(imgs) or '(none)'} were exported from the AEDT sessions that "
+        "produced the numbers.", "",
+        "| case | production | AEDT | error | auto -> refined mesh |", "|---|---|---|---|---|"] + [
+        f"| {k.replace('vr_attach_', '')} | {v['production_value']:.6g} | "
+        f"{v['reference_value']:.6g} | {100 * v['rel_error']:+.3f} % | "
+        f"{100 * (v.get('mesh_change_rel') or 0.0):+.4f} % |" for k, v in rows.items()] + [
+        "", "The card is compared at the unit cell's own infinite-lattice metal fraction; a "
+        "variant's finite-lattice fraction differs from it only by the cell-edge strip."])
+
+
 def pkg_rdl_stages(status):
     for arch in ("Z1", "Z2"):
         m = J(f"reference_pkg_rdl_moose_{arch}.json")
@@ -338,6 +380,7 @@ def top_readme(status):
 def main():
     status = {}
     rve_stages(status)
+    attach_rve_stage(status)
     pkg_rdl_stages(status)
     column_stages(status)
     bilayer_stage(status)

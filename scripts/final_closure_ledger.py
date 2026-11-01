@@ -228,6 +228,22 @@ def vr_attach_r_per_rail_cell(t_c, spec=None):
     return r_b / n, n, r_b
 
 
+def vr_attach_rails(t_c, spec=None):
+    """Per rail: (R_rail_per_cell_ohm, n_bumps, R_bump_ohm). A spec from
+    final_closure_vr_attach.ledger_spec (the attach-density study) carries the REAL lattice's
+    VDD and GND counts (a checkerboard can be odd) and the two-sided constriction into each
+    bump, which lives in Cu and scales with its resistivity. The production spec carries
+    neither and keeps the legacy model (equal rails, no constriction) -- for the production
+    geometry the two agree to the study's stated difference."""
+    sp = dict(spec or attach_spec())
+    r1, n_leg, r_b = vr_attach_r_per_rail_cell(t_c, sp)
+    if "n_vdd" not in sp:
+        return {"VDD": (r1, n_leg, r_b), "GND": (r1, n_leg, r_b)}
+    r_b = r_b + float(sp.get("r_constriction_20c_ohm", 0.0)) * rho_ratio_cu(t_c)
+    return {rail: (r_b / int(sp[k]), int(sp[k]), r_b)
+            for rail, k in (("VDD", "n_vdd"), ("GND", "n_gnd"))}
+
+
 def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
     """All terms for one architecture and scenario at the given temperatures."""
     import pad_interface as PAD
@@ -303,14 +319,19 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
         # the explicit VR-to-substrate attach: Cu pillar + solder cap per bump, one
         # VDD/GND checkerboard over each cell, carrying only the 1 V output current
         t_att = temps.get("attach", t_sub)
-        r_rc, n_b, r_b = vr_attach_r_per_rail_cell(t_att)
-        for rail in ("VDD", "GND"):
+        sp_att = attach_spec()
+        for rail, (r_rc, n_b, r_b) in vr_attach_rails(t_att, sp_att).items():
             add(f"P_VR_attach_{rail}", f"VR attach {rail}: {n_b} Cu-pillar bumps/cell",
                 "1V", N_VR * i_cell_rms ** 2 * r_rc, r_rc / N_VR, i_cell_rms,
                 "cell output RMS", "(rho_Cu h_Cu + rho_solder h_cap) / A per bump, "
-                "n in parallel", lay["attach"], "GEOMETRY_CLOSE_ANALOG", "BOUNDED",
-                "Au et al. ECTC 2016 geometry (CLOSE_ANALOG); R_bump = %.4g mOhm at %.1f C"
-                % (r_b * 1e3, t_att))
+                "n in parallel" + (" + two-sided constriction (real lattice)"
+                                   if "n_vdd" in sp_att else ""),
+                lay["attach"], "GEOMETRY_CLOSE_ANALOG", "BOUNDED",
+                ("d %g um / pitch %g um, %s; R_bump = %.4g mOhm at %.1f C"
+                 % (sp_att["d_um"], sp_att["pitch_um"], sp_att["model"], r_b * 1e3, t_att))
+                if "n_vdd" in sp_att else
+                ("Au et al. ECTC 2016 geometry (CLOSE_ANALOG); R_bump = %.4g mOhm at %.1f C"
+                 % (r_b * 1e3, t_att)))
 
     cfg = PPK.load_physical_package_config(R / "configs/phase0nt/z2_2p4mm_cutout.yaml")
     if arch == "Z1":

@@ -303,7 +303,7 @@
      "fetched_final_url": "https://ansys.synopsys.com/products/electronics"
     }
    ],
-   "role_in_study": "Commercial platform hosting the Mechanical design used for every Ansys reference solve (4 cores: solves requesting more fail without HPC licences). Q3D Extractor and Maxwell DC conduction are installed but not licensed; Icepak is licensed but its matched benchmark was not run.",
+   "role_in_study": "Commercial platform hosting the Mechanical design used for every Ansys reference solve (4 cores: solves requesting more fail without HPC licences). Q3D Extractor and Maxwell DC conduction are installed but not licensed; Icepak is licensed and ran the matched cold-plate benchmark (research/final_closure/reference_cooling_icepak.json).",
    "status": "EXECUTED",
    "lane": "platform",
    "evidence_paths": [
@@ -341,7 +341,7 @@
      "fetched_final_url": "https://ansys.synopsys.com/products/structures/ansys-mechanical"
     }
    ],
-   "role_in_study": "Independent commercial FE reference (never production). Thermal: single-TSV DC resistance through the exact k<->sigma conduction analogy, TSV-tile k_z and k_xy, RDL-tier k_x and k_z unit cells, and the thermal column of one interior cell for Z1 and Z2. Structural: bilayer CTE-mismatch warpage from two solved temperature levels. Warm-up plus 3 timed repeats on 4 cores.",
+   "role_in_study": "Independent commercial FE reference (never production). Thermal: single-TSV DC resistance through the exact k<->sigma conduction analogy, TSV-tile k_z and k_xy, RDL-tier k_x and k_z unit cells, and the thermal column of one interior cell for Z1 and Z2. Structural: bilayer CTE-mismatch warpage from two solved temperature levels. Warm-up plus 3 timed repeats on 4 cores. Attach: explicit unit cells of the VR-to-substrate attach at both published densities (k_z, k_xy) against the homogenised card.",
    "status": "EXECUTED",
    "lane": "reference",
    "evidence_paths": [
@@ -355,7 +355,11 @@
     "research/final_closure/reference_mech_bilayer.json",
     "presentation/prelim_hvr/tool_evidence/tsv_bulk/01_geometry.png",
     "presentation/prelim_hvr/tool_evidence/thermal_column_Z1/01_geometry.png",
-    "presentation/prelim_hvr/tool_evidence/mech_bilayer/01_geometry.png"
+    "presentation/prelim_hvr/tool_evidence/mech_bilayer/01_geometry.png",
+    "scripts/reference_tools/aedt_attach_rve.py",
+    "research/final_closure/reference_attach_rve.json",
+    "presentation/prelim_hvr/tool_evidence/attach_rve/01_geometry_dense_kz_fine.png",
+    "presentation/prelim_hvr/tool_evidence/attach_rve/01_geometry_sparse_kz_fine.png"
    ],
    "notes": "The ansys.com 'Ansys Mechanical' page describes Ansys's Mechanical product line; this study ran the Mechanical design type inside AEDT through PyAEDT. That page is recorded for context only and is not used to characterise the AEDT design type."
   },
@@ -388,7 +392,8 @@
     "scripts/reference_tools/aedt_common.py",
     "scripts/reference_tools/aedt_rve_references.py",
     "scripts/reference_tools/thermal_column_benchmark.py",
-    "scripts/reference_tools/mech_bilayer_benchmark.py"
+    "scripts/reference_tools/mech_bilayer_benchmark.py",
+    "scripts/reference_tools/aedt_attach_rve.py"
    ],
    "notes": "The fetched documentation is the 'stable' PyAEDT 1.9.0 docs; the study used 1.1.0."
   },

@@ -1,0 +1,662 @@
+{
+ "gate": "geom.vr_attach_density",
+ "subtype": "B1",
+ "statement": "The attach density is taken at two published constructions, one dense and one sparse; the geometry-only comparison holds the production Cu-pillar + solder-cap material and the 30 um height. The engineering sweep between them is not a manufacturing geometry.",
+ "allocation_rule": "checkerboard: site (i, j) is VDD if i + j is even, else GND",
+ "edge_rule": "bump inside the cell with clearance >= (p - d) / 2 to the cell edge",
+ "production_reference": {
+  "T_attach_C": 97.69745437317785,
+  "I_cell_rms_A": 20.573030604962867,
+  "P_Z2_internal_w": 148.0379345672572,
+  "P_attach_production_w": 0.2343404640859675
+ },
+ "production_attach_vs_refined_dense": {
+  "P_attach_w": 0.2343404640859675,
+  "model": "legacy: n = floor(L/p)^2 // 2 per rail, series column, no constriction, infinite-lattice f",
+  "refined_dense_P_attach_w": 0.23751450913984604,
+  "difference_w": 0.003174045053878527,
+  "kz_production_W_mK": 19.140579542087167,
+  "f_production": 0.19634954084936207,
+  "kz_refined_dense_W_mK": 18.69639881295053
+ },
+ "equal_sharing_assessment": {
+  "T_C": 97.69745437317785,
+  "I_cell_rms_A": 20.573030604962867,
+  "verdict": "equal sharing is NOT justified (redistribution length << cell); the ledger's equal-sharing block model is an upper bound on the coupled network's loss, and the density penalty is reported from both",
+  "per_case": {
+   "dense": {
+    "network_w": 2.601720346380115,
+    "block_w": 3.997150468489376,
+    "network_terms_ohm": {
+     "plane": 2.467479083640348e-05,
+     "vertical": 2.332441376300403e-05,
+     "top_rdl": 1.4725408809288029e-05
+    },
+    "block_terms_ohm": {
+     "plane": 7.723395015522448e-05,
+     "vertical": 1.9132947317526366e-05,
+     "top_rdl": 0.0
+    },
+    "vertical_current_peak_over_mean": 1.6515714084638558,
+    "n_cv": 14500
+   },
+   "sparse": {
+    "network_w": 2.876472135111695,
+    "block_w": 4.224058645024583,
+    "network_terms_ohm": {
+     "plane": 2.6003167145637197e-05,
+     "vertical": 2.9598537947679397e-05,
+     "top_rdl": 1.3746871477105336e-05
+    },
+    "block_terms_ohm": {
+     "plane": 7.723395015522448e-05,
+     "vertical": 2.460345365855011e-05,
+     "top_rdl": 0.0
+    },
+    "vertical_current_peak_over_mean": 1.634353489655114,
+    "n_cv": 14500
+   },
+   "eng_p34": {
+    "network_w": 2.6835409303303943,
+    "block_w": 4.064406871031106,
+    "network_terms_ohm": {
+     "plane": 2.507584239841692e-05,
+     "vertical": 2.5197167605749337e-05,
+     "top_rdl": 1.4424207610164048e-05
+    },
+    "block_terms_ohm": {
+     "plane": 7.723395015522448e-05,
+     "vertical": 2.0754425142596673e-05,
+     "top_rdl": 0.0
+    },
+    "vertical_current_peak_over_mean": 1.6465570146268733,
+    "n_cv": 14500
+   },
+   "eng_p37": {
+    "network_w": 2.7449695641210057,
+    "block_w": 4.115080556890404,
+    "network_terms_ohm": {
+     "plane": 2.5373862263475928e-05,
+     "vertical": 2.6600684521439036e-05,
+     "top_rdl": 1.4203647565482082e-05
+    },
+    "block_terms_ohm": {
+     "plane": 7.723395015522448e-05,
+     "vertical": 2.1976111923783797e-05,
+     "top_rdl": 0.0
+    },
+    "vertical_current_peak_over_mean": 1.6427191059920423,
+    "n_cv": 14500
+   },
+   "eng_p41": {
+    "network_w": 2.8588509584084774,
+    "block_w": 4.2094171160388445,
+    "network_terms_ohm": {
+     "plane": 2.5919518297762795e-05,
+     "vertical": 2.919733641908756e-05,
+     "top_rdl": 1.3806894681791382e-05
+    },
+    "block_terms_ohm": {
+     "plane": 7.723395015522448e-05,
+     "vertical": 2.4250462513048822e-05,
+     "top_rdl": 0.0
+    },
+    "vertical_current_peak_over_mean": 1.6354836277790756,
+    "n_cv": 14500
+   }
+  },
+  "density_penalty_vs_dense": {
+   "sparse": {
+    "block_w": 0.22690817653520723,
+    "network_w": 0.2747517887315798,
+    "network_over_block": 1.2108501021290836
+   },
+   "eng_p34": {
+    "block_w": 0.06725640254172971,
+    "network_w": 0.08182058395027925,
+    "network_over_block": 1.2165471368991687
+   },
+   "eng_p37": {
+    "block_w": 0.1179300884010277,
+    "network_w": 0.1432492177408906,
+    "network_over_block": 1.2146960939583444
+   },
+   "eng_p41": {
+    "block_w": 0.21226664754946833,
+    "network_w": 0.2571306120283623,
+    "network_over_block": 1.2113566356129428
+   }
+  }
+ },
+ "current_density_note": "an OUTPUT only; no electromigration-safe current density is claimed (EPTC 2015 10.1109/EPTC.2015.7412351 and Materials 2023 10.3390/ma16031134 are CONTEXT_ONLY)",
+ "mechanical_note": "BOUNDED: A underfill-dominated, B column-stiffened Voigt at the real f; Lee 2017 (10.3390/ma10101220) is CONTEXT_ONLY",
+ "local_level_decision": {
+  "rule": "re-run L3 if the critical joint moves to another site, if the joint driver changes by more than 2U (its global uncertainty), or if the L0 local response changes by more than the production local uncertainty U of Z2",
+  "production": {
+   "critical_joint_xy_mm": [
+    14.4,
+    14.4
+   ],
+   "du_c_um": 3.089903403502321,
+   "T_joint_C": 97.25446363636362,
+   "d_eps_in_L0": 0.008036993628906221,
+   "U_local_Z2": 0.2922041298153646,
+   "U_du": 0.007066676977583547
+  },
+  "cases": {
+   "dense": {
+    "critical_joint_moved": false,
+    "du_change_rel": 8.740151814479825e-05,
+    "T_joint_change_K": 0.0014000000000180535,
+    "L0_change_rel": 0.0001227662880627739,
+    "decision": "L3 not required: the class-B L0 comparison stands"
+   },
+   "sparse": {
+    "critical_joint_moved": false,
+    "du_change_rel": 0.0014500404191001397,
+    "T_joint_change_K": 0.0566000000000173,
+    "L0_change_rel": 0.002121616945629991,
+    "decision": "L3 not required: the class-B L0 comparison stands"
+   }
+  }
+ },
+ "cases": {
+  "dense": {
+   "case": "dense",
+   "role": "production geometry",
+   "source": "Au et al., ECTC 2016",
+   "doi": "10.1109/ECTC.2016.127",
+   "source_class": "CLOSE_ANALOG",
+   "evidence": "abstract: '30um pitch micro Cu pillar bump (15um diameter)'; cap height printed '16mm' (unit error, read as 16 um)",
+   "d_um": 15.0,
+   "pitch_um": 30.0,
+   "h_cu_um": 14.0,
+   "h_cap_um": 16.0,
+   "h_total_um": 30.0,
+   "cell_side_um": 2368.5438564654023,
+   "n_per_axis": 78,
+   "n_total": 6084,
+   "n_vdd": 3042,
+   "n_gnd": 3042,
+   "edge_clearance_um": 21.771928232701157,
+   "edge_rule_um": 7.5,
+   "metal_area_um2": 1075131.5458747668,
+   "area_fraction": 0.19164555184933454,
+   "area_fraction_infinite_lattice": 0.19634954084936207,
+   "all_cells": {
+    "n_cells": 49,
+    "cell_side_mm": 2.368543856465402,
+    "per_cell": [
+     6084,
+     3042,
+     3042
+    ],
+    "total_vdd": 149058,
+    "total_gnd": 149058
+   },
+   "electrical": {
+    "T_attach_C": 97.69745437317785,
+    "I_cell_rms_A": 20.573030604962867,
+    "R_vertical_ohm": 0.017186562880669033,
+    "R_constriction_two_sides_ohm": 0.00023257811172612599,
+    "R_bump_ohm": 0.01741914099239516,
+    "constriction_fraction": 0.013351870326307413,
+    "constriction_dimensionless_fv": 0.041923024353947035,
+    "constriction_dimensionless_annulus": 0.03989070212686791,
+    "VDD": {
+     "n_per_cell": 3042,
+     "R_rail_per_cell_ohm": 5.7262133439826295e-06,
+     "I_per_bump_A": 0.00676299493917254,
+     "J_avg_per_bump_A_m2": 38270722.655103356,
+     "P_w": 0.11875725456992302
+    },
+    "GND": {
+     "n_per_cell": 3042,
+     "R_rail_per_cell_ohm": 5.7262133439826295e-06,
+     "I_per_bump_A": 0.00676299493917254,
+     "J_avg_per_bump_A_m2": 38270722.655103356,
+     "P_w": 0.11875725456992302
+    },
+    "P_attach_total_w": 0.23751450913984604,
+    "redistribution_length_mm": 0.12147031355813316,
+    "cell_side_mm": 2.3685438564654024,
+    "equal_sharing": "QUESTIONABLE: the redistribution length is below the cell size",
+    "attach_fraction_of_production_Z2_internal": 0.001604416529007553
+   },
+   "k_z_W_mK": 18.69639881295053,
+   "k_xy_W_mK": 0.8801143737966783,
+   "k_column_W_mK": 95.02639622117255,
+   "mech_bound_A": {
+    "E_MPa": 8000.0,
+    "cte": 3e-05,
+    "basis": "underfill-dominated (production convention)"
+   },
+   "mech_bound_B": {
+    "E_MPa": 19321.110404368006,
+    "cte": 2.301970494552089e-05,
+    "basis": "column-stiffened Voigt at the real f"
+   },
+   "mechanical_status": "BOUNDED (no structural homogenisation reference run)",
+   "rve_kz_W_mK": 19.046329012545986,
+   "rve_kz_error": 0.004948487946370013,
+   "rve_kz_mesh_change": -2.0112963891257074e-06,
+   "rve_kxy_W_mK": 0.8854581893983413,
+   "rve_kxy_error": 0.0035977676226432746,
+   "rve_kxy_mesh_change": -3.2820584945680625e-05,
+   "etm_S0": {
+    "file": "research/final_closure/sensitivity/etm_Z2_HV_S0__attach_dense.json",
+    "et_converged": true,
+    "P_Z2_internal_w": 148.0542099525283,
+    "P_attach_VDD_w": 0.11876015493458156,
+    "P_attach_GND_w": 0.11876015493458156,
+    "P_attach_total_w": 0.23752030986916312,
+    "attach_fraction_of_Z2_internal": 0.0016042793375839902,
+    "T_max_C": 124.627,
+    "P_conv_w": 142.94368860946824,
+    "T_conv_C": 113.80796778685963,
+    "die_warpage_pv_um": 68.82569999999998,
+    "du_c_um": 3.090173465750708,
+    "T_joint_C": 97.25586363636364,
+    "critical_joint_xy_mm": [
+     14.4,
+     14.4
+    ],
+    "d_eps_in_L0": 0.008037980300781226
+   }
+  },
+  "sparse": {
+   "case": "sparse",
+   "role": "lower-density published geometry, production material held",
+   "source": "Na et al., Electronics 12(1):144 (2023; online 28 Dec 2022)",
+   "doi": "10.3390/electronics12010144",
+   "source_class": "CLOSE_ANALOG",
+   "evidence": "abstract: 'bumps with a diameter of 30 um, a height of 40 um, and a space of 50 um' (a pure-Sn cap on a Cu post/Ni barrier); pitch = 30 + 50 = 80 um",
+   "d_um": 30.0,
+   "pitch_um": 80.0,
+   "h_cu_um": 14.0,
+   "h_cap_um": 16.0,
+   "h_total_um": 30.0,
+   "cell_side_um": 2368.5438564654023,
+   "n_per_axis": 29,
+   "n_total": 841,
+   "n_vdd": 421,
+   "n_gnd": 420,
+   "edge_clearance_um": 49.27192823270116,
+   "edge_rule_um": 25.0,
+   "metal_area_um2": 594467.8698755286,
+   "area_fraction": 0.10596575220597658,
+   "area_fraction_infinite_lattice": 0.11044661672776616,
+   "all_cells": {
+    "n_cells": 49,
+    "cell_side_mm": 2.368543856465402,
+    "per_cell": [
+     841,
+     421,
+     420
+    ],
+    "total_vdd": 20629,
+    "total_gnd": 20580
+   },
+   "electrical": {
+    "T_attach_C": 97.69745437317785,
+    "I_cell_rms_A": 20.573030604962867,
+    "R_vertical_ohm": 0.004296640720167258,
+    "R_constriction_two_sides_ohm": 0.00041717826722042475,
+    "R_bump_ohm": 0.004713818987387683,
+    "constriction_fraction": 0.0885011215612286,
+    "constriction_dimensionless_fv": 0.0751978530000881,
+    "constriction_dimensionless_annulus": 0.07305347067570829,
+    "VDD": {
+     "n_per_cell": 421,
+     "R_rail_per_cell_ohm": 1.1196719685006372e-05,
+     "I_per_bump_A": 0.048867056068795406,
+     "J_avg_per_bump_A_m2": 69132742.46842305,
+     "P_w": 0.23221134283752662
+    },
+    "GND": {
+     "n_per_cell": 420,
+     "R_rail_per_cell_ohm": 1.1223378541399245e-05,
+     "I_per_bump_A": 0.04898340620229254,
+     "J_avg_per_bump_A_m2": 69297344.23620501,
+     "P_w": 0.23276422698713978
+    },
+    "P_attach_total_w": 0.46497556982466637,
+    "redistribution_length_mm": 0.1685046803868208,
+    "cell_side_mm": 2.3685438564654024,
+    "equal_sharing": "QUESTIONABLE: the redistribution length is below the cell size",
+    "attach_fraction_of_production_Z2_internal": 0.0031409217588983366
+   },
+   "k_z_W_mK": 10.605964103676133,
+   "k_xy_W_mK": 0.74024485454618,
+   "k_column_W_mK": 95.02639622117255,
+   "mech_bound_A": {
+    "E_MPa": 8000.0,
+    "cte": 3e-05,
+    "basis": "underfill-dominated (production convention)"
+   },
+   "mech_bound_B": {
+    "E_MPa": 14259.732971777445,
+    "cte": 2.477048694637971e-05,
+    "basis": "column-stiffened Voigt at the real f"
+   },
+   "mechanical_status": "BOUNDED (no structural homogenisation reference run)",
+   "rve_kz_W_mK": 10.883865013409233,
+   "rve_kz_error": 0.013341857771655065,
+   "rve_kz_mesh_change": -7.70873821787282e-06,
+   "rve_kxy_W_mK": 0.7456213077406036,
+   "rve_kxy_error": 0.0017166828131246698,
+   "rve_kxy_mesh_change": -3.74532153574275e-05,
+   "etm_S0": {
+    "file": "research/final_closure/sensitivity/etm_Z2_HV_S0__attach_sparse.json",
+    "et_converged": true,
+    "P_Z2_internal_w": 148.71752425017675,
+    "P_attach_VDD_w": 0.2325000219879312,
+    "P_attach_GND_w": 0.23305359346885487,
+    "P_attach_total_w": 0.4655536154567861,
+    "attach_fraction_of_Z2_internal": 0.0031304556595066688,
+    "T_max_C": 125.407,
+    "P_conv_w": 143.36964801812152,
+    "T_conv_C": 114.55855440962098,
+    "die_warpage_pv_um": 69.3695,
+    "du_c_um": 3.0943838883285144,
+    "T_joint_C": 97.31106363636364,
+    "critical_joint_xy_mm": [
+     14.4,
+     14.4
+    ],
+    "d_eps_in_L0": 0.00805404505078123
+   }
+  },
+  "eng_p34": {
+   "case": "eng_p34",
+   "role": "ENGINEERING_SENSITIVITY (not a published geometry)",
+   "source": "engineering interpolation between the endpoints",
+   "doi": null,
+   "source_class": "ENGINEERING_SENSITIVITY",
+   "evidence": "dense pillar diameter held, pitch opened",
+   "d_um": 15.0,
+   "pitch_um": 34.0,
+   "h_cu_um": 14.0,
+   "h_cap_um": 16.0,
+   "h_total_um": 30.0,
+   "cell_side_um": 2368.5438564654023,
+   "n_per_axis": 69,
+   "n_total": 4761,
+   "n_vdd": 2381,
+   "n_gnd": 2380,
+   "edge_clearance_um": 20.771928232701157,
+   "edge_rule_um": 9.5,
+   "metal_area_um2": 841338.1475854315,
+   "area_fraction": 0.14997114930221594,
+   "area_fraction_infinite_lattice": 0.15286728958860368,
+   "all_cells": {
+    "n_cells": 49,
+    "cell_side_mm": 2.368543856465402,
+    "per_cell": [
+     4761,
+     2381,
+     2380
+    ],
+    "total_vdd": 116669,
+    "total_gnd": 116620
+   },
+   "electrical": {
+    "T_attach_C": 97.69745437317785,
+    "I_cell_rms_A": 20.573030604962867,
+    "R_vertical_ohm": 0.017186562880669033,
+    "R_constriction_two_sides_ohm": 0.0003082897928460049,
+    "R_bump_ohm": 0.017494852673515037,
+    "constriction_fraction": 0.017621742726231477,
+    "constriction_dimensionless_fv": 0.055570321719593356,
+    "constriction_dimensionless_annulus": 0.05349480116354172,
+    "VDD": {
+     "n_per_cell": 2381,
+     "R_rail_per_cell_ohm": 7.347691169052935e-06,
+     "I_per_bump_A": 0.008640500044083522,
+     "J_avg_per_bump_A_m2": 48895228.18850248,
+     "P_w": 0.15238545584078778
+    },
+    "GND": {
+     "n_per_cell": 2380,
+     "R_rail_per_cell_ohm": 7.350778434250016e-06,
+     "I_per_bump_A": 0.008644130506286919,
+     "J_avg_per_bump_A_m2": 48915772.40202706,
+     "P_w": 0.15244948334324188
+    },
+    "P_attach_total_w": 0.30483493918402965,
+    "redistribution_length_mm": 0.13796521195136244,
+    "cell_side_mm": 2.3685438564654024,
+    "equal_sharing": "QUESTIONABLE: the redistribution length is below the cell size",
+    "attach_fraction_of_production_Z2_internal": 0.002059167740181729
+   },
+   "k_z_W_mK": 14.761235165755666,
+   "k_xy_W_mK": 0.8086114864823001,
+   "k_column_W_mK": 95.02639622117255,
+   "mech_bound_A": {
+    "E_MPa": 8000.0,
+    "cte": 3e-05,
+    "basis": "underfill-dominated (production convention)"
+   },
+   "mech_bound_B": {
+    "E_MPa": 16859.27130756017,
+    "cte": 2.373997541047784e-05,
+    "basis": "column-stiffened Voigt at the real f"
+   },
+   "mechanical_status": "BOUNDED (no structural homogenisation reference run)",
+   "etm_S0": {
+    "file": "research/final_closure/sensitivity/etm_Z2_HV_S0__attach_eng_p34.json",
+    "et_converged": true,
+    "P_Z2_internal_w": 148.27372934542817,
+    "P_attach_VDD_w": 0.15245398767504403,
+    "P_attach_GND_w": 0.1525180439723865,
+    "P_attach_total_w": 0.30497203164743053,
+    "attach_fraction_of_Z2_internal": 0.0020568177046181107,
+    "T_max_C": 124.899,
+    "P_conv_w": 143.09250115534203,
+    "T_conv_C": 114.07022670241565,
+    "die_warpage_pv_um": 69.01610000000001,
+    "du_c_um": 3.0915747778611866,
+    "T_joint_C": 97.27426363636364,
+    "critical_joint_xy_mm": [
+     14.4,
+     14.4
+    ],
+    "d_eps_in_L0": null
+   }
+  },
+  "eng_p37": {
+   "case": "eng_p37",
+   "role": "ENGINEERING_SENSITIVITY (not a published geometry)",
+   "source": "engineering interpolation between the endpoints",
+   "doi": null,
+   "source_class": "ENGINEERING_SENSITIVITY",
+   "evidence": "dense pillar diameter held, pitch opened",
+   "d_um": 15.0,
+   "pitch_um": 37.0,
+   "h_cu_um": 14.0,
+   "h_cap_um": 16.0,
+   "h_total_um": 30.0,
+   "cell_side_um": 2368.5438564654023,
+   "n_per_axis": 64,
+   "n_total": 4096,
+   "n_vdd": 2048,
+   "n_gnd": 2048,
+   "edge_clearance_um": 11.271928232701157,
+   "edge_rule_um": 11.0,
+   "metal_area_um2": 723822.9473870883,
+   "area_fraction": 0.1290236982864685,
+   "area_fraction_infinite_lattice": 0.12908297060951487,
+   "all_cells": {
+    "n_cells": 49,
+    "cell_side_mm": 2.368543856465402,
+    "per_cell": [
+     4096,
+     2048,
+     2048
+    ],
+    "total_vdd": 100352,
+    "total_gnd": 100352
+   },
+   "electrical": {
+    "T_attach_C": 97.69745437317785,
+    "I_cell_rms_A": 20.573030604962867,
+    "R_vertical_ohm": 0.017186562880669033,
+    "R_constriction_two_sides_ohm": 0.00036352316142261023,
+    "R_bump_ohm": 0.017550086042091642,
+    "constriction_fraction": 0.020713468899853045,
+    "constriction_dimensionless_fv": 0.06552633107405166,
+    "constriction_dimensionless_annulus": 0.06343395856970836,
+    "VDD": {
+     "n_per_cell": 2048,
+     "R_rail_per_cell_ohm": 8.56937795024006e-06,
+     "I_per_bump_A": 0.010045425100079525,
+     "J_avg_per_bump_A_m2": 56845477.69376192,
+     "P_w": 0.177722298770437
+    },
+    "GND": {
+     "n_per_cell": 2048,
+     "R_rail_per_cell_ohm": 8.56937795024006e-06,
+     "I_per_bump_A": 0.010045425100079525,
+     "J_avg_per_bump_A_m2": 56845477.69376192,
+     "P_w": 0.177722298770437
+    },
+    "P_attach_total_w": 0.355444597540874,
+    "redistribution_length_mm": 0.15037542913067228,
+    "cell_side_mm": 2.3685438564654024,
+    "equal_sharing": "QUESTIONABLE: the redistribution length is below the cell size",
+    "attach_fraction_of_production_Z2_internal": 0.0024010372650760466
+   },
+   "k_z_W_mK": 12.783242856319095,
+   "k_xy_W_mK": 0.7752182802611384,
+   "k_column_W_mK": 95.02639622117255,
+   "mech_bound_A": {
+    "E_MPa": 8000.0,
+    "cte": 3e-05,
+    "basis": "underfill-dominated (production convention)"
+   },
+   "mech_bound_B": {
+    "E_MPa": 15621.838957312846,
+    "cte": 2.4187747823568797e-05,
+    "basis": "column-stiffened Voigt at the real f"
+   },
+   "mechanical_status": "BOUNDED (no structural homogenisation reference run)",
+   "etm_S0": {
+    "file": "research/final_closure/sensitivity/etm_Z2_HV_S0__attach_eng_p37.json",
+    "et_converged": true,
+    "P_Z2_internal_w": 148.43577451022398,
+    "P_attach_VDD_w": 0.17785745946072393,
+    "P_attach_GND_w": 0.17785745946072393,
+    "P_attach_total_w": 0.35571491892144785,
+    "attach_fraction_of_Z2_internal": 0.0023964231001263572,
+    "T_max_C": 125.098,
+    "P_conv_w": 143.20142109274343,
+    "T_conv_C": 114.26215870470638,
+    "die_warpage_pv_um": 69.15390000000001,
+    "du_c_um": 3.0927710894496476,
+    "T_joint_C": 97.28776363636362,
+    "critical_joint_xy_mm": [
+     14.4,
+     14.4
+    ],
+    "d_eps_in_L0": null
+   }
+  },
+  "eng_p41": {
+   "case": "eng_p41",
+   "role": "ENGINEERING_SENSITIVITY (not a published geometry)",
+   "source": "engineering interpolation between the endpoints",
+   "doi": null,
+   "source_class": "ENGINEERING_SENSITIVITY",
+   "evidence": "dense pillar diameter held, pitch opened",
+   "d_um": 15.0,
+   "pitch_um": 41.0,
+   "h_cu_um": 14.0,
+   "h_cap_um": 16.0,
+   "h_total_um": 30.0,
+   "cell_side_um": 2368.5438564654023,
+   "n_per_axis": 57,
+   "n_total": 3249,
+   "n_vdd": 1625,
+   "n_gnd": 1624,
+   "edge_clearance_um": 28.771928232701157,
+   "edge_rule_um": 13.0,
+   "metal_area_um2": 574145.6923976197,
+   "area_fraction": 0.10234326067693757,
+   "area_fraction_infinite_lattice": 0.10512467981227,
+   "all_cells": {
+    "n_cells": 49,
+    "cell_side_mm": 2.368543856465402,
+    "per_cell": [
+     3249,
+     1625,
+     1624
+    ],
+    "total_vdd": 79625,
+    "total_gnd": 79576
+   },
+   "electrical": {
+    "T_attach_C": 97.69745437317785,
+    "I_cell_rms_A": 20.573030604962867,
+    "R_vertical_ohm": 0.017186562880669033,
+    "R_constriction_two_sides_ohm": 0.00043449599602672905,
+    "R_bump_ohm": 0.017621058876695763,
+    "constriction_fraction": 0.02465776881327827,
+    "constriction_dimensionless_fv": 0.07831943465329486,
+    "constriction_dimensionless_annulus": 0.076182057359704,
+    "VDD": {
+     "n_per_cell": 1625,
+     "R_rail_per_cell_ohm": 1.0843728539505085e-05,
+     "I_per_bump_A": 0.012660326526130994,
+     "J_avg_per_bump_A_m2": 71642792.81035349,
+     "P_w": 0.22489057834465684
+    },
+    "GND": {
+     "n_per_cell": 1624,
+     "R_rail_per_cell_ohm": 1.0850405712251085e-05,
+     "I_per_bump_A": 0.012668122293696347,
+     "J_avg_per_bump_A_m2": 71686907.83055691,
+     "P_w": 0.2250290577648198
+    },
+    "P_attach_total_w": 0.4499196361094766,
+    "redistribution_length_mm": 0.16696882406210717,
+    "cell_side_mm": 2.3685438564654024,
+    "equal_sharing": "QUESTIONABLE: the redistribution length is below the cell size",
+    "attach_fraction_of_production_Z2_internal": 0.003039218545061957
+   },
+   "k_z_W_mK": 10.263905283247254,
+   "k_xy_W_mK": 0.7349114511649567,
+   "k_column_W_mK": 95.02639622117255,
+   "mech_bound_A": {
+    "E_MPa": 8000.0,
+    "cte": 3e-05,
+    "basis": "underfill-dominated (production convention)"
+   },
+   "mech_bound_B": {
+    "E_MPa": 14045.74091120836,
+    "cte": 2.4872310544251564e-05,
+    "basis": "column-stiffened Voigt at the real f"
+   },
+   "mechanical_status": "BOUNDED (no structural homogenisation reference run)",
+   "etm_S0": {
+    "file": "research/final_closure/sensitivity/etm_Z2_HV_S0__attach_eng_p41.json",
+    "et_converged": true,
+    "P_Z2_internal_w": 148.7334313740991,
+    "P_attach_VDD_w": 0.22518877120566858,
+    "P_attach_GND_w": 0.22532743424212526,
+    "P_attach_total_w": 0.4505162054477938,
+    "attach_fraction_of_Z2_internal": 0.003029017762083637,
+    "T_max_C": 125.463,
+    "P_conv_w": 143.3999352293112,
+    "T_conv_C": 114.61193326478552,
+    "die_warpage_pv_um": 69.40800000000002,
+    "du_c_um": 3.09459619336675,
+    "T_joint_C": 97.31235454545454,
+    "critical_joint_xy_mm": [
+     14.4,
+     14.4
+    ],
+    "d_eps_in_L0": null
+   }
+  }
+ }
+}

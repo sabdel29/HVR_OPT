@@ -94,14 +94,59 @@ SOURCES = [
              " abstract quote in z2_direct_feed_architecture.json",
      "class": "CLOSE_ANALOG",
      "use": "the attach geometry (15 um Cu pillars, 30 um pitch, solder cap) as a modelling "
-            "choice",
-     "caveat": "not this package; no current or reliability limit is transferred"},
+            "choice: the production attach and the dense endpoint of geom.vr_attach_density",
+     "caveat": "not this package; no current or reliability limit is transferred. The "
+               "abstract prints the cap height as '16mm', a unit error for a 30 um-pitch "
+               "bump; it is read as 16 um (cap) on a 14 um pillar in the 30 um envelope, and "
+               "the height bounds and the all-solder bound cover that reading"},
     {"doi": "10.3390/electronics12010144",
-     "title": "Fabrication of 30 um Sn Microbumps by Electroplating (Na et al.)",
+     "title": "Fabrication of 30 um Sn Microbumps by Electroplating and Investigation of IMC "
+              "Characteristics on Shear Strength (Na et al.)",
      "held": "METADATA: research/final_closure/literature_metadata/"
              "oa_10.3390_electronics12010144.json; quote in z2_direct_feed_architecture.json",
-     "class": "CLOSE_ANALOG", "use": "the all-solder attach bound and the 40 um height bound",
-     "caveat": "a bound, not a value of this design"},
+     "class": "CLOSE_ANALOG",
+     "use": "the sparse endpoint of geom.vr_attach_density (30 um bumps, 50 um space, i.e. "
+            "80 um pitch) held in the production material and height; its pure-Sn cap on a "
+            "Cu post/Ni barrier gives the all-solder resistive bound; the 40 um height bound",
+     "caveat": "a bound, not a value of this design; Electronics 12(1), 2023 (online "
+               "December 2022); its post/cap split is not in the accessible text"},
+    {"doi": "10.1109/EPTC.2015.7412351",
+     "title": "Electromigration Reliability and Morphologies of Cu Pillar with Microbump under "
+              "High Current Density Stressing (Hsiao and Lin, EPTC 2015)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_EPTC.2015.7412351.json",
+     "class": "CONTEXT_ONLY",
+     "use": "Cu-pillar microbump electromigration is studied under accelerated stress: the "
+            "reason the attach current density is reported as an output only",
+     "caveat": "no current density, rating or allowable is taken; no electromigration-safe "
+               "attach current is claimed"},
+    {"doi": "10.3390/ma16031134",
+     "title": "Interfacial Reaction and Electromigration Failure of Cu Pillar/Ni/Sn-Ag/Cu "
+              "Microbumps under Bidirectional Current Stressing (Fu et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/oa_10.3390_ma16031134.json",
+     "class": "CONTEXT_ONLY",
+     "use": "Cu-pillar microbump electromigration failure physics: the reason no "
+            "electromigration-safe attach current is claimed",
+     "caveat": "an accelerated test condition is failure-physics evidence, never a rating"},
+    {"doi": "10.3390/ma10101220",
+     "title": "Effect of Wafer Level Underfill on the Microbump Reliability of Ultrathin-Chip "
+              "Stacking Type 3D-IC Assembly during Thermal Cycling Tests (Lee)",
+     "held": "METADATA: research/final_closure/literature_metadata/oa_10.3390_ma10101220.json",
+     "class": "CONTEXT_ONLY",
+     "use": "the underfill affects microbump reliability (title-level record only): context "
+            "for carrying the attach mechanics as two bounds (underfill-dominated, "
+            "column-stiffened) rather than one card",
+     "caveat": "no property, stiffness or life is taken; only the bibliographic record is "
+               "held"},
+    {"doi": "10.1109/TCPMT.2025.3628798",
+     "title": "Challenges and Mitigations of Microbumps Pitch Scaling for Chiplet Applications "
+              "(Derakhshandeh et al.)",
+     "held": "METADATA: research/final_closure/literature_metadata/"
+             "oa_10.1109_TCPMT.2025.3628798.json",
+     "class": "CONTEXT_ONLY",
+     "use": "microbump pitch is a process choice with its own constraints: context for treating "
+            "the attach density as a sensitivity",
+     "caveat": "no geometry, value or allowable is taken from it"},
     {"doi": "10.1109/TCPMT.2016.2641040",
      "title": "Cu Pillar/Sn-Ag Microbumps with Nonconductive Films (Lee et al.)",
      "held": "METADATA: research/final_closure/literature_metadata/"

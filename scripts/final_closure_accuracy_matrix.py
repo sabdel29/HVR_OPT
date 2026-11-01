@@ -103,6 +103,88 @@ def icepak_row():
                            "cross-section levels)"}
 
 
+def attach_rows(mach, aedt):
+    """geom.vr_attach_density: the homogenised attach card against explicit AEDT unit cells
+    (dense and sparse, k_z and k_xy), the electrical column model against its closed forms,
+    and the mechanical card, which has no reference and is carried as two bounds."""
+    out = []
+    rve = J("reference_attach_rve.json") or {}
+    for case in ("dense", "sparse"):
+        for k in ("kz", "kxy"):
+            st = f"vr_attach_{case}_{k}"
+            r = rve.get(st) or {}
+            pm = ("columns (Cu + solder in series) in parallel with underfill" if k == "kz"
+                  else "Maxwell-Garnett per z-slice, slices in parallel")
+            if not r.get("reference_value"):
+                out.append({"stage": st, "production_model": pm,
+                            "model_type": "REDUCED MATERIAL MODEL",
+                            "reference_tool": aedt, "status": "NOT_EXECUTED",
+                            "evidence_class": "UNVALIDATED",
+                            "limitations": "no explicit attach unit cell solved"})
+                continue
+            g = r["geometry"]
+            out.append({"stage": st, "production_model": pm,
+                        "model_type": "REDUCED MATERIAL MODEL",
+                        "reference_tool": aedt + " (thermal FEM, explicit unit cell)",
+                        "reference_type": "INDEPENDENT COMMERCIAL FEM",
+                        "observable": (f"attach {'k_z' if k == 'kz' else 'k_xy'} (W/mK); "
+                                       f"{g['d_um']:g} um at {g['pitch_um']:g} um pitch, "
+                                       f"{g['h_cu_um']:g} Cu + {g['h_cap_um']:g} cap"),
+                        "production_value": r["production_value"],
+                        "reference_value": r["reference_value"],
+                        "error_metric": "(prod - ref) / ref", "error": r["rel_error"],
+                        "production_runtime_s": r["production_timing_s"],
+                        "reference_runtime_s": r["reference_wall_s"],
+                        "speedup": r["reference_wall_s"] / r["production_timing_s"],
+                        "timing_method": "production: median of repeated calls; AEDT: single "
+                                         "solve (n = 1), 4 cores, shared host",
+                        "machine": (r.get("hardware") or {}).get("cpu") or mach,
+                        "cores": "prod 1 / AEDT 4", "solver_version": "AEDT 2026.1",
+                        "mesh_or_dof": r.get("mesh"),
+                        "mesh_sensitivity": {"auto_to_refined": r.get("mesh_change_rel")},
+                        "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
+                        "status": "EXECUTED",
+                        "limitations": "infinite periodic lattice (the card is compared at the "
+                                       "same f); contact and IMC layers not resolved"})
+    st = J("vr_attach_density_study.json") or {}
+    for case in ("dense", "sparse"):
+        e = ((st.get("cases") or {}).get(case) or {}).get("electrical")
+        if not e:
+            continue
+        # closed forms: the column is exactly 1-D (insulating underfill, prismatic); the
+        # constriction's closed form is the equal-area annulus
+        rs = e["R_bump_ohm"] - e["R_constriction_two_sides_ohm"]
+        r_ann = rs + e["R_constriction_two_sides_ohm"] * (e["constriction_dimensionless_annulus"]
+                                                          / e["constriction_dimensionless_fv"])
+        out.append({"stage": f"vr_attach_{case}_electrical",
+                    "production_model": "Cu + solder column in series + two-sided constriction "
+                                        "(2-D finite-volume unit cell)",
+                    "model_type": "ANALYTICAL",
+                    "reference_tool": "closed forms (exact 1-D column; annulus constriction "
+                                      "of the equal-area circular cell)",
+                    "reference_type": "CLOSED FORM (model-form check)",
+                    "observable": f"single-bump resistance at {e['T_attach_C']:.1f} C (Ohm)",
+                    "production_value": e["R_bump_ohm"], "reference_value": r_ann,
+                    "error_metric": "(prod - ref) / ref",
+                    "error": (e["R_bump_ohm"] - r_ann) / r_ann,
+                    "evidence_class": "CLOSED_FORM_VERIFICATION", "status": "EXECUTED",
+                    "limitations": "no 3-D electrical field-solver reference (Q3D and Maxwell "
+                                   "are not licensed); "
+                                   "the constriction is "
+                                   f"{100 * e['constriction_fraction']:.1f} % of the bump; "
+                                   "contact/IMC resistance not resolved (all-solder bound); "
+                                   "equal sharing is an upper bound "
+                                   "(equal_sharing_assessment)"})
+    if st:
+        out.append({"stage": "vr_attach_mechanical", "production_model":
+                    "underfill-dominated card (A) and column-stiffened Voigt card (B)",
+                    "model_type": "REDUCED MATERIAL MODEL", "reference_tool": "none",
+                    "status": "BOUNDED", "evidence_class": "UNVALIDATED",
+                    "limitations": "no structural homogenisation reference; the attach "
+                                   "mechanics are carried as two bounds, never as one card"})
+    return out
+
+
 def rows():
     out, mach = [], machine()
     AEDT = "Ansys Electronics Desktop 2026 R1, Mechanical"
@@ -154,6 +236,7 @@ def rows():
                     "solver_version": "AEDT 2026.1",
                     "evidence_class": "INDEPENDENT_NUMERICAL_VALIDATION",
                     "status": "EXECUTED", "limitations": lim})
+    out += attach_rows(mach, AEDT)
     for arch in ("Z1", "Z2"):
         m = J(f"reference_pkg_rdl_moose_{arch}.json")
         if not m:

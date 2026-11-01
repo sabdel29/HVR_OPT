@@ -8,6 +8,7 @@ or documentation image is presented as a validation run.
 
 | stage | reference tool | status |
 |---|---|---|
+| `attach_rve` | AEDT | solved, compared |
 | `mech_bilayer` | AEDT | solved, compared |
 | `pkg_rdl_moose_Z1` | MOOSE | solved, compared |
 | `pkg_rdl_moose_Z2` | MOOSE | solved, compared |

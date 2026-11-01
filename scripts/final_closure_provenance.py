@@ -81,6 +81,26 @@ def fix(p):
         "analogous heat-conduction problem on Gmsh meshes, compared with the in-house FV "
         "network, for Z1's package 48 V RDL and for the BGA-fed control network (the primary "
         "direct-fed Z2 has no package 48 V RDL).")
+    # the attach-density unit cells (geom.vr_attach_density) are AEDT Mechanical references
+    am = t["AEDT Mechanical (thermal, structural)"]
+    for q in ("scripts/reference_tools/aedt_attach_rve.py",
+              "research/final_closure/reference_attach_rve.json",
+              "presentation/prelim_hvr/tool_evidence/attach_rve/01_geometry_dense_kz_fine.png",
+              "presentation/prelim_hvr/tool_evidence/attach_rve/01_geometry_sparse_kz_fine.png"):
+        if q not in am["evidence_paths"]:
+            am["evidence_paths"].append(q)
+    tail = (" Attach: explicit unit cells of the VR-to-substrate attach at both published "
+            "densities (k_z, k_xy) against the homogenised card.")
+    if tail not in am["role_in_study"]:
+        am["role_in_study"] += tail
+    pa = t["PyAEDT (ansys.aedt.core)"]
+    if "scripts/reference_tools/aedt_attach_rve.py" not in pa["evidence_paths"]:
+        pa["evidence_paths"].append("scripts/reference_tools/aedt_attach_rve.py")
+    ed = t["Ansys Electronics Desktop 2026 R1"]
+    ed["role_in_study"] = ed["role_in_study"].replace(
+        "Icepak is licensed but its matched benchmark was not run.",
+        "Icepak is licensed and ran the matched cold-plate benchmark "
+        "(research/final_closure/reference_cooling_icepak.json).")
     m = p["meta"]
     m["repo_head"] = "the commit that carries this file (a file cannot name its own SHA)"
     m["untracked_evidence_paths"] = []

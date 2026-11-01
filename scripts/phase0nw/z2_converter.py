@@ -90,7 +90,10 @@ def vr_attach_material(att: dict, column_stiffened: bool = False) -> dict:
     import math
     h_cu, h_cap = float(att["cu_height_um"]), float(att["cap_height_um"])
     h = h_cu + h_cap
-    f = math.pi * (float(att["diameter_um"]) / 2.0) ** 2 / float(att["pitch_um"]) ** 2
+    # the real finite lattice's metal fraction when the caller supplies it
+    # (final_closure_vr_attach.lattice); otherwise the infinite periodic lattice's
+    f = float(att.get("area_fraction") or
+              math.pi * (float(att["diameter_um"]) / 2.0) ** 2 / float(att["pitch_um"]) ** 2)
     k_col = h / (h_cu / K_COPPER + h_cap / K_SOLDER)
     kz = f * k_col + (1.0 - f) * K_UNDERFILL
     kxy = (h_cu * _maxwell_garnett_2d(K_COPPER, K_UNDERFILL, f)
