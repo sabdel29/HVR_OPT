@@ -42,10 +42,13 @@ def facts():
             "local_per": o("d_eps_in_per_cycle").get("per_scenario", {}),
             "therm_stmt": o("T_max_C").get("statement", ""),
             "classb": cb.get("summary") or {}, "classb_gates": cb.get("gates") or [],
+            "attach_x": cb.get("attach_density_crossover") or {},
+            "attach_study": J("vr_attach_density_study.json") or {},
             "mech_robust": bool(mech),
             "mech_fav": o("du_c_um").get("favoured_where_resolved") if mech else None,
             "warp": o("die_warpage_pv_um"), "du": o("du_c_um"),
-            "loss": o("P_loss_w"), "therm": o("T_max_C"),
+            "loss": o("P_loss_package_internal_w"), "platform": o("P_loss_platform_inclusive_w"),
+            "therm": o("T_max_C"),
             "aedt_thermal": ok("thermal_column_aedt_Z1") or ok("thermal_column_aedt_Z2"),
             "aedt_thermal_both": ok("thermal_column_aedt_Z1") and ok("thermal_column_aedt_Z2"),
             "aedt_mech": ok("mech_bilayer_aedt"),
@@ -116,7 +119,8 @@ def inadmissible_sentence(F):
 
 def sentences(F):
     mech = _mech_sentence(F)
-    loss = _ordering_sentence(F["loss"], "dissipates less", "loss")
+    loss = _ordering_sentence(F["loss"], "dissipates less inside the package",
+                              "package-internal loss")
     therm = _ordering_sentence(F["therm"], "runs cooler", "peak-temperature")
     return mech, loss, therm
 
@@ -377,7 +381,9 @@ CASE_PLAIN = {"tsv_min": "the electrically minimal through-silicon via field",
               "board_eta075": "high board copper coverage",
               "gan_k_half": "halved device-tier conductivity",
               "pad_drop": "the minimum pad count"}
-OBS_PLAIN = {"P_loss_w": "loss", "T_max_C": "peak-temperature", "die_warpage_pv_um":
+OBS_PLAIN = {"P_loss_package_internal_w": "package-internal loss",
+             "P_loss_platform_inclusive_w": "platform-inclusive loss",
+             "T_max_C": "peak-temperature", "die_warpage_pv_um":
              "die-warpage", "du_c_um": "joint-driver", "d_eps_in_per_cycle": "local-response"}
 
 
@@ -430,7 +436,9 @@ def sens_summary(F):
     sm = F.get("classb") or {}
     if not sm:
         return ""
-    names = {"P_loss_w": "loss", "T_max_C": "peak-temperature",
+    names = {"P_loss_package_internal_w": "package-internal loss",
+             "P_loss_platform_inclusive_w": "platform-inclusive loss",
+             "T_max_C": "peak-temperature",
              "die_warpage_pv_um": "die-warpage", "du_c_um": "joint-driver",
              "d_eps_in_per_cycle": "local-response"}
     rev, gone, made = {}, set(), set()
@@ -473,7 +481,7 @@ def sens_sentence_short(F):
     rev = lambda obs: [c for c, r in _moved_by_case(F).items()
                        if any(k in obs and x["production_verdict"].endswith("lower")
                               and x["verdict"].endswith("lower") for k, x in r.items())]
-    loss, mech = rev({"P_loss_w"}), rev({"die_warpage_pv_um", "du_c_um"})
+    loss, mech = rev({"P_loss_package_internal_w"}), rev({"die_warpage_pv_um", "du_c_um"})
     loc = [c for c, r in _moved_by_case(F).items() if "d_eps_in_per_cycle" in r]
     out = [f"All {sm.get('n_gates')} open sensitivity inputs were run on the production mesh "
            "or bounded"]
@@ -708,16 +716,28 @@ def central_claim(F):
         if any(c in mov and any(o in mov[c] for o in obs) for c in cases):
             return "change"
         return None
-    cl = ["converter placement changes the high-voltage entry path"]
-    v = verb(("tsv_min", "tsv_mid"), ("P_loss_w",))
+    # the platform-level electrical preference turns on the unsourced feed wherever a
+    # resolved package-internal advantage has a crossover R* (direct_feed_crossover.json)
+    cl = (["the external feed resistance decides the platform-level electrical preference"]
+          if _requirement_scenarios(F) else
+          ["converter placement changes the high-voltage entry path"])
+    v = verb(("tsv_min", "tsv_mid"), ("P_loss_package_internal_w",))
     if v:
-        cl.append(f"through-silicon-via provisioning can {v} the electrical preference")
-    v = verb(("z2_cooled", "z2_cooled_tim", "icepak_equivalent"),
-             ("die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle"))
+        cl.append(f"through-silicon-via provisioning can {v} the package-internal one")
+    v = verb(("attach_sparse", "attach_sparse_stiff"), ("P_loss_package_internal_w",))
     if v:
-        cl.append(f"cooling can {v} the mechanical preference")
+        cl.append(f"the regulator-to-substrate attach density can {v} it")
+    mech_obs = ("die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle")
+    v = verb(("z2_cooled", "z2_cooled_tim", "icepak_equivalent"), mech_obs)
+    w = verb(("f2_void", "f1_sidewall_filled"), mech_obs)
+    if v and w == v:
+        cl.append(f"cooling and the out-of-cell construction can {v} the mechanical preference")
+    elif v or w:
+        cl += ([f"cooling can {v} the mechanical preference"] if v else []) + (
+            [f"the out-of-cell construction can {w} the mechanical preference"] if w else [])
     loc_cases = ("f2_void", "f1_sidewall_filled", "attach_h20", "attach_h40", "attach_sn",
-                 "attach_stiff", "attach_uf_soft", "attach_uf_stiff", "bga_depop")
+                 "attach_stiff", "attach_uf_soft", "attach_uf_stiff", "bga_depop",
+                 "attach_sparse", "attach_sparse_stiff")
     if verb(loc_cases, ("du_c_um", "d_eps_in_per_cycle")):
         cl.append("local construction determines the solder response")
     body = ", ".join(cl[:-1]) + (", and " if len(cl) > 1 else "") + cl[-1]
@@ -834,7 +854,7 @@ def _and(xs):
     return ", ".join(xs[:-1]) + (" and " if len(xs) > 1 else "") + xs[-1]
 
 
-def orderings_abstract(F):
+def orderings_abstract(F, short=False):
     """All four field observables in one clause, grouped by the architecture that is lower
     where the gap is resolved (ordering.json). An observable resolved in only some valid
     scenarios is marked with them; one whose resolved verdicts differ between scenarios is
@@ -861,9 +881,9 @@ def orderings_abstract(F):
     parts = [f"the {NAME[a]} architecture has the lower {_and(by[a])}"
              for a in ("Z1", "Z2") if a in by]
     for what, res in mixed:
-        parts.append(f"the {what} ordering reverses between scenarios ("
-                     + ", ".join(f"{NAME[v.split()[0]]} lower in the {SCEN_SHORT[s]}"
-                                 for s, v in res.items()) + ")")
+        parts.append(f"the {what} ordering reverses between scenarios" + ("" if short else (
+            " (" + ", ".join(f"{NAME[v.split()[0]]} lower in the {SCEN_SHORT[s]}"
+                             for s, v in res.items()) + ")")))
     if none or partial:
         subj = (f"the {_and(none)} difference" + ("s" if len(none) > 1 else "")
                 + (", and the remaining ones," if partial else "") if none
@@ -881,9 +901,11 @@ def feed_sentence_abstract(F):
         return ""
     req = [s for s in _requirement_scenarios(F) if s != "HV_S0"]
     if s0["status"] == "ahead" and s0["verdict"] == "Z2 lower":
-        out = ("Inside the package the backside regulator dissipates \\PlossZtwo\\,W against "
-               "\\PlossZone\\,W in the continuous-input scenario, an advantage it keeps only "
-               "while its external 48\\,V feed loop stays below \\RstarSzero\\,m$\\Omega$")
+        out = ("Inside the declared package boundary the backside regulator dissipates "
+               "\\PlossZtwo\\,W against \\PlossZone\\,W in the headline scenario; its "
+               "external feed lies outside that boundary, so the platform-level preference is "
+               "conditional: the complete 48\\,V feed loop must stay below "
+               "\\RstarSzero\\,m$\\Omega$")
     elif s0["status"] == "inadmissible":
         out = ("In the continuous-input scenario the embedded operating point is inadmissible, "
                "so no feed requirement is defined there")
@@ -894,10 +916,7 @@ def feed_sentence_abstract(F):
         out = ("In the continuous-input scenario the backside regulator (\\PlossZtwo\\,W) is "
                "not ahead of the embedded one (\\PlossZone\\,W) even with a lossless external "
                "feed")
-    if req and s0["status"] == "ahead" and s0["verdict"] == "Z2 lower":
-        out += " (" + ", ".join(f"\\Rstar{SCEN_TAG[s]}\\,m$\\Omega$ under {SCEN_NAME[s]}"
-                                for s in req) + ")"
-    elif req:
+    if req and not (s0["status"] == "ahead" and s0["verdict"] == "Z2 lower"):
         s = req[0]
         out += (f"; under {SCEN_NAME[s]} the backside regulator stays ahead only while its "
                 f"external feed loop is below \\Rstar{SCEN_TAG[s]}\\,m$\\Omega$")
@@ -915,16 +934,15 @@ def abstract_df(F):
     central claim, the feed requirement and one clause for the field observables; the
     scenario hierarchy and the sensitivity table are in the body."""
     claim = central_claim(F).split(". A coupled")[0]
-    return rf"""Kilowatt-scale power delivery is increasingly limited by what the package can physically
-accommodate. A hierarchical electrothermal--mechanical framework for distributed vertical power
-delivery carries converter synthesis into an explicit physical package---conductor-level
-electrical ledger, tier-resolved heat map, converged electrothermal fixed point, thermoelastic
-package solution, all-site critical-joint search and viscoplastic local solder submodel---each
-checked against a matched reference. It is applied to a 1\,kW, 48\,V-to-1\,V
-system of 49 regulator cells in two physically closed architectures: a regulator embedded between
+    return rf"""Kilowatt-scale power delivery is package-limited. A hierarchical
+electrothermal--mechanical framework for distributed vertical power delivery carries converter
+synthesis into an explicit physical package---conductor-level ledger, tier-resolved heat map,
+converged electrothermal fixed point, thermoelastic solution, all-site critical-joint search and
+viscoplastic solder submodel---each checked against a matched reference. It is applied to a 1\,kW, 48\,V-to-1\,V, 49-cell
+regulator system in two physically closed architectures: a regulator embedded between
 substrate and die (Z1), fed through the ball-grid array, and a backside regulator in a board
 opening (Z2), fed directly at 48\,V so that only 1\,V crosses the substrate. {claim}.
-{feed_sentence_abstract(F)} {orderings_abstract(F)[0].upper() + orderings_abstract(F)[1:]}.
+{feed_sentence_abstract(F)} {orderings_abstract(F, True)[0].upper() + orderings_abstract(F, True)[1:]}.
 {scen_sentence_short(F)}No absolute life, qualification or commercial speedup is claimed."""
 
 
@@ -1264,8 +1282,18 @@ def phys_section_df(F):
                   "ordering; the physical closure reverses it. ",
                   "The frozen pair of Sec.~\\ref{sec:histrep} showed the opposite mechanical "
                   "ordering; the physical closure reverses it. ")
-    s = s.replace("Electrically, ", "Electrically, inside the package-internal boundary, ")
+    s = s.replace("In the continuous-input scenario the two architectures dissipate\n"
+                  "\\PlossZone\\,W (Z1) and \\PlossZtwo\\,W (Z2)",
+                  "In the continuous-input scenario the two architectures dissipate, each inside "
+                  "its package-internal boundary,\n\\PlossZone\\,W (Z1) and \\PlossZtwo\\,W (Z2)")
+    s = s.replace("\nThermally, ", " " + platform_sentence(F) + "\nThermally, ", 1)
     return s
+
+
+def platform_sentence(F):
+    """ordering.json's platform-inclusive statement: conditional on the unsourced feed."""
+    t = (F.get("platform") or {}).get("statement", "")
+    return t.replace(" mOhm", "\\,m$\\Omega$").replace("R* =", "$R^{*}$ =")
 
 
 def _crit_location():
@@ -1293,6 +1321,9 @@ CASE_PLAIN.update({
     "attach_h20": "a 20\\,$\\mu$m attach", "attach_h40": "a 40\\,$\\mu$m attach",
     "attach_sn": "an all-solder attach", "attach_stiff": "a column-stiffened attach card",
     "attach_uf_soft": "a soft attach underfill", "attach_uf_stiff": "a stiff attach underfill",
+    "attach_dense": "the dense attach on its real lattice",
+    "attach_sparse": "the sparser published attach",
+    "attach_sparse_stiff": "the sparser attach with a column-stiffened card",
     "feed_heat_at_crossover": "the feed loss deposited in the package",
     "icepak_equivalent": "the Icepak-equivalent cooling coefficient",
     "bga_depop": "a depopulated BGA field"})
@@ -1333,12 +1364,91 @@ def fill_paragraph_df(F):
     return txt
 
 
+def attach_paragraph_df(F):
+    """geom.vr_attach_density: the two published lattices, the equal-sharing check, the
+    explicit-RVE check, the mechanical bounds, the class-B verdicts and the engineering
+    crossover -- every number a macro or read from the class-B record."""
+    st = F.get("attach_study") or {}
+    if not st:
+        return ""
+    sp, ss = _rows_for(F, "attach_sparse"), _rows_for(F, "attach_sparse_stiff")
+    side = st["cases"]["dense"]["cell_side_um"] / 1e3
+    txt = (r" The attach density has no single defensible value either. It is taken at two "
+           r"published Cu-pillar constructions with the production material and height held: "
+           r"\AttDenseD\,$\mu$m pillars at \AttDenseP\,$\mu$m pitch~\cite{Au2016CuPillar30um} "
+           r"and \AttSparseD\,$\mu$m bumps at \AttSparseP\,$\mu$m~\cite{Na2022SnMicrobump}; "
+           r"pitch is a process choice of its own~\cite{Derakhshandeh2026MicrobumpPitch}. On "
+           r"the real finite lattice of a cell (legal sites at the inter-cell clearance, VDD and "
+           r"GND by a checkerboard) they give \AttDenseNvdd\,+\,\AttDenseNgnd\ and "
+           r"\AttSparseNvdd\,+\,\AttSparseNgnd\ bumps, metal fractions of \AttDenseFpct\ and "
+           r"\AttSparseFpct\,\%, and attach losses of \AttDensePw\ and \AttSparsePw\,W, "
+           r"\AttDenseFracPct\ and \AttSparseFracPct\,\% of the backside package-internal "
+           r"loss. The average current per bump, \AttDenseImA\ and \AttSparseImA\,mA, is an "
+           r"output only; electromigration studies of such joints~\cite{Hsiao2015CuPillarEM,"
+           r"Fu2023CuPillarEM} are the reason no current-density allowable is claimed. Equal "
+           r"sharing between the bumps is checked, not assumed: the output plane redistributes "
+           r"current over \AttDenseLambda--\AttSparseLambda\,mm, far less than the "
+           f"{side:.2f}" r"\,mm cell, so the bumps near the inductor footprints carry more "
+           r"(peak to mean \AttPeakMean). The ledger's equal-sharing pattern is one admissible current "
+           r"pattern of the coupled plane--attach--via--RDL network, so it bounds that network's "
+           r"loss from above in both architectures; on the network itself the penalty from the "
+           r"dense to the sparse construction is \AttPenNet\,W instead of \AttPenBlock\,W. "
+           r"Through the thickness the attach conducts \AttDenseKz\ and \AttSparseKz\,W/mK, "
+           r"in plane \AttDenseKxy\ and \AttSparseKxy\,W/mK; explicit AEDT unit cells of "
+           r"both lattices agree with the homogenised card to \ErrAttDenseKz\ and "
+           r"\ErrAttSparseKz\,\% through the thickness and \ErrAttDenseKxy\ and "
+           r"\ErrAttSparseKxy\,\% in plane. Mechanically the attach is bounded, not resolved: "
+           r"the underfill-dominated card and a column-stiffened one (\AttDenseEB\ and "
+           r"\AttSparseEB\,GPa for the dense and the sparse lattice) are both run, because the "
+           r"underfill affects the reliability of such joints~\cite{Lee2017WaferLevelUnderfill}. ")
+
+    if all((st["cases"][c].get("etm_S0") or {}).get("P_conv_w") is not None
+           for c in ("dense", "sparse")):
+        txt += (r"In the coupled solution the sparser attach raises the backside package-internal "
+                r"loss by \AttDeltaPetm\,W, of which the attach itself is only \AttDeltaPatt\,W: "
+                r"the attach also carries the converter's heat into the substrate, so with less "
+                r"metal the converter runs \AttDeltaTconv\,K warmer and its devices dissipate "
+                r"\AttDeltaPconv\,W more. ")
+
+    def verdicts(rows):
+        names = {"P_loss_package_internal_w": "package-internal loss", "T_max_C": "peak "
+                 "temperature", "die_warpage_pv_um": "die warpage", "du_c_um": "joint driver",
+                 "d_eps_in_per_cycle": "local response"}
+        return ", ".join(f"{names[k]} {rows[k]['verdict']}" for k in names if k in rows)
+    if sp:
+        txt += f"Under the sparser construction the verdicts are: {verdicts(sp)}"
+        txt += ((", and the same with the column-stiffened card. " if verdicts(ss) == verdicts(sp)
+                 else f"; with the column-stiffened card: {verdicts(ss)}. ") if ss else ". ")
+    lc = ((F.get("attach_x") or {}).get("crossover") or {}).get("P_loss_package_internal_w")
+    if lc and lc.get("f_star"):
+        txt += (r"An engineering sweep of the \AttDenseD\,$\mu$m pillar's pitch between the "
+                r"published constructions---not a manufacturing geometry---places the loss "
+                r"crossover at a metal fraction of \AttFstarPct\,\%"
+                + (r" (\AttPstar\,$\mu$m pitch)" if lc.get("pitch_star_um_d15") else "")
+                + (r", or \AttFstarNetPct\,\% with the network's density penalty"
+                   if lc.get("f_star_network_penalty") else "")
+                + r": a denser attach keeps the backside package-internal advantage resolved, "
+                r"a sparser one withdraws it"
+                + ("" if lc.get("reversal") else
+                   ", and no density in the published range reverses it") + ". ")
+    elif lc and lc.get("status", "").startswith("holds"):
+        txt += ("The package-internal ordering holds at every swept density down to the sparser "
+                "published construction. ")
+    ad = (df_facts()["cx"].get("HV_S0") or {}).get("attach_density_R_star") or {}
+    if all(isinstance((ad.get(c) or {}).get("R_star_mohm"), (int, float))
+           for c in ("dense", "sparse")):
+        txt += (r"The platform-inclusive requirement moves with it: $R^{*}$ = "
+                r"\RstarDenseSzero\,m$\Omega$ with the dense and \RstarSparseSzero\,m$\Omega$ "
+                r"with the sparser attach. ")
+    return txt
+
+
 def sens_section_df(F):
     return r"""
 \subsubsection{Sensitivity of the orderings}\label{sec:classb}
 Every input that has no single defensible value---the board representation, copper coverage
 and thickness, the through-silicon via density, the out-of-cell fill and the sidewall clearance,
-the attach height, material and underfill, the direct-feed loop resistance and where its heat
+the attach height, density, material and underfill, the direct-feed loop resistance and where its heat
 lands, a backside cooling path and its interface, the cooling model form, the BGA population, the
 device and converter-tier materials, contact and redistribution construction, the pad count and
 the 48\,V waveform---was classified by whether it can move an ordering (\NbOne\ of the
@@ -1347,7 +1457,7 @@ continuous-input scenario or bounded analytically, with every variant judged by 
 ordering rule as the production pair (Table~\ref{tab:classb}). Stress tests on unsourced
 material cards are declared as bounds, not as property claims. The reversals are a result, not a
 caveat: they say which neighbouring design decisions an architecture ranking depends on. """ + \
-        sens_sentence(F) + fill_paragraph_df(F) + r"""
+        sens_sentence(F) + fill_paragraph_df(F) + attach_paragraph_df(F) + r"""
 \input{final_classb_table}
 """
 
@@ -1356,8 +1466,9 @@ def discuss_df(F):
     """The 'no universal winner' paragraph, naming only the decisions that the class-B
     runs show to move an ordering."""
     mv = _moved_by_case(F)
-    elec = [c for c in ("tsv_min", "tsv_mid", "pad_drop", "attach_sn") if c in mv
-            and "P_loss_w" in mv[c]]
+    elec = [c for c in ("tsv_min", "tsv_mid", "pad_drop", "attach_sn", "attach_sparse",
+                        "attach_sparse_stiff") if c in mv
+            and "P_loss_package_internal_w" in mv[c]]
     mech = [c for c, r in mv.items() if set(r) & {"die_warpage_pv_um", "du_c_um",
                                                   "d_eps_in_per_cycle"}]
     s = (r"""
@@ -1389,9 +1500,12 @@ therefore stated as a maximum loop resistance, and whether a real feed meets it 
 The connector drawn in the figures is illustrative.
 
 \emph{The attach is a close analog, not a qualified joint.} Its geometry follows a published
-30\,$\mu$m-pitch Cu-pillar process on an organic substrate; its current-carrying capability,
-electromigration margin and fatigue are not evaluated, and its mechanical card is the
-underfill's, bounded by a column-stiffened card.
+30\,$\mu$m-pitch Cu-pillar process on an organic substrate, and its density is carried between
+that construction and a sparser published one; neither is this package's process. Its
+current-carrying capability, electromigration margin and fatigue are not evaluated---the
+per-bump current density is reported as an output, never against an allowable---its contact
+and intermetallic resistance is bounded by the all-solder case, and its mechanical card is
+bounded by the underfill-dominated and column-stiffened cards rather than resolved.
 
 \emph{The BGA population is smeared.} The mechanical BGA field is a homogenised layer; the
 depopulated field is a uniform scaling of it, and a discrete ball-by-ball depopulation pattern is
@@ -1434,8 +1548,8 @@ input-current scenarios, because the switching schedule of the regulator is not 
 loss model; on an engineering ball-provisioning rule rather than a reliability allowable; on a
 direct-feed requirement rather than a specified connector; and on solder response rather than
 life. Closing those requires the switch-state schedule of the converter, a characterised direct
-feed, qualified electromigration and fatigue data for the package metallurgy, and a required
-life for the application."""
+feed, a qualified regulator-to-substrate attach of known density, qualified electromigration and
+fatigue data for the package metallurgy, and a required life for the application."""
 
 
 #: the original Sec. II stack figure and paragraph (historical frozen pair), verbatim from the

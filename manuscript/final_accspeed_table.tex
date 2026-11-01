@@ -13,6 +13,12 @@ tsv tile kz & Voigt & AEDT Mechanical & +0.711\,\% & 0.7\,$\mu$s & 36.1\,s & -- 
 tsv tile kx & Maxwell-Garnett & AEDT Mechanical & +0.255\,\% & 0.8\,$\mu$s & 36.0\,s & -- \\
 rdl tier kx & laminate, grid in-plane & AEDT Mechanical & -3.694\,\% & 0.6\,$\mu$s & 34.1\,s & -- \\
 rdl tier kz & laminate, series & AEDT Mechanical & +12.490\,\% & 1.3\,$\mu$s & 34.1\,s & -- \\
+attach $k_z$, 15/30\,$\mu$m & columns (Cu + solder in series) in parallel with underfill & AEDT Mechanical & +0.495\,\% & 3.3\,$\mu$s & 170.0\,s & -- \\
+attach $k_{xy}$, 15/30\,$\mu$m & Maxwell-Garnett per z-slice, slices in parallel & AEDT Mechanical & +0.360\,\% & 3.3\,$\mu$s & 157.0\,s & -- \\
+attach $k_z$, 30/80\,$\mu$m & columns (Cu + solder in series) in parallel with underfill & AEDT Mechanical & +1.334\,\% & 3.3\,$\mu$s & 85.6\,s & -- \\
+attach $k_{xy}$, 30/80\,$\mu$m & Maxwell-Garnett per z-slice, slices in parallel & AEDT Mechanical & +0.172\,\% & 3.3\,$\mu$s & 80.5\,s & -- \\
+attach bump $R$, 15/30\,$\mu$m & Cu + solder column in series + two-sided constriction (2-D finite-volume unit cell) & closed forms (exact 1-D column; annulus constriction of the equal-area circular cell) & +0.065\,\% & -- & -- & -- \\
+attach bump $R$, 30/80\,$\mu$m & Cu + solder column in series + two-sided constriction (2-D finite-volume unit cell) & closed forms (exact 1-D column; annulus constriction of the equal-area circular cell) & +0.253\,\% & -- & -- & -- \\
 pkg 48 V RDL, Z1 & voltage-fed aligned graded FV sheet (L3) & MOOSE & +0.079\,\% & 15.8\,s & 55.0\,s & 3.47$\times$ \\
 pkg 48 V RDL, Z2 control & voltage-fed aligned graded FV sheet (L3) & MOOSE & +0.108\,\% & 24.4\,s & 60.8\,s & 2.49$\times$ \\
 thermal column aedt Z1 & CalculiX C3D8 structured hex & AEDT Mechanical & -0.141\,\% & 70.7\,s & 154.7\,s & 2.19$\times$ \\
@@ -22,7 +28,7 @@ thermal column moose Z2 & CalculiX C3D8 structured hex & MOOSE & -0.125\,\% & 42
 mech bilayer closed form & CalculiX C3D8I & Timoshenko bimaterial curvature & -0.433\,\% & 65.9\,s & -- & -- \\
 mech bilayer aedt & CalculiX C3D8I & AEDT Mechanical & +0.014\,\% & 65.9\,s & 262.7\,s & 3.99$\times$ \\
 structural solver iterative vs direct & CalculiX ITERATIVE CHOLESKY & CalculiX SPOOLES (direct) & -0.010\,\% & -- & -- & -- \\
-cooling icepak & laminar microchannel correlation (Shah \& London Nu, fin efficiency, caloric + base resistance) & Ansys Icepak 2026 R1 conjugate CFD & +16.484\,\% & 12.1\,$\mu$s & 1305.4\,s & -- \\
+cooling icepak & laminar microchannel correlation (Shah \& London Nu, fin efficiency, caloric + base resistance) & Ansys Icepak 2026 R1 conjugate CFD & +16.484\,\% & 17.1\,$\mu$s & 1305.4\,s & -- \\
 \bottomrule
 \end{tabular}
 \end{table*}

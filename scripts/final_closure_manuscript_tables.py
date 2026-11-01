@@ -126,7 +126,7 @@ def main():
         "NjointZone": str(z1["n_joint_sites"]), "NjointZtwo": str(z2["n_joint_sites"]),
     }
     names = {"T_max_C": "peak temperature", "die_warpage_pv_um": "die warpage",
-             "du_c_um": "critical-joint displacement", "P_loss_w": "loss"}
+             "du_c_um": "critical-joint displacement", "P_loss_w": "package-internal loss"}
     bnd = [(a, k, max(v.get(k) or 0.0 for v in c["checks"].values()),
             c["uncertainty_bound_rel"][k])
            for a, c in sorted(mc["cases"].items())
@@ -144,6 +144,7 @@ def main():
     mac.update(direct_feed_macros())
     mac.update(architecture_macros(z2))
     mac.update(control_macros())
+    mac.update(attach_density_macros())
     M = list(L) + [f"\\newcommand{{\\{k}}}{{{v}}}" for k, v in mac.items()]
     OUT_MAC.write_text("\n".join(M) + "\n")
     tables = {}
@@ -269,6 +270,82 @@ LOCAL_POL = None
 SCEN_TAG = {"HV_S0": "Szero", "HV_S1": "Sone", "HV_S2": "Stwo"}
 
 
+def _stiff_run_gpa(variant):
+    """Young's modulus (GPa) of the column-stiffened attach card a class-B run carried."""
+    c = J(f"sensitivity/etm_Z2_HV_S0__{variant}.json") or {}
+    e = ((c.get("materials") or {}).get("vr_attach_card") or {}).get("E")
+    return f"{e / 1e3:.1f}" if isinstance(e, (int, float)) else "n/a"
+
+
+def _study_case(name):
+    return ((J("vr_attach_density_study.json") or {}).get("cases") or {})[name]
+
+
+def attach_density_macros():
+    """geom.vr_attach_density: the two published lattices, their attach loss and cards, the
+    explicit-RVE errors, the equal-sharing check, the class-B verdicts and the engineering
+    crossover (vr_attach_density_study.json, classB_resolution.json,
+    direct_feed_crossover.json)."""
+    st = J("vr_attach_density_study.json") or {}
+    if not st:
+        return {}
+    out = {}
+    for name, tag in (("dense", "Dense"), ("sparse", "Sparse")):
+        c = st["cases"][name]
+        e = c["electrical"]
+        out.update({f"Att{tag}D": f"{c['d_um']:.0f}", f"Att{tag}P": f"{c['pitch_um']:.0f}",
+                    f"Att{tag}Nvdd": str(c["n_vdd"]), f"Att{tag}Ngnd": str(c["n_gnd"]),
+                    f"Att{tag}Naxis": str(c["n_per_axis"]),
+                    f"Att{tag}Fpct": f"{100 * c['area_fraction']:.1f}",
+                    f"Att{tag}Pw": f"{e['P_attach_total_w']:.3f}",
+                    f"Att{tag}Rbump": f"{1e3 * e['R_bump_ohm']:.2f}",
+                    f"Att{tag}ConstrPct": f"{100 * e['constriction_fraction']:.1f}",
+                    f"Att{tag}ImA": f"{1e3 * e['VDD']['I_per_bump_A']:.1f}",
+                    f"Att{tag}Jkacm": f"{e['VDD']['J_avg_per_bump_A_m2'] / 1e7:.2f}",
+                    f"Att{tag}Lambda": f"{e['redistribution_length_mm']:.2f}",
+                    f"Att{tag}Kz": f"{c['k_z_W_mK']:.1f}", f"Att{tag}Kxy": f"{c['k_xy_W_mK']:.2f}",
+                    # the stiffened card each density was actually RUN with (attach_stiff
+                    # carries the production lattice, attach_sparse_stiff the sparse one)
+                    f"Att{tag}EB": _stiff_run_gpa("attach_stiff" if name == "dense"
+                                                  else "attach_sparse_stiff"),
+                    f"ErrAtt{tag}Kz": (f"{100 * c['rve_kz_error']:+.1f}"
+                                       if "rve_kz_error" in c else "n/a"),
+                    f"ErrAtt{tag}Kxy": (f"{100 * c['rve_kxy_error']:+.1f}"
+                                        if "rve_kxy_error" in c else "n/a")})
+        et = c.get("etm_S0") or {}
+        out[f"Att{tag}PzTwo"] = (f"{et['P_Z2_internal_w']:.2f}" if et else "n/a")
+        out[f"Att{tag}FracPct"] = (f"{100 * et['attach_fraction_of_Z2_internal']:.2f}"
+                                   if et else "n/a")
+    ed, esp = (st["cases"][c].get("etm_S0") or {} for c in ("dense", "sparse"))
+    ok = all(x.get(k) is not None for x in (ed, esp)
+             for k in ("P_Z2_internal_w", "P_attach_total_w", "P_conv_w", "T_conv_C"))
+    out["AttDeltaPetm"] = f"{esp['P_Z2_internal_w'] - ed['P_Z2_internal_w']:.2f}" if ok else "n/a"
+    out["AttDeltaPatt"] = f"{esp['P_attach_total_w'] - ed['P_attach_total_w']:.2f}" if ok else "n/a"
+    out["AttDeltaPconv"] = f"{esp['P_conv_w'] - ed['P_conv_w']:.2f}" if ok else "n/a"
+    out["AttDeltaTconv"] = f"{esp['T_conv_C'] - ed['T_conv_C']:.2f}" if ok else "n/a"
+    es = st.get("equal_sharing_assessment") or {}
+    pen = (es.get("density_penalty_vs_dense") or {}).get("sparse") or {}
+    out["AttPenBlock"] = f"{pen['block_w']:.2f}" if pen else "n/a"
+    out["AttPenNet"] = f"{pen['network_w']:.2f}" if pen else "n/a"
+    out["AttNetFactor"] = f"{pen['network_over_block']:.2f}" if pen else "n/a"
+    out["AttPeakMean"] = (f"{es['per_case']['dense']['vertical_current_peak_over_mean']:.2f}"
+                          if es.get("per_case") else "n/a")
+    cb = (J("classB_resolution.json") or {}).get("attach_density_crossover") or {}
+    lc = (cb.get("crossover") or {}).get("P_loss_package_internal_w") or {}
+    fmt = lambda v, k=1: f"{v:.{k}f}" if isinstance(v, (int, float)) else "n/a"
+    out["AttFstarPct"] = fmt(100 * lc["f_star"]) if lc.get("f_star") else "n/a"
+    out["AttPstar"] = fmt(lc.get("pitch_star_um_d15"))
+    out["AttFstarNetPct"] = (fmt(100 * lc["f_star_network_penalty"])
+                             if lc.get("f_star_network_penalty") else "n/a")
+    out["AttPstarNet"] = fmt(lc.get("pitch_star_um_d15_network_penalty"))
+    cx = ((J("direct_feed_crossover.json") or {}).get("scenarios") or {}).get("HV_S0") or {}
+    ad = cx.get("attach_density_R_star") or {}
+    for name, tag in (("dense", "Dense"), ("sparse", "Sparse")):
+        r = (ad.get(name) or {}).get("R_star_mohm")
+        out[f"Rstar{tag}Szero"] = f"{r:.2f}" if isinstance(r, (int, float)) else "n/a"
+    return out
+
+
 def direct_feed_macros():
     """The direct-feed crossover (direct_feed_crossover.json): R*, the feed loss there,
     the zero-feed advantage and the 48 V RMS current, per scenario with a valid reference."""
@@ -281,7 +358,9 @@ def direct_feed_macros():
         out[f"PfeedRstar{tag}"] = f"{c['P_feed_at_R_star_w']:.2f}" if ok else "n/a"
         out[f"AdvZeroFeed{tag}"] = f"{c['advantage_at_zero_feed_w']:.2f}"
         out[f"Irms{tag}"] = f"{c['I_48_rms_a']:.1f}"
-        out[f"PfeedPerMohm{tag}"] = f"{c['I_48_rms_a'] ** 2 * 1e-3:.3f}"
+        out[f"PfeedPerMohm{tag}"] = f"{c['P_feed_per_mohm_w']:.3f}"
+        out[f"EffRstar{tag}"] = (f"{100 * c['efficiency_Z2_at_R_star']:.2f}"
+                                 if ok and c.get("efficiency_Z2_at_R_star") else "n/a")
     sw = [p for c in (cx.get("scenarios") or {}).values() for p in c.get("sweep", [])]
     out["FeedSweepLo"] = f"{cx['sweep_mohm'][0]:g}" if cx else "n/a"
     out["FeedSweepHi"] = f"{cx['sweep_mohm'][1]:g}" if cx else "n/a"
@@ -311,7 +390,9 @@ def architecture_macros(z2row):
     return {"AttachH": f"{att['h_total_um']:.0f}", "AttachCu": f"{att['h_cu_um']:.0f}",
             "AttachCap": f"{att['h_cap_um']:.0f}", "AttachD": f"{att['d_um']:.0f}",
             "AttachPitch": f"{att['pitch_um']:.0f}",
-            "AttachNbump": str(att["bumps_per_rail_per_cell"]),
+            # the real lattice of the production geometry (vr_attach_density_study.json),
+            # never the frozen declaration's count
+            "AttachNbump": str(_study_case("dense")["n_vdd"]),
             "AttachAreaPct": f"{100 * att['area_fraction']:.1f}",
             "AttachKz": f"{val(card, 'k'):.1f}",
             "AttachKxy": f"{kxy:.2f}" if kxy else "n/a",
@@ -419,10 +500,16 @@ CASE_TEXT = {"board_t3p2": "PCB 3.2 mm (2.4 mm)", "board_eta025": "PCB Cu covera
              "z2_cooled": "Z2 underside cold plate (bound)",
              "z2_cooled_tim": "Z2 underside plate via 50\\,$\\mu$m TIM (bound)",
              "attach_h20": "attach 20\\,$\\mu$m (30)", "attach_h40": "attach 40\\,$\\mu$m (30)",
-             "attach_sn": "all-Sn microbumps, 80\\,$\\mu$m pitch (Cu pillar)",
+             "attach_sn": "all-Sn bound, 30/80\\,$\\mu$m (Cu pillar)",
              "attach_stiff": "attach column-stiffened card (underfill card)",
              "attach_uf_soft": "attach underfill 4\\,GPa, 40\\,ppm/K (8, 30)",
              "attach_uf_stiff": "attach underfill 12\\,GPa, 20\\,ppm/K (8, 30)",
+             "attach_dense": "attach 15/30\\,$\\mu$m, real lattice",
+             "attach_sparse": "attach 30/80\\,$\\mu$m (15/30)",
+             "attach_sparse_stiff": "attach 30/80\\,$\\mu$m, stiffened card",
+             "attach_eng_p34": "attach 15\\,$\\mu$m at 34\\,$\\mu$m pitch (30), sweep",
+             "attach_eng_p37": "attach 15\\,$\\mu$m at 37\\,$\\mu$m pitch (30), sweep",
+             "attach_eng_p41": "attach 15\\,$\\mu$m at 41\\,$\\mu$m pitch (30), sweep",
              "feed_heat_at_crossover": "feed loss at the largest $R^*$ in the HS tier (outside)",
              "icepak_equivalent": "Icepak-equivalent top coefficient (compact)",
              "bga_depop": "BGA field 420/528 sites (528), smeared",
@@ -433,10 +520,17 @@ CASE_TEXT = {"board_t3p2": "PCB 3.2 mm (2.4 mm)", "board_eta025": "PCB Cu covera
              "pad_drop": "1 V pads at drop floor (2040)"}
 #: the package 48 V RDL reference of "Z2" is the BGA-fed CONTROL's sheet: the primary,
 #: direct-fed Z2 has no package 48 V RDL
-STAGE_LABEL = {"pkg_rdl_Z1": "pkg 48 V RDL, Z1", "pkg_rdl_Z2": "pkg 48 V RDL, Z2 control"}
-OBS_COL = ("P_loss_w", "T_max_C", "die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle")
+STAGE_LABEL = {"pkg_rdl_Z1": "pkg 48 V RDL, Z1", "pkg_rdl_Z2": "pkg 48 V RDL, Z2 control",
+               "vr_attach_dense_kz": "attach $k_z$, 15/30\\,$\\mu$m",
+               "vr_attach_dense_kxy": "attach $k_{xy}$, 15/30\\,$\\mu$m",
+               "vr_attach_sparse_kz": "attach $k_z$, 30/80\\,$\\mu$m",
+               "vr_attach_sparse_kxy": "attach $k_{xy}$, 30/80\\,$\\mu$m",
+               "vr_attach_dense_electrical": "attach bump $R$, 15/30\\,$\\mu$m",
+               "vr_attach_sparse_electrical": "attach bump $R$, 30/80\\,$\\mu$m"}
+OBS_COL = ("P_loss_package_internal_w", "T_max_C", "die_warpage_pv_um", "du_c_um",
+           "d_eps_in_per_cycle")
 VSHORT = {"Z1 lower": "Z1", "Z2 lower": "Z2", "unresolved": "n.r.", "not rankable": "n.a."}
-SHORT = {"P_loss_w": "loss", "T_max_C": "$T_{\\max}$", "die_warpage_pv_um": "warp",
+SHORT = {"P_loss_package_internal_w": "int.\\ loss", "T_max_C": "$T_{\\max}$", "die_warpage_pv_um": "warp",
          "du_c_um": "$\\du$", "d_eps_in_per_cycle": "local"}
 
 
@@ -466,7 +560,7 @@ def classb_table():
         return []
     L = [r"\begin{table*}[!t]",
          r"\caption{Class-B sensitivities on the production mesh at HV-S0: relative change "
-         r"of each observable against the production case (Z1 / Z2, \%) and the Z1/Z2 "
+         r"of each observable against the production case (Z1 / Z2, \%; $P_{\mathrm{int}}$: package-internal loss) and the Z1/Z2 "
          r"verdict under the variant, formed with the same rule as the production ordering "
          r"(Z1/Z2: that architecture lower; n.r.: no ranking, gap within twice the "
          r"uncertainty). `bound' rows are declared stress tests, not property claims; the "
@@ -474,7 +568,7 @@ def classb_table():
          r"\label{tab:classb}", r"\centering", r"\scriptsize",
          r"\setlength{\tabcolsep}{2.0pt}",
          r"\begin{tabular}{@{}L{3.5cm}cccccL{3.9cm}@{}}", r"\toprule",
-         r"Variant (production) & $P_{\mathrm{loss}}$ & $T_{\max}$ & warp & $\du$ & "
+         r"Variant (production) & $P_{\mathrm{int}}$ & $T_{\max}$ & warp & $\du$ & "
          r"$\Delta\varepsilon_{\mathrm{in}}$ & verdicts that change \\", r"\midrule"]
     for case, obs in rows.items():
         cells, moved = [], []

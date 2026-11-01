@@ -13,10 +13,14 @@ No value is typed here; a rerun redraws every figure.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
-import matplotlib
+#: a fixed PDF/SVG timestamp (matplotlib and cairo honour it), so regenerating a figure from
+#: unchanged artifacts is byte-identical and a test run leaves the tracked figures untouched
+os.environ.setdefault("SOURCE_DATE_EPOCH", "1793000000")
+import matplotlib                                                     # noqa: E402
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt                                      # noqa: E402
 import numpy as np                                                   # noqa: E402
@@ -49,13 +53,15 @@ def main():
     fig, ax = plt.subplots(2, 3, figsize=(7.16, 4.7))
     x = np.arange(len(SCEN))
     w = 0.36
-    panels = (("P_loss_w", "(a) loss (W)"), ("T_max_C", r"(b) peak temperature ($^\circ$C)"),
+    panels = (("P_loss_w", "(a) package-internal loss (W)"), ("T_max_C", r"(b) peak temperature ($^\circ$C)"),
               ("die_warpage_pv_um", r"(c) die warpage ($\mu$m)"),
               ("du_c_um", r"(d) joint driver $\Delta u_c$ ($\mu$m)"))
     for a_, (k, title) in zip(ax.ravel()[:4], panels):
         for n, a in enumerate(("Z1", "Z2")):
             v = [g(a, s_, k) for s_ in SCEN]
-            u = [(od[k].get("uncertainty_rel") or {}).get(s_) or 0.0 for s_ in SCEN]
+            # final_results' package-internal loss is ordered under its boundary's own key
+            ok = "P_loss_package_internal_w" if k == "P_loss_w" else k
+            u = [(od[ok].get("uncertainty_rel") or {}).get(s_) or 0.0 for s_ in SCEN]
             # an operating point at or above the solder melting onset is an infeasibility
             # result, not an operating comparison: drawn pale and hatched, never ranked
             melt = [bool(g(a, s_, "T_joint_at_or_above_solder_solidus")) for s_ in SCEN]
@@ -163,11 +169,11 @@ def crossover_figure():
         ax[1].set_ylim(min(e_lo) - 6, max(e_hi) + 2)
     ax[2].set_xscale("log")
     ax[2].set_yscale("log")
-    ax[0].set_ylabel("loss (W)")
+    ax[0].set_ylabel("platform-incl. loss (W)")
     ax[1].set_ylabel("efficiency (%)")
     ax[2].set_ylabel("feed loss (W)")
     ax[2].set_xlabel(r"$R_{\mathrm{Z2,\,direct\ feed\ loop}}$ (m$\Omega$)")
-    for a_, t_ in zip(ax, ("(a) platform-to-load loss (crossover region)",
+    for a_, t_ in zip(ax, ("(a) platform-inclusive loss (crossover region)",
                            "(b) system efficiency", "(c) external feed loss")):
         a_.set_title(t_, loc="left")
     # the legend sits in the empty upper-left corner of (c), clear of the R* labels in (a)

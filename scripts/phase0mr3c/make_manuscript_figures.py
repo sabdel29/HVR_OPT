@@ -6,9 +6,11 @@ text, colourblind-safe palette, grayscale-distinguishable markers and line style
 no boxes or backgrounds, vector PDF output.
 """
 from __future__ import annotations
-import csv, math, re, sys
+import csv, math, os, re, sys
 from pathlib import Path
-import matplotlib
+#: a fixed PDF timestamp, so regenerating from unchanged inputs is byte-identical
+os.environ.setdefault("SOURCE_DATE_EPOCH", "1793000000")
+import matplotlib                                                        # noqa: E402
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt                                          # noqa: E402
 import numpy as np                                                       # noqa: E402
