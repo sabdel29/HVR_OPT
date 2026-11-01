@@ -118,16 +118,29 @@ def thesis_items(cb):
     items = ["<li><strong>Converter placement</strong> changes the high-voltage entry path: Z1 pays "
              "for 48 V inside the package, Z2 in an external feed whose resistance decides the "
              "electrical comparison.</li>"]
-    v = verb(("tsv_min", "tsv_mid"), {"P_loss_w"})
+    v = verb(("tsv_min", "tsv_mid"), {"P_loss_package_internal_w"})
     if v:
-        items.append(f"<li><strong>TSV provisioning</strong> can {v} the electrical "
-                     "preference.</li>")
-    v = verb(("z2_cooled", "z2_cooled_tim", "icepak_equivalent"),
-             {"die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle"})
+        items.append(f"<li><strong>TSV provisioning</strong> can {v} the package-internal "
+                     "electrical preference.</li>")
+    v = verb(("attach_sparse", "attach_sparse_stiff"), {"P_loss_package_internal_w"})
     if v:
-        items.append(f"<li><strong>Cooling</strong> can {v} the mechanical preference.</li>")
+        items.append(f"<li><strong>The regulator-to-substrate attach density</strong> can {v} "
+                     "it.</li>")
+    mech = {"die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle"}
+    v = verb(("z2_cooled", "z2_cooled_tim", "icepak_equivalent"), mech)
+    w = verb(("f2_void", "f1_sidewall_filled"), mech)
+    if v and w == v:
+        items.append(f"<li><strong>Cooling</strong> and the <strong>out-of-cell construction"
+                     f"</strong> can {v} the mechanical preference.</li>")
+    else:
+        if v:
+            items.append(f"<li><strong>Cooling</strong> can {v} the mechanical preference.</li>")
+        if w:
+            items.append(f"<li>The <strong>out-of-cell construction</strong> can {w} the "
+                         "mechanical preference.</li>")
     if verb(("f2_void", "f1_sidewall_filled", "attach_h20", "attach_h40", "attach_sn",
-             "attach_stiff", "attach_uf_soft", "attach_uf_stiff", "bga_depop"),
+             "attach_stiff", "attach_uf_soft", "attach_uf_stiff", "bga_depop",
+             "attach_sparse", "attach_sparse_stiff"),
             {"du_c_um", "d_eps_in_per_cycle"}):
         items.append("<li><strong>Local construction</strong> determines the solder "
                      "response.</li>")
@@ -170,6 +183,8 @@ def build(S, take, emit, S_appx=None):
            for a in ("Z1", "Z2", "Z2BF")}
     ext = (_case("Z2") or {}).get("external_feed") or {}
     p48 = lambda a: sum(v for k, v in led[a].items() if k.startswith(("P_pkg_RDL_HV", "P_BGA_")))
+    _rstar0 = (((J("direct_feed_crossover.json") or {}).get("scenarios") or {}).get("HV_S0")
+               or {}).get("R_star_mohm") or 0.0
     t = "A. Where does the 48 V go?"
     S(f"""<h2>{t}</h2>
 {naive("Z2 avoids sending its 48 V input through the package: the low-current, "
@@ -182,9 +197,11 @@ def build(S, take, emit, S_appx=None):
 &rarr; package 48 V RDL &rarr; 48 V TSVs &rarr; regulator. Package 48 V loss at HV-S0:
 <strong>{val(t, "Z1 pkg 48V W", f"{p48('Z1'):.2f} W", "etm_Z1_HV_S0_h1.1_r21.json", "ledger_rows")}</strong>.</p></div>
 <div><p><strong>Z2:</strong> a dedicated external feed &rarr; regulator. No package 48 V
-ball or RDL term exists. The feed itself is outside the package: every mΩ of loop costs
+ball or RDL term exists; Z2's remaining BGA balls carry signals and hold the package to the
+board. The feed itself is outside the package: every mΩ of loop costs
 <strong>{val(t, "Z2 W per mOhm", f"{ext.get('P_feed_per_mohm_w', 0):.3f} W", "etm_Z2_HV_S0_h1.1_r21.json", "external_feed.P_feed_per_mohm_w")}</strong>
-at HV-S0 (see the direct-feed slide).</p></div></div>""",
+at HV-S0, so Z2's electrical advantage holds only while that loop stays below
+R* = {val(t, "Rstar S0 arch", f"{_rstar0:.2f} mΩ", "direct_feed_crossover.json", "scenarios.HV_S0.R_star_mohm")}.</p></div></div>""",
       "This is the first half of the electrical story. Z1 pays for 48 V inside the package: "
       "balls, a copper sheet, vias. Z2 pays nothing inside the package for 48 V, but needs "
       "its own connection from the board to the regulator, and that connection's "
@@ -217,22 +234,25 @@ TSV field {val(t, "Z2 TSV W", f"{tsv('Z2'):.3f} W", "etm_Z2_HV_S0_h1.1_r21.json"
 
     # 9 ------------------------------------------------- the attach
     spec = (J("z2_direct_feed_architecture.json") or {}).get("vr_attach") or {}
+    _att_study = J("vr_attach_density_study.json") or {}
     t = "The bridge: backside regulator to substrate"
     S(f"""<h2>{t}</h2>
 {naive("These bumps or pillars are the electrical bridge between the backside regulator and "
        "the silicon package substrate.")}
-<div class="cols" style="align-items:center"><div style="flex:1.35;text-align:center">
-{fig(t, "figs/z2_vr_attach_detail.svg", "VR-to-substrate attach: Cu pillars + solder caps "
-     "landing under the VDD/GND TSVs", "attach detail", "max-height:60vh;max-width:100%")}</div>
-<div style="flex:.65"><table class="small">
+<div class="cols" style="align-items:center"><div style="flex:1.65;text-align:center">
+{fig(t, "figs/z2_vr_attach_detail.svg", "VR-to-substrate attach: VDD/GND Cu pillars + solder "
+     "caps on the checkerboard, routed to the VDD/GND TSVs", "attach detail",
+     "max-height:70vh;max-width:100%")}</div>
+<div style="flex:.55"><table class="small">
 <tr><td>height (Cu + cap)</td><td class='num'>{val(t, "h", f"{spec.get('h_total_um', 0):.0f} µm", "z2_direct_feed_architecture.json", "vr_attach.h_total_um")}
 ({spec.get('h_cu_um', 0):.0f} + {spec.get('h_cap_um', 0):.0f})</td></tr>
 <tr><td>pillar / pitch</td><td class='num'>{spec.get('d_um', 0):.0f} / {spec.get('pitch_um', 0):.0f} µm</td></tr>
-<tr><td>pillars per rail per cell</td><td class='num'>{val(t, "n", str(spec.get('bumps_per_rail_per_cell')), "z2_direct_feed_architecture.json", "vr_attach.bumps_per_rail_per_cell")}</td></tr>
+<tr><td>pillars per cell, VDD + GND</td><td class='num'>{val(t, "n", str(_att_study['cases']['dense']['n_vdd']), "vr_attach_density_study.json", "cases.dense.n_vdd")} + {_att_study['cases']['dense']['n_gnd']}</td></tr>
 <tr><td>attach loss, HV-S0</td><td class='num'>{val(t, "attach W", f"{att:.3f} W", "etm_Z2_HV_S0_h1.1_r21.json", "ledger_rows")}</td></tr></table>
 <p class="sub">Geometry: a published 30 µm-pitch Cu-pillar process (close analog, not
-this design). 20/40 µm heights, all-solder bumps and underfill corners are class-B
-variants (sensitivity slide).</p></div></div>""",
+this design). Its density is an input of its own: a sparser published construction
+(30 µm at 80 µm) is run against it (attach-density slide); 20/40 µm heights, all-solder
+bumps and underfill corners are class-B variants.</p></div></div>""",
       "Before this correction the model glued the regulator straight onto the substrate. "
       "Now the joint is a real tier: pillars carry the current and heat, underfill carries "
       "the load. Its resistance enters the loss ledger and its height and material are "
@@ -364,7 +384,7 @@ balls per rail), on the same corrected geometry.</p>
 {fig(t, "figs/ball_sharing.svg", "per-ball current share, solved", "ball sharing",
      "max-height:38vh;max-width:92%")}</div>
 <div class="cols" style="align-items:flex-start"><div style="flex:1.1"><table class="small">
-<tr><th></th><th>loss</th><th>T<sub>max</sub></th><th>warpage</th><th>joint driver</th></tr>
+<tr><th></th><th>internal loss</th><th>T<sub>max</sub></th><th>warpage</th><th>joint driver</th></tr>
 {rowsc}</table></div>
 <div style="flex:1"><p class="sub">It isolates what the opening and the ball placement do: balls
 must sit outside the opening, so current crowds inward. {ctrl_txt}</p></div></div>""",
@@ -377,7 +397,7 @@ must sit outside the opening, so current crowds inward. {ctrl_txt}</p></div></di
 
     # 15 ------------------------------------------- Z2 direct-feed requirement
     cx = (J("direct_feed_crossover.json") or {}).get("scenarios") or {}
-    lossv = (od.get("P_loss_w") or {}).get("per_scenario", {})
+    lossv = (od.get("P_loss_package_internal_w") or {}).get("per_scenario", {})
     req, other = [], []
     for s_, c in cx.items():
         lab = s_.replace("_", "-")
@@ -400,7 +420,7 @@ must sit outside the opening, so current crowds inward. {ctrl_txt}</p></div></di
        "that connection be for Z2 to stay ahead?")}
 <div style="text-align:center">{fig(t, "figs/direct_feed_crossover.svg",
     "Z2 platform loss vs the swept external feed resistance, Z1 as reference, R* marked",
-    "direct-feed crossover", "max-height:44vh;max-width:100%")}</div>
+    "direct-feed crossover", "max-height:56vh;max-width:100%")}</div>
 <div class="callout">{("For Z2 to keep its electrical advantage the loop (supply + return, from the "
   "board node shared with Z1 to the 49 regulator inputs) must stay " + " and ".join(req) + ". ")
   if req else "No scenario leaves Z2 a resolved advantage to protect, so the feed sets no "
@@ -417,11 +437,12 @@ value, so R* is a <strong>requirement</strong>, never a result.</div>""",
     tsvrows, lossv = [], {}
     # verdicts by the uncertainty-aware ordering rule (ordering.json / classB rows), never
     # by comparing the raw numbers
-    v_prod = (od.get("P_loss_w") or {}).get("per_scenario", {}).get("HV_S0")
+    v_prod = (od.get("P_loss_package_internal_w") or {}).get("per_scenario", {}).get("HV_S0")
     v_var = {}
     for g in cb.get("gates", []):
         for r in g.get("rows", []):
-            if r.get("case") in ("tsv_min", "tsv_mid") and r.get("observable") == "P_loss_w":
+            if (r.get("case") in ("tsv_min", "tsv_mid")
+                    and r.get("observable") == "P_loss_package_internal_w"):
                 v_var[r["case"]] = r.get("verdict")
     short = {"Z1 lower": "Z1 lower", "Z2 lower": "Z2 lower",
              "unresolved": "no ranking (within 2U)"}
@@ -439,8 +460,10 @@ value, so R* is a <strong>requirement</strong>, never a result.</div>""",
         tsvrows.append(f"<tr><td>{nv} vias per cell{' (production)' if v is None else ''}</td>"
                        f"<td class='num'>{cells_[0]}</td><td class='num'>{cells_[1]}</td>"
                        f"<td><strong>{short.get(vd, vd or 'n/a')}</strong></td></tr>")
-    say = {"Z1 lower": "Z1 dissipates less", "Z2 lower": "Z2 dissipates less",
-           "unresolved": "the losses are equal within the measured uncertainty"}
+    say = {"Z1 lower": "Z1 dissipates less inside the package",
+           "Z2 lower": "Z2 dissipates less inside the package",
+           "unresolved": "the package-internal losses are equal within the measured "
+                         "uncertainty"}
     tsv_txt = "The production field is the densest that fits (1444 per cell)."
     if v_prod in say:
         tsv_txt += f" There {say[v_prod]}"
@@ -449,13 +472,13 @@ value, so R* is a <strong>requirement</strong>, never a result.</div>""",
                         f"{say[v_var['tsv_min']]}")
         tsv_txt += "."
         if v_var.get("tsv_min") and v_var["tsv_min"] != v_prod:
-            tsv_txt += (" The loss verdict therefore depends on how the TSVs are provisioned "
-                        "(sensitivity slide).")
+            tsv_txt += (" The package-internal loss verdict therefore depends on how the TSVs "
+                        "are provisioned (sensitivity slide).")
     S(f"""<h2>{t}</h2>
 {naive("After conversion the voltage is only 1 V, so roughly 1 kA must cross the substrate. "
        "How many parallel vias does that take — and does it change which design wins?")}
-<table style="font-size:1.15em"><tr><th>TSV field</th><th>Z1 loss (48 V vias)</th>
-<th>Z2 loss (1 V vias)</th><th>verdict (HV-S0)</th></tr>
+<table style="font-size:1.15em"><tr><th>TSV field</th><th>Z1 internal loss (48 V vias)</th>
+<th>Z2 internal loss (1 V vias)</th><th>verdict (HV-S0)</th></tr>
 {''.join(tsvrows)}</table>
 <p class="sub" style="margin-top:.6em">{tsv_txt}</p>""",
       "Same TSVs, different job. In Z1 they carry 48 V at 20 A total and cost nothing. In Z2 "
@@ -676,23 +699,55 @@ specified</td><td>the sidewall-filled case is a sensitivity</td></tr>
     # 24 ------------------------------------------------------------- S0 result
     t = "HV-S0 result (headline scenario)"
     s0 = sc.get("HV_S0", {})
+    cx0 = ((J("direct_feed_crossover.json") or {}).get("scenarios") or {}).get("HV_S0") or {}
+    r0 = _rows()
+    z1i = (r0.get(("Z1", "HV_S0")) or {}).get("P_loss_package_internal_w")
+    z2i = (r0.get(("Z2", "HV_S0")) or {}).get("P_loss_package_internal_w")
+    iv0 = (od.get("P_loss_package_internal_w") or {}).get("per_scenario", {}).get("HV_S0", "")
+    u0 = ((od.get("P_loss_package_internal_w") or {}).get("uncertainty_rel") or {}).get("HV_S0")
+    internal_txt = (f"<strong>Package-internal loss:</strong> Z2 "
+                    f"{val(t, 'Z2 internal', f'{z2i:.2f} W', 'control_results.json', 'cases.Z2_HV_S0.P_loss_w')} "
+                    f"vs Z1 {val(t, 'Z1 internal', f'{z1i:.2f} W', 'control_results.json', 'cases.Z1_HV_S0.P_loss_w')}, "
+                    f"about {abs(z1i - z2i):.1f} W apart against a resolution limit (2U) of "
+                    f"{2 * u0 * max(z1i, z2i):.1f} W"
+                    + ((": Z2 lower, narrowly." if abs(z1i - z2i) < 1.25 * 2 * u0 * max(z1i, z2i)
+                        else ": Z2 lower.") if iv0 == "Z2 lower" else
+                       ": Z1 lower." if iv0 == "Z1 lower" else
+                       ": no ranking.")) if z1i and z2i and u0 else ""
+    rs = cx0.get("R_star_mohm")
+    platform_txt = ((f"<strong>Platform loss:</strong> conditional &mdash; Z2 keeps the advantage "
+                     f"only while its complete 48 V feed loop stays below R* = "
+                     f"{val(t, 'Rstar S0', f'{rs:.2f} mΩ', 'direct_feed_crossover.json', 'scenarios.HV_S0.R_star_mohm')}"
+                     " (direct-feed slide); above it Z1 is lower.") if rs else
+                    "<strong>Platform loss:</strong> Z2 is not ahead even with a lossless feed.")
+    ppm0 = cx0.get("P_feed_per_mohm_w", 0.0)
+    strip = ((f"<div style='display:flex;gap:.5em;justify-content:center;margin-top:.35em;"
+              f"font-size:.9em'><span class='chip ok'>external feed loop below R* = "
+              f"{val(t, 'Rstar S0 strip', f'{rs:.2f} mΩ', 'direct_feed_crossover.json', 'scenarios.HV_S0.R_star_mohm')}"
+              f": Z2 lower, platform-inclusive</span><span class='chip open'>above R*: Z1 lower "
+              f"&mdash; each mΩ of loop costs "
+              f"{val(t, 'W per mOhm S0', f'{ppm0:.3f} W', 'direct_feed_crossover.json', 'scenarios.HV_S0.P_feed_per_mohm_w')}"
+              f"</span></div>") if rs else "")
     S(f"""<h2>{t}</h2>
 <div style="text-align:center">{fig(t, "figs/s0_cards.svg",
     "five observables, Z1 vs Z2, with uncertainty and verdict", "S0 cards",
-    "max-height:50vh;max-width:100%")}</div>
-<div class="callout" style="margin-top:.3em">{s0.get("statement", "")}
-{od.get("T_max_C", {}).get("statement", "")}</div>
+    "max-height:46vh;max-width:100%")}</div>
+<div class="callout" style="margin-top:.3em">{internal_txt}<br>{platform_txt}<br>
+{od.get("T_max_C", {}).get("statement", "")}</div>{strip}
 <p class="sub">A ranking is claimed only where the Z1/Z2 gap exceeds <strong>twice the measured
-discretisation uncertainty</strong>; otherwise "no ranking". Loss here is package-internal:
-Z2's external feed is the requirement on the direct-feed slide.</p>""",
-      "Read the verdict line under each card, not the bars. " + "; ".join(
+discretisation uncertainty</strong>; otherwise "no ranking". The unknown external feed is
+never treated as lossless.</p>""",
+      "Read the verdict line under each card, not the bars. Package-internal loss: "
+      + {"Z1 lower": "Z1 lower", "Z2 lower": "Z2 about 1 W lower"}.get(
+          iv0, "no ranking — the difference is inside the measured uncertainty")
+      + "; platform loss: conditional on the direct feed (R* above); " + "; ".join(
           f"{nm}: " + ({"Z1 lower": "Z1 lower", "Z2 lower": "Z2 lower"}.get(
               (od.get(k) or {}).get("per_scenario", {}).get("HV_S0", ""),
               "no ranking — the difference is inside the measured uncertainty"))
-          for k, nm in (("P_loss_w", "Loss"), ("T_max_C", "Peak temperature"),
+          for k, nm in (("T_max_C", "Peak temperature"),
                         ("die_warpage_pv_um", "Warpage"), ("du_c_um", "Joint driver"),
                         ("d_eps_in_per_cycle", "Local response"))) + ".",
-      "figs/s0_cards.svg — final_results.json · ordering.json")
+      "figs/s0_cards.svg — final_results.json · ordering.json · direct_feed_crossover.json")
 
     # 25 ------------------------------------------------------------- scenarios
     t = "Appendix — Scenario robustness"
@@ -713,7 +768,8 @@ Z2's external feed is the requirement on the direct-feed slide.</p>""",
     sm = cb.get("summary") or {}
     order = ["tsv_min", "tsv_mid", "f2_void", "f1_sidewall_filled", "z2_cooled", "z2_cooled_tim",
              "icepak_equivalent", "feed_heat_at_crossover", "attach_h20", "attach_h40",
-             "attach_sn", "attach_stiff", "attach_uf_soft", "attach_uf_stiff", "bga_depop",
+             "attach_sn", "attach_dense", "attach_sparse", "attach_sparse_stiff",
+             "attach_stiff", "attach_uf_soft", "attach_uf_stiff", "bga_depop",
              "board_h1", "board_t3p2", "board_eta025", "board_eta075", "gan_k_half",
              "conv_k_tenth", "conv_E80_a4", "conv_E80_a10", "conv_E160_a4", "conv_E160_a10",
              "pad_drop"]
@@ -728,7 +784,10 @@ Z2's external feed is the requirement on the direct-feed slide.</p>""",
             "icepak_equivalent": "Icepak-matched cooling coefficient",
             "feed_heat_at_crossover": "Z2: feed loss at the largest R* deposited in the package",
             "attach_h20": "Z2 attach 20 µm (30)", "attach_h40": "Z2 attach 40 µm (30)",
-            "attach_sn": "Z2 attach: all-Sn bumps, 80 µm pitch",
+            "attach_sn": "Z2 attach: all-Sn bound, 30 µm at 80 µm",
+            "attach_dense": "Z2 attach 15/30 µm on the real lattice (smeared card)",
+            "attach_sparse": "Z2 attach 30/80 µm, published (15/30)",
+            "attach_sparse_stiff": "Z2 attach 30/80 µm, column-stiffened card",
             "attach_stiff": "Z2 attach: column-stiffened card",
             "attach_uf_soft": "Z2 attach underfill 4 GPa, 40 ppm/K",
             "attach_uf_stiff": "Z2 attach underfill 12 GPa, 20 ppm/K",
@@ -741,7 +800,8 @@ Z2's external feed is the requirement on the direct-feed slide.</p>""",
             "conv_E160_a10": "converter medium 160 GPa, 10 ppm/K",
             "pad_drop": "1 V pads at the drop floor (2040)",
             "board_h0_h1grid": "board H0 card on the five-block grid (control)"}
-    cols = (("P_loss_w", "loss"), ("T_max_C", "peak T"), ("die_warpage_pv_um", "warpage"),
+    cols = (("P_loss_package_internal_w", "internal loss"), ("T_max_C", "peak T"),
+            ("die_warpage_pv_um", "warpage"),
             ("du_c_um", "joint driver"), ("d_eps_in_per_cycle", "local"))
     by = {}
     for g in cb.get("gates", []):
@@ -797,6 +857,70 @@ resistance is the requirement on the direct-feed slide.</p>
           "the one most exposed to a neighbouring decision."),
       "research/final_closure/classB_resolution.csv")
 
+    # 26b ---------------------------------------------------------- attach density
+    t = "The tiny connection that can change the architecture result"
+    lc = (((cb.get("attach_density_crossover") or {}).get("crossover") or {})
+          .get("P_loss_package_internal_w") or {})
+    sp_rows = by.get("attach_sparse", {})
+    adr = ((((J("direct_feed_crossover.json") or {}).get("scenarios") or {}).get("HV_S0") or {})
+           .get("attach_density_R_star") or {})
+    vtx = {"Z1 lower": "Z1 lower", "Z2 lower": "Z2 lower", "unresolved": "no ranking",
+           "not rankable": "n/a"}
+    res = "; ".join(f"{lab} {vtx.get(sp_rows[k]['verdict'], sp_rows[k]['verdict'])}"
+                    for k, lab in cols if k in sp_rows)
+    lines = [f"<strong>Sparser published attach, HV-S0:</strong> {res}." if res else ""]
+    _ast = J("vr_attach_density_study.json") or {}
+    e_d, e_s = ((((_ast.get("cases") or {}).get(c) or {}).get("etm_S0") or {})
+                for c in ("dense", "sparse"))
+    if e_d.get("P_conv_w") is not None and e_s.get("P_conv_w") is not None:
+        lines.append(
+            "<strong>Coupled solution:</strong> Z2's package-internal loss rises by "
+            + val(t, "attach dP etm", f"{e_s['P_Z2_internal_w'] - e_d['P_Z2_internal_w']:.2f} W",
+                  "vr_attach_density_study.json", "cases.sparse.etm_S0.P_Z2_internal_w")
+            + f", of which the attach itself is only "
+            f"{e_s['P_attach_total_w'] - e_d['P_attach_total_w']:.2f} W: the converter runs "
+            f"{e_s['T_conv_C'] - e_d['T_conv_C']:.1f} K warmer because less metal carries its "
+            "heat into the substrate.")
+    if lc.get("f_star"):
+        fs_ = 100 * lc["f_star"]
+        ps_ = lc.get("pitch_star_um_d15")
+        lines.append(
+            "<strong>Where the internal-loss ranking stops</strong> (engineering sweep, not a "
+            "manufacturing geometry): Z2 stays lower above about "
+            + val(t, "f star", f"{fs_:.1f} %", "classB_resolution.json",
+                  "attach_density_crossover.crossover.P_loss_package_internal_w.f_star")
+            + " metal" + (f" (about {ps_:.1f} µm pitch for 15 µm pillars)" if ps_ else "")
+            + "; below it, no ranking" + ("" if lc.get("reversal") else ", and no published "
+                                          "density reverses it") + ".")
+    elif lc.get("status", "").startswith("holds"):
+        lines.append("<strong>Internal loss:</strong> the ranking holds at every swept density "
+                     "down to the sparser published construction.")
+    rd, rsp = ((adr.get(k) or {}).get("R_star_mohm") for k in ("dense", "sparse"))
+    if rd and rsp:
+        lines.append("<strong>Platform requirement:</strong> R* = "
+                     + val(t, "Rstar dense", f"{rd:.2f} mΩ", "direct_feed_crossover.json",
+                           "scenarios.HV_S0.attach_density_R_star.dense.R_star_mohm")
+                     + " with the dense attach, "
+                     + val(t, "Rstar sparse", f"{rsp:.2f} mΩ", "direct_feed_crossover.json",
+                           "scenarios.HV_S0.attach_density_R_star.sparse.R_star_mohm")
+                     + " with the sparse one.")
+    S(f"""<h2>{t}</h2>
+<div style="text-align:center">{fig(t, "figs/z2_attach_density.svg",
+    "dense vs sparse published attach in plan at one scale, and what density changes",
+    "attach density", "max-height:52vh;max-width:100%")}</div>
+<div class="callout" style="margin-top:.3em;font-size:.8em">{'<br>'.join(x for x in lines if x)}</div>""",
+      "Both lattices are published constructions, and the material and height are held, so "
+      "only the density changes. Fewer bumps raise the attach resistance; fewer metal "
+      "columns conduct less heat downward; a different metal fraction changes how stiff the "
+      "layer can be, which we bound rather than claim. The current per bump is reported, "
+      "never checked against an allowable. "
+      + ("Read the verdicts: the attach density alone decides whether the internal-loss "
+         "ranking is resolved." if (sp_rows.get("P_loss_package_internal_w") or {}).get(
+             "robust") is False else
+         "Read the verdicts: the internal-loss ranking survives even the sparse attach."),
+      "figs/z2_attach_density.svg — vr_attach_density_study.json · classB_resolution.json · "
+      "direct_feed_crossover.json")
+
     # 27 ------------------------------------------------------------- accuracy / runtime
     t = "Accuracy and runtime, stage by stage"
     take(t)                       # the legacy one-chart version is superseded by this slide
@@ -816,7 +940,8 @@ resistance is the requirement on the direct-feed slide.</p>
     # one line per observable, read from ordering.json's per-scenario verdicts (the full
     # statements, with their reasons, are on slides 24-25 and in the paper)
     can = []
-    for k, nm in (("P_loss_w", "Loss"), ("T_max_C", "Peak temperature"),
+    for k, nm in (("P_loss_package_internal_w", "Package-internal loss"),
+                  ("T_max_C", "Peak temperature"),
                   ("die_warpage_pv_um", "Die warpage"), ("du_c_um", "Joint driver"),
                   ("d_eps_in_per_cycle", "Local response")):
         won = {}
@@ -826,6 +951,15 @@ resistance is the requirement on the direct-feed slide.</p>
         if won:
             can.append(f"{nm}: " + "; ".join(f"{a} lower in {' and '.join(ss)}"
                                              for a, ss in won.items()))
+        if k == "P_loss_package_internal_w":
+            # the platform loss is conditional on Z2's unsourced feed: never one winner
+            rs = (od.get("P_loss_platform_inclusive_w") or {}).get("R_star_mohm") or {}
+            cond = [f"{s_.replace('_', '-')} below R* = {v:.2f} mΩ" for s_, v in rs.items()
+                    if v and (od.get("P_loss_platform_inclusive_w") or {}).get(
+                        "per_scenario", {}).get(s_, "").startswith("conditional")]
+            if cond:
+                can.append("Platform loss: conditional — Z2 lower only " + "; ".join(cond)
+                           + " (complete direct-feed loop)")
     plain = {"board_t3p2": "a 3.2 mm board", "board_eta025": "board copper coverage 0.25",
              "board_eta075": "board copper coverage 0.75",
              "tsv_mid": "a 729-via TSV field", "gan_k_half": "GaN tiers at half conductivity",
@@ -840,11 +974,16 @@ resistance is the requirement on the direct-feed slide.</p>
              "feed_heat_at_crossover": "the feed loss at the largest R* deposited in the package",
              "attach_h20": "a 20 µm attach", "attach_h40": "a 40 µm attach",
              "attach_sn": "all-Sn attach bumps", "attach_stiff": "a column-stiffened attach",
+             "attach_dense": "the dense attach on its real lattice",
+             "attach_sparse": "the sparser published attach (30 µm at 80 µm)",
+             "attach_sparse_stiff": "that sparser attach with a column-stiffened card",
              "attach_uf_soft": "a soft attach underfill",
              "attach_uf_stiff": "a stiff attach underfill",
              "bga_depop": "a depopulated Z2 BGA field",
              "board_h1": "the five-block board model"}
-    obs = {"P_loss_w": "loss", "T_max_C": "peak temperature", "die_warpage_pv_um": "warpage",
+    obs = {"P_loss_package_internal_w": "package-internal loss",
+           "P_loss_platform_inclusive_w": "platform-inclusive loss",
+           "T_max_C": "peak temperature", "die_warpage_pv_um": "warpage",
            "du_c_um": "joint driver", "d_eps_in_per_cycle": "local response"}
     # single-input rows only, as in the manuscript (the converter-rescaling threshold has no
     # production verdict and is stated in the decision report). A REVERSAL flips a resolved
@@ -865,14 +1004,19 @@ resistance is the requirement on the direct-feed slide.</p>
                 made.setdefault(o, {})[f"{case_plain(plain, r['case'])} ({av})"] = None
     revs = "".join(f"<li>{case_plain(plain, c)} — {'; '.join(sorted(v))}</li>"
                    for c, v in rev.items())
-    unr = "".join(f"<li>{o}: {'; '.join(v)}</li>" for o, v in unres.items())
+
+    def grouped(names):
+        """The package 48 V RDL thickness/occupancy corners are one input: name them once."""
+        rdl = [n for n in names if "package 48 V RDL" in n]
+        rest = [n for n in names if "package 48 V RDL" not in n]
+        return rest + ([f"{len(rdl)} package 48 V RDL thickness/occupancy corners"]
+                       if len(rdl) > 1 else rdl)
+    unr = "".join(f"<li>{o}: {'; '.join(grouped(list(v)))}</li>" for o, v in unres.items())
     mk = "".join(f"<li>{o}: {'; '.join(v)}</li>" for o, v in made.items())
     therm0 = (od.get("T_max_C") or {}).get("per_scenario", {}).get("HV_S0")
     S(f"""<h2>{t}</h2><div class="cols"><div><h3>Can claim (production model; each gap &gt; 2U)</h3><ul>
 {''.join(f'<li>{c}</li>' for c in can)}</ul>
-{('<h3>Reversed by one neighbouring decision</h3><ul class="sub">' + revs + '</ul>') if revs else ''}
-{('<h3>Left unresolved by</h3><ul class="sub">' + unr + '</ul>') if unr else ''}
-{('<h3>Ranked only under</h3><ul class="sub">' + mk + '</ul>') if mk else ''}</div>
+{('<h3>Reversed by one neighbouring decision</h3><ul class="sub" style="font-size:.8em">' + revs + '</ul>') if revs else ''}</div>
 <div><h3>Cannot claim</h3><ul>
 {"<li>a thermal ranking at HV-S0 (inside the measured uncertainty);</li>"
  if therm0 == "unresolved" else ""}
@@ -882,9 +1026,11 @@ resistance is the requirement on the direct-feed slide.</p>
 <li>any absolute solder life (response only — Darveaux);</li>
 <li>the 48 V waveform (results are scenario-conditioned);</li>
 <li>a value for Z2's direct-feed loop resistance (it is a requirement, R*);</li>
-<li>an electromigration-safe current density;</li>
+<li>an electromigration-safe current density, or a qualified attach;</li>
 <li>a commercial end-to-end speedup;</li>
-<li>any statement about which architecture a company uses or should use.</li></ul></div></div>""",
+<li>any statement about which architecture a company uses or should use.</li></ul>
+{('<h3>Left unresolved by</h3><ul class="sub" style="font-size:.8em">' + unr + '</ul>') if unr else ''}
+{('<h3>Ranked only under</h3><ul class="sub" style="font-size:.8em">' + mk + '</ul>') if mk else ''}</div></div>""",
       "Read the left column as the paper's claims, the right as its explicit non-claims.",
       "ordering.json statements · FINAL_PAPER_DECISION.md")
 
@@ -898,7 +1044,11 @@ resistance is the requirement on the direct-feed slide.</p>
            "scenarios;",
            "Z2 backside cooling as a co-designed architecture state;"]
     if "tsv" in moved:
-        fut.append("TSV density as a co-design variable: the HV-S0 loss ordering depends on it;")
+        fut.append("TSV density as a co-design variable: the HV-S0 package-internal loss "
+                   "ordering depends on it;")
+    if "attach_sparse" in moved:
+        fut.append("a qualified attach process of known density: the HV-S0 package-internal "
+                   "ranking depends on it;")
     fut.append("the Icepak conjugate-CFD check extended from one channel to the full cold "
                "plate;" if ice_done else
                "an Icepak conjugate-CFD check of the cold-plate correlation;")

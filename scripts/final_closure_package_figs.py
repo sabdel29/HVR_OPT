@@ -58,7 +58,8 @@ OUT = {"Z1": FIGS / "z1_package_cross_section.svg",
        "power_path": FIGS / "z1_z2_power_path_final.svg",
        "power_path_48": FIGS / "z1_z2_power_path_48v.svg",
        "power_path_1v": FIGS / "z1_z2_power_path_1v.svg",
-       "attach": FIGS / "z2_vr_attach_detail.svg"}
+       "attach": FIGS / "z2_vr_attach_detail.svg",
+       "attach_density": FIGS / "z2_attach_density.svg"}
 STAMP = "ILLUSTRATIVE — NOT TO SCALE"
 
 # ------------------------------------------------------------------ mapping (pixels only)
@@ -1540,109 +1541,235 @@ WIN_TSV_UM = 48.0
 
 
 def attach_detail_svg(spec) -> str:
-    """The Z2 VR-to-substrate attach, magnified. Pillar diameter, pitch and heights come
-    from the architecture spec (CLOSE_ANALOG literature geometry); the TSV diameter and
-    pitch from the spec's TSV field. Schematic in that the landing pads are drawn but not
-    resolved in the model (their spreading sits in the TSV two-end spreading term), and
-    only the top WIN_TSV_UM of the substrate-deep TSVs is shown."""
+    """The Z2 VR-to-substrate attach, magnified, with its plan-view lattice. Pillar diameter,
+    pitch and heights come from the architecture spec (CLOSE_ANALOG technology geometry);
+    the TSV diameter and pitch from the spec's TSV field; the rail counts from the real
+    finite lattice (vr_attach_density_study.json), never a stored count. The section cuts
+    one lattice row, so its pillars alternate VDD/GND as the checkerboard does; each lands
+    on its own pad and a two-net land-side RDL routes it to a TSV of its rail. Schematic in
+    that the pads and that RDL are drawn but not resolved in the model (their spreading sits
+    in the TSV two-end term), and only the top WIN_TSV_UM of the substrate-deep TSVs is
+    shown."""
     a = spec["architectures"]["Z2"]
     att = a.get("attach") or {}
     t = a["tsv"]
     if not att:
         raise ValueError("Z2 has no VR attach in the spec")
+    st = json.loads((R / "research/final_closure/vr_attach_density_study.json").read_text())
+    dn, sp = st["cases"]["dense"], st["cases"]["sparse"]
     d, pitch = float(att["d_um"]), float(att["pitch_um"])
+    if (dn["d_um"], dn["pitch_um"]) != (d, pitch):
+        raise ValueError("the attach study's dense case is not the production attach")
     h_cu, h_cap = float(att["h_cu_um"]), float(att["h_cap_um"])
     tsv_d, tsv_p = float(t["d_um"]), float(t["pitch_um"])
     lay = {L["name"]: L for L in a["layers"]}
     t_rdl = float(next(L["t_um"] for n, L in lay.items() if "land_side_attach_rdl" in n))
     t_sub = sum(float(L["t_um"]) for L in a["layers"] if "tsv_tile" in L["materials"])
     side = float(a["cells"]["side_mm"])
-    i_pillar = 1000.0 / a["cells"]["n"] / float(att["bumps_per_rail_per_cell"])
+    i_pillar = 1000.0 / a["cells"]["n"] / dn["n_vdd"]
     k = 6.0                                       # px per um, both axes
-    Wc, Hc = 1600, 900
+    Wc, Hc = 1600, 1080
     x0, win = 90.0, 2 * tsv_p                     # one VDD and one GND TSV
     X = (lambda um: x0 + um * k)
     out = [F.svg_open(Wc, Hc, "Z2 regulator-to-substrate attach",
-                      "Cu pillar + solder cap + underfill; 1 V supply and return only",
+                      "Cu pillar + solder cap + underfill; 1 V supply and return only; "
+                      "VDD/GND checkerboard",
                       attrs(data_spec_sha256=spec["sha256"], data_figure="vr-attach-detail",
-                            data_px_per_um=f"{k:g}", data_schematic="true")),
+                            data_px_per_um=f"{k:g}", data_schematic="true",
+                            data_n_vdd=dn["n_vdd"], data_n_gnd=dn["n_gnd"])),
            patterns()]
-    out.append(F.text(24, 42, "The electrical bridge: regulator → package substrate (Z2)", 26,
-                      weight="bold", halo=False))
-    out.append(F.text(24, 68, "Only the 1 V supply and its return cross here, about 1 kA in "
-                      "total; the 48 V input never does — it enters the regulator from below.",
-                      FS + 2, fill=F.Z2, weight="bold", halo=False))
-    out.append(stamp(24, 82, f"SCHEMATIC MAGNIFICATION — dimensions from the spec; "
-                     f"{WIN_TSV_UM:g} of the {t_sub:g} µm TSV shown; landing pads not resolved "
-                     "in the model", FS))
+    # the slide names the figure; the figure keeps the one sentence that matters
+    out.append(F.text(24, 36, "Only the 1 V supply and its return cross here, about 1 kA in "
+                      "total; the 48 V input never does.", FS + 8, fill=F.Z2, weight="bold",
+                      halo=False))
+    out.append(stamp(24, 52, f"SCHEMATIC MAGNIFICATION — dimensions from the spec; "
+                     f"{WIN_TSV_UM:g} of the {t_sub:g} µm TSV shown; pads and land-side RDL "
+                     "not resolved in the model", FS + 3))
+    out.append(stamp(24, 94, "CLOSE_ANALOG TECHNOLOGY GEOMETRY — Au et al., ECTC 2016; "
+                     "not this package", FS + 3, col=F.WARN))
     y_ind = 790.0
     y_rdl_bot = y_ind - 46
     y_rdl_top = y_rdl_bot - t_rdl * k
     y_cap_top = y_rdl_top - h_cap * k             # the solder cap wets the regulator RDL
-    y_cu_top = y_cap_top - h_cu * k               # the Cu pillar rises to the substrate pad
-    y_pad_top = y_cu_top - 4 * k                  # landing pad (schematic)
-    y_sub_top = y_pad_top - WIN_TSV_UM * k
+    y_cu_top = y_cap_top - h_cu * k               # the Cu pillar rises to its pad
+    y_pad_top = y_cu_top - 2 * k                  # per-pillar pad (schematic)
+    y_lsr_top = y_pad_top - 6 * k                 # two-net land-side RDL (schematic)
+    y_sub_top = y_lsr_top - WIN_TSV_UM * k
     out.append(F.rect(X(0), y_rdl_bot, win * k, y_ind - y_rdl_bot, F.MAT["inductor"], F.INK, 0.8))
     out.append(F.text(X(win / 2), y_rdl_bot + 29, "regulator: inductors + output capacitors",
-                      FS + 1, "middle", "bold", "#ffffff", halo=False))
+                      FS + 5, "middle", "bold", "#ffffff", halo=False))
     out.append(F.rect(X(0), y_rdl_top, win * k, y_rdl_bot - y_rdl_top, F.MAT["rdl"], F.INK, 0.8))
-    out.append(F.rect(X(0), y_cu_top, win * k, y_rdl_top - y_cu_top, F.MAT["fill"], F.INK, 0.6))
-    out.append(F.rect(X(0), y_sub_top, win * k, y_pad_top - y_sub_top, F.MAT["silicon"], F.INK,
+    out.append(F.rect(X(0), y_pad_top, win * k, y_rdl_top - y_pad_top, F.MAT["fill"], F.INK, 0.6))
+    out.append(F.rect(X(0), y_lsr_top, win * k, y_pad_top - y_lsr_top, F.MAT["rdl"], F.INK, 0.6,
+                      'fill-opacity="0.45"'))
+    out.append(F.rect(X(0), y_sub_top, win * k, y_lsr_top - y_sub_top, F.MAT["silicon"], F.INK,
                       0.8))
-    for i in range(2):
-        xc = (i + 0.5) * tsv_p
-        pol = "VDD" if i == 0 else "GND"
-        out.append(F.rect(X(xc - tsv_d / 2), y_sub_top, tsv_d * k, y_pad_top - y_sub_top,
+    tsv_x = {"VDD": 0.5 * tsv_p, "GND": 1.5 * tsv_p}
+    for pol, xc in tsv_x.items():
+        out.append(F.rect(X(xc - tsv_d / 2), y_sub_top, tsv_d * k, y_lsr_top - y_sub_top,
                           F.MAT["tsv"], F.INK, 0.6, attrs(data_tsv=pol)))
-        out.append(F.rect(X(xc - tsv_p / 2 + 2), y_pad_top, (tsv_p - 4) * k, y_cu_top - y_pad_top,
-                          F.MAT["rdl"], F.INK, 0.5, attrs(data_landing_pad=pol)))
-        out.append(F.text(X(xc), y_sub_top + 42, f"{pol} TSV", FS + 2, "middle", "bold",
+        out.append(F.text(X(xc), y_sub_top + 46, f"{pol} TSV", FS + 8, "middle", "bold",
                           "#ffffff", halo=False))
-        for j in (-1, 1):                        # 2 of the 2 x 2 pillars under each TSV
-            px_ = xc + j * pitch / 2
-            out.append(F.rect(X(px_ - d / 2), y_cu_top, d * k, h_cu * k, PILLAR, F.INK, 0.6,
-                              attrs(data_pillar=pol)))
-            out.append(F.rect(X(px_ - d / 2) - 3, y_cap_top, d * k + 6, h_cap * k,
-                              F.MAT["solder"], F.INK, 0.6, 'rx="8" ' + attrs(data_cap=pol)))
-            kk = "1v" if pol == "VDD" else "ret"
-            ya, yb = (y_rdl_top - 6, y_sub_top + 70) if pol == "VDD" else \
-                (y_sub_top + 70, y_rdl_top - 6)
-            out.append(arrow([(X(px_), ya), (X(px_), yb)], kk, 3.0))
+    # one lattice row: site j is VDD where (0 + j) is even, as the checkerboard rule
+    y_route = {"VDD": y_lsr_top + 2.0 * k, "GND": y_lsr_top + 4.0 * k}   # two RDL nets
+    for j in range(int(round(win / pitch))):
+        px_ = (j + 0.5) * pitch
+        pol = "VDD" if j % 2 == 0 else "GND"
+        col = F.I1V if pol == "VDD" else F.IRET
+        out.append(F.rect(X(px_ - d / 2 - 1), y_pad_top, (d + 2) * k, y_cu_top - y_pad_top,
+                          col, F.INK, 0.5, attrs(data_pad=pol)))
+        out.append(F.rect(X(px_ - d / 2), y_cu_top, d * k, h_cu * k, PILLAR, col, 2.6,
+                          attrs(data_pillar=pol) + (' stroke-dasharray="7,4"'
+                                                    if pol == "GND" else "")))
+        out.append(F.rect(X(px_ - d / 2) - 3, y_cap_top, d * k + 6, h_cap * k,
+                          F.MAT["solder"], col, 2.6, 'rx="8" ' + attrs(data_cap=pol)
+                          + (' stroke-dasharray="7,4"' if pol == "GND" else "")))
+        out.append(F.text(X(px_ - 0.2 * d), y_cu_top + h_cu * k / 2 + 7, pol, FS + 5, "middle",
+                          "bold", "#ffffff", halo=False))
+        xa, xt, yr = X(px_ + 0.25 * d), X(tsv_x[pol]), y_route[pol]
+        if pol == "VDD":           # up the pillar, along its RDL net, then up its TSV once
+            pts = [(xa, y_rdl_top - 6), (xa, yr), (xt, yr)]
+            if j == 0:
+                pts.append((xt, y_sub_top + 70))
+            kk = "1v"
+        else:
+            pts = ([(xt, y_sub_top + 70)] if j == 1 else []) + [(xt, yr), (xa, yr),
+                                                                (xa, y_rdl_top - 6)]
+            kk = "ret"
+        out.append(arrow(pts, kk, 3.0) if len(pts) > 2 or kk == "ret" else poly(pts, F.I1V, 3.0))
     xr = X(win) + 34
 
     def dim(y_a, y_b, txt, at=None):
         out.append(poly([(xr, y_a), (xr + 11, y_a)], F.INK, 1.0))
         out.append(poly([(xr, y_b), (xr + 11, y_b)], F.INK, 1.0))
         out.append(poly([(xr + 5.5, y_a), (xr + 5.5, y_b)], F.INK, 1.2))
-        lines = wrap(txt, Wc - xr - 42, FS + 1)
+        lines = wrap(txt, Wc - xr - 42, FS + 5)
         yc = (y_a + y_b) / 2 if at is None else at
         for j, ln in enumerate(lines):
-            out.append(F.text(xr + 21, yc + 5 + (j - (len(lines) - 1) / 2) * 18,
-                              ln, FS + 1, halo=False))
-    dim(y_sub_top, y_pad_top, f"Si package substrate: 1 V VDD and GND TSVs, Ø{tsv_d:g} µm at "
-        f"{tsv_p:g} µm pitch, {t['n_per_cell']} per cell", at=y_pad_top - 42)
-    dim(y_pad_top, y_cu_top, "TSV landing pads (schematic)")
+            out.append(F.text(xr + 21, yc + 7 + (j - (len(lines) - 1) / 2) * 24,
+                              ln, FS + 5, halo=False))
+    dim(y_sub_top, y_lsr_top, f"Si substrate: VDD + GND TSVs, Ø{tsv_d:g} µm at {tsv_p:g} µm, "
+        f"{t['n_per_cell']} per cell", at=y_lsr_top - 46)
+    dim(y_lsr_top, y_pad_top, "two-net land-side RDL (schematic)")
+    dim(y_pad_top, y_cu_top, "per-pillar pad (schematic)", at=y_cu_top + 4)
     dim(y_cu_top, y_cap_top, f"Cu pillar {h_cu:g} µm tall, Ø{d:g} µm, {pitch:g} µm pitch")
     dim(y_cap_top, y_rdl_top, f"solder cap {h_cap:g} µm; underfill between the pillars")
     dim(y_rdl_top, y_rdl_bot, f"regulator 1 V output / attach RDL, {t_rdl:g} µm")
-    facts = [f"{att.get('bumps_per_rail_per_cell')} pillars per rail in each {side:.2f} mm cell "
-             f"(VDD/GND checkerboard): about {round((tsv_p / pitch) ** 2):d} under every TSV",
-             f"1 kA / {a['cells']['n']} cells / {att.get('bumps_per_rail_per_cell')} ≈ "
-             f"{1e3 * i_pillar:.0f} mA per pillar; no current-density allowable is claimed",
-             f"geometry from Au et al., ECTC 2016 (Ø{d:g} µm Cu pillars at {pitch:g} µm pitch, "
-             f"{h_cap:g} µm cap): a CLOSE ANALOG, not this package",
-             f"height = the {att.get('h_total_um'):g} µm attach allowance of the clearance "
-             "budget; other heights and all-solder bumps are class-B cases"]
-    yf = 200.0
-    for j, ln in enumerate(facts):
-        for jj, l2 in enumerate(wrap(ln, Wc - xr - 60, FS + 1)):
-            out.append(F.text(xr + 24, yf + j * 48 + jj * 18, ("• " if jj == 0 else "   ") + l2,
-                              FS + 1, halo=False))
+    facts = [f"{dn['n_vdd']} VDD + {dn['n_gnd']} GND pillars per {side:.2f} mm cell "
+             f"({dn['n_per_axis']} × {dn['n_per_axis']} legal sites, checkerboard)",
+             f"≈ {1e3 * i_pillar:.1f} mA per pillar on average (1 kA / {a['cells']['n']} cells / "
+             f"{dn['n_vdd']}): an output, never checked against an allowable",
+             f"sparser published case (Ø{sp['d_um']:g} µm at {sp['pitch_um']:g} µm): "
+             f"{sp['n_vdd']} + {sp['n_gnd']} per cell"]
+    yf = 186.0
+    for ln in facts:
+        for jj, l2 in enumerate(wrap(ln, Wc - xr - 60, FS + 5)):
+            out.append(F.text(xr + 24, yf, ("• " if jj == 0 else "   ") + l2, FS + 5,
+                              halo=False))
+            yf += 24
+        yf += 12
+    # plan view: the top-left corner of one cell's lattice, the section row marked
+    kp, ncol, nrow = 2.0, 12, 2
+    xp, yp = x0, 892.0
+    out.append(F.text(xp, yp - 28, "Plan view, one cell's corner — checkerboard: site (i, j) "
+                      "is VDD if i + j is even; row A–A is the section", FS + 5, weight="bold",
+                      halo=False))
+    out.append(F.rect(xp, yp, ncol * pitch * kp, nrow * pitch * kp, F.MAT["fill"], F.INK, 0.6))
+    for i in range(nrow):
+        for j in range(ncol):
+            pol = "VDD" if (i + j) % 2 == 0 else "GND"
+            cx_, cy_ = xp + (j + 0.5) * pitch * kp, yp + (i + 0.5) * pitch * kp
+            dash = f' stroke-dasharray="4,3"' if pol == "GND" else ""
+            fill = "#ece4fb" if pol == "VDD" else "#e4e7eb"
+            out.append(f'<circle cx="{cx_:.2f}" cy="{cy_:.2f}" r="{d / 2 * kp:.2f}" '
+                       f'fill="{fill}" stroke="{F.I1V if pol == "VDD" else F.IRET}" '
+                       f'stroke-width="2"{dash} data-plan-site="{pol}"/>\n')
+            out.append(F.text(cx_, cy_ + 6, "V" if pol == "VDD" else "G", FS + 2, "middle",
+                              "bold", F.INK, halo=False))
+    ys, xe = yp + 0.5 * pitch * kp, xp + ncol * pitch * kp
+    out.append(poly([(xp - 14, ys), (xe + 14, ys)], F.MUTED, 1.4, dash="6,4"))
+    out.append(F.text(xp - 18, ys + 6, "A", FS + 3, "end", "bold", F.MUTED, halo=False))
+    out.append(F.text(xe + 18, ys + 6, "A", FS + 3, "start", "bold", F.MUTED, halo=False))
+    yb = yp + nrow * pitch * kp + 34
+    out.append(F.scale_bar(xp, yb, pitch * kp, f"{pitch:g} µm", FS + 1))
+    out.append(F.text(xp + pitch * kp + 18, yb + 6, f"nominal: {d:g} µm diameter / {pitch:g} µm "
+                      "pitch (plan at 1/3 of the section scale)", FS + 4, halo=False))
     lg = [("1v", None, "1 V supply (up the VDD pillars)"),
           ("ret", None, "1 V return (down the GND pillars)"),
-          ("fill", PILLAR, "Cu pillar"), ("fill", F.MAT["solder"], "solder cap"),
+          ("fill", PILLAR, "Cu pillar (VDD: solid, GND: dashed)"),
+          ("fill", F.MAT["solder"], "solder cap"),
           ("fill", F.MAT["fill"], "underfill"), ("fill", F.MAT["tsv"], "Cu TSV")]
-    out.append(legend_block(xr, 830, lg, 3, 270))
+    out.append(legend_block(xr, 952, lg, 2, 372, FS + 4))
+    out.append(F.svg_close())
+    return "".join(out)
+
+# =================================================================== attach density
+#: the plan-view window both lattices are drawn in, at ONE scale (um and px per um)
+DENSITY_WIN_UM, DENSITY_PX_PER_UM = 240.0, 1.75
+
+
+def attach_density_svg(spec) -> str:
+    """The two published attach densities side by side, in plan, over the same window at the
+    same scale, and what the density changes. Every number is the real-lattice study's
+    (vr_attach_density_study.json); the geometries are CLOSE_ANALOG technology geometries
+    with the production material and height held. Sized for a slide: the slide title names
+    it, so the figure carries none."""
+    st = json.loads((R / "research/final_closure/vr_attach_density_study.json").read_text())
+    dn, sp = st["cases"]["dense"], st["cases"]["sparse"]
+    W, kp = DENSITY_WIN_UM, DENSITY_PX_PER_UM
+    Wc, Hc = 1600, 692
+    out = [F.svg_open(Wc, Hc, "VR attach density: dense vs sparse published constructions",
+                      "plan view at one scale; real-lattice counts; production material held",
+                      attrs(data_figure="attach-density", data_spec_sha256=spec["sha256"],
+                            data_px_per_um=f"{kp:g}"))]
+    out.append(stamp(24, 8, "CLOSE_ANALOG TECHNOLOGY GEOMETRIES — production Cu pillar + "
+                     f"solder cap, {dn['h_total_um']:g} µm tall, in both; each window "
+                     f"{W:g} × {W:g} µm at one scale", FS + 3, col=F.WARN))
+
+    def patch(x0, y0, c, title, src):
+        out.append(F.text(x0, y0 - 44, title, FS + 12, weight="bold", halo=False))
+        out.append(F.text(x0, y0 - 14, src, FS + 4, fill=F.MUTED, halo=False))
+        out.append(F.rect(x0, y0, W * kp, W * kp, F.MAT["fill"], F.INK, 0.8))
+        p, d = c["pitch_um"], c["d_um"]
+        n = int(W // p)
+        off = (W - (n - 1) * p) / 2.0
+        for i in range(n):
+            for j in range(n):
+                pol = "VDD" if (i + j) % 2 == 0 else "GND"
+                cx_, cy_ = x0 + (off + j * p) * kp, y0 + (off + i * p) * kp
+                dash = ' stroke-dasharray="5,3"' if pol == "GND" else ""
+                out.append(f'<circle cx="{cx_:.2f}" cy="{cy_:.2f}" r="{d / 2 * kp:.2f}" '
+                           f'fill="{PILLAR}" stroke="{F.I1V if pol == "VDD" else F.IRET}" '
+                           f'stroke-width="2.6"{dash} data-site="{pol}"/>\n')
+        y1 = y0 + W * kp + 36
+        for k_, ln in enumerate((f"{d:g} µm at {p:g} µm pitch",
+                                 f"{c['n_vdd']} VDD + {c['n_gnd']} GND per cell",
+                                 f"metal {c['area_fraction']:.1%} of the footprint")):
+            out.append(F.text(x0 + W * kp / 2, y1 + 29 * k_, ln, FS + 8, "middle",
+                              "bold" if k_ == 1 else "normal", halo=False))
+    patch(42, 118, dn, "dense attach", "Au et al., ECTC 2016")
+    patch(498, 118, sp, "sparse attach", "Na et al., Electronics 2023")
+    out.append(F.scale_bar(1002, 628, dn["pitch_um"] * kp,
+                           f"{dn['pitch_um']:g} µm, both windows", FS + 1))
+    e_d, e_s = dn["electrical"], sp["electrical"]
+    rows = [("fewer bumps", "higher electrical resistance",
+             f"attach loss {e_d['P_attach_total_w']:.2f} → {e_s['P_attach_total_w']:.2f} W"),
+            ("fewer metal columns", "less heat conducted downward",
+             f"through-thickness k {dn['k_z_W_mK']:.1f} → {sp['k_z_W_mK']:.1f} W/m·K"),
+            ("a different metal fraction", "a different stiffness (bounded)",
+             f"stiffened bound {dn['mech_bound_B']['E_MPa'] / 1e3:.1f} → "
+             f"{sp['mech_bound_B']['E_MPa'] / 1e3:.1f} GPa")]
+    xr, y = 1000, 150
+    for cause, effect, num in rows:
+        out.append(F.text(xr, y, cause, FS + 12, weight="bold", halo=False))
+        out.append(F.arrow([(xr + 9, y + 14), (xr + 9, y + 58)], "ink", 2.6))
+        out.append(F.text(xr + 31, y + 46, effect, FS + 9, weight="bold", fill=F.Z2,
+                          halo=False))
+        out.append(F.text(xr + 31, y + 80, num, FS + 7, fill=F.INK, halo=False))
+        y += 160
+    out.append(F.text(24, Hc - 12, "VDD solid ring, GND dashed ring; site (i, j) is VDD if "
+                      "i + j is even. Counts are the legal sites of the real cell lattice.",
+                      FS + 2, fill=F.MUTED, halo=False))
     out.append(F.svg_close())
     return "".join(out)
 
@@ -1655,7 +1782,7 @@ def build_all(spec=None) -> dict:
             "pair": comparison_svg(spec), "exploded_svg": exploded_svg(spec),
             "cell": cell_zoom_svg(spec), "power_path": power_path_svg(spec),
             "power_path_48": power_path_svg(spec, "48"), "power_path_1v": power_path_svg(spec, "1v"),
-            "attach": attach_detail_svg(spec)}
+            "attach": attach_detail_svg(spec), "attach_density": attach_density_svg(spec)}
 
 
 def main():
@@ -1663,7 +1790,7 @@ def main():
     figs = build_all(spec)
     FIGS.mkdir(parents=True, exist_ok=True)
     for k in ("Z1", "Z2", "pair", "cell", "power_path", "power_path_48", "power_path_1v",
-              "attach"):
+              "attach", "attach_density"):
         OUT[k].write_text(figs[k])
         print("wrote", OUT[k].relative_to(R))
     png = render_png(figs["exploded_svg"], 1600)

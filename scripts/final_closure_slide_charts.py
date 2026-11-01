@@ -35,7 +35,8 @@ sys.path.insert(0, str(R / "scripts"))
 import figstyle as S                                                    # noqa: E402
 
 COL = {"Z1": S.Z1, "Z2": S.Z2}
-OBS = (("P_loss_w", "Electrical loss", "W"), ("T_max_C", "Peak temperature", "°C"),
+OBS = (("P_loss_package_internal_w", "Package-internal loss", "W"),
+       ("T_max_C", "Peak temperature", "°C"),
        ("die_warpage_pv_um", "Die warpage (peak-to-valley)", "µm"),
        ("du_c_um", "Critical-joint displacement driver", "µm"),
        ("d_eps_in_per_cycle", "Local inelastic strain per cycle", "–"))
@@ -71,7 +72,8 @@ def _fmt(v, k):
         return "n/a"
     if k == "d_eps_in_per_cycle":
         return f"{v * 1e3:.2f}×10⁻³"
-    return f"{v:.1f}" if k in ("P_loss_w", "T_max_C", "die_warpage_pv_um") else f"{v:.2f}"
+    return f"{v:.1f}" if k in ("P_loss_package_internal_w", "P_loss_w", "T_max_C",
+                               "die_warpage_pv_um") else f"{v:.2f}"
 
 
 def _verdict_text(o, s):
@@ -208,7 +210,11 @@ LABEL = {"tsv_bulk": "TSV field, bulk k", "tsv_tile_kz": "TSV tile k_z",
          "thermal_column_moose_Z1": "Thermal unit cell, Z1 (MOOSE)",
          "thermal_column_moose_Z2": "Thermal unit cell, Z2 (MOOSE)",
          "mech_bilayer_aedt": "Thermoelastic bilayer (AEDT)",
-         "cooling_icepak": "Cold-plate correlation (Icepak CFD)"}
+         "cooling_icepak": "Cold-plate correlation (Icepak CFD)",
+         "vr_attach_dense_kz": "Attach k_z, 15/30 µm",
+         "vr_attach_dense_kxy": "Attach k_xy, 15/30 µm",
+         "vr_attach_sparse_kz": "Attach k_z, 30/80 µm",
+         "vr_attach_sparse_kxy": "Attach k_xy, 30/80 µm"}
 
 
 SUP = str.maketrans("0123456789-", "⁰¹²³⁴⁵⁶⁷⁸⁹⁻")
@@ -235,11 +241,13 @@ def accuracy_runtime_split():
         return
     rows = [r for r in acc["rows"] if r.get("status") == "EXECUTED"
             and isinstance(r.get("error"), float) and r["stage"] in LABEL]
-    A = [r for r in rows if r["stage"].startswith(("tsv_", "rdl_tier", "cooling_"))]
+    A = [r for r in rows if r["stage"].startswith(("tsv_", "rdl_tier", "vr_attach_",
+                                                    "cooling_"))]
     B = [r for r in rows if r not in A]
-    fig, ax = plt.subplots(2, 2, figsize=(15.5, 7.4),
-                           gridspec_kw={"width_ratios": [1.15, 1], "hspace": 0.55,
-                                        "wspace": 0.55})
+    fig, ax = plt.subplots(2, 2, figsize=(15.5, 8.6),
+                           gridspec_kw={"width_ratios": [1.15, 1], "hspace": 0.5,
+                                        "wspace": 0.55,
+                                        "height_ratios": [max(len(A), 1), max(len(B), 1)]})
     for row, grp, title, log in ((0, A, "A · Closed-form / reduced model vs commercial "
                                   "reference (same problem)", True),
                                  (1, B, "B · Production solver vs reference FE solver "
@@ -571,10 +579,20 @@ def direct_feed_crossover():
     h, lab = axes[0].get_legend_handles_labels()
     fig.legend(h, lab, frameon=False, fontsize=11, loc="upper center", ncol=4,
                bbox_to_anchor=(0.5, -0.02))
-    fig.suptitle("Z2 keeps its electrical advantage only while the external 48 V feed loop "
-                 "stays below R* (swept, no value assumed; HV-S2 not drawn: Z1 is "
-                 "inadmissible there)", x=0.01, ha="left", fontsize=14.5, fontweight="bold",
-                 y=1.03)
+    fig.suptitle("Platform-inclusive: Z2 stays lower only while its external 48 V feed loop "
+                 "is below R* (swept, no value assumed; HV-S2 not drawn: Z1 is inadmissible "
+                 "there)", x=0.01, ha="left", fontsize=14.5, fontweight="bold", y=1.03)
+    c0 = sc.get("HV_S0") or {}
+    if c0.get("R_star_mohm"):
+        # the numbers the crossover is made of, at HV-S0 (direct_feed_crossover.json)
+        fig.text(0.01, -0.20,
+                 f"HV-S0 package-internal: Z1 {c0['P_Z1_internal_w']:.2f} W, Z2 "
+                 f"{c0['P_Z2_internal_w']:.2f} W; Z2 advantage with a lossless feed "
+                 f"{c0['advantage_at_zero_feed_w']:.2f} W.   I48,rms = {c0['I_48_rms_a']:.1f} A, "
+                 f"so each mΩ of loop costs {c0['P_feed_per_mohm_w']:.3f} W.   "
+                 f"R* = {c0['R_star_mohm']:.2f} mΩ, where the system efficiency of both is "
+                 f"{100 * c0['efficiency_Z2_at_R_star']:.2f} %.",
+                 ha="left", fontsize=12.5, color=S.INK)
     fig.subplots_adjust(wspace=0.32)
     save(fig, "direct_feed_crossover.svg", ["direct_feed_crossover.json"])
 

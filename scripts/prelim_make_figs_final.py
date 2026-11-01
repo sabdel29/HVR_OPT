@@ -77,14 +77,14 @@ def fig_ledger():
         ax.text(left + 1.5, yi, f"{left:.2f} W", va="center", fontsize=14,
                 fontweight="bold", color=C[a])
     ax.set_yticks([0, 1], ["Z2 backside", "Z1 embedded"])
-    ax.set_xlabel("electrical loss at the converged E–T state, HV-S0 (W)")
+    ax.set_xlabel("package-internal loss at the converged E–T state, HV-S0 (W)")
     ax.set_xlim(0, 175)
     ax.legend(ncol=4, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.32))
     save(fig, "final_ledger.svg")
 
 
 def fig_scenarios():
-    keys = [("P_loss_w", "electrical loss (W)"), ("T_max_C", "peak temperature (°C)"),
+    keys = [("P_loss_w", "package-internal loss (W)"), ("T_max_C", "peak temperature (°C)"),
             ("die_warpage_pv_um", "die warpage p-v (µm)"),
             ("du_c_um", "critical-joint driver Δu (µm)")]
     fin = J("final_results.json")

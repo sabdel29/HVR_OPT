@@ -1,6 +1,6 @@
 {
  "generator": "scripts/prelim_build_deck.py + prelim_deck_main.py",
- "n_main": 32,
+ "n_main": 33,
  "values": [
   {
    "slide": "A. Where does the 48 V go?",
@@ -284,6 +284,14 @@
    "source": "etm_Z2_HV_S0_h1.1_r21.json",
    "key": "external_feed.P_feed_per_mohm_w",
    "raw": 0.5720447479190338
+  },
+  {
+   "slide": "A. Where does the 48 V go?",
+   "label": "Rstar S0 arch",
+   "text": "1.77 m\u03a9",
+   "source": "direct_feed_crossover.json",
+   "key": "scenarios.HV_S0.R_star_mohm",
+   "raw": 1.7697883016262077
   },
   {
    "slide": "B. After conversion, where does the 1 V go?",
@@ -1034,8 +1042,8 @@
    "slide": "The bridge: backside regulator to substrate",
    "label": "n",
    "text": "3042",
-   "source": "z2_direct_feed_architecture.json",
-   "key": "vr_attach.bumps_per_rail_per_cell",
+   "source": "vr_attach_density_study.json",
+   "key": "cases.dense.n_vdd",
    "raw": 3042
   },
   {
@@ -1572,10 +1580,10 @@
   {
    "slide": "Cooling model vs Icepak (conjugate CFD)",
    "label": "corr rt",
-   "text": "12.07 \u00b5s (11.98 \u00b5s\u201312.08 \u00b5s)",
+   "text": "17.06 \u00b5s (15.74 \u00b5s\u201318.04 \u00b5s)",
    "source": "accuracy_speed_matrix.json",
    "key": "cooling_icepak.production_runtime_s",
-   "raw": 1.207030937075615e-05
+   "raw": 1.7064119689166545e-05
   },
   {
    "slide": "Global mechanics vs AEDT and the closed form",
@@ -1664,6 +1672,78 @@
    "source": "local_mesh_study.json",
    "key": "cases.Z2_HV_S1.U",
    "raw": 0.2931472619332411
+  },
+  {
+   "slide": "HV-S0 result (headline scenario)",
+   "label": "Z2 internal",
+   "text": "148.04 W",
+   "source": "control_results.json",
+   "key": "cases.Z2_HV_S0.P_loss_w",
+   "raw": 148.0379345672572
+  },
+  {
+   "slide": "HV-S0 result (headline scenario)",
+   "label": "Z1 internal",
+   "text": "149.06 W",
+   "source": "control_results.json",
+   "key": "cases.Z1_HV_S0.P_loss_w",
+   "raw": 149.05716508309735
+  },
+  {
+   "slide": "HV-S0 result (headline scenario)",
+   "label": "Rstar S0",
+   "text": "1.77 m\u03a9",
+   "source": "direct_feed_crossover.json",
+   "key": "scenarios.HV_S0.R_star_mohm",
+   "raw": 1.7697883016262077
+  },
+  {
+   "slide": "HV-S0 result (headline scenario)",
+   "label": "Rstar S0 strip",
+   "text": "1.77 m\u03a9",
+   "source": "direct_feed_crossover.json",
+   "key": "scenarios.HV_S0.R_star_mohm",
+   "raw": 1.7697883016262077
+  },
+  {
+   "slide": "HV-S0 result (headline scenario)",
+   "label": "W per mOhm S0",
+   "text": "0.572 W",
+   "source": "direct_feed_crossover.json",
+   "key": "scenarios.HV_S0.P_feed_per_mohm_w",
+   "raw": 0.5720497646132947
+  },
+  {
+   "slide": "The tiny connection that can change the architecture result",
+   "label": "attach dP etm",
+   "text": "0.66 W",
+   "source": "vr_attach_density_study.json",
+   "key": "cases.sparse.etm_S0.P_Z2_internal_w",
+   "raw": 148.71752425017675
+  },
+  {
+   "slide": "The tiny connection that can change the architecture result",
+   "label": "f star",
+   "text": "17.4 %",
+   "source": "classB_resolution.json",
+   "key": "attach_density_crossover.crossover.P_loss_package_internal_w.f_star",
+   "raw": 0.17350125663047195
+  },
+  {
+   "slide": "The tiny connection that can change the architecture result",
+   "label": "Rstar dense",
+   "text": "1.74 m\u03a9",
+   "source": "direct_feed_crossover.json",
+   "key": "scenarios.HV_S0.attach_density_R_star.dense.R_star_mohm",
+   "raw": 1.7413628528454843
+  },
+  {
+   "slide": "The tiny connection that can change the architecture result",
+   "label": "Rstar sparse",
+   "text": "0.58 m\u03a9",
+   "source": "direct_feed_crossover.json",
+   "key": "scenarios.HV_S0.attach_density_R_star.sparse.R_star_mohm",
+   "raw": 0.5829992046837381
   }
  ],
  "figures": [
@@ -1685,7 +1765,7 @@
   {
    "figure": "figs/z2_vr_attach_detail.svg",
    "slide": "The bridge: backside regulator to substrate",
-   "purpose": "VR-to-substrate attach: Cu pillars + solder caps landing under the VDD/GND TSVs"
+   "purpose": "VR-to-substrate attach: VDD/GND Cu pillars + solder caps on the checkerboard, routed to the VDD/GND TSVs"
   },
   {
    "figure": "figs/regulator_cell_zoom.svg",
@@ -1786,6 +1866,11 @@
    "figure": "figs/scenario_small_multiples.svg",
    "slide": "Appendix \u2014 Scenario robustness",
    "purpose": "small multiples across HV-S0/S1/S2 with scenario classes"
+  },
+  {
+   "figure": "figs/z2_attach_density.svg",
+   "slide": "The tiny connection that can change the architecture result",
+   "purpose": "dense vs sparse published attach in plan at one scale, and what density changes"
   },
   {
    "figure": "figs/accuracy_runtime_split.svg",

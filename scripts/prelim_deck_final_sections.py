@@ -352,7 +352,7 @@ def mechanics_validation(S):
     if mc.get("cases"):
         rows = []
         names = {"T_max_C": "T<sub>max</sub>", "die_warpage_pv_um": "die warpage",
-                 "du_c_um": "&Delta;u<sub>c</sub>", "P_loss_w": "loss"}
+                 "du_c_um": "&Delta;u<sub>c</sub>", "P_loss_w": "package-internal loss"}
         for arch, c in sorted(mc["cases"].items()):
             for chk, rel in (c.get("checks") or {}).items():
                 vals = [v for v in rel.values() if isinstance(v, (int, float))]
@@ -443,8 +443,8 @@ def final_results(S):
         return next(x[k] for x in fin if x["arch"] == a and x["scenario"] == s)
     S(f"""<h2>CURRENT physical result — HV-S0</h2>
 <div class="kpi">
-<div><div class="v" style="color:var(--z1)">{g('Z1','HV_S0','P_loss_w'):.1f} W</div><div class="l">Z1 loss</div></div>
-<div><div class="v" style="color:var(--z2)">{g('Z2','HV_S0','P_loss_w'):.1f} W</div><div class="l">Z2 loss</div></div>
+<div><div class="v" style="color:var(--z1)">{g('Z1','HV_S0','P_loss_w'):.1f} W</div><div class="l">Z1 internal loss</div></div>
+<div><div class="v" style="color:var(--z2)">{g('Z2','HV_S0','P_loss_w'):.1f} W</div><div class="l">Z2 internal loss</div></div>
 <div><div class="v" style="color:var(--z1)">{g('Z1','HV_S0','T_max_C'):.1f} °C</div><div class="l">Z1 T<sub>max</sub></div></div>
 <div><div class="v" style="color:var(--z2)">{g('Z2','HV_S0','T_max_C'):.1f} °C</div><div class="l">Z2 T<sub>max</sub></div></div></div>
 <div class="kpi" style="margin-top:.5em">
@@ -472,7 +472,9 @@ from an average current alone there is no finite RMS upper bound at all.
 The waveform is not derivable from the converter model, so every HV-side result is conditioned
 on one of them. """ + " ".join(c["statement"] for c in (J("ordering.json") or {}).get(
         "scenario_classes", {}).values() if c.get("inadmissible")) + """</p>""",
-      " ".join([say("P_loss_w", "Loss"), say("T_max_C", "Peak temperature"),
+      " ".join([say("P_loss_package_internal_w", "Package-internal loss"),
+                say("P_loss_platform_inclusive_w", "Platform-inclusive loss"),
+                say("T_max_C", "Peak temperature"),
                 say("die_warpage_pv_um", "Die warpage"), say("du_c_um", "Joint driver")]),
       "final_results.json · ordering.json")
     z1e, z2e = g("Z1", "HV_S0", "d_eps_in_per_cycle"), g("Z2", "HV_S0", "d_eps_in_per_cycle")
@@ -499,15 +501,20 @@ on one of them. """ + " ".join(c["statement"] for c in (J("ordering.json") or {}
         f"{plain.get(c, c.replace('_', ' '))} reverses the {' and '.join(sorted(v))} "
         f"ordering{'s' if len(v) > 1 else ''}" for c, v in mv.items()) or \
         "no class-B input reverses a mechanical ordering"
-    bullets = [say("P_loss_w", "Electrical loss"), say("T_max_C", "Peak temperature")]
+    bullets = [say("P_loss_package_internal_w", "Package-internal loss"),
+               say("P_loss_platform_inclusive_w", "Platform-inclusive loss"),
+               say("T_max_C", "Peak temperature")]
+    u2 = ((J("local_mesh_study.json") or {}).get("cases", {}).get("Z2_HV_S0") or {}).get("U")
+    local_rank = ((order.get("d_eps_in_per_cycle") or {}).get("per_scenario") or {}).get("HV_S0")
 
     S(f"""<h2>Architecture conclusion</h2>
 <div class="callout" style="font-size:1.0em">In the physically closed lineage at HV-S0, the
 direct-fed backside architecture (Z2) carries
-{g('Z2','HV_S0','du_c_um')/g('Z1','HV_S0','du_c_um'):.2f}&times; the joint displacement driver,
-{(z2e/z1e if z1e and z2e else float('nan')):.2f}&times; the local inelastic response and
+{g('Z2','HV_S0','du_c_um')/g('Z1','HV_S0','du_c_um'):.2f}&times; the joint displacement driver and
 {g('Z2','HV_S0','die_warpage_pv_um')/g('Z1','HV_S0','die_warpage_pv_um'):.1f}&times; the die warpage
-of Z1 — in its declared construction. No architecture wins unconditionally (class-B slide).</div>
+of Z1 — in its declared construction. {("The local inelastic response is not ranked: the "
+f"difference lies inside Z2's discretisation bound of {100 * u2:.0f} %.") if (u2 and local_rank
+== "unresolved") else ""} No architecture wins unconditionally (class-B slide).</div>
 <ul style="margin-top:.6em">
 <li><span class="chip hist">HISTORICAL</span> the frozen R3C pair showed the opposite — Z2 hotter but
 mechanically better. Physical closure reversed it.</li>

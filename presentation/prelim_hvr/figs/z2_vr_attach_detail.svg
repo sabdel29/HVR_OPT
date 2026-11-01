@@ -1,71 +1,138 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="'Source Sans 3', 'Segoe UI', Arial, Helvetica, sans-serif" data-spec-sha256="4729030cb06868e688c623a4dcc1e46cd8f10e9afd71b31ac6b9d1cdfade4704" data-figure="vr-attach-detail" data-px-per-um="6" data-schematic="true">
-<title>Z2 regulator-to-substrate attach</title><desc>Cu pillar + solder cap + underfill; 1 V supply and return only</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1080" viewBox="0 0 1600 1080" font-family="'Source Sans 3', 'Segoe UI', Arial, Helvetica, sans-serif" data-spec-sha256="4729030cb06868e688c623a4dcc1e46cd8f10e9afd71b31ac6b9d1cdfade4704" data-figure="vr-attach-detail" data-px-per-um="6" data-schematic="true" data-n-vdd="3042" data-n-gnd="3042">
+<title>Z2 regulator-to-substrate attach</title><desc>Cu pillar + solder cap + underfill; 1 V supply and return only; VDD/GND checkerboard</desc>
 <defs><marker id="a48" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e36209"/></marker><marker id="a1v" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8250df"/></marker><marker id="aret" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3d464f"/></marker><marker id="aink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#10151c"/></marker><marker id="amuted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5a6672"/></marker><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#5a6672" stroke-width="1"/></pattern></defs>
-<rect width="1600" height="900" fill="#ffffff"/>
+<rect width="1600" height="1080" fill="#ffffff"/>
 <defs><marker id="pk48" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#e36209"/></marker><marker id="pk1v" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#8250df"/></marker><marker id="pkret" viewBox="0 0 12 12" refX="10.2" refY="6" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#3d464f"/></marker><pattern id="tsvp" width="4" height="8" patternUnits="userSpaceOnUse"><rect width="4" height="8" fill="#9aa5b8"/><rect x="1" width="1.8" height="8" fill="#c4783c"/></pattern><pattern id="pillar" width="5" height="8" patternUnits="userSpaceOnUse"><rect width="5" height="8" fill="#efe6d2"/><rect x="1.4" y="0" width="2.2" height="8" fill="#b87333"/></pattern><pattern id="bump" width="6" height="8" patternUnits="userSpaceOnUse"><rect width="6" height="8" fill="#efe6d2"/><rect x="1.5" y="0" width="3" height="8" rx="1.2" fill="#b9bec6"/></pattern><pattern id="chan" width="14" height="28.0" patternUnits="userSpaceOnUse"><rect width="14" height="28.0" fill="#a9cdea"/><rect x="4" y="7" width="6" height="14.0" rx="2" fill="#ffffff" opacity="0.85"/></pattern></defs>
-<text x="24.00" y="42.00" font-size="26" text-anchor="start" font-weight="bold"  fill="#10151c">The electrical bridge: regulator → package substrate (Z2)</text>
-<text x="24.00" y="68.00" font-size="16" text-anchor="start" font-weight="bold"  fill="#d1442f">Only the 1 V supply and its return cross here, about 1 kA in total; the 48 V input never does — it enters the regulator from below.</text>
-<rect x="24.00" y="82.00" width="900.62" height="26.00" fill="#ffffff" stroke="#cf222e" stroke-width="1.6" />
-<text x="33.00" y="98.00" font-size="14" text-anchor="start" font-weight="bold"  fill="#cf222e">SCHEMATIC MAGNIFICATION — dimensions from the spec; 48 of the 300 µm TSV shown; landing pads not resolved in the model</text>
+<text x="24.00" y="36.00" font-size="22" text-anchor="start" font-weight="bold"  fill="#d1442f">Only the 1 V supply and its return cross here, about 1 kA in total; the 48 V input never does.</text>
+<rect x="24.00" y="52.00" width="1182.81" height="29.00" fill="#ffffff" stroke="#cf222e" stroke-width="1.6" />
+<text x="33.00" y="71.00" font-size="17" text-anchor="start" font-weight="bold"  fill="#cf222e">SCHEMATIC MAGNIFICATION — dimensions from the spec; 48 of the 300 µm TSV shown; pads and land-side RDL not resolved in the model</text>
+<rect x="24.00" y="94.00" width="742.36" height="29.00" fill="#ffffff" stroke="#bf8700" stroke-width="1.6" />
+<text x="33.00" y="113.00" font-size="17" text-anchor="start" font-weight="bold"  fill="#bf8700">CLOSE_ANALOG TECHNOLOGY GEOMETRY — Au et al., ECTC 2016; not this package</text>
 <rect x="90.00" y="744.00" width="720.00" height="46.00" fill="#8a6a48" stroke="#10151c" stroke-width="0.8" />
-<text x="450.00" y="773.00" font-size="15" text-anchor="middle" font-weight="bold"  fill="#ffffff">regulator: inductors + output capacitors</text>
+<text x="450.00" y="773.00" font-size="19" text-anchor="middle" font-weight="bold"  fill="#ffffff">regulator: inductors + output capacitors</text>
 <rect x="90.00" y="684.00" width="720.00" height="60.00" fill="#d9893f" stroke="#10151c" stroke-width="0.8" />
-<rect x="90.00" y="504.00" width="720.00" height="180.00" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" />
-<rect x="90.00" y="192.00" width="720.00" height="288.00" fill="#9aa5b8" stroke="#10151c" stroke-width="0.8" />
-<rect x="180.00" y="192.00" width="180.00" height="288.00" fill="#c4783c" stroke="#10151c" stroke-width="0.6" data-tsv="VDD"/>
-<rect x="102.00" y="480.00" width="336.00" height="24.00" fill="#d9893f" stroke="#10151c" stroke-width="0.5" data-landing-pad="VDD"/>
-<text x="270.00" y="234.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#ffffff">VDD TSV</text>
-<rect x="135.00" y="504.00" width="90.00" height="84.00" fill="#b87333" stroke="#10151c" stroke-width="0.6" data-pillar="VDD"/>
-<rect x="132.00" y="588.00" width="96.00" height="96.00" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" rx="8" data-cap="VDD"/>
-<polyline points="180.00,678.00 180.00,262.00" fill="none" stroke="#8250df" stroke-width="3.0" stroke-linejoin="round" marker-end="url(#pk1v)" />
-<rect x="315.00" y="504.00" width="90.00" height="84.00" fill="#b87333" stroke="#10151c" stroke-width="0.6" data-pillar="VDD"/>
-<rect x="312.00" y="588.00" width="96.00" height="96.00" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" rx="8" data-cap="VDD"/>
-<polyline points="360.00,678.00 360.00,262.00" fill="none" stroke="#8250df" stroke-width="3.0" stroke-linejoin="round" marker-end="url(#pk1v)" />
-<rect x="540.00" y="192.00" width="180.00" height="288.00" fill="#c4783c" stroke="#10151c" stroke-width="0.6" data-tsv="GND"/>
-<rect x="462.00" y="480.00" width="336.00" height="24.00" fill="#d9893f" stroke="#10151c" stroke-width="0.5" data-landing-pad="GND"/>
-<text x="630.00" y="234.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#ffffff">GND TSV</text>
-<rect x="495.00" y="504.00" width="90.00" height="84.00" fill="#b87333" stroke="#10151c" stroke-width="0.6" data-pillar="GND"/>
-<rect x="492.00" y="588.00" width="96.00" height="96.00" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" rx="8" data-cap="GND"/>
-<polyline points="540.00,262.00 540.00,678.00" fill="none" stroke="#3d464f" stroke-width="3.0" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" />
-<rect x="675.00" y="504.00" width="90.00" height="84.00" fill="#b87333" stroke="#10151c" stroke-width="0.6" data-pillar="GND"/>
-<rect x="672.00" y="588.00" width="96.00" height="96.00" fill="#b9bec6" stroke="#10151c" stroke-width="0.6" rx="8" data-cap="GND"/>
-<polyline points="720.00,262.00 720.00,678.00" fill="none" stroke="#3d464f" stroke-width="3.0" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" />
-<polyline points="844.00,192.00 855.00,192.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
-<polyline points="844.00,480.00 855.00,480.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
-<polyline points="849.50,192.00 849.50,480.00" fill="none" stroke="#10151c" stroke-width="1.2" stroke-linejoin="round" />
-<text x="865.00" y="443.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">Si package substrate: 1 V VDD and GND TSVs, Ø30 µm at 60 µm pitch, 1444 per cell</text>
-<polyline points="844.00,480.00 855.00,480.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
+<rect x="90.00" y="492.00" width="720.00" height="192.00" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" />
+<rect x="90.00" y="456.00" width="720.00" height="36.00" fill="#d9893f" stroke="#10151c" stroke-width="0.6" fill-opacity="0.45"/>
+<rect x="90.00" y="168.00" width="720.00" height="288.00" fill="#9aa5b8" stroke="#10151c" stroke-width="0.8" />
+<rect x="180.00" y="168.00" width="180.00" height="288.00" fill="#c4783c" stroke="#10151c" stroke-width="0.6" data-tsv="VDD"/>
+<text x="270.00" y="214.00" font-size="22" text-anchor="middle" font-weight="bold"  fill="#ffffff">VDD TSV</text>
+<rect x="540.00" y="168.00" width="180.00" height="288.00" fill="#c4783c" stroke="#10151c" stroke-width="0.6" data-tsv="GND"/>
+<text x="630.00" y="214.00" font-size="22" text-anchor="middle" font-weight="bold"  fill="#ffffff">GND TSV</text>
+<rect x="129.00" y="492.00" width="102.00" height="12.00" fill="#8250df" stroke="#10151c" stroke-width="0.5" data-pad="VDD"/>
+<rect x="135.00" y="504.00" width="90.00" height="84.00" fill="#b87333" stroke="#8250df" stroke-width="2.6" data-pillar="VDD"/>
+<rect x="132.00" y="588.00" width="96.00" height="96.00" fill="#b9bec6" stroke="#8250df" stroke-width="2.6" rx="8" data-cap="VDD"/>
+<text x="162.00" y="553.00" font-size="19" text-anchor="middle" font-weight="bold"  fill="#ffffff">VDD</text>
+<polyline points="202.50,678.00 202.50,468.00 270.00,468.00 270.00,238.00" fill="none" stroke="#8250df" stroke-width="3.0" stroke-linejoin="round" marker-end="url(#pk1v)" />
+<rect x="309.00" y="492.00" width="102.00" height="12.00" fill="#3d464f" stroke="#10151c" stroke-width="0.5" data-pad="GND"/>
+<rect x="315.00" y="504.00" width="90.00" height="84.00" fill="#b87333" stroke="#3d464f" stroke-width="2.6" data-pillar="GND" stroke-dasharray="7,4"/>
+<rect x="312.00" y="588.00" width="96.00" height="96.00" fill="#b9bec6" stroke="#3d464f" stroke-width="2.6" rx="8" data-cap="GND" stroke-dasharray="7,4"/>
+<text x="342.00" y="553.00" font-size="19" text-anchor="middle" font-weight="bold"  fill="#ffffff">GND</text>
+<polyline points="630.00,238.00 630.00,480.00 382.50,480.00 382.50,678.00" fill="none" stroke="#3d464f" stroke-width="3.0" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" />
+<rect x="489.00" y="492.00" width="102.00" height="12.00" fill="#8250df" stroke="#10151c" stroke-width="0.5" data-pad="VDD"/>
+<rect x="495.00" y="504.00" width="90.00" height="84.00" fill="#b87333" stroke="#8250df" stroke-width="2.6" data-pillar="VDD"/>
+<rect x="492.00" y="588.00" width="96.00" height="96.00" fill="#b9bec6" stroke="#8250df" stroke-width="2.6" rx="8" data-cap="VDD"/>
+<text x="522.00" y="553.00" font-size="19" text-anchor="middle" font-weight="bold"  fill="#ffffff">VDD</text>
+<polyline points="562.50,678.00 562.50,468.00 270.00,468.00" fill="none" stroke="#8250df" stroke-width="3.0" stroke-linejoin="round" marker-end="url(#pk1v)" />
+<rect x="669.00" y="492.00" width="102.00" height="12.00" fill="#3d464f" stroke="#10151c" stroke-width="0.5" data-pad="GND"/>
+<rect x="675.00" y="504.00" width="90.00" height="84.00" fill="#b87333" stroke="#3d464f" stroke-width="2.6" data-pillar="GND" stroke-dasharray="7,4"/>
+<rect x="672.00" y="588.00" width="96.00" height="96.00" fill="#b9bec6" stroke="#3d464f" stroke-width="2.6" rx="8" data-cap="GND" stroke-dasharray="7,4"/>
+<text x="702.00" y="553.00" font-size="19" text-anchor="middle" font-weight="bold"  fill="#ffffff">GND</text>
+<polyline points="630.00,480.00 742.50,480.00 742.50,678.00" fill="none" stroke="#3d464f" stroke-width="3.0" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" />
+<polyline points="844.00,168.00 855.00,168.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
+<polyline points="844.00,456.00 855.00,456.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
+<polyline points="849.50,168.00 849.50,456.00" fill="none" stroke="#10151c" stroke-width="1.2" stroke-linejoin="round" />
+<text x="865.00" y="417.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">Si substrate: VDD + GND TSVs, Ø30 µm at 60 µm, 1444 per cell</text>
+<polyline points="844.00,456.00 855.00,456.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
+<polyline points="844.00,492.00 855.00,492.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
+<polyline points="849.50,456.00 849.50,492.00" fill="none" stroke="#10151c" stroke-width="1.2" stroke-linejoin="round" />
+<text x="865.00" y="481.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">two-net land-side RDL (schematic)</text>
+<polyline points="844.00,492.00 855.00,492.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
 <polyline points="844.00,504.00 855.00,504.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
-<polyline points="849.50,480.00 849.50,504.00" fill="none" stroke="#10151c" stroke-width="1.2" stroke-linejoin="round" />
-<text x="865.00" y="497.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">TSV landing pads (schematic)</text>
+<polyline points="849.50,492.00 849.50,504.00" fill="none" stroke="#10151c" stroke-width="1.2" stroke-linejoin="round" />
+<text x="865.00" y="515.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">per-pillar pad (schematic)</text>
 <polyline points="844.00,504.00 855.00,504.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
 <polyline points="844.00,588.00 855.00,588.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
 <polyline points="849.50,504.00 849.50,588.00" fill="none" stroke="#10151c" stroke-width="1.2" stroke-linejoin="round" />
-<text x="865.00" y="551.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">Cu pillar 14 µm tall, Ø15 µm, 30 µm pitch</text>
+<text x="865.00" y="553.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">Cu pillar 14 µm tall, Ø15 µm, 30 µm pitch</text>
 <polyline points="844.00,588.00 855.00,588.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
 <polyline points="844.00,684.00 855.00,684.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
 <polyline points="849.50,588.00 849.50,684.00" fill="none" stroke="#10151c" stroke-width="1.2" stroke-linejoin="round" />
-<text x="865.00" y="641.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">solder cap 16 µm; underfill between the pillars</text>
+<text x="865.00" y="643.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">solder cap 16 µm; underfill between the pillars</text>
 <polyline points="844.00,684.00 855.00,684.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
 <polyline points="844.00,744.00 855.00,744.00" fill="none" stroke="#10151c" stroke-width="1.0" stroke-linejoin="round" />
 <polyline points="849.50,684.00 849.50,744.00" fill="none" stroke="#10151c" stroke-width="1.2" stroke-linejoin="round" />
-<text x="865.00" y="719.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">regulator 1 V output / attach RDL, 10 µm</text>
-<text x="868.00" y="200.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">• 3042 pillars per rail in each 2.37 mm cell (VDD/GND checkerboard): about 4 under every TSV</text>
-<text x="868.00" y="248.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">• 1 kA / 49 cells / 3042 ≈ 7 mA per pillar; no current-density allowable is claimed</text>
-<text x="868.00" y="296.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">• geometry from Au et al., ECTC 2016 (Ø15 µm Cu pillars at 30 µm pitch, 16 µm cap): a CLOSE</text>
-<text x="868.00" y="314.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">   ANALOG, not this package</text>
-<text x="868.00" y="344.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">• height = the 30 µm attach allowance of the clearance budget; other heights and all-solder bumps are</text>
-<text x="868.00" y="362.00" font-size="15" text-anchor="start" font-weight="normal"  fill="#10151c">   class-B cases</text>
-<polyline points="842.00,837.50 868.00,837.50" fill="none" stroke="#8250df" stroke-width="2.3" stroke-linejoin="round" marker-end="url(#pk1v)" />
-<text x="876.00" y="842.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">1 V supply (up the VDD pillars)</text>
-<polyline points="842.00,859.50 868.00,859.50" fill="none" stroke="#3d464f" stroke-width="2.3" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" />
-<text x="876.00" y="864.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">1 V return (down the GND pillars)</text>
-<rect x="1114.00" y="830.00" width="15.00" height="15.00" fill="#b87333" stroke="#10151c" stroke-width="0.8" />
-<text x="1137.00" y="842.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">Cu pillar</text>
-<rect x="1114.00" y="852.00" width="15.00" height="15.00" fill="#b9bec6" stroke="#10151c" stroke-width="0.8" />
-<text x="1137.00" y="864.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">solder cap</text>
-<rect x="1384.00" y="830.00" width="15.00" height="15.00" fill="#efe6d2" stroke="#10151c" stroke-width="0.8" />
-<text x="1407.00" y="842.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">underfill</text>
-<rect x="1384.00" y="852.00" width="15.00" height="15.00" fill="#c4783c" stroke="#10151c" stroke-width="0.8" />
-<text x="1407.00" y="864.30" font-size="14" text-anchor="start" font-weight="normal"  fill="#10151c">Cu TSV</text>
+<text x="865.00" y="721.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">regulator 1 V output / attach RDL, 10 µm</text>
+<text x="868.00" y="186.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">• 3042 VDD + 3042 GND pillars per 2.37 mm cell (78 × 78 legal sites,</text>
+<text x="868.00" y="210.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">   checkerboard)</text>
+<text x="868.00" y="246.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">• ≈ 6.7 mA per pillar on average (1 kA / 49 cells / 3042): an output, never checked</text>
+<text x="868.00" y="270.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">   against an allowable</text>
+<text x="868.00" y="306.00" font-size="19" text-anchor="start" font-weight="normal"  fill="#10151c">• sparser published case (Ø30 µm at 80 µm): 421 + 420 per cell</text>
+<text x="90.00" y="864.00" font-size="19" text-anchor="start" font-weight="bold"  fill="#10151c">Plan view, one cell&#x27;s corner — checkerboard: site (i, j) is VDD if i + j is even; row A–A is the section</text>
+<rect x="90.00" y="892.00" width="720.00" height="120.00" fill="#efe6d2" stroke="#10151c" stroke-width="0.6" />
+<circle cx="120.00" cy="922.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="120.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="180.00" cy="922.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="180.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="240.00" cy="922.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="240.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="300.00" cy="922.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="300.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="360.00" cy="922.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="360.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="420.00" cy="922.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="420.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="480.00" cy="922.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="480.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="540.00" cy="922.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="540.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="600.00" cy="922.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="600.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="660.00" cy="922.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="660.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="720.00" cy="922.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="720.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="780.00" cy="922.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="780.00" y="928.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="120.00" cy="982.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="120.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="180.00" cy="982.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="180.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="240.00" cy="982.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="240.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="300.00" cy="982.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="300.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="360.00" cy="982.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="360.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="420.00" cy="982.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="420.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="480.00" cy="982.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="480.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="540.00" cy="982.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="540.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="600.00" cy="982.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="600.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="660.00" cy="982.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="660.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<circle cx="720.00" cy="982.00" r="15.00" fill="#e4e7eb" stroke="#3d464f" stroke-width="2" stroke-dasharray="4,3" data-plan-site="GND"/>
+<text x="720.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">G</text>
+<circle cx="780.00" cy="982.00" r="15.00" fill="#ece4fb" stroke="#8250df" stroke-width="2" data-plan-site="VDD"/>
+<text x="780.00" y="988.00" font-size="16" text-anchor="middle" font-weight="bold"  fill="#10151c">V</text>
+<polyline points="76.00,922.00 824.00,922.00" fill="none" stroke="#5a6672" stroke-width="1.4" stroke-dasharray="6,4" stroke-linejoin="round" />
+<text x="72.00" y="928.00" font-size="17" text-anchor="end" font-weight="bold"  fill="#5a6672">A</text>
+<text x="828.00" y="928.00" font-size="17" text-anchor="start" font-weight="bold"  fill="#5a6672">A</text>
+<line x1="90.00" y1="1046.00" x2="150.00" y2="1046.00" stroke="#10151c" stroke-width="2"/><line x1="90.00" y1="1042.00" x2="90.00" y2="1050.00" stroke="#10151c"/><line x1="150.00" y1="1042.00" x2="150.00" y2="1050.00" stroke="#10151c"/>
+<text x="120.00" y="1039.00" font-size="15" text-anchor="middle" font-weight="normal"  fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linejoin="round">30 µm</text><text x="120.00" y="1039.00" font-size="15" text-anchor="middle" font-weight="normal"  fill="#10151c">30 µm</text>
+<text x="168.00" y="1052.00" font-size="18" text-anchor="start" font-weight="normal"  fill="#10151c">nominal: 15 µm diameter / 30 µm pitch (plan at 1/3 of the section scale)</text>
+<polyline points="842.00,959.50 868.00,959.50" fill="none" stroke="#8250df" stroke-width="2.3" stroke-linejoin="round" marker-end="url(#pk1v)" />
+<text x="876.00" y="964.30" font-size="18" text-anchor="start" font-weight="normal"  fill="#10151c">1 V supply (up the VDD pillars)</text>
+<polyline points="842.00,981.50 868.00,981.50" fill="none" stroke="#3d464f" stroke-width="2.3" stroke-dasharray="7,4" stroke-linejoin="round" marker-end="url(#pkret)" />
+<text x="876.00" y="986.30" font-size="18" text-anchor="start" font-weight="normal"  fill="#10151c">1 V return (down the GND pillars)</text>
+<rect x="844.00" y="996.00" width="15.00" height="15.00" fill="#b87333" stroke="#10151c" stroke-width="0.8" />
+<text x="867.00" y="1008.30" font-size="18" text-anchor="start" font-weight="normal"  fill="#10151c">Cu pillar (VDD: solid, GND: dashed)</text>
+<rect x="1216.00" y="952.00" width="15.00" height="15.00" fill="#b9bec6" stroke="#10151c" stroke-width="0.8" />
+<text x="1239.00" y="964.30" font-size="18" text-anchor="start" font-weight="normal"  fill="#10151c">solder cap</text>
+<rect x="1216.00" y="974.00" width="15.00" height="15.00" fill="#efe6d2" stroke="#10151c" stroke-width="0.8" />
+<text x="1239.00" y="986.30" font-size="18" text-anchor="start" font-weight="normal"  fill="#10151c">underfill</text>
+<rect x="1216.00" y="996.00" width="15.00" height="15.00" fill="#c4783c" stroke="#10151c" stroke-width="0.8" />
+<text x="1239.00" y="1008.30" font-size="18" text-anchor="start" font-weight="normal"  fill="#10151c">Cu TSV</text>
 </svg>
