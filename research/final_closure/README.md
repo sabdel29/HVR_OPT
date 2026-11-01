@@ -11,7 +11,7 @@ derived from them is rebuilt by `scripts/final_closure_rebuild.sh`.
 | `etm_<arch>_<scen>_h1.1[_rXZ].json` | `scripts/final_closure_physical_etm.py` | one E-T fixed point (+ mechanics, all-site joint search) per case and mesh level; `_r21` is production, `_r11` (no suffix), `_r12`, `_r31` are the nested study, `_h0.8` the re-graded (not nested) mesh; arch `Z2BF` is the BGA-fed control |
 | `direct_feed_crossover.json` | `scripts/final_closure_direct_feed.py` | the swept external feed loop of the direct-fed Z2 and the crossover R* per scenario |
 | `control_results.json` | `scripts/final_closure_results.py` | the controlled BGA-fed Z1 vs Z2 experiment |
-| `sensitivity/etm_<arch>_HV_S0__<variant>.json`, `classB_resolution.{csv,json}`, `classB_sensitivity_rows.csv` | `scripts/final_closure_sensitivity.py`, `scripts/final_closure_classB.py` | class-B variants on the production mesh and their verdicts |
+| `sensitivity/etm_<arch>_HV_S0__<variant>.json`, `classB_resolution.{csv,json}`, `classB_sensitivity_rows.csv` | `scripts/final_closure_sensitivity.py`, `scripts/final_closure_classB.py` | class-B variants on the production mesh and their verdicts; `attach_density_crossover` holds the ENGINEERING_SENSITIVITY attach-pitch sweep and its crossover |
 | `local_mesh_policy.json`, `local_time_study.json`, `local_cycle_study.json`, `local_mesh_study.json` | `scripts/final_closure_local_mesh.py` | the declared local solder mesh family (amendment 4 for the corrected lineage) |
 | `tool_provenance.json` | `scripts/final_closure_provenance.py` (consistency fix and guard) | every tool, its lane, version and evidence |
 | `reference_cooling_icepak.json`, `reference_artifacts/icepak/` | `scripts/reference_tools/icepak_cooling_benchmark.py`, `preserve_icepak_artifact.py` | the matched Icepak conjugate CFD and its preserved AEDT projects |
@@ -27,7 +27,11 @@ derived from them is rebuilt by `scripts/final_closure_rebuild.sh`.
 | `final_results.json`, `electrical_ledger.*`, `energy_audit.json`, `mesh_convergence.json`, `coupling_checks.json`, `ordering.json`, `FINAL_PAPER_DECISION.md` | `scripts/final_closure_results.py` | the frozen lineage, its checks and the paper decision |
 | `paper_gate_classification.{csv,json}` | `scripts/final_closure_gate_classes.py` | every OPEN gate in class A, B or C |
 | `literature_rules.{json,md}` | `scripts/final_closure_literature_rules.py` | DIRECT / CLOSE_ANALOG / CONTEXT_ONLY / NOT_HELD |
-| `FINAL_PAPER_SCOPE.md` | hand-written, frozen before the manuscript changed; dated amendments only | what the paper may and may not claim |
+| `FINAL_PAPER_SCOPE.md` | hand-written; the active (direct-fed) architecture only; dated amendments | what the paper may and may not claim |
+| `archive/FINAL_PAPER_SCOPE_PRE_DIRECT_FEED.md` | archived unchanged (`git log --follow`) | the scope frozen before the final lineage, whose primary Z2 was BGA-fed; provenance only |
+| `vr_attach_density_study.{json,csv}` | `scripts/final_closure_vr_attach.py` | geom.vr_attach_density: real finite attach lattices of the two published densities and the engineering pitches (counts, metal fraction, per-bump current, resistance, loss, thermal and mechanical cards) |
+| `reference_attach_rve.json` | `scripts/reference_tools/aedt_attach_rve.py` | explicit AEDT Mechanical unit cells of the attach (dense and sparse, k_z and k_xy) against the homogenised card |
+| `final_test_report.txt` | hand-written policy | the final test result is NOT in the tree: `scripts/final_closure_test_report.py --note` runs the suite on the exact pushed commit and attaches the report as a git note (`refs/notes/test-reports`) |
 | `superseded_pre_rve/`, `superseded_base_mesh/` | archived | results replaced by the RVE tensor and by the production mesh; provenance only |
 | `superseded_bga_fed_z2/` | archived | the previous lineage, whose primary Z2 was BGA-fed, attach-less and sidewall-filled; provenance only |
 | `superseded_pre_tile_temperature/` | archived | the first direct-fed HV-S0 cases and crossover, computed before the E-T coupling fix (DEFECT #68), with the diagnostic that found it; provenance only |
