@@ -1,6 +1,6 @@
 # PDF Build Log --- ETM_DVPD_FULL_TECHNICAL_REPORT
 
-Built 2026-09-23 16:50 by `scripts/phase0dr/build_pdf.py`.
+Built (SOURCE_DATE_EPOCH 1793000000, 2026-10-26 07:33 UTC) by `scripts/phase0dr/build_pdf.py`.
 Verification: **PASSED** (89/89 checks).
 
 ## Command
@@ -142,7 +142,7 @@ Title:          Electrothermal–Mechanical Co-Design of Distributed Vertical Po
 Author:         HVR_Journal_System_Level / ETM-DVPD — HiPerCAS Lab, University of Illinois Chicago
 Creator:        LaTeX with hyperref package
 Producer:       XeTeX 0.99999
-CreationDate:   Wed Sep 23 16:50:47 2026 CDT
+CreationDate:   Mon Oct 26 02:33:20 2026 CDT
 Tagged:         no
 UserProperties: no
 Suspects:       no
@@ -152,7 +152,7 @@ Pages:          173
 Encrypted:      no
 Page size:      612 x 792 pts (letter)
 Page rot:       0
-File size:      10422292 bytes
+File size:      10422286 bytes
 Optimized:      no
 PDF version:    1.5
 ```

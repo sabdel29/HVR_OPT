@@ -77,7 +77,12 @@ def main():
                                           & {"P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return",
                                              "P_BGA_supply", "P_BGA_return"})
                 if r.get("hv_feed") == "DIRECT_FEED" else [],
-                "P_loss_w": r["P_loss_w"], "I_48_avg_a": r["i_hv_avg_a"],
+                # the legacy name stays for compatibility; the explicit fields say which
+                # boundary the number belongs to (LOSS_BOUNDARY)
+                "P_loss_w": r["P_loss_w"], "P_loss_package_internal_w": r["P_loss_w"],
+                "loss_boundary": LOSS_BOUNDARY[arch],
+                **platform_fields(arch, scen, r),
+                "I_48_avg_a": r["i_hv_avg_a"],
                 "T_max_C": th["T_max_C"], "T_die_mean_C": h["T_die_mean_C"],
                 "T_conv_mean_C": h["T_conv_C"],
                 "die_warpage_pv_um": mm["die_warpage_pv_um"],
@@ -384,9 +389,19 @@ def local_production(arch, scen, resp_L0):
             "U": None}
 
 
-OBS = (("P_loss_w", "loss"), ("T_max_C", "peak temperature"),
+OBS = (("P_loss_package_internal_w", "package-internal loss"), ("T_max_C", "peak temperature"),
        ("die_warpage_pv_um", "die warpage"), ("du_c_um", "joint displacement driver"),
        ("d_eps_in_per_cycle", "local inelastic response"))
+#: the case files carry the package-internal loss under its legacy name
+LEGACY_KEY = {"P_loss_package_internal_w": "P_loss_w"}
+#: where each architecture's loss is counted from (the two boundaries the paper uses)
+LOSS_BOUNDARY = {
+    "Z1": ("package-internal = platform-inclusive: from the BGA pads on the PCB, where the board "
+           "48 V node common to both architectures meets the package"),
+    "Z2": ("package-internal: from the backside regulator's 48 V input terminals; the external "
+           "direct-feed loop R_Z2_direct_feed_loop is OUTSIDE this boundary, so the platform-"
+           "inclusive loss is a function of that unsourced resistance (direct_feed_crossover)"),
+    "Z2BF": "package-internal from the BGA pads (BGA-fed control)"}
 SCEN_LABEL = {"HV_S0": "HV-S0", "HV_S1": "HV-S1", "HV_S2": "HV-S2"}
 
 
@@ -422,6 +437,67 @@ def scenario_classes(final):
     return out
 
 
+def platform_fields(arch, scen, r):
+    """Platform-inclusive loss, only at NAMED feed resistances: Z1's boundary already starts
+    at the common board node; Z2's depends on R_Z2_direct_feed_loop, so it is given at
+    R = 0, 1 mOhm and R* (where it equals Z1's), never as one scalar."""
+    if arch != "Z2" or r.get("hv_feed") != "DIRECT_FEED":
+        return {"P_loss_platform_inclusive_w": r["P_loss_w"]}
+    import final_closure_direct_feed as DF
+    temps = DF.converged_temps(r)
+    c = ((J("direct_feed_crossover.json") or {}).get("scenarios") or {}).get(scen) or {}
+    out = {"P_loss_platform_inclusive_w": None,
+           "P_loss_platform_inclusive_note": "a function of R_Z2_direct_feed_loop; see the "
+                                             "named points"}
+    for lab, r_ohm in (("Rfeed_0", 0.0), ("Rfeed_1mohm", 1e-3)):
+        pt = DF.platform_point(scen, temps, r_ohm)
+        out[f"P_loss_platform_inclusive_at_{lab}_w"] = pt["P_total_w"]
+    if c.get("R_star_mohm") and not c.get("Z1_operating_point_inadmissible"):
+        out["P_loss_platform_inclusive_at_Rstar_w"] = c["P_Z1_w"]
+        out["R_star_mohm"] = c["R_star_mohm"]
+    return out
+
+
+def platform_cell(c):
+    """The platform-inclusive verdict of one scenario: conditional on R_Z2_direct_feed_loop
+    (direct_feed_crossover.json), never a single Z1/Z2 winner while that resistance is
+    unknown."""
+    if c.get("Z1_operating_point_inadmissible"):
+        return "not rankable"
+    if c.get("R_star_mohm"):
+        return f"conditional: Z2 lower only below R* = {c['R_star_mohm']:.3g} mOhm"
+    return "Z1 lower for any feed resistance"
+
+
+def platform_ordering(internal, sc):
+    cx = (J("direct_feed_crossover.json") or {}).get("scenarios", {})
+    per = {s: platform_cell(c) for s, c in cx.items()}
+    parts = []
+    for s, c in cx.items():
+        lab = SCEN_LABEL.get(s, s)
+        if c.get("Z1_operating_point_inadmissible"):
+            parts.append(f"{lab} is not rankable (the Z1 operating point is inadmissible)")
+        elif c.get("R_star_mohm"):
+            v = internal["per_scenario"].get(s)
+            parts.append(f"in {lab} Z2 has the lower platform-inclusive loss only while the "
+                         f"complete direct-feed loop stays below R* = {c['R_star_mohm']:.3g} "
+                         f"mOhm, and Z1 above it" + (" (at zero feed the package-internal "
+                                                     "difference is itself within the "
+                                                     "uncertainty)" if v == "unresolved" else ""))
+        else:
+            parts.append(f"in {lab} Z1 has the lower platform-inclusive loss for any feed "
+                         "resistance")
+    return {"per_scenario": per, "favoured": [], "favoured_where_resolved": None,
+            "robust_across_scenarios": False, "conditional_on": "R_Z2_direct_feed_loop",
+            "R_star_mohm": {s: c.get("R_star_mohm") for s, c in cx.items()},
+            "loss_boundary": "platform_inclusive",
+            "statement": ("The platform-inclusive loss has no unconditional winner: "
+                          + "; ".join(parts) + ". No value of that loop resistance is known, "
+                          "so no platform-level ranking is claimed.") if parts else
+            "No direct-feed crossover is available.",
+            "unresolved": [], "not_rankable": [s for s, v in per.items() if v == "not rankable"]}
+
+
 def ordering(final, mc):
     """THE single source of every Z1/Z2 ordering claim. Per observable and scenario the
     verdict is 'Z1 lower', 'Z2 lower', 'unresolved' (gap within twice the measured
@@ -438,17 +514,19 @@ def ordering(final, mc):
     out = {}
     for key, name in OBS:
         mesh = None
-        if key in MESH_KEYS and mc.get("cases"):
-            mesh = max([(c["checks"][t].get(key) or 0.0) for c in mc["cases"].values()
+        mk = LEGACY_KEY.get(key, key)
+        if mk in MESH_KEYS and mc.get("cases"):
+            mesh = max([(c["checks"][t].get(mk) or 0.0) for c in mc["cases"].values()
                         for t in c["checks"]]
-                       + [c.get("uncertainty_bound_rel", {}).get(key, 0.0)
+                       + [c.get("uncertainty_bound_rel", {}).get(mk, 0.0)
                           for c in mc["cases"].values()])
         per, gaps, unc, why = {}, {}, {}, {}
         for s in SCEN:
             a, b = rows.get(("Z1", s)), rows.get(("Z2", s))
             if not (a and b):
                 continue
-            va, vb = a[key], b[key]
+            va = a.get(key, a.get(LEGACY_KEY.get(key, key)))
+            vb = b.get(key, b.get(LEGACY_KEY.get(key, key)))
             melt = [x["arch"] for x in (a, b) if x.get("T_joint_at_or_above_solder_solidus")]
             if melt or va is None or vb is None:
                 per[s] = "not rankable"
@@ -481,7 +559,10 @@ def ordering(final, mc):
              "not_rankable": [k for k, v in per.items() if v == "not rankable"],
              "hv_s0_within_mesh_uncertainty": per.get("HV_S0") == "unresolved"}
         o["statement"] = _statement(key, name, o, rows)
+        o["loss_boundary"] = ("package_internal" if key == "P_loss_package_internal_w"
+                              else None)
         out[key] = o
+    out["P_loss_platform_inclusive_w"] = platform_ordering(out["P_loss_package_internal_w"], sc)
     return {"orderings": out, "scenario_classes": sc,
             "rule": "an ordering is claimed in a scenario only where the Z1/Z2 gap exceeds "
                     "twice the measured discretisation uncertainty of that observable; a "
@@ -568,11 +649,13 @@ def write_decision(final, audit_pass):
                      f"substrate: {x.get('crosses_substrate')}; conversion "
                      f"{x.get('conversion')}. Path: " + " -> ".join(x.get("power_path", [])))
     va = spec.get("vr_attach") or {}
+    att_n = lambda k: (((J("vr_attach_density_study.json") or {}).get("cases") or {})
+                       .get("dense") or {}).get(k)
     sw = spec.get("sidewall") or {}
     lines += [f"- Z2 VR-to-substrate attach: {va.get('technology')}, {va.get('h_total_um')} um "
               f"({va.get('h_cu_um')} Cu + {va.get('h_cap_um')} cap), {va.get('d_um')} um at "
-              f"{va.get('pitch_um')} um pitch, {va.get('bumps_per_rail_per_cell')} bumps/rail/cell "
-              "(CLOSE_ANALOG geometry); carries 1 V only.",
+              f"{va.get('pitch_um')} um pitch, {att_n('n_vdd')} VDD + {att_n('n_gnd')} GND "
+              "bumps/cell on the real lattice (CLOSE_ANALOG geometry); carries 1 V only.",
               f"- Z2 sidewall: {sw.get('clearance_mm')} mm clearance {sw.get('clearance_content')} "
               f"between the {sw.get('cell_grid_bbox_mm')} mm cell grid and the "
               f"{sw.get('cutout_mm')} mm opening ({sw.get('defect_resolved')} resolved).",
@@ -612,14 +695,14 @@ def write_decision(final, audit_pass):
                   ctl["statement"], ""]
         _fmt = lambda v, d: "n/a" if v is None else f"{v:.{d}f}"        # noqa: E731
         for k, c in ctl["cases"].items():
-            lines.append(f"- {k} ({c.get('architecture_variant')}): P_loss {c['P_loss_w']:.3f} W, "
+            lines.append(f"- {k} ({c.get('architecture_variant')}): package-internal loss {c['P_loss_w']:.3f} W, "
                          f"T_max {c['T_max_C']:.2f} C, warpage "
                          f"{_fmt(c.get('die_warpage_pv_um'), 2)} um, du_c {_fmt(c.get('du_c_um'), 4)} um")
         if "direct_feed_minus_control_w" in ctl:
             lines.append(f"- direct feed minus BGA-fed control: "
                          f"{ctl['direct_feed_minus_control_w']:+.3f} W (package-internal)")
         lines.append("")
-    lines += ["| arch | scenario | P_loss (W) | T_max (C) | die warp (um) | du_c (um) | "
+    lines += ["| arch | scenario | package-internal loss (W) | T_max (C) | die warp (um) | du_c (um) | "
               "T_joint (C) | d_eps_in / cycle |", "|---|---|---|---|---|---|---|---|"]
     for f in final:
         de = f["d_eps_in_per_cycle"]
@@ -634,13 +717,16 @@ def write_decision(final, audit_pass):
         lines.append(f"- **{s_}** ({c['class']}): {c['statement']}")
     lines += ["", "## Architecture ordering per scenario", "",
               "Rendered from `ordering.json`, the single source of every ordering claim.", "",
-              "| scenario | loss | T_max | die warpage | joint driver | local response |",
-              "|---|---|---|---|---|---|"]
+              "| scenario | package-internal loss | platform-inclusive loss | T_max | die warpage "
+              "| joint driver | local response |",
+              "|---|---|---|---|---|---|---|"]
+    cols = [OBS[0][0], "P_loss_platform_inclusive_w"] + [k for k, _ in OBS[1:]]
     for s_ in SCEN:
-        cells = [(od.get(k) or {}).get("per_scenario", {}).get(s_, "n/a") for k, _ in OBS]
+        cells = [(od.get(k) or {}).get("per_scenario", {}).get(s_, "n/a") for k in cols]
         lines.append(f"| {s_} | " + " | ".join(cells) + " |")
     lines += ["", "## Robustness", ""]
-    for k, name in OBS:
+    for k, name in list(OBS[:1]) + [("P_loss_platform_inclusive_w", "platform-inclusive loss")] \
+            + list(OBS[1:]):
         if k in od:
             lines.append(f"- {name}: {od[k]['statement']}")
     lines += ["", "## Accuracy and runtime (stage by stage)", "",
@@ -785,6 +871,7 @@ def write_decision(final, audit_pass):
     for g in cb.get("gates", []):
         lines.append(f"- `{g['gate']}` ({g['new_subtype']}): {g['final_status']}")
     lines.append("")
+    lines += attach_density_lines(cb)
     ready, why = paper_ready(audit_pass, manuscript_on_lineage, mesh_ok,
                              all(f["et_converged"] for f in final),
                              all(L["converged"] for L in pn.get("loop", {}).values()),
@@ -793,12 +880,67 @@ def write_decision(final, audit_pass):
               f"**{'PAPER_READY' if ready else 'PAPER_NOT_READY'}** -- "
               + ("every generator-checkable criterion of the readiness rule holds (direct-fed "
                  "primary Z2, clearance and attach in the nominal mesh, no package 48 V term in "
-                 "the Z2 ledger, crossover computed, all B1 resolved, E-T and conservation, "
-                 "mesh, local U, provenance, manuscript on the lineage). The remaining "
-                 "criteria -- slides match artifacts, tests pass on the exact final SHA -- are "
-                 "checked by the test suite and recorded in final_test_report.txt."
+                 "the Z2 ledger, crossover regenerated from the current cases, all B1 resolved "
+                 "including the attach "
+                 "density with its real-lattice study, explicit thermal RVE and mechanical "
+                 "bounds, package-internal and platform-inclusive loss ordered separately, "
+                 "active scope on the direct-fed Z2, E-T and conservation, mesh, local U, "
+                 "provenance, manuscript on the lineage). The remaining criteria -- slides "
+                 "match artifacts, tests pass on the exact final SHA -- are checked by the "
+                 "test suite, which is run on the final pushed commit."
                  if ready else "not ready: " + "; ".join(why)), ""]
     (D / "FINAL_PAPER_DECISION.md").write_text("\n".join(lines))
+
+
+def attach_density_lines(cb):
+    """geom.vr_attach_density in the decision report: the two published lattices, the
+    checks, and what the density does to the HV-S0 orderings and to R*."""
+    st = J("vr_attach_density_study.json") or {}
+    if not st:
+        return ["## Attachment density", "", "no attach-density study", ""]
+    out = ["## Attachment density (`geom.vr_attach_density`)", "",
+           f"Allocation: {st['allocation_rule']}; legal site: {st['edge_rule']}. "
+           "Production material and 30 um height held in both published cases.", ""]
+    for name in ("dense", "sparse"):
+        c = st["cases"][name]
+        e = c["electrical"]
+        out.append(f"- {name} ({c['source']}, {c['source_class']}): {c['d_um']:g} um at "
+                   f"{c['pitch_um']:g} um pitch, {c['n_per_axis']} x {c['n_per_axis']} sites, "
+                   f"{c['n_vdd']} VDD + {c['n_gnd']} GND per cell, metal "
+                   f"{100 * c['area_fraction']:.2f} %; bump {1e3 * e['R_bump_ohm']:.3f} mOhm "
+                   f"(constriction {100 * e['constriction_fraction']:.1f} %), attach loss "
+                   f"{e['P_attach_total_w']:.4f} W at the production state; per-bump current "
+                   f"{1e3 * e['VDD']['I_per_bump_A']:.2f} mA (output only); k_z "
+                   f"{c['k_z_W_mK']:.2f}, k_xy {c['k_xy_W_mK']:.3f} W/mK (explicit AEDT unit "
+                   f"cell: {100 * c.get('rve_kz_error', float('nan')):+.2f} / "
+                   f"{100 * c.get('rve_kxy_error', float('nan')):+.2f} %); mechanics BOUNDED "
+                   f"(E {c['mech_bound_A']['E_MPa'] / 1e3:.1f} to "
+                   f"{c['mech_bound_B']['E_MPa'] / 1e3:.1f} GPa)")
+    es = st.get("equal_sharing_assessment") or {}
+    pen = (es.get("density_penalty_vs_dense") or {}).get("sparse") or {}
+    if pen:
+        out.append(f"- equal sharing: {es['verdict']}; dense-to-sparse penalty "
+                   f"{pen['block_w']:.3f} W (ledger model) vs {pen['network_w']:.3f} W "
+                   "(coupled network)")
+    x = (cb.get("attach_density_crossover") or {}).get("crossover") or {}
+    lc = x.get("P_loss_package_internal_w") or {}
+    if lc:
+        out.append(f"- package-internal loss vs density (ENGINEERING_SENSITIVITY sweep): "
+                   f"{lc.get('status')}"
+                   + (f"; crossover metal fraction {100 * lc['f_star']:.1f} % (15 um pillars "
+                      f"at {lc['pitch_star_um_d15']:.1f} um pitch), "
+                      f"{100 * (lc.get('f_star_network_penalty') or float('nan')):.1f} % with "
+                      "the network penalty" if lc.get("f_star") else ""))
+    ad = ((((J("direct_feed_crossover.json") or {}).get("scenarios") or {}).get("HV_S0") or {})
+          .get("attach_density_R_star") or {})
+    if ad.get("sparse"):
+        out.append(f"- platform requirement at HV-S0: R* = "
+                   f"{ad['dense']['R_star_mohm']:.3f} mOhm (dense) and "
+                   f"{ad['sparse']['R_star_mohm']:.3f} mOhm (sparse)")
+    ld = st.get("local_level_decision") or {}
+    for name, c in (ld.get("cases") or {}).items():
+        out.append(f"- local level, {name}: {c.get('decision')}")
+    return out + [""]
 
 
 def local_wording(lm):
@@ -815,6 +957,75 @@ def local_cases(pol):
     lineage; without it, the original declaration."""
     a4 = [a for a in pol.get("amendments", []) if a.get("id") == 4]
     return [tuple(c) for c in (a4[0]["cases"] if a4 else pol["cases"])]
+
+
+#: the sentence the pre-direct-feed scope used for Z2 (FINAL_PAPER_SCOPE.md at 4cf83c7)
+SUPERSEDED_Z2_SCOPE = "48 V reaches them laterally through the package RDL"
+
+
+def attach_density_missing(gates):
+    """geom.vr_attach_density (B1) needs its own evidence, not only a resolved row: the
+    real-lattice study of both published endpoints and the explicit thermal RVE of both."""
+    why = []
+    if "geom.vr_attach_density" not in {g.get("gate") for g in gates}:
+        why.append("the attach-density B1 gate is absent from the Class-B record")
+    st = (J("vr_attach_density_study.json") or {}).get("cases") or {}
+    for c in ("dense", "sparse"):
+        r = st.get(c) or {}
+        need = ("n_vdd", "n_gnd", "area_fraction", "k_z_W_mK", "k_xy_W_mK", "mech_bound_A",
+                "mech_bound_B", "electrical")
+        if any(k not in r for k in need):
+            why.append(f"attach-density study lacks the {c} lattice/electrical/thermal/"
+                       "mechanical evidence")
+    rve = J("reference_attach_rve.json") or {}
+    for k in ("vr_attach_dense_kz", "vr_attach_dense_kxy", "vr_attach_sparse_kz",
+              "vr_attach_sparse_kxy"):
+        if not (rve.get(k) or {}).get("reference_value"):
+            why.append(f"no explicit attach RVE for {k}")
+    return why
+
+
+def loss_boundary_missing():
+    """No generic 'loss' ordering: package-internal and platform-inclusive are separate."""
+    od = (J("ordering.json") or {}).get("orderings") or {}
+    why = []
+    if "P_loss_w" in od:
+        why.append("ordering.json still carries a generic loss ordering")
+    if "P_loss_package_internal_w" not in od or "P_loss_platform_inclusive_w" not in od:
+        why.append("package-internal and platform-inclusive loss are not both ordered")
+    elif od["P_loss_platform_inclusive_w"].get("favoured"):
+        why.append("a single platform-inclusive winner is stored although R_feed is unknown")
+    return why
+
+
+def crossover_stale():
+    """'Direct-feed crossover regenerated': the internal losses the crossover is built from
+    must be the CURRENT production cases', so a changed Z1 or Z2 case without a rerun of
+    final_closure_direct_feed.py is caught here."""
+    import final_closure_physical_etm as E
+    cx = (J("direct_feed_crossover.json") or {}).get("scenarios") or {}
+    why = []
+    for s, c in cx.items():
+        for a, k in (("Z1", "P_Z1_internal_w"), ("Z2", "P_Z2_internal_w")):
+            f = E.case_path(a, s)
+            if not f.exists():
+                continue
+            cur = json.loads(f.read_text())["P_loss_w"]
+            if not isinstance(c.get(k), (int, float)) or abs(c[k] - cur) > 1e-9 * abs(cur):
+                why.append(f"direct-feed crossover not regenerated for the current {a} {s} "
+                           "case")
+    return why
+
+
+def active_scope_stale():
+    f = D / "FINAL_PAPER_SCOPE.md"
+    t = f.read_text() if f.exists() else ""
+    why = []
+    if "Z2_DIRECT_FEED" not in t and "direct-fed" not in t:
+        why.append("the active paper scope does not define the direct-fed Z2")
+    if SUPERSEDED_Z2_SCOPE in t:
+        why.append("the active paper scope still describes the BGA-fed Z2 as the primary")
+    return why
 
 
 def paper_ready(audit_pass, manuscript_on_lineage, mesh_ok, et_ok, loops_ok, classb, lm,
@@ -865,6 +1076,10 @@ def paper_ready(audit_pass, manuscript_on_lineage, mesh_ok, et_ok, loops_ok, cla
     for g in b1:
         if not g.get("resolved"):
             why.append(f"B1 gate `{g['gate']}` unresolved")
+    why += attach_density_missing(gates)
+    why += loss_boundary_missing()
+    why += crossover_stale()
+    why += active_scope_stale()
     pol = json.loads((D / "local_mesh_policy.json").read_text())
     if not (lm or {}).get("acceptance", {}).get("pass"):
         why.append("local solder study not accepted")

@@ -13,8 +13,13 @@ Three responsibilities:
      verification is reported as a failure, not shipped quietly.
 """
 from __future__ import annotations
-import re, subprocess, sys, shutil
+import os, re, subprocess, sys, shutil
 from pathlib import Path
+
+#: one fixed build time (honoured by xdvipdfmx and used for the log's "Built" line), so a
+#: rebuild of unchanged sources writes a byte-identical build log -- the test suite rebuilds
+#: this report and must leave the tracked tree clean
+os.environ.setdefault("SOURCE_DATE_EPOCH", "1793000000")
 
 ROOT = Path(__file__).resolve().parents[2]
 RES  = ROOT / "results"
@@ -654,7 +659,9 @@ def write_log(rows, warn, ok):
     gens = sorted((ROOT / "scripts" / "phase0dr").glob("build_full_report*.py"))
 
     L = ["# PDF Build Log --- ETM_DVPD_FULL_TECHNICAL_REPORT", "",
-         f"Built {datetime.datetime.now():%Y-%m-%d %H:%M} by `scripts/phase0dr/build_pdf.py`.",
+         f"Built (SOURCE_DATE_EPOCH {os.environ['SOURCE_DATE_EPOCH']}, "
+         f"{datetime.datetime.fromtimestamp(int(os.environ['SOURCE_DATE_EPOCH']), datetime.timezone.utc):%Y-%m-%d %H:%M} UTC) "
+         "by `scripts/phase0dr/build_pdf.py`.",
          f"Verification: **{'PASSED' if ok else 'FAILED'}** ({sum(r[1] for r in rows)}/{len(rows)} checks).", "",
          "## Command", "", "```", STATS["cmd"], "```", "",
          "## Toolchain", "",

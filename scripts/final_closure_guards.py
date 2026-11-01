@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import re
 
-OBS_ORDER = ("P_loss_w", "T_max_C", "die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle")
+OBS_ORDER = ("P_loss_package_internal_w", "P_loss_platform_inclusive_w", "T_max_C",
+             "die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle")
 FORBIDDEN_MESH = ("mesh-converged", "mesh converged", "mesh- and cycle-converged",
                   "mesh and cycle converged", "cycle-converged")
 
@@ -119,4 +120,26 @@ def inadmissible_ranking_claims(text, ordering):
         bad += [m.group(0)[:200] for m in re.finditer(
             rf"\b{lab}:? (?:Z1|Z2) lower|(?:Z1|Z2)(?: has)? lower [^.]*?\b{lab}\b, where the gap",
             flat)]
+    return bad
+
+
+#: a Z1/Z2 loss ranking; it must carry its boundary in the same sentence or bullet
+_LOSS_RANK = re.compile(
+    r"(?:\b(?:Z1|Z2|embedded|backside)\b[^.;\n]{0,60}?\b(?:lower|less)\s+(?:electrical\s+)?"
+    r"loss\b|\bloss(?:es)?\b\s*[:=-]\s*(?:Z1|Z2)\s+lower\b|\b(?:Z1|Z2)\s+lower\s+loss\b|"
+    r"\b(?:Z1|Z2|backside|embedded)\b[^.;\n]{0,40}?\bdissipates?\s+less\b)", re.I)
+_BOUNDARY = re.compile(r"package[- ]internal|internal|inside the (?:declared )?package|"
+                       r"platform|R\^?\{?\*|R\*|feed|boundary|HVR input", re.I)
+
+
+def generic_loss_claims(text):
+    """Sentences or bullets that rank Z1/Z2 by 'loss' without saying WHICH loss: the
+    package-internal loss (from each architecture's own input boundary) and the platform-
+    inclusive loss (with Z2's unsourced external feed) are different quantities, and a bare
+    'Z2 has lower loss' reads as if that feed were lossless."""
+    flat = re.sub(r"<[^>]+>", " ", text)
+    bad = []
+    for piece in re.split(r"(?<=[.;])\s+|\n+", flat):
+        if _LOSS_RANK.search(piece) and not _BOUNDARY.search(piece):
+            bad.append(" ".join(piece.split())[:200])
     return bad

@@ -1,6 +1,6 @@
 {
  "orderings": {
-  "P_loss_w": {
+  "P_loss_package_internal_w": {
    "per_scenario": {
     "HV_S0": "Z2 lower",
     "HV_S1": "Z2 lower",
@@ -28,7 +28,8 @@
     "HV_S2"
    ],
    "hv_s0_within_mesh_uncertainty": false,
-   "statement": "Z2 has lower loss in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model."
+   "statement": "Z2 has lower package-internal loss in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+   "loss_boundary": "package_internal"
   },
   "T_max_C": {
    "per_scenario": {
@@ -59,7 +60,8 @@
     "HV_S2"
    ],
    "hv_s0_within_mesh_uncertainty": false,
-   "statement": "Z1 has lower peak temperature in HV-S0; Z2 has lower peak temperature in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the peak temperature ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model."
+   "statement": "Z1 has lower peak temperature in HV-S0; Z2 has lower peak temperature in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the peak temperature ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+   "loss_boundary": null
   },
   "die_warpage_pv_um": {
    "per_scenario": {
@@ -89,7 +91,8 @@
     "HV_S2"
    ],
    "hv_s0_within_mesh_uncertainty": false,
-   "statement": "Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model."
+   "statement": "Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+   "loss_boundary": null
   },
   "du_c_um": {
    "per_scenario": {
@@ -119,7 +122,8 @@
     "HV_S2"
    ],
    "hv_s0_within_mesh_uncertainty": false,
-   "statement": "Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model."
+   "statement": "Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+   "loss_boundary": null
   },
   "d_eps_in_per_cycle": {
    "per_scenario": {
@@ -152,7 +156,30 @@
     "HV_S2"
    ],
    "hv_s0_within_mesh_uncertainty": true,
-   "statement": "No local inelastic response ranking can be drawn. In HV-S0 the difference lies within the measured discretisation uncertainty, so no ranking is drawn. In HV-S1 the difference lies within the measured discretisation uncertainty (and the Z1 response is extrapolated), so no ranking is drawn. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model."
+   "statement": "No local inelastic response ranking can be drawn. In HV-S0 the difference lies within the measured discretisation uncertainty, so no ranking is drawn. In HV-S1 the difference lies within the measured discretisation uncertainty (and the Z1 response is extrapolated), so no ranking is drawn. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+   "loss_boundary": null
+  },
+  "P_loss_platform_inclusive_w": {
+   "per_scenario": {
+    "HV_S0": "conditional: Z2 lower only below R* = 1.77 mOhm",
+    "HV_S1": "conditional: Z2 lower only below R* = 3.76 mOhm",
+    "HV_S2": "not rankable"
+   },
+   "favoured": [],
+   "favoured_where_resolved": null,
+   "robust_across_scenarios": false,
+   "conditional_on": "R_Z2_direct_feed_loop",
+   "R_star_mohm": {
+    "HV_S0": 1.7697883016262077,
+    "HV_S1": 3.7570362016754784,
+    "HV_S2": 4.443309664944468
+   },
+   "loss_boundary": "platform_inclusive",
+   "statement": "The platform-inclusive loss has no unconditional winner: in HV-S0 Z2 has the lower platform-inclusive loss only while the complete direct-feed loop stays below R* = 1.77 mOhm, and Z1 above it; in HV-S1 Z2 has the lower platform-inclusive loss only while the complete direct-feed loop stays below R* = 3.76 mOhm, and Z1 above it; HV-S2 is not rankable (the Z1 operating point is inadmissible). No value of that loop resistance is known, so no platform-level ranking is claimed.",
+   "unresolved": [],
+   "not_rankable": [
+    "HV_S2"
+   ]
   }
  },
  "scenario_classes": {

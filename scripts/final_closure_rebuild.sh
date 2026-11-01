@@ -6,10 +6,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 export PATH=/home/beams0/MGHARIB/envs/etm/bin:$PATH
+# one fixed timestamp for every generated PDF/SVG (matplotlib, cairo, pdfTeX): a rebuild of
+# unchanged artifacts is then byte-identical
+export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-1793000000}" FORCE_SOURCE_DATE=1
 SCR="${HVR_SCRATCH:-$HOME/claude_scratch/hvr_work}"
 mkdir -p "$SCR"
 python scripts/final_closure_literature_rules.py
 python scripts/final_closure_provenance.py                    # lane/version consistency
+python scripts/final_closure_vr_attach.py > /dev/null         # attach lattices, before its readers
 python scripts/final_closure_accuracy_matrix.py
 python scripts/final_closure_architecture_spec.py > /dev/null
 python scripts/final_closure_package_figs.py                  # the manuscript converts some
