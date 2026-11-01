@@ -11,14 +11,19 @@
  "scenarios": {
   "HV_S0": {
    "P_Z1_w": 149.05716508309735,
+   "P_Z1_internal_w": 149.05716508309735,
    "efficiency_Z1": 0.8702787210135731,
    "P_Z2_internal_w": 148.0379345672572,
    "P_Z2_internal_recomputed_w": 148.04296856390826,
-   "advantage_at_zero_feed_w": 1.0141965191890847,
+   "efficiency_Z2_zero_feed": 0.8710475368800038,
+   "advantage_at_zero_feed_w": 1.0192305158401496,
+   "advantage_at_zero_feed_recomputed_w": 1.0141965191890847,
    "R_star_mohm": 1.7697883016262077,
    "P_feed_at_R_star_w": 1.0141965192090145,
+   "efficiency_Z2_at_R_star": 0.870278721013558,
    "I_48_rms_a": 23.917561845081423,
    "scen_rms_ratio": 1.0,
+   "P_feed_per_mohm_w": 0.5720497646132947,
    "Z1_hottest_joint_C": 122.04163283359274,
    "Z1_operating_point_inadmissible": false,
    "requirement": "for Z2 to keep its electrical advantage in HV-S0, R_Z2_direct_feed_loop < 1.77 mOhm",
@@ -32,6 +37,24 @@
     "sub": 96.94490901707623,
     "interface": 91.4427508538109,
     "attach": 97.69745437317785
+   },
+   "attach_density_R_star": {
+    "dense": {
+     "source": "research/final_closure/sensitivity/etm_Z2_HV_S0__attach_dense.json",
+     "P_Z2_internal_w": 148.0542099525283,
+     "P_Z2_internal_recomputed_w": 148.05925807782475,
+     "advantage_at_zero_feed_w": 1.0029551305690347,
+     "advantage_at_zero_feed_recomputed_w": 0.9979070052725945,
+     "R_star_mohm": 1.7413628528454843
+    },
+    "sparse": {
+     "source": "research/final_closure/sensitivity/etm_Z2_HV_S0__attach_sparse.json",
+     "P_Z2_internal_w": 148.71752425017675,
+     "P_Z2_internal_recomputed_w": 148.72307102022933,
+     "advantage_at_zero_feed_w": 0.339640832920594,
+     "advantage_at_zero_feed_recomputed_w": 0.3340940628680187,
+     "R_star_mohm": 0.5829992046837381
+    }
    },
    "sweep": [
     {
@@ -2689,14 +2712,19 @@
   },
   "HV_S1": {
    "P_Z1_w": 186.77602042829412,
+   "P_Z1_internal_w": 186.77602042829412,
    "efficiency_Z1": 0.8426189801501983,
    "P_Z2_internal_w": 150.02386489930396,
    "P_Z2_internal_recomputed_w": 150.02914536618678,
-   "advantage_at_zero_feed_w": 36.746875062107335,
+   "efficiency_Z2_zero_feed": 0.8695431798657457,
+   "advantage_at_zero_feed_w": 36.75215552899016,
+   "advantage_at_zero_feed_recomputed_w": 36.746875062107335,
    "R_star_mohm": 3.7570362016754784,
    "P_feed_at_R_star_w": 36.74687506280797,
+   "efficiency_Z2_at_R_star": 0.8426189801497007,
    "I_48_rms_a": 95.8357621138489,
    "scen_rms_ratio": 4.0,
+   "P_feed_per_mohm_w": 9.184493299942236,
    "Z1_hottest_joint_C": 148.145,
    "Z1_operating_point_inadmissible": false,
    "requirement": "for Z2 to keep its electrical advantage in HV-S1, R_Z2_direct_feed_loop < 3.76 mOhm",
@@ -2711,6 +2739,7 @@
     "interface": 91.56447730112453,
     "attach": 97.90330982923781
    },
+   "attach_density_R_star": {},
    "sweep": [
     {
      "R_mohm": 0.01,
@@ -5398,14 +5427,19 @@
   },
   "HV_S2": {
    "P_Z1_w": 314.14628224393294,
+   "P_Z1_internal_w": 314.14628224393294,
    "efficiency_Z1": 0.760950294127438,
    "P_Z2_internal_w": 154.27566878811456,
    "P_Z2_internal_recomputed_w": 154.28151287058512,
-   "advantage_at_zero_feed_w": 159.86476937334783,
+   "efficiency_Z2_zero_feed": 0.8663397870014377,
+   "advantage_at_zero_feed_w": 159.8706134558184,
+   "advantage_at_zero_feed_recomputed_w": 159.86476937334783,
    "R_star_mohm": 4.443309664944468,
    "P_feed_at_R_star_w": 159.86476936729224,
+   "efficiency_Z2_at_R_star": 0.7609502941309445,
    "I_48_rms_a": 166.6061855441102,
    "scen_rms_ratio": 6.928203230275509,
+   "P_feed_per_mohm_w": 27.75762106155847,
    "Z1_hottest_joint_C": 239.0780909090909,
    "Z1_operating_point_inadmissible": true,
    "requirement": null,
@@ -5420,6 +5454,7 @@
     "interface": 91.82509035818408,
     "attach": 98.34404162848814
    },
+   "attach_density_R_star": {},
    "sweep": [
     {
      "R_mohm": 0.01,

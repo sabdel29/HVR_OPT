@@ -92,6 +92,9 @@ CLASSES = {
         "(ARM names connector types only); swept, and turned into the requirement R < R*"),
     "geom.sidewall_clearance": ("B", "1.0 mm clearance (production) vs sidewall-filled"),
     "geom.vr_attach_height": ("B", "attach joint height 20-40 um"),
+    "geom.vr_attach_density": ("B", "attach pitch/count between two published constructions "
+        "(15/30 um and 30/80 um); it moves the attach resistance, vertical conduction and "
+        "stiffness together"),
     "elec.direct_feed_heat_location": ("B", "where the external feed's heat lands"),
     "therm.cooling_model_form": ("B", "compact cooling model vs matched Icepak CFD"),
     "therm.backside_interface": ("B", "backside cooling through a TIM"),

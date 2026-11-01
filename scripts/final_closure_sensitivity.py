@@ -180,9 +180,11 @@ def v_attach_height(h_um):
 
 
 def v_attach_sn():
-    """All-solder alternative: pure-Sn microbumps of Na et al. 2022 (30 um diameter, 50 um
-    space, i.e. 80 um pitch) in the same 30 um envelope. Material AND density change
-    together because that is the alternative technology as published."""
+    """All-solder BOUND at the Na et al. density (30 um diameter, 50 um space, i.e. 80 um
+    pitch) in the same 30 um envelope. Na et al. report a pure-Sn cap on a Cu post/Ni
+    barrier; the all-Sn column is that construction's resistive upper bound (its post/cap
+    split is not in the accessible text). Material AND density change together, so this is
+    NOT the density sensitivity (geom.vr_attach_density holds the material)."""
     _attach_override(cu_height_um=0.0, cap_height_um=30.0, diameter_um=30.0, pitch_um=80.0)
 
 
@@ -206,6 +208,36 @@ def v_attach_stiff():
         st = Z2C.vr_attach_material(att, column_stiffened=True)
         c["E"], c["cte"] = st["E"], st["cte"]
     _attach_card(edit)
+
+
+def v_attach_density(name, stiff=False):
+    """geom.vr_attach_density: the attach of final_closure_vr_attach.CASES[name] in the
+    mesh (its REAL lattice metal fraction in the homogenised card) and in the ledger (real
+    VDD/GND counts, series column + two-sided constriction). Heights and material stay at
+    production, so the z grid is the production grid. stiff=True puts the column-stiffened
+    (Voigt, real f) mechanical card on it: the second of the two mechanical bounds."""
+    import final_closure_vr_attach as VA
+    import physical_package as PP
+    import final_closure_ledger as FL
+    case = VA.CASES[name]
+    att_mesh = VA.mesh_attach(case)
+    o = PP.load_physical_package_config
+
+    def load(path):
+        cfg = o(path)
+        att = dict(cfg.attach)
+        att.update(att_mesh)
+        h = float(att["cu_height_um"]) + float(att["cap_height_um"])
+        return replace(cfg, attach=tuple(sorted(att.items())), attach_um=h)
+    PP.load_physical_package_config = load
+    sp = dict(FL.attach_spec())
+    sp.update(VA.ledger_spec(case))
+    FL.attach_spec = lambda: sp
+    if stiff:
+        def edit(c):
+            st = VA.card(case, column_stiffened=True)
+            c["E"], c["cte"] = st["E"], st["cte"]
+        _attach_card(edit)
 
 
 def v_attach_underfill(E_mpa, cte):
@@ -443,9 +475,36 @@ VARIANTS = {
                             "the size the through-thickness mesh check bounds"),
     "attach_sn": dict(kind="full", archs=("Z2",), apply=v_attach_sn,
                       gates=["mat.vr_attach_material"],
-                      nature="alternative technology (Na et al. 2022, CLOSE_ANALOG)",
-                      what="all-solder (pure Sn) microbumps, 30 um at 80 um pitch, instead of "
-                           "15 um Cu pillars at 30 um pitch"),
+                      nature="all-solder resistive bound at the Na et al. 2023 density "
+                             "(CLOSE_ANALOG)",
+                      what="an all-solder (pure Sn) column, 30 um at 80 um pitch, instead of "
+                           "15 um Cu pillars at 30 um pitch (material and density together)"),
+    "attach_dense": dict(kind="full", archs=("Z2",), apply=lambda: v_attach_density("dense"),
+                         gates=["geom.vr_attach_density"],
+                         nature="published geometry (Au et al. ECTC 2016, CLOSE_ANALOG)",
+                         what="15 um pillars at 30 um pitch (production geometry) on the real "
+                              "lattice with the two-sided constriction: the dense endpoint"),
+    "attach_sparse": dict(kind="full", archs=("Z2",), apply=lambda: v_attach_density("sparse"),
+                          gates=["geom.vr_attach_density"],
+                          nature="published geometry (Na et al. 2023, CLOSE_ANALOG); "
+                                 "production material and height held",
+                          what="30 um bumps at 80 um pitch instead of 15 um at 30 um, "
+                               "underfill-dominated mechanical card (bound A)"),
+    "attach_sparse_stiff": dict(kind="full", archs=("Z2",),
+                                apply=lambda: v_attach_density("sparse", stiff=True),
+                                gates=["geom.vr_attach_density"],
+                                nature="published geometry, column-stiffened mechanical "
+                                       "bound (B)",
+                                what="the sparse attach with the column-stiffened (Voigt, "
+                                     "real metal fraction) card instead of the underfill-"
+                                     "dominated one"),
+    **{f"attach_eng_p{p:g}": dict(kind="full", archs=("Z2",),
+                                  apply=(lambda p=p: v_attach_density(f"eng_p{p:g}")),
+                                  gates=[], nature="ENGINEERING_SENSITIVITY (not a published "
+                                                   "geometry)",
+                                  what=f"15 um pillars at {p:g} um pitch, between the "
+                                       "published endpoints, to locate a crossover")
+       for p in (34.0, 37.0, 41.0)},
     "attach_stiff": dict(kind="mech", archs=("Z2",), apply=v_attach_stiff,
                          gates=["mat.vr_attach_material"], nature="bounding model form",
                          what="column-stiffened (Voigt) attach card instead of the "

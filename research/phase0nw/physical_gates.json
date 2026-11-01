@@ -145,7 +145,7 @@
    "area": "Electrical",
    "gate": "10 um RDL electrical (resistance) model closed or bounded",
    "status": "SPECIFIED",
-   "evidence": "bounded: Class-B B1 (package 48 V RDL t_Cu 2 / 5 / 10 um x occupancy 0.3 / 0.8 (package_network sensitivity; Z1 only)): RESOLVED -- ordering changes in: P_loss_w under t_cu=0.005, occupancy=0.8 (Z2 lower -> unresolved); P_loss_w under t_cu=0.01, occupancy=0.3 (Z2 lower -> unresolved); P_loss_w under t_cu=0.01, occupancy=0.8 (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 1.8 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "bounded: Class-B B1 (package 48 V RDL t_Cu 2 / 5 / 10 um x occupancy 0.3 / 0.8 (package_network sensitivity; Z1 only)): RESOLVED -- ordering changes in: P_loss_package_internal_w under t_cu=0.005, occupancy=0.8 (Z2 lower -> unresolved); P_loss_package_internal_w under t_cu=0.01, occupancy=0.3 (Z2 lower -> unresolved); P_loss_package_internal_w under t_cu=0.01, occupancy=0.8 (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 1.8 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.z1_tsv_sizing",
@@ -166,7 +166,7 @@
    "area": "TSV",
    "gate": "thermal/mechanical sensitivity to TSV density",
    "status": "IMPLEMENTED",
-   "evidence": "run on the production mesh at HV-S0: Class-B B1 (TSV sizing study: 64 / 729 / 1444 vias per cell, in the FE substrate AND the ledger): RESOLVED -- ordering changes in: P_loss_w under tsv_min (Z2 lower -> Z1 lower); P_loss_w under tsv_mid (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 9.1 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (TSV sizing study: 64 / 729 / 1444 vias per cell, in the FE substrate AND the ledger): RESOLVED -- ordering changes in: P_loss_package_internal_w under tsv_min (Z2 lower -> Z1 lower); P_loss_package_internal_w under tsv_mid (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 9.1 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "tsv.fe_copper_representation",
@@ -215,7 +215,7 @@
    "area": "RMS",
    "gate": "individual branch waveforms",
    "status": "OPEN",
-   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B1 (converter-internal branch RMS: identical converter model in both architectures): RESOLVED -- ordering changes in: P_loss_w under common rescaling k of the converter terms (Z2 lower for every k < 91.230) -- the claim is narrowed accordingly (research/final_closure/classB_resolution.csv)"
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B1 (converter-internal branch RMS: identical converter model in both architectures): RESOLVED -- ordering changes in: P_loss_package_internal_w under common rescaling k of the converter terms (Z2 lower for every k < 91.230) -- the claim is narrowed accordingly (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.hv_input_waveform",
@@ -845,14 +845,21 @@
    "area": "Z2 geometry",
    "gate": "VR attach height sensitivity run",
    "status": "IMPLEMENTED",
-   "evidence": "run on the production mesh at HV-S0: Class-B B1 (VR attach joint 20 / 40 um (production 30 um; Na et al. 2022 CLOSE_ANALOG)): RESOLVED -- ordering changes in: P_loss_w under attach_h40 (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 0.3 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (VR attach joint 20 / 40 um (production 30 um; Na et al. 2022 CLOSE_ANALOG)): RESOLVED -- ordering changes in: P_loss_package_internal_w under attach_h40 (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 0.3 % (research/final_closure/classB_resolution.csv)"
+  },
+  {
+   "id": "geom.vr_attach_density",
+   "area": "Z2 geometry",
+   "gate": "VR attach pitch/count (density) sensitivity run on the real lattice",
+   "status": "IMPLEMENTED",
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (VR attach pitch/count: the published dense 15/30 um (Au et al. 2016) and sparse 30/80 um (Na et al. 2023) constructions on the real lattice, production material and height held; underfill-dominated and column-stiffened mechanical bounds): RESOLVED -- ordering changes in: P_loss_package_internal_w under attach_sparse (Z2 lower -> unresolved); P_loss_package_internal_w under attach_sparse_stiff (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 1.1 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "mat.vr_attach_material",
    "area": "Material",
    "gate": "VR attach material bounded",
    "status": "OPEN",
-   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (Cu pillar + solder cap (production) vs all-solder Sn microbumps (Na et al. 2022), and the column-stiffened card): RESOLVED -- ordering changes in: P_loss_w under attach_sn (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 1.8 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "no sourced material card; an assumed sensitivity bracket resolves the paper's dependence on it but does not bound the property -- Class-B B1 (Cu pillar + solder cap (production) vs an all-solder column at the Na et al. density (a resistive bound: Na et al. report a Sn cap on a Cu post), and the column-stiffened card): RESOLVED -- ordering changes in: P_loss_package_internal_w under attach_sn (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 1.8 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "mat.vr_attach_underfill",
@@ -866,14 +873,14 @@
    "area": "Electrical",
    "gate": "direct-feed loop resistance determined",
    "status": "OPEN",
-   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B1 (R_Z2_direct_feed_loop swept 0.01-100 mOhm (direct_feed_crossover.json)): RESOLVED -- ordering changes in: P_loss_w under R_feed = 1 R* = 1.77 mOhm (Z2 lower -> unresolved); P_loss_w under R_feed = 10 R* = 17.7 mOhm (Z2 lower -> Z1 lower) -- the claim is narrowed accordingly; largest relative change of any observable 7.0 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "not determinable here; the paper's dependence on it is resolved -- Class-B B1 (R_Z2_direct_feed_loop swept 0.01-100 mOhm (direct_feed_crossover.json)): RESOLVED -- ordering changes in: P_loss_platform_inclusive_w under R_feed = 1 R* = 1.77 mOhm (Z2 lower -> unresolved); P_loss_platform_inclusive_w under R_feed = 10 R* = 17.7 mOhm (Z2 lower -> Z1 lower) -- the claim is narrowed accordingly; largest relative change of any observable 7.0 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "elec.direct_feed_heat_location",
    "area": "Electrical",
    "gate": "direct-feed heat-location sensitivity run",
    "status": "IMPLEMENTED",
-   "evidence": "run on the production mesh at HV-S0: Class-B B1 (feed loss at the largest admissible loop resistance (largest R*), at the HV-S0 current, deposited in the deepest converter tier): RESOLVED -- ordering changes in: P_loss_w under feed_heat_at_crossover (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 0.8 % (research/final_closure/classB_resolution.csv)"
+   "evidence": "run on the production mesh at HV-S0: Class-B B1 (feed loss at the largest admissible loop resistance (largest R*), at the HV-S0 current, deposited in the deepest converter tier): RESOLVED -- ordering changes in: P_loss_package_internal_w under feed_heat_at_crossover (Z2 lower -> unresolved) -- the claim is narrowed accordingly; largest relative change of any observable 0.8 % (research/final_closure/classB_resolution.csv)"
   },
   {
    "id": "therm.cooling_model_form",

@@ -116,6 +116,7 @@ REQUIRED_GATES = {
     "direct_feed": ["arch.z2_direct_feed_power_path", "geom.vr_attach_explicit",
                     "geom.sidewall_clearance_baseline", "elec.direct_feed_crossover",
                     "geom.sidewall_clearance", "geom.vr_attach_height",
+                    "geom.vr_attach_density",
                     "mat.vr_attach_material", "mat.vr_attach_underfill",
                     "elec.direct_feed_loop_resistance", "elec.direct_feed_heat_location",
                     "therm.cooling_model_form", "therm.backside_interface",
@@ -929,6 +930,8 @@ def gates():
     for gid, area, gate in (
             ("geom.sidewall_clearance", "Z2 geometry", "sidewall clearance sensitivity run"),
             ("geom.vr_attach_height", "Z2 geometry", "VR attach height sensitivity run"),
+            ("geom.vr_attach_density", "Z2 geometry",
+             "VR attach pitch/count (density) sensitivity run on the real lattice"),
             ("mat.vr_attach_material", "Material", "VR attach material bounded"),
             ("mat.vr_attach_underfill", "Material", "VR attach underfill bounded"),
             ("elec.direct_feed_loop_resistance", "Electrical",

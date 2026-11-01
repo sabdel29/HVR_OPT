@@ -28,11 +28,13 @@ D = R / "research" / "final_closure"
 SENS = D / "sensitivity"
 sys.path.insert(0, str(R / "scripts"))
 
-OBS = {"P_loss_w": "loss", "T_max_C": "peak temperature",
+OBS = {"P_loss_package_internal_w": "package-internal loss",
+       "P_loss_platform_inclusive_w": "platform-inclusive loss", "T_max_C": "peak temperature",
        "die_warpage_pv_um": "die warpage", "du_c_um": "joint displacement driver",
        "d_eps_in_per_cycle": "local inelastic response"}
-GLOBAL = ("P_loss_w", "T_max_C", "die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle")
-THERMAL = ("P_loss_w", "T_max_C")
+GLOBAL = ("P_loss_package_internal_w", "T_max_C", "die_warpage_pv_um", "du_c_um",
+          "d_eps_in_per_cycle")
+THERMAL = ("P_loss_package_internal_w", "T_max_C")
 MECH = ("die_warpage_pv_um", "du_c_um", "d_eps_in_per_cycle")
 SCEN = "HV_S0"
 H01 = ["board_h1", "board_h0_h1grid"]
@@ -40,7 +42,8 @@ H01 = ["board_h1", "board_h0_h1grid"]
 #: its production values
 Z2_ONLY = ("z2_cooled", "z2_cooled_tim", "f1_sidewall_filled", "attach_h20", "attach_h40",
            "attach_sn", "attach_stiff", "attach_uf_soft", "attach_uf_stiff",
-           "feed_heat_at_crossover", "bga_depop")
+           "feed_heat_at_crossover", "bga_depop", "attach_dense", "attach_sparse",
+           "attach_sparse_stiff", "attach_eng_p34", "attach_eng_p37", "attach_eng_p41")
 CONV = ["conv_k_tenth", "conv_E80_a4", "conv_E80_a10", "conv_E160_a4", "conv_E160_a10"]
 WAVE = ("named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each "
         "scenario solved through the full lineage")
@@ -79,15 +82,24 @@ GATES = {
                               "Na et al. 2022 CLOSE_ANALOG)", "runs",
                               ["attach_h20", "attach_h40"],
                               "the attach carries 1 kA and sits in the converter heat path"),
-    "mat.vr_attach_material": ("B1", GLOBAL, "Cu pillar + solder cap (production) vs all-solder "
-                               "Sn microbumps (Na et al. 2022), and the column-stiffened card",
-                               "runs", ["attach_sn", "attach_stiff"],
+    "geom.vr_attach_density": ("B1", GLOBAL, "VR attach pitch/count: the published dense "
+                               "15/30 um (Au et al. 2016) and sparse 30/80 um (Na et al. 2023) "
+                               "constructions on the real lattice, production material and "
+                               "height held; underfill-dominated and column-stiffened "
+                               "mechanical bounds", "runs",
+                               ["attach_dense", "attach_sparse", "attach_sparse_stiff"],
+                               "attach resistance, vertical conduction and stiffness all scale "
+                               "with the metal fraction"),
+    "mat.vr_attach_material": ("B1", GLOBAL, "Cu pillar + solder cap (production) vs an all-"
+                               "solder column at the Na et al. density (a resistive bound: Na "
+                               "et al. report a Sn cap on a Cu post), and the column-stiffened "
+                               "card", "runs", ["attach_sn", "attach_stiff"],
                                "attach conductivity, resistance and stiffness"),
     "mat.vr_attach_underfill": ("B1", MECH, "attach underfill E 4 / 12 GPa, CTE 40 / 20 ppm/K "
                                 "(declared stress corners)", "runs",
                                 ["attach_uf_soft", "attach_uf_stiff"],
                                 "the attach couples the converter to the substrate"),
-    "elec.direct_feed_loop_resistance": ("B1", ("P_loss_w",), "R_Z2_direct_feed_loop swept "
+    "elec.direct_feed_loop_resistance": ("B1", ("P_loss_platform_inclusive_w",), "R_Z2_direct_feed_loop swept "
                                          "0.01-100 mOhm (direct_feed_crossover.json)",
                                          "direct_feed", [],
                                          "the external feed is unsourced: no value assumed"),
@@ -118,12 +130,12 @@ GATES = {
     "mat.inductor_tier_bounded": ("B1", GLOBAL, "converter medium k/10, and the card's own "
                                   "E 80-160 GPa x CTE 4-10 ppm/K corners", "runs", CONV,
                                   "inductor/Cout tier on the same generic card"),
-    "elec.contact_resistance_bounded": ("B1", ("P_loss_w",), "rho_c 1e-6 / 1e-5 / 1e-4 "
+    "elec.contact_resistance_bounded": ("B1", ("P_loss_package_internal_w",), "rho_c 1e-6 / 1e-5 / 1e-4 "
                                         "ohm mm^2 on the package 48 V RDL (package_network "
                                         "sensitivity; Z1 only: the direct-fed Z2 has no package "
                                         "48 V RDL)", "network", ["rho_c"],
                                         "unsourced contact resistance in the 48 V path"),
-    "elec.rdl10um_electrical_model": ("B1", ("P_loss_w",), "package 48 V RDL t_Cu 2 / 5 / 10 "
+    "elec.rdl10um_electrical_model": ("B1", ("P_loss_package_internal_w",), "package 48 V RDL t_Cu 2 / 5 / 10 "
                                       "um x occupancy 0.3 / 0.8 (package_network "
                                       "sensitivity; Z1 only)", "network", ["t_cu", "occupancy"],
                                       "the 10 um tier's sheet resistance is undefined"),
@@ -135,7 +147,7 @@ GATES = {
                                "the 48 V RMS follows the scenario"),
     "elec.bga_rms_current": ("B1", tuple(OBS), WAVE, "scenarios", [],
                              "the BGA RMS follows the scenario"),
-    "elec.individual_branch_waveforms": ("B2", ("P_loss_w",), "converter-internal branch "
+    "elec.individual_branch_waveforms": ("B2", ("P_loss_package_internal_w",), "converter-internal branch "
                                          "RMS: identical converter model in both "
                                          "architectures", "common_mode", [],
                                          "the converter terms depend on T_conv only"),
@@ -156,7 +168,7 @@ def _vals(case):
     if case is None or "mechanics" not in case:
         return None
     m, c = case["mechanics"], case["mechanics"]["joint_search"]["critical"]
-    return {"P_loss_w": case["P_loss_w"], "T_max_C": case["thermal"]["T_max_C"],
+    return {"P_loss_package_internal_w": case["P_loss_w"], "T_max_C": case["thermal"]["T_max_C"],
             "die_warpage_pv_um": m["die_warpage_pv_um"], "du_c_um": c["du_um"],
             "T_joint_C": c["T_C"], "d_eps_in_per_cycle": (case.get("local") or {}).get(
                 "d_peeq_per_cycle")}
@@ -265,16 +277,17 @@ def judge_network(params, od):
         dp = {a: (p_hv[a] * (sel[FL.NETWORK_KEY[a]]["r_loop_ohm"] / r0[a] - 1.0)
                   if a in fed else 0.0) for a in ("Z1", "Z2")}
         loss = {a: fin[(a, SCEN)]["P_loss_w"] + dp[a] for a in ("Z1", "Z2")}
-        u = (od.get("P_loss_w") or {}).get("uncertainty_rel", {}).get(SCEN)
+        u = (od.get("P_loss_package_internal_w") or {}).get("uncertainty_rel", {}).get(SCEN)
         verdict, gap = _verdict(loss["Z1"], loss["Z2"], u)
         rows.append({"case": ", ".join(f"{p}={c:g}" for p, c in zip(params, combo)),
-                     "observable": "P_loss_w", "Z1": loss["Z1"], "Z2": loss["Z2"],
+                     "observable": "P_loss_package_internal_w", "Z1": loss["Z1"],
+                     "Z2": loss["Z2"],
                      "change_rel": {a: dp[a] / fin[(a, SCEN)]["P_loss_w"] for a in dp},
                      "delta_W": dp, "gap_rel": gap, "uncertainty_rel": u,
                      "verdict": verdict,
-                     "production_verdict": (od.get("P_loss_w") or {}).get(
+                     "production_verdict": (od.get("P_loss_package_internal_w") or {}).get(
                          "per_scenario", {}).get(SCEN),
-                     "robust": verdict == (od.get("P_loss_w") or {}).get(
+                     "robust": verdict == (od.get("P_loss_package_internal_w") or {}).get(
                          "per_scenario", {}).get(SCEN),
                      "method": "first order: the 48 V RDL rows scale with the swept loop "
                                "resistance at the solved HV-S0 current; the thermal "
@@ -301,7 +314,8 @@ def judge_common_mode():
     # an ordering that holds for every k BELOW 91.230.)
     lead = "Z2" if d_rest + d_conv > 0 else "Z1"
     side = ">" if (d_conv > 0) == (lead == "Z2") else "<"
-    return [{"case": "common rescaling k of the converter terms", "observable": "P_loss_w",
+    return [{"case": "common rescaling k of the converter terms",
+             "observable": "P_loss_package_internal_w",
              "converter_terms_W": c, "delta_converter_W": d_conv, "delta_rest_W": d_rest,
              "k_at_which_order_flips": k_flip,
              "verdict": (f"{lead} lower for every k {side} {k_flip:.3f}" if k_flip
@@ -320,8 +334,10 @@ def judge_direct_feed(od):
     sc = (cx.get("scenarios") or {}).get(SCEN)
     if not sc or sc.get("R_star_mohm") is None or not sc.get("sweep"):
         return []
-    u = (od.get("P_loss_w") or {}).get("uncertainty_rel", {}).get(SCEN)
-    prod = (od.get("P_loss_w") or {}).get("per_scenario", {}).get(SCEN)
+    # judged against the package-internal verdict (the zero-feed reference); the variant is
+    # the PLATFORM-INCLUSIVE loss at a named loop resistance
+    u = (od.get("P_loss_package_internal_w") or {}).get("uncertainty_rel", {}).get(SCEN)
+    prod = (od.get("P_loss_package_internal_w") or {}).get("per_scenario", {}).get(SCEN)
     sw = [q for q in sc["sweep"] if q.get("feasible", True)]     # no point above R_max
     rows = []
     # around R* where Z2 is ahead at zero feed; at declared loop resistances (0.1, 1 and
@@ -331,7 +347,8 @@ def judge_direct_feed(od):
     for lab, r in pts:
         pt = min(sw, key=lambda q: abs(math.log(q["R_mohm"] / r)) if q["R_mohm"] > 0 else 9e9)
         verdict, gap = _verdict(sc["P_Z1_w"], pt["P_total_w"], u)
-        rows.append({"case": f"R_feed = {lab} = {r:.4g} mOhm", "observable": "P_loss_w",
+        rows.append({"case": f"R_feed = {lab} = {r:.4g} mOhm",
+                     "observable": "P_loss_platform_inclusive_w",
                      "Z1": sc["P_Z1_w"], "Z2": pt["P_total_w"],
                      "change_rel": {"Z1": 0.0, "Z2": (pt["P_total_w"] - sc["P_Z2_internal_w"])
                                     / sc["P_Z2_internal_w"]},
@@ -354,6 +371,95 @@ def judge_scenarios(od, sc):
                      "robust_across_scenarios": o.get("robust_across_scenarios"),
                      "robust": None})
     return rows
+
+
+#: ENGINEERING_SENSITIVITY between the published attach endpoints (geom.vr_attach_density),
+#: judged with the same rule; never a gate case and never a manufacturing geometry
+ATTACH_SWEEP = ("attach_dense", "attach_eng_p34", "attach_eng_p37", "attach_eng_p41",
+                "attach_sparse")
+ATTACH_OBS = ["P_loss_package_internal_w", "T_max_C", "die_warpage_pv_um", "du_c_um"]
+
+
+def _interp_zero(pts):
+    """First sign change of (x, margin) pairs ordered from dense to sparse: the x at which
+    the margin crosses zero (linear), with the bracketing pair, or None."""
+    for (x0, m0), (x1, m1) in zip(pts, pts[1:]):
+        if m0 > 0 >= m1:
+            return x0 + (x1 - x0) * m0 / (m0 - m1), (x0, x1)
+    return None
+
+
+def attach_density_crossover(od, unc):
+    """Where, between the published attach densities, does each ordering stop holding? Each
+    sweep point is the Z2 variant against the unchanged Z1, judged with the ordering rule;
+    the signed margin (gap - 2U, positive while the production verdict holds) is
+    interpolated linearly in the attach's real-lattice metal fraction (and, inside the
+    15 um-pillar family, in pitch). Because the ledger's equal-sharing attach model bounds
+    the coupled network's loss from above but understates its DENSITY PENALTY
+    (vr_attach_density_study.json, equal_sharing_assessment), the loss crossover is also
+    formed with Z2 raised by the network-minus-block penalty at each point."""
+    import final_closure_vr_attach as VA
+    st = J(D / "vr_attach_density_study.json") or {}
+    pen = (st.get("equal_sharing_assessment") or {}).get("density_penalty_vs_dense") or {}
+    rows, missing = judge_runs(list(ATTACH_SWEEP), ATTACH_OBS, od, unc)
+    if missing:
+        return {"status": "PENDING -- missing " + ", ".join(sorted(set(missing)))}
+    pts = []
+    for v in ATTACH_SWEEP:
+        case = VA.CASES[v.removeprefix("attach_")]
+        L = VA.lattice(case)
+        p = pen.get(v.removeprefix("attach_")) or {}
+        pts.append({"case": v, "class": case["class"], "d_um": case["d_um"],
+                    "pitch_um": case["pitch_um"], "area_fraction": L["area_fraction"],
+                    "n_vdd": L["n_vdd"], "n_gnd": L["n_gnd"],
+                    "network_minus_block_penalty_w": (p.get("network_w", 0.0)
+                                                      - p.get("block_w", 0.0)),
+                    "obs": {r["observable"]: {k: r[k] for k in ("Z1", "Z2", "gap_rel",
+                                                                "verdict")}
+                            for r in rows if r["case"] == v}})
+    cross = {}
+    for k in ATTACH_OBS:
+        prod = (od.get(k) or {}).get("per_scenario", {}).get(SCEN)
+        u = unc.get(k)
+        if prod not in ("Z1 lower", "Z2 lower") or u is None:
+            cross[k] = {"production_verdict": prod, "status": "no resolved production verdict "
+                        "to lose; verdicts per point listed"}
+            continue
+        sgn = 1.0 if prod == "Z2 lower" else -1.0
+
+        def margin(o, dz2=0.0):
+            z1, z2 = o["Z1"], o["Z2"] + dz2
+            return sgn * (z1 - z2) / max(abs(z1), abs(z2)) - 2.0 * u
+        for x in pts:
+            o = x["obs"][k]
+            o["margin"] = margin(o)
+            if k == "P_loss_package_internal_w":
+                o["margin_network_penalty"] = margin(o, x["network_minus_block_penalty_w"])
+        f_m = [(x["area_fraction"], x["obs"][k]["margin"]) for x in pts]
+        d15 = [(x["pitch_um"], x["obs"][k]["margin"]) for x in pts if x["d_um"] == 15.0]
+        zf, zp = _interp_zero(f_m), _interp_zero(d15)
+        c = {"production_verdict": prod, "uncertainty_rel": u,
+             "f_star": zf[0] if zf else None, "f_bracket": zf[1] if zf else None,
+             "pitch_star_um_d15": zp[0] if zp else None,
+             "status": ("holds at every point down to the sparse published geometry"
+                        if all(m > 0 for _, m in f_m) else
+                        "lost at every point including the dense one" if all(
+                            m <= 0 for _, m in f_m) else
+                        "lost below the crossover metal fraction")}
+        if k == "P_loss_package_internal_w":
+            zn = _interp_zero([(x["area_fraction"], x["obs"][k]["margin_network_penalty"])
+                               for x in pts])
+            zpn = _interp_zero([(x["pitch_um"], x["obs"][k]["margin_network_penalty"])
+                                for x in pts if x["d_um"] == 15.0])
+            c["f_star_network_penalty"] = zn[0] if zn else None
+            c["pitch_star_um_d15_network_penalty"] = zpn[0] if zpn else None
+            c["reversal"] = any(x["obs"][k]["verdict"] not in (prod, "unresolved")
+                                for x in pts)
+        cross[k] = c
+    return {"class": "ENGINEERING_SENSITIVITY",
+            "rule": "each point judged as the production pair (gap > 2U); margin = signed gap "
+                    "- 2U, interpolated linearly between points",
+            "points": pts, "crossover": cross}
 
 
 def main():
@@ -424,7 +530,8 @@ def main():
     (D / "classB_resolution.json").write_text(json.dumps(
         {"rule": "a B1 gate is resolved when every case it needs exists and carries a "
                  "verdict formed with the ordering.json rule; PAPER_READY requires every "
-                 "B1 gate resolved", "summary": summary, "gates": out},
+                 "B1 gate resolved", "summary": summary, "gates": out,
+         "attach_density_crossover": attach_density_crossover(od, unc)},
         indent=1, default=float))
     cols = ["gate", "old_class", "new_subtype", "observable", "range_source", "cases_run",
             "max_change_rel", "architecture_gap_rel_min", "ordering_robust", "final_status",

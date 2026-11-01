@@ -24,6 +24,7 @@
     "elec.rdl10um_electrical_model",
     "elec.tsv_resistance_temperature_dependent",
     "geom.sidewall_clearance",
+    "geom.vr_attach_density",
     "geom.vr_attach_height",
     "local.solder_rerun_at_new_critical_site",
     "mat.rdl_tensor_transfer_validated",
@@ -63,7 +64,7 @@
       "rationale": "branch ripple needs the switch schedule; the HV side is carried per scenario and the LV side uses the output-ripple RMS",
       "b_subtype": "B1",
       "b_resolved": true,
-      "b_status": "RESOLVED -- ordering changes in: P_loss_w under common rescaling k of the converter terms (Z2 lower for every k < 91.230) -- the claim is narrowed accordingly"
+      "b_status": "RESOLVED -- ordering changes in: P_loss_package_internal_w under common rescaling k of the converter terms (Z2 lower for every k < 91.230) -- the claim is narrowed accordingly"
     },
     {
       "id": "elec.hv_input_waveform",
@@ -193,7 +194,7 @@
       "rationale": "VR attach geometry is CLOSE_ANALOG literature; the all-solder alternative and the column-stiffened card bound it",
       "b_subtype": "B1",
       "b_resolved": true,
-      "b_status": "RESOLVED -- ordering changes in: P_loss_w under attach_sn (Z2 lower -> unresolved) -- the claim is narrowed accordingly"
+      "b_status": "RESOLVED -- ordering changes in: P_loss_package_internal_w under attach_sn (Z2 lower -> unresolved) -- the claim is narrowed accordingly"
     },
     {
       "id": "mat.vr_attach_underfill",
@@ -213,7 +214,7 @@
       "rationale": "the external 48 V feed has no sourced value (ARM names connector types only); swept, and turned into the requirement R < R*",
       "b_subtype": "B1",
       "b_resolved": true,
-      "b_status": "RESOLVED -- ordering changes in: P_loss_w under R_feed = 1 R* = 1.77 mOhm (Z2 lower -> unresolved); P_loss_w under R_feed = 10 R* = 17.7 mOhm (Z2 lower -> Z1 lower) -- the claim is narrowed accordingly"
+      "b_status": "RESOLVED -- ordering changes in: P_loss_platform_inclusive_w under R_feed = 1 R* = 1.77 mOhm (Z2 lower -> unresolved); P_loss_platform_inclusive_w under R_feed = 10 R* = 17.7 mOhm (Z2 lower -> Z1 lower) -- the claim is narrowed accordingly"
     }
   ]
 }

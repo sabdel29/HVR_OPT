@@ -101,6 +101,35 @@ def crossover(scen, temps, p_ref, lo=1e-8, hi=1.0):
     return math.sqrt(lo * hi)
 
 
+def attach_density_rstar(scen, p_z1):
+    """R* under the published attach densities (geom.vr_attach_density): each variant's own
+    converged temperatures and its real-lattice attach ledger (final_closure_vr_attach.
+    ledger_spec). The attach is Z2-only, so the Z1 reference is the production one."""
+    import final_closure_vr_attach as VA
+    out, orig = {}, FL.attach_spec
+    try:
+        for name in ("dense", "sparse"):
+            f = R / "research/final_closure/sensitivity" / f"etm_Z2_{scen}__attach_{name}.json"
+            if not f.exists():
+                continue
+            c = json.loads(f.read_text())
+            sp = dict(orig())
+            sp.update(VA.ledger_spec(VA.CASES[name]))
+            FL.attach_spec = lambda sp=sp: sp
+            temps = converged_temps(c)
+            base = platform_point(scen, temps, 0.0)
+            r = crossover(scen, temps, p_z1)
+            out[name] = {"source": f.relative_to(R).as_posix(),
+                         "P_Z2_internal_w": c["P_loss_w"],
+                         "P_Z2_internal_recomputed_w": base["P_total_w"],
+                         "advantage_at_zero_feed_w": p_z1 - c["P_loss_w"],
+                         "advantage_at_zero_feed_recomputed_w": p_z1 - base["P_total_w"],
+                         "R_star_mohm": None if r is None else r * 1e3}
+    finally:
+        FL.attach_spec = orig
+    return out
+
+
 def main():
     rs = np.logspace(math.log10(SPEC["sweep_mohm"][0]), math.log10(SPEC["sweep_mohm"][1]),
                      SPEC["sweep_points"]) * 1e-3
@@ -129,15 +158,25 @@ def main():
             raise RuntimeError(f"{f1.name} has no joint search: admissibility unknown")
         t_joint = FR.hottest_joint_C(c1["mechanics"])
         z1_inadmissible = t_joint >= FR.SAC305_SOLIDUS_C
+        at_star = platform_point(scen, temps, r_star) if r_star else None
         out["scenarios"][scen] = {
-            "P_Z1_w": p_z1, "efficiency_Z1": FL.P_LOAD_W / (FL.P_LOAD_W + p_z1),
+            # package-internal losses (each architecture inside its own boundary)
+            "P_Z1_w": p_z1, "P_Z1_internal_w": p_z1,
+            "efficiency_Z1": FL.P_LOAD_W / (FL.P_LOAD_W + p_z1),
             "P_Z2_internal_w": c2["P_loss_w"],
             "P_Z2_internal_recomputed_w": base["P_total_w"],
-            "advantage_at_zero_feed_w": p_z1 - base["P_total_w"],
+            "efficiency_Z2_zero_feed": base["efficiency"],
+            # the package-internal gap of the two converged cases (the numbers every table
+            # shows); R* is solved on the self-consistent re-solve at zero feed, which
+            # differs from the converged case by the E-T tolerance only
+            "advantage_at_zero_feed_w": p_z1 - c2["P_loss_w"],
+            "advantage_at_zero_feed_recomputed_w": p_z1 - base["P_total_w"],
             "R_star_mohm": None if r_star is None else r_star * 1e3,
-            "P_feed_at_R_star_w": (None if not r_star else
-                                   platform_point(scen, temps, r_star)["P_feed_w"]),
+            "P_feed_at_R_star_w": None if not at_star else at_star["P_feed_w"],
+            "efficiency_Z2_at_R_star": None if not at_star else at_star["efficiency"],
             "I_48_rms_a": base["I_48_rms_a"], "scen_rms_ratio": FL.SCEN_RATIO[scen],
+            # feed loss per milliohm of external loop at the zero-feed operating point
+            "P_feed_per_mohm_w": base["I_48_rms_a"] ** 2 * 1e-3,
             "Z1_hottest_joint_C": t_joint,
             "Z1_operating_point_inadmissible": z1_inadmissible,
             "requirement": (None if r_star is None or z1_inadmissible else
@@ -147,6 +186,8 @@ def main():
                             f"for Z2 to keep its electrical advantage in {scen.replace('_', '-')}, "
                             f"R_Z2_direct_feed_loop < {r_star * 1e3:.3g} mOhm"),
             "temps_C": temps,
+            "attach_density_R_star": (attach_density_rstar(scen, p_z1)
+                                      if not z1_inadmissible else {}),
             "sweep": [platform_point(scen, temps, r) for r in rs]}
         s = out["scenarios"][scen]
         print(f"{scen}: P_Z1 {p_z1:.3f} W, P_Z2(0) {base['P_total_w']:.3f} W, "
