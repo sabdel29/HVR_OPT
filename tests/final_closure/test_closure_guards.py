@@ -138,12 +138,13 @@ def test_paper_ready_function_refuses_an_unresolved_b1():
     lm = {"acceptance": {"pass": True},
           "cases": {f"{a}_{s}": {"U": 0.01, "production_value": 1.0} for a, s in pol["cases"]}}
     cb = {"gates": [{"gate": "board.h1_meshed", "new_subtype": "B1", "resolved": True},
+                    {"gate": "geom.vr_attach_density", "new_subtype": "B1", "resolved": True},
                     {"gate": "tsv.density_sensitivity_run", "new_subtype": "B1",
                      "resolved": False}]}
     final = [{"arch": "Z2", "architecture_variant": "Z2_DIRECT_FEED", "forbidden_terms": []}]
     ok, why = FR.paper_ready(True, True, True, True, True, cb, lm, final)
     assert not ok and any("tsv.density_sensitivity_run" in w for w in why)
-    cb["gates"][1]["resolved"] = True
+    cb["gates"][2]["resolved"] = True
     ok, why = FR.paper_ready(True, True, True, True, True, cb, lm, final)
     assert ok, why
     lm["acceptance"]["pass"] = False

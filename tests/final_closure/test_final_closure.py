@@ -302,7 +302,10 @@ EVID_FOLDER = {"tsv_tile_kz": "tsv_tile_rve", "tsv_tile_kx": "tsv_tile_rve",
                "pkg_rdl_Z1": "pkg_rdl_moose_Z1", "pkg_rdl_Z2": "pkg_rdl_moose_Z2",
                "thermal_column_aedt_Z1": "thermal_column_Z1",
                "thermal_column_aedt_Z2": "thermal_column_Z2",
-               "mech_bilayer_aedt": "mech_bilayer"}
+               "mech_bilayer_aedt": "mech_bilayer",
+               # geom.vr_attach_density: one folder for the four explicit attach unit cells
+               **{f"vr_attach_{c}_{k}": "attach_rve" for c in ("dense", "sparse")
+                  for k in ("kz", "kxy")}}
 
 
 def test_reference_tool_evidence_is_real_where_claimed():
@@ -444,7 +447,10 @@ def test_literature_rules_classify_every_listed_source_without_invention():
               "US20260059645A1 (patent)", "US20210249384A1 (patent family)",
               "10.1109/ECTC.2016.127", "10.3390/electronics12010144",
               "10.1109/TCPMT.2016.2641040", "10.1109/ICEPT.2018.8480482",
-              "10.1016/j.mssp.2026.110744"}
+              "10.1016/j.mssp.2026.110744",
+              # added with the attach-density closure (geom.vr_attach_density): CONTEXT_ONLY
+              "10.1109/EPTC.2015.7412351", "10.3390/ma16031134", "10.3390/ma10101220",
+              "10.1109/TCPMT.2025.3628798"}
     got = {s["doi"]: s for s in lr["sources"]}
     assert set(got) == listed
     # a held source names a record committed with the repo (a held PDF stays local: literature

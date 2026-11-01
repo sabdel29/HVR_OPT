@@ -165,6 +165,7 @@ CLOSED_IDS = {
     "geom.sidewall_clearance",                 # class B: sidewall-filled construction run
     "geom.vr_attach_explicit",                 # measured attach tier, 30 um
     "geom.vr_attach_height",                   # class B: 20 / 40 um attach
+    "geom.vr_attach_density",                  # class B: published 15/30 and 30/80 um lattices
     "mech.bga_population",                     # class B: 420/528 Z2 BGA field
     "therm.backside_interface",                # class B: backside plate behind a TIM
     "therm.cooling_model_form",                # class B: Icepak-equivalent coefficient
