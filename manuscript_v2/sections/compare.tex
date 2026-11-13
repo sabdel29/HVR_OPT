@@ -1,0 +1,70 @@
+% ============================================================================ COMPARE
+\section{Comparing Integrations}\label{sec:compare}
+
+In comparison mode the same synthesized regulator, device set, cell grid and cooling solution
+are placed in each integration, and every output is reported inside declared loss boundaries
+(Table~\ref{tab:compare}). Because the regulator is identical, every difference between the
+columns is caused by the integration, and model-form errors common to all of them---the
+converter loss model, the device temperature coefficients, the solder law---largely cancel in
+the differences.
+
+\input{tab_compare}
+
+\subsection{Electrical: the loss swap and its thermal price}
+Moving the regulator out of the package removes the package 48-V network, \PhvZone~W in Z1,
+and puts the kiloampere 1-V current through new conductors: the Cu-pillar attach and the TSV
+field in Z2 (\PattZtwo~W and \PtsvZtwo~W); the board-level attach, the board via field, the
+ball field and the TSVs in Z3 (\PattZthree, \PboardZthree{} and \PtsvZthree~W). A
+room-temperature analysis stops here, and it prefers Z2 over Z1 by \DeltaPrtZtwoSzero~W. The
+coupled solution reverses that preference (Fig.~\ref{fig:loss}). The backside converter of Z2 is
+cooled only through the attach and the substrate, so its low-side tier runs \dTlsZtwoSzero~K
+hotter than in Z1 and its conversion loss rises by \dPconvZtwoSzero~W---four times the routing
+saving. Z1 therefore has the lower package-internal loss, by \LossGapZtwoSzero~W, and the
+ordering is resolved against both the mesh and the local uncertainty. % TODO(data): Z3 sentence
+Which integration is electrically better is thus decided by the thermal path of the converter as
+much as by the rail its interconnect carries.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig5_loss_swap.pdf}
+\caption{(a) Current per regulator cell in each class of connection, by rail. (b), (c)
+Package-internal loss of Z2 and of Z3 minus that of Z1 at S0, term by term: the routing each
+integration removes or adds, and the change of conversion loss caused by the converter's own
+temperature (low-side tier temperature difference in parentheses).}
+\label{fig:loss}
+\end{figure}
+
+The input waveform changes the ranking again. Without local input decoupling (S1) the pulsed
+input current reaches the package 48-V network of Z1 but not the directly fed backside
+regulators, and Z2 has the lower package-internal loss by \LossGapZtwoSone~W; under S2, Z1 has no
+admissible operating point (Section~\ref{sec:evaluate}). The direct feed itself is outside the
+package boundary. Its loop resistance $R_{\mathrm{feed}}$ enters through~\eqref{eq:feed} and is
+treated as a requirement (Fig.~\ref{fig:feed}): where a backside regulator is ahead at zero feed
+resistance, $R^*$ is the largest loop resistance that keeps it ahead; where it is behind, no
+feed can recover the difference. % TODO(data): R* values for Z2/Z3 at S0/S1
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig6_crossover.pdf}
+\caption{Platform-inclusive loss of the directly fed backside integrations minus that of Z1,
+against the external feed-loop resistance. (a) S0. (b) S1. Below zero the backside integration
+has the lower platform-inclusive loss; the circle marks the crossover $R^*$. Dashed: the package
+48-V loop resistance of Z1, for scale.}
+\label{fig:feed}
+\end{figure}
+
+\subsection{Thermal and mechanical}
+% TODO(data): peak/die/joint temperatures, warpage and joint driver per integration, mechanisms
+% (Z1 sandwich on a full array; Z2 one-sided plate on a ring; Z3 uncut board, second plate),
+% and the scenario figure.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig8_scenarios.pdf}
+\caption{Every integration under the three 48-V input scenarios: (a) package-internal loss,
+(b) peak temperature, (c) die warpage, (d) critical-joint displacement, (e) local inelastic
+strain increment. Whiskers: discretization uncertainty (package mesh for (a)--(d), local
+uncertainty $U$ for (e)). Hatched and clipped: no admissible operating point; open marker:
+joint temperature beyond the calibration of the solder law.}
+\label{fig:scenarios}
+\end{figure*}

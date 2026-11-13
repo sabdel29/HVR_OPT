@@ -1,0 +1,39 @@
+{
+ "model": "In Z3 the 1 V output (1 kA per rail) enters the package through the BGA. At the 1.5-A-per-\nball criterion it needs 667 balls per rail, which fill 1334 of the 1369 sites of the 0.8-mm\nlattice, while the TSV fields that carry it to the die sit only under the 49 cell\nfootprints. The current of every ball outside a footprint must therefore travel laterally\nin a land-side copper plane of the substrate. This script bounds that loss with a 2-D\nfinite-volume solution of one rail's plane:",
+ "grid_mm": 0.1,
+ "T_C": 90.0,
+ "occupancy": 0.8,
+ "I_rail_A": 1000.0,
+ "cases": [
+  {
+   "t_cu_um": 10.0,
+   "R_s_mohm_sq": 2.7414650000000003,
+   "P_one_rail_w": 33.347990494780696,
+   "P_two_rails_w": 66.69598098956139,
+   "dV_one_rail_mV": 163.11176931611223
+  },
+  {
+   "t_cu_um": 20.0,
+   "R_s_mohm_sq": 1.3707325000000001,
+   "P_one_rail_w": 16.673995247390348,
+   "P_two_rails_w": 33.347990494780696,
+   "dV_one_rail_mV": 81.55588465805612
+  },
+  {
+   "t_cu_um": 40.0,
+   "R_s_mohm_sq": 0.6853662500000001,
+   "P_one_rail_w": 8.336997623695174,
+   "P_two_rails_w": 16.673995247390348,
+   "dV_one_rail_mV": 40.77794232902806
+  },
+  {
+   "t_cu_um": 60.0,
+   "R_s_mohm_sq": 0.4569108333333333,
+   "P_one_rail_w": 5.557998415786292,
+   "P_two_rails_w": 11.115996831572584,
+   "dV_one_rail_mV": 27.185294886032008
+  }
+ ],
+ "balls_per_rail": 685,
+ "balls_inside_footprints": 245
+}

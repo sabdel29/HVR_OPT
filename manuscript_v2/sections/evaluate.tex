@@ -1,0 +1,50 @@
+% ============================================================================ EVALUATE
+\section{Evaluating a Design}\label{sec:evaluate}
+
+In evaluation mode the chain is run once for one integration, and every output is checked
+against a rule the package must satisfy. The design evaluated here is the embedded regulator
+(Z1), the integration of the reference framework~\cite{Krishnakumar2026DVPD}, at the
+synthesized design point of Table~\ref{tab:spec}; its fields are shown in
+Fig.~\ref{fig:fields} and its numbers in the first column of Table~\ref{tab:compare}.
+
+\emph{Interconnect.} In the reference tier order the high-side-to-flying-capacitor connection
+cannot be built with build-up microvias (Section~\ref{sec:realizability}); in the repartitioned
+order every vertical net passes the aspect-ratio, pitch and landing checks. The package 48-V
+network needs \NballMatched{} balls per rail under the 1.5-A provisioning rule, and its supply
+and return loop measures \RloopZone~m$\Omega$. The substrate's TSV field carries the 48-V input
+at 0.48~A per cell and dissipates \PtsvZone~W.
+
+\emph{Electrothermal state.} The fixed point converges in \EtItersZone{} iterations to
+\PlossZone~W inside the package (\EffZone\,\% efficiency), of which \PconvZone~W is conversion
+and \ProuteZone~W routing. The peak temperature, \TmaxZone\,$^\circ$C, lies in the low-side
+device tier, which averages \TlsZone\,$^\circ$C; the die averages \TdieZone\,$^\circ$C.
+Evaluated with every region at 25\,$^\circ$C, the same ledger returns \PrtZone~W. An electrical
+analysis decoupled from the thermal solution would therefore understate the package loss by
+\UnderZone\,\% (\RiseZone~W), because on-resistance and resistivity are evaluated about 90~K
+above the temperature such an analysis assumes.
+
+\emph{Mechanical state.} The die warps by \WarpZone~\textmu m peak to valley. The search over
+all \NjointZone{} ball sites places the critical joint at the corner of the array, where
+$\du = \DuZone$~\textmu m at \TjointZone\,$^\circ$C, inside the 125-$^\circ$C calibration of the
+solder law, and the local response is $\deps = \EpsZone\times10^{-3}$ per cycle with an
+uncertainty of \EpsUZone\,\%.
+
+\emph{A requirement on the converter.} The evaluation returns more than a verdict: it returns a
+requirement that no converter-level analysis raises. Without local input decoupling (S1) the
+pulsed input current flows through the package 48-V network; the package loss rises to
+\PlossZoneSone~W and the critical joint reaches \TjointZoneSone\,$^\circ$C, beyond the
+calibration of the solder law. With the input pulsed at the overall conversion ratio (S2), the
+hottest joint reaches \TjointHotZoneStwo\,$^\circ$C, above the 217-$^\circ$C solidus of SAC305,
+and the operating point does not exist. The embedded regulator is admissible only with local
+input capacitance at every cell, of the order of 0.5~\textmu F at the synthesized frequency.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig7_fields.pdf}
+\caption{Converged fields at S0. (a)--(c) Temperature on the vertical section through the
+middle row of cells (3$\times$ vertical exaggeration; voids left empty). (d)--(f) Out-of-plane
+displacement of the die top surface relative to its lowest point; the peak-to-valley value is
+the die warpage. (g)--(i) Relative in-plane displacement across the ball layer at every legal
+site; the critical joint is ringed.}
+\label{fig:fields}
+\end{figure*}

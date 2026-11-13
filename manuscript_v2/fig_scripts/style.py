@@ -4,7 +4,10 @@ IEEE T-CPMT print figures: Times New Roman (matches the IEEEtran body), 8 pt lab
 7 pt ticks, vector PDF. Column width 3.5 in, double column 7.16 in.
 
 Colour roles (validated with the dataviz validator, light surface #ffffff, --pairs all):
-  architecture identity  Z1 #2a78d6 (blue), Z2 #eb6834 (orange)   -> charts only
+  architecture identity  Z1 #2a78d6 (blue), Z2 #eb6834 (orange), Z3 #1baf7a (aqua) -> charts only
+                         (the first three categorical slots; validated all-pairs: worst CVD
+                         dE 9.2, normal-vision 24.0; aqua is 2.7:1 on white, so it is always
+                         direct-labelled)
   rail identity          48 V #e34948 (red), 1 V #6250d6 (violet) -> schematics/ledger only
   The two pairs FAIL together (red~orange, violet~blue), so they never share a figure.
 Text is always ink (never series colour); identity comes from the mark beside it.
@@ -23,7 +26,7 @@ from matplotlib.patches import FancyBboxPatch, Rectangle
 
 # ------------------------------------------------------------------ paths
 SRC = Path("/home/beams0/SABDELZAHER/ETM_project/HVR_OPT_work")      # revised lineage (working copy)
-FC = SRC / "research" / "final_closure"
+FC = Path(os.environ.get("TCPMT_RESULTS_DIR", SRC / "research" / "final_closure"))
 FIELDS = Path("/home/beams0/SABDELZAHER/ETM_project/scratch/fields")
 OUT = SRC / "manuscript_v2" / "figs"
 OUT.mkdir(parents=True, exist_ok=True)
@@ -33,8 +36,9 @@ COL_W = 3.5      # in, single column
 DBL_W = 7.16     # in, double column
 
 # ------------------------------------------------------------------ colours
-Z1, Z2 = "#2a78d6", "#eb6834"
-ARCH = {"Z1": Z1, "Z2": Z2}
+Z1, Z2, Z3 = "#2a78d6", "#eb6834", "#1baf7a"
+ARCH = {"Z1": Z1, "Z2": Z2, "Z3": Z3}
+ARCH_NAME = {"Z1": "Z1 embedded", "Z2": "Z2 package backside", "Z3": "Z3 board backside"}
 V48, V1 = "#e34948", "#6250d6"
 INK, INK2, MUTED = "#0b0b0b", "#52514e", "#898781"
 GRID, AXIS = "#e1e0d9", "#8a8983"

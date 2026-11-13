@@ -48,6 +48,10 @@ HOMOG = R / "research" / "phase0nv" / "pcb_homogenization.json"
 CONV_TIERS = ("flying_caps", "inductor_plus_cout")
 
 
+#: cap on concurrent solver processes (shared host); unset = the previous behaviour
+POOL_MAX = int(os.environ.get("FC_POOL_MAX", "10000"))
+
+
 # ------------------------------------------------------------------ board variants
 def eta_material(eta):
     """The IT-968G board card at copper coverage eta, by the SAME rule that derives the
@@ -435,6 +439,41 @@ def v_conv_mech(E_mpa, cte):
     E.BUILD_HOOKS.append(hook)
 
 
+
+# ------------------------------------------------------------------ tier order (Z1)
+def v_z1_tier_reference():
+    """Z1 built in the REFERENCE tier order of Krishnakumar 2026 (HS -> LS -> C_f -> L)
+    instead of the production repartitioned order (HS -> C_f -> LS -> L), everything else
+    unchanged: the same components, heights, interlayers and total. Isolates what tier
+    order alone does to device temperature and loss, on top of its realizability verdict
+    (worst via AR 5.32 vs 0.83). The mesh, the deposits (FL.LAYERS) and the intra-VR
+    routing (FL.cell_tiers) all follow the swapped order."""
+    import yaml
+    import final_closure_ledger as FL
+    import physical_package as PP
+    sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+    import z1_package as Z1P
+    cfg = yaml.safe_load(Z1P.Z1_CFG.read_text())
+    t = cfg["converter"]["tiers_from_substrate_upward"]
+    names = [x["name"] for x in t]
+    i_ls, i_cf = names.index("gan_ls_EPC2057"), names.index("flying_caps")
+    t[i_ls], t[i_cf] = t[i_cf], t[i_ls]
+    tmp = scratch("fc_sens", "z1_tier_reference") / "z1_physical_reference_order.yaml"
+    tmp.parent.mkdir(parents=True, exist_ok=True)
+    tmp.write_text(yaml.safe_dump(cfg, sort_keys=False))
+    load = PP.load_z1_package_config
+    PP.load_z1_package_config = lambda path=None: load(path or tmp)
+    Z1P.Z1_CFG = tmp
+    tiers = [(next((c for key, c in FL._TIER_CLASS if x["name"].startswith(key)), "rdl"),
+              float(x["um"])) for x in t]
+    ct = FL.cell_tiers
+    FL.cell_tiers = lambda arch: list(tiers) if arch == "Z1" else ct(arch)
+    lay = dict(FL.LAYERS["Z1"])
+    lay["ls"] = f"z1conv_{i_cf}_gan_ls_EPC2057"
+    lay["caps"] = f"z1conv_{i_ls}_flying_caps"
+    FL.LAYERS["Z1"] = lay
+
+
 VARIANTS = {
     "board_t3p2": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_thickness(
         "it968g_3p2mm", 3200.0), gates=["board.t_only_comparison_run",
@@ -552,6 +591,10 @@ VARIANTS = {
                       nature="BGA mechanical population (smeared)",
                       what="BGA field populated at 420/528: the 54 + 54 48 V balls of the "
                            "BGA-fed design removed"),
+    "z1_tier_reference": dict(kind="full", archs=("Z1",), apply=v_z1_tier_reference,
+                              gates=[], nature="ENGINEERING_SENSITIVITY (tier order)",
+                              what="Z1 in the reference tier order HS-LS-Cf-L (production: "
+                                   "repartitioned HS-Cf-LS-L); components, heights unchanged"),
     "board_hbot100": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_hbot(100.0),
                           gates=[], nature="ENGINEERING_SENSITIVITY (board thermal boundary)",
                           what="effective board-bottom coefficient 100 W/m2K instead of 10 "
@@ -695,7 +738,7 @@ def local_main(names):
     if not tasks:
         print("no variant needs a local solve", flush=True)
         return
-    with mp.Pool(min(len(tasks), 24)) as p:
+    with mp.Pool(min(len(tasks), 24, POOL_MAX)) as p:
         out = p.map(_local_task, tasks, chunksize=1)
     for arch, variant, r in out:
         f = case_file(arch, variant)
@@ -713,7 +756,7 @@ def main():
     for a in (sys.argv[1:] or list(VARIANTS)):
         v, *arch = a.split(":")
         tasks += [(x, v) for x in (arch or VARIANTS[v]["archs"])]
-    with mp.Pool(len(tasks)) as p:
+    with mp.Pool(min(len(tasks), POOL_MAX)) as p:
         out = p.map(_task, tasks)
     log = OUT / "run_log.json"
     old = json.loads(log.read_text()) if log.exists() else []

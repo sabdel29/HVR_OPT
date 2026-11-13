@@ -1,4 +1,4 @@
-"""Fig. 8 (proposed): embedded vs backside across the three named 48-V input scenarios.
+"""Fig. 8: the integrations across the three named 48-V input scenarios.
 
 One quantity per panel (small multiples, one y-axis each). The Z1 operating point under
 S2 is inadmissible (critical joint above the SAC305 solidus); it is drawn hatched and
@@ -17,10 +17,12 @@ fin = S.J("final_results.json")
 od = S.J("ordering.json")["orderings"]
 SC = ["HV_S0", "HV_S1", "HV_S2"]
 TICK = ["S0", "S1", "S2"]
+ARCHS = [a for a in ("Z1", "Z2", "Z3") if any(x["arch"] == a for x in fin)]
+NA = len(ARCHS)
 
 
 def g(a, s, k):
-    return next(x.get(k) for x in fin if x["arch"] == a and x["scenario"] == s)
+    return next((x.get(k) for x in fin if x["arch"] == a and x["scenario"] == s), None)
 
 
 def unc(key, s):
@@ -38,14 +40,20 @@ fig, axes = plt.subplots(1, 5, figsize=(S.DBL_W, 2.05),
                          gridspec_kw={"wspace": 0.42, "left": 0.055, "right": 0.995,
                                       "bottom": 0.20, "top": 0.80})
 x = np.arange(3)
-w = 0.34
+w = 0.68 / NA
+
+
+def xpos(n, j):
+    return x[j] + (n - (NA - 1) / 2) * (w + 0.03)
 for ax, (key, title, fmt, ytop) in zip(axes[:4], panels):
     ax.set_xlim(-0.6, 2.6)
     ax.set_ylim(0, ytop)
-    for n, a in enumerate(("Z1", "Z2")):
+    for n, a in enumerate(ARCHS):
         for j, s in enumerate(SC):
             v = g(a, s, key)
-            xc = x[j] + (n - 0.5) * (w + 0.03)
+            xc = xpos(n, j)
+            if v is None:
+                continue
             infeasible = bool(g(a, s, "T_joint_at_or_above_solder_solidus"))
             if infeasible:
                 hv = ytop * 0.97
@@ -79,9 +87,9 @@ for k, (ax, t) in enumerate(zip(axes, titles)):
 ax = axes[4]
 ax.set_xlim(-0.6, 2.6)
 ax.set_ylim(0, 11)
-for n, a in enumerate(("Z1", "Z2")):
+for n, a in enumerate(ARCHS):
     for j, s in enumerate(SC):
-        xc = x[j] + (n - 0.5) * (w + 0.03)
+        xc = xpos(n, j)
         v = g(a, s, "d_eps_in_per_cycle")
         if v is None:
             ax.text(xc, 0.4, "n/a", ha="center", va="bottom", fontsize=6, color=S.INK2,
@@ -97,13 +105,12 @@ ax.tick_params(axis="x", length=0, pad=2)
 for lab in ax.get_xticklabels():
     lab.set_fontsize(6.3)
 
-handles = [Patch(fc=S.Z1, ec="none", label="Z1 embedded"),
-           Patch(fc=S.Z2, ec="none", label="Z2 backside"),
+handles = [Patch(fc=S.ARCH[a], ec="none", label=S.ARCH_NAME[a]) for a in ARCHS] + [
            Patch(fc="white", ec=S.INK2, hatch="//////", lw=0.6,
                  label="inadmissible (joint ≥ SAC305 solidus), clipped"),
            Line2D([], [], marker="o", ls="none", mfc="white", mec=S.INK2, ms=4,
                   label="joint beyond solder-model calibration")]
-fig.legend(handles=handles, loc="upper center", ncol=4, bbox_to_anchor=(0.52, 1.03),
+fig.legend(handles=handles, loc="upper center", ncol=NA + 2, bbox_to_anchor=(0.52, 1.03),
            columnspacing=1.4, handletextpad=0.5)
 fig.text(0.52, 0.035, "48-V input scenarios:  S0 smoothed (local input decoupling)   ·   "
          "S1 pulsed at the buck duty $D$   ·   S2 pulsed at the overall ratio 1/48",

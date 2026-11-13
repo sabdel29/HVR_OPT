@@ -1,48 +1,48 @@
-"""Fig. 5 (proposed): rail assignment and the loss swap.
+"""Fig. 5: rail assignment and where each integration gains or loses against Z1.
 
-(a) Current carried by each class of vertical connection inside one regulator cell,
-    coloured by rail (48 V red, 16 V neutral, 1 V violet) - the substrate field carries
-    the 48-V input in Z1 but the 1-V output in Z2.
-(b,c) Package-internal loss difference Z2 - Z1, decomposed term by term (waterfall), at
-    S0 and S1: what the backside regulator removes (the 48-V package path) and adds (the
-    1-V attach and TSV field), plus the electrothermal knock-on in the converter devices.
-Data: electrical_ledger.json (converged E-T state, per scenario). Rail colours only;
-no architecture colours in this figure (the two pairs fail together under CVD).
+(a)   Current carried by each class of connection inside one regulator cell, coloured by
+      rail (48 V red, 16 V neutral, 1 V violet).
+(b,c) Package-internal loss of Z2 and of Z3 minus that of Z1 at S0, decomposed term by
+      term (waterfall): the routing terms each integration removes or adds, and the
+      electrothermal term -- the same converter dissipating more or less because it runs
+      at a different temperature. The converter row is annotated with that temperature
+      difference.
+Data: electrical_ledger.json and final_results.json (converged E-T state). Rail colours
+only; no architecture colours in this figure (the two pairs fail together under CVD).
 """
-import json
-import numpy as np
 import matplotlib.pyplot as plt
 import style as S
 
 S.setup()
 L = S.J("electrical_ledger.json")["rows"]
+FIN = {(x["arch"], x["scenario"]): x for x in S.J("final_results.json")}
+SCEN = "HV_S0"
 
 
-def tot(a, s, pred):
-    return sum(r["P_w"] for r in L if r["arch"] == a and r["scenario"] == s and pred(r))
+def tot(a, pred, s=SCEN):
+    return sum(r["P_w"] or 0.0 for r in L if r["arch"] == a and r["scenario"] == s
+               and pred(r["term"]))
+
+
+def pre(*p):
+    return lambda t: any(t.startswith(x) for x in p)
 
 
 GROUPS = [
-    ("48-V package path\n(RDL, balls, TSVs)", lambda r: r["rail"] == "48V", S.V48),
-    ("1-V Cu-pillar attach", lambda r: r["term"].startswith("P_VR_attach"), S.V1),
-    ("1-V TSV field", lambda r: r["term"].startswith("P_TSV") and r["rail"] == "1V", S.V1),
-    ("Converter devices", lambda r: r["rail"] == "converter", S.NEUTRAL),
-    ("Intra-cell metal, vias", lambda r: r["rail"] == "mixed", S.NEUTRAL),
+    ("48-V package path", pre("P_pkg_RDL_HV", "P_BGA_supply", "P_BGA_return"), S.V48),
+    ("TSV field", pre("P_TSV"), S.V1),
+    ("VR attach", pre("P_VR_attach", "P_VR_PCB_attach", "P_board_attach"), S.V1),
+    ("Board vias, 1-V BGA", pre("P_board", "P_PCB", "P_pcb", "P_BGA_LV", "P_BGA_1V",
+                                "P_BGA_VDD", "P_BGA_GND", "P_sub_land"), S.V1),
+    ("Intra-cell routing", pre("P_intraVR"), S.NEUTRAL),
+    ("Converter", pre("P_conv_"), S.NEUTRAL),
 ]
+archs = [a for a in ("Z2", "Z3") if any(r["arch"] == a and r["scenario"] == SCEN for r in L)]
 
-
-def deltas(s):
-    out = []
-    for name, pred, col in GROUPS:
-        out.append((name, tot("Z2", s, pred) - tot("Z1", s, pred), col))
-    net = tot("Z2", s, lambda r: True) - tot("Z1", s, lambda r: True)
-    return out, net
-
-
-fig = plt.figure(figsize=(S.COL_W, 3.55))
-axA = fig.add_axes([0.40, 0.745, 0.56, 0.205])
-axB = fig.add_axes([0.40, 0.10, 0.255, 0.42])
-axC = fig.add_axes([0.705, 0.10, 0.255, 0.42])
+fig = plt.figure(figsize=(S.COL_W, 3.45))
+axA = fig.add_axes([0.40, 0.765, 0.56, 0.19])
+wpan = 0.56 / len(archs) - (0.05 if len(archs) > 1 else 0)
+axes = [fig.add_axes([0.40 + k * (wpan + 0.05), 0.10, wpan, 0.47]) for k in range(len(archs))]
 
 # ---------------------------------------------------------------- (a) segment currents
 seg = [("48-V input bus", 0.478, S.V48), ("16-V high side to $C_\\mathrm{f}$", 1.015, S.NEUTRAL),
@@ -54,7 +54,7 @@ axA.set_ylim(len(seg) - 0.45, -0.55)
 axA.grid(axis="x", which="major", color=S.GRID, lw=0.5)
 axA.grid(axis="y", visible=False)
 for i, (lab, v, col) in enumerate(seg):
-    axA.barh(i, v, left=0.2, height=0.62, color=col, lw=0, zorder=2)
+    axA.barh(i, v - 0.2, left=0.2, height=0.62, color=col, lw=0, zorder=2)
     axA.text(v * 1.28, i, f"{v:.2f} A" if v < 10 else f"{v:.1f} A", va="center", ha="left",
              fontsize=6.6, color=S.INK)
 axA.set_yticks(range(len(seg)), [s[0] for s in seg])
@@ -62,14 +62,39 @@ axA.tick_params(axis="y", length=0, labelsize=6.8)
 axA.set_xlabel("Current per regulator cell (A)", labelpad=1.5)
 axA.spines["left"].set_visible(False)
 S.panel(axA, "a", "Rail currents in one cell", x=-0.70, y=1.06)
-axA.text(1.0, -0.40, "×49 cells: 23.9 A at 48 V vs 1.0 kA at 1 V", transform=axA.transData,
-         ha="left", va="bottom", fontsize=6.2, color=S.INK2)
+i48 = FIN[("Z1", SCEN)]["I_48_avg_a"]
+axA.text(60, -0.5, f"×49 cells: {i48:.1f} A at 48 V,\n1.0 kA at 1 V",
+         transform=axA.transData, ha="right", va="top", fontsize=6.0, color=S.INK2,
+         linespacing=1.0)
 
-# ---------------------------------------------------------------- (b,c) loss swap
-for k, (ax, s, name, xl) in enumerate(((axB, "HV_S0", "S0 smoothed", (-2.2, 1.25)),
-                                       (axC, "HV_S1", "S1 pulsed", (-40, 17)))):
-    ds, net = deltas(s)
-    rows = ds + [("Net, Z2 $-$ Z1", net, S.INK)]
+
+def T_ls(a):
+    import json
+    c = json.loads((S.FC / f"etm_{a}_{SCEN}_h1.1_r21.json").read_text())
+    return c["et_history"][-1]["T_ls_C"]
+
+
+def fmt(d):
+    return (f"{d:+.2f}" if abs(d) < 10 else f"{d:+.1f}").replace("-", "−")
+
+
+# ---------------------------------------------------------------- (b,c) waterfalls
+def present(a, p):
+    return any(r["arch"] == a and r["scenario"] == SCEN and p(r["term"]) for r in L)
+
+
+rows_all = {}
+for a in archs:
+    ds = [(n, (tot(a, p) - tot("Z1", p)) if (present(a, p) or present("Z1", p)) else None, c)
+          for n, p, c in GROUPS]
+    net = tot(a, lambda t: True) - tot("Z1", lambda t: True)
+    rows_all[a] = ds + [("Net vs. Z1", net, S.INK)]
+span = max(max(abs(d) for _, d, _ in r if d is not None) for r in rows_all.values())
+lo = (-1.25 * span if any(d is not None and d < 0 for r in rows_all.values() for _, d, _ in r)
+      else -0.15 * span)
+xl = (lo, 1.55 * span)
+for k, (ax, a) in enumerate(zip(axes, archs)):
+    rows = rows_all[a]
     ax.set_xlim(*xl)
     ax.set_ylim(len(rows) - 0.4, -0.6)
     ax.axvline(0, color=S.AXIS, lw=0.6, zorder=1)
@@ -77,24 +102,31 @@ for k, (ax, s, name, xl) in enumerate(((axB, "HV_S0", "S0 smoothed", (-2.2, 1.25
     ax.grid(axis="y", visible=False)
     cum = 0.0
     for i, (lab, d, col) in enumerate(rows):
-        if i < len(rows) - 1:
+        last = i == len(rows) - 1
+        if d is None:                       # structurally absent in both integrations
+            ax.text(xl[1], i, "\u2013", va="center", ha="right", fontsize=6.3, color=S.INK2)
+            continue
+        if not last:
             left = cum if d >= 0 else cum + d
             ax.barh(i, abs(d), left=left, height=0.6, color=col, lw=0, zorder=2)
             if i < len(rows) - 2:
-                ax.plot([cum + d, cum + d], [i + 0.3, i + 0.7], color=S.MUTED, lw=0.5,
-                        zorder=1)
+                ax.plot([cum + d] * 2, [i + 0.3, i + 0.7], color=S.MUTED, lw=0.5, zorder=1)
             cum += d
-            ax.text(xl[1], i, (f"{d:+.2f}" if abs(d) < 10 else f"{d:+.1f}").replace("-", "\u2212"), va="center",
-                    ha="right", fontsize=6.2, color=S.INK)
         else:
             ax.barh(i, d, left=0, height=0.6, color=col, lw=0, zorder=2)
-            ax.text(xl[1], i, (f"{d:+.2f}" if abs(d) < 10 else f"{d:+.1f}").replace("-", "\u2212"), va="center",
-                    ha="right", fontsize=6.4, color=S.INK, fontweight="bold")
+        ax.text(xl[1], i, fmt(d), va="center", ha="right", fontsize=6.3, color=S.INK,
+                fontweight="bold" if last else "normal")
+    # the low-side device tier carries most of the conversion loss: its temperature
+    # difference is the electrothermal mechanism behind the converter row
+    dT = T_ls(a) - T_ls("Z1")
+    ic = [r[0] for r in rows].index("Converter")
+    ax.text(xl[1], ic + 0.52, f"({dT:+.1f} K)".replace("-", "−"), va="center", ha="right",
+            fontsize=5.6, color=S.INK2)
     ax.set_yticks(range(len(rows)), [r[0] for r in rows] if k == 0 else [])
     ax.tick_params(axis="y", length=0, labelsize=6.6)
     ax.spines["left"].set_visible(False)
     ax.set_xlabel("$\\Delta P$ (W)", labelpad=1.5)
-    S.panel(ax, "bc"[k], name, y=1.02)
-fig.text(0.40, 0.575, "Package-internal loss difference, Z2 $-$ Z1", ha="left",
-         va="bottom", fontsize=7, color=S.INK)
+    S.panel(ax, "bcd"[k], f"{a} $-$ Z1", y=1.02)
+fig.text(0.40, 0.615, "Package-internal loss difference at S0", ha="left", va="bottom",
+         fontsize=7, color=S.INK)
 S.save(fig, "fig5_loss_swap")

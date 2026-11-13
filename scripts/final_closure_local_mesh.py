@@ -82,6 +82,10 @@ SCR_MESH = "fc_localmesh_p5" if A5 else ("fc_localmesh_p4" if A4 else "fc_localm
 SUPERSEDED = OUT / "superseded_bga_fed_z2"
 
 
+#: cap on concurrent solver processes (shared host); unset = the previous behaviour
+POOL_MAX = int(os.environ.get("FC_POOL_MAX", "10000"))
+
+
 def policy_cases(optional=True):
     """The cases of the CURRENT pass: amendment 4 re-declares them for the corrected
     lineage (direct-fed Z2, explicit attach, sidewall clearance)."""
@@ -258,7 +262,7 @@ def temporal():
     incs = TEMPORAL["initial_increments_s"]
     cases = ["CONTROL"] + [f"{a}:{s}" for a, s in policy_cases()]
     tasks = [(c, i) for c in cases for i in incs]
-    with mp.Pool(min(len(tasks), 24)) as pool:
+    with mp.Pool(min(len(tasks), 24, POOL_MAX)) as pool:
         rows = pool.map(_time_task, tasks, chunksize=1)
     study = {"policy": "local_mesh_policy.json amendments 2 and 3",
              "extraction": "block order (scripts/final_closure_local_extract.py, DEFECT #65)",
@@ -305,7 +309,7 @@ def _cycle_task(case):
 
 def cycles():
     cases = ["CONTROL"] + [f"{a}:{s}" for a, s in policy_cases()]
-    with mp.Pool(len(cases)) as pool:
+    with mp.Pool(min(len(cases), POOL_MAX)) as pool:
         rows = pool.map(_cycle_task, cases, chunksize=1)
     study = {"policy": "local_mesh_policy.json amendment 3 (d)", "level": "L0",
              "n_cycles": N_CYC_LONG, "cases": {}}
@@ -386,7 +390,7 @@ def main():
     cases = [tuple(c.split(":")) for c in sys.argv[1:]] or policy_cases()
     tasks = [(a, s, tag, inc0) for a, s in cases for tag in LEVELS]
     du, tj, _ = _inputs("CONTROL")
-    with mp.Pool(min(len(tasks) + 1, 22)) as pool:
+    with mp.Pool(min(len(tasks) + 1, 22, POOL_MAX)) as pool:
         ctl = pool.apply_async(_solve, ("CONTROL", du, tj, scratch(SCR_MESH, "control"),
                                         "L0", inc0, True))
         rows = pool.map(run_level, tasks, chunksize=1)
