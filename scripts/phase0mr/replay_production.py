@@ -64,11 +64,17 @@ def compiled_design():
 def converter_terms(t_c: float) -> dict:
     """Converter loss decomposed per component, at the LOCAL layer temperature."""
     from HVR_FULL_OPT_EPC_V2 import LossModelInputs, compute_total_loss
-    from electrical import rdson_at, dcr_at, ALPHA_GAN_RDSON
+    import os as _os
+    from electrical import rdson_at, dcr_at, ALPHA_GAN_RDSON, ALPHA_GAN_HS, ALPHA_GAN_LS
     from dataclasses import replace as dc_replace
     d = compiled_design()
-    hs = dc_replace(d.hs, R_DS_ON=rdson_at(d.hs.R_DS_ON, t_c, ALPHA_GAN_RDSON))
-    ls = dc_replace(d.ls, R_DS_ON=rdson_at(d.ls.R_DS_ON, t_c, ALPHA_GAN_RDSON))
+    # TCPMT revision: per-device, datasheet-sourced coefficients (HVR_LEGACY_ALPHA=1 restores
+    # the single adopted 7.5e-3 /K of the frozen lineages)
+    legacy = _os.environ.get("HVR_LEGACY_ALPHA", "0") == "1"
+    a_hs = ALPHA_GAN_RDSON if legacy else ALPHA_GAN_HS
+    a_ls = ALPHA_GAN_RDSON if legacy else ALPHA_GAN_LS
+    hs = dc_replace(d.hs, R_DS_ON=rdson_at(d.hs.R_DS_ON, t_c, a_hs))
+    ls = dc_replace(d.ls, R_DS_ON=rdson_at(d.ls.R_DS_ON, t_c, a_ls))
     ind = dc_replace(d.inductor, r_dcr_mohm=dcr_at(d.inductor.r_dcr_mohm, t_c))
     lr = compute_total_loss(d.arch, LossModelInputs(
         hs_device=hs, ls_device=ls, inductor=ind, capacitor=d.capacitor,

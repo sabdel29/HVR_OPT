@@ -40,7 +40,13 @@ T_REF_RHO = 20.0            # degC    the temperature RHO_CU_20C refers to
 # ID, PulsedID, Package, Stock, Price), so this cannot be sourced from repository data.
 # 0.0075/K gives ~1.75x at 125 degC, consistent with the normalised R_DS(on) curves EPC
 # publishes for eGaN parts. Swept in the Phase-0D robustness study.
-ALPHA_GAN_RDSON = 7.5e-3    # 1/K     ASSUMPTION
+ALPHA_GAN_RDSON = 7.5e-3    # 1/K     ASSUMPTION (legacy single value, kept for old lineages)
+# TCPMT revision: device-specific coefficients SOURCED from the datasheets' typical
+# normalized R_DS(on) vs T_J curves, linear-equivalent over 25-125 degC:
+#   EPC2014C (high side), Fig. 8, rev. May 2021: 1.60x at 125 C  -> 6.0e-3 /K
+#   EPC2057  (low side),  Fig. 9, rev. Apr. 2025: 1.80x at 125 C -> 8.0e-3 /K
+ALPHA_GAN_HS = 6.0e-3       # 1/K     SOURCE_BACKED (EPC2014C datasheet Fig. 8)
+ALPHA_GAN_LS = 8.0e-3       # 1/K     SOURCE_BACKED (EPC2057 datasheet Fig. 9)
 T_REF_DEVICE = 25.0         # degC    datasheet reference for R_DS(on) and inductor DCR
 
 # June-2026 Table III TSV geometry - SOURCE_BACKED

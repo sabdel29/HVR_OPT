@@ -16,7 +16,7 @@ Bringing the regulator to the point of load changes the package it sits in. The 
 embedded between the substrate and the die~\cite{Krishnakumar2026DVPD}, attached to the
 substrate backside inside an opening in the board~\cite{ArmCutoutVR2026,GoogleBacksideIVR2021},
 or mounted on the board backside beneath the package, as in current vertical-power
-modules~\cite{BoardBacksideVPD}. Each choice decides which rail crosses each vertical
+modules~\cite{Vicor_VPD_AI,Baek2022LEGOPoL,Radhakrishnan2021PowerDelivery}. Each choice decides which rail crosses each vertical
 interconnect and at what current, where some 13\,\% of the input power is dissipated inside the
 stack, which materials expand against each other, which
 solder joints carry the deformation, and which vias must be manufactured. The converter-level
@@ -30,14 +30,14 @@ alternative, and none of these outcomes is visible to the model that produced it
 Today these questions are answered one domain at a time. Converter design and synthesis tools
 size the regulator; power-integrity and IR-drop tools evaluate the delivery network on a fixed
 layout; thermal solvers then receive a loss map; structural and reliability tools finally receive
-a temperature field and a geometry that the preceding steps have frozen~\cite{RedHawkSCET,
-Celsius,Sherlock}. Each hand-off is manual and each step is evaluated on a geometry it cannot
+a temperature field and a geometry that the preceding steps have frozen~\cite{Synopsys_RedHawkSC_ET,
+Cadence_Celsius,Ansys_Sherlock,Keysight_PIPro}. Each hand-off is manual and each step is evaluated on a geometry it cannot
 change. DVPD design frameworks have closed part of this gap: converter synthesis, interconnect
 allocation, floorplanning and thermal feasibility are co-optimized in one
 flow~\cite{Krishnakumar2026DVPD}, and self-consistent electrothermal models with embedded
 cooling have been reported~\cite{Choi2024ITherm,Choi2025SelfConsistent,Wang2025TTSV}.
 Regulator-placement studies compare top and bottom placements for power integrity and
-electromagnetic interference~\cite{Xu2019VRplacement,Hossen2020PDNDSE}. None of these carries a
+electromagnetic interference~\cite{Xu2019VRplacement,Hossen2020DSEarXiv,Zhang2019PDNbenchmark}. None of these carries a
 synthesized converter through a physically resolved package to the thermal, mechanical and
 manufacturability consequences of integrating it, and none does so fast enough to compare
 integration alternatives during architecture selection.
