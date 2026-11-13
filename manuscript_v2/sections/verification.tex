@@ -1,0 +1,47 @@
+% ============================================================================ VERIFICATION
+\section{Verification and Cost}\label{sec:verification}
+
+No single accuracy is defined for a chain of models; each reduced model is instead solved
+together with a reference on the same problem and the same machine (Fig.~\ref{fig:verif}). The
+direct-current conduction stages are checked against a commercial thermal finite-element solver
+through the exact analogy between $\nabla\!\cdot(k\nabla T) = 0$ and
+$\nabla\!\cdot(\sigma\nabla V) = 0$. The single-TSV resistance and the TSV-field and attach
+homogenizations agree within 1.4\,\%; the series rule for the through-thickness conductivity of
+an RDL tier overstates it by 12.5\,\% because it ignores constriction onto the copper grid, so
+the reference tensor replaces it in every thermal result. The voltage-fed package network agrees
+with an open-source finite-element solution~\cite{MOOSE} to 0.1\,\%. The package thermal solver
+agrees with commercial and open-source finite-element solutions of representative unit cells of
+the stacks to 0.2\,\% of the temperature rise, and the thermoelastic element reproduces the
+bimaterial closed form to 0.4\,\% and a commercial structural solution to 0.01\,\%. A conjugate
+computational-fluid-dynamics solution of one microchannel half-pitch at the production heat load
+shows the cold-plate correlation to be 16.5\,\% conservative in mean base temperature rise; the
+correlation is kept, and the coefficient equivalent to the conjugate solution is run as a
+sensitivity.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig10_verification.pdf}
+\caption{Every production model against a matched reference on the same problem and machine:
+$|$relative error$|$ and median runtimes of the model and the reference. The series-rule RDL
+conductivity was replaced by the reference tensor; the cold-plate correlation is conservative and
+its CFD-equivalent coefficient is run as a sensitivity (Fig.~\ref{fig:robust}).}
+\label{fig:verif}
+\end{figure}
+
+The package mesh is selected by nested refinement in which every coarse node survives: on the
+production grid the largest change of peak temperature, die warpage, joint driver or loss
+under a further in-plane level or a through-thickness split is \MeshWorstProd\,\%, and an
+architecture ordering is claimed only where the gap exceeds twice that change. The local response
+is computed on a declared family of four nested solder meshes with the fixed averaging band;
+its uncertainty $U = U_{\mathrm{mesh}} + U_{\mathrm{time}} + U_{\mathrm{cyc}}$ (discretization,
+first-increment and cycle-count contributions) is \LocalUrange, and a local ordering is drawn only
+where the gap exceeds $2U$. Heat deposited in the mesh equals the ledger total, and heat leaving
+through the cold-plate and board films equals the deposited heat, to $10^{-6}$ in every case.
+
+The analytical stages cost microseconds to seconds: one converter synthesis takes 4.6~s and a
+regulator-count sweep about four minutes on one core. One fully coupled evaluation of an
+integration architecture on the production mesh---electrothermal fixed point, thermoelastic
+solution with the all-site joint search, and the local submodel---takes \EvalHours\ on a shared
+two-socket workstation, with the expensive steps entered once per candidate rather than once per
+design variable. No commercial flow evaluates the same coupled problem, so no end-to-end speedup
+is claimed; the per-stage comparison is Fig.~\ref{fig:verif}.

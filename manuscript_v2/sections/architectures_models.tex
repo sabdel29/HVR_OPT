@@ -1,0 +1,166 @@
+% ============================================================================ ARCHITECTURES + MODELS
+\section{Integration Architectures and Physical Models}\label{sec:models}
+
+\subsection{Three integrations of one regulator}\label{sec:archs}
+The same 49 cells are placed in three integrations (Fig.~\ref{fig:sections}). In the
+\emph{embedded} architecture (Z1) the 1973-\textmu m converter sits between a 300-\textmu m
+silicon power substrate and the die; 48~V reaches it through the board, a solved set of
+ball-grid-array (BGA) balls, a package 48-V redistribution layer (RDL) and the through-silicon
+vias (TSVs) of the substrate, and the 1-V output travels tens of micrometres to the die. In the
+\emph{package-backside} architecture (Z2) the converter hangs below the substrate inside a
+23.36-mm opening in the board, joined to the substrate by a 30-\textmu m Cu-pillar attach at
+30-\textmu m pitch~\cite{Au2016CuPillar30um} and cleared from the opening sidewall by 1~mm;
+48~V enters the converter directly~\cite{ArmCutoutVR2026}, and only 1~V crosses the attach and
+the TSVs. In the \emph{board-backside} architecture (Z3) the converter is attached to the
+underside of an uncut board beneath the package, as in current vertical-power
+modules~\cite{Vicor_VPD_AI}: the 1-V output crosses a board-level solder attach, a via field
+through the 2.4-mm board, the full BGA and the TSVs, and a second cold plate cools the converter
+from below. All three use the repartitioned tier order of Section~\ref{sec:realizability}, so
+they differ in placement only.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig3_sections.pdf}
+\caption{The three constructions as meshed, half sections to scale in $z$ (10-\textmu m RDL
+tiers drawn as lines). (a) Z1: converter between substrate and die, full BGA. (b) Z2: converter
+in a board opening under a 300-\textmu m substrate, BGA ring. (c) Z3: converter on the board
+underside with its own cold plate, full BGA carrying the 1-V output. Red: 48-V input path;
+violet: 1-V output path; ringed ball: critical joint.}
+\label{fig:sections}
+\end{figure*}
+
+Loss is reported inside a declared boundary. The \emph{package-internal} loss of Z2 and Z3
+starts at the converter's 48-V input terminals; that of Z1 starts at its BGA pads, where the
+board 48-V node common to all three meets the package. The external 48-V feed of the backside
+architectures is outside that boundary and is treated as a requirement: its loop resistance
+$R_{\mathrm{feed}}$ is swept, and the platform-inclusive loss
+\begin{equation}
+P(R) = P_{\mathrm{int}}(I) + (k I)^2 R,\qquad 48\,\mathrm{V}\cdot I = P_{\mathrm{load}} + P(R),
+\label{eq:feed}
+\end{equation}
+is solved self-consistently for the input current $I$, with $k$ the RMS-to-average ratio of the
+input waveform. The crossover $R^*$ at which a backside architecture loses its advantage is a
+specification for the feed, not a property of any connector.
+
+\subsection{Input waveform scenarios}\label{sec:scenarios}
+The hybrid cell draws input current only in phase A (Fig.~\ref{fig:converter}b), so the RMS
+current the package 48-V path carries depends on how much of the pulse local input decoupling
+absorbs. Three named scenarios bound the design space: smoothed input (S0, $k = 1$), which
+corresponds to sufficient local input capacitance at every cell---about 0.5~\textmu F per cell
+for 1~V of ripple; input pulsed at the buck duty (S1, $k = 1/\sqrt{D} = 4$), which corresponds
+to none; and input pulsed at the overall conversion ratio (S2, $k = \sqrt{48}$), the duty assumed
+by the reference framework's input-current model~\cite{Krishnakumar2026DVPD}.
+
+\subsection{Rail-aware conductor ledger}
+Every conductor carries the rail assigned to it and that rail's current: the 48-V input bus
+0.48~A per cell, the 16-V high-side and intermediate links 1.0 and 1.4~A, and the switch-node and
+output paths the full 20.4~A. A vertical field of vias of radius $r$, liner $t_\ell$ and height
+$h$ carrying current $I$ is provisioned at a design current density $J_{\mathrm{d}}$ and resolved
+by its allocated count,
+\begin{equation}
+n_{\mathrm{req}} = \left\lceil \frac{I}{J_{\mathrm{d}}\pi(r-t_\ell)^2}\right\rceil \le
+n_{\mathrm{alloc}} \le n_{\mathrm{avail}},\qquad
+R = \frac{\rho(T)\,h}{\pi(r-t_\ell)^2\,n_{\mathrm{alloc}}},
+\label{eq:via}
+\end{equation}
+and lateral runs are sheets whose required width must fit the available width or the design is
+rejected. Inside the cell, links between components in different tiers are via stacks across the
+dielectric depth of the actual tier order and links within a tier are lateral runs. The package
+48-V network of Z1 is solved as two voltage-fed resistive sheets, supply and return, each fed
+through the individual resistance of every ball and contact on a finite-volume grid aligned with
+every pad and ball edge; ball currents are an output, and the ball count is the smallest legal
+mirror-symmetric count meeting a 1.5-A-per-ball provisioning rule (54 per rail). The Cu-pillar
+attach of Z2 and the solder attach of Z3 are resolved on the real lattice inside each cell as
+series columns with two-sided constriction; the board via field of Z3 is a plated-through-hole
+array under each cell, and its BGA carries the 1-V output on the balls the same rule provisions.
+
+\subsection{Interconnect realizability}\label{sec:realizability}
+Whether two components in different tiers can be connected is decided by the conductor-plane
+sequence of the stack, not by its material-layer count: an interlayer RDL is patterned copper
+and serves as a capture plane, so a via is needed only across a region without a conductor
+plane. Each vertical net is checked against the via count of~\eqref{eq:via}, the pitch rule, the
+aspect ratio of every via level and the landing area the connected device actually presents
+(the low-side die, for instance, exposes its switch node on four solder bars). Assigning the
+same components to tiers in a different order changes this outcome sharply (Fig.~\ref{fig:realize}).
+In the reference order of~\cite{Krishnakumar2026DVPD}---high-side device, low-side device,
+flying capacitors, inductors---the high-side-to-flying-capacitor connection must cross the whole
+638-\textmu m low-side tier, an aspect ratio of 5.3 for build-up microvias of the assumed
+120-\textmu m diameter (21 for a 30-\textmu m through-via), far beyond the $\approx$1:1 practice
+for stacked microvias~\cite{IPC2226A2017,Ning2019MicroviaFatigue}. Of the 144 tier assignments
+that satisfy the per-tier area budget, the repartitioned order---high-side device, flying
+capacitors, low-side device, inductors---keeps both ends fixed, changes no component, area or
+height, and needs at most a 100-\textmu m crossing (aspect ratio 0.83). Tier order is therefore a
+synthesis variable with a manufacturing consequence that no electrical model sees.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig4_realizability.pdf}
+\caption{Tier order as a realizability constraint. (a) The same tiers in the reference and the
+repartitioned order, to scale with the selected-device heights; a bar marks each net that must
+cross a whole tier with a build-up via. (b) Worst via aspect ratio per net at the assumed
+120-\textmu m via diameter: 5.3 for the reference order against 0.83 for the repartitioned order,
+which is identical in components, per-tier area and height.}
+\label{fig:realize}
+\end{figure}
+
+\subsection{Package thermal model and cooling}
+Steady conduction $\nabla\!\cdot(\mathbf{k}\nabla T) + q''' = 0$ is solved on the explicit stack
+with orthotropic conductivity. Layers containing regular arrays---TSV fields, attach, RDL tiers,
+ball fields, the Z3 board via field---carry homogenized tensors checked against explicitly meshed
+unit cells (Section~\ref{sec:verification}). Every ledger term is deposited in the layer and the
+cell footprints that produce it, and the deposited total equals the ledger total to $10^{-6}$.
+The top boundary is a silicon microchannel cold plate evaluated at its operating point (223
+channels, $50\times300$~\textmu m, 27~g\,s$^{-1}$ of water, Reynolds number 1265, laminar) with
+\begin{equation}
+h_{\mathrm{eff}} = \eta_{\mathrm{f}}\,\Lambda\,\mathrm{Nu}\,k_{\mathrm{f}}/D_{\mathrm{h}},
+\label{eq:heff}
+\end{equation}
+the Shah--London Nusselt number~\cite{ShahLondon1978}, area amplification $\Lambda$ and fin
+efficiency $\eta_{\mathrm{f}}$, and a coolant energy balance iterated with the solid solution;
+operating points in the transitional band are refused rather than interpolated. The board is a
+$30\times30$~mm coupon with natural convection beneath; its lateral spreading is treated as a
+sensitivity (Section~\ref{sec:explore}).
+
+The temperature-dependent terms---device on-resistance, inductor winding and the resistivity of
+every conductor---are iterated with the thermal solution to a fixed point. Each term is
+evaluated at the mean temperature of the region it is deposited in, each device at its own
+tier's in-cell temperature; the iteration stops when every coupled temperature changes by less
+than 0.25~K and the loss by less than 0.1\,\%.
+
+\subsection{Thermoelastic package and critical joint}
+The converged field loads a finite-element model of the mounted assembly,
+$\boldsymbol{\sigma} = \mathbf{C}:(\boldsymbol{\varepsilon}-\boldsymbol{\alpha}(T-T_{\mathrm{ref}}))$
+with $T_{\mathrm{ref}} = 25\,^\circ$C, incompatible-mode hexahedra and cubic silicon; the board
+and ball field are meshed as real layers and only rigid-body motion is restrained. The critical
+joint is searched, not assumed: at every legal ball site the relative in-plane displacement
+across the ball layer
+\begin{equation}
+\Delta u = \left\| \mathbf{u}_{\mathrm{t}} - \mathbf{u}_{\mathrm{b}} \right\|_{xy}
+\label{eq:du}
+\end{equation}
+is evaluated, and its maximum $\du$ with the local joint temperature $T_{\mathrm{j}}$ drives a
+local submodel of that joint.
+
+\subsection{Local solder response}
+The submodel resolves the critical joint---solder between two copper pads---with its lower pad
+fixed and its upper pad displaced in plane by $\du$, through four cycles of a 300-s dwell at
+$T_{\mathrm{j}}$ and a 300-s dwell at 25\,$^\circ$C, with a viscoplastic law driven by the
+overstress $\dot\varepsilon_{\mathrm{in}} = A(T)\langle\sigma_{\mathrm{vm}}-\sigma_y\rangle^{n(T)}$.
+The response is the per-cycle increment of accumulated equivalent inelastic strain on the
+stabilized cycle, volume-averaged over the solder core,
+\begin{equation}
+\deps = \frac{1}{V_{\mathrm{c}}}\int_{V_{\mathrm{c}}}\!
+\left[\varepsilon^{\mathrm{eq}}_{\mathrm{in}}(t_k)-\varepsilon^{\mathrm{eq}}_{\mathrm{in}}(t_{k-1})
+\right]\mathrm{d}V,
+\label{eq:deps}
+\end{equation}
+where the core $V_{\mathrm{c}}$ excludes a band of fixed physical width (59~\textmu m) along the
+free edge, where the bimaterial corner is singular. Fixing the band in physical units, rather than
+as one element, keeps the averaging volume identical at every mesh level, which is what makes
+the response mesh-convergent. $\deps$ is a response: no damage law, life relation or allowable
+is applied.
+
+Mechanical feedback to the electrical model is quantified rather than assumed: deformation
+changes the field resistance by 0.16\,\%, against 22.8\,\% from the temperature dependence
+already inside the fixed point, so the mechanics is evaluated one way on the converged field in
+the intact regime.
