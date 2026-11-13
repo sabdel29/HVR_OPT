@@ -66,6 +66,22 @@ FORBIDDEN_DIRECT_FEED_TERMS = ("P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return",
                                "P_BGA_supply", "P_BGA_return")
 ARCH_SPEC = R / "research" / "final_closure" / "z2_direct_feed_architecture.json"
 
+#: Z3 -- the SAME regulator and tier order as Z2, hung from the PCB BACKSIDE
+#: (configs/phase0nz/z3_board_backside.yaml). Direct-fed like Z2, so no package 48 V term;
+#: its 1 V output crosses a VR-to-PCB solder attach, the board's plated through-holes and the
+#: full BGA before the substrate TSVs. `pcb_via` is the board, whose elements under the cells
+#: hold the via fields (final_closure_physical_etm.in_tile_keys confines that loss to them).
+Z3_CFG = R / "configs" / "phase0nz" / "z3_board_backside.yaml"
+LAYERS["Z3"] = {"hs": "z3conv_7_gan_hs_EPC2014C", "ls": "z3conv_3_gan_ls_EPC2057",
+                "caps": "z3conv_5_flying_caps", "ind": "z3conv_1_inductor_plus_cout",
+                "rdl": ["z3conv_0_land_side_attach_rdl", "z3conv_2_interlayer_rdl",
+                        "z3conv_4_interlayer_rdl", "z3conv_6_interlayer_rdl"],
+                "attach": "z3_attach_vr_pcb", "pcb_via": "board",
+                "lv": "z2_top_rdl", "tsv": "sub_lower", "pads": "interface",
+                "bga": "bga", "die": "die"}
+VARIANT["Z3"] = "Z3_BOARD_BACKSIDE"
+HV_FEED["Z3"] = "DIRECT_FEED"
+
 #: the intra-VR fidelity policy, declared before the R0/R2/reference differences
 #: were read: point-to-point traces -> R0 width rule; via stacks -> R0 via model;
 #: the distributed output plane -> R2 sheet. R1 is retired (no net obstructed).
@@ -170,7 +186,10 @@ def cell_tiers(arch):
     if arch == "Z1":
         cfg = yaml.safe_load((R / "configs" / "phase0nx" / "z1_physical.yaml").read_text())
         raw = cfg["converter"]["tiers_from_substrate_upward"]          # HS end first
-    else:                                    # Z2, Z2BF (and board-backside Z3): HS deepest
+    elif arch == "Z3":                       # board-backside Z3: its OWN list, HS deepest
+        cfg = yaml.safe_load(Z3_CFG.read_text())
+        raw = list(reversed(cfg["converter"]["tiers_from_board_downward"]))
+    else:                                    # Z2, Z2BF: HS deepest
         cfg = yaml.safe_load((R / "configs" / "phase0nt" / "z2_2p4mm_cutout.yaml").read_text())
         raw = list(reversed(cfg["converter"]["tiers_from_substrate_downward"]))
     out = []
@@ -307,6 +326,151 @@ def vr_attach_rails(t_c, spec=None):
             for rail, k in (("VDD", "n_vdd"), ("GND", "n_gnd"))}
 
 
+@lru_cache(maxsize=1)
+def z3_spec():
+    """Z3's board-level 1 V path, from its OWN config (configs/phase0nz/z3_board_backside.yaml):
+
+      attach  the attach-density study's machinery (final_closure_vr_attach): bumps on the
+              REAL legal lattice of each cell (edge clearance >= (p - d)/2, VDD/GND
+              checkerboard), the series column -- all solder here -- and the two-sided
+              constriction of the output-plane current into each bump; the spec form
+              vr_attach_rails reads
+      via     one plated through-hole under every bump (via-in-pad), so the via field's
+              VDD/GND counts ARE the attach lattice's; R = rho_Cu(T) L / A_annulus
+      bga     the 1 V ball count of the 1.5 A/ball ENGINEERING criterion on the DC rail
+              current, equal sharing (a lower bound on the BGA loss)
+    """
+    import final_closure_vr_attach as VA
+    import physical_package as PPK
+    import z3_package as Z3P
+    cfg = PPK.load_z3_package_config(Z3_CFG)
+    if abs(cfg.bga_1v_criterion_current_a - P_LOAD_W / V_OUT) > 1e-9:
+        raise RuntimeError(f"the Z3 BGA count is provisioned for {cfg.bga_1v_criterion_current_a}"
+                           f" A but the ledger's 1 V rail carries {P_LOAD_W / V_OUT} A DC")
+    a = cfg.attach_dict()
+    lat = Z3P.attach_lattice(cfg)
+    c_fv = VA.constriction_fv(float(a["pitch_um"]), float(a["diameter_um"]))
+    attach = {"h_cu_um": float(a["cu_height_um"]), "h_cap_um": float(a["cap_height_um"]),
+              "d_um": float(a["diameter_um"]), "pitch_um": float(a["pitch_um"]),
+              "cell_side_mm": Z3P.cell_side_um(cfg) / 1e3,
+              "n_vdd": int(lat["n_vdd"]), "n_gnd": int(lat["n_gnd"]),
+              "r_constriction_20c_ohm": 2.0 * c_fv * VA.sheet_resistance(20.0),
+              "model": "real lattice + all-solder column + two-sided constriction"}
+    return {"cfg": cfg, "attach": attach,
+            "attach_lattice": {k: lat[k] for k in ("n_per_axis", "n_total", "n_vdd", "n_gnd",
+                                                   "edge_clearance_um", "edge_rule_um",
+                                                   "area_fraction",
+                                                   "area_fraction_infinite_lattice")},
+            "via": Z3P.via_field(cfg),
+            "bga": {"n_per_rail": cfg.bga_1v_n_per_rail, "sites_total": cfg.bga_sites_total,
+                    "criterion_a": cfg.bga_1v_criterion_a,
+                    "criterion_current_a": cfg.bga_1v_criterion_current_a}}
+
+
+def z3_rows(add, lay, temps, t_sub, t_bga, i_cell_rms):
+    """The Z3 1 V rows between the converter and the substrate TSVs, in power-path order.
+    Each conductor is deposited in its own FE region: the attach tier, the board elements
+    under the cells (the via fields), the BGA layer (equal sharing over the whole field).
+    The two lateral-spreading conductors the geometry needs but the model does not carry are
+    RECORDED as NOT_MODELLED zero rows, never silently absent: each makes the Z3 1 V loss a
+    lower bound."""
+    import pad_interface as PAD
+    from interconnect import rho_cu, rho_solder
+    z3 = z3_spec()
+    t_att = temps.get("attach", t_sub)
+    sp_att = z3["attach"]
+    a_bump = math.pi * (sp_att["d_um"] * 1e-6 / 2.0) ** 2
+    for rail, (r_rc, n_b, r_b) in vr_attach_rails(t_att, sp_att).items():
+        add(f"P_VR_PCB_attach_{rail}", f"VR-to-PCB attach {rail}: {n_b} SAC305 bumps/cell",
+            "1V", N_VR * i_cell_rms ** 2 * r_rc, r_rc / N_VR, i_cell_rms, "cell output RMS",
+            "rho_solder h / A per bump (all-solder column) + two-sided constriction (real "
+            "lattice), n in parallel", lay["attach"], "GEOMETRY_DESIGN_CHOICE", "BOUNDED",
+            "d %g um / pitch %g um / standoff %g um; R_bump = %.4g mOhm at %.1f C; %.3f A and "
+            "%.0f A/cm2 per bump (OUTPUT only, no allowable claimed)"
+            % (sp_att["d_um"], sp_att["pitch_um"], sp_att["h_cap_um"] + sp_att["h_cu_um"],
+               r_b * 1e3, t_att, i_cell_rms / n_b, i_cell_rms / n_b / a_bump * 1e-4))
+    via = z3["via"]
+    t_via = temps.get("pcb_via", t_bga)
+    r_via = rho_cu(t_via) * via["L_um"] * 1e-6 / (via["A_annulus_um2"] * 1e-12)
+    for rail in ("VDD", "GND"):
+        n = via[f"n_{rail.lower()}"]
+        add(f"P_PCB_via_{rail}", f"PCB 1 V plated through-holes {rail}: {n}/cell", "1V",
+            N_VR * i_cell_rms ** 2 * r_via / n, r_via / n / N_VR, i_cell_rms,
+            "cell output RMS", "rho_Cu(T) L / A_annulus per via, n in parallel per rail per "
+            "cell", lay["pcb_via"], "CLOSED_FORM_GEOMETRY_DESIGN_CHOICE", "BOUNDED",
+            "finished hole %g um, plating %g um (drill %g um), pitch %g um, L %g um, via-in-pad "
+            "under the attach bumps; R_via = %.4g mOhm at %.1f C"
+            % (via["d_finished_um"], (via["d_drill_um"] - via["d_finished_um"]) / 2.0,
+               via["d_drill_um"], via["pitch_um"], via["L_um"], r_via * 1e3, t_via))
+    i_rail = i_cell_rms * N_VR
+    add("P_PCB_plane_1V_spreading", "PCB 1 V copper planes: via fields -> BGA balls", "1V",
+        0.0, None, i_rail, "1 V output RMS of the 49 cells", "none -- NOT MODELLED",
+        lay["pcb_via"], "STRUCTURAL", "NOT_MODELLED",
+        "the via fields sit only under the 49 cells while the 1 V balls cover the whole "
+        "lattice, so the PCB planes must spread ~1 kA laterally between them; that loss is "
+        "NOT modelled and the Z3 1 V loss is a LOWER BOUND")
+    bga = z3["bga"]
+    r_ball = PAD.bga_ball_resistance_ohm(20.0) * rho_solder(t_bga) / rho_solder(20.0)
+    n = bga["n_per_rail"]
+    for rail in ("VDD", "GND"):
+        add(f"P_BGA_1V_{rail}", f"BGA 1 V {rail} balls (N={n}, equal sharing)", "1V",
+            i_rail ** 2 * r_ball / n, r_ball / n, i_rail, "1 V output RMS of the 49 cells",
+            "Table III rho_solder h / A per ball, equal sharing", lay["bga"],
+            "SOURCE_REPRODUCTION", "LOWER_BOUND",
+            "%d per rail by the %.1f A/ball ENGINEERING criterion on %.0f A DC (%d of %d sites, "
+            "%.1f %%); equal sharing is a lower bound; %.3f A RMS per ball"
+            % (n, bga["criterion_a"], bga["criterion_current_a"], 2 * n, bga["sites_total"],
+               100.0 * 2 * n / bga["sites_total"], i_rail / n))
+    add("P_sub_land_1V_spreading", "package land-side 1 V redistribution: BGA balls -> TSV "
+        "fields", "1V", 0.0, None, i_rail, "1 V output RMS of the 49 cells",
+        "none -- NOT MODELLED", lay["tsv"], "STRUCTURAL", "NOT_MODELLED",
+        "the balls cover the whole lattice while the TSV fields sit only under the 49 cells, "
+        "and the Z2 package adopted above the board has no land-side 1 V RDL to carry that "
+        "redistribution; NOT modelled, so the Z3 1 V loss is a LOWER BOUND")
+
+
+def z3_design(rows, temps, i_cell_rms):
+    """The Z3 design numbers a reader needs next to the ledger: counts, per-bump and per-ball
+    currents (outputs, no allowable claimed) and the fraction of the BGA field the 1 V rails
+    consume."""
+    z3 = z3_spec()
+    p = {r["term"]: r["P_w"] for r in rows}
+    att, lat, via, bga = z3["attach"], z3["attach_lattice"], z3["via"], z3["bga"]
+    a_bump = math.pi * (att["d_um"] * 1e-6 / 2.0) ** 2
+    i_rail = i_cell_rms * N_VR
+    n = bga["n_per_rail"]
+    return {
+        "vr_attach": {
+            "technology": "SAC305 solder bumps + underfill", "d_um": att["d_um"],
+            "pitch_um": att["pitch_um"], "standoff_um": att["h_cu_um"] + att["h_cap_um"],
+            **lat, "bumps_per_rail_per_cell": {"VDD": att["n_vdd"], "GND": att["n_gnd"]},
+            "I_per_bump_A": {r: i_cell_rms / att[f"n_{r.lower()}"] for r in ("VDD", "GND")},
+            "J_per_bump_A_cm2": {r: i_cell_rms / att[f"n_{r.lower()}"] / a_bump * 1e-4
+                                 for r in ("VDD", "GND")},
+            "T_attach_C": temps.get("attach"),
+            "P_attach_w": p["P_VR_PCB_attach_VDD"] + p["P_VR_PCB_attach_GND"],
+            "note": "per-bump current is an OUTPUT; no solder electromigration allowable is "
+                    "claimed"},
+        "pcb_via_field": {**via, "T_via_C": temps.get("pcb_via"),
+                          "P_via_w": p["P_PCB_via_VDD"] + p["P_PCB_via_GND"]},
+        "bga_1v": {"n_per_rail": n, "n_total": 2 * n, "sites_total": bga["sites_total"],
+                   "fraction_of_field": 2 * n / bga["sites_total"],
+                   "sites_left_for_signals_and_other_rails": bga["sites_total"] - 2 * n,
+                   "criterion_A_per_ball": bga["criterion_a"],
+                   "criterion_current_A_dc": bga["criterion_current_a"],
+                   "I_per_ball_A_dc_equal_sharing": bga["criterion_current_a"] / n,
+                   "I_per_ball_A_rms_equal_sharing": i_rail / n,
+                   "n_per_rail_if_provisioned_on_rms": math.ceil(i_rail / bga["criterion_a"]),
+                   "T_bga_C": temps.get("bga"),
+                   "P_bga_1v_w": p["P_BGA_1V_VDD"] + p["P_BGA_1V_GND"],
+                   "sharing": "EQUAL (lower bound)"},
+        "not_modelled": [r["term"] for r in rows if r["maturity"] == "NOT_MODELLED"],
+        "lower_bound_statement": ("the Z3 1 V loss is a LOWER BOUND: equal BGA sharing, and "
+                                  "neither the PCB plane spreading nor the package land-side "
+                                  "redistribution is modelled"),
+    }
+
+
 def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
     """All terms for one architecture and scenario at the given temperatures."""
     import pad_interface as PAD
@@ -378,7 +542,11 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
                 lay["bga"], "SOURCE_REPRODUCTION",
                 "SCENARIO" if scen != "HV_S0" else "CLOSED")
 
-    if "attach" in lay:
+    if arch == "Z3":
+        # Z3: VR-to-PCB attach, PCB plated through-holes, 1 V BGA (z3_rows); the TSV field,
+        # top RDL and pads below are Z2's
+        z3_rows(add, lay, temps, t_sub, t_bga, i_cell_rms)
+    elif "attach" in lay:
         # the explicit VR-to-substrate attach: Cu pillar + solder cap per bump, one
         # VDD/GND checkerboard over each cell, carrying only the 1 V output current
         t_att = temps.get("attach", t_sub)
@@ -396,13 +564,16 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
                 ("Au et al. ECTC 2016 geometry (CLOSE_ANALOG); R_bump = %.4g mOhm at %.1f C"
                  % (r_b * 1e3, t_att)))
 
-    cfg = PPK.load_physical_package_config(R / "configs/phase0nt/z2_2p4mm_cutout.yaml")
+    # Z3's TSV field is Z2's, but its cells and substrate come from Z3's own config
+    cfg = (z3_spec()["cfg"] if arch == "Z3" else
+           PPK.load_physical_package_config(R / "configs/phase0nt/z2_2p4mm_cutout.yaml"))
+    h_tsv = cfg.substrate_mm if arch == "Z3" else 0.300
     if arch == "Z1":
         rep = TF.system_report(cfg.cells, cfg.cell_side_mm, 0.300,
                                i_hv_rms, T_C=t_sub)
         rail_v, cur = "48V", f"HV RMS, {scen}"
     else:
-        rep = TF.system_report(cfg.cells, cfg.cell_side_mm, 0.300,
+        rep = TF.system_report(cfg.cells, cfg.cell_side_mm, h_tsv,
                                i_cell_rms * N_VR, T_C=t_sub)
         rail_v, cur = "1V", "cell output RMS"
     for rail, key in (("VDD", "p_vdd_total_w"), ("GND", "p_gnd_total_w")):
@@ -412,7 +583,7 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
             f"incl. two-end spreading", rail_v, rep[key], r_cell / N_VR,
             pc["i_cell_a"] * N_VR, cur, "rho L/A per via + compact spreading",
             lay["tsv"], "INDEPENDENT_NUMERICAL_VALIDATION",
-            "CLOSED" if (arch == "Z2" or scen == "HV_S0") else "SCENARIO")
+            "CLOSED" if (arch in ("Z2", "Z3") or scen == "HV_S0") else "SCENARIO")
 
     n_pad = pad_count(pad_case)
     r_pad = PAD.pad_bulk_resistance_ohm(t_if)
@@ -443,11 +614,15 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
            "architecture_variant": VARIANT[arch], "hv_feed": HV_FEED[arch]}
     if HV_FEED[arch] == "DIRECT_FEED":
         # OUTSIDE the package-internal boundary: the external feed is a swept parameter
-        # (R_Z2_direct_feed_loop), so only its scaling is recorded here
-        out["external_feed"] = {"parameter": "R_Z2_direct_feed_loop",
+        # (R_Z2_direct_feed_loop; Z3's own loop to the board backside for Z3), so only its
+        # scaling is recorded here
+        out["external_feed"] = {"parameter": ("R_Z3_direct_feed_loop" if arch == "Z3" else
+                                              "R_Z2_direct_feed_loop"),
                                 "i_48_avg_a": i_hv_avg_a, "i_48_rms_a": i_hv_rms,
                                 "P_feed_per_mohm_w": i_hv_rms ** 2 * 1e-3,
                                 "in_package_internal_total": False}
+    if arch == "Z3":
+        out["z3_design"] = z3_design(rows, temps, i_cell_rms)
     return out
 
 
