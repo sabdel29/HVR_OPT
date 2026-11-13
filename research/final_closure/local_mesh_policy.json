@@ -215,6 +215,57 @@
    "excluded": "any case whose critical joint is at or above the SAC305 melting onset (about 217 C)",
    "acceptance": "pass 5 is accepted only if its harness control (the published control joint, L0 mesh, unchanged by the band) is reproduced within 0.1 % by the same extraction",
    "production_level": "L3 unless rule C applies"
+  },
+  {
+   "id": 6,
+   "declared_at": "2026-11-13T17:58:00-0600",
+   "declared_after": "TCPMT revision: the board-backside integration Z3 (configs/phase0nz/z3_board_backside.yaml, merged 9ba05d5); its production cases (r21) were launched, no Z3 local result of any level exists",
+   "declared_before_any_result_of": [
+    "pass 5 (revised lineage, all three integrations)"
+   ],
+   "finding": "pass 5 (amendment 5) declares Z1 and Z2 only; the comparison now has a third integration whose critical joint must be resolved under the same policy",
+   "change": "pass 5 runs on the amendment-5 cases plus Z3 at HV-S0 and HV-S1 (and Z3 HV-S2 as optional), with the amendment-5 fixed band, levels, rule, uncertainty and acceptance unchanged; the temporal and cycle studies include the Z3 cases",
+   "band_frac": 0.16666666666666666,
+   "rule": "unchanged: the declared A/B/C rule; U = U_mesh + U_time + U_cyc with fresh temporal and cycle studies",
+   "cases": [
+    [
+     "Z1",
+     "HV_S0"
+    ],
+    [
+     "Z2",
+     "HV_S0"
+    ],
+    [
+     "Z1",
+     "HV_S1"
+    ],
+    [
+     "Z2",
+     "HV_S1"
+    ],
+    [
+     "Z3",
+     "HV_S0"
+    ],
+    [
+     "Z3",
+     "HV_S1"
+    ]
+   ],
+   "optional_cases": [
+    [
+     "Z2",
+     "HV_S2"
+    ],
+    [
+     "Z3",
+     "HV_S2"
+    ]
+   ],
+   "excluded": "any case whose critical joint is at or above the SAC305 melting onset (about 217 C)",
+   "acceptance": "pass 5 is accepted only if its harness control (the published control joint, L0 mesh, unchanged by the band) is reproduced within 0.1 % by the same extraction",
+   "production_level": "L3 unless rule C applies"
   }
  ]
 }

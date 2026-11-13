@@ -99,7 +99,11 @@ def main():
                             "T_off_C": LR.T_OFF, "procedure": LR.PROCEDURE,
                             "material": LR.MATKIND},
            "norton_T_range_C": NORTON_T_RANGE_C, "cases": {}}
-    for arch in ("Z1", "Z2"):
+    sys.path.insert(0, str(R / "scripts"))
+    import final_closure_physical_etm as E
+    # TCPMT revision: every integration with a production case (Z3 once it exists)
+    archs = [a for a in ("Z1", "Z2", "Z3") if E.case_path(a, scen).exists()]
+    for arch in archs:
         du, tj, crit = critical(arch, scen)
         r = LR.run_case(f"{arch}_{scen}", du, tj)
         extrap = not (NORTON_T_RANGE_C[0] <= tj <= NORTON_T_RANGE_C[1])
@@ -111,7 +115,7 @@ def main():
     # one finer local mesh for the convergence of THIS operating point
     keep = (LR.N_XY, LR.N_Z_SOL)
     LR.N_XY, LR.N_Z_SOL = 8, 10
-    for arch in ("Z1", "Z2"):
+    for arch in archs:
         du, tj, _ = critical(arch, scen)
         rf = LR.run_case(f"{arch}_{scen}_fine", du, tj)
         base = res["cases"][arch]["response"]

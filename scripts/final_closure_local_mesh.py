@@ -76,6 +76,8 @@ if _LT != 6 and not getattr(LR.run, "_wrapped", False):
 
 A4 = AMEND.get(4)
 A5 = AMEND.get(5)
+#: amendment 6 (TCPMT revision) extends pass 5 to the board-backside Z3; rules unchanged
+A6 = AMEND.get(6)
 PASS = 5 if A5 else (4 if A4 else 3)
 #: each pass keeps its own scratch tree
 SCR_MESH = "fc_localmesh_p5" if A5 else ("fc_localmesh_p4" if A4 else "fc_localmesh_p3")
@@ -89,7 +91,7 @@ POOL_MAX = int(os.environ.get("FC_POOL_MAX", "10000"))
 def policy_cases(optional=True):
     """The cases of the CURRENT pass: amendment 4 re-declares them for the corrected
     lineage (direct-fed Z2, explicit attach, sidewall clearance)."""
-    for A in (A5, A4):
+    for A in (A6, A5, A4):
         if A:
             c = [tuple(x) for x in A["cases"]]
             return c + ([tuple(x) for x in A.get("optional_cases", [])] if optional else [])
