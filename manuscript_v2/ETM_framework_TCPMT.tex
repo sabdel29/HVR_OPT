@@ -1,0 +1,46 @@
+\documentclass[journal]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,graphicx,booktabs,array,url,textcomp,siunitx}
+\usepackage[hidelinks]{hyperref}
+\sisetup{detect-all, per-mode=symbol, group-minimum-digits=4}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\graphicspath{{figs/}}
+\newcommand{\du}{\Delta u_{\mathrm{c}}}
+\newcommand{\deps}{\Delta\varepsilon_{\mathrm{in}}}
+\IfFileExists{results_macros.tex}{\input{results_macros}}{}
+
+\begin{document}
+
+\title{From Device to Solder Joint: An Electrothermal--Mechanical Framework for Co-Designing
+Voltage-Regulator Integration in Distributed Vertical Power Delivery}
+
+\author{Salma~Abdelzaher,~\IEEEmembership{Student Member,~IEEE},
+        Mohamed~Gharib,~\IEEEmembership{Student Member,~IEEE},
+        and~Inna~Partin-Vaisband,~\IEEEmembership{Senior Member,~IEEE}%
+\thanks{S. Abdelzaher and M. Gharib contributed equally to this work.}%
+\thanks{This work was supported in part by the Center for Heterogeneous Integration of Micro
+Electronic Systems (CHIMES), one of seven centers in JUMP~2.0, a Semiconductor Research
+Corporation (SRC) program sponsored by DARPA. % TODO(authors): confirm funding statement
+}%
+\thanks{The authors are with the Department of Electrical and Computer Engineering, University
+of Illinois Chicago, Chicago, IL 60607 USA (e-mail: sabdel29@uic.edu; mghari5@uic.edu;
+vaisband@uic.edu).}}
+
+\maketitle
+
+% ABSTRACT, SECTIONS: assembled from sections/*.tex once the revised lineage is frozen.
+\input{sections/abstract}
+\input{sections/intro}
+\input{sections/framework}
+\input{sections/converter_dse}
+\input{sections/architectures_models}
+\input{sections/verification}
+\input{sections/evaluate}
+\input{sections/compare}
+\input{sections/explore}
+\input{sections/discussion}
+\input{sections/conclusion}
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+\end{document}

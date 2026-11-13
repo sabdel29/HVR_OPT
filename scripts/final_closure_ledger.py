@@ -36,8 +36,8 @@ SCEN_RATIO = {"HV_S0": 1.0, "HV_S1": 1.0 / math.sqrt(0.0625),
               "HV_S2": math.sqrt(V_IN / V_OUT)}
 
 LAYERS = {
-    "Z1": {"hs": "z1conv_1_gan_hs_EPC2014C", "ls": "z1conv_3_gan_ls_EPC2057",
-           "caps": "z1conv_5_flying_caps", "ind": "z1conv_7_inductor_plus_cout",
+    "Z1": {"hs": "z1conv_1_gan_hs_EPC2014C", "ls": "z1conv_5_gan_ls_EPC2057",
+           "caps": "z1conv_3_flying_caps", "ind": "z1conv_7_inductor_plus_cout",
            "rdl": ["z1conv_0_bottom_substrate_rdl", "z1conv_2_interlayer_rdl",
                    "z1conv_4_interlayer_rdl", "z1conv_6_interlayer_rdl",
                    "z1conv_8_output_rdl"],
@@ -155,27 +155,90 @@ def vout_plane_r2(occupancy=VOUT_PLANE_OCCUPANCY, level=2):
     return p, sh.n
 
 
-def intra_vr(t_conv_c, scen):
-    """Per-system intra-VR metal and vertical losses under the fidelity policy."""
+#: component class of each converter tier name in the architecture configs
+_TIER_CLASS = (("gan_hs", "gan_hs"), ("gan_ls", "gan_ls"), ("flying_caps", "cap_fly"),
+               ("inductor", "inductor"))
+
+
+def cell_tiers(arch):
+    """The tiers of ONE regulator cell, from the input (high-side) end to the output end,
+    as [(component_class or 'rdl', thickness_um)], read from the architecture's own config
+    so the electrical routing and the meshed stack can never disagree on the tier order
+    (TCPMT revision: the physical-lineage ledger used one legacy layout for every
+    architecture, with mid-plane via heights, whatever order the mesh carried)."""
+    import yaml
+    if arch == "Z1":
+        cfg = yaml.safe_load((R / "configs" / "phase0nx" / "z1_physical.yaml").read_text())
+        raw = cfg["converter"]["tiers_from_substrate_upward"]          # HS end first
+    else:                                    # Z2, Z2BF (and board-backside Z3): HS deepest
+        cfg = yaml.safe_load((R / "configs" / "phase0nt" / "z2_2p4mm_cutout.yaml").read_text())
+        raw = list(reversed(cfg["converter"]["tiers_from_substrate_downward"]))
+    out = []
+    for t in raw:
+        cls = next((c for key, c in _TIER_CLASS if t["name"].startswith(key)), "rdl")
+        out.append((cls, float(t["um"])))
+    return out
+
+
+def face_span_um(tiers, a, b):
+    """Dielectric/RDL depth a via must cross between the terminal faces of component
+    classes a and b (cap_out shares the inductor tier; 'out' is the output plane)."""
+    cls = [c for c, _ in tiers]
+    def idx(c):
+        c = "inductor" if c == "cap_out" else c
+        return len(tiers) if c == "out" else cls.index(c)
+    i, j = sorted((idx(a), idx(b)))
+    if j == len(tiers):          # inductor terminal -> the output RDL plane above it
+        nxt = [h for c, h in tiers[i + 1:] if c == "rdl"]
+        return nxt[0] if nxt else 10.0
+    return sum(h for _, h in tiers[i + 1:j])
+
+
+def intra_vr(t_conv_c, scen, arch="Z1"):
+    """Per-system intra-VR metal and vertical losses under the fidelity policy.
+
+    Same R0 trace and via models as before; the GEOMETRY now follows the cell's actual tier
+    order: every link between components in different tiers is a via stack across the
+    face-to-face span of that order (Phase-0M-R3B DEFECT #62 convention), and links
+    between components in the same tier are lateral R0 runs."""
     import routing as RT
-    rr = RT.route_loss("R0", t_cu_m=INTRA_T_CU_M, j_max=INTRA_J_MAX,
-                       via_policy="D_area_optimal", n_layers=INTRA_N_LAYERS)
+    d = RT.DESIGN
+    comps = {c.name: c for c in RT.tile_layout(d["tile_side_mm"], d)}
+    tiers = cell_tiers(arch)
+    tier_cls = {c for c, _ in tiers}
+    s_m = d["tile_side_mm"] * 1e-3
     k_t = rho_ratio_cu(t_conv_c, RT.T_C)
     p_lat = p_vert = 0.0
     nets = []
-    for n in rr["nets"]:
-        if n["net"] == "vout_plane":
+    for n in RT.nets(d):
+        if n.name == "vout_plane":
             continue
-        scale = SCEN_RATIO[scen] ** 2 if n["rail"] == "HV" else 1.0
-        p = n["P_w_per_vr"] * k_t * scale
-        if n["geom"] == "vertical":
+        a, b = comps[n.src], comps[n.dst]
+        ka = a.kind if a.kind in tier_cls or a.kind == "cap_out" else None
+        kb = ("out" if b.kind == "pad_out" else
+              b.kind if b.kind in tier_cls or b.kind == "cap_out" else None)
+        same = (ka is None or kb is None or
+                ("inductor" if ka == "cap_out" else ka) == ("inductor" if kb == "cap_out" else kb))
+        if not same:
+            hgt = face_span_um(tiers, ka, kb)
+            fp = min(a.w_mm * a.h_mm, b.w_mm * b.h_mm)
+            seg = RT.vertical_segment(max(n.i_rms_a, 1e-9), hgt, INTRA_J_MAX, fp,
+                                      "D_area_optimal")
+            geom, length_mm = "vertical", hgt * 1e-3
+        else:
+            length_mm = RT.manhattan(a, b)
+            seg = RT.lateral_segment(max(n.i_rms_a, 1e-9), length_mm, INTRA_T_CU_M,
+                                     INTRA_J_MAX, s_m, INTRA_N_LAYERS)
+            geom = "lateral"
+        scale = SCEN_RATIO[scen] ** 2 if n.rail == "HV" else 1.0
+        p = n.i_rms_a ** 2 * seg["R_ohm"] * k_t * scale
+        if geom == "vertical":
             p_vert += p
         else:
             p_lat += p
-        nets.append({"net": n["net"], "geom": n["geom"], "rail": n["rail"],
-                     "model": FIDELITY_POLICY["vertical" if n["geom"] == "vertical"
-                                               else "lateral"],
-                     "R_ohm": n["R_mohm"] * 1e-3 * k_t, "P_w_per_vr": p})
+        nets.append({"net": n.name, "geom": geom, "rail": n.rail,
+                     "model": FIDELITY_POLICY[geom], "length_mm": length_mm,
+                     "R_ohm": seg["R_ohm"] * k_t, "P_w_per_vr": p})
     r_plane_20, n_cv = vout_plane_r2()
     i_out = RT.DESIGN["i_out_per_vr_a"]
     import rms_currents as RMS
@@ -281,7 +344,7 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
             f"HVR_FULL_OPT_EPC_V2 closed form at its tier's in-cell temperature "
             f"({t_k:.2f} C)", layer, "CONSERVATION_VERIFICATION", "CLOSED")
 
-    iv = intra_vr(t_conv, scen)
+    iv = intra_vr(t_conv, scen, arch)
     add("P_intraVR_metal", "cell traces (R0) + output plane (R2)", "mixed",
         iv["P_intraVR_metal"], None, None, "converter-model RMS; HV nets per scenario",
         "R0 width rule + R2 refined FV sheet", ",".join(lay["rdl"]),

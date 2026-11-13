@@ -1,0 +1,79 @@
+% ============================================================================ INTRODUCTION
+\section{Introduction}\label{sec:intro}
+
+\IEEEPARstart{A}{rtificial-intelligence} and high-performance processors are approaching one
+to two kilowatts per package at core voltages below one volt, so the package must deliver on
+the order of a kiloampere~\cite{Krishnakumar2026DVPD,Ye2026TenKiloAmp,Swaminathan2026IVPDReview}.
+At that current a single milliohm between the regulator and the load would dissipate about a
+kilowatt, and moving voltage regulation into or directly beneath the package has become the only
+scalable option~\cite{VPD2023Architectures,Sriharini_ECTC_24,ISCAS2024DVPD}. Distributed
+vertical power delivery (DVPD) goes one step further: many regulator cells, each beneath its own
+load region, so that high voltage travels laterally and the kiloampere rail travels only
+micrometres~\cite{Krishnakumar2026DVPD,VPD_transactions_on_power_electronics_new,
+vertical_stacking_2025_TRansactions_power_electronics}.
+
+Bringing the regulator to the point of load changes the package it sits in. The regulator can be
+embedded between the substrate and the die~\cite{Krishnakumar2026DVPD}, attached to the
+substrate backside inside an opening in the board~\cite{ArmCutoutVR2026,GoogleBacksideIVR2021},
+or mounted on the board backside beneath the package, as in current vertical-power
+modules~\cite{BoardBacksideVPD}. Each choice decides which rail crosses each vertical
+interconnect and at what current, where some 13\,\% of the input power is dissipated inside the
+stack, which materials expand against each other, which
+solder joints carry the deformation, and which vias must be manufactured. The converter-level
+decisions are coupled to these as tightly: the regulator count fixes the footprint of each cell,
+the device and passive selection fixes the component heights and the stack height, and the
+assignment of components to tiers fixes which connections must cross which dielectric depth. A
+design that is electrically optimal can therefore exceed a via aspect-ratio rule, overload the
+ball field, outrun the cooling solution or drive the critical solder joint harder than an
+alternative, and none of these outcomes is visible to the model that produced it.
+
+Today these questions are answered one domain at a time. Converter design and synthesis tools
+size the regulator; power-integrity and IR-drop tools evaluate the delivery network on a fixed
+layout; thermal solvers then receive a loss map; structural and reliability tools finally receive
+a temperature field and a geometry that the preceding steps have frozen~\cite{RedHawkSCET,
+Celsius,Sherlock}. Each hand-off is manual and each step is evaluated on a geometry it cannot
+change. DVPD design frameworks have closed part of this gap: converter synthesis, interconnect
+allocation, floorplanning and thermal feasibility are co-optimized in one
+flow~\cite{Krishnakumar2026DVPD}, and self-consistent electrothermal models with embedded
+cooling have been reported~\cite{Choi2024ITherm,Choi2025SelfConsistent,Wang2025TTSV}.
+Regulator-placement studies compare top and bottom placements for power integrity and
+electromagnetic interference~\cite{Xu2019VRplacement,Hossen2020PDNDSE}. None of these carries a
+synthesized converter through a physically resolved package to the thermal, mechanical and
+manufacturability consequences of integrating it, and none does so fast enough to compare
+integration alternatives during architecture selection.
+
+This paper presents a framework that does. Starting from a component library and a system
+specification, it synthesizes a generalized hybrid switched-capacitor--buck regulator, places
+the resulting cells in a candidate package integration, and evaluates, on one explicit geometry
+and one converged field, the conductor-level loss of every rail, the electrothermal fixed point
+with a physical cold plate, the thermoelastic deformation of the mounted package with a search
+over every solder joint, the viscoplastic response of the critical joint, and the manufacturability
+of the vertical interconnect. Every reduced model is benchmarked against a commercial or
+open-source reference on the same problem, and one fully coupled evaluation of an integration
+architecture takes about an hour on a single workstation, while converter-level exploration takes
+seconds. The framework is used in three ways, each demonstrated on a \SI{1}{kW},
+\SIrange{48}{1}{V} system: to \emph{evaluate} one design against package rules and its thermal
+solution, to \emph{compare} integration architectures on conversion, routing, thermal and
+mechanical grounds, and to \emph{explore} the design space---regulator count and converter
+architecture, and the neighboring package decisions on which every architecture ranking depends.
+
+The contributions are as follows.
+\begin{enumerate}
+\item A device-to-joint electrothermal--mechanical framework for package-integrated voltage
+regulation, in which converter synthesis over a generalized hybrid SC--buck family is propagated
+into an explicit package stack and evaluated electrically, thermally, mechanically and for
+interconnect realizability on one geometry (Sections~\ref{sec:framework}--\ref{sec:models}).
+\item Physics and verification for that coupling: a rail-aware conductor ledger, a voltage-fed
+package network with the ball count as a solved variable, conductor-plane realizability, an
+electrothermal fixed point with a physical microchannel boundary, and a thermoelastic package
+model driving a local solder submodel with a mesh-independent response metric, each checked
+against a matched reference (Sections~\ref{sec:models}--\ref{sec:verification}).
+\item A demonstration of the three modes of use on one specification: evaluation of a single
+design, comparison of three integration architectures---embedded, package-backside and
+board-backside---and exploration of regulator count, converter architecture and neighboring
+package decisions (Sections~\ref{sec:evaluate}--\ref{sec:explore}).
+\item Design rules that follow from the coupled solution and that no single-domain analysis
+exposes, including a feed-resistance requirement for backside regulators, an
+attach-density threshold, a tier-ordering rule for build-up interconnect, and the conditions
+under which peak temperature fails to rank solder-joint response (Section~\ref{sec:discussion}).
+\end{enumerate}

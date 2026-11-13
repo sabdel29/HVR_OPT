@@ -63,6 +63,8 @@ supply_return:
       tsv_fields.sizing_study(); the adopted point is MAXIMUM DENSITY and is labelled so.
 
 converter:
+  # TCPMT revision: REPARTITIONED tier order (HS -> C_f -> LS -> L), the same order as Z2,
+  # so the architecture comparison changes placement only (worst via AR 0.83, not 5.32).
   # Stacked above the bottom substrate, beneath the compute die. NINE tiers: Z1 is
   # sandwiched and needs a landing RDL at BOTH ends, where Z2 needs one.
   total_um: 1973.0
@@ -70,9 +72,9 @@ converter:
     - {name: bottom_substrate_rdl, um: 10.0,  status: SOURCE_BACKED}
     - {name: gan_hs_EPC2014C,      um: 685.0, status: SOURCE_BACKED}
     - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
-    - {name: gan_ls_EPC2057,       um: 638.0, status: SOURCE_BACKED}
-    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
     - {name: flying_caps,          um: 100.0, status: BOUNDED}
+    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
+    - {name: gan_ls_EPC2057,       um: 638.0, status: SOURCE_BACKED}
     - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
     - {name: inductor_plus_cout,   um: 500.0, status: SOURCE_BACKED}
     - {name: output_rdl,           um: 10.0,  status: SOURCE_BACKED}

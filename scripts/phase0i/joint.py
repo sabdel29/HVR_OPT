@@ -47,6 +47,17 @@ def _grid(lo: float, hi: float, n: int) -> np.ndarray:
     return np.linspace(lo, hi, n + 1)
 
 
+import os as _os
+
+#: Fixed-width corner-exclusion band as a fraction of the solder side (TCPMT revision).
+#: Unset (legacy): the band is ONE ELEMENT wide, so the averaging volume ESOLCORE grows with
+#: refinement (128 -> 1600 core elements over L0..L3) and a mesh study of the metric cannot
+#: converge in principle. Set JOINT_BAND_FRAC (e.g. 1/6 = one L0 element = 59.08 um) to make
+#: the band a fixed PHYSICAL width: breakpoints are inserted at the band edge, so every level
+#: averages exactly the same region. With n_xy = 6 the fixed band reproduces legacy L0 exactly.
+BAND_FRAC = float(_os.environ["JOINT_BAND_FRAC"]) if _os.environ.get("JOINT_BAND_FRAC") else None
+
+
 def build_joint(n_xy: int = 6, n_z_solder: int = 8, n_z_pad: int = 1) -> JointMesh:
     """Structured hex mesh: pad / solder / pad, with the solder inset inside the pads."""
     hp, hs = PAD_UM / 2e3, SOLDER_SIDE_UM / 2e3            # mm
@@ -54,8 +65,17 @@ def build_joint(n_xy: int = 6, n_z_solder: int = 8, n_z_pad: int = 1) -> JointMe
     # in-plane grid: solder edges are breakpoints so both regions share nodes
     n_in = max(2, n_xy)
     n_out = max(1, n_xy // 3)
-    xs = np.unique(np.concatenate([_grid(-hp, -hs, n_out), _grid(-hs, hs, n_in),
-                                   _grid(hs, hp, n_out)]))
+    if BAND_FRAC:
+        b = BAND_FRAC * 2 * hs
+        dx0 = 2 * hs / n_in
+        n_b = max(1, int(np.ceil(b / dx0 - 1e-9)))        # band elements never wider than dx0
+        n_c = max(2, int(round((2 * hs - 2 * b) / dx0)))  # core refines with every level
+        xs = np.unique(np.concatenate([_grid(-hp, -hs, n_out), _grid(-hs, -hs + b, n_b),
+                                       _grid(-hs + b, hs - b, n_c), _grid(hs - b, hs, n_b),
+                                       _grid(hs, hp, n_out)]))
+    else:
+        xs = np.unique(np.concatenate([_grid(-hp, -hs, n_out), _grid(-hs, hs, n_in),
+                                       _grid(hs, hp, n_out)]))
     ys = xs.copy()
     zs = np.unique(np.concatenate([_grid(0.0, tp, n_z_pad),
                                    _grid(tp, tp + hsol, n_z_solder),
@@ -97,14 +117,16 @@ def build_joint(n_xy: int = 6, n_z_solder: int = 8, n_z_pad: int = 1) -> JointMe
         "NTOP": [remap[n] for n in used if abs(pts[remap[n] - 1, 2] - zt) < 1e-9],
     }
     m = JointMesh(pts, elems, sets)
-    # corner exclusion: solder elements whose centroid is within one element of the free edge
+    # corner exclusion: legacy = solder elements whose centroid is within one element of the
+    # free edge (mesh dependent); fixed band = centroid within the physical band b
     dx = (2 * hs) / n_in
+    lim = (hs - BAND_FRAC * 2 * hs) if BAND_FRAC else (hs - dx * 0.999)
     core = []
     for e, c, s in elems:
         if s != "ESOL":
             continue
         ctr = pts[[n - 1 for n in c]].mean(axis=0)
-        if max(abs(ctr[0]), abs(ctr[1])) < hs - dx * 0.999:
+        if max(abs(ctr[0]), abs(ctr[1])) < lim:
             core.append(e)
     m.sets["ESOLCORE"] = core
     m.sets["_dx_mm"] = dx
