@@ -35,6 +35,12 @@ from pathlib import Path
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
 R = Path(__file__).resolve().parents[1]
+# Amendment 5 (TCPMT revision): the fixed-width averaging band is read by joint.py at
+# import time, so it is set from the policy before the harness is imported.
+_A5 = next((a for a in json.loads((R / "research" / "final_closure" / "local_mesh_policy.json")
+            .read_text()).get("amendments", []) if a.get("id") == 5), None)
+if _A5:
+    os.environ["JOINT_BAND_FRAC"] = repr(float(_A5["band_frac"]))
 for _p in ("scripts/phase0mr3c", "scripts/phase0ir", "scripts/phase0i", "scripts"):
     sys.path.insert(0, str(R / _p))
 import run_final_local_response as LR                                # noqa: E402
@@ -69,18 +75,20 @@ if _LT != 6 and not getattr(LR.run, "_wrapped", False):
     LR.run = _run
 
 A4 = AMEND.get(4)
-PASS = 4 if A4 else 3
-#: pass-4 results of the corrected lineage live in their own scratch tree
-SCR_MESH = "fc_localmesh_p4" if A4 else "fc_localmesh_p3"
+A5 = AMEND.get(5)
+PASS = 5 if A5 else (4 if A4 else 3)
+#: each pass keeps its own scratch tree
+SCR_MESH = "fc_localmesh_p5" if A5 else ("fc_localmesh_p4" if A4 else "fc_localmesh_p3")
 SUPERSEDED = OUT / "superseded_bga_fed_z2"
 
 
 def policy_cases(optional=True):
     """The cases of the CURRENT pass: amendment 4 re-declares them for the corrected
     lineage (direct-fed Z2, explicit attach, sidewall clearance)."""
-    if A4:
-        c = [tuple(x) for x in A4["cases"]]
-        return c + ([tuple(x) for x in A4.get("optional_cases", [])] if optional else [])
+    for A in (A5, A4):
+        if A:
+            c = [tuple(x) for x in A["cases"]]
+            return c + ([tuple(x) for x in A.get("optional_cases", [])] if optional else [])
     c = [tuple(x) for x in POLICY["cases"]]
     return c + ([tuple(x) for x in POLICY["optional_cases"]["cases"]] if optional else [])
 
@@ -326,6 +334,16 @@ def run_level(task):
     return dict(r, arch=arch, scenario=scen, source=src)
 
 
+def char_size(n_xy):
+    """Amendment 5: largest in-plane solder element width divided by the fixed band."""
+    import math
+    f = float(A5["band_frac"])
+    dx = 1.0 / n_xy
+    n_b = max(1, math.ceil(f / dx - 1e-9))
+    n_c = max(2, round((1.0 - 2 * f) / dx))
+    return max(f / n_b, (1.0 - 2 * f) / n_c) / f
+
+
 def apply_policy(rows):
     """The declared rule, applied mechanically to the completed levels of one case."""
     done = [r for r in sorted(rows, key=lambda r: r["n_xy"]) if r["d_peeq_per_cycle"]]
@@ -336,7 +354,8 @@ def apply_policy(rows):
                     production_value=None, note="fewer than three completed levels")
     a, b, c = done[-3:]
     v = [a["d_peeq_per_cycle"], b["d_peeq_per_cycle"], c["d_peeq_per_cycle"]]
-    h = [6.0 / a["n_xy"], 6.0 / b["n_xy"], 6.0 / c["n_xy"]]
+    h = ([char_size(r["n_xy"]) for r in (a, b, c)] if A5 else
+         [6.0 / a["n_xy"], 6.0 / b["n_xy"], 6.0 / c["n_xy"]])
     last = abs(v[2] - v[1]) / abs(v[2])
     out.update(production_level=c["level"], production_value=v[2],
                finest_change_rel=last, finest_three=[r["level"] for r in (a, b, c)])
@@ -373,7 +392,8 @@ def main():
         rows = pool.map(run_level, tasks, chunksize=1)
         ctl = ctl.get()
     cs = json.loads(CYCLE_STUDY.read_text())        # read late: may run concurrently
-    p1 = json.loads((OUT / "local_mesh_study_pass1.json").read_text())["cases"]
+    _p1f = OUT / "local_mesh_study_pass1.json"
+    p1 = json.loads(_p1f.read_text())["cases"] if _p1f.exists() else {}
     p3f = SUPERSEDED / "local_mesh_study_pass3.json"
     p3 = (json.loads(p3f.read_text())["cases"] if (A4 and p3f.exists()) else {})
     pub = LR.CONTROL["d_eps_in_stab"]
@@ -382,7 +402,9 @@ def main():
                                    if ctl["d_peeq_per_cycle"] else None)}}
     keep_previous(OUT / "local_mesh_study.json")
     study = {"policy": "research/final_closure/local_mesh_policy.json",
-             "pass": PASS, "corrected_lineage": bool(A4), "amendments_applied": sorted(AMEND),
+             "pass": PASS, "corrected_lineage": bool(A4), "revised_lineage": bool(A5),
+             "averaging_band_frac": (float(A5["band_frac"]) if A5 else None),
+             "amendments_applied": sorted(AMEND),
              "initial_increment_s": inc0, "split_steps": True,
              "extraction": "block order (DEFECT #65)",
              "time_study": TIME_STUDY.name, "cycle_study": CYCLE_STUDY.name,
@@ -403,7 +425,9 @@ def main():
         old = (p1.get(f"{a}_{s}") or {}).get("levels", {})
         l0 = (c["levels"].get("L0") or {}).get("d_peeq_per_cycle")
         o0 = (old.get("L0") or {}).get("d_peeq_per_cycle")
-        if not A4:
+        if A5:
+            c["pass3_L0_crosscheck"] = None
+        elif not A4:
             acc[f"{a}_{s}"] = {"pass3_L0": l0, "pass1_L0": o0,
                                "dev_rel": abs(l0 - o0) / o0 if (l0 and o0) else None}
         else:
@@ -417,7 +441,7 @@ def main():
         c["pass1_values"] = {t_: o["d_peeq_per_cycle"] for t_, o in old.items()}
         study["cases"][f"{a}_{s}"] = c
     devs = [v["dev_rel"] for v in acc.values()]
-    rule = (A4 or AMEND[3])["acceptance"]
+    rule = (A5 or A4 or AMEND[3])["acceptance"]
     study["acceptance"] = {"rule": rule, "checks": acc,
                            "pass": all(d is not None and d < 1e-3 for d in devs)}
     (OUT / "local_mesh_study.json").write_text(json.dumps(study, indent=1, default=float))

@@ -176,6 +176,45 @@
    "excluded": "any case whose critical joint is at or above the SAC305 melting onset (about 217 C) is not run: no valid solid-solder response exists",
    "acceptance": "pass 4 is accepted only if its harness control (the published control joint) is reproduced within 0.1 % by the same extraction",
    "production_level": "L3 unless rule C applies"
+  },
+  {
+   "id": 5,
+   "declared_at": "2026-11-13T17:05:00-0600",
+   "declared_after": "TCPMT revision: model consistency fixes (Z1 repartitioned tier order, tier-aware intra-VR routing, datasheet GaN coefficients) and the finding that ESOLCORE excludes 'one element' from the free edge, so the averaging volume itself grows with refinement (128 -> 1600 core elements over L0..L3) and the L0..L3 study cannot converge in principle",
+   "declared_before_any_result_of": [
+    "pass 5 (revised lineage)"
+   ],
+   "diagnostic_seen_before_declaring": "one probe on the OLD-lineage Z2 HV-S0 joint with the fixed band: L0 8.036993628906e-3 (identical to legacy L0), n_xy=12 7.860402609863e-3 (-2.20 % from L0), against the legacy one-element band's -9.90 % over the same refinement",
+   "change": "the corner-exclusion band is a FIXED PHYSICAL WIDTH b = solder side / 6 = 59.08 um (one L0 element), with mesh breakpoints at +/-(hs - b): band elements n_b = ceil(b/dx), core n_c = round((2hs-2b)/dx); every level averages the same (236.3 um)^2 x 300 um core. Levels keep their n_xy/n_z. The characteristic size for Richardson is the largest in-plane solder element width divided by b (1, 0.80, 0.57, 0.50). Implemented as scripts/phase0i/joint.py with JOINT_BAND_FRAC; unset reproduces the legacy harness.",
+   "band_frac": 0.16666666666666666,
+   "rule": "unchanged: the declared A/B/C rule; U = U_mesh + U_time + U_cyc with fresh temporal and cycle studies",
+   "cases": [
+    [
+     "Z1",
+     "HV_S0"
+    ],
+    [
+     "Z2",
+     "HV_S0"
+    ],
+    [
+     "Z1",
+     "HV_S1"
+    ],
+    [
+     "Z2",
+     "HV_S1"
+    ]
+   ],
+   "optional_cases": [
+    [
+     "Z2",
+     "HV_S2"
+    ]
+   ],
+   "excluded": "any case whose critical joint is at or above the SAC305 melting onset (about 217 C)",
+   "acceptance": "pass 5 is accepted only if its harness control (the published control joint, L0 mesh, unchanged by the band) is reproduced within 0.1 % by the same extraction",
+   "production_level": "L3 unless rule C applies"
   }
  ]
 }
