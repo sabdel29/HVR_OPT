@@ -440,6 +440,28 @@ def v_conv_mech(E_mpa, cte):
 
 
 
+# ------------------------------------------------------------------ cooling (Z3)
+def v_z3_top_only():
+    """Z3 with the top cold plate only: the converter underside carries the board's
+    natural-convection film (h_bottom at the bottom ambient) instead of the second cold
+    plate of the Z3 production boundary. Asks whether the cooling solution of Z1 and Z2
+    survives the board-backside integration; everything else is the Z3 production case."""
+    bc = {}
+
+    def hook(m, st, tiles):
+        tb = st["thermal_bc"]
+        bc["h"], bc["T"] = tb["h_bottom"]["value"], tb["ambient_bottom"]["value"]
+        return {"z3_converter_underside": "natural-convection film (no second cold plate)"}
+    E.BUILD_HOOKS.append(hook)
+    orig = E.z3_converter_cold_plate
+
+    def plate(m, q_w):
+        p = orig(m, q_w)
+        p.update({"h_W_m2K": float(bc["h"]), "T_C": float(bc["T"]),
+                  "label": "Z3 top-only: natural-convection film on the converter underside"})
+        return p
+    E.z3_converter_cold_plate = plate
+
 # ------------------------------------------------------------------ tier order (Z1)
 def v_z1_tier_reference():
     """Z1 built in the REFERENCE tier order of Krishnakumar 2026 (HS -> LS -> C_f -> L)
@@ -591,6 +613,10 @@ VARIANTS = {
                       nature="BGA mechanical population (smeared)",
                       what="BGA field populated at 420/528: the 54 + 54 48 V balls of the "
                            "BGA-fed design removed"),
+    "z3_top_only": dict(kind="full", archs=("Z3",), apply=v_z3_top_only,
+                        gates=[], nature="ENGINEERING_SENSITIVITY (cooling solution, Z3)",
+                        what="Z3 with the top cold plate only (converter underside in the "
+                             "board's natural-convection film instead of its own plate)"),
     "z1_tier_reference": dict(kind="full", archs=("Z1",), apply=v_z1_tier_reference,
                               gates=["geom.tier_order"], nature="ENGINEERING_SENSITIVITY (tier order)",
                               what="Z1 in the reference tier order HS-LS-Cf-L (production: "
