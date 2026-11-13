@@ -292,6 +292,19 @@ def v_icepak_equivalent():
     f = icepak_factor()
     orig = type(c).h_uniform
     type(c).h_uniform = lambda self, q_w: orig(self, q_w) * f
+def v_board_hbot(h_w_m2k):
+    """Board thermal boundary (TCPMT revision). The production board is a 30 x 30 mm coupon
+    with adiabatic sides and h_bottom = 10 W/m2K (natural convection), so heat can leave
+    almost only through the top cold plate and the whole Z1 board settles near the joint
+    temperature (114-122 C). An effective bottom coefficient stands for the lateral
+    spreading of a full server board and its forced-air cooling (a fin of k_xy = 66 W/mK,
+    t = 2.4 mm gives 60-520 W/m2K referred to the coupon footprint for h_air = 10-100)."""
+    def hook(m, st, tiles):
+        st["thermal_bc"]["h_bottom"]["value"] = float(h_w_m2k)
+        return {"h_bottom_W_m2K": float(h_w_m2k)}
+    E.BUILD_HOOKS.append(hook)
+
+
 def v_z2_cooled():
     """Z2-COOLED, bounding: a second cold plate of the SAME kind as the top one (uniform
     h of the top microchannel plate at the dissipated power, fluid at the inlet
@@ -539,6 +552,14 @@ VARIANTS = {
                       nature="BGA mechanical population (smeared)",
                       what="BGA field populated at 420/528: the 54 + 54 48 V balls of the "
                            "BGA-fed design removed"),
+    "board_hbot100": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_hbot(100.0),
+                          gates=[], nature="ENGINEERING_SENSITIVITY (board thermal boundary)",
+                          what="effective board-bottom coefficient 100 W/m2K instead of 10 "
+                               "(full server board, forced air)"),
+    "board_hbot500": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_hbot(500.0),
+                          gates=[], nature="ENGINEERING_SENSITIVITY (board thermal boundary)",
+                          what="effective board-bottom coefficient 500 W/m2K instead of 10 "
+                               "(upper end of board spreading)"),
     "z2_cooled": dict(kind="full", archs=("Z2",), apply=v_z2_cooled,
                       gates=["therm.z2_cooled"],
                       nature="bounding case (strongest backside cooling the model states)",
