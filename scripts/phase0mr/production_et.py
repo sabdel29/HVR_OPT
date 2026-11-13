@@ -87,7 +87,8 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
                  board_case: str | None = None,
                  cutout_mm: float | None = None,
                  physical_converter=None,
-                 physical_z1=None):
+                 physical_z1=None,
+                 physical_z3=None):
     """The Phase-0I global mesh for one architecture, with its materials and tiles.
 
     Extracted so the layer set a given architecture actually gets can be inspected
@@ -96,6 +97,11 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
     PHASE 0M-R2: ARCH_Z4 now receives its power die as REAL GEOMETRY between the
     substrate top and the compute die (`ZG.mid_layers`), instead of having its heat
     deposited into the `interface` layer.
+
+    PHASE 0N-Z: `physical_z3` (a physical_package.Z3Package) builds Z3, the regulator on
+    the PCB BACKSIDE: Z2's package above a FULL board and BGA, and the converter tiers plus
+    the VR-to-PCB attach hung under the board (z3_package). None leaves every other path
+    exactly as it was.
     """
     doe = load_doe() if doe is None else doe
     # PHASE 0N-T. board_case is an EXPLICIT parameter. Default None keeps the
@@ -113,6 +119,15 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
         import zglobal as _ZG
         st = _ZG.BRD.stack_with_board(_ZG.load_stack(), 0.020, board_case)
         extra, _t_tile = _ZG.BRD.bottom_layers(board_case), 0.020
+    elif physical_z3 is not None:
+        # PHASE 0N-Z. Z3's converter is not in, above or (as stack_for's 'below') between
+        # the substrate and the BGA: it hangs under the BOARD. Its substrate is Z2's, so the
+        # tile band is the thin RDL band of the configured thickness, and the bottom stack
+        # starts from the plain board + BGA (z3_package.install adds the rest underneath).
+        import zglobal as _ZG
+        _t_tile = physical_z3.tile_band_mm
+        st = _ZG.BRD.stack_with_board(_ZG.load_stack(), _t_tile, board_case)
+        extra = _ZG.BRD.bottom_layers(board_case)
     else:
         st, extra, _t_tile = ZG.stack_for(arch, h_sub_mm, board_case=board_case)
     mid = ZG.mid_layers(arch, os.environ.get("PHASE0MR2_Z4_VARIANT", z4_variant))
@@ -167,6 +182,21 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
                     if abs((b - a) + 2.0 * clr - cut) > 1e-6:
                         raise ValueError(f"cell-grid bbox {b - a:.6f} mm + 2 x {clr} mm "
                                          f"clearance != cutout {cut} mm")
+    if physical_z3 is not None:
+        # PHASE 0N-Z. Converter tiers + attach under the full board and BGA; the out-of-cell
+        # rule fills between the cells inside the MEASURED cell-grid bbox (checked against
+        # the declared one) and leaves no element outside it, as Z2's production rule does.
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "phase0nw"))
+        import z3_package as Z3P
+        if cut is not None:
+            raise ValueError("Z3 has no PCB opening; refusing a cutout")
+        extra, conv_names, conv_fill = Z3P.install(physical_z3, st, extra)
+        mid = mid + Z3P.mid_layers(physical_z3)
+        iface_mat = "microbump"
+        fill_extent = (min(t.x0 for t in tiles), max(t.x1 for t in tiles),
+                       min(t.y0 for t in tiles), max(t.y1 for t in tiles))
+        Z3P.check_fill_extent(physical_z3, fill_extent)
     m = build(tiles, st, h_sub_mm, h_xy=h_xy, z_scale=1.4, support_layer=False,
               extra_bottom_layers=extra, explicit_bottom_layers=explicit_bottom,
               extra_mid_layers=mid,
@@ -175,6 +205,10 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
               conv_fill_material=conv_fill, conv_layer_names=conv_names,
               interface_material=iface_mat, cutout_mm=cut,
               conv_fill_extent=fill_extent)
+    if physical_z3 is not None:
+        # the PCB 1 V via fields exist only under the cells: those board elements take the
+        # via-field card, the rest of the board keeps the board card
+        Z3P.assign_via_field(physical_z3, m)
     return m, build_materials(st), st, tiles
 
 
