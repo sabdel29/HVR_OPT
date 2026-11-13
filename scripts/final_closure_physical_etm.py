@@ -19,6 +19,13 @@ historical form was wrong for the physical packages:
 3. THE RDL TIER TENSOR IS THE TIER'S OWN. A four-metal-layer, 40 um stack tensor was
    applied to single 10 um tiers. It is replaced by the laminate of one 10 um tier
    (validated separately against an explicit RVE).
+
+PHASE 0N-Z adds Z3, the same regulator hung from the PCB BACKSIDE
+(configs/phase0nz/z3_board_backside.yaml), as a separate branch everywhere it differs:
+its own geometry builder, the board elements under the cells as the PCB via-field
+deposit/temperature region, and its production bottom boundary (a converter-underside
+cold plate plus the natural-convection film on the uncovered board underside). Z3 writes
+only its own case files; the Z1/Z2 results pipeline does not read them.
 """
 from __future__ import annotations
 
@@ -49,6 +56,8 @@ from hvr_scratch import path as scratch                             # noqa: E402
 import pkg_rdl_network as _K                                        # noqa: E402
 # the BGA-fed CONTROL shares Z2's cutout and therefore its 528-site mechanical BGA field
 _K.register_architecture("Z2BF", _K.architecture_cutout_mm("Z2"))
+# Z3 (regulator on the PCB backside) has NO opening: the full 1369-site lattice, as Z1
+_K.register_architecture("Z3", None)
 
 OUT = R / "research" / "final_closure"
 WD = Path(os.environ["FC_WORKDIR"]) if "FC_WORKDIR" in os.environ else scratch("fc_etm")
@@ -245,6 +254,9 @@ def build(arch, h_xy=1.1, refine=(1, 1)):
     with _NestedRefinement(*refine):
         if arch == "Z1":
             m, mats, st, tiles = PP.build_physical_z1(h_xy=h_xy)
+        elif arch == "Z3":
+            # the regulator on the PCB backside, from its OWN config (configs/phase0nz)
+            m, mats, st, tiles = PP.build_physical_z3(h_xy=h_xy)
         else:
             cfg = PP.load_physical_package_config(
                 R / "configs/phase0nt/z2_2p4mm_cutout.yaml")
@@ -269,6 +281,19 @@ def build(arch, h_xy=1.1, refine=(1, 1)):
         m.elem_material, np.ndarray) else mat
     info = {"tsv_tile_cu_fraction": f, "sub_lower_in_tiles": n_in,
             "sub_lower_outside_tiles": n_out}
+    if arch == "Z3":
+        # the two Z3 cards, recorded with the case as the TSV card is
+        import z3_package as Z3P
+        z3 = PP.load_z3_package_config()
+        mat_a = np.asarray(m.elem_material, dtype=object)
+        vn, an = Z3P.via_material_name(z3), Z3P.attach_material_name(z3)
+        info.update({"pcb_via_field_elements": int((mat_a == vn).sum()),
+                     "pcb_via_cu_fraction": st["materials"][vn]["cu_area_fraction"],
+                     "pcb_via_card_k_ortho": st["materials"][vn]["k_ortho"]["value"],
+                     "pcb_via_card_E_MPa": st["materials"][vn]["E"]["value"],
+                     "vr_attach_pcb_elements": int((mat_a == an).sum()),
+                     "vr_attach_pcb_card_k_ortho": st["materials"][an]["k_ortho"]["value"],
+                     "vr_attach_pcb_fraction": st["materials"][an]["geometry"]["f"]})
     for hook in BUILD_HOOKS:
         info.update(hook(m, st, tiles) or {})
     mats = PE.build_materials(st)
@@ -288,13 +313,22 @@ def layer_mean_T(m, Tn, layers):
 #: to the package corners, where it has almost no path to the cold plate, and
 #: produced a 362 C hot spot at (15, 15) mm in an element carrying no device at all.
 IN_TILE_KEYS = ("hs", "ls", "caps", "ind", "rdl", "lv", "tsv", "pads", "attach")
+#: Z3 also confines its PCB 1 V via-field loss to the cells: the plated through-holes exist
+#: only in the board under the 49 footprints, so that loss goes into those board elements and
+#: never into the board out to the package corners. Every other architecture keeps
+#: IN_TILE_KEYS unchanged.
+IN_TILE_KEYS_BY_ARCH = {"Z3": IN_TILE_KEYS + ("pcb_via",)}
+
+
+def in_tile_keys(arch):
+    return IN_TILE_KEYS_BY_ARCH.get(arch, IN_TILE_KEYS)
 
 
 def deposits_from_ledger(arch, L):
     """(layers tuple, in_tiles) -> W."""
     lay = FL.LAYERS[arch]
     tile_layers = set()
-    for k in IN_TILE_KEYS:
+    for k in in_tile_keys(arch):
         if k not in lay:
             continue
         v = lay[k]
@@ -322,7 +356,52 @@ def _region_elems(m, layers, in_tiles, tiles):
     return ids[keep]
 
 
-def write_thermal(m, mats, st, deposits, h_face, t_face, path, tiles):
+#: Z3 PRODUCTION thermal boundary (configs/phase0nz/z3_board_backside.yaml, thermal_boundary).
+#: Z3's converter hangs UNDER the board, so the lowest surface of the model is its high-side
+#: tier and ccxio.bottom_film_faces (the bottom of m.layers[0] at the lowest z) would put the
+#: board's natural-convection film on the converter. Z3 instead cools the converter underside
+#: with a second cold plate of the top plate's kind -- the v_z2_cooled film form of
+#: final_closure_sensitivity (top-plate h at the dissipated power, fluid at the inlet
+#: temperature), promoted to production for Z3 only -- and keeps the natural-convection film
+#: on the board underside wherever nothing covers it. The two face sets never overlap.
+def exposed_bottom_faces(m, layer):
+    """Elements of `layer` whose BOTTOM face lies on the layer's underside and is not the top
+    face of any other element, i.e. faces open to the environment. Exact on the conforming
+    mesh: two elements share a face if and only if they share its four nodes (element nodes
+    0-3 are the bottom face, 4-7 the top face)."""
+    ids = m.elem_set(layer=layer)
+    zb = m.nodes[m.elems[ids - 1][:, 0] - 1, 2]
+    z0 = float(zb.min())
+    on = ids[np.abs(zb - z0) < 1e-9]
+    zt = m.nodes[m.elems[:, 4] - 1, 2]
+    covered = {tuple(sorted(r[4:])) for r in m.elems[np.abs(zt - z0) < 1e-9]}
+    return np.array([e for e in on if tuple(sorted(m.elems[e - 1][:4])) not in covered], int)
+
+
+def board_bottom_faces(m, arch=None):
+    """The faces that carry the production natural-convection (h_bottom) film."""
+    import production_et as PE
+    if arch != "Z3":
+        return PE.ccxio.bottom_film_faces(m)
+    return exposed_bottom_faces(m, "board")
+
+
+def z3_converter_cold_plate(m, q_w):
+    """Z3's converter-underside cold plate: the bottom faces of the DEEPEST tier, which the
+    tier order makes the high-side GaN, over the whole cell-grid bbox (cells + encapsulant)."""
+    from cooling_production import CANDIDATES
+    cooler = CANDIDATES[COOLER]
+    deepest = min(m.layers, key=lambda L: L.z0)
+    if deepest.name != FL.LAYERS["Z3"]["hs"]:
+        raise ValueError(f"the Z3 cold plate belongs on the high-side tier, but the deepest "
+                         f"layer is {deepest.name}")
+    return {"elems": exposed_bottom_faces(m, deepest.name),
+            "h_W_m2K": float(cooler.h_uniform(q_w)), "T_C": float(cooler.t_in_c),
+            "layer": deepest.name,
+            "label": "Z3 production: second top-type cold plate on the converter underside"}
+
+
+def write_thermal(m, mats, st, deposits, h_face, t_face, path, tiles, arch=None):
     import production_et as PE
     ccxio = PE.ccxio
     tb = st["thermal_bc"]
@@ -343,27 +422,45 @@ def write_thermal(m, mats, st, deposits, h_face, t_face, path, tiles):
         L += ccxio._fmt_set(f"E_SRC_{k}", ids)
         dflux.append(f"E_SRC_{k},BF,{w / vol:.9g}")
         deposited += (w / vol) * vol
-    top, bot = ccxio.top_film_faces(m), ccxio.bottom_film_faces(m)
+    top, bot = ccxio.top_film_faces(m), board_bottom_faces(m, arch)
     L += ["*INITIAL CONDITIONS, TYPE=TEMPERATURE", f"NALL,{float(t_face.mean()):.6f}"]
     L += ["*STEP", "*HEAT TRANSFER, STEADY STATE", "*DFLUX"] + dflux + ["*FILM"]
     for e, h_i, t_i in zip(top, h_face, t_face):
         L.append(f"{int(e)},F2,{t_i:.6f},{h_i * PE.W_M2K_TO_W_MM2K:.9g}")
     for e in bot:
         L.append(f"{int(e)},F1,{t_amb},{h_bot * PE.W_M2K_TO_W_MM2K:.9g}")
+    plate = z3_converter_cold_plate(m, sum(deposits.values())) if arch == "Z3" else None
+    if plate is not None:
+        if set(map(int, plate["elems"])) & set(map(int, bot)):
+            raise ValueError("Z3 converter cold-plate faces overlap the board-bottom film")
+        for e in plate["elems"]:
+            L.append(f"{int(e)},F1,{plate['T_C']:.6f},"
+                     f"{plate['h_W_m2K'] * PE.W_M2K_TO_W_MM2K:.9g}")
     extra = EXTRA_FILM(m, tiles, sum(deposits.values())) if EXTRA_FILM else None
     if extra is not None:
         if set(map(int, extra["elems"])) & set(map(int, bot)):
             raise ValueError("extra film faces overlap the board-bottom film")
+        if plate is not None and set(map(int, extra["elems"])) & set(map(int, plate["elems"])):
+            raise ValueError("extra film faces overlap the Z3 converter cold plate")
         for e in extra["elems"]:
             L.append(f"{int(e)},F1,{extra['T_C']:.6f},"
                      f"{extra['h_W_m2K'] * PE.W_M2K_TO_W_MM2K:.9g}")
     L += ["*NODE FILE", "NT", "*END STEP"]
     path.write_text("\n".join(L) + "\n")
     return {"top": top, "bot": bot, "deposited_w": deposited,
-            "h_bot": h_bot, "t_amb": t_amb, "extra": extra}
+            "h_bot": h_bot, "t_amb": t_amb, "extra": extra, "plate": plate}
 
 
-def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02):
+def film_heat_w(m, Tn, film):
+    """Heat leaving through one convective face set, COMPUTED from the solved field (the
+    bottom-face node mean against the film's sink)."""
+    import production_et as PE
+    t = np.array([float(np.nanmean(Tn[m.elems[int(e) - 1][:4], 0])) for e in film["elems"]])
+    a = np.array([PE.ccxio.face_area(m, e) for e in film["elems"]])
+    return float(np.sum(film["h_W_m2K"] * PE.W_M2K_TO_W_MM2K * a * (t - film["T_C"])))
+
+
+def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02, arch=None):
     import production_et as PE
     from cooling_production import CANDIDATES
     ccxio = PE.ccxio
@@ -382,7 +479,7 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
     hist, t0 = [], time.time()
     for it in range(max_fluid_iter):
         ti = wd / f"th_{it}.inp"
-        info = write_thermal(m, mats, st, deposits, h_face, t_face, ti, tiles)
+        info = write_thermal(m, mats, st, deposits, h_face, t_face, ti, tiles, arch=arch)
         ccxio.run_ccx(ti, threads=THREADS)
         frd = wd / f"th_{it}.frd"
         if not frd.is_file():
@@ -412,6 +509,16 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
            "energy_residual_rel": (q_top + q_bot - Q) / Q,
            "fluid_iters": len(hist), "fluid_hist": hist,
            "wall_s": time.time() - t0, "n_elems": m.n_elems, "n_nodes": m.n_nodes}
+    q_known = q_top + q_bot
+    pl = info.get("plate")
+    if pl is not None:                    # Z3 production: the converter cold plate's heat
+        q_p = film_heat_w(m, Tn, pl)      # flow, computed from the solved field as well
+        q_known = q_known + q_p
+        out.update({"q_bottom_plate_W": q_p,
+                    "bottom_plate_film": {k: v for k, v in pl.items() if k != "elems"},
+                    "bottom_plate_faces": int(len(pl["elems"])),
+                    "board_bottom_film_faces": int(len(bot)),
+                    "energy_residual_rel": (q_known - Q) / Q})
     ex = info.get("extra")
     if ex is not None:                    # sensitivity only: the extra film's heat flow,
         tx = np.array([float(np.nanmean(Tn[m.elems[int(e) - 1][:4], 0]))   # computed too
@@ -421,7 +528,7 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
         out.update({"q_extra_W": q_x, "extra_film": {k: v for k, v in ex.items()
                                                      if k != "elems"},
                     "extra_film_faces": int(len(ex["elems"])),
-                    "energy_residual_rel": (q_top + q_bot + q_x - Q) / Q})
+                    "energy_residual_rel": (q_known + q_x - Q) / Q})
     return out
 
 
@@ -445,6 +552,8 @@ def temperature_regions(arch):
            "interface": ([lay["pads"]], True)}
     if "attach" in lay:
         reg["attach"] = ([lay["attach"]], True)
+    if "pcb_via" in lay:                  # Z3: the board elements under the cells (via fields)
+        reg["pcb_via"] = ([lay["pcb_via"]], True)
     return reg
 
 
@@ -457,7 +566,7 @@ def region_nodes(m, tiles, layers, in_tiles):
 def temps_from_history(h):
     """The ledger temperatures of one recorded E-T iteration (keys present in it)."""
     return {k: h[f"T_{k}_C"] for k in ("conv", "hs", "ls", "ind", "caps", "bga", "sub",
-                                         "interface", "attach") if f"T_{k}_C" in h}
+                                         "interface", "attach", "pcb_via") if f"T_{k}_C" in h}
 
 
 def run_et(arch, scen, h_xy=1.1, refine=(1, 1)):
@@ -474,7 +583,7 @@ def run_et(arch, scen, h_xy=1.1, refine=(1, 1)):
         if EXTRA_DEPOSITS is not None:
             for key, w in EXTRA_DEPOSITS(arch, scen, L).items():
                 dep[key] = dep.get(key, 0.0) + w
-        th = solve_thermal(m, mats, st, dep, wd / f"et{it}", tiles)
+        th = solve_thermal(m, mats, st, dep, wd / f"et{it}", tiles, arch=arch)
         Tn = th["T_node"]
         new = {k: float(np.nanmean(Tn[nd - 1])) for k, nd in regions.items()}
         d_t = max(abs(new[k] - temps[k]) for k in temps)
@@ -566,6 +675,16 @@ def run_case(arch, scen, h_xy=1.1, do_mech=True, refine=(1, 1), solver="", threa
            "et_history": hist, "et_converged": (hist[-1]["max_dT_K"] < ET_TOL_K
                                                 and hist[-1]["dP_rel"] < ET_TOL_P_REL),
            "et_wall_s": t_et, "threads": THREADS}
+    if arch == "Z3":
+        # the board-backside design numbers (counts, per-bump/per-ball currents, BGA field
+        # consumption) and the converged temperatures they were evaluated at
+        res["z3_design"] = L["z3_design"]
+        res["thermal_boundary"] = {
+            "top": f"{COOLER} cold plate on the TIM (as Z1/Z2)",
+            "converter_underside": th.get("bottom_plate_film"),
+            "board_underside_outside_converter": "production h_bottom natural convection",
+            "q_split_W": {"top": th["q_top_W"], "converter_plate": th.get("q_bottom_plate_W"),
+                          "board_bottom": th["q_bot_W"]}}
     # write THIS case now, and again after mechanics: a failure in another worker, or a
     # long structural solve, must not withhold the converged thermal state
     f = OUT / f"etm_{arch}_{scen}_h{h_xy}{refine_tag(refine)}.json"
