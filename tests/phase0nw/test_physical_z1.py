@@ -21,12 +21,13 @@ from physical_package import (PhysicalConfigError,  # noqa: E402
 
 CFG = R / "configs/phase0nt/z2_2p4mm_cutout.yaml"
 
-# research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md section 1, PCB-backside frame.
+# research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md section 1, PCB-backside frame, with the
+# TCPMT-revision REPARTITIONED tier order (HS -> C_f -> LS -> L, configs/phase0nx).
 SPEC_Z1 = {
     "bottom_substrate_rdl": (3000.0, 3010.0),
     "gan_hs_EPC2014C":      (3010.0, 3695.0),
-    "gan_ls_EPC2057":       (3705.0, 4343.0),
-    "flying_caps":          (4353.0, 4453.0),
+    "flying_caps":          (3705.0, 3805.0),
+    "gan_ls_EPC2057":       (3815.0, 4453.0),
     "inductor_plus_cout":   (4463.0, 4963.0),
     "output_rdl":           (4963.0, 4973.0),
 }
