@@ -44,6 +44,8 @@ Z2_ONLY = ("z2_cooled", "z2_cooled_tim", "f1_sidewall_filled", "attach_h20", "at
            "attach_sn", "attach_stiff", "attach_uf_soft", "attach_uf_stiff",
            "feed_heat_at_crossover", "bga_depop", "attach_dense", "attach_sparse",
            "attach_sparse_stiff", "attach_eng_p34", "attach_eng_p37", "attach_eng_p41")
+#: ... and the variants that exist only for Z1 (TCPMT revision): Z2 keeps its production values
+Z1_ONLY = ("z1_tier_reference",)
 CONV = ["conv_k_tenth", "conv_E80_a4", "conv_E80_a10", "conv_E160_a4", "conv_E160_a10"]
 WAVE = ("named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each "
         "scenario solved through the full lineage")
@@ -121,6 +123,16 @@ GATES = {
     "therm.z2_cooled": ("B1", GLOBAL, "bounding Z2-COOLED: a top-type cold plate on the Z2 "
                         "converter underside; Z1 unchanged", "runs", ["z2_cooled"],
                         "an extra Z2 heat path could move any thermal ordering"),
+    "board.bottom_boundary": ("B1", GLOBAL, "board-bottom film 100 / 500 W/m2K (production "
+                              "10: a 30-mm coupon in natural convection) standing in for the "
+                              "lateral spreading of a full server board", "runs",
+                              ["board_hbot100", "board_hbot500"],
+                              "the board is the second heat path of every joint"),
+    "geom.tier_order": ("B1", GLOBAL, "Z1 converter tiers in the reference order HS-LS-Cf-L "
+                        "(production: the repartitioned HS-Cf-LS-L of the realizability "
+                        "check); components, heights unchanged; Z2 unchanged", "runs",
+                        ["z1_tier_reference"],
+                        "tier order sets where each device sits in the heat path"),
     "mat.gan_bounded": ("B1", GLOBAL, "GaN tiers at half the Si carrier conductivity "
                         "(stress bound on the unresolved epi)", "runs", ["gan_k_half"],
                         "the device tiers sit in the converter heat path"),
@@ -209,6 +221,9 @@ def judge_runs(cases, observables, od, unc):
             c = J(f)
             if c is None and v in Z2_ONLY and a == "Z1":
                 var[a] = base[a]                         # Z1 is unchanged by definition
+                continue
+            if c is None and v in Z1_ONLY and a == "Z2":
+                var[a] = base[a]                         # Z2 is unchanged by definition
                 continue
             var[a] = _vals(c)
             if var[a] is None:

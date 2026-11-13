@@ -193,6 +193,20 @@ def main():
             if "ls" in t1 and "ls" in tb:
                 mac[f"dTls{k}"] = fx(tb["ls"] - t1["ls"], 1)
             mac[f"dTmax{k}"] = fx(zb["T_max_C"] - z1["T_max_C"], 1)
+    for a in ARCHS:
+        if (a, "HV_S0") in S and (a, "HV_S1") in S:
+            mac[f"RiseSone{ATAG[a]}"] = fx(S[(a, "HV_S1")]["P_loss_w"]
+                                           - S[(a, "HV_S0")]["P_loss_w"], 1)
+    for b in ("Z2", "Z3"):
+        k = f"{ATAG[b]}Szero"
+        if f"dPconv{k}" in mac and f"dProute{k}" in mac:
+            dr = float(mac[f"dProute{k}"])
+            if dr < 0:                      # routing saved, conversion paid
+                mac[f"ConvToRoute{ATAG[b]}"] = fx(float(mac[f"dPconv{k}"]) / -dr, 1)
+    sens = sorted((D / "sensitivity").glob("etm_*__*.json")) if (D / "sensitivity").exists() else []
+    mac["NvariantRuns"] = str(sum(1 for f in sens
+                                  if (json.loads(f.read_text()).get("mechanics") or {})
+                                  .get("joint_search")))
     # ratios of the mechanical drivers against the embedded reference
     for b in ("Z2", "Z3"):
         if ("Z1", "HV_S0") in S and (b, "HV_S0") in S:
@@ -242,7 +256,9 @@ def feed_macros():
         for s, v in (c.get("scenarios") or {}).items():
             k = f"{ATAG[b]}{STAG_X[s]}"
             ok = v.get("R_star_mohm") is not None and not v.get("Z1_operating_point_inadmissible")
-            out[f"Rstar{k}"] = fx(v["R_star_mohm"], 2) if ok else NA
+            # R* = 0: behind even with a lossless feed -- no feed resistance is affordable
+            out[f"Rstar{k}"] = (("none" if v["R_star_mohm"] == 0 else fx(v["R_star_mohm"], 2))
+                                if ok else NA)
             out[f"Adv{k}"] = fx(v.get("advantage_at_zero_feed_w"), 2)
             out[f"Irms{STAG_X[s]}"] = fx(v.get("I_48_rms_a"), 1)
             out[f"PfeedPerMohm{STAG_X[s]}"] = fx(v.get("P_feed_per_mohm_w"), 2)

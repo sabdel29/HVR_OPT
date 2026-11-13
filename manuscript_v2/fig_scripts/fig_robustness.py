@@ -53,6 +53,7 @@ LAYOUT = [
         ("Cold-plate $h$ from conjugate CFD", ["icepak_equivalent"]),
     ]),
     ("Construction, materials", [
+        ("Z1 tiers in the reference order", ["z1_tier_reference"]),
         ("Out-of-cell volume void", ["f2_void"]),
         ("Opening filled to the PCB sidewall", ["f1_sidewall_filled"]),
         ("Converter-tier conductivity ×0.1", ["conv_k_tenth"]),
@@ -61,6 +62,8 @@ LAYOUT = [
                                           "conv_E160_a10"]),
     ]),
     ("Board", [
+        ("Board-bottom film 100 W/m$^2$K (10)", ["board_hbot100"]),
+        ("Board-bottom film 500 W/m$^2$K (10)", ["board_hbot500"]),
         ("PCB as 5-block laminate", ["board_h1"]),
         ("PCB copper coverage 25 % / 75 % (2)", ["board_eta025", "board_eta075"]),
         ("PCB 3.2 mm thick", ["board_t3p2"]),
@@ -96,7 +99,19 @@ def merged(cases, obs):
     return worst, (n, len(st)) if len(st) > 1 and n != len(st) else None
 
 
-PROD = ["Z2", "cond.", "Z1", "Z1", "Z1"]       # production verdicts at S0 (ordering.json)
+def _prod(key):
+    """The production verdict at S0, read from ordering.json (never typed in)."""
+    v = (S.J("ordering.json")["orderings"][key]["per_scenario"] or {}).get("HV_S0", "")
+    if v.endswith("lower"):
+        return v.split()[0]
+    if v.startswith("conditional"):
+        return "cond."
+    if v.startswith("Z1 lower for any") or v.startswith("Z2 lower for any"):
+        return v.split()[0]
+    return "≈" if v == "unresolved" else "–"
+
+
+PROD = [_prod(k) for k, _ in OBS]
 HEAD = ["Int.\nloss", "Platf.\nloss", "Peak\ntemp.", "Die\nwarp.", "Joint\ndriver"]
 
 COLW_IN, ROWH_IN, LAB_IN = 0.31, 0.138, 1.92

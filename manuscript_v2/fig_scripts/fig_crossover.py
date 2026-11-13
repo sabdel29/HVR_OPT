@@ -1,58 +1,69 @@
-"""Fig. 6 (proposed): the direct-feed requirement.
+"""Fig. 6: the direct-feed requirement of the backside integrations.
 
-Platform-inclusive loss difference  dP(R) = P_Z2(R) - P_Z1  against the swept external
-feed-loop resistance R of the direct-fed backside regulator, one panel per admissible
-scenario (each with its own y-scale; S2 has no admissible Z1 reference and is omitted).
-Below zero the backside architecture has the lower platform-inclusive loss. R* is the
-crossover. Context marker: the embedded architecture's own package 48-V loop
-(supply + return, 20 C), package_network.json. Data: direct_feed_crossover.json.
+Platform-inclusive loss difference dP(R) = P_Zb(R) - P_Z1 of each directly fed backside
+integration b (Z2, Z3) against the swept external feed-loop resistance R, one panel per
+admissible scenario (S2 has no admissible Z1 reference and is omitted). Below zero the
+backside integration has the lower platform-inclusive loss; R* is the crossover, and a
+curve that starts above zero has no crossover (behind even with a lossless feed).
+Context marker: the embedded integration's own package 48-V loop (package_network.json).
+Data: direct_feed_crossover.json ("architectures" block; older files: Z2 only).
 """
 import numpy as np
 import matplotlib.pyplot as plt
 import style as S
 
 S.setup()
-cx = S.J("direct_feed_crossover.json")["scenarios"]
+cx = S.J("direct_feed_crossover.json")
+per = cx.get("architectures") or {"Z2": {"scenarios": cx["scenarios"]}}
 pk = S.J("package_network.json")
-r_z1 = 1e3 * pk["loop"]["Z1"]["r_loop_ohm"]       # 2.262 mOhm at 20 C
+r_z1 = 1e3 * pk["loop"]["Z1"]["r_loop_ohm"]
 
-fig, axes = plt.subplots(2, 1, figsize=(S.COL_W, 3.15), sharex=True,
-                         gridspec_kw={"hspace": 0.38, "left": 0.16, "right": 0.97,
-                                      "bottom": 0.13, "top": 0.93})
-spec = [("HV_S0", "S0, smoothed input", (-1.6, 3.2)),
-        ("HV_S1", "S1, pulsed at the buck duty", (-48, 64))]
-for k, (ax, (s, name, yl)) in enumerate(zip(axes, spec)):
-    c = cx[s]
-    sw = [p for p in c["sweep"] if p.get("feasible", True) and p["P_total_w"] is not None]
-    R = np.array([p["R_mohm"] for p in sw])
-    dP = np.array([p["P_total_w"] for p in sw]) - c["P_Z1_w"]
+fig, axes = plt.subplots(2, 1, figsize=(S.COL_W, 3.2), sharex=True,
+                         gridspec_kw={"hspace": 0.40, "left": 0.16, "right": 0.97,
+                                      "bottom": 0.13, "top": 0.92})
+spec = [("HV_S0", "S0, smoothed input"), ("HV_S1", "S1, pulsed at the buck duty")]
+for k, (ax, (s, name)) in enumerate(zip(axes, spec)):
+    curves = []
+    for b, c in per.items():
+        cs = (c.get("scenarios") or {}).get(s)
+        if not cs:
+            continue
+        sw = [p for p in cs["sweep"] if p.get("feasible", True) and p["P_total_w"] is not None]
+        R = np.array([p["R_mohm"] for p in sw])
+        dP = np.array([p["P_total_w"] for p in sw]) - cs["P_Z1_w"]
+        curves.append((b, cs, R, dP))
+    lo = min(min(d[(r >= 0.01) & (r <= 40)].min() for _, _, r, d in curves), 0.0)
+    hi = max(max(d[(r >= 0.01) & (r <= 40)].max() for _, _, r, d in curves), 0.0)
+    pad = 0.12 * (hi - lo)
+    yl = (lo - pad, hi + pad)
     ax.set_xscale("log")
     ax.set_xlim(0.01, 40)
     ax.set_ylim(*yl)
-    ax.axhspan(yl[0], 0, color=S.Z2, alpha=0.07, lw=0, zorder=0)
-    ax.axhspan(0, yl[1], color=S.Z1, alpha=0.07, lw=0, zorder=0)
     ax.axhline(0, color=S.AXIS, lw=0.6, zorder=1)
-    ax.plot(R, dP, color=S.INK, lw=1.2, zorder=3)
-    rs = c["R_star_mohm"]
-    ax.plot(rs, 0, "o", ms=4.5, mfc="white", mec=S.INK, mew=0.9, zorder=5)
-    eta = 100 * c["efficiency_Z2_at_R_star"]
-    ax.annotate(f"$R^*$ = {rs:.2f} m$\\Omega$\n($\\eta$ = {eta:.1f} %)", (rs, 0),
-                xytext=(-7, 7), textcoords="offset points",
-                ha="right", va="bottom", fontsize=7, color=S.INK)
-    adv = c["advantage_at_zero_feed_w"]
-    ax.annotate(f"lossless feed: Z2 lower by {adv:.1f} W", (0.012, -adv),
-                xytext=(0, -3), textcoords="offset points", ha="left", va="top",
-                fontsize=6.3, color=S.INK2)
-    # context: the embedded architecture's own package 48-V loop resistance
+    for j, (b, cs, R, dP) in enumerate(curves):
+        ax.plot(R, dP, color=S.ARCH[b], lw=1.3, zorder=3)
+        rs = cs.get("R_star_mohm")
+        lab_y = dP[np.searchsorted(R, 20.0)]
+        ax.text(22, lab_y, b, ha="left", va="center", fontsize=6.6, color=S.INK)
+        if rs:                                       # a crossover exists
+            ax.plot(rs, 0, "o", ms=4.5, mfc="white", mec=S.INK, mew=0.9, zorder=5)
+            ax.annotate(f"$R^*_\\mathrm{{{b}}}$ = {rs:.2f} m$\\Omega$", (rs, 0),
+                        xytext=(-6, 6 + 10 * j), textcoords="offset points", ha="right",
+                        va="bottom", fontsize=6.6, color=S.INK)
+        else:
+            ax.annotate(f"{b} behind at zero feed", (0.012, dP[0]), xytext=(0, 3 + 0 * j),
+                        textcoords="offset points", ha="left", va="bottom", fontsize=6.3,
+                        color=S.INK2)
     ax.axvline(r_z1, color=S.MUTED, lw=0.6, ls=(0, (2, 2)), zorder=2)
     if k == 0:
-        ax.text(r_z1 * 1.06, yl[1] * 0.96, "Z1 package\n48-V loop", ha="left", va="top",
-                fontsize=6.3, color=S.INK2)
-    ax.text(0.012, yl[1] * 0.93, "Z1 lower", ha="left", va="top", fontsize=6.5,
-            color=S.INK2)
-    ax.text(0.012, yl[0] * 0.08, "Z2 lower", ha="left", va="top", fontsize=6.5,
-            color=S.INK2)
-    ax.set_ylabel(r"$P_\mathrm{Z2}-P_\mathrm{Z1}$ (W)")
+        ax.text(r_z1 * 1.06, yl[1] - 0.04 * (yl[1] - yl[0]), "Z1 package\n48-V loop",
+                ha="left", va="top", fontsize=6.2, color=S.INK2)
+    ax.text(0.012, yl[1] - 0.04 * (yl[1] - yl[0]), "Z1 lower", ha="left", va="top",
+            fontsize=6.4, color=S.INK2)
+    if yl[0] < 0:
+        ax.text(0.012, yl[0] + 0.04 * (yl[1] - yl[0]), "backside lower", ha="left",
+                va="bottom", fontsize=6.4, color=S.INK2)
+    ax.set_ylabel(r"$P_\mathrm{backside}-P_\mathrm{Z1}$ (W)")
     S.panel(ax, "ab"[k], name, y=1.03)
     ax.grid(axis="x", which="major", color=S.GRID, lw=0.5)
 axes[1].set_xlabel(r"Direct-feed loop resistance $R_\mathrm{feed}$ (m$\Omega$)")

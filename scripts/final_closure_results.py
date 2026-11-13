@@ -49,7 +49,7 @@ def main():
     rows, final, audit = [], [], {}
     for scen in SCEN:
         loc = J(f"local_solder_{scen}.json")
-        for arch in ("Z1", "Z2"):
+        for arch in ("Z1", "Z2", "Z3"):      # Z3 (TCPMT revision) whenever its cases exist
             pf = E.case_path(arch, scen)
             r = json.loads(pf.read_text()) if pf.exists() else None
             if r is None or "mechanics" not in r:
@@ -401,7 +401,11 @@ LOSS_BOUNDARY = {
     "Z2": ("package-internal: from the backside regulator's 48 V input terminals; the external "
            "direct-feed loop R_Z2_direct_feed_loop is OUTSIDE this boundary, so the platform-"
            "inclusive loss is a function of that unsourced resistance (direct_feed_crossover)"),
-    "Z2BF": "package-internal from the BGA pads (BGA-fed control)"}
+    "Z2BF": "package-internal from the BGA pads (BGA-fed control)",
+    "Z3": ("package-internal: from the board-backside regulator's 48 V input terminals to the "
+           "die; the external direct-feed loop R_Z3_direct_feed_loop is OUTSIDE this boundary, "
+           "and the board-plane and land-side 1 V redistribution are not modelled, so the Z3 "
+           "1 V loss is a lower bound (tcpmt_z3_landside_estimate)")}
 SCEN_LABEL = {"HV_S0": "HV-S0", "HV_S1": "HV-S1", "HV_S2": "HV-S2"}
 
 
@@ -441,16 +445,18 @@ def platform_fields(arch, scen, r):
     """Platform-inclusive loss, only at NAMED feed resistances: Z1's boundary already starts
     at the common board node; Z2's depends on R_Z2_direct_feed_loop, so it is given at
     R = 0, 1 mOhm and R* (where it equals Z1's), never as one scalar."""
-    if arch != "Z2" or r.get("hv_feed") != "DIRECT_FEED":
+    if arch not in ("Z2", "Z3") or r.get("hv_feed") != "DIRECT_FEED":
         return {"P_loss_platform_inclusive_w": r["P_loss_w"]}
     import final_closure_direct_feed as DF
     temps = DF.converged_temps(r)
-    c = ((J("direct_feed_crossover.json") or {}).get("scenarios") or {}).get(scen) or {}
+    cx = J("direct_feed_crossover.json") or {}
+    c = (((cx.get("architectures") or {}).get(arch) or {}).get("scenarios") or {}).get(scen) \
+        or ((cx.get("scenarios") or {}).get(scen) if arch == "Z2" else None) or {}
     out = {"P_loss_platform_inclusive_w": None,
            "P_loss_platform_inclusive_note": "a function of R_Z2_direct_feed_loop; see the "
                                              "named points"}
     for lab, r_ohm in (("Rfeed_0", 0.0), ("Rfeed_1mohm", 1e-3)):
-        pt = DF.platform_point(scen, temps, r_ohm)
+        pt = DF.platform_point(scen, temps, r_ohm, arch=arch)
         out[f"P_loss_platform_inclusive_at_{lab}_w"] = pt["P_total_w"]
     if c.get("R_star_mohm") and not c.get("Z1_operating_point_inadmissible"):
         out["P_loss_platform_inclusive_at_Rstar_w"] = c["P_Z1_w"]

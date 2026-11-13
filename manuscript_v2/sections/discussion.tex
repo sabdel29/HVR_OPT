@@ -1,0 +1,53 @@
+% ============================================================================ DISCUSSION
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Design rules from the coupled solution}
+Each rule below follows from a result of Sections~\ref{sec:evaluate}--\ref{sec:explore} and is
+invisible to the single-domain analysis that would normally make the decision.
+
+\emph{Rank integrations on the converged electrothermal state.} The loss a regulator dissipates
+depends on the temperature its integration imposes on it. At room temperature the backside
+regulator is ahead by \DeltaPrtZtwoSzero~W; on the converged field the embedded regulator is ahead
+by \LossGapZtwoSzero~W, because removing the 48-V package network saves less than the hotter
+converter costs. A placement study that holds the converter loss fixed can rank the
+integrations in the wrong order.
+
+\emph{An embedded regulator needs local input decoupling.} The package 48-V network of an
+embedded regulator carries whatever waveform the cells draw. Without local input capacitance
+the package loss rises by \RiseSoneZone~W and the critical joint leaves the calibrated range of
+the solder law; with the input pulsed at the overall ratio there is no admissible operating
+point. Directly fed backside regulators are insensitive to this choice.
+
+\emph{Order the tiers for the interconnect technology.} With build-up microvias, the high-side
+device, the flying capacitors, the low-side device and the inductors should be stacked in that
+order: the reference order needs a via of aspect ratio 5.3, the repartitioned one 0.83, with the
+same components, area and height. % TODO(data): + its electrothermal effect (z1_tier_reference)
+
+\emph{A backside regulator needs a feed specification.} The direct 48-V feed is outside the
+package and must be specified as a loop resistance below $R^*$; where the backside regulator is
+behind at zero feed resistance, no connector recovers the difference.
+% TODO(data): R* values
+
+\emph{Size the package interface for the rail it carries.} Integrating the regulator on the
+board backside removes the board opening, but sends the kiloampere 1-V current through the ball
+field: at 1.5~A per ball it occupies 1334 of the 1369 sites of a 0.8-mm array, leaving almost no
+signal balls, and only \LandBallsInside{} balls per rail lie under the cells. Redistributing
+the rest laterally in the package land side costs \LandPmin--\LandPmax~W and
+\LandDVmin--\LandDVmax~mV for \LandTmax--\LandTmin~\textmu m of copper. Keeping the 1-V
+current under the cells requires a ball pitch of \PitchMaxZthree~mm or less.
+
+\emph{Do not use peak temperature as a proxy for joint response.} % TODO(data)
+
+\subsection{Scope and limitations}
+The framework is verified stage by stage against matched references, not against a measured
+system; no fabricated DVPD package of this kind exists to measure. The converter loss model
+omits core, alternating-current winding, dielectric and dead-time losses, which bias the
+absolute loss downward by the same mechanism in every integration. The local solder response is
+a per-cycle inelastic strain increment, not a life: no damage law or allowable is applied, and
+the constitutive law is calibrated to 125\,$^\circ$C, so responses at hotter joints are flagged
+as extrapolations. The mechanics is one-way coupled, which the 0.16-\% feedback of deformation
+on resistance justifies in the intact regime. The board is a 30-mm coupon with a film beneath;
+its lateral spreading is bracketed by the board-boundary sensitivity. The Z3 ledger omits the
+board-plane and land-side 1-V redistribution and is therefore a lower bound, which the sheet
+estimate above brackets. Every result belongs to one specification; the conclusions that
+generalize are the mechanisms and rules, not the numbers.

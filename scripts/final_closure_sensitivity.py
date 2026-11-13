@@ -592,15 +592,15 @@ VARIANTS = {
                       what="BGA field populated at 420/528: the 54 + 54 48 V balls of the "
                            "BGA-fed design removed"),
     "z1_tier_reference": dict(kind="full", archs=("Z1",), apply=v_z1_tier_reference,
-                              gates=[], nature="ENGINEERING_SENSITIVITY (tier order)",
+                              gates=["geom.tier_order"], nature="ENGINEERING_SENSITIVITY (tier order)",
                               what="Z1 in the reference tier order HS-LS-Cf-L (production: "
                                    "repartitioned HS-Cf-LS-L); components, heights unchanged"),
     "board_hbot100": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_hbot(100.0),
-                          gates=[], nature="ENGINEERING_SENSITIVITY (board thermal boundary)",
+                          gates=["board.bottom_boundary"], nature="ENGINEERING_SENSITIVITY (board thermal boundary)",
                           what="effective board-bottom coefficient 100 W/m2K instead of 10 "
                                "(full server board, forced air)"),
     "board_hbot500": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_hbot(500.0),
-                          gates=[], nature="ENGINEERING_SENSITIVITY (board thermal boundary)",
+                          gates=["board.bottom_boundary"], nature="ENGINEERING_SENSITIVITY (board thermal boundary)",
                           what="effective board-bottom coefficient 500 W/m2K instead of 10 "
                                "(upper end of board spreading)"),
     "z2_cooled": dict(kind="full", archs=("Z2",), apply=v_z2_cooled,

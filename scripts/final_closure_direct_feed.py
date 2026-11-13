@@ -42,7 +42,7 @@ def converged_temps(case):
     return E.temps_from_history(case["et_history"][-1])
 
 
-def platform_point(scen, temps, r_ohm, tol_w=1e-9, max_iter=200):
+def platform_point(scen, temps, r_ohm, tol_w=1e-9, max_iter=200, arch="Z2"):
     """Self-consistent platform-inclusive Z2 state at one external loop resistance.
 
     Power balance at the platform: V I = P_load + P_int(I) + (k I)^2 R. For a given P_int
@@ -54,7 +54,7 @@ def platform_point(scen, temps, r_ohm, tol_w=1e-9, max_iter=200):
     i = (FL.P_LOAD_W + 140.0) / v
     a = k * k * r_ohm
     for _ in range(max_iter):
-        L = FL.ledger("Z2", scen, temps, i)
+        L = FL.ledger(arch, scen, temps, i)
         c = FL.P_LOAD_W + L["P_loss_w"]
         if a == 0.0:
             i_new = c / v
@@ -71,7 +71,7 @@ def platform_point(scen, temps, r_ohm, tol_w=1e-9, max_iter=200):
             i = i_new
             break
         i = i_new
-    L = FL.ledger("Z2", scen, temps, i)
+    L = FL.ledger(arch, scen, temps, i)
     p_feed = (k * i) ** 2 * r_ohm
     p_tot = L["P_loss_w"] + p_feed
     return {"R_mohm": r_ohm * 1e3, "feasible": True, "I_48_avg_a": i, "I_48_rms_a": k * i,
@@ -80,11 +80,11 @@ def platform_point(scen, temps, r_ohm, tol_w=1e-9, max_iter=200):
             "energy_residual_w": v * i - FL.P_LOAD_W - p_tot}
 
 
-def crossover(scen, temps, p_ref, lo=1e-8, hi=1.0):
+def crossover(scen, temps, p_ref, lo=1e-8, hi=1.0, arch="Z2"):
     """R* with P_Z2(R*) = P_ref, by bisection on log R (P_Z2 is monotone in R). An
     infeasible point (the feed cannot deliver the load) counts as Z2 behind."""
     def f(r):
-        p = platform_point(scen, temps, r)
+        p = platform_point(scen, temps, r, arch=arch)
         return float("inf") if not p["feasible"] else p["P_total_w"] - p_ref
     if f(lo) >= 0:
         return 0.0          # Z2 is not ahead even with a lossless feed
@@ -192,6 +192,37 @@ def main():
         s = out["scenarios"][scen]
         print(f"{scen}: P_Z1 {p_z1:.3f} W, P_Z2(0) {base['P_total_w']:.3f} W, "
               f"R* = {s['R_star_mohm']} mOhm, inadmissible Z1: {z1_inadmissible}")
+    # TCPMT revision: every directly fed backside integration against Z1, same definitions
+    # (Z2 repeats the block above; Z3 when its production cases exist)
+    out["architectures"] = {}
+    for b in ("Z2", "Z3"):
+        blk = {}
+        for scen in FL.SCENARIOS:
+            f1, fb = E.case_path("Z1", scen), E.case_path(b, scen)
+            if not (f1.exists() and fb.exists()):
+                continue
+            c1, cb = json.loads(f1.read_text()), json.loads(fb.read_text())
+            if "mechanics" not in c1:
+                continue
+            temps = converged_temps(cb)
+            p_z1 = c1["P_loss_w"]
+            base = platform_point(scen, temps, 0.0, arch=b)
+            r_star = crossover(scen, temps, p_z1, arch=b)
+            z1_inad = FR.hottest_joint_C(c1["mechanics"]) >= FR.SAC305_SOLIDUS_C
+            at = platform_point(scen, temps, r_star, arch=b) if r_star else None
+            blk[scen] = {"P_Z1_w": p_z1, f"P_{b}_internal_w": cb["P_loss_w"],
+                         "P_internal_recomputed_w": base["P_total_w"],
+                         "advantage_at_zero_feed_w": p_z1 - cb["P_loss_w"],
+                         "R_star_mohm": None if r_star is None else r_star * 1e3,
+                         "efficiency_at_R_star": None if not at else at["efficiency"],
+                         "I_48_rms_a": base["I_48_rms_a"],
+                         "P_feed_per_mohm_w": base["I_48_rms_a"] ** 2 * 1e-3,
+                         "Z1_operating_point_inadmissible": z1_inad,
+                         "sweep": [platform_point(scen, temps, r, arch=b) for r in rs]}
+            print(f"{b} {scen}: P_Z1 {p_z1:.3f} W, P_{b}(0) {base['P_total_w']:.3f} W, "
+                  f"R* = {blk[scen]['R_star_mohm']} mOhm")
+        if blk:
+            out["architectures"][b] = {"scenarios": blk}
     OUT.write_text(json.dumps(out, indent=1) + "\n")
     print("wrote", OUT)
 
