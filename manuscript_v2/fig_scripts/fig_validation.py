@@ -55,6 +55,10 @@ def fmt_t(t):
     return f"{t:.0f} s" if t < 1e3 else f"{t / 60:.0f} min"
 
 
+# a benchmark missing from the matrix (or without a numeric error) is dropped, never invented
+GROUPS = [(g, [it for it in items if it[0] in M and isinstance(M[it[0]].get("error"), (int, float))])
+          for g, items in GROUPS]
+GROUPS = [(g, items) for g, items in GROUPS if items]
 n = sum(len(g[1]) for g in GROUPS) + len(GROUPS)
 fig = plt.figure(figsize=(S.COL_W, 0.128 * n + 0.75))
 ax = fig.add_axes([0.42, 0.085, 0.36, 0.86])
