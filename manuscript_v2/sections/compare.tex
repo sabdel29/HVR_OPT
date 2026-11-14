@@ -14,18 +14,20 @@ model, the device temperature coefficients, the solder law---largely cancel in t
 \subsection{Electrical: the loss swap and its thermal price}\label{sec:compare-elec}
 Moving the regulator out of the package removes the package 48-V network, \PhvZone~W in Z1,
 and sends the kiloampere 1-V current through new conductors (Fig.~\ref{fig:loss}): the
-Cu-pillar attach and the TSV field in Z2 (\PattZtwo~W and \PtsvZtwo~W); the board-level attach,
-the board via field, the ball field and the TSVs in Z3 (\PattZthree, \PboardZthree{} and
-\PtsvZthree~W). A room-temperature analysis stops here, and it prefers Z2 over Z1 by
-\DeltaPrtZtwoSzero~W. The coupled solution reverses that preference. The converter of Z2 is
-cooled only through the attach and the substrate, so its low-side tier runs \dTlsAbsZtwoSzero~K
-hotter than in Z1 and its conversion loss rises by \dPconvAbsZtwoSzero~W, about
-\ConvToRouteZtwo{} times the \dProuteAbsZtwoSzero~W it saves in routing; Z1 has the lower
-package-internal loss by \LossGapZtwoSzero~W. Z3 makes the opposite trade. Its routing costs
-\dProuteAbsZthreeSzero~W more than that of Z1, but its converter, cooled from below, runs
-\dTlsAbsZthreeSzero~K cooler and dissipates \dPconvAbsZthreeSzero~W less. Which integration is
-electrically better is thus decided by the thermal path of the converter as much as by the rail
-its interconnect carries.
+Cu-pillar attach and the TSV field in Z2 (\PattZtwo{} and \PtsvZtwo~W); the board-level attach,
+the board via field with the ball field, and the TSVs in Z3 (\PattZthree, \PboardZthree{} and
+\PtsvZthree~W). A room-temperature analysis stops here. It prefers Z2 over Z1 by
+\DeltaPrtZtwoSzero~W and ranks Z3 last, because its routing costs \dProuteAbsZthreeSzero~W more
+than that of Z1. The coupled solution reverses both conclusions. The converter of Z2 is cooled
+only through the attach and the substrate, so its low-side tier runs \dTlsAbsZtwoSzero~K hotter
+than in Z1 and its conversion loss rises by \dPconvAbsZtwoSzero~W, about \ConvToRouteZtwo{} times
+the \dProuteAbsZtwoSzero~W it saves in routing: Z1 has the lower package-internal loss, by
+\LossGapZtwoSzero~W. The converter of Z3, cooled from below by its own plate, runs
+\dTlsAbsZthreeSzero~K cooler than in Z1 and dissipates \dPconvAbsZthreeSzero~W less, \ConvToRouteZthree{} times
+its routing penalty: Z3 has the lowest loss of the three, \LossGapZthreeSzero~W below Z1. Which
+integration is electrically better is thus decided by the thermal path of its converter as much
+as by the rail its interconnect carries, and an analysis that holds the converter loss fixed
+gets the order wrong in both directions.
 
 \begin{figure}[!t]
 \centering
@@ -43,9 +45,11 @@ signal and auxiliary rail, and only \LandBallsInside{} balls per rail lie under 
 current of the rest must spread laterally in the land side of the package to the TSV fields; a
 sheet solution of that redistribution, which the coupled ledger does not contain, adds
 \LandPmin--\LandPmax~W and \LandDVmin--\LandDVmax~mV of drop for \LandTmax--\LandTmin~\textmu m
-of land-side copper. Carrying the current straight down under the cells would instead require a
-ball pitch of \PitchMaxZthree~mm. The board-backside regulator therefore trades the board opening
-for a ball field that the package as specified cannot provide.
+of land-side copper; because that loss scales as \LandPT~W\,\textmu m divided by the copper
+thickness, the \LossGapZthreeSzero-W lead of Z3 survives only with more than \LandTie~\textmu m
+of land-side copper per rail. Carrying the current straight down under the cells would instead
+require a ball pitch of \PitchMaxZthree~mm. The board-backside regulator therefore trades the
+board opening for a ball field that the package as specified cannot provide.
 
 The input waveform changes the ranking again. Without local input decoupling (S1) the pulsed
 current reaches the package 48-V network of Z1 but not the directly fed backside regulators, and
@@ -54,15 +58,17 @@ operating point (Section~\ref{sec:evaluate}). The direct feed itself lies outsid
 boundary; its loop resistance enters through~\eqref{eq:feed} and is treated as a requirement
 (Fig.~\ref{fig:feed}). Where a backside regulator is ahead at zero feed resistance, $R^*$ is the
 largest loop resistance that keeps it ahead; where it is behind, no feed recovers the
-difference. % TODO(data): R* values for Z2/Z3 at S0/S1
+difference. Z2 is behind at S0 and needs a loop below \RstarZtwoSone~m$\Omega$ at S1, about
+\RstarOverLoopZtwo{} times the package 48-V loop of Z1 (\RloopZone~m$\Omega$); Z3 keeps its lower-bound lead up
+to \RstarZthreeSzero~m$\Omega$ at S0 and \RstarZthreeSone~m$\Omega$ at S1.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{fig6_crossover.pdf}
 \caption{Platform-inclusive loss of the directly fed backside integrations minus that of Z1,
 against the external feed-loop resistance. (a) S0. (b) S1. Below zero the backside integration
-has the lower platform-inclusive loss; circles mark the crossover $R^*$. Dashed: the package
-48-V loop resistance of Z1, for scale.}
+has the lower platform-inclusive loss; circles mark the crossover $R^*$. The Z3 curves use its
+lower-bound ledger. Dashed: the package 48-V loop resistance of Z1, for scale.}
 \label{fig:feed}
 \end{figure}
 

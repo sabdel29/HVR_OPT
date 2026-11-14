@@ -68,7 +68,7 @@ zhi = max(d["sec"][3] for d in data.values())
 gap = 0.012
 wS = (0.905 - 0.055 - (N - 1) * gap) / N
 sec_h_in = wS * S.DBL_W * ((zhi - zlo + 0.3) * VEX) / 31.2
-map_w = 0.118
+map_w = 0.112
 map_in = map_w * S.DBL_W
 H = sec_h_in + map_in + 1.25
 fig = plt.figure(figsize=(S.DBL_W, H))
@@ -76,7 +76,7 @@ y_map = 0.42 / H
 y_sec = (map_in + 0.42 + 0.78) / H
 axS = [fig.add_axes([0.055 + k * (wS + gap), y_sec, wS, sec_h_in / H]) for k in range(N)]
 caxT = fig.add_axes([0.928, y_sec + 0.1 * sec_h_in / H, 0.011, 0.8 * sec_h_in / H])
-x0D, x0J = 0.055, 0.505
+x0D, x0J = 0.055, 0.535
 axD = [fig.add_axes([x0D + k * (map_w + 0.012), y_map, map_w, map_in / H]) for k in range(N)]
 caxD = fig.add_axes([x0D + N * (map_w + 0.012) + 0.002, y_map + 0.06 * map_in / H, 0.009,
                      0.88 * map_in / H])
@@ -88,7 +88,7 @@ fig.text(x0D, y_map + map_in / H + 0.22 / H, "Die top surface relative to its lo
 fig.text(x0J, y_map + map_in / H + 0.22 / H, "Relative displacement across the ball layer",
          ha="left", va="bottom", fontsize=7, color=S.INK)
 
-tnorm = mcolors.Normalize(85, max(125, 5 * np.ceil(max(d["tmax"] for d in data.values()) / 5)))
+tnorm = mcolors.Normalize(25, max(125, 5 * np.ceil(max(d["tmax"] for d in data.values()) / 5)))
 tcmap = plt.get_cmap("YlOrRd")
 for k, a in enumerate(ARCHS):
     ax = axS[k]
@@ -107,8 +107,6 @@ for k, a in enumerate(ARCHS):
     S.panel(ax, LET[k], f"{a}, $T_\\max$ = {data[a]['tmax']:.1f} °C", y=1.02)
 cb = fig.colorbar(plt.cm.ScalarMappable(norm=tnorm, cmap=tcmap), cax=caxT)
 cb.set_label("Temperature (°C)", labelpad=2)
-cb.ax.text(0.5, -0.06, "≤85", transform=cb.ax.transAxes, ha="center", va="top", fontsize=6,
-           color=S.INK2)
 cb.outline.set_linewidth(0.4)
 
 vmax_d = max(d["die"][2].max() for d in data.values())

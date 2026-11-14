@@ -6,11 +6,12 @@ Each rule below follows from a result of Sections~\ref{sec:evaluate}--\ref{sec:e
 invisible to the single-domain analysis that would normally make the decision.
 
 \emph{Rank integrations on the converged electrothermal state.} The loss a regulator dissipates
-depends on the temperature its integration imposes on it. At room temperature the backside
-regulator is ahead by \DeltaPrtZtwoSzero~W; on the converged field the embedded regulator is ahead
-by \LossGapZtwoSzero~W, because removing the 48-V package network saves less than the hotter
-converter costs. A placement study that holds the converter loss fixed can rank the
-integrations in the wrong order.
+depends on the temperature its integration imposes on it. At room temperature the
+substrate-backside regulator is ahead of the embedded one by \DeltaPrtZtwoSzero~W and the
+board-backside regulator behind it by \DeltaPrtAbsZthreeSzero~W; on the converged field the order
+of each pair reverses, by \LossGapZtwoSzero~W and \LossGapZthreeSzero~W, because the converter's
+thermal path changes its conversion loss by more than the routing changes. A placement study
+that holds the converter loss fixed ranks the integrations in the wrong order.
 
 \emph{An embedded regulator needs local input decoupling.} The package 48-V network of an
 embedded regulator carries whatever waveform the cells draw. Without local input capacitance

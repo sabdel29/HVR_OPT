@@ -1,24 +1,23 @@
 % ============================================================================ ABSTRACT
 \begin{abstract}
-Kilowatt processors draw about a kiloampere at 1~V, and distributed vertical power delivery
-answers by placing many regulator cells directly beneath the load. Where those cells are
-integrated---between the substrate and the die, on the substrate backside, or on the board
-backside---decides which rail crosses every vertical interconnect, where the converter's heat
-must flow and which solder joints carry the deformation, yet the choice is still made one domain
-at a time on a geometry fixed in advance. This paper presents an electrothermal--mechanical
-framework that carries a regulator synthesized from a generalized hybrid switched-capacitor--buck
-family into an explicit package stack and evaluates, on one geometry and one converged field, a
-rail-aware conductor-level loss ledger, an electrothermal fixed point with a microchannel cold
-plate, a thermoelastic package solution with an all-site critical-joint search, a viscoplastic
-solder submodel and the realizability of the vertical interconnect. Every reduced model is
-verified against a matched reference, and one coupled evaluation takes about an hour on a
-workstation. Three modes of use are demonstrated on a 1-kW, 48-to-1-V, 49-cell system.
-Evaluation shows that the embedded regulator is admissible only with local input decoupling and
-a repartitioned tier order. Comparison shows that coupling reverses the electrical ranking: the
-backside regulator, ahead by \DeltaPrtZtwoSzero~W at room temperature, dissipates
-\LossGapZtwoSzero~W more on the converged field because its converter runs \dTlsZtwoSzero~K
-hotter, while the board-backside regulator consumes almost the entire ball-grid array for its
-1-V current. % TODO(data): mechanical sentence
+Kilowatt processors draw about a kiloampere at 1~V, so distributed vertical power delivery
+places many regulator cells directly beneath the load. Where the cells are integrated---between
+substrate and die, on the substrate backside or on the board backside---decides which rail
+crosses each vertical interconnect, where the converter's heat flows and which solder joints
+deform, yet the choice is made one domain at a time on a fixed geometry. This paper presents an
+electrothermal--mechanical framework that carries a regulator synthesized from a generalized
+hybrid switched-capacitor--buck family into an explicit package and evaluates, on one geometry
+and one converged field, a rail-aware loss ledger, an electrothermal fixed point with a
+microchannel cold plate, a thermoelastic solution with an all-site joint search, a viscoplastic
+solder submodel and interconnect realizability. Each reduced model is verified against a matched
+reference; one coupled evaluation takes a few hours. Three modes of use are demonstrated on
+a 1-kW, 48-to-1-V system. Evaluation shows that the embedded regulator is admissible only with
+local input decoupling and a repartitioned tier order. Comparison shows that coupling reverses
+the electrical ranking in both directions: the substrate-backside regulator, ahead by
+\DeltaPrtZtwoSzero~W at room temperature, dissipates \LossGapZtwoSzero~W more when coupled,
+whereas the board-backside regulator, behind by \DeltaPrtAbsZthreeSzero~W, leads by
+\LossGapZthreeSzero~W because its converter runs \dTlsAbsZthreeSzero~K cooler, and warps the die
+\WarpFoldZthree{} times less, but its 1-V current needs nearly the entire ball array.
 Exploration moves the regulator-count optimum to 76 cells with a different topology and
 identifies the package decisions that reverse each ranking.
 \end{abstract}

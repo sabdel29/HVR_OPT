@@ -52,15 +52,15 @@ with a physical cold plate, the thermoelastic deformation of the mounted package
 over every solder joint, the viscoplastic response of the critical joint, and the manufacturability
 of the vertical interconnect. Every reduced model is benchmarked against a commercial or
 open-source reference on the same problem, and one fully coupled evaluation of an integration
-architecture takes about an hour on a single workstation, while converter-level exploration takes
+architecture takes \EvalHours{} on a shared workstation, while one converter synthesis takes
 seconds. The framework is used in three ways, each demonstrated on a \SI{1}{kW},
 \SIrange{48}{1}{V} system: to \emph{evaluate} one design against package rules and its thermal
 solution, to \emph{compare} integration architectures on conversion, routing, thermal and
 mechanical grounds, and to \emph{explore} the design space---regulator count and converter
 architecture, and the neighboring package decisions on which every architecture ranking depends.
 The coupled answers differ from the single-domain ones: the electrothermal coupling alone
-reverses the electrical ranking of the embedded and the backside regulator, and the
-board-backside regulator, mechanically the best of the three, is limited by its ball field.
+reverses the electrical ranking of the integrations in both directions, and the board-backside
+regulator, the best of the three thermally and mechanically, is limited by its ball field.
 
 The contributions are as follows.
 \begin{enumerate}

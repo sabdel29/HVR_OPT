@@ -89,12 +89,22 @@ for a in archs:
           for n, p, c in GROUPS]
     net = tot(a, lambda t: True) - tot("Z1", lambda t: True)
     rows_all[a] = ds + [("Net vs. Z1", net, S.INK)]
-span = max(max(abs(d) for _, d, _ in r if d is not None) for r in rows_all.values())
-lo = (-1.25 * span if any(d is not None and d < 0 for r in rows_all.values() for _, d, _ in r)
-      else -0.15 * span)
-xl = (lo, 1.55 * span)
+def window(rows):
+    """Each panel on its own scale: the cumulative waterfall path and the net must fit."""
+    cum, pts = 0.0, [0.0]
+    for _, d, _ in rows[:-1]:
+        if d is not None:
+            cum += d
+            pts.append(cum)
+    pts.append(rows[-1][1] or 0.0)
+    lo, hi = min(pts), max(pts)
+    w = hi - lo
+    return (lo - 0.12 * w, hi + 0.55 * w)
+
+
 for k, (ax, a) in enumerate(zip(axes, archs)):
     rows = rows_all[a]
+    xl = window(rows)
     ax.set_xlim(*xl)
     ax.set_ylim(len(rows) - 0.4, -0.6)
     ax.axvline(0, color=S.AXIS, lw=0.6, zorder=1)
