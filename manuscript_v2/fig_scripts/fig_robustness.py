@@ -168,7 +168,7 @@ for (st, who, lab), (lx, lyy) in zip(items, pos):
             fontsize=5.6 if who else 7.5, color="white" if who else S.INK2,
             fontweight="bold" if who else "normal")
     ax.text(lx + 0.8, lyy + 0.41, lab, ha="left", va="center", fontsize=6.5, color=S.INK2)
-ax.text(xl + 0.15, ly + 2.35, "Coloured cell in the map: the ordering reverses toward that "
+ax.text(xl + 0.15, ly + 2.35, "Colored cell in the map: the ordering reverses toward that "
         "architecture;  n/m: n of m merged variants.", ha="left", va="center",
         fontsize=6.0, color=S.INK2)
 

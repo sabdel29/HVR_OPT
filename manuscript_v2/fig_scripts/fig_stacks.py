@@ -1,6 +1,6 @@
-"""Fig. 3 (proposed): the two package constructions, to scale, from the solver mesh record.
+"""Fig. 3: the three package constructions, to scale, from the solver mesh record.
 
-Right half-sections (x = 0 is the package centre line) of Z1 and Z2 on one z-scale,
+Right half-sections (x = 0 is the package center line) of Z1, Z2 and Z3 on one z-scale,
 aligned at the PCB backside, vertical exaggeration VEX. Every z-extent and the tier
 ORDER are read from architecture_geometry.json, so a re-run with a different stack
 redraws the figure. 10-um RDL tiers are drawn as lines (true thickness < line width).
@@ -58,7 +58,7 @@ def rail(ax, pts, col, lw=1.6):
 def label(ax, z_um, text, x_edge, y_text=None):
     yt = Z(z_um) if y_text is None else y_text
     ax.annotate(text, (x_edge, Z(z_um)), xytext=(HALF + 1.2, yt), textcoords="data",
-                ha="left", va="center", fontsize=6.3, color=S.INK,
+                ha="left", va="center", fontsize=6.1, color=S.INK,
                 arrowprops=dict(arrowstyle="-", color=S.MUTED, lw=0.45,
                                 shrinkA=0, shrinkB=0))
 
@@ -69,11 +69,16 @@ def draw(ax, a):
     conv = [l for l in A["layers"] if any(r in l["roles"] for r in ("hs", "ls", "caps", "ind"))]
     rdls = [l for l in A["layers"] if "rdl" in l["roles"]]
     z1 = a == "Z1"
-    # board and BGA
-    bx0 = 0.0 if z1 else CUT_HALF
+    z3 = a == "Z3"
+    # board and BGA (Z2: board and balls outside the opening only)
+    bx0 = CUT_HALF if a == "Z2" else 0.0
     ax.add_patch(Rectangle((bx0, Z(-2700)), HALF - bx0, Z(-300) - Z(-2700), fc=S.MAT["pcb"],
                            ec="none", zorder=1))
     crit = balls(ax, bx0, HALF)
+    if z3:                                   # 1 V plated through-holes under the cells
+        for xc in CELL_X:
+            for xt in np.linspace(max(0.25, xc - CELL / 2 + 0.3), xc + CELL / 2 - 0.3, 5):
+                ax.plot([xt, xt], [Z(-2700), Z(-300)], color="#c9a46a", lw=0.55, zorder=2)
     # substrate (+ TSVs under the cells)
     ax.add_patch(Rectangle((0, Z(0)), HALF, Z(300) - Z(0), fc=S.MAT["silicon"], ec="none",
                            zorder=1))
@@ -85,10 +90,17 @@ def draw(ax, a):
     for l in conv:
         role = next(r for r in ("hs", "ls", "caps", "ind") if r in l["roles"])
         cells_and_fill(ax, l["z0_um"], l["z1_um"], COLOR[role], fill_to)
-    # attach (Z2)
+    # attach (Z2: Cu pillar to the substrate; Z3: solder bumps to the board)
     if not z1:
-        at = L["conv_attach_vr_substrate"]
+        at = next(l for l in A["layers"] if "attach" in l["roles"])
         cells_and_fill(ax, at["z0_um"], at["z1_um"], S.MAT["attach"], GRID_HALF)
+    if z3:                                   # the converter's own cold plate underneath
+        zb = min(l["z0_um"] for l in conv)
+        ax.add_patch(Rectangle((0, Z(zb - 400)), GRID_HALF + 0.8, Z(zb) - Z(zb - 400),
+                               fc=S.MAT["coldplate"], ec="none", zorder=2))
+        for xc in np.arange(0.4, GRID_HALF + 0.6, 0.9):
+            ax.add_patch(Rectangle((xc, Z(zb - 310)), 0.35, Z(zb - 90) - Z(zb - 310),
+                                   fc="white", ec="none", zorder=3))
     # RDL tiers as lines across the converter footprint
     for l in rdls:
         zc = 0.5 * (l["z0_um"] + l["z1_um"])
@@ -117,6 +129,9 @@ def draw(ax, a):
         rail(ax, [(xb, -2700), (xb, -150), (xb, -40), (xc + 0.5, -40), (xc + 0.5, 150),
                   (xc + 0.5, hs["z0_um"] + 180)], S.V48)
         rail(ax, [(xc - 0.5, ind["z1_um"] - 120), (xc - 0.5, zdie + 200)], S.V1)
+    elif z3:
+        rail(ax, [(xc + 0.5, hs["z0_um"] - 500), (xc + 0.5, hs["z1_um"] - 180)], S.V48)
+        rail(ax, [(xc - 0.5, ind["z0_um"] + 150), (xc - 0.5, zdie + 200)], S.V1)
     else:
         rail(ax, [(xc + 0.5, -2700), (xc + 0.5, hs["z0_um"] + 180)], S.V48)
         rail(ax, [(xc - 0.5, ind["z0_um"] + 250), (xc - 0.5, zdie + 200)], S.V1)
@@ -131,15 +146,21 @@ def draw(ax, a):
     for l in sorted(conv, key=lambda l: -l["z0_um"]):
         role = next(r for r in ("hs", "ls", "caps", "ind") if r in l["roles"])
         labs.append((0.5 * (l["z0_um"] + l["z1_um"]), f"{NAME[role]}  {l['t_um']:.0f} µm", edge))
-    if not z1:
-        labs.append((-15, "Cu-pillar attach 30 µm", GRID_HALF))
-    labs += [(150, "Si substrate 300 µm, TSVs", HALF),
-             (-150, "BGA 300 µm", HALF), (-1500 if z1 else -2350, "PCB 2.4 mm", HALF)]
+    if a == "Z2":
+        labs.append((-15, "Cu pillar 30 µm", GRID_HALF))
+    if z3:
+        at = next(l for l in A["layers"] if "attach" in l["roles"])
+        labs.append((0.5 * (at["z0_um"] + at["z1_um"]), "solder 100 µm", GRID_HALF))
+        labs.append((min(l["z0_um"] for l in conv) - 200, "cold plate", GRID_HALF + 0.8))
+    labs += [(150, "Si + TSVs 300 µm", HALF),
+             (-150, "BGA 300 µm", HALF),
+             (-1500 if z1 else (-1500 if z3 else -2350),
+              "PCB 2.4 mm" + (" + vias" if z3 else ""), HALF)]
     # spread label rows symmetrically (min gap d), keeping them near their targets
     tg = np.array([Z(z) for z, _, _ in labs])
     order = np.argsort(tg)[::-1]
     y = tg[order].copy()
-    d = 0.62
+    d = 0.70
     for _ in range(400):
         moved = False
         for i in range(len(y) - 1):
@@ -154,29 +175,30 @@ def draw(ax, a):
     for yi, i in zip(y, order):
         z, t, xe = labs[i]
         label(ax, z, t, xe, y_text=yi)
-    ax.plot([0, 0], [Z(-2750), Z(ztop + 450)], color=S.MUTED, lw=0.5, ls=(0, (3, 2)))
-    ax.set_xlim(-0.3, HALF + 7.6)
-    ax.set_ylim(Z(-2800), Z(3200))
+    zlo = min(l["z0_um"] for l in A["layers"]) - (450 if z3 else 50)
+    ax.plot([0, 0], [Z(zlo), Z(ztop + 450)], color=S.MUTED, lw=0.5, ls=(0, (3, 2)))
+    ax.set_xlim(-0.3, HALF + 8.4)
+    ax.set_ylim(Z(ZMIN), Z(3200))
     ax.set_aspect("equal")
     ax.axis("off")
     return crit
 
 
-fig, axes = plt.subplots(1, 2, figsize=(S.DBL_W, 2.75),
+ARCHS = [a for a in ("Z1", "Z2", "Z3") if a in G]
+ZMIN = min(min(l["z0_um"] for l in G[a]["layers"]) for a in ARCHS) - 480
+fig, axes = plt.subplots(1, len(ARCHS), figsize=(S.DBL_W, 2.62),
                          gridspec_kw={"wspace": 0.02, "left": 0.01, "right": 0.995,
-                                      "bottom": 0.02, "top": 0.90})
-for k, a in enumerate(("Z1", "Z2")):
+                                      "bottom": 0.01, "top": 0.93})
+TITLE = {"Z1": "Z1 embedded: 48 V crosses the substrate",
+         "Z2": "Z2 package backside: 1 V crosses the substrate",
+         "Z3": "Z3 board backside: 1 V crosses board and substrate"}
+for k, a in enumerate(ARCHS):
     draw(axes[k], a)
-    t = ("Z1 embedded: 48 V crosses the substrate" if a == "Z1" else
-         "Z2 backside, in the PCB opening: 1 V crosses the substrate")
-    S.panel(axes[k], "ab"[k], t, x=0.0, y=1.0)
+    S.panel(axes[k], "abc"[k], TITLE[a], x=0.0, y=1.0)
 # z scale bar (true thickness) and legend
 ax = axes[0]
-ax.plot([-0.2, -0.2], [Z(-2700), Z(-1700)], color=S.INK, lw=0.8)
-ax.text(0.15, Z(-2200), "1 mm", ha="left", va="center", fontsize=6, color=S.INK,
+ax.plot([-0.2, -0.2], [Z(-4700), Z(-3700)], color=S.INK, lw=0.8)
+ax.text(0.15, Z(-4200), "1 mm", ha="left", va="center", fontsize=6, color=S.INK,
         rotation=90)
-fig.text(0.50, 0.005, "Half sections, $x \\geq 0$, to scale in $z$ (vertical ×%g); "
-         "10-µm RDL tiers drawn as lines. Red: 48-V input path; violet: 1-V output path; "
-         "ringed ball: critical joint." % VEX, ha="center", va="bottom", fontsize=6.4,
-         color=S.INK2)
+# (the caption carries the drawing conventions; nothing is printed under the panels)
 S.save(fig, "fig3_sections")

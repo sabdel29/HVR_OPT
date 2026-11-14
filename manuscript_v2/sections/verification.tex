@@ -6,15 +6,17 @@ together with a reference on the same problem and the same machine (Fig.~\ref{fi
 direct-current conduction stages are checked against a commercial thermal finite-element solver
 through the exact analogy between $\nabla\!\cdot(k\nabla T) = 0$ and
 $\nabla\!\cdot(\sigma\nabla V) = 0$. The single-TSV resistance and the TSV-field and attach
-homogenizations agree within 1.4\,\%; the series rule for the through-thickness conductivity of
-an RDL tier overstates it by 12.5\,\% because it ignores constriction onto the copper grid, so
-the reference tensor replaces it in every thermal result. The voltage-fed package network agrees
-with an open-source finite-element solution~\cite{MOOSE} to 0.1\,\%. The package thermal solver
+homogenizations agree within \ErrHomogMax\,\%; the series rule for the through-thickness conductivity of
+an RDL tier overstates it by \ErrRdlKz\,\% because it ignores constriction onto the copper grid, so
+the reference tensor replaces it in every thermal result; the board via field and the solder
+attach of Z3 use the same mixing rules as the verified TSV-field and Cu-pillar cards. The
+voltage-fed package network agrees
+with an open-source finite-element solution~\cite{MOOSE} to \ErrPkgRdlZone\,\%. The package thermal solver
 agrees with commercial and open-source finite-element solutions of representative unit cells of
-the stacks to 0.2\,\% of the temperature rise, and the thermoelastic element reproduces the
-bimaterial closed form to 0.4\,\% and a commercial structural solution to 0.01\,\%. A conjugate
+the stacks to \ErrThermMax\,\% of the temperature rise, and the thermoelastic element reproduces the
+bimaterial closed form to \ErrMechClosed\,\% and a commercial structural solution to \ErrMechAedt\,\%. A conjugate
 computational-fluid-dynamics solution of one microchannel half-pitch at the production heat load
-shows the cold-plate correlation to be 16.5\,\% conservative in mean base temperature rise; the
+shows the cold-plate correlation to be \ErrCoolingIcepak\,\% conservative in mean base temperature rise; the
 correlation is kept, and the coefficient equivalent to the conjugate solution is run as a
 sensitivity.
 

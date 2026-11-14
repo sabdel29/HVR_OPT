@@ -1,0 +1,1192 @@
+{
+ "generated_by": "scripts/final_closure_architecture_spec.py",
+ "rule": "every z extent measured on the solver mesh; nothing typed in",
+ "architectures": {
+  "Z1": {
+   "arch": "Z1",
+   "label": "Z1 -- converter embedded between substrate and die",
+   "variant": "Z1_EMBEDDED",
+   "hv_feed": "BGA_FED",
+   "bga_48v_power_field": {
+    "supply": 54,
+    "return": 54,
+    "source": "package_network.json matched count"
+   },
+   "out_of_cell": null,
+   "attach": null,
+   "layers": [
+    {
+     "name": "board",
+     "z0_um": -2700.0,
+     "z1_um": -300.0,
+     "t_um": 2400.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2450,
+     "materials": {
+      "board_fr4": 2450
+     },
+     "roles": [],
+     "role_text": null
+    },
+    {
+     "name": "bga",
+     "z0_um": -300.0,
+     "z1_um": 0.0,
+     "t_um": 300.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2450,
+     "materials": {
+      "bga_homog": 2450
+     },
+     "roles": [
+      "bga",
+      "pkg_hv"
+     ],
+     "role_text": "BGA ball field (48 V supply + return, plus signals and mechanical support)"
+    },
+    {
+     "name": "sub_lower",
+     "z0_um": 0.0,
+     "z1_um": 280.0,
+     "t_um": 280.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 3675,
+     "materials": {
+      "silicon": 2352,
+      "tsv_tile": 1323
+     },
+     "roles": [
+      "tsv"
+     ],
+     "role_text": "through-silicon via field"
+    },
+    {
+     "name": "tile_band",
+     "z0_um": 280.0,
+     "z1_um": 300.0,
+     "t_um": 20.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 4900,
+     "materials": {
+      "silicon": 3136,
+      "tsv_tile": 1764
+     },
+     "roles": [],
+     "role_text": null
+    },
+    {
+     "name": "z1conv_0_bottom_substrate_rdl",
+     "z0_um": 300.0,
+     "z1_um": 310.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1225,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 784
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "z1conv_1_gan_hs_EPC2014C",
+     "z0_um": 310.0,
+     "z1_um": 995.0,
+     "t_um": 685.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2450,
+     "materials": {
+      "silicon": 882,
+      "underfill_homog": 1568
+     },
+     "roles": [
+      "hs"
+     ],
+     "role_text": "high-side GaN device tier"
+    },
+    {
+     "name": "z1conv_2_interlayer_rdl",
+     "z0_um": 995.0,
+     "z1_um": 1005.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1225,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 784
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "z1conv_3_flying_caps",
+     "z0_um": 1005.0,
+     "z1_um": 1105.0,
+     "t_um": 100.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2450,
+     "materials": {
+      "hvr_effective": 882,
+      "underfill_homog": 1568
+     },
+     "roles": [
+      "caps"
+     ],
+     "role_text": "flying-capacitor tier"
+    },
+    {
+     "name": "z1conv_4_interlayer_rdl",
+     "z0_um": 1105.0,
+     "z1_um": 1115.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1225,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 784
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "z1conv_5_gan_ls_EPC2057",
+     "z0_um": 1115.0,
+     "z1_um": 1753.0,
+     "t_um": 638.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2450,
+     "materials": {
+      "silicon": 882,
+      "underfill_homog": 1568
+     },
+     "roles": [
+      "ls"
+     ],
+     "role_text": "low-side GaN device tier"
+    },
+    {
+     "name": "z1conv_6_interlayer_rdl",
+     "z0_um": 1753.0,
+     "z1_um": 1763.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1225,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 784
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "z1conv_7_inductor_plus_cout",
+     "z0_um": 1763.0,
+     "z1_um": 2263.0,
+     "t_um": 500.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2450,
+     "materials": {
+      "hvr_effective": 882,
+      "underfill_homog": 1568
+     },
+     "roles": [
+      "ind"
+     ],
+     "role_text": "inductor + output-capacitor tier"
+    },
+    {
+     "name": "z1conv_8_output_rdl",
+     "z0_um": 2263.0,
+     "z1_um": 2273.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1225,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 784
+     },
+     "roles": [
+      "rdl",
+      "lv"
+     ],
+     "role_text": "converter RDL tier (10 um); 1 V output RDL"
+    },
+    {
+     "name": "interface",
+     "z0_um": 2273.0,
+     "z1_um": 2283.0,
+     "t_um": 10.0,
+     "footprint": "die",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 841,
+     "materials": {
+      "microbump": 841
+     },
+     "roles": [
+      "pads"
+     ],
+     "role_text": "die-to-package interface (Cu pads)"
+    },
+    {
+     "name": "die",
+     "z0_um": 2283.0,
+     "z1_um": 2583.0,
+     "t_um": 300.0,
+     "footprint": "die",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 3364,
+     "materials": {
+      "silicon": 3364
+     },
+     "roles": [
+      "die"
+     ],
+     "role_text": "compute die"
+    },
+    {
+     "name": "tim",
+     "z0_um": 2583.0,
+     "z1_um": 2633.0,
+     "t_um": 50.0,
+     "footprint": "die",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2523,
+     "materials": {
+      "tim": 2523
+     },
+     "roles": [],
+     "role_text": null
+    }
+   ],
+   "z_min_um": -2700.0,
+   "z_max_um": 2633.0,
+   "substrate_mm": [
+    30.0,
+    30.0
+   ],
+   "die_mm": [
+    22.36,
+    22.36
+   ],
+   "board_extent_mm": [
+    -15.0,
+    15.0
+   ],
+   "board_case": "it968g_2p4mm",
+   "cutout_mm": null,
+   "cells": {
+    "n": 49,
+    "grid": 7,
+    "side_mm": 2.368543856465402,
+    "centres_x_mm": [
+     -9.495728,
+     -6.330485,
+     -3.165243,
+     0.0,
+     3.165243,
+     6.330485,
+     9.495728
+    ]
+   },
+   "bga": {
+    "pitch_mm": 0.8,
+    "sites_legal": 1369,
+    "height_um": 300.0
+   },
+   "tsv": {
+    "n_per_cell": 1444,
+    "d_um": 30.0,
+    "pitch_um": 60.0,
+    "rail_carried": "48 V input (low current)"
+   },
+   "rails": {
+    "input": "48 V enters through the PCB and the 48 V BGA power field",
+    "output": "1 V delivered to the compute die",
+    "return": "ground return through the same BGA field"
+   },
+   "mesh": {
+    "builder": "final_closure_physical_etm.build",
+    "h_xy_mm": 1.1,
+    "n_elems_base": 36128
+   }
+  },
+  "Z2": {
+   "arch": "Z2",
+   "label": "Z2 -- direct-fed converter on the substrate backside, inside the PCB opening",
+   "variant": "Z2_DIRECT_FEED",
+   "hv_feed": "DIRECT_FEED",
+   "bga_48v_power_field": null,
+   "out_of_cell": {
+    "fill": "underfill_homog",
+    "extent_x_mm": [
+     -10.68,
+     10.68
+    ],
+    "clearance_mm": 1.0,
+    "ring": "VOID"
+   },
+   "attach": {
+    "layer": "conv_attach_vr_substrate",
+    "technology": "Cu pillar + SnAg solder cap + underfill",
+    "carries": "1 V VDD and GND only",
+    "pattern": "VDD/GND checkerboard over each cell footprint",
+    "h_total_um": 30.0,
+    "h_cu_um": 14.0,
+    "h_cap_um": 16.0,
+    "d_um": 15.0,
+    "pitch_um": 30.0,
+    "cell_side_mm": 2.3685438564654024,
+    "bumps_per_rail_per_cell": 3042,
+    "area_fraction": 0.19634954084936207,
+    "underfill_material": "underfill_homog",
+    "k_underfill_W_mK": 0.6,
+    "mechanical_convention": "underfill-dominated card (as the interface microbump layer); column-stiffened Voigt card is a class-B bound",
+    "thermal_method": "Voigt through thickness (Cu + solder columns in series), Maxwell-Garnett in plane (Phase 0M-R validated, <~0.6 % vs RVE)",
+    "bounds": {
+     "h_total_um": [
+      20.0,
+      40.0
+     ],
+     "d_pitch_um": [
+      [
+       15.0,
+       30.0
+      ],
+      [
+       30.0,
+       80.0
+      ]
+     ],
+     "material": [
+      "Cu pillar + solder cap",
+      "all-solder (pure Sn) microbump"
+     ]
+    },
+    "sources": [
+     {
+      "ref": "Au et al., ECTC 2016, 10.1109/ECTC.2016.127",
+      "class": "CLOSE_ANALOG",
+      "quote": "30\u03bcm pitch micro Cu pillar bump (15\u03bcm diameter) ... sufficient solder cap volume (16mm height)"
+     },
+     {
+      "ref": "Na et al., Electronics 12(1):144, 2022, 10.3390/electronics12010144",
+      "class": "CLOSE_ANALOG",
+      "quote": "bumps with a diameter of 30 \u00b5m, a height of 40 \u00b5m, and a space of 50 \u00b5m"
+     },
+     {
+      "ref": "framework allowance, research/PCB_THICKNESS_Z2_AUDIT.md",
+      "class": "BOUNDED",
+      "quote": "cell-to-substrate attach solder + underfill | 30"
+     }
+    ],
+    "measured_layer": true
+   },
+   "layers": [
+    {
+     "name": "board",
+     "z0_um": -2700.0,
+     "z1_um": -300.0,
+     "t_um": 2400.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "outside_opening_footprint",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 4896,
+     "materials": {
+      "board_fr4": 4896
+     },
+     "roles": [],
+     "role_text": null
+    },
+    {
+     "name": "conv_7_gan_hs_EPC2014C",
+     "z0_um": -1993.0,
+     "z1_um": -1308.0,
+     "t_um": 685.0,
+     "footprint": "substrate",
+     "region": "inside_cutout",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 2187,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "silicon": 1323,
+      "underfill_homog": 864
+     },
+     "roles": [
+      "hs"
+     ],
+     "role_text": "high-side GaN device tier"
+    },
+    {
+     "name": "conv_6_interlayer_rdl",
+     "z0_um": -1308.0,
+     "z1_um": -1298.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "inside_cutout",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 729,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 288
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "conv_5_flying_caps",
+     "z0_um": -1298.0,
+     "z1_um": -1198.0,
+     "t_um": 100.0,
+     "footprint": "substrate",
+     "region": "inside_cutout",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 1458,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "hvr_effective": 882,
+      "underfill_homog": 576
+     },
+     "roles": [
+      "caps"
+     ],
+     "role_text": "flying-capacitor tier"
+    },
+    {
+     "name": "conv_4_interlayer_rdl",
+     "z0_um": -1198.0,
+     "z1_um": -1188.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "inside_cutout",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 729,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 288
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "conv_3_gan_ls_EPC2057",
+     "z0_um": -1188.0,
+     "z1_um": -550.0,
+     "t_um": 638.0,
+     "footprint": "substrate",
+     "region": "inside_cutout",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 1458,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "silicon": 882,
+      "underfill_homog": 576
+     },
+     "roles": [
+      "ls"
+     ],
+     "role_text": "low-side GaN device tier"
+    },
+    {
+     "name": "conv_2_interlayer_rdl",
+     "z0_um": -550.0,
+     "z1_um": -540.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "inside_cutout",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 729,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 288
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "conv_1_inductor_plus_cout",
+     "z0_um": -540.0,
+     "z1_um": -40.0,
+     "t_um": 500.0,
+     "footprint": "substrate",
+     "region": "inside_cutout",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 2916,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "hvr_effective": 1764,
+      "underfill_homog": 1152
+     },
+     "roles": [
+      "ind"
+     ],
+     "role_text": "inductor + output-capacitor tier"
+    },
+    {
+     "name": "bga",
+     "z0_um": -300.0,
+     "z1_um": 0.0,
+     "t_um": 300.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "outside_opening_footprint",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2040,
+     "materials": {
+      "bga_homog": 2040
+     },
+     "roles": [
+      "bga",
+      "pkg_hv"
+     ],
+     "role_text": "BGA ball field (signals, auxiliary rails, mechanical support -- NOT the 48 V HVR feed)"
+    },
+    {
+     "name": "conv_0_land_side_attach_rdl",
+     "z0_um": -40.0,
+     "z1_um": -30.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "inside_cutout",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 729,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 288
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "conv_attach_vr_substrate",
+     "z0_um": -30.0,
+     "z1_um": 0.0,
+     "t_um": 30.0,
+     "footprint": "substrate",
+     "region": "inside_cutout",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 729,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "underfill_homog": 288,
+      "vr_attach": 441
+     },
+     "roles": [
+      "attach"
+     ],
+     "role_text": "VR-to-substrate attach (Cu pillar + solder cap + underfill, 1 V only)"
+    },
+    {
+     "name": "sub_lower",
+     "z0_um": 0.0,
+     "z1_um": 280.0,
+     "t_um": 280.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "both",
+     "n_elems_inside_cutout": 2883,
+     "n_elems_outside_cutout": 1224,
+     "materials": {
+      "silicon": 2784,
+      "tsv_tile": 1323
+     },
+     "roles": [
+      "tsv"
+     ],
+     "role_text": "through-silicon via field"
+    },
+    {
+     "name": "tile_band",
+     "z0_um": 280.0,
+     "z1_um": 300.0,
+     "t_um": 20.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "both",
+     "n_elems_inside_cutout": 3844,
+     "n_elems_outside_cutout": 1632,
+     "materials": {
+      "silicon": 3712,
+      "tsv_tile": 1764
+     },
+     "roles": [],
+     "role_text": null
+    },
+    {
+     "name": "z2_top_rdl",
+     "z0_um": 300.0,
+     "z1_um": 310.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "both",
+     "n_elems_inside_cutout": 961,
+     "n_elems_outside_cutout": 408,
+     "materials": {
+      "rdl_tier": 1369
+     },
+     "roles": [
+      "lv"
+     ],
+     "role_text": "1 V output RDL"
+    },
+    {
+     "name": "interface",
+     "z0_um": 310.0,
+     "z1_um": 320.0,
+     "t_um": 10.0,
+     "footprint": "die",
+     "region": "all",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 841,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "microbump": 841
+     },
+     "roles": [
+      "pads"
+     ],
+     "role_text": "die-to-package interface (Cu pads)"
+    },
+    {
+     "name": "die",
+     "z0_um": 320.0,
+     "z1_um": 620.0,
+     "t_um": 300.0,
+     "footprint": "die",
+     "region": "all",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 3364,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "silicon": 3364
+     },
+     "roles": [
+      "die"
+     ],
+     "role_text": "compute die"
+    },
+    {
+     "name": "tim",
+     "z0_um": 620.0,
+     "z1_um": 670.0,
+     "t_um": 50.0,
+     "footprint": "die",
+     "region": "all",
+     "plan_extent": "within_opening_footprint",
+     "n_elems_inside_cutout": 2523,
+     "n_elems_outside_cutout": 0,
+     "materials": {
+      "tim": 2523
+     },
+     "roles": [],
+     "role_text": null
+    }
+   ],
+   "z_min_um": -2700.0,
+   "z_max_um": 670.0,
+   "substrate_mm": [
+    30.0,
+    30.0
+   ],
+   "die_mm": [
+    22.36,
+    22.36
+   ],
+   "board_extent_mm": [
+    -15.0,
+    15.0
+   ],
+   "board_case": "it968g_2p4mm",
+   "cutout_mm": 23.36,
+   "cells": {
+    "n": 49,
+    "grid": 7,
+    "side_mm": 2.368543856465402,
+    "centres_x_mm": [
+     -9.495728,
+     -6.330485,
+     -3.165243,
+     0.0,
+     3.165243,
+     6.330485,
+     9.495728
+    ]
+   },
+   "bga": {
+    "pitch_mm": 0.8,
+    "sites_legal": 528,
+    "height_um": 300.0
+   },
+   "tsv": {
+    "n_per_cell": 1444,
+    "d_um": 30.0,
+    "pitch_um": 60.0,
+    "rail_carried": "1 V output (about 1 kA total)"
+   },
+   "rails": {
+    "input": "48 V enters the backside HVR directly through a dedicated external connection on the cutout side (no package 48 V path)",
+    "output": "1 V through the VR attach and the substrate TSVs to the die",
+    "return": "ground through the substrate GND TSVs and the VR attach to the HVR, then the direct-feed return"
+   },
+   "mesh": {
+    "builder": "final_closure_physical_etm.build",
+    "h_xy_mm": 1.1,
+    "n_elems_base": 36280
+   }
+  },
+  "Z3": {
+   "arch": "Z3",
+   "label": "Z3 -- direct-fed converter on the board underside, beneath an uncut board, with its own cold plate",
+   "variant": "Z3_BOARD_BACKSIDE",
+   "hv_feed": "DIRECT_FEED",
+   "bga_48v_power_field": null,
+   "out_of_cell": {
+    "fill": "underfill_homog",
+    "extent_x_mm": [
+     -10.68,
+     10.68
+    ],
+    "clearance_mm": 1.0,
+    "ring": "VOID"
+   },
+   "attach": {
+    "technology": "SAC305 bumps + underfill (board-level attach)",
+    "measured_layer": true
+   },
+   "layers": [
+    {
+     "name": "z3conv_7_gan_hs_EPC2014C",
+     "z0_um": -4763.0,
+     "z1_um": -4078.0,
+     "t_um": 685.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1458,
+     "materials": {
+      "silicon": 882,
+      "underfill_homog": 576
+     },
+     "roles": [
+      "hs"
+     ],
+     "role_text": "high-side GaN device tier"
+    },
+    {
+     "name": "z3conv_6_interlayer_rdl",
+     "z0_um": -4078.0,
+     "z1_um": -4068.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 729,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 288
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "z3conv_5_flying_caps",
+     "z0_um": -4068.0,
+     "z1_um": -3968.0,
+     "t_um": 100.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1458,
+     "materials": {
+      "hvr_effective": 882,
+      "underfill_homog": 576
+     },
+     "roles": [
+      "caps"
+     ],
+     "role_text": "flying-capacitor tier"
+    },
+    {
+     "name": "z3conv_4_interlayer_rdl",
+     "z0_um": -3968.0,
+     "z1_um": -3958.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 729,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 288
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "z3conv_3_gan_ls_EPC2057",
+     "z0_um": -3958.0,
+     "z1_um": -3320.0,
+     "t_um": 638.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1458,
+     "materials": {
+      "silicon": 882,
+      "underfill_homog": 576
+     },
+     "roles": [
+      "ls"
+     ],
+     "role_text": "low-side GaN device tier"
+    },
+    {
+     "name": "z3conv_2_interlayer_rdl",
+     "z0_um": -3320.0,
+     "z1_um": -3310.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 729,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 288
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "z3conv_1_inductor_plus_cout",
+     "z0_um": -3310.0,
+     "z1_um": -2810.0,
+     "t_um": 500.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1458,
+     "materials": {
+      "hvr_effective": 882,
+      "underfill_homog": 576
+     },
+     "roles": [
+      "ind"
+     ],
+     "role_text": "inductor + output-capacitor tier"
+    },
+    {
+     "name": "z3conv_0_land_side_attach_rdl",
+     "z0_um": -2810.0,
+     "z1_um": -2800.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 729,
+     "materials": {
+      "rdl_tier": 441,
+      "underfill_homog": 288
+     },
+     "roles": [
+      "rdl"
+     ],
+     "role_text": "converter RDL tier (10 um)"
+    },
+    {
+     "name": "z3_attach_vr_pcb",
+     "z0_um": -2800.0,
+     "z1_um": -2700.0,
+     "t_um": 100.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1458,
+     "materials": {
+      "underfill_homog": 576,
+      "vr_attach_pcb": 882
+     },
+     "roles": [
+      "attach"
+     ],
+     "role_text": "VR-to-substrate attach (Cu pillar + solder cap + underfill, 1 V only)"
+    },
+    {
+     "name": "board",
+     "z0_um": -2700.0,
+     "z1_um": -300.0,
+     "t_um": 2400.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2450,
+     "materials": {
+      "board_fr4": 1568,
+      "pcb_via_field": 882
+     },
+     "roles": [
+      "pcb_via"
+     ],
+     "role_text": "board 1 V via field under the cells (plated through-holes)"
+    },
+    {
+     "name": "bga",
+     "z0_um": -300.0,
+     "z1_um": -0.0,
+     "t_um": 300.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2450,
+     "materials": {
+      "bga_homog": 2450
+     },
+     "roles": [
+      "bga"
+     ],
+     "role_text": "BGA ball field (the 1 V output, about 1 kA per rail on 1334 of 1369 sites, plus mechanical support)"
+    },
+    {
+     "name": "sub_lower",
+     "z0_um": 0.0,
+     "z1_um": 280.0,
+     "t_um": 280.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 3675,
+     "materials": {
+      "silicon": 2352,
+      "tsv_tile": 1323
+     },
+     "roles": [
+      "tsv"
+     ],
+     "role_text": "through-silicon via field"
+    },
+    {
+     "name": "tile_band",
+     "z0_um": 280.0,
+     "z1_um": 300.0,
+     "t_um": 20.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 4900,
+     "materials": {
+      "silicon": 3136,
+      "tsv_tile": 1764
+     },
+     "roles": [],
+     "role_text": null
+    },
+    {
+     "name": "z2_top_rdl",
+     "z0_um": 300.0,
+     "z1_um": 310.0,
+     "t_um": 10.0,
+     "footprint": "substrate",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 1225,
+     "materials": {
+      "rdl_tier": 1225
+     },
+     "roles": [
+      "lv"
+     ],
+     "role_text": "1 V output RDL"
+    },
+    {
+     "name": "interface",
+     "z0_um": 310.0,
+     "z1_um": 320.0,
+     "t_um": 10.0,
+     "footprint": "die",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 841,
+     "materials": {
+      "microbump": 841
+     },
+     "roles": [
+      "pads"
+     ],
+     "role_text": "die-to-package interface (Cu pads)"
+    },
+    {
+     "name": "die",
+     "z0_um": 320.0,
+     "z1_um": 620.0,
+     "t_um": 300.0,
+     "footprint": "die",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 3364,
+     "materials": {
+      "silicon": 3364
+     },
+     "roles": [
+      "die"
+     ],
+     "role_text": "compute die"
+    },
+    {
+     "name": "tim",
+     "z0_um": 620.0,
+     "z1_um": 670.0,
+     "t_um": 50.0,
+     "footprint": "die",
+     "region": "all",
+     "plan_extent": "no_opening",
+     "n_elems_inside_cutout": 0,
+     "n_elems_outside_cutout": 2523,
+     "materials": {
+      "tim": 2523
+     },
+     "roles": [],
+     "role_text": null
+    }
+   ],
+   "z_min_um": -4763.0,
+   "z_max_um": 670.0,
+   "substrate_mm": [
+    30.0,
+    30.0
+   ],
+   "die_mm": [
+    22.36,
+    22.36
+   ],
+   "board_extent_mm": [
+    -15.0,
+    15.0
+   ],
+   "board_case": "it968g_2p4mm",
+   "cutout_mm": null,
+   "cells": {
+    "n": 49,
+    "grid": 7,
+    "side_mm": 2.368543856465402,
+    "centres_x_mm": [
+     -9.495728,
+     -6.330485,
+     -3.165243,
+     0.0,
+     3.165243,
+     6.330485,
+     9.495728
+    ]
+   },
+   "bga": {
+    "pitch_mm": 0.8,
+    "sites_legal": 1369,
+    "height_um": 300.0
+   },
+   "tsv": {
+    "n_per_cell": 1444,
+    "d_um": 30.0,
+    "pitch_um": 60.0,
+    "rail_carried": "1 V output (about 1 kA total)"
+   },
+   "rails": {
+    "input": "48 V enters the board-backside HVR directly (no package or BGA 48 V path)",
+    "output": "1 V through the board-level attach, the board via field, the BGA and the substrate TSVs to the die",
+    "return": "ground along the same path in reverse"
+   },
+   "mesh": {
+    "builder": "final_closure_physical_etm.build",
+    "h_xy_mm": 1.1,
+    "n_elems_base": 31634
+   }
+  }
+ },
+ "sha256": "9b49f14872e81247ec65ffa28f1b3f35c7a4de8417960a3fc377cfab579155a2"
+}

@@ -58,9 +58,11 @@ output paths the full 20.4~A. A vertical field of vias of radius $r$, liner $t_\
 $h$ carrying current $I$ is provisioned at a design current density $J_{\mathrm{d}}$ and resolved
 by its allocated count,
 \begin{equation}
-n_{\mathrm{req}} = \left\lceil \frac{I}{J_{\mathrm{d}}\pi(r-t_\ell)^2}\right\rceil \le
-n_{\mathrm{alloc}} \le n_{\mathrm{avail}},\qquad
-R = \frac{\rho(T)\,h}{\pi(r-t_\ell)^2\,n_{\mathrm{alloc}}},
+\begin{aligned}
+n_{\mathrm{req}} &= \left\lceil \frac{I}{J_{\mathrm{d}}\pi(r-t_\ell)^2}\right\rceil \le
+n_{\mathrm{alloc}} \le n_{\mathrm{avail}},\\
+R &= \frac{\rho(T)\,h}{\pi(r-t_\ell)^2\,n_{\mathrm{alloc}}},
+\end{aligned}
 \label{eq:via}
 \end{equation}
 and lateral runs are sheets whose required width must fit the available width or the design is
@@ -73,6 +75,9 @@ mirror-symmetric count meeting a 1.5-A-per-ball provisioning rule (54 per rail).
 attach of Z2 and the solder attach of Z3 are resolved on the real lattice inside each cell as
 series columns with two-sided constriction; the board via field of Z3 is a plated-through-hole
 array under each cell, and its BGA carries the 1-V output on the balls the same rule provisions.
+The lateral redistribution of that current in the board planes and in the package land side is
+not part of the Z3 ledger, which is therefore a lower bound (bounded in
+Section~\ref{sec:compare}).
 
 \subsection{Interconnect realizability}\label{sec:realizability}
 Whether two components in different tiers can be connected is decided by the conductor-plane
@@ -117,9 +122,11 @@ h_{\mathrm{eff}} = \eta_{\mathrm{f}}\,\Lambda\,\mathrm{Nu}\,k_{\mathrm{f}}/D_{\m
 \end{equation}
 the Shah--London Nusselt number~\cite{ShahLondon1978}, area amplification $\Lambda$ and fin
 efficiency $\eta_{\mathrm{f}}$, and a coolant energy balance iterated with the solid solution;
-operating points in the transitional band are refused rather than interpolated. The board is a
-$30\times30$~mm coupon with natural convection beneath; its lateral spreading is treated as a
-sensitivity (Section~\ref{sec:explore}).
+operating points in the transitional band are refused rather than interpolated. In Z3 a second
+plate of the same kind---the top plate's coefficient at the dissipated power, fluid at the inlet
+temperature---cools the converter underside. The board is a $30\times30$~mm coupon with natural
+convection beneath; its lateral spreading is treated as a sensitivity
+(Section~\ref{sec:explore}).
 
 The temperature-dependent terms---device on-resistance, inductor winding and the resistivity of
 every conductor---are iterated with the thermal solution to a fixed point. Each term is
@@ -160,7 +167,8 @@ as one element, keeps the averaging volume identical at every mesh level, which 
 the response mesh-convergent. $\deps$ is a response: no damage law, life relation or allowable
 is applied.
 
-Mechanical feedback to the electrical model is quantified rather than assumed: deformation
-changes the field resistance by 0.16\,\%, against 22.8\,\% from the temperature dependence
-already inside the fixed point, so the mechanics is evaluated one way on the converged field in
-the intact regime.
+Mechanical feedback to the electrical model is bounded rather than assumed: the thermal strain
+of a copper conductor, $\alpha_{\mathrm{Cu}}\Delta T\approx 0.15$\,\% at the converged
+temperatures, changes its resistance two orders of magnitude less than the 20--35\,\% change of
+resistivity already inside the fixed point, so the mechanics is evaluated one way on the
+converged field in the intact regime.

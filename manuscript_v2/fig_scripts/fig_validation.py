@@ -35,7 +35,7 @@ GROUPS = [
                        ("mech_bilayer_aedt", "Bilayer vs AEDT", "C"),
                        ("structural_solver_iterative_vs_direct", "Iterative vs direct solver", "S")]),
     ("Cooling boundary", [("cooling_icepak", "Cold-plate correlation vs CFD", "C")]),
-    ("Discretisation", [("mesh_convergence_Z1", "Global mesh, Z1", "S"),
+    ("Discretization", [("mesh_convergence_Z1", "Global mesh, Z1", "S"),
                         ("mesh_convergence_Z2", "Global mesh, Z2", "S")]),
 ]
 MK = {"C": dict(marker="o", mfc=S.INK, mec=S.INK),          # commercial FEM / CFD

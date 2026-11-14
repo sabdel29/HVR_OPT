@@ -30,11 +30,14 @@ ROLE_TEXT = {"hs": "high-side GaN device tier", "ls": "low-side GaN device tier"
              "rdl": "converter RDL tier (10 um)", "lv": "1 V output RDL",
              "tsv": "through-silicon via field", "pads": "die-to-package interface (Cu pads)",
              "bga": "BGA ball field (48 V supply + return)", "die": "compute die",
-             "attach": "VR-to-substrate attach (Cu pillar + solder cap + underfill, 1 V only)"}
+             "attach": "VR-to-substrate attach (Cu pillar + solder cap + underfill, 1 V only)",
+             "pcb_via": "board 1 V via field under the cells (plated through-holes)"}
 #: the BGA's ELECTRICAL role differs by architecture; its mechanical role does not
 BGA_ROLE = {"Z1": "BGA ball field (48 V supply + return, plus signals and mechanical support)",
             "Z2": "BGA ball field (signals, auxiliary rails, mechanical support -- NOT the 48 V "
-                  "HVR feed)"}
+                  "HVR feed)",
+            "Z3": "BGA ball field (the 1 V output, about 1 kA per rail on 1334 of 1369 sites, "
+                  "plus mechanical support)"}
 
 
 def _layers(m, materials, cut=None):
@@ -94,7 +97,7 @@ def spec_for(arch):
     # the out-of-cell fill extent, MEASURED: the converter-tier elements' x range
     cen = m.elem_centroids()
     lay_a = np.array(m.elem_layer, dtype=object)
-    conv = np.array([str(x).startswith("conv") for x in lay_a])
+    conv = np.array([str(x).startswith(("conv", "z3conv")) for x in lay_a])
     fill_extent = ([float(m.xs[np.searchsorted(m.xs, cen[conv, 0].min()) - 1]),
                     float(m.xs[np.searchsorted(m.xs, cen[conv, 0].max())])]
                    if conv.any() else None)
@@ -107,16 +110,23 @@ def spec_for(arch):
         "arch": arch,
         "label": {"Z1": "Z1 -- converter embedded between substrate and die",
                   "Z2": "Z2 -- direct-fed converter on the substrate backside, inside the "
-                        "PCB opening"}[arch],
+                        "PCB opening",
+                  "Z3": "Z3 -- direct-fed converter on the board underside, beneath an uncut "
+                        "board, with its own cold plate"}[arch],
         "variant": FL.VARIANT[arch], "hv_feed": FL.HV_FEED[arch],
-        "bga_48v_power_field": (spec_df["architectures"][arch]["bga_48v_power_field"]),
+        "bga_48v_power_field": ((spec_df["architectures"].get(arch) or {}).get(
+            "bga_48v_power_field") if arch != "Z3" else None),
         "out_of_cell": (None if arch == "Z1" else
                         {"fill": "underfill_homog", "extent_x_mm": fill_extent,
                          "clearance_mm": cfg2.clearance_mm,
                          "ring": "VOID" if cfg2.clearance_void else "FILLED"}),
         "attach": (None if arch == "Z1" else
                    dict(spec_df["vr_attach"], measured_layer=next(
-                       (o for o in layers if "attach" in o["roles"]), None) is not None)),
+                       (o for o in layers if "attach" in o["roles"]), None) is not None)
+                   if arch != "Z3" else
+                   {"technology": "SAC305 bumps + underfill (board-level attach)",
+                    "measured_layer": next((o for o in layers if "attach" in o["roles"]),
+                                           None) is not None}),
         "layers": layers,
         "z_min_um": round(float(m.zs.min()) * 1e3, 3),
         "z_max_um": round(float(m.zs.max()) * 1e3, 3),
@@ -125,6 +135,8 @@ def spec_for(arch):
         "board_extent_mm": [float(m.xs.min()), float(m.xs.max())],
         "board_case": E.PRODUCTION_H_XY and BRD.BOARD_CASES and
         (__import__("physical_package").load_z1_package_config().board_case if arch == "Z1"
+         else __import__("physical_package").load_z3_package_config().board_case
+         if arch == "Z3"
          else __import__("physical_package").load_physical_package_config(
              R / "configs/phase0nt/z2_2p4mm_cutout.yaml").board_case),
         "cutout_mm": cut,
@@ -135,10 +147,16 @@ def spec_for(arch):
         "tsv": {"n_per_cell": E.TSV_N_PER_CELL, "d_um": E.TSV_D_MM * 1e3,
                 "pitch_um": TF.P_TSV_MM * 1e3,
                 "rail_carried": {"Z1": "48 V input (low current)",
-                                 "Z2": "1 V output (about 1 kA total)"}[arch]},
+                                 "Z2": "1 V output (about 1 kA total)",
+                                 "Z3": "1 V output (about 1 kA total)"}[arch]},
         "rails": ({"input": "48 V enters through the PCB and the 48 V BGA power field",
                    "output": "1 V delivered to the compute die",
                    "return": "ground return through the same BGA field"} if arch == "Z1" else
+                  {"input": "48 V enters the board-backside HVR directly (no package or BGA "
+                            "48 V path)",
+                   "output": "1 V through the board-level attach, the board via field, the BGA "
+                             "and the substrate TSVs to the die",
+                   "return": "ground along the same path in reverse"} if arch == "Z3" else
                   {"input": "48 V enters the backside HVR directly through a dedicated "
                             "external connection on the cutout side (no package 48 V path)",
                    "output": "1 V through the VR attach and the substrate TSVs to the die",
@@ -152,7 +170,7 @@ def spec_for(arch):
 def main():
     spec = {"generated_by": "scripts/final_closure_architecture_spec.py",
             "rule": "every z extent measured on the solver mesh; nothing typed in",
-            "architectures": {a: spec_for(a) for a in ("Z1", "Z2")}}
+            "architectures": {a: spec_for(a) for a in ("Z1", "Z2", "Z3")}}
     txt = json.dumps(spec, indent=1, default=float)
     spec["sha256"] = hashlib.sha256(txt.encode()).hexdigest()
     OUT.write_text(json.dumps(spec, indent=1, default=float))
