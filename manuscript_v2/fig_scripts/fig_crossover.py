@@ -32,8 +32,12 @@ for k, (ax, (s, name)) in enumerate(zip(axes, spec)):
         R = np.array([p["R_mohm"] for p in sw])
         dP = np.array([p["P_total_w"] for p in sw]) - cs["P_Z1_w"]
         curves.append((b, cs, R, dP))
+    # window around the crossover region: the feed becomes infeasible near R_max and dP
+    # diverges there, which would flatten everything of interest near zero
+    adv = max(abs(cs["advantage_at_zero_feed_w"]) for _, cs, _, _ in curves)
     lo = min(min(d[(r >= 0.01) & (r <= 40)].min() for _, _, r, d in curves), 0.0)
-    hi = max(max(d[(r >= 0.01) & (r <= 40)].max() for _, _, r, d in curves), 0.0)
+    hi = min(max(max(d[(r >= 0.01) & (r <= 40)].max() for _, _, r, d in curves), 0.0),
+             2.0 * adv + 5.0)
     pad = 0.12 * (hi - lo)
     yl = (lo - pad, hi + pad)
     ax.set_xscale("log")
@@ -43,8 +47,10 @@ for k, (ax, (s, name)) in enumerate(zip(axes, spec)):
     for j, (b, cs, R, dP) in enumerate(curves):
         ax.plot(R, dP, color=S.ARCH[b], lw=1.3, zorder=3)
         rs = cs.get("R_star_mohm")
-        lab_y = dP[np.searchsorted(R, 20.0)]
-        ax.text(22, lab_y, b, ha="left", va="center", fontsize=6.6, color=S.INK)
+        k_lab = min(np.searchsorted(dP, yl[1] * 0.85) - 1, len(R) - 1) if dP[-1] > yl[1] \
+            else np.searchsorted(R, 20.0)
+        ax.text(R[k_lab] * 1.12, min(dP[k_lab], yl[1] * 0.85), b, ha="left", va="center",
+                fontsize=6.6, color=S.INK)
         if rs:                                       # a crossover exists
             ax.plot(rs, 0, "o", ms=4.5, mfc="white", mec=S.INK, mew=0.9, zorder=5)
             ax.annotate(f"$R^*_\\mathrm{{{b}}}$ = {rs:.2f} m$\\Omega$", (rs, 0),
@@ -61,7 +67,7 @@ for k, (ax, (s, name)) in enumerate(zip(axes, spec)):
     ax.text(0.012, yl[1] - 0.04 * (yl[1] - yl[0]), "Z1 lower", ha="left", va="top",
             fontsize=6.4, color=S.INK2)
     if yl[0] < 0:
-        ax.text(0.012, yl[0] + 0.04 * (yl[1] - yl[0]), "backside lower", ha="left",
+        ax.text(36, yl[0] + 0.04 * (yl[1] - yl[0]), "backside lower", ha="right",
                 va="bottom", fontsize=6.4, color=S.INK2)
     ax.set_ylabel(r"$P_\mathrm{backside}-P_\mathrm{Z1}$ (W)")
     S.panel(ax, "ab"[k], name, y=1.03)

@@ -12,7 +12,7 @@ cannot be built with build-up microvias (Section~\ref{sec:realizability}); in th
 order every vertical net passes the aspect-ratio, pitch and landing checks. The package 48-V
 network needs \NballMatched{} balls per rail under the 1.5-A provisioning rule, and its supply
 and return loop measures \RloopZone~m$\Omega$. The substrate's TSV field carries the 48-V input
-at 0.48~A per cell and dissipates \PtsvZone~W.
+at 0.48~A per cell and dissipates less than a milliwatt.
 
 \emph{Electrothermal state.} The fixed point converges in \EtItersZone{} iterations to
 \PlossZone~W inside the package (\EffZone\,\% efficiency), of which \PconvZone~W is conversion
@@ -20,7 +20,7 @@ and \ProuteZone~W routing. The peak temperature, \TmaxZone\,$^\circ$C, lies in t
 device tier, which averages \TlsZone\,$^\circ$C; the die averages \TdieZone\,$^\circ$C.
 Evaluated with every region at 25\,$^\circ$C, the same ledger returns \PrtZone~W. An electrical
 analysis decoupled from the thermal solution would therefore understate the package loss by
-\UnderZone\,\% (\RiseZone~W), because on-resistance and resistivity are evaluated about 90~K
+\UnderZone\,\% (\RiseZone~W), because on-resistance and resistivity are evaluated up to \TlsRiseZone~K
 above the temperature such an analysis assumes.
 
 \emph{Mechanical state.} The die warps by \WarpZone~\textmu m peak to valley. The search over
@@ -42,7 +42,7 @@ input capacitance at every cell, of the order of 0.5~\textmu F at the synthesize
 \centering
 \includegraphics[width=\textwidth]{fig7_fields.pdf}
 \caption{Converged fields at S0. (a)--(c) Temperature on the vertical section through the
-middle row of cells (3$\times$ vertical exaggeration; voids left empty). (d)--(f) Out-of-plane
+middle row of cells (2$\times$ vertical exaggeration; voids left empty). (d)--(f) Out-of-plane
 displacement of the die top surface relative to its lowest point; the peak-to-valley value is
 the die warpage. (g)--(i) Relative in-plane displacement across the ball layer at every legal
 site; the critical joint is ringed.}

@@ -157,6 +157,8 @@ def main():
             f"EtIters{k}": str(x.get("et_iterations", NA)),
             f"TjointHot{k}": fx(x.get("T_joint_hottest_C"), 1),
             f"Tls{k}": fx((x.get("T_regions") or {}).get("ls"), 1),
+            f"TlsRise{k}": (fx(x["T_regions"]["ls"] - 25.0, 0)
+                            if (x.get("T_regions") or {}).get("ls") is not None else NA),
             f"Ths{k}": fx((x.get("T_regions") or {}).get("hs"), 1),
             f"Tind{k}": fx((x.get("T_regions") or {}).get("ind"), 1),
             f"Qplate{k}": fx((x.get("q_split") or {}).get("converter_plate"), 0),
@@ -202,6 +204,9 @@ def main():
                 mac[f"dTls{k}"] = fx(tb["ls"] - t1["ls"], 1)
                 mac[f"dTlsAbs{k}"] = fx(abs(tb["ls"] - t1["ls"]), 0)
             mac[f"dTmax{k}"] = fx(zb["T_max_C"] - z1["T_max_C"], 1)
+            mac[f"dTmaxAbs{k}"] = fx(abs(zb["T_max_C"] - z1["T_max_C"]), 0)
+            mac[f"dTjoint{k}"] = fx(zb["T_joint_C"] - z1["T_joint_C"], 1)
+            mac[f"dTjointAbs{k}"] = fx(abs(zb["T_joint_C"] - z1["T_joint_C"]), 0)
     for a in ARCHS:
         if (a, "HV_S0") in S and (a, "HV_S1") in S:
             mac[f"RiseSone{ATAG[a]}"] = fx(S[(a, "HV_S1")]["P_loss_w"]

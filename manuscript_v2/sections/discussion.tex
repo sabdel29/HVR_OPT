@@ -36,7 +36,12 @@ the rest laterally in the package land side costs \LandPmin--\LandPmax~W and
 \LandDVmin--\LandDVmax~mV for \LandTmax--\LandTmin~\textmu m of copper. Keeping the 1-V
 current under the cells requires a ball pitch of \PitchMaxZthree~mm or less.
 
-\emph{Do not use peak temperature as a proxy for joint response.} % TODO(data)
+\emph{Do not use temperature as a proxy for joint response.} The package-backside regulator
+runs \dTmaxAbsZtwoSzero~K hotter at its peak than the embedded one, yet its critical joint is
+\dTjointAbsZtwoSzero~K cooler, because the ball ring sits away from the converter; the joint
+still moves \DuRatioZtwo{} times as far, because its driver is set by the bending of the plate the
+balls support rather than by their temperature. A screen on joint temperature would rank the two
+the wrong way round.
 
 \subsection{Scope and limitations}
 The framework is verified stage by stage against matched references, not against a measured

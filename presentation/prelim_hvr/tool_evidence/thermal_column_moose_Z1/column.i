@@ -6,7 +6,7 @@
 []
 [Variables]
   [T]
-    initial_condition = 30.0741
+    initial_condition = 30.0576
   []
 []
 [Kernels]
@@ -23,49 +23,49 @@
   [src1]
     type = BodyForce
     variable = T
-    value = 1.118791880147e-01
+    value = 1.059736583338e-01
     block = 'z1conv_1_gan_hs_EPC2014C__tile'
   []
   [src2]
     type = BodyForce
     variable = T
-    value = 5.863190095175e-01
-    block = 'z1conv_3_gan_ls_EPC2057__tile'
+    value = 5.854170222899e-01
+    block = 'z1conv_5_gan_ls_EPC2057__tile'
   []
   [src3]
     type = BodyForce
     variable = T
-    value = 1.037581154094e-01
+    value = 1.036361329283e-01
     block = 'z1conv_7_inductor_plus_cout__tile'
   []
   [src4]
     type = BodyForce
     variable = T
     value = 5.239274958813e-02
-    block = 'z1conv_5_flying_caps__tile'
+    block = 'z1conv_3_flying_caps__tile'
   []
   [src5]
     type = BodyForce
     variable = T
-    value = 3.043310239524e-01
+    value = 1.301580569876e-01
     block = 'z1conv_0_bottom_substrate_rdl__tile z1conv_2_interlayer_rdl__tile z1conv_4_interlayer_rdl__tile z1conv_6_interlayer_rdl__tile z1conv_8_output_rdl__tile'
   []
   [src6]
     type = BodyForce
     variable = T
-    value = 1.205668722267e-02
+    value = 1.181048747687e-02
     block = 'bga__gap bga__tile'
   []
   [src7]
     type = BodyForce
     variable = T
-    value = 4.235102585576e-06
+    value = 4.148625360343e-06
     block = 'sub_lower__tile'
   []
   [src8]
     type = BodyForce
     variable = T
-    value = 1.609878906501e-02
+    value = 1.608759861812e-02
     block = 'interface__tile'
   []
 []
@@ -168,19 +168,19 @@
     specific_heat = 1
     thermal_conductivity = '3.428454136258e-02 0 0 0 3.428454136258e-02 0 0 0 6.204741529454e-04'
   []
-  [m_z1conv_3_gan_ls_EPC2057__gap]
+  [m_z1conv_3_flying_caps__gap]
     type = AnisoHeatConductionMaterial
-    block = 'z1conv_3_gan_ls_EPC2057__gap'
+    block = 'z1conv_3_flying_caps__gap'
     temperature = T
     specific_heat = 1
     thermal_conductivity = '7.000000000000e-04 0 0 0 7.000000000000e-04 0 0 0 7.000000000000e-04'
   []
-  [m_z1conv_3_gan_ls_EPC2057__tile]
+  [m_z1conv_3_flying_caps__tile]
     type = AnisoHeatConductionMaterial
-    block = 'z1conv_3_gan_ls_EPC2057__tile'
+    block = 'z1conv_3_flying_caps__tile'
     temperature = T
     specific_heat = 1
-    thermal_conductivity = '1.300000000000e-01 0 0 0 1.300000000000e-01 0 0 0 1.300000000000e-01'
+    thermal_conductivity = '6.000000000000e-02 0 0 0 6.000000000000e-02 0 0 0 6.000000000000e-02'
   []
   [m_z1conv_4_interlayer_rdl__gap]
     type = AnisoHeatConductionMaterial
@@ -196,19 +196,19 @@
     specific_heat = 1
     thermal_conductivity = '3.428454136258e-02 0 0 0 3.428454136258e-02 0 0 0 6.204741529454e-04'
   []
-  [m_z1conv_5_flying_caps__gap]
+  [m_z1conv_5_gan_ls_EPC2057__gap]
     type = AnisoHeatConductionMaterial
-    block = 'z1conv_5_flying_caps__gap'
+    block = 'z1conv_5_gan_ls_EPC2057__gap'
     temperature = T
     specific_heat = 1
     thermal_conductivity = '7.000000000000e-04 0 0 0 7.000000000000e-04 0 0 0 7.000000000000e-04'
   []
-  [m_z1conv_5_flying_caps__tile]
+  [m_z1conv_5_gan_ls_EPC2057__tile]
     type = AnisoHeatConductionMaterial
-    block = 'z1conv_5_flying_caps__tile'
+    block = 'z1conv_5_gan_ls_EPC2057__tile'
     temperature = T
     specific_heat = 1
-    thermal_conductivity = '6.000000000000e-02 0 0 0 6.000000000000e-02 0 0 0 6.000000000000e-02'
+    thermal_conductivity = '1.300000000000e-01 0 0 0 1.300000000000e-01 0 0 0 1.300000000000e-01'
   []
   [m_z1conv_6_interlayer_rdl__gap]
     type = AnisoHeatConductionMaterial
@@ -300,7 +300,7 @@
     type = ConvectiveHeatFluxBC
     variable = T
     boundary = top
-    T_infinity = 30.0740994
+    T_infinity = 30.0576352
     heat_transfer_coefficient = 1.155534926155e-01
   []
   [bot]
@@ -398,15 +398,15 @@
     variable = T
     block = 'z1conv_2_interlayer_rdl__tile'
   []
-  [avg_z1conv_3_gan_ls_EPC2057__gap]
+  [avg_z1conv_3_flying_caps__gap]
     type = ElementAverageValue
     variable = T
-    block = 'z1conv_3_gan_ls_EPC2057__gap'
+    block = 'z1conv_3_flying_caps__gap'
   []
-  [avg_z1conv_3_gan_ls_EPC2057__tile]
+  [avg_z1conv_3_flying_caps__tile]
     type = ElementAverageValue
     variable = T
-    block = 'z1conv_3_gan_ls_EPC2057__tile'
+    block = 'z1conv_3_flying_caps__tile'
   []
   [avg_z1conv_4_interlayer_rdl__gap]
     type = ElementAverageValue
@@ -418,15 +418,15 @@
     variable = T
     block = 'z1conv_4_interlayer_rdl__tile'
   []
-  [avg_z1conv_5_flying_caps__gap]
+  [avg_z1conv_5_gan_ls_EPC2057__gap]
     type = ElementAverageValue
     variable = T
-    block = 'z1conv_5_flying_caps__gap'
+    block = 'z1conv_5_gan_ls_EPC2057__gap'
   []
-  [avg_z1conv_5_flying_caps__tile]
+  [avg_z1conv_5_gan_ls_EPC2057__tile]
     type = ElementAverageValue
     variable = T
-    block = 'z1conv_5_flying_caps__tile'
+    block = 'z1conv_5_gan_ls_EPC2057__tile'
   []
   [avg_z1conv_6_interlayer_rdl__gap]
     type = ElementAverageValue

@@ -64,18 +64,29 @@ for a in ARCHS:
 zlo = min(d["sec"][2] for d in data.values())
 zhi = max(d["sec"][3] for d in data.values())
 
-H = 3.75
-fig = plt.figure(figsize=(S.DBL_W, H))
+# layout: the section row is sized from its true aspect (31.2 mm wide, shared z range)
 gap = 0.012
 wS = (0.905 - 0.055 - (N - 1) * gap) / N
-axS = [fig.add_axes([0.055 + k * (wS + gap), 0.585, wS, 0.37]) for k in range(N)]
-caxT = fig.add_axes([0.928, 0.62, 0.011, 0.30])
-wM = 0.118
+sec_h_in = wS * S.DBL_W * ((zhi - zlo + 0.3) * VEX) / 31.2
+map_w = 0.118
+map_in = map_w * S.DBL_W
+H = sec_h_in + map_in + 1.25
+fig = plt.figure(figsize=(S.DBL_W, H))
+y_map = 0.42 / H
+y_sec = (map_in + 0.42 + 0.78) / H
+axS = [fig.add_axes([0.055 + k * (wS + gap), y_sec, wS, sec_h_in / H]) for k in range(N)]
+caxT = fig.add_axes([0.928, y_sec + 0.1 * sec_h_in / H, 0.011, 0.8 * sec_h_in / H])
 x0D, x0J = 0.055, 0.505
-axD = [fig.add_axes([x0D + k * (wM + 0.012), 0.075, wM, 0.40]) for k in range(N)]
-caxD = fig.add_axes([x0D + N * (wM + 0.012) + 0.002, 0.10, 0.009, 0.33])
-axJ = [fig.add_axes([x0J + k * (wM + 0.012), 0.075, wM, 0.40]) for k in range(N)]
-caxJ = fig.add_axes([x0J + N * (wM + 0.012) + 0.002, 0.10, 0.009, 0.33])
+axD = [fig.add_axes([x0D + k * (map_w + 0.012), y_map, map_w, map_in / H]) for k in range(N)]
+caxD = fig.add_axes([x0D + N * (map_w + 0.012) + 0.002, y_map + 0.06 * map_in / H, 0.009,
+                     0.88 * map_in / H])
+axJ = [fig.add_axes([x0J + k * (map_w + 0.012), y_map, map_w, map_in / H]) for k in range(N)]
+caxJ = fig.add_axes([x0J + N * (map_w + 0.012) + 0.002, y_map + 0.06 * map_in / H, 0.009,
+                     0.88 * map_in / H])
+fig.text(x0D, y_map + map_in / H + 0.22 / H, "Die top surface relative to its lowest point",
+         ha="left", va="bottom", fontsize=7, color=S.INK)
+fig.text(x0J, y_map + map_in / H + 0.22 / H, "Relative displacement across the ball layer",
+         ha="left", va="bottom", fontsize=7, color=S.INK)
 
 tnorm = mcolors.Normalize(85, max(125, 5 * np.ceil(max(d["tmax"] for d in data.values()) / 5)))
 tcmap = plt.get_cmap("YlOrRd")
@@ -116,7 +127,7 @@ for k, a in enumerate(ARCHS):
     ax.set_xlabel("$x$ (mm)", labelpad=1)
     if k == 0:
         ax.set_ylabel("$y$ (mm)", labelpad=0)
-    S.panel(ax, LET[N + k], f"{a} die, {u.max():.1f} µm", y=1.02)
+    S.panel(ax, LET[N + k], f"{a}: {u.max():.1f} µm", y=1.02)
 cb = fig.colorbar(plt.cm.ScalarMappable(norm=dnorm, cmap=dcmap), cax=caxD)
 cb.set_label("$u_z - u_{z,\\min}$ (µm)", labelpad=2)
 cb.outline.set_linewidth(0.4)
@@ -131,7 +142,7 @@ for k, a in enumerate(ARCHS):
     ax = axJ[k]
     ax.scatter(xy[:, 0], xy[:, 1], c=du, s=1.1, cmap=jcmap, norm=jnorm, lw=0)
     c = js["critical"]
-    ax.plot(c["x_mm"], c["y_mm"], "o", ms=5.0, mfc="none", mec=S.INK, mew=0.8)
+    ax.plot(c["x_mm"], c["y_mm"], "o", ms=5.0, mfc="none", mec=S.INK, mew=0.8, clip_on=False)
     ax.set_aspect("equal")
     ax.set_xlim(-15.3, 15.3)
     ax.set_ylim(-15.3, 15.3)
@@ -141,7 +152,7 @@ for k, a in enumerate(ARCHS):
     ax.set_xlabel("$x$ (mm)", labelpad=1)
     if k == 0:
         ax.set_ylabel("$y$ (mm)", labelpad=0)
-    S.panel(ax, LET[2 * N + k], f"{a} balls, {c['du_um']:.2f} µm", y=1.02)
+    S.panel(ax, LET[2 * N + k], f"{a}: {c['du_um']:.2f} µm", y=1.02)
 cb = fig.colorbar(plt.cm.ScalarMappable(norm=jnorm, cmap=jcmap), cax=caxJ)
 cb.set_label("$\\Delta u$ across balls (µm)", labelpad=2)
 cb.outline.set_linewidth(0.4)
