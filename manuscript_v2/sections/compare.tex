@@ -54,10 +54,15 @@ integrations does not survive the board-backside one. Mechanically, Z1 sandwiche
 between the die and the substrate on the full ball array and its die warps by \WarpAZone~\textmu m;
 Z2 is a thin silicon plate that carries the encapsulated converter on one side and rests on a
 ring of balls around the opening, a bimetal strip whose die warps \WarpRatioZtwo{} times as much
-and whose critical joint moves \DuRatioZtwo{} times as far (Fig.~\ref{fig:fields}). The uncut board
-does not rescue Z3 under this cooling: its hot converter heats the board from below, the die
-warps by \WarpAZthree~\textmu m and the critical joint moves \DuAZthree~\textmu m, the most of the
-three. Under one top plate the embedded regulator is the best integration in every respect, and
+and whose critical joint moves \DuRatioZtwo{} times as far (Fig.~\ref{fig:fields}). Beneath every
+package lies the board, which expands at \CteBoard~ppm\,K$^{-1}$ against \CteSi~ppm\,K$^{-1}$ for
+silicon and is tied to the package by the ball field; its temperature sets the joint driver. The
+Z1 board averages \TboardAZone\,$^\circ$C because the converter's heat leaks into it, but the
+thick, nearly symmetric silicon--converter--silicon sandwich above it resists bending. Not
+touching the package does not decouple the board-backside converter from it: under this cooling
+the converter heats the board of Z3 from below to \TboardAZthree\,$^\circ$C, the hottest of the
+three, beneath a package of only 0.6~mm of silicon, so the die warps by \WarpAZthree~\textmu m and
+the critical joint moves \DuAZthree~\textmu m, the most of the three. Under one top plate the embedded regulator is the best integration in every respect, and
 Z2 is behind even at zero feed resistance, so no direct feed can recover its loss; only without
 local input decoupling (S1) does Z2 lead, by \LossGapZtwoSone~W, and then only while its feed loop
 stays below \RstarZtwoSone~m$\Omega$, about \RstarOverLoopZtwo{} times the package 48-V loop of Z1.
@@ -79,10 +84,13 @@ Z2 and Z3 touch it: the loss of Z2 falls by \GainBZtwo~W to \PlossBZtwo~W and th
 \GainBZthree~W to \PlossBZthree~W, and their peaks fall to \TmaxBZtwo{} and
 \TmaxBZthree\,$^\circ$C. The converter of Z1 reaches the plate only through the substrate, the
 ball field and 2.4~mm of board; only \QbotBZone~W takes that path and its loss falls by
-\GainBZone~W. For Z1 the bottom plate is a mechanical decision instead: by cooling the board it
-removes most of the expansion mismatch between the board and the silicon above it, so its die
-warpage falls from \WarpAZone{} to \WarpBZone~\textmu m and its joint driver from \DuAZone{} to
-\DuBZone~\textmu m. With identical cooling the ranking therefore splits by domain
+\GainBZone~W. For Z1 the bottom plate is a mechanical decision instead: it cools the board
+underside to \TboardBotBZone\,$^\circ$C and the board to \TboardBZone\,$^\circ$C on average,
+which removes most of the expansion mismatch with the silicon above while the stiff sandwich holds
+the board flat, so the die warpage falls from \WarpAZone{} to \WarpBZone~\textmu m and the joint
+driver from \DuAZone{} to \DuBZone~\textmu m---at an interior ball, which only the all-site search
+finds. The board of Z3, between the die and its plate, still carries die heat down and stays at
+\TboardBZthree\,$^\circ$C. With identical cooling the ranking therefore splits by domain
 (Fig.~\ref{fig:tiers}): Z2 has the lowest loss, \GapBZtwo~W below Z1 and ahead of Z1 for any feed
 loop below \RstarTierBZtwo~m$\Omega$; Z1 has the smallest die warpage and joint driver; and Z3
 lies between them in every respect while it pays for its longer 1-V path---and still for its

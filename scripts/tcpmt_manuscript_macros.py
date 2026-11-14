@@ -234,6 +234,14 @@ def main():
     T = tier_cases(S)
     mac.update(tier_macros(T))
     mac.update(isothermal_macros())
+    lt = R / "research" / "tcpmt_revision" / "layer_temperatures.json"
+    if lt.exists():                 # board / substrate means per cooling tier (mechanism)
+        for a, tiers in json.loads(lt.read_text())["cases"].items():
+            for t, v in tiers.items():
+                mac[f"Tboard{t}{ATAG[a]}"] = fx(v["board"], 0)
+                mac[f"TboardBot{t}{ATAG[a]}"] = fx(v["board_bottom"], 0)
+                mac[f"Tsub{t}{ATAG[a]}"] = fx(v["substrate"], 0)
+                mac["CteBoard"], mac["CteSi"] = fx(1e6 * v["cte_board"], 1), fx(1e6 * v["cte_silicon"], 1)
     # Z3 is outside the Z1/Z2 mesh ladder: its own r21 -> r31 change, per observable
     f21, f31 = D / "etm_Z3_HV_S0_h1.1_r21.json", D / "etm_Z3_HV_S0_h1.1_r31.json"
     if f21.exists() and f31.exists():
@@ -583,6 +591,7 @@ def compare_table(S, mac):
              lambda a: NA if m("PconvA", a) == NA else f"{m('PconvA', a)} / {m('ProuteA', a)}"),
          row("Peak temperature ($^\\circ$C)", lambda a: m("TmaxA", a)),
          row("Low-side tier ($^\\circ$C)", lambda a: m("TlsA", a)),
+         row("Board, mean ($^\\circ$C)", lambda a: m("TboardA", a)),
          row("Die warpage (\\textmu m)", lambda a: m("WarpA", a)),
          row("$\\du$ (\\textmu m) at $T_{\\mathrm{j}}$ ($^\\circ$C)", du_at("A")),
          row("$\\deps$ ($10^{-3}$/cycle), L0", lambda a: m("EpsA", a)),
@@ -593,6 +602,7 @@ def compare_table(S, mac):
              lambda a: NA if m("PconvB", a) == NA else f"{m('PconvB', a)} / {m('ProuteB', a)}"),
          row("Peak temperature ($^\\circ$C)", lambda a: m("TmaxB", a)),
          row("Heat to bottom plate (W)", lambda a: m("QbotB", a)),
+         row("Board, mean ($^\\circ$C)", lambda a: m("TboardB", a)),
          row("Die warpage (\\textmu m)", lambda a: m("WarpB", a)),
          row("$\\du$ (\\textmu m) at $T_{\\mathrm{j}}$ ($^\\circ$C)", du_at("B")),
          row("$\\deps$ ($10^{-3}$/cycle), L0", lambda a: m("EpsB", a)),
