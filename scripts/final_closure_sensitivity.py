@@ -462,6 +462,56 @@ def v_z3_top_only():
         return p
     E.z3_converter_cold_plate = plate
 
+# ------------------------------------------------------------------ cooling B (all three)
+#: the cell-grid footprint the second plate covers in every integration (21.36 mm square,
+#: the measured cell-grid bbox of configs/phase0nz), so the three plates are identical
+PLATE_HALF_MM = 10.68 + 1e-6
+TIM_R = 50e-6 / 3.0        # the top plate's TIM card: 50 um at k = 3 W/mK, in series
+
+
+def v_z1_bottom_plate_tim():
+    """Cooling B for Z1: the same second plate as the backside integrations get -- top-plate
+    coefficient at the dissipated power, inlet temperature, through the top plate's 50-um TIM --
+    under the board beneath the cell-grid footprint. Z1's converter reaches it only through the
+    substrate, the ball field and 2.4 mm of board; the natural-convection film stays on the rest
+    of the board underside."""
+    from cooling_production import CANDIDATES
+    cooler = CANDIDATES[E.COOLER]
+
+    def in_plate(m, e):
+        c = m.nodes[m.elems[int(e) - 1][:4] - 1][:, :2].mean(0)
+        return abs(c[0]) <= PLATE_HALF_MM and abs(c[1]) <= PLATE_HALF_MM
+    orig = E.board_bottom_faces
+
+    def board_bottom_faces(m, arch=None):
+        faces = orig(m, arch)
+        if arch != "Z1":
+            return faces
+        return np.array([e for e in faces if not in_plate(m, e)], int)
+    E.board_bottom_faces = board_bottom_faces
+
+    def film(m, tiles, q_w):
+        faces = orig(m, "Z1")
+        h = float(cooler.h_uniform(q_w))
+        return {"elems": np.array([e for e in faces if in_plate(m, e)], int),
+                "h_W_m2K": 1.0 / (1.0 / h + TIM_R), "T_C": float(cooler.t_in_c),
+                "layer": "board",
+                "label": "Z1 cooling B: second plate under the board through a 50 um TIM"}
+    E.EXTRA_FILM = film
+
+
+def v_z3_plate_tim():
+    """Cooling B for Z3: its converter plate through the same 50-um TIM as the top plate (the
+    Z3 production plate sits on the converter without an interface: a bound)."""
+    orig = E.z3_converter_cold_plate
+
+    def plate(m, q_w):
+        p = orig(m, q_w)
+        p.update({"h_W_m2K": 1.0 / (1.0 / p["h_W_m2K"] + TIM_R),
+                  "label": "Z3 cooling B: converter plate through a 50 um TIM"})
+        return p
+    E.z3_converter_cold_plate = plate
+
 # ------------------------------------------------------------------ tier order (Z1)
 def v_z1_tier_reference():
     """Z1 built in the REFERENCE tier order of Krishnakumar 2026 (HS -> LS -> C_f -> L)
@@ -613,6 +663,13 @@ VARIANTS = {
                       nature="BGA mechanical population (smeared)",
                       what="BGA field populated at 420/528: the 54 + 54 48 V balls of the "
                            "BGA-fed design removed"),
+    "z1_bottom_plate_tim": dict(kind="full", archs=("Z1",), apply=v_z1_bottom_plate_tim,
+                                gates=[], nature="ENGINEERING_SENSITIVITY (cooling B)",
+                                what="Z1 with a second plate under the board beneath the cell "
+                                     "grid, through a 50 um TIM"),
+    "z3_plate_tim": dict(kind="full", archs=("Z3",), apply=v_z3_plate_tim,
+                         gates=[], nature="ENGINEERING_SENSITIVITY (cooling B)",
+                         what="Z3 converter plate through a 50 um TIM"),
     "z3_top_only": dict(kind="full", archs=("Z3",), apply=v_z3_top_only,
                         gates=[], nature="ENGINEERING_SENSITIVITY (cooling solution, Z3)",
                         what="Z3 with the top cold plate only (converter underside in the "
