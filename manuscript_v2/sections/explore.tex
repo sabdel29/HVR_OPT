@@ -5,7 +5,7 @@ Exploration works at two levels. At the converter level the synthesis is repeate
 regulator count and the topology (Section~\ref{sec:dse}, Fig.~\ref{fig:dse}): the optimum moves
 to 76 cells with a two-branch topology, and a sweep with the topology held fixed misses it
 because its feasible range ends at 52 cells. At the package level, every input without a single
-defensible value is varied on the production mesh and the full chain is rerun, so that each
+defensible value is varied on the production mesh and the whole chain is rerun, so that each
 ranking of Section~\ref{sec:compare} is reported together with the decisions that can change
 it. Fig.~\ref{fig:robust} summarizes \NvariantRuns{} such runs for the embedded and
 package-backside pair at S0: for each decision and each ranking, whether the ranking is
@@ -17,15 +17,36 @@ preserved, withdrawn (the gap falls within twice its uncertainty) or reversed.
 \caption{Ranking-robustness map, Z1 against Z2 at S0. Rows: package decisions varied on the
 production mesh, grouped by the design choice they represent (merged rows give the number of
 runs); columns: the rankings. Each cell shows whether the production ranking is preserved,
-withdrawn (gap within twice its uncertainty) or reversed, with the architecture it then
+withdrawn (gap within twice its uncertainty) or reversed, with the integration it then
 favors.}
 \label{fig:robust}
 \end{figure}
 
-% TODO(data): which decisions preserve / withdraw / reverse each ranking:
-%  - tier order (z1_tier_reference): +x K, +y W -- realizability and electrothermal coupled
-%  - backside cooling (z2_cooled): reverses the thermal and mechanical rankings?
-%  - TSV provisioning (tsv_min), attach density (attach_sparse): electrical ranking
-%  - out-of-cell construction (f2_void): mechanical ranking
-%  - board boundary (board_hbot100/500): joint temperatures, calibration flags
-%  - cooling model form (icepak_equivalent): peak temperature
+\emph{Tier order.} The strongest single decision is the one the realizability check already
+forces. Built in the reference order, with the same components, heights and total, the embedded
+regulator dissipates \SensDTierRefZonePloss~W more, its peak rises by \SensDTierRefZoneTmax~K,
+its die warps by \SensTierRefZoneWarp~\textmu m instead of \WarpZone~\textmu m, and its critical
+joint moves \SensTierRefZoneDu~\textmu m at \SensTierRefZoneTjoint\,$^\circ$C, beyond the
+calibration of the solder law. The mechanism is the interlayer redistribution: a 10-\textmu m
+RDL tier conducts only 0.62~W\,m$^{-1}$K$^{-1}$ through its thickness, so each one between the
+low-side devices---which carry three quarters of the conversion loss---and the die adds several
+kelvin, and the reference order puts one more of them in that path. In that order the embedded
+regulator would also lose its electrical lead over Z2 (\SensTierRefZonePloss{} against
+\PlossZtwo~W). Tier order is therefore a coupled decision: the same choice sets the via aspect
+ratio, the device temperature, the loss and the joint response.
+
+\emph{Cooling.} A second plate under the Z2 converter lowers its loss by
+\SensDZtwoCooledZtwoPloss~W to \SensZtwoCooledZtwoPloss~W, its peak to
+\SensZtwoCooledZtwoTmax\,$^\circ$C and its die warpage to \SensZtwoCooledZtwoWarp~\textmu m,
+reversing every Z1--Z2 ranking of Table~\ref{tab:compare}; with equal cooling the
+package-backside regulator then has a lower loss than the board-backside one, whose 1-V path is
+longer, while the board-backside regulator keeps the smaller die warpage and joint driver.
+% TODO(data): z3_top_only -- does the top plate alone carry Z3?
+
+\emph{Construction and interconnect.} Leaving the space between the cells void instead of
+encapsulated relieves the one-sided Z2 plate---its die warpage falls to
+\SensVoidZtwoWarp~\textmu m---but stiffens nothing in Z1, whose warpage rises to
+\SensVoidZoneWarp~\textmu m, so the mechanical gap narrows without reversing. Under-provisioning
+the 1-V TSV field of Z2 (64 instead of 1444 vias per cell) adds \SensDTsvMinZtwoPloss~W and
+widens the electrical gap, whereas a sparser attach (30-\textmu m bumps at 80-\textmu m pitch)
+costs only \SensDAttSparseZtwoPloss~W. % TODO(data): board boundary (hbot 100/500), cooling model form
