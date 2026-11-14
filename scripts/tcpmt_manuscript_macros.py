@@ -231,6 +231,16 @@ def main():
             mac[f"DuRatio{ATAG[b]}"] = fx(zb["du_c_um"] / z1["du_c_um"], 2)
     mac.update(landside_macros())
     mac.update(sensitivity_macros(S))
+    T = tier_cases(S)
+    mac.update(tier_macros(T))
+    mac.update(isothermal_macros())
+    tf = R / "research" / "tcpmt_revision" / "tier_feed_crossover.json"
+    if tf.exists():
+        for t, row in json.loads(tf.read_text()).get("tiers", {}).items():
+            for b, v in row.items():
+                r = v.get("R_star_mohm")
+                mac[f"RstarTier{t}{ATAG[b]}"] = (NA if r is None else "none" if r == 0
+                                                  else fx(r, 1))
     mac.update(feed_macros())
     mac.update(verification_macros(S))
     mac.update(network_macros())
@@ -283,6 +293,105 @@ def sensitivity_macros(S):
                 out[f"Sens{tag}{ATAG[a]}{k}"] = fx(val, nd[k])
                 if bvals.get(k) is not None:
                     out[f"SensD{tag}{ATAG[a]}{k}"] = fx(val - bvals[k], nd[k])
+    return out
+
+
+#: the three-tier comparison (TCPMT revision). Common temperature: no coupling. A: the same
+#: top cold plate for every integration. B: the same top plate plus the same bottom plate
+#: (top-plate coefficient, inlet temperature, 50-um TIM) under the cell-grid footprint.
+#: I: interface-free bottom plates, reported as bounds. ("prod", None) = production case.
+TIERS = {"A": {"Z1": ("prod", None), "Z2": ("prod", None), "Z3": ("sens", "z3_top_only")},
+         "B": {"Z1": ("sens", "z1_bottom_plate_tim"), "Z2": ("sens", "z2_cooled_tim"),
+               "Z3": ("sens", "z3_plate_tim")},
+         "I": {"Z2": ("sens", "z2_cooled"), "Z3": ("prod", None)}}
+
+
+def case_record(kind, arch, variant):
+    """One integration under one cooling configuration, read from its case file."""
+    f = (D / f"etm_{arch}_HV_S0_h1.1_r21.json" if kind == "prod"
+         else D / "sensitivity" / f"etm_{arch}_HV_S0__{variant}.json")
+    if not f.exists():
+        return None
+    c = json.loads(f.read_text())
+    m = c.get("mechanics") or {}
+    crit = (m.get("joint_search") or {}).get("critical") or {}
+    h = c["et_history"][-1]
+    g = ledger_groups(c["ledger_rows"])
+    th = c["thermal"]
+    q_bottom = th.get("q_bottom_plate_W", th.get("q_extra_W"))
+    loc = (c.get("local") or {}).get("d_peeq_per_cycle")
+    return {"P": c["P_loss_w"], "conv": g.get("conv", 0.0),
+            "route": c["P_loss_w"] - g.get("conv", 0.0), "Tmax": th["T_max_C"],
+            "Tdie": h.get("T_die_mean_C"), "Tls": h.get("T_ls_C"),
+            "warp": m.get("die_warpage_pv_um"), "du": crit.get("du_um"),
+            "Tj": crit.get("T_C"), "qb": q_bottom, "eps": loc,
+            "Tjhot": max((x["T_C"] for x in (m.get("joint_search") or {}).get("ranked", [])),
+                         default=None),
+            "converged": c.get("et_converged"), "file": f.name}
+
+
+def tier_cases(S):
+    out = {}
+    for t, row in TIERS.items():
+        for a, (kind, v) in row.items():
+            r = case_record(kind, a, v)
+            if r is None:
+                continue
+            if kind == "prod" and (a, "HV_S0") in S:        # production local response
+                r["eps"] = S[(a, "HV_S0")].get("d_eps_in_per_cycle")
+            out[(t, a)] = r
+    return out
+
+
+def tier_macros(T):
+    """\\<Obs><Tier><Arch>, e.g. \\PlossAZthree, \\WarpBZone, \\QbotBZtwo."""
+    nd = {"Ploss": ("P", 1), "Pconv": ("conv", 1), "Proute": ("route", 1),
+          "Tmax": ("Tmax", 1), "Tdie": ("Tdie", 1), "Tls": ("Tls", 1), "Warp": ("warp", 1),
+          "Du": ("du", 2), "Tjoint": ("Tj", 1), "TjointHot": ("Tjhot", 1), "Qbot": ("qb", 0)}
+    out = {}
+    for (t, a), r in T.items():
+        for name, (key, n) in nd.items():
+            if r.get(key) is not None:
+                out[f"{name}{t}{ATAG[a]}"] = fx(r[key], n)
+        if r.get("eps"):
+            out[f"Eps{t}{ATAG[a]}"] = fx(1e3 * r["eps"], 2)
+    # differences against Z1 within a tier, and the gain of each integration from A to B
+    for t in ("A", "B"):
+        for b in ("Z2", "Z3"):
+            if (t, "Z1") in T and (t, b) in T:
+                d = T[(t, b)]["P"] - T[(t, "Z1")]["P"]
+                out[f"Gap{t}{ATAG[b]}"] = fx(abs(d), 1)
+                out[f"Lead{t}{ATAG[b]}"] = "Z1" if d > 0 else b
+    for a in ARCHS:
+        if ("A", a) in T and ("B", a) in T:
+            out[f"GainB{ATAG[a]}"] = fx(T[("A", a)]["P"] - T[("B", a)]["P"], 1)
+            out[f"CoolB{ATAG[a]}"] = fx(T[("A", a)]["Tmax"] - T[("B", a)]["Tmax"], 0)
+    return out
+
+
+def isothermal_macros():
+    """The uncoupled comparison: every region of every integration at one temperature."""
+    try:
+        import final_closure_ledger as FL
+    except Exception:                                         # noqa: BLE001
+        return {}
+    keys = ("conv", "hs", "ls", "ind", "caps", "bga", "sub", "interface", "attach", "pcb_via")
+    out = {}
+    for T, tag in ((25.0, "Iso"), (100.0, "IsoHot")):
+        vals = {}
+        for a in ARCHS:
+            try:
+                L = FL.self_consistent(a, "HV_S0", {k: T for k in keys})
+            except Exception:                                 # noqa: BLE001
+                continue
+            conv = sum(r["P_w"] for r in L["rows"] if r["term"].startswith("P_conv"))
+            vals[a] = L["P_loss_w"]
+            out[f"P{tag}{ATAG[a]}"] = fx(L["P_loss_w"], 1)
+            out[f"Proute{tag}{ATAG[a]}"] = fx(L["P_loss_w"] - conv, 1)
+            out[f"Pconv{tag}"] = fx(conv, 1)
+        for b in ("Z2", "Z3"):
+            if "Z1" in vals and b in vals:
+                out[f"Gap{tag}{ATAG[b]}"] = fx(abs(vals[b] - vals["Z1"]), 1)
     return out
 
 
@@ -403,46 +512,41 @@ def network_macros():
 
 
 def compare_table(S, mac):
-    cols = [a for a in ARCHS]
+    """Table II: the three integrations under the three-tier comparison."""
+    A = ("Z1", "Z2", "Z3")
 
-    def cell(a, key, s="HV_S0"):
-        return mac.get(f"{key}{ATAG[a]}{STAG[s]}", NA)
-
-    def both(a, key):
-        """S0 value with the S1 value in parentheses."""
-        v0, v1 = cell(a, key), cell(a, key, "HV_S1")
-        return v0 if v1 == NA else f"{v0} ({v1})"
+    def m(key, a):
+        return mac.get(f"{key}{ATAG[a]}", NA)
 
     def row(label, f):
-        return f"{label} & " + " & ".join(f(a) for a in cols) + r" \\"
+        return f"{label} & " + " & ".join(f(a) for a in A) + r" \\"
 
-    def loc(a):
-        x = S.get((a, "HV_S0"))
-        if not x:
-            return NA
-        cx, cy = x["critical_joint_xy_mm"]
-        return f"({cx:.1f}, {cy:.1f})"
+    def du_at(t):
+        def f(a):
+            du, tj = m(f"Du{t}", a), m(f"Tjoint{t}", a)
+            return NA if du == NA else f"{du} ({tj})"
+        return f
 
-    def rstar(a, s):
-        if a == "Z1":
-            return "n/a"
-        return mac.get(f"Rstar{ATAG[a]}{STAG_X[s]}", NA)
+    def rstar(t):
+        def f(a):
+            if a == "Z1":
+                return "n/a"
+            return mac.get(f"RstarTier{t}{ATAG[a]}", NA)
+        return f
 
     def calib(a):
-        flags = []
-        for s in ("HV_S0", "HV_S1"):
-            x = S.get((a, s))
-            if not x:
-                flags.append(NA)
-            else:
-                flags.append("yes" if x["T_joint_C"] <= NORTON_T_MAX_C else "no")
-        return "/".join(flags)
+        out = []
+        for t in ("A", "B"):
+            tj = mac.get(f"TjointHot{t}{ATAG[a]}")
+            out.append(NA if tj in (None, NA) else ("yes" if float(tj) <= NORTON_T_MAX_C
+                                                    else "no"))
+        return "/".join(out)
 
     L = [r"% GENERATED by scripts/tcpmt_manuscript_macros.py -- do not edit",
          r"\begin{table}[!t]",
-         r"\caption{The three integrations evaluated by the framework with one regulator "
-         r"(Z3 with its own converter cold plate). Smoothed input (S0); pulsed input (S1) in "
-         r"parentheses where it changes the result. Loss inside the package-internal "
+         r"\caption{The three integrations compared at S0 three ways: at one common temperature "
+         r"(no electrothermal coupling), with the same top cold plate (cooling~A), and with the "
+         r"same top and bottom cold plates (cooling~B). Loss inside the package-internal "
          r"boundary.}",
          r"\label{tab:compare}", r"\centering", r"\footnotesize",
          r"\setlength{\tabcolsep}{3pt}",
@@ -450,42 +554,42 @@ def compare_table(S, mac):
          r" & Z1 & Z2 & Z3 \\",
          r" & {\scriptsize embedded} & {\scriptsize pkg.\ backside} & "
          r"{\scriptsize board backside} \\", r"\midrule",
-         r"\multicolumn{4}{@{}l}{\emph{Electrical (W)}}\\",
-         row("Conversion", lambda a: cell(a, "Pconv")),
-         row("Intra-cell routing", lambda a: cell(a, "Pintra")),
-         row("48-V package path", lambda a: both(a, "Phv")),
-         row("TSV field", lambda a: cell(a, "Ptsv")),
-         row("VR attach", lambda a: cell(a, "Patt")),
-         row("Board vias, 1-V BGA", lambda a: cell(a, "Pboard")
-             + (r"$^\dagger$" if a == "Z3" and cell(a, "Pboard") != NA else "")),
-         row("Package-internal total", lambda a: both(a, "Ploss")),
-         row("Feed limit $R^*$ (m$\\Omega$)",
-             lambda a: rstar(a, "HV_S0") if rstar(a, "HV_S1") in (NA, "n/a")
-             else f"{rstar(a, 'HV_S0')} ({rstar(a, 'HV_S1')})"),
-         r"\midrule", r"\multicolumn{4}{@{}l}{\emph{Thermal ($^\circ$C)}}\\",
-         row("Peak", lambda a: both(a, "Tmax")),
-         row("Die, mean", lambda a: cell(a, "Tdie")),
-         row("Converter, mean", lambda a: cell(a, "Tconv")),
-         row("Critical joint", lambda a: both(a, "Tjoint")),
-         r"\midrule", r"\multicolumn{4}{@{}l}{\emph{Mechanical}}\\",
-         row("Die warpage (\\textmu m)", lambda a: cell(a, "Warp")),
-         row("Joint sites searched", lambda a: cell(a, "Njoint")),
-         row("Critical joint $(x, y)$ (mm)", loc),
-         row("$\\du$ (\\textmu m)", lambda a: both(a, "Du")),
-         row("$\\deps$ ($10^{-3}$/cycle)", lambda a: cell(a, "Eps")),
-         row("\\quad uncertainty $U$ (\\%)", lambda a: cell(a, "EpsU")),
-         r"\midrule", r"\multicolumn{4}{@{}l}{\emph{Rules and cost}}\\",
+         r"\multicolumn{4}{@{}l}{\emph{Common temperature (no coupling)}}\\",
+         row("Loss at 25\\,$^\\circ$C (W)", lambda a: m("PIso", a)),
+         row("Loss at 100\\,$^\\circ$C (W)", lambda a: m("PIsoHot", a)),
+         row("\\quad of which routing", lambda a: m("ProuteIsoHot", a)),
+         r"\midrule", r"\multicolumn{4}{@{}l}{\emph{Cooling A: top plate}}\\",
+         row("Loss (W)", lambda a: m("PlossA", a)),
+         row("\\quad conversion / routing",
+             lambda a: NA if m("PconvA", a) == NA else f"{m('PconvA', a)} / {m('ProuteA', a)}"),
+         row("Peak temperature ($^\\circ$C)", lambda a: m("TmaxA", a)),
+         row("Low-side tier ($^\\circ$C)", lambda a: m("TlsA", a)),
+         row("Die warpage (\\textmu m)", lambda a: m("WarpA", a)),
+         row("$\\du$ (\\textmu m) at $T_{\\mathrm{j}}$ ($^\\circ$C)", du_at("A")),
+         row("$\\deps$ ($10^{-3}$/cycle)", lambda a: m("EpsA", a)),
+         r"\midrule",
+         r"\multicolumn{4}{@{}l}{\emph{Cooling B: top and bottom plates}}\\",
+         row("Loss (W)", lambda a: m("PlossB", a)),
+         row("\\quad conversion / routing",
+             lambda a: NA if m("PconvB", a) == NA else f"{m('PconvB', a)} / {m('ProuteB', a)}"),
+         row("Peak temperature ($^\\circ$C)", lambda a: m("TmaxB", a)),
+         row("Heat to bottom plate (W)", lambda a: m("QbotB", a)),
+         row("Die warpage (\\textmu m)", lambda a: m("WarpB", a)),
+         row("$\\du$ (\\textmu m) at $T_{\\mathrm{j}}$ ($^\\circ$C)", du_at("B")),
+         r"\midrule", r"\multicolumn{4}{@{}l}{\emph{Rules}}\\",
          row("BGA sites for power", lambda a: {"Z1": str(2 * int(mac.get("NballMatched", 0)))
                                                if mac.get("NballMatched") else NA,
                                                "Z2": "0", "Z3": "1334"}[a]),
          row("Worst via aspect ratio", lambda a: "0.83"),
-         row("Joint $\\le 125\\,^\\circ$C, S0/S1", calib),
-         row("E--T iterations", lambda a: cell(a, "EtIters")),
+         row("Feed limit $R^*$, A / B (m$\\Omega$)",
+             lambda a: "n/a" if a == "Z1" else f"{rstar('A')(a)} / {rstar('B')(a)}"),
+         row("Joints $\\le 125\\,^\\circ$C, A/B", calib),
          r"\bottomrule", r"\end{tabular}",
-         r"\par\smallskip\raggedright\footnotesize $^\dagger$Lower bound: the land-side and "
-         r"board-plane 1-V redistribution is not in the coupled solution; a sheet estimate "
+         r"\par\smallskip\raggedright\footnotesize Z3 routing is a lower bound: the land-side "
+         r"and board-plane 1-V redistribution is not in the coupled solution; a sheet estimate "
          r"adds " + mac.get("LandPmin", NA) + "--" + mac.get("LandPmax", NA) + r"~W "
-         r"(Section~\ref{sec:compare}).", r"\end{table}", ""]
+         r"(Section~\ref{sec:compare}). Feed limit with the Z3 lower-bound ledger.",
+         r"\end{table}", ""]
     return "\n".join(L)
 
 

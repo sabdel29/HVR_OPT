@@ -1,104 +1,88 @@
 % ============================================================================ COMPARE
 \section{Comparing Integrations}\label{sec:compare}
 
-In comparison mode the same synthesized regulator, device set and cell grid are placed in each
-integration, and every output is reported inside declared loss boundaries
-(Table~\ref{tab:compare}). Z1 and Z2 share the top cold plate. Z3 also carries a second plate
-under the converter, because the board it hangs from blocks the upward heat path; two variants
-in Section~\ref{sec:explore} separate the effect of that plate from the effect of the placement.
-Because the regulator is identical, model-form errors common to all columns---the converter loss
-model, the device temperature coefficients, the solder law---largely cancel in the differences.
+In comparison mode the same synthesized regulator---cell count, topology, devices, passives and
+tier stack---is placed in each integration, and every output is reported inside declared loss
+boundaries. Because the integrations differ in how the converter can be cooled, they are compared
+three ways (Table~\ref{tab:compare}, Fig.~\ref{fig:tiers}): at one common temperature, which is
+what an analysis without electrothermal coupling sees; with the same top cold plate (cooling~A);
+and with the same top plate and an identical bottom plate under the cell grid, behind the same
+50-\textmu m thermal interface as the top plate (cooling~B). Model-form errors common to all
+columns---the converter loss model, the device temperature coefficients, the solder
+law---largely cancel in the differences.
 
 \input{tab_compare}
 
-\subsection{Electrical: the loss swap and its thermal price}\label{sec:compare-elec}
-Moving the regulator out of the package removes the package 48-V network, \PhvZone~W in Z1,
-and sends the kiloampere 1-V current through new conductors (Fig.~\ref{fig:loss}): the
-Cu-pillar attach and the TSV field in Z2 (\PattZtwo{} and \PtsvZtwo~W); the board-level attach,
-the board via field with the ball field, and the TSVs in Z3 (\PattZthree, \PboardZthree{} and
-\PtsvZthree~W). A room-temperature analysis stops here. It prefers Z2 over Z1 by
-\DeltaPrtZtwoSzero~W and ranks Z3 last, because its routing costs \dProuteAbsZthreeSzero~W more
-than that of Z1. The coupled solution reverses both conclusions. The converter of Z2 is cooled
-only through the attach and the substrate, so its low-side tier runs \dTlsAbsZtwoSzero~K hotter
-than in Z1 and its conversion loss rises by \dPconvAbsZtwoSzero~W, about \ConvToRouteZtwo{} times
-the \dProuteAbsZtwoSzero~W it saves in routing: Z1 has the lower package-internal loss, by
-\LossGapZtwoSzero~W. The converter of Z3, cooled from below by its own plate, runs
-\dTlsAbsZthreeSzero~K cooler than in Z1 and dissipates \dPconvAbsZthreeSzero~W less, \ConvToRouteZthree{} times
-its routing penalty: Z3 has the lowest loss of the three, \LossGapZthreeSzero~W below Z1. Which
-integration is electrically better is thus decided by the thermal path of its converter as much
-as by the rail its interconnect carries, and an analysis that holds the converter loss fixed
-gets the order wrong in both directions.
+\subsection{Placement alone}\label{sec:compare-elec}
+At a common temperature the conversion loss is identical by construction, and the integrations
+differ only in routing (Fig.~\ref{fig:loss}). Moving the regulator out of the package removes
+the package 48-V network, \PhvZone~W in Z1, and sends the kiloampere 1-V current through new
+conductors: the Cu-pillar attach and the TSV field in Z2 (\PattZtwo{} and \PtsvZtwo~W), and the
+board-level attach, the board via field with the ball field, and the TSVs in Z3 (\PattZthree,
+\PboardZthree{} and \PtsvZthree~W). At 100\,$^\circ$C, Z2 is \GapIsoHotZtwo~W below Z1 and Z3
+\GapIsoHotZthree~W above it. Z3 pays more than its ledger shows. At 1.5~A per ball its 1-V
+current needs 1334 of the 1369 sites of the 0.8-mm ball array, leaving 35 for every signal and
+auxiliary rail, and only \LandBallsInside{} balls per rail lie under the cells. The current of
+the rest must spread laterally in the land side of the package; a sheet solution of that
+redistribution, which the coupled ledger does not contain, adds \LandPmin--\LandPmax~W and
+\LandDVmin--\LandDVmax~mV of drop for \LandTmax--\LandTmin~\textmu m of land-side copper.
+Carrying the current straight down under the cells would require a ball pitch of
+\PitchMaxZthree~mm.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{fig5_loss_swap.pdf}
 \caption{(a) Current per regulator cell in each class of connection, by rail. (b), (c)
-Package-internal loss of Z2 and of Z3 minus that of Z1 at S0, term by term: the routing each
-integration removes or adds, and the change of conversion loss caused by the converter's own
+Package-internal loss of Z2 and of Z3 minus that of Z1 under cooling~A, term by term: the routing
+each integration removes or adds, and the change of conversion loss caused by the converter's own
 temperature (low-side tier temperature difference in parentheses).}
 \label{fig:loss}
 \end{figure}
 
-The Z3 ledger is nonetheless a lower bound, and the package rules expose why. At 1.5~A per ball
-the 1-V current needs 1334 of the 1369 sites of the 0.8-mm ball array, leaving 35 for every
-signal and auxiliary rail, and only \LandBallsInside{} balls per rail lie under the cells. The
-current of the rest must spread laterally in the land side of the package to the TSV fields; a
-sheet solution of that redistribution, which the coupled ledger does not contain, adds
-\LandPmin--\LandPmax~W and \LandDVmin--\LandDVmax~mV of drop for \LandTmax--\LandTmin~\textmu m
-of land-side copper; because that loss scales as \LandPT~W\,\textmu m divided by the copper
-thickness, the \LossGapZthreeSzero-W lead of Z3 survives only with more than \LandTie~\textmu m
-of land-side copper per rail. Carrying the current straight down under the cells would instead
-require a ball pitch of \PitchMaxZthree~mm. The board-backside regulator therefore trades the
-board opening for a ball field that the package as specified cannot provide.
+\subsection{The same top cold plate}
+With one top plate the converter's thermal path decides the ranking, and it reverses the
+placement-alone result twice. The converter of Z2 is cooled only through the attach and the
+substrate, so its low-side tier runs \dTlsAbsZtwoSzero~K hotter than in Z1 and its conversion loss
+rises by \dPconvAbsZtwoSzero~W, about \ConvToRouteZtwo{} times the \dProuteAbsZtwoSzero~W it saves
+in routing: Z1 has the lower loss, by \GapAZtwo~W. The converter of Z3 must push its heat up
+through 2.4~mm of board: it reaches \TmaxAZthree\,$^\circ$C and dissipates \PlossAZthree~W,
+\GapAZthree~W more than Z1. The cooling solution of the embedded and package-backside
+integrations does not survive the board-backside one. Mechanically, Z1 sandwiches the converter
+between the die and the substrate on the full ball array and its die warps by \WarpAZone~\textmu m;
+Z2 is a thin silicon plate that carries the encapsulated converter on one side and rests on a
+ring of balls around the opening, a bimetal strip whose die warps \WarpRatioZtwo{} times as much
+and whose critical joint moves \DuRatioZtwo{} times as far (Fig.~\ref{fig:fields}).
+% TODO(data): Z3 under cooling A, mechanical sentence
 
-The input waveform changes the ranking again. Without local input decoupling (S1) the pulsed
-current reaches the package 48-V network of Z1 but not the directly fed backside regulators, and
-Z2 has the lower package-internal loss by \LossGapZtwoSone~W; under S2, Z1 has no admissible
-operating point (Section~\ref{sec:evaluate}). The direct feed itself lies outside the package
-boundary; its loop resistance enters through~\eqref{eq:feed} and is treated as a requirement
-(Fig.~\ref{fig:feed}). Where a backside regulator is ahead at zero feed resistance, $R^*$ is the
-largest loop resistance that keeps it ahead; where it is behind, no feed recovers the
-difference. Z2 is behind at S0 and needs a loop below \RstarZtwoSone~m$\Omega$ at S1, about
-\RstarOverLoopZtwo{} times the package 48-V loop of Z1 (\RloopZone~m$\Omega$); Z3 keeps its lower-bound lead up
-to \RstarZthreeSzero~m$\Omega$ at S0 and \RstarZthreeSone~m$\Omega$ at S1.
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig8_tiers.pdf}
+\caption{The three integrations at S0 compared three ways. (a) Package-internal loss at one
+common temperature (no electrothermal coupling) and coupled under cooling~A (the same top cold
+plate) and cooling~B (the same top and bottom plates). (b) Peak temperature, (c) die warpage and
+(d) critical-joint displacement under cooling~A and~B. Open diamonds: the interface-free bottom
+plate, a bound.}
+\label{fig:tiers}
+\end{figure*}
+
+\subsection{The same top and bottom cold plates}
+% TODO(data): cooling B results -- which integration can use the bottom plate (Z1 only through
+% substrate, balls and 2.4 mm of board; Z2 and Z3 directly), losses, temperatures, warpage, joints;
+% the interface-free bound; R* under B.
+
+The direct 48-V feed of the backside integrations lies outside the package boundary; its loop
+resistance enters through~\eqref{eq:feed} and is treated as a requirement (Fig.~\ref{fig:feed}).
+Where a backside regulator is ahead at zero feed resistance, $R^*$ is the largest loop resistance
+that keeps it ahead; where it is behind, no feed recovers the difference. Under cooling~A, Z2 is
+behind at S0 and needs a loop below \RstarZtwoSone~m$\Omega$ at S1, about \RstarOverLoopZtwo{}
+times the package 48-V loop of Z1 (\RloopZone~m$\Omega$).
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{fig6_crossover.pdf}
 \caption{Platform-inclusive loss of the directly fed backside integrations minus that of Z1,
 against the external feed-loop resistance. (a) S0. (b) S1. Below zero the backside integration
-has the lower platform-inclusive loss; circles mark the crossover $R^*$. The Z3 curves use its
-lower-bound ledger. Dashed: the package 48-V loop resistance of Z1, for scale.}
+has the lower platform-inclusive loss; circles mark the crossover $R^*$. Dashed: the package
+48-V loop resistance of Z1, for scale.}
 \label{fig:feed}
 \end{figure}
-
-\subsection{Thermal and mechanical}
-The same placement decides the thermal and mechanical state (Fig.~\ref{fig:fields}). In Z1 the
-converter sits directly beneath the die, in the main heat path to the cold plate; the peak,
-\TmaxZone\,$^\circ$C, is in its low-side tier. In Z2 the converter heat must cross the attach and
-the substrate before it reaches the die, and the peak rises to \TmaxZtwo\,$^\circ$C. In Z3 the
-second plate removes \QplateZthree~W from below---the converter loss and a further
-\QdieDownZthree~W of die heat that crosses the board via field---so the peak falls to
-\TmaxZthree\,$^\circ$C and the die averages \TdieZthree\,$^\circ$C against \TdieZone\,$^\circ$C in Z1.
-
-Mechanically, Z1 sandwiches the converter between the die and the substrate and is held by the
-full array; its die warps by \WarpZone~\textmu m. Z2 is a thin silicon plate that carries the
-encapsulated converter on one side and rests on a ring of balls around the opening, a bimetal
-strip whose die warps by \WarpZtwo~\textmu m, \WarpRatioZtwo{} times as much, and whose critical
-joint moves \DuRatioZtwo{} times as far. Z3 keeps the uncut board and the full array and moves the
-converter's expansion below the board: its die warps by \WarpZthree~\textmu m and its critical
-joint moves \DuZthree~\textmu m. Removing the board opening is thus the strongest single
-mechanical decision among the three, but it is bought with the ball field of
-Section~\ref{sec:compare-elec} and, as Section~\ref{sec:explore} shows, partly with the second
-plate. % TODO(data): check signs/claims against final numbers; local response sentence
-
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{fig8_scenarios.pdf}
-\caption{Every integration under the three 48-V input scenarios: (a) package-internal loss,
-(b) peak temperature, (c) die warpage, (d) critical-joint displacement, (e) local inelastic
-strain increment. Whiskers: discretization uncertainty (package mesh for (a)--(d), local
-uncertainty $U$ for (e)). Hatched and clipped: no admissible operating point; open marker:
-joint temperature beyond the calibration of the solder law.}
-\label{fig:scenarios}
-\end{figure*}

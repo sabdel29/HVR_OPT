@@ -1,4 +1,4 @@
-"""Fig. 7: converged fields of every integration at S0.
+"""Fig. 7: converged fields of every integration at S0 under cooling A (the same top plate).
 
 (a)-(c) Temperature on the vertical section y = 0 (middle row of cells), drawn element by
         element so voids (board opening, sidewall ring) stay empty; shared heat scale.
@@ -19,7 +19,11 @@ import frd
 
 S.setup()
 F = S.FIELDS
-ARCHS = [a for a in ("Z1", "Z2", "Z3") if (F / f"etm_{a}_HV_S0_r21" / "structural.frd").exists()]
+#: cooling A (the same top cold plate): production fields for Z1/Z2, the top-only case for Z3
+SRC_FIELD = {"Z1": ("etm_Z1_HV_S0_r21", "etm_Z1_HV_S0_h1.1_r21.json"),
+             "Z2": ("etm_Z2_HV_S0_r21", "etm_Z2_HV_S0_h1.1_r21.json"),
+             "Z3": ("etm_Z3_HV_S0__z3_top_only", "sensitivity/etm_Z3_HV_S0__z3_top_only.json")}
+ARCHS = [a for a in ("Z1", "Z2", "Z3") if (F / SRC_FIELD[a][0] / "structural.frd").exists()]
 N = len(ARCHS)
 VEX = 2.0                                   # vertical exaggeration of the sections
 GEO = (S.J("architecture_geometry.json") or {}).get("architectures", {})
@@ -55,9 +59,9 @@ def die_top(ds, a):
 
 data = {}
 for a in ARCHS:
-    dt = frd.read(F / f"etm_{a}_HV_S0_r21" / "thermal_converged.frd")
-    ds = frd.read(F / f"etm_{a}_HV_S0_r21" / "structural.frd")
-    case = json.loads((S.FC / f"etm_{a}_HV_S0_h1.1_r21.json").read_text())
+    dt = frd.read(F / SRC_FIELD[a][0] / "thermal_converged.frd")
+    ds = frd.read(F / SRC_FIELD[a][0] / "structural.frd")
+    case = json.loads((S.FC / SRC_FIELD[a][1]).read_text())
     T = dt["NDTEMP"][:, 0]
     data[a] = dict(sec=section(dt, T), tmax=float(T.max()), die=die_top(ds, a),
                    js=case["mechanics"]["joint_search"])

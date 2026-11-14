@@ -14,9 +14,14 @@ import matplotlib.pyplot as plt
 import style as S
 
 S.setup()
-L = S.J("electrical_ledger.json")["rows"]
-FIN = {(x["arch"], x["scenario"]): x for x in S.J("final_results.json")}
+import json
 SCEN = "HV_S0"
+#: cooling A (the same top plate): production cases for Z1/Z2, the top-only case for Z3
+CASE = {"Z1": "etm_Z1_HV_S0_h1.1_r21.json", "Z2": "etm_Z2_HV_S0_h1.1_r21.json",
+        "Z3": "sensitivity/etm_Z3_HV_S0__z3_top_only.json"}
+CJ = {a: json.loads((S.FC / f).read_text()) for a, f in CASE.items() if (S.FC / f).exists()}
+L = [dict(r, arch=a, scenario=SCEN) for a, c in CJ.items() for r in c["ledger_rows"]]
+FIN = {(a, SCEN): {"I_48_avg_a": c["i_hv_avg_a"]} for a, c in CJ.items()}
 
 
 def tot(a, pred, s=SCEN):
@@ -69,9 +74,7 @@ axA.text(60, -0.5, f"×49 cells: {i48:.1f} A at 48 V,\n1.0 kA at 1 V",
 
 
 def T_ls(a):
-    import json
-    c = json.loads((S.FC / f"etm_{a}_{SCEN}_h1.1_r21.json").read_text())
-    return c["et_history"][-1]["T_ls_C"]
+    return CJ[a]["et_history"][-1]["T_ls_C"]
 
 
 def fmt(d):
@@ -137,6 +140,6 @@ for k, (ax, a) in enumerate(zip(axes, archs)):
     ax.spines["left"].set_visible(False)
     ax.set_xlabel("$\\Delta P$ (W)", labelpad=1.5)
     S.panel(ax, "bcd"[k], f"{a} $-$ Z1", y=1.02)
-fig.text(0.40, 0.615, "Package-internal loss difference at S0", ha="left", va="bottom",
+fig.text(0.40, 0.615, "Loss difference, cooling A (S0)", ha="left", va="bottom",
          fontsize=7, color=S.INK)
 S.save(fig, "fig5_loss_swap")
