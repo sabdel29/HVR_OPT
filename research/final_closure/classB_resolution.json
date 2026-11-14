@@ -1,0 +1,4779 @@
+{
+ "rule": "a B1 gate is resolved when every case it needs exists and carries a verdict formed with the ordering.json rule; PAPER_READY requires every B1 gate resolved",
+ "summary": {
+  "n_gates": 33,
+  "subtypes": {
+   "B1": 30,
+   "B2": 3,
+   "B3": 0
+  },
+  "b1_resolved": 30,
+  "b1_total": 30,
+  "all_b1_resolved": true,
+  "orderings_that_move": [
+   "P_loss_package_internal_w under t_cu=0.002, occupancy=0.3",
+   "P_loss_package_internal_w under z1_tier_reference",
+   "P_loss_package_internal_w under z2_cooled",
+   "P_loss_package_internal_w under z2_cooled_tim",
+   "T_max_C under z1_tier_reference",
+   "T_max_C under z2_cooled",
+   "T_max_C under z2_cooled_tim",
+   "d_eps_in_per_cycle under conv_k_tenth",
+   "d_eps_in_per_cycle under f2_void",
+   "d_eps_in_per_cycle under z1_tier_reference",
+   "d_eps_in_per_cycle under z2_cooled",
+   "d_eps_in_per_cycle under z2_cooled_tim",
+   "die_warpage_pv_um under z2_cooled",
+   "die_warpage_pv_um under z2_cooled_tim",
+   "du_c_um under conv_k_tenth",
+   "du_c_um under f2_void",
+   "du_c_um under z1_tier_reference",
+   "du_c_um under z2_cooled",
+   "du_c_um under z2_cooled_tim"
+  ]
+ },
+ "gates": [
+  {
+   "gate": "board.h1_meshed",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "PCB-H1: the 18-layer schedule as five depth blocks (pcb_h1.py), against H0 on the same z grid",
+   "rationale": "the board is the bottom heat path and the mechanical support",
+   "method": "runs",
+   "cases_run": [
+    "board_h1",
+    "board_h0_h1grid"
+   ],
+   "max_change_rel": 0.235400091654199,
+   "architecture_gap_rel_min": 0.020544475732459745,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "board_h1",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 142.4161714014036,
+     "Z2": 147.2668259361614,
+     "change_rel": {
+      "Z1": -0.013121459981729183,
+      "Z2": -0.001157764090680034
+     },
+     "gap_rel": 0.03293786298389099,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h1",
+     "observable": "T_max_C",
+     "Z1": 112.554,
+     "Z2": 123.981,
+     "change_rel": {
+      "Z1": -0.02687981463389325,
+      "Z2": -0.00283912686795252
+     },
+     "gap_rel": 0.09216734822271148,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h1",
+     "observable": "die_warpage_pv_um",
+     "Z1": 24.252609999999997,
+     "Z2": 65.63250000000001,
+     "change_rel": {
+      "Z1": -0.050360706627886505,
+      "Z2": -0.044366886236961195
+     },
+     "gap_rel": 0.6304786500590409,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h1",
+     "observable": "du_c_um",
+     "Z1": 2.0755425443459563,
+     "Z2": 2.5575905730793083,
+     "change_rel": {
+      "Z1": -0.06010735759536744,
+      "Z2": -0.17158726875848984
+     },
+     "gap_rel": 0.18847740283659709,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h1",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005128144683984356,
+     "Z2": 0.006137361562499981,
+     "change_rel": {
+      "Z1": -0.11515459763997347,
+      "Z2": -0.235400091654199
+     },
+     "gap_rel": 0.16443823102781838,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h0_h1grid",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.30973417069129,
+     "Z2": 147.33668920659719,
+     "change_rel": {
+      "Z1": 5.8753109981954584e-08,
+      "Z2": -0.0006839140921728562
+     },
+     "gap_rel": 0.020544475732459745,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h0_h1grid",
+     "observable": "T_max_C",
+     "Z1": 115.699,
+     "Z2": 124.308,
+     "change_rel": {
+      "Z1": 0.0003112490597684771,
+      "Z2": -0.0002091141602457594
+     },
+     "gap_rel": 0.06925539788267858,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h0_h1grid",
+     "observable": "die_warpage_pv_um",
+     "Z1": 24.803219999999996,
+     "Z2": 68.6364,
+     "change_rel": {
+      "Z1": -0.028800928471077056,
+      "Z2": -0.0006290077402898823
+     },
+     "gap_rel": 0.6386287742364111,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h0_h1grid",
+     "observable": "du_c_um",
+     "Z1": 2.1601053431983486,
+     "Z2": 3.0866563749374754,
+     "change_rel": {
+      "Z1": -0.02181377856032431,
+      "Z2": -0.00022096387095102857
+     },
+     "gap_rel": 0.30017952087650035,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h0_h1grid",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005502909773046856,
+     "Z2": 0.008024316308593727,
+     "change_rel": {
+      "Z1": -0.05049004808901345,
+      "Z2": -0.00032099272487676216
+     },
+     "gap_rel": 0.3142207309109368,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h1 vs board_h0_h1grid",
+     "observable": "P_loss_package_internal_w",
+     "change_rel": {
+      "Z1": -0.013121517963909176,
+      "Z2": -0.0004741742929882985
+     },
+     "verdict": "material effect only",
+     "within_mesh_tolerance": true,
+     "robust": null
+    },
+    {
+     "case": "board_h1 vs board_h0_h1grid",
+     "observable": "T_max_C",
+     "change_rel": {
+      "Z1": -0.02718260313399421,
+      "Z2": -0.002630562795636744
+     },
+     "verdict": "material effect only",
+     "within_mesh_tolerance": false,
+     "robust": null
+    },
+    {
+     "case": "board_h1 vs board_h0_h1grid",
+     "observable": "die_warpage_pv_um",
+     "change_rel": {
+      "Z1": -0.022199133822140796,
+      "Z2": -0.04376540727660524
+     },
+     "verdict": "material effect only",
+     "within_mesh_tolerance": false,
+     "robust": null
+    },
+    {
+     "case": "board_h1 vs board_h0_h1grid",
+     "observable": "du_c_um",
+     "change_rel": {
+      "Z1": -0.03914753468790777,
+      "Z2": -0.1714041790184319
+     },
+     "verdict": "material effect only",
+     "within_mesh_tolerance": false,
+     "robust": null
+    },
+    {
+     "case": "board_h1 vs board_h0_h1grid",
+     "observable": "d_eps_in_per_cycle",
+     "change_rel": {
+      "Z1": -0.068103077193468,
+      "Z2": -0.2351545818393141
+     },
+     "verdict": "material effect only",
+     "within_mesh_tolerance": false,
+     "robust": null
+    }
+   ]
+  },
+  {
+   "gate": "board.h1_thermal_validated",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C",
+   "range_source": "H1 vs H0 on the H1 z grid",
+   "rationale": "thermal half of the H0 model-form check",
+   "method": "runs",
+   "cases_run": [
+    "board_h1",
+    "board_h0_h1grid"
+   ],
+   "max_change_rel": 0.02718260313399421,
+   "architecture_gap_rel_min": 0.020544475732459745,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "board_h1",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 142.4161714014036,
+     "Z2": 147.2668259361614,
+     "change_rel": {
+      "Z1": -0.013121459981729183,
+      "Z2": -0.001157764090680034
+     },
+     "gap_rel": 0.03293786298389099,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h1",
+     "observable": "T_max_C",
+     "Z1": 112.554,
+     "Z2": 123.981,
+     "change_rel": {
+      "Z1": -0.02687981463389325,
+      "Z2": -0.00283912686795252
+     },
+     "gap_rel": 0.09216734822271148,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h0_h1grid",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.30973417069129,
+     "Z2": 147.33668920659719,
+     "change_rel": {
+      "Z1": 5.8753109981954584e-08,
+      "Z2": -0.0006839140921728562
+     },
+     "gap_rel": 0.020544475732459745,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h0_h1grid",
+     "observable": "T_max_C",
+     "Z1": 115.699,
+     "Z2": 124.308,
+     "change_rel": {
+      "Z1": 0.0003112490597684771,
+      "Z2": -0.0002091141602457594
+     },
+     "gap_rel": 0.06925539788267858,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h1 vs board_h0_h1grid",
+     "observable": "P_loss_package_internal_w",
+     "change_rel": {
+      "Z1": -0.013121517963909176,
+      "Z2": -0.0004741742929882985
+     },
+     "verdict": "material effect only",
+     "within_mesh_tolerance": true,
+     "robust": null
+    },
+    {
+     "case": "board_h1 vs board_h0_h1grid",
+     "observable": "T_max_C",
+     "change_rel": {
+      "Z1": -0.02718260313399421,
+      "Z2": -0.002630562795636744
+     },
+     "verdict": "material effect only",
+     "within_mesh_tolerance": false,
+     "robust": null
+    }
+   ]
+  },
+  {
+   "gate": "therm.h0_h1_compared",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C",
+   "range_source": "H1 vs H0 on the H1 z grid",
+   "rationale": "thermal half of the H0 model-form check",
+   "method": "runs",
+   "cases_run": [
+    "board_h1",
+    "board_h0_h1grid"
+   ],
+   "max_change_rel": 0.02718260313399421,
+   "architecture_gap_rel_min": 0.020544475732459745,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "board_h1",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 142.4161714014036,
+     "Z2": 147.2668259361614,
+     "change_rel": {
+      "Z1": -0.013121459981729183,
+      "Z2": -0.001157764090680034
+     },
+     "gap_rel": 0.03293786298389099,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h1",
+     "observable": "T_max_C",
+     "Z1": 112.554,
+     "Z2": 123.981,
+     "change_rel": {
+      "Z1": -0.02687981463389325,
+      "Z2": -0.00283912686795252
+     },
+     "gap_rel": 0.09216734822271148,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h0_h1grid",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.30973417069129,
+     "Z2": 147.33668920659719,
+     "change_rel": {
+      "Z1": 5.8753109981954584e-08,
+      "Z2": -0.0006839140921728562
+     },
+     "gap_rel": 0.020544475732459745,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h0_h1grid",
+     "observable": "T_max_C",
+     "Z1": 115.699,
+     "Z2": 124.308,
+     "change_rel": {
+      "Z1": 0.0003112490597684771,
+      "Z2": -0.0002091141602457594
+     },
+     "gap_rel": 0.06925539788267858,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_h1 vs board_h0_h1grid",
+     "observable": "P_loss_package_internal_w",
+     "change_rel": {
+      "Z1": -0.013121517963909176,
+      "Z2": -0.0004741742929882985
+     },
+     "verdict": "material effect only",
+     "within_mesh_tolerance": true,
+     "robust": null
+    },
+    {
+     "case": "board_h1 vs board_h0_h1grid",
+     "observable": "T_max_C",
+     "change_rel": {
+      "Z1": -0.02718260313399421,
+      "Z2": -0.002630562795636744
+     },
+     "verdict": "material effect only",
+     "within_mesh_tolerance": false,
+     "robust": null
+    }
+   ]
+  },
+  {
+   "gate": "board.eta_sensitivity_run",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "copper coverage eta 0.25 / 0.50 / 0.75 (config eta_sensitivity)",
+   "rationale": "board k_xy spans 34-98 W/mK and E 23-38 GPa over eta",
+   "method": "runs",
+   "cases_run": [
+    "board_eta025",
+    "board_eta075"
+   ],
+   "max_change_rel": 0.1937141330079804,
+   "architecture_gap_rel_min": 0.021211537038953548,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "board_eta025",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.31021650761605,
+     "Z2": 147.43759450437992,
+     "change_rel": {
+      "Z1": 3.4011260682054085e-06,
+      "Z2": 4.795084340410802e-07
+     },
+     "gap_rel": 0.021211537038953548,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_eta025",
+     "observable": "T_max_C",
+     "Z1": 115.797,
+     "Z2": 124.362,
+     "change_rel": {
+      "Z1": 0.0011585381669159572,
+      "Z2": 0.0002251998648800134
+     },
+     "gap_rel": 0.06887152023930138,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_eta025",
+     "observable": "die_warpage_pv_um",
+     "Z1": 22.06999,
+     "Z2": 68.85609999999998,
+     "change_rel": {
+      "Z1": -0.13582374398757024,
+      "Z2": 0.0025699043092850845
+     },
+     "gap_rel": 0.6794766186292862,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_eta025",
+     "observable": "du_c_um",
+     "Z1": 1.808804232219692,
+     "Z2": 2.8497621751720454,
+     "change_rel": {
+      "Z1": -0.1808976433439587,
+      "Z2": -0.07695184218611219
+     },
+     "gap_rel": 0.36527888257535346,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_eta025",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.004672850841015607,
+     "Z2": 0.007192543886718733,
+     "change_rel": {
+      "Z1": -0.1937141330079804,
+      "Z2": -0.10394420459755796
+     },
+     "gap_rel": 0.3503201489469979,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_eta075",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.31140663480448,
+     "Z2": 147.9625597289694,
+     "change_rel": {
+      "Z1": 1.164815988889622e-05,
+      "Z2": 0.003561073928598372
+     },
+     "gap_rel": 0.02467619579475328,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_eta075",
+     "observable": "T_max_C",
+     "Z1": 115.642,
+     "Z2": 126.107,
+     "change_rel": {
+      "Z1": -0.00018156195153161165,
+      "Z2": 0.014259977158299388
+     },
+     "gap_rel": 0.08298508409525247,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_eta075",
+     "observable": "die_warpage_pv_um",
+     "Z1": 23.600530000000003,
+     "Z2": 69.4634,
+     "change_rel": {
+      "Z1": -0.07589366124275404,
+      "Z2": 0.011412413584237315
+     },
+     "gap_rel": 0.660245107495458,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_eta075",
+     "observable": "du_c_um",
+     "Z1": 2.1831127248355395,
+     "Z2": 3.267732406134133,
+     "change_rel": {
+      "Z1": -0.011395072000586929,
+      "Z2": 0.058430210067882765
+     },
+     "gap_rel": 0.3319181458256996,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_eta075",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005720509576171855,
+     "Z2": 0.008670092207031221,
+     "change_rel": {
+      "Z1": -0.012943879403303646,
+      "Z2": 0.08013054784822057
+     },
+     "gap_rel": 0.34020199098543963,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "board.t_only_comparison_run",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C",
+   "range_source": "PCB 2.4 vs 3.2 mm, one material dict",
+   "rationale": "board thickness, thermal",
+   "method": "runs",
+   "cases_run": [
+    "board_t3p2"
+   ],
+   "max_change_rel": 0.00018156195153161165,
+   "architecture_gap_rel_min": 0.021212015232951142,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "board_t3p2",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.31140663480448,
+     "Z2": 147.43888245537724,
+     "change_rel": {
+      "Z1": 1.164815988889622e-05,
+      "Z2": 9.215079705642743e-06
+     },
+     "gap_rel": 0.021212015232951142,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_t3p2",
+     "observable": "T_max_C",
+     "Z1": 115.642,
+     "Z2": 124.331,
+     "change_rel": {
+      "Z1": -0.00018156195153161165,
+      "Z2": -2.4128556951438172e-05
+     },
+     "gap_rel": 0.06988603003273526,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "mech.t_only_mechanical",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "PCB 2.4 vs 3.2 mm, one material dict",
+   "rationale": "board thickness, mechanical",
+   "method": "runs",
+   "cases_run": [
+    "board_t3p2"
+   ],
+   "max_change_rel": 0.17670900735136147,
+   "architecture_gap_rel_min": 0.13436683832369775,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "board_t3p2",
+     "observable": "die_warpage_pv_um",
+     "Z1": 23.600530000000003,
+     "Z2": 63.61030000000001,
+     "change_rel": {
+      "Z1": -0.07589366124275404,
+      "Z2": -0.07381085504283656
+     },
+     "gap_rel": 0.6289825704327758,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_t3p2",
+     "observable": "du_c_um",
+     "Z1": 2.1831127248355395,
+     "Z2": 2.6825384504726975,
+     "change_rel": {
+      "Z1": -0.011395072000586929,
+      "Z2": -0.13111620452178366
+     },
+     "gap_rel": 0.18617653944499948,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_t3p2",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005720509576171855,
+     "Z2": 0.006608468609374974,
+     "change_rel": {
+      "Z1": -0.012943879403303646,
+      "Z2": -0.17670900735136147
+     },
+     "gap_rel": 0.13436683832369775,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "tsv.density_sensitivity_run",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "TSV sizing study: 64 / 729 / 1444 vias per cell, in the FE substrate AND the ledger",
+   "rationale": "the adopted field is the maximum-density end",
+   "method": "runs",
+   "cases_run": [
+    "tsv_min",
+    "tsv_mid"
+   ],
+   "max_change_rel": 0.09147780158498711,
+   "architecture_gap_rel_min": 0.02555784578441649,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "tsv_min",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.31805612357883,
+     "Z2": 160.92478435582802,
+     "change_rel": {
+      "Z1": 5.772605756665215e-05,
+      "Z2": 0.09147780158498711
+     },
+     "gap_rel": 0.10319559102548997,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "tsv_min",
+     "observable": "T_max_C",
+     "Z1": 115.689,
+     "Z2": 126.05,
+     "change_rel": {
+      "Z1": 0.00022479098761052582,
+      "Z2": 0.013801534576222062
+     },
+     "gap_rel": 0.08219754065846889,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "tsv_min",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.38696,
+     "Z2": 71.6653,
+     "change_rel": {
+      "Z1": -0.005943906438683848,
+      "Z2": 0.04347287986534566
+     },
+     "gap_rel": 0.6457565934978294,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "tsv_min",
+     "observable": "du_c_um",
+     "Z1": 2.2189790215173018,
+     "Z2": 3.192565156502274,
+     "change_rel": {
+      "Z1": 0.004846690160984576,
+      "Z2": 0.034083269152914854
+     },
+     "gap_rel": 0.30495419427919157,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "tsv_min",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005828108003906229,
+     "Z2": 0.008422952878906225,
+     "change_rel": {
+      "Z1": 0.005621894370449419,
+      "Z2": 0.04934163217025238
+     },
+     "gap_rel": 0.3080683119453653,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "tsv_mid",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.31010107444482,
+     "Z2": 148.09509261287351,
+     "change_rel": {
+      "Z1": 2.6012273040864326e-06,
+      "Z2": 0.004459982703529608
+     },
+     "gap_rel": 0.02555784578441649,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "tsv_mid",
+     "observable": "T_max_C",
+     "Z1": 115.676,
+     "Z2": 124.512,
+     "change_rel": {
+      "Z1": 0.00011239549380532435,
+      "Z2": 0.0014316277124519219
+     },
+     "gap_rel": 0.07096504754561808,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "tsv_mid",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.45975,
+     "Z2": 69.6962,
+     "change_rel": {
+      "Z1": -0.003093728904614016,
+      "Z2": 0.014802066406909719
+     },
+     "gap_rel": 0.6347039006430767,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "tsv_mid",
+     "observable": "du_c_um",
+     "Z1": 2.213842966539374,
+     "Z2": 3.1187871255181143,
+     "change_rel": {
+      "Z1": 0.002520869233877919,
+      "Z2": 0.010186301125064221
+     },
+     "gap_rel": 0.2901590017396281,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "tsv_mid",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005812417324218735,
+     "Z2": 0.00813938019140622,
+     "change_rel": {
+      "Z1": 0.0029145164322364873,
+      "Z2": 0.01401380462353102
+     },
+     "gap_rel": 0.2858894427421337,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "mech.f1_f2_bracket_run",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "out-of-cell converter volume encapsulated between the cells (F1, production, 1.0 mm clearance void) vs void (F2), and F1 filled to the PCB sidewall (DEFECT #66 construction)",
+   "rationale": "the fill carries heat and load between the cells",
+   "method": "runs",
+   "cases_run": [
+    "f2_void",
+    "f1_sidewall_filled"
+   ],
+   "max_change_rel": 0.7423578921310735,
+   "architecture_gap_rel_min": 0.018489470622471724,
+   "ordering_robust": false,
+   "final_status": "RESOLVED -- ordering changes in: du_c_um under f2_void (Z1 lower -> Z2 lower); d_eps_in_per_cycle under f2_void (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "f2_void",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 146.47464955636346,
+     "Z2": 149.2621622909108,
+     "change_rel": {
+      "Z1": 0.015001926266128873,
+      "Z2": 0.012375672331946348
+     },
+     "gap_rel": 0.018675280404383356,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f2_void",
+     "observable": "T_max_C",
+     "Z1": 119.921,
+     "Z2": 127.207,
+     "change_rel": {
+      "Z1": 0.036813847124836895,
+      "Z2": 0.02310711470715967
+     },
+     "gap_rel": 0.05727672219296098,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f2_void",
+     "observable": "die_warpage_pv_um",
+     "Z1": 34.631400000000006,
+     "Z2": 39.137100000000004,
+     "change_rel": {
+      "Z1": 0.35603294756675763,
+      "Z2": -0.4301495640626911
+     },
+     "gap_rel": 0.11512605686164783,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f2_void",
+     "observable": "du_c_um",
+     "Z1": 3.4809774741615116,
+     "Z2": 3.025210883613006,
+     "change_rel": {
+      "Z1": 0.5763324752139238,
+      "Z2": -0.020123378208244527
+     },
+     "gap_rel": 0.13093063483793144,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "f2_void",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.01009788075781248,
+     "Z2": 0.00781337548828122,
+     "change_rel": {
+      "Z1": 0.7423578921310735,
+      "Z2": -0.02660025462510498
+     },
+     "gap_rel": 0.22623611075658567,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "f1_sidewall_filled",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.02819926299415,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.00277625758545605
+     },
+     "gap_rel": 0.018489470622471724,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f1_sidewall_filled",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 122.499,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.01475863400196252
+     },
+     "gap_rel": 0.055804537179895336,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f1_sidewall_filled",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 69.963,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.018686771617772758
+     },
+     "gap_rel": 0.6349676257450367,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f1_sidewall_filled",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.978374249801994,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.28860964411959705
+     },
+     "gap_rel": 0.4449300009571976,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f1_sidewall_filled",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.01128434651562496,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.4058175037800098
+     },
+     "gap_rel": 0.4864101204315277,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "geom.sidewall_clearance",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "1.0 mm sidewall clearance void (production) vs encapsulant filled to the PCB sidewall",
+   "rationale": "a bonded sidewall is an extra heat and load path",
+   "method": "runs",
+   "cases_run": [
+    "f1_sidewall_filled"
+   ],
+   "max_change_rel": 0.4058175037800098,
+   "architecture_gap_rel_min": 0.018489470622471724,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "f1_sidewall_filled",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.02819926299415,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.00277625758545605
+     },
+     "gap_rel": 0.018489470622471724,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f1_sidewall_filled",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 122.499,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.01475863400196252
+     },
+     "gap_rel": 0.055804537179895336,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f1_sidewall_filled",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 69.963,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.018686771617772758
+     },
+     "gap_rel": 0.6349676257450367,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f1_sidewall_filled",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.978374249801994,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.28860964411959705
+     },
+     "gap_rel": 0.4449300009571976,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "f1_sidewall_filled",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.01128434651562496,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.4058175037800098
+     },
+     "gap_rel": 0.4864101204315277,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "geom.vr_attach_height",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "VR attach joint 20 / 40 um (production 30 um; Na et al. 2022 CLOSE_ANALOG)",
+   "rationale": "the attach carries 1 kA and sits in the converter heat path",
+   "method": "runs",
+   "cases_run": [
+    "attach_h20",
+    "attach_h40"
+   ],
+   "max_change_rel": 0.0027667411970982055,
+   "architecture_gap_rel_min": 0.019373692166229434,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "attach_h20",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.16077321118388,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.001877070290616415
+     },
+     "gap_rel": 0.019373692166229434,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_h20",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 123.99,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.0027667411970982055
+     },
+     "gap_rel": 0.0671586418259537,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_h20",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 68.77359999999999,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0013686742497041313
+     },
+     "gap_rel": 0.6286546000209382,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_h20",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.0895305285126358,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0007099847485301218
+     },
+     "gap_rel": 0.28523891554079817,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_h20",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.00803416144531247,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.000905526285962966
+     },
+     "gap_rel": 0.27863956837086823,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_h40",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.71344329996214,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0018714333094732312
+     },
+     "gap_rel": 0.023042707094736777,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_h40",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.677,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0027586983447810214
+     },
+     "gap_rel": 0.07229882015127095,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_h40",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 68.59979999999999,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.0011619170758131972
+     },
+     "gap_rel": 0.627713783422109,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_h40",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.0857784464906786,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.0005053280338865778
+     },
+     "gap_rel": 0.28436981807916933,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_h40",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.008021860640624972,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.0006269228032528306
+     },
+     "gap_rel": 0.27753342676902804,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "geom.vr_attach_density",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "VR attach pitch/count: the published dense 15/30 um (Au et al. 2016) and sparse 30/80 um (Na et al. 2023) constructions on the real lattice, production material and height held; underfill-dominated and column-stiffened mechanical bounds",
+   "rationale": "attach resistance, vertical conduction and stiffness all scale with the metal fraction",
+   "method": "runs",
+   "cases_run": [
+    "attach_dense",
+    "attach_sparse",
+    "attach_sparse_stiff"
+   ],
+   "max_change_rel": 0.010575192633620388,
+   "architecture_gap_rel_min": 0.021324485488518997,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "attach_dense",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.4541086930945,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.00011248755284623442
+     },
+     "gap_rel": 0.021324485488518997,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_dense",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.357,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.00018498560329432122
+     },
+     "gap_rel": 0.06991162540106309,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_dense",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 68.6953,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0002285977204292888
+     },
+     "gap_rel": 0.6282313346036774,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_dense",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.0875638439144755,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 7.29685753390339e-05
+     },
+     "gap_rel": 0.2847836343912469,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_dense",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.008027702523437477,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.00010086600591562906
+     },
+     "gap_rel": 0.27805917682571546,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sparse",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 148.1278183628546,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.004681946211435306
+     },
+     "gap_rel": 0.025775662620343823,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sparse",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 125.136,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.006450367558350833
+     },
+     "gap_rel": 0.07570163661935814,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sparse",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 69.2397,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.008155260077228046
+     },
+     "gap_rel": 0.6311543810848401,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sparse",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.091645584888732,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0013950590710953587
+     },
+     "gap_rel": 0.2857278978473277,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sparse",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.008043358999999969,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0020513687460252195
+     },
+     "gap_rel": 0.2794644416631465,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sparse_stiff",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 148.1278183628546,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.004681946211435306
+     },
+     "gap_rel": 0.025775662620343823,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sparse_stiff",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 125.136,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.006450367558350833
+     },
+     "gap_rel": 0.07570163661935814,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sparse_stiff",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 69.4059,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.010575192633620388
+     },
+     "gap_rel": 0.6320376221618047,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sparse_stiff",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.09410827645806,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0021927336757120606
+     },
+     "gap_rel": 0.28629640797270417,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sparse_stiff",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.008052094687499975,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.003139671234614684
+     },
+     "gap_rel": 0.280246148003491,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "mat.vr_attach_material",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "Cu pillar + solder cap (production) vs an all-solder column at the Na et al. density (a resistive bound: Na et al. report a Sn cap on a Cu post), and the column-stiffened card",
+   "rationale": "attach conductivity, resistance and stiffness",
+   "method": "runs",
+   "cases_run": [
+    "attach_sn",
+    "attach_stiff"
+   ],
+   "max_change_rel": 0.01800971467510011,
+   "architecture_gap_rel_min": 0.02121439667486107,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "attach_sn",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 148.9360595508885,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.010163869450276168
+     },
+     "gap_rel": 0.03106255041789711,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sn",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 126.119,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.01435649138610514
+     },
+     "gap_rel": 0.08290582703637044,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sn",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 69.91650000000001,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.01800971467510011
+     },
+     "gap_rel": 0.6347248503572119,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sn",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.096974710240262,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.003121181826652058
+     },
+     "gap_rel": 0.28695698297833844,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_sn",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.008063580976562472,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.004570646984533138
+     },
+     "gap_rel": 0.28127141219094165,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_stiff",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02121439667486107,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_stiff",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.06973957244197088,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_stiff",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 68.9024,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0032440491790865457
+     },
+     "gap_rel": 0.6293487599851385,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_stiff",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.0905340317901215,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0010350230481164795
+     },
+     "gap_rel": 0.2854710000554795,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_stiff",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.008038219425781222,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.001411074388821105
+     },
+     "gap_rel": 0.279003736899671,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "mat.vr_attach_underfill",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "attach underfill E 4 / 12 GPa, CTE 40 / 20 ppm/K (declared stress corners)",
+   "rationale": "the attach couples the converter to the substrate",
+   "method": "runs",
+   "cases_run": [
+    "attach_uf_soft",
+    "attach_uf_stiff"
+   ],
+   "max_change_rel": 0.00425162639269908,
+   "architecture_gap_rel_min": 0.2766650562608004,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "attach_uf_soft",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 68.38759999999999,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.00425162639269908
+     },
+     "gap_rel": 0.6265586158894303,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_uf_soft",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.083212237784342,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.0013365322093040807
+     },
+     "gap_rel": 0.2837741872040525,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_uf_soft",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.008012230320312475,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.001826679727020671
+     },
+     "gap_rel": 0.2766650562608004,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_uf_stiff",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 68.86359999999999,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.002679107041974375
+     },
+     "gap_rel": 0.6291399229781771,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_uf_stiff",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.0905659565819805,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0010453636023461488
+     },
+     "gap_rel": 0.28547838096561723,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "attach_uf_stiff",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.00803836149609372,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0014287736797637981
+     },
+     "gap_rel": 0.27901647981555744,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "elec.direct_feed_loop_resistance",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_platform_inclusive_w",
+   "range_source": "R_Z2_direct_feed_loop swept 0.01-100 mOhm (direct_feed_crossover.json)",
+   "rationale": "the external feed is unsourced: no value assumed",
+   "method": "direct_feed",
+   "cases_run": [],
+   "max_change_rel": 0.03918821394638485,
+   "architecture_gap_rel_min": 0.021631155073741123,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/direct_feed_crossover.json",
+   "rows": [
+    {
+     "case": "R_feed = 0.1 mOhm = 0.1 mOhm",
+     "observable": "P_loss_platform_inclusive_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.50032816398905,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.00042597267997782973
+     },
+     "gap_rel": 0.021631155073741123,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true,
+     "R_star_mohm": 0.0,
+     "method": "self-consistent I_48 with the feed loss; sweep point nearest"
+    },
+    {
+     "case": "R_feed = 1 mOhm = 1 mOhm",
+     "observable": "P_loss_platform_inclusive_w",
+     "Z1": 144.3097256920461,
+     "Z2": 148.01519934350728,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.003918103897487632
+     },
+     "gap_rel": 0.025034413140651003,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true,
+     "R_star_mohm": 0.0,
+     "method": "self-consistent I_48 with the feed loss; sweep point nearest"
+    },
+    {
+     "case": "R_feed = 10 mOhm = 10 mOhm",
+     "observable": "P_loss_platform_inclusive_w",
+     "Z1": 144.3097256920461,
+     "Z2": 153.21533703351156,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.03918821394638485
+     },
+     "gap_rel": 0.058124803390391694,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true,
+     "R_star_mohm": 0.0,
+     "method": "self-consistent I_48 with the feed loss; sweep point nearest"
+    }
+   ]
+  },
+  {
+   "gate": "elec.direct_feed_heat_location",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "feed loss at the largest admissible loop resistance (largest R*), at the HV-S0 current, deposited in the deepest converter tier",
+   "rationale": "where the feed's heat lands is unknown",
+   "method": "runs",
+   "cases_run": [
+    "feed_heat_at_crossover"
+   ],
+   "max_change_rel": 0.006728344370089406,
+   "architecture_gap_rel_min": 0.02323722070242524,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "feed_heat_at_crossover",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.74285911654457,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0020709470819709696
+     },
+     "gap_rel": 0.02323722070242524,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "feed_heat_at_crossover",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 125.108,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.00622516769347082
+     },
+     "gap_rel": 0.07549477251654577,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "feed_heat_at_crossover",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 69.1417,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.006728344370089406
+     },
+     "gap_rel": 0.630631587016229,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "feed_heat_at_crossover",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.0964795248291197,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.002960789501456126
+     },
+     "gap_rel": 0.2868429539667739,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "feed_heat_at_crossover",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.008062870160156227,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.004482092619024199
+     },
+     "gap_rel": 0.28120804963372514,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "therm.cooling_model_form",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "ICEPAK_EQUIVALENT_COOLING_SENSITIVITY: top coefficient x dT_compact/dT_CFD of the matched Icepak case",
+   "rationale": "the compact cooling model is 16.5 % conservative in dT",
+   "method": "runs",
+   "cases_run": [
+    "icepak_equivalent"
+   ],
+   "max_change_rel": 0.06332897545353096,
+   "architecture_gap_rel_min": 0.021294921904824744,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "icepak_equivalent",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 142.41616275593512,
+     "Z2": 145.51489099567715,
+     "change_rel": {
+      "Z1": -0.013121519890847862,
+      "Z2": -0.013040322175278984
+     },
+     "gap_rel": 0.021294921904824744,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "icepak_equivalent",
+     "observable": "T_max_C",
+     "Z1": 112.492,
+     "Z2": 121.063,
+     "change_rel": {
+      "Z1": -0.02741585468127225,
+      "Z2": -0.026308169929383764
+     },
+     "gap_rel": 0.07079784905379842,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "icepak_equivalent",
+     "observable": "die_warpage_pv_um",
+     "Z1": 24.702749999999998,
+     "Z2": 66.2706,
+     "change_rel": {
+      "Z1": -0.03273494876023745,
+      "Z2": -0.0350759177397656
+     },
+     "gap_rel": 0.6272442078387702,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "icepak_equivalent",
+     "observable": "du_c_um",
+     "Z1": 2.131131713180963,
+     "Z2": 2.960999155481195,
+     "change_rel": {
+      "Z1": -0.03493425241005502,
+      "Z2": -0.04092178653806796
+     },
+     "gap_rel": 0.2802660178960333,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "icepak_equivalent",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.0054532063132812295,
+     "Z2": 0.007518557980468721,
+     "change_rel": {
+      "Z1": -0.05906622535490733,
+      "Z2": -0.06332897545353096
+     },
+     "gap_rel": 0.2747005040797376,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "therm.backside_interface",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "Z2-COOLED through a 50 um TIM (k 3 W/mK)",
+   "rationale": "a backside interface weakens the extra Z2 heat path",
+   "method": "runs",
+   "cases_run": [
+    "z2_cooled_tim"
+   ],
+   "max_change_rel": 0.7438817348965341,
+   "architecture_gap_rel_min": 0.048999265490394274,
+   "ordering_robust": false,
+   "final_status": "RESOLVED -- ordering changes in: P_loss_package_internal_w under z2_cooled_tim (Z1 lower -> Z2 lower); T_max_C under z2_cooled_tim (Z1 lower -> Z2 lower); die_warpage_pv_um under z2_cooled_tim (Z1 lower -> Z2 lower); du_c_um under z2_cooled_tim (Z1 lower -> Z2 lower); d_eps_in_per_cycle under z2_cooled_tim (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "z2_cooled_tim",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 115.18200402488185,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.21877415564995178
+     },
+     "gap_rel": 0.20184170905654822,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z2_cooled_tim",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 81.5453,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.3441431949426545
+     },
+     "gap_rel": 0.29497505684618247,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z2_cooled_tim",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 17.5901,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.7438817348965341
+     },
+     "gap_rel": 0.3112390734710691,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z2_cooled_tim",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 2.1000722796691313,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.31977907984283827
+     },
+     "gap_rel": 0.048999265490394274,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z2_cooled_tim",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.004149423853515609,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.4830597699390592
+     },
+     "gap_rel": 0.28402983038036467,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    }
+   ]
+  },
+  {
+   "gate": "mech.bga_population",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "Z2 BGA field populated at 420/528 (the 48 V balls of the BGA-fed design removed), smeared",
+   "rationale": "the mechanical field need not carry the 48 V balls",
+   "method": "runs",
+   "cases_run": [
+    "bga_depop"
+   ],
+   "max_change_rel": 0.05809776290023773,
+   "architecture_gap_rel_min": 0.021214444167083474,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "bga_depop",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.43753096074548,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 4.852158076986683e-08
+     },
+     "gap_rel": 0.021214444167083474,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "bga_depop",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.06973957244197088,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "bga_depop",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 68.92049999999999,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0035075917739762915
+     },
+     "gap_rel": 0.6294461009423902,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "bga_depop",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 3.218206655849198,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.04238864247212362
+     },
+     "gap_rel": 0.31381777891239926,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "bga_depop",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.00849323740234372,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.05809776290023773
+     },
+     "gap_rel": 0.3176304990168472,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "therm.z2_cooled",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "bounding Z2-COOLED: a top-type cold plate on the Z2 converter underside; Z1 unchanged",
+   "rationale": "an extra Z2 heat path could move any thermal ordering",
+   "method": "runs",
+   "cases_run": [
+    "z2_cooled"
+   ],
+   "max_change_rel": 0.8115990774553142,
+   "architecture_gap_rel_min": 0.0961050847183304,
+   "ordering_robust": false,
+   "final_status": "RESOLVED -- ordering changes in: P_loss_package_internal_w under z2_cooled (Z1 lower -> Z2 lower); T_max_C under z2_cooled (Z1 lower -> Z2 lower); die_warpage_pv_um under z2_cooled (Z1 lower -> Z2 lower); du_c_um under z2_cooled (Z1 lower -> Z2 lower); d_eps_in_per_cycle under z2_cooled (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "z2_cooled",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 111.5525067376788,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.2433913439578483
+     },
+     "gap_rel": 0.22699245527131356,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z2_cooled",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 80.0525,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.3561495648816897
+     },
+     "gap_rel": 0.30788151785791484,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z2_cooled",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.53876,
+     "Z2": 12.939300000000001,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.8115990774553142
+     },
+     "gap_rel": 0.4933465837808883,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z2_cooled",
+     "observable": "du_c_um",
+     "Z1": 2.2082761910295026,
+     "Z2": 1.9960496206091403,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.3534723910435984
+     },
+     "gap_rel": 0.0961050847183304,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z2_cooled",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005795526167968733,
+     "Z2": 0.003723503314062491,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": -0.5361214646285595
+     },
+     "gap_rel": 0.3575210936598123,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    }
+   ]
+  },
+  {
+   "gate": "board.bottom_boundary",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "board-bottom film 100 / 500 W/m2K (production 10: a 30-mm coupon in natural convection) standing in for the lateral spreading of a full server board",
+   "rationale": "the board is the second heat path of every joint",
+   "method": "runs",
+   "cases_run": [
+    "board_hbot100",
+    "board_hbot500"
+   ],
+   "max_change_rel": 0.6970248359748085,
+   "architecture_gap_rel_min": 0.02467445177913638,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "board_hbot100",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 143.73137615738477,
+     "Z2": 147.36759066710783,
+     "change_rel": {
+      "Z1": -0.0040076961680012724,
+      "Z2": -0.0004743238894024136
+     },
+     "gap_rel": 0.02467445177913638,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_hbot100",
+     "observable": "T_max_C",
+     "Z1": 114.09,
+     "Z2": 124.003,
+     "change_rel": {
+      "Z1": -0.013599854750438718,
+      "Z2": -0.0026621841169752686
+     },
+     "gap_rel": 0.07994161431578266,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_hbot100",
+     "observable": "die_warpage_pv_um",
+     "Z1": 17.55921,
+     "Z2": 65.31039999999999,
+     "change_rel": {
+      "Z1": -0.31244860752832165,
+      "Z2": -0.04905677959685292
+     },
+     "gap_rel": 0.7311422070604375,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_hbot100",
+     "observable": "du_c_um",
+     "Z1": 1.6630360407429288,
+     "Z2": 2.5681079780213407,
+     "change_rel": {
+      "Z1": -0.24690758905134136,
+      "Z2": -0.16818064369296498
+     },
+     "gap_rel": 0.3524275244749428,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_hbot100",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.004131891778124986,
+     "Z2": 0.00617383557421873,
+     "change_rel": {
+      "Z1": -0.2870549354152658,
+      "Z2": -0.23085611526741442
+     },
+     "gap_rel": 0.33074152551465424,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_hbot500",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 143.03417447157503,
+     "Z2": 147.28068315128402,
+     "change_rel": {
+      "Z1": -0.00883898305782295,
+      "Z2": -0.0010637770596663618
+     },
+     "gap_rel": 0.028832760609529894,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_hbot500",
+     "observable": "T_max_C",
+     "Z1": 112.246,
+     "Z2": 123.593,
+     "change_rel": {
+      "Z1": -0.029542723256356845,
+      "Z2": -0.005959753567005
+     },
+     "gap_rel": 0.09180940668160825,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_hbot500",
+     "observable": "die_warpage_pv_um",
+     "Z1": 7.737609999999999,
+     "Z2": 61.240199999999994,
+     "change_rel": {
+      "Z1": -0.6970248359748085,
+      "Z2": -0.1083203746090544
+     },
+     "gap_rel": 0.8736514577026202,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_hbot500",
+     "observable": "du_c_um",
+     "Z1": 1.005845468211439,
+     "Z2": 1.932717176938484,
+     "change_rel": {
+      "Z1": -0.5445110207240372,
+      "Z2": -0.3739859959925874
+     },
+     "gap_rel": 0.4795692405420921,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "board_hbot500",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.0022431075085344453,
+     "Z2": 0.004040910843359362,
+     "change_rel": {
+      "Z1": -0.6129587817354936,
+      "Z2": -0.49657845166815007
+     },
+     "gap_rel": 0.44490051983684326,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "geom.tier_order",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "Z1 converter tiers in the reference order HS-LS-Cf-L (production: the repartitioned HS-Cf-LS-L of the realizability check); components, heights unchanged; Z2 unchanged",
+   "rationale": "tier order sets where each device sits in the heat path",
+   "method": "runs",
+   "cases_run": [
+    "z1_tier_reference"
+   ],
+   "max_change_rel": 0.9679036739262203,
+   "architecture_gap_rel_min": 0.03093330174829123,
+   "ordering_robust": false,
+   "final_status": "RESOLVED -- ordering changes in: P_loss_package_internal_w under z1_tier_reference (Z1 lower -> Z2 lower); T_max_C under z1_tier_reference (Z1 lower -> Z2 lower); du_c_um under z1_tier_reference (Z1 lower -> Z2 lower); d_eps_in_per_cycle under z1_tier_reference (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "z1_tier_reference",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 152.14383496289315,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.05428677265706176,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.03093330174829123,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z1_tier_reference",
+     "observable": "T_max_C",
+     "Z1": 128.341,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.10961154388179463,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.03122151144217362,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z1_tier_reference",
+     "observable": "die_warpage_pv_um",
+     "Z1": 38.248099999999994,
+     "Z2": 68.67960000000001,
+     "change_rel": {
+      "Z1": 0.4976490636193767,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.44309372797744906,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "z1_tier_reference",
+     "observable": "du_c_um",
+     "Z1": 3.8074936152494407,
+     "Z2": 3.0873385652177823,
+     "change_rel": {
+      "Z1": 0.724192666984459,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.18914149905527258,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "z1_tier_reference",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.01140503723828122,
+     "Z2": 0.008026892882812475,
+     "change_rel": {
+      "Z1": 0.9679036739262203,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.29619757348357795,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    }
+   ]
+  },
+  {
+   "gate": "mat.gan_bounded",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "GaN tiers at half the Si carrier conductivity (stress bound on the unresolved epi)",
+   "rationale": "the device tiers sit in the converter heat path",
+   "method": "runs",
+   "cases_run": [
+    "gan_k_half"
+   ],
+   "max_change_rel": 0.033607289508540646,
+   "architecture_gap_rel_min": 0.021286784594559956,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "gan_k_half",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.81298424780553,
+     "Z2": 147.9626329433138,
+     "change_rel": {
+      "Z1": 0.003487350234684621,
+      "Z2": 0.003561570507369449
+     },
+     "gap_rel": 0.021286784594559956,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "gan_k_half",
+     "observable": "T_max_C",
+     "Z1": 117.244,
+     "Z2": 126.13,
+     "change_rel": {
+      "Z1": 0.013669021208165127,
+      "Z2": 0.014444962761593709
+     },
+     "gap_rel": 0.07045112185840004,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "gan_k_half",
+     "observable": "die_warpage_pv_um",
+     "Z1": 26.183989999999998,
+     "Z2": 69.61260000000001,
+     "change_rel": {
+      "Z1": 0.025264734857917845,
+      "Z2": 0.01358481994653444
+     },
+     "gap_rel": 0.6238613411939794,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "gan_k_half",
+     "observable": "du_c_um",
+     "Z1": 2.2558055125782754,
+     "Z2": 3.095258125512916,
+     "change_rel": {
+      "Z1": 0.021523268575664268,
+      "Z2": 0.0025651738958454603
+     },
+     "gap_rel": 0.2712060121950361,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "gan_k_half",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.0059902980937499815,
+     "Z2": 0.008056090394531227,
+     "change_rel": {
+      "Z1": 0.033607289508540646,
+      "Z2": 0.003637461237494685
+     },
+     "gap_rel": 0.25642615705796723,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "mat.mlcc_bounded",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "converter medium k/10, and the card's own E 80-160 GPa x CTE 4-10 ppm/K corners",
+   "rationale": "flying-cap tier on a generic PROVISIONAL card",
+   "method": "runs",
+   "cases_run": [
+    "conv_k_tenth",
+    "conv_E80_a4",
+    "conv_E80_a10",
+    "conv_E160_a4",
+    "conv_E160_a10"
+   ],
+   "max_change_rel": 0.9136941290407349,
+   "architecture_gap_rel_min": 0.02121439667486107,
+   "ordering_robust": false,
+   "final_status": "RESOLVED -- ordering changes in: du_c_um under conv_k_tenth (Z1 lower -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "conv_k_tenth",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 169.32699154457416,
+     "Z2": 174.65536553650287,
+     "change_rel": {
+      "Z1": 0.17335814154282553,
+      "Z2": 0.18460593359745314
+     },
+     "gap_rel": 0.030507931866628438,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_k_tenth",
+     "observable": "T_max_C",
+     "Z1": 159.729,
+     "Z2": 175.424,
+     "change_rel": {
+      "Z1": 0.38098614077103327,
+      "Z2": 0.4109093248829765
+     },
+     "gap_rel": 0.08946894381612545,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_k_tenth",
+     "observable": "die_warpage_pv_um",
+     "Z1": 40.82685,
+     "Z2": 103.05049999999999,
+     "change_rel": {
+      "Z1": 0.5986230341645405,
+      "Z2": 0.5004528273315507
+     },
+     "gap_rel": 0.6038170605673917,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_k_tenth",
+     "observable": "du_c_um",
+     "Z1": 3.427119841417576,
+     "Z2": 3.3434590758772718,
+     "change_rel": {
+      "Z1": 0.5519434821329329,
+      "Z2": 0.0829583491570911
+     },
+     "gap_rel": 0.024411391900931924,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "conv_k_tenth",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.011090864402343713,
+     "Z2": 0.008984324933593723,
+     "change_rel": {
+      "Z1": 0.9136941290407349,
+      "Z2": 0.1192780400534985
+     },
+     "gap_rel": 0.1899346518297381,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "conv_E80_a4",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02121439667486107,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a4",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.06973957244197088,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a4",
+     "observable": "die_warpage_pv_um",
+     "Z1": 26.60977,
+     "Z2": 68.4477,
+     "change_rel": {
+      "Z1": 0.04193664845121694,
+      "Z2": -0.003376548494749681
+     },
+     "gap_rel": 0.6112393842305878,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a4",
+     "observable": "du_c_um",
+     "Z1": 2.236713215619207,
+     "Z2": 3.110280729483812,
+     "change_rel": {
+      "Z1": 0.012877476424924423,
+      "Z2": 0.007431049035080911
+     },
+     "gap_rel": 0.28086452312283205,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a4",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.0058810981093749826,
+     "Z2": 0.008108400210937476,
+     "change_rel": {
+      "Z1": 0.01476517212176464,
+      "Z2": 0.010154281278566437
+     },
+     "gap_rel": 0.27469069651471695,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a10",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02121439667486107,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a10",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.06973957244197088,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a10",
+     "observable": "die_warpage_pv_um",
+     "Z1": 24.43791,
+     "Z2": 68.4119,
+     "change_rel": {
+      "Z1": -0.043105068531126854,
+      "Z2": -0.00389780953878597
+     },
+     "gap_rel": 0.6427827614786317,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a10",
+     "observable": "du_c_um",
+     "Z1": 2.1835875967796485,
+     "Z2": 3.0576965344347355,
+     "change_rel": {
+      "Z1": -0.011180030084164502,
+      "Z2": -0.009601159755200274
+     },
+     "gap_rel": 0.2858717102273461,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a10",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.0057216973164062315,
+     "Z2": 0.007921741101562468,
+     "change_rel": {
+      "Z1": -0.012738938523053526,
+      "Z2": -0.013099935776539685
+     },
+     "gap_rel": 0.2777222528419042,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a4",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02121439667486107,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a4",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.06973957244197088,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a4",
+     "observable": "die_warpage_pv_um",
+     "Z1": 26.30321,
+     "Z2": 68.7054,
+     "change_rel": {
+      "Z1": 0.029932933313911878,
+      "Z2": 0.00037565740045063755
+     },
+     "gap_rel": 0.6171594954690607,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a4",
+     "observable": "du_c_um",
+     "Z1": 2.227526128980144,
+     "Z2": 3.107454619390322,
+     "change_rel": {
+      "Z1": 0.008717178597875972,
+      "Z2": 0.006515661871091418
+     },
+     "gap_rel": 0.2831669640224122,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a4",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005853402742187479,
+     "Z2": 0.008098338761718721,
+     "change_rel": {
+      "Z1": 0.009986422723552409,
+      "Z2": 0.008900813795488563
+     },
+     "gap_rel": 0.2772094482072267,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a10",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02121439667486107,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a10",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.06973957244197088,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a10",
+     "observable": "die_warpage_pv_um",
+     "Z1": 23.24473,
+     "Z2": 69.14399999999999,
+     "change_rel": {
+      "Z1": -0.08982542613658609,
+      "Z2": 0.0067618332081139584
+     },
+     "gap_rel": 0.6638214451000809,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a10",
+     "observable": "du_c_um",
+     "Z1": 2.1455336225989257,
+     "Z2": 3.034531848218314,
+     "change_rel": {
+      "Z1": -0.0284124642947521,
+      "Z2": -0.017104284445636476
+     },
+     "gap_rel": 0.29296058505411704,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a10",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005608789804296859,
+     "Z2": 0.007839677472656225,
+     "change_rel": {
+      "Z1": -0.032220778279623156,
+      "Z2": -0.023323521677624956
+     },
+     "gap_rel": 0.28456370509378887,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "mat.inductor_tier_bounded",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "converter medium k/10, and the card's own E 80-160 GPa x CTE 4-10 ppm/K corners",
+   "rationale": "inductor/Cout tier on the same generic card",
+   "method": "runs",
+   "cases_run": [
+    "conv_k_tenth",
+    "conv_E80_a4",
+    "conv_E80_a10",
+    "conv_E160_a4",
+    "conv_E160_a10"
+   ],
+   "max_change_rel": 0.9136941290407349,
+   "architecture_gap_rel_min": 0.02121439667486107,
+   "ordering_robust": false,
+   "final_status": "RESOLVED -- ordering changes in: du_c_um under conv_k_tenth (Z1 lower -> Z2 lower); d_eps_in_per_cycle under conv_k_tenth (Z1 lower -> Z2 lower) -- the claim is narrowed accordingly",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "conv_k_tenth",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 169.32699154457416,
+     "Z2": 174.65536553650287,
+     "change_rel": {
+      "Z1": 0.17335814154282553,
+      "Z2": 0.18460593359745314
+     },
+     "gap_rel": 0.030507931866628438,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_k_tenth",
+     "observable": "T_max_C",
+     "Z1": 159.729,
+     "Z2": 175.424,
+     "change_rel": {
+      "Z1": 0.38098614077103327,
+      "Z2": 0.4109093248829765
+     },
+     "gap_rel": 0.08946894381612545,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_k_tenth",
+     "observable": "die_warpage_pv_um",
+     "Z1": 40.82685,
+     "Z2": 103.05049999999999,
+     "change_rel": {
+      "Z1": 0.5986230341645405,
+      "Z2": 0.5004528273315507
+     },
+     "gap_rel": 0.6038170605673917,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_k_tenth",
+     "observable": "du_c_um",
+     "Z1": 3.427119841417576,
+     "Z2": 3.3434590758772718,
+     "change_rel": {
+      "Z1": 0.5519434821329329,
+      "Z2": 0.0829583491570911
+     },
+     "gap_rel": 0.024411391900931924,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "conv_k_tenth",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.011090864402343713,
+     "Z2": 0.008984324933593723,
+     "change_rel": {
+      "Z1": 0.9136941290407349,
+      "Z2": 0.1192780400534985
+     },
+     "gap_rel": 0.1899346518297381,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z2 lower",
+     "production_verdict": "Z1 lower",
+     "robust": false
+    },
+    {
+     "case": "conv_E80_a4",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02121439667486107,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a4",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.06973957244197088,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a4",
+     "observable": "die_warpage_pv_um",
+     "Z1": 26.60977,
+     "Z2": 68.4477,
+     "change_rel": {
+      "Z1": 0.04193664845121694,
+      "Z2": -0.003376548494749681
+     },
+     "gap_rel": 0.6112393842305878,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a4",
+     "observable": "du_c_um",
+     "Z1": 2.236713215619207,
+     "Z2": 3.110280729483812,
+     "change_rel": {
+      "Z1": 0.012877476424924423,
+      "Z2": 0.007431049035080911
+     },
+     "gap_rel": 0.28086452312283205,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a4",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.0058810981093749826,
+     "Z2": 0.008108400210937476,
+     "change_rel": {
+      "Z1": 0.01476517212176464,
+      "Z2": 0.010154281278566437
+     },
+     "gap_rel": 0.27469069651471695,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a10",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02121439667486107,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a10",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.06973957244197088,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a10",
+     "observable": "die_warpage_pv_um",
+     "Z1": 24.43791,
+     "Z2": 68.4119,
+     "change_rel": {
+      "Z1": -0.043105068531126854,
+      "Z2": -0.00389780953878597
+     },
+     "gap_rel": 0.6427827614786317,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a10",
+     "observable": "du_c_um",
+     "Z1": 2.1835875967796485,
+     "Z2": 3.0576965344347355,
+     "change_rel": {
+      "Z1": -0.011180030084164502,
+      "Z2": -0.009601159755200274
+     },
+     "gap_rel": 0.2858717102273461,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E80_a10",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.0057216973164062315,
+     "Z2": 0.007921741101562468,
+     "change_rel": {
+      "Z1": -0.012738938523053526,
+      "Z2": -0.013099935776539685
+     },
+     "gap_rel": 0.2777222528419042,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a4",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02121439667486107,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a4",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.06973957244197088,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a4",
+     "observable": "die_warpage_pv_um",
+     "Z1": 26.30321,
+     "Z2": 68.7054,
+     "change_rel": {
+      "Z1": 0.029932933313911878,
+      "Z2": 0.00037565740045063755
+     },
+     "gap_rel": 0.6171594954690607,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a4",
+     "observable": "du_c_um",
+     "Z1": 2.227526128980144,
+     "Z2": 3.107454619390322,
+     "change_rel": {
+      "Z1": 0.008717178597875972,
+      "Z2": 0.006515661871091418
+     },
+     "gap_rel": 0.2831669640224122,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a4",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005853402742187479,
+     "Z2": 0.008098338761718721,
+     "change_rel": {
+      "Z1": 0.009986422723552409,
+      "Z2": 0.008900813795488563
+     },
+     "gap_rel": 0.2772094482072267,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a10",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.3097256920461,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02121439667486107,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a10",
+     "observable": "T_max_C",
+     "Z1": 115.663,
+     "Z2": 124.334,
+     "change_rel": {
+      "Z1": 0.0,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.06973957244197088,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a10",
+     "observable": "die_warpage_pv_um",
+     "Z1": 23.24473,
+     "Z2": 69.14399999999999,
+     "change_rel": {
+      "Z1": -0.08982542613658609,
+      "Z2": 0.0067618332081139584
+     },
+     "gap_rel": 0.6638214451000809,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a10",
+     "observable": "du_c_um",
+     "Z1": 2.1455336225989257,
+     "Z2": 3.034531848218314,
+     "change_rel": {
+      "Z1": -0.0284124642947521,
+      "Z2": -0.017104284445636476
+     },
+     "gap_rel": 0.29296058505411704,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "conv_E160_a10",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.005608789804296859,
+     "Z2": 0.007839677472656225,
+     "change_rel": {
+      "Z1": -0.032220778279623156,
+      "Z2": -0.023323521677624956
+     },
+     "gap_rel": 0.28456370509378887,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "elec.contact_resistance_bounded",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w",
+   "range_source": "rho_c 1e-6 / 1e-5 / 1e-4 ohm mm^2 on the package 48 V RDL (package_network sensitivity; Z1 only: the direct-fed Z2 has no package 48 V RDL)",
+   "rationale": "unsourced contact resistance in the 48 V path",
+   "method": "network",
+   "cases_run": [
+    "rho_c"
+   ],
+   "max_change_rel": 0.0009965120103517684,
+   "architecture_gap_rel_min": 0.020239025065588178,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- ordering robust",
+   "resolved": true,
+   "evidence_path": "research/final_closure/package_network.json",
+   "rows": [
+    {
+     "case": "rho_c=1e-06",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.2744354387006,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": -0.0002445452181151294,
+      "Z2": 0.0
+     },
+     "delta_W": {
+      "Z1": -0.0352902533454959,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02145375401371415,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true,
+     "method": "first order: the 48 V RDL rows scale with the swept loop resistance at the solved HV-S0 current; the thermal feedback of a <= 2 W change is second order"
+    },
+    {
+     "case": "rho_c=1e-05",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.31028712421792,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 3.890466627508638e-06,
+      "Z2": 0.0
+     },
+     "delta_W": {
+      "Z1": 0.0005614321718298312,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.021210588742135907,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true,
+     "method": "first order: the 48 V RDL rows scale with the swept loop resistance at the solved HV-S0 current; the thermal feedback of a <= 2 W change is second order"
+    },
+    {
+     "case": "rho_c=0.0001",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.4535320669088,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.0009965120103517684,
+      "Z2": 0.0
+     },
+     "delta_W": {
+      "Z1": 0.1438063748626931,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.020239025065588178,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true,
+     "method": "first order: the 48 V RDL rows scale with the swept loop resistance at the solved HV-S0 current; the thermal feedback of a <= 2 W change is second order"
+    }
+   ]
+  },
+  {
+   "gate": "elec.rdl10um_electrical_model",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w",
+   "range_source": "package 48 V RDL t_Cu 2 / 5 / 10 um x occupancy 0.3 / 0.8 (package_network sensitivity; Z1 only)",
+   "rationale": "the 10 um tier's sheet resistance is undefined",
+   "method": "network",
+   "cases_run": [
+    "t_cu",
+    "occupancy"
+   ],
+   "max_change_rel": 0.017733750136219827,
+   "architecture_gap_rel_min": 0.003856857348563835,
+   "ordering_robust": false,
+   "final_status": "RESOLVED -- ordering changes in: P_loss_package_internal_w under t_cu=0.002, occupancy=0.3 (Z1 lower -> unresolved) -- the claim is narrowed accordingly",
+   "resolved": true,
+   "evidence_path": "research/final_closure/package_network.json",
+   "rows": [
+    {
+     "case": "t_cu=0.002, occupancy=0.3",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 146.86887830969528,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 0.017733750136219827,
+      "Z2": 0.0
+     },
+     "delta_W": {
+      "Z1": 2.5591526176491683,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.003856857348563835,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "unresolved",
+     "production_verdict": "Z1 lower",
+     "robust": false,
+     "method": "first order: the 48 V RDL rows scale with the swept loop resistance at the solved HV-S0 current; the thermal feedback of a <= 2 W change is second order"
+    },
+    {
+     "case": "t_cu=0.005, occupancy=0.3",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 144.31028712421792,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": 3.890466627508638e-06,
+      "Z2": 0.0
+     },
+     "delta_W": {
+      "Z1": 0.0005614321718298312,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.021210588742135907,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true,
+     "method": "first order: the 48 V RDL rows scale with the swept loop resistance at the solved HV-S0 current; the thermal feedback of a <= 2 W change is second order"
+    },
+    {
+     "case": "t_cu=0.005, occupancy=0.8",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 143.23653448941388,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": -0.007436721243046265,
+      "Z2": 0.0
+     },
+     "delta_W": {
+      "Z1": -1.0731912026322186,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.02849335236349697,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true,
+     "method": "first order: the 48 V RDL rows scale with the swept loop resistance at the solved HV-S0 current; the thermal feedback of a <= 2 W change is second order"
+    },
+    {
+     "case": "t_cu=0.01, occupancy=0.3",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 143.45218755233043,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": -0.005942344742208375,
+      "Z2": 0.0
+     },
+     "delta_W": {
+      "Z1": -0.8575381397156631,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.027030678158529522,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true,
+     "method": "first order: the 48 V RDL rows scale with the swept loop resistance at the solved HV-S0 current; the thermal feedback of a <= 2 W change is second order"
+    },
+    {
+     "case": "t_cu=0.01, occupancy=0.8",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 142.9110927184051,
+     "Z2": 147.43752380684376,
+     "change_rel": {
+      "Z1": -0.009691882975549878,
+      "Z2": 0.0
+     },
+     "delta_W": {
+      "Z1": -1.3986329736410144,
+      "Z2": 0.0
+     },
+     "gap_rel": 0.030700672200441297,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true,
+     "method": "first order: the 48 V RDL rows scale with the swept loop resistance at the solved HV-S0 current; the thermal feedback of a <= 2 W change is second order"
+    }
+   ]
+  },
+  {
+   "gate": "elec.hv_input_waveform",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, P_loss_platform_inclusive_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each scenario solved through the full lineage",
+   "rationale": "the 48 V waveform is not derivable from the pinned model",
+   "method": "scenarios",
+   "cases_run": [],
+   "max_change_rel": null,
+   "architecture_gap_rel_min": null,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario",
+   "resolved": true,
+   "evidence_path": "research/final_closure/ordering.json",
+   "rows": [
+    {
+     "case": "per scenario",
+     "observable": "P_loss_package_internal_w",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower package-internal loss in HV-S0; Z2 has lower package-internal loss in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the package-internal loss ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "T_max_C",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower peak temperature in HV-S0; Z2 has lower peak temperature in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the peak temperature ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "die_warpage_pv_um",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z1 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "du_c_um",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z1 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "d_eps_in_per_cycle",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower local inelastic response in HV-S0; Z2 has lower local inelastic response in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the local inelastic response ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "P_loss_platform_inclusive_w",
+     "per_scenario": {
+      "HV_S0": "Z1 lower for any feed resistance",
+      "HV_S1": "conditional: Z2 lower only below R* = 3.16 mOhm",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "The platform-inclusive loss has no unconditional winner: in HV-S0 Z1 has the lower platform-inclusive loss for any feed resistance; in HV-S1 Z2 has the lower platform-inclusive loss only while the complete direct-feed loop stays below R* = 3.16 mOhm, and Z1 above it; HV-S2 is not rankable (the Z1 operating point is inadmissible). No value of that loop resistance is known, so no platform-level ranking is claimed.",
+     "robust_across_scenarios": false,
+     "robust": null
+    }
+   ]
+  },
+  {
+   "gate": "elec.hv_waveform_determination",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, P_loss_platform_inclusive_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each scenario solved through the full lineage",
+   "rationale": "determined unresolvable from available sources",
+   "method": "scenarios",
+   "cases_run": [],
+   "max_change_rel": null,
+   "architecture_gap_rel_min": null,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario",
+   "resolved": true,
+   "evidence_path": "research/final_closure/ordering.json",
+   "rows": [
+    {
+     "case": "per scenario",
+     "observable": "P_loss_package_internal_w",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower package-internal loss in HV-S0; Z2 has lower package-internal loss in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the package-internal loss ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "T_max_C",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower peak temperature in HV-S0; Z2 has lower peak temperature in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the peak temperature ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "die_warpage_pv_um",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z1 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "du_c_um",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z1 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "d_eps_in_per_cycle",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower local inelastic response in HV-S0; Z2 has lower local inelastic response in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the local inelastic response ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "P_loss_platform_inclusive_w",
+     "per_scenario": {
+      "HV_S0": "Z1 lower for any feed resistance",
+      "HV_S1": "conditional: Z2 lower only below R* = 3.16 mOhm",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "The platform-inclusive loss has no unconditional winner: in HV-S0 Z1 has the lower platform-inclusive loss for any feed resistance; in HV-S1 Z2 has the lower platform-inclusive loss only while the complete direct-feed loop stays below R* = 3.16 mOhm, and Z1 above it; HV-S2 is not rankable (the Z1 operating point is inadmissible). No value of that loop resistance is known, so no platform-level ranking is claimed.",
+     "robust_across_scenarios": false,
+     "robust": null
+    }
+   ]
+  },
+  {
+   "gate": "elec.z1_hv_rms_current",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, P_loss_platform_inclusive_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each scenario solved through the full lineage",
+   "rationale": "the 48 V RMS follows the scenario",
+   "method": "scenarios",
+   "cases_run": [],
+   "max_change_rel": null,
+   "architecture_gap_rel_min": null,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario",
+   "resolved": true,
+   "evidence_path": "research/final_closure/ordering.json",
+   "rows": [
+    {
+     "case": "per scenario",
+     "observable": "P_loss_package_internal_w",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower package-internal loss in HV-S0; Z2 has lower package-internal loss in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the package-internal loss ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "T_max_C",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower peak temperature in HV-S0; Z2 has lower peak temperature in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the peak temperature ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "die_warpage_pv_um",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z1 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "du_c_um",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z1 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "d_eps_in_per_cycle",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower local inelastic response in HV-S0; Z2 has lower local inelastic response in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the local inelastic response ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "P_loss_platform_inclusive_w",
+     "per_scenario": {
+      "HV_S0": "Z1 lower for any feed resistance",
+      "HV_S1": "conditional: Z2 lower only below R* = 3.16 mOhm",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "The platform-inclusive loss has no unconditional winner: in HV-S0 Z1 has the lower platform-inclusive loss for any feed resistance; in HV-S1 Z2 has the lower platform-inclusive loss only while the complete direct-feed loop stays below R* = 3.16 mOhm, and Z1 above it; HV-S2 is not rankable (the Z1 operating point is inadmissible). No value of that loop resistance is known, so no platform-level ranking is claimed.",
+     "robust_across_scenarios": false,
+     "robust": null
+    }
+   ]
+  },
+  {
+   "gate": "elec.bga_rms_current",
+   "old_class": "B",
+   "new_subtype": "B1",
+   "declared_subtype": "B1",
+   "observable": "P_loss_package_internal_w, P_loss_platform_inclusive_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each scenario solved through the full lineage",
+   "rationale": "the BGA RMS follows the scenario",
+   "method": "scenarios",
+   "cases_run": [],
+   "max_change_rel": null,
+   "architecture_gap_rel_min": null,
+   "ordering_robust": true,
+   "final_status": "RESOLVED -- scenario-conditioned: every named scenario is solved and each ordering is stated per scenario",
+   "resolved": true,
+   "evidence_path": "research/final_closure/ordering.json",
+   "rows": [
+    {
+     "case": "per scenario",
+     "observable": "P_loss_package_internal_w",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower package-internal loss in HV-S0; Z2 has lower package-internal loss in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the package-internal loss ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "T_max_C",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower peak temperature in HV-S0; Z2 has lower peak temperature in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the peak temperature ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "die_warpage_pv_um",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z1 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower die warpage in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "du_c_um",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z1 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower joint displacement driver in every scenario for which a valid two-architecture comparison can be made; HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "d_eps_in_per_cycle",
+     "per_scenario": {
+      "HV_S0": "Z1 lower",
+      "HV_S1": "Z2 lower",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "Z1 has lower local inelastic response in HV-S0; Z2 has lower local inelastic response in HV-S1 (each gap exceeds twice the measured discretisation uncertainty): the local inelastic response ordering reverses with the scenario. HV-S2 is not rankable because the Z1 operating point is physically inadmissible for the solid-solder model.",
+     "robust_across_scenarios": false,
+     "robust": null
+    },
+    {
+     "case": "per scenario",
+     "observable": "P_loss_platform_inclusive_w",
+     "per_scenario": {
+      "HV_S0": "Z1 lower for any feed resistance",
+      "HV_S1": "conditional: Z2 lower only below R* = 3.16 mOhm",
+      "HV_S2": "not rankable"
+     },
+     "scenario_classes": {
+      "HV_S0": "headline",
+      "HV_S1": "sensitivity",
+      "HV_S2": "stress / inadmissible"
+     },
+     "verdict": "The platform-inclusive loss has no unconditional winner: in HV-S0 Z1 has the lower platform-inclusive loss for any feed resistance; in HV-S1 Z2 has the lower platform-inclusive loss only while the complete direct-feed loop stays below R* = 3.16 mOhm, and Z1 above it; HV-S2 is not rankable (the Z1 operating point is inadmissible). No value of that loop resistance is known, so no platform-level ranking is claimed.",
+     "robust_across_scenarios": false,
+     "robust": null
+    }
+   ]
+  },
+  {
+   "gate": "elec.individual_branch_waveforms",
+   "old_class": "B",
+   "new_subtype": "B2",
+   "declared_subtype": "B2",
+   "observable": "P_loss_package_internal_w",
+   "range_source": "converter-internal branch RMS: identical converter model in both architectures",
+   "rationale": "the converter terms depend on T_conv only",
+   "method": "common_mode",
+   "cases_run": [],
+   "max_change_rel": null,
+   "architecture_gap_rel_min": null,
+   "ordering_robust": true,
+   "final_status": "BOUNDED -- magnitude only",
+   "resolved": true,
+   "evidence_path": "research/final_closure/electrical_ledger.json",
+   "rows": [
+    {
+     "case": "common rescaling k of the converter terms",
+     "observable": "P_loss_package_internal_w",
+     "converter_terms_W": {
+      "Z1": 142.49456349880583,
+      "Z2": 146.60423863794827
+     },
+     "delta_converter_W": -4.109675139142439,
+     "delta_rest_W": 0.981877024344783,
+     "k_at_which_order_flips": 0.23891840379132012,
+     "verdict": "Z1 lower for every k > 0.239",
+     "robust": true,
+     "method": "ledger rows at the converged HV-S0 temperatures: the converter and intra-VR rows are the same functions of T_conv in Z1 and Z2"
+    }
+   ]
+  },
+  {
+   "gate": "elec.pad_count_criterion",
+   "old_class": "B",
+   "new_subtype": "B2",
+   "declared_subtype": "B2",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "pad sweep end: the voltage-drop floor, 4 pads per rail per cell (vs 2040)",
+   "rationale": "same pad field and current in both architectures",
+   "method": "runs",
+   "cases_run": [
+    "pad_drop"
+   ],
+   "max_change_rel": 0.5210644791175252,
+   "architecture_gap_rel_min": 0.15366355416779423,
+   "ordering_robust": true,
+   "final_status": "BOUNDED -- magnitude only",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "pad_drop",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 168.03444710893282,
+     "Z2": 198.5433191922911,
+     "change_rel": {
+      "Z1": 0.16440140332270312,
+      "Z2": 0.34662678852637596
+     },
+     "gap_rel": 0.15366355416779423,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "pad_drop",
+     "observable": "T_max_C",
+     "Z1": 117.425,
+     "Z2": 177.435,
+     "change_rel": {
+      "Z1": 0.015233912314223223,
+      "Z2": 0.4270835008927566
+     },
+     "gap_rel": 0.33820835799024995,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "pad_drop",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.93406,
+     "Z2": 104.4661,
+     "change_rel": {
+      "Z1": 0.015478433565294434,
+      "Z2": 0.5210644791175252
+     },
+     "gap_rel": 0.7517466431694109,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "pad_drop",
+     "observable": "du_c_um",
+     "Z1": 2.256584948654905,
+     "Z2": 3.4040003181720944,
+     "change_rel": {
+      "Z1": 0.021876229894450296,
+      "Z2": 0.10256787400055511
+     },
+     "gap_rel": 0.3370785141798509,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "pad_drop",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.006000205660156229,
+     "Z2": 0.009313562882812475,
+     "change_rel": {
+      "Z1": 0.035316809251718664,
+      "Z2": 0.1602949010014912
+     },
+     "gap_rel": 0.3557561444901836,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  },
+  {
+   "gate": "elec.pad_loss_closed",
+   "old_class": "B",
+   "new_subtype": "B2",
+   "declared_subtype": "B2",
+   "observable": "P_loss_package_internal_w, T_max_C, die_warpage_pv_um, du_c_um, d_eps_in_per_cycle",
+   "range_source": "pad sweep end: the voltage-drop floor, 4 pads per rail per cell (vs 2040)",
+   "rationale": "same pad field and current in both architectures",
+   "method": "runs",
+   "cases_run": [
+    "pad_drop"
+   ],
+   "max_change_rel": 0.5210644791175252,
+   "architecture_gap_rel_min": 0.15366355416779423,
+   "ordering_robust": true,
+   "final_status": "BOUNDED -- magnitude only",
+   "resolved": true,
+   "evidence_path": "research/final_closure/sensitivity/",
+   "rows": [
+    {
+     "case": "pad_drop",
+     "observable": "P_loss_package_internal_w",
+     "Z1": 168.03444710893282,
+     "Z2": 198.5433191922911,
+     "change_rel": {
+      "Z1": 0.16440140332270312,
+      "Z2": 0.34662678852637596
+     },
+     "gap_rel": 0.15366355416779423,
+     "uncertainty_rel": 0.0022317956526792158,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "pad_drop",
+     "observable": "T_max_C",
+     "Z1": 117.425,
+     "Z2": 177.435,
+     "change_rel": {
+      "Z1": 0.015233912314223223,
+      "Z2": 0.4270835008927566
+     },
+     "gap_rel": 0.33820835799024995,
+     "uncertainty_rel": 0.005177826517008591,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "pad_drop",
+     "observable": "die_warpage_pv_um",
+     "Z1": 25.93406,
+     "Z2": 104.4661,
+     "change_rel": {
+      "Z1": 0.015478433565294434,
+      "Z2": 0.5210644791175252
+     },
+     "gap_rel": 0.7517466431694109,
+     "uncertainty_rel": 0.011280237459122372,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "pad_drop",
+     "observable": "du_c_um",
+     "Z1": 2.256584948654905,
+     "Z2": 3.4040003181720944,
+     "change_rel": {
+      "Z1": 0.021876229894450296,
+      "Z2": 0.10256787400055511
+     },
+     "gap_rel": 0.3370785141798509,
+     "uncertainty_rel": 0.007025259555862101,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    },
+    {
+     "case": "pad_drop",
+     "observable": "d_eps_in_per_cycle",
+     "Z1": 0.006000205660156229,
+     "Z2": 0.009313562882812475,
+     "change_rel": {
+      "Z1": 0.035316809251718664,
+      "Z2": 0.1602949010014912
+     },
+     "gap_rel": 0.3557561444901836,
+     "uncertainty_rel": 0.017191138196403666,
+     "verdict": "Z1 lower",
+     "production_verdict": "Z1 lower",
+     "robust": true
+    }
+   ]
+  }
+ ],
+ "attach_density_crossover": {
+  "class": "ENGINEERING_SENSITIVITY",
+  "rule": "each point judged as the production pair (gap > 2U); margin = signed gap - 2U, interpolated linearly between points",
+  "points": [
+   {
+    "case": "attach_dense",
+    "class": "CLOSE_ANALOG",
+    "d_um": 15.0,
+    "pitch_um": 30.0,
+    "area_fraction": 0.19164555184933454,
+    "n_vdd": 3042,
+    "n_gnd": 3042,
+    "network_minus_block_penalty_w": 0.0,
+    "obs": {
+     "P_loss_package_internal_w": {
+      "Z1": 144.3097256920461,
+      "Z2": 147.4541086930945,
+      "gap_rel": 0.021324485488518997,
+      "verdict": "Z1 lower",
+      "margin": 0.016860894183160564,
+      "margin_network_penalty": 0.016860894183160564
+     },
+     "T_max_C": {
+      "Z1": 115.663,
+      "Z2": 124.357,
+      "gap_rel": 0.06991162540106309,
+      "verdict": "Z1 lower",
+      "margin": 0.059555972367045906
+     },
+     "die_warpage_pv_um": {
+      "Z1": 25.53876,
+      "Z2": 68.6953,
+      "gap_rel": 0.6282313346036774,
+      "verdict": "Z1 lower",
+      "margin": 0.6056708596854327
+     },
+     "du_c_um": {
+      "Z1": 2.2082761910295026,
+      "Z2": 3.0875638439144755,
+      "gap_rel": 0.2847836343912469,
+      "verdict": "Z1 lower",
+      "margin": 0.27073311527952265
+     }
+    }
+   },
+   {
+    "case": "attach_eng_p34",
+    "class": "ENGINEERING_SENSITIVITY",
+    "d_um": 15.0,
+    "pitch_um": 34.0,
+    "area_fraction": 0.14997114930221594,
+    "n_vdd": 2381,
+    "n_gnd": 2380,
+    "network_minus_block_penalty_w": 0.014561415742321504,
+    "obs": {
+     "P_loss_package_internal_w": {
+      "Z1": 144.3097256920461,
+      "Z2": 147.67725294147948,
+      "gap_rel": 0.022803290163907912,
+      "verdict": "Z1 lower",
+      "margin": 0.01833969885854948,
+      "margin_network_penalty": 0.018436043856516225
+     },
+     "T_max_C": {
+      "Z1": 115.663,
+      "Z2": 124.629,
+      "gap_rel": 0.07194152243859782,
+      "verdict": "Z1 lower",
+      "margin": 0.061585869404580634
+     },
+     "die_warpage_pv_um": {
+      "Z1": 25.53876,
+      "Z2": 68.8857,
+      "gap_rel": 0.6292589027911454,
+      "verdict": "Z1 lower",
+      "margin": 0.6066984278729006
+     },
+     "du_c_um": {
+      "Z1": 2.2082761910295026,
+      "Z2": 3.0888426133959244,
+      "gap_rel": 0.28507973133610476,
+      "verdict": "Z1 lower",
+      "margin": 0.27102921222438053
+     }
+    }
+   },
+   {
+    "case": "attach_eng_p37",
+    "class": "ENGINEERING_SENSITIVITY",
+    "d_um": 15.0,
+    "pitch_um": 37.0,
+    "area_fraction": 0.1290236982864685,
+    "n_vdd": 2048,
+    "n_gnd": 2048,
+    "network_minus_block_penalty_w": 0.025314321954008623,
+    "obs": {
+     "P_loss_package_internal_w": {
+      "Z1": 144.3097256920461,
+      "Z2": 147.84195270583814,
+      "gap_rel": 0.023891912607648846,
+      "verdict": "Z1 lower",
+      "margin": 0.019428321302290413,
+      "margin_network_penalty": 0.01959542734869829
+     },
+     "T_max_C": {
+      "Z1": 115.663,
+      "Z2": 124.828,
+      "gap_rel": 0.0734210273336111,
+      "verdict": "Z1 lower",
+      "margin": 0.06306537429959391
+     },
+     "die_warpage_pv_um": {
+      "Z1": 25.53876,
+      "Z2": 69.0244,
+      "gap_rel": 0.6300038826849637,
+      "verdict": "Z1 lower",
+      "margin": 0.6074434077667189
+     },
+     "du_c_um": {
+      "Z1": 2.2082761910295026,
+      "Z2": 3.08996150925504,
+      "gap_rel": 0.2853386087770729,
+      "verdict": "Z1 lower",
+      "margin": 0.2712880896653487
+     }
+    }
+   },
+   {
+    "case": "attach_eng_p41",
+    "class": "ENGINEERING_SENSITIVITY",
+    "d_um": 15.0,
+    "pitch_um": 41.0,
+    "area_fraction": 0.10234326067693757,
+    "n_vdd": 1625,
+    "n_gnd": 1624,
+    "network_minus_block_penalty_w": 0.04485544762775051,
+    "obs": {
+     "P_loss_package_internal_w": {
+      "Z1": 144.3097256920461,
+      "Z2": 148.14446748932693,
+      "gap_rel": 0.025885150233889775,
+      "verdict": "Z1 lower",
+      "margin": 0.021421558928531342,
+      "margin_network_penalty": 0.02171641389352562
+     },
+     "T_max_C": {
+      "Z1": 115.663,
+      "Z2": 125.192,
+      "gap_rel": 0.07611508722602081,
+      "verdict": "Z1 lower",
+      "margin": 0.06575943419200363
+     },
+     "die_warpage_pv_um": {
+      "Z1": 25.53876,
+      "Z2": 68.9815,
+      "gap_rel": 0.6297737799265021,
+      "verdict": "Z1 lower",
+      "margin": 0.6072133050082573
+     },
+     "du_c_um": {
+      "Z1": 2.2082761910295026,
+      "Z2": 3.0875509484871864,
+      "gap_rel": 0.28478064722737734,
+      "verdict": "Z1 lower",
+      "margin": 0.2707301281156531
+     }
+    }
+   },
+   {
+    "case": "attach_sparse",
+    "class": "CLOSE_ANALOG",
+    "d_um": 30.0,
+    "pitch_um": 80.0,
+    "area_fraction": 0.10596575220597658,
+    "n_vdd": 421,
+    "n_gnd": 420,
+    "network_minus_block_penalty_w": 0.047834543629387216,
+    "obs": {
+     "P_loss_package_internal_w": {
+      "Z1": 144.3097256920461,
+      "Z2": 148.1278183628546,
+      "gap_rel": 0.025775662620343823,
+      "verdict": "Z1 lower",
+      "margin": 0.02131207131498539,
+      "margin_network_penalty": 0.021626573567259007
+     },
+     "T_max_C": {
+      "Z1": 115.663,
+      "Z2": 125.136,
+      "gap_rel": 0.07570163661935814,
+      "verdict": "Z1 lower",
+      "margin": 0.06534598358534095
+     },
+     "die_warpage_pv_um": {
+      "Z1": 25.53876,
+      "Z2": 69.2397,
+      "gap_rel": 0.6311543810848401,
+      "verdict": "Z1 lower",
+      "margin": 0.6085939061665954
+     },
+     "du_c_um": {
+      "Z1": 2.2082761910295026,
+      "Z2": 3.091645584888732,
+      "gap_rel": 0.2857278978473277,
+      "verdict": "Z1 lower",
+      "margin": 0.2716773787356035
+     }
+    }
+   }
+  ],
+  "crossover": {
+   "P_loss_package_internal_w": {
+    "production_verdict": "Z1 lower",
+    "uncertainty_rel": 0.0022317956526792158,
+    "f_star": null,
+    "f_bracket": null,
+    "pitch_star_um_d15": null,
+    "status": "holds at every point down to the sparse published geometry",
+    "f_star_network_penalty": null,
+    "pitch_star_um_d15_network_penalty": null,
+    "reversal": false
+   },
+   "T_max_C": {
+    "production_verdict": "Z1 lower",
+    "uncertainty_rel": 0.005177826517008591,
+    "f_star": null,
+    "f_bracket": null,
+    "pitch_star_um_d15": null,
+    "status": "holds at every point down to the sparse published geometry"
+   },
+   "die_warpage_pv_um": {
+    "production_verdict": "Z1 lower",
+    "uncertainty_rel": 0.011280237459122372,
+    "f_star": null,
+    "f_bracket": null,
+    "pitch_star_um_d15": null,
+    "status": "holds at every point down to the sparse published geometry"
+   },
+   "du_c_um": {
+    "production_verdict": "Z1 lower",
+    "uncertainty_rel": 0.007025259555862101,
+    "f_star": null,
+    "f_bracket": null,
+    "pitch_star_um_d15": null,
+    "status": "holds at every point down to the sparse published geometry"
+   }
+  }
+ }
+}

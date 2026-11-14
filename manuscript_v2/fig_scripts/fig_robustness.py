@@ -17,7 +17,6 @@ import style as S
 S.setup()
 rows = list(csv.DictReader(open(S.FC / "classB_sensitivity_rows.csv")))
 OBS = [("P_loss_package_internal_w", "Package-\ninternal loss"),
-       ("P_loss_platform_inclusive_w", "Platform-\nincl. loss"),
        ("T_max_C", "Peak\ntemperature"),
        ("die_warpage_pv_um", "Die\nwarpage"),
        ("du_c_um", "Joint\ndriver $\\Delta u_\\mathrm{c}$")]
@@ -33,14 +32,11 @@ LAYOUT = [
         ("Attach 40 µm tall", ["attach_h40"]),
         ("Attach 20 µm tall", ["attach_h20"]),
         ("Attach stiffness / underfill (3)", ["attach_stiff", "attach_uf_soft", "attach_uf_stiff"]),
-        ("Contact resistivity 10$^{-6}$–10$^{-4}$ Ω cm$^2$ (3)",
+        ("Contact resistivity 10$^{-6}$–10$^{-4}$ Ω mm$^2$ (3)",
          ["rho_c=1e-06", "rho_c=1e-05", "rho_c=0.0001"]),
         ("1-V pads at the IR-drop floor", ["pad_drop"]),
     ]),
     ("48-V feed", [
-        ("Direct-feed loop 0.1 $R^*$", ["R_feed = 0.1 R* = 0.177 mOhm"]),
-        ("Direct-feed loop = $R^*$", ["R_feed = 1 R* = 1.77 mOhm"]),
-        ("Direct-feed loop 10 $R^*$", ["R_feed = 10 R* = 17.7 mOhm"]),
         ("Feed loss deposited inside the package", ["feed_heat_at_crossover"]),
         ("Z1 48-V RDL with more copper (3)",
          ["t_cu=0.005, occupancy=0.8", "t_cu=0.01, occupancy=0.3", "t_cu=0.01, occupancy=0.8"]),
@@ -112,7 +108,7 @@ def _prod(key):
 
 
 PROD = [_prod(k) for k, _ in OBS]
-HEAD = ["Int.\nloss", "Platf.\nloss", "Peak\ntemp.", "Die\nwarp.", "Joint\ndriver"]
+HEAD = ["Int.\nloss", "Peak\ntemp.", "Die\nwarp.", "Joint\ndriver"]
 
 COLW_IN, ROWH_IN, LAB_IN = 0.31, 0.138, 1.92
 n_body = sum(len(g[1]) for g in LAYOUT) + len(LAYOUT)

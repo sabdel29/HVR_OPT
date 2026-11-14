@@ -2,7 +2,8 @@
 
 (a) Package-internal loss at a common temperature (25 and 100 C, no coupling) and coupled
     under cooling A (the same top cold plate) and cooling B (the same top and bottom plates).
-(b) Peak temperature, (c) die warpage, (d) critical-joint displacement, under A and B.
+(b) Peak temperature, (c) die warpage, (d) critical-joint displacement and (e) local inelastic
+strain increment at the base local mesh, under A and B.
 Open diamonds: the interface-free bottom plate (a bound) for the backside integrations.
 Data: the production and sensitivity case files through scripts/tcpmt_manuscript_macros.py
 (TIERS, case_record) and the isothermal ledger, so the figure and Table II read the same
@@ -26,6 +27,12 @@ for t, row in TM.TIERS.items():
         r = TM.case_record(kind, a, v)
         if r is not None:
             recs[(t, a)] = r
+lm = (S.J("local_mesh_study.json") or {}).get("cases") or {}
+for t, row in TM.TIERS.items():
+    for a, (kind, v) in row.items():
+        if kind == "prod" and (t, a) in recs:
+            recs[(t, a)]["eps"] = (((lm.get(f"{a}_HV_S0") or {}).get("levels") or {})
+                                   .get("L0") or {}).get("d_peeq_per_cycle")
 iso = {}
 try:
     import final_closure_ledger as FL
@@ -41,9 +48,13 @@ panels = [("P", "(a) Package-internal loss (W)", [("25 °C", "iso25"), ("100 °C
           ("Tmax", "(b) Peak temperature (°C)", [("A", "A"), ("B", "B")], "{:.0f}"),
           ("warp", "(c) Die warpage (µm)", [("A", "A"), ("B", "B")], "{:.1f}"),
           ("du", r"(d) Joint driver $\Delta u_\mathrm{c}$ (µm)", [("A", "A"), ("B", "B")],
-           "{:.2f}")]
-fig, axes = plt.subplots(1, 4, figsize=(S.DBL_W, 2.15),
-                         gridspec_kw={"width_ratios": [1.9, 1, 1, 1], "wspace": 0.34,
+           "{:.2f}"),
+          ("eps_m", r"(e) $\Delta\varepsilon_\mathrm{in}$, L0 ($10^{-3}$/cycle)",
+           [("A", "A"), ("B", "B")], "{:.1f}")]
+for r in recs.values():                         # local response in 1e-3 per cycle
+    r["eps_m"] = 1e3 * r["eps"] if r.get("eps") else None
+fig, axes = plt.subplots(1, 5, figsize=(S.DBL_W, 2.15),
+                         gridspec_kw={"width_ratios": [1.75, 1, 1, 1, 1], "wspace": 0.36,
                                       "left": 0.05, "right": 0.995, "bottom": 0.17,
                                       "top": 0.80})
 w = 0.25

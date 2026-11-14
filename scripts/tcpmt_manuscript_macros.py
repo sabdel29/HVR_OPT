@@ -234,6 +234,18 @@ def main():
     T = tier_cases(S)
     mac.update(tier_macros(T))
     mac.update(isothermal_macros())
+    # Z3 is outside the Z1/Z2 mesh ladder: its own r21 -> r31 change, per observable
+    f21, f31 = D / "etm_Z3_HV_S0_h1.1_r21.json", D / "etm_Z3_HV_S0_h1.1_r31.json"
+    if f21.exists() and f31.exists():
+        def q(c):
+            m = c.get("mechanics") or {}
+            cr = (m.get("joint_search") or {}).get("critical") or {}
+            return {"Ploss": c["P_loss_w"], "Tmax": c["thermal"]["T_max_C"],
+                    "Warp": m.get("die_warpage_pv_um"), "Du": cr.get("du_um")}
+        a, b = q(json.loads(f21.read_text())), q(json.loads(f31.read_text()))
+        for k in a:
+            if a[k] and b[k]:
+                mac[f"MeshZthree{k}"] = fx(100 * abs(b[k] - a[k]) / abs(b[k]), 1)
     tf = R / "research" / "tcpmt_revision" / "tier_feed_crossover.json"
     if tf.exists():
         for t, row in json.loads(tf.read_text()).get("tiers", {}).items():

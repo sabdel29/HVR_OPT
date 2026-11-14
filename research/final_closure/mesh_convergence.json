@@ -1,0 +1,280 @@
+{
+ "tolerance_rel": 0.02,
+ "declared_before_reading": true,
+ "stale_lineage_files_skipped": [],
+ "production_refine": [
+  2,
+  1
+ ],
+ "production_label": "graded h_xy = 1.1 mm grid, every in-plane interval split in 2",
+ "production_reason": "The unrefined grid fails the declared tolerance: splitting its in-plane intervals in two changed T_max by 3.7 % (Z1) and 2.7 % (Z2), so production uses the split grid.",
+ "method": "nested refinement of the h_xy = 1.1 mm grid: rN1 splits every in-plane interval in N, r12 every layer's elements in two through the thickness; every coarser node survives",
+ "structural_solver_checks": {
+  "Z1_HV_S0_h0.8_SPOOLES_t1": {
+   "arch": "Z1",
+   "scenario": "HV_S0",
+   "h_xy_mm": 0.8,
+   "n_elems": 43232,
+   "solver": "SPOOLES",
+   "threads": 1,
+   "ok": false,
+   "error": "ts per material and temperature:            9\n   temperature points per material:            1\n   plastic data points per material:            0\n\n   orientations:            0\n   amplitudes:            2\n   data points in all amplitudes:            2\n   print requests:            1\n   transformations:            0\n   property cards:            0\n\n\n STEP            1\n\n Static analysis was selected\n"
+  },
+  "Z1_HV_S0_h1.1_ITERATIVE_CHOLESKY_t10": {
+   "arch": "Z1",
+   "scenario": "HV_S0",
+   "h_xy_mm": 1.1,
+   "n_elems": 36128,
+   "solver": "ITERATIVE CHOLESKY",
+   "threads": 10,
+   "die_warpage_pv_um": 24.46632,
+   "pkg_warpage_pv_um": 23.81874,
+   "du_c_um": 2.309250951737206,
+   "critical_xy_mm": [
+    14.4,
+    14.4
+   ],
+   "wall_s": 294.8841233253479,
+   "ok": true
+  },
+  "Z1_HV_S0_h1.1_SPOOLES_t1": {
+   "arch": "Z1",
+   "scenario": "HV_S0",
+   "h_xy_mm": 1.1,
+   "n_elems": 36128,
+   "solver": "SPOOLES",
+   "threads": 1,
+   "die_warpage_pv_um": 24.468700000000002,
+   "pkg_warpage_pv_um": 23.82263,
+   "du_c_um": 2.309212176772717,
+   "critical_xy_mm": [
+    14.4,
+    14.4
+   ],
+   "wall_s": 229.37272143363953,
+   "ok": true
+  }
+ },
+ "cases": {
+  "Z1": {
+   "levels": {
+    "r12": {
+     "T_max_C": 111.38,
+     "die_warpage_pv_um": 22.84887,
+     "du_c_um": 2.1659258132148484,
+     "P_loss_w": 141.91000532142465,
+     "n_elems": 72256,
+     "structural_solver": "ITERATIVE CHOLESKY"
+    },
+    "r21": {
+     "T_max_C": 115.663,
+     "die_warpage_pv_um": 25.53876,
+     "du_c_um": 2.2082761910295026,
+     "P_loss_w": 144.3097256920461,
+     "n_elems": 144512,
+     "structural_solver": "ITERATIVE CHOLESKY"
+    },
+    "r31": {
+     "T_max_C": 116.265,
+     "die_warpage_pv_um": 25.83013,
+     "du_c_um": 2.216194348436311,
+     "P_loss_w": 144.63251591229522,
+     "n_elems": 325152,
+     "structural_solver": "ITERATIVE CHOLESKY"
+    },
+    "r11": {
+     "T_max_C": 111.328,
+     "die_warpage_pv_um": 22.92175,
+     "du_c_um": 2.179312222329945,
+     "P_loss_w": 141.88252650679672,
+     "n_elems": 36128,
+     "structural_solver": "ITERATIVE CHOLESKY"
+    }
+   },
+   "steps": {
+    "r11->r21": {
+     "T_max_C": 0.03747957428045264,
+     "die_warpage_pv_um": 0.10247208556719278,
+     "du_c_um": 0.013116098800148034,
+     "P_loss_w": 0.01681937356342129
+    },
+    "r21->r31": {
+     "T_max_C": 0.005177826517008591,
+     "die_warpage_pv_um": 0.011280237459122372,
+     "du_c_um": 0.0035728623766211717,
+     "P_loss_w": 0.0022317956526792158
+    }
+   },
+   "checks": {
+    "in-plane": {
+     "T_max_C": 0.005177826517008591,
+     "die_warpage_pv_um": 0.011280237459122372,
+     "du_c_um": 0.0035728623766211717,
+     "P_loss_w": 0.0022317956526792158
+    },
+    "through-thickness": {
+     "T_max_C": 0.0004668701741784207,
+     "die_warpage_pv_um": 0.003189654455559414,
+     "du_c_um": 0.006180455966415284,
+     "P_loss_w": 0.00019363549853787347
+    }
+   },
+   "check_basis": {
+    "in-plane": {
+     "T_max_C": "r21 -> r31",
+     "die_warpage_pv_um": "r21 -> r31",
+     "du_c_um": "r21 -> r31",
+     "P_loss_w": "r21 -> r31"
+    },
+    "through-thickness": {
+     "T_max_C": "r11 -> r12 (base in-plane resolution)",
+     "die_warpage_pv_um": "r11 -> r12 (base in-plane resolution)",
+     "du_c_um": "r11 -> r12 (base in-plane resolution)",
+     "P_loss_w": "r11 -> r12 (base in-plane resolution)"
+    }
+   },
+   "worst": 0.011280237459122372,
+   "complete": true,
+   "pass": true,
+   "observable_status": {
+    "T_max_C": "converged",
+    "die_warpage_pv_um": "converged",
+    "du_c_um": "converged",
+    "P_loss_w": "converged"
+   },
+   "uncertainty_bound_rel": {},
+   "bounded_ok": true,
+   "richardson": {
+    "T_max_C": {
+     "order": 2.4755566463083145,
+     "extrapolated": 116.61327894489193,
+     "finest_error_estimate": -0.34827894489193045
+    },
+    "die_warpage_pv_um": {
+     "order": 2.83524338800878,
+     "extrapolated": 25.965217051221813,
+     "finest_error_estimate": -0.1350870512218138
+    },
+    "du_c_um": {
+     "order": 1.342046787337206,
+     "extrapolated": 2.227143907638184,
+     "finest_error_estimate": -0.0109495592018731
+    },
+    "P_loss_w": {
+     "order": 2.5463441857468467,
+     "extrapolated": 144.8110555296056,
+     "finest_error_estimate": -0.17853961731037796
+    }
+   },
+   "remesh_sensitivity": null
+  },
+  "Z2": {
+   "levels": {
+    "r12": {
+     "T_max_C": 121.034,
+     "die_warpage_pv_um": 66.06179999999999,
+     "du_c_um": 3.144127297501262,
+     "P_loss_w": 145.13811635388242,
+     "n_elems": 72560,
+     "structural_solver": "ITERATIVE CHOLESKY"
+    },
+    "r21": {
+     "T_max_C": 124.334,
+     "die_warpage_pv_um": 68.67960000000001,
+     "du_c_um": 3.0873385652177823,
+     "P_loss_w": 147.43752380684376,
+     "n_elems": 145120,
+     "structural_solver": "ITERATIVE CHOLESKY"
+    },
+    "r31": {
+     "T_max_C": 124.724,
+     "die_warpage_pv_um": 68.8046,
+     "du_c_um": 3.1091813713578222,
+     "P_loss_w": 147.72528383713475,
+     "n_elems": 326520,
+     "structural_solver": "ITERATIVE CHOLESKY"
+    },
+    "r11": {
+     "T_max_C": 121.02,
+     "die_warpage_pv_um": 66.2931,
+     "du_c_um": 3.1468568251011932,
+     "P_loss_w": 145.1018341766731,
+     "n_elems": 36280,
+     "structural_solver": "ITERATIVE CHOLESKY"
+    }
+   },
+   "steps": {
+    "r11->r21": {
+     "T_max_C": 0.026654012579021082,
+     "die_warpage_pv_um": 0.03474830954169815,
+     "du_c_um": 0.01927817718275175,
+     "P_loss_w": 0.01584189404340935
+    },
+    "r21->r31": {
+     "T_max_C": 0.003126904204483504,
+     "die_warpage_pv_um": 0.0018167389971017315,
+     "du_c_um": 0.007025259555862101,
+     "P_loss_w": 0.0019479402768198342
+    }
+   },
+   "checks": {
+    "in-plane": {
+     "T_max_C": 0.003126904204483504,
+     "die_warpage_pv_um": 0.0018167389971017315,
+     "du_c_um": 0.007025259555862101,
+     "P_loss_w": 0.0019479402768198342
+    },
+    "through-thickness": {
+     "T_max_C": 0.00011566997703133007,
+     "die_warpage_pv_um": 0.003501266995449784,
+     "du_c_um": 0.0008681352062623302,
+     "P_loss_w": 0.0002499837955789982
+    }
+   },
+   "check_basis": {
+    "in-plane": {
+     "T_max_C": "r21 -> r31",
+     "die_warpage_pv_um": "r21 -> r31",
+     "du_c_um": "r21 -> r31",
+     "P_loss_w": "r21 -> r31"
+    },
+    "through-thickness": {
+     "T_max_C": "r11 -> r12 (base in-plane resolution)",
+     "die_warpage_pv_um": "r11 -> r12 (base in-plane resolution)",
+     "du_c_um": "r11 -> r12 (base in-plane resolution)",
+     "P_loss_w": "r11 -> r12 (base in-plane resolution)"
+    }
+   },
+   "worst": 0.007025259555862101,
+   "complete": true,
+   "pass": true,
+   "observable_status": {
+    "T_max_C": "converged",
+    "die_warpage_pv_um": "converged",
+    "du_c_um": "converged",
+    "P_loss_w": "converged"
+   },
+   "uncertainty_bound_rel": {},
+   "bounded_ok": true,
+   "richardson": {
+    "T_max_C": {
+     "order": 2.7454341062636782,
+     "extrapolated": 124.91480084328767,
+     "finest_error_estimate": -0.19080084328765645
+    },
+    "die_warpage_pv_um": {
+     "order": 4.033067683171751,
+     "extrapolated": 68.83486023297202,
+     "finest_error_estimate": -0.030260232972019532
+    },
+    "du_c_um": null,
+    "P_loss_w": {
+     "order": 2.6709737802270626,
+     "extrapolated": 147.87258963334187,
+     "finest_error_estimate": -0.14730579620712034
+    }
+   },
+   "remesh_sensitivity": null
+  }
+ }
+}
