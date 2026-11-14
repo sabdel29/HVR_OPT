@@ -899,6 +899,14 @@ def write_decision(final, audit_pass):
 
 
 def attach_density_lines(cb):
+    try:
+        return _attach_density_lines(cb)
+    except (KeyError, TypeError):      # the attach-density variants have not run yet
+        return ["", "Attach density: the attach_dense / attach_sparse variants are not all "
+                "complete; no attach-density crossover is reported yet."]
+
+
+def _attach_density_lines(cb):
     """geom.vr_attach_density in the decision report: the two published lattices, the
     checks, and what the density does to the HV-S0 orderings and to R*."""
     st = J("vr_attach_density_study.json") or {}

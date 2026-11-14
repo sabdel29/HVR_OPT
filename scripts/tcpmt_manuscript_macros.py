@@ -338,8 +338,12 @@ def tier_cases(S):
             r = case_record(kind, a, v)
             if r is None:
                 continue
-            if kind == "prod" and (a, "HV_S0") in S:        # production local response
-                r["eps"] = S[(a, "HV_S0")].get("d_eps_in_per_cycle")
+            if kind == "prod":
+                # every tier entry at the base local level L0 with the production settings --
+                # the level every variant's local response is solved at -- so the column is
+                # comparable; the declared production level (L3) is reported in Section V
+                lm = ((J("local_mesh_study.json") or {}).get("cases") or {}).get(f"{a}_HV_S0") or {}
+                r["eps"] = ((lm.get("levels") or {}).get("L0") or {}).get("d_peeq_per_cycle")
             out[(t, a)] = r
     return out
 
@@ -569,7 +573,7 @@ def compare_table(S, mac):
          row("Low-side tier ($^\\circ$C)", lambda a: m("TlsA", a)),
          row("Die warpage (\\textmu m)", lambda a: m("WarpA", a)),
          row("$\\du$ (\\textmu m) at $T_{\\mathrm{j}}$ ($^\\circ$C)", du_at("A")),
-         row("$\\deps$ ($10^{-3}$/cycle)", lambda a: m("EpsA", a)),
+         row("$\\deps$ ($10^{-3}$/cycle), L0", lambda a: m("EpsA", a)),
          r"\midrule",
          r"\multicolumn{4}{@{}l}{\emph{Cooling B: top and bottom plates}}\\",
          row("Loss (W)", lambda a: m("PlossB", a)),
@@ -579,6 +583,7 @@ def compare_table(S, mac):
          row("Heat to bottom plate (W)", lambda a: m("QbotB", a)),
          row("Die warpage (\\textmu m)", lambda a: m("WarpB", a)),
          row("$\\du$ (\\textmu m) at $T_{\\mathrm{j}}$ ($^\\circ$C)", du_at("B")),
+         row("$\\deps$ ($10^{-3}$/cycle), L0", lambda a: m("EpsB", a)),
          r"\midrule", r"\multicolumn{4}{@{}l}{\emph{Rules}}\\",
          row("BGA sites for power", lambda a: {"Z1": str(2 * int(mac.get("NballMatched", 0)))
                                                if mac.get("NballMatched") else NA,

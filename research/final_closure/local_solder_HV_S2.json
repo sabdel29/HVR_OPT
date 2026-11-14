@@ -1,0 +1,127 @@
+{
+ "scenario": "HV_S2",
+ "control_deviation_pct": 0.0,
+ "control_tolerance_pct": 0.5,
+ "cetol": 0.05,
+ "local_family": {
+  "n_xy": 6,
+  "n_z_solder": 8,
+  "n_cycles": 4,
+  "dwell_s": 300.0,
+  "T_off_C": 25.0,
+  "procedure": "VISCO",
+  "material": "EPC"
+ },
+ "norton_T_range_C": [
+  -40.0,
+  125.0
+ ],
+ "cases": {
+  "Z1": {
+   "critical_joint": {
+    "rank": 1,
+    "x_mm": 14.4,
+    "y_mm": 14.4,
+    "du_um": 4.41078698371418,
+    "T_C": 224.26863636363635,
+    "source": "etm_Z1_HV_S2_h1.1_r21.json"
+   },
+   "du_c_um": 4.41078698371418,
+   "T_joint_C": 224.26863636363635,
+   "T_outside_norton_calibration": true,
+   "response": null,
+   "fine_mesh": {
+    "n_xy": 8,
+    "n_z_solder": 10,
+    "response": null
+   }
+  },
+  "Z2": {
+   "critical_joint": {
+    "rank": 1,
+    "x_mm": 14.4,
+    "y_mm": 14.4,
+    "du_um": 3.112531812310455,
+    "T_C": 97.72305454545454,
+    "source": "etm_Z2_HV_S2_h1.1_r21.json"
+   },
+   "du_c_um": 3.112531812310455,
+   "T_joint_C": 97.72305454545454,
+   "T_outside_norton_calibration": false,
+   "response": {
+    "n_core": 128,
+    "n_elem": 488,
+    "wall_s": 56.402952909469604,
+    "stab_change_pct": 0.3119377097571724,
+    "prev_cycle_d_eps": 0.008150450339843723,
+    "d_peeq_per_cycle": 0.008125026011718718,
+    "range_eq_inelastic": 0.00399404912498207,
+    "inelastic_work_MJ_per_m3": 0.6384923985419599
+   },
+   "fine_mesh": {
+    "n_xy": 8,
+    "n_z_solder": 10,
+    "response": {
+     "n_core": 250,
+     "n_elem": 1148,
+     "wall_s": 157.33856654167175,
+     "stab_change_pct": 0.336280865650132,
+     "prev_cycle_d_eps": 0.008099601585805725,
+     "d_peeq_per_cycle": 0.008072364175478765,
+     "range_eq_inelastic": 0.003992876318833969,
+     "inelastic_work_MJ_per_m3": 0.635470204643386
+    }
+   },
+   "mesh_change_pct": 0.6481436018050758
+  },
+  "Z3": {
+   "critical_joint": {
+    "rank": 1,
+    "x_mm": 14.4,
+    "y_mm": 14.4,
+    "du_um": 1.4170583268494579,
+    "T_C": 78.88027272727274,
+    "source": "etm_Z3_HV_S2_h1.1_r21.json"
+   },
+   "du_c_um": 1.4170583268494579,
+   "T_joint_C": 78.88027272727274,
+   "T_outside_norton_calibration": false,
+   "response": {
+    "n_core": 128,
+    "n_elem": 488,
+    "wall_s": 53.58660888671875,
+    "stab_change_pct": 2.5929476899888058,
+    "prev_cycle_d_eps": 0.0021326769027343686,
+    "d_peeq_per_cycle": 0.002077377706249993,
+    "range_eq_inelastic": 0.0010278490733615585,
+    "inelastic_work_MJ_per_m3": 0.13730841935740348
+   },
+   "fine_mesh": {
+    "n_xy": 8,
+    "n_z_solder": 10,
+    "response": {
+     "n_core": 250,
+     "n_elem": 1148,
+     "wall_s": 178.79921913146973,
+     "stab_change_pct": 2.609036995109465,
+     "prev_cycle_d_eps": 0.0021109301383435653,
+     "d_peeq_per_cycle": 0.0020558551900932663,
+     "range_eq_inelastic": 0.0010206119653307548,
+     "inelastic_work_MJ_per_m3": 0.13611238079636634
+    }
+   },
+   "mesh_change_pct": 1.03604251128594
+  }
+ },
+ "incomplete_solves": {
+  "Z1_HV_S2": {
+   "t_last_s": 300.0,
+   "t_end_s": 2400.0
+  },
+  "Z1_HV_S2_fine": {
+   "t_last_s": 300.0,
+   "t_end_s": 2400.0
+  }
+ },
+ "wall_s": 688.4
+}

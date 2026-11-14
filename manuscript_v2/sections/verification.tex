@@ -36,8 +36,10 @@ under a further in-plane level or a through-thickness split is \MeshWorstProd\,\
 architecture ordering is claimed only where the gap exceeds twice that change. The local response
 is computed on a declared family of four nested solder meshes with the fixed averaging band;
 its uncertainty $U = U_{\mathrm{mesh}} + U_{\mathrm{time}} + U_{\mathrm{cyc}}$ (discretization,
-first-increment and cycle-count contributions) is \LocalUrange, and a local ordering is drawn only
-where the gap exceeds $2U$. Heat deposited in the mesh equals the ledger total, and heat leaving
+first-increment and cycle-count contributions) is \LocalUrange: below 2\,\% for the embedded and
+package-backside joints, and \EpsUZthree\,\% for the cool board-backside joint, whose creep
+stabilizes slowly over cycles. Every case passes the declared convergence rule with the fixed
+averaging band, and a local ordering is drawn only where the gap exceeds $2U$. Heat deposited in the mesh equals the ledger total, and heat leaving
 through the cold-plate and board films equals the deposited heat, to $10^{-6}$ in every case.
 
 The analytical stages cost microseconds to seconds: one converter synthesis takes 4.6~s and a
