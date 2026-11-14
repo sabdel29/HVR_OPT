@@ -5,13 +5,19 @@
 Each rule below follows from a result of Sections~\ref{sec:evaluate}--\ref{sec:explore} and is
 invisible to the single-domain analysis that would normally make the decision.
 
-\emph{Rank integrations on the converged electrothermal state.} The loss a regulator dissipates
-depends on the temperature its integration imposes on it. At room temperature the
-substrate-backside regulator is ahead of the embedded one by \DeltaPrtZtwoSzero~W and the
-board-backside regulator behind it by \DeltaPrtAbsZthreeSzero~W; on the converged field the order
-of each pair reverses, by \LossGapZtwoSzero~W and \LossGapZthreeSzero~W, because the converter's
-thermal path changes its conversion loss by more than the routing changes. A placement study
-that holds the converter loss fixed ranks the integrations in the wrong order.
+\emph{Rank integrations on the converged state, under one cooling solution.} At a common
+temperature the three integrations differ only in routing, and the package-backside regulator
+is ahead by \GapIsoHotZtwo~W. Under the same top plate the converter's thermal path reverses that
+order and makes the embedded regulator the best in every respect, with the board-backside one
+\GapAZthree~W and \dTmaxTierAZthree~K behind; with the same top and bottom plates the order
+splits by domain. A placement study that holds the converter loss fixed, or that gives the
+integrations different cooling, ranks them in the wrong order.
+
+\emph{Choose the cooling with the integration.} A bottom plate is an electrical and thermal
+decision for the backside regulators, whose converters touch it (\GainBZtwo{} and \GainBZthree~W
+less loss), and a mechanical one for the embedded regulator, whose converter cannot reach it but
+whose board it cools (die warpage \WarpAZone{}\,$\to$\,\WarpBZone~\textmu m). A board-backside
+regulator without its own plate does not survive the top-plate cooling of the other two.
 
 \emph{An embedded regulator needs local input decoupling.} The package 48-V network of an
 embedded regulator carries whatever waveform the cells draw. Without local input capacitance
@@ -22,12 +28,16 @@ point. Directly fed backside regulators are insensitive to this choice.
 \emph{Order the tiers for the interconnect technology.} With build-up microvias, the high-side
 device, the flying capacitors, the low-side device and the inductors should be stacked in that
 order: the reference order needs a via of aspect ratio 5.3, the repartitioned one 0.83, with the
-same components, area and height. % TODO(data): + its electrothermal effect (z1_tier_reference)
+same components, area and height. The same order puts one fewer low-conductivity
+redistribution tier between the low-side devices and the die, which is worth
+\SensDTierRefZonePloss~W, \SensDTierRefZoneTmax~K and \SensDTierRefZoneDu~\textmu m of joint driver in the
+embedded regulator. Order the tiers for the via technology and for the heat path at once.
 
 \emph{A backside regulator needs a feed specification.} The direct 48-V feed is outside the
-package and must be specified as a loop resistance below $R^*$; where the backside regulator is
-behind at zero feed resistance, no connector recovers the difference.
-% TODO(data): R* values
+package and must be specified as a loop resistance below $R^*$: \RstarTierBZtwo~m$\Omega$ for the
+package-backside and \RstarTierBZthree~m$\Omega$ for the board-backside regulator with bottom
+cooling. Under top cooling alone both are behind even with a lossless feed, and no connector
+recovers the difference.
 
 \emph{Size the package interface for the rail it carries.} Integrating the regulator on the
 board backside removes the board opening, but sends the kiloampere 1-V current through the ball

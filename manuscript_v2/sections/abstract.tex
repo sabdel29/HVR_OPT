@@ -7,19 +7,18 @@ crosses each vertical interconnect, where the converter's heat flows and which s
 deform, yet the choice is made one domain at a time on a fixed geometry. This paper presents an
 electrothermal--mechanical framework that carries a regulator synthesized from a generalized
 hybrid switched-capacitor--buck family into an explicit package and evaluates, on one geometry
-and one converged field, a rail-aware loss ledger, an electrothermal fixed point with a
-microchannel cold plate, a thermoelastic solution with an all-site joint search, a viscoplastic
+and one converged field, a rail-aware loss ledger, an electrothermal fixed point with
+microchannel cold plates, a thermoelastic solution with an all-site joint search, a viscoplastic
 solder submodel and interconnect realizability. Each reduced model is verified against a matched
-reference; one coupled evaluation takes a few hours. Three modes of use are demonstrated on
-a 1-kW, 48-to-1-V system. Evaluation shows that the embedded regulator is admissible only with
-local input decoupling and a repartitioned tier order. Comparison shows that coupling reverses
-the electrical ranking in both directions: the substrate-backside regulator, ahead by
-\DeltaPrtZtwoSzero~W at room temperature, dissipates \LossGapZtwoSzero~W more when coupled,
-whereas the board-backside regulator, behind by \DeltaPrtAbsZthreeSzero~W, leads by
-\LossGapZthreeSzero~W because its converter runs \dTlsAbsZthreeSzero~K cooler, and warps the die
-\WarpFoldZthree{} times less, but its 1-V current needs nearly the entire ball array.
-Exploration moves the regulator-count optimum to 76 cells with a different topology and
-identifies the package decisions that reverse each ranking.
+reference; one coupled evaluation takes a few hours. Three modes of use are demonstrated on a
+1-kW, 48-to-1-V system. Evaluation shows that the embedded regulator is admissible only with
+local input decoupling and a repartitioned tier order, which alone saves \SensDTierRefZonePloss~W
+and \SensDTierRefZoneTmax~K. Comparison at a common temperature, under the same top cold plate
+and under the same top and bottom plates shows that coupling decides the ranking: the
+board-backside regulator, \GapIsoHotZthree~W behind on routing alone, does not survive top-only
+cooling, and with bottom cooling the backside regulators lead electrically and the embedded one
+mechanically. Exploration moves the regulator-count optimum to 76 cells with a different
+topology and identifies the package decisions that reverse each ranking.
 \end{abstract}
 
 \begin{IEEEkeywords}

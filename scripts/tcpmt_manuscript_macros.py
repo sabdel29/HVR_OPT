@@ -293,6 +293,7 @@ def sensitivity_macros(S):
                 out[f"Sens{tag}{ATAG[a]}{k}"] = fx(val, nd[k])
                 if bvals.get(k) is not None:
                     out[f"SensD{tag}{ATAG[a]}{k}"] = fx(val - bvals[k], nd[k])
+                    out[f"SensDAbs{tag}{ATAG[a]}{k}"] = fx(abs(val - bvals[k]), nd[k])
     return out
 
 
@@ -362,6 +363,8 @@ def tier_macros(T):
                 d = T[(t, b)]["P"] - T[(t, "Z1")]["P"]
                 out[f"Gap{t}{ATAG[b]}"] = fx(abs(d), 1)
                 out[f"Lead{t}{ATAG[b]}"] = "Z1" if d > 0 else b
+                out[f"dTmaxTier{t}{ATAG[b]}"] = fx(abs(T[(t, b)]["Tmax"]
+                                                       - T[(t, "Z1")]["Tmax"]), 0)
     for a in ARCHS:
         if ("A", a) in T and ("B", a) in T:
             out[f"GainB{ATAG[a]}"] = fx(T[("A", a)]["P"] - T[("B", a)]["P"], 1)

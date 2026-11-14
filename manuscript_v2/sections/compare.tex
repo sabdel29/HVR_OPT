@@ -54,8 +54,13 @@ integrations does not survive the board-backside one. Mechanically, Z1 sandwiche
 between the die and the substrate on the full ball array and its die warps by \WarpAZone~\textmu m;
 Z2 is a thin silicon plate that carries the encapsulated converter on one side and rests on a
 ring of balls around the opening, a bimetal strip whose die warps \WarpRatioZtwo{} times as much
-and whose critical joint moves \DuRatioZtwo{} times as far (Fig.~\ref{fig:fields}).
-% TODO(data): Z3 under cooling A, mechanical sentence
+and whose critical joint moves \DuRatioZtwo{} times as far (Fig.~\ref{fig:fields}). The uncut board
+does not rescue Z3 under this cooling: its hot converter heats the board from below, the die
+warps by \WarpAZthree~\textmu m and the critical joint moves \DuAZthree~\textmu m, the most of the
+three. Under one top plate the embedded regulator is the best integration in every respect, and
+Z2 is behind even at zero feed resistance, so no direct feed can recover its loss; only without
+local input decoupling (S1) does Z2 lead, by \LossGapZtwoSone~W, and then only while its feed loop
+stays below \RstarZtwoSone~m$\Omega$, about \RstarOverLoopZtwo{} times the package 48-V loop of Z1.
 
 \begin{figure*}[!t]
 \centering
@@ -69,23 +74,17 @@ plate, a bound.}
 \end{figure*}
 
 \subsection{The same top and bottom cold plates}
-% TODO(data): cooling B results -- which integration can use the bottom plate (Z1 only through
-% substrate, balls and 2.4 mm of board; Z2 and Z3 directly), losses, temperatures, warpage, joints;
-% the interface-free bound; R* under B.
-
-The direct 48-V feed of the backside integrations lies outside the package boundary; its loop
-resistance enters through~\eqref{eq:feed} and is treated as a requirement (Fig.~\ref{fig:feed}).
-Where a backside regulator is ahead at zero feed resistance, $R^*$ is the largest loop resistance
-that keeps it ahead; where it is behind, no feed recovers the difference. Under cooling~A, Z2 is
-behind at S0 and needs a loop below \RstarZtwoSone~m$\Omega$ at S1, about \RstarOverLoopZtwo{}
-times the package 48-V loop of Z1 (\RloopZone~m$\Omega$).
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{fig6_crossover.pdf}
-\caption{Platform-inclusive loss of the directly fed backside integrations minus that of Z1,
-against the external feed-loop resistance. (a) S0. (b) S1. Below zero the backside integration
-has the lower platform-inclusive loss; circles mark the crossover $R^*$. Dashed: the package
-48-V loop resistance of Z1, for scale.}
-\label{fig:feed}
-\end{figure}
+An identical bottom plate changes the three integrations in different ways. The converters of
+Z2 and Z3 touch it: the loss of Z2 falls by \GainBZtwo~W to \PlossBZtwo~W and that of Z3 by
+\GainBZthree~W to \PlossBZthree~W, and their peaks fall to \TmaxBZtwo{} and
+\TmaxBZthree\,$^\circ$C. The converter of Z1 reaches the plate only through the substrate, the
+ball field and 2.4~mm of board; only \QbotBZone~W takes that path and its loss falls by
+\GainBZone~W. For Z1 the bottom plate is a mechanical decision instead: by cooling the board it
+removes most of the expansion mismatch between the board and the silicon above it, so its die
+warpage falls from \WarpAZone{} to \WarpBZone~\textmu m and its joint driver from \DuAZone{} to
+\DuBZone~\textmu m. With identical cooling the ranking therefore splits by domain
+(Fig.~\ref{fig:tiers}): Z2 has the lowest loss, \GapBZtwo~W below Z1 and ahead of Z1 for any feed
+loop below \RstarTierBZtwo~m$\Omega$; Z1 has the smallest die warpage and joint driver; and Z3
+lies between them in every respect while it pays for its longer 1-V path---and still for its
+ball field. An interface-free plate would lower the backside losses by a further few watts
+(open diamonds), not change this order.

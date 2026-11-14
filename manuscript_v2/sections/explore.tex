@@ -35,13 +35,17 @@ regulator would also lose its electrical lead over Z2 (\SensTierRefZonePloss{} a
 \PlossZtwo~W). Tier order is therefore a coupled decision: the same choice sets the via aspect
 ratio, the device temperature, the loss and the joint response.
 
-\emph{Cooling.} A second plate under the Z2 converter lowers its loss by
-\SensDZtwoCooledZtwoPloss~W to \SensZtwoCooledZtwoPloss~W, its peak to
-\SensZtwoCooledZtwoTmax\,$^\circ$C and its die warpage to \SensZtwoCooledZtwoWarp~\textmu m,
-reversing every Z1--Z2 ranking of Table~\ref{tab:compare}; with equal cooling the
-package-backside regulator then has a lower loss than the board-backside one, whose 1-V path is
-longer, while the board-backside regulator keeps the smaller die warpage and joint driver.
-% TODO(data): z3_top_only -- does the top plate alone carry Z3?
+\emph{Cooling boundaries.} The cooling tiers of Section~\ref{sec:compare} fix two choices that
+are varied here. Removing the 50-\textmu m interface between the bottom plate and the converter
+lowers the backside losses only to \PlossIZtwo{} (Z2) and \PlossIZthree~W (Z3). The board
+boundary---a 30-mm coupon in natural convection, standing in for a full server board---moves the
+joint drivers by up to half but no ranking: with a 500-W\,m$^{-2}$K$^{-1}$ film beneath the
+board the die warpage of Z1 falls from \WarpZone{} to \SensHbotHiZoneWarp~\textmu m and its joint
+driver from \DuZone{} to \SensHbotHiZoneDu~\textmu m, and those of Z2 to \SensHbotHiZtwoWarp{} and
+\SensHbotHiZtwoDu~\textmu m---the same mechanism as the bottom plate of cooling~B, a cooler board
+expanding less against the silicon above it. The cold-plate coefficient equivalent to the
+conjugate CFD solution lowers both losses by about \SensDAbsIcepakZtwoPloss~W and both peaks by about
+\SensDAbsIcepakZtwoTmax~K, a common-mode change.
 
 \emph{Construction and interconnect.} Leaving the space between the cells void instead of
 encapsulated relieves the one-sided Z2 plate---its die warpage falls to
@@ -49,4 +53,4 @@ encapsulated relieves the one-sided Z2 plate---its die warpage falls to
 \SensVoidZoneWarp~\textmu m, so the mechanical gap narrows without reversing. Under-provisioning
 the 1-V TSV field of Z2 (64 instead of 1444 vias per cell) adds \SensDTsvMinZtwoPloss~W and
 widens the electrical gap, whereas a sparser attach (30-\textmu m bumps at 80-\textmu m pitch)
-costs only \SensDAttSparseZtwoPloss~W. % TODO(data): board boundary (hbot 100/500), cooling model form
+costs only \SensDAttSparseZtwoPloss~W.

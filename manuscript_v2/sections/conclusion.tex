@@ -7,13 +7,14 @@ its loss, the waveform its package interconnect carries, the deformation of the 
 survival of the interconnect and ball-field rules. The framework presented here carries a
 synthesized hybrid switched-capacitor--buck regulator through an explicit package to these
 consequences on one geometry, verifies each stage against a matched reference, and does so in
-\EvalHours{} per integration on a shared workstation. Used to evaluate, compare and explore, it showed on one 1-kW
-specification that coupling reverses the electrical ranking of the integrations in both
-directions, that the embedded regulator requires local input decoupling and a repartitioned tier
-order, that the substrate-backside regulator warps the die \WarpRatioZtwo{} times as much as the
-embedded one, that the board-backside regulator is limited by the ball field rather than by its
-thermal or mechanical behavior, and that the regulator-count optimum shifts with the topology
-chosen at each count.
+\EvalHours{} per integration on a shared workstation. Used to evaluate, compare and explore, it showed on one 1-kW specification that the ranking of
+the integrations is decided by the coupling and by the cooling they share: at one temperature the
+three differ only in routing, under one top cold plate the embedded regulator is best in every
+respect and the board-backside one does not survive, and with an added bottom plate the backside
+regulators lead electrically while the embedded one leads mechanically. It also showed that the
+embedded regulator requires local input decoupling, that its tier order sets both the via aspect
+ratio and the device temperature, that the board-backside regulator is limited by its ball field,
+and that the regulator-count optimum shifts with the topology chosen at each count.
 The same chain applies to any member of the hybrid family, any package stack the builder can
 express, and any cooling solution with a declared boundary, which makes it a design tool for the
 integration decision itself rather than a check applied after it.

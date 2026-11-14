@@ -58,9 +58,10 @@ seconds. The framework is used in three ways, each demonstrated on a \SI{1}{kW},
 solution, to \emph{compare} integration architectures on conversion, routing, thermal and
 mechanical grounds, and to \emph{explore} the design space---regulator count and converter
 architecture, and the neighboring package decisions on which every architecture ranking depends.
-The coupled answers differ from the single-domain ones: the electrothermal coupling alone
-reverses the electrical ranking of the integrations in both directions, and the board-backside
-regulator, the best of the three thermally and mechanically, is limited by its ball field.
+The coupled answers differ from the single-domain ones: the ranking of the integrations changes
+with the cooling solution they share, a board-backside regulator does not survive the top-plate
+cooling of the other two and needs nearly the whole ball field for its 1-V current, and the tier
+order chosen for via manufacturability also sets the device temperature.
 
 The contributions are as follows.
 \begin{enumerate}
@@ -74,13 +75,14 @@ electrothermal fixed point with a physical microchannel boundary, and a thermoel
 model driving a local solder submodel with a mesh-independent response metric, each checked
 against a matched reference (Sections~\ref{sec:models}--\ref{sec:verification}).
 \item A demonstration of the three modes of use on one specification: evaluation of a single
-design, comparison of three integration architectures---embedded, package-backside and
-board-backside---and exploration of regulator count, converter architecture and neighboring
-package decisions (Sections~\ref{sec:evaluate}--\ref{sec:explore}).
+design; comparison of three integration architectures---embedded, package-backside and
+board-backside---at a common temperature and under two identical cooling solutions; and
+exploration of regulator count, converter architecture and neighboring package decisions
+(Sections~\ref{sec:evaluate}--\ref{sec:explore}).
 \item Design rules that follow from the coupled solution and that no single-domain analysis
-exposes: integrations must be ranked on the converged electrothermal state, because the coupling
-reverses the electrical ranking of embedded and backside regulators; an embedded regulator needs
-local input decoupling; tiers must be ordered for the interconnect technology; a board-backside
-regulator is limited by the ball pitch beneath the load; and a backside regulator needs a
-feed-resistance specification (Section~\ref{sec:discussion}).
+exposes: integrations must be ranked on the converged electrothermal state and under one cooling
+solution; the cooling must be chosen with the integration; an embedded regulator needs local
+input decoupling; tiers must be ordered for the via technology and the heat path at once; a
+board-backside regulator is limited by the ball pitch beneath the load; and a backside regulator
+needs a feed-resistance specification (Section~\ref{sec:discussion}).
 \end{enumerate}
