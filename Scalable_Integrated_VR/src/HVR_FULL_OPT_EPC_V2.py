@@ -42,6 +42,7 @@ Adds on top of V2:
 """
 
 import math
+import os
 import re
 import numpy as np
 import pandas as pd
@@ -53,6 +54,18 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from dataclasses import dataclass, field
 from typing import Optional, List
+
+# ── Flying-capacitor voltage rule (TCPMT revision, review round 2) ───────────────────────────
+# In this family the flying capacitor C_i holds (N - i) V_in / N, so the most stressed one, C_1,
+# holds (N - 1) V_in / N (32 V for N = 3 at 48 V). The published rule compared every capacitor
+# with V_in / N, which admitted under-rated parts (a 25-V part for C_1 = 32 V).
+#   "stress"  every flying capacitor must satisfy  v_max * CAP_V_DERATING >= (N - 1) V_in / N,
+#             and the library includes the rated parts added in the revision (RATED_CAPACITORS)
+#   "legacy"  the published rule  v_max > V_in / N  and the published library: reproduces every
+#             earlier result exactly, including the production converter of the ETM study
+# Set per process with HVR_CAP_RULE / HVR_CAP_DERATING, or per call by assigning CAP_RULE.
+CAP_RULE = os.environ.get("HVR_CAP_RULE", "stress")
+CAP_V_DERATING = float(os.environ.get("HVR_CAP_DERATING", "0.8"))   # stress <= 80 % of rating
 
 
 # ============================================================
@@ -224,6 +237,40 @@ def row_to_device(row) -> EPCDevice:
         footprint_mm2=row.get('footprint_mm2', np.nan),
     )
 
+
+
+# Rated flying-capacitor parts added in the TCPMT revision (used only with CAP_RULE = "stress").
+# Murata SimSurfing characteristic data (pimapi.murata.com, retrieved 2026-11): both part numbers
+# share one construction -- 0.272 uF at 32 V, 0.589 uF at 16 V (25 C, from 1 uF nominal); ESR at
+# 805 kHz 7.8 mOhm at 32 V (6.85 mOhm at 16 V); 0603 (1.6 x 0.8 mm), 0.8 +/- 0.2 mm thick. The
+# loss model takes one ESR for every flying capacitor: the C_1 (32 V) value is used.
+RATED_CAPACITORS: List["Capacitor"] = []
+
+
+def _rated_capacitors():
+    return [
+        Capacitor(
+            "Murata-GRM188D72A105KE01-1uF-100V", "MLCC",
+            c_uf=1.0, esr_mohm=7.8, esl_ph=400, v_max=100.0, footprint_mm2=1.28,
+            source=("Murata GRM188D72A105KE01, 0603, 1 uF, 100 V, X7T; 0.272 uF at 32 V; "
+                    "https://www.murata.com/en-us/products/productdetail?partno="
+                    "GRM188D72A105KE01")),
+        Capacitor(
+            "Murata-GRM188D71H105KE01-1uF-50V", "MLCC",
+            c_uf=1.0, esr_mohm=7.8, esl_ph=400, v_max=50.0, footprint_mm2=1.28,
+            source=("Murata GRM188D71H105KE01, 0603, 1 uF, 50 V, X7T; 0.272 uF at 32 V; "
+                    "https://www.murata.com/en-us/products/productdetail?partno="
+                    "GRM188D71H105KE01")),
+    ]
+
+
+def default_capacitor_library(rule=None):
+    """The capacitor library for a voltage rule: the published library, plus the rated parts
+    under the corrected rule."""
+    rule = rule or CAP_RULE
+    if not RATED_CAPACITORS:
+        RATED_CAPACITORS.extend(_rated_capacitors())
+    return list(CAPACITOR_LIBRARY) + (list(RATED_CAPACITORS) if rule != "legacy" else [])
 
 # ============================================================
 # 3) SOTA PASSIVE LIBRARIES
@@ -793,9 +840,13 @@ def filter_candidate_inductors(library, arch, I_out):
     return [ind for ind in library if ind.i_sat_a >= i_sat_min]
 
 
-def filter_candidate_capacitors(library, arch, V_in):
-    """Voltage rating must exceed per-stage SC voltage."""
-    return [cap for cap in library if cap.v_max > V_in / arch.N]
+def filter_candidate_capacitors(library, arch, V_in, rule=None):
+    """Voltage rating against the flying-capacitor stress (see CAP_RULE)."""
+    rule = rule or CAP_RULE
+    if rule == "legacy":
+        return [cap for cap in library if cap.v_max > V_in / arch.N]
+    v_stress = (arch.N - 1) * V_in / arch.N          # C_1, the most stressed capacitor
+    return [cap for cap in library if cap.v_max * CAP_V_DERATING >= v_stress]
 
 
 # ============================================================
@@ -1294,7 +1345,7 @@ def run_hvr_optimization(
     if inductor_library is None:
         inductor_library = INDUCTOR_LIBRARY
     if capacitor_library is None:
-        capacitor_library = CAPACITOR_LIBRARY
+        capacitor_library = default_capacitor_library()
 
     area_budget = I_out / I_target_density   # [V3]
 

@@ -277,7 +277,14 @@ def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: floa
     phase exactly, because the upstream optimizer then falls back to its own full libraries.
     """
     import os
+    import HVR_FULL_OPT_EPC_V2 as H
     from HVR_FULL_OPT_EPC_V2 import run_hvr_optimization
+    # The production lineage of the ETM study was synthesized with the published capacitor rule
+    # (v_max > V_in/N). The corrected rule is the engine default; the production path pins the
+    # published one so every existing result stays reproducible, unless HVR_PRODUCTION_CAP_RULE
+    # asks for the corrected selection (TCPMT revision, review round 2).
+    prev_rule = H.CAP_RULE
+    H.CAP_RULE = os.environ.get("HVR_PRODUCTION_CAP_RULE", "legacy")
     cwd = os.getcwd()
     os.chdir(SIVR)                     # the optimizer opens EPC-Product-Table.csv by bare name
     try:
@@ -288,6 +295,7 @@ def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: floa
                                    capacitor_library=capacitor_library)
     finally:
         os.chdir(cwd)
+        H.CAP_RULE = prev_rule
     feas = [r for r in res if r.area_feasible and r.ripple_satisfied
             and np.isfinite(r.optimized_loss)]
     if not feas:

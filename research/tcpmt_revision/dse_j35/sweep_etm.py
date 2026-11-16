@@ -17,8 +17,11 @@ Loss boundary for every number written here: CONVERSION + ROUTING ("matched").
 The reference paper's end-to-end boundary is NOT reconstructed. See assumptions.md.
 """
 import sys, os, json, math, time, csv, argparse
-sys.path.insert(0, "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine")
-os.chdir("/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine")
+# engine directory: the published copy by default; HVR_DSE_ENGINE selects another (the
+# TCPMT-revision engine with the corrected capacitor rule; HVR_CAP_RULE=legacy reproduces it)
+ENGINE = os.environ.get("HVR_DSE_ENGINE", "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine")
+sys.path.insert(0, ENGINE)
+os.chdir(ENGINE)
 
 import numpy as np
 from HVR_FULL_OPT_sizing import run_hvr_optimization as run_continuous

@@ -27,6 +27,7 @@ from HVR_FULL_OPT_EPC_V2 import (
     Capacitor,
     INDUCTOR_LIBRARY,
     CAPACITOR_LIBRARY,
+    default_capacitor_library,
     generate_architectures,
     filter_candidate_inductors,
     filter_candidate_capacitors,
@@ -649,7 +650,7 @@ def run_hvr_optimization(
     if inductor_library is None:
         inductor_library = INDUCTOR_LIBRARY
     if capacitor_library is None:
-        capacitor_library = CAPACITOR_LIBRARY
+        capacitor_library = default_capacitor_library()
 
     area_budget = I_out / I_target_density
     architectures = generate_architectures(
