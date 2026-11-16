@@ -203,6 +203,96 @@ def run():
             "r_scale_hot": r_scale, "temperature_C": T_PARTS_C, "options": opts}
 
 
+def robustness(seed=1, trials=4):
+    """The recommended option (7-phase Latin interleaving + ring) against (i) the X7S
+    temperature factor at its class limit and (ii) random per-cell phase errors."""
+    d = CI.design()
+    f = d["f_sw_hz"]
+    _t, i = CI.phase_a_current("ramp_deff")
+    I = CI.harmonics(i)
+    l_nom = CI.loop_inductance_estimate()["nominal_pH"] * 1e-12
+    r_scale = CI.network_resistance()["loop_hot_ohm"] / NW.self_check()["R_loop_reduced_ohm"]
+    xy, _ = NW.ring_layout()
+    out = {"temperature_factor": {}, "phase_error": {}}
+    for tf in X7S_T_FACTOR:
+        br, inf = part_branch_params("GRM31CC72A475KE11", 1, L_CONN_NH["c"], t_fac=tf)
+        ev = NW.evaluate(I, f, l_nom, ring_branch=br, phase="latin7", ring_xy=xy,
+                         r_scale=r_scale)
+        out["temperature_factor"][f"{tf:g}"] = {"C_ring_uF": len(xy) * inf["C_total_uF"],
+                                                "k_eq": ev["k_eq"]}
+    br, _ = part_branch_params("GRM31CC72A475KE11", 1, L_CONN_NH["c"])
+    base = NW.phases("latin7")
+    rng = np.random.default_rng(seed)
+    orig = NW.phases
+    try:
+        for sig in (2.0, 5.0, 10.0):
+            ks = []
+            for _k in range(trials):
+                pert = base + np.deg2rad(sig) * rng.standard_normal(len(base))
+                NW.phases = lambda name, p=pert: p
+                ks.append(NW.evaluate(I, f, l_nom, ring_branch=br, phase="perturbed",
+                                      ring_xy=xy, r_scale=r_scale)["k_eq"])
+            out["phase_error"][f"{sig:g}deg"] = {"timing_ns": sig / 360.0 / f * 1e9,
+                                                 "k_eq_mean": float(np.mean(ks)),
+                                                 "k_eq_range": [min(ks), max(ks)]}
+    finally:
+        NW.phases = orig
+    # optional HF capacitance AT each cell (closes the switching loop locally): with the
+    # cells interleaved it no longer resonates the package network up
+    out["optional_local_hf"] = {}
+    for lab, (loc, inf) in (("silicon_2x10nF_cf_tier", silicon_branch(2, L_CONN_NH["a1"])),
+                            ("0402_X7R_8x4n7_gaps", part_branch_params(
+                                "GRM155R72A472KA01", 8,
+                                0.5 * (L_CONN_NH["b_level1"] + L_CONN_NH["b_level2"])))):
+        ev = NW.evaluate(I, f, l_nom, ring_branch=br, local_branch=loc, phase="latin7",
+                         ring_xy=xy, r_scale=r_scale)
+        out["optional_local_hf"][lab] = {"part": inf["part"], "C_per_cell_uF": inf["C_total_uF"],
+                                         "k_eq": ev["k_eq"], "P_local_esr_W": ev["P_local_esr_W"],
+                                         "I_local_rms_A_max": ev["I_local_rms_A_max"]}
+    # time-domain check of the 49-cell result (trapezoidal MNA, constant ESR, exact 7-phase
+    # shifts) against the frequency-domain port model at the same ESR and full harmonics
+    _t7, i7 = CI.phase_a_current("ramp_deff", n=7 * 512)
+    I7 = CI.harmonics(i7)
+    rec_r = PA.load()["parts"]["GRM31CC72A475KE11"]
+    esr_c = float(PA.esr_at(rec_r, 2 * f))
+    brc = NW.Branch(br.c, lambda x: np.full_like(np.asarray(x, float), esr_c), br.l)
+    k_fd = NW.evaluate(I7, f, l_nom, ring_branch=brc, phase="latin7", ring_xy=xy,
+                       r_scale=r_scale, n_harm=len(I7) - 1)["k_eq"]
+    td = NW.td_verify(i7, f, l_nom, br.c, esr_c, br.l, phase="latin7", periods=20,
+                      r_scale=r_scale, ring_xy=xy)
+    out["time_domain_49cell"] = {"ESR_const_mohm": esr_c * 1e3, "k_eq_frequency_domain": k_fd,
+                                 "k_eq_time_domain": td["k_eq_td"],
+                                 "rel_diff": td["k_eq_td"] / k_fd - 1.0, "dt_ns": td["dt_ns"],
+                                 "periods": td["periods"]}
+    # grid resolution of the port model: level 2 (h_fine 10 um) against the production level 1
+    import json as _json
+    pn = _json.loads(NW.NETWORK.read_text())["loop"]["Z1"]
+    gs2, _ = NW.reduce_sheet("supply", xy, level=2)
+    gr2, _ = NW.reduce_sheet("return", xy, level=2)
+    r2 = NW.solve_harmonic(gs2, gr2, np.full(49, 1.0 / 49), 0.0, 1e-10)["P_sheets_W"]
+    o_pm = NW.port_matrices
+    try:
+        NW.port_matrices = lambda ring_xy, refresh=False: (gs2, gr2)
+        k2 = NW.evaluate(I, f, l_nom, ring_branch=br, phase="latin7", ring_xy=xy,
+                         r_scale=CI.network_resistance()["loop_hot_ohm"] / r2)["k_eq"]
+    finally:
+        NW.port_matrices = o_pm
+    out["port_model_level2"] = {"R_loop_ohm": r2, "R_loop_production_ohm": pn["r_loop_ohm"],
+                                "k_eq": k2}
+    # the cell waveform assumption: the scenario S1 flat pulse and the ramp at the nominal D
+    out["waveform"] = {}
+    for mode in ("ramp_deff", "ramp_D", "rect_D"):
+        _t2, i2 = CI.phase_a_current(mode)
+        I2 = CI.harmonics(i2)
+        out["waveform"][mode] = {"k_open": CI.k_of(I2), "k_eq": NW.evaluate(
+            I2, f, l_nom, ring_branch=br, phase="latin7", ring_xy=xy, r_scale=r_scale)["k_eq"]}
+    out["note"] = ("random phase errors decorrelate the cells that share a Latin phase, so they "
+                   "lower k_eq slightly; the ring's capacitance hardly matters once interleaved; "
+                   "a few nF at each cell for the switching loop costs < 0.02 in k; a flat or "
+                   "nominal-D pulse raises k_eq by 0.06-0.09")
+    return out
+
+
 def main():
     out = run()
     doc = json.loads(CI.JSON_OUT.read_text()) if CI.JSON_OUT.exists() else {}

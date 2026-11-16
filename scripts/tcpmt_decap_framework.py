@@ -128,6 +128,17 @@ def ledger_consequence():
             "P_pkg_48V_terms_W": pkg48, "P_intraVR_metal_W": rows["P_intraVR_metal"],
             "hotloop_correction_W": rows["P_intraVR_metal"] - rows_c["P_intraVR_metal"],
             "P_cap_esr_W": p_esr, "I_48_avg_A": Lk["i_hv_avg_a"]}
+    # the recommended design across its loop-inductance band (k_eq and ring ESR at each end)
+    o = pl["options"][RECOMMENDED]
+    band = {}
+    for j, lp in enumerate(pl["loop_inductance_pH_evaluated"]):
+        ev = o[f"L{lp:.0f}pH"]
+        key = f"HV_DECB{j}"
+        _register(ev["k_eq"], kh, ev.get("P_ring_esr_W", 0.0), key=key)
+        band[f"{lp:.0f}pH"] = {"k_eq": ev["k_eq"],
+                               "P_package_internal_W": FL.self_consistent(
+                                   "Z1", key, temps)["P_loss_w"]}
+    out["recommended_band"] = band
     rows0 = {r["term"]: r["P_w"] for r in L0["rows"]}
     out["S0_pkg_48V_terms_W"] = sum(rows0[t] for t in (
         "P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return", "P_BGA_supply", "P_BGA_return",
@@ -225,6 +236,21 @@ def collect():
            "et_history_last": c["et_history"][-1]}
     out["backside"] = backside_note(c["P_loss_w"])
     doc = json.loads(CI.JSON_OUT.read_text())
+    # the other options, ESTIMATED (not run) by this run's own thermal amplification
+    # (coupled / fixed-temperature loss rise) and its joint-temperature slope
+    led = doc["framework"]["ledger_at_S0_temperatures"]
+    rise_fix = led["cases"][RECOMMENDED]["delta_vs_S0_W"]
+    amp = (c["P_loss_w"] - s0["P_loss_w"]) / rise_fix
+    slope = ((crit["T_C"] - out["S0"]["T_joint_C"]) / (c["P_loss_w"] - s0["P_loss_w"])
+             if crit else None)
+    out["other_options_estimated"] = {
+        "method": "coupled loss rise = fixed-T rise x %.3f (this run); joint slope %s K/W "
+                  "(this run vs S0); linear, not run" % (amp, f"{slope:.3f}" if slope else "n/a"),
+        "cases": {n: {"k_eq": v["k_eq"],
+                      "P_loss_W": s0["P_loss_w"] + amp * v["delta_vs_S0_W"],
+                      "T_joint_C": (out["S0"]["T_joint_C"] + slope * amp * v["delta_vs_S0_W"])
+                      if slope else None}
+                  for n, v in led["cases"].items()}}
     doc.setdefault("framework", {})["coupled_case"] = out
     CI.JSON_OUT.write_text(json.dumps(doc, indent=1, default=float))
     print(json.dumps({k: v for k, v in out.items() if k != "rows"}, indent=1, default=float))
@@ -242,6 +268,7 @@ def summary():
     import tcpmt_decap_placement as PL
     doc = json.loads(CI.JSON_OUT.read_text())
     doc["placement"]["connection_inductance"] = PL.connection_inductance()
+    doc["placement"]["robustness_recommended"] = PL.robustness()
     ci, pl, fw = doc["circuit"], doc["placement"], doc["framework"]
     cb = ci["charge_balance"]["ramp_deff"]
     lnom = ci["loop_inductance_estimate"]["nominal_pH"]
@@ -286,6 +313,8 @@ def summary():
             "size_mm": [3.2, 1.6], "height_mm": [1.6, 1.9], "rating": "100 V, X7S, -55..125 C",
             "k_eq": rec["k_eq_nominal"], "k_eq_band": rec["k_eq_band"],
             "ring_cap_rms_A_max": rec[lkey]["I_ring_rms_A_max"],
+            "ring_cap_self_heating_K": PA.self_heating_K(
+                PA.load()["parts"]["GRM31CC72A475KE11"], rec[lkey]["I_ring_rms_A_max"]),
             "P_ring_esr_W": rec[lkey]["P_ring_esr_W"],
             "input_ripple_pp_V_max_cell": rec[lkey]["ripple_pp_V_max_cell"]},
         "ledger_at_S0_temperatures": led["cases"][RECOMMENDED],
@@ -293,6 +322,10 @@ def summary():
                                                   "die_warpage_um", "within_125C_calibration",
                                                   "et_converged")},
     }
+    s["backside_integrations"] = cc.get("backside") if cc else None
+    s["other_options_coupled_estimate"] = cc.get("other_options_estimated") if cc else None
+    s["robustness_recommended"] = doc["placement"]["robustness_recommended"]
+    s["connection_inductance_nH"] = doc["placement"]["connection_inductance"]
     data = PA.load()
     s["parts_table_input_48V"] = [
         {k: x[k] for k in x if k not in ("roles",)} | {"url": data["parts"][x["part"]]["url"]}
@@ -303,10 +336,13 @@ def summary():
     r = s["recommended"]
     lc = s["ledger_at_S0_temperatures"]
     k12 = s["C_for_k_le_1p2_uF_per_cell"]
-    if cc:
+    if cc and cc.get("T_joint_C") is not None:
         tail = (f"the coupled Z1 case at that k loses {cc['P_loss_W']:.1f} W in the package with "
                 f"its critical joint at {cc['T_joint_C']:.0f} C (S0: {cc['S0']['P_loss_W']:.1f} W, "
                 f"{cc['S0']['T_joint_C']:.0f} C)")
+    elif cc:
+        tail = (f"the coupled Z1 case at that k loses {cc['P_loss_W']:.1f} W in the package "
+                f"(S0: {cc['S0']['P_loss_W']:.1f} W)")
     else:
         tail = (f"at the converged S0 temperatures the package-internal loss rises to "
                 f"{lc['P_package_internal_W']:.1f} W")
@@ -316,8 +352,8 @@ def summary():
         f"circuit model of the cells' phase-A pulse against the {s['network_R_loop_hot_mohm']:.1f}-"
         f"mOhm package network leaves k = {k_at['0.56uF']['100pH']:.1f} at that value; k <= 1.2 "
         f"needs about {k12['100']:.1f} uF per cell at 48 V, and the Z1 stack has no room for it "
-        f"(the cell tiers are full and the 0.8-mm gaps take only 0402 parts, at most 4.7 nF at "
-        f"100 V and 125 C, which resonate with the package inductance). The decoupling is "
+        f"(the cell tiers and the 0.8-mm gaps hold only nanofarads of 100-V, 125-C capacitance, "
+        f"which resonate with the package inductance and raise k). The decoupling is "
         f"therefore made physical as seven interleaved clock phases over the 7 x 7 cells and a "
         f"ring of {r['count']} 1206 100-V X7S capacitors ({r['C_total_48V_105C_uF']:.0f} uF at "
         f"48 V and 105 C) outside the cell grid: a 49-cell model of the package sheets gives "
@@ -338,10 +374,11 @@ def summary():
                      "edge (30 mm); cell clocks in 7 interleaved phases (Latin square)"}
     s["figure_caption"] = (
         f"C_in is the package input capacitance ({r['count']} x 1206 100-V X7S, "
-        f"{r['C_total_48V_105C_uF']:.0f} uF at 48 V) in the ring outside the cell grid; the cell "
-        f"itself has no room for one, and its phase-A input pulse (S1) is smoothed in the package "
-        f"network by interleaving the cells' clocks in seven phases, which with C_in holds "
-        f"k = {r['k_eq']:.2f}.")
+        f"{r['C_total_48V_105C_uF']:.0f} uF at 48 V) in the ring outside the cell grid, since a "
+        f"cell has room for only nanofarads of 100-V capacitance; the phase-A input pulse (S1) "
+        f"is smoothed in the package network by interleaving the cells' clocks in seven phases, "
+        f"which with C_in holds k = {r['k_eq']:.2f} (bare pulse: "
+        f"{s['k_open_cell_waveform']:.1f}).")
     doc["summary"] = s
     CI.JSON_OUT.write_text(json.dumps(doc, indent=1, default=float))
     print(json.dumps({k: s[k] for k in ("recommended", "ledger_at_S0_temperatures",

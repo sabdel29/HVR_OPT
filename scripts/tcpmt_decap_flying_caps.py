@@ -61,14 +61,16 @@ def cap_current_waveform(n=2 ** 14):
     t = np.arange(n) * T / n
     ton = d["D_eff"] * T
     di = d["v_out"] * (1.0 - d["D_eff"]) * T / d["L_H"]
-    ramp = lambda tt: d["I_L_a"] - di / 2 + di * tt / ton
-    i = np.zeros(n)
-    a = t < ton
-    i[a] = ramp(t[a])
-    b = (t >= T / 2) & (t < T / 2 + ton)
-    i[b] = -ramp(t[b] - T / 2)
+    te = CI.T_EDGE_S                      # the same 1 ns edges as the input waveform
+
+    def pulse(tt):
+        x = np.where(tt < ton, d["I_L_a"] - di / 2 + di * tt / ton, 0.0)
+        x = np.where(tt < te, x * tt / te, x)
+        fall = (tt >= ton) & (tt < ton + te)
+        return np.where(fall, (d["I_L_a"] + di / 2) * (1.0 - (tt - ton) / te), x)
+    i = pulse(t) - pulse((t - T / 2) % T)
     return t, i, {"I_L_A": d["I_L_a"], "branch_ripple_pp_A": di, "t_on_ns": ton * 1e9,
-                  "D_eff": d["D_eff"]}
+                  "D_eff": d["D_eff"], "edge_ns": te * 1e9}
 
 
 def requirement():
@@ -223,9 +225,11 @@ def esr_loss(choice, t_conv):
     for cap, (key, n) in choice.items():
         rec = data["parts"][key]
         esr_f = PA.esr_at(rec, f, bias=V_C[cap]) / n
+        p_n = np.abs(I[1:257]) ** 2 / 2 * esr_f
         per[cap] = {"part": key, "n": n,
                     "ESR_805kHz_mohm": float(PA.esr_at(rec, 805e3, bias=V_C[cap])) * 1e3 / n,
-                    "P_spectrum_per_cell_W": float(np.sum(np.abs(I[1:257]) ** 2 / 2 * esr_f))}
+                    "P_spectrum_per_cell_W": float(np.sum(p_n)),
+                    "share_above_20fsw": float(np.sum(p_n[20:]) / np.sum(p_n))}
     r_mean = 0.5 * (per["C1"]["ESR_805kHz_mohm"] + per["C2"]["ESR_805kHz_mohm"])
     p_model = base * r_mean / LIBRARY_ESR_MOHM
     p_spec = 49 * (per["C1"]["P_spectrum_per_cell_W"] + per["C2"]["P_spectrum_per_cell_W"])
@@ -245,7 +249,8 @@ def tier_height(choice):
     for lab, t in (("nominal", t_nom), ("max_tolerance", t_max)):
         h = t * 1e3 + ATTACH_UM
         out[lab] = {"part_height_mm": t, "tier_um": h, "via_AR_at_120um": h / VIA_D_UM,
-                    "post_diameter_for_AR3_um": h / 3.0, "post_diameter_for_AR5_um": h / 5.0}
+                    "post_diameter_for_AR3_um": h / 3.0, "post_diameter_for_AR5_um": h / 5.0,
+                    "Z1_converter_layer_um": 1973.0 - 100.0 + h}
     out["current_tier_um"] = 100.0
     out["current_AR"] = 100.0 / VIA_D_UM * 1.0
     out["build_up_microvia_AR_limit"] = ("~1:1 (laser-drilled, filled build-up microvias; "

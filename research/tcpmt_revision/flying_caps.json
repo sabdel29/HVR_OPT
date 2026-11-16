@@ -12,20 +12,21 @@
    "I_L_A": 6.802721088435374,
    "branch_ripple_pp_A": 4.612592404376641,
    "t_on_ns": 88.82512780489655,
-   "D_eff": 0.07151935785575289
+   "D_eff": 0.07151935785575289,
+   "edge_ns": 1.0
   },
-  "charge_per_interval_C": 6.042343510731812e-07,
+  "charge_per_interval_C": 6.065445002907008e-07,
   "charge_at_nominal_D_C": 5.280498422189867e-07,
-  "I_rms_per_cap_A": 2.621350660139146,
+  "I_rms_per_cap_A": 2.625957406575833,
   "I_rms_loss_model_A": 2.4245549083879374,
   "C_required_uF": {
    "C1": {
-    "5pct": 0.3776464694207382,
-    "10pct": 0.1888232347103691
+    "5pct": 0.37909031268168797,
+    "10pct": 0.18954515634084398
    },
    "C2": {
-    "5pct": 0.7552929388414764,
-    "10pct": 0.3776464694207382
+    "5pct": 0.7581806253633759,
+    "10pct": 0.37909031268168797
    }
   },
   "note": "effective capacitance at the capacitor's DC voltage and tier temperature; peak-to-peak ripple; D_eff (loss-lengthened on-interval) is conservative against the nominal D = 0.0625 (charge x 0.874)"
@@ -499,7 +500,7 @@
     "t_um": 100.0,
     "density_uF_per_mm2": 0.015624999999999997
    },
-   "area_for_10pct_mm2": 12.084687021463626,
+   "area_for_10pct_mm2": 12.130890005814019,
    "C_in_half_tier_uF": 0.043828124999999996,
    "C_in_full_tier_uF": 0.08765624999999999,
    "meets_10pct_in_half_tier": false
@@ -518,7 +519,7 @@
     "t_um": 100.0,
     "density_uF_per_mm2": 0.0603686107371611
    },
-   "area_for_10pct_mm2": 6.255676001307587,
+   "area_for_10pct_mm2": 6.279593120540894,
    "C_in_half_tier_uF": 0.16933395311773689,
    "C_in_full_tier_uF": 0.33866790623547377,
    "meets_10pct_in_half_tier": false
@@ -586,12 +587,12 @@
     "n": 1
    },
    "ripple_pct": {
-    "C1": 7.803764221018106,
-    "C2": 7.199461735275009
+    "C1": 7.833600094759599,
+    "C2": 7.226987199301951
    },
    "ripple_pct_at_class_limit_temp_factor": {
-    "C1": 10.366194263740468,
-    "C2": 9.563464096111579
+    "C1": 10.40582699154633,
+    "C2": 9.600027772207069
    },
    "cell_layout_mm": [
     [
@@ -615,14 +616,16 @@
      "tier_um": 830.0,
      "via_AR_at_120um": 6.916666666666667,
      "post_diameter_for_AR3_um": 276.6666666666667,
-     "post_diameter_for_AR5_um": 166.0
+     "post_diameter_for_AR5_um": 166.0,
+     "Z1_converter_layer_um": 2703.0
     },
     "max_tolerance": {
      "part_height_mm": 1.0,
      "tier_um": 1030.0,
      "via_AR_at_120um": 8.583333333333334,
      "post_diameter_for_AR3_um": 343.3333333333333,
-     "post_diameter_for_AR5_um": 206.0
+     "post_diameter_for_AR5_um": 206.0,
+     "Z1_converter_layer_um": 2903.0
     },
     "current_tier_um": 100.0,
     "current_AR": 0.8333333333333334,
@@ -636,21 +639,23 @@
       "part": "GRM188D71H105KE01",
       "n": 1,
       "ESR_805kHz_mohm": 7.804490037379023,
-      "P_spectrum_per_cell_W": 0.05974715292764304
+      "P_spectrum_per_cell_W": 0.05994516713205796,
+      "share_above_20fsw": 0.28060224046931126
      },
      "C2": {
       "part": "GRM188D71H105KE01",
       "n": 1,
       "ESR_805kHz_mohm": 6.845153436416245,
-      "P_spectrum_per_cell_W": 0.060311785204046425
+      "P_spectrum_per_cell_W": 0.06053385440933887,
+      "share_above_20fsw": 0.2889077684303541
      }
     },
     "P_cap_ESR_library_2p5mohm_W": 1.4402242934280696,
     "R_C_effective_mohm": 7.3248217368976345,
     "P_cap_ESR_model_W": 4.2197544842039845,
     "delta_model_W": 2.779530190775915,
-    "P_cap_ESR_spectrum_W": 5.882887968452784,
-    "delta_spectrum_W": 4.442663675024715,
+    "P_cap_ESR_spectrum_W": 5.903472055528445,
+    "delta_spectrum_W": 4.463247762100375,
     "note": "P_conv_cap_esr is temperature-independent in the converter model; the ledger's S0 value at the converged temperatures is 1.4402 W"
    }
   },
@@ -681,12 +686,12 @@
  "summary": {
   "C_required_uF": {
    "C1": {
-    "5pct": 0.3776464694207382,
-    "10pct": 0.1888232347103691
+    "5pct": 0.37909031268168797,
+    "10pct": 0.18954515634084398
    },
    "C2": {
-    "5pct": 0.7552929388414764,
-    "10pct": 0.3776464694207382
+    "5pct": 0.7581806253633759,
+    "10pct": 0.37909031268168797
    }
   },
   "thin_option_meets_requirement": false,
@@ -716,8 +721,8 @@
   },
   "recommended_10pct": "C1 1 x GRM188D71H105KE01, C2 1 x GRM188D71H105KE01",
   "ripple_pct_10pct_choice": {
-   "C1": 7.803764221018106,
-   "C2": 7.199461735275009
+   "C1": 7.833600094759599,
+   "C2": 7.226987199301951
   },
   "min_tier_um_10pct": [
    830.0,
@@ -730,7 +735,7 @@
   "P_cap_ESR_W": {
    "library_2p5mohm": 1.4402242934280696,
    "10pct_model": 4.2197544842039845,
-   "10pct_spectrum": 5.882887968452784
+   "10pct_spectrum": 5.903472055528445
   }
  }
 }

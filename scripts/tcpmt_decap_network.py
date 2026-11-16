@@ -304,6 +304,76 @@ def evaluate(I_harm, f_sw, l_loop_h, ring_branch=None, local_branch=None, phase=
     return res
 
 
+def td_verify(i_period, f_sw, l_loop_h, c_ring, esr_ring, l_ring, phase="latin7",
+              periods=20, r_scale=1.0, ring_xy=None):
+    """Time-domain check of the 49-cell port model: trapezoidal MNA on the reduced sheets with
+    the board inductor (rail -> board node) and every ring branch (series ESR-L-C, constant
+    ESR) as companion models, the 49 cells as phase-shifted current sources. Returns the
+    loss-equivalent k of the sheets over the last period. `i_period` must have a sample count
+    divisible by the phase denominator (7 or 49) so the shifts are exact."""
+    ring_xy = ring_xy if ring_xy is not None else ring_layout()[0]
+    Gs, Gr = port_matrices(ring_xy)
+    Gs, Gr = Gs / r_scale, Gr / r_scale
+    nc = len(cells())
+    npt = Gs.shape[0]
+    nr = npt - 1 - nc
+    n = 2 * npt - 1
+    n_t = len(i_period)
+    dt = 1.0 / f_sw / n_t
+    Y = np.zeros((n, n))
+    Y[:npt, :npt] += Gs
+    Y[npt:, npt:] += Gr[1:, 1:]
+    gL = dt / (2.0 * l_loop_h)
+    Y[0, 0] += gL
+    geq = 1.0 / (esr_ring + 2.0 * l_ring / dt + dt / (2.0 * c_ring))
+    ss = 1 + nc + np.arange(nr)
+    rr = npt + nc + np.arange(nr)
+    Y[ss, ss] += geq
+    Y[rr, rr] += geq
+    Y[ss, rr] -= geq
+    Y[rr, ss] -= geq
+    import scipy.linalg as sla
+    lu = sla.lu_factor(Y)
+    sc = 1 + np.arange(nc)
+    rc = npt + np.arange(nc)
+    shift = np.round(phases(phase) / (2 * np.pi) * n_t).astype(int)
+    I0 = float(np.mean(i_period))
+    # DC operating point: rail tied, rings open
+    dc = solve_harmonic(Gs * r_scale, Gr * r_scale, np.full(nc, I0), 0.0, l_loop_h,
+                        r_scale=r_scale)
+    vs, vr = dc["V_s"].real, dc["V_r"].real
+    V = np.concatenate([vs, vr[1:]])
+    i_b = nc * I0
+    i_k = np.zeros(nr)
+    v_c = vs[1 + nc:] - vr[1 + nc:]
+    v_l = np.zeros(nr)
+    p_last = np.empty(n_t)
+    for p in range(periods):
+        for k in range(n_t):
+            J = np.zeros(n)
+            icell = i_period[(k + 1 - shift) % n_t]
+            J[sc] -= icell
+            J[rc] += icell
+            J[0] += i_b - gL * V[0]                      # inductor history (into the rail)
+            hist = -(2 * l_ring / dt) * i_k - v_l + v_c + (dt / (2 * c_ring)) * i_k
+            J[ss] += geq * hist                          # series RLC companion
+            J[rr] -= geq * hist
+            Vn = sla.lu_solve(lu, J)
+            dv = Vn[ss] - Vn[rr]
+            i_new = geq * (dv - hist)
+            v_c_new = v_c + (dt / (2 * c_ring)) * (i_new + i_k)
+            v_l = (2 * l_ring / dt) * (i_new - i_k) - v_l
+            i_b = i_b - gL * (V[0] + Vn[0])
+            i_k, v_c, V = i_new, v_c_new, Vn
+            if p == periods - 1:
+                vs_t = V[:npt]
+                vr_t = np.concatenate([[0.0], V[npt:]])
+                p_last[k] = float(vs_t @ Gs @ vs_t + vr_t @ Gr @ vr_t)
+    return {"k_eq_td": math.sqrt(float(np.mean(p_last)) / dc["P_sheets_W"]),
+            "P_DC_W": dc["P_sheets_W"], "P_mean_W": float(np.mean(p_last)),
+            "dt_ns": dt * 1e9, "periods": periods}
+
+
 def self_check():
     """DC resistance of the reduced sheets against package_network.json, and k_eq = k_open
     with no capacitors (all cells in phase)."""

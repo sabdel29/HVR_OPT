@@ -222,8 +222,33 @@ def fetch_all():
                               "note": "the HVR_FULL_OPT_EPC_V2 library entry"}
     OUT.mkdir(parents=True, exist_ok=True)
     CACHE.write_text(json.dumps(data, indent=0))
+    fetch_temp_rise()                             # the recommended ring part's self-heating
     compact()
-    return data
+    return load()
+
+
+def fetch_temp_rise(pn="GRM31CC72A475KE11#"):
+    """Murata's self-heating curves (temperature rise vs ripple current at 100 kHz, 500 kHz,
+    1 MHz) for one part, merged into the cache."""
+    req = {"ReqType": "Characteristics", "languageRegion": "en-us",
+           "ReqChara": [{"partnumber": pn, "chara_type": "temp_rise",
+                         "parameter": {"supply_status": "B"},
+                         "WorkInfo": {"color": "#EA002A", "line_dash": ""}}]}
+    r = _post("/characteristics/characteristics", req)
+    curves = {}
+    for s in (r.get("JsonCharaData") or [{}])[0].get("charadata") or []:
+        if "data" in s:
+            curves[s.get("caption2", "")] = _curve(s, (0, 1))
+    data = json.loads(CACHE.read_text())
+    data["parts"][pn.rstrip("#")]["temp_rise_A_rms_K"] = curves
+    CACHE.write_text(json.dumps(data, separators=(",", ":")))
+    _LOADED.clear()
+    return curves
+
+
+def self_heating_K(rec, i_rms_a, freq="1MHz"):
+    d = np.array(rec["temp_rise_A_rms_K"][freq])
+    return float(np.interp(i_rms_a, d[:, 0], d[:, 1], left=d[0, 1] * (i_rms_a / d[0, 0]) ** 2))
 
 
 def compact(sig=5):

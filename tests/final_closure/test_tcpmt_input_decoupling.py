@@ -67,6 +67,20 @@ def test_ring_parts_fit_the_converter_layer(dec):
     assert r["height_mm"][1] < 1.973 and r["rating"].startswith("100 V")
 
 
+def test_variant_hooks_reproduce_the_ledger_consequence(dec):
+    """The coupled variant's ledger hooks, evaluated at the S0 temperatures, give the recorded
+    fixed-temperature package-internal loss of the recommended design."""
+    import tcpmt_decap_circuit as CI
+    import tcpmt_decap_framework as F
+    rk = F.recommended_k()
+    FL = F._register(rk["k_eq"], F.k_open(), rk["P_ring_esr_W"], key="HV_TEST_DEC")
+    p = FL.self_consistent("Z1", "HV_TEST_DEC", CI.s0_temperatures())["P_loss_w"]
+    rec = dec["framework"]["ledger_at_S0_temperatures"]["cases"][F.RECOMMENDED]
+    assert abs(p - rec["P_package_internal_W"]) < 1e-6
+    assert abs(FL.self_consistent("Z1", "HV_S0", CI.s0_temperatures())["P_loss_w"]
+               - json.loads(CI.CASE_S0.read_text())["P_loss_w"]) < 1e-9
+
+
 def test_no_thin_flying_capacitor_claimed(fly):
     assert fly["thin_options"]["any_thin_option_meets_C1_at_32V"] is False
     r = fly["recommended"]["10pct"]
