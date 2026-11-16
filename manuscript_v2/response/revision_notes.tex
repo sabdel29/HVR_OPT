@@ -1,0 +1,115 @@
+\documentclass[10pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,xcolor,enumitem,textcomp}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\du}{\Delta u_{\mathrm{c}}}
+\newcommand{\deps}{\Delta\varepsilon_{\mathrm{in}}}
+\input{../results_macros}
+\newcommand{\pending}[1]{\textcolor{red}{[PENDING: #1]}}
+\setlist{nosep,leftmargin=*}
+\title{Revision Notes: Status of the Conclusions and Remaining Work\\[2pt]
+\large TCPMT revision, second review round (Option A)}
+\date{}
+\begin{document}
+\maketitle
+
+Every number is generated from the result artifacts of the repository (the same macros as the
+manuscript). ``A0'' is the technology-conditional reference stack with a 100-\textmu m
+flying-capacitor tier; ``A1'' uses rated Murata 0603 X7T MLCCs (1030-\textmu m tier).
+
+\section*{Conclusions that remain valid}
+\begin{enumerate}
+\item \textbf{Coupling decides the ranking.} The integrations differ only in routing at a common
+temperature (Z2 \GapIsoHotZtwo~W ahead of Z1 at 100\,$^\circ$C); the cooling they share reorders them.
+\item \textbf{Z3 is infeasible under the top plate alone.} GaN junction bound \TjAZthree\,$^\circ$C
+against the 150-$^\circ$C rating; six component and material limits fail.
+\item \textbf{Under two plates Z2 has the lowest loss and Z1 the smallest die warpage and joint
+driver}, both resolved under the conservative rule (\PlossBZtwo{} vs \PlossBZone~W; \WarpBZone{} vs
+\WarpBZtwo~\textmu m). Z2's lead survives a physical feed (0.6--2~m$\Omega$ against
+$R^* = \RstarTierBZtwo$~m$\Omega$), the implemented decoupling and the interface feedback.
+\item \textbf{The embedded regulator needs local input decoupling}; without it the joint leaves the
+solder law's range (S1) and S2 is infeasible under the intact-solid model. It is now implemented
+physically (7 interleaved phases and a ring of 56 1206 capacitors; $k = \DecapKeq$;
+\DecapPlossZone~W; joint \DecapTjointZone\,$^\circ$C).
+\item \textbf{The repartitioned tier order has the better heat path} in both capacitor cases (A0:
+\SensDTierRefZonePloss~W and \SensDTierRefZoneTmax~K; A1: \RcfmaxRefAPloss{} vs \RcfmaxAPloss~W).
+\item \textbf{The joint of largest displacement is the critical joint} (\SolderSites{} competing sites
+in \SolderCases{} cases; monotone response).
+\item \textbf{Temperature is not a proxy for joint response} (Z2: hotter peak, cooler joint, larger
+driver).
+\item \textbf{Omitted converter losses change no ranking} (\OmitLo--\OmitHi~W per integration;
+gaps move by at most 0.2~W).
+\end{enumerate}
+
+\section*{Conclusions that become conditional}
+\begin{enumerate}
+\item \textbf{Tier-order realizability} (aspect ratio 0.83 vs 5.3) holds only with a thin, rated
+flying-capacitor technology (A0). With rated MLCCs (A1) neither order meets the 1:1 build-up rule
+(8.6 vs 5.3) and the reference order has the smaller crossing.
+\item \textbf{Physical feasibility of the embedded stack} is established only when the capacitor
+technology, or a redesigned stack, is demonstrated; A1 needs copper posts, and in Z2 the A1
+converter no longer fits the 2.4-mm board opening.
+\item \textbf{Z1 vs Z2 under one top plate}: Z1 leads by \GapAZtwo~W with ideal decoupling
+(resolved with correlation credit), the two tie with implemented decoupling (\DecapPlossZone{} vs
+\SdecAZtwoPloss~W), and only Z1 stays feasible against a non-conforming plate.
+\item \textbf{Z1 vs Z3 joint response under two plates} is not resolved, and the alternative solder
+law narrows it to \SchubertGapB\,\%.
+\item \textbf{Platform preference for the bottom plate}: Z1 top-cooled (\PlatAZone~W) and Z2
+dual-cooled (\PlatBZtwo~W) are within the pump-efficiency band.
+\item \textbf{Regulator-count optimum}: \pending{corrected DSE and the coupled evaluation of the
+strongest square candidate}.
+\end{enumerate}
+
+\section*{Conclusions withdrawn}
+\begin{enumerate}
+\item ``Under one top plate the embedded regulator is best in every respect'': electrically it ties
+with Z2 once its decoupling is implemented.
+\item ``Under two plates Z3 leads Z1 electrically'': with the land-side and board-plane redistribution
+coupled, Z3 is behind at 10--40~\textmu m of land-side copper (\ZthreeLandBFortyPloss~W at 40~\textmu m
+vs \PlossBZone~W) and ties only at \ZthreeLandTie~\textmu m.
+\item ``The synthesized design is implemented by the selected library capacitor'': the 25-V part is
+under-rated for the 32-V $C_1$, and no part fits the 100-\textmu m tier.
+\item ``About 0.5~\textmu F per cell gives a smooth package input'': $k \le 1.2$ needs about
+\DecapCkTwo~\textmu F per cell, which the stack cannot hold.
+\item Categorical novelty claims and ``every reduced model is verified''.
+\item The 1.1\,\% mesh-change criterion for comparisons, superseded by the per-output budget at the
+MOOSE-observed convergence order.
+\end{enumerate}
+
+\section*{Corrections found during the revision}
+\begin{enumerate}
+\item The synthesis capacitor rule compared every flying capacitor with $V_{\mathrm{in}}/N$; it now
+checks $(N-i)V_{\mathrm{in}}/N$ against the derated rating and the effective capacitance against the
+ripple limit. The published rule is kept as a legacy configuration.
+\item The cold-plate coefficient counted half the coolant rise twice (\CoolCalK~K per kW); the
+correction lowers every loss by 1--5~W and changes no ranking.
+\item The cells' internal 48-V runs carry the bare input pulse whatever decoupling sits outside the
+cell; the implemented-decoupling runs include it (about \DecapHotLoop~W per integration).
+\item The production mesh leaves the converter stack and board 2--3~K cold (MOOSE refinement); the
+uncertainty budget was revised accordingly.
+\item The local solder card interpolates the creep prefactor linearly between rows 25~K apart
+(up to \CardGridMax\,\% in the response); this is now part of $U$.
+\end{enumerate}
+
+\section*{Remaining work for a fully manufacturable package}
+\begin{enumerate}
+\item A flying-capacitor technology rated $\ge$40~V with $\ge$0.19~\textmu F ($C_1$) and
+$\ge$0.38~\textmu F ($C_2$) effective at bias, temperature and tolerance, in $\le$2.8~mm$^2$ each and
+$\le$100--120~\textmu m height (custom silicon or thin-film integrated capacitors), or a converter
+redesign at a higher switching frequency that lowers the required capacitance.
+\item A vertical interconnect for a thick capacitor tier (copper posts or through-mold vias at a
+demonstrated aspect ratio) and its process qualification.
+\item For Z2, a board opening at least 2.7~mm deep (or a protruding converter) and a demonstrated
+48-V feed below $R^*$.
+\item For Z3, land-side copper of at least \ZthreeLandThirtyMv~\textmu m per rail (30-mV drop) and
+\ZthreeLandTie~\textmu m to match Z1, a ball pitch of \PitchMaxZthree~mm or a reallocation of
+signal balls.
+\item The seven-phase interleaved control and the ring capacitance, implemented and measured.
+\item A conforming plate interface or lid, with a die-flatness specification.
+\item Assembly feasibility (placement, encapsulation, lamination warpage), a solder law calibrated
+against measured hysteresis loops, and experimental validation of temperature, loss and warpage on a
+prototype.
+\item High-frequency power-integrity analysis (droop, resonance) beyond the input network.
+\end{enumerate}
+\end{document}
