@@ -1,0 +1,322 @@
+"""TCPMT revision -- the 49 Z1 cells sharing the package 48 V network: port model.
+
+The one-cell circuit (tcpmt_decap_circuit) gives each cell 1/49 of the network, which is
+exact only when every cell sees the same path and all switch in phase. This module keeps the
+real network: the production supply and return sheets of package_network.json (refined FV
+grid, 5 um Cu at 30 %, the traced 0.2 mm VIN pads, the 54 + 54 BGA balls nearest the centre,
+rho_c contacts, ball resistance) are Kron-reduced onto their PORTS
+
+    rail   the BGA balls' board side (one node per sheet)
+    cells  the 49 cell terminals (VIN pad on the supply sheet, mirrored pad on the return)
+    ring   one contact per ring capacitor (through-substrate vias to the land-side sheets)
+
+and every harmonic of the cells' input current is solved on the reduced network with:
+the board loop inductance between the supply rail and the board node, the ring capacitors
+between supply-ring and return-ring ports, local capacitors across each cell's two
+terminals, and an arbitrary phase per cell (interleaving). The sheet loss (balls included)
+at DC and at each harmonic gives the loss-equivalent k of the package network:
+
+    k_eq^2 = (P_DC + sum_n P_n) / P_DC
+
+which is exactly the factor by which the ledger's package 48 V terms (I_rms^2 R) grow.
+
+Check: with no capacitors and all cells in phase k_eq equals the cell waveform's own k, and
+the DC loss per A^2 reproduces package_network.json (R_supply + R_return = 2.262 mOhm).
+"""
+from __future__ import annotations
+
+import json
+import math
+import sys
+from functools import lru_cache
+from pathlib import Path
+
+import numpy as np
+import scipy.sparse as sp
+import scipy.sparse.linalg as spla
+
+R = Path(__file__).resolve().parents[1]
+for _p in ("scripts/phase0nw", "scripts/phase0mr", "scripts/phase0m", "scripts"):
+    if str(R / _p) not in sys.path:
+        sys.path.insert(0, str(R / _p))
+
+NETWORK = R / "research" / "final_closure" / "package_network.json"
+sys.path.insert(0, str(R / "scripts"))
+from hvr_scratch import path as _scratch                            # noqa: E402
+#: regenerable in ~20 s; kept out of the repository
+CACHE = _scratch("tcpmt_decap") / "port_matrices.npz"
+LEVEL = 1
+RING_SIDE_MM = 0.30          # TSV landing under each ring-capacitor terminal
+GRID_HALF_MM = 10.68         # measured cell-grid half span (configs/phase0nz)
+PKG_HALF_MM = 15.0
+RING_CLEAR_MM = 0.30         # clearance to the cell grid and to the package edge
+CAP_1206 = (3.2, 1.6)
+CAP_GAP_MM = 0.30
+
+
+# ------------------------------------------------------------------ geometry
+@lru_cache(maxsize=1)
+def cells():
+    import physical_coords as PCO
+    return [tuple(c) for c in PCO.physical_cell_coordinates()]
+
+
+def balls(rail):
+    pn = json.loads(NETWORK.read_text())
+    return [tuple(p) for p in pn["convergence"][f"Z1_{rail}"]["ball_xy"]]
+
+
+def ring_layout(cap=CAP_1206, gap=CAP_GAP_MM, clear=RING_CLEAR_MM):
+    """1206 capacitors packed in the ring between the cell grid and the package edge, long
+    axis parallel to the nearest edge, in as many rows as the ring width allows. Returns the
+    capacitor centres (mm) and the packing summary."""
+    inner = GRID_HALF_MM + clear
+    outer = PKG_HALF_MM - clear
+    w = outer - inner
+    pitch_l, pitch_w = cap[0] + gap, cap[1] + gap
+    n_rows = int(math.floor((w + gap) / pitch_w))
+    xy = []
+    for r in range(n_rows):
+        off = inner + cap[1] / 2 + r * pitch_w
+        # top/bottom strips span the full width (corners included)
+        n_tb = int(math.floor((2 * outer + gap) / pitch_l))
+        x0 = -(n_tb * pitch_l - gap) / 2 + cap[0] / 2
+        for k in range(n_tb):
+            for s in (1, -1):
+                xy.append((x0 + k * pitch_l, s * off))
+        # left/right strips between them
+        span = 2 * (inner)                              # clear of the top/bottom strips
+        n_lr = int(math.floor((span + gap) / pitch_l))
+        y0 = -(n_lr * pitch_l - gap) / 2 + cap[0] / 2
+        for k in range(n_lr):
+            for s in (1, -1):
+                xy.append((s * off, y0 + k * pitch_l))
+    area = (2 * PKG_HALF_MM) ** 2 - (2 * GRID_HALF_MM) ** 2
+    return xy, {"n_caps": len(xy), "rows": n_rows, "ring_width_mm": w,
+                "ring_area_mm2": area, "cap_LxW_mm": list(cap), "spacing_mm": gap,
+                "clearance_mm": clear}
+
+
+# ------------------------------------------------------------------ Kron reduction
+def reduce_sheet(rail, ring_xy, level=LEVEL):
+    """Kron-reduced conductance (S) of one 20-C sheet over ports [rail, cells, ring]."""
+    import pkg_rdl_refined as RF
+    import pkg_rdl_network as K
+    import pad_interface as PI
+    cl = cells()
+    bl = balls(rail)
+    sq = RF.cell_terminals(cl, rail, "VIN_PAD")
+    rsq = [(x, y, RING_SIDE_MM) for x, y in ring_xy]
+    fx, fy = RF.build_grid_general(bl, sq + rsq, level)
+    sh = RF.RefinedSheet(fx, fy, K.sheet_resistance_ohm_sq(5.0e-3, 0.30, 20.0))
+    rho_c = K.RHO_C_CASES["CONTACT_N"]
+    ns, nb, nc, nr = sh.n, len(bl), len(cl), len(rsq)
+    # node numbering: sheet [0, ns), balls [ns, ns+nb), ports: rail, cells, ring
+    i_rail = ns + nb
+    i_cell = i_rail + 1
+    i_ring = i_cell + nc
+    N = i_ring + nr
+    L = sh.laplacian().tocoo()
+    rows, cols, vals = [L.row], [L.col], [L.data]
+
+    def stamp(a, nodes, g):
+        k = len(nodes)
+        rows.extend([np.full(k, a), nodes, np.full(k, a), nodes])
+        cols.extend([np.full(k, a), nodes, nodes, np.full(k, a)])
+        vals.extend([g, g, -g, -g])
+
+    r_ball = PI.bga_ball_resistance_ohm(20.0)
+    for j, (x, y) in enumerate(bl):
+        stamp(i_rail, np.array([ns + j]), np.array([1.0 / r_ball]))
+        nd, ar = sh.overlap(x, y, PI.BGA_D_UM * 1e-3, "disc")
+        stamp(ns + j, nd, ar / rho_c)
+    for m, (x, y, s) in enumerate(sq):
+        nd, ar = sh.overlap(x, y, s, "square")
+        stamp(i_cell + m, nd, ar / rho_c)
+    for q, (x, y, s) in enumerate(rsq):
+        nd, ar = sh.overlap(x, y, s, "square")
+        stamp(i_ring + q, nd, ar / rho_c)
+    G = sp.coo_matrix((np.concatenate(vals), (np.concatenate(rows), np.concatenate(cols))),
+                      shape=(N, N)).tocsr()
+    P = np.arange(i_rail, N)
+    I = np.arange(0, i_rail)
+    Gii = G[I][:, I].tocsc()
+    Gip = G[I][:, P].toarray()
+    Gpp = G[P][:, P].toarray()
+    lu = spla.splu(Gii, permc_spec="COLAMD")
+    X = lu.solve(Gip)
+    Gred = Gpp - Gip.T @ X
+    return 0.5 * (Gred + Gred.T), {"n_sheet": ns, "n_balls": nb, "n_ports": len(P),
+                                    "level": level}
+
+
+def port_matrices(ring_xy, refresh=False):
+    key = np.array(ring_xy, float).round(6)
+    if CACHE.exists() and not refresh:
+        z = np.load(CACHE)
+        if z["ring"].shape == key.shape and np.allclose(z["ring"], key):
+            return z["Gs"], z["Gr"]
+    Gs, _ = reduce_sheet("supply", ring_xy)
+    Gr, _ = reduce_sheet("return", ring_xy)
+    CACHE.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(CACHE, Gs=Gs, Gr=Gr, ring=key)
+    return Gs, Gr
+
+
+# ------------------------------------------------------------------ AC solve
+class Branch:
+    """Two-terminal capacitor branch: z(f) = esr(f) + j w l + 1/(j w c)."""
+
+    def __init__(self, c_f, esr_fn, l_h):
+        self.c, self.esr_fn, self.l = c_f, esr_fn, l_h
+
+    def y(self, f):
+        w = 2 * np.pi * f
+        return 1.0 / (self.esr_fn(np.array([f]))[0] + 1j * w * self.l + 1.0 / (1j * w * self.c))
+
+
+def solve_harmonic(Gs, Gr, I_cells, f, l_loop_h, ring_branch=None, local_branch=None,
+                   r_scale=1.0):
+    """Node voltages and the two sheets' losses for one harmonic (f > 0) or DC (f = 0).
+    Ports per sheet: [rail, 49 cells, nr ring]; the return rail is the reference."""
+    Gs, Gr = Gs / r_scale, Gr / r_scale
+    nc = len(I_cells)
+    npt = Gs.shape[0]
+    nr = npt - 1 - nc
+    # unknowns: supply ports (npt) + return ports without the rail (npt - 1)
+    n = npt + npt - 1
+    Y = np.zeros((n, n), complex)
+    Y[:npt, :npt] += Gs
+    Y[npt:, npt:] += Gr[1:, 1:]
+    J = np.zeros(n, complex)
+    sc = 1 + np.arange(nc)                     # supply cell ports
+    rc = npt + np.arange(nc)                   # return cell ports (rail removed)
+    J[sc] -= I_cells
+    J[rc] += I_cells
+    if f == 0.0:
+        Y[0, :] = 0.0
+        Y[:, 0] = 0.0
+        Y[0, 0] = 1.0                          # supply rail tied to the board node
+        J[0] = 0.0
+    else:
+        Y[0, 0] += 1.0 / (1j * 2 * np.pi * f * l_loop_h)
+        if ring_branch is not None and nr:
+            y = ring_branch.y(f)
+            ss = 1 + nc + np.arange(nr)
+            rr = npt + nc + np.arange(nr)
+            Y[ss, ss] += y
+            Y[rr, rr] += y
+            Y[ss, rr] -= y
+            Y[rr, ss] -= y
+        if local_branch is not None:
+            y = local_branch.y(f)
+            Y[sc, sc] += y
+            Y[rc, rc] += y
+            Y[sc, rc] -= y
+            Y[rc, sc] -= y
+    V = np.linalg.solve(Y, J)
+    vs = V[:npt]
+    vr = np.concatenate([[0.0], V[npt:]])
+    p_s = 0.5 * float(np.real(np.conj(vs) @ Gs @ vs))
+    p_r = 0.5 * float(np.real(np.conj(vr) @ Gr @ vr))
+    if f == 0.0:
+        p_s, p_r = 2 * p_s, 2 * p_r            # DC phasor convention
+    out = {"P_sheets_W": p_s + p_r, "V_s": vs, "V_r": vr}
+    if ring_branch is not None and nr and f > 0:
+        dv = vs[1 + nc:] - vr[1 + nc:]
+        out["I_ring"] = dv * ring_branch.y(f)
+    if local_branch is not None and f > 0:
+        dv = vs[sc] - vr[1:1 + nc]
+        out["I_local"] = dv * local_branch.y(f)
+    out["V_cell_diff"] = vs[sc] - vr[1:1 + nc]
+    return out
+
+
+def phases(name):
+    """Per-cell switching phase (rad) on the 7 x 7 grid, cells in coordinate order."""
+    cl = np.array(cells())
+    xs = np.unique(np.round(cl[:, 0], 6))
+    ys = np.unique(np.round(cl[:, 1], 6))
+    col = np.searchsorted(xs, np.round(cl[:, 0], 6))
+    row = np.searchsorted(ys, np.round(cl[:, 1], 6))
+    if name == "sync":
+        p, P = np.zeros(len(cl)), 1
+    elif name == "rows7":
+        p, P = row, 7
+    elif name == "latin7":
+        p, P = (row + 3 * col) % 7, 7
+    elif name == "raster49":
+        p, P = row * 7 + col, 49
+    elif name == "spread49":
+        p, P = ((row * 7 + col) * 18) % 49, 49
+    else:
+        raise ValueError(name)
+    return 2 * np.pi * np.asarray(p, float) / P
+
+
+def evaluate(I_harm, f_sw, l_loop_h, ring_branch=None, local_branch=None, phase="sync",
+             ring_xy=None, r_scale=1.0, n_harm=128, n_t=2048):
+    """Sum the harmonics: k_eq of the package network, capacitor currents and ESR losses,
+    and the band-limited (<= 20 f_sw) input ripple of the worst cell."""
+    ring_xy = ring_xy if ring_xy is not None else []
+    Gs, Gr = port_matrices(ring_xy)
+    nc = len(cells())
+    ph = phases(phase)
+    I0 = float(np.real(I_harm[0]))
+    dc = solve_harmonic(Gs, Gr, np.full(nc, I0), 0.0, l_loop_h, r_scale=r_scale)
+    p_ac, p_ring, p_loc = 0.0, 0.0, 0.0
+    i2_ring = np.zeros(len(ring_xy))
+    i2_loc = np.zeros(nc)
+    vh = []
+    for n in range(1, n_harm + 1):
+        f = n * f_sw
+        Ic = I_harm[n] * np.exp(-1j * n * ph)
+        s = solve_harmonic(Gs, Gr, Ic, f, l_loop_h, ring_branch, local_branch, r_scale)
+        p_ac += s["P_sheets_W"]
+        if "I_ring" in s:
+            i2 = np.abs(s["I_ring"]) ** 2 / 2
+            i2_ring += i2
+            p_ring += float(np.sum(i2) * ring_branch.esr_fn(np.array([f]))[0])
+        if "I_local" in s:
+            i2 = np.abs(s["I_local"]) ** 2 / 2
+            i2_loc += i2
+            p_loc += float(np.sum(i2) * local_branch.esr_fn(np.array([f]))[0])
+        if n <= 20:
+            vh.append(s["V_cell_diff"])
+    vh = np.array(vh)                                   # (20, nc)
+    t = np.arange(n_t) / n_t / f_sw
+    nn = np.arange(1, vh.shape[0] + 1)
+    E = np.exp(1j * 2 * np.pi * f_sw * np.outer(t, nn))
+    v_t = np.real(E @ vh)                               # (n_t, nc)
+    rip = v_t.max(0) - v_t.min(0)
+    res = {"phase": phase, "P_DC_W": dc["P_sheets_W"], "P_AC_W": p_ac,
+           "k_eq": math.sqrt((dc["P_sheets_W"] + p_ac) / dc["P_sheets_W"]),
+           "R_dc_per_A2_ohm": dc["P_sheets_W"] / (nc * I0) ** 2 * r_scale,
+           "ripple_pp_V_max_cell": float(rip.max()), "ripple_pp_V_mean": float(rip.mean())}
+    if ring_branch is not None and len(ring_xy):
+        res.update({"I_ring_rms_A_max": float(np.sqrt(i2_ring.max())),
+                    "I_ring_rms_A_mean": float(np.sqrt(i2_ring.mean())),
+                    "P_ring_esr_W": p_ring})
+    if local_branch is not None:
+        res.update({"I_local_rms_A_max": float(np.sqrt(i2_loc.max())),
+                    "I_local_rms_A_mean": float(np.sqrt(i2_loc.mean())),
+                    "P_local_esr_W": p_loc})
+    return res
+
+
+def self_check():
+    """DC resistance of the reduced sheets against package_network.json, and k_eq = k_open
+    with no capacitors (all cells in phase)."""
+    pn = json.loads(NETWORK.read_text())["loop"]["Z1"]
+    xy, _ = ring_layout()
+    Gs, Gr = port_matrices(xy)
+    nc = len(cells())
+    dc = solve_harmonic(Gs, Gr, np.full(nc, 1.0 / nc), 0.0, 1e-10)
+    return {"R_loop_reduced_ohm": dc["P_sheets_W"], "R_loop_package_network_ohm":
+            pn["r_loop_ohm"], "rel_diff": dc["P_sheets_W"] / pn["r_loop_ohm"] - 1.0,
+            "note": f"level {LEVEL} reduction vs the level-3 converged production value"}
+
+
+if __name__ == "__main__":
+    print(json.dumps(ring_layout()[1]))
+    print(json.dumps(self_check(), default=float))
