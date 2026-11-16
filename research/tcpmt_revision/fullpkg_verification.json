@@ -1,0 +1,4108 @@
+{
+ "stage": "tcpmt_fullpkg_verification",
+ "purpose": "complete-package cross-check of the production thermal model (CalculiX on the explicit package mesh) against MOOSE on the identical problem, plus MOOSE on a uniformly refined copy for the discretization change",
+ "moose": {
+  "executable": "/home/beams0/LPOPRYHO/projects/moose/modules/heat_transfer/heat_transfer-opt",
+  "mpiexec": "/usr/lib64/openmpi/bin/mpiexec",
+  "filemesh_formats": {
+   ".msh": "Gmsh ASCII (GmshIO; versions >= 2.0, 2.2 used here; 3-D physical groups -> subdomains, lower-dimensional elements -> sidesets, then deleted)",
+   ".e/.exo/.exd": "ExodusII (ExodusII_IO)",
+   ".inp": "Abaqus (AbaqusIO)",
+   ".unv": "I-deas universal",
+   ".vtu/.pvtu": "VTK",
+   ".xda/.xdr": "libMesh native",
+   ".cpa/.cpr": "libMesh checkpoint",
+   ".n/.nem": "Nemesis (distributed)"
+  },
+  "objects": "AnisoHeatConduction, AnisoHeatConductionMaterial (diagonal k_ortho), BodyForce, ConvectiveHeatFluxBC, NodalValueSampler"
+ },
+ "calculix": {
+  "deck_writer": "final_closure_physical_etm.write_thermal",
+  "runner": "phase0b/etm/ccxio.run_ccx",
+  "element": "C3D8"
+ },
+ "cores": {
+  "calculix_threads": 8,
+  "moose_mpi_ranks": 8,
+  "note": "CalculiX assembles on 8 threads but its default SPOOLES factorization runs on one ('Using 1 cpu for spooles'), and its Newton loop factors twice for this linear problem"
+ },
+ "timing_method": "wall clock of the solver process; 3 timed repeats after one untimed warm-up on the production mesh (median and range), one run on the refined copy; shared host, so load averages are recorded",
+ "cases": {
+  "Z1": {
+   "arch": "Z1",
+   "scenario": "HV_S0",
+   "variant": "Z1_EMBEDDED",
+   "problem": {
+    "case_file": "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json",
+    "production_T_max_C_streamwise_film": 115.663,
+    "P_loss_W": 144.3097256920461,
+    "Q_dissipated_W": 1144.3097256920462,
+    "deposits": [
+     {
+      "layers": [
+       "die"
+      ],
+      "in_cells": false,
+      "W": 1000.0,
+      "n_elems": 13456,
+      "volume_mm3": 149.99088000000012,
+      "q_W_mm3": 6.66707202464576
+     },
+     {
+      "layers": [
+       "z1conv_1_gan_hs_EPC2014C"
+      ],
+      "in_cells": true,
+      "W": 20.151235770452917,
+      "n_elems": 3528,
+      "volume_mm3": 188.29964997142957,
+      "q_W_mm3": 0.10701685198836235
+     },
+     {
+      "layers": [
+       "z1conv_5_gan_ls_EPC2057"
+      ],
+      "in_cells": true,
+      "W": 104.742129351082,
+      "n_elems": 3528,
+      "volume_mm3": 175.37981997338989,
+      "q_W_mm3": 0.5972302250451298
+     },
+     {
+      "layers": [
+       "z1conv_7_inductor_plus_cout"
+      ],
+      "in_cells": true,
+      "W": 14.352074432725493,
+      "n_elems": 3528,
+      "volume_mm3": 137.44499997914568,
+      "q_W_mm3": 0.10442049135947551
+     },
+     {
+      "layers": [
+       "z1conv_3_flying_caps"
+      ],
+      "in_cells": true,
+      "W": 1.4402242934280696,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582916,
+      "q_W_mm3": 0.05239274959607811
+     },
+     {
+      "layers": [
+       "z1conv_0_bottom_substrate_rdl",
+       "z1conv_2_interlayer_rdl",
+       "z1conv_4_interlayer_rdl",
+       "z1conv_6_interlayer_rdl",
+       "z1conv_8_output_rdl"
+      ],
+      "in_cells": true,
+      "W": 1.8088996511173498,
+      "n_elems": 8820,
+      "volume_mm3": 13.74449999791461,
+      "q_W_mm3": 0.13160898187579073
+     },
+     {
+      "layers": [
+       "bga"
+      ],
+      "in_cells": false,
+      "W": 1.7705350225166245,
+      "n_elems": 9800,
+      "volume_mm3": 270.0,
+      "q_W_mm3": 0.006557537120431943
+     },
+     {
+      "layers": [
+       "sub_lower"
+      ],
+      "in_cells": true,
+      "W": 0.0003251120370273716,
+      "n_elems": 5292,
+      "volume_mm3": 76.96919998832158,
+      "q_W_mm3": 4.2239238172762655e-06
+     },
+     {
+      "layers": [
+       "interface"
+      ],
+      "in_cells": true,
+      "W": 0.04430205868661582,
+      "n_elems": 1764,
+      "volume_mm3": 2.7488999995828554,
+      "q_W_mm3": 0.016116286039266122
+     }
+    ],
+    "top_film": {
+     "h_W_m2K": 115553.49261554122,
+     "T_inf_C": 25.0,
+     "source": "cooling_production.CANDIDATES['TOP_SI_MICROCHANNEL_27'].h_uniform(Q) at t_in_c"
+    },
+    "bottom_film": {
+     "h_W_m2K": 10.0,
+     "T_inf_C": 25.0,
+     "source": "stack thermal_bc h_bottom / ambient_bottom"
+    },
+    "mesh": {
+     "h_xy_mm": 1.1,
+     "refine": [
+      2,
+      1
+     ],
+     "label": "graded h_xy = 1.1 mm grid, every in-plane interval split in 2",
+     "n_elems": 144512,
+     "n_nodes": 153873,
+     "n_layers": 16,
+     "materials": [
+      "bga_homog",
+      "board_fr4",
+      "hvr_effective",
+      "microbump",
+      "rdl_tier",
+      "silicon",
+      "tim",
+      "tsv_tile",
+      "underfill_homog"
+     ]
+    }
+   },
+   "input_audit": {
+    "node_coord_max_abs_mm": 4.5300000017789444e-07,
+    "connectivity_identical": true,
+    "material_labels_identical": true,
+    "conductivity_max_rel": 1.3112372809685747e-06,
+    "source_support_identical": true,
+    "source_density_max_rel": 3.442576262938924e-09,
+    "deposited_W_on_deck_mesh": 1144.3097422391622,
+    "deposited_W_model": 1144.309725692046,
+    "Q_ledger_W": 1144.3097256920462,
+    "films": {
+     "bottom": {
+      "face": "F1",
+      "n_faces": 4900,
+      "faces_identical": true,
+      "h_W_m2K": 10.000000000000002,
+      "T_inf_C": 25.0,
+      "h_rel_err": 2.220446049250313e-16,
+      "T_abs_err_K": 0.0,
+      "area_mm2": 900.0
+     },
+     "top": {
+      "face": "F2",
+      "n_faces": 3364,
+      "faces_identical": true,
+      "h_W_m2K": 115553.493,
+      "T_inf_C": 25.0,
+      "h_rel_err": 3.3271063681894475e-09,
+      "T_abs_err_K": 0.0,
+      "area_mm2": 499.96959999999996
+     }
+    },
+    "films_complete": true,
+    "passed": true
+   },
+   "moose_mesh": {
+    "format": "Gmsh 2.2 ASCII",
+    "n_nodes": 153873,
+    "n_hex": 144512,
+    "n_quad": 8264,
+    "bytes": 18033249,
+    "blocks": [
+     {
+      "name": "bga_homog__src7",
+      "material": "BGA_HOMOG",
+      "n_elems": 9800,
+      "k_W_mmK": [
+       0.00981748,
+       0.00981748,
+       0.00981748
+      ],
+      "q_W_mm3": 0.00655753712
+     },
+     {
+      "name": "board_fr4",
+      "material": "BOARD_FR4",
+      "n_elems": 9800,
+      "k_W_mmK": [
+       0.0658592,
+       0.0658592,
+       0.000446083
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "hvr_effective__src4",
+      "material": "HVR_EFFECTIVE",
+      "n_elems": 3528,
+      "k_W_mmK": [
+       0.06,
+       0.06,
+       0.06
+      ],
+      "q_W_mm3": 0.104420491
+     },
+     {
+      "name": "hvr_effective__src5",
+      "material": "HVR_EFFECTIVE",
+      "n_elems": 3528,
+      "k_W_mmK": [
+       0.06,
+       0.06,
+       0.06
+      ],
+      "q_W_mm3": 0.0523927496
+     },
+     {
+      "name": "microbump",
+      "material": "MICROBUMP",
+      "n_elems": 1600,
+      "k_W_mmK": [
+       0.000891,
+       0.000891,
+       0.011739
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "microbump__src9",
+      "material": "MICROBUMP",
+      "n_elems": 1764,
+      "k_W_mmK": [
+       0.000891,
+       0.000891,
+       0.011739
+      ],
+      "q_W_mm3": 0.016116286
+     },
+     {
+      "name": "rdl_tier__src6",
+      "material": "RDL_TIER",
+      "n_elems": 8820,
+      "k_W_mmK": [
+       0.0342845,
+       0.0342845,
+       0.000620474
+      ],
+      "q_W_mm3": 0.131608982
+     },
+     {
+      "name": "silicon",
+      "material": "SILICON",
+      "n_elems": 21952,
+      "k_W_mmK": [
+       0.13,
+       0.13,
+       0.13
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "silicon__src1",
+      "material": "SILICON",
+      "n_elems": 13456,
+      "k_W_mmK": [
+       0.13,
+       0.13,
+       0.13
+      ],
+      "q_W_mm3": 6.66707202
+     },
+     {
+      "name": "silicon__src2",
+      "material": "SILICON",
+      "n_elems": 3528,
+      "k_W_mmK": [
+       0.13,
+       0.13,
+       0.13
+      ],
+      "q_W_mm3": 0.107016852
+     },
+     {
+      "name": "silicon__src3",
+      "material": "SILICON",
+      "n_elems": 3528,
+      "k_W_mmK": [
+       0.13,
+       0.13,
+       0.13
+      ],
+      "q_W_mm3": 0.597230225
+     },
+     {
+      "name": "tim",
+      "material": "TIM",
+      "n_elems": 10092,
+      "k_W_mmK": [
+       0.003,
+       0.003,
+       0.003
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "tsv_tile",
+      "material": "TSV_TILE",
+      "n_elems": 7056,
+      "k_W_mmK": [
+       0.156561,
+       0.156561,
+       0.179125
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "tsv_tile__src8",
+      "material": "TSV_TILE",
+      "n_elems": 5292,
+      "k_W_mmK": [
+       0.156561,
+       0.156561,
+       0.179125
+      ],
+      "q_W_mm3": 4.22392382e-06
+     },
+     {
+      "name": "underfill_homog",
+      "material": "UNDERFILL_HOMOG",
+      "n_elems": 40768,
+      "k_W_mmK": [
+       0.0007,
+       0.0007,
+       0.0007
+      ],
+      "q_W_mm3": null
+     }
+    ],
+    "sidesets": [
+     {
+      "name": "bottom",
+      "face": "F1",
+      "n_faces": 4900,
+      "h_W_mm2K": 1e-05,
+      "T_inf_C": 25.0
+     },
+     {
+      "name": "top",
+      "face": "F2",
+      "n_faces": 3364,
+      "h_W_mm2K": 0.115553493,
+      "T_inf_C": 25.0
+     }
+    ]
+   },
+   "calculix": {
+    "deposited_W": 1144.309725692046,
+    "t_write_deck_s": 3.3094229698181152,
+    "threads": 8,
+    "ccx_reported_s": [
+     99.27763,
+     87.057233,
+     93.754925
+    ],
+    "newton_iterations": 2,
+    "log_solver_lines": [
+     "Using up to 8 cpu(s) for setting up the structure of the matrix.",
+     "Using up to 8 cpu(s) for the heat flux calculation.",
+     "Using up to 8 cpu(s) for the symmetric stiffness/mass contributions.",
+     "Factoring the system of equations using the symmetric spooles solver",
+     "Using 1 cpu for spooles.",
+     "Using up to 8 cpu(s) for the heat flux calculation."
+    ],
+    "frd_vs_dat_max_abs_K": 0.0005000000000023874,
+    "solver": "CalculiX 2.23 default (SPOOLES), *HEAT TRANSFER, STEADY STATE",
+    "timing": {
+     "median_s": 93.83218216896057,
+     "min_s": 87.13557696342468,
+     "max_s": 99.40550351142883,
+     "repeats": 3,
+     "walls_s": [
+      99.40550351142883,
+      87.13557696342468,
+      93.83218216896057
+     ]
+    },
+    "metrics": {
+     "T_max_C": 107.7982,
+     "T_max_rise_K": 82.7982,
+     "T_max_xyz_mm": [
+      -15.0,
+      -15.0,
+      -0.15
+     ],
+     "T_min_C": 44.22871,
+     "T_volume_mean_C": 104.34420737727271,
+     "layer_volume_mean_C": {
+      "board": 105.60208038604226,
+      "bga": 107.71426623868592,
+      "sub_lower": 107.70629834963155,
+      "tile_band": 107.70503889786205,
+      "z1conv_0_bottom_substrate_rdl": 107.69463376340059,
+      "z1conv_1_gan_hs_EPC2014C": 107.2188215457763,
+      "z1conv_2_interlayer_rdl": 106.47463854425126,
+      "z1conv_3_flying_caps": 106.15408727365929,
+      "z1conv_4_interlayer_rdl": 105.8156092031487,
+      "z1conv_5_gan_ls_EPC2057": 104.56254074969318,
+      "z1conv_6_interlayer_rdl": 102.0738211120256,
+      "z1conv_7_inductor_plus_cout": 98.75966984910725,
+      "z1conv_8_output_rdl": 95.07666030577643,
+      "interface": 86.01009627933132,
+      "die": 84.76304753487868,
+      "tim": 63.85590566715871,
+      "converter_all_tiers": 104.06608770317618,
+      "substrate": 107.70621438618026
+     },
+     "region_volume_mean_C": {
+      "conv": 103.44397227504466,
+      "hs": 107.61520811174631,
+      "ls": 104.6937125596039,
+      "ind": 95.656528277087,
+      "caps": 106.40874510574652,
+      "bga": 107.71426623868592,
+      "sub": 107.71951614996534,
+      "interface": 86.63607779938421
+     }
+    },
+    "production_conventions": {
+     "layer_node_mean_C": {
+      "board": 105.6024327646631,
+      "bga": 107.71438523441118,
+      "sub_lower": 107.70800760265821,
+      "tile_band": 107.70685857567942,
+      "z1conv_0_bottom_substrate_rdl": 107.69734506050385,
+      "z1conv_1_gan_hs_EPC2014C": 107.24063426568802,
+      "z1conv_2_interlayer_rdl": 106.5035322059115,
+      "z1conv_3_flying_caps": 106.14669992726311,
+      "z1conv_4_interlayer_rdl": 105.77066334060703,
+      "z1conv_5_gan_ls_EPC2057": 104.32931233220921,
+      "z1conv_6_interlayer_rdl": 101.55452572505456,
+      "z1conv_7_inductor_plus_cout": 97.62262740990545,
+      "z1conv_8_output_rdl": 93.33853601666337,
+      "interface": 86.02697585894859,
+      "die": 84.72431098305084,
+      "tim": 63.88181089126687,
+      "converter_all_tiers": 103.25815706620001,
+      "substrate": 107.70742386679233
+     },
+     "ledger_region_node_mean_C": {
+      "conv": 102.67620157999643,
+      "hs": 107.60634652228238,
+      "ls": 104.65026497292797,
+      "ind": 95.65118816048869,
+      "caps": 106.4103019575177,
+      "bga": 107.71438523441118,
+      "sub": 107.719725,
+      "interface": 86.61190913994169
+     }
+    }
+   },
+   "moose_base": {
+    "metrics": {
+     "T_max_C": 107.7982408755247,
+     "T_max_rise_K": 82.7982408755247,
+     "T_max_xyz_mm": [
+      -15.0,
+      -15.0,
+      -0.15
+     ],
+     "T_min_C": 44.22870889937536,
+     "T_volume_mean_C": 104.34420818875046,
+     "layer_volume_mean_C": {
+      "board": 105.60208226257225,
+      "bga": 107.71426547484705,
+      "sub_lower": 107.70629846683381,
+      "tile_band": 107.70503753377966,
+      "z1conv_0_bottom_substrate_rdl": 107.69463519781411,
+      "z1conv_1_gan_hs_EPC2014C": 107.21882123771631,
+      "z1conv_2_interlayer_rdl": 106.4746383176104,
+      "z1conv_3_flying_caps": 106.15408682175574,
+      "z1conv_4_interlayer_rdl": 105.81560941246174,
+      "z1conv_5_gan_ls_EPC2057": 104.56254089874895,
+      "z1conv_6_interlayer_rdl": 102.07382115242375,
+      "z1conv_7_inductor_plus_cout": 98.75966992777694,
+      "z1conv_8_output_rdl": 95.0766609312464,
+      "interface": 86.0100962409388,
+      "die": 84.76304764631189,
+      "tim": 63.85590567798919,
+      "converter_all_tiers": 104.0660876520107,
+      "substrate": 107.70621440463023
+     },
+     "region_volume_mean_C": {
+      "conv": 103.44397270843886,
+      "hs": 107.61520950693591,
+      "ls": 104.69371214232702,
+      "ind": 95.6565283423639,
+      "caps": 106.40874641795993,
+      "bga": 107.71426547484705,
+      "sub": 107.7195154376165,
+      "interface": 86.63607774074642
+     }
+    },
+    "production_conventions": {
+     "layer_node_mean_C": {
+      "board": 105.6024336655209,
+      "bga": 107.71438497692108,
+      "sub_lower": 107.70800809524575,
+      "tile_band": 107.70685750531395,
+      "z1conv_0_bottom_substrate_rdl": 107.69734641565826,
+      "z1conv_1_gan_hs_EPC2014C": 107.24063445894767,
+      "z1conv_2_interlayer_rdl": 106.50353179874848,
+      "z1conv_3_flying_caps": 106.14669948027716,
+      "z1conv_4_interlayer_rdl": 105.77066345107686,
+      "z1conv_5_gan_ls_EPC2057": 104.32931211825162,
+      "z1conv_6_interlayer_rdl": 101.55452544846328,
+      "z1conv_7_inductor_plus_cout": 97.62262763019984,
+      "z1conv_8_output_rdl": 93.33853663927417,
+      "interface": 86.0269757906564,
+      "die": 84.72431103714106,
+      "tim": 63.881810902037685,
+      "converter_all_tiers": 103.25815712738772,
+      "substrate": 107.70742358275109
+     },
+     "ledger_region_node_mean_C": {
+      "conv": 102.676201764318,
+      "hs": 107.60634777933396,
+      "ls": 104.65026381353393,
+      "ind": 95.65118821930989,
+      "caps": 106.41030233098901,
+      "bga": 107.71438497692108,
+      "sub": 107.71972537791449,
+      "interface": 86.611909058622
+     }
+    },
+    "ranks": 8,
+    "solver": "NEWTON; GMRES(300) + hypre BoomerAMG, l_tol 1e-12 (primary)",
+    "solver_check_mumps": {
+     "solver": "NEWTON; PETSc LU (MUMPS)",
+     "max_abs_T_hypre_minus_mumps_K": 1.944101768458495e-09
+    },
+    "runs": {
+     "hypre": {
+      "timing": {
+       "median_s": 11.848535776138306,
+       "min_s": 11.37067699432373,
+       "max_s": 12.083880186080933,
+       "repeats": 3,
+       "walls_s": [
+        11.37067699432373,
+        12.083880186080933,
+        11.848535776138306
+       ]
+      },
+      "moose_reported_s": [
+       3.98,
+       3.37,
+       4.09,
+       4.0
+      ],
+      "solve_s": [
+       1.731,
+       1.778,
+       1.689,
+       1.726
+      ],
+      "nonlinear_residuals": [
+       9.328119,
+       1.882281e-11
+      ],
+      "linear_its": 25
+     },
+     "mumps": {
+      "timing": {
+       "median_s": 44.28862977027893,
+       "min_s": 42.44235944747925,
+       "max_s": 44.432389974594116,
+       "repeats": 3,
+       "walls_s": [
+        42.44235944747925,
+        44.432389974594116,
+        44.28862977027893
+       ]
+      },
+      "moose_reported_s": [
+       37.73,
+       34.45,
+       36.93,
+       36.49
+      ],
+      "solve_s": [
+       35.511,
+       32.181,
+       34.837,
+       34.362
+      ],
+      "nonlinear_residuals": [
+       9.328119,
+       6.902031e-11
+      ],
+      "linear_its": 1
+     }
+    }
+   },
+   "identical_mesh": {
+    "T_max_C": {
+     "calculix": 107.7982,
+     "moose": 107.7982408755247,
+     "moose_postprocessor": 107.7982408755247
+    },
+    "T_max_err_K": -4.087552470366518e-05,
+    "T_max_err_rel_to_rise": -4.936764893882376e-07,
+    "field_ccx_minus_moose": {
+     "max_abs_K": 4.999835279306808e-05,
+     "rms_K": 2.4446605600452035e-05,
+     "mean_K": -5.21594053794636e-09,
+     "max_abs_rel_to_rise": 6.038579678431183e-07,
+     "rms_rel_to_rise": 2.952552785018519e-07,
+     "argmax_node": 42143
+    },
+    "layer_volume_mean_err_K": {
+     "board": -1.8765299927281376e-06,
+     "bga": 7.638388694886089e-07,
+     "sub_lower": -1.1720226211764384e-07,
+     "tile_band": 1.364082393706667e-06,
+     "z1conv_0_bottom_substrate_rdl": -1.4344135195187846e-06,
+     "z1conv_1_gan_hs_EPC2014C": 3.080599810800777e-07,
+     "z1conv_2_interlayer_rdl": 2.2664086429813324e-07,
+     "z1conv_3_flying_caps": 4.5190354569513147e-07,
+     "z1conv_4_interlayer_rdl": -2.0931304334226297e-07,
+     "z1conv_5_gan_ls_EPC2057": -1.490557650640767e-07,
+     "z1conv_6_interlayer_rdl": -4.0398148826170655e-08,
+     "z1conv_7_inductor_plus_cout": -7.866968587677547e-08,
+     "z1conv_8_output_rdl": -6.254699655983131e-07,
+     "interface": 3.839252826765005e-08,
+     "die": -1.1143320932660572e-07,
+     "tim": -1.0830483176960115e-08,
+     "converter_all_tiers": 5.116548607020377e-08,
+     "substrate": -1.8449966887601477e-08
+    },
+    "layer_node_mean_err_K": {
+     "board": -9.008577990243793e-07,
+     "bga": 2.574901003526975e-07,
+     "sub_lower": -4.925875316530437e-07,
+     "tile_band": 1.0703654709232069e-06,
+     "z1conv_0_bottom_substrate_rdl": -1.3551544100209867e-06,
+     "z1conv_1_gan_hs_EPC2014C": -1.9325965183725202e-07,
+     "z1conv_2_interlayer_rdl": 4.0716301441534597e-07,
+     "z1conv_3_flying_caps": 4.469859504752094e-07,
+     "z1conv_4_interlayer_rdl": -1.1046982706375275e-07,
+     "z1conv_5_gan_ls_EPC2057": 2.1395759119968716e-07,
+     "z1conv_6_interlayer_rdl": 2.765912796576231e-07,
+     "z1conv_7_inductor_plus_cout": -2.2029439605830703e-07,
+     "z1conv_8_output_rdl": -6.226107984730334e-07,
+     "interface": 6.82921950101445e-08,
+     "die": -5.4090222079139494e-08,
+     "tim": -1.0770811798010982e-08,
+     "converter_all_tiers": -6.11877055689547e-08,
+     "substrate": 2.8404123497693945e-07
+    },
+    "ledger_region_node_mean_err_K": {
+     "conv": -1.8432156423386914e-07,
+     "hs": -1.2570515792731385e-06,
+     "ls": 1.1593940456577911e-06,
+     "ind": -5.882120035494154e-08,
+     "caps": -3.734713089897923e-07,
+     "bga": 2.574901003526975e-07,
+     "sub": -3.779144890359021e-07,
+     "interface": 8.13196834315022e-08
+    },
+    "energy": {
+     "Q_ledger_W": 1144.3097256920462,
+     "Q_deposited_on_deck_mesh_W": 1144.3097422391622,
+     "note": "the deck prints node coordinates to 1e-6 mm, so the power deposited on the solved mesh differs from the ledger total by +1.45e-08 (relative); both codes solve the deck",
+     "calculix": {
+      "q_films_W": {
+       "bottom": 0.7064155780661652,
+       "top": 1143.6033232410377
+      },
+      "residual_rel_to_ledger": 1.1471594912498165e-08,
+      "residual_rel_to_deposited": -2.9887523398047867e-09
+     },
+     "moose": {
+      "q_films_W": {
+       "bottom": 0.7064155796165226,
+       "top": 1143.6033266594463
+      },
+      "q_films_from_side_integrals_W": {
+       "bottom": 0.7064155796165233,
+       "top": 1143.603326659447
+      },
+      "residual_rel_to_ledger": 1.446026046387609e-08,
+      "residual_rel_to_deposited": -8.683164400423812e-14
+     }
+    },
+    "node_map_max_dist_mm": 0.0,
+    "calculix_output_resolution_K": 0.0001,
+    "max_abs_layer_err_K": 1.8765299927281376e-06
+   },
+   "moose_refined": {
+    "mesh": {
+     "format": "Gmsh 2.2 ASCII",
+     "n_nodes": 1193193,
+     "n_hex": 1156096,
+     "n_quad": 33056,
+     "bytes": 152800082,
+     "construction": "every production hex split 2x2x2 at its edge midpoints (strictly nested; blocks, sources and films inherited)"
+    },
+    "metrics": {
+     "T_max_C": 108.86381916312,
+     "T_max_rise_K": 83.86381916312,
+     "T_max_xyz_mm": [
+      -15.0,
+      15.0,
+      -0.15
+     ],
+     "T_min_C": 44.19449403997762,
+     "T_volume_mean_C": 105.29624498175326,
+     "layer_volume_mean_C": {
+      "board": 106.63339926813674,
+      "bga": 108.77369173412994,
+      "sub_lower": 108.76494724508821,
+      "tile_band": 108.76369349506113,
+      "z1conv_0_bottom_substrate_rdl": 108.75376492571272,
+      "z1conv_1_gan_hs_EPC2014C": 108.26372074395275,
+      "z1conv_2_interlayer_rdl": 107.47219178387543,
+      "z1conv_3_flying_caps": 107.14107741023139,
+      "z1conv_4_interlayer_rdl": 106.7917149288836,
+      "z1conv_5_gan_ls_EPC2057": 105.50353190011094,
+      "z1conv_6_interlayer_rdl": 102.86060680486736,
+      "z1conv_7_inductor_plus_cout": 99.46590781043001,
+      "z1conv_8_output_rdl": 95.60220089190052,
+      "interface": 86.00959377890447,
+      "die": 84.78059896895904,
+      "tim": 63.85559857232897,
+      "converter_all_tiers": 104.98417055320272,
+      "substrate": 108.76486366175308
+     },
+     "region_volume_mean_C": {
+      "conv": 104.33699258929771,
+      "hs": 108.68484002264682,
+      "ls": 105.65313342529869,
+      "ind": 96.20811486460359,
+      "caps": 107.40809459709558,
+      "bga": 108.77369173412994,
+      "sub": 108.78273589937004,
+      "interface": 86.74888893980156
+     }
+    },
+    "q_films_W": {
+     "bottom": 0.7154542840744338,
+     "top": 1143.594287954806
+    },
+    "energy_residual_rel_to_deposited": -2.4618857419050574e-13,
+    "Q_deposited_W": 1144.3097422391622,
+    "timing": {
+     "median_s": 76.34462356567383,
+     "min_s": 76.34462356567383,
+     "max_s": 76.34462356567383,
+     "repeats": 1,
+     "walls_s": [
+      76.34462356567383
+     ]
+    },
+    "moose_reported_s": 28.47,
+    "solve_s": 13.071,
+    "nonlinear_residuals": [
+     3.585877,
+     2.3691e-11
+    ],
+    "linear_its": 24,
+    "ranks": 8,
+    "solver": "NEWTON; GMRES(300) + hypre BoomerAMG, l_tol 1e-12",
+    "node_map_max_dist_mm": 2.5219419200973697e-15
+   },
+   "discretization_change": {
+    "what": "MOOSE on the production mesh minus MOOSE on its uniform 2x2x2 refinement (identical problem); the production CalculiX solve equals the former",
+    "T_max_change_K": -1.0655782875953008,
+    "T_max_change_rel_to_rise": -0.012706054866433988,
+    "T_max_production_mesh_minus_extrapolated_K_if_p2": -1.4207710501270678,
+    "layer_volume_mean_change_K": {
+     "board": -1.031317005564489,
+     "bga": -1.059426259282887,
+     "sub_lower": -1.058648778254394,
+     "tile_band": -1.0586559612814739,
+     "z1conv_0_bottom_substrate_rdl": -1.0591297278986076,
+     "z1conv_1_gan_hs_EPC2014C": -1.0448995062364332,
+     "z1conv_2_interlayer_rdl": -0.9975534662650318,
+     "z1conv_3_flying_caps": -0.9869905884756491,
+     "z1conv_4_interlayer_rdl": -0.9761055164218533,
+     "z1conv_5_gan_ls_EPC2057": -0.9409910013619935,
+     "z1conv_6_interlayer_rdl": -0.7867856524436121,
+     "z1conv_7_inductor_plus_cout": -0.7062378826530704,
+     "z1conv_8_output_rdl": -0.5255399606541289,
+     "interface": 0.000502462034319251,
+     "die": -0.01755132264715087,
+     "tim": 0.0003071056602195199,
+     "converter_all_tiers": -0.9180829011920224,
+     "substrate": -1.0586492571228518
+    },
+    "region_volume_mean_change_K": {
+     "conv": -0.8930198808588443,
+     "hs": -1.0696305157109123,
+     "ls": -0.9594212829716753,
+     "ind": -0.5515865222396883,
+     "caps": -0.9993481791356515,
+     "bga": -1.059426259282887,
+     "sub": -1.063220461753545,
+     "interface": -0.11281119905514458
+    },
+    "field_at_production_nodes": {
+     "max_abs_K": 4.0291702952092265,
+     "rms_K": 0.9331415829436872,
+     "mean_K": -0.7919769463201598,
+     "max_abs_rel_to_rise": 0.048044202320100114,
+     "rms_rel_to_rise": 0.01112686725044888,
+     "argmax_node": 18654
+    },
+    "calculix_vs_refined_moose": {
+     "T_max_K": -1.0656191631200045,
+     "field_at_production_nodes": {
+      "max_abs_K": 4.0291711269353385,
+      "rms_K": 0.9331415930948247,
+      "mean_K": -0.7919769515361004,
+      "max_abs_rel_to_rise": 0.04804421223767984,
+      "rms_rel_to_rise": 0.01112686737149199,
+      "argmax_node": 18654
+     }
+    },
+    "max_abs_layer_change_K": 1.059426259282887
+   },
+   "load_average": {
+    "before": [
+     66.3,
+     63.3,
+     61.0
+    ],
+    "after": [
+     74.4,
+     70.0,
+     64.9
+    ]
+   },
+   "moose_refined_x3": {
+    "mesh": {
+     "format": "Gmsh 2.2 ASCII",
+     "n_nodes": 3985033,
+     "n_hex": 3901824,
+     "n_quad": 74376,
+     "bytes": 556579484,
+     "construction": "every production hex split 3x3x3 (strictly nested)"
+    },
+    "metrics": {
+     "T_max_C": 109.301604845526,
+     "T_max_rise_K": 84.301604845526,
+     "T_max_xyz_mm": [
+      -15.0,
+      15.0,
+      -0.15
+     ],
+     "T_min_C": 44.18782688480093,
+     "T_volume_mean_C": 105.69408941496704,
+     "layer_volume_mean_C": {
+      "board": 107.06420904231229,
+      "bga": 109.21602509800688,
+      "sub_lower": 109.20717453616331,
+      "tile_band": 109.20592453354435,
+      "z1conv_0_bottom_substrate_rdl": 109.19609827595005,
+      "z1conv_1_gan_hs_EPC2014C": 108.70104481141719,
+      "z1conv_2_interlayer_rdl": 107.89379562083525,
+      "z1conv_3_flying_caps": 107.55763637516948,
+      "z1conv_4_interlayer_rdl": 107.2030632274247,
+      "z1conv_5_gan_ls_EPC2057": 105.89801409266087,
+      "z1conv_6_interlayer_rdl": 103.19855511168214,
+      "z1conv_7_inductor_plus_cout": 99.76007663547985,
+      "z1conv_8_output_rdl": 95.8117032294025,
+      "interface": 86.00938278956917,
+      "die": 84.78373791449755,
+      "tim": 63.85547028581093,
+      "converter_all_tiers": 105.36846568517394,
+      "substrate": 109.20709120265542
+     },
+     "region_volume_mean_C": {
+      "conv": 104.70677331811069,
+      "hs": 109.13340393477785,
+      "ls": 106.04772716426662,
+      "ind": 96.43088931339064,
+      "caps": 107.82741756456015,
+      "bga": 109.21602509800688,
+      "sub": 109.23023740214913,
+      "interface": 86.78606891388074
+     }
+    },
+    "q_films_W": {
+     "bottom": 0.7192300021177378,
+     "top": 1143.5905122382044
+    },
+    "Q_deposited_W": 1144.3097422391622,
+    "energy_residual_rel_to_deposited": 1.0135657118206376e-12,
+    "field_at_production_nodes_vs_production_mesh": {
+     "max_abs_K": 3.1038039701005147,
+     "rms_K": 1.2768701210474658,
+     "mean_K": -1.1152111601893733,
+     "max_abs_rel_to_rise": 0.03681785152000268,
+     "rms_rel_to_rise": 0.015146450929222505,
+     "argmax_node": 18654
+    },
+    "timing": {
+     "median_s": 276.2837324142456,
+     "min_s": 276.2837324142456,
+     "max_s": 276.2837324142456,
+     "repeats": 1,
+     "walls_s": [
+      276.2837324142456
+     ]
+    },
+    "moose_reported_s": 109.47,
+    "solve_s": 60.403,
+    "nonlinear_residuals": [
+     2.005298,
+     3.03635e-11
+    ],
+    "linear_its": 30,
+    "ranks": 8,
+    "solver": "NEWTON; GMRES(300) + hypre BoomerAMG, l_tol 1e-12",
+    "node_map_max_dist_mm": 7.549516567451064e-15
+   },
+   "refinement_ladder": {
+    "levels": [
+     "production mesh (x1)",
+     "x2",
+     "x3"
+    ],
+    "n_elems": [
+     144512,
+     1156096,
+     3901824
+    ],
+    "T_max_C": {
+     "levels": [
+      107.7982408755247,
+      108.86381916312,
+      109.301604845526
+     ],
+     "ratios": [
+      1.0,
+      2.0,
+      3.0
+     ],
+     "asymptotic": true,
+     "observed_order": 0.6336358756517262,
+     "extrapolated": 110.7960695690508,
+     "production_mesh_error": -2.9978286935261025,
+     "error_by_level": [
+      -2.9978286935261025,
+      -1.9322504059308017,
+      -1.4944647235247999
+     ]
+    },
+    "layer_volume_mean_C": {
+     "board": {
+      "levels": [
+       105.60208226257225,
+       106.63339926813674,
+       107.06420904231229
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6042513185639917,
+      "extrapolated": 108.61597812673111,
+      "production_mesh_error": -3.0138958641588545,
+      "error_by_level": [
+       -3.0138958641588545,
+       -1.9825788585943656,
+       -1.5517690844188223
+      ]
+     },
+     "bga": {
+      "levels": [
+       107.71426547484705,
+       108.77369173412994,
+       109.21602509800688
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6051248326692658,
+      "extrapolated": 110.80670878741894,
+      "production_mesh_error": -3.0924433125718878,
+      "error_by_level": [
+       -3.0924433125718878,
+       -2.033017053289001,
+       -1.5906836894120602
+      ]
+     },
+     "sub_lower": {
+      "levels": [
+       107.70629846683381,
+       108.76494724508821,
+       109.20717453616331
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.604250214728979,
+      "extrapolated": 110.80007259267894,
+      "production_mesh_error": -3.0937741258451297,
+      "error_by_level": [
+       -3.0937741258451297,
+       -2.0351253475907356,
+       -1.5928980565156365
+      ]
+     },
+     "tile_band": {
+      "levels": [
+       107.70503753377966,
+       108.76369349506113,
+       109.20592453354435
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6042472264720662,
+      "extrapolated": 110.79884497018661,
+      "production_mesh_error": -3.093807436406948,
+      "error_by_level": [
+       -3.093807436406948,
+       -2.035151475125474,
+       -1.5929204366422596
+      ]
+     },
+     "z1conv_0_bottom_substrate_rdl": {
+      "levels": [
+       107.69463519781411,
+       108.75376492571272,
+       109.19609827595005
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.604629576270233,
+      "extrapolated": 110.78825123529845,
+      "production_mesh_error": -3.093616037484338,
+      "error_by_level": [
+       -3.093616037484338,
+       -2.0344863095857306,
+       -1.5921529593483967
+      ]
+     },
+     "z1conv_1_gan_hs_EPC2014C": {
+      "levels": [
+       107.21882123771631,
+       108.26372074395275,
+       108.70104481141719
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6008470913712451,
+      "extrapolated": 110.28634126976291,
+      "production_mesh_error": -3.067520032046602,
+      "error_by_level": [
+       -3.067520032046602,
+       -2.0226205258101686,
+       -1.5852964583457236
+      ]
+     },
+     "z1conv_2_interlayer_rdl": {
+      "levels": [
+       106.4746383176104,
+       107.47219178387543,
+       107.89379562083525
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.5835647345760768,
+      "extrapolated": 109.47311171980051,
+      "production_mesh_error": -2.9984734021901147,
+      "error_by_level": [
+       -2.9984734021901147,
+       -2.000919935925083,
+       -1.5793160989652648
+      ]
+     },
+     "z1conv_3_flying_caps": {
+      "levels": [
+       106.15408682175574,
+       107.14107741023139,
+       107.55763637516948
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.5860314406450553,
+      "extrapolated": 109.1106789383689,
+      "production_mesh_error": -2.956592116613166,
+      "error_by_level": [
+       -2.956592116613166,
+       -1.9696015281375168,
+       -1.5530425631994262
+      ]
+     },
+     "z1conv_4_interlayer_rdl": {
+      "levels": [
+       105.81560941246174,
+       106.7917149288836,
+       107.2030632274247
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.5886839377530753,
+      "extrapolated": 108.72891556241616,
+      "production_mesh_error": -2.9133061499544226,
+      "error_by_level": [
+       -2.9133061499544226,
+       -1.9372006335325693,
+       -1.5258523349914555
+      ]
+     },
+     "z1conv_5_gan_ls_EPC2057": {
+      "levels": [
+       104.56254089874895,
+       105.50353190011094,
+       105.89801409266087
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.597941197178232,
+      "extrapolated": 107.3358396701454,
+      "production_mesh_error": -2.7732987713964548,
+      "error_by_level": [
+       -2.7732987713964548,
+       -1.8323077700344612,
+       -1.4378255774845314
+      ]
+     },
+     "z1conv_6_interlayer_rdl": {
+      "levels": [
+       102.07382115242375,
+       102.86060680486736,
+       103.19855511168214
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.5548950824982684,
+      "extrapolated": 104.5379671480274,
+      "production_mesh_error": -2.4641459956036584,
+      "error_by_level": [
+       -2.4641459956036584,
+       -1.6773603431600463,
+       -1.3394120363452657
+      ]
+     },
+     "z1conv_7_inductor_plus_cout": {
+      "levels": [
+       98.75966992777694,
+       99.46590781043001,
+       99.76007663547985
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6093342717746377,
+      "extrapolated": 100.80970203081998,
+      "production_mesh_error": -2.050032103043037,
+      "error_by_level": [
+       -2.050032103043037,
+       -1.3437942203899667,
+       -1.0496253953401293
+      ]
+     },
+     "z1conv_8_output_rdl": {
+      "levels": [
+       95.0766609312464,
+       95.60220089190052,
+       95.8117032294025
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6868429719474238,
+      "extrapolated": 96.4640850754123,
+      "production_mesh_error": -1.3874241441659052,
+      "error_by_level": [
+       -1.3874241441659052,
+       -0.8618841835117763,
+       -0.6523818460098028
+      ]
+     },
+     "interface": {
+      "levels": [
+       86.0100962409388,
+       86.00959377890447,
+       86.00938278956917
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.5950257824560075,
+      "extrapolated": 86.00860952337425,
+      "production_mesh_error": 0.0014867175645463249,
+      "error_by_level": [
+       0.0014867175645463249,
+       0.000984255530227074,
+       0.0007732661949262365
+      ]
+     },
+     "die": {
+      "levels": [
+       84.76304764631189,
+       84.78059896895904,
+       84.78373791449755
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 2.058024443011628,
+      "extrapolated": 84.78614588808156,
+      "production_mesh_error": -0.023098241769673677,
+      "error_by_level": [
+       -0.023098241769673677,
+       -0.005546919122522809,
+       -0.0024079735840132344
+      ]
+     },
+     "tim": {
+      "levels": [
+       63.85590567798919,
+       63.85559857232897,
+       63.85547028581093
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6042520205096318,
+      "extrapolated": 63.85500820067769,
+      "production_mesh_error": 0.0008974773115042467,
+      "error_by_level": [
+       0.0008974773115042467,
+       0.0005903716512847268,
+       0.00046208513324330625
+      ]
+     },
+     "converter_all_tiers": {
+      "levels": [
+       104.0660876520107,
+       104.98417055320272,
+       105.36846568517394
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6006265202594645,
+      "extrapolated": 106.76210907926422,
+      "production_mesh_error": -2.696021427253527,
+      "error_by_level": [
+       -2.696021427253527,
+       -1.7779385260615044,
+       -1.393643394090276
+      ]
+     },
+     "substrate": {
+      "levels": [
+       107.70621440463023,
+       108.76486366175308,
+       109.20709120265542
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6042500155103003,
+      "extrapolated": 110.7999907511768,
+      "production_mesh_error": -3.093776346546562,
+      "error_by_level": [
+       -3.093776346546562,
+       -2.0351270894237103,
+       -1.5928995485213733
+      ]
+     }
+    },
+    "region_volume_mean_C": {
+     "conv": {
+      "levels": [
+       103.44397270843886,
+       104.33699258929771,
+       104.70677331811069
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6197694923226962,
+      "extrapolated": 106.00111958695234,
+      "production_mesh_error": -2.5571468785134783,
+      "error_by_level": [
+       -2.5571468785134783,
+       -1.664126997654634,
+       -1.2943462688416503
+      ]
+     },
+     "hs": {
+      "levels": [
+       107.61520950693591,
+       108.68484002264682,
+       109.13340393477785
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.5973355283321706,
+      "extrapolated": 110.77021570990927,
+      "production_mesh_error": -3.155006202973354,
+      "error_by_level": [
+       -3.155006202973354,
+       -2.0853756872624416,
+       -1.6368117751314202
+      ]
+     },
+     "ls": {
+      "levels": [
+       104.69371214232702,
+       105.65313342529869,
+       106.04772716426662
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6317452587232801,
+      "extrapolated": 107.39931925345533,
+      "production_mesh_error": -2.705607111128316,
+      "error_by_level": [
+       -2.705607111128316,
+       -1.7461858281566407,
+       -1.3515920891887134
+      ]
+     },
+     "ind": {
+      "levels": [
+       95.6565283423639,
+       96.20811486460359,
+       96.43088931339064
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.663823039837365,
+      "extrapolated": 97.15216733046545,
+      "production_mesh_error": -1.4956389881015468,
+      "error_by_level": [
+       -1.4956389881015468,
+       -0.9440524658618585,
+       -0.721278017074809
+      ]
+     },
+     "caps": {
+      "levels": [
+       106.40874641795993,
+       107.40809459709558,
+       107.82741756456015
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.5963521678302062,
+      "extrapolated": 109.36036997926448,
+      "production_mesh_error": -2.951623561304544,
+      "error_by_level": [
+       -2.951623561304544,
+       -1.9522753821688923,
+       -1.5329524147043259
+      ]
+     },
+     "bga": {
+      "levels": [
+       107.71426547484705,
+       108.77369173412994,
+       109.21602509800688
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.6051248326692658,
+      "extrapolated": 110.80670878741894,
+      "production_mesh_error": -3.0924433125718878,
+      "error_by_level": [
+       -3.0924433125718878,
+       -2.033017053289001,
+       -1.5906836894120602
+      ]
+     },
+     "sub": {
+      "levels": [
+       107.7195154376165,
+       108.78273589937004,
+       109.23023740214913
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 0.5908926884205055,
+      "extrapolated": 110.88322142229322,
+      "production_mesh_error": -3.1637059846767244,
+      "error_by_level": [
+       -3.1637059846767244,
+       -2.1004855229231794,
+       -1.652984020144089
+      ]
+     },
+     "interface": {
+      "levels": [
+       86.63607774074642,
+       86.74888893980156,
+       86.78606891388074
+      ],
+      "ratios": [
+       1.0,
+       2.0,
+       3.0
+      ],
+      "asymptotic": true,
+      "observed_order": 1.0196885770819457,
+      "extrapolated": 86.85868286388354,
+      "production_mesh_error": -0.22260512313712866,
+      "error_by_level": [
+       -0.22260512313712866,
+       -0.10979392408198407,
+       -0.07261395000280402
+      ]
+     }
+    },
+    "note": "observed order and extrapolation from three strictly nested uniform refinements of the production mesh (h, h/2, h/3), identical problem"
+   },
+   "refinement_split": {
+    "what": "MOOSE on anisotropic refinements of the production mesh (nx, ny, nz children per hex), identical problem; changes are refined minus production mesh",
+    "levels": {
+     "r221": {
+      "factors": [
+       2,
+       2,
+       1
+      ],
+      "n_hex": 578048,
+      "n_nodes": 606537,
+      "T_max_C": 108.8088241470162,
+      "T_max_xyz_mm": [
+       -15.0,
+       -15.0,
+       -0.15
+      ],
+      "T_max_change_K": 1.0105832714914982,
+      "layer_volume_mean_change_K": {
+       "board": 0.9933665673715382,
+       "bga": 1.0195367224806375,
+       "sub_lower": 1.0196916497148152,
+       "tile_band": 1.0196984738342962,
+       "z1conv_0_bottom_substrate_rdl": 1.0197665759047538,
+       "z1conv_1_gan_hs_EPC2014C": 0.9961048341364744,
+       "z1conv_2_interlayer_rdl": 0.9624266277461402,
+       "z1conv_3_flying_caps": 0.9504781395954467,
+       "z1conv_4_interlayer_rdl": 0.9380884879549853,
+       "z1conv_5_gan_ls_EPC2057": 0.8679808471261623,
+       "z1conv_6_interlayer_rdl": 0.7609888596646783,
+       "z1conv_7_inductor_plus_cout": 0.6391960941407149,
+       "z1conv_8_output_rdl": 0.48184713881489927,
+       "interface": -0.0004885164952384002,
+       "die": -0.0004610074395401398,
+       "tim": -0.0002958047689176624,
+       "converter_all_tiers": 0.857770212762631,
+       "substrate": 1.0196921046561016
+      },
+      "region_volume_mean_change_K": {
+       "conv": 0.8474926604922501,
+       "hs": 1.026039932154191,
+       "ls": 0.8959469613730278,
+       "ind": 0.5230761564052102,
+       "caps": 0.9630549547340479,
+       "bga": 1.0195367224806375,
+       "sub": 1.0255718218215861,
+       "interface": 0.10778567696024766
+      },
+      "q_films_W": {
+       "bottom": 0.7151216775204354,
+       "top": 1143.5946205615728
+      },
+      "wall_s": 46.0327889919281,
+      "solve_s": 8.54
+     },
+     "r112": {
+      "factors": [
+       1,
+       1,
+       2
+      ],
+      "n_hex": 289024,
+      "n_nodes": 302705,
+      "T_max_C": 107.8280156217097,
+      "T_max_xyz_mm": [
+       15.0,
+       -15.0,
+       -0.15
+      ],
+      "T_max_change_K": 0.02977474618499798,
+      "layer_volume_mean_change_K": {
+       "board": 0.014756541863292227,
+       "bga": 0.01608459942461593,
+       "sub_lower": 0.015147859358961568,
+       "tile_band": 0.015146832717093162,
+       "z1conv_0_bottom_substrate_rdl": 0.015555136121676583,
+       "z1conv_1_gan_hs_EPC2014C": 0.023791324657679525,
+       "z1conv_2_interlayer_rdl": 0.011343511450121468,
+       "z1conv_3_flying_caps": 0.011698017352770762,
+       "z1conv_4_interlayer_rdl": 0.012144686813940098,
+       "z1conv_5_gan_ls_EPC2057": 0.04533636227107252,
+       "z1conv_6_interlayer_rdl": 0.0022934427825305193,
+       "z1conv_7_inductor_plus_cout": 0.04058202104815223,
+       "z1conv_8_output_rdl": 0.022825231263226442,
+       "interface": -2.539277957680497e-06,
+       "die": 0.018023094045332755,
+       "tim": -4.394212496094951e-06,
+       "converter_all_tiers": 0.034122700893632896,
+       "substrate": 0.01514779091614571
+      },
+      "region_volume_mean_change_K": {
+       "conv": 0.026496273616857025,
+       "hs": 0.020891710989630496,
+       "ls": 0.04341156867020857,
+       "ind": 0.01624364925355337,
+       "caps": 0.014604928110031778,
+       "bga": 0.01608459942461593,
+       "sub": 0.014535997249623733,
+       "interface": 0.0030338598166963493
+      },
+      "q_films_W": {
+       "bottom": 0.7065449094149996,
+       "top": 1143.6031973293957
+      },
+      "wall_s": 21.259688138961792,
+      "solve_s": 3.561
+     },
+     "r114": {
+      "factors": [
+       1,
+       1,
+       4
+      ],
+      "n_hex": 578048,
+      "n_nodes": 600369,
+      "T_max_C": 107.8384410554573,
+      "T_max_xyz_mm": [
+       -15.0,
+       -15.0,
+       -0.15
+      ],
+      "T_max_change_K": 0.04020017993259728,
+      "layer_volume_mean_change_K": {
+       "board": 0.018975598031914842,
+       "bga": 0.02064963066273151,
+       "sub_lower": 0.019479220552170773,
+       "tile_band": 0.019478225059089027,
+       "z1conv_0_bottom_substrate_rdl": 0.01998825115494185,
+       "z1conv_1_gan_hs_EPC2014C": 0.030343982927817592,
+       "z1conv_2_interlayer_rdl": 0.01475687956971683,
+       "z1conv_3_flying_caps": 0.015267595416318613,
+       "z1conv_4_interlayer_rdl": 0.015883119476384877,
+       "z1conv_5_gan_ls_EPC2057": 0.05733654159601542,
+       "z1conv_6_interlayer_rdl": 0.0032320595707204802,
+       "z1conv_7_inductor_plus_cout": 0.05112553578626944,
+       "z1conv_8_output_rdl": 0.02894255348439856,
+       "interface": -3.434601836715956e-06,
+       "die": 0.022528621721491504,
+       "tim": -5.650505059406896e-06,
+       "converter_all_tiers": 0.04322549311258683,
+       "substrate": 0.01947915418595869
+      },
+      "region_volume_mean_change_K": {
+       "conv": 0.033526654573350356,
+       "hs": 0.026649741442810182,
+       "ls": 0.05468232656895111,
+       "ind": 0.020507777202737998,
+       "caps": 0.01873224951100383,
+       "bga": 0.02064963066273151,
+       "sub": 0.018731207034718977,
+       "interface": 0.003836059076874676
+      },
+      "q_films_W": {
+       "bottom": 0.7065818862142805,
+       "top": 1143.6031603543202
+      },
+      "wall_s": 41.923983097076416,
+      "solve_s": 6.648
+     },
+     "r331": {
+      "factors": [
+       3,
+       3,
+       1
+      ],
+      "n_hex": 1300608,
+      "n_nodes": 1358025,
+      "T_max_C": 109.2330888566233,
+      "T_max_xyz_mm": [
+       0.0,
+       0.0,
+       -0.15
+      ],
+      "T_max_change_K": 1.4348479810985992,
+      "layer_volume_mean_change_K": {
+       "board": 1.3933854197199906,
+       "bga": 1.4300940363035295,
+       "sub_lower": 1.430311226647433,
+       "tile_band": 1.4303206706230895,
+       "z1conv_0_bottom_substrate_rdl": 1.4304175469138016,
+       "z1conv_1_gan_hs_EPC2014C": 1.3993366338568052,
+       "z1conv_2_interlayer_rdl": 1.3535967533662898,
+       "z1conv_3_flying_caps": 1.3352912591695372,
+       "z1conv_4_interlayer_rdl": 1.3163154399698698,
+       "z1conv_5_gan_ls_EPC2057": 1.2226423372712816,
+       "z1conv_6_interlayer_rdl": 1.072495838539524,
+       "z1conv_7_inductor_plus_cout": 0.897894334551907,
+       "z1conv_8_output_rdl": 0.6665348441154464,
+       "interface": -0.0006852372556522823,
+       "die": -0.0006466505754474383,
+       "tim": -0.0004149224234950566,
+       "converter_all_tiers": 1.2060118108428668,
+       "substrate": 1.4303118562457513
+      },
+      "region_volume_mean_change_K": {
+       "conv": 1.188600329781977,
+       "hs": 1.4428051297866347,
+       "ls": 1.2573258215436596,
+       "ind": 0.7270390052020588,
+       "caps": 1.3528609512722483,
+       "bga": 1.4300940363035295,
+       "sub": 1.4421058748949491,
+       "interface": 0.14207209626741246
+      },
+      "q_films_W": {
+       "bottom": 0.718627536694542,
+       "top": 1143.5911147020715
+      },
+      "wall_s": 107.99209856987,
+      "solve_s": 21.413
+     },
+     "r441": {
+      "factors": [
+       4,
+       4,
+       1
+      ],
+      "n_hex": 2312192,
+      "n_nodes": 2408337,
+      "T_max_C": 109.4405786149075,
+      "T_max_xyz_mm": [
+       0.0,
+       0.0,
+       -0.15
+      ],
+      "T_max_change_K": 1.6423377393827963,
+      "layer_volume_mean_change_K": {
+       "board": 1.5847616282410257,
+       "bga": 1.626512034399795,
+       "sub_lower": 1.626759003937238,
+       "tile_band": 1.626769627202961,
+       "z1conv_0_bottom_substrate_rdl": 1.6268814241196026,
+       "z1conv_1_gan_hs_EPC2014C": 1.5926447523888072,
+       "z1conv_2_interlayer_rdl": 1.5415523685822876,
+       "z1conv_3_flying_caps": 1.5196524857278604,
+       "z1conv_4_interlayer_rdl": 1.4968966855379762,
+       "z1conv_5_gan_ls_EPC2057": 1.3927794901385084,
+       "z1conv_6_interlayer_rdl": 1.2217131143477076,
+       "z1conv_7_inductor_plus_cout": 1.0219492864931823,
+       "z1conv_8_output_rdl": 0.7552979418384638,
+       "interface": -0.0007793520046703861,
+       "die": -0.0007354655897131579,
+       "tim": -0.0004719104512531658,
+       "converter_all_tiers": 1.3729945652601856,
+       "substrate": 1.6267597121549215
+      },
+      "region_volume_mean_change_K": {
+       "conv": 1.350798734457399,
+       "hs": 1.6425955802476295,
+       "ls": 1.4292815551931852,
+       "ind": 0.8214959149068903,
+       "caps": 1.5390174371513439,
+       "bga": 1.626512034399795,
+       "sub": 1.6417237436286456,
+       "interface": 0.1570954669623177
+      },
+      "q_films_W": {
+       "bottom": 0.720304802732474,
+       "top": 1143.5894374358522
+      },
+      "wall_s": 184.0159215927124,
+      "solve_s": 35.771
+     }
+    },
+    "uniform_x2_T_max_change_K": 1.0655782875953008
+   },
+   "inplane_ladder": {
+    "what": "in-plane refinement only (every in-plane interval of the production mesh split in n = 1, 2, 3, 4; through-thickness unchanged), identical problem; extrapolation from the finest three levels (generalized Richardson)",
+    "n_hex": [
+     144512,
+     578048,
+     1300608,
+     2312192
+    ],
+    "T_max_C": {
+     "levels": [
+      107.7982408755247,
+      108.8088241470162,
+      109.2330888566233,
+      109.4405786149075
+     ],
+     "observed_order_x1x2x3": 0.5954025933965728,
+     "observed_order_x2x3x4": 1.06258756248485,
+     "asymptotic_fine": true,
+     "extrapolated": 110.02087563328479,
+     "production_mesh_error": -2.2226347577600905,
+     "x4_error": -0.5802970183772942
+    },
+    "layer_volume_mean_C": {
+     "board": {
+      "levels": [
+       105.60208226257225,
+       106.59544882994379,
+       106.99546768229224,
+       107.18684389081328
+      ],
+      "observed_order_x1x2x3": 0.669026478253846,
+      "observed_order_x2x3x4": 1.124724000987408,
+      "asymptotic_fine": true,
+      "extrapolated": 107.6877721752877,
+      "production_mesh_error": -2.085689912715452,
+      "x4_error": -0.5009282844744263
+     },
+     "bga": {
+      "levels": [
+       107.71426547484705,
+       108.73380219732769,
+       109.14435951115058,
+       109.34077750924685
+      ],
+      "observed_order_x1x2x3": 0.6690264787395406,
+      "observed_order_x2x3x4": 1.1247239981470747,
+      "asymptotic_fine": true,
+      "extrapolated": 109.85490270734472,
+      "production_mesh_error": -2.1406372324976672,
+      "x4_error": -0.5141251980978723
+     },
+     "sub_lower": {
+      "levels": [
+       107.70629846683381,
+       108.72599011654863,
+       109.13660969348125,
+       109.33305747077105
+      ],
+      "observed_order_x1x2x3": 0.669027013843549,
+      "observed_order_x2x3x4": 1.12472412170787,
+      "asymptotic_fine": true,
+      "extrapolated": 109.8472605499523,
+      "production_mesh_error": -2.140962083118481,
+      "x4_error": -0.5142030791812431
+     },
+     "tile_band": {
+      "levels": [
+       107.70503753377966,
+       108.72473600761396,
+       109.13535820440275,
+       109.33180716098262
+      ],
+      "observed_order_x1x2x3": 0.6690275644071302,
+      "observed_order_x2x3x4": 1.1247251866220616,
+      "asymptotic_fine": true,
+      "extrapolated": 109.84601275709484,
+      "production_mesh_error": -2.1409752233151806,
+      "x4_error": -0.5142055961122196
+     },
+     "z1conv_0_bottom_substrate_rdl": {
+      "levels": [
+       107.69463519781411,
+       108.71440177371886,
+       109.12505274472791,
+       109.32151662193371
+      ],
+      "observed_order_x1x2x3": 0.669021763889172,
+      "observed_order_x2x3x4": 1.1247085948926365,
+      "asymptotic_fine": true,
+      "extrapolated": 109.8357701523392,
+      "production_mesh_error": -2.1411349545250857,
+      "x4_error": -0.5142535304054832
+     },
+     "z1conv_1_gan_hs_EPC2014C": {
+      "levels": [
+       107.21882123771631,
+       108.21492607185279,
+       108.61815787157312,
+       108.81146599010512
+      ],
+      "observed_order_x1x2x3": 0.6597677173504839,
+      "observed_order_x2x3x4": 1.1189518274211205,
+      "asymptotic_fine": true,
+      "extrapolated": 109.32050635416886,
+      "production_mesh_error": -2.1016851164525434,
+      "x4_error": -0.5090403640637362
+     },
+     "z1conv_2_interlayer_rdl": {
+      "levels": [
+       106.4746383176104,
+       107.43706494535654,
+       107.82823507097669,
+       108.01619068619269
+      ],
+      "observed_order_x1x2x3": 0.6526616392790097,
+      "observed_order_x2x3x4": 1.1124866818834258,
+      "asymptotic_fine": true,
+      "extrapolated": 108.51450050323174,
+      "production_mesh_error": -2.0398621856213452,
+      "x4_error": -0.49830981703905763
+     },
+     "z1conv_3_flying_caps": {
+      "levels": [
+       106.15408682175574,
+       107.10456496135119,
+       107.48937808092528,
+       107.6737393074836
+      ],
+      "observed_order_x1x2x3": 0.6595319683600493,
+      "observed_order_x2x3x4": 1.1207436924792478,
+      "asymptotic_fine": true,
+      "extrapolated": 108.15831192124375,
+      "production_mesh_error": -2.0042250994880106,
+      "x4_error": -0.48457261376015026
+     },
+     "z1conv_4_interlayer_rdl": {
+      "levels": [
+       105.81560941246174,
+       106.75369790041673,
+       107.13192485243161,
+       107.31250609799972
+      ],
+      "observed_order_x1x2x3": 0.6668419757171327,
+      "observed_order_x2x3x4": 1.1304921800823111,
+      "asymptotic_fine": true,
+      "extrapolated": 107.78235570797517,
+      "production_mesh_error": -1.9667462955134312,
+      "x4_error": -0.469849609975455
+     },
+     "z1conv_5_gan_ls_EPC2057": {
+      "levels": [
+       104.56254089874895,
+       105.43052174587511,
+       105.78518323602023,
+       105.95532038888746
+      ],
+      "observed_order_x1x2x3": 0.643285970602935,
+      "observed_order_x2x3x4": 1.1170675360616267,
+      "asymptotic_fine": true,
+      "extrapolated": 106.40422829753312,
+      "production_mesh_error": -1.841687398784174,
+      "x4_error": -0.44890790864566554
+     },
+     "z1conv_6_interlayer_rdl": {
+      "levels": [
+       102.07382115242375,
+       102.83481001208843,
+       103.14631699096327,
+       103.29553426677145
+      ],
+      "observed_order_x1x2x3": 0.6400908044746352,
+      "observed_order_x2x3x4": 1.1211883480855325,
+      "asymptotic_fine": true,
+      "extrapolated": 103.68755302068158,
+      "production_mesh_error": -1.6137318682578297,
+      "x4_error": -0.3920187539101221
+     },
+     "z1conv_7_inductor_plus_cout": {
+      "levels": [
+       98.75966992777694,
+       99.39886602191766,
+       99.65756426232885,
+       99.78161921427012
+      ],
+      "observed_order_x1x2x3": 0.6601349406113115,
+      "observed_order_x2x3x4": 1.118137081596914,
+      "asymptotic_fine": true,
+      "extrapolated": 100.10857286630373,
+      "production_mesh_error": -1.3489029385267912,
+      "x4_error": -0.32695365203360893
+     },
+     "z1conv_8_output_rdl": {
+      "levels": [
+       95.0766609312464,
+       95.5585080700613,
+       95.74319577536184,
+       95.83195887308486
+      ],
+      "observed_order_x1x2x3": 0.7559546509330815,
+      "observed_order_x2x3x4": 1.1118049516494746,
+      "asymptotic_fine": true,
+      "extrapolated": 96.06745710960675,
+      "production_mesh_error": -0.9907961783603554,
+      "x4_error": -0.2354982365218916
+     },
+     "interface": {
+      "levels": [
+       86.0100962409388,
+       86.00960772444355,
+       86.00941100368314,
+       86.00931688893412
+      ],
+      "observed_order_x1x2x3": 0.6690263092143125,
+      "observed_order_x2x3x4": 1.124723954048163,
+      "asymptotic_fine": true,
+      "extrapolated": 86.00907054304591,
+      "production_mesh_error": 0.0010256978928850913,
+      "x4_error": 0.00024634588821470516
+     },
+     "die": {
+      "levels": [
+       84.76304764631189,
+       84.76258663887235,
+       84.76240099573644,
+       84.76231218072218
+      ],
+      "observed_order_x1x2x3": 0.6690263081306738,
+      "observed_order_x2x3x4": 1.124723954101003,
+      "asymptotic_fine": true,
+      "extrapolated": 84.76207970691968,
+      "production_mesh_error": 0.0009679393922112922,
+      "x4_error": 0.00023247380249813432
+     },
+     "tim": {
+      "levels": [
+       63.85590567798919,
+       63.855609873220274,
+       63.8554907555657,
+       63.85543376753794
+      ],
+      "observed_order_x1x2x3": 0.6690263074064731,
+      "observed_order_x2x3x4": 1.1247239563434803,
+      "asymptotic_fine": true,
+      "extrapolated": 63.8552846010531,
+      "production_mesh_error": 0.0006210769360919244,
+      "x4_error": 0.0001491664848387586
+     },
+     "converter_all_tiers": {
+      "levels": [
+       104.0660876520107,
+       104.92385786477332,
+       105.27209946285356,
+       105.43908221727088
+      ],
+      "observed_order_x1x2x3": 0.6546468286256877,
+      "observed_order_x2x3x4": 1.1183299047910324,
+      "asymptotic_fine": true,
+      "extrapolated": 105.87908571658373,
+      "production_mesh_error": -1.812998064573037,
+      "x4_error": -0.44000349931285143
+     },
+     "substrate": {
+      "levels": [
+       107.70621440463023,
+       108.72590650928633,
+       109.13652626087598,
+       109.33297411678515
+      ],
+      "observed_order_x1x2x3": 0.669027050548191,
+      "observed_order_x2x3x4": 1.1247241927018456,
+      "asymptotic_fine": true,
+      "extrapolated": 109.8471773637622,
+      "production_mesh_error": -2.1409629591319685,
+      "x4_error": -0.514203246977047
+     }
+    },
+    "region_volume_mean_C": {
+     "conv": {
+      "levels": [
+       103.44397270843886,
+       104.29146536893111,
+       104.63257303822084,
+       104.79477144289626
+      ],
+      "observed_order_x1x2x3": 0.6699013694921596,
+      "observed_order_x2x3x4": 1.1419645620638934,
+      "asymptotic_fine": true,
+      "extrapolated": 105.21182525368995,
+      "production_mesh_error": -1.7678525452510883,
+      "x4_error": -0.4170538107936892
+     },
+     "hs": {
+      "levels": [
+       107.61520950693591,
+       108.6412494390901,
+       109.05801463672255,
+       109.25780508718354
+      ],
+      "observed_order_x1x2x3": 0.6537627325117341,
+      "observed_order_x2x3x4": 1.1190301038106178,
+      "asymptotic_fine": true,
+      "extrapolated": 109.78387240419606,
+      "production_mesh_error": -2.1686628972601483,
+      "x4_error": -0.5260673170125187
+     },
+     "ls": {
+      "levels": [
+       104.69371214232702,
+       105.58965910370004,
+       105.95103796387068,
+       106.1229936975202
+      ],
+      "observed_order_x1x2x3": 0.6661441176425349,
+      "observed_order_x2x3x4": 1.1400224901872642,
+      "asymptotic_fine": true,
+      "extrapolated": 106.56601981523751,
+      "production_mesh_error": -1.8723076729104946,
+      "x4_error": -0.4430261177173094
+     },
+     "ind": {
+      "levels": [
+       95.6565283423639,
+       96.17960449876911,
+       96.38356734756596,
+       96.47802425727079
+      ],
+      "observed_order_x1x2x3": 0.7257607446774574,
+      "observed_order_x2x3x4": 1.2164708492907637,
+      "asymptotic_fine": true,
+      "extrapolated": 96.7034550067344,
+      "production_mesh_error": -1.0469266643705026,
+      "x4_error": -0.2254307494636123
+     },
+     "caps": {
+      "levels": [
+       106.40874641795993,
+       107.37180137269398,
+       107.76160736923218,
+       107.94776385511128
+      ],
+      "observed_order_x1x2x3": 0.6599801768660882,
+      "observed_order_x2x3x4": 1.1297804840605479,
+      "asymptotic_fine": true,
+      "extrapolated": 108.43247695448801,
+      "production_mesh_error": -2.0237305365280776,
+      "x4_error": -0.4847130993767337
+     },
+     "bga": {
+      "levels": [
+       107.71426547484705,
+       108.73380219732769,
+       109.14435951115058,
+       109.34077750924685
+      ],
+      "observed_order_x1x2x3": 0.6690264787395406,
+      "observed_order_x2x3x4": 1.1247239981470747,
+      "asymptotic_fine": true,
+      "extrapolated": 109.85490270734472,
+      "production_mesh_error": -2.1406372324976672,
+      "x4_error": -0.5141251980978723
+     },
+     "sub": {
+      "levels": [
+       107.7195154376165,
+       108.74508725943808,
+       109.16162131251144,
+       109.36123918124514
+      ],
+      "observed_order_x1x2x3": 0.6539365090368197,
+      "observed_order_x2x3x4": 1.1199037922053554,
+      "asymptotic_fine": true,
+      "extrapolated": 109.88637248389455,
+      "production_mesh_error": -2.1668570462780536,
+      "x4_error": -0.525133302649408
+     },
+     "interface": {
+      "levels": [
+       86.63607774074642,
+       86.74386341770666,
+       86.77814983701383,
+       86.79317320770873
+      ],
+      "observed_order_x1x2x3": 1.0811647600330003,
+      "observed_order_x2x3x4": 1.3722412160822222,
+      "asymptotic_fine": true,
+      "extrapolated": 86.82421056020534,
+      "production_mesh_error": -0.18813281945892868,
+      "x4_error": -0.031037352496610993
+     }
+    }
+   }
+  },
+  "Z3": {
+   "arch": "Z3",
+   "scenario": "HV_S0",
+   "variant": "Z3_BOARD_BACKSIDE",
+   "problem": {
+    "case_file": "research/final_closure/etm_Z3_HV_S0_h1.1_r21.json",
+    "production_T_max_C_streamwise_film": 82.44,
+    "P_loss_W": 120.32261821657468,
+    "Q_dissipated_W": 1120.3226182165747,
+    "deposits": [
+     {
+      "layers": [
+       "die"
+      ],
+      "in_cells": false,
+      "W": 1000.0,
+      "n_elems": 13456,
+      "volume_mm3": 149.99087999999998,
+      "q_W_mm3": 6.667072024645766
+     },
+     {
+      "layers": [
+       "z3conv_7_gan_hs_EPC2014C"
+      ],
+      "in_cells": true,
+      "W": 16.776253047601422,
+      "n_elems": 3528,
+      "volume_mm3": 188.29964997142946,
+      "q_W_mm3": 0.08909338413611957
+     },
+     {
+      "layers": [
+       "z3conv_3_gan_ls_EPC2057"
+      ],
+      "in_cells": true,
+      "W": 75.05720081175876,
+      "n_elems": 3528,
+      "volume_mm3": 175.37981997339,
+      "q_W_mm3": 0.4279694255767113
+     },
+     {
+      "layers": [
+       "z3conv_1_inductor_plus_cout"
+      ],
+      "in_cells": true,
+      "W": 12.420712820735435,
+      "n_elems": 3528,
+      "volume_mm3": 137.44499997914568,
+      "q_W_mm3": 0.0903686043335153
+     },
+     {
+      "layers": [
+       "z3conv_5_flying_caps"
+      ],
+      "in_cells": true,
+      "W": 1.4402242934280696,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "q_W_mm3": 0.05239274959607834
+     },
+     {
+      "layers": [
+       "z3conv_0_land_side_attach_rdl",
+       "z3conv_2_interlayer_rdl",
+       "z3conv_4_interlayer_rdl",
+       "z3conv_6_interlayer_rdl"
+      ],
+      "in_cells": true,
+      "W": 1.4822775891116244,
+      "n_elems": 7056,
+      "volume_mm3": 10.995599998331787,
+      "q_W_mm3": 0.13480643069377843
+     },
+     {
+      "layers": [
+       "z3_attach_vr_pcb"
+      ],
+      "in_cells": true,
+      "W": 2.2930064593659623,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "q_W_mm3": 0.08341541924820417
+     },
+     {
+      "layers": [
+       "board"
+      ],
+      "in_cells": true,
+      "W": 9.130670380958584,
+      "n_elems": 3528,
+      "volume_mm3": 659.7359998998993,
+      "q_W_mm3": 0.01383988501816479
+     },
+     {
+      "layers": [
+       "bga"
+      ],
+      "in_cells": false,
+      "W": 1.15758780537676,
+      "n_elems": 9800,
+      "volume_mm3": 270.0,
+      "q_W_mm3": 0.004287362242136148
+     },
+     {
+      "layers": [
+       "sub_lower"
+      ],
+      "in_cells": true,
+      "W": 0.5220755633732426,
+      "n_elems": 5292,
+      "volume_mm3": 76.96919998832158,
+      "q_W_mm3": 0.006782915288874723
+     },
+     {
+      "layers": [
+       "interface"
+      ],
+      "in_cells": true,
+      "W": 0.04260944486482385,
+      "n_elems": 1764,
+      "volume_mm3": 2.748899999582916,
+      "q_W_mm3": 0.015500543807082424
+     }
+    ],
+    "top_film": {
+     "h_W_m2K": 115553.49261554122,
+     "T_inf_C": 25.0,
+     "source": "cooling_production.CANDIDATES['TOP_SI_MICROCHANNEL_27'].h_uniform(Q) at t_in_c"
+    },
+    "bottom_film": {
+     "h_W_m2K": 10.0,
+     "T_inf_C": 25.0,
+     "source": "stack thermal_bc h_bottom / ambient_bottom"
+    },
+    "mesh": {
+     "h_xy_mm": 1.1,
+     "refine": [
+      2,
+      1
+     ],
+     "label": "graded h_xy = 1.1 mm grid, every in-plane interval split in 2",
+     "n_elems": 126536,
+     "n_nodes": 135731,
+     "n_layers": 17,
+     "materials": [
+      "bga_homog",
+      "board_fr4",
+      "hvr_effective",
+      "microbump",
+      "pcb_via_field",
+      "rdl_tier",
+      "silicon",
+      "tim",
+      "tsv_tile",
+      "underfill_homog",
+      "vr_attach_pcb"
+     ]
+    }
+   },
+   "input_audit": {
+    "node_coord_max_abs_mm": 4.5300000017789444e-07,
+    "connectivity_identical": true,
+    "material_labels_identical": true,
+    "conductivity_max_rel": 1.3112372809685747e-06,
+    "source_support_identical": true,
+    "source_density_max_rel": 2.2715650455120707e-09,
+    "deposited_W_on_deck_mesh": 1120.3226320332044,
+    "deposited_W_model": 1120.322618216575,
+    "Q_ledger_W": 1120.3226182165747,
+    "films": {
+     "bottom": {
+      "face": "F1",
+      "n_faces": 1984,
+      "faces_identical": true,
+      "h_W_m2K": 10.000000000000002,
+      "T_inf_C": 25.0,
+      "h_rel_err": 2.220446049250313e-16,
+      "T_abs_err_K": 0.0,
+      "area_mm2": 443.7504
+     },
+     "plate": {
+      "face": "F1",
+      "n_faces": 2916,
+      "faces_identical": true,
+      "h_W_m2K": 115553.493,
+      "T_inf_C": 25.0,
+      "h_rel_err": 3.3271063681894475e-09,
+      "T_abs_err_K": 0.0,
+      "area_mm2": 456.24959999999993
+     },
+     "top": {
+      "face": "F2",
+      "n_faces": 3364,
+      "faces_identical": true,
+      "h_W_m2K": 115553.493,
+      "T_inf_C": 25.0,
+      "h_rel_err": 3.3271063681894475e-09,
+      "T_abs_err_K": 0.0,
+      "area_mm2": 499.96959999999996
+     }
+    },
+    "films_complete": true,
+    "passed": true
+   },
+   "moose_mesh": {
+    "format": "Gmsh 2.2 ASCII",
+    "n_nodes": 135731,
+    "n_hex": 126536,
+    "n_quad": 8264,
+    "bytes": 16105009,
+    "blocks": [
+     {
+      "name": "bga_homog__src9",
+      "material": "BGA_HOMOG",
+      "n_elems": 9800,
+      "k_W_mmK": [
+       0.00981748,
+       0.00981748,
+       0.00981748
+      ],
+      "q_W_mm3": 0.00428736224
+     },
+     {
+      "name": "board_fr4",
+      "material": "BOARD_FR4",
+      "n_elems": 6272,
+      "k_W_mmK": [
+       0.0658592,
+       0.0658592,
+       0.000446083
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "hvr_effective__src4",
+      "material": "HVR_EFFECTIVE",
+      "n_elems": 3528,
+      "k_W_mmK": [
+       0.06,
+       0.06,
+       0.06
+      ],
+      "q_W_mm3": 0.0903686043
+     },
+     {
+      "name": "hvr_effective__src5",
+      "material": "HVR_EFFECTIVE",
+      "n_elems": 3528,
+      "k_W_mmK": [
+       0.06,
+       0.06,
+       0.06
+      ],
+      "q_W_mm3": 0.0523927496
+     },
+     {
+      "name": "microbump",
+      "material": "MICROBUMP",
+      "n_elems": 1600,
+      "k_W_mmK": [
+       0.000891,
+       0.000891,
+       0.011739
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "microbump__src11",
+      "material": "MICROBUMP",
+      "n_elems": 1764,
+      "k_W_mmK": [
+       0.000891,
+       0.000891,
+       0.011739
+      ],
+      "q_W_mm3": 0.0155005438
+     },
+     {
+      "name": "pcb_via_field__src8",
+      "material": "PCB_VIA_FIELD",
+      "n_elems": 3528,
+      "k_W_mmK": [
+       0.0771915,
+       0.0771915,
+       0.0445755
+      ],
+      "q_W_mm3": 0.013839885
+     },
+     {
+      "name": "rdl_tier",
+      "material": "RDL_TIER",
+      "n_elems": 4900,
+      "k_W_mmK": [
+       0.0342845,
+       0.0342845,
+       0.000620474
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "rdl_tier__src6",
+      "material": "RDL_TIER",
+      "n_elems": 7056,
+      "k_W_mmK": [
+       0.0342845,
+       0.0342845,
+       0.000620474
+      ],
+      "q_W_mm3": 0.134806431
+     },
+     {
+      "name": "silicon",
+      "material": "SILICON",
+      "n_elems": 21952,
+      "k_W_mmK": [
+       0.13,
+       0.13,
+       0.13
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "silicon__src1",
+      "material": "SILICON",
+      "n_elems": 13456,
+      "k_W_mmK": [
+       0.13,
+       0.13,
+       0.13
+      ],
+      "q_W_mm3": 6.66707202
+     },
+     {
+      "name": "silicon__src2",
+      "material": "SILICON",
+      "n_elems": 3528,
+      "k_W_mmK": [
+       0.13,
+       0.13,
+       0.13
+      ],
+      "q_W_mm3": 0.0890933841
+     },
+     {
+      "name": "silicon__src3",
+      "material": "SILICON",
+      "n_elems": 3528,
+      "k_W_mmK": [
+       0.13,
+       0.13,
+       0.13
+      ],
+      "q_W_mm3": 0.427969426
+     },
+     {
+      "name": "tim",
+      "material": "TIM",
+      "n_elems": 10092,
+      "k_W_mmK": [
+       0.003,
+       0.003,
+       0.003
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "tsv_tile",
+      "material": "TSV_TILE",
+      "n_elems": 7056,
+      "k_W_mmK": [
+       0.156561,
+       0.156561,
+       0.179125
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "tsv_tile__src10",
+      "material": "TSV_TILE",
+      "n_elems": 5292,
+      "k_W_mmK": [
+       0.156561,
+       0.156561,
+       0.179125
+      ],
+      "q_W_mm3": 0.00678291529
+     },
+     {
+      "name": "underfill_homog",
+      "material": "UNDERFILL_HOMOG",
+      "n_elems": 16128,
+      "k_W_mmK": [
+       0.0007,
+       0.0007,
+       0.0007
+      ],
+      "q_W_mm3": null
+     },
+     {
+      "name": "vr_attach_pcb__src7",
+      "material": "VR_ATTACH_PCB",
+      "n_elems": 3528,
+      "k_W_mmK": [
+       0.000885625,
+       0.000885625,
+       0.0116741
+      ],
+      "q_W_mm3": 0.0834154192
+     }
+    ],
+    "sidesets": [
+     {
+      "name": "bottom",
+      "face": "F1",
+      "n_faces": 1984,
+      "h_W_mm2K": 1e-05,
+      "T_inf_C": 25.0
+     },
+     {
+      "name": "plate",
+      "face": "F1",
+      "n_faces": 2916,
+      "h_W_mm2K": 0.115553493,
+      "T_inf_C": 25.0
+     },
+     {
+      "name": "top",
+      "face": "F2",
+      "n_faces": 3364,
+      "h_W_mm2K": 0.115553493,
+      "T_inf_C": 25.0
+     }
+    ]
+   },
+   "calculix": {
+    "deposited_W": 1120.3226182165747,
+    "t_write_deck_s": 1.7710189819335938,
+    "threads": 8,
+    "ccx_reported_s": [
+     102.275109,
+     100.365365,
+     93.781468
+    ],
+    "newton_iterations": 2,
+    "log_solver_lines": [
+     "Using up to 8 cpu(s) for setting up the structure of the matrix.",
+     "Using up to 8 cpu(s) for the heat flux calculation.",
+     "Using up to 8 cpu(s) for the symmetric stiffness/mass contributions.",
+     "Factoring the system of equations using the symmetric spooles solver",
+     "Using 1 cpu for spooles.",
+     "Using up to 8 cpu(s) for the heat flux calculation."
+    ],
+    "frd_vs_dat_max_abs_K": 5.000000000165983e-05,
+    "solver": "CalculiX 2.23 default (SPOOLES), *HEAT TRANSFER, STEADY STATE",
+    "timing": {
+     "median_s": 100.45198678970337,
+     "min_s": 93.87139916419983,
+     "max_s": 102.3570203781128,
+     "repeats": 3,
+     "walls_s": [
+      102.3570203781128,
+      100.45198678970337,
+      93.87139916419983
+     ]
+    },
+    "metrics": {
+     "T_max_C": 75.47512,
+     "T_max_rise_K": 50.475120000000004,
+     "T_max_xyz_mm": [
+      -7.913107,
+      -7.913107,
+      0.32
+     ],
+     "T_min_C": 23.04974,
+     "T_volume_mean_C": 62.083259002198076,
+     "layer_volume_mean_C": {
+      "z3conv_7_gan_hs_EPC2014C": 31.20625221854798,
+      "z3conv_6_interlayer_rdl": 36.93801592193321,
+      "z3conv_5_flying_caps": 40.33485566857075,
+      "z3conv_4_interlayer_rdl": 43.698041547772,
+      "z3conv_3_gan_ls_EPC2057": 48.71866551745425,
+      "z3conv_2_interlayer_rdl": 51.9460873955918,
+      "z3conv_1_inductor_plus_cout": 54.87892609875419,
+      "z3conv_0_land_side_attach_rdl": 57.61354369568451,
+      "z3_attach_vr_pcb": 59.54997678273204,
+      "board": 66.10455798291665,
+      "bga": 72.62368301328247,
+      "sub_lower": 73.47784041589591,
+      "tile_band": 73.52833740392634,
+      "z2_top_rdl": 73.94874587494587,
+      "interface": 75.3410610199627,
+      "die": 74.69480023257793,
+      "tim": 57.39562894243418,
+      "converter_all_tiers": 43.72577527849474,
+      "substrate": 73.4812068817646
+     },
+     "region_volume_mean_C": {
+      "conv": 43.85530777359194,
+      "hs": 31.0663500012001,
+      "ls": 49.29582945218821,
+      "ind": 54.82322698052615,
+      "caps": 40.44012421955674,
+      "bga": 72.62368301328247,
+      "sub": 73.7276064954657,
+      "interface": 75.345902473103,
+      "attach": 59.65930149933309,
+      "pcb_via": 65.69791297233625
+     }
+    },
+    "production_conventions": {
+     "layer_node_mean_C": {
+      "z3conv_7_gan_hs_EPC2014C": 31.218217712396694,
+      "z3conv_6_interlayer_rdl": 36.920569386776855,
+      "z3conv_5_flying_caps": 40.355931748760334,
+      "z3conv_4_interlayer_rdl": 43.758336267768584,
+      "z3conv_3_gan_ls_EPC2057": 48.69877232286502,
+      "z3conv_2_interlayer_rdl": 51.98653600495869,
+      "z3conv_1_inductor_plus_cout": 54.9175248584022,
+      "z3conv_0_land_side_attach_rdl": 57.642178871074385,
+      "z3_attach_vr_pcb": 59.59707421818181,
+      "board": 66.10148771077168,
+      "bga": 72.53010386497387,
+      "sub_lower": 73.5389361287443,
+      "tile_band": 73.59882858956557,
+      "z2_top_rdl": 74.10049937611585,
+      "interface": 75.32212725797186,
+      "die": 74.610035329503,
+      "tim": 57.388576172795176,
+      "converter_all_tiers": 44.94424656198347,
+      "substrate": 73.56938467367586
+     },
+     "ledger_region_node_mean_C": {
+      "conv": 45.032935645083775,
+      "hs": 31.05899477162293,
+      "ls": 49.26436059280855,
+      "ind": 54.81215524226017,
+      "caps": 40.44022515896154,
+      "bga": 72.53010386497387,
+      "sub": 73.72535041441066,
+      "interface": 75.34517283840067,
+      "attach": 59.617263624878525,
+      "pcb_via": 65.66050048174372
+     }
+    }
+   },
+   "moose_base": {
+    "metrics": {
+     "T_max_C": 75.4751192760804,
+     "T_max_rise_K": 50.475119276080406,
+     "T_max_xyz_mm": [
+      -7.913107,
+      7.913107,
+      0.32
+     ],
+     "T_min_C": 23.04974160760629,
+     "T_volume_mean_C": 62.083259003668964,
+     "layer_volume_mean_C": {
+      "z3conv_7_gan_hs_EPC2014C": 31.206252087878134,
+      "z3conv_6_interlayer_rdl": 36.938015849115324,
+      "z3conv_5_flying_caps": 40.334855668768576,
+      "z3conv_4_interlayer_rdl": 43.69804186157634,
+      "z3conv_3_gan_ls_EPC2057": 48.71866567050858,
+      "z3conv_2_interlayer_rdl": 51.9460874246055,
+      "z3conv_1_inductor_plus_cout": 54.87892613351016,
+      "z3conv_0_land_side_attach_rdl": 57.61354381350646,
+      "z3_attach_vr_pcb": 59.54997681076664,
+      "board": 66.10455797740224,
+      "bga": 72.62368299272455,
+      "sub_lower": 73.47784041836985,
+      "tile_band": 73.52833745030361,
+      "z2_top_rdl": 73.9487458285156,
+      "interface": 75.3410610588977,
+      "die": 74.69480026362022,
+      "tim": 57.39562904261965,
+      "converter_all_tiers": 43.72577529347986,
+      "substrate": 73.48120688716546
+     },
+     "region_volume_mean_C": {
+      "conv": 43.85530778456212,
+      "hs": 31.066349916812953,
+      "ls": 49.29582957676167,
+      "ind": 54.82322697350295,
+      "caps": 40.44012421647703,
+      "bga": 72.62368299272455,
+      "sub": 73.72760656389357,
+      "interface": 75.34590249624728,
+      "attach": 59.659301682352776,
+      "pcb_via": 65.69791302362654
+     }
+    },
+    "production_conventions": {
+     "layer_node_mean_C": {
+      "z3conv_7_gan_hs_EPC2014C": 31.218217657781615,
+      "z3conv_6_interlayer_rdl": 36.92056939285611,
+      "z3conv_5_flying_caps": 40.35593185278887,
+      "z3conv_4_interlayer_rdl": 43.75833647208945,
+      "z3conv_3_gan_ls_EPC2057": 48.69877242675834,
+      "z3conv_2_interlayer_rdl": 51.986536007916186,
+      "z3conv_1_inductor_plus_cout": 54.917524833355394,
+      "z3conv_0_land_side_attach_rdl": 57.642178806203844,
+      "z3_attach_vr_pcb": 59.59707416908645,
+      "board": 66.10148767313484,
+      "bga": 72.53010380884213,
+      "sub_lower": 73.53893613925896,
+      "tile_band": 73.59882863406806,
+      "z2_top_rdl": 74.10049935892853,
+      "interface": 75.32212731416679,
+      "die": 74.6100354024832,
+      "tim": 57.388576178116864,
+      "converter_all_tiers": 44.94424657588222,
+      "substrate": 73.56938470123951
+     },
+     "ledger_region_node_mean_C": {
+      "conv": 45.03293564730866,
+      "hs": 31.05899467562747,
+      "ls": 49.26436066602665,
+      "ind": 54.812155207775604,
+      "caps": 40.44022528555711,
+      "bga": 72.53010380884213,
+      "sub": 73.72535044929543,
+      "interface": 75.34517290816493,
+      "attach": 59.61726367080578,
+      "pcb_via": 65.6605004420756
+     }
+    },
+    "ranks": 8,
+    "solver": "NEWTON; GMRES(300) + hypre BoomerAMG, l_tol 1e-12 (primary)",
+    "solver_check_mumps": {
+     "solver": "NEWTON; PETSc LU (MUMPS)",
+     "max_abs_T_hypre_minus_mumps_K": 5.649667400575709e-10
+    },
+    "runs": {
+     "hypre": {
+      "timing": {
+       "median_s": 10.834839582443237,
+       "min_s": 10.023495435714722,
+       "max_s": 10.924290180206299,
+       "repeats": 3,
+       "walls_s": [
+        10.834839582443237,
+        10.023495435714722,
+        10.924290180206299
+       ]
+      },
+      "moose_reported_s": [
+       3.87,
+       3.56,
+       2.76,
+       3.61
+      ],
+      "solve_s": [
+       1.66,
+       1.476,
+       1.301,
+       1.433
+      ],
+      "nonlinear_residuals": [
+       9.261959,
+       1.294674e-11
+      ],
+      "linear_its": 20
+     },
+     "mumps": {
+      "timing": {
+       "median_s": 38.052555322647095,
+       "min_s": 33.62902522087097,
+       "max_s": 38.34374713897705,
+       "repeats": 3,
+       "walls_s": [
+        38.052555322647095,
+        33.62902522087097,
+        38.34374713897705
+       ]
+      },
+      "moose_reported_s": [
+       28.72,
+       31.02,
+       26.55,
+       30.49
+      ],
+      "solve_s": [
+       26.855,
+       28.853,
+       24.515,
+       28.386
+      ],
+      "nonlinear_residuals": [
+       9.261959,
+       3.139311e-11
+      ],
+      "linear_its": 1
+     }
+    }
+   },
+   "identical_mesh": {
+    "T_max_C": {
+     "calculix": 75.47512,
+     "moose": 75.4751192760804,
+     "moose_postprocessor": 75.4751192760804
+    },
+    "T_max_err_K": 7.239195980446311e-07,
+    "T_max_err_rel_to_rise": 1.4342107518409685e-08,
+    "field_ccx_minus_moose": {
+     "max_abs_K": 4.999655971005268e-06,
+     "rms_K": 2.9091509008697442e-06,
+     "mean_K": -8.656801652137339e-09,
+     "max_abs_rel_to_rise": 9.905188875242431e-08,
+     "rms_rel_to_rise": 5.76353439252793e-08,
+     "argmax_node": 68574
+    },
+    "layer_volume_mean_err_K": {
+     "z3conv_7_gan_hs_EPC2014C": 1.3066984649867663e-07,
+     "z3conv_6_interlayer_rdl": 7.281788327873073e-08,
+     "z3conv_5_flying_caps": -1.978222030629695e-10,
+     "z3conv_4_interlayer_rdl": -3.1380434251104816e-07,
+     "z3conv_3_gan_ls_EPC2057": -1.5305433009871194e-07,
+     "z3conv_2_interlayer_rdl": -2.9013698110702535e-08,
+     "z3conv_1_inductor_plus_cout": -3.475597054602986e-08,
+     "z3conv_0_land_side_attach_rdl": -1.178219477537823e-07,
+     "z3_attach_vr_pcb": -2.8034598642534547e-08,
+     "board": 5.514408485396416e-09,
+     "bga": 2.055791981092625e-08,
+     "sub_lower": -2.4739392756600864e-09,
+     "tile_band": -4.637726647160889e-08,
+     "z2_top_rdl": 4.6430272959696595e-08,
+     "interface": -3.8934999224693456e-08,
+     "die": -3.1042290515870263e-08,
+     "tim": -1.001854741389252e-07,
+     "converter_all_tiers": -1.4985126028932427e-08,
+     "substrate": -5.400849545367237e-09
+    },
+    "layer_node_mean_err_K": {
+     "z3conv_7_gan_hs_EPC2014C": 5.461507868176341e-08,
+     "z3conv_6_interlayer_rdl": -6.0792544331889076e-09,
+     "z3conv_5_flying_caps": -1.0402853689583935e-07,
+     "z3conv_4_interlayer_rdl": -2.0432086245136816e-07,
+     "z3conv_3_gan_ls_EPC2057": -1.038933206132242e-07,
+     "z3conv_2_interlayer_rdl": -2.9574991344816226e-09,
+     "z3conv_1_inductor_plus_cout": 2.504680907122747e-08,
+     "z3conv_0_land_side_attach_rdl": 6.487054093895495e-08,
+     "z3_attach_vr_pcb": 4.909536244213086e-08,
+     "board": 3.763683764645975e-08,
+     "bga": 5.61317392566707e-08,
+     "sub_lower": -1.0514668247196823e-08,
+     "tile_band": -4.450248525245115e-08,
+     "z2_top_rdl": 1.7187318235301063e-08,
+     "interface": -5.61949349275892e-08,
+     "die": -7.298019966128777e-08,
+     "tim": -5.321687979176204e-09,
+     "converter_all_tiers": -1.389874881851938e-08,
+     "substrate": -2.756365802270011e-08
+    },
+    "ledger_region_node_mean_err_K": {
+     "conv": -2.2248869413488137e-09,
+     "hs": 9.599546046956675e-08,
+     "ls": -7.321809647464761e-08,
+     "ind": 3.448456453725157e-08,
+     "caps": -1.2659557313554615e-07,
+     "bga": 5.61317392566707e-08,
+     "sub": -3.488477773316845e-08,
+     "interface": -6.976425481752813e-08,
+     "attach": -4.592725133534259e-08,
+     "pcb_via": 3.966812300859601e-08
+    },
+    "energy": {
+     "Q_ledger_W": 1120.3226182165747,
+     "Q_deposited_on_deck_mesh_W": 1120.3226320332044,
+     "note": "the deck prints node coordinates to 1e-6 mm, so the power deposited on the solved mesh differs from the ledger total by +1.23e-08 (relative); both codes solve the deck",
+     "calculix": {
+      "q_films_W": {
+       "bottom": 0.16261833126237799,
+       "plate": 166.6949263978587,
+       "top": 953.4650980037266
+      },
+      "residual_rel_to_ledger": 2.188322597135332e-08,
+      "residual_rel_to_deposited": 9.550501810883137e-09
+     },
+     "moose": {
+      "q_films_W": {
+       "bottom": 0.16261833054986746,
+       "plate": 166.69493559085134,
+       "top": 953.4650781117059
+      },
+      "q_films_from_side_integrals_W": {
+       "bottom": 0.16261833054986763,
+       "plate": 166.69493559085157,
+       "top": 953.4650781117059
+      },
+      "residual_rel_to_ledger": 1.2332637178481914e-08,
+      "residual_rel_to_deposited": -8.686420349564003e-14
+     }
+    },
+    "node_map_max_dist_mm": 0.0,
+    "calculix_output_resolution_K": 1e-05,
+    "max_abs_layer_err_K": 3.1380434251104816e-07
+   },
+   "moose_refined": {
+    "mesh": {
+     "format": "Gmsh 2.2 ASCII",
+     "n_nodes": 1048717,
+     "n_hex": 1012288,
+     "n_quad": 33056,
+     "bytes": 135449929,
+     "construction": "every production hex split 2x2x2 at its edge midpoints (strictly nested; blocks, sources and films inherited)"
+    },
+    "metrics": {
+     "T_max_C": 75.59151406757164,
+     "T_max_rise_K": 50.59151406757164,
+     "T_max_xyz_mm": [
+      -7.913107,
+      8.1122815,
+      0.32
+     ],
+     "T_min_C": 24.0166236802301,
+     "T_volume_mean_C": 62.43712741407588,
+     "layer_volume_mean_C": {
+      "z3conv_7_gan_hs_EPC2014C": 31.3704267243832,
+      "z3conv_6_interlayer_rdl": 37.31010280417114,
+      "z3conv_5_flying_caps": 40.726423395879564,
+      "z3conv_4_interlayer_rdl": 44.109610422521186,
+      "z3conv_3_gan_ls_EPC2057": 49.34809555208132,
+      "z3conv_2_interlayer_rdl": 52.628345604874575,
+      "z3conv_1_inductor_plus_cout": 55.57127525964768,
+      "z3conv_0_land_side_attach_rdl": 58.30674981928837,
+      "z3_attach_vr_pcb": 60.16923114954415,
+      "board": 66.44784793445645,
+      "bga": 72.9037876611328,
+      "sub_lower": 73.71506643095091,
+      "tile_band": 73.76287931153479,
+      "z2_top_rdl": 74.16219897645358,
+      "interface": 75.472156963585,
+      "die": 74.8365396326951,
+      "tim": 57.475007020592585,
+      "converter_all_tiers": 44.1949339400666,
+      "substrate": 73.71825395632318
+     },
+     "region_volume_mean_C": {
+      "conv": 44.33761559591777,
+      "hs": 31.209602325045083,
+      "ls": 49.988403071787324,
+      "ind": 55.51225857801464,
+      "caps": 40.846598875377886,
+      "bga": 72.9037876611328,
+      "sub": 73.90825219793821,
+      "interface": 75.46868382010379,
+      "attach": 60.30246108390037,
+      "pcb_via": 66.11012369879288
+     }
+    },
+    "q_films_W": {
+     "bottom": 0.16514838403567716,
+     "plate": 164.35616042628664,
+     "top": 955.8013232227005
+    },
+    "energy_residual_rel_to_deposited": -1.621600434416271e-13,
+    "Q_deposited_W": 1120.3226320332044,
+    "timing": {
+     "median_s": 64.23952651023865,
+     "min_s": 64.23952651023865,
+     "max_s": 64.23952651023865,
+     "repeats": 1,
+     "walls_s": [
+      64.23952651023865
+     ]
+    },
+    "moose_reported_s": 22.59,
+    "solve_s": 12.007,
+    "nonlinear_residuals": [
+     3.553572,
+     1.591318e-11
+    ],
+    "linear_its": 22,
+    "ranks": 8,
+    "solver": "NEWTON; GMRES(300) + hypre BoomerAMG, l_tol 1e-12",
+    "node_map_max_dist_mm": 2.5510982866352577e-15
+   },
+   "discretization_change": {
+    "what": "MOOSE on the production mesh minus MOOSE on its uniform 2x2x2 refinement (identical problem); the production CalculiX solve equals the former",
+    "T_max_change_K": -0.11639479149123133,
+    "T_max_change_rel_to_rise": -0.0023006781598939843,
+    "T_max_production_mesh_minus_extrapolated_K_if_p2": -0.15519305532164177,
+    "layer_volume_mean_change_K": {
+     "z3conv_7_gan_hs_EPC2014C": -0.16417463650506647,
+     "z3conv_6_interlayer_rdl": -0.37208695505581346,
+     "z3conv_5_flying_caps": -0.39156772711098853,
+     "z3conv_4_interlayer_rdl": -0.4115685609448434,
+     "z3conv_3_gan_ls_EPC2057": -0.6294298815727402,
+     "z3conv_2_interlayer_rdl": -0.6822581802690735,
+     "z3conv_1_inductor_plus_cout": -0.6923491261375148,
+     "z3conv_0_land_side_attach_rdl": -0.69320600578191,
+     "z3_attach_vr_pcb": -0.619254338777516,
+     "board": -0.3432899570542105,
+     "bga": -0.2801046684082422,
+     "sub_lower": -0.23722601258106124,
+     "tile_band": -0.23454186123117893,
+     "z2_top_rdl": -0.2134531479379831,
+     "interface": -0.13109590468729948,
+     "die": -0.14173936907486961,
+     "tim": -0.079377977972932,
+     "converter_all_tiers": -0.46915864658673456,
+     "substrate": -0.23704706915772533
+    },
+    "region_volume_mean_change_K": {
+     "conv": -0.48230781135564627,
+     "hs": -0.14325240823212937,
+     "ls": -0.6925734950256555,
+     "ind": -0.6890316045116904,
+     "caps": -0.406474658900855,
+     "bga": -0.2801046684082422,
+     "sub": -0.1806456340446374,
+     "interface": -0.12278132385651475,
+     "attach": -0.6431594015475923,
+     "pcb_via": -0.41221067516633525
+    },
+    "field_at_production_nodes": {
+     "max_abs_K": 3.0046840546276883,
+     "rms_K": 0.4953507403828057,
+     "mean_K": -0.31365383214612147,
+     "max_abs_rel_to_rise": 0.05939106804778636,
+     "rms_rel_to_rise": 0.009791182365508955,
+     "argmax_node": 67995
+    },
+    "calculix_vs_refined_moose": {
+     "T_max_K": -0.11639406757163329,
+     "field_at_production_nodes": {
+      "max_abs_K": 3.004687565976816,
+      "rms_K": 0.4953507493001424,
+      "mean_K": -0.3136538408029231,
+      "max_abs_rel_to_rise": 0.0593911374536777,
+      "rms_rel_to_rise": 0.009791182541770466,
+      "argmax_node": 59195
+     }
+    },
+    "max_abs_layer_change_K": 0.69320600578191
+   },
+   "load_average": {
+    "before": [
+     74.4,
+     70.0,
+     64.9
+    ],
+    "after": [
+     78.7,
+     74.4,
+     68.7
+    ]
+   },
+   "refinement_split": {
+    "what": "MOOSE on anisotropic refinements of the production mesh (nx, ny, nz children per hex), identical problem; changes are refined minus production mesh",
+    "levels": {
+     "r221": {
+      "factors": [
+       2,
+       2,
+       1
+      ],
+      "n_hex": 506144,
+      "n_nodes": 534299,
+      "T_max_C": 75.57353277605037,
+      "T_max_xyz_mm": [
+       -8.1122815,
+       8.1122815,
+       0.32
+      ],
+      "T_max_change_K": 0.09841349996996485,
+      "layer_volume_mean_change_K": {
+       "z3conv_7_gan_hs_EPC2014C": 0.1707384232941358,
+       "z3conv_6_interlayer_rdl": 0.3588432810021729,
+       "z3conv_5_flying_caps": 0.40484313115611315,
+       "z3conv_4_interlayer_rdl": 0.4501402935241785,
+       "z3conv_3_gan_ls_EPC2057": 0.607004683892157,
+       "z3conv_2_interlayer_rdl": 0.7185938167800572,
+       "z3conv_1_inductor_plus_cout": 0.7481426551021997,
+       "z3conv_0_land_side_attach_rdl": 0.7690214118770129,
+       "z3_attach_vr_pcb": 0.7143142165488072,
+       "board": 0.43292405189461647,
+       "bga": 0.19538845173222796,
+       "sub_lower": 0.15869742619464944,
+       "tile_band": 0.1565127371652295,
+       "z2_top_rdl": 0.1380933792515009,
+       "interface": 0.11452688139304712,
+       "die": 0.10807771051806014,
+       "tim": 0.06934790947476444,
+       "converter_all_tiers": 0.4797485669782162,
+       "substrate": 0.15855178025933014
+      },
+      "region_volume_mean_change_K": {
+       "conv": 0.49152640984925,
+       "hs": 0.14162235995375738,
+       "ls": 0.6934533303695645,
+       "ind": 0.7219546250748081,
+       "caps": 0.41866987711050285,
+       "bga": 0.19538845173222796,
+       "sub": 0.1707656112029099,
+       "interface": 0.11050700400595304,
+       "attach": 0.6974825505799274,
+       "pcb_via": 0.47037705163901933
+      },
+      "q_films_W": {
+       "bottom": 0.16500966776477455,
+       "plate": 164.65150316637852,
+       "top": 955.5061191989811
+      },
+      "wall_s": 40.79203176498413,
+      "solve_s": 6.994
+     },
+     "r112": {
+      "factors": [
+       1,
+       1,
+       2
+      ],
+      "n_hex": 253072,
+      "n_nodes": 266421,
+      "T_max_C": 75.49007953398754,
+      "T_max_xyz_mm": [
+       -7.913107,
+       7.913107,
+       0.32
+      ],
+      "T_max_change_K": 0.014960257907134178,
+      "layer_volume_mean_change_K": {
+       "z3conv_7_gan_hs_EPC2014C": -0.009994018498911572,
+       "z3conv_6_interlayer_rdl": -0.0011951551457940468,
+       "z3conv_5_flying_caps": -0.01887304947862134,
+       "z3conv_4_interlayer_rdl": -0.035502607433180344,
+       "z3conv_3_gan_ls_EPC2057": 0.014446655899760685,
+       "z3conv_2_interlayer_rdl": -0.04301544345991459,
+       "z3conv_1_inductor_plus_cout": -0.060847200465119045,
+       "z3conv_0_land_side_attach_rdl": -0.08045038483091815,
+       "z3_attach_vr_pcb": -0.09720955249220964,
+       "board": -0.08934733793871885,
+       "bga": 0.08365836356054501,
+       "sub_lower": 0.07812946757920258,
+       "tile_band": 0.0776781274581424,
+       "z2_top_rdl": 0.0753311217231527,
+       "interface": 0.014565946826124332,
+       "die": 0.03177137816128095,
+       "tim": 0.008817172766796944,
+       "converter_all_tiers": -0.016067996585242383,
+       "substrate": 0.07809937823776636
+      },
+      "region_volume_mean_change_K": {
+       "conv": -0.014202668257233597,
+       "hs": -0.0017014171476787965,
+       "ls": -0.006807139583031585,
+       "ind": -0.03898380196955742,
+       "caps": -0.017130155123112445,
+       "bga": 0.08365836356054501,
+       "sub": 0.006907205541580197,
+       "interface": 0.01032127698739771,
+       "attach": -0.05618663538381696,
+       "pcb_via": -0.05604969121205272
+      },
+      "q_films_W": {
+       "bottom": 0.162771831166371,
+       "plate": 166.43527589843433,
+       "top": 953.7245843034161
+      },
+      "wall_s": 18.924411296844482,
+      "solve_s": 3.23
+     },
+     "r331": {
+      "factors": [
+       3,
+       3,
+       1
+      ],
+      "n_hex": 1138824,
+      "n_nodes": 1195739,
+      "T_max_C": 75.61499886720895,
+      "T_max_xyz_mm": [
+       -8.04589,
+       8.04589,
+       0.32
+      ],
+      "T_max_change_K": 0.13987959112854753,
+      "layer_volume_mean_change_K": {
+       "z3conv_7_gan_hs_EPC2014C": 0.2375984640853268,
+       "z3conv_6_interlayer_rdl": 0.4957534844642666,
+       "z3conv_5_flying_caps": 0.5836311526842337,
+       "z3conv_4_interlayer_rdl": 0.6703043394151322,
+       "z3conv_3_gan_ls_EPC2057": 0.8870960003690627,
+       "z3conv_2_interlayer_rdl": 1.0308660434778503,
+       "z3conv_1_inductor_plus_cout": 1.0674379817506292,
+       "z3conv_0_land_side_attach_rdl": 1.089554066566258,
+       "z3_attach_vr_pcb": 1.0165152243751265,
+       "board": 0.6210832701187314,
+       "bga": 0.2806805426794199,
+       "sub_lower": 0.22870582956650765,
+       "tile_band": 0.22560897817837144,
+       "z2_top_rdl": 0.19951669649802284,
+       "interface": 0.1622362307365961,
+       "die": 0.15310047883787092,
+       "tim": 0.09823670483112323,
+       "converter_all_tiers": 0.689591992672888,
+       "substrate": 0.2284993728072635
+      },
+      "region_volume_mean_change_K": {
+       "conv": 0.7048445846786322,
+       "hs": 0.20245741948678742,
+       "ls": 0.9946223362026458,
+       "ind": 1.035944180677184,
+       "caps": 0.6000746783362487,
+       "bga": 0.2806805426794199,
+       "sub": 0.24386052880925035,
+       "interface": 0.15702433147801287,
+       "attach": 0.9966648613376705,
+       "pcb_via": 0.6745585038562751
+      },
+      "q_films_W": {
+       "bottom": 0.16603844230203646,
+       "plate": 163.800222109638,
+       "top": 956.3563714810089
+      },
+      "wall_s": 91.22805380821228,
+      "solve_s": 15.493
+     },
+     "r441": {
+      "factors": [
+       4,
+       4,
+       1
+      ],
+      "n_hex": 2024576,
+      "n_nodes": 2120051,
+      "T_max_C": 75.63538716616824,
+      "T_max_xyz_mm": [
+       -8.01269425,
+       -8.01269425,
+       0.32
+      ],
+      "T_max_change_K": 0.16026789008783737,
+      "layer_volume_mean_change_K": {
+       "z3conv_7_gan_hs_EPC2014C": 0.2685074992079919,
+       "z3conv_6_interlayer_rdl": 0.5572904753492409,
+       "z3conv_5_flying_caps": 0.6722388792445031,
+       "z3conv_4_interlayer_rdl": 0.7855706180966706,
+       "z3conv_3_gan_ls_EPC2057": 1.028818511124804,
+       "z3conv_2_interlayer_rdl": 1.186424384887566,
+       "z3conv_1_inductor_plus_cout": 1.2257204832040074,
+       "z3conv_0_land_side_attach_rdl": 1.2464275183888986,
+       "z3_attach_vr_pcb": 1.1657665278629636,
+       "board": 0.7146366119453091,
+       "bga": 0.3231535214805632,
+       "sub_lower": 0.2636526244834556,
+       "tile_band": 0.2601054443812245,
+       "z2_top_rdl": 0.2302352214628769,
+       "interface": 0.18572726210629753,
+       "die": 0.17526869696492042,
+       "tim": 0.11246091051167895,
+       "converter_all_tiers": 0.7937621531068615,
+       "substrate": 0.2634161458099413
+      },
+      "region_volume_mean_change_K": {
+       "conv": 0.8104463329717291,
+       "hs": 0.23090816362810784,
+       "ls": 1.1449249736256206,
+       "ind": 1.19216214199961,
+       "caps": 0.6895576736211453,
+       "bga": 0.3231535214805632,
+       "sub": 0.280087715131188,
+       "interface": 0.17999381345944698,
+       "attach": 1.1449866949519745,
+       "pcb_via": 0.7760503916941275
+      },
+      "q_films_W": {
+       "bottom": 0.16654856282891378,
+       "plate": 163.3810665178841,
+       "top": 956.7750169520511
+      },
+      "wall_s": 159.50215029716492,
+      "solve_s": 30.65
+     }
+    },
+    "uniform_x2_T_max_change_K": 0.11639479149123133
+   },
+   "inplane_ladder": {
+    "what": "in-plane refinement only (every in-plane interval of the production mesh split in n = 1, 2, 3, 4; through-thickness unchanged), identical problem; extrapolation from the finest three levels (generalized Richardson)",
+    "n_hex": [
+     126536,
+     506144,
+     1138824,
+     2024576
+    ],
+    "T_max_C": {
+     "levels": [
+      75.4751192760804,
+      75.57353277605037,
+      75.61499886720895,
+      75.63538716616824
+     ],
+     "observed_order_x1x2x3": 0.5889877540307478,
+     "observed_order_x2x3x4": 1.047432184246075,
+     "asymptotic_fine": true,
+     "extrapolated": 75.69336580908733,
+     "production_mesh_error": -0.2182465330069192,
+     "x4_error": -0.057978642919081835
+    },
+    "layer_volume_mean_C": {
+     "z3conv_7_gan_hs_EPC2014C": {
+      "levels": [
+       31.206252087878134,
+       31.37699051117227,
+       31.44385055196346,
+       31.474759587086126
+      ],
+      "observed_order_x1x2x3": 0.7182671231480933,
+      "observed_order_x2x3x4": 1.221427883964377,
+      "asymptotic_fine": true,
+      "extrapolated": 31.548172257488808,
+      "production_mesh_error": -0.34192016961067395,
+      "x4_error": -0.07341267040268207
+     },
+     "z3conv_6_interlayer_rdl": {
+      "levels": [
+       36.938015849115324,
+       37.2968591301175,
+       37.43376933357959,
+       37.495306324464565
+      ],
+      "observed_order_x1x2x3": 0.7640359746459837,
+      "observed_order_x2x3x4": 1.3006564559149716,
+      "asymptotic_fine": true,
+      "extrapolated": 37.63091238545799,
+      "production_mesh_error": -0.6928965363426656,
+      "x4_error": -0.13560606099342465
+     },
+     "z3conv_5_flying_caps": {
+      "levels": [
+       40.334855668768576,
+       40.73969879992469,
+       40.91848682145281,
+       41.00709454801308
+      ],
+      "observed_order_x1x2x3": 0.5056005882392953,
+      "observed_order_x2x3x4": 1.0249965998164057,
+      "asymptotic_fine": true,
+      "extrapolated": 41.26545926386322,
+      "production_mesh_error": -0.9306035950946452,
+      "x4_error": -0.2583647158501421
+     },
+     "z3conv_4_interlayer_rdl": {
+      "levels": [
+       43.69804186157634,
+       44.14818215510052,
+       44.368346200991475,
+       44.48361247967301
+      ],
+      "observed_order_x1x2x3": 0.323322384557138,
+      "observed_order_x2x3x4": 0.869601029847352,
+      "asymptotic_fine": true,
+      "extrapolated": 44.88913417132348,
+      "production_mesh_error": -1.191092309747134,
+      "x4_error": -0.40552169165046337
+     },
+     "z3conv_3_gan_ls_EPC2057": {
+      "levels": [
+       48.71866567050858,
+       49.325670354400735,
+       49.60576167087764,
+       49.74748418163338
+      ],
+      "observed_order_x1x2x3": 0.4274653834692831,
+      "observed_order_x2x3x4": 0.9663043937036535,
+      "asymptotic_fine": true,
+      "extrapolated": 50.18971619147748,
+      "production_mesh_error": -1.4710505209689018,
+      "x4_error": -0.4422320098440977
+     },
+     "z3conv_2_interlayer_rdl": {
+      "levels": [
+       51.9460874246055,
+       52.66468124138556,
+       52.97695346808335,
+       53.13251180949307
+      ],
+      "observed_order_x1x2x3": 0.53423876760944,
+      "observed_order_x2x3x4": 1.010490846836258,
+      "asymptotic_fine": true,
+      "extrapolated": 53.59361197157512,
+      "production_mesh_error": -1.6475245469696205,
+      "x4_error": -0.4611001620820545
+     },
+     "z3conv_1_inductor_plus_cout": {
+      "levels": [
+       54.87892613351016,
+       55.62706878861236,
+       55.94636411526079,
+       56.10464661671417
+      ],
+      "observed_order_x1x2x3": 0.566267545766544,
+      "observed_order_x2x3x4": 1.0242985729063174,
+      "asymptotic_fine": true,
+      "extrapolated": 56.56653401744692,
+      "production_mesh_error": -1.6876078839367565,
+      "x4_error": -0.46188740073274914
+     },
+     "z3conv_0_land_side_attach_rdl": {
+      "levels": [
+       57.61354381350646,
+       58.38256522538347,
+       58.70309788007272,
+       58.85997133189536
+      ],
+      "observed_order_x1x2x3": 0.6081602733239344,
+      "observed_order_x2x3x4": 1.060521549283898,
+      "asymptotic_fine": true,
+      "extrapolated": 59.29969918883384,
+      "production_mesh_error": -1.686155375327381,
+      "x4_error": -0.4397278569384824
+     },
+     "z3_attach_vr_pcb": {
+      "levels": [
+       59.54997681076664,
+       60.264291027315444,
+       60.56649203514176,
+       60.7157433386296
+      ],
+      "observed_order_x1x2x3": 0.5817774591306486,
+      "observed_order_x2x3x4": 1.034837053785417,
+      "asymptotic_fine": true,
+      "extrapolated": 61.146156117560366,
+      "production_mesh_error": -1.5961793067937293,
+      "x4_error": -0.4304127789307657
+     },
+     "board": {
+      "levels": [
+       66.10455797740224,
+       66.53748202929685,
+       66.72564124752097,
+       66.81919458934755
+      ],
+      "observed_order_x1x2x3": 0.5339775739964647,
+      "observed_order_x2x3x4": 1.0158729944417266,
+      "asymptotic_fine": true,
+      "extrapolated": 67.09480886954218,
+      "production_mesh_error": -0.9902508921399402,
+      "x4_error": -0.2756142801946311
+     },
+     "bga": {
+      "levels": [
+       72.62368299272455,
+       72.81907144445678,
+       72.90436353540397,
+       72.94683651420512
+      ],
+      "observed_order_x1x2x3": 0.5262259828576157,
+      "observed_order_x2x3x4": 1.0115071000552,
+      "asymptotic_fine": true,
+      "extrapolated": 73.07258755332485,
+      "production_mesh_error": -0.4489045606002975,
+      "x4_error": -0.1257510391197343
+     },
+     "sub_lower": {
+      "levels": [
+       73.47784041836985,
+       73.6365378445645,
+       73.70654624793636,
+       73.7414930428533
+      ],
+      "observed_order_x1x2x3": 0.5075296852759972,
+      "observed_order_x2x3x4": 1.0046448972580628,
+      "asymptotic_fine": true,
+      "extrapolated": 73.84577566289478,
+      "production_mesh_error": -0.3679352445249293,
+      "x4_error": -0.1042826200414737
+     },
+     "tile_band": {
+      "levels": [
+       73.52833745030361,
+       73.68485018746884,
+       73.75394642848198,
+       73.78844289468483
+      ],
+      "observed_order_x1x2x3": 0.5062018558582282,
+      "observed_order_x2x3x4": 1.004234337498112,
+      "asymptotic_fine": true,
+      "extrapolated": 73.89143017459823,
+      "production_mesh_error": -0.36309272429461714,
+      "x4_error": -0.10298727991339263
+     },
+     "z2_top_rdl": {
+      "levels": [
+       73.9487458285156,
+       74.0868392077671,
+       74.14826252501362,
+       74.17898104997847
+      ],
+      "observed_order_x1x2x3": 0.49287308288678067,
+      "observed_order_x2x3x4": 0.9993673373381957,
+      "asymptotic_fine": true,
+      "extrapolated": 74.2712037590004,
+      "production_mesh_error": -0.3224579304848021,
+      "x4_error": -0.0922227090219252
+     },
+     "interface": {
+      "levels": [
+       75.3410610588977,
+       75.45558794029074,
+       75.50329728963429,
+       75.52678832100399
+      ],
+      "observed_order_x1x2x3": 0.6091288864539164,
+      "observed_order_x2x3x4": 1.0434560426730277,
+      "asymptotic_fine": true,
+      "extrapolated": 75.59388510618875,
+      "production_mesh_error": -0.2528240472910568,
+      "x4_error": -0.06709678518475926
+     },
+     "die": {
+      "levels": [
+       74.69480026362022,
+       74.80287797413828,
+       74.8479007424581,
+       74.87006896058514
+      ],
+      "observed_order_x1x2x3": 0.6091288864564817,
+      "observed_order_x2x3x4": 1.043456042683923,
+      "asymptotic_fine": true,
+      "extrapolated": 74.93338743077798,
+      "production_mesh_error": -0.2385871671577604,
+      "x4_error": -0.06331847019283998
+     },
+     "tim": {
+      "levels": [
+       57.39562904261965,
+       57.46497695209442,
+       57.493865747450776,
+       57.50808995313133
+      ],
+      "observed_order_x1x2x3": 0.609128886459601,
+      "observed_order_x2x3x4": 1.0434560426771249,
+      "asymptotic_fine": true,
+      "extrapolated": 57.548718159613514,
+      "production_mesh_error": -0.1530891169938613,
+      "x4_error": -0.04062820648218235
+     },
+     "converter_all_tiers": {
+      "levels": [
+       43.72577529347986,
+       44.20552386045808,
+       44.41536728615275,
+       44.519537446586725
+      ],
+      "observed_order_x1x2x3": 0.5226608992097248,
+      "observed_order_x2x3x4": 1.0203407053806326,
+      "asymptotic_fine": true,
+      "extrapolated": 44.82487993879116,
+      "production_mesh_error": -1.0991046453113,
+      "x4_error": -0.30534249220443854
+     },
+     "substrate": {
+      "levels": [
+       73.48120688716546,
+       73.63975866742479,
+       73.70970625997272,
+       73.7446230329754
+      ],
+      "observed_order_x1x2x3": 0.5074422737626676,
+      "observed_order_x2x3x4": 1.0046178580088552,
+      "asymptotic_fine": true,
+      "extrapolated": 73.84881929553596,
+      "production_mesh_error": -0.3676124083705048,
+      "x4_error": -0.10419626256056347
+     }
+    },
+    "region_volume_mean_C": {
+     "conv": {
+      "levels": [
+       43.85530778456212,
+       44.34683419441137,
+       44.560152369240754,
+       44.66575411753385
+      ],
+      "observed_order_x1x2x3": 0.5365639078316387,
+      "observed_order_x2x3x4": 1.0281875713208017,
+      "asymptotic_fine": true,
+      "extrapolated": 44.972567046536035,
+      "production_mesh_error": -1.1172592619739135,
+      "x4_error": -0.3068129290021844
+     },
+     "hs": {
+      "levels": [
+       31.066349916812953,
+       31.20797227676671,
+       31.26880733629974,
+       31.29725808044106
+      ],
+      "observed_order_x1x2x3": 0.5547796528864795,
+      "observed_order_x2x3x4": 1.1888363141938596,
+      "asymptotic_fine": true,
+      "extrapolated": 31.367029627858738,
+      "production_mesh_error": -0.3006797110457846,
+      "x4_error": -0.06977154741767677
+     },
+     "ls": {
+      "levels": [
+       49.29582957676167,
+       49.98928290713123,
+       50.290451912964315,
+       50.44075455038729
+      ],
+      "observed_order_x1x2x3": 0.5352885853609144,
+      "observed_order_x2x3x4": 1.0053020340895178,
+      "asymptotic_fine": true,
+      "extrapolated": 50.88892599233781,
+      "production_mesh_error": -1.5930964155761416,
+      "x4_error": -0.44817144195052094
+     },
+     "ind": {
+      "levels": [
+       54.82322697350295,
+       55.545181598577756,
+       55.85917115418013,
+       56.01538911550256
+      ],
+      "observed_order_x1x2x3": 0.532785985749141,
+      "observed_order_x2x3x4": 1.0140361482269187,
+      "asymptotic_fine": true,
+      "extrapolated": 56.47657889795577,
+      "production_mesh_error": -1.6533519244528208,
+      "x4_error": -0.46118978245321074
+     },
+     "caps": {
+      "levels": [
+       40.44012421647703,
+       40.858794093587534,
+       41.04019889481328,
+       41.129681890098176
+      ],
+      "observed_order_x1x2x3": 0.539440706237748,
+      "observed_order_x2x3x4": 1.0382915612717074,
+      "asymptotic_fine": true,
+      "extrapolated": 41.38674139891869,
+      "production_mesh_error": -0.9466171824416563,
+      "x4_error": -0.257059508820511
+     },
+     "bga": {
+      "levels": [
+       72.62368299272455,
+       72.81907144445678,
+       72.90436353540397,
+       72.94683651420512
+      ],
+      "observed_order_x1x2x3": 0.5262259828576157,
+      "observed_order_x2x3x4": 1.0115071000552,
+      "asymptotic_fine": true,
+      "extrapolated": 73.07258755332485,
+      "production_mesh_error": -0.4489045606002975,
+      "x4_error": -0.1257510391197343
+     },
+     "sub": {
+      "levels": [
+       73.72760656389357,
+       73.89837217509648,
+       73.97146709270282,
+       74.00769427902476
+      ],
+      "observed_order_x1x2x3": 0.5610483956531098,
+      "observed_order_x2x3x4": 1.0249037941406418,
+      "asymptotic_fine": true,
+      "extrapolated": 74.11333749652552,
+      "production_mesh_error": -0.3857309326319438,
+      "x4_error": -0.10564321750075578
+     },
+     "interface": {
+      "levels": [
+       75.34590249624728,
+       75.45640950025323,
+       75.50292682772529,
+       75.52589630970672
+      ],
+      "observed_order_x1x2x3": 0.5906734454391593,
+      "observed_order_x2x3x4": 1.035395656491374,
+      "asymptotic_fine": true,
+      "extrapolated": 75.59209467001307,
+      "production_mesh_error": -0.24619217376579172,
+      "x4_error": -0.06619836030634474
+     },
+     "attach": {
+      "levels": [
+       59.659301682352776,
+       60.356784232932704,
+       60.65596654369045,
+       60.80428837730475
+      ],
+      "observed_order_x1x2x3": 0.5573094437795976,
+      "observed_order_x2x3x4": 1.0241107863475967,
+      "asymptotic_fine": true,
+      "extrapolated": 61.237200980993165,
+      "production_mesh_error": -1.5778992986403892,
+      "x4_error": -0.4329126036884148
+     },
+     "pcb_via": {
+      "levels": [
+       65.69791302362654,
+       66.16829007526556,
+       66.37247152748282,
+       66.47396341532067
+      ],
+      "observed_order_x1x2x3": 0.5361995042926153,
+      "observed_order_x2x3x4": 1.016646670401058,
+      "asymptotic_fine": true,
+      "extrapolated": 66.77270276473563,
+      "production_mesh_error": -1.074789741109086,
+      "x4_error": -0.2987393494149586
+     }
+    }
+   }
+  }
+ },
+ "generated": "2026-11-16 15:14:13",
+ "summary": {
+  "Z1": {
+   "mesh": "144512 hex / 153873 nodes (graded h_xy = 1.1 mm grid, every in-plane interval split in 2)",
+   "input_audit_passed": true,
+   "T_max_C": {
+    "production_streamwise_film": 115.663,
+    "calculix": 107.7982,
+    "moose": 107.7982408755247,
+    "moose_refined": 108.86381916312,
+    "moose_refined_x3": 109.301604845526
+   },
+   "identical_mesh": {
+    "T_max_err_K": -4.087552470366518e-05,
+    "T_max_err_pct_of_rise": -4.936764893882376e-05,
+    "field_max_abs_K": 4.999835279306808e-05,
+    "field_rms_K": 2.4446605600452035e-05,
+    "max_abs_layer_mean_err_K": 1.8765299927281376e-06,
+    "calculix_print_resolution_K": 0.0001,
+    "energy_residual_rel_to_deposited": {
+     "calculix": -2.9887523398047867e-09,
+     "moose": -8.683164400423812e-14
+    }
+   },
+   "layer_volume_mean_C": {
+    "die": {
+     "calculix": 84.76304753487868,
+     "moose": 84.76304764631189,
+     "moose_refined": 84.78059896895904
+    },
+    "converter_all_tiers": {
+     "calculix": 104.06608770317618,
+     "moose": 104.0660876520107,
+     "moose_refined": 104.98417055320272
+    },
+    "substrate": {
+     "calculix": 107.70621438618026,
+     "moose": 107.70621440463023,
+     "moose_refined": 108.76486366175308
+    },
+    "bga": {
+     "calculix": 107.71426623868592,
+     "moose": 107.71426547484705,
+     "moose_refined": 108.77369173412994
+    },
+    "board": {
+     "calculix": 105.60208038604226,
+     "moose": 105.60208226257225,
+     "moose_refined": 106.63339926813674
+    }
+   },
+   "runtime_s_median": {
+    "calculix": 93.83218216896057,
+    "moose_hypre": 11.848535776138306,
+    "moose_mumps": 44.28862977027893
+   },
+   "cores": "8 CalculiX threads (SPOOLES factorization single-threaded); 8 MOOSE MPI ranks",
+   "refinement": {
+    "mesh": "1156096 hex / 1193193 nodes",
+    "sign": "production mesh minus uniform 2x2x2 refinement",
+    "T_max_change_K": -1.0655782875953008,
+    "T_max_change_pct_of_rise": -1.270605486643399,
+    "max_abs_layer_mean_change_K": 1.059426259282887,
+    "field_change_max_abs_K": 4.0291702952092265,
+    "field_change_rms_K": 0.9331415829436872,
+    "T_max_production_minus_extrapolated_K_if_p2": -1.4207710501270678,
+    "moose_refined_wall_s": 76.34462356567383
+   },
+   "refinement_ladder": {
+    "n_elems": [
+     144512,
+     1156096,
+     3901824
+    ],
+    "T_max": {
+     "asymptotic": true,
+     "observed_order": 0.6336358756517262,
+     "extrapolated": 110.7960695690508,
+     "production_mesh_error": -2.9978286935261025
+    },
+    "layer_mean_production_mesh_error_K": {
+     "die": -0.023098241769673677,
+     "converter_all_tiers": -2.696021427253527,
+     "substrate": -3.093776346546562,
+     "bga": -3.0924433125718878,
+     "board": -3.0138958641588545
+    },
+    "layer_mean_observed_order": {
+     "die": 2.058024443011628,
+     "converter_all_tiers": 0.6006265202594645,
+     "substrate": 0.6042500155103003,
+     "bga": 0.6051248326692658,
+     "board": 0.6042513185639917
+    },
+    "moose_wall_s": 276.2837324142456
+   },
+   "refinement_attribution_x2": {
+    "sign": "refined minus production mesh",
+    "uniform_2x2x2_T_max_change_K": 1.0655782875953008,
+    "in_plane_only_T_max_change_K": 1.0105832714914982,
+    "through_thickness_only_T_max_change_K": 0.02977474618499798
+   },
+   "inplane_ladder": {
+    "n_hex": [
+     144512,
+     578048,
+     1300608,
+     2312192
+    ],
+    "T_max_C": [
+     107.7982408755247,
+     108.8088241470162,
+     109.2330888566233,
+     109.4405786149075
+    ],
+    "T_max_observed_order": [
+     0.5954025933965728,
+     1.06258756248485
+    ],
+    "T_max_extrapolated_C": 110.02087563328479,
+    "T_max_production_mesh_error_K": -2.2226347577600905,
+    "T_max_production_mesh_error_pct_of_rise": -2.614222379156434,
+    "layer_mean_production_mesh_error_K": {
+     "die": 0.0009679393922112922,
+     "converter_all_tiers": -1.812998064573037,
+     "substrate": -2.1409629591319685,
+     "bga": -2.1406372324976672,
+     "board": -2.085689912715452
+    },
+    "ledger_region_production_mesh_error_K": {
+     "conv": -1.7678525452510883,
+     "hs": -2.1686628972601483,
+     "ls": -1.8723076729104946,
+     "ind": -1.0469266643705026,
+     "caps": -2.0237305365280776,
+     "bga": -2.1406372324976672,
+     "sub": -2.1668570462780536,
+     "interface": -0.18813281945892868
+    }
+   }
+  },
+  "Z3": {
+   "mesh": "126536 hex / 135731 nodes (graded h_xy = 1.1 mm grid, every in-plane interval split in 2)",
+   "input_audit_passed": true,
+   "T_max_C": {
+    "production_streamwise_film": 82.44,
+    "calculix": 75.47512,
+    "moose": 75.4751192760804,
+    "moose_refined": 75.59151406757164
+   },
+   "identical_mesh": {
+    "T_max_err_K": 7.239195980446311e-07,
+    "T_max_err_pct_of_rise": 1.4342107518409685e-06,
+    "field_max_abs_K": 4.999655971005268e-06,
+    "field_rms_K": 2.9091509008697442e-06,
+    "max_abs_layer_mean_err_K": 3.1380434251104816e-07,
+    "calculix_print_resolution_K": 1e-05,
+    "energy_residual_rel_to_deposited": {
+     "calculix": 9.550501810883137e-09,
+     "moose": -8.686420349564003e-14
+    }
+   },
+   "layer_volume_mean_C": {
+    "die": {
+     "calculix": 74.69480023257793,
+     "moose": 74.69480026362022,
+     "moose_refined": 74.8365396326951
+    },
+    "converter_all_tiers": {
+     "calculix": 43.72577527849474,
+     "moose": 43.72577529347986,
+     "moose_refined": 44.1949339400666
+    },
+    "substrate": {
+     "calculix": 73.4812068817646,
+     "moose": 73.48120688716546,
+     "moose_refined": 73.71825395632318
+    },
+    "bga": {
+     "calculix": 72.62368301328247,
+     "moose": 72.62368299272455,
+     "moose_refined": 72.9037876611328
+    },
+    "board": {
+     "calculix": 66.10455798291665,
+     "moose": 66.10455797740224,
+     "moose_refined": 66.44784793445645
+    }
+   },
+   "runtime_s_median": {
+    "calculix": 100.45198678970337,
+    "moose_hypre": 10.834839582443237,
+    "moose_mumps": 38.052555322647095
+   },
+   "cores": "8 CalculiX threads (SPOOLES factorization single-threaded); 8 MOOSE MPI ranks",
+   "refinement": {
+    "mesh": "1012288 hex / 1048717 nodes",
+    "sign": "production mesh minus uniform 2x2x2 refinement",
+    "T_max_change_K": -0.11639479149123133,
+    "T_max_change_pct_of_rise": -0.23006781598939843,
+    "max_abs_layer_mean_change_K": 0.69320600578191,
+    "field_change_max_abs_K": 3.0046840546276883,
+    "field_change_rms_K": 0.4953507403828057,
+    "T_max_production_minus_extrapolated_K_if_p2": -0.15519305532164177,
+    "moose_refined_wall_s": 64.23952651023865
+   },
+   "refinement_attribution_x2": {
+    "sign": "refined minus production mesh",
+    "uniform_2x2x2_T_max_change_K": 0.11639479149123133,
+    "in_plane_only_T_max_change_K": 0.09841349996996485,
+    "through_thickness_only_T_max_change_K": 0.014960257907134178
+   },
+   "inplane_ladder": {
+    "n_hex": [
+     126536,
+     506144,
+     1138824,
+     2024576
+    ],
+    "T_max_C": [
+     75.4751192760804,
+     75.57353277605037,
+     75.61499886720895,
+     75.63538716616824
+    ],
+    "T_max_observed_order": [
+     0.5889877540307478,
+     1.047432184246075
+    ],
+    "T_max_extrapolated_C": 75.69336580908733,
+    "T_max_production_mesh_error_K": -0.2182465330069192,
+    "T_max_production_mesh_error_pct_of_rise": -0.4305228692623053,
+    "layer_mean_production_mesh_error_K": {
+     "die": -0.2385871671577604,
+     "converter_all_tiers": -1.0991046453113,
+     "substrate": -0.3676124083705048,
+     "bga": -0.4489045606002975,
+     "board": -0.9902508921399402
+    },
+    "ledger_region_production_mesh_error_K": {
+     "conv": -1.1172592619739135,
+     "hs": -0.3006797110457846,
+     "ls": -1.5930964155761416,
+     "ind": -1.6533519244528208,
+     "caps": -0.9466171824416563,
+     "bga": -0.4489045606002975,
+     "sub": -0.3857309326319438,
+     "interface": -0.24619217376579172,
+     "attach": -1.5778992986403892,
+     "pcb_via": -1.074789741109086
+    }
+   }
+  }
+ },
+ "side_observations": {
+  "streamwise_film_within_column_sink_spread": {
+   "what": "solve_thermal assigns each top face the coolant temperature after the heat of every face before it in an argsort on centroid x; faces sharing one x (one streamwise column) therefore get different sink temperatures, spread over the column's share of the coolant rise, although a 1-D coolant model gives them one",
+   "arch": "Z1",
+   "faces": 3364,
+   "columns": 58,
+   "coolant_rise_K": 10.136771512149727,
+   "spread_K_median": 0.1785702014349475,
+   "spread_K_max": 0.24655141027275107,
+   "status": "observation only; not part of the verification problem (uniform film)"
+  },
+  "z2_bga_temperature_region": {
+   "what": "temperature_regions('Z2')['bga'] selects by element-centroid z (production _layer_elems), so inside the PCB opening it also takes the converter elements that share the BGA's z range; the region feeds the ledger's BGA temperature, used only by the BGA-fed terms (the Z2BF control on this geometry)",
+   "region_elements_z_range": 22740,
+   "bga_label_elements": 8160,
+   "extra_layers_in_region": [
+    "conv_0_land_side_attach_rdl",
+    "conv_1_inductor_plus_cout",
+    "conv_attach_vr_substrate"
+   ],
+   "field": "/home/beams0/SABDELZAHER/ETM_project/scratch/fields/etm_Z2_HV_S0_r21/thermal_converged.frd",
+   "T_region_node_mean_C": 99.41724528640022,
+   "T_bga_label_node_mean_C": 94.13265966386554,
+   "status": "observation only; Z1 and Z3 stacks do not overlap in z (unaffected)"
+  }
+ },
+ "caveats": [
+  "The verification problem replaces the production streamwise top film (sink warming along the flow, 1-D coolant balance) by a uniform film at the inlet temperature with the same h; the streamwise coolant model itself is not cross-checked. It enters the deck through the same per-face *FILM lines verified here.",
+  "On the identical mesh both codes use trilinear hexahedra with exact quadrature on axis-aligned bricks, so their discrete systems coincide: that comparison verifies the deck (materials, anisotropy, sources, films, units) and the CalculiX solve, not the discretization. The refined MOOSE meshes measure the discretization error.",
+  "Both codes use the production homogenized material cards; the homogenizations are checked separately (unit-cell and RVE references), not here.",
+  "CalculiX prints nodal temperatures to 7 significant digits (1e-4 K above 100 C, 1e-5 K below), which bounds the measurable identical-mesh agreement.",
+  "The deck prints node coordinates to 1e-6 mm and conductivities to 6 significant digits; both codes solve the deck as printed (input audit).",
+  "Runtimes are wall clock on a shared 96-core host (load average 60-80) with 8 cores per solver; CalculiX's default SPOOLES factorization is single-threaded and its Newton loop factors twice for this linear problem.",
+  "Extrapolated mesh-converged values come from nested refinements with observed orders below 2 (the change is in-plane and sits in the converter stack and everything below it); they are estimates, not bounds."
+ ]
+}
