@@ -74,14 +74,16 @@ The framework is used in three ways, each demonstrated on a \SI{1}{kW}, \SIrange
 system: to \emph{evaluate} one design against its ratings and package rules, to \emph{compare}
 integration architectures on conversion, routing, thermal and mechanical grounds, and to
 \emph{explore} the design space---regulator count and converter topology, and the package
-decisions on which every ranking depends. The coupled answers differ from the single-domain
-ones. Electrically, at a common temperature, the package-backside regulator is marginally ahead
-of the embedded one; under one top cold plate the converter's thermal path reverses that order,
-and the board-backside regulator exceeds the ratings of its own devices; with an identical
-bottom plate the backside regulators lead electrically while the embedded one leads
-mechanically. A flat cold plate on a warped package closes a mechanical-to-thermal loop that
-the sequential chain misses, and the tier order chosen for via manufacturability also sets the
-device temperature.
+decisions on which every ranking depends. The coupled answers differ from the single-domain ones. At a common temperature the
+package-backside regulator is marginally ahead of the embedded one. Under one top cold plate the
+converter's thermal path reverses that order for ideal decoupling and ties the two once the
+embedded regulator's decoupling is implemented, while the board-backside regulator exceeds the
+ratings of its own devices. With an identical bottom plate the package-backside regulator leads
+electrically and the embedded one mechanically, and the board-backside regulator falls behind both
+once its 1-V redistribution is in the coupled solution. A flat cold plate on a warped package closes
+a mechanical-to-thermal loop that leaves the package-backside regulator without a feasible operating
+point, and the tier order chosen for the vias also sets the device temperature, its via advantage
+conditional on a thin flying-capacitor technology.
 
 The contributions are as follows.
 \begin{enumerate}
