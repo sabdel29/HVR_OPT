@@ -43,18 +43,22 @@ moves no optimum and changes no count by more than 0.9~W ($M = 49$: \FswFineFort
 \FswFineFortyNineLoss~W).
 % PENDING(authors): output-capacitance switching term and per-switch voltage stress of the family
 
-\emph{Tier order.} The strongest single decision is the one the realizability check already
-forces. Built in the reference order, with the same components, heights and total, the embedded
-regulator dissipates \SensDTierRefZonePloss~W more, its peak rises by \SensDTierRefZoneTmax~K,
-its die warps by \SensTierRefZoneWarp~\textmu m instead of \WarpZone~\textmu m, and its critical
-joint moves \SensTierRefZoneDu~\textmu m at \SensTierRefZoneTjoint\,$^\circ$C, beyond the
-calibration of the solder law. The mechanism is the interlayer redistribution: a 10-\textmu m
-RDL tier conducts only 0.62~W\,m$^{-1}$K$^{-1}$ through its thickness, so each one between the
-low-side devices---which carry three quarters of the conversion loss---and the die adds several
-kelvin, and the reference order puts one more of them in that path. In that order the embedded
-regulator would also lose its electrical lead over Z2 (\SensTierRefZonePloss{} against
-\PlossZtwo~W). Tier order is therefore a coupled decision: the same choice sets the via aspect
-ratio, the device temperature, the loss and the joint response.
+\emph{Tier order and capacitor technology.} The strongest single construction decision is the
+tier order. Built in the reference order, with the same components, heights and total, the
+embedded regulator dissipates \SensDTierRefZonePloss~W more, its peak rises by
+\SensDTierRefZoneTmax~K, its die warps by \SensTierRefZoneWarp~\textmu m instead of
+\WarpZone~\textmu m, and its critical joint moves \SensTierRefZoneDu~\textmu m at
+\SensTierRefZoneTjoint\,$^\circ$C, beyond the calibration of the solder law. The mechanism is the
+interlayer redistribution: a 10-\textmu m RDL tier conducts only 0.62~W\,m$^{-1}$K$^{-1}$ through its
+thickness, so each one between the low-side devices---which carry three quarters of the conversion
+loss---and the die adds several kelvin, and the reference order puts one more of them in that path.
+The thermal advantage survives the rated capacitors of case A1: with the 1030-\textmu m capacitor
+tier the repartitioned order dissipates \RcfmaxAPloss~W and peaks at \RcfmaxATmax\,$^\circ$C, the
+reference order \RcfmaxRefAPloss~W and \RcfmaxRefATmax\,$^\circ$C, and the case-A1 die warps by
+\RcfmaxAWarp~\textmu m. What A1 removes is the realizability advantage: with a thick capacitor tier
+the reference order has the smaller via crossing (Section~\ref{sec:realizability}). Tier order is
+therefore a coupled decision, and which order wins on vias depends on the capacitor technology,
+while the heat path favors the repartitioned order in both cases.
 
 \emph{Cooling boundaries.} The cooling tiers of Section~\ref{sec:compare} fix two choices that
 are varied here. Removing the 50-\textmu m interface between the bottom plate and the converter
