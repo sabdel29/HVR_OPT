@@ -1,0 +1,3242 @@
+{
+ "model": "Reads the coupled cases of tcpmt_z3land_variants (research/final_closure/sensitivity/\netm_Z3_HV_S0__z3_land_*.json) and the three-tier reference cases, and writes\nresearch/tcpmt_revision/z3_land_coupled.json:",
+ "shape_factors": {
+  "land_kappa_one_rail": 0.012164295548097444,
+  "land_kappa_V_one_rail": 0.05949803091271717,
+  "board_kappa_two_rails": 0.025904292545726557,
+  "board_kappa_V_VDD": 0.06057552424212608,
+  "board_kappa_V_GND": 0.05997986795657644
+ },
+ "land_fv_source": "research/tcpmt_revision/z3_landside_spreading.json",
+ "board_plane_fv_source": "research/tcpmt_revision/z3_board_plane_spreading.json",
+ "board_allocation": {
+  "planes_per_rail": 2,
+  "t_plane_um": 35.0,
+  "t_cu_per_rail_um": 70.0,
+  "occupancy": 0.8,
+  "status": "DECLARED (not in the Z3 design record)",
+  "basis": "four of the fourteen 1-oz layers of the 18-layer schedule (pcb_h1: 14 x 1 oz + 4 x 2 oz) carry the two 1 V rails; the four 2-oz central planes instead would halve the loss"
+ },
+ "references": {
+  "A": {
+   "Z1": {
+    "file": "etm_Z1_HV_S0_h1.1_r21.json",
+    "P_loss_w": 144.3097256920461,
+    "P_conversion_w": 140.6856638476885,
+    "P_routing_w": 3.6240618443576125,
+    "T_max_C": 115.663,
+    "T_die_mean_C": 89.7903692157426,
+    "T_sub_C": 112.77212859225324,
+    "T_ls_C": 109.71026600027767,
+    "T_conv_C": 107.73509471053728,
+    "die_warpage_pv_um": 25.53876,
+    "critical_joint": {
+     "du_um": 2.2082761910295026,
+     "T_C": 114.9509090909091,
+     "x_mm": 14.4,
+     "y_mm": 14.4
+    },
+    "T_joint_hottest_C": 115.39787096225092,
+    "et_converged": true,
+    "et_iterations": 5,
+    "mechanics_error": null
+   },
+   "Z2": {
+    "file": "etm_Z2_HV_S0_h1.1_r21.json",
+    "P_loss_w": 147.43752380684376,
+    "P_conversion_w": 144.76410733781404,
+    "P_routing_w": 2.6734164690297177,
+    "T_max_C": 124.334,
+    "T_die_mean_C": 89.962456374605,
+    "T_sub_C": 96.88554339858392,
+    "T_ls_C": 116.73845231153686,
+    "T_conv_C": 113.6485338739067,
+    "die_warpage_pv_um": 68.67960000000001,
+    "critical_joint": {
+     "du_um": 3.0873385652177823,
+     "T_C": 97.20446363636364,
+     "x_mm": 14.4,
+     "y_mm": 14.4
+    },
+    "T_joint_hottest_C": 98.27047636363636,
+    "et_converged": true,
+    "et_iterations": 5,
+    "mechanics_error": null
+   },
+   "Z3": {
+    "file": "etm_Z3_HV_S0__z3_top_only.json",
+    "P_loss_w": 199.5537853740105,
+    "P_conversion_w": 181.43048241292547,
+    "P_routing_w": 18.123302961085017,
+    "T_max_C": 185.779,
+    "T_die_mean_C": 92.97891551278367,
+    "T_sub_C": 101.25554020199917,
+    "T_ls_C": 179.65848549215605,
+    "T_conv_C": 176.37698971582356,
+    "die_warpage_pv_um": 59.4543,
+    "critical_joint": {
+     "du_um": 4.472309535573702,
+     "T_C": 109.86727272727273,
+     "x_mm": 14.4,
+     "y_mm": 14.4
+    },
+    "T_joint_hottest_C": 118.64690909090909,
+    "et_converged": true,
+    "et_iterations": 7,
+    "mechanics_error": null,
+    "R_star": {
+     "P_Z1_w": 144.3097256920461,
+     "P_internal_w": 199.5537853740105,
+     "P_internal_recomputed_w": 199.58578716057346,
+     "advantage_at_zero_feed_w": -55.24405968196439,
+     "R_star_mohm": 0.0,
+     "meaning": "0 = Z3 behind Z1 even with a lossless 48 V feed"
+    }
+   }
+  },
+  "B": {
+   "Z1": {
+    "file": "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
+    "P_loss_w": 142.62940729978502,
+    "P_conversion_w": 139.0589782849464,
+    "P_routing_w": 3.5704290148386235,
+    "T_max_C": 111.333,
+    "T_die_mean_C": 88.99653329503016,
+    "T_sub_C": 107.86580862140775,
+    "T_ls_C": 106.98032597528807,
+    "T_conv_C": 104.71934746236688,
+    "die_warpage_pv_um": 5.878100000000001,
+    "critical_joint": {
+     "du_um": 0.6870063190339837,
+     "T_C": 108.26778453192728,
+     "x_mm": 8.8,
+     "y_mm": -8.8
+    },
+    "T_joint_hottest_C": 110.12164976928022,
+    "et_converged": true,
+    "et_iterations": 4,
+    "mechanics_error": null
+   },
+   "Z2": {
+    "file": "etm_Z2_HV_S0__z2_cooled_tim.json",
+    "P_loss_w": 115.18200402488185,
+    "P_conversion_w": 112.85573589245162,
+    "P_routing_w": 2.3262681324302292,
+    "T_max_C": 81.5453,
+    "T_die_mean_C": 77.21781414536052,
+    "T_sub_C": 74.97163387130362,
+    "T_ls_C": 62.58407645425517,
+    "T_conv_C": 58.36903407434403,
+    "die_warpage_pv_um": 17.5901,
+    "critical_joint": {
+     "du_um": 2.1000722796691313,
+     "T_C": 78.66977272727273,
+     "x_mm": 14.4,
+     "y_mm": 14.4
+    },
+    "T_joint_hottest_C": 79.07205815756022,
+    "et_converged": true,
+    "et_iterations": 4,
+    "mechanics_error": null
+   },
+   "Z3": {
+    "file": "etm_Z3_HV_S0__z3_plate_tim.json",
+    "P_loss_w": 124.46326420109739,
+    "P_conversion_w": 109.6524249349555,
+    "P_routing_w": 14.810839266141883,
+    "T_max_C": 83.287,
+    "T_die_mean_C": 79.25260242459063,
+    "T_sub_C": 78.6242000416493,
+    "T_ls_C": 57.016819117034565,
+    "T_conv_C": 52.753097388908465,
+    "die_warpage_pv_um": 7.095000000000001,
+    "critical_joint": {
+     "du_um": 1.556194188550817,
+     "T_C": 80.38148181818181,
+     "x_mm": 14.4,
+     "y_mm": 14.4
+    },
+    "T_joint_hottest_C": 80.72933197022797,
+    "et_converged": true,
+    "et_iterations": 4,
+    "mechanics_error": null,
+    "R_star": {
+     "P_Z1_w": 142.62940729978502,
+     "P_internal_w": 124.46326420109739,
+     "P_internal_recomputed_w": 124.45480673960763,
+     "advantage_at_zero_feed_w": 18.166143098687627,
+     "R_star_mohm": 32.072776308980956,
+     "meaning": "0 = Z3 behind Z1 even with a lossless 48 V feed"
+    }
+   }
+  }
+ },
+ "runs": {
+  "z3_land_t10_B": {
+   "file": "research/final_closure/sensitivity/etm_Z3_HV_S0__z3_land_t10_B.json",
+   "t_land_um": 10.0,
+   "cooling_tier": "B",
+   "board_planes_in_ledger": true,
+   "P_loss_w": 203.07738466481396,
+   "P_conversion_w": 111.34152028609797,
+   "P_routing_w": 91.73586437871599,
+   "T_max_C": 109.712,
+   "T_die_mean_C": 83.16521365124964,
+   "T_sub_C": 84.43858373594335,
+   "T_ls_C": 59.961050465083986,
+   "T_conv_C": 55.44944638451927,
+   "die_warpage_pv_um": 8.54097,
+   "critical_joint": {
+    "du_um": 1.9482804094384503,
+    "T_C": 108.44327272727273,
+    "x_mm": 14.4,
+    "y_mm": 14.4
+   },
+   "T_joint_hottest_C": 108.44327272727273,
+   "et_converged": true,
+   "et_iterations": 4,
+   "mechanics_error": null,
+   "P_land_w": 66.7803799089758,
+   "P_board_plane_w": 9.86787051077139,
+   "land": {
+    "T_C": 88.98559092937909,
+    "t_um": 10.0,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 2.7011159162489773,
+    "kappa_one_rail": 0.012164295548097444,
+    "P_w": 66.7803799089758,
+    "R_eff_ohm": 6.571434462984517e-05,
+    "dV_static_one_rail_mV": 160.71107828381403
+   },
+   "board": {
+    "T_C": 79.74951626000133,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 0.3748547353809052,
+    "kappa_two_rails": 0.025904292545726557,
+    "P_w": 9.86787051077139,
+    "R_eff_ohm": 9.710346727457884e-06,
+    "dV_static_VDD_mV": 22.70702211034178,
+    "dV_static_GND_mV": 22.4837375310441
+   },
+   "board_bound_uncoupled": null,
+   "T_land_C": 88.98113862328904,
+   "T_board_C": 79.74130706209085,
+   "dV_land_static_one_rail_mV": 160.71107828381403,
+   "dV_board_static_VDD_mV": 22.70702211034178,
+   "dV_board_static_GND_mV": 22.4837375310441,
+   "R_star": {
+    "P_Z1_w": 142.62940729978502,
+    "P_internal_w": 203.07738466481396,
+    "P_internal_recomputed_w": 203.06824035927986,
+    "advantage_at_zero_feed_w": -60.44797736502895,
+    "R_star_mohm": 0.0,
+    "meaning": "0 = Z3 behind Z1 even with a lossless 48 V feed"
+   },
+   "ranking_in_tier": [
+    {
+     "arch": "Z2",
+     "P_loss_w": 115.18200402488185
+    },
+    {
+     "arch": "Z1",
+     "P_loss_w": 142.62940729978502
+    },
+    {
+     "arch": "Z3",
+     "P_loss_w": 203.07738466481396
+    }
+   ],
+   "vs_Z1_same_tier_w": 60.44797736502895,
+   "vs_Z2_same_tier_w": 87.89538063993211,
+   "vs_Z1B_w": 60.44797736502895,
+   "vs_Z2B_w": 87.89538063993211,
+   "delta_vs_reference_Z3_w": 78.61412046371657,
+   "deposit_check": {
+    "deposit_residual_rel_reported": -1.8899339173147203e-16,
+    "Q_ledger_W_reported": 1203.077384664814,
+    "Q_deposited_W_reported": 1203.0773846648137,
+    "load_plus_P_loss_W": 1203.077384664814,
+    "Q_ledger_minus_load_plus_P_loss_W": 0.0,
+    "regions": [
+     {
+      "set": "E_SRC_1",
+      "layers": [
+       "die"
+      ],
+      "in_tiles": false,
+      "W": 1000.0,
+      "n_elems": 13456,
+      "volume_mm3": 149.99087999999998,
+      "xy_extent_mm": [
+       -11.055,
+       11.055,
+       -11.055,
+       11.055
+      ]
+     },
+     {
+      "set": "E_SRC_2",
+      "layers": [
+       "z3conv_7_gan_hs_EPC2014C"
+      ],
+      "in_tiles": true,
+      "W": 17.15652664777475,
+      "n_elems": 3528,
+      "volume_mm3": 188.29964997142946,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_3",
+      "layers": [
+       "z3conv_3_gan_ls_EPC2057"
+      ],
+      "in_tiles": true,
+      "W": 79.90247551782704,
+      "n_elems": 3528,
+      "volume_mm3": 175.37981997339,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_4",
+      "layers": [
+       "z3conv_1_inductor_plus_cout"
+      ],
+      "in_tiles": true,
+      "W": 12.842293827068115,
+      "n_elems": 3528,
+      "volume_mm3": 137.44499997914568,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_5",
+      "layers": [
+       "z3conv_5_flying_caps"
+      ],
+      "in_tiles": true,
+      "W": 1.4402242934280696,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_6",
+      "layers": [
+       "z3conv_0_land_side_attach_rdl",
+       "z3conv_2_interlayer_rdl",
+       "z3conv_4_interlayer_rdl",
+       "z3conv_6_interlayer_rdl"
+      ],
+      "in_tiles": true,
+      "W": 1.5325738680613692,
+      "n_elems": 7056,
+      "volume_mm3": 10.995599998331787,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_7",
+      "layers": [
+       "z3_attach_vr_pcb"
+      ],
+      "in_tiles": true,
+      "W": 2.3685431793419287,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_8",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": true,
+      "W": 9.405753409026934,
+      "n_elems": 3528,
+      "volume_mm3": 659.7359998998993,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_9",
+      "layers": [
+       "bga"
+      ],
+      "in_tiles": false,
+      "W": 1.2036108817237203,
+      "n_elems": 9800,
+      "volume_mm3": 270.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_10",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": true,
+      "W": 0.5338985197876411,
+      "n_elems": 5292,
+      "volume_mm3": 76.96919998832158,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_11",
+      "layers": [
+       "interface"
+      ],
+      "in_tiles": true,
+      "W": 0.04323410102718638,
+      "n_elems": 1764,
+      "volume_mm3": 2.748899999582916,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_12",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": false,
+      "W": 66.7803799089758,
+      "n_elems": 14700,
+      "volume_mm3": 252.00000000000003,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_13",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": false,
+      "W": 9.86787051077139,
+      "n_elems": 9800,
+      "volume_mm3": 2160.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     }
+    ],
+    "land_region": {
+     "sets": [
+      "E_SRC_12"
+     ],
+     "W": 66.7803799089758,
+     "n_elems": 14700,
+     "volume_mm3": 252.00000000000003,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "land_region_W_minus_row_W": 0.0,
+    "plane_region": {
+     "sets": [
+      "E_SRC_13"
+     ],
+     "W": 9.86787051077139,
+     "n_elems": 9800,
+     "volume_mm3": 2160.0,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "plane_region_W_minus_row_W": 0.0,
+    "sum_regions_W": 1203.077384664814,
+    "deck": {
+     "deck": "/home/beams0/SABDELZAHER/ETM_project/scratch_z3land/fc_sens/z3_land_t10_B/Z3_HV_S0_h1.1_r21/et3/th_7.inp",
+     "sets": [
+      {
+       "set": "E_SRC_1",
+       "n_elems": 13456,
+       "BF_W_mm3": 6.66707202,
+       "volume_mm3": 149.99087999999998,
+       "W": 999.9999993031774
+      },
+      {
+       "set": "E_SRC_2",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0911128972,
+       "volume_mm3": 188.29967282205175,
+       "W": 17.156528732629234
+      },
+      {
+       "set": "E_SRC_3",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.455596747,
+       "volume_mm3": 175.37984125615932,
+       "W": 79.90248516568259
+      },
+      {
+       "set": "E_SRC_4",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0934358749,
+       "volume_mm3": 137.445016658432,
+       "W": 12.842295382125666
+      },
+      {
+       "set": "E_SRC_5",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0523927496,
+       "volume_mm3": 27.489003331686305,
+       "W": 1.4402244683106065
+      },
+      {
+       "set": "E_SRC_6",
+       "n_elems": 7056,
+       "BF_W_mm3": 0.139380649,
+       "volume_mm3": 10.995601332674692,
+       "W": 1.5325740498934635
+      },
+      {
+       "set": "E_SRC_7",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0861633082,
+       "volume_mm3": 27.489003331686305,
+       "W": 2.368543466178914
+      },
+      {
+       "set": "E_SRC_8",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0142568443,
+       "volume_mm3": 659.7360799604737,
+       "W": 9.405754571088824
+      },
+      {
+       "set": "E_SRC_9",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.00445781808,
+       "volume_mm3": 270.0,
+       "W": 1.2036108816
+      },
+      {
+       "set": "E_SRC_10",
+       "n_elems": 5292,
+       "BF_W_mm3": 0.00693652162,
+       "volume_mm3": 76.96920932872193,
+       "W": 0.5338985845829853
+      },
+      {
+       "set": "E_SRC_11",
+       "n_elems": 1764,
+       "BF_W_mm3": 0.0157277824,
+       "volume_mm3": 2.748900333168643,
+       "W": 0.04323410627936392
+      },
+      {
+       "set": "E_SRC_12",
+       "n_elems": 14700,
+       "BF_W_mm3": 0.265001508,
+       "volume_mm3": 252.00000000000003,
+       "W": 66.78038001600001
+      },
+      {
+       "set": "E_SRC_13",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.00456845857,
+       "volume_mm3": 2160.0,
+       "W": 9.867870511200001
+      }
+     ],
+     "sum_BF_x_V_W": 1203.0773992387492
+    },
+    "deck_sum_minus_load_plus_P_loss_rel": 1.2113880135836445e-08
+   },
+   "deposit": "uniform",
+   "T_max_location": {
+    "T_C": 109.712,
+    "x_mm": 15.0,
+    "y_mm": 15.0,
+    "z_mm": 0.28,
+    "layers": [
+     "sub_lower",
+     "tile_band"
+    ],
+    "T_die_max_C": 94.3915,
+    "T_sub_lower_max_C": 109.712,
+    "T_sub_lower_min_C": 80.8806,
+    "frd": "th_7.frd"
+   },
+   "task": {
+    "arch": "Z3",
+    "variant": "z3_land_t10_B",
+    "file": "etm_Z3_HV_S0__z3_land_t10_B.json",
+    "mechanics_ok": true,
+    "wall_s": 4823.764910936356
+   }
+  },
+  "z3_land_t20_B": {
+   "file": "research/final_closure/sensitivity/etm_Z3_HV_S0__z3_land_t20_B.json",
+   "t_land_um": 20.0,
+   "cooling_tier": "B",
+   "board_planes_in_ledger": true,
+   "P_loss_w": 168.33352738783864,
+   "P_conversion_w": 110.70576769898184,
+   "P_routing_w": 57.6277596888568,
+   "T_max_C": 95.6692,
+   "T_die_mean_C": 81.37650738293594,
+   "T_sub_C": 81.79760717409413,
+   "T_ls_C": 58.85251652089407,
+   "T_conv_C": 54.434229702367595,
+   "die_warpage_pv_um": 7.82591,
+   "critical_joint": {
+    "du_um": 1.787051701860909,
+    "T_C": 95.04201818181818,
+    "x_mm": 14.4,
+    "y_mm": 14.4
+   },
+   "T_joint_hottest_C": 95.04201818181818,
+   "et_converged": true,
+   "et_iterations": 4,
+   "mechanics_error": null,
+   "P_land_w": 32.882764384156346,
+   "P_board_plane_w": 9.76991047636497,
+   "land": {
+    "T_C": 84.07034563578655,
+    "t_um": 20.0,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 1.3300337369954311,
+    "kappa_one_rail": 0.012164295548097444,
+    "P_w": 32.882764384156346,
+    "R_eff_ohm": 3.2357846931505866e-05,
+    "dV_static_one_rail_mV": 79.13438839871091
+   },
+   "board": {
+    "T_C": 76.6303749983469,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 0.37113348845784927,
+    "kappa_two_rails": 0.025904292545726557,
+    "P_w": 9.76991047636497,
+    "R_eff_ohm": 9.613950458528157e-06,
+    "dV_static_VDD_mV": 22.481605627143267,
+    "dV_static_GND_mV": 22.260537631965388
+   },
+   "board_bound_uncoupled": null,
+   "T_land_C": 84.06633953580639,
+   "T_board_C": 76.6220983997884,
+   "dV_land_static_one_rail_mV": 79.13438839871091,
+   "dV_board_static_VDD_mV": 22.481605627143267,
+   "dV_board_static_GND_mV": 22.260537631965388,
+   "R_star": {
+    "P_Z1_w": 142.62940729978502,
+    "P_internal_w": 168.33352738783864,
+    "P_internal_recomputed_w": 168.3244784423198,
+    "advantage_at_zero_feed_w": -25.704120088053628,
+    "R_star_mohm": 0.0,
+    "meaning": "0 = Z3 behind Z1 even with a lossless 48 V feed"
+   },
+   "ranking_in_tier": [
+    {
+     "arch": "Z2",
+     "P_loss_w": 115.18200402488185
+    },
+    {
+     "arch": "Z1",
+     "P_loss_w": 142.62940729978502
+    },
+    {
+     "arch": "Z3",
+     "P_loss_w": 168.33352738783864
+    }
+   ],
+   "vs_Z1_same_tier_w": 25.704120088053628,
+   "vs_Z2_same_tier_w": 53.151523362956794,
+   "vs_Z1B_w": 25.704120088053628,
+   "vs_Z2B_w": 53.151523362956794,
+   "delta_vs_reference_Z3_w": 43.870263186741255,
+   "deposit_check": {
+    "deposit_residual_rel_reported": 1.946136699094773e-16,
+    "Q_ledger_W_reported": 1168.3335273878386,
+    "Q_deposited_W_reported": 1168.3335273878388,
+    "load_plus_P_loss_W": 1168.3335273878386,
+    "Q_ledger_minus_load_plus_P_loss_W": 0.0,
+    "regions": [
+     {
+      "set": "E_SRC_1",
+      "layers": [
+       "die"
+      ],
+      "in_tiles": false,
+      "W": 1000.0,
+      "n_elems": 13456,
+      "volume_mm3": 149.99087999999998,
+      "xy_extent_mm": [
+       -11.055,
+       11.055,
+       -11.055,
+       11.055
+      ]
+     },
+     {
+      "set": "E_SRC_2",
+      "layers": [
+       "z3conv_7_gan_hs_EPC2014C"
+      ],
+      "in_tiles": true,
+      "W": 17.137438014755627,
+      "n_elems": 3528,
+      "volume_mm3": 188.29964997142946,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_3",
+      "layers": [
+       "z3conv_3_gan_ls_EPC2057"
+      ],
+      "in_tiles": true,
+      "W": 79.34915521389787,
+      "n_elems": 3528,
+      "volume_mm3": 175.37981997339,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_4",
+      "layers": [
+       "z3conv_1_inductor_plus_cout"
+      ],
+      "in_tiles": true,
+      "W": 12.778950176900276,
+      "n_elems": 3528,
+      "volume_mm3": 137.44499997914568,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_5",
+      "layers": [
+       "z3conv_5_flying_caps"
+      ],
+      "in_tiles": true,
+      "W": 1.4402242934280696,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_6",
+      "layers": [
+       "z3conv_0_land_side_attach_rdl",
+       "z3conv_2_interlayer_rdl",
+       "z3conv_4_interlayer_rdl",
+       "z3conv_6_interlayer_rdl"
+      ],
+      "in_tiles": true,
+      "W": 1.5272099378766801,
+      "n_elems": 7056,
+      "volume_mm3": 10.995599998331787,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_7",
+      "layers": [
+       "z3_attach_vr_pcb"
+      ],
+      "in_tiles": true,
+      "W": 2.354237159155158,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_8",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": true,
+      "W": 9.33600185539349,
+      "n_elems": 3528,
+      "volume_mm3": 659.7359998998993,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_9",
+      "layers": [
+       "bga"
+      ],
+      "in_tiles": false,
+      "W": 1.1851605387598723,
+      "n_elems": 9800,
+      "volume_mm3": 270.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_10",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": true,
+      "W": 0.5294766883308512,
+      "n_elems": 5292,
+      "volume_mm3": 76.96919998832158,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_11",
+      "layers": [
+       "interface"
+      ],
+      "in_tiles": true,
+      "W": 0.0429986488194402,
+      "n_elems": 1764,
+      "volume_mm3": 2.748899999582916,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_12",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": false,
+      "W": 32.882764384156346,
+      "n_elems": 14700,
+      "volume_mm3": 252.00000000000003,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_13",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": false,
+      "W": 9.76991047636497,
+      "n_elems": 9800,
+      "volume_mm3": 2160.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     }
+    ],
+    "land_region": {
+     "sets": [
+      "E_SRC_12"
+     ],
+     "W": 32.882764384156346,
+     "n_elems": 14700,
+     "volume_mm3": 252.00000000000003,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "land_region_W_minus_row_W": 0.0,
+    "plane_region": {
+     "sets": [
+      "E_SRC_13"
+     ],
+     "W": 9.76991047636497,
+     "n_elems": 9800,
+     "volume_mm3": 2160.0,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "plane_region_W_minus_row_W": 0.0,
+    "sum_regions_W": 1168.3335273878386,
+    "deck": {
+     "deck": "/home/beams0/SABDELZAHER/ETM_project/scratch_z3land/fc_sens/z3_land_t20_B/Z3_HV_S0_h1.1_r21/et3/th_7.inp",
+     "sets": [
+      {
+       "set": "E_SRC_1",
+       "n_elems": 13456,
+       "BF_W_mm3": 6.66707202,
+       "volume_mm3": 149.99087999999998,
+       "W": 999.9999993031774
+      },
+      {
+       "set": "E_SRC_2",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0910115235,
+       "volume_mm3": 188.29967282205175,
+       "W": 17.137440098086472
+      },
+      {
+       "set": "E_SRC_3",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.452441765,
+       "volume_mm3": 175.37984125615932,
+       "W": 79.34916492335654
+      },
+      {
+       "set": "E_SRC_4",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0929750095,
+       "volume_mm3": 137.445016658432,
+       "W": 12.778951729545373
+      },
+      {
+       "set": "E_SRC_5",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0523927496,
+       "volume_mm3": 27.489003331686305,
+       "W": 1.4402244683106065
+      },
+      {
+       "set": "E_SRC_6",
+       "n_elems": 7056,
+       "BF_W_mm3": 0.138892824,
+       "volume_mm3": 10.995601332674692,
+       "W": 1.5272101206733515
+      },
+      {
+       "set": "E_SRC_7",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0856428811,
+       "volume_mm3": 27.489003331686305,
+       "W": 2.354237443893114
+      },
+      {
+       "set": "E_SRC_8",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0141511178,
+       "volume_mm3": 659.7360799604737,
+       "W": 9.336002984430882
+      },
+      {
+       "set": "E_SRC_9",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.00438948348,
+       "volume_mm3": 270.0,
+       "W": 1.1851605396
+      },
+      {
+       "set": "E_SRC_10",
+       "n_elems": 5292,
+       "BF_W_mm3": 0.00687907226,
+       "volume_mm3": 76.96920932872193,
+       "W": 0.5294767527673443
+      },
+      {
+       "set": "E_SRC_11",
+       "n_elems": 1764,
+       "BF_W_mm3": 0.0156421292,
+       "volume_mm3": 2.748900333168643,
+       "W": 0.04299865416934696
+      },
+      {
+       "set": "E_SRC_12",
+       "n_elems": 14700,
+       "BF_W_mm3": 0.13048716,
+       "volume_mm3": 252.00000000000003,
+       "W": 32.88276432
+      },
+      {
+       "set": "E_SRC_13",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.0045231067,
+       "volume_mm3": 2160.0,
+       "W": 9.769910472
+      }
+     ],
+     "sum_BF_x_V_W": 1168.3335418100105
+    },
+    "deck_sum_minus_load_plus_P_loss_rel": 1.234422500572381e-08
+   },
+   "deposit": "uniform",
+   "T_max_location": {
+    "T_C": 95.6692,
+    "x_mm": 15.0,
+    "y_mm": 15.0,
+    "z_mm": 0.28,
+    "layers": [
+     "sub_lower",
+     "tile_band"
+    ],
+    "T_die_max_C": 88.815,
+    "T_sub_lower_max_C": 95.6692,
+    "T_sub_lower_min_C": 78.8639,
+    "frd": "th_7.frd"
+   },
+   "task": {
+    "arch": "Z3",
+    "variant": "z3_land_t20_B",
+    "file": "etm_Z3_HV_S0__z3_land_t20_B.json",
+    "mechanics_ok": true,
+    "wall_s": 5051.218068599701
+   }
+  },
+  "z3_land_t40_B": {
+   "file": "research/final_closure/sensitivity/etm_Z3_HV_S0__z3_land_t40_B.json",
+   "t_land_um": 40.0,
+   "cooling_tier": "B",
+   "board_planes_in_ledger": true,
+   "P_loss_w": 151.35451739131338,
+   "P_conversion_w": 110.39500247499568,
+   "P_routing_w": 40.9595149163177,
+   "T_max_C": 88.8066,
+   "T_die_mean_C": 80.50238583165758,
+   "T_sub_C": 80.50698833819243,
+   "T_ls_C": 58.31077684298209,
+   "T_conv_C": 53.93809618748598,
+   "die_warpage_pv_um": 7.94657,
+   "critical_joint": {
+    "du_um": 1.718014389918472,
+    "T_C": 88.49306363636364,
+    "x_mm": 14.4,
+    "y_mm": 14.4
+   },
+   "T_joint_hottest_C": 88.49306363636364,
+   "et_converged": true,
+   "et_iterations": 4,
+   "mechanics_error": null,
+   "P_land_w": 16.317391687983054,
+   "P_board_plane_w": 9.722035133577007,
+   "land": {
+    "T_C": 81.66824460920452,
+    "t_um": 40.0,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 0.6600017319481549,
+    "kappa_one_rail": 0.012164295548097444,
+    "P_w": 16.317391687983054,
+    "R_eff_ohm": 1.6056912259347087e-05,
+    "dV_static_one_rail_mV": 39.26880344989819
+   },
+   "board": {
+    "T_C": 75.10597825828208,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 0.3693148287042112,
+    "kappa_two_rails": 0.025904292545726557,
+    "P_w": 9.722035133577007,
+    "R_eff_ohm": 9.566839364228778e-06,
+    "dV_static_VDD_mV": 22.371439359148585,
+    "dV_static_GND_mV": 22.151454660084234
+   },
+   "board_bound_uncoupled": null,
+   "T_land_C": 81.66453060900615,
+   "T_board_C": 75.0977701249752,
+   "dV_land_static_one_rail_mV": 39.26880344989819,
+   "dV_board_static_VDD_mV": 22.371439359148585,
+   "dV_board_static_GND_mV": 22.151454660084234,
+   "R_star": {
+    "P_Z1_w": 142.62940729978502,
+    "P_internal_w": 151.35451739131338,
+    "P_internal_recomputed_w": 151.34557131440616,
+    "advantage_at_zero_feed_w": -8.725110091528364,
+    "R_star_mohm": 0.0,
+    "meaning": "0 = Z3 behind Z1 even with a lossless 48 V feed"
+   },
+   "ranking_in_tier": [
+    {
+     "arch": "Z2",
+     "P_loss_w": 115.18200402488185
+    },
+    {
+     "arch": "Z1",
+     "P_loss_w": 142.62940729978502
+    },
+    {
+     "arch": "Z3",
+     "P_loss_w": 151.35451739131338
+    }
+   ],
+   "vs_Z1_same_tier_w": 8.725110091528364,
+   "vs_Z2_same_tier_w": 36.17251336643153,
+   "vs_Z1B_w": 8.725110091528364,
+   "vs_Z2B_w": 36.17251336643153,
+   "delta_vs_reference_Z3_w": 26.89125319021599,
+   "deposit_check": {
+    "deposit_residual_rel_reported": 0.0,
+    "Q_ledger_W_reported": 1151.3545173913135,
+    "Q_deposited_W_reported": 1151.3545173913135,
+    "load_plus_P_loss_W": 1151.3545173913135,
+    "Q_ledger_minus_load_plus_P_loss_W": 0.0,
+    "regions": [
+     {
+      "set": "E_SRC_1",
+      "layers": [
+       "die"
+      ],
+      "in_tiles": false,
+      "W": 1000.0,
+      "n_elems": 13456,
+      "volume_mm3": 149.99087999999998,
+      "xy_extent_mm": [
+       -11.055,
+       11.055,
+       -11.055,
+       11.055
+      ]
+     },
+     {
+      "set": "E_SRC_2",
+      "layers": [
+       "z3conv_7_gan_hs_EPC2014C"
+      ],
+      "in_tiles": true,
+      "W": 17.128107063546164,
+      "n_elems": 3528,
+      "volume_mm3": 188.29964997142946,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_3",
+      "layers": [
+       "z3conv_3_gan_ls_EPC2057"
+      ],
+      "in_tiles": true,
+      "W": 79.07868231930382,
+      "n_elems": 3528,
+      "volume_mm3": 175.37981997339,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_4",
+      "layers": [
+       "z3conv_1_inductor_plus_cout"
+      ],
+      "in_tiles": true,
+      "W": 12.747988798717628,
+      "n_elems": 3528,
+      "volume_mm3": 137.44499997914568,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_5",
+      "layers": [
+       "z3conv_5_flying_caps"
+      ],
+      "in_tiles": true,
+      "W": 1.4402242934280696,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_6",
+      "layers": [
+       "z3conv_0_land_side_attach_rdl",
+       "z3conv_2_interlayer_rdl",
+       "z3conv_4_interlayer_rdl",
+       "z3conv_6_interlayer_rdl"
+      ],
+      "in_tiles": true,
+      "W": 1.5245880463553942,
+      "n_elems": 7056,
+      "volume_mm3": 10.995599998331787,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_7",
+      "layers": [
+       "z3_attach_vr_pcb"
+      ],
+      "in_tiles": true,
+      "W": 2.3472449816834544,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_8",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": true,
+      "W": 9.301912035568954,
+      "n_elems": 3528,
+      "volume_mm3": 659.7359998998993,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_9",
+      "layers": [
+       "bga"
+      ],
+      "in_tiles": false,
+      "W": 1.1761437507698516,
+      "n_elems": 9800,
+      "volume_mm3": 270.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_10",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": true,
+      "W": 0.5273156993629561,
+      "n_elems": 5292,
+      "volume_mm3": 76.96919998832158,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_11",
+      "layers": [
+       "interface"
+      ],
+      "in_tiles": true,
+      "W": 0.04288358101703195,
+      "n_elems": 1764,
+      "volume_mm3": 2.748899999582916,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_12",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": false,
+      "W": 16.317391687983054,
+      "n_elems": 14700,
+      "volume_mm3": 252.00000000000003,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_13",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": false,
+      "W": 9.722035133577007,
+      "n_elems": 9800,
+      "volume_mm3": 2160.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     }
+    ],
+    "land_region": {
+     "sets": [
+      "E_SRC_12"
+     ],
+     "W": 16.317391687983054,
+     "n_elems": 14700,
+     "volume_mm3": 252.00000000000003,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "land_region_W_minus_row_W": 0.0,
+    "plane_region": {
+     "sets": [
+      "E_SRC_13"
+     ],
+     "W": 9.722035133577007,
+     "n_elems": 9800,
+     "volume_mm3": 2160.0,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "plane_region_W_minus_row_W": 0.0,
+    "sum_regions_W": 1151.3545173913135,
+    "deck": {
+     "deck": "/home/beams0/SABDELZAHER/ETM_project/scratch_z3land/fc_sens/z3_land_t40_B/Z3_HV_S0_h1.1_r21/et3/th_7.inp",
+     "sets": [
+      {
+       "set": "E_SRC_1",
+       "n_elems": 13456,
+       "BF_W_mm3": 6.66707202,
+       "volume_mm3": 149.99087999999998,
+       "W": 999.9999993031774
+      },
+      {
+       "set": "E_SRC_2",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0909619697,
+       "volume_mm3": 188.29967282205175,
+       "W": 17.128109133759384
+      },
+      {
+       "set": "E_SRC_3",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.450899552,
+       "volume_mm3": 175.37984125615932,
+       "W": 79.07869185223335
+      },
+      {
+       "set": "E_SRC_4",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0927497457,
+       "volume_mm3": 137.445016658432,
+       "W": 12.747990342801831
+      },
+      {
+       "set": "E_SRC_5",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0523927496,
+       "volume_mm3": 27.489003331686305,
+       "W": 1.4402244683106065
+      },
+      {
+       "set": "E_SRC_6",
+       "n_elems": 7056,
+       "BF_W_mm3": 0.138654375,
+       "volume_mm3": 10.995601332674692,
+       "W": 1.5245882305311764
+      },
+      {
+       "set": "E_SRC_7",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0853885184,
+       "volume_mm3": 27.489003331686305,
+       "W": 2.3472452667853574
+      },
+      {
+       "set": "E_SRC_8",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0140994459,
+       "volume_mm3": 659.7360799604737,
+       "W": 9.301913167680773
+      },
+      {
+       "set": "E_SRC_9",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.00435608797,
+       "volume_mm3": 270.0,
+       "W": 1.1761437519
+      },
+      {
+       "set": "E_SRC_10",
+       "n_elems": 5292,
+       "BF_W_mm3": 0.00685099624,
+       "volume_mm3": 76.96920932872193,
+       "W": 0.5273157637068469
+      },
+      {
+       "set": "E_SRC_11",
+       "n_elems": 1764,
+       "BF_W_mm3": 0.0156002696,
+       "volume_mm3": 2.748900333168643,
+       "W": 0.04288358630096065
+      },
+      {
+       "set": "E_SRC_12",
+       "n_elems": 14700,
+       "BF_W_mm3": 0.0647515543,
+       "volume_mm3": 252.00000000000003,
+       "W": 16.3173916836
+      },
+      {
+       "set": "E_SRC_13",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.00450094219,
+       "volume_mm3": 2160.0,
+       "W": 9.7220351304
+      }
+     ],
+     "sum_BF_x_V_W": 1151.3545316811878
+    },
+    "deck_sum_minus_load_plus_P_loss_rel": 1.2411359079698134e-08
+   },
+   "deposit": "uniform",
+   "T_max_location": {
+    "T_C": 88.8066,
+    "x_mm": 15.0,
+    "y_mm": 15.0,
+    "z_mm": 0.28,
+    "layers": [
+     "sub_lower",
+     "tile_band"
+    ],
+    "T_die_max_C": 86.0899,
+    "T_sub_lower_max_C": 88.8066,
+    "T_sub_lower_min_C": 77.7453,
+    "frd": "th_7.frd"
+   },
+   "task": {
+    "arch": "Z3",
+    "variant": "z3_land_t40_B",
+    "file": "etm_Z3_HV_S0__z3_land_t40_B.json",
+    "mechanics_ok": true,
+    "wall_s": 5030.21076130867
+   }
+  },
+  "z3_land_t40_A": {
+   "file": "research/final_closure/sensitivity/etm_Z3_HV_S0__z3_land_t40_A.json",
+   "t_land_um": 40.0,
+   "cooling_tier": "A",
+   "board_planes_in_ledger": true,
+   "P_loss_w": 233.04314702442878,
+   "P_conversion_w": 185.37089686779134,
+   "P_routing_w": 47.67225015663743,
+   "T_max_C": 193.514,
+   "T_die_mean_C": 94.96767878770468,
+   "T_sub_C": 104.33597767596835,
+   "T_ls_C": 186.426332222685,
+   "T_conv_C": 183.06248832217346,
+   "die_warpage_pv_um": 62.28680000000001,
+   "critical_joint": {
+    "du_um": 4.7781396663423745,
+    "T_C": 120.14036363636363,
+    "x_mm": 14.4,
+    "y_mm": 14.4
+   },
+   "T_joint_hottest_C": 123.63463636363636,
+   "et_converged": true,
+   "et_iterations": 7,
+   "mechanics_error": null,
+   "P_land_w": 17.624249613768587,
+   "P_board_plane_w": 11.65779214727317,
+   "land": {
+    "T_C": 106.98635092739536,
+    "t_um": 40.0,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 0.7128611907956026,
+    "kappa_one_rail": 0.012164295548097444,
+    "P_w": 17.624249613768587,
+    "R_eff_ohm": 1.7342908419212782e-05,
+    "dV_static_one_rail_mV": 42.41383716643314
+   },
+   "board": {
+    "T_C": 136.7423344574489,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 0.44284920294825286,
+    "kappa_two_rails": 0.025904292545726557,
+    "P_w": 11.65779214727317,
+    "R_eff_ohm": 1.1471695306813374e-05,
+    "dV_static_VDD_mV": 26.825822628798104,
+    "dV_static_GND_mV": 26.56203671751133
+   },
+   "board_bound_uncoupled": null,
+   "T_land_C": 106.99925515274747,
+   "T_board_C": 136.77313681147922,
+   "dV_land_static_one_rail_mV": 42.41383716643314,
+   "dV_board_static_VDD_mV": 26.825822628798104,
+   "dV_board_static_GND_mV": 26.56203671751133,
+   "R_star": {
+    "P_Z1_w": 144.3097256920461,
+    "P_internal_w": 233.04314702442878,
+    "P_internal_recomputed_w": 233.08241014914856,
+    "advantage_at_zero_feed_w": -88.73342133238268,
+    "R_star_mohm": 0.0,
+    "meaning": "0 = Z3 behind Z1 even with a lossless 48 V feed"
+   },
+   "ranking_in_tier": [
+    {
+     "arch": "Z1",
+     "P_loss_w": 144.3097256920461
+    },
+    {
+     "arch": "Z2",
+     "P_loss_w": 147.43752380684376
+    },
+    {
+     "arch": "Z3",
+     "P_loss_w": 233.04314702442878
+    }
+   ],
+   "vs_Z1_same_tier_w": 88.73342133238268,
+   "vs_Z2_same_tier_w": 85.60562321758502,
+   "vs_Z1B_w": 90.41373972464376,
+   "vs_Z2B_w": 117.86114299954693,
+   "delta_vs_reference_Z3_w": 33.48936165041829,
+   "deposit_check": {
+    "deposit_residual_rel_reported": -1.844004210168384e-16,
+    "Q_ledger_W_reported": 1233.043147024429,
+    "Q_deposited_W_reported": 1233.0431470244287,
+    "load_plus_P_loss_W": 1233.043147024429,
+    "Q_ledger_minus_load_plus_P_loss_W": 0.0,
+    "regions": [
+     {
+      "set": "E_SRC_1",
+      "layers": [
+       "die"
+      ],
+      "in_tiles": false,
+      "W": 1000.0,
+      "n_elems": 13456,
+      "volume_mm3": 149.99087999999998,
+      "xy_extent_mm": [
+       -11.055,
+       11.055,
+       -11.055,
+       11.055
+      ]
+     },
+     {
+      "set": "E_SRC_2",
+      "layers": [
+       "z3conv_7_gan_hs_EPC2014C"
+      ],
+      "in_tiles": true,
+      "W": 23.34811655052413,
+      "n_elems": 3528,
+      "volume_mm3": 188.29964997142946,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_3",
+      "layers": [
+       "z3conv_3_gan_ls_EPC2057"
+      ],
+      "in_tiles": true,
+      "W": 143.03035320908322,
+      "n_elems": 3528,
+      "volume_mm3": 175.37981997339,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_4",
+      "layers": [
+       "z3conv_1_inductor_plus_cout"
+      ],
+      "in_tiles": true,
+      "W": 17.552202814755933,
+      "n_elems": 3528,
+      "volume_mm3": 137.44499997914568,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_5",
+      "layers": [
+       "z3conv_5_flying_caps"
+      ],
+      "in_tiles": true,
+      "W": 1.4402242934280696,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_6",
+      "layers": [
+       "z3conv_0_land_side_attach_rdl",
+       "z3conv_2_interlayer_rdl",
+       "z3conv_4_interlayer_rdl",
+       "z3conv_6_interlayer_rdl"
+      ],
+      "in_tiles": true,
+      "W": 2.206807459137917,
+      "n_elems": 7056,
+      "volume_mm3": 10.995599998331787,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_7",
+      "layers": [
+       "z3_attach_vr_pcb"
+      ],
+      "in_tiles": true,
+      "W": 3.0601300369647695,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_8",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": true,
+      "W": 11.219244496379616,
+      "n_elems": 3528,
+      "volume_mm3": 659.7359998998993,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_9",
+      "layers": [
+       "bga"
+      ],
+      "in_tiles": false,
+      "W": 1.2919036131569728,
+      "n_elems": 9800,
+      "volume_mm3": 270.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_10",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": true,
+      "W": 0.5671848862791184,
+      "n_elems": 5292,
+      "volume_mm3": 76.96919998832158,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_11",
+      "layers": [
+       "interface"
+      ],
+      "in_tiles": true,
+      "W": 0.04493790367728954,
+      "n_elems": 1764,
+      "volume_mm3": 2.748899999582916,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_12",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": false,
+      "W": 17.624249613768587,
+      "n_elems": 14700,
+      "volume_mm3": 252.00000000000003,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_13",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": false,
+      "W": 11.65779214727317,
+      "n_elems": 9800,
+      "volume_mm3": 2160.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     }
+    ],
+    "land_region": {
+     "sets": [
+      "E_SRC_12"
+     ],
+     "W": 17.624249613768587,
+     "n_elems": 14700,
+     "volume_mm3": 252.00000000000003,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "land_region_W_minus_row_W": 0.0,
+    "plane_region": {
+     "sets": [
+      "E_SRC_13"
+     ],
+     "W": 11.65779214727317,
+     "n_elems": 9800,
+     "volume_mm3": 2160.0,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "plane_region_W_minus_row_W": 0.0,
+    "sum_regions_W": 1233.043147024429,
+    "deck": {
+     "deck": "/home/beams0/SABDELZAHER/ETM_project/scratch_z3land/fc_sens/z3_land_t40_A/Z3_HV_S0_h1.1_r21/et6/th_1.inp",
+     "sets": [
+      {
+       "set": "E_SRC_1",
+       "n_elems": 13456,
+       "BF_W_mm3": 6.66707202,
+       "volume_mm3": 149.99087999999998,
+       "W": 999.9999993031774
+      },
+      {
+       "set": "E_SRC_2",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.123994477,
+       "volume_mm3": 188.29967282205175,
+       "W": 23.34811945084142
+      },
+      {
+       "set": "E_SRC_3",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.815546243,
+       "volume_mm3": 175.37984125615932,
+       "W": 143.03037063439714
+      },
+      {
+       "set": "E_SRC_4",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.127703466,
+       "volume_mm3": 137.445016658432,
+       "W": 17.552205011709503
+      },
+      {
+       "set": "E_SRC_5",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0523927496,
+       "volume_mm3": 27.489003331686305,
+       "W": 1.4402244683106065
+      },
+      {
+       "set": "E_SRC_6",
+       "n_elems": 7056,
+       "BF_W_mm3": 0.20069914,
+       "volume_mm3": 10.995601332674692,
+       "W": 2.2068077312506644
+      },
+      {
+       "set": "E_SRC_7",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.111321985,
+       "volume_mm3": 27.489003331686305,
+       "W": 3.060130416554933
+      },
+      {
+       "set": "E_SRC_8",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0170056576,
+       "volume_mm3": 659.7360799604737,
+       "W": 11.219245882174038
+      },
+      {
+       "set": "E_SRC_9",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.0047848282,
+       "volume_mm3": 270.0,
+       "W": 1.291903614
+      },
+      {
+       "set": "E_SRC_10",
+       "n_elems": 5292,
+       "BF_W_mm3": 0.00736898508,
+       "volume_mm3": 76.96920932872193,
+       "W": 0.5671849551627487
+      },
+      {
+       "set": "E_SRC_11",
+       "n_elems": 1764,
+       "BF_W_mm3": 0.0163475949,
+       "volume_mm3": 2.748900333168643,
+       "W": 0.04493790906711601
+      },
+      {
+       "set": "E_SRC_12",
+       "n_elems": 14700,
+       "BF_W_mm3": 0.0699374985,
+       "volume_mm3": 252.00000000000003,
+       "W": 17.624249622
+      },
+      {
+       "set": "E_SRC_13",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.00539712599,
+       "volume_mm3": 2160.0,
+       "W": 11.657792138400001
+      }
+     ],
+     "sum_BF_x_V_W": 1233.0431711370454
+    },
+    "deck_sum_minus_load_plus_P_loss_rel": 1.9555371267765873e-08
+   },
+   "deposit": "uniform",
+   "T_max_location": {
+    "T_C": 193.514,
+    "x_mm": 10.68,
+    "y_mm": 10.68,
+    "z_mm": -4.763,
+    "layers": [
+     "z3conv_7_gan_hs_EPC2014C"
+    ],
+    "T_die_max_C": 106.172,
+    "T_sub_lower_max_C": 120.25,
+    "T_sub_lower_min_C": 99.7453,
+    "frd": "th_1.frd"
+   },
+   "task": {
+    "arch": "Z3",
+    "variant": "z3_land_t40_A",
+    "file": "etm_Z3_HV_S0__z3_land_t40_A.json",
+    "mechanics_ok": true,
+    "wall_s": 3710.7359714508057
+   }
+  },
+  "z3_land_t40_B_noplane": {
+   "file": "research/final_closure/sensitivity/etm_Z3_HV_S0__z3_land_t40_B_noplane.json",
+   "t_land_um": 40.0,
+   "cooling_tier": "B",
+   "board_planes_in_ledger": false,
+   "P_loss_w": 141.09477440317093,
+   "P_conversion_w": 109.95566778200579,
+   "P_routing_w": 31.13910662116514,
+   "T_max_C": 87.1605,
+   "T_die_mean_C": 80.10948681413387,
+   "T_sub_C": 79.88918527696794,
+   "T_ls_C": 57.545357517700964,
+   "T_conv_C": 53.23714066895204,
+   "die_warpage_pv_um": 7.282,
+   "critical_joint": {
+    "du_um": 1.6299325834053013,
+    "T_C": 86.8075,
+    "x_mm": 14.4,
+    "y_mm": 14.4
+   },
+   "T_joint_hottest_C": 86.8075,
+   "et_converged": true,
+   "et_iterations": 4,
+   "mechanics_error": null,
+   "P_land_w": 16.2745017256584,
+   "P_board_plane_w": 0.0,
+   "land": {
+    "T_C": 80.83732595715135,
+    "t_um": 40.0,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 0.6582669295999151,
+    "kappa_one_rail": 0.012164295548097444,
+    "P_w": 16.2745017256584,
+    "R_eff_ohm": 1.6014706962384043e-05,
+    "dV_static_one_rail_mV": 39.16558612615516
+   },
+   "board": null,
+   "board_bound_uncoupled": {
+    "T_C": 73.53702682668784,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 0.36744301361233955,
+    "kappa_two_rails": 0.025904292545726557,
+    "P_w": 9.672760502090952,
+    "R_eff_ohm": 9.51835131849743e-06,
+    "dV_static_VDD_mV": 22.25805317867414,
+    "dV_static_GND_mV": 22.039183438034648
+   },
+   "T_land_C": 80.833875119024,
+   "T_board_C": 73.53702682668784,
+   "dV_land_static_one_rail_mV": 39.16558612615516,
+   "R_star": {
+    "P_Z1_w": 142.62940729978502,
+    "P_internal_w": 141.09477440317093,
+    "P_internal_recomputed_w": 141.08620450451804,
+    "advantage_at_zero_feed_w": 1.5346328966140845,
+    "R_star_mohm": 2.7232949570802734,
+    "meaning": "0 = Z3 behind Z1 even with a lossless 48 V feed"
+   },
+   "ranking_in_tier": [
+    {
+     "arch": "Z2",
+     "P_loss_w": 115.18200402488185
+    },
+    {
+     "arch": "Z3",
+     "P_loss_w": 141.09477440317093
+    },
+    {
+     "arch": "Z1",
+     "P_loss_w": 142.62940729978502
+    }
+   ],
+   "vs_Z1_same_tier_w": -1.5346328966140845,
+   "vs_Z2_same_tier_w": 25.912770378289082,
+   "vs_Z1B_w": -1.5346328966140845,
+   "vs_Z2B_w": 25.912770378289082,
+   "delta_vs_reference_Z3_w": 16.631510202073542,
+   "deposit_check": {
+    "deposit_residual_rel_reported": 1.9925923818392364e-16,
+    "Q_ledger_W_reported": 1141.094774403171,
+    "Q_deposited_W_reported": 1141.0947744031712,
+    "load_plus_P_loss_W": 1141.094774403171,
+    "Q_ledger_minus_load_plus_P_loss_W": 0.0,
+    "regions": [
+     {
+      "set": "E_SRC_1",
+      "layers": [
+       "die"
+      ],
+      "in_tiles": false,
+      "W": 1000.0,
+      "n_elems": 13456,
+      "volume_mm3": 149.99087999999998,
+      "xy_extent_mm": [
+       -11.055,
+       11.055,
+       -11.055,
+       11.055
+      ]
+     },
+     {
+      "set": "E_SRC_2",
+      "layers": [
+       "z3conv_7_gan_hs_EPC2014C"
+      ],
+      "in_tiles": true,
+      "W": 17.114915621746174,
+      "n_elems": 3528,
+      "volume_mm3": 188.29964997142946,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_3",
+      "layers": [
+       "z3conv_3_gan_ls_EPC2057"
+      ],
+      "in_tiles": true,
+      "W": 78.69630243235858,
+      "n_elems": 3528,
+      "volume_mm3": 175.37981997339,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_4",
+      "layers": [
+       "z3conv_1_inductor_plus_cout"
+      ],
+      "in_tiles": true,
+      "W": 12.704225434472969,
+      "n_elems": 3528,
+      "volume_mm3": 137.44499997914568,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_5",
+      "layers": [
+       "z3conv_5_flying_caps"
+      ],
+      "in_tiles": true,
+      "W": 1.4402242934280696,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_6",
+      "layers": [
+       "z3conv_0_land_side_attach_rdl",
+       "z3conv_2_interlayer_rdl",
+       "z3conv_4_interlayer_rdl",
+       "z3conv_6_interlayer_rdl"
+      ],
+      "in_tiles": true,
+      "W": 1.5208817540436657,
+      "n_elems": 7056,
+      "volume_mm3": 10.995599998331787,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_7",
+      "layers": [
+       "z3_attach_vr_pcb"
+      ],
+      "in_tiles": true,
+      "W": 2.337363914619375,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_8",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": true,
+      "W": 9.26476354585985,
+      "n_elems": 3528,
+      "volume_mm3": 659.7359998998993,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_9",
+      "layers": [
+       "bga"
+      ],
+      "in_tiles": false,
+      "W": 1.17248484250073,
+      "n_elems": 9800,
+      "volume_mm3": 270.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_10",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": true,
+      "W": 0.5262810480854831,
+      "n_elems": 5292,
+      "volume_mm3": 76.96919998832158,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_11",
+      "layers": [
+       "interface"
+      ],
+      "in_tiles": true,
+      "W": 0.04282979039762661,
+      "n_elems": 1764,
+      "volume_mm3": 2.748899999582916,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_12",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": false,
+      "W": 16.2745017256584,
+      "n_elems": 14700,
+      "volume_mm3": 252.00000000000003,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     }
+    ],
+    "land_region": {
+     "sets": [
+      "E_SRC_12"
+     ],
+     "W": 16.2745017256584,
+     "n_elems": 14700,
+     "volume_mm3": 252.00000000000003,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "land_region_W_minus_row_W": 0.0,
+    "plane_region": null,
+    "plane_region_W_minus_row_W": null,
+    "sum_regions_W": 1141.094774403171,
+    "deck": {
+     "deck": "/home/beams0/SABDELZAHER/ETM_project/scratch_z3land/fc_sens/z3_land_t40_B_noplane/Z3_HV_S0_h1.1_r21/et3/th_7.inp",
+     "sets": [
+      {
+       "set": "E_SRC_1",
+       "n_elems": 13456,
+       "BF_W_mm3": 6.66707202,
+       "volume_mm3": 149.99087999999998,
+       "W": 999.9999993031774
+      },
+      {
+       "set": "E_SRC_2",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0908919142,
+       "volume_mm3": 188.29967282205175,
+       "W": 17.11491770603
+      },
+      {
+       "set": "E_SRC_3",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.448719257,
+       "volume_mm3": 175.37984125615932,
+       "W": 78.69631206124176
+      },
+      {
+       "set": "E_SRC_4",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0924313393,
+       "volume_mm3": 137.445016658432,
+       "W": 12.70422696984968
+      },
+      {
+       "set": "E_SRC_5",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0523927496,
+       "volume_mm3": 27.489003331686305,
+       "W": 1.4402244683106065
+      },
+      {
+       "set": "E_SRC_6",
+       "n_elems": 7056,
+       "BF_W_mm3": 0.138317305,
+       "volume_mm3": 10.995601332674692,
+       "W": 1.5208819431899718
+      },
+      {
+       "set": "E_SRC_7",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0850290631,
+       "volume_mm3": 27.489003331686305,
+       "W": 2.337364198846065
+      },
+      {
+       "set": "E_SRC_8",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0140431378,
+       "volume_mm3": 659.7360799604737,
+       "W": 9.26476468251675
+      },
+      {
+       "set": "E_SRC_9",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.00434253645,
+       "volume_mm3": 270.0,
+       "W": 1.1724848415
+      },
+      {
+       "set": "E_SRC_10",
+       "n_elems": 5292,
+       "BF_W_mm3": 0.00683755383,
+       "volume_mm3": 76.96920932872193,
+       "W": 0.5262811120376744
+      },
+      {
+       "set": "E_SRC_11",
+       "n_elems": 1764,
+       "BF_W_mm3": 0.0155807015,
+       "volume_mm3": 2.748900333168643,
+       "W": 0.04282979554435117
+      },
+      {
+       "set": "E_SRC_12",
+       "n_elems": 14700,
+       "BF_W_mm3": 0.0645813561,
+       "volume_mm3": 252.00000000000003,
+       "W": 16.2745017372
+      }
+     ],
+     "sum_BF_x_V_W": 1141.094788819444
+    },
+    "deck_sum_minus_load_plus_P_loss_rel": 1.2633720953380873e-08
+   },
+   "deposit": "uniform",
+   "T_max_location": {
+    "T_C": 87.1605,
+    "x_mm": 15.0,
+    "y_mm": 15.0,
+    "z_mm": 0.28,
+    "layers": [
+     "sub_lower",
+     "tile_band"
+    ],
+    "T_die_max_C": 85.2356,
+    "T_sub_lower_max_C": 87.1605,
+    "T_sub_lower_min_C": 77.1327,
+    "frd": "th_7.frd"
+   },
+   "task": {
+    "arch": "Z3",
+    "variant": "z3_land_t40_B_noplane",
+    "file": "etm_Z3_HV_S0__z3_land_t40_B_noplane.json",
+    "mechanics_ok": true,
+    "wall_s": 4970.889004468918
+   }
+  },
+  "z3_land_t100_B": {
+   "file": "research/final_closure/sensitivity/etm_Z3_HV_S0__z3_land_t100_B.json",
+   "t_land_um": 100.0,
+   "cooling_tier": "B",
+   "board_planes_in_ledger": true,
+   "P_loss_w": 141.28946175042864,
+   "P_conversion_w": 110.21076516250686,
+   "P_routing_w": 31.078696587921783,
+   "T_max_C": 84.7386,
+   "T_die_mean_C": 79.98421239299051,
+   "T_sub_C": 79.74191851311954,
+   "T_ls_C": 57.98963513813689,
+   "T_conv_C": 53.643989260884894,
+   "die_warpage_pv_um": 7.52198,
+   "critical_joint": {
+    "du_um": 1.6668628207573495,
+    "T_C": 84.61086363636363,
+    "x_mm": 14.4,
+    "y_mm": 14.4
+   },
+   "T_joint_hottest_C": 84.61086363636363,
+   "et_converged": true,
+   "et_iterations": 4,
+   "mechanics_error": null,
+   "P_land_w": 6.4975564292181724,
+   "P_board_plane_w": 9.69365454312206,
+   "land": {
+    "T_C": 80.24429763935727,
+    "t_um": 100.0,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 0.2628115190660683,
+    "kappa_one_rail": 0.012164295548097444,
+    "P_w": 6.4975564292181724,
+    "R_eff_ohm": 6.393833982728202e-06,
+    "dV_static_one_rail_mV": 15.636767885611091
+   },
+   "board": {
+    "T_C": 74.20231309264034,
+    "I_rms_A": 1008.0784996431805,
+    "R_s_mohm_sq": 0.36823672388784473,
+    "kappa_two_rails": 0.025904292545726557,
+    "P_w": 9.69365454312206,
+    "R_eff_ohm": 9.538911821670664e-06,
+    "dV_static_VDD_mV": 22.306132594709226,
+    "dV_static_GND_mV": 22.086790075555225
+   },
+   "board_bound_uncoupled": null,
+   "T_land_C": 80.24075483535013,
+   "T_board_C": 74.19415829531178,
+   "dV_land_static_one_rail_mV": 15.636767885611091,
+   "dV_board_static_VDD_mV": 22.306132594709226,
+   "dV_board_static_GND_mV": 22.086790075555225,
+   "R_star": {
+    "P_Z1_w": 142.62940729978502,
+    "P_internal_w": 141.28946175042864,
+    "P_internal_recomputed_w": 141.28058138084415,
+    "advantage_at_zero_feed_w": 1.3399455493563721,
+    "R_star_mohm": 2.3802774557295705,
+    "meaning": "0 = Z3 behind Z1 even with a lossless 48 V feed"
+   },
+   "ranking_in_tier": [
+    {
+     "arch": "Z2",
+     "P_loss_w": 115.18200402488185
+    },
+    {
+     "arch": "Z3",
+     "P_loss_w": 141.28946175042864
+    },
+    {
+     "arch": "Z1",
+     "P_loss_w": 142.62940729978502
+    }
+   ],
+   "vs_Z1_same_tier_w": -1.3399455493563721,
+   "vs_Z2_same_tier_w": 26.107457725546794,
+   "vs_Z1B_w": -1.3399455493563721,
+   "vs_Z2B_w": 26.107457725546794,
+   "delta_vs_reference_Z3_w": 16.826197549331255,
+   "deposit_check": {
+    "deposit_residual_rel_reported": 0.0,
+    "Q_ledger_W_reported": 1141.2894617504287,
+    "Q_deposited_W_reported": 1141.2894617504287,
+    "load_plus_P_loss_W": 1141.2894617504287,
+    "Q_ledger_minus_load_plus_P_loss_W": 0.0,
+    "regions": [
+     {
+      "set": "E_SRC_1",
+      "layers": [
+       "die"
+      ],
+      "in_tiles": false,
+      "W": 1000.0,
+      "n_elems": 13456,
+      "volume_mm3": 149.99087999999998,
+      "xy_extent_mm": [
+       -11.055,
+       11.055,
+       -11.055,
+       11.055
+      ]
+     },
+     {
+      "set": "E_SRC_2",
+      "layers": [
+       "z3conv_7_gan_hs_EPC2014C"
+      ],
+      "in_tiles": true,
+      "W": 17.122575165514203,
+      "n_elems": 3528,
+      "volume_mm3": 188.29964997142946,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_3",
+      "layers": [
+       "z3conv_3_gan_ls_EPC2057"
+      ],
+      "in_tiles": true,
+      "W": 78.91833182670511,
+      "n_elems": 3528,
+      "volume_mm3": 175.37981997339,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_4",
+      "layers": [
+       "z3conv_1_inductor_plus_cout"
+      ],
+      "in_tiles": true,
+      "W": 12.729633876859479,
+      "n_elems": 3528,
+      "volume_mm3": 137.44499997914568,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_5",
+      "layers": [
+       "z3conv_5_flying_caps"
+      ],
+      "in_tiles": true,
+      "W": 1.4402242934280696,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_6",
+      "layers": [
+       "z3conv_0_land_side_attach_rdl",
+       "z3conv_2_interlayer_rdl",
+       "z3conv_4_interlayer_rdl",
+       "z3conv_6_interlayer_rdl"
+      ],
+      "in_tiles": true,
+      "W": 1.5230336786261243,
+      "n_elems": 7056,
+      "volume_mm3": 10.995599998331787,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_7",
+      "layers": [
+       "z3_attach_vr_pcb"
+      ],
+      "in_tiles": true,
+      "W": 2.3430998775898515,
+      "n_elems": 3528,
+      "volume_mm3": 27.48899999582904,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_8",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": true,
+      "W": 9.281703352316498,
+      "n_elems": 3528,
+      "volume_mm3": 659.7359998998993,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_9",
+      "layers": [
+       "bga"
+      ],
+      "in_tiles": false,
+      "W": 1.1707986613358414,
+      "n_elems": 9800,
+      "volume_mm3": 270.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_10",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": true,
+      "W": 0.5260346761753851,
+      "n_elems": 5292,
+      "volume_mm3": 76.96919998832158,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_11",
+      "layers": [
+       "interface"
+      ],
+      "in_tiles": true,
+      "W": 0.04281536953785285,
+      "n_elems": 1764,
+      "volume_mm3": 2.748899999582916,
+      "xy_extent_mm": [
+       -10.405000000000001,
+       10.405000000000001,
+       -10.405,
+       10.405000000000001
+      ]
+     },
+     {
+      "set": "E_SRC_12",
+      "layers": [
+       "sub_lower"
+      ],
+      "in_tiles": false,
+      "W": 6.4975564292181724,
+      "n_elems": 14700,
+      "volume_mm3": 252.00000000000003,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     },
+     {
+      "set": "E_SRC_13",
+      "layers": [
+       "board"
+      ],
+      "in_tiles": false,
+      "W": 9.69365454312206,
+      "n_elems": 9800,
+      "volume_mm3": 2160.0,
+      "xy_extent_mm": [
+       -14.725000000000001,
+       14.725000000000001,
+       -14.725000000000001,
+       14.725
+      ]
+     }
+    ],
+    "land_region": {
+     "sets": [
+      "E_SRC_12"
+     ],
+     "W": 6.4975564292181724,
+     "n_elems": 14700,
+     "volume_mm3": 252.00000000000003,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "land_region_W_minus_row_W": 0.0,
+    "plane_region": {
+     "sets": [
+      "E_SRC_13"
+     ],
+     "W": 9.69365454312206,
+     "n_elems": 9800,
+     "volume_mm3": 2160.0,
+     "xy_extent_mm": [
+      -14.725000000000001,
+      14.725000000000001,
+      -14.725000000000001,
+      14.725
+     ]
+    },
+    "plane_region_W_minus_row_W": 0.0,
+    "sum_regions_W": 1141.2894617504287,
+    "deck": {
+     "deck": "/home/beams0/SABDELZAHER/ETM_project/scratch_z3land/fc_sens/z3_land_t100_B/Z3_HV_S0_h1.1_r21/et3/th_7.inp",
+     "sets": [
+      {
+       "set": "E_SRC_1",
+       "n_elems": 13456,
+       "BF_W_mm3": 6.66707202,
+       "volume_mm3": 149.99087999999998,
+       "W": 999.9999993031774
+      },
+      {
+       "set": "E_SRC_2",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0909325916,
+       "volume_mm3": 188.29967282205175,
+       "W": 17.12257724714125
+      },
+      {
+       "set": "E_SRC_3",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.449985248,
+       "volume_mm3": 175.37984125615932,
+       "W": 78.91834136185348
+      },
+      {
+       "set": "E_SRC_4",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.092616202,
+       "volume_mm3": 137.445016658432,
+       "W": 12.729635426730702
+      },
+      {
+       "set": "E_SRC_5",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0523927496,
+       "volume_mm3": 27.489003331686305,
+       "W": 1.4402244683106065
+      },
+      {
+       "set": "E_SRC_6",
+       "n_elems": 7056,
+       "BF_W_mm3": 0.138513012,
+       "volume_mm3": 10.995601332674692,
+       "W": 1.5230338593399855
+      },
+      {
+       "set": "E_SRC_7",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.085237727,
+       "volume_mm3": 27.489003331686305,
+       "W": 2.3431001614883677
+      },
+      {
+       "set": "E_SRC_8",
+       "n_elems": 3528,
+       "BF_W_mm3": 0.0140688144,
+       "volume_mm3": 659.7360799604737,
+       "W": 9.281704461947465
+      },
+      {
+       "set": "E_SRC_9",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.00433629134,
+       "volume_mm3": 270.0,
+       "W": 1.1707986618000001
+      },
+      {
+       "set": "E_SRC_10",
+       "n_elems": 5292,
+       "BF_W_mm3": 0.00683435291,
+       "volume_mm3": 76.96920932872193,
+       "W": 0.5260347397561499
+      },
+      {
+       "set": "E_SRC_11",
+       "n_elems": 1764,
+       "BF_W_mm3": 0.0155754555,
+       "volume_mm3": 2.748900333168643,
+       "W": 0.04281537481320337
+      },
+      {
+       "set": "E_SRC_12",
+       "n_elems": 14700,
+       "BF_W_mm3": 0.0257839541,
+       "volume_mm3": 252.00000000000003,
+       "W": 6.497556433200001
+      },
+      {
+       "set": "E_SRC_13",
+       "n_elems": 9800,
+       "BF_W_mm3": 0.00448780303,
+       "volume_mm3": 2160.0,
+       "W": 9.693654544800001
+      }
+     ],
+     "sum_BF_x_V_W": 1141.2894760443587
+    },
+    "deck_sum_minus_load_plus_P_loss_rel": 1.2524368695827619e-08
+   },
+   "deposit": "uniform",
+   "T_max_location": {
+    "T_C": 84.7386,
+    "x_mm": 15.0,
+    "y_mm": 15.0,
+    "z_mm": 0.28,
+    "layers": [
+     "sub_lower",
+     "tile_band"
+    ],
+    "T_die_max_C": 84.6168,
+    "T_sub_lower_max_C": 84.7386,
+    "T_sub_lower_min_C": 76.99,
+    "frd": "th_7.frd"
+   },
+   "task": {
+    "arch": "Z3",
+    "variant": "z3_land_t100_B",
+    "file": "etm_Z3_HV_S0__z3_land_t100_B.json",
+    "mechanics_ok": true,
+    "wall_s": 5021.75212931633
+   }
+  }
+ },
+ "derived": {
+  "P_Z1B_w": 142.62940729978502,
+  "P_Z2B_w": 115.18200402488185,
+  "tie_with_board_planes": {
+   "t_um": 83.29970284923051,
+   "t_um_linear_in_inverse_t": 83.35467778337365,
+   "bracketed": true,
+   "bracket_t_um": [
+    40.0,
+    100.0
+   ],
+   "method": "quadratic in 1/t through the three nearest runs",
+   "runs_t_um": [
+    10.0,
+    20.0,
+    40.0,
+    100.0
+   ],
+   "P_loss_w": [
+    203.07738466481396,
+    168.33352738783864,
+    151.35451739131338,
+    141.28946175042864
+   ],
+   "board_allocation": "2 x 35 um Cu per rail, 80 %"
+  },
+  "board_plane_coupled_increment_t40_w": 10.259742988142449,
+  "board_plane_row_t40_w": 9.722035133577007,
+  "board_plane_feedback_t40_w": 0.5377078545654417,
+  "land_only_P_loss_w_estimated": {
+   "10.0": 192.66374041340353,
+   "20.0": 158.02326115988836,
+   "40.0": 141.09477440317093,
+   "100.0": 131.05966903092016
+  },
+  "land_only_P_loss_w_t40_coupled": 141.09477440317093,
+  "tie_land_only": {
+   "t_um": 36.65432246669361,
+   "t_um_linear_in_inverse_t": 36.67524681542715,
+   "bracketed": true,
+   "bracket_t_um": [
+    20.0,
+    40.0
+   ],
+   "method": "quadratic in 1/t through the three nearest runs",
+   "basis": "coupled runs minus the board planes' coupled increment (measured at t = 40 um by the no-plane control, scaled by each run's plane row)"
+  },
+  "tie_with_2oz_central_planes": {
+   "t_um": 50.891348802121705,
+   "t_um_linear_in_inverse_t": 50.93201713552352,
+   "bracketed": true,
+   "bracket_t_um": [
+    40.0,
+    100.0
+   ],
+   "method": "quadratic in 1/t through the three nearest runs",
+   "basis": "board planes on the four 2-oz central layers (2 x 69.6 um per rail): half the 2 x 35 um plane term, same scaling"
+  },
+  "drop_30mV_one_rail": {
+   "t_um": 52.265554660956376,
+   "T_land_C": 81.10765015207782,
+   "n_rails": 1
+  },
+  "drop_30mV_VDD_plus_GND": {
+   "t_um": 104.2439456648487,
+   "T_land_C": 80.24075483535013,
+   "n_rails": 2
+  },
+  "drop_rule": "land-side static spread (max - min of the rail plane potential, FV) at the DC rail current 1000 A, rho_Cu at the coupled land-side temperature of the cooling-B runs (interpolated in 1/t)"
+ },
+ "equal_sharing_context": {
+  "network_check": {
+   "I_rms_A": 1008.0784996431805,
+   "R_ball_mohm": 0.3818755408129471,
+   "T_C": {
+    "land": 78.6242000416493,
+    "board": 71.6520746494516,
+    "bga": 77.61470126958937
+   },
+   "board_R_s_mohm_sq": 0.3651941983451761,
+   "grid_mm": 0.1,
+   "cases": [
+    {
+     "t_land_um": 10.0,
+     "land_R_s_mohm_sq": 2.6145853505978236,
+     "rails": {
+      "VDD": {
+       "equal_sharing": {
+        "board_w": 4.758660728219194,
+        "bga_w": 0.5665261688680919,
+        "land_w": 32.32053129727129,
+        "sum_w": 37.64571819435857
+       },
+       "free_network": {
+        "board_w": 0.5360791925617345,
+        "bga_w": 0.9491619158615558,
+        "land_w": 3.2872989137047974,
+        "sum_w": 4.772540022128088
+       },
+       "free_over_equal": 0.1267751088580183,
+       "ball_current_A": {
+        "equal": 1.4716474447345702,
+        "free_max": 3.442362557781388,
+        "free_min": 0.002185825481392212,
+        "free_sum": 1008.0784996431794,
+        "free_n_above_1p5A": 365,
+        "n_balls": 685,
+        "free_share_through_in_footprint_balls": 0.6706261259603393
+       }
+      },
+      "GND": {
+       "equal_sharing": {
+        "board_w": 4.854900794201765,
+        "bga_w": 0.56735442350094,
+        "land_w": 32.32053129727129,
+        "sum_w": 37.74278651497399
+       },
+       "free_network": {
+        "board_w": 0.6812207830567073,
+        "bga_w": 0.9509973398839464,
+        "land_w": 3.361718601521891,
+        "sum_w": 4.993936724462545
+       },
+       "free_over_equal": 0.13231499805880154,
+       "ball_current_A": {
+        "equal": 1.4737989760865213,
+        "free_max": 3.2474992016695117,
+        "free_min": 0.0034099459940768215,
+        "free_sum": 1008.0784996431796,
+        "free_n_above_1p5A": 364,
+        "n_balls": 684,
+        "free_share_through_in_footprint_balls": 0.5736555114867243
+       }
+      }
+     },
+     "two_rails": {
+      "equal_sharing": {
+       "board_w": 9.613561522420959,
+       "bga_w": 1.133880592369032,
+       "land_w": 64.64106259454257,
+       "sum_w": 75.38850470933257
+      },
+      "free_network": {
+       "board_w": 1.2172999756184417,
+       "bga_w": 1.9001592557455023,
+       "land_w": 6.649017515226689,
+       "sum_w": 9.766476746590634
+      },
+      "free_over_equal": 0.12954861996860395
+     }
+    },
+    {
+     "t_land_um": 20.0,
+     "land_R_s_mohm_sq": 1.3072926752989118,
+     "rails": {
+      "VDD": {
+       "equal_sharing": {
+        "board_w": 4.758660728219194,
+        "bga_w": 0.5665261688680919,
+        "land_w": 16.160265648635644,
+        "sum_w": 21.48545254572293
+       },
+       "free_network": {
+        "board_w": 0.5405199261729909,
+        "bga_w": 0.9353668138482334,
+        "land_w": 1.650463266822712,
+        "sum_w": 3.1263500068439365
+       },
+       "free_over_equal": 0.14551008409949892,
+       "ball_current_A": {
+        "equal": 1.4716474447345702,
+        "free_max": 3.3934805067692464,
+        "free_min": 0.003744822145020272,
+        "free_sum": 1008.0784996431795,
+        "free_n_above_1p5A": 365,
+        "n_balls": 685,
+        "free_share_through_in_footprint_balls": 0.6615072687066965
+       }
+      },
+      "GND": {
+       "equal_sharing": {
+        "board_w": 4.854900794201765,
+        "bga_w": 0.56735442350094,
+        "land_w": 16.160265648635644,
+        "sum_w": 21.58252086633835
+       },
+       "free_network": {
+        "board_w": 0.6858088682046624,
+        "bga_w": 0.9365221405833909,
+        "land_w": 1.6880597335321212,
+        "sum_w": 3.3103907423201746
+       },
+       "free_over_equal": 0.15338295108442582,
+       "ball_current_A": {
+        "equal": 1.4737989760865213,
+        "free_max": 3.2080146581336995,
+        "free_min": 0.005533292073446408,
+        "free_sum": 1008.0784996431796,
+        "free_n_above_1p5A": 364,
+        "n_balls": 684,
+        "free_share_through_in_footprint_balls": 0.5635044362973346
+       }
+      }
+     },
+     "two_rails": {
+      "equal_sharing": {
+       "board_w": 9.613561522420959,
+       "bga_w": 1.133880592369032,
+       "land_w": 32.32053129727129,
+       "sum_w": 43.06797341206128
+      },
+      "free_network": {
+       "board_w": 1.2263287943776533,
+       "bga_w": 1.8718889544316242,
+       "land_w": 3.338523000354833,
+       "sum_w": 6.436740749164111
+      },
+      "free_over_equal": 0.14945538968317204
+     }
+    },
+    {
+     "t_land_um": 40.0,
+     "land_R_s_mohm_sq": 0.6536463376494559,
+     "rails": {
+      "VDD": {
+       "equal_sharing": {
+        "board_w": 4.758660728219194,
+        "bga_w": 0.5665261688680919,
+        "land_w": 8.080132824317822,
+        "sum_w": 13.405319721405109
+       },
+       "free_network": {
+        "board_w": 0.5474896421941766,
+        "bga_w": 0.9186656248389513,
+        "land_w": 0.832209369529442,
+        "sum_w": 2.29836463656257
+       },
+       "free_over_equal": 0.17145168368439792,
+       "ball_current_A": {
+        "equal": 1.4716474447345702,
+        "free_max": 3.3373352374461547,
+        "free_min": 0.0067995970441016105,
+        "free_sum": 1008.0784996431793,
+        "free_n_above_1p5A": 365,
+        "n_balls": 685,
+        "free_share_through_in_footprint_balls": 0.6506100563059957
+       }
+      },
+      "GND": {
+       "equal_sharing": {
+        "board_w": 4.854900794201765,
+        "bga_w": 0.56735442350094,
+        "land_w": 8.080132824317822,
+        "sum_w": 13.502388042020527
+       },
+       "free_network": {
+        "board_w": 0.6930154353084473,
+        "bga_w": 0.9190707867257342,
+        "land_w": 0.8513737870374208,
+        "sum_w": 2.4634600090716026
+       },
+       "free_over_equal": 0.18244624590888034,
+       "ball_current_A": {
+        "equal": 1.4737989760865213,
+        "free_max": 3.163541255821896,
+        "free_min": 0.009485099749436617,
+        "free_sum": 1008.0784996431794,
+        "free_n_above_1p5A": 364,
+        "n_balls": 684,
+        "free_share_through_in_footprint_balls": 0.5515006721616291
+       }
+      }
+     },
+     "two_rails": {
+      "equal_sharing": {
+       "board_w": 9.613561522420959,
+       "bga_w": 1.133880592369032,
+       "land_w": 16.160265648635644,
+       "sum_w": 26.907707763425634
+      },
+      "free_network": {
+       "board_w": 1.240505077502624,
+       "bga_w": 1.8377364115646855,
+       "land_w": 1.6835831565668629,
+       "sum_w": 4.761824645634173
+      },
+      "free_over_equal": 0.17696879598591056
+     }
+    },
+    {
+     "t_land_um": 100.0,
+     "land_R_s_mohm_sq": 0.2614585350597824,
+     "rails": {
+      "VDD": {
+       "equal_sharing": {
+        "board_w": 4.758660728219194,
+        "bga_w": 0.5665261688680919,
+        "land_w": 3.2320531297271287,
+        "sum_w": 8.557240026814414
+       },
+       "free_network": {
+        "board_w": 0.5594936826540639,
+        "bga_w": 0.897383846155698,
+        "land_w": 0.33867846576106925,
+        "sum_w": 1.795555994570831
+       },
+       "free_over_equal": 0.20982886876427362,
+       "ball_current_A": {
+        "equal": 1.4716474447345702,
+        "free_max": 3.2806960165686094,
+        "free_min": 0.013374543942004156,
+        "free_sum": 1008.0784996431951,
+        "free_n_above_1p5A": 364,
+        "n_balls": 685,
+        "free_share_through_in_footprint_balls": 0.6370276213232153
+       }
+      },
+      "GND": {
+       "equal_sharing": {
+        "board_w": 4.854900794201765,
+        "bga_w": 0.56735442350094,
+        "land_w": 3.2320531297271287,
+        "sum_w": 8.654308347429833
+       },
+       "free_network": {
+        "board_w": 0.7054114711856335,
+        "bga_w": 0.8969534597078611,
+        "land_w": 0.3466190085311848,
+        "sum_w": 1.9489839394246795
+       },
+       "free_over_equal": 0.22520389396611817,
+       "ball_current_A": {
+        "equal": 1.4737989760865213,
+        "free_max": 3.11237990361397,
+        "free_min": 0.0175388633190676,
+        "free_sum": 1008.0784996431964,
+        "free_n_above_1p5A": 364,
+        "n_balls": 684,
+        "free_share_through_in_footprint_balls": 0.5368110644367886
+       }
+      }
+     },
+     "two_rails": {
+      "equal_sharing": {
+       "board_w": 9.613561522420959,
+       "bga_w": 1.133880592369032,
+       "land_w": 6.464106259454257,
+       "sum_w": 17.211548374244245
+      },
+      "free_network": {
+       "board_w": 1.2649051538396974,
+       "bga_w": 1.794337305863559,
+       "land_w": 0.6852974742922541,
+       "sum_w": 3.7445399339955108
+      },
+      "free_over_equal": 0.2175597367868963
+     }
+    }
+   ]
+  },
+  "grid_check_t40_0p05mm": {
+   "free_over_equal": 0.19519841767560242,
+   "two_rails": {
+    "equal_sharing": {
+     "board_w": 9.705677529755683,
+     "bga_w": 1.133880592369032,
+     "land_w": 16.160265648635644,
+     "sum_w": 26.999823770760358
+    },
+    "free_network": {
+     "board_w": 1.4197720901480104,
+     "bga_w": 1.8104118151305777,
+     "land_w": 2.040138972293952,
+     "sum_w": 5.270322877572539
+    },
+    "free_over_equal": 0.19519841767560242
+   }
+  },
+  "temperatures_from": "etm_Z3_HV_S0__z3_plate_tim.json",
+  "Z3B_free_sharing_estimate": {
+   "10.0": {
+    "P_Z3B_free_sharing_est_w": 133.095860355319,
+    "ahead_of_Z1B_w": 9.533546944466025
+   },
+   "20.0": {
+    "P_Z3B_free_sharing_est_w": 129.76612435789247,
+    "ahead_of_Z1B_w": 12.86328294189255
+   },
+   "40.0": {
+    "P_Z3B_free_sharing_est_w": 128.09120825436253,
+    "ahead_of_Z1B_w": 14.538199045422488
+   },
+   "100.0": {
+    "P_Z3B_free_sharing_est_w": 127.07392354272385,
+    "ahead_of_Z1B_w": 15.555483757061168
+   }
+  },
+  "note": "free sharing puts ~365 of ~685 balls per rail above the 1.5 A criterion that set the 667-ball count (max ~3.3-3.4 A); equal sharing is what that criterion presumes"
+ }
+}

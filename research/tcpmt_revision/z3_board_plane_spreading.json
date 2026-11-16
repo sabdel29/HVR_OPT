@@ -1,0 +1,136 @@
+{
+ "model": "Z3 1 V spreading shape factors for the coupled ledger (TCPMT revision).",
+ "grid_mm": 0.1,
+ "land_side": {
+  "committed": {
+   "kappa_one_rail": 0.012164295548097444,
+   "kappa_V_one_rail": 0.05949803091271717,
+   "source": "research/tcpmt_revision/z3_landside_spreading.json",
+   "solved_point": {
+    "t_cu_um": 10.0,
+    "T_C": 90.0,
+    "occupancy": 0.8,
+    "I_rail_A": 1000.0,
+    "R_s_mohm_sq": 2.7414650000000003,
+    "P_one_rail_w": 33.347990494780696,
+    "dV_one_rail_mV": 163.11176931611223
+   },
+   "grid_mm": 0.1,
+   "occupancy": 0.8,
+   "balls_per_rail": 685,
+   "balls_inside_footprints": 245,
+   "P_two_rails_x_t_W_um_at_solved_point": 666.959809895614,
+   "dV_one_rail_x_t_mV_um_at_solved_point": 1631.1176931611224
+  },
+  "resolve_check_rel": {
+   "kappa": 2.731148640577885e-14,
+   "kappa_V": 4.141131881851834e-14
+  },
+  "loss_fraction_in_footprints": 0.3751229452280086,
+  "area_fraction_footprints": 0.30617777777777777,
+  "grid_check": {
+   "0.05": {
+    "kappa": 0.012355102067676208,
+    "kappa_V": 0.058991155888517784
+   },
+   "kappa_change_rel": 0.015685784583605145
+  }
+ },
+ "board_planes": {
+  "allocation": {
+   "planes_per_rail": 2,
+   "t_plane_um": 35.0,
+   "t_cu_per_rail_um": 70.0,
+   "occupancy": 0.8,
+   "status": "DECLARED (not in the Z3 design record)",
+   "basis": "four of the fourteen 1-oz layers of the 18-layer schedule (pcb_h1: 14 x 1 oz + 4 x 2 oz) carry the two 1 V rails; the four 2-oz central planes instead would halve the loss"
+  },
+  "via_field": {
+   "r_mm": 0.125,
+   "n_vdd": 13,
+   "n_gnd": 12,
+   "pitch_um": 400.0,
+   "d_drill_um": 250.0
+  },
+  "rails": {
+   "VDD": {
+    "0.1": {
+     "kappa": 0.012822484085857027,
+     "kappa_V": 0.06057552424212608,
+     "loss_fraction_in_footprints": 0.39667069852955367,
+     "area_fraction_footprints": 0.30617777777777777,
+     "grid_mm": 0.1,
+     "n_vias": 637,
+     "n_balls": 685,
+     "grid_cells_per_via": [
+      4,
+      6
+     ]
+    },
+    "0.05": {
+     "kappa": 0.012943007825953957,
+     "kappa_V": 0.05992568801600592,
+     "loss_fraction_in_footprints": 0.3960444245915587,
+     "area_fraction_footprints": 0.30617777777777777,
+     "grid_mm": 0.05,
+     "n_vias": 637,
+     "n_balls": 685,
+     "grid_cells_per_via": [
+      16,
+      21
+     ]
+    }
+   },
+   "GND": {
+    "0.1": {
+     "kappa": 0.013081808459869532,
+     "kappa_V": 0.05997986795657644,
+     "loss_fraction_in_footprints": 0.4051532189891111,
+     "area_fraction_footprints": 0.30617777777777777,
+     "grid_mm": 0.1,
+     "n_vias": 588,
+     "n_balls": 684,
+     "grid_cells_per_via": [
+      4,
+      6
+     ]
+    },
+    "0.05": {
+     "kappa": 0.013209496581378504,
+     "kappa_V": 0.05937318182947645,
+     "loss_fraction_in_footprints": 0.40417025156185027,
+     "area_fraction_footprints": 0.30617777777777777,
+     "grid_mm": 0.05,
+     "n_vias": 588,
+     "n_balls": 684,
+     "grid_cells_per_via": [
+      16,
+      21
+     ]
+    }
+   }
+  },
+  "kappa_two_rails": 0.025904292545726557,
+  "kappa_V_VDD": 0.06057552424212608,
+  "kappa_V_GND": 0.05997986795657644,
+  "kappa_two_rails_grid_check": 0.02615250440733246,
+  "grid_check_change_rel": 0.009581881503529122,
+  "at_70C_1000A": {
+   "R_s_mohm_sq": 0.36322321428571425,
+   "P_two_rails_w": 9.409040402256267,
+   "dV_VDD_mV": 22.002436622267236
+  },
+  "at_90C_1000A": {
+   "R_s_mohm_sq": 0.38708392857142865,
+   "P_two_rails_w": 10.02713532546341,
+   "dV_VDD_mV": 23.447811898915976
+  }
+ },
+ "used_in_coupled_ledger": {
+  "land_kappa_one_rail": 0.012164295548097444,
+  "land_kappa_V_one_rail": 0.05949803091271717,
+  "board_kappa_two_rails": 0.025904292545726557,
+  "board_kappa_V_VDD": 0.06057552424212608,
+  "board_kappa_V_GND": 0.05997986795657644
+ }
+}
