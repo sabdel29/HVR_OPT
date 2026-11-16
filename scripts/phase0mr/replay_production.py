@@ -52,13 +52,31 @@ TRANSITION_GEOM = {
 _DESIGN_CACHE: dict = {}
 
 
+def _z1_design():
+    """scripts/phase0nw/z1_design: the converter a Z1 evaluation runs with (TCPMT revision)."""
+    if str(R / "scripts" / "phase0nw") not in sys.path:
+        sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+    import z1_design
+    return z1_design
+
+
 def compiled_design():
     if "d" not in _DESIGN_CACHE:
-        d, g, why = kw1.design_1kw()
+        Z1D = _z1_design()
+        if Z1D.is_default():
+            d, g, why = kw1.design_1kw()
+        else:                       # a count-optimal candidate (HVR_Z1_CONFIG), compiled
+            d, why = Z1D.compiled(), "realizable"    # and checked against its config
         if d is None:
             raise RuntimeError(f"no compiled converter: {why}")
         _DESIGN_CACHE["d"] = d
     return _DESIGN_CACHE["d"]
+
+
+def n_vr() -> int:
+    """Regulator count of the compiled design: N_VR (49) on the production path."""
+    Z1D = _z1_design()
+    return N_VR if Z1D.is_default() else Z1D.n_vr()
 
 
 def converter_terms(t_c: float) -> dict:
@@ -81,7 +99,7 @@ def converter_terms(t_c: float) -> dict:
         I_out=d.i_out_a, V_out=d.v_out, V_in=d.v_in, f_sw=d.f_sw_hz))
     dec = converter_decomposition(d.arch, hs, ls, ind, d.capacitor, d.i_out_a,
                                   d.v_out, d.v_in, d.f_sw_hz, lr)
-    dec["p_conv_total_w"] = lr.total_loss * N_VR
+    dec["p_conv_total_w"] = lr.total_loss * n_vr()
     return dec
 
 

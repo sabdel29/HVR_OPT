@@ -45,7 +45,10 @@ def load_z1_config(path=None) -> dict:
     which is how two architectures that must stay comparable drift apart unnoticed.
     """
     import yaml
-    p = Path(path) if path else Z1_CFG
+    import z1_design as Z1D
+    # no path: the Z1 config in force -- the production file unless HVR_Z1_CONFIG selects
+    # a count-optimal candidate (z1_design.config_path)
+    p = Path(path) if path else Z1D.config_path()
     c = yaml.safe_load(p.read_text())
     conv = c["converter"]
     tiers = conv["tiers_from_substrate_upward"]

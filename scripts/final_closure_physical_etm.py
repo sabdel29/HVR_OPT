@@ -51,6 +51,7 @@ for _p in ("scripts/phase0nw", "scripts/phase0m", "scripts/phase0mr", "scripts/p
         sys.path.insert(0, str(R / _p))
 
 import final_closure_ledger as FL                                   # noqa: E402
+import z1_design as Z1D                                             # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from hvr_scratch import path as scratch                             # noqa: E402
 import pkg_rdl_network as _K                                        # noqa: E402
@@ -61,6 +62,12 @@ _K.register_architecture("Z3", None)
 
 OUT = R / "research" / "final_closure"
 WD = Path(os.environ["FC_WORKDIR"]) if "FC_WORKDIR" in os.environ else scratch("fc_etm")
+#: TCPMT revision: a non-default Z1 design (HVR_Z1_CONFIG, scripts/phase0nw/z1_design.py)
+#: writes its case files to its config's results directory, named with its design tag, and
+#: never into research/final_closure; the production names are unchanged
+DESIGN_TAG = "" if Z1D.is_default() else Z1D.tag()
+if not Z1D.is_default():
+    OUT = Z1D.results_dir()
 ET_TOL_K = 0.25            # declared before any physical result was read
 #: mechanical mesh convergence, DECLARED before the h = 0.8 mm runs were read:
 #: relative change of T_max, die warpage and critical-joint du between h_xy 1.1 and 0.8
@@ -106,6 +113,8 @@ EXTRA_DEPOSITS = None
 # --- material corrections -------------------------------------------------
 TSV_N_PER_CELL = 1444      # the adopted 'A_same_field' fabric (tsv_fields)
 TSV_D_MM = 0.030
+if not Z1D.is_default():   # the same maximum-density rule on the candidate's cell side
+    TSV_N_PER_CELL = Z1D.tsv_n_per_cell()
 
 
 def tsv_tile_fraction(tile_side_mm):
@@ -223,11 +232,21 @@ def refine_tag(refine):
     return "" if tuple(refine) == (1, 1) else f"_r{refine[0]}{refine[1]}"
 
 
+def design_suffix():
+    """'' on the production design; '_<tag>' for a non-default Z1 design."""
+    return f"_{DESIGN_TAG}" if DESIGN_TAG else ""
+
+
 def case_path(arch, scen, h_xy=None, refine=None):
     """The ETM case file; the production mesh unless a level is named explicitly."""
     h_xy = PRODUCTION_H_XY if h_xy is None else h_xy
     refine = PRODUCTION_REFINE if refine is None else refine
-    return OUT / f"etm_{arch}_{scen}_h{h_xy}{refine_tag(refine)}.json"
+    return OUT / f"etm_{arch}{design_suffix()}_{scen}_h{h_xy}{refine_tag(refine)}.json"
+
+
+def work_dir(arch, scen, h_xy, refine):
+    """The scratch directory of one case (the design tag keeps a candidate apart)."""
+    return WD / f"{arch}{design_suffix()}_{scen}_h{h_xy}{refine_tag(refine)}"
 
 
 def current_lineage(r):
@@ -251,6 +270,7 @@ def production_label():
 def build(arch, h_xy=1.1, refine=(1, 1)):
     import physical_package as PP
     import production_et as PE
+    Z1D.require_z1(arch, "build")
     with _NestedRefinement(*refine):
         if arch == "Z1":
             m, mats, st, tiles = PP.build_physical_z1(h_xy=h_xy)
@@ -543,7 +563,9 @@ def temperature_regions(arch):
     while the device losses were deposited only inside the 49 cells -- 7.8 K below the
     in-cell mean for the direct-fed Z2 and 1.2 K above it for Z1 at HV-S0."""
     lay = FL.LAYERS[arch]
-    conv_layers = [lay["hs"], lay["ls"], lay["caps"], lay["ind"]] + lay["rdl"]
+    # a separate output-capacitor tier (a non-default design) is converter metal's region too
+    conv_layers = ([lay["hs"], lay["ls"], lay["caps"], lay["ind"]]
+                   + ([lay["cout"]] if "cout" in lay else []) + lay["rdl"])
     reg = {"conv": (conv_layers, True),
            "hs": ([lay["hs"]], True), "ls": ([lay["ls"]], True),
            "ind": ([lay["ind"]], True), "caps": ([lay["caps"]], True),
@@ -576,7 +598,7 @@ def run_et(arch, scen, h_xy=1.1, refine=(1, 1)):
     regions = {k: region_nodes(m, tiles, *v) for k, v in temperature_regions(arch).items()}
     temps = {k: (60.0 if k == "bga" else 85.0) for k in regions}
     hist, th, L = [], None, None
-    wd = WD / f"{arch}_{scen}_h{h_xy}{refine_tag(refine)}"
+    wd = work_dir(arch, scen, h_xy, refine)
     for it in range(ET_MAX_ITER):
         L = FL.self_consistent(arch, scen, temps)
         dep = deposits_from_ledger(arch, L)
@@ -685,9 +707,11 @@ def run_case(arch, scen, h_xy=1.1, do_mech=True, refine=(1, 1), solver="", threa
             "board_underside_outside_converter": "production h_bottom natural convection",
             "q_split_W": {"top": th["q_top_W"], "converter_plate": th.get("q_bottom_plate_W"),
                           "board_bottom": th["q_bot_W"]}}
+    if not Z1D.is_default():
+        res["design"] = Z1D.summary()
     # write THIS case now, and again after mechanics: a failure in another worker, or a
     # long structural solve, must not withhold the converged thermal state
-    f = OUT / f"etm_{arch}_{scen}_h{h_xy}{refine_tag(refine)}.json"
+    f = case_path(arch, scen, h_xy, refine)
     f.write_text(json.dumps(res, indent=1, default=float))
     if do_mech:
         try:

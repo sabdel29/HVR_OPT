@@ -47,12 +47,17 @@ PLACE = {"uniform": "uniform", "compact": "compact", "asymmetric": "asymmetric"}
 
 
 def design_1kw(m_vr: int = M_VR, j: float = J_TARGET, h_sub_mm: float = 1.5,
-               bound: str = BOUND):
-    """Compile a converter that PHYSICALLY FITS the substrate, or return None."""
+               bound: str = BOUND, topology: tuple | None = None):
+    """Compile a converter that PHYSICALLY FITS the substrate, or return None.
+
+    TCPMT revision: parameterized by regulator count AND topology. `topology` = (N, K, K_A)
+    restricts the pick to that architecture (the count-optimal DSE re-synthesizes the
+    topology per count); None keeps the historical pick, so design_1kw() is unchanged."""
     fit, budget = fitting_inductors(h_sub_mm, bound)
     if not fit:
         return None, None, f"no inductor fits h_sub={h_sub_mm*1e3:.0f} um (budget {budget:.0f} um)"
-    d = compile_hvr(P_LOAD_W / V_POL / m_vr, j, inductor_library=fit)
+    d = compile_hvr(P_LOAD_W / V_POL / m_vr, j, inductor_library=fit,
+                    **({} if topology is None else {"architecture": tuple(topology)}))
     if d is None:
         return None, None, f"no converter from the {len(fit)} fitting inductors"
     g = geom_check(d, h_sub_mm, bound)
