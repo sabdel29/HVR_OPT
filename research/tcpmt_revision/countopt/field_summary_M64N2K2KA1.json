@@ -1,0 +1,204 @@
+{
+ "design": {
+  "config": "configs/phase0nx/z1_physical_m64.yaml",
+  "tag": "M64N2K2KA1",
+  "production": false,
+  "n_vr": 64,
+  "topology": {
+   "N": 2,
+   "K": 2,
+   "K_A": 1
+  },
+  "label": "N2K2KA1_J3.5",
+  "hs_part": "EPC2014C",
+  "ls_part": "EPC2057",
+  "inductor": "Shared_Core_UIC_250_nH",
+  "capacitor": "Murata-GCM21-10uF-25V",
+  "f_sw_hz": 480112.6858341158,
+  "cell_area_mm2": 3.74,
+  "cell_side_mm": 1.9339079605813716,
+  "conversion_25C_W": 96.05363352729304,
+  "p_conv_85C_legacy_alpha_W": 132.56290617245602,
+  "tsv_per_cell": 961,
+  "tiers": [
+   [
+    "bottom_substrate_rdl",
+    10.0
+   ],
+   [
+    "gan_hs_EPC2014C",
+    685.0
+   ],
+   [
+    "interlayer_rdl",
+    10.0
+   ],
+   [
+    "flying_caps",
+    100.0
+   ],
+   [
+    "interlayer_rdl",
+    10.0
+   ],
+   [
+    "gan_ls_EPC2057",
+    638.0
+   ],
+   [
+    "interlayer_rdl",
+    10.0
+   ],
+   [
+    "inductor",
+    500.0
+   ],
+   [
+    "interlayer_rdl",
+    10.0
+   ],
+   [
+    "output_caps",
+    100.0
+   ],
+   [
+    "output_rdl",
+    10.0
+   ]
+  ],
+  "package_network": "research/tcpmt_revision/countopt/package_network_M64N2K2KA1.json"
+ },
+ "frd": "/home/beams0/SABDELZAHER/ETM_project/scratch_countopt/fc_etm/Z1_M64N2K2KA1_HV_S0_h1.1_r21/et4/th_0.frd",
+ "T_max_C": 129.835,
+ "T_max_at_mm": [
+  9.71304602,
+  1.387578003,
+  0.31
+ ],
+ "T_max_layers": [
+  "z1conv_0_bottom_substrate_rdl",
+  "z1conv_1_gan_hs_EPC2014C"
+ ],
+ "n_cells": 64,
+ "layers": {
+  "board": {
+   "z0_um": -2699.9999999999995,
+   "z1_um": -299.99999999999983,
+   "T_max_C": 129.521,
+   "T_mean_C": 124.3540260351054
+  },
+  "bga": {
+   "z0_um": -299.99999999999983,
+   "z1_um": 1.6653345369377348e-13,
+   "T_max_C": 129.641,
+   "T_mean_C": 126.96386722096246
+  },
+  "sub_lower": {
+   "z0_um": 0.0,
+   "z1_um": 279.99999999999994,
+   "T_max_C": 129.652,
+   "T_mean_C": 126.95987370874275
+  },
+  "tile_band": {
+   "z0_um": 279.99999999999994,
+   "z1_um": 300.0,
+   "T_max_C": 129.653,
+   "T_mean_C": 126.95872809271856
+  },
+  "z1conv_0_bottom_substrate_rdl": {
+   "z0_um": 300.0,
+   "z1_um": 310.0,
+   "T_max_C": 129.835,
+   "T_mean_C": 126.95061136306374,
+   "T_in_cell_mean_C": 127.02899218750001
+  },
+  "z1conv_1_gan_hs_EPC2014C": {
+   "z0_um": 310.0,
+   "z1_um": 995.0000000000001,
+   "T_max_C": 129.835,
+   "T_mean_C": 126.3159142521206,
+   "T_in_cell_mean_C": 126.94136604166667
+  },
+  "z1conv_2_interlayer_rdl": {
+   "z0_um": 995.0000000000001,
+   "z1_um": 1005.0000000000001,
+   "T_max_C": 129.752,
+   "T_mean_C": 125.45059385235575,
+   "T_in_cell_mean_C": 126.39099218750002
+  },
+  "z1conv_3_flying_caps": {
+   "z0_um": 1005.0000000000001,
+   "z1_um": 1105.0000000000002,
+   "T_max_C": 129.072,
+   "T_mean_C": 125.12361661207693,
+   "T_in_cell_mean_C": 125.89034187500002
+  },
+  "z1conv_4_interlayer_rdl": {
+   "z0_um": 1105.0000000000002,
+   "z1_um": 1115.0000000000002,
+   "T_max_C": 128.987,
+   "T_mean_C": 124.78482917611488,
+   "T_in_cell_mean_C": 125.36570124999999
+  },
+  "z1conv_5_gan_ls_EPC2057": {
+   "z0_um": 1115.0000000000002,
+   "z1_um": 1753.0,
+   "T_max_C": 128.697,
+   "T_mean_C": 122.9272772318804,
+   "T_in_cell_mean_C": 124.14739479166668
+  },
+  "z1conv_6_interlayer_rdl": {
+   "z0_um": 1753.0,
+   "z1_um": 1763.0000000000002,
+   "T_max_C": 128.559,
+   "T_mean_C": 119.59106386999244,
+   "T_in_cell_mean_C": 119.5121959375
+  },
+  "z1conv_7_inductor": {
+   "z0_um": 1763.0000000000002,
+   "z1_um": 2263.0,
+   "T_max_C": 128.557,
+   "T_mean_C": 114.61700172167633,
+   "T_in_cell_mean_C": 113.066551875
+  },
+  "z1conv_8_interlayer_rdl": {
+   "z0_um": 2263.0,
+   "z1_um": 2272.9999999999995,
+   "T_max_C": 128.512,
+   "T_mean_C": 109.11885158730159,
+   "T_in_cell_mean_C": 106.19542578125
+  },
+  "z1conv_9_output_caps": {
+   "z0_um": 2272.9999999999995,
+   "z1_um": 2373.0,
+   "T_max_C": 128.512,
+   "T_mean_C": 106.51193130091544,
+   "T_in_cell_mean_C": 101.5553625625
+  },
+  "z1conv_10_output_rdl": {
+   "z0_um": 2373.0,
+   "z1_um": 2382.9999999999995,
+   "T_max_C": 128.51,
+   "T_mean_C": 103.87672598891407,
+   "T_in_cell_mean_C": 96.89773265625001
+  },
+  "interface": {
+   "z0_um": 2382.9999999999995,
+   "z1_um": 2392.9999999999995,
+   "T_max_C": 97.9056,
+   "T_mean_C": 91.93349142637447
+  },
+  "die": {
+   "z0_um": 2392.9999999999995,
+   "z1_um": 2692.999999999999,
+   "T_max_C": 97.482,
+   "T_mean_C": 90.59887327181853
+  },
+  "tim": {
+   "z0_um": 2692.999999999999,
+   "z1_um": 2742.999999999999,
+   "T_max_C": 94.2075,
+   "T_mean_C": 69.4982426566705
+  }
+ }
+}

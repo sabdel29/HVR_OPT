@@ -326,6 +326,50 @@ def cmd_compare(a):
     cmp_["dse_electrical_only"] = {
         m: {k: dse["counts"][m][k] for k in ("conversion_total_W", "routing_W", "total_W")}
         for m in ("49", "64", "76")}
+    # the electrical difference with the coupling removed: the candidate's ledger at the
+    # 49-cell case's converged temperatures (each region key at the production value)
+    import final_closure_ledger as FL
+    hp = p["et_history"][-1]
+    t49 = {k: hp[f"T_{k}_C"] for k in ("conv", "hs", "ls", "ind", "caps", "bga", "sub",
+                                       "interface") if f"T_{k}_C" in hp}
+    Lm = FL.self_consistent("Z1", SCEN, t49)
+    tm = {r["term"]: r["P_w"] for r in Lm["rows"]}
+    cmp_["candidate_at_49_temperatures"] = {
+        "temperatures_C": t49, "P_loss_W": Lm["P_loss_w"],
+        "groups": {g: sum(tm.get(k, 0.0) for k in ks) for g, ks in groups.items()},
+        "delta_vs_49_W": Lm["P_loss_w"] - pp["loss"]["total"],
+        "note": "same ledger, the production converged region temperatures: the electrical "
+                "penalty of the design alone; the rest of delta P_loss is the coupling"}
+    # 48 V BGA closure at the candidate's own converged current (1.5 A/ball criterion):
+    # the level-1 screen over every legal count, and the converged count's level-3 peak
+    scr = {int(k): v for k, v in net_c["screen_level1_peak_fraction"].items()}
+    ok = sorted(n for n, f in scr.items() if f * i_c <= 1.5)
+    cmp_["candidate"]["balls_48V"].update({
+        "screen_min_passing_n_per_rail": ok[0] if ok else None,
+        "screen_larger_counts_that_fail": [n for n, f in sorted(scr.items())
+                                           if ok and n > ok[0] and f * i_c > 1.5],
+        "production_closure_HV_S0": net_p["closure"].get("Z1__HV_S0")})
+    # mesh: the candidate's tile is 1.93 mm, so r21 puts 4 elements across it where the
+    # 49-cell tile gets 6; the r31 E-T level (thermal only) brackets that
+    f31 = E.case_path("Z1", SCEN, 1.1, (3, 1))
+    p31 = R / "research" / "final_closure" / "etm_Z1_HV_S0_h1.1_r31.json"
+    if f31.exists():
+        c31 = json.loads(f31.read_text())
+        q31 = json.loads(p31.read_text()) if p31.exists() else None
+
+        def rel(a_, b_):
+            return (a_ - b_) / b_
+        cmp_["mesh_r21_to_r31"] = {
+            "candidate": {"T_max_rel": rel(c31["thermal"]["T_max_C"], c["thermal"]["T_max_C"]),
+                          "P_loss_rel": rel(c31["P_loss_w"], c["P_loss_w"]),
+                          "T_max_r31_C": c31["thermal"]["T_max_C"],
+                          "P_loss_r31_W": c31["P_loss_w"],
+                          "et_converged_r31": c31["et_converged"],
+                          "n_elems_r31": c31["thermal"]["n_elems"]},
+            "production_49": None if q31 is None else {
+                "T_max_rel": rel(q31["thermal"]["T_max_C"], p["thermal"]["T_max_C"]),
+                "P_loss_rel": rel(q31["P_loss_w"], p["P_loss_w"])},
+            "declared_tolerance_rel": E.MESH_TOL_REL}
     out = R / "research" / "tcpmt_revision" / "countopt" / f"etm_compare_{Z1D.tag()}_vs_49.json"
     out.write_text(json.dumps(cmp_, indent=1, default=float))
     print(json.dumps(d, indent=1))

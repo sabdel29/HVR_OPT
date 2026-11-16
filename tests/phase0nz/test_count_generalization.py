@@ -266,3 +266,39 @@ def test_candidate_energy_balance_and_regions(cand):
 
 def test_candidate_process_refuses_other_architectures(cand):
     assert cand["guard"] is True
+
+
+# ------------------------------------------------------------------ the committed results
+CASE64 = CO / "etm_Z1_M64N2K2KA1_HV_S0_h1.1_r21.json"
+
+
+@pytest.mark.skipif(not CASE64.exists(), reason="the candidate case has not been run")
+def test_candidate_case_is_the_production_chain_and_complete():
+    c = json.loads(CASE64.read_text())
+    assert c["design"]["n_vr"] == 64 and c["design"]["tag"] == "M64N2K2KA1"
+    assert c["design"]["config"] == "configs/phase0nx/z1_physical_m64.yaml"
+    assert (c["arch"], c["scenario"], c["h_xy_mm"], c["refine"]) == ("Z1", "HV_S0", 1.1, [2, 1])
+    assert c["architecture_variant"] == "Z1_EMBEDDED" and c["hv_feed"] == "BGA_FED"
+    assert c["et_converged"] is True
+    h = c["et_history"][-1]
+    assert h["max_dT_K"] < 0.25 and h["dP_rel"] < 1e-3
+    assert abs(c["thermal"]["energy_residual_rel"]) < 1e-4
+    assert abs(c["thermal"]["deposit_residual_rel"]) < 1e-9
+    m = c["mechanics"]
+    assert m["structural_solver"] == "ITERATIVE CHOLESKY" and m["structural_threads"] in (1, 2)
+    js = m["joint_search"]
+    assert js["n_sites"] == js["n_evaluated"] == 1369
+    assert js["critical"]["du_um"] == max(r["du_um"] for r in js["ranked"])
+    loc = c.get("local")
+    if loc is not None:
+        assert loc["error"] is None and loc["d_peeq_per_cycle"] > 0
+        assert (loc["du_um"], loc["T_joint_C"]) == (js["critical"]["du_um"], js["critical"]["T_C"])
+        assert loc["level"] == "L0" and loc["split_steps"] is True
+
+
+def test_local_harness_reproduces_the_49_cell_l0_before_it_is_trusted():
+    f = CO / "local_control_49.json"
+    if not f.exists():
+        pytest.skip("control not run")
+    j = json.loads(f.read_text())
+    assert j["rerun"]["error"] is None and j["dev_rel"] < 1e-3
