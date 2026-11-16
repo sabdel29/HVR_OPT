@@ -68,10 +68,14 @@ RUNS = {
     "z3_land_t100_B": (100.0, "B", True),
     "z3_land_t10_B_fvmap": (10.0, "B", True),
     "z3_land_t40_B_fvmap": (40.0, "B", True),
+    "z3_land_t20_B_fvmap": (20.0, "B", True),
+    "z3_land_t100_B_fvmap": (100.0, "B", True),
+    "z3_land_t40_A_fvmap": (40.0, "A", True),
 }
 #: deposit-distribution sensitivity: the two spreading losses deposited along their FV loss
 #: maps (fv_bins) instead of uniformly over the whole layer; everything else as the base run
-FVMAP = {"z3_land_t10_B_fvmap", "z3_land_t40_B_fvmap"}
+FVMAP = {"z3_land_t10_B_fvmap", "z3_land_t40_B_fvmap", "z3_land_t20_B_fvmap",
+         "z3_land_t100_B_fvmap", "z3_land_t40_A_fvmap"}
 FVMAP_BINS = 32
 COOLING = {"A": S.v_z3_top_only, "B": S.v_z3_plate_tim}
 COOLING_NAME = {"A": "z3_top_only", "B": "z3_plate_tim"}

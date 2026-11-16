@@ -9,6 +9,9 @@ research/tcpmt_revision/z3_land_coupled.json:
               the same cooling tier, the within-tier ranking, and the deposit check
   derived     the land-side copper at which coupled Z3-B ties Z1-B, and the copper that
               keeps the land-side static spread within 30 mV (3 % of 1 V)
+  deposit     the *_fvmap runs against their uniform-deposit twins (T_max, warpage, joint)
+  sharing     the equal-ball-sharing assumption against a free (Kirchhoff) division of the
+              board-plane + BGA + land-side network (tcpmt_z3land_fv.network_check), context
 
 R* is computed exactly as scripts/tcpmt_tier_feed.py does (final_closure_direct_feed.
 platform_point / crossover on the case's converged temperatures, Z1 of the same tier as the
@@ -298,6 +301,7 @@ def main():
         rec["task"] = z.get("task")
         out["runs"][name] = rec
     out["derived"] = derived(out, refs)
+    out["table"] = compact_table(out)
     out["equal_sharing_context"] = sharing_context(refs)
     OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
     table(out)
@@ -402,6 +406,51 @@ def sharing_context(refs):
             "note": "free sharing puts ~365 of ~685 balls per rail above the 1.5 A criterion "
                     "that set the 667-ball count (max ~3.3-3.4 A); equal sharing is what that "
                     "criterion presumes"}
+
+
+def compact_table(out):
+    """One row per primary run (uniform deposit), with its FV-map deposit counterpart where
+    it exists: the numbers a results table needs."""
+    rows = []
+    for name, r in out["runs"].items():
+        if name in V.FVMAP:
+            continue
+        cj = r["critical_joint"] or {}
+        loc = r.get("T_max_location") or {}
+        row = {"run": name, "file": r["file"], "cooling_tier": r["cooling_tier"],
+               "t_land_um": r["t_land_um"], "board_planes_in_ledger": r["board_planes_in_ledger"],
+               "P_loss_w": r["P_loss_w"], "P_conversion_w": r["P_conversion_w"],
+               "P_routing_w": r["P_routing_w"], "P_land_w": r["P_land_w"],
+               "P_board_plane_w": r["P_board_plane_w"],
+               "P_board_plane_bound_uncoupled_w": (r.get("board_bound_uncoupled") or {}).get("P_w"),
+               "dV_land_static_one_rail_mV": r.get("dV_land_static_one_rail_mV"),
+               "dV_board_static_VDD_mV": r.get("dV_board_static_VDD_mV"),
+               "T_land_C": r["T_land_C"], "T_board_C": r["T_board_C"],
+               "T_max_C": r["T_max_C"], "T_max_at": loc.get("layers"),
+               "T_max_xyz_mm": [loc.get("x_mm"), loc.get("y_mm"), loc.get("z_mm")],
+               "T_die_max_C": loc.get("T_die_max_C"),
+               "die_warpage_pv_um": r["die_warpage_pv_um"], "du_c_um": cj.get("du_um"),
+               "T_joint_C": cj.get("T_C"), "joint_xy_mm": [cj.get("x_mm"), cj.get("y_mm")],
+               "R_star_mohm": r["R_star"]["R_star_mohm"],
+               "ranking_in_tier": " < ".join(x["arch"] for x in r["ranking_in_tier"]),
+               "vs_Z1_same_tier_w": r["vs_Z1_same_tier_w"],
+               "vs_Z2_same_tier_w": r["vs_Z2_same_tier_w"]}
+        fv = out["runs"].get(name + "_fvmap")
+        if fv:
+            cf = fv["critical_joint"] or {}
+            lf = fv.get("T_max_location") or {}
+            row["fv_map_deposit"] = {"P_loss_w": fv["P_loss_w"], "T_max_C": fv["T_max_C"],
+                                     "T_max_at": lf.get("layers"),
+                                     "T_max_xyz_mm": [lf.get("x_mm"), lf.get("y_mm"),
+                                                      lf.get("z_mm")],
+                                     "T_die_max_C": lf.get("T_die_max_C"),
+                                     "die_warpage_pv_um": fv["die_warpage_pv_um"],
+                                     "du_c_um": cf.get("du_um"), "T_joint_C": cf.get("T_C"),
+                                     "joint_xy_mm": [cf.get("x_mm"), cf.get("y_mm")],
+                                     "R_star_mohm": fv["R_star"]["R_star_mohm"],
+                                     "file": fv["file"]}
+        rows.append(row)
+    return rows
 
 
 def table(out):
