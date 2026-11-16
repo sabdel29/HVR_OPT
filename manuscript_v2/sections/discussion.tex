@@ -57,8 +57,9 @@ the wrong way round.
 \subsection{Scope and limitations}
 The framework is verified stage by stage against matched references, not against a measured
 system; no fabricated DVPD package of this kind exists to measure. The converter loss model
-omits core, alternating-current winding, dielectric and dead-time losses, which bias the
-absolute loss downward by the same mechanism in every integration. The local solder response is
+omits core, alternating-current winding, dielectric and dead-time losses; bounded from datasheets
+at each case's temperatures, they add \OmitLo--\OmitHi~W to every integration and change no
+ranking (Section~\ref{sec:explore}). The local solder response is
 a per-cycle inelastic strain increment, not a life: no damage law or allowable is applied, and
 the constitutive law is calibrated to 125\,$^\circ$C, so responses at hotter joints are flagged
 as extrapolations. The mechanics is one-way coupled, which the small feedback of thermal strain on

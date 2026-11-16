@@ -229,9 +229,82 @@ def agents():
     return m
 
 
+def omitted():
+    """Omitted converter losses (dead time, core, AC winding, dielectric), agent omitloss."""
+    d = J(TR / "omitted_losses.json")
+    if not d:
+        return {}
+    c = d["cases"]
+    m = {}
+    a1 = c["A_Z1"]["omitted"]
+    m["OmitLo"], m["OmitNom"], m["OmitHi"] = (fx(a1[k]["total_w"], 0) for k in ("low", "nominal", "high"))
+    m["OmitDead"] = fx(a1["nominal"]["dead_time_w"], 0)
+    m["OmitCore"] = fx(a1["nominal"]["core_w"], 1)
+    m["OmitAc"] = fx(a1["nominal"]["ac_winding_w"], 1)
+    m["OmitDiel"] = fx(a1["nominal"]["dielectric_w"], 2)
+    pr = d["summary"]["pairs"]
+    for key, tag in (("A_Z1_vs_A_Z2", "AZoneZtwo"), ("B_Z2_vs_B_Z3", "BZtwoZthree"),
+                     ("B_Z3_vs_B_Z1", "BZthreeZone"), ("B_Z2_vs_B_Z1", "BZtwoZone")):
+        lo, nom, hi = pr[key]["delta_omitted_w_low_nom_high"]
+        m[f"OmitGap{tag}Lo"], m[f"OmitGap{tag}Hi"] = fx(lo, 2), fx(hi, 2)
+        m[f"OmitGap{tag}Fb"] = fx(pr[key]["delta_feedback_w_nom_high"][0], 1)
+    dse = d["summary"]["dse"]["T_25C"]
+    m["OmitDseOpt"] = str(dse["nominal"]["optimum_M"])
+    m["OmitDseMarginLo"] = fx(min(dse[k]["margin_w"] for k in ("low", "nominal", "high")), 1)
+    m["OmitDseMarginHi"] = fx(max(dse[k]["margin_w"] for k in ("low", "nominal", "high")), 1)
+    g = d["fsw_grid_sensitivity"]["runs"]
+    fine = {r["M"]: r for r in g.get("n785_all", [])}
+    if 49 in fine:
+        m["FswFineFortyNineKhz"] = fx(fine[49]["f_sw_Hz"] / 1e3, 0)
+        m["FswFineFortyNineLoss"] = fx(fine[49]["total_loss_W"], 1)
+    if 76 in fine:
+        m["FswFineOptLoss"] = fx(fine[76]["total_loss_W"], 1)
+        m["FswFineOptKhz"] = fx(fine[76]["f_sw_Hz"] / 1e3, 0)
+    cs = (d.get("out_of_scope_coss_check") or {}).get("per_count") or []
+    for r in cs:
+        if r["M"] == 49:
+            m["CossDeficitFortyNine"] = fx(r["underestimate_w"], 1)
+    return m
+
+
+def fullpkg():
+    """Complete-package thermal cross-check, CalculiX vs MOOSE (agent fullpkg)."""
+    d = J(TR / "fullpkg_verification.json")
+    if not d:
+        return {}
+    sm = d["summary"]
+    m = {}
+
+    def sci(x):
+        e = int(f"{x:.0e}".split("e")[1])
+        mant = x / 10 ** e
+        return f"${mant:.0f}\\times10^{{{e}}}$" if round(mant) != 1 else f"$10^{{{e}}}$"
+    for a, tag in (("Z1", "Zone"), ("Z3", "Zthree")):
+        z = sm.get(a)
+        if not z:
+            continue
+        im = z["identical_mesh"]
+        m[f"FullPkgErr{tag}"] = sci(abs(im["T_max_err_K"]))
+        m[f"FullPkgField{tag}"] = sci(im["field_max_abs_K"])
+        rt = z.get("runtime_s_median") or {}
+        if rt:
+            m[f"FullPkgCcx{tag}"] = fx(rt.get("calculix"), 0)
+            m[f"FullPkgMoose{tag}"] = fx(rt.get("moose_hypre"), 0)
+        lad = z.get("refinement_ladder") or {}
+        ne = lad.get("n_elems") or []
+        if ne:
+            m[f"FullPkgMaxElems{tag}"] = fx(max(ne) / 1e6, 1)
+    z1 = sm.get("Z1", {})
+    lm = z1.get("layer_volume_mean_C", {})
+    if lm:
+        m["FullPkgDieRefineZone"] = fx(abs(lm["die"]["moose_refined"] - lm["die"]["moose"]), 2)
+    m["FullPkgElemsZone"] = "144{,}512"
+    return m
+
+
 def macros():
     m = {}
-    for f in (cooling, feasibility, dse, variants, platform, uncertainty, agents):
+    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, agents):
         try:
             m.update(f())
         except Exception as e:          # a malformed artifact must not stop the paper build

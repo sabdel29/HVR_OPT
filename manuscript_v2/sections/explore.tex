@@ -27,6 +27,22 @@ favors.}
 \label{fig:robust}
 \end{figure}
 
+\emph{Omitted converter losses.} Dead-time conduction, inductor core and alternating-current
+winding loss and capacitor dielectric loss, evaluated from manufacturer data at each case's own
+tier temperatures---EPC2057 reverse conduction over a 2--10-ns dead time, the inductor
+material's loss line, the winding's AC-resistance ratio and an X7R dissipation factor---add
+\OmitLo--\OmitHi~W (\OmitNom~W nominal, \OmitDead~W of it dead time) to every integration
+(Table~S7). Because the integrations share one converter, these terms differ between them only
+through temperature: they change the Z1--Z2 gap under cooling~A by
+$+$\OmitGapAZoneZtwoLo{} to $+$\OmitGapAZoneZtwoHi~W and the Z2--Z3 gap under cooling~B by
+\OmitGapBZtwoZthreeLo{} to \OmitGapBZtwoZthreeHi~W, and the electrothermal feedback of the added
+heat widens both, by about \OmitGapAZoneZtwoFb{} and \OmitGapBZtwoZthreeFb~W. In the count screen
+they reorder the counts below the optimum but leave it at $M = \OmitDseOpt$, \OmitDseMarginLo--%
+\OmitDseMarginHi~W ahead, at 25 and 100\,$^\circ$C; a switching-frequency grid sixteen times finer
+moves no optimum and changes no count by more than 0.9~W ($M = 49$: \FswFineFortyNineKhz~kHz,
+\FswFineFortyNineLoss~W).
+% PENDING(authors): output-capacitance switching term and per-switch voltage stress of the family
+
 \emph{Tier order.} The strongest single decision is the one the realizability check already
 forces. Built in the reference order, with the same components, heights and total, the embedded
 regulator dissipates \SensDTierRefZonePloss~W more, its peak rises by \SensDTierRefZoneTmax~K,

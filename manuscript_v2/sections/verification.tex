@@ -46,9 +46,12 @@ board via field and the solder attach of Z3 use the same mixing rules as the ver
 and Cu-pillar cards without a separate reference. The voltage-fed package network agrees with an
 open-source finite-element solution~\cite{MOOSE} to \ErrPkgRdlZone\,\%. The package thermal solver
 agrees with commercial and open-source finite-element solutions of representative unit cells of
-the stacks to \ErrThermMax\,\% of the temperature rise,
-% PENDING(fullpkg): full-package MOOSE vs CalculiX cross-check sentence
-and the thermoelastic element reproduces the bimaterial closed form to \ErrMechClosed\,\% and a
+the stacks to \ErrThermMax\,\% of the temperature rise. The complete Z1 package---all 16 layers,
+nine materials, \FullPkgElemsZone{} hexahedra, the converged S0 heat map and a uniform cold-plate
+film---solved by the production path and by the open-source MOOSE heat-transfer module on the
+identical mesh agrees to \FullPkgErrZone~K at the peak and \FullPkgFieldZone~K over the nodal
+field, the print resolution of the production output (Z3 with its second plate:
+\FullPkgErrZthree~K). The thermoelastic element reproduces the bimaterial closed form to \ErrMechClosed\,\% and a
 commercial structural solution to \ErrMechAedt\,\%. A conjugate CFD solution of one microchannel
 half-pitch at the production load shows the cold-plate correlation to be \ErrCoolingIcepak\,\%
 conservative in mean base temperature rise, the developing entrance region accounting for much
@@ -69,15 +72,24 @@ Mesh refinement and the local solder family are reported in Table~\ref{tab:uncer
 \end{figure}
 
 \emph{Discretization and the comparison rule.} The package mesh is selected by nested
-refinement in which every coarse node survives (Table~S3). For each output of each architecture
-the numerical uncertainty $U$ adds the Richardson estimate of the production mesh's
-discretization error, the through-thickness split, the stopping tolerance of the fixed point
-and the matched-reference agreement of the solver (Table~\ref{tab:uncertainty}): for the loss it
-is \UrelZonePloss, \UrelZtwoPloss{} and \UrelZthreePloss\,\% for Z1, Z2 and Z3, for the peak
-temperature 1--1.5\,\% of the rise, and for the warpage and joint driver 1--5\,\%. A difference
-between two architectures is \emph{resolved} when it exceeds $2(U_a + U_b)$, which takes no credit
-for the strong correlation of errors on one mesh family; a resolved ranking that a declared
-alternative reverses is reported as \emph{conditional} on that decision. The local response is
+refinement in which every coarse node survives (Table~S3). MOOSE solutions of the complete
+package on uniformly refined copies of up to \FullPkgMaxElemsZone~M hexahedra show why a
+three-level Richardson estimate of the production ladder is optimistic: the die is converged to
+\FullPkgDieRefineZone~K, but the in-plane resolution of the cells leaves the converter stack,
+substrate and board of Z1 2--3~K cold, converging at an observed order of only 0.6. Each
+output's discretization error is therefore taken as the extrapolation of the production step
+(r21 to r31) at that order, and the numerical uncertainty $U$ adds it to the through-thickness
+split, the stopping tolerance of the fixed point and the matched-reference agreement of the
+solver (Table~\ref{tab:uncertainty}): for the loss \UrelZonePloss, \UrelZtwoPloss{} and
+\UrelZthreePloss\,\% for Z1, Z2 and Z3, for the peak temperature 1--4\,\% of the rise, and for
+the warpage and joint driver 2--16\,\%. A difference between two architectures is
+\emph{resolved} when it exceeds $2(U_a + U_b)$, which takes no credit for the correlation of
+errors on one mesh family, and \emph{resolved with correlation credit} when it exceeds twice the
+paired estimate, in which the two architectures' signed discretization errors cancel because
+they are computed on the same mesh family and move together under refinement---from r21 to r31
+the Z1--Z2 loss gap under cooling~A changes by 0.04~W. A resolved ranking that a declared
+alternative reverses is \emph{conditional} on that decision (Section~\ref{sec:explore}).
+The local response is
 computed on a declared family of four nested solder meshes with the fixed averaging band; its
 uncertainty $U = U_{\mathrm{mesh}} + U_{\mathrm{time}} + U_{\mathrm{cyc}}$ (discretization,
 first-increment and cycle-count contributions) is below 2\,\% for the embedded and

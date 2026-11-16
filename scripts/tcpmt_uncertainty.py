@@ -2,9 +2,13 @@
 (TCPMT review MC13).
 
 NUMERICAL uncertainty of an output y of architecture a (production mesh r21):
-  U_mesh  |Richardson extrapolation - r21| from the nested levels r11, r21, r31
-          (h = 1, 1/2, 1/3); where the observed order is not defined (non-monotone
-          levels), 2 |r31 - r21|
+  U_mesh  the extrapolation of the production ladder r21 -> r31 (h = 1/2 -> 1/3) at the
+          order P_ORDER = 0.6, e = F (y_r31 - y_r21) with F = h21^p / (h21^p - h31^p) = 4.63.
+          The order is the LOWEST observed in the independent MOOSE ladders of the complete
+          package (uniform 2x2x2 and 3x3x3 refinement: 0.60-0.63 in the converter, substrate,
+          BGA and board; in-plane x1..x4: 0.6 -> 1.1; fullpkg_verification.json), because the
+          coarsest production level r11 is not in the asymptotic range and a three-level
+          Richardson estimate understates the error
   U_tt    the through-thickness split r11 -> r12, as a relative change (Z1, Z2; Z3 takes
           the larger of the two)
   U_et    the E-T stop: 0.1 % of the loss, 0.25 K of a temperature
@@ -19,9 +23,11 @@ the solder study's stabilized values when present) plus the L0 -> L3 offset when
 compared values are L0 solves.
 
 RULE: a difference D = y_b - y_a between two architectures is RESOLVED when
-|D| > 2 (U_a + U_b), i.e. without credit for the strong positive correlation of errors
-on one mesh family (the correlated estimate, the difference of the Richardson errors, is
-reported beside it). MODEL-FORM uncertainty (material cards, boundaries, omitted physics)
+|D| > 2 (U_a + U_b), i.e. without credit for the correlation of errors on one mesh family.
+It is RESOLVED WITH CORRELATION CREDIT when it exceeds twice the paired estimate, in which
+the signed discretization errors of the two architectures (same mesh family, same direction)
+cancel, the matched-reference agreement (common solver) cancels, and the fixed-point stops
+and local-response uncertainties add. MODEL-FORM uncertainty (material cards, boundaries, omitted physics)
 is not added to U: it is handled by rerunning both architectures under each declared
 alternative (the robustness map), and a resolved ranking that a declared alternative reverses
 is CONDITIONAL on that decision.
@@ -45,6 +51,8 @@ OBS = ("P", "T", "warp", "du")
 U_ET = {"P_rel": 1e-3, "T_K": 0.25}
 U_REF = {"T_rel_rise": 0.0013, "mech_rel": 0.0043}
 T_IN = 25.0
+P_ORDER = 0.6
+F_MESH = 0.5 ** P_ORDER / (0.5 ** P_ORDER - (1 / 3) ** P_ORDER)
 
 
 def J(p):
@@ -91,14 +99,12 @@ def production_uncertainty(a):
     for y in OBS:
         v11, v21, v31 = (lv[r][y] if lv[r] else None for r in ("r11", "r21", "r31"))
         rich = (richardson(v11, v21, v31) if None not in (v11, v21, v31) else None)
-        if rich:
-            u_mesh = abs(rich["extrapolated"] - v21)
-            basis = f"Richardson (order {rich['order']:.2f})"
-        else:
-            u_mesh = 2 * abs(v31 - v21)
-            basis = "2 |r31 - r21|"
-        out[y] = {"value_r21": v21, "U_mesh": u_mesh, "mesh_basis": basis,
-                  "extrapolated": rich["extrapolated"] if rich else None,
+        e = F_MESH * (v31 - v21)                # signed: r21 -> converged
+        u_mesh = abs(e)
+        basis = f"extrapolation of r21 -> r31 at order {P_ORDER} (lowest MOOSE-ladder order)"
+        out[y] = {"value_r21": v21, "U_mesh": u_mesh, "e_mesh_signed": e,
+                  "mesh_basis": basis,
+                  "richardson_three_level": rich["extrapolated"] if rich else None,
                   "tt_rel": tt_rel.get(y)}
     return out
 
@@ -120,7 +126,8 @@ def assemble():
             u_ref = (U_REF["T_rel_rise"] if y == "T" else (U_REF["mech_rel"] if y in ("warp", "du")
                                                            else 0.0))
             rel[a][y] = {"mesh": u_mesh_rel, "tt": u_tt, "et": u_et, "ref": u_ref,
-                         "total": u_mesh_rel + u_tt + u_et + u_ref}
+                         "total": u_mesh_rel + u_tt + u_et + u_ref,
+                         "e_mesh_rel_signed": v["e_mesh_signed"] / abs(base)}
     return prod, rel
 
 
@@ -184,9 +191,25 @@ def comparisons(rel):
                 continue
             d = yb - ya
             ud = U.get((t, a, y), 0.0) + U.get((t, b, y), 0.0)
+            if y == "eps":
+                up = ud
+            else:
+                def signed(arch, val):
+                    base = (val - T_IN) if y == "T" else val
+                    return rel[arch][y]["e_mesh_rel_signed"] * abs(base)
+
+                def indep(arch, val):
+                    base = (val - T_IN) if y == "T" else val
+                    return rel[arch][y]["et"] * abs(base)
+                up = (abs(signed(b, yb) - signed(a, ya)) + indep(a, ya) + indep(b, yb)
+                      + abs(rel[b][y]["tt"] * yb - rel[a][y]["tt"] * ya))
+            verdict = ("resolved" if abs(d) > 2 * ud else
+                       "resolved with correlation credit" if abs(d) > 2 * up else
+                       "not resolved")
             res.append({"tier": t, "a": a, "b": b, "output": y, "y_a": ya, "y_b": yb,
                         "D": d, "U_a": U.get((t, a, y)), "U_b": U.get((t, b, y)),
-                        "U_D": ud, "resolved": abs(d) > 2 * ud,
+                        "U_D": ud, "U_D_paired": up, "verdict": verdict,
+                        "resolved": verdict != "not resolved",
                         "lower": a if d > 0 else b})
     return res, U, eps, eps_basis
 
@@ -211,14 +234,16 @@ def latex(prod, rel, U, res):
                 u = U.get((t, a, y))
                 cells.append("--" if u is None else (f"{u:.2f}" if u < 10 else f"{u:.1f}"))
         L.append(f"{names[y]} & " + " & ".join(cells) + r" \\")
-    L += [r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Comparisons (lower first; R: resolved, "
-          r"--: within $2U$)}}\\"]
+    L += [r"\midrule", r"\multicolumn{7}{@{}p{0.95\columnwidth}@{}}{\emph{Comparisons (lower "
+          r"first). R: gap $>2(U_a+U_b)$; Rc: resolved only with the paired discretization errors "
+          r"(same mesh family); --: not resolved.}}\\"]
     seen = {}
     for r in res:
         seen.setdefault((r["tier"], r["a"], r["b"]), []).append(r)
     for (t, a, b), rows in seen.items():
+        code = {"resolved": "R", "resolved with correlation credit": "Rc", "not resolved": "--"}
         s = "; ".join(f"{names[r['output']].split(' (')[0]} {r['lower']} "
-                      f"{'R' if r['resolved'] else '--'}" for r in rows)
+                      f"{code[r['verdict']]}" for r in rows)
         L.append(f"\\multicolumn{{7}}{{@{{}}p{{0.95\\columnwidth}}@{{}}}}{{{t}, {a}/{b}: {s}}}\\\\")
     L += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     return L
@@ -237,8 +262,9 @@ def main():
     for r in res:
         k = f"Res{r['tier']}{ATAG[r['a']]}{ATAG[r['b']]}" + \
             {"P": "Ploss", "T": "Tmax", "warp": "Warp", "du": "Du", "eps": "Eps"}[r["output"]]
-        mac[k] = "resolved" if r["resolved"] else "not resolved"
+        mac[k] = r["verdict"]
         mac[k + "Ratio"] = f"{abs(r['D']) / r['U_D']:.1f}" if r["U_D"] else "--"
+        mac[k + "RatioPaired"] = f"{abs(r['D']) / r['U_D_paired']:.1f}" if r["U_D_paired"] else "--"
     out = {"rule": __doc__.split("RULE:")[1].split("python")[0].strip(),
            "production": prod, "relative": rel,
            "U": {f"{t}.{a}.{y}": u for (t, a, y), u in U.items()},
@@ -248,7 +274,7 @@ def main():
     TAB.write_text("\n".join(latex(prod, rel, U, res)) + "\n")
     for r in res:
         print(f"{r['tier']} {r['a']}/{r['b']} {r['output']:5s} D={r['D']:+8.3f} U_D={r['U_D']:.3f} "
-              f"{'RESOLVED' if r['resolved'] else 'not resolved'}")
+              f"paired={r['U_D_paired']:.3f} {r['verdict']}")
     return out
 
 
