@@ -1,0 +1,163 @@
+{
+ "feeds": {
+  "Z2_bga_fed": {
+   "R_ohm": 0.0020418349501970965,
+   "kind": "solved (voltage-fed package network)",
+   "P_coupled_A_W": 148.70158983426006,
+   "geometry": "BGA ring + substrate 48-V RDL (production network)"
+  },
+  "Z2_flex": {
+   "R_ohm": 0.000616071238095238,
+   "kind": "estimate",
+   "geometry": "2 x 70 um Cu, 20 mm x 15 mm bridge + 70-um plane pair under the cell grid, copper at 60 C"
+  },
+  "Z3_board_planes": {
+   "R_ohm": 0.00018956038095238096,
+   "kind": "estimate",
+   "geometry": "70-um 48-V plane pair under the package, copper at 60 C"
+  }
+ },
+ "pump_shaft_W_per_plate": {
+  "0.75": 22.418346821767788,
+  "0.55": 30.570472938774255,
+  "0.35": 48.03931461807384,
+  "hyd": 16.81376011632584
+ },
+ "z3_source": "lower bound (land side not in the ledger)",
+ "tiers": {
+  "A": {
+   "Z1": {
+    "case": "etm_Z1_HV_S0_h1.1_r21.json",
+    "P_int_W": 144.3097256920461,
+    "feed": null,
+    "R_feed_mohm": 0.0,
+    "P_feed_W": 0.0,
+    "P_feed_S1_W": 0.0,
+    "I_in_A": 23.83978595191763,
+    "plates": 1,
+    "P_pump_shaft_W": 30.570472938774255,
+    "P_pump_band_W": [
+     22.418346821767788,
+     48.03931461807384
+    ],
+    "P_pump_hydraulic_W": 16.81376011632584,
+    "P_platform_W": 174.88019863082036,
+    "P_platform_no_pump_W": 144.3097256920461
+   },
+   "Z2": {
+    "case": "etm_Z2_HV_S0_h1.1_r21.json",
+    "P_int_W": 147.43752380684376,
+    "feed": "Z2_bga_fed",
+    "R_feed_mohm": 2.0418349501970967,
+    "P_feed_W": 1.1691785819272695,
+    "P_feed_S1_W": 19.302167777245216,
+    "I_in_A": 23.929306299765646,
+    "plates": 1,
+    "P_pump_shaft_W": 30.570472938774255,
+    "P_pump_band_W": [
+     22.418346821767788,
+     48.03931461807384
+    ],
+    "P_pump_hydraulic_W": 16.81376011632584,
+    "P_platform_W": 179.17717532754529,
+    "P_platform_no_pump_W": 148.60670238877103
+   },
+   "Z3": {
+    "case": "etm_Z3_HV_S0__z3_top_only.json",
+    "P_int_W": 199.5537853740105,
+    "feed": "Z3_board_planes",
+    "R_feed_mohm": 0.18956038095238095,
+    "P_feed_W": 0.11841051915340017,
+    "P_feed_S1_W": 1.9002002268798321,
+    "I_in_A": 24.99317074777423,
+    "plates": 1,
+    "P_pump_shaft_W": 30.570472938774255,
+    "P_pump_band_W": [
+     22.418346821767788,
+     48.03931461807384
+    ],
+    "P_pump_hydraulic_W": 16.81376011632584,
+    "P_platform_W": 230.24266883193815,
+    "P_platform_no_pump_W": 199.6721958931639
+   }
+  },
+  "B": {
+   "Z1": {
+    "case": "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
+    "P_int_W": 142.62940729978502,
+    "feed": null,
+    "R_feed_mohm": 0.0,
+    "P_feed_W": 0.0,
+    "P_feed_S1_W": 0.0,
+    "I_in_A": 23.80477931874552,
+    "plates": 2,
+    "P_pump_shaft_W": 61.14094587754851,
+    "P_pump_band_W": [
+     44.836693643535575,
+     96.07862923614768
+    ],
+    "P_pump_hydraulic_W": 33.62752023265168,
+    "P_platform_W": 203.77035317733353,
+    "P_platform_no_pump_W": 142.62940729978502
+   },
+   "Z2": {
+    "case": "etm_Z2_HV_S0__z2_cooled_tim.json",
+    "P_int_W": 115.18200402488185,
+    "feed": "Z2_bga_fed",
+    "R_feed_mohm": 2.0418349501970967,
+    "P_feed_W": 1.1043058066629499,
+    "P_feed_S1_W": 18.214700402543713,
+    "I_in_A": 23.25596478815683,
+    "plates": 2,
+    "P_pump_shaft_W": 61.14094587754851,
+    "P_pump_band_W": [
+     44.836693643535575,
+     96.07862923614768
+    ],
+    "P_pump_hydraulic_W": 33.62752023265168,
+    "P_platform_W": 177.42725570909332,
+    "P_platform_no_pump_W": 116.2863098315448
+   },
+   "Z3": {
+    "case": "etm_Z3_HV_S0__z3_plate_tim.json",
+    "P_int_W": 124.46326420109739,
+    "feed": "Z3_board_planes",
+    "R_feed_mohm": 0.18956038095238095,
+    "P_feed_W": 0.10404854462687751,
+    "P_feed_S1_W": 1.6694145843132588,
+    "I_in_A": 23.428485682202577,
+    "plates": 2,
+    "P_pump_shaft_W": 61.14094587754851,
+    "P_pump_band_W": [
+     44.836693643535575,
+     96.07862923614768
+    ],
+    "P_pump_hydraulic_W": 33.62752023265168,
+    "P_platform_W": 185.70825862327277,
+    "P_platform_no_pump_W": 124.56731274572427
+   }
+  }
+ },
+ "macros": {
+  "FeedRbgaZtwo": "2.04",
+  "FeedRflexZtwo": "0.62",
+  "FeedRZthree": "0.19",
+  "FeedPbgaZtwo": "1.17",
+  "FeedPbgaZtwoSone": "19.3",
+  "FeedPZthree": "0.10",
+  "FeedPZthreeSone": "1.7",
+  "PlatAZone": "174.9",
+  "PlatNoPumpAZone": "144.3",
+  "PlatAZtwo": "179.2",
+  "PlatNoPumpAZtwo": "148.6",
+  "PlatAZthree": "230.2",
+  "PlatNoPumpAZthree": "199.7",
+  "PlatBZone": "203.8",
+  "PlatNoPumpBZone": "142.6",
+  "PlatBZtwo": "177.4",
+  "PlatNoPumpBZtwo": "116.3",
+  "PlatBZthree": "185.7",
+  "PlatNoPumpBZthree": "124.6",
+  "PumpShaftPlate": "31"
+ }
+}

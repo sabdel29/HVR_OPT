@@ -1,0 +1,256 @@
+"""Uncertainty of every compared output, per architecture, and the comparison rule
+(TCPMT review MC13).
+
+NUMERICAL uncertainty of an output y of architecture a (production mesh r21):
+  U_mesh  |Richardson extrapolation - r21| from the nested levels r11, r21, r31
+          (h = 1, 1/2, 1/3); where the observed order is not defined (non-monotone
+          levels), 2 |r31 - r21|
+  U_tt    the through-thickness split r11 -> r12, as a relative change (Z1, Z2; Z3 takes
+          the larger of the two)
+  U_et    the E-T stop: 0.1 % of the loss, 0.25 K of a temperature
+  U_ref   the matched-reference agreement of the solver that produced y: 0.13 % of the
+          temperature rise (thermal unit cells, AEDT/MOOSE), 0.43 % of a displacement
+          (bimaterial closed form)
+  U = U_mesh + U_tt + U_et + U_ref (linear sum: no credit for independence)
+For a tier case (same mesh as its architecture's production case) the production relative
+uncertainty is applied to the tier value (temperatures: to the rise above the inlet).
+The local response carries its own U = U_mesh + U_time + U_cyc (local_mesh_study.json, or
+the solder study's stabilized values when present) plus the L0 -> L3 offset when the
+compared values are L0 solves.
+
+RULE: a difference D = y_b - y_a between two architectures is RESOLVED when
+|D| > 2 (U_a + U_b), i.e. without credit for the strong positive correlation of errors
+on one mesh family (the correlated estimate, the difference of the Richardson errors, is
+reported beside it). MODEL-FORM uncertainty (material cards, boundaries, omitted physics)
+is not added to U: it is handled by rerunning both architectures under each declared
+alternative (the robustness map), and a resolved ranking that a declared alternative reverses
+is CONDITIONAL on that decision.
+
+    python tcpmt_uncertainty.py   -> research/tcpmt_revision/uncertainty.json,
+                                     manuscript_v2/tab_uncertainty.tex
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+R = Path(__file__).resolve().parents[1]
+FC = R / "research" / "final_closure"
+SENS = FC / "sensitivity"
+TR = R / "research" / "tcpmt_revision"
+OUT = TR / "uncertainty.json"
+TAB = R / "manuscript_v2" / "tab_uncertainty.tex"
+ATAG = {"Z1": "Zone", "Z2": "Ztwo", "Z3": "Zthree"}
+OBS = ("P", "T", "warp", "du")
+U_ET = {"P_rel": 1e-3, "T_K": 0.25}
+U_REF = {"T_rel_rise": 0.0013, "mech_rel": 0.0043}
+T_IN = 25.0
+
+
+def J(p):
+    p = Path(p)
+    return json.loads(p.read_text()) if p.is_file() else None
+
+
+def obs(c):
+    if not c:
+        return None
+    me = c.get("mechanics") or {}
+    cr = (me.get("joint_search") or {}).get("critical") or {}
+    return {"P": c["P_loss_w"], "T": c["thermal"]["T_max_C"],
+            "warp": me.get("die_warpage_pv_um"), "du": cr.get("du_um"),
+            "Tj": cr.get("T_C")}
+
+
+def richardson(t1, t2, t3, h=(1.0, 1 / 2, 1 / 3)):
+    d1, d2 = t2 - t1, t3 - t2
+    if d1 == 0 or d2 == 0 or d1 * d2 < 0:
+        return None
+    target = d1 / d2
+    f = lambda p: (h[0] ** p - h[1] ** p) / (h[1] ** p - h[2] ** p) - target
+    lo, hi = 0.2, 6.0
+    if f(lo) * f(hi) > 0:
+        return None
+    for _ in range(80):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if f(lo) * f(mid) > 0 else (lo, mid)
+    p = 0.5 * (lo + hi)
+    c = d1 / (h[1] ** p - h[0] ** p)
+    return {"order": p, "extrapolated": t1 - c * h[0] ** p}
+
+
+def production_uncertainty(a):
+    lv = {r: obs(J(FC / f"etm_{a}_HV_S0_h1.1{'' if r == 'r11' else '_' + r}.json"))
+          for r in ("r11", "r21", "r31", "r12")}
+    out = {}
+    tt_rel = {}
+    for y in OBS:
+        v11, v21, v31, v12 = (lv[r][y] if lv[r] else None for r in ("r11", "r21", "r31", "r12"))
+        if v12 is not None and v11:
+            tt_rel[y] = abs(v12 - v11) / abs(v11)
+    for y in OBS:
+        v11, v21, v31 = (lv[r][y] if lv[r] else None for r in ("r11", "r21", "r31"))
+        rich = (richardson(v11, v21, v31) if None not in (v11, v21, v31) else None)
+        if rich:
+            u_mesh = abs(rich["extrapolated"] - v21)
+            basis = f"Richardson (order {rich['order']:.2f})"
+        else:
+            u_mesh = 2 * abs(v31 - v21)
+            basis = "2 |r31 - r21|"
+        out[y] = {"value_r21": v21, "U_mesh": u_mesh, "mesh_basis": basis,
+                  "extrapolated": rich["extrapolated"] if rich else None,
+                  "tt_rel": tt_rel.get(y)}
+    return out
+
+
+def assemble():
+    prod = {a: production_uncertainty(a) for a in ("Z1", "Z2", "Z3")}
+    # Z3 has no through-thickness level: take the larger of Z1 and Z2
+    for y in OBS:
+        prod["Z3"][y]["tt_rel"] = max(prod["Z1"][y]["tt_rel"] or 0, prod["Z2"][y]["tt_rel"] or 0)
+    rel = {}
+    for a, d in prod.items():
+        rel[a] = {}
+        for y, v in d.items():
+            x = v["value_r21"]
+            base = (x - T_IN) if y == "T" else x
+            u_mesh_rel = v["U_mesh"] / abs(base)
+            u_tt = v["tt_rel"] or 0.0
+            u_et = (U_ET["P_rel"] if y == "P" else (U_ET["T_K"] / abs(base) if y == "T" else 0.0))
+            u_ref = (U_REF["T_rel_rise"] if y == "T" else (U_REF["mech_rel"] if y in ("warp", "du")
+                                                           else 0.0))
+            rel[a][y] = {"mesh": u_mesh_rel, "tt": u_tt, "et": u_et, "ref": u_ref,
+                         "total": u_mesh_rel + u_tt + u_et + u_ref}
+    return prod, rel
+
+
+TIERS = {
+    "A": {"Z1": FC / "etm_Z1_HV_S0_h1.1_r21.json", "Z2": FC / "etm_Z2_HV_S0_h1.1_r21.json",
+          "Z3": SENS / "etm_Z3_HV_S0__z3_top_only.json"},
+    "B": {"Z1": SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
+          "Z2": SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
+          "Z3": SENS / "etm_Z3_HV_S0__z3_plate_tim.json"},
+}
+#: tier L0 local responses (x1e-3 / cycle), replaced by the solder study when present
+EPS_L0 = {"A": {"Z1": 5.80, "Z2": 8.03, "Z3": 13.47}, "B": {"Z1": 2.08, "Z2": 4.15, "Z3": 2.52}}
+
+
+def local_u():
+    lm = (J(FC / "local_mesh_study.json") or {}).get("cases", {})
+    u = {a: (lm.get(f"{a}_HV_S0") or {}).get("U") for a in ("Z1", "Z2", "Z3")}
+    l3 = {a: (lm.get(f"{a}_HV_S0") or {}).get("production_value") for a in ("Z1", "Z2", "Z3")}
+    ss = J(TR / "solder_studies.json")
+    eps, u_t, basis = {t: dict(v) for t, v in EPS_L0.items()}, {}, "4-cycle L0 (production)"
+    if ss and isinstance(ss.get("stabilized"), dict):
+        basis = "16-cycle L0 (solder study)"
+        for t in ("A", "B"):
+            for a in ("Z1", "Z2", "Z3"):
+                v = (ss["stabilized"].get(t) or {}).get(a) or {}
+                if v.get("eps_per_cycle") is not None:
+                    eps[t][a] = 1e3 * v["eps_per_cycle"]
+                if v.get("U_rel") is not None:
+                    u_t[(t, a)] = v["U_rel"]
+    return eps, u, u_t, l3, basis
+
+
+def comparisons(rel):
+    eps, u_loc, u_t, l3, eps_basis = local_u()
+    cases = {t: {a: obs(J(f)) for a, f in v.items()} for t, v in TIERS.items()}
+    U = {}
+    for t, v in cases.items():
+        for a, o in v.items():
+            if not o:
+                continue
+            for y in OBS:
+                x = o[y]
+                if x is None:
+                    continue
+                base = (x - T_IN) if y == "T" else x
+                U[(t, a, y)] = rel[a][y]["total"] * abs(base)
+            # local response: own U (or the production arch's) + L0 -> L3 offset
+            u_rel = u_t.get((t, a), u_loc.get(a) or 0.0)
+            off = 0.0
+            if l3.get(a) and t == "A":
+                off = abs(eps["A"][a] - 1e3 * l3[a]) / (1e3 * l3[a]) if a in ("Z1", "Z2") else 0.0
+            U[(t, a, "eps")] = (u_rel + off) * eps[t][a]
+    res = []
+    pairs = [("A", "Z1", "Z2"), ("A", "Z1", "Z3"), ("B", "Z2", "Z1"), ("B", "Z3", "Z1"),
+             ("B", "Z2", "Z3")]
+    for t, a, b in pairs:
+        for y in OBS + ("eps",):
+            ya = eps[t][a] if y == "eps" else (cases[t][a] or {}).get(y)
+            yb = eps[t][b] if y == "eps" else (cases[t][b] or {}).get(y)
+            if ya is None or yb is None:
+                continue
+            d = yb - ya
+            ud = U.get((t, a, y), 0.0) + U.get((t, b, y), 0.0)
+            res.append({"tier": t, "a": a, "b": b, "output": y, "y_a": ya, "y_b": yb,
+                        "D": d, "U_a": U.get((t, a, y)), "U_b": U.get((t, b, y)),
+                        "U_D": ud, "resolved": abs(d) > 2 * ud,
+                        "lower": a if d > 0 else b})
+    return res, U, eps, eps_basis
+
+
+def latex(prod, rel, U, res):
+    names = {"P": "Loss (W)", "T": "Peak temp.\\ (K)", "warp": "Die warpage (\\textmu m)",
+             "du": "$\\du$ (\\textmu m)", "eps": "$\\deps$ ($10^{-3}$/cycle)"}
+    L = [r"% GENERATED by scripts/tcpmt_uncertainty.py -- do not edit",
+         r"\begin{table}[!t]",
+         r"\caption{Numerical uncertainty $U$ of each compared output (S0, production mesh) and "
+         r"the comparisons it resolves: a gap is resolved when it exceeds $2(U_a+U_b)$.}",
+         r"\label{tab:uncertainty}", r"\centering", r"\footnotesize",
+         r"\setlength{\tabcolsep}{2.5pt}",
+         r"\begin{tabular}{@{}lrrrrrr@{}}", r"\toprule",
+         r" & \multicolumn{3}{c}{Cooling A: $\pm U$} & \multicolumn{3}{c}{Cooling B: $\pm U$}\\",
+         r"\cmidrule(lr){2-4}\cmidrule(l){5-7}",
+         r"Output & Z1 & Z2 & Z3 & Z1 & Z2 & Z3 \\", r"\midrule"]
+    for y in OBS + ("eps",):
+        cells = []
+        for t in ("A", "B"):
+            for a in ("Z1", "Z2", "Z3"):
+                u = U.get((t, a, y))
+                cells.append("--" if u is None else (f"{u:.2f}" if u < 10 else f"{u:.1f}"))
+        L.append(f"{names[y]} & " + " & ".join(cells) + r" \\")
+    L += [r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Comparisons (lower first; R: resolved, "
+          r"--: within $2U$)}}\\"]
+    seen = {}
+    for r in res:
+        seen.setdefault((r["tier"], r["a"], r["b"]), []).append(r)
+    for (t, a, b), rows in seen.items():
+        s = "; ".join(f"{names[r['output']].split(' (')[0]} {r['lower']} "
+                      f"{'R' if r['resolved'] else '--'}" for r in rows)
+        L.append(f"\\multicolumn{{7}}{{@{{}}p{{0.95\\columnwidth}}@{{}}}}{{{t}, {a}/{b}: {s}}}\\\\")
+    L += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    return L
+
+
+def main():
+    prod, rel = assemble()
+    res, U, eps, eps_basis = comparisons(rel)
+    mac = {}
+    for (t, a, y), u in U.items():
+        mac[f"U{t}{ATAG[a]}{ {'P': 'Ploss', 'T': 'Tmax', 'warp': 'Warp', 'du': 'Du', 'eps': 'Eps'}[y] }"
+            .replace(" ", "")] = f"{u:.2f}"
+    for a in ("Z1", "Z2", "Z3"):
+        for y, tag in (("P", "Ploss"), ("T", "Tmax"), ("warp", "Warp"), ("du", "Du")):
+            mac[f"Urel{ATAG[a]}{tag}"] = f"{100 * rel[a][y]['total']:.2f}"
+    for r in res:
+        k = f"Res{r['tier']}{ATAG[r['a']]}{ATAG[r['b']]}" + \
+            {"P": "Ploss", "T": "Tmax", "warp": "Warp", "du": "Du", "eps": "Eps"}[r["output"]]
+        mac[k] = "resolved" if r["resolved"] else "not resolved"
+        mac[k + "Ratio"] = f"{abs(r['D']) / r['U_D']:.1f}" if r["U_D"] else "--"
+    out = {"rule": __doc__.split("RULE:")[1].split("python")[0].strip(),
+           "production": prod, "relative": rel,
+           "U": {f"{t}.{a}.{y}": u for (t, a, y), u in U.items()},
+           "eps_basis": eps_basis, "eps": eps, "comparisons": res, "macros": mac,
+           "latex_supplement": latex(prod, rel, U, res)}
+    OUT.write_text(json.dumps(out, indent=1, default=float))
+    TAB.write_text("\n".join(latex(prod, rel, U, res)) + "\n")
+    for r in res:
+        print(f"{r['tier']} {r['a']}/{r['b']} {r['output']:5s} D={r['D']:+8.3f} U_D={r['U_D']:.3f} "
+              f"{'RESOLVED' if r['resolved'] else 'not resolved'}")
+    return out
+
+
+if __name__ == "__main__":
+    main()

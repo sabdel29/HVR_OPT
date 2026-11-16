@@ -1,0 +1,45 @@
+% Capability comparison with the closest prior work (evidence: review_work/novelty/notes.txt;
+% the detailed version with quotes and pointers is Table S1 of the supplementary material).
+\begin{table}[!t]
+\caption{Capabilities stated in the closest prior work and in this work.}
+\label{tab:prior}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+ & \cite{Krishnakumar2026DVPD} & \cite{Choi2025SelfConsistent}
+ & \cite{Synopsys_RedHawkSC_ET,Cadence_Celsius,Ansys_Sherlock} & This work \\
+\midrule
+Converter topology search           & --         & --\textsuperscript{a} & ?          & \checkmark\textsuperscript{b} \\
+Discrete device/passive library & --         & --\textsuperscript{a} & ?          & \checkmark \\
+Regulator-count optimization        & \checkmark & --                    & ?          & \checkmark\textsuperscript{c} \\
+Floorplan, interconnect allocation  & \checkmark & --\textsuperscript{a} & ?          & $\circ$ \\
+IR drop, transient droop            & \checkmark & ?                     & $\circ$    & -- \\
+Package-explicit geometry           & $\circ$    & \checkmark            & \checkmark & \checkmark \\
+Integration comparison & $\circ$    & --                    & ?          & \checkmark \\
+Electrothermal coupling             & \checkmark & \checkmark            & \checkmark & \checkmark \\
+Cooling boundary technology-neutral & -- & --                    & \checkmark & $\circ$\textsuperscript{d} \\
+Thermomechanics                     & --         & ?                     & \checkmark & \checkmark \\
+All-site joint search               & --         & ?                     & ?          & \checkmark \\
+Local solder response               & --         & ?                     & \checkmark & \checkmark\textsuperscript{e} \\
+Interconnect realizability          & $\circ$    & ?                     & ?          & \checkmark \\
+Component-rating feasibility        & $\circ$    & ?                     & ?          & \checkmark \\
+Per-stage reference verification    & $\circ$    & ?                     & $\circ$    & \checkmark\textsuperscript{f} \\
+Runtime reported                    & --         & $\circ$               & ?          & \checkmark \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\parbox{\columnwidth}{\scriptsize
+\checkmark: stated and demonstrated; $\circ$: partial; --: not part of the work; ?: not
+determinable from the accessible text (full text of~\cite{Choi2025SelfConsistent} not
+accessible; product pages of~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius,Ansys_Sherlock}
+silent). \textsuperscript{a}\,Supplied by the electrical
+framework~\cite{Krishnakumar2026DVPD}. \textsuperscript{b}\,All $(N,K)$ members within a
+component budget; $K_A$ and $\mathbf{B}$ set by rule~\cite{Abdelzaher2025ECTC,
+Abdelzaher2026EPEPS}. \textsuperscript{c}\,Electrical screen; the strongest candidates are
+carried through the coupled chain. \textsuperscript{d}\,Declared film boundary;
+demonstrated with microchannel plates. \textsuperscript{e}\,Inelastic response, no life.
+\textsuperscript{f}\,Converter loss model validated on other
+members~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}; solder law by sensitivity.}
+\end{table}

@@ -13,76 +13,95 @@ micrometers~\cite{Krishnakumar2026DVPD,Sriharini_ECTC_24,ISCAS2024DVPD}.
 
 Bringing the regulator to the point of load changes the package it sits in. The regulator can be
 embedded between the substrate and the die~\cite{Krishnakumar2026DVPD}, stacked on the die
-backside~\cite{GoogleBacksideIVR2021}, attached to the substrate backside inside an opening in
-the board~\cite{ArmCutoutVR2026}, or mounted on the board backside beneath the package, as in
-current vertical-power modules~\cite{Vicor_VPD_AI,Baek2022LEGOPoL,Radhakrishnan2021PowerDelivery,
-VPD_transactions_on_power_electronics_new}. Each choice decides which rail crosses each vertical
-interconnect and at what current, where some 13\,\% of the input power is dissipated inside the
-stack, which materials expand against each other, which
-solder joints carry the deformation, and which vias must be manufactured. The converter-level
-decisions are coupled to these as tightly: the regulator count fixes the footprint of each cell,
-the device and passive selection fixes the component heights and the stack height, and the
-assignment of components to tiers fixes which connections must cross which dielectric depth. A
-design that is electrically optimal can therefore exceed a via aspect-ratio rule, overload the
-ball field, outrun the cooling solution or drive the critical solder joint harder than an
-alternative, and none of these outcomes is visible to the model that produced it.
+backside~\cite{GoogleBacksideIVR2021}, attached to the package-substrate backside inside an
+opening in the board~\cite{ArmCutoutVR2026}, or mounted on the board backside beneath the
+package, as in current vertical-power modules~\cite{Vicor_VPD_AI,Baek2022LEGOPoL,
+Radhakrishnan2021PowerDelivery,VPD_transactions_on_power_electronics_new}. Each choice decides
+which rail crosses each vertical interconnect and at what current, where some 13\,\% of the input
+power is dissipated inside the stack, which materials expand against each other, which solder
+joints carry the deformation, and which vias must be manufactured. The converter-level decisions
+are coupled to these as tightly: the regulator count fixes the footprint of each cell, the device
+and passive selection fixes the component heights and ratings, and the assignment of components
+to tiers fixes which connections must cross which dielectric depth. A design that is electrically
+optimal can therefore exceed a via aspect-ratio rule, overload the ball field, outrun the cooling
+solution, run its devices beyond their ratings or drive the critical solder joint harder than an
+alternative.
 
-Today these questions are answered one domain at a time. Converter design and synthesis tools
-size the regulator; power-integrity and IR-drop tools evaluate the delivery network on a fixed
-layout; thermal solvers then receive a loss map; structural and reliability tools finally receive
-a temperature field and a geometry that the preceding steps have frozen~\cite{Synopsys_RedHawkSC_ET,
-Cadence_Celsius,Ansys_Sherlock,Keysight_PIPro}. Each hand-off is manual and each step is evaluated on a geometry it cannot
-change. DVPD design frameworks have closed part of this gap: converter synthesis, interconnect
-allocation, floorplanning and thermal feasibility are co-optimized in one
-flow~\cite{Krishnakumar2026DVPD}; thermal analyses with embedded microchannel
-cooling~\cite{Choi2024ITherm}, a self-consistent electrothermal model with substrate-embedded
-microfluidic cooling~\cite{Choi2025SelfConsistent} and electrothermal co-optimization with
-thermal TSVs~\cite{Wang2025TTSV} have been reported.
-Regulator-placement studies compare top and bottom placements for power integrity and
-electromagnetic interference~\cite{Xu2019VRplacement,Hossen2020DSEarXiv,Zhang2019PDNbenchmark}. None of these carries a
-synthesized converter through a physically resolved package to the thermal, mechanical and
-manufacturability consequences of integrating it, and none does so fast enough to compare
-integration alternatives during architecture selection.
+Commercial multiphysics tools couple electrical, thermal and structural analysis of a given
+layout, including stress, warpage and solder-life
+estimates~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius,Ansys_Sherlock,Keysight_PIPro}; the
+regulator, its tier order and its placement are inputs to them rather than design variables.
+DVPD design frameworks have made the regulator a variable: the framework of~\cite{Krishnakumar2026DVPD}
+co-optimizes switch sizing, regulator count, floorplan, interconnect allocation, IR drop and
+transient droop for a given hybrid topology, and verifies the result with a self-consistent
+electrothermal model with substrate-embedded microfluidic
+cooling~\cite{Choi2025SelfConsistent,Choi2025AutoET}. Thermal comparisons of DVPD integration
+variants~\cite{Choi2024ITherm,Choi2025EmbeddedCooling}, electrothermal co-optimization with
+thermal TSVs~\cite{Wang2025TTSV} and regulator-placement studies for power integrity and
+electromagnetic interference~\cite{Xu2019VRplacement,Hossen2020DSEarXiv,Zhang2019PDNbenchmark}
+have also been reported. To our knowledge, no published study carries a converter synthesized
+over its topology from discrete parts into a mounted, explicitly resolved package, compares its
+integration architectures under identical cooling, and evaluates their thermomechanical and
+solder-joint consequences together with the ratings of the selected parts and the
+realizability of the vertical interconnect (Table~\ref{tab:prior}).
 
-This paper presents a framework that does. Starting from a component library and a system
-specification, it synthesizes a generalized hybrid switched-capacitor--buck regulator, places
-the resulting cells in a candidate package integration, and evaluates, on one explicit geometry
-and one converged field, the conductor-level loss of every rail, the electrothermal fixed point
-with a physical cold plate, the thermoelastic deformation of the mounted package with a search
-over every solder joint, the viscoplastic response of the critical joint, and the manufacturability
-of the vertical interconnect. Every reduced model is benchmarked against a commercial or
-open-source reference on the same problem, and one fully coupled evaluation of an integration
-architecture takes \EvalHours{} on a shared workstation, while one converter synthesis takes
-seconds. The framework is used in three ways, each demonstrated on a \SI{1}{kW},
-\SIrange{48}{1}{V} system: to \emph{evaluate} one design against package rules and its thermal
-solution, to \emph{compare} integration architectures on conversion, routing, thermal and
-mechanical grounds, and to \emph{explore} the design space---regulator count and converter
-architecture, and the neighboring package decisions on which every architecture ranking depends.
-The coupled answers differ from the single-domain ones: the ranking of the integrations changes
-with the cooling solution they share, a board-backside regulator does not survive the top-plate
-cooling of the other two and needs nearly the whole ball field for its 1-V current, and the tier
-order chosen for via manufacturability also sets the device temperature.
+\input{tab_prior}
+
+This paper presents such a framework and makes the following distinctions explicit. From the
+DVPD framework of~\cite{Krishnakumar2026DVPD} it adopts the 1-kW, 48-to-1-V specification, the
+embedded integration, the TSV and ball-grid technology, the routing model that scores the
+regulator-count screen, and the input-current model used as one scenario. From our converter
+work~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS} it adopts the generalized hybrid
+switched-capacitor--buck family, its closed-form loss model and the selection of catalog
+devices, passives and switching frequency. It extends the count optimization
+of~\cite{Krishnakumar2026DVPD}, which sizes switch widths continuously for one topology, by
+re-synthesizing the topology from discrete parts at every count, and it carries the
+self-consistent electrothermal treatment of~\cite{Choi2025SelfConsistent}, applied there to one
+embedded architecture, to an explicit mounted package with a declared cooling boundary. New are
+the comparison of three placements of one synthesized regulator---embedded, package-backside and
+board-backside---at a common temperature and under two identical coolings, after the candidates
+that violate a component rating are filtered out; a thermoelastic solution of the mounted
+assembly with a search over every ball site, a viscoplastic submodel of the critical joint and
+an optional mechanical-to-thermal feedback through the top interface; and a per-net
+realizability check of the tier order whose thermal and mechanical consequences are evaluated
+on the same geometry. Every reduced model of the package chain is checked against a matched
+reference, and one coupled evaluation takes \EvalHours{} on a shared workstation. Unlike
+\cite{Krishnakumar2026DVPD}, the framework resolves neither spatial IR drop nor transient droop,
+and the package result is not fed back into the synthesis automatically; the conclusions are
+restricted to steady-state loss, temperature, deformation and joint response.
+
+The framework is used in three ways, each demonstrated on a \SI{1}{kW}, \SIrange{48}{1}{V}
+system: to \emph{evaluate} one design against its ratings and package rules, to \emph{compare}
+integration architectures on conversion, routing, thermal and mechanical grounds, and to
+\emph{explore} the design space---regulator count and converter topology, and the package
+decisions on which every ranking depends. The coupled answers differ from the single-domain
+ones. Electrically, at a common temperature, the package-backside regulator is marginally ahead
+of the embedded one; under one top cold plate the converter's thermal path reverses that order,
+and the board-backside regulator exceeds the ratings of its own devices; with an identical
+bottom plate the backside regulators lead electrically while the embedded one leads
+mechanically. A flat cold plate on a warped package closes a mechanical-to-thermal loop that
+the sequential chain misses, and the tier order chosen for via manufacturability also sets the
+device temperature.
 
 The contributions are as follows.
 \begin{enumerate}
 \item A device-to-joint electrothermal--mechanical framework for package-integrated voltage
-regulation, in which converter synthesis over a generalized hybrid SC--buck family is propagated
-into an explicit package stack and evaluated electrically, thermally, mechanically and for
-interconnect realizability on one geometry (Sections~\ref{sec:framework}--\ref{sec:models}).
-\item Physics and verification for that coupling: a rail-aware conductor ledger, a voltage-fed
-package network with the ball count as a solved variable, conductor-plane realizability, an
-electrothermal fixed point with a physical microchannel boundary, and a thermoelastic package
-model driving a local solder submodel with a mesh-independent response metric, each checked
-against a matched reference (Sections~\ref{sec:models}--\ref{sec:verification}).
-\item A demonstration of the three modes of use on one specification: evaluation of a single
-design; comparison of three integration architectures---embedded, package-backside and
-board-backside---at a common temperature and under two identical cooling solutions; and
-exploration of regulator count, converter architecture and neighboring package decisions
+regulation, in which topology-level synthesis from a discrete library is propagated into an
+explicit package and evaluated electrically, thermally, mechanically, against component ratings
+and for interconnect realizability on one geometry, with each coupling direction classified and
+the interface feedback available as an option (Sections~\ref{sec:framework}--\ref{sec:models}).
+\item Physics and verification for that chain: a rail-aware conductor ledger, a voltage-fed
+package network with the ball count as a solved variable, an electrothermal fixed point with a
+physical cold-plate boundary and its hydraulic cost, and a thermoelastic package model driving a
+local solder submodel with a mesh-independent response metric, each checked against a matched
+reference, with a full-package cross-check and an uncertainty budget for every compared output
+(Sections~\ref{sec:models}--\ref{sec:verification}).
+\item A demonstration of the three modes on one specification: evaluation of a design with its
+input decoupling implemented; comparison of three integration architectures at a common
+temperature and under two identical coolings, with a feasibility filter and platform-inclusive
+accounting; and exploration of regulator count and topology with coupled evaluation of the
+strongest candidates, and of the package decisions that reverse each ranking
 (Sections~\ref{sec:evaluate}--\ref{sec:explore}).
-\item Design rules that follow from the coupled solution and that no single-domain analysis
-exposes: integrations must be ranked on the converged electrothermal state and under one cooling
-solution; the cooling must be chosen with the integration; an embedded regulator needs local
-input decoupling; tiers must be ordered for the via technology and the heat path at once; a
-board-backside regulator is limited by the ball pitch beneath the load; and a backside regulator
-needs a feed-resistance specification (Section~\ref{sec:discussion}).
+\item Design rules that follow from the coupled solution, stated with the conditions under
+which they hold (Section~\ref{sec:discussion}).
 \end{enumerate}

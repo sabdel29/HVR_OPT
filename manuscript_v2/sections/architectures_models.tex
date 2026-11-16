@@ -30,18 +30,26 @@ violet: 1-V output path; ringed ball: critical joint.}
 \label{fig:sections}
 \end{figure*}
 
-Loss is reported inside a declared boundary. The \emph{package-internal} loss of Z2 and Z3
-starts at the converter's 48-V input terminals; that of Z1 starts at its BGA pads, where the
-board 48-V node common to all three meets the package. The external 48-V feed of the backside
-architectures is outside that boundary and is treated as a requirement: its loop resistance
-$R_{\mathrm{feed}}$ is swept, and the platform-inclusive loss
+Loss is reported inside a declared boundary. The \emph{package-internal} loss $P_{\mathrm{int}}$
+of Z2 and Z3 starts at the converter's 48-V input terminals; that of Z1 starts at its BGA pads,
+where the board 48-V node common to all three meets the package. The board's 48-V distribution
+upstream of that node is common to all three and excluded from every boundary. The external
+48-V feed of the backside architectures, from the common node to the converter terminals, is
+accounted for by its loop resistance $R$:
 \begin{equation}
-P(R) = P_{\mathrm{int}}(I) + (k I)^2 R,\qquad 48\,\mathrm{V}\cdot I = P_{\mathrm{load}} + P(R),
+P(R) = P_{\mathrm{int}} + (k I)^2 R,\qquad 48\,\mathrm{V}\cdot I = P_{\mathrm{load}} + P(R),
 \label{eq:feed}
 \end{equation}
-is solved self-consistently for the input current $I$, with $k$ the RMS-to-average ratio of the
-input waveform. The crossover $R^*$ at which a backside architecture loses its advantage is a
-specification for the feed, not a property of any connector.
+where $I$ is the average input current, $P_{\mathrm{int}}$ the package-internal loss of the
+converged coupled solution, and $k$ the RMS-to-average ratio of the current the feed carries.
+The same factor scales the package 48-V network of Z1 (Section~\ref{sec:scenarios}): the pulsed
+input current is charged wherever it flows, inside the package or outside it. Equation
+\eqref{eq:feed} is solved for $I$ by fixed-point iteration; the feed loss is dissipated outside
+the package and is not deposited in its thermal model. The crossover $R^*$ at which a backside
+architecture loses its advantage over Z1 is a specification for the feed. Two physical feeds are
+evaluated against it in Section~\ref{sec:compare}: for Z2, 48~V routed through the BGA ring and a
+substrate 48-V RDL to the converter, solved with the same voltage-fed network as Z1; for Z3, the
+board's own 48-V plane pair under the package.
 
 \subsection{Input waveform scenarios}\label{sec:scenarios}
 The hybrid cell draws input current only in phase A (Fig.~\ref{fig:converter}b), so the RMS
@@ -55,9 +63,12 @@ by the reference framework's input-current model~\cite{Krishnakumar2026DVPD}.
 \subsection{Rail-aware conductor ledger}
 Every conductor carries the rail assigned to it and that rail's current: the 48-V input bus
 0.48~A per cell, the 16-V high-side and intermediate links 1.0 and 1.4~A, and the switch-node and
-output paths the full 20.4~A. A vertical field of vias of radius $r$, liner $t_\ell$ and height
-$h$ carrying current $I$ is provisioned at a design current density $J_{\mathrm{d}}$ and resolved
-by its allocated count,
+output paths the full 20.4~A. The current is the one that flows in that conductor: switched
+nets inside the cell carry the RMS currents of the converter model, the 48-V nets the scenario
+RMS $kI$, and the 1-V output path the RMS of the cell output current (1.008 times its average,
+which keeps the residual ripple ahead of the output capacitors). A vertical field of vias of
+radius $r$, liner $t_\ell$ and height $h$ carrying current $I$ is provisioned at a design current
+density $J_{\mathrm{d}}$ and resolved by its allocated count,
 \begin{equation}
 \begin{aligned}
 n_{\mathrm{req}} &= \left\lceil \frac{I}{J_{\mathrm{d}}\pi(r-t_\ell)^2}\right\rceil \le
@@ -66,19 +77,26 @@ R &= \frac{\rho(T)\,h}{\pi(r-t_\ell)^2\,n_{\mathrm{alloc}}},
 \end{aligned}
 \label{eq:via}
 \end{equation}
-and lateral runs are sheets whose required width must fit the available width or the design is
-rejected. Inside the cell, links between components in different tiers are via stacks across the
-dielectric depth of the actual tier order and links within a tier are lateral runs. The package
-48-V network of Z1 is solved as two voltage-fed resistive sheets, supply and return, each fed
-through the individual resistance of every ball and contact on a finite-volume grid aligned with
-every pad and ball edge; ball currents are an output, and the ball count is the smallest legal
-mirror-symmetric count meeting a 1.5-A-per-ball provisioning rule (54 per rail). The Cu-pillar
-attach of Z2 and the solder attach of Z3 are resolved on the real lattice inside each cell as
-series columns with two-sided constriction; the board via field of Z3 is a plated-through-hole
-array under each cell, and its BGA carries the 1-V output on the balls the same rule provisions.
-The lateral redistribution of that current in the board planes and in the package land side is
-not part of the Z3 ledger, which is therefore a lower bound (bounded in
-Section~\ref{sec:compare}).
+where $r-t_\ell$ is the copper radius inside the liner, $\rho(T)$ the copper resistivity at the
+field's converged temperature, $n_{\mathrm{avail}}$ the count the pitch rule fits in the
+footprint and $J_{\mathrm{d}} = 100$~A\,mm$^{-2}$ the provisioning density of the intra-cell
+conductors. The contact and intermetallic resistance at via and joint interfaces is not
+resolved; the attach and pad terms carry it as the all-solder bound. Lateral runs are sheets
+whose required width must fit the available width or the design is rejected. Inside the cell,
+links between components in different tiers are via stacks across the dielectric depth of the
+actual tier order and links within a tier are lateral runs. The package 48-V network of Z1 is
+solved as two voltage-fed resistive sheets, supply and return, each fed through the individual
+resistance of every ball and contact on a finite-volume grid aligned with every pad and ball
+edge; ball currents are an output, and the ball count is the smallest legal mirror-symmetric
+count meeting a design target of 1.5~A per ball (54 per rail)---a derated continuous rating
+for a 0.4-mm SAC ball, not a measured limit. The Cu-pillar attach of Z2 and the solder attach of
+Z3 are resolved on the real lattice inside each cell as series columns with two-sided
+constriction; the board via field of Z3 is a plated-through-hole array under each cell, and its
+BGA carries the 1-V output on the balls the same rule provisions. The lateral redistribution of
+that current from the balls beneath the cells to the rest of the ball field, in the package land
+side, is solved as a two-dimensional sheet and deposited in the substrate's land-side layer
+% PENDING(z3land): coupled land-side term -- shape factor, deposit layer, board-plane bound
+(Section~\ref{sec:compare}).
 
 \subsection{Interconnect realizability}\label{sec:realizability}
 Whether two components in different tiers can be connected is decided by the conductor-plane
@@ -95,8 +113,27 @@ flying capacitors, inductors---the high-side-to-flying-capacitor connection must
 for stacked microvias~\cite{IPC2226A2017,Ning2019MicroviaFatigue}. Of the 144 tier assignments
 that satisfy the per-tier area budget, the repartitioned order---high-side device, flying
 capacitors, low-side device, inductors---keeps both ends fixed, changes no component, area or
-height, and needs at most a 100-\textmu m crossing (aspect ratio 0.83). Tier order is therefore a
-synthesis variable with a manufacturing consequence that no electrical model sees.
+height, and needs at most a 100-\textmu m crossing (aspect ratio 0.83). The 144 assignments are
+the permutations of the four component tiers (with their interlayer planes) that keep every
+tier's area within the cell footprint; the repartitioned order is preferred among the passing
+ones because it keeps the substrate-side and die-side tiers of the reference stack, so it changes
+nothing else. Tier order is therefore a synthesis variable with a manufacturing consequence.
+
+The rule set is declared rather than universal: laser-drilled microvias of 120-\textmu m
+diameter in a build-up dielectric laminated around the components, as in chip-embedding
+substrates~\cite{Ostmann2008ChipEmbedding}; a 10-\textmu m patterned copper capture plane at every
+interlayer RDL, with a pad 1.5 times the via diameter to absorb overlay; and an aspect-ratio
+limit of 1 for each via level, the stacked-microvia practice of HDI boards~\cite{IPC2226A2017,
+Ning2019MicroviaFatigue}. Applying that practice to the dielectric between embedded component
+tiers assumes the tiers are built up layer by layer; with through-mold copper posts instead, the
+limit is a property of the post process. The verdict is therefore \emph{geometric feasibility
+under declared rules}: it is not a demonstrated process for this stack, and assembly
+feasibility---component placement within a tier, encapsulation and warpage during
+lamination---is not evaluated. The same holds for the 30-\textmu m-pitch Cu-pillar attach of Z2,
+for which thermocompression bonding at that pitch has been demonstrated on organic
+substrates~\cite{Au2016CuPillar30um}, and for the board opening, whose 1-mm clearance is a
+declared design value.
+% PENDING(flying caps): the 100-um flying-capacitor tier and its rating (decap agent)
 
 \begin{figure}[!t]
 \centering
@@ -115,25 +152,52 @@ with orthotropic conductivity. Layers containing regular arrays---TSV fields, at
 ball fields, the Z3 board via field---carry homogenized tensors checked against explicitly meshed
 unit cells (Section~\ref{sec:verification}). Every ledger term is deposited in the layer and the
 cell footprints that produce it, and the deposited total equals the ledger total to $10^{-6}$.
-The top boundary is a silicon microchannel cold plate evaluated at its operating point (223
-channels, $50\times300$~\textmu m, 27~g\,s$^{-1}$ of water, Reynolds number 1265, laminar) with
+The top boundary is a silicon microchannel cold plate on a 50-\textmu m thermal interface
+($k = 3$~W\,m$^{-1}$K$^{-1}$, \TimH~kW\,m$^{-2}$K$^{-1}$). Its coefficient follows from the channel
+geometry and flow,
 \begin{equation}
-h_{\mathrm{eff}} = \eta_{\mathrm{f}}\,\Lambda\,\mathrm{Nu}\,k_{\mathrm{f}}/D_{\mathrm{h}},
+\begin{aligned}
+h_{\mathrm{eff}}^{-1} &= A_{\mathrm{f}}\left(R_{\mathrm{conv}} + R_{\mathrm{cal}} +
+R_{\mathrm{base}}\right),\quad R_{\mathrm{conv}} = \frac{1}{h_{\mathrm{ch}}\Lambda A_{\mathrm{f}}},\\
+\Lambda &= \frac{nL(w + 2\eta_{\mathrm{f}}H)}{A_{\mathrm{f}}},\quad
+h_{\mathrm{ch}} = \frac{\mathrm{Nu}\,k_{\mathrm{f}}}{D_{\mathrm{h}}},\quad
+\eta_{\mathrm{f}} = \frac{\tanh(mH)}{mH},
+\end{aligned}
 \label{eq:heff}
 \end{equation}
-the Shah--London Nusselt number~\cite{ShahLondon1978}, area amplification $\Lambda$ and fin
-efficiency $\eta_{\mathrm{f}}$, and a coolant energy balance iterated with the solid solution;
-operating points in the transitional band are refused rather than interpolated. In Z3 a second
-plate of the same kind---the top plate's coefficient at the dissipated power, fluid at the inlet
-temperature---cools the converter underside. The board is a $30\times30$~mm coupon with natural
-convection beneath; its lateral spreading is treated as a sensitivity
-(Section~\ref{sec:explore}).
+for $n = 223$ channels of width $w = 50$~\textmu m, depth $H = 300$~\textmu m and length
+$L = 22.36$~mm over the footprint $A_{\mathrm{f}}$, with the fully developed laminar Nusselt
+number of a rectangular duct heated on three walls~\cite{ShahLondon1978} ($\mathrm{Nu} =
+\CoolNu$ at aspect ratio 1/6), $m = (2h_{\mathrm{ch}}/k_{\mathrm{s}}t_{\mathrm{f}})^{1/2}$ for
+50-\textmu m silicon fins ($\eta_{\mathrm{f}} = \CoolEtaF$, $\Lambda = \CoolLambda$), the caloric
+resistance $R_{\mathrm{cal}} = 1/(2\dot m c_p)$ and a 100-\textmu m silicon base, for water
+entering at 25\,$^\circ$C at $\dot m = 27$~g\,s$^{-1}$ per plate ($Re = \CoolRe$, laminar; operating
+points in the transitional band are refused). The coolant warming
+$T_{\mathrm{f}}(x) = T_{\mathrm{in}} + Q(0\!\to\!x)/(\dot m c_p)$ is resolved along the flow and
+iterated with the solid solution. Three properties of this boundary bear on the comparisons.
+The flow is thermally developing over most of the channel ($L_{\mathrm{th}} = 0.05\,Re\,Pr\,
+D_{\mathrm{h}} = \CoolLth$~mm), so the fully developed $\mathrm{Nu}$ is a lower bound and the
+coefficient is conservative, as the conjugate CFD check of Section~\ref{sec:verification}
+confirms. Because \eqref{eq:heff} includes the caloric resistance of a uniform sink while the
+coolant warming is also resolved, half the coolant rise, \CoolCalK~K per kilowatt, is counted
+twice: a conservative, largely common-mode offset that Section~\ref{sec:compare} removes as a
+check. And the plate costs pumping power: $\Delta p = \CoolDpFd$~kPa fully developed and about
+\CoolDp~kPa with entrance and plenum losses, \CoolPhyd~W of hydraulic power per plate, or
+\CoolPshaftLo--\CoolPshaftHi~W at the shaft for pump efficiencies of 0.75--0.35, with uniform
+flow among the channels. Cooling~B adds an identical plate beneath the cell grid---the same
+geometry, the same 27~g\,s$^{-1}$, the same interface, coolant at the inlet temperature---so the
+two plates are provisioned independently and each receives the full flow. The die dissipates its
+1~kW uniformly; a non-uniform power map is a sensitivity. The board is a $30\times30$~mm coupon
+with natural convection (10~W\,m$^{-2}$K$^{-1}$) beneath; its lateral spreading is treated as a
+sensitivity (Section~\ref{sec:explore}).
 
 The temperature-dependent terms---device on-resistance, inductor winding and the resistivity of
 every conductor---are iterated with the thermal solution to a fixed point. Each term is
 evaluated at the mean temperature of the region it is deposited in, each device at its own
 tier's in-cell temperature; the iteration stops when every coupled temperature changes by less
-than 0.25~K and the loss by less than 0.1\,\%.
+than 0.25~K and the loss by less than 0.1\,\%. The GaN on-resistance coefficients are fitted to
+the datasheet curves over 25--125\,$^\circ$C; above that range they are extrapolated, which the
+feasibility stage reports.
 
 \subsection{Thermoelastic package and critical joint}
 The converged field loads a finite-element model of the mounted assembly,
@@ -146,8 +210,21 @@ across the ball layer
 \Delta u = \left\| \mathbf{u}_{\mathrm{t}} - \mathbf{u}_{\mathrm{b}} \right\|_{xy}
 \label{eq:du}
 \end{equation}
-is evaluated, and its maximum $\du$ with the local joint temperature $T_{\mathrm{j}}$ drives a
-local submodel of that joint.
+is evaluated from the nodal displacements on the bottom and top planes of the ball layer,
+interpolated linearly at each site of the ball lattice. With $T_{\mathrm{ref}} = 25\,^\circ$C the
+solution is the change from power-off to the operating point, the same excursion the local
+cycle imposes. The maximum $\du$ and the local joint temperature $T_{\mathrm{j}}$ drive a local
+submodel of that joint; because the largest displacement need not give the largest inelastic
+response, the submodel is also solved at the competing sites (Section~\ref{sec:verification}).
+
+When the optional interface feedback is enabled, the solved displacement of the top surface
+sets the local thickness of the top interface. The plate is taken as flat and rigid, resting on
+the highest point of the warped surface at the nominal 50-\textmu m bond line, so the interface
+thickens by $g(x,y) = \max u_z - u_z(x,y)$ and the local coefficient becomes
+$(h_{\mathrm{eff}}^{-1} + g/k_{\mathrm{TIM}})^{-1}$; the electrothermal fixed point and the
+thermoelastic solution are then iterated until the warpage changes by less than 1\,\%. A
+conforming interface ($g = 0$, the production chain) and a rigid plate on the free warpage
+bound the feedback from below and above.
 
 \subsection{Local solder response}
 The submodel resolves the critical joint---solder between two copper pads---with its lower pad
@@ -167,9 +244,3 @@ free edge, where the bimaterial corner is singular. Fixing the band in physical 
 as one element, keeps the averaging volume identical at every mesh level, which is what makes
 the response mesh-convergent. $\deps$ is a response: no damage law, life relation or allowable
 is applied.
-
-Mechanical feedback to the electrical model is bounded rather than assumed: the thermal strain
-of a copper conductor, $\alpha_{\mathrm{Cu}}\Delta T\approx 0.15$\,\% at the converged
-temperatures, changes its resistance two orders of magnitude less than the 20--35\,\% change of
-resistivity already inside the fixed point, so the mechanics is evaluated one way on the
-converged field in the intact regime.

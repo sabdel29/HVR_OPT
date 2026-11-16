@@ -1,0 +1,170 @@
+{
+ "plate": {
+  "name": "TOP_SI_MICROCHANNEL_27",
+  "geometry": {
+   "channels": 223,
+   "w_ch_um": 50,
+   "h_ch_um": 300,
+   "t_fin_um": 50,
+   "t_base_um": 100.0,
+   "length_mm": 22.36,
+   "width_mm": 22.36,
+   "k_solid_W_mK": 130.0,
+   "aspect_ratio": 0.16666666666666666,
+   "D_h_um": 85.71428571428572
+  },
+  "fluid": {
+   "medium": "water (properties at ~50 C)",
+   "rho_kg_m3": 988.0,
+   "cp_J_kgK": 4181.0,
+   "k_W_mK": 0.644,
+   "mu_Pa_s": 0.000547,
+   "Pr": 3.551253105590062,
+   "T_inlet_C": 25.0,
+   "m_dot_g_s": 27.0,
+   "V_dot_ml_min": 1639.6761133603238,
+   "flow_distribution": "uniform over the channels (ideal plenum)"
+  },
+  "regime": {
+   "velocity_m_s": 8.16978631470017,
+   "Re": 1264.8339846837978,
+   "regime": "laminar",
+   "L_hydrodynamic_entrance_mm": 5.420717077216276,
+   "L_thermal_entrance_mm": 19.250338354989385,
+   "Graetz_number_at_outlet": 17.218549512512862,
+   "note": "thermally developing over most of the channel: the fully developed Nu is a lower bound on the mean Nu (conservative)"
+  },
+  "heat_transfer": {
+   "Nu_fully_developed_3walls": 4.602666666666667,
+   "h_channel_W_m2K": 34581.36888888889,
+   "fin_efficiency": 0.7689174847183996,
+   "area_amplification_Lambda": 5.099783517679868,
+   "R_conv_K_W": 0.011341290635280301,
+   "R_caloric_K_W": 0.004429207969030978,
+   "R_base_K_W": 0.001538555082610561,
+   "R_total_K_W": 0.01730905368692184,
+   "h_eff_uniform_sink_W_m2K": 115553.49261554122,
+   "h_eff_streamwise_sink_W_m2K": 155290.8048126262,
+   "caloric_double_count_K_per_kW": 4.429207969030978,
+   "production_note": "production uses h_eff_uniform_sink with the streamwise sink (conservative by Q R_cal); variant plate_local_h_* quantifies it"
+  },
+  "hydraulics": {
+   "dp_fully_developed_kPa": 537.7743292423885,
+   "dp_with_entrance_and_plenum_kPa": 615.2590738862937,
+   "K_inf": 0.85,
+   "K_contraction": 0.5,
+   "K_expansion": 1.0,
+   "P_hydraulic_fd_W": 14.696262033951912,
+   "P_hydraulic_W": 16.81376011632584,
+   "P_shaft_eta_0.35_W": 48.03931461807384,
+   "P_shaft_eta_0.55_W": 30.570472938774255,
+   "P_shaft_eta_0.75_W": 22.418346821767788
+  },
+  "tim": {
+   "thickness_um": 50.0,
+   "k_W_mK": 3.0,
+   "R_m2K_W": 1.6666666666666664e-05,
+   "h_W_m2K": 60000.00000000001
+  },
+  "dT_fluid_K_per_kW": 8.858415938061956
+ },
+ "tiers": {
+  "A": {
+   "plates": 1,
+   "m_dot_per_plate_g_s": 27.0,
+   "P_hydraulic_W": 16.81376011632584,
+   "P_shaft_W": {
+    "0.35": 48.03931461807384,
+    "0.55": 30.570472938774255,
+    "0.75": 22.418346821767788
+   },
+   "cases": {
+    "Z1": {
+     "file": "etm_Z1_HV_S0_h1.1_r21.json",
+     "P_loss_W": 144.3097256920461,
+     "Q_total_W": 1144.3097256920462,
+     "q_top_plate_W": 1143.5602642098145,
+     "q_bottom_plate_W": 0.0,
+     "q_board_natural_W": 0.7495061555320696,
+     "q_converter_underside_natural_W": 0.0,
+     "energy_residual_rel": 3.9039518239899394e-08,
+     "dT_fluid_top_K": 10.130132470610562,
+     "dT_fluid_bottom_K": 0.0
+    },
+    "Z2": {
+     "file": "etm_Z2_HV_S0_h1.1_r21.json",
+     "P_loss_W": 147.43752380684376,
+     "Q_total_W": 1147.4375238068437,
+     "q_top_plate_W": 1147.2051205066061,
+     "q_bottom_plate_W": 0.0,
+     "q_board_natural_W": 0.23239564205156582,
+     "q_converter_underside_natural_W": 0.0,
+     "energy_residual_rel": -6.674163770476301e-09,
+     "dT_fluid_top_K": 10.162420123722006,
+     "dT_fluid_bottom_K": 0.0
+    },
+    "Z3": {
+     "file": "etm_Z3_HV_S0__z3_top_only.json",
+     "P_loss_W": 199.5537853740105,
+     "Q_total_W": 1199.5537853740104,
+     "q_top_plate_W": 1198.2950764834425,
+     "q_bottom_plate_W": 0.0,
+     "q_board_natural_W": 0.5385820130933496,
+     "q_converter_underside_natural_W": 0.7201616736670726,
+     "energy_residual_rel": 2.9007613429871563e-08,
+     "dT_fluid_top_K": 10.614996204022097,
+     "dT_fluid_bottom_K": 0.0
+    }
+   }
+  },
+  "B": {
+   "plates": 2,
+   "m_dot_per_plate_g_s": 27.0,
+   "P_hydraulic_W": 33.62752023265168,
+   "P_shaft_W": {
+    "0.35": 96.07862923614768,
+    "0.55": 61.14094587754851,
+    "0.75": 44.836693643535575
+   },
+   "cases": {
+    "Z1": {
+     "file": "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
+     "P_loss_W": 142.62940729978502,
+     "Q_total_W": 1142.629407299785,
+     "q_top_plate_W": 1129.7355158768296,
+     "q_bottom_plate_W": 12.862423815000033,
+     "q_board_natural_W": 0.03143243546729792,
+     "q_converter_underside_natural_W": 0.0,
+     "energy_residual_rel": -3.0782061070649476e-08,
+     "dT_fluid_top_K": 10.007667099637953,
+     "dT_fluid_bottom_K": 0.11394070012490395
+    },
+    "Z2": {
+     "file": "etm_Z2_HV_S0__z2_cooled_tim.json",
+     "P_loss_W": 115.18200402488185,
+     "Q_total_W": 1115.1820040248817,
+     "q_top_plate_W": 924.5126146338016,
+     "q_bottom_plate_W": 190.4967517929478,
+     "q_board_natural_W": 0.17264542959903356,
+     "q_converter_underside_natural_W": 0.0,
+     "energy_residual_rel": 7.022590678423646e-09,
+     "dT_fluid_top_K": 8.189717280411399,
+     "dT_fluid_bottom_K": 1.6874994622316812
+    },
+    "Z3": {
+     "file": "etm_Z3_HV_S0__z3_plate_tim.json",
+     "P_loss_W": 124.46326420109739,
+     "Q_total_W": 1124.4632642010974,
+     "q_top_plate_W": 960.3207456712793,
+     "q_bottom_plate_W": 163.95086874855275,
+     "q_board_natural_W": 0.19163492960605855,
+     "q_converter_underside_natural_W": 0.0,
+     "energy_residual_rel": -1.320777647115485e-08,
+     "dT_fluid_top_K": 8.506920599106001,
+     "dT_fluid_bottom_K": 1.4523449887812836
+    }
+   }
+  }
+ },
+ "rule": "cooling A: one top plate; cooling B: the top plate plus an identical plate (same geometry and mass flow) under the cell grid through the same 50-um TIM; pumping power counts every plate"
+}

@@ -1,51 +1,101 @@
 % ============================================================================ VERIFICATION
-\section{Verification and Cost}\label{sec:verification}
+\section{Verification, Uncertainty and Cost}\label{sec:verification}
 
-No single accuracy is defined for a chain of models; each reduced model is instead solved
-together with a reference on the same problem and the same machine (Fig.~\ref{fig:verif}). The
-direct-current conduction stages are checked against a commercial thermal finite-element solver
-through the exact analogy between $\nabla\!\cdot(k\nabla T) = 0$ and
-$\nabla\!\cdot(\sigma\nabla V) = 0$. The single-TSV resistance and the TSV-field and attach
-homogenizations agree within \ErrHomogMax\,\%; the series rule for the through-thickness conductivity of
-an RDL tier overstates it by \ErrRdlKz\,\% because it ignores constriction onto the copper grid, so
-the reference tensor replaces it in every thermal result; the board via field and the solder
-attach of Z3 use the same mixing rules as the verified TSV-field and Cu-pillar cards. The
-voltage-fed package network agrees
-with an open-source finite-element solution~\cite{MOOSE} to \ErrPkgRdlZone\,\%. The package thermal solver
+No single accuracy is defined for a chain of models, and checks of different kinds establish
+different things (Table~\ref{tab:verif}). Each reduced model is solved together with a reference
+on the same problem and the same machine (Fig.~\ref{fig:verif}); the discretization of each
+finite-element model is measured by nested refinement; and model-form choices that no reference
+can settle are carried as alternatives through the whole chain (Section~\ref{sec:explore}).
+
+\begin{table}[!t]
+\caption{What each check establishes and what it does not.}
+\label{tab:verif}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{@{}L{2.25cm}L{2.95cm}L{3.3cm}@{}}
+\toprule
+Check & Establishes & Does not establish \\
+\midrule
+Homogenized card vs explicit unit cell & Accuracy of the mixing rule for the declared pattern &
+Contact and intermetallic resistance; full-package accuracy \\
+Package network vs 2-D FEM & The DC conduction model as implemented & High-frequency PDN
+behavior \\
+Thermal unit cell and full package vs FEM & The thermal solver and mesh on the package &
+Material data and cooling boundary \\
+Cold plate vs conjugate CFD & The model form of the boundary at the operating point & Manifold
+and flow distribution \\
+Thermoelastic vs closed form, FEM & Element, solver and boundary restraint & Solder fatigue \\
+Nested mesh refinement & Discretization error of each output & Model accuracy \\
+Local solder mesh family, cycles & Discretization, time-step and stabilization error &
+Constitutive validity (bounded by an alternative law) \\
+Fixed point, energy balance & Convergence and conservation of the coupled solution &
+Completeness of the physics \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\emph{Reference-model checks.} The direct-current conduction stages are checked against a
+commercial thermal finite-element solver through the exact analogy between
+$\nabla\!\cdot(k\nabla T) = 0$ and $\nabla\!\cdot(\sigma\nabla V) = 0$. The single-TSV resistance
+and the TSV-field and attach homogenizations agree within \ErrHomogMax\,\%. The series rule for
+the through-thickness conductivity of an RDL tier overstates it by \ErrRdlKz\,\% because it
+ignores constriction onto the copper grid; the reference tensor therefore replaces the rule in
+every production result, and the \ErrRdlKz\,\% is the error that was removed, not a residual. The
+board via field and the solder attach of Z3 use the same mixing rules as the verified TSV-field
+and Cu-pillar cards without a separate reference. The voltage-fed package network agrees with an
+open-source finite-element solution~\cite{MOOSE} to \ErrPkgRdlZone\,\%. The package thermal solver
 agrees with commercial and open-source finite-element solutions of representative unit cells of
-the stacks to \ErrThermMax\,\% of the temperature rise, and the thermoelastic element reproduces the
-bimaterial closed form to \ErrMechClosed\,\% and a commercial structural solution to \ErrMechAedt\,\%. A conjugate
-computational-fluid-dynamics solution of one microchannel half-pitch at the production heat load
-shows the cold-plate correlation to be \ErrCoolingIcepak\,\% conservative in mean base temperature rise; the
-correlation is kept, and the coefficient equivalent to the conjugate solution is run as a
-sensitivity.
+the stacks to \ErrThermMax\,\% of the temperature rise,
+% PENDING(fullpkg): full-package MOOSE vs CalculiX cross-check sentence
+and the thermoelastic element reproduces the bimaterial closed form to \ErrMechClosed\,\% and a
+commercial structural solution to \ErrMechAedt\,\%. A conjugate CFD solution of one microchannel
+half-pitch at the production load shows the cold-plate correlation to be \ErrCoolingIcepak\,\%
+conservative in mean base temperature rise, the developing entrance region accounting for much
+of the gap; the correlation is kept, and the CFD-equivalent coefficient is run as an alternative.
+The converter loss model is taken from~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}, where it is
+validated against circuit simulation of other family members; it is not re-validated at the
+synthesized point, and its omitted terms are bounded in Section~\ref{sec:explore}.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{fig10_verification.pdf}
-\caption{Every production model against a matched reference on the same problem and machine:
-$|$relative error$|$ and median runtimes of the model and the reference. The series-rule RDL
-conductivity was replaced by the reference tensor; the cold-plate correlation is conservative and
-its CFD-equivalent coefficient is run as a sensitivity (Fig.~\ref{fig:robust}).}
+\caption{Matched-reference checks only: $|$relative error$|$ of every reduced model against its
+reference on the same problem and machine, and the median runtimes of both. The series-rule RDL
+conductivity (open marker) was replaced by the reference tensor; the cold-plate correlation is
+conservative and its CFD-equivalent coefficient is run as an alternative (Fig.~\ref{fig:robust}).
+Mesh refinement and the local solder family are reported in Table~\ref{tab:uncertainty}.}
 \label{fig:verif}
 \end{figure}
 
-The package mesh is selected by nested refinement in which every coarse node survives: on the
-production grid the largest change of peak temperature, die warpage, joint driver or loss
-under a further in-plane level or a through-thickness split is \MeshWorstProd\,\%, and an
-architecture ordering is claimed only where the gap exceeds twice that change. The local response
-is computed on a declared family of four nested solder meshes with the fixed averaging band;
-its uncertainty $U = U_{\mathrm{mesh}} + U_{\mathrm{time}} + U_{\mathrm{cyc}}$ (discretization,
-first-increment and cycle-count contributions) is \LocalUrange: below 2\,\% for the embedded and
-package-backside joints, and \EpsUZthree\,\% for the cool board-backside joint, whose creep
-stabilizes slowly over cycles. Every case passes the declared convergence rule with the fixed
-averaging band, and a local ordering is drawn only where the gap exceeds $2U$. Heat deposited in the mesh equals the ledger total, and heat leaving
-through the cold-plate and board films equals the deposited heat, to $10^{-6}$ in every case.
+\emph{Discretization and the comparison rule.} The package mesh is selected by nested
+refinement in which every coarse node survives (Table~S3). For each output of each architecture
+the numerical uncertainty $U$ adds the Richardson estimate of the production mesh's
+discretization error, the through-thickness split, the stopping tolerance of the fixed point
+and the matched-reference agreement of the solver (Table~\ref{tab:uncertainty}): for the loss it
+is \UrelZonePloss, \UrelZtwoPloss{} and \UrelZthreePloss\,\% for Z1, Z2 and Z3, for the peak
+temperature 1--1.5\,\% of the rise, and for the warpage and joint driver 1--5\,\%. A difference
+between two architectures is \emph{resolved} when it exceeds $2(U_a + U_b)$, which takes no credit
+for the strong correlation of errors on one mesh family; a resolved ranking that a declared
+alternative reverses is reported as \emph{conditional} on that decision. The local response is
+computed on a declared family of four nested solder meshes with the fixed averaging band; its
+uncertainty $U = U_{\mathrm{mesh}} + U_{\mathrm{time}} + U_{\mathrm{cyc}}$ (discretization,
+first-increment and cycle-count contributions) is below 2\,\% for the embedded and
+package-backside joints and \EpsUZthree\,\% for the cool board-backside joint, whose creep
+stabilizes slowly.
+% PENDING(solder): critical-joint verification, 16-cycle stabilization, band and law sensitivity
+Heat deposited in the mesh equals the ledger total, and heat leaving through the cold-plate and
+board films equals the deposited heat, to $10^{-6}$ in every case.
 
-The analytical stages cost microseconds to seconds: one converter synthesis takes 4.6~s and a
-regulator-count sweep about four minutes on one core. One fully coupled evaluation of an
-integration architecture on the production mesh---electrothermal fixed point, thermoelastic
-solution with the all-site joint search, and the local submodel---takes \EvalHours\ on a shared
-two-socket workstation, with the expensive steps entered once per candidate rather than once per
-design variable. No commercial flow evaluates the same coupled problem, so no end-to-end speedup
-is claimed; the per-stage comparison is Fig.~\ref{fig:verif}.
+\input{tab_uncertainty}
+
+\emph{Cost.} The analytical stages cost microseconds to seconds: one converter synthesis takes
+4.6~s and a regulator-count sweep about four minutes on one core. One coupled evaluation on the
+production mesh---the electrothermal fixed point (4--5 thermal solves), the thermoelastic
+solution with the all-site joint search and the local submodel---takes \EvalHours\ on a shared
+two-socket workstation (Intel Xeon Gold 6342, 2 threads per thermal and 1 per structural solve;
+CalculiX~2.23). The fixed point takes 48~min for Z1 and Z2 and 2.4~h for Z3, whose two cooled
+faces need eight coolant iterations per thermal solve; the structural solve takes 23--61~min;
+geometry construction and meshing take under two minutes; sensitivity runs repeat the chain.
+The per-stage breakdown, mesh sizes and degrees of freedom are in Table~S3. No end-to-end
+speedup against another flow is claimed; the per-stage comparison is Fig.~\ref{fig:verif}.

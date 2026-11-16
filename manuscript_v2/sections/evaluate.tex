@@ -15,7 +15,7 @@ and return loop measures \RloopZone~m$\Omega$. The substrate's TSV field carries
 at 0.48~A per cell and dissipates less than a milliwatt.
 
 \emph{Electrothermal state.} The fixed point converges in \EtItersZone{} iterations to
-\PlossZone~W inside the package (\EffZone\,\% efficiency), of which \PconvZone~W is conversion
+\PlossZone~W inside the package (\EffZone\,\% package-internal efficiency), of which \PconvZone~W is conversion
 and \ProuteZone~W routing. The peak temperature, \TmaxZone\,$^\circ$C, lies in the low-side
 device tier, which averages \TlsZone\,$^\circ$C; the die averages \TdieZone\,$^\circ$C.
 Evaluated with every region at 25\,$^\circ$C, the same ledger returns \PrtZone~W. An electrical
@@ -24,19 +24,29 @@ analysis decoupled from the thermal solution would therefore understate the pack
 above the temperature such an analysis assumes.
 
 \emph{Mechanical state.} The die warps by \WarpZone~\textmu m peak to valley. The search over
-all \NjointZone{} ball sites places the critical joint at the corner of the array, where
+all \NjointZone{} ball sites places the largest displacement at the corner of the array, where
 $\du = \DuZone$~\textmu m at \TjointZone\,$^\circ$C, inside the 125-$^\circ$C calibration of the
-solder law, and the local response is $\deps = \EpsZone\times10^{-3}$ per cycle with an
-uncertainty of \EpsUZone\,\%.
+solder law; the local response there is $\deps = \EpsZone\times10^{-3}$ per cycle on the finest
+solder mesh (L3), with an uncertainty of \EpsUZone\,\%.
+% PENDING(solder): the competing sites (Pareto set, corners) and the site of largest response
 
 \emph{A requirement on the converter.} The evaluation returns more than a verdict: it returns a
-requirement that no converter-level analysis raises. Without local input decoupling (S1) the
-pulsed input current flows through the package 48-V network; the package loss rises to
-\PlossZoneSone~W and the critical joint reaches \TjointZoneSone\,$^\circ$C, beyond the
-calibration of the solder law. With the input pulsed at the overall conversion ratio (S2), the
-hottest joint reaches \TjointHotZoneStwo\,$^\circ$C, above the 217-$^\circ$C solidus of SAC305,
-and the operating point does not exist. The embedded regulator is admissible only with local
-input capacitance at every cell, of the order of 0.5~\textmu F at the synthesized frequency.
+requirement on the converter that a converter-level loss analysis does not by itself expose.
+Without local input decoupling (S1) the pulsed input current flows through the package 48-V
+network; the package loss rises to \PlossZoneSone~W and the critical joint reaches
+\TjointZoneSone\,$^\circ$C, beyond the calibration of the solder law, while the capacitors reach
+\TcapSoneZone\,$^\circ$C, above their 125-$^\circ$C class (Table~S5). With the input pulsed at the
+overall conversion ratio (S2), the hottest joint reaches \TjointHotZoneStwo\,$^\circ$C, above the
+217-$^\circ$C solidus of SAC305: under the intact-solid solder model the design is infeasible.
+The embedded regulator is admissible only with local input capacitance at every cell.
+% PENDING(decap): the implemented decoupling -- part, count, placement, k achieved, ESR loss, E-T result
+
+\emph{Feasibility.} At S0 the evaluated design passes every check of the feasibility stage: the
+GaN junctions stay below \TjAZone\,$^\circ$C (\TjMarginAZone~K below the 150-$^\circ$C rating), the
+capacitor and inductor tiers below \TcapAZone\,$^\circ$C, the build-up dielectric and encapsulant
+below \TrdlAZone\,$^\circ$C, the critical joint inside the solder law's range, and the
+repartitioned stack meets the via, pitch, landing and provisioning rules
+(Table~S5 lists every limit and case).
 
 \begin{figure*}[!t]
 \centering

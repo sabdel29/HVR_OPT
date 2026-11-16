@@ -102,6 +102,11 @@ EXTRA_FILM = None
 #:                NOT in the package-internal ledger but deposited in the FE domain (the
 #:                direct-feed heat-location sensitivity); None on the production path
 EXTRA_DEPOSITS = None
+#:   TOP_FILM_HOOK callable (mesh, top_faces, h_face) -> h_face: per-face top-film
+#:                coefficients, used consistently in the deck AND the coolant balance
+#:                (the mechanical-to-thermal TIM feedback of the TCPMT revision,
+#:                tcpmt_review_variants.py); None on the production path
+TOP_FILM_HOOK = None
 
 # --- material corrections -------------------------------------------------
 TSV_N_PER_CELL = 1444      # the adopted 'A_same_field' fabric (tsv_fields)
@@ -471,6 +476,8 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
     cen = np.array([m.elem_centroids()[int(e) - 1] for e in top])
     areas = np.array([ccxio.face_area(m, e) for e in top])
     h_face = np.full(len(top), cooler.h_uniform(Q))
+    if TOP_FILM_HOOK is not None:
+        h_face = np.asarray(TOP_FILM_HOOK(m, top, h_face), float)
     m_dot = cooler.m_dot_g_s * 1e-3 * (2.0 if cooler.two_sided else 1.0)
     order = np.argsort(cen[:, 0])
     frac = np.zeros(len(top))
