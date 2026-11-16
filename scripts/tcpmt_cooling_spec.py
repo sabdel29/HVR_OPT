@@ -42,10 +42,10 @@ K_INF, K_CONTRACTION, K_EXPANSION = 0.85, 0.5, 1.0
 TIM_UM, TIM_K = 50.0, 3.0
 TIER_CASES = {
     "A": {"Z1": FC / "etm_Z1_HV_S0_h1.1_r21.json", "Z2": FC / "etm_Z2_HV_S0_h1.1_r21.json",
-          "Z3": SENS / "etm_Z3_HV_S0__z3_top_only.json"},
+          "Z3": SENS / "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json"},
     "B": {"Z1": SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
           "Z2": SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
-          "Z3": SENS / "etm_Z3_HV_S0__z3_plate_tim.json"},
+          "Z3": SENS / "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json"},
 }
 
 

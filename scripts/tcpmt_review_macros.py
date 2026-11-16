@@ -100,6 +100,15 @@ def feasibility():
         fails = [x for x, v in c["checks"].items() if isinstance(v, dict) and not v["ok"]]
         m[f"Nfail{k}"] = str(len(fails))
         m[f"Feasible{k}"] = "yes" if not fails else "no"
+    # Z3 with the coupled land side: the whole-field maximum bounds every component and material
+    # temperature (feasibility.json evaluated the fields without the land-side heat)
+    for t, v in (("A", "z3_land_t40_A_fvmap"), ("B", "z3_land_t40_B_fvmap")):
+        c = J(SENS / f"etm_Z3_HV_S0__{v}.json")
+        if c:
+            tmax = c["thermal"]["T_max_C"]
+            m[f"Tj{t}Zthree"] = fx(tmax, 1)
+            m[f"TjMargin{t}Zthree"] = fx(150.0 - tmax, 0)
+            m[f"Feasible{t}Zthree"] = "yes" if tmax <= 125.0 else "no"
     return m
 
 
@@ -402,6 +411,12 @@ def solder():
     m["SchubertGapB"] = fx(100 * co["adjacent_gaps_rel"]["schubert_time_final"]["B"]["Z1<Z3"], 1)
     m["SchubertHold"] = "yes" if co.get("rankings_hold_all_variants") else "no"
     m["CardGridMax"] = fx(100 * d["numerical_tolerance"]["card_grid_sensitivity_max_rel"], 1)
+    zl = J(TR / "solder_z3land.json")              # Z3 with the coupled land side
+    for t, v in ((zl or {}).get("cases") or {}).items():
+        if v.get("stabilised") is not None:
+            m[f"Eps{t}Zthree"] = fx(1e3 * v["stabilised"], 2)
+            if v.get("U_stab_num") is not None:
+                m[f"EpsU{t}Zthree"] = fx(100 * v["U_stab_num"], 1)
     return m
 
 
@@ -410,10 +425,10 @@ def vdrop():
     the 1-V conductor loss divided by the load current (both rails, supply + return)."""
     cases = {("A", "Z1"): R / "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json",
              ("A", "Z2"): R / "research/final_closure/etm_Z2_HV_S0_h1.1_r21.json",
-             ("A", "Z3"): SENS / "etm_Z3_HV_S0__z3_top_only.json",
+             ("A", "Z3"): SENS / "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json",
              ("B", "Z1"): SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
              ("B", "Z2"): SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
-             ("B", "Z3"): SENS / "etm_Z3_HV_S0__z3_plate_tim.json"}
+             ("B", "Z3"): SENS / "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json"}
     land = J(TR / "z3_land_coupled.json") or {}
     pick = land.get("recommended_case_files") or {}
     for t in ("A", "B"):
@@ -430,9 +445,60 @@ def vdrop():
     return m
 
 
+
+def z3land():
+    """Z3 with the land-side and board-plane 1-V redistribution in the coupled ledger (agent
+    z3land): thickness sweep, ties, drops, and the lower-bound values of the earlier ledger."""
+    d = J(TR / "z3_land_coupled.json")
+    if not d:
+        return {}
+    m = {}
+    tab = {r["run"]: r for r in d["table"]}
+    names = {10: "Ten", 20: "Twenty", 40: "Forty", 100: "Hundred"}
+    for t_um, k in names.items():
+        r = tab.get(f"z3_land_t{t_um}_B")
+        if r:
+            m[f"ZthreeLandB{k}Ploss"] = fx(r["P_loss_w"], 1)
+            m[f"ZthreeLandB{k}Land"] = fx(r["P_land_w"], 1)
+            m[f"ZthreeLandB{k}Drop"] = fx(r["dV_land_static_one_rail_mV"], 0)
+    r = tab.get("z3_land_t40_B")
+    if r:
+        m["ZthreeLandPlane"] = fx(r["P_board_plane_w"], 1)
+        m["ZthreeLandPlaneDrop"] = fx(r["dV_board_static_VDD_mV"], 0)
+    r = tab.get("z3_land_t40_A")
+    if r:
+        m["ZthreeLandAFortyPloss"] = fx(r["P_loss_w"], 1)
+    dv = d["derived"]
+    m["ZthreeLandTie"] = fx(dv["tie_with_board_planes"]["t_um"], 0)
+    m["ZthreeLandTieLandOnly"] = fx(dv["tie_land_only"]["t_um"], 0)
+    for key, mac in (("drop_30mV_one_rail", "ZthreeLandThirtyMv"),
+                     ("drop_30mV_VDD_plus_GND", "ZthreeLandThirtyMvLoop")):
+        v = dv.get(key)
+        if isinstance(v, dict):
+            val = next((v[k] for k in ("t_um", "t_min_um", "t_um_min") if v.get(k) is not None),
+                       None)
+            m[mac] = fx(val, 0)
+        elif isinstance(v, (int, float)):
+            m[mac] = fx(v, 0)
+    m["ZthreeLandNote"] = (r"Z3: land-side (40~\textmu m) and board-plane redistribution "
+                           r"in the coupled solution.")
+    iso = J(TR / "z3_land_isothermal.json") or {}
+    if iso:
+        m["PIsoLandZthree"] = fx(iso["25.0"]["P"], 1)
+        m["PIsoHotLandZthree"] = fx(iso["100.0"]["P"], 1)
+        m["IsoHotLandTermsZthree"] = fx(iso["100.0"]["land"] + iso["100.0"]["plane"], 1)
+    lb = {"A": SENS / "etm_Z3_HV_S0__z3_top_only.json",
+          "B": SENS / "etm_Z3_HV_S0__z3_plate_tim.json"}
+    for t, f in lb.items():
+        c = _case(f)
+        if c:
+            m[f"PlossLb{t}Zthree"] = fx(c["P"], 1)
+    return m
+
+
 def macros():
     m = {}
-    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, solder, vdrop, agents):
+    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, solder, vdrop, z3land, agents):
         try:
             m.update(f())
         except Exception as e:          # a malformed artifact must not stop the paper build

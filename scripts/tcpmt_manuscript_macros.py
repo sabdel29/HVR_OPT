@@ -326,9 +326,9 @@ def sensitivity_macros(S):
 #: top cold plate for every integration. B: the same top plate plus the same bottom plate
 #: (top-plate coefficient, inlet temperature, 50-um TIM) under the cell-grid footprint.
 #: I: interface-free bottom plates, reported as bounds. ("prod", None) = production case.
-TIERS = {"A": {"Z1": ("prod", None), "Z2": ("prod", None), "Z3": ("sens", "z3_top_only")},
+TIERS = {"A": {"Z1": ("prod", None), "Z2": ("prod", None), "Z3": ("sens", "z3_land_t40_A_fvmap")},
          "B": {"Z1": ("sens", "z1_bottom_plate_tim"), "Z2": ("sens", "z2_cooled_tim"),
-               "Z3": ("sens", "z3_plate_tim")},
+               "Z3": ("sens", "z3_land_t40_B_fvmap")},
          "I": {"Z2": ("sens", "z2_cooled"), "Z3": ("prod", None)}}
 
 

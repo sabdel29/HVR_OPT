@@ -133,10 +133,10 @@ def assemble():
 
 TIERS = {
     "A": {"Z1": FC / "etm_Z1_HV_S0_h1.1_r21.json", "Z2": FC / "etm_Z2_HV_S0_h1.1_r21.json",
-          "Z3": SENS / "etm_Z3_HV_S0__z3_top_only.json"},
+          "Z3": SENS / "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json"},
     "B": {"Z1": SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
           "Z2": SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
-          "Z3": SENS / "etm_Z3_HV_S0__z3_plate_tim.json"},
+          "Z3": SENS / "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json"},
 }
 #: tier L0 local responses (x1e-3 / cycle), replaced by the solder study when present
 EPS_L0 = {"A": {"Z1": 5.80, "Z2": 8.03, "Z3": 13.47}, "B": {"Z1": 2.08, "Z2": 4.15, "Z3": 2.52}}
@@ -156,6 +156,12 @@ def local_u():
                 eps[t][a] = 1e3 * v["stabilised"]
             if v.get("U_stab_num") is not None:
                 u_t[(t, a)] = v["U_stab_num"]
+        zl = J(TR / "solder_z3land.json")          # Z3 with the coupled land side
+        for t, v in ((zl or {}).get("cases") or {}).items():
+            if v.get("stabilised") is not None:
+                eps[t]["Z3"] = 1e3 * v["stabilised"]
+                if v.get("U_stab_num") is not None:
+                    u_t[(t, "Z3")] = v["U_stab_num"]
     return eps, u, u_t, l3, basis
 
 
