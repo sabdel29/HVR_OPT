@@ -75,9 +75,13 @@ def declared(path=None):
     conv = c["converter"]
     if int(d["n_vr"]) != int(conv["cells"]):
         raise DesignError(f"design.n_vr {d['n_vr']} != converter.cells {conv['cells']}")
-    if abs(float(d["area_mm2"]) - float(conv["cell_area_mm2"])) > 1e-9:
-        raise DesignError(f"design.area_mm2 {d['area_mm2']} != converter.cell_area_mm2 "
-                          f"{conv['cell_area_mm2']}")
+    # the physical cell is the synthesized footprint, or larger but never beyond the DSE's
+    # area budget I_vr / J_t (a cell enlarged so that two component classes share a tier)
+    a_syn, a_cell = float(d["area_mm2"]), float(conv["cell_area_mm2"])
+    budget = P_LOAD_W / V_OUT / int(d["n_vr"]) / float(d["j_target_A_mm2"])
+    if not (a_syn - 1e-9 <= a_cell <= budget + 1e-9):
+        raise DesignError(f"converter.cell_area_mm2 {a_cell} must lie between the synthesized "
+                          f"{a_syn} mm2 and the {budget:.4f} mm2 area budget")
     n = int(round(math.sqrt(int(d["n_vr"]))))
     if n * n != int(d["n_vr"]):
         raise DesignError(f"{d['n_vr']} cells is not a square grid (the package builder "
@@ -191,17 +195,19 @@ def routing_design(base: dict, path=None) -> dict:
 
 @lru_cache(maxsize=None)
 def _routing_design(p: str, base_items: tuple) -> dict:
-    return design_dict(compiled(p), n_vr(p), dict(base_items))
+    return design_dict(compiled(p), n_vr(p), dict(base_items), tile_side_mm=cell_side_mm(p))
 
 
-def design_dict(des, n: int, base: dict) -> dict:
+def design_dict(des, n: int, base: dict, tile_side_mm: float | None = None) -> dict:
     """The routing.DESIGN fields of a compiled HVRDesign at n regulators. Applied to the
-    production design (kw1.design_1kw(), n = 49) it reproduces routing.DESIGN (tested)."""
+    production design (kw1.design_1kw(), n = 49) it reproduces routing.DESIGN (tested).
+    The tile is the physical cell (default: the synthesized footprint, sqrt(area))."""
     a = des.arch
     out = dict(base)
+    tile = math.sqrt(des.area_mm2) if tile_side_mm is None else float(tile_side_mm)
     out.update(label=des.label, N=a.N, K=a.K, K_A=a.K_A, f_sw_hz=float(des.f_sw_hz),
                i_out_per_vr_a=P_LOAD_W / V_OUT / n, v_in=float(des.v_in),
-               v_out=float(des.v_out), n_vr=n, tile_side_mm=math.sqrt(des.area_mm2),
+               v_out=float(des.v_out), n_vr=n, tile_side_mm=tile,
                p_conv_total_w=float(des.loss_at(85.0)["p_conv_w"]) * n,
                hs_part=des.hs.part_number, hs_footprint_mm2=float(des.hs.footprint_mm2),
                hs_rdson_ohm=float(des.hs.R_DS_ON), ind_l_nh=des.inductor.l_nh,
@@ -279,7 +285,8 @@ def summary(path=None) -> dict:
             "topology": d["topology"], "label": des.label,
             "hs_part": des.hs.part_number, "ls_part": des.ls.part_number,
             "inductor": des.inductor.name, "capacitor": des.capacitor.name,
-            "f_sw_hz": float(des.f_sw_hz), "cell_area_mm2": float(des.area_mm2),
+            "f_sw_hz": float(des.f_sw_hz), "cell_area_mm2": cell_area_mm2(path),
+            "synthesized_area_mm2": float(des.area_mm2),
             "cell_side_mm": cell_side_mm(path), "conversion_25C_W": float(des.loss_25c_w)
             * n_vr(path), "p_conv_85C_legacy_alpha_W": rd["p_conv_total_w"],
             "tsv_per_cell": tsv_n_per_cell(path),

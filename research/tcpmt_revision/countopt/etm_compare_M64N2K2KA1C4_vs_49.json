@@ -1,0 +1,355 @@
+{
+ "scenario": "HV_S0",
+ "mesh": "h_xy 1.1, refine [2, 1]",
+ "candidate": {
+  "design": {
+   "config": "configs/phase0nx/z1_physical_m64_cell4p0.yaml",
+   "tag": "M64N2K2KA1C4",
+   "production": false,
+   "n_vr": 64,
+   "topology": {
+    "N": 2,
+    "K": 2,
+    "K_A": 1
+   },
+   "label": "N2K2KA1_J3.5",
+   "hs_part": "EPC2014C",
+   "ls_part": "EPC2057",
+   "inductor": "Shared_Core_UIC_250_nH",
+   "capacitor": "Murata-GCM21-10uF-25V",
+   "f_sw_hz": 480112.6858341158,
+   "cell_area_mm2": 4.0,
+   "synthesized_area_mm2": 3.74,
+   "cell_side_mm": 2.0,
+   "conversion_25C_W": 96.05363352729304,
+   "p_conv_85C_legacy_alpha_W": 132.56290617245602,
+   "tsv_per_cell": 1024,
+   "tiers": [
+    [
+     "bottom_substrate_rdl",
+     10.0
+    ],
+    [
+     "gan_hs_EPC2014C",
+     685.0
+    ],
+    [
+     "interlayer_rdl",
+     10.0
+    ],
+    [
+     "flying_caps",
+     100.0
+    ],
+    [
+     "interlayer_rdl",
+     10.0
+    ],
+    [
+     "gan_ls_EPC2057",
+     638.0
+    ],
+    [
+     "interlayer_rdl",
+     10.0
+    ],
+    [
+     "inductor_plus_cout",
+     500.0
+    ],
+    [
+     "output_rdl",
+     10.0
+    ]
+   ],
+   "package_network": "research/tcpmt_revision/countopt/package_network_M64N2K2KA1C4.json"
+  },
+  "file": "research/tcpmt_revision/countopt/etm_Z1_M64N2K2KA1C4_HV_S0_h1.1_r21.json",
+  "loss": {
+   "terms": {
+    "P_conv_hs": 16.205205120070755,
+    "P_conv_ls": 117.48926722433556,
+    "P_conv_inductor_dcr": 16.623907839424,
+    "P_conv_cap_esr": 0.8300035375351628,
+    "P_intraVR_metal": 1.053597611364828,
+    "P_intraVR_vertical": 0.039888349130786524,
+    "P_pkg_RDL_HV_supply": 1.0776514813707667,
+    "P_BGA_supply": 0.010308035686207452,
+    "P_pkg_RDL_HV_return": 0.6586568052207787,
+    "P_BGA_return": 0.006392101846254616,
+    "P_TSV_VDD": 0.0001797202918786529,
+    "P_TSV_GND": 0.0001797202918786529,
+    "P_pad_VDD": 0.022258629165966944,
+    "P_pad_GND": 0.022258629165966944,
+    "P_pkg_RDL_LV_supply": 0.0,
+    "P_pkg_RDL_LV_return": 0.0
+   },
+   "groups": {
+    "conversion": 151.1483837213655,
+    "intra_vr": 1.0934859604956144,
+    "package_48V": 1.7530084241240076,
+    "tsv_48V": 0.0003594405837573058,
+    "pads_1V": 0.04451725833193389
+   },
+   "total": 154.03975480490078
+  },
+  "temperatures_C": {
+   "T_max_C": 118.055,
+   "T_die_mean_C": 90.12210712033834,
+   "T_conv_C": 109.92965687946429,
+   "T_hs_C": 115.04502020833334,
+   "T_ls_C": 112.42009395833334,
+   "T_ind_C": 102.34568775,
+   "T_caps_C": 114.04325104166666,
+   "T_bga_C": 115.11492029898379,
+   "T_sub_C": 115.14631109375001,
+   "T_interface_C": 92.10433365625002
+  },
+  "thermal": {
+   "T_max_C": 118.055,
+   "T_mean_C": 106.64881223830113,
+   "q_top_W": 1153.2701540831792,
+   "q_bot_W": 0.7695941186020709,
+   "energy_residual_rel": -5.721743592808341e-09,
+   "n_elems": 112256,
+   "n_nodes": 120033
+  },
+  "et_converged": true,
+  "et_iterations": 5,
+  "mechanics": {
+   "die_warpage_pv_um": 25.07661,
+   "pkg_warpage_pv_um": 24.24689,
+   "critical_joint": {
+    "rank": 1,
+    "x_mm": 14.4,
+    "y_mm": 14.4,
+    "du_um": 2.2291095051315444,
+    "T_C": 117.26790909090909
+   },
+   "n_sites": 1369,
+   "n_evaluated": 1369,
+   "structural_wall_s": 768.4363276958466
+  },
+  "local_L0": {
+   "level": "L0",
+   "n_xy": 6,
+   "n_z_solder": 8,
+   "initial_increment_s": 0.002,
+   "split_steps": true,
+   "n_cycles": 4,
+   "du_um": 2.2291095051315444,
+   "T_joint_C": 117.26790909090909,
+   "wall_s": 74.02290058135986,
+   "error": null,
+   "d_peeq_per_cycle": 0.0059367337421874795,
+   "d_peeq_time_keyed": 0.0059367337421874795,
+   "stab_change_pct": 0.7614986509659905,
+   "range_eq_inelastic": 0.0029219923672960243,
+   "inelastic_work_MJ_per_m3": 0.4539963841710825,
+   "per_cycle": [
+    null,
+    0.006099661487109352,
+    0.005982288790624978,
+    0.0059367337421874795
+   ],
+   "collisions": {
+    "n_increments": 368,
+    "n_distinct_times": 368,
+    "boundary_collisions": {},
+    "interior_collisions": 0
+   },
+   "n_core": 128,
+   "n_elem": 488
+  },
+  "balls_48V": {
+   "n_per_rail": 54,
+   "r_loop_mohm": 2.186511099922556,
+   "peak_ball_fraction": 0.05924364481184151,
+   "i_hv_S0_A": 24.04249489176877,
+   "peak_ball_A": 1.4243650277584627,
+   "criterion_A": 1.5,
+   "passes_1p5A": true,
+   "screen_min_passing_n_per_rail": 54,
+   "screen_larger_counts_that_fail": [
+    58,
+    60,
+    70,
+    72,
+    74
+   ],
+   "production_closure_HV_S0": {
+    "status": "CLOSED",
+    "n_min": 54,
+    "verified_level": 2,
+    "peak_at_n_min_A": 1.4458655586943079,
+    "peak_at_lower_A": 1.797160793425392,
+    "larger_counts_that_FAIL": [
+     70,
+     72,
+     74
+    ],
+    "criterion_A": 1.5
+   }
+  },
+  "tsv_48V": {
+   "per_cell": 1024,
+   "vdd_per_cell": 512,
+   "gnd_per_cell": 512,
+   "total": 65536,
+   "i_cell_A": 0.3756639824672796,
+   "i_per_via_mA": 0.7337187157564055,
+   "loss_W": 0.0003594405837573058,
+   "cu_fraction_in_tiles": 0.18095573684677208
+  },
+  "via_ar_worst": 0.8333333333333334,
+  "tier_order": "gan_hs | cap_fly | gan_ls | inductor+cap_out",
+  "stack_um": 1973.0,
+  "physical_cell_entry": "64_cell4p0"
+ },
+ "production_49": {
+  "file": "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json",
+  "loss": {
+   "terms": {
+    "P_conv_hs": 20.151235770452917,
+    "P_conv_ls": 104.742129351082,
+    "P_conv_inductor_dcr": 14.352074432725493,
+    "P_conv_cap_esr": 1.4402242934280696,
+    "P_intraVR_metal": 1.764408165918472,
+    "P_intraVR_vertical": 0.04449148519887784,
+    "P_pkg_RDL_HV_supply": 1.0881715617767898,
+    "P_BGA_supply": 0.009841107499282282,
+    "P_pkg_RDL_HV_return": 0.6659977605305774,
+    "P_BGA_return": 0.0065245927099750285,
+    "P_TSV_VDD": 0.0001625560185136858,
+    "P_TSV_GND": 0.0001625560185136858,
+    "P_pad_VDD": 0.02215102934330791,
+    "P_pad_GND": 0.02215102934330791,
+    "P_pkg_RDL_LV_supply": 0.0,
+    "P_pkg_RDL_LV_return": 0.0
+   },
+   "groups": {
+    "conversion": 140.6856638476885,
+    "intra_vr": 1.8088996511173498,
+    "package_48V": 1.7705350225166243,
+    "tsv_48V": 0.0003251120370273716,
+    "pads_1V": 0.04430205868661582
+   },
+   "total": 144.3097256920461
+  },
+  "temperatures_C": {
+   "T_max_C": 115.663,
+   "T_die_mean_C": 89.7903692157426,
+   "T_conv_C": 107.73509471053728,
+   "T_hs_C": 112.66123087602388,
+   "T_ls_C": 109.71026600027767,
+   "T_ind_C": 100.71426919339163,
+   "T_caps_C": 111.46775621268914,
+   "T_bga_C": 112.76164557296832,
+   "T_sub_C": 112.77212859225324,
+   "T_interface_C": 91.6777084548105
+  },
+  "thermal": {
+   "T_max_C": 115.663,
+   "T_mean_C": 104.49584515607026,
+   "q_top_W": 1143.5602642098145,
+   "q_bot_W": 0.7495061555320696,
+   "energy_residual_rel": 3.9039518239899394e-08,
+   "n_elems": 144512,
+   "n_nodes": 153873
+  },
+  "mechanics": {
+   "die_warpage_pv_um": 25.53876,
+   "pkg_warpage_pv_um": 25.187230000000003,
+   "critical_joint": {
+    "rank": 1,
+    "x_mm": 14.4,
+    "y_mm": 14.4,
+    "du_um": 2.2082761910295026,
+    "T_C": 114.9509090909091
+   },
+   "n_sites": 1369,
+   "n_evaluated": 1369,
+   "structural_wall_s": 1951.757740497589
+  },
+  "local_L0": {
+   "d_peeq_per_cycle": 0.005795526167968733,
+   "du_um": 2.2082761910295026,
+   "T_joint_C": 114.9509090909091,
+   "error": null
+  },
+  "balls_48V": {
+   "n_per_rail": 54,
+   "r_loop_mohm": 2.2619405287403644,
+   "peak_ball_fraction": 0.06103149125920757,
+   "i_hv_S0_A": 23.83978595191763,
+   "peak_ball_A": 1.4549776879458403,
+   "criterion_A": 1.5,
+   "passes_1p5A": true
+  },
+  "tsv_48V": {
+   "per_cell": 1444,
+   "vdd_per_cell": 722,
+   "gnd_per_cell": 722,
+   "total": 70756,
+   "i_cell_A": 0.48652624373798514,
+   "i_per_via_mA": 0.6738590633490099,
+   "loss_W": 0.0003251120370273716,
+   "cu_fraction_in_tiles": 0.1819435745367779
+  },
+  "via_ar_worst": 0.8333333333333334,
+  "tier_order": "gan_hs | cap_fly | gan_ls | inductor+cap_out",
+  "stack_um": 1973.0
+ },
+ "delta_candidate_minus_49": {
+  "P_loss_W": 9.73002911285468,
+  "T_max_K": 2.39200000000001,
+  "P_conversion_W": 10.462719873677003,
+  "P_intra_vr_W": -0.7154136906217354,
+  "P_package_48V_W": -0.01752659839261672,
+  "P_tsv_48V_W": 3.4328546729934194e-05,
+  "P_pads_1V_W": 0.00021519964531806907,
+  "die_warpage_um": -0.46215000000000117,
+  "du_um": 0.02083331410204181,
+  "T_joint_K": 2.316999999999993,
+  "local_L0_rel": 0.024364927381259394
+ },
+ "dse_electrical_only": {
+  "49": {
+   "conversion_total_W": 91.45021347660969,
+   "routing_W": 4.664969904925002,
+   "total_W": 96.11518338153469
+  },
+  "64": {
+   "conversion_total_W": 96.05363352729304,
+   "routing_W": 4.123049625739984,
+   "total_W": 100.17668315303303
+  },
+  "76": {
+   "conversion_total_W": 84.36718517412962,
+   "routing_W": 4.079022267863589,
+   "total_W": 88.44620744199321
+  }
+ },
+ "candidate_at_49_temperatures": {
+  "temperatures_C": {
+   "conv": 107.73509471053728,
+   "hs": 112.66123087602388,
+   "ls": 109.71026600027767,
+   "ind": 100.71426919339163,
+   "caps": 111.46775621268914,
+   "bga": 112.76164557296832,
+   "sub": 112.77212859225324,
+   "interface": 91.6777084548105
+  },
+  "P_loss_W": 152.36309239696664,
+  "groups": {
+   "conversion": 149.49556037419464,
+   "intra_vr": 1.0865349312602859,
+   "package_48V": 1.7361817621500175,
+   "tsv_48V": 0.0003559694736125612,
+   "pads_1V": 0.044459359888105725
+  },
+  "delta_vs_49_W": 8.053366704920535,
+  "note": "same ledger, the production converged region temperatures: the electrical penalty of the design alone; the rest of delta P_loss is the coupling"
+ }
+}

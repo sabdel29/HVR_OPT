@@ -281,6 +281,9 @@ def cmd_compare(a):
 
     n_c = int(c["design"]["n_vr"])
     i_c, i_p = c["i_hv_avg_a"], p["i_hv_avg_a"]
+    # the physical-cell entry of THIS config: same count, same physical cell area
+    ck = next(k for k, v in cell["cells"].items()
+              if int(v["M"]) == n_c and abs(v["cell_area_mm2"] - Z1D.cell_area_mm2()) < 1e-9)
     cmp_ = {
         "scenario": SCEN, "mesh": f"h_xy 1.1, refine {c['refine']}",
         "candidate": {"design": c["design"], "file": str(E.case_path("Z1", SCEN).relative_to(R)),
@@ -291,9 +294,10 @@ def cmd_compare(a):
                       "et_converged": c["et_converged"], "et_iterations": len(c["et_history"]),
                       "mechanics": mech(c), "local_L0": (c.get("local") or {}),
                       "balls_48V": balls(net_c, i_c), "tsv_48V": tsv(c, n_c),
-                      "via_ar_worst": cell["cells"]["64"]["chosen"]["worst_ar"],
-                      "tier_order": cell["cells"]["64"]["chosen"]["partition"],
-                      "stack_um": cell["cells"]["64"]["chosen"]["stack_um"]},
+                      "via_ar_worst": cell["cells"][ck]["chosen"]["worst_ar"],
+                      "tier_order": cell["cells"][ck]["chosen"]["partition"],
+                      "stack_um": cell["cells"][ck]["chosen"]["stack_um"],
+                      "physical_cell_entry": ck},
         "production_49": {"file": str(PRODUCTION_CASE.relative_to(R)), "loss": split(p),
                           "temperatures_C": temps(p),
                           "thermal": {k: p["thermal"][k] for k in

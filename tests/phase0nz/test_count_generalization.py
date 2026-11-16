@@ -132,6 +132,37 @@ def test_physical_cell_method_reproduces_the_paper_and_selects_the_configured_or
     assert all(t["um"] == 10.0 for t in tiers if t["name"].endswith("_rdl"))
 
 
+def test_the_enlarged_cell_sensitivity_recovers_the_production_order():
+    """SENSITIVITY (configs/phase0nx/z1_physical_m64_cell4p0.yaml): the smallest M = 64 cell
+    in which L and C_out share a tier is 4.0 mm2, inside the 4.46 mm2 DSE budget; there the
+    production four-tier order is the preferred realizable one, and a cell beyond the budget
+    is refused."""
+    import z1_design as Z1D
+    cell = json.loads((CO / "physical_cell.json").read_text())["cells"]["64_cell4p0"]
+    assert cell["cell_area_mm2"] == 4.0 <= cell["area_budget_mm2"]
+    assert cell["chosen"]["partition"] == "gan_hs | cap_fly | gan_ls | inductor+cap_out"
+    assert cell["chosen"]["stack_um"] == 1973.0 and cell["chosen"]["worst_ar"] <= 1.0
+    cfg = R / "configs" / "phase0nx" / "z1_physical_m64_cell4p0.yaml"
+    d = Z1D.declared(cfg)
+    assert d["area_mm2"] == 3.74 and Z1D.cell_area_mm2(cfg) == 4.0
+    assert Z1D.cell_side_mm(cfg) == 2.0 and Z1D.tsv_n_per_cell(cfg) == 32 * 32
+    c = yaml.safe_load(cfg.read_text())
+    assert (c["converter"]["tiers_from_substrate_upward"] == yaml.safe_load(
+        (R / "configs/phase0nx/z1_physical.yaml").read_text())["converter"][
+        "tiers_from_substrate_upward"])
+
+
+def test_a_cell_outside_the_synthesized_area_and_budget_is_refused(tmp_path):
+    import z1_design as Z1D
+    for area, side in ((3.70, 1.9235), (4.50, 2.1213)):
+        c = yaml.safe_load(CFG64.read_text())
+        c["converter"]["cell_area_mm2"], c["converter"]["cell_side_mm"] = area, side
+        p = tmp_path / f"z1_{area}.yaml"
+        p.write_text(yaml.safe_dump(c, sort_keys=False))
+        with pytest.raises(Z1D.DesignError):
+            Z1D.declared(p)
+
+
 def test_a_non_default_config_without_a_design_block_is_refused(tmp_path):
     import z1_design as Z1D
     c = yaml.safe_load(CFG64.read_text())
@@ -270,13 +301,18 @@ def test_candidate_process_refuses_other_architectures(cand):
 
 # ------------------------------------------------------------------ the committed results
 CASE64 = CO / "etm_Z1_M64N2K2KA1_HV_S0_h1.1_r21.json"
+CASES = (("M64N2K2KA1", "configs/phase0nx/z1_physical_m64.yaml"),
+         ("M64N2K2KA1C4", "configs/phase0nx/z1_physical_m64_cell4p0.yaml"))
 
 
-@pytest.mark.skipif(not CASE64.exists(), reason="the candidate case has not been run")
-def test_candidate_case_is_the_production_chain_and_complete():
-    c = json.loads(CASE64.read_text())
-    assert c["design"]["n_vr"] == 64 and c["design"]["tag"] == "M64N2K2KA1"
-    assert c["design"]["config"] == "configs/phase0nx/z1_physical_m64.yaml"
+@pytest.mark.parametrize("tag,cfg", CASES)
+def test_candidate_case_is_the_production_chain_and_complete(tag, cfg):
+    f = CO / f"etm_Z1_{tag}_HV_S0_h1.1_r21.json"
+    if not f.exists():
+        pytest.skip("the case has not been run")
+    c = json.loads(f.read_text())
+    assert c["design"]["n_vr"] == 64 and c["design"]["tag"] == tag
+    assert c["design"]["config"] == cfg
     assert (c["arch"], c["scenario"], c["h_xy_mm"], c["refine"]) == ("Z1", "HV_S0", 1.1, [2, 1])
     assert c["architecture_variant"] == "Z1_EMBEDDED" and c["hv_feed"] == "BGA_FED"
     assert c["et_converged"] is True
@@ -302,3 +338,36 @@ def test_local_harness_reproduces_the_49_cell_l0_before_it_is_trusted():
         pytest.skip("control not run")
     j = json.loads(f.read_text())
     assert j["rerun"]["error"] is None and j["dev_rel"] < 1e-3
+
+
+def test_rated_flying_capacitor_makes_no_order_realizable_in_either_design():
+    """The 100-um C_f tier is the production stack's technology assumption, kept in the
+    candidate for comparability. With the decap study's rated part (830 / 1030-um tier) no
+    area-feasible order of the 49-cell cell, the M = 64 cell or the enlarged M = 64 cell
+    meets AR <= 1; the configured order gives the decap study's 6.92 / 8.58."""
+    cell = json.loads((CO / "physical_cell.json").read_text())
+    rf = cell["rated_flying_cap"]
+    assert rf["part"]["part"] == "GRM188D71H105KE01"
+    for key in ("49", "64", "64_cell4p0"):
+        for hk, ar in (("nominal", 6.92), ("max_tolerance", 8.58)):
+            c = rf["cases"][f"{key}_{hk}"]
+            assert c["n_realizable"] == 0, (key, hk)
+            assert round(c["configured_worst_ar"], 2) == ar
+            assert round(c["best_worst_ar"], 2) == 5.32 and c["best_worst_net"] == "HS -> C_f"
+    # with the production 100-um assumption both designs are realizable at AR 0.83
+    for key in ("49", "64", "64_cell4p0"):
+        assert round(cell["cells"][key]["chosen"]["worst_ar"], 2) == 0.83
+
+
+def test_high_side_stress_flag_changes_only_the_n2_designs():
+    """SENSITIVITY (unconfirmed 2 V_in / N blocking reading): N = 3 keeps EPC2014C (32 V),
+    the N = 2 designs need an 80-V high side."""
+    a = json.loads((CO / "candidate_dse.json").read_text())["counts"]
+    b = json.loads((CO / "candidate_dse_hs_2vin_over_n.json").read_text())["counts"]
+    assert b["49"]["hs_device"]["part_number"] == a["49"]["hs_device"]["part_number"] == "EPC2014C"
+    assert b["49"]["total_W"] == a["49"]["total_W"]
+    for m in ("64", "72", "76"):
+        assert a[m]["topology"]["N"] == 2 and a[m]["hs_device"]["VDSmax"] < 48.0
+        assert b[m]["hs_device"]["VDSmax"] >= 48.0 and b[m]["topology"]["label"] == "N2K2K_A1"
+        assert b[m]["total_W"] > a[m]["total_W"]
+    assert not b["81"]["feasible"]

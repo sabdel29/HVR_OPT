@@ -124,7 +124,35 @@ def evaluate(tiers, H, A, n_of, cell_mm2):
             "output_end_on_top": bool({"inductor", "cap_out"} & set(tiers[-1]))}
 
 
-def study(rec, label):
+#: the RATED flying capacitor of the decap study (research/tcpmt_revision/flying_caps.json,
+#: recommended 10 % choice): C1 holds (N-1) V_in / N -- 32 V at N = 3, 24 V at N = 2 -- and the
+#: library 25-V GCM21 is under-rated (N = 3) or not adequately derated (N = 2); no part of
+#: <= 150 um meets it. GRM188D71H105KE01: 0603, 1 uF, 50 V, X7T; tier = part + 30-um attach
+#: (830 um nominal, 1030 um at the height tolerance); one part per flying capacitor.
+RATED_CF = {"part": "GRM188D71H105KE01", "L_mm": 1.6, "W_mm": 0.8, "T_nom_mm": 0.8,
+            "T_max_mm": 1.0, "tier_um": {"nominal": 830.0, "max_tolerance": 1030.0},
+            "source": "research/tcpmt_revision/flying_caps.json (tcpmt-revision a16d8ce): "
+                      "recommended.10pct, summary.min_tier_um_10pct"}
+
+
+def _rated_cf():
+    """The decap study's numbers, re-read when its file is in the tree."""
+    f = R / "research" / "tcpmt_revision" / "flying_caps.json"
+    if f.exists():
+        j = json.loads(f.read_text())
+        c1 = j["recommended"]["10pct"]["C1"]
+        assert (c1["part"], c1["L_mm"], c1["W_mm"], c1["T_nom_mm"], c1["T_max_mm"]) == (
+            RATED_CF["part"], RATED_CF["L_mm"], RATED_CF["W_mm"], RATED_CF["T_nom_mm"],
+            RATED_CF["T_max_mm"]), "flying_caps.json changed: re-derive RATED_CF"
+        assert j["summary"]["min_tier_um_10pct"] == [RATED_CF["tier_um"]["nominal"],
+                                                     RATED_CF["tier_um"]["max_tolerance"]]
+    return RATED_CF
+
+
+def study(rec, label, cell_area=None, cf=None):
+    """cell_area: a physical cell larger than the synthesized footprint (sensitivity).
+    cf: (tier height um, footprint mm2) of a rated flying capacitor in place of the
+    production BOUNDED 100-um assumption (sensitivity)."""
     a = rec["topology"]
     N, K = a["N"], a["K"]
     hs, ls = rec["hs_device"], rec["ls_device"]
@@ -142,7 +170,9 @@ def study(rec, label):
          "cap_fly": float(cap["footprint_mm2"]), "cap_out": float(cap["footprint_mm2"]),
          "inductor": float(ind["footprint_mm2"])}
     n_of = {"gan_hs": N, "gan_ls": K, "cap_fly": N - 1, "cap_out": 1, "inductor": K}
-    cell = float(rec["area_mm2"])
+    if cf is not None:
+        H["cap_fly"], A["cap_fly"] = float(cf[0]), float(cf[1])
+    cell = float(rec["area_mm2"]) if cell_area is None else float(cell_area)
     rows = []
     for k in range(1, 6):
         for tiers in partitions(list(CLASSES), k):
@@ -195,6 +225,39 @@ def main():
            "cells": {}}
     for m in ("49", "64"):
         res["cells"][m] = study(d[m], f"M{m}")
+    # SENSITIVITY, not the synthesized cell: the smallest M = 64 cell in which the output
+    # capacitor shares the inductor tier (2 x 1.0 + 2.0 = 4.0 mm2), still inside the DSE's
+    # area budget I_vr / J_t = 4.46 mm2 -- it recovers the production four-tier order
+    budget = d["64"]["area_budget_mm2"]
+    a4 = res["cells"]["64"]["tier_area_mm2_by_class"]["inductor"] + \
+        res["cells"]["64"]["tier_area_mm2_by_class"]["cap_out"]
+    assert a4 <= budget
+    res["cells"]["64_cell4p0"] = study(d["64"], "M64 cell 4.0 mm2 (sensitivity)", a4)
+    res["cells"]["64_cell4p0"]["area_budget_mm2"] = budget
+    # SENSITIVITY: the rated flying capacitor's real height, both designs, both cells. The
+    # configured order keeps C_f between HS and LS, so HS -> LS crosses the whole C_f tier;
+    # the best achievable worst AR over every area-feasible order with HS on the landing
+    # RDL is reported beside it (C_f cannot share the tier above HS with LS in any cell).
+    rc = _rated_cf()
+    res["rated_flying_cap"] = {"part": rc, "cases": {}}
+    for key, rec, area in (("49", d["49"], None), ("64", d["64"], None),
+                           ("64_cell4p0", d["64"], a4)):
+        for hk, h in rc["tier_um"].items():
+            st = study(rec, f"M{key} rated C_f {hk}", area, (h, rc["L_mm"] * rc["W_mm"]))
+            rows = [r for r in st["assignments"] if r["hs_at_bottom"]]
+            best = min(rows, key=lambda r: (r["worst_ar"], r["stack_um"]))
+            conf = res["cells"][key]["chosen"]["partition"]
+            same = next(r for r in st["assignments"] if r["partition"] == conf)
+            res["rated_flying_cap"]["cases"][f"{key}_{hk}"] = {
+                "cell_area_mm2": st["cell_area_mm2"], "cap_fly_tier_um": h,
+                "cap_fly_tier_area_mm2": st["tier_area_mm2_by_class"]["cap_fly"],
+                "n_area_feasible": st["n_area_feasible_assignments"],
+                "n_realizable": st["n_realizable"],
+                "configured_order": conf, "configured_worst_ar": same["worst_ar"],
+                "configured_worst_net": same["worst_net"],
+                "configured_stack_um": same["stack_um"],
+                "best_hs_at_bottom": best["partition"], "best_worst_ar": best["worst_ar"],
+                "best_worst_net": best["worst_net"]}
     # the production checks the method must reproduce before it is trusted on M = 64
     p = {r["partition"]: r for r in res["cells"]["49"]["assignments"]}
     ref = p["gan_hs | gan_ls | cap_fly | inductor+cap_out"]

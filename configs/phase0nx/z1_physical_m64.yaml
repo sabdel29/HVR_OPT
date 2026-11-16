@@ -79,6 +79,21 @@ converter:
   # C_out (worst via AR 0.83: HS -> LS across C_f and L -> output across C_out).
   # Tier heights are the production parts' (datasheet mounted heights; MLCC at the
   # production BOUNDED 100 um). Ten RDL-separated tiers + landing and output RDLs.
+  #
+  # FLYING-CAPACITOR TECHNOLOGY ASSUMPTION, stated explicitly: the 100-um C_f (and C_out)
+  # tier is the SAME thin embedded-capacitor assumption the 49-cell production stack makes,
+  # kept so that the two remain comparable. It is not a rated part: C1 holds V_in / 2 = 24 V
+  # here, the library 25-V GCM21 (0805, 1.25 mm) is not adequately derated, and no part of
+  # <= 150 um meets the requirement (research/tcpmt_revision/flying_caps.json). With the rated
+  # GRM188D71H105KE01 (0603, 1 uF, 50 V; 830-um tier, 1030 um at tolerance) no tier order of
+  # this cell, nor of the 49-cell cell, passes the AR <= 1 rule: this order gives 6.92 (8.58)
+  # for HS -> LS across C_f, the best order 5.32 (physical_cell.json, rated_flying_cap).
+  #
+  # HIGH-SIDE VOLTAGE STRESS, FLAGGED (unconfirmed reading of the generalized schematic): if
+  # S2..SN block 2 V_in / N, S2 sees 48 V at N = 2 against the 40-V EPC2014C (32 V at N = 3,
+  # within rating). Re-synthesized with that filter the M = 64 high side becomes EPC2214
+  # (80 V): 96.90 W conversion, +0.85 W (candidate_dse_hs_2vin_over_n.json). Not carried
+  # through the ETM chain.
   total_um: 2083.0
   tiers_from_substrate_upward:
     - {name: bottom_substrate_rdl, um: 10.0,  status: SOURCE_BACKED}

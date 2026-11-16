@@ -13,6 +13,11 @@ how many device / passive combinations pass each gate of the optimizer.
 
 Writes research/tcpmt_revision/countopt/candidate_dse.json (no field is computed here that the
 sweep does not compute; the gate census re-applies the optimizer's own filters).
+
+--hs-stress 2vin_over_n (SENSITIVITY, unconfirmed reading of the generalized schematic):
+the high-side filter requires V_DS,max >= 2 V_in / N (S2..SN blocking 2 V_in / N) instead of
+the optimizer's V_in / N -- 48 V at N = 2 against the 40-V EPC2014C, 32 V at N = 3. Writes
+candidate_dse_hs_2vin_over_n.json.
 """
 from __future__ import annotations
 
@@ -161,21 +166,31 @@ def candidate(m, die):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--counts", default="49,64,72,76,81")
+    ap.add_argument("--hs-stress", default="vin_over_n", choices=("vin_over_n", "2vin_over_n"))
     args = ap.parse_args()
+    out_path = OUT
+    if args.hs_stress == "2vin_over_n":
+        orig = EPC.filter_candidate_devices
+
+        def strict(df, arch, V_in, V_out, V_gs_drive, I_out, max_B):
+            hs, ls = orig(df, arch, V_in, V_out, V_gs_drive, I_out, max_B)
+            return [d for d in hs if d.VDSmax >= 2.0 * V_in / arch.N], ls
+        EPC.filter_candidate_devices = strict
+        out_path = HERE / "candidate_dse_hs_2vin_over_n.json"
     die = die_config()
     res = {"settings": {"J_target": SW.J_TARGET, "ripple_factor": SW.RIPPLE_FACTOR,
                         "v_ripple_frac": SW.V_RIPPLE_FRAC, "routing_arch": SW.ROUTING_ARCH,
                         "selection": "case D: re-synthesized topology, discrete library, "
                                      "min conversion + routing over the sweep's cc set",
-                        "engine": SW.ENGINE},
+                        "engine": SW.ENGINE, "hs_stress_filter": args.hs_stress},
            "counts": {}}
     for m in [int(x) for x in args.counts.split(",")]:
         res["counts"][str(m)] = candidate(m, die)
         c = res["counts"][str(m)]
         print(m, "feasible" if c["feasible"] else "INFEASIBLE",
               c.get("topology", {}).get("label", ""), flush=True)
-    OUT.write_text(json.dumps(res, indent=1, default=float))
-    print("wrote", OUT)
+    out_path.write_text(json.dumps(res, indent=1, default=float))
+    print("wrote", out_path)
 
 
 if __name__ == "__main__":
