@@ -152,6 +152,15 @@ def variants():
             ("Z2", "B"): SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
             ("Z3", "B"): SENS / "etm_Z3_HV_S0__z3_plate_tim.json"}
     m = {}
+    # every expected key exists ("--" until its run is complete), so the paper always builds
+    for (a, t) in base:
+        for tag in ("Fb", "Hot", "Cal"):
+            k = f"{tag}{t}{ATAG[a]}"
+            for f in ("Ploss", "dP", "Tmax", "dT", "Warp", "Du", "Tjoint"):
+                m[f"{k}{f}"] = NA
+            if tag == "Fb":
+                for f in ("GapMean", "GapPv", "Iters", "Conv"):
+                    m[f"{k}{f}"] = NA
     for (a, t), bf in base.items():
         b = _case(bf)
         if not b:
