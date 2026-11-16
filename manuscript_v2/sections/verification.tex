@@ -95,7 +95,22 @@ uncertainty $U = U_{\mathrm{mesh}} + U_{\mathrm{time}} + U_{\mathrm{cyc}}$ (disc
 first-increment and cycle-count contributions) is below 2\,\% for the embedded and
 package-backside joints and \EpsUZthree\,\% for the cool board-backside joint, whose creep
 stabilizes slowly.
-% PENDING(solder): critical-joint verification, 16-cycle stabilization, band and law sensitivity
+The critical joint is verified rather than assumed: solving the submodel at every site on the
+Pareto front of ($\Delta u$, $T_{\mathrm{j}}$) and at the corners---\SolderSites{} sites in
+\SolderCases{} cases---returns the joint of largest $\Delta u$ as the largest response in every case,
+and the response rises monotonically with both $\Delta u$ and $T_{\mathrm{j}}$ (\SolderViol{}
+violations among \SolderPairs{} ordered pairs), so no other ball can exceed it. Over 48 cycles the
+response changes by at most \SolderStabA\,\% under cooling~A, while the cooler joints of cooling~B
+settle \SolderStabBLo--\SolderStabBHi\,\% below their four-cycle values as the hardening saturates;
+the stabilized values are used for every comparison. Averaging bands of 44, 59 and 89~\textmu m
+change the response by $-4$ to $+8$\,\% and no ranking. The creep card is interpolated linearly
+between rows 25~K apart, and rebuilding it on 2.5-K rows changes the response by up to
+\CardGridMax\,\%, which $U$ contains. With the widely used Garofalo law of~\cite{Schubert2003ECTC},
+mapped to temperature-dependent Norton parameters over the stresses at which the joints dwell, the
+responses rise \SchubertRatioLo--\SchubertRatioHi-fold and no ordering changes, but the cooling-B
+gap between Z1 and Z3 narrows to \SchubertGapB\,\%: the constitutive law can soften that ordering,
+and calibration against measured hysteresis loops~\cite{Libot2023Anand} is the route to a predictive
+law.
 Heat deposited in the mesh equals the ledger total, and heat leaving through the cold-plate and
 board films equals the deposited heat, to $10^{-6}$ in every case.
 

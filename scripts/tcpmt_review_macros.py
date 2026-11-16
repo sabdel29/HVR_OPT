@@ -370,9 +370,42 @@ def decap():
     return m
 
 
+def solder():
+    """Local solder studies (agent solder): stabilized tier responses (these REPLACE the 4-cycle
+    tier values everywhere), critical-joint verification, band, alternative law, card grid."""
+    d = J(TR / "solder_studies.json")
+    if not d:
+        return {}
+    m = {}
+    st = d["stabilization"]["cases"]
+    ch_a, ch_b = [], []
+    for lab, v in st.items():
+        t, a = lab.split("_")
+        m[f"Eps{t}{ATAG[a]}"] = fx(1e3 * v["stabilised"], 2)
+        m[f"EpsU{t}{ATAG[a]}"] = fx(100 * v["U_stab_num"], 1)
+        m[f"EpsFour{t}{ATAG[a]}"] = fx(1e3 * v["v4"], 2)
+        (ch_a if t == "A" else ch_b).append(abs(v["change_4_to_48_rel"]))
+    m["SolderStabA"] = fx(100 * max(ch_a), 1)
+    m["SolderStabBLo"], m["SolderStabBHi"] = fx(100 * min(ch_b), 1), fx(100 * max(ch_b), 1)
+    cj = d["critical_joint"]
+    m["SolderCases"] = str(len(cj["cases"]))
+    m["SolderSites"] = str(sum(c.get("n_solved", 0) for c in cj["cases"].values()))
+    mp = cj["monotonicity_pairs"]
+    m["SolderPairs"] = f"{mp['n_ordered_pairs']:,}".replace(",", "{,}")
+    m["SolderViol"] = str(mp["n_violations"])
+    m["SolderAllMaxDu"] = "yes" if cj.get("all_max_du") else "no"
+    co = d["constitutive"]
+    r = co["ratio_to_production"]["schubert_time_final"]
+    m["SchubertRatioLo"], m["SchubertRatioHi"] = fx(min(r.values()), 1), fx(max(r.values()), 1)
+    m["SchubertGapB"] = fx(100 * co["adjacent_gaps_rel"]["schubert_time_final"]["B"]["Z1<Z3"], 1)
+    m["SchubertHold"] = "yes" if co.get("rankings_hold_all_variants") else "no"
+    m["CardGridMax"] = fx(100 * d["numerical_tolerance"]["card_grid_sensitivity_max_rel"], 1)
+    return m
+
+
 def macros():
     m = {}
-    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, agents):
+    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, solder, agents):
         try:
             m.update(f())
         except Exception as e:          # a malformed artifact must not stop the paper build

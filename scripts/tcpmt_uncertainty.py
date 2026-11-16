@@ -148,15 +148,14 @@ def local_u():
     l3 = {a: (lm.get(f"{a}_HV_S0") or {}).get("production_value") for a in ("Z1", "Z2", "Z3")}
     ss = J(TR / "solder_studies.json")
     eps, u_t, basis = {t: dict(v) for t, v in EPS_L0.items()}, {}, "4-cycle L0 (production)"
-    if ss and isinstance(ss.get("stabilized"), dict):
-        basis = "16-cycle L0 (solder study)"
-        for t in ("A", "B"):
-            for a in ("Z1", "Z2", "Z3"):
-                v = (ss["stabilized"].get(t) or {}).get(a) or {}
-                if v.get("eps_per_cycle") is not None:
-                    eps[t][a] = 1e3 * v["eps_per_cycle"]
-                if v.get("U_rel") is not None:
-                    u_t[(t, a)] = v["U_rel"]
+    if ss and (ss.get("stabilization") or {}).get("cases"):
+        basis = "stabilized L0 (48 cycles; U = mesh + time + cycle + card grid)"
+        for lab, v in ss["stabilization"]["cases"].items():
+            t, a = lab.split("_")
+            if v.get("stabilised") is not None:
+                eps[t][a] = 1e3 * v["stabilised"]
+            if v.get("U_stab_num") is not None:
+                u_t[(t, a)] = v["U_stab_num"]
     return eps, u, u_t, l3, basis
 
 
@@ -177,8 +176,8 @@ def comparisons(rel):
             # local response: own U (or the production arch's) + L0 -> L3 offset
             u_rel = u_t.get((t, a), u_loc.get(a) or 0.0)
             off = 0.0
-            if l3.get(a) and t == "A":
-                off = abs(eps["A"][a] - 1e3 * l3[a]) / (1e3 * l3[a]) if a in ("Z1", "Z2") else 0.0
+            if not u_t and l3.get(a) and t == "A" and a in ("Z1", "Z2"):
+                off = abs(eps["A"][a] - 1e3 * l3[a]) / (1e3 * l3[a])
             U[(t, a, "eps")] = (u_rel + off) * eps[t][a]
     res = []
     pairs = [("A", "Z1", "Z2"), ("A", "Z1", "Z3"), ("B", "Z2", "Z1"), ("B", "Z3", "Z1"),

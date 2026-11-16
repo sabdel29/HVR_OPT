@@ -236,20 +236,31 @@ conforming interface ($g = 0$, the production chain) and a rigid plate on the fr
 bound the feedback from below and above.
 
 \subsection{Local solder response}
-The submodel resolves the critical joint---solder between two copper pads---with its lower pad
-fixed and its upper pad displaced in plane by $\du$, through four cycles of a 300-s dwell at
-$T_{\mathrm{j}}$ and a 300-s dwell at 25\,$^\circ$C, with a viscoplastic law driven by the
-overstress $\dot\varepsilon_{\mathrm{in}} = A(T)\langle\sigma_{\mathrm{vm}}-\sigma_y\rangle^{n(T)}$.
-The response is the per-cycle increment of accumulated equivalent inelastic strain on the
-stabilized cycle, volume-averaged over the solder core,
+The submodel resolves the critical joint---a 400-\textmu m SAC305 ball, 300~\textmu m tall at
+0.8-mm pitch~\cite{Krishnakumar2026DVPD}, as the equal-area 354.5-\textmu m square prism---between
+two 20-\textmu m copper pads, on a family of four nested hexahedral meshes (L0--L3). The lower pad
+face is fixed; the upper one is displaced in plane by $\du$ (its other components restrained) for a
+300-s dwell at $T_{\mathrm{j}}$ and returned for a 300-s dwell at 25\,$^\circ$C, each load applied in a
+3-s step and held. The prescribed cycle stands in for power cycling between off and the
+converged operating point, which the package reaches in seconds, short against the dwell. The
+solder is elastic--viscoplastic: $E = 45 - 0.12(T-25)$~GPa, $\nu = 0.36$ and
+21.5~ppm\,K$^{-1}$~\cite{Paska2024SAC305}; a temperature-dependent yield stress with isotropic
+hardening that saturates at 2\,\% inelastic strain~\cite{Yuan2023SAC305}; and Norton creep of the
+overstress, $\dot\varepsilon_{\mathrm{in}} = A(T)\langle\sigma_{\mathrm{vm}}-\sigma_y\rangle^{n(T)}$,
+fitted to tensile creep data at 45--150\,$^\circ$C and 7.5--15.9~MPa~\cite{Xiao2005SAC}
+($n$ from 8.3 at 25\,$^\circ$C to 6.6 at 125\,$^\circ$C; every parameter, source and calibration
+range in Table~S6). The response is the per-cycle increment of accumulated equivalent inelastic
+strain on the stabilized cycle (the 48th), volume-averaged over the solder core,
 \begin{equation}
 \deps = \frac{1}{V_{\mathrm{c}}}\int_{V_{\mathrm{c}}}\!
 \left[\varepsilon^{\mathrm{eq}}_{\mathrm{in}}(t_k)-\varepsilon^{\mathrm{eq}}_{\mathrm{in}}(t_{k-1})
 \right]\mathrm{d}V,
 \label{eq:deps}
 \end{equation}
-where the core $V_{\mathrm{c}}$ excludes a band of fixed physical width (59~\textmu m) along the
-free edge, where the bimaterial corner is singular. Fixing the band in physical units, rather than
-as one element, keeps the averaging volume identical at every mesh level, which is what makes
-the response mesh-convergent. $\deps$ is a response: no damage law, life relation or allowable
-is applied.
+where $t_{k-1}$ and $t_k$ bound the last cycle and the core $V_{\mathrm{c}}$ excludes a band of
+fixed physical width (59~\textmu m, one sixth of the joint side) along the free edge, where the
+bimaterial corner is singular. Fixing the band in physical units keeps the averaging volume
+identical at every mesh level, which makes the response mesh-convergent; it is a numerical device,
+not a statement about where damage occurs. $\deps$ is a response used to compare integrations: no
+damage law, life relation or allowable is applied, and the law's calibration range (125\,$^\circ$C)
+is part of the feasibility check.
