@@ -17,8 +17,11 @@ Loss boundary for every number written here: CONVERSION + ROUTING ("matched").
 The reference paper's end-to-end boundary is NOT reconstructed. See assumptions.md.
 """
 import sys, os, json, math, time, csv, argparse
-sys.path.insert(0, "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine")
-os.chdir("/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine")
+# Engine and output locations may be redirected (DSE_ENGINE, DSE_OUT) so that a second
+# sweep runs on a private engine copy; the defaults are the paths of the production sweep.
+ENGINE = os.environ.get("DSE_ENGINE", "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine")
+sys.path.insert(0, ENGINE)
+os.chdir(ENGINE)
 
 import numpy as np
 from HVR_FULL_OPT_sizing import run_hvr_optimization as run_continuous
@@ -27,7 +30,7 @@ from Framework_w_HVR_OPT_sizing_v2 import DieConfig, DVPDRoutingModel
 sys.path.insert(0, "/home/beams0/SABDELZAHER/Salma_Thesis/analysis/system_partitioning_comparison/scripts")
 import paper_routing as PR
 
-OUT = "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_j35"
+OUT = os.environ.get("DSE_OUT", "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_j35")
 
 # ---- reference-paper operating point (assumptions.md Sec. 1) -------------------
 V_IN, V_OUT      = 48.0, 1.0
