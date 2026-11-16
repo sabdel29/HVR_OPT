@@ -358,7 +358,9 @@ def decap():
                 m[f"{k}Ploss"] = m[f"{k}Tmax"] = NA
     # rated flying-capacitor tier (Z1)
     for tag, f in (("RcfA", "z1_rated_cf_rep_A"), ("RcfB", "z1_rated_cf_rep_B"),
-                   ("RcfRefA", "z1_rated_cf_ref_A")):
+                   ("RcfRefA", "z1_rated_cf_ref_A"),
+                   ("RcfmaxA", "z1_rated_cfmax_rep_A"), ("RcfmaxB", "z1_rated_cfmax_rep_B"),
+                   ("RcfmaxRefA", "z1_rated_cfmax_ref_A")):
         c = _case(SENS / f"etm_Z1_HV_S0__{f}.json")
         for fld in ("Ploss", "Tmax", "Warp", "Du", "Tjoint"):
             m[f"{tag}{fld}"] = NA
@@ -403,9 +405,34 @@ def solder():
     return m
 
 
+def vdrop():
+    """Mean static drop of the 1-V path between converter output and die, per tier case:
+    the 1-V conductor loss divided by the load current (both rails, supply + return)."""
+    cases = {("A", "Z1"): R / "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json",
+             ("A", "Z2"): R / "research/final_closure/etm_Z2_HV_S0_h1.1_r21.json",
+             ("A", "Z3"): SENS / "etm_Z3_HV_S0__z3_top_only.json",
+             ("B", "Z1"): SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
+             ("B", "Z2"): SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
+             ("B", "Z3"): SENS / "etm_Z3_HV_S0__z3_plate_tim.json"}
+    land = J(TR / "z3_land_coupled.json") or {}
+    pick = land.get("recommended_case_files") or {}
+    for t in ("A", "B"):
+        if pick.get(t) and (SENS / pick[t]).is_file():
+            cases[(t, "Z3")] = SENS / pick[t]
+    m = {}
+    for (t, a), f in cases.items():
+        c = J(f)
+        if not c:
+            continue
+        p1 = sum(r["P_w"] for r in c["ledger_rows"] if r.get("rail") == "1V")
+        v = 1e3 * p1 / 1000.0                                    # mV at 1000 A
+        m[f"Vdrop{t}{ATAG[a]}"] = fx(v, 2 if v < 1 else 1)
+    return m
+
+
 def macros():
     m = {}
-    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, solder, agents):
+    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, solder, vdrop, agents):
         try:
             m.update(f())
         except Exception as e:          # a malformed artifact must not stop the paper build

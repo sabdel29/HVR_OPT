@@ -134,15 +134,21 @@ lamination---is not evaluated. The same holds for the 30-\textmu m-pitch Cu-pill
 for which thermocompression bonding at that pitch has been demonstrated on organic
 substrates~\cite{Au2016CuPillar30um}, and for the board opening, whose 1-mm clearance is a
 declared design value.
-The 0.83 aspect ratio rests on the 100-\textmu m flying-capacitor tier of the reference
-stack~\cite{Krishnakumar2026DVPD}. No capacitor rated for the 32~V of $C_1$ and its
-\FlyConeTen-\textmu F requirement (10\,\% ripple) is that thin: with a rated 0603 MLCC the tier is
-\FlyTierLo--\FlyTierHi~\textmu m, the crossing has an aspect ratio of \FlyArLo--\FlyArHi{} in the
-repartitioned order against 5.3 in the reference order, and neither order meets the build-up
-rule---the connection needs through-mold copper posts. The thermal advantage of the
-repartitioned order does not depend on this (Section~\ref{sec:explore}); its realizability
-advantage holds only with a thin flying-capacitor technology, which the framework therefore
-reports as a requirement on the capacitor rather than as a property of the stack.
+Two capacitor cases are carried through the paper. \emph{Case A0}, the reference, keeps the
+100-\textmu m flying-capacitor tier of the reference stack~\cite{Krishnakumar2026DVPD}; it is
+technology-conditional, because no vendor part combines a 32-V rating, the
+\FlyConeTen-\textmu F effective capacitance of $C_1$ and the cell's area at that thickness (the
+evidence matrix is Table~S9: 100-\textmu m silicon capacitors rated for 32~V provide 10~nF in
+0.64~mm$^2$, so $C_1$ alone would need about twice the cell). The 0.83 and 5.3 aspect ratios are
+geometric comparisons under that assumption. \emph{Case A1} uses the rated 0603 MLCC of
+Table~\ref{tab:spec}: with its 1.0-mm maximum height and a 30-\textmu m mounting allowance the tier
+is 1030~\textmu m, the crossing has an aspect ratio of 8.6 in the repartitioned order against 5.3 in
+the reference order, and neither order meets the build-up rule---the connection needs
+through-mold copper posts or another vertical interconnect. The converter grows to 2.70~mm, so
+in Z2 it no longer fits the 2.4-mm board opening. The thermal advantage of the repartitioned order
+holds in both cases (Section~\ref{sec:explore}); its realizability advantage holds only in A0, so
+the framework reports the thin capacitor as a requirement on the technology rather than as a
+property of the stack.
 
 \begin{figure}[!t]
 \centering

@@ -45,13 +45,18 @@ temperature by the typical normalized curves of the selected parts, $6.0\times10
 for the high-side EPC2014C and $8.0\times10^{-3}$\,K$^{-1}$ for the low-side EPC2057 over
 25--125\,$^\circ$C~\cite{EPC2014C_DS2021,EPC2057_DS2025}, and each device is evaluated at the
 in-cell temperature of its own tier.
-The capacitor rule compares each part's rating with $V_{\mathrm{in}}/N$; in this family the
-flying capacitor $C_i$ holds $(N-i)V_{\mathrm{in}}/N$, 32~V for $C_1$ of the selected cell, so the
-library part (25~V) is under-rated for $C_1$. Because the flying capacitors are soft-charged through
-the inductors, only their equivalent series resistance enters the loss: the rated part of
-Table~\ref{tab:spec} raises the capacitor loss from \FlyEsrLossLib{} to \FlyEsrLoss~W, and its height
-is the realizability question of Section~\ref{sec:realizability}.
-% TODO(authors): confirm the per-switch stress of the family (S2..SN) before generalizing
+\emph{Capacitor rule (corrected).} In this family the flying capacitor $C_i$ holds
+$(N-i)V_{\mathrm{in}}/N$---32 and 16~V for $C_1$ and $C_2$ of the selected cell---while every
+switch blocks $V_{\mathrm{in}}/N$. The published synthesis compared every capacitor with
+$V_{\mathrm{in}}/N$, which admitted a 25-V part for the 32-V $C_1$. The rule now requires each
+flying capacitor's derated rating (80\,\%) to cover its own stress and its effective capacitance
+under bias, temperature and tolerance to hold the switching ripple below 10\,\% of its voltage; the
+equivalent series resistance is taken at the switching frequency where the vendor publishes it.
+Because the flying capacitors are soft-charged through the inductors, only that resistance enters
+the loss. Under the corrected rule the 49-cell synthesis returns the same topology, devices and
+frequency with a rated 0603 100-V X7T capacitor, 0.27~\textmu F at 32~V and 7.8~m$\Omega$ at
+805~kHz (Table~\ref{tab:spec}), which raises the cell loss by 0.06~W; the published rule is kept
+as a reproducible legacy configuration.
 
 \begin{figure}[!t]
 \centering
@@ -138,9 +143,8 @@ Ripple limits & $\Delta I < 0.5\,I_{\mathrm{cell}}$; $\Delta V_{\mathrm{out}} < 
 Architecture $N/K/K_A$ & $3/3/2$, $\mathbf{B} = [1,1,1]$, $D = 0.0625$, 805~kHz & synthesis \\
 High-side device & EPC2014C: 40~V / 16~V, 10~A, $T_J\le150\,^\circ$C, 16~m$\Omega$ & synthesis \\
 Low-side device & EPC2057: 50~V / 16~V, 9.6~A, $T_J\le150\,^\circ$C, 8.5~m$\Omega$ & synthesis \\
-Inductor ($\times3$) & 250~nH, 1.6~m$\Omega$, $I_{\mathrm{sat}}$ 23~A / 9.1~A peak, 500~\textmu m, shared-core interposer type % TODO(authors): cite the library source of Shared_Core_UIC_250_nH ('Rasheedi, TCPMT 2026')
-& synthesis \\
-Flying capacitors $C_1$, $C_2$ & 32~V / 16~V; library part 10~\textmu F, 25~V, 2.5~m$\Omega$ (under-rated for $C_1$); rated: 0603 1~\textmu F 50~V X7T, 0.27/0.59~\textmu F at bias, 7.8/6.8~m$\Omega$, 0.8~mm & synthesis / check \\
+Inductor ($\times3$) & 250~nH, 1.6~m$\Omega$, $I_{\mathrm{sat}}$ 23~A / 9.1~A peak, 500~\textmu m, shared-core interposer type~\cite{Rasheedi2026CoupledInductor} & synthesis \\
+Flying capacitors $C_1$, $C_2$ & 32~V / 16~V stress. A1: 0603 1~\textmu F 100~V X7T (GRM188D72A105KE01), 0.27/0.59~\textmu F at 32/16~V, 7.8~m$\Omega$, 1.0~mm max; A0: 100-\textmu m tier, no qualifying part & synthesis \\
 Output capacitance & 50~\textmu F per cell, in the inductor tier & synthesis \\
 Input decoupling & 56 $\times$ 1206 4.7-\textmu F 100-V X7S in a ring outside the grid (65~\textmu F at 48~V); 7 interleaved clock phases; $k = \DecapKeq$ & design \\
 Cell footprint & 5.61~mm$^2$ (2.37~mm square), 3.64~A\,mm$^{-2}$ & synthesis \\

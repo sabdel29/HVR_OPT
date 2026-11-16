@@ -401,7 +401,7 @@ CF_RATED_UM = 830.0          # 0603 MLCC (0.8 mm nominal) + its attach (decap ag
 CF_RATED_ESR_MOHM = 7.3      # mean of C1 (7.8) and C2 (6.8) at 805 kHz, datasheet R(f)
 
 
-def v_z1_rated_cf(order="rep"):
+def v_z1_rated_cf(order="rep", cf_um=None, esr_mohm=None):
     """Z1 with flying capacitors of a rated part (GRM188D71H105KE01, 0603, 1 uF, 50 V, X7T):
     the tier grows from the 100-um assumption to 830 um and the capacitor ESR from 2.5 to
     7.3 mOhm; order 'ref' also swaps LS and C_f (the reference order)."""
@@ -414,8 +414,10 @@ def v_z1_rated_cf(order="rep"):
     t = cfg["converter"]["tiers_from_substrate_upward"]
     names = [x["name"] for x in t]
     i_cf = names.index("flying_caps")
-    dz = CF_RATED_UM - float(t[i_cf]["um"])
-    t[i_cf]["um"] = CF_RATED_UM
+    cf_um = CF_RATED_UM if cf_um is None else float(cf_um)
+    esr_mohm = CF_RATED_ESR_MOHM if esr_mohm is None else float(esr_mohm)
+    dz = cf_um - float(t[i_cf]["um"])
+    t[i_cf]["um"] = cf_um
     t[i_cf]["status"] = "RATED_PART"
     cfg["converter"]["total_um"] = float(cfg["converter"]["total_um"]) + dz
     ex = cfg["expected"]
@@ -426,7 +428,7 @@ def v_z1_rated_cf(order="rep"):
     i_ls = names.index("gan_ls_EPC2057")
     if order == "ref":
         t[i_ls], t[i_cf] = t[i_cf], t[i_ls]
-    tmp = scratch("fc_sens", f"z1_rated_cf_{order}") / f"z1_physical_rated_cf_{order}.yaml"
+    tmp = scratch("fc_sens", f"z1_rated_cf_{order}_{cf_um:.0f}") / f"z1_physical_rated_cf_{order}.yaml"
     tmp.write_text(yaml.safe_dump(cfg, sort_keys=False))
     load = PP.load_z1_package_config
     PP.load_z1_package_config = lambda path=None: load(path or tmp)
@@ -444,27 +446,29 @@ def v_z1_rated_cf(order="rep"):
         FL.LAYERS["Z1"] = lay
     import replay_production as RPX
     d = RPX.compiled_design()
-    RPX._DESIGN_CACHE["d"] = replace(d, capacitor=replace(d.capacitor,
-                                                          esr_mohm=CF_RATED_ESR_MOHM))
-    return {"cf_um": CF_RATED_UM, "dz_um": dz, "esr_mohm": CF_RATED_ESR_MOHM, "order": order}
+    RPX._DESIGN_CACHE["d"] = replace(d, capacitor=replace(d.capacitor, esr_mohm=esr_mohm))
+    return {"cf_um": cf_um, "dz_um": dz, "esr_mohm": esr_mohm, "order": order}
 
 
-def run_ratedcf(tier, order="rep"):
+def run_ratedcf(tier, order="rep", cf_um=None, esr_mohm=None, tag="cf"):
+    """Case A1 (rated commercial MLCC). tag 'cf': nominal part height (830 um, ESR 7.3 mOhm,
+    mean of C1/C2); tag 'cfmax': the documented MAXIMUM part height 1.0 mm + 30-um mounting
+    (1030 um) and the corrected synthesis's ESR at 32 V (7.8 mOhm, Murata data)."""
     _long_ccx()
-    name = f"z1_rated_cf_{order}_{tier}"
+    cf = CF_RATED_UM if cf_um is None else cf_um
+    esr = CF_RATED_ESR_MOHM if esr_mohm is None else esr_mohm
+    name = f"z1_rated_{tag}_{order}_{tier}"
     S.VARIANTS[name] = dict(
         kind="full", archs=("Z1",), apply=None, gates=["geom.flying_cap_rated"],
-        nature="PHYSICAL_DESIGN (rated flying capacitors)",
-        what=f"flying-cap tier {CF_RATED_UM:.0f} um (rated 0603 50-V MLCC), ESR "
-             f"{CF_RATED_ESR_MOHM} mOhm, {'reference' if order == 'ref' else 'repartitioned'} "
-             f"order, cooling {tier}")
+        nature="PHYSICAL_DESIGN (case A1: rated flying capacitors)",
+        what=f"flying-cap tier {cf:.0f} um (rated 0603 MLCC), ESR {esr} mOhm, "
+             f"{'reference' if order == 'ref' else 'repartitioned'} order, cooling {tier}")
 
     def apply():
         apply_tier("Z1", tier)
-        v_z1_rated_cf(order)
+        v_z1_rated_cf(order, cf, esr)
     S.VARIANTS[name]["apply"] = apply
     return S.run_full("Z1", name)
-
 
 if __name__ == "__main__":
     mode, arch, tier = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -481,5 +485,8 @@ if __name__ == "__main__":
         print(run_sdec(arch, tier))
     elif mode in ("ratedcf", "ratedcfref"):
         print(run_ratedcf(tier, "ref" if mode == "ratedcfref" else "rep"))
+    elif mode in ("ratedcfmax", "ratedcfmaxref"):
+        print(run_ratedcf(tier, "ref" if mode == "ratedcfmaxref" else "rep", 1030.0, 7.8,
+                          "cfmax"))
     else:
         raise SystemExit("mode is feedback or hotspot")

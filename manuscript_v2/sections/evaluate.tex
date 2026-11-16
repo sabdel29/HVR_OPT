@@ -57,12 +57,19 @@ critical joint reaches \DecapTjointZone\,$^\circ$C, inside the solder law's cali
 regulator is admissible with this decoupling, about 5~W above the ideal S0, and the interleaving is a
 control requirement that the converter must meet.
 
-\emph{Feasibility.} At S0 the evaluated design passes every check of the feasibility stage: the
+\emph{Feasibility.} In the reference case A0 the evaluated design passes every check of the
+feasibility stage at S0: the
 GaN junctions stay below \TjAZone\,$^\circ$C (\TjMarginAZone~K below the 150-$^\circ$C rating), the
 capacitor and inductor tiers below \TcapAZone\,$^\circ$C, the build-up dielectric and encapsulant
 below \TrdlAZone\,$^\circ$C, the critical joint inside the solder law's range, and the
 repartitioned stack meets the via, pitch, landing and provisioning rules
-(Table~S5 lists every limit and case).
+(Table~S5 lists every limit and case). That verdict is conditional on the thin flying-capacitor
+technology the stack assumes. With rated commercial capacitors (case A1) the converter is
+1030~\textmu m taller, the high-side-to-low-side connection needs copper posts instead of
+build-up vias, and the coupled solution changes to \RcfmaxAPloss~W, \RcfmaxATmax\,$^\circ$C and
+\RcfmaxAWarp~\textmu m of die warpage (Section~\ref{sec:explore}); the physical feasibility of the
+embedded stack is therefore not established until the capacitor technology, or a redesigned stack,
+is demonstrated.
 
 \begin{figure*}[!t]
 \centering
