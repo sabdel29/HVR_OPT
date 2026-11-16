@@ -496,9 +496,26 @@ def z3land():
     return m
 
 
+def feedback_passes():
+    """Interface feedback: per-pass values where a case does not converge (Z2 and Z3 under
+    cooling A run away; their passes are reported instead of a converged value)."""
+    m = {}
+    rv = TR / "review_variants"
+    for a in ("Z2", "Z3"):
+        for it in (1, 2, 3, 4, 5):
+            d = J(rv / f"etm_{a}_HV_S0__tim_warp_fb_A_it{it}.json")
+            if not d or "mechanics" not in d:
+                continue
+            k = f"FbPass{['', 'One', 'Two', 'Three', 'Four', 'Five'][it]}A{ATAG[a]}"
+            m[f"{k}Ploss"] = fx(d["P_loss_w"], 1)
+            m[f"{k}Tmax"] = fx(d["thermal"]["T_max_C"], 1)
+            m[f"{k}Warp"] = fx(d["mechanics"]["die_warpage_pv_um"], 1)
+    return m
+
+
 def macros():
     m = {}
-    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, solder, vdrop, z3land, agents):
+    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, solder, vdrop, z3land, feedback_passes, agents):
         try:
             m.update(f())
         except Exception as e:          # a malformed artifact must not stop the paper build
