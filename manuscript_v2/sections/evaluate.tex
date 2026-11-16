@@ -38,8 +38,24 @@ network; the package loss rises to \PlossZoneSone~W and the critical joint reach
 \TcapSoneZone\,$^\circ$C, above their 125-$^\circ$C class (Table~S5). With the input pulsed at the
 overall conversion ratio (S2), the hottest joint reaches \TjointHotZoneStwo\,$^\circ$C, above the
 217-$^\circ$C solidus of SAC305: under the intact-solid solder model the design is infeasible.
-The embedded regulator is admissible only with local input capacitance at every cell.
-% PENDING(decap): the implemented decoupling -- part, count, placement, k achieved, ESR loss, E-T result
+The embedded regulator needs its input current smoothed.
+
+\emph{Implementing the decoupling.} Charge balance asks for \DecapConeV~\textmu F per cell for 1~V
+of ripple, but a circuit model of the cells' phase-A pulse against the package network---its
+3.1-m$\Omega$ loop and an estimated \DecapLpH~pH, with the capacitors' series resistance and
+inductance and their derating under 48~V of bias---shows that the RMS ratio $k$ falls much more
+slowly with capacitance: $k \le 1.2$ needs about \DecapCkTwo~\textmu F per cell, and a few hundred
+nanofarads resonate with the package inductance and raise $k$ above its bare value of \DecapKopen.
+The embedded stack has no room for that: the cell tiers and the 0.8-mm gaps between cells hold
+only nanofarads of 100-V, 125-$^\circ$C capacitance. The decoupling is therefore implemented as seven
+interleaved clock phases over the $7\times7$ cells, assigned as a Latin square, and a ring of 56
+1206 100-V X7S capacitors (65~\textmu F at 48~V) outside the cell grid; a 49-cell model of the
+package sheets gives $k = \DecapKeq$ (\DecapKeqLo--\DecapKeqHi{} over the loop-inductance band). The
+coupled Z1 case at that $k$ dissipates \DecapPlossZone~W in the package---including \DecapHotLoop~W in
+the cells' own input loops, which carry the bare pulse whatever sits outside the cell---and its
+critical joint reaches \DecapTjointZone\,$^\circ$C, inside the solder law's calibration. The embedded
+regulator is admissible with this decoupling, about 5~W above the ideal S0, and the interleaving is a
+control requirement that the converter must meet.
 
 \emph{Feasibility.} At S0 the evaluated design passes every check of the feasibility stage: the
 GaN junctions stay below \TjAZone\,$^\circ$C (\TjMarginAZone~K below the 150-$^\circ$C rating), the

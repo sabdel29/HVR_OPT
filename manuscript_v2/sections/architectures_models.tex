@@ -53,12 +53,13 @@ board's own 48-V plane pair under the package.
 
 \subsection{Input waveform scenarios}\label{sec:scenarios}
 The hybrid cell draws input current only in phase A (Fig.~\ref{fig:converter}b), so the RMS
-current the package 48-V path carries depends on how much of the pulse local input decoupling
-absorbs. Three named scenarios bound the design space: smoothed input (S0, $k = 1$), which
-corresponds to sufficient local input capacitance at every cell---about 0.5~\textmu F per cell
-for 1~V of ripple; input pulsed at the buck duty (S1, $k = 1/\sqrt{D} = 4$), which corresponds
-to none; and input pulsed at the overall conversion ratio (S2, $k = \sqrt{48}$), the duty assumed
-by the reference framework's input-current model~\cite{Krishnakumar2026DVPD}.
+current the 48-V path carries depends on how much of the pulse local input decoupling absorbs.
+Three named scenarios bound the design space: smoothed input (S0, $k = 1$), the limit of ideal
+local input capacitance; input pulsed at the buck duty (S1, $k = 1/\sqrt{D} = 4$), which
+corresponds to none (a circuit model of the cell's pulse gives \DecapKopen); and input pulsed at the
+overall conversion ratio (S2, $k = \sqrt{48}$), the duty assumed by the input-current model
+of~\cite{Krishnakumar2026DVPD}. Section~\ref{sec:evaluate} implements the decoupling physically and
+evaluates the design at the $k$ it achieves.
 
 \subsection{Rail-aware conductor ledger}
 Every conductor carries the rail assigned to it and that rail's current: the 48-V input bus
@@ -133,7 +134,15 @@ lamination---is not evaluated. The same holds for the 30-\textmu m-pitch Cu-pill
 for which thermocompression bonding at that pitch has been demonstrated on organic
 substrates~\cite{Au2016CuPillar30um}, and for the board opening, whose 1-mm clearance is a
 declared design value.
-% PENDING(flying caps): the 100-um flying-capacitor tier and its rating (decap agent)
+The 0.83 aspect ratio rests on the 100-\textmu m flying-capacitor tier of the reference
+stack~\cite{Krishnakumar2026DVPD}. No capacitor rated for the 32~V of $C_1$ and its
+\FlyConeTen-\textmu F requirement (10\,\% ripple) is that thin: with a rated 0603 MLCC the tier is
+\FlyTierLo--\FlyTierHi~\textmu m, the crossing has an aspect ratio of \FlyArLo--\FlyArHi{} in the
+repartitioned order against 5.3 in the reference order, and neither order meets the build-up
+rule---the connection needs through-mold copper posts. The thermal advantage of the
+repartitioned order does not depend on this (Section~\ref{sec:explore}); its realizability
+advantage holds only with a thin flying-capacitor technology, which the framework therefore
+reports as a requirement on the capacitor rather than as a property of the stack.
 
 \begin{figure}[!t]
 \centering

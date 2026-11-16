@@ -371,6 +371,101 @@ def run_caloric(arch, tier):
     return S.run_full(arch, name)
 
 
+# ------------------------------------------------------------------ implemented decoupling
+def run_sdec(arch, tier):
+    """The physically implemented input decoupling (tcpmt_decap_framework: 7 interleaved
+    clock phases + a ring of 56 x 1206 100-V capacitors) for any architecture and tier: the
+    package 48-V network (Z1 only) at k_eq, the cell-internal VIN->HS runs at the bare-pulse
+    k_open (the hot loop, common to every integration), ring ESR as a ledger row (Z1)."""
+    import tcpmt_decap_framework as DF
+    _long_ccx()
+    rk = DF.recommended_k()
+    DF._register(rk["k_eq"], DF.k_open(), rk["P_ring_esr_W"])
+    name = f"sdec_{tier}"
+    S.VARIANTS[name] = dict(
+        kind="full", archs=(arch,), apply=None, gates=["decap.implemented"],
+        nature="PHYSICAL_DESIGN (implemented input decoupling, hot loop)",
+        what=f"implemented decoupling: k_eq = {rk['k_eq']:.3f}, cell-internal VIN runs at "
+             f"k_open = {DF.k_open():.3f} (cooling {tier})")
+
+    def apply():
+        apply_tier(arch, tier)
+    S.VARIANTS[name]["apply"] = apply
+    S.SCEN = DF.SCEN_KEY
+    S.case_file = lambda a, v, scen=DF.SCEN_KEY: S.OUT / f"etm_{a}_{scen}__{v}.json"
+    return S.run_full(arch, name)
+
+
+# ------------------------------------------------------------------ rated flying capacitors
+CF_RATED_UM = 830.0          # 0603 MLCC (0.8 mm nominal) + its attach (decap agent, flying_caps.json)
+CF_RATED_ESR_MOHM = 7.3      # mean of C1 (7.8) and C2 (6.8) at 805 kHz, datasheet R(f)
+
+
+def v_z1_rated_cf(order="rep"):
+    """Z1 with flying capacitors of a rated part (GRM188D71H105KE01, 0603, 1 uF, 50 V, X7T):
+    the tier grows from the 100-um assumption to 830 um and the capacitor ESR from 2.5 to
+    7.3 mOhm; order 'ref' also swaps LS and C_f (the reference order)."""
+    import yaml
+    import physical_package as PP
+    from dataclasses import replace
+    sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+    import z1_package as Z1P
+    cfg = yaml.safe_load(Z1P.Z1_CFG.read_text())
+    t = cfg["converter"]["tiers_from_substrate_upward"]
+    names = [x["name"] for x in t]
+    i_cf = names.index("flying_caps")
+    dz = CF_RATED_UM - float(t[i_cf]["um"])
+    t[i_cf]["um"] = CF_RATED_UM
+    t[i_cf]["status"] = "RATED_PART"
+    cfg["converter"]["total_um"] = float(cfg["converter"]["total_um"]) + dz
+    ex = cfg["expected"]
+    ex["package_top_um"] = float(ex["package_top_um"]) + dz
+    if "converter_span_um" in ex:
+        ex["converter_span_um"] = [float(ex["converter_span_um"][0]),
+                                   float(ex["converter_span_um"][1]) + dz]
+    i_ls = names.index("gan_ls_EPC2057")
+    if order == "ref":
+        t[i_ls], t[i_cf] = t[i_cf], t[i_ls]
+    tmp = scratch("fc_sens", f"z1_rated_cf_{order}") / f"z1_physical_rated_cf_{order}.yaml"
+    tmp.write_text(yaml.safe_dump(cfg, sort_keys=False))
+    load = PP.load_z1_package_config
+    PP.load_z1_package_config = lambda path=None: load(path or tmp)
+    Z1P.Z1_CFG = tmp
+    Z1P.Z1_TIERS = tuple((x["name"], float(x["um"])) for x in t)
+    Z1P.Z1_CONV_UM = sum(u for _n, u in Z1P.Z1_TIERS)
+    tiers = [(next((c for key, c in FL._TIER_CLASS if x["name"].startswith(key)), "rdl"),
+              float(x["um"])) for x in t]
+    ct = FL.cell_tiers
+    FL.cell_tiers = lambda arch: list(tiers) if arch == "Z1" else ct(arch)
+    if order == "ref":
+        lay = dict(FL.LAYERS["Z1"])
+        lay["ls"] = f"z1conv_{i_cf}_gan_ls_EPC2057"
+        lay["caps"] = f"z1conv_{i_ls}_flying_caps"
+        FL.LAYERS["Z1"] = lay
+    import replay_production as RPX
+    d = RPX.compiled_design()
+    RPX._DESIGN_CACHE["d"] = replace(d, capacitor=replace(d.capacitor,
+                                                          esr_mohm=CF_RATED_ESR_MOHM))
+    return {"cf_um": CF_RATED_UM, "dz_um": dz, "esr_mohm": CF_RATED_ESR_MOHM, "order": order}
+
+
+def run_ratedcf(tier, order="rep"):
+    _long_ccx()
+    name = f"z1_rated_cf_{order}_{tier}"
+    S.VARIANTS[name] = dict(
+        kind="full", archs=("Z1",), apply=None, gates=["geom.flying_cap_rated"],
+        nature="PHYSICAL_DESIGN (rated flying capacitors)",
+        what=f"flying-cap tier {CF_RATED_UM:.0f} um (rated 0603 50-V MLCC), ESR "
+             f"{CF_RATED_ESR_MOHM} mOhm, {'reference' if order == 'ref' else 'repartitioned'} "
+             f"order, cooling {tier}")
+
+    def apply():
+        apply_tier("Z1", tier)
+        v_z1_rated_cf(order)
+    S.VARIANTS[name]["apply"] = apply
+    return S.run_full("Z1", name)
+
+
 if __name__ == "__main__":
     mode, arch, tier = sys.argv[1], sys.argv[2], sys.argv[3]
     if (arch, tier) not in TIER_BASE:
@@ -382,5 +477,9 @@ if __name__ == "__main__":
         print(run_hotspot(arch, tier))
     elif mode == "caloric":
         print(run_caloric(arch, tier))
+    elif mode == "sdec":
+        print(run_sdec(arch, tier))
+    elif mode in ("ratedcf", "ratedcfref"):
+        print(run_ratedcf(tier, "ref" if mode == "ratedcfref" else "rep"))
     else:
         raise SystemExit("mode is feedback or hotspot")

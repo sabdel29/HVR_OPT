@@ -45,7 +45,13 @@ temperature by the typical normalized curves of the selected parts, $6.0\times10
 for the high-side EPC2014C and $8.0\times10^{-3}$\,K$^{-1}$ for the low-side EPC2057 over
 25--125\,$^\circ$C~\cite{EPC2014C_DS2021,EPC2057_DS2025}, and each device is evaluated at the
 in-cell temperature of its own tier.
-% PENDING(flying caps): capacitor stress per position (C1 32 V, C2 16 V) and the corrected rule
+The capacitor rule compares each part's rating with $V_{\mathrm{in}}/N$; in this family the
+flying capacitor $C_i$ holds $(N-i)V_{\mathrm{in}}/N$, 32~V for $C_1$ of the selected cell, so the
+library part (25~V) is under-rated for $C_1$. Because the flying capacitors are soft-charged through
+the inductors, only their equivalent series resistance enters the loss: the rated part of
+Table~\ref{tab:spec} raises the capacitor loss from \FlyEsrLossLib{} to \FlyEsrLoss~W, and its height
+is the realizability question of Section~\ref{sec:realizability}.
+% TODO(authors): confirm the per-switch stress of the family (S2..SN) before generalizing
 
 \begin{figure}[!t]
 \centering
@@ -55,8 +61,10 @@ in-cell temperature of its own tier.
 $I_{\mathrm{cell}}/3 = 6.8$~A. (b) S$_1$ and S$_3$ conduct in phase A and drive $L_1$ and
 $L_3$ at 16~V; S$_2$ conducts in phase B and drives $L_2$; S$_4$--S$_6$ freewheel the undriven
 inductors ($D = 0.0625$, $f_{\mathrm{sw}} = 805$~kHz). The 48-V input current flows only in
-phase A, so the waveform the package carries depends on local input decoupling
-(Section~\ref{sec:scenarios}).}
+phase A; $C_{\mathrm{in}}$ is the package input capacitance (56 1206 100-V X7S capacitors,
+65~\textmu F at 48~V) in a ring outside the cell grid, and the clocks of the 49 cells are interleaved
+in seven phases, which together hold the RMS-to-average ratio of the package input current at
+$k = \DecapKeq$ (bare pulse: \DecapKopen; Section~\ref{sec:evaluate}).}
 \label{fig:converter}
 \end{figure}
 
@@ -132,11 +140,9 @@ High-side device & EPC2014C: 40~V / 16~V, 10~A, $T_J\le150\,^\circ$C, 16~m$\Omeg
 Low-side device & EPC2057: 50~V / 16~V, 9.6~A, $T_J\le150\,^\circ$C, 8.5~m$\Omega$ & synthesis \\
 Inductor ($\times3$) & 250~nH, 1.6~m$\Omega$, $I_{\mathrm{sat}}$ 23~A / 9.1~A peak, 500~\textmu m, shared-core interposer type % TODO(authors): cite the library source of Shared_Core_UIC_250_nH ('Rasheedi, TCPMT 2026')
 & synthesis \\
-Flying capacitors $C_1$, $C_2$ & 32~V and 16~V % PENDING(flying caps): part, rating, effective C, ESR, height
-& synthesis \\
+Flying capacitors $C_1$, $C_2$ & 32~V / 16~V; library part 10~\textmu F, 25~V, 2.5~m$\Omega$ (under-rated for $C_1$); rated: 0603 1~\textmu F 50~V X7T, 0.27/0.59~\textmu F at bias, 7.8/6.8~m$\Omega$, 0.8~mm & synthesis / check \\
 Output capacitance & 50~\textmu F per cell, in the inductor tier & synthesis \\
-Input decoupling & % PENDING(decap): part, count, effective uF at 48 V, placement
--- & design \\
+Input decoupling & 56 $\times$ 1206 4.7-\textmu F 100-V X7S in a ring outside the grid (65~\textmu F at 48~V); 7 interleaved clock phases; $k = \DecapKeq$ & design \\
 Cell footprint & 5.61~mm$^2$ (2.37~mm square), 3.64~A\,mm$^{-2}$ & synthesis \\
 Loss per cell at 25\,$^\circ$C & 1.87~W (1.67~W conduction) & synthesis \\
 \midrule

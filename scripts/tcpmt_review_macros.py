@@ -311,9 +311,68 @@ def fullpkg():
     return m
 
 
+def decap():
+    """Implemented input decoupling and rated flying capacitors (agent decap) and the
+    implemented-decoupling runs of every architecture (tcpmt_review_variants sdec_*)."""
+    d = J(TR / "input_decoupling.json")
+    m = {}
+    if d:
+        s = d["summary"]
+        m["DecapConeV"] = fx(s["requirement_charge_balance_uF_per_cell"]["1V"], 2)
+        m["DecapKopen"] = fx(s["k_open_cell_waveform"], 1)
+        m["DecapCkTwo"] = fx(s["C_for_k_le_1p2_uF_per_cell"]["100"], 1)
+        m["DecapLpH"] = fx(s["loop_inductance_nominal_pH"], 0)
+        lr = s["ledger_at_S0_temperatures"]
+        m["DecapKeq"] = fx(lr["k_eq"], 2)
+        m["DecapKeqLo"], m["DecapKeqHi"] = fx(lr["k_eq_band"][0], 2), fx(lr["k_eq_band"][1], 2)
+        cc = s["coupled_case"]
+        m["DecapPlossZone"] = fx(cc["P_loss_W"], 1)
+        m["DecapTmaxZone"] = fx(cc["T_max_C"], 1)
+        m["DecapTjointZone"] = fx(cc["T_joint_C"], 0)
+        m["DecapDuZone"] = fx(cc["du_um"], 2)
+        m["DecapWarpZone"] = fx(cc["die_warpage_um"], 1)
+        bs = s["backside_integrations"]
+        m["DecapHotLoop"] = fx(bs["Z2_hotloop_correction_W"], 1)
+        m["DecapRstarKone"] = fx(bs["R_star_mohm"]["k_feed=1"], 2)
+        m["DecapRstarKeq"] = fx(bs["R_star_mohm"]["k_feed=k_eq"], 2)
+    f = J(TR / "flying_caps.json")
+    if f:
+        s = f["summary"]
+        m["FlyConeTen"] = fx(s["C_required_uF"]["C1"]["10pct"], 2)
+        m["FlyCtwoTen"] = fx(s["C_required_uF"]["C2"]["10pct"], 2)
+        m["FlyRippleOne"] = fx(s["ripple_pct_10pct_choice"]["C1"], 1)
+        m["FlyRippleTwo"] = fx(s["ripple_pct_10pct_choice"]["C2"], 1)
+        m["FlyTierLo"], m["FlyTierHi"] = (fx(x, 0) for x in s["min_tier_um_10pct"])
+        m["FlyArLo"], m["FlyArHi"] = (fx(x, 1) for x in s["via_AR_10pct"])
+        m["FlyEsrLoss"] = fx(s["P_cap_ESR_W"]["10pct_model"], 1)
+        m["FlyEsrLossLib"] = fx(s["P_cap_ESR_W"]["library_2p5mohm"], 2)
+    # implemented decoupling for the other cases (sdec_A/B), coupled
+    for a in ("Z1", "Z2", "Z3"):
+        for t in ("A", "B"):
+            c = _case(SENS / f"etm_{a}_HV_SDEC__sdec_{t}.json")
+            k = f"Sdec{t}{ATAG[a]}"
+            if c and c.get("P") is not None:
+                m[f"{k}Ploss"] = fx(c["P"], 1)
+                m[f"{k}Tmax"] = fx(c["T"], 1)
+            else:
+                m[f"{k}Ploss"] = m[f"{k}Tmax"] = NA
+    # rated flying-capacitor tier (Z1)
+    for tag, f in (("RcfA", "z1_rated_cf_rep_A"), ("RcfB", "z1_rated_cf_rep_B"),
+                   ("RcfRefA", "z1_rated_cf_ref_A")):
+        c = _case(SENS / f"etm_Z1_HV_S0__{f}.json")
+        for fld in ("Ploss", "Tmax", "Warp", "Du", "Tjoint"):
+            m[f"{tag}{fld}"] = NA
+        if c and c.get("P") is not None:
+            m[f"{tag}Ploss"], m[f"{tag}Tmax"] = fx(c["P"], 1), fx(c["T"], 1)
+            if c["warp"] is not None:
+                m[f"{tag}Warp"], m[f"{tag}Du"] = fx(c["warp"], 1), fx(c["du"], 2)
+                m[f"{tag}Tjoint"] = fx(c["Tj"], 0)
+    return m
+
+
 def macros():
     m = {}
-    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, agents):
+    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, agents):
         try:
             m.update(f())
         except Exception as e:          # a malformed artifact must not stop the paper build
