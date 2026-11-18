@@ -274,8 +274,12 @@ def law_record() -> dict:
         rows = [fit(name, T, *window_at(T, win)) for T in rows_C()]
         t_cal = cal.get("T_C")
         s_cal = cal.get("stress_MPa")
-        visited_T = (json.loads(CARDS.read_text()).get("laws", {}).get(name, {})
-                     .get("visited_T_C") if CARDS.is_file() else None)
+        ent = (json.loads(CARDS.read_text()).get("laws", {}).get(name, {})
+               if CARDS.is_file() else {})
+        visited_T = ent.get("visited_T_C")
+        fit_win = win
+        if ent.get("visited_window_last_MPa"):        # what the joints actually visit
+            win = ent["visited_window_last_MPa"]
         ext = {"stress_hot": None, "stress_cold": None, "rows_outside_T": None}
         if s_cal:
             ext["stress_hot"] = [max(0.0, s_cal[0] - win["hot"][0]),
@@ -290,16 +294,19 @@ def law_record() -> dict:
             ext["cold_dwell_25C_extrapolated"] = 25.0 < t_cal[0]
         out["laws"][name] = {
             "form": law["form"], "alloy": law["alloy"], "source": law["source"],
-            "calibration_window": cal, "visited_window_MPa": win, "window_status": status,
+            "calibration_window": cal, "visited_window_MPa": win,
+            "card_fit_window_MPa": fit_win if law["form"] == "garofalo" else None,
+            "window_status": status,
             "visited_joint_T_C": visited_T,
             "extrapolation_MPa_beyond_calibration": ext,
+            # at the temperatures the cycle visits: the joints' hot dwells, the 25-C cold dwell
             "surrogate_max_rate_err_rel_hot": max(
-                r["max_rate_err_rel"] for r in rows if r["T_C"] >= 75.0),
+                r["max_rate_err_rel"] for r in rows if 75.0 <= r["T_C"] <= 125.0),
             "surrogate_max_rate_err_rel_cold": max(
-                r["max_rate_err_rel"] for r in rows if r["T_C"] <= 25.0),
+                r["max_rate_err_rel"] for r in rows if abs(r["T_C"] - 25.0) < 1e-9),
             "rows_floor_constrained_C": [r["T_C"] for r in rows if r["floor_constraint_applied"]],
             "rate_vs_measured_Sn3.9Ag0.6Cu": data_agreement(name),
-            "card_sha": card_sha(card(name, win)[0])}
+            "card_sha": card_sha(card(name, fit_win)[0])}
     return out
 
 
