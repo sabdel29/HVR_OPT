@@ -140,9 +140,27 @@ def converter_terms(t_conv_c):
 # intra-VR: R0 traces and via stacks, R2 output plane
 # ---------------------------------------------------------------------------
 def routing_design() -> dict:
-    """routing.DESIGN of the design in force (the production dict itself by default)."""
+    """routing.DESIGN of the design in force (the production dict itself by default).
+
+    Review round 2: routing.DESIGN is the LEGACY converter's record (its capacitor, its 85 C
+    loss). Under any other production rules the dict is rebuilt from the production converter
+    by the rule that produced it (z1_design.design_dict), on the production tile."""
     import routing as RT
-    return Z1D.routing_design(RT.DESIGN)
+    import replay_production as RPX          # puts scripts/phase0d (electrical) on the path
+    import electrical as EL
+    d = Z1D.routing_design(RT.DESIGN)
+    rules = EL.production_rules()
+    if not Z1D.is_default() or rules == EL.LEGACY_RULES:
+        return d
+    key = tuple(sorted(rules.items()))
+    if key not in _ROUTING_CACHE:
+        _ROUTING_CACHE[key] = Z1D.design_dict(RPX.compiled_design(),
+                                              Z1D.design_point()["n_vr"], d,
+                                              tile_side_mm=d["tile_side_mm"])
+    return dict(_ROUTING_CACHE[key])
+
+
+_ROUTING_CACHE: dict = {}
 
 
 @lru_cache(maxsize=4)
@@ -533,6 +551,8 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
     # deposited in (final_closure_physical_etm.temperature_regions; DEFECT #68). Without
     # per-tier keys (an older caller) every term falls back to the converter mean.
     ct_at = lru_cache(maxsize=8)(converter_terms)
+    import replay_production as _RPX
+    ident = _RPX.design_identity()      # review round 2: the converter lineage, on every row
     for k, layer, comp, key in (
             ("P_conv_hs", lay["hs"], "high-side GaN (cond+sw+gate+Coss)", "hs"),
             ("P_conv_ls", lay["ls"], "low-side GaN conduction", "ls"),
@@ -542,6 +562,7 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
         add(k, comp, "converter", ct_at(t_k)[k], None, None, "converter model RMS",
             f"HVR_FULL_OPT_EPC_V2 closed form at its tier's in-cell temperature "
             f"({t_k:.2f} C)", layer, "CONSERVATION_VERIFICATION", "CLOSED")
+        rows[-1]["converter"] = ident
 
     iv = intra_vr(t_conv, scen, arch)
     add("P_intraVR_metal", "cell traces (R0) + output plane (R2)", "mixed",

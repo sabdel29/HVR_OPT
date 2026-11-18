@@ -45,15 +45,22 @@ def test_rated_parts_only_under_corrected_rule():
                 & {c.name for c in H.default_capacitor_library("legacy")})
 
 
-def test_production_lineage_pins_legacy_selection():
-    if os.environ.get("HVR_PRODUCTION_CAP_RULE", "legacy") != "legacy":
-        return
+def test_production_lineage_selection(monkeypatch):
+    """Review round 2: the production converter uses the corrected rule (rated part); the
+    published selection stays reachable with HVR_PRODUCTION_RULES=legacy."""
     sys.path.insert(0, str(R / "scripts" / "phase0f"))
     import kw1
+    for k in ("HVR_PRODUCTION_RULES", "HVR_PRODUCTION_CAP_RULE"):
+        monkeypatch.delenv(k, raising=False)
+    d, _g, why = kw1.design_1kw()
+    assert d is not None, why
+    assert d.capacitor.name == "Murata-GRM188D72A105KE01-1uF-100V"
+    assert (d.hs.part_number, d.ls.part_number) == ("EPC2014C", "EPC2057")
+    assert (d.arch.N, d.arch.K, d.arch.K_A) == (3, 3, 2)
+    monkeypatch.setenv("HVR_PRODUCTION_RULES", "legacy")
     d, _g, why = kw1.design_1kw()
     assert d is not None, why
     assert d.capacitor.name == "Murata-GCM21-10uF-25V"
-    assert (d.hs.part_number, d.ls.part_number) == ("EPC2014C", "EPC2057")
     assert (d.arch.N, d.arch.K, d.arch.K_A) == (3, 3, 2)
     assert H.CAP_RULE == os.environ.get("HVR_CAP_RULE", "stress")   # restored after the call
 

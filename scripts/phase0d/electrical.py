@@ -246,16 +246,23 @@ class HVRDesign:
     area_budget_mm2: float
     loss_25c_w: float
     j_target: float
+    #: the engine rule switches this design was synthesized under (production_rules())
+    rules: dict | None = None
 
     def loss_at(self, T_c: float, alpha_gan: float = ALPHA_GAN_RDSON) -> dict:
+        import HVR_FULL_OPT_EPC_V2 as H
         from HVR_FULL_OPT_EPC_V2 import LossModelInputs, compute_total_loss
         hs_t = replace(self.hs, R_DS_ON=rdson_at(self.hs.R_DS_ON, T_c, alpha_gan))
         ls_t = replace(self.ls, R_DS_ON=rdson_at(self.ls.R_DS_ON, T_c, alpha_gan))
         ind_t = replace(self.inductor,
                         r_dcr_mohm=dcr_at(self.inductor.r_dcr_mohm, T_c))
-        r = compute_total_loss(self.arch, LossModelInputs(
-            hs_device=hs_t, ls_device=ls_t, inductor=ind_t, capacitor=self.capacitor,
-            I_out=self.i_out_a, V_out=self.v_out, V_in=self.v_in, f_sw=self.f_sw_hz))
+        prev_rules = _pin_production_rules(H, ("COSS_RULE",))   # the production C_OSS term
+        try:
+            r = compute_total_loss(self.arch, LossModelInputs(
+                hs_device=hs_t, ls_device=ls_t, inductor=ind_t, capacitor=self.capacitor,
+                I_out=self.i_out_a, V_out=self.v_out, V_in=self.v_in, f_sw=self.f_sw_hz))
+        finally:
+            _restore_rules(H, prev_rules)
         return {"p_conv_w": r.total_loss, "p_cond_w": r.p_cond, "p_sw_w": r.p_sw,
                 "delta_i_out_a": r.delta_i_out, "delta_v_out_v": r.delta_v_out,
                 "T_c": T_c}
@@ -265,6 +272,108 @@ class HVRDesign:
         """Square-tile approximation - see electrical_model_validation.md section 3.3."""
         a = math.sqrt(self.area_mm2)
         return a, a
+
+
+# ---------------------------------------------------------------------------------------------
+# TCPMT review round 2 -- the PRODUCTION converter is synthesized under the CORRECTED engine
+# rules (rated flying capacitor, its ESR at f_sw, per-switch voltage stress at 0.9 derating,
+# corrected C_oss term). The tier packing check stays OFF in production for now (with it on,
+# the 49-cell N3K3K_A2 point does not place; the design point is the authors' choice).
+# Every rule can be pinned back by environment, so each earlier result stays reproducible:
+#     HVR_PRODUCTION_RULES=legacy        every rule at its published value (the frozen lineage)
+#     HVR_PRODUCTION_CAP_RULE=legacy     the flying-capacitor voltage rule (and its library)
+#     HVR_PRODUCTION_SW_RULE=legacy      the switch-voltage rule
+#     HVR_PRODUCTION_COSS_RULE=legacy    the output-capacitance loss term
+#     HVR_PRODUCTION_PACK_RULE=on        the tier packing check
+# A rule the engine does not have (an older engine checkout) is left untouched.
+#: (engine attribute, production environment variable, production value, published value)
+_RULES = (("CAP_RULE", "HVR_PRODUCTION_CAP_RULE", "stress", "legacy"),
+          ("SW_RULE", "HVR_PRODUCTION_SW_RULE", "stress", "legacy"),
+          ("COSS_RULE", "HVR_PRODUCTION_COSS_RULE", "corrected", "legacy"),
+          ("PACK_RULE", "HVR_PRODUCTION_PACK_RULE", "off", "off"))
+#: the rule values of the lineage every result before review round 2 was computed with
+LEGACY_RULES = {attr: legacy for attr, _env, _prod, legacy in _RULES}
+
+
+def production_rules(H=None) -> dict:
+    """attribute -> value of the production converter in this process (environment-resolved);
+    with the engine module given, only the rules it has."""
+    import os
+    allv = os.environ.get("HVR_PRODUCTION_RULES", "").strip().lower()
+    out = {}
+    for attr, env, prod, legacy in _RULES:
+        if H is not None and not hasattr(H, attr):
+            continue
+        v = os.environ.get(env) or (legacy if allv == "legacy" else prod)
+        out[attr] = v
+    return out
+
+
+def _pin_production_rules(H, only=None) -> dict:
+    """Set the engine's rule switches (all, or those named in `only`) to the production
+    values; return the previous ones."""
+    prev = {}
+    for attr, v in production_rules(H).items():
+        if only is None or attr in only:
+            prev[attr] = getattr(H, attr)
+            setattr(H, attr, v)
+    return prev
+
+
+def _restore_rules(H, prev: dict) -> None:
+    for attr, val in prev.items():
+        setattr(H, attr, val)
+
+
+def rules_of(record) -> dict:
+    """The converter rules a stored result was computed with: the `converter` stamp of its
+    converter ledger rows (written since review round 2), else the legacy lineage."""
+    rows = (record or {}).get("ledger_rows") or []
+    for r in rows:
+        c = r.get("converter") if isinstance(r, dict) else None
+        if isinstance(c, dict) and isinstance(c.get("rules"), dict):
+            return dict(c["rules"])
+    return dict(LEGACY_RULES)
+
+
+class pinned_rules:
+    """Context manager: evaluate under the given converter rules (e.g. rules_of(case), to
+    re-evaluate a stored case in its own lineage) by setting the production environment."""
+
+    def __init__(self, rules: dict):
+        self.rules = dict(rules or {})
+
+    def __enter__(self):
+        import os
+        self.prev = {k: os.environ.get(k) for k in
+                     ["HVR_PRODUCTION_RULES"] + [env for _a, env, _p, _l in _RULES]}
+        os.environ.pop("HVR_PRODUCTION_RULES", None)
+        for attr, env, prod, legacy in _RULES:
+            os.environ[env] = str(self.rules.get(attr, legacy))
+        return self
+
+    def __exit__(self, *exc):
+        import os
+        for k, v in self.prev.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        return False
+
+
+def _esr_at_fsw(H, design: HVRDesign, rules: dict) -> HVRDesign:
+    """The engine's selection loop evaluates the corrected-rule loss with the capacitor's ESR at
+    f_sw (vendor ESR(f) at the C_1 bias) but returns the library part; carry the evaluated ESR in
+    the design, so every later loss evaluation (the ledger) uses the same value."""
+    cap = design.capacitor
+    if (rules.get("CAP_RULE", "legacy") == "legacy" or not getattr(H, "CAP_ESR_F", False)
+            or not getattr(cap, "vendor_part", None) or not hasattr(H, "cap_esr_mohm")):
+        return design
+    n = design.arch.N
+    esr = float(H.cap_esr_mohm(cap, design.f_sw_hz, (n - 1) * design.v_in / n))
+    return replace(design, capacitor=replace(cap, esr_mohm=esr))
+# ---------------------------------------------------------------------------------------------
 
 
 def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: float = 1.0,
@@ -282,12 +391,12 @@ def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: floa
     import os
     import HVR_FULL_OPT_EPC_V2 as H
     from HVR_FULL_OPT_EPC_V2 import run_hvr_optimization
-    # The production lineage of the ETM study was synthesized with the published capacitor rule
-    # (v_max > V_in/N). The corrected rule is the engine default; the production path pins the
-    # published one so every existing result stays reproducible, unless HVR_PRODUCTION_CAP_RULE
-    # asks for the corrected selection (TCPMT revision, review round 2).
-    prev_rule = H.CAP_RULE
-    H.CAP_RULE = os.environ.get("HVR_PRODUCTION_CAP_RULE", "legacy")
+    # The production converter is synthesized under the production rules (production_rules():
+    # corrected by default since review round 2; HVR_PRODUCTION_RULES=legacy restores the
+    # published lineage exactly). The engine's own switches are restored afterwards.
+    prev_rules = _pin_production_rules(H)
+    # a rule the engine does not have behaves as published: recorded as its legacy value
+    rules = {**LEGACY_RULES, **production_rules(H)}
     cwd = os.getcwd()
     os.chdir(SIVR)                     # the optimizer opens EPC-Product-Table.csv by bare name
     try:
@@ -298,7 +407,7 @@ def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: floa
                                    capacitor_library=capacitor_library)
     finally:
         os.chdir(cwd)
-        H.CAP_RULE = prev_rule
+        _restore_rules(H, prev_rules)
     feas = [r for r in res if r.area_feasible and r.ripple_satisfied
             and np.isfinite(r.optimized_loss)]
     if architecture is not None:
@@ -307,10 +416,11 @@ def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: floa
     if not feas:
         return None
     b = min(feas, key=lambda r: r.optimized_loss)
-    return HVRDesign(label=f"N{b.architecture.N}K{b.architecture.K}KA{b.architecture.K_A}"
-                           f"_J{j_target:g}",
-                     arch=b.architecture, hs=b.optimized_hs_device, ls=b.optimized_ls_device,
-                     inductor=b.optimized_inductor, capacitor=b.optimized_capacitor,
-                     f_sw_hz=b.optimized_f_sw, i_out_a=i_out_a, v_in=v_in, v_out=v_out,
-                     area_mm2=b.total_area_mm2, area_budget_mm2=b.area_budget_mm2,
-                     loss_25c_w=b.optimized_loss, j_target=j_target)
+    des = HVRDesign(label=f"N{b.architecture.N}K{b.architecture.K}KA{b.architecture.K_A}"
+                          f"_J{j_target:g}",
+                    arch=b.architecture, hs=b.optimized_hs_device, ls=b.optimized_ls_device,
+                    inductor=b.optimized_inductor, capacitor=b.optimized_capacitor,
+                    f_sw_hz=b.optimized_f_sw, i_out_a=i_out_a, v_in=v_in, v_out=v_out,
+                    area_mm2=b.total_area_mm2, area_budget_mm2=b.area_budget_mm2,
+                    loss_25c_w=b.optimized_loss, j_target=j_target, rules=rules)
+    return _esr_at_fsw(H, des, rules)

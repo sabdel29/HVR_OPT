@@ -74,11 +74,17 @@ def test_variant_hooks_reproduce_the_ledger_consequence(dec):
     import tcpmt_decap_framework as F
     rk = F.recommended_k()
     FL = F._register(rk["k_eq"], F.k_open(), rk["P_ring_esr_W"], key="HV_TEST_DEC")
-    p = FL.self_consistent("Z1", "HV_TEST_DEC", CI.s0_temperatures())["P_loss_w"]
-    rec = dec["framework"]["ledger_at_S0_temperatures"]["cases"][F.RECOMMENDED]
-    assert abs(p - rec["P_package_internal_W"]) < 1e-6
-    assert abs(FL.self_consistent("Z1", "HV_S0", CI.s0_temperatures())["P_loss_w"]
-               - json.loads(CI.CASE_S0.read_text())["P_loss_w"]) < 1e-9
+    import replay_production as RPX
+    import electrical as EL
+    # the committed artifact belongs to the lineage of the S0 case it was computed from
+    with EL.pinned_rules(EL.rules_of(json.loads(CI.CASE_S0.read_text()))):
+        RPX._DESIGN_CACHE.clear()
+        p = FL.self_consistent("Z1", "HV_TEST_DEC", CI.s0_temperatures())["P_loss_w"]
+        rec = dec["framework"]["ledger_at_S0_temperatures"]["cases"][F.RECOMMENDED]
+        assert abs(p - rec["P_package_internal_W"]) < 1e-6
+        assert abs(FL.self_consistent("Z1", "HV_S0", CI.s0_temperatures())["P_loss_w"]
+                   - json.loads(CI.CASE_S0.read_text())["P_loss_w"]) < 1e-9
+    RPX._DESIGN_CACHE.clear()
 
 
 def test_no_thin_flying_capacitor_claimed(fly):
