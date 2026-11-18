@@ -204,29 +204,45 @@ def cooling_table():
 
 
 def feasibility_table():
+    """S5 (review round 2): every limit on every compared case, and the verdict of every case
+    and variant of the study (tcpmt_feasibility)."""
     f = J(TR / "feasibility.json")
-    if not f:
+    if not f or "records" not in f:
         return placeholder("S5. Temperature feasibility", "feasibility.json")
     lim = f["limits"]
-    L = [r"\subsection*{S5. Component and material temperature feasibility}",
-         r"Maximum temperatures from the converged fields ($^\circ$C); GaN junction bounded "
-         r"from the tier maximum by $R_{\theta\mathrm{JC}}$ at the device's own dissipation. "
-         f"Limits: GaN $T_J\\le{lim['gan_Tj_C']:.0f}$; $R_{{DS(on)}}$ fit $\\le{lim['ron_fit_max_C']:.0f}$; "
-         f"X7R/X7S capacitors $\\le{lim['mlcc_C']:.0f}$; inductor $\\le{lim['inductor_C']:.0f}$; "
-         f"build-up dielectric and encapsulant $T_g\\approx{lim['buildup_Tg_C']:.0f}$; board "
-         f"$T_g\\approx{lim['board_Tg_C']:.0f}$; solder law $\\le{lim['solder_cal_C']:.0f}$.",
-         r"\begin{tabular}{@{}lrrrrrrrl@{}}", r"\toprule",
-         r"Case & $T_J$ HS & $T_J$ LS & Caps & Ind. & RDL & Encap. & Joint & Fails \\",
+    L = [r"\subsection*{S5. Feasibility stage}",
+         r"Every declared limit on every case: GaN junction per device tier (tier maximum in the "
+         r"cells plus $R_{\theta\mathrm{JC}}$ at the device's dissipation) "
+         f"$\\le{lim['gan_Tj_C']:.0f}$; $R_{{DS(on)}}$ fit range $\\le{lim['ron_fit_max_C']:.0f}$; "
+         f"MLCC and inductor $\\le{lim['mlcc_C']:.0f}$; build-up dielectric and encapsulant "
+         f"$T_g\\approx{lim['buildup_Tg_C']:.0f}$; board $T_g\\approx{lim['board_Tg_C']:.0f}$; "
+         f"processor die $\\le{lim['die_C']:.0f}$; hottest joint within the solder law "
+         f"$\\le{lim['solder_cal_C']:.0f}$ ($^\\circ$C); every power ball $\\le"
+         f"{lim['bga_A_per_ball']:.1f}$~A at the case's waveform and at least "
+         f"{100 * (1 - lim['bga_power_site_fraction_max']):.0f}\\,\\% of the ball sites left "
+         f"for signals; static 1-V drop $\\le{lim['ir_drop_mV_per_rail']:.0f}$~mV per rail. "
+         r"Compared cases (production state: implemented decoupling; references S0, S1):",
+         r"\begin{tabular}{@{}lrrrrrrrrrl@{}}", r"\toprule",
+         r"Case & $T_J$ HS & $T_J$ LS & Caps & Ind. & RDL & Encap. & Die & Joint & Drop & Fails \\",
          r"\midrule"]
-    for lab, c in f["cases"].items():
-        rg = c["regions"]
-        fails = [k for k, v in c["checks"].items() if isinstance(v, dict) and not v["ok"]]
-        L.append(f"{tex(lab)} & {rg['hs']['device']['Tj_bound_C']:.1f} & "
-                 f"{rg['ls']['device']['Tj_bound_C']:.1f} & {rg['caps']['in_cells']['max_C']:.1f} & "
-                 f"{rg['ind']['in_cells']['max_C']:.1f} & {rg['rdl']['all']['max_C']:.1f} & "
-                 f"{rg['encapsulant']['all']['max_C']:.1f} & {c['joints']['T_critical_C']:.1f} & "
-                 f"{tex(', '.join(fails) or 'none')} \\\\")
-    L += [r"\bottomrule", r"\end{tabular}", ""]
+
+    def v(x, n=1):
+        return "--" if x is None else f"{x:.{n}f}"
+    for key, c in sorted(f["cases"].items()):
+        rg, ch, tj = c["regions"], c["checks"], c.get("junction_C") or {}
+        L.append(f"{tex(key)} & {v(tj.get('hs'))} & {v(tj.get('ls'))} & "
+                 f"{v(rg.get('caps_in_cells'))} & {v(rg.get('ind_in_cells'))} & "
+                 f"{v(rg.get('rdl_all'))} & {v(rg.get('encapsulant'))} & {v(c.get('die_T_max_C'))} & "
+                 f"{v(c['joints'].get('T_hottest_C'))} & {v(ch.get('ir_drop', {}).get('value'))} & "
+                 f"{tex(', '.join(c['fails']) or 'none')} \\\\")
+    L += [r"\bottomrule", r"\end{tabular}", "",
+          r"Every case and variant of the study (not ranked when any limit fails):",
+          r"\begin{longtable}{@{}p{5.6cm}p{1.4cm}p{6.0cm}@{}}", r"\toprule",
+          r"Case & Verdict & Failed limits \\", r"\midrule", r"\endhead"]
+    for r in f["records"]:
+        tag = " (superseded)" if r["role"] == "superseded" else ""
+        L.append(f"{tex(r['case'])}{tag} & {r['verdict']} & {tex(', '.join(r['fails']) or '--')} \\\\")
+    L += [r"\bottomrule", r"\end{longtable}", ""]
     return L
 
 
@@ -270,26 +286,38 @@ def variants_table():
 
 
 def scenario_table():
-    L = [r"\subsection*{S8. The selected regulator under the three input scenarios}",
-         r"Package-internal loss, peak and low-side tier temperature, critical joint, "
-         r"die warpage and local response (L3) per scenario, production cooling.",
-         r"\begin{tabular}{@{}llrrrrrr@{}}", r"\toprule",
-         r"Arch & Scen. & $P$ (W) & $T_{\max}$ & $T_{\mathrm{LS}}$ & $\du$ (\textmu m) at $T_{\mathrm{j}}$ & "
-         r"Warp (\textmu m) & $k$ \\", r"\midrule"]
+    """S8 (review round 2): the regulator under every input state, cooling A -- the production
+    state (implemented decoupling) and the S0/S1 references from tcpmt_cases (Z3 on its coupled
+    land side), S2 for the BGA/direct-fed production cases; superseded uncoupled Z3 rows are not
+    printed."""
     import math
-    kmap = {"S0": "1", "S1": "4", "S2": f"{math.sqrt(48):.2f}"}
+    import tcpmt_cases as TC
+    L = [r"\subsection*{S8. The selected regulator under the input states}",
+         r"Package-internal loss, peak and low-side tier temperature, critical joint and die "
+         r"warpage per input state, cooling~A; SDEC: implemented decoupling (production).",
+         r"\begin{tabular}{@{}llrrrrrr@{}}", r"\toprule",
+         r"Arch & State & $P$ (W) & $T_{\max}$ & $T_{\mathrm{LS}}$ & $\du$ (\textmu m) at $T_{\mathrm{j}}$ & "
+         r"Warp (\textmu m) & $k$ \\", r"\midrule"]
+    kmap = {"SDEC": f"{J(TR / 'input_decoupling.json')['summary']['recommended']['k_eq']:.2f}",
+            "S0": "1", "S1": "4", "S2": f"{math.sqrt(48):.2f}"}
     for a in ARCHS:
-        for s in ("S0", "S1", "S2"):
-            c = J(FC / f"etm_{a}_HV_{s}_h1.1_r21.json")
+        for s_ in ("SDEC", "S0", "S1", "S2"):
+            if s_ == "S2":
+                pth = FC / f"etm_{a}_HV_S2_h1.1_r21.json"
+                pth = None if (a == "Z3" or not pth.is_file()) else pth
+            else:
+                pth = TC.case_path(s_, "A", a)
+            c = J(pth) if pth else None
             if not c:
+                L.append(f"{a} & {s_} & -- & -- & -- & -- & -- & {kmap[s_]} \\\\")
                 continue
             me = c.get("mechanics") or {}
             cr = (me.get("joint_search") or {}).get("critical") or {}
             h = c["et_history"][-1]
             du = f"{cr['du_um']:.2f} at {cr['T_C']:.0f}" if cr else "--"
             warp = f"{me['die_warpage_pv_um']:.1f}" if me else "--"
-            L.append(f"{a} & {s} & {c['P_loss_w']:.1f} & {c['thermal']['T_max_C']:.1f} & "
-                     f"{h.get('T_ls_C', float('nan')):.1f} & {du} & {warp} & {kmap[s]} \\\\")
+            L.append(f"{a} & {s_} & {c['P_loss_w']:.1f} & {c['thermal']['T_max_C']:.1f} & "
+                     f"{h.get('T_ls_C', float('nan')):.1f} & {du} & {warp} & {kmap[s_]} \\\\")
     L += [r"\bottomrule", r"\end{tabular}", ""]
     return L
 
@@ -365,6 +393,9 @@ def review_variants_table():
         c = J(f)
         me = c.get("mechanics") or {}
         cr = (me.get("joint_search") or {}).get("critical") or {}
+        import tcpmt_cases as TC
+        if TC.is_superseded(f):
+            name += " (superseded base)"
         rows.append((f.stem.split("_")[1], name, c.get("P_loss_w"), c["thermal"]["T_max_C"],
                      me.get("die_warpage_pv_um"), cr.get("du_um"), cr.get("T_C")))
     L = [r"\subsection*{S12. Review-round variants}",
