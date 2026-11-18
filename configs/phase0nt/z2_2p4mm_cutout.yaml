@@ -124,14 +124,20 @@ converter:
       reproduced in the mesh audit.
     rdl_tiers:      {material: rdl_composite, status: DERIVED,
                      note: framework RDL+bump homogenization}
-    gan_hs_and_ls:  {material: silicon, status: BOUNDED,
-                     note: "EPC eGaN FETs are GaN-on-Si; the 685/638 um body is
-                            predominantly the Si carrier. The GaN epi is NOT resolved."}
-    inductor_cout:  {material: hvr_effective, status: PROVISIONAL,
-                     note: existing homogenized converter medium}
-    flying_caps:    {material: hvr_effective, status: OPEN,
-                     note: "an MLCC ceramic/Ni stack is NOT this medium; no sourced MLCC
-                            card exists in the framework"}
+    # TCPMT revision: cards DERIVED by unit-cell homogenization of the tier contents of the
+    # design in force (scripts/tcpmt_converter_cards.py -> research/tcpmt_revision/
+    # converter_cards.json, with Voigt/Reuss bounds). The statuses below stay those of the
+    # PROPERTY: several inputs are declared (MLCC construction, TY-M5 core k, encapsulant),
+    # not sourced. Legacy assignment (silicon / hvr_effective): variant conv_k_legacy.
+    gan_hs_and_ls:  {material: conv_gan_hs / conv_gan_ls, status: BOUNDED,
+                     note: "dies at their area fraction with their solder terminals in the
+                            encapsulant (EPC datasheet outlines); the GaN epi is NOT resolved"}
+    inductor_cout:  {material: conv_ind_cout, status: PROVISIONAL,
+                     note: "Cu windings (inductor paper Fig. 7), TY-M5 rod, C_out MLCC,
+                            output-current posts, encapsulant"}
+    flying_caps:    {material: conv_cfly_a0, status: OPEN,
+                     note: "MLCC (BaTiO3/Ni body, Cu terminations) in the encapsulant;
+                            case A1 (rated 0603 parts) carries conv_cfly_a1"}
 
 out_of_cell:
   # Brief section 15. The opening is 23.36^2 = 545.69 mm2; the 49 cells occupy

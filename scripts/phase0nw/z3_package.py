@@ -68,7 +68,7 @@ def converter_layers(cfg, nz_thin: int = 1, nz_thick: int = 2) -> list:
     out = []
     n = len(cfg.tiers)
     for i, t in enumerate(reversed(cfg.tiers)):
-        mat = Z2C.TIER_MATERIAL[t.name][0]
+        mat = Z2C.tier_material(t.name)
         out.append((f"{CONV_PREFIX}{n - 1 - i:d}_{t.name}", t.um / 1e3, mat,
                     nz_thin if t.um <= 20.0 else nz_thick))
     return out
@@ -212,6 +212,7 @@ def install(cfg, stack: dict, extra_bottom: list):
                          f"{cfg.board_thickness_mm} mm")
     stack["materials"]["rdl_tier"] = Z2C.rdl_tier_material()
     stack["materials"]["microbump"] = Z2C.microbump_material()
+    Z2C.install_converter_cards(stack, [(t.name, t.um) for t in cfg.tiers])
     stack["materials"][attach_material_name(cfg)] = attach_material(cfg)
     stack["materials"][via_material_name(cfg)] = pcb_via_field_material(cfg, stack)
     conv = converter_layers(cfg)
