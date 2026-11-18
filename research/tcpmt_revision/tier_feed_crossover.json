@@ -1,36 +1,198 @@
 {
- "rule": "R* of backside integration b against Z1 within one cooling tier, from b's converged temperatures in that tier (S0); 0 = behind at zero feed",
+ "rule": "R* of backside integration b against Z1 within one cooling tier, from b's converged temperatures in that tier; 0 ('none') = behind at zero feed",
+ "production_state": "SDEC",
+ "states": {
+  "SDEC": {
+   "A": {
+    "Z2": {
+     "P_Z1_w": 149.65984668142073,
+     "P_internal_w": 149.22369088634457,
+     "P_internal_recomputed_w": 149.22958932181828,
+     "reproduction_w": 0.005898435473710606,
+     "advantage_at_zero_feed_w": 0.43615579507616076,
+     "k_feed": 1.649920238619531,
+     "I_48_rms_a": 39.502857463385006,
+     "R_star_mohm": 0.2755155759205628,
+     "R_star_label": "0.3 mOhm",
+     "case": "etm_Z2_HV_SDEC__sdec_A.json",
+     "Z1_case": "etm_Z1_HV_SDEC__z1_input_decoupling.json",
+     "converter_rules": {
+      "CAP_RULE": "legacy",
+      "SW_RULE": "legacy",
+      "COSS_RULE": "legacy",
+      "PACK_RULE": "off"
+     }
+    }
+   },
+   "B": {
+    "Z2": {
+     "P_Z1_w": 147.86294463270082,
+     "P_internal_w": 116.56122064167866,
+     "P_internal_recomputed_w": 116.55871202240078,
+     "reproduction_w": -0.002508619277875823,
+     "advantage_at_zero_feed_w": 31.301723991022158,
+     "k_feed": 1.649920238619531,
+     "I_48_rms_a": 38.37985034526491,
+     "R_star_mohm": 20.108494872858532,
+     "R_star_label": "20.1 mOhm",
+     "case": "etm_Z2_HV_SDEC__sdec_B.json",
+     "Z1_case": "etm_Z1_HV_SDEC__sdec_B.json",
+     "converter_rules": {
+      "CAP_RULE": "legacy",
+      "SW_RULE": "legacy",
+      "COSS_RULE": "legacy",
+      "PACK_RULE": "off"
+     }
+    }
+   }
+  },
+  "S0": {
+   "A": {
+    "Z2": {
+     "P_Z1_w": 144.3097256920461,
+     "P_internal_w": 147.43752380684376,
+     "P_internal_recomputed_w": 147.44317725239463,
+     "reproduction_w": 0.005653445550876768,
+     "advantage_at_zero_feed_w": -3.127798114797656,
+     "k_feed": 1.0,
+     "I_48_rms_a": 23.905066192758223,
+     "R_star_mohm": 0.0,
+     "R_star_label": "none",
+     "case": "etm_Z2_HV_S0_h1.1_r21.json",
+     "Z1_case": "etm_Z1_HV_S0_h1.1_r21.json",
+     "converter_rules": {
+      "CAP_RULE": "legacy",
+      "SW_RULE": "legacy",
+      "COSS_RULE": "legacy",
+      "PACK_RULE": "off"
+     }
+    },
+    "Z3": {
+     "P_Z1_w": 144.3097256920461,
+     "P_internal_w": 232.9699734404515,
+     "P_internal_recomputed_w": 233.00918174485548,
+     "reproduction_w": 0.03920830440398504,
+     "advantage_at_zero_feed_w": -88.6602477484054,
+     "k_feed": 1.0,
+     "I_48_rms_a": 25.687691286351157,
+     "R_star_mohm": 0.0,
+     "R_star_label": "none",
+     "case": "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json",
+     "Z1_case": "etm_Z1_HV_S0_h1.1_r21.json",
+     "converter_rules": {
+      "CAP_RULE": "legacy",
+      "SW_RULE": "legacy",
+      "COSS_RULE": "legacy",
+      "PACK_RULE": "off"
+     }
+    }
+   },
+   "B": {
+    "Z2": {
+     "P_Z1_w": 142.62940729978502,
+     "P_internal_w": 115.18200402488185,
+     "P_internal_recomputed_w": 115.17953608957446,
+     "reproduction_w": -0.0024679353073935317,
+     "advantage_at_zero_feed_w": 27.447403274903166,
+     "k_feed": 1.0,
+     "I_48_rms_a": 23.232907001866135,
+     "R_star_mohm": 48.44087638489992,
+     "R_star_label": "48.4 mOhm",
+     "case": "etm_Z2_HV_S0__z2_cooled_tim.json",
+     "Z1_case": "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
+     "converter_rules": {
+      "CAP_RULE": "legacy",
+      "SW_RULE": "legacy",
+      "COSS_RULE": "legacy",
+      "PACK_RULE": "off"
+     }
+    },
+    "Z3": {
+     "P_Z1_w": 142.62940729978502,
+     "P_internal_w": 151.32082378620896,
+     "P_internal_recomputed_w": 151.3118762558157,
+     "reproduction_w": -0.008947530393271563,
+     "advantage_at_zero_feed_w": -8.691416486423947,
+     "k_feed": 1.0,
+     "I_48_rms_a": 23.985664088662826,
+     "R_star_mohm": 0.0,
+     "R_star_label": "none",
+     "case": "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json",
+     "Z1_case": "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
+     "converter_rules": {
+      "CAP_RULE": "legacy",
+      "SW_RULE": "legacy",
+      "COSS_RULE": "legacy",
+      "PACK_RULE": "off"
+     }
+    }
+   }
+  },
+  "S1": {
+   "A": {
+    "Z2": {
+     "P_Z1_w": 179.94320484589966,
+     "P_internal_w": 149.428894786459,
+     "P_internal_recomputed_w": 149.43482281700778,
+     "reproduction_w": 0.005928030548773222,
+     "advantage_at_zero_feed_w": 30.514310059440646,
+     "k_feed": 4.0,
+     "I_48_rms_a": 95.78623523475066,
+     "R_star_mohm": 3.1554366171753516,
+     "R_star_label": "3.2 mOhm",
+     "case": "etm_Z2_HV_S1_h1.1_r21.json",
+     "Z1_case": "etm_Z1_HV_S1_h1.1_r21.json",
+     "converter_rules": {
+      "CAP_RULE": "legacy",
+      "SW_RULE": "legacy",
+      "COSS_RULE": "legacy",
+      "PACK_RULE": "off"
+     }
+    }
+   }
+  }
+ },
  "tiers": {
   "A": {
    "Z2": {
-    "P_Z1_w": 144.3097256920461,
-    "P_internal_w": 147.43752380684376,
-    "P_internal_recomputed_w": 147.44317725239463,
-    "R_star_mohm": 0.0,
-    "case": "etm_Z2_HV_S0_h1.1_r21.json"
-   },
-   "Z3": {
-    "P_Z1_w": 144.3097256920461,
-    "P_internal_w": 199.5537853740105,
-    "P_internal_recomputed_w": 199.58578716057346,
-    "R_star_mohm": 0.0,
-    "case": "etm_Z3_HV_S0__z3_top_only.json"
+    "P_Z1_w": 149.65984668142073,
+    "P_internal_w": 149.22369088634457,
+    "P_internal_recomputed_w": 149.22958932181828,
+    "reproduction_w": 0.005898435473710606,
+    "advantage_at_zero_feed_w": 0.43615579507616076,
+    "k_feed": 1.649920238619531,
+    "I_48_rms_a": 39.502857463385006,
+    "R_star_mohm": 0.2755155759205628,
+    "R_star_label": "0.3 mOhm",
+    "case": "etm_Z2_HV_SDEC__sdec_A.json",
+    "Z1_case": "etm_Z1_HV_SDEC__z1_input_decoupling.json",
+    "converter_rules": {
+     "CAP_RULE": "legacy",
+     "SW_RULE": "legacy",
+     "COSS_RULE": "legacy",
+     "PACK_RULE": "off"
+    }
    }
   },
   "B": {
    "Z2": {
-    "P_Z1_w": 142.62940729978502,
-    "P_internal_w": 115.18200402488185,
-    "P_internal_recomputed_w": 115.17953608957446,
-    "R_star_mohm": 48.44087638489992,
-    "case": "etm_Z2_HV_S0__z2_cooled_tim.json"
-   },
-   "Z3": {
-    "P_Z1_w": 142.62940729978502,
-    "P_internal_w": 124.46326420109739,
-    "P_internal_recomputed_w": 124.45480673960763,
-    "R_star_mohm": 32.072776308980956,
-    "case": "etm_Z3_HV_S0__z3_plate_tim.json"
+    "P_Z1_w": 147.86294463270082,
+    "P_internal_w": 116.56122064167866,
+    "P_internal_recomputed_w": 116.55871202240078,
+    "reproduction_w": -0.002508619277875823,
+    "advantage_at_zero_feed_w": 31.301723991022158,
+    "k_feed": 1.649920238619531,
+    "I_48_rms_a": 38.37985034526491,
+    "R_star_mohm": 20.108494872858532,
+    "R_star_label": "20.1 mOhm",
+    "case": "etm_Z2_HV_SDEC__sdec_B.json",
+    "Z1_case": "etm_Z1_HV_SDEC__sdec_B.json",
+    "converter_rules": {
+     "CAP_RULE": "legacy",
+     "SW_RULE": "legacy",
+     "COSS_RULE": "legacy",
+     "PACK_RULE": "off"
+    }
    }
   }
  }

@@ -78,11 +78,16 @@ def r_star(case, p_z1, t_um=None, plane=True):
     """tcpmt_tier_feed.py's R*, with the variant's ledger rows active (t_um None = the
     reference ledger, both spreading rows NOT_MODELLED)."""
     import final_closure_direct_feed as DF
+    import replay_production as RPX                        # (puts phase0d on the path)
+    import electrical as EL
     V.configure(t_um if t_um is not None else 1.0, plane)
     V.STATE["t_um"] = t_um
     temps = DF.converged_temps(case)
-    base = DF.platform_point("HV_S0", temps, 0.0, arch="Z3")
-    r = DF.crossover("HV_S0", temps, p_z1, arch="Z3")
+    with EL.pinned_rules(EL.rules_of(case)):           # the case's own converter lineage
+        RPX._DESIGN_CACHE.clear()
+        base = DF.platform_point("HV_S0", temps, 0.0, arch="Z3")
+        r = DF.crossover("HV_S0", temps, p_z1, arch="Z3")
+    RPX._DESIGN_CACHE.clear()
     return {"P_Z1_w": p_z1, "P_internal_w": case["P_loss_w"],
             "P_internal_recomputed_w": base["P_total_w"],
             "advantage_at_zero_feed_w": p_z1 - case["P_loss_w"],
@@ -469,5 +474,144 @@ def table(out):
     print(json.dumps(out["derived"], indent=1, default=float)[:3000])
 
 
+# ------------------------------------------------------------------ compact documentation
+#: the four 2-oz central planes of the board schedule (pcb_h1: 14 x 1 oz + 4 x 2 oz), two per rail
+TWO_OZ_T_PLANE_UM = 69.6
+
+
+def documentation():
+    """The compact description of the coupled Z3 land side the paper needs (review round 2):
+    shape factors, sheet resistance at the converged temperature, the deposit layers, the
+    DECLARED board planes, the 2-oz-plane sensitivity against the resolution rule, and R* --
+    for every compared Z3 case of tcpmt_cases (production state and S0 reference).
+    Reads the case files and the committed artifacts only (no solve)."""
+    import tcpmt_cases as TC
+    d = json.loads(OUT.read_text())
+    def unc_of(state):
+        f = R / "research/tcpmt_revision" / ("uncertainty.json" if state == TC.PRODUCTION_STATE
+                                             else f"uncertainty_{state}.json")
+        return json.loads(f.read_text()) if f.is_file() else {}
+    tf_p = R / "research/tcpmt_revision/tier_feed_crossover.json"
+    tf = json.loads(tf_p.read_text()) if tf_p.is_file() else {}
+    sf = d["shape_factors"]
+    al = d["board_allocation"]
+    doc = {"what": "Z3 1-V land-side and board-plane redistribution in the coupled ledger",
+           "land_side": {
+               "model": "P = 2 kappa I_rail^2 R_s(T_land), R_s = rho_Cu(T_land) / (t_Cu occ); "
+                        "static spread per rail dV = kappa_V I_dc R_s",
+               "kappa_one_rail": sf["land_kappa_one_rail"],
+               "kappa_V_one_rail": sf["land_kappa_V_one_rail"],
+               "occupancy": V.LAND_OCC, "t_Cu_um_compared": 40.0,
+               "source": d["land_fv_source"],
+               "deposit": "the whole substrate land-side layer (sub_lower); FV-map cases: "
+                          f"{V.FVMAP_BINS} power-density bins along the FV loss map",
+               "temperature": "node mean of the whole land-side layer (where it is deposited)"},
+           "board_planes": {
+               "model": "P = (kappa_VDD + kappa_GND) I_rail^2 R_s,b(T_board)",
+               "kappa_two_rails": sf["board_kappa_two_rails"],
+               "kappa_V": {"VDD": sf["board_kappa_V_VDD"], "GND": sf["board_kappa_V_GND"]},
+               "planes_per_rail": al["planes_per_rail"], "t_plane_um": al["t_plane_um"],
+               "occupancy": al["occupancy"],
+               "status": "DECLARED, not in the Z3 design record: two 35-um (1-oz) planes per "
+                         "rail, four of the fourteen 1-oz layers of the 18-layer schedule",
+               "deposit": "the whole board (board layer); FV-map cases: power-density bins",
+               "temperature": "node mean of the whole board"},
+           "cases": {}}
+    for st in TC.STATES:
+        unc = unc_of(st)
+        rule = unc.get("rule", "")
+        comps = {(c["tier"], c["a"], c["b"], c["output"]): c for c in unc.get("comparisons", [])}
+        U = unc.get("U") or {}
+        for t in TC.TIERS:
+            p, c = TC.load(st, t, "Z3")
+            if c is None:
+                continue
+            p1, z1 = TC.load(st, t, "Z1")
+            z = c.get("z3_land") or {}
+            rows = {r["term"]: r for r in c["ledger_rows"]}
+            land, board = z.get("land") or {}, z.get("board") or {}
+            p_plane = rows[V.PLANE_TERM]["P_w"]
+            # the coupled increment of the planes: row x (the no-plane control's coupled
+            # increment / its row at t = 40 um, cooling B), as derived() measured it
+            dv = d.get("derived") or {}
+            fb = (dv.get("board_plane_coupled_increment_t40_w", p_plane)
+                  / dv.get("board_plane_row_t40_w", p_plane)) if dv else 1.0
+            inc = p_plane * fb
+            save_2oz = inc * (1.0 - al["t_plane_um"] / TWO_OZ_T_PLANE_UM)
+            rec = {"case": p.name, "T_land_C": land.get("T_C"),
+                   "R_s_land_mohm_sq": land.get("R_s_mohm_sq"), "P_land_w": land.get("P_w"),
+                   "dV_land_one_rail_mV": land.get("dV_static_one_rail_mV"),
+                   "T_board_C": board.get("T_C"), "R_s_board_mohm_sq": board.get("R_s_mohm_sq"),
+                   "P_board_planes_w": board.get("P_w"),
+                   "dV_board_mV": {r: board.get(f"dV_static_{r}_mV") for r in ("VDD", "GND")},
+                   "P_loss_w": c["P_loss_w"], "I_rail_rms_A": z.get("I_rail_rms_A")}
+            if z1 is not None:
+                gap = c["P_loss_w"] - z1["P_loss_w"]
+                gap2 = gap - save_2oz
+                ua = (U.get(f"{t}.Z1.P") or {}).get("U") if isinstance(U.get(f"{t}.Z1.P"),
+                                                                     dict) else U.get(f"{t}.Z1.P")
+                ub = (U.get(f"{t}.Z3.P") or {}).get("U") if isinstance(U.get(f"{t}.Z3.P"),
+                                                                     dict) else U.get(f"{t}.Z3.P")
+                cmp_ = comps.get((t, "Z1", "Z3", "P")) or comps.get((t, "Z3", "Z1", "P")) or {}
+                up = cmp_.get("U_D_paired")
+                if ua is None or ub is None:
+                    ua, ub = cmp_.get("U_a"), cmp_.get("U_b")
+                thr = 2.0 * (ua + ub) if ua is not None and ub is not None else None
+                rec["two_oz_planes"] = {
+                    "t_plane_um": TWO_OZ_T_PLANE_UM, "coupled_increment_1oz_w": inc,
+                    "saving_w": save_2oz, "gap_to_Z1_1oz_w": gap, "gap_to_Z1_2oz_w": gap2,
+                    "threshold_unpaired_w": thr,
+                    "threshold_paired_w": 2.0 * up if up is not None else None,
+                    "resolved_unpaired": None if thr is None else abs(gap2) > thr,
+                    "resolved_with_correlation_credit": (None if up is None
+                                                         else abs(gap2) > 2.0 * up),
+                    "rule": rule.split("\n")[0] if rule else None,
+                    "basis": "the plane term scales as 1/t; its coupled increment (row + "
+                             "thermal feedback) from the cooling-B no-plane control"}
+            fr = ((tf.get("states") or {}).get(st) or {}).get(t, {}).get("Z3") or {}
+            if fr:
+                rec["R_star"] = {"label": fr.get("R_star_label"),
+                                 "R_star_mohm": fr.get("R_star_mohm"),
+                                 "advantage_at_zero_feed_w": fr.get("advantage_at_zero_feed_w"),
+                                 "case": fr.get("case")}
+            doc["cases"][f"{st}_{t}"] = rec
+    d["documentation"] = doc
+    m = dict(d.get("macros") or {})
+    m.update({"ZthreeLandKappa": f"{sf['land_kappa_one_rail']:.4f}",
+              "ZthreeLandKappaV": f"{sf['land_kappa_V_one_rail']:.4f}",
+              "ZthreeBoardKappa": f"{sf['board_kappa_two_rails']:.4f}",
+              "ZthreeLandOcc": f"{100 * V.LAND_OCC:.0f}",
+              "ZthreeBoardPlanes": f"{al['planes_per_rail']}",
+              "ZthreeBoardPlaneUm": f"{al['t_plane_um']:.0f}"})
+    for key, rec in doc["cases"].items():
+        st, t = key.split("_")
+        tag = f"{t}{'' if st == TC.PRODUCTION_STATE else 'Ref' + {'S0': 'Szero', 'S1': 'Sone'}[st]}"
+        for name, v, nd in (("RsLand", rec["R_s_land_mohm_sq"], 3), ("TLand", rec["T_land_C"], 0),
+                            ("RsBoard", rec["R_s_board_mohm_sq"], 3),
+                            ("TBoardPl", rec["T_board_C"], 0)):
+            if v is not None:
+                m[f"Zthree{name}{tag}"] = f"{v:.{nd}f}"
+        two = rec.get("two_oz_planes")
+        if two:
+            m[f"ZthreeTwoOzSave{tag}"] = f"{two['saving_w']:.1f}"
+            m[f"ZthreeTwoOzGap{tag}"] = f"{two['gap_to_Z1_2oz_w']:.1f}"
+            if two["threshold_unpaired_w"] is not None:
+                m[f"ZthreeTwoOzThr{tag}"] = f"{two['threshold_unpaired_w']:.1f}"
+                m[f"ZthreeTwoOzRes{tag}"] = (
+                    "resolved" if two["resolved_unpaired"] else
+                    "resolved with correlation credit" if two["resolved_with_correlation_credit"]
+                    else "not resolved")
+        rs = rec.get("R_star")
+        if rs and rs.get("label"):
+            m[f"ZthreeRstar{tag}"] = rs["label"].replace(" mOhm", "")
+    d["macros"] = m
+    OUT.write_text(json.dumps(d, indent=1, default=float) + "\n")
+    print(json.dumps(doc["cases"], indent=1, default=float))
+    return doc
+
+
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:2] == ["doc"]:
+        documentation()
+    else:
+        main()
