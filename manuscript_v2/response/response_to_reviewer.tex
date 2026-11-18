@@ -6,7 +6,6 @@
 \newcommand{\du}{\Delta u_{\mathrm{c}}}
 \newcommand{\deps}{\Delta\varepsilon_{\mathrm{in}}}
 \input{../results_macros}
-\newcommand{\pending}[1]{\textcolor{red}{[PENDING: #1]}}
 \newenvironment{comment}{\par\medskip\noindent\textbf{Comment.}\itshape}{\par}
 \newenvironment{reply}{\par\smallskip\noindent\textbf{Response.}}{\par\medskip}
 \setlist{nosep,leftmargin=*}
@@ -18,385 +17,268 @@ Distributed Vertical Power Delivery''}
 \begin{document}
 \maketitle
 
-We thank the reviewer for a careful and constructive report. The concerns about loss accounting,
-component ratings, decoupling, the critical-joint selection and the uncertainty of close
-comparisons were all well founded, and each is answered below with a new analysis rather than a
-change of wording. Every number in this letter is generated from the same result files as the
-revised manuscript. Section, equation, figure and table numbers refer to the revised manuscript;
-``S'' tables are in the new supplementary material, which lists every material card, layer, mesh,
-boundary condition, solver setting, runtime, variant and uncertainty.
+We thank the reviewer for a careful and constructive report. The concerns about the Z3 loss
+accounting, the decoupling, the component ratings, the critical joint and the uncertainty of close
+comparisons were well founded; each is answered with a new analysis rather than a change of
+wording, and two of them changed results that the paper now reports differently. In working through
+the report we also found and corrected three errors of our own, listed at the end. Every number in
+this letter is generated from the same result files as the revised manuscript. ``S'' tables are in
+the new supplementary material.
 
 \paragraph{Summary of the main changes.}
 \begin{itemize}
-\item \textbf{Z3 loss accounting (MC3).} The land-side redistribution of the 1-V current is now a
-term of the coupled ledger, deposited in the substrate's land-side layer and iterated with the
-temperature field; Z3 is re-solved for several land-side copper thicknesses, and its ranking, feed
-crossover and voltage drop are re-evaluated. \pending{z3land numbers}
-\item \textbf{Input decoupling (MC4).} The embedded design's local input capacitance is
-implemented with real parts, verified by a circuit simulation including parasitics, and its effect
-on the package network and the coupled solution is evaluated. \pending{decap}
-\item \textbf{Feasibility filter (MC5).} A feasibility stage checks the GaN junction temperature,
-capacitor, inductor, dielectric and encapsulant limits, the solder law's range and the
-interconnect rules for every case; candidates that fail are removed before any ranking. Z3 under
-the top plate alone fails six limits (junction bound \TjAZthree\,$^\circ$C against 150\,$^\circ$C).
-\item \textbf{Omitted converter losses (MC6)} are bounded from datasheets at each case's
-temperatures: \OmitLo--\OmitHi~W per integration; no ranking changes, and the count optimum is
-unchanged.
-\item \textbf{Count optimum through the full chain (MC7).} \pending{countopt}
-\item \textbf{Solder joint (MC8, MC9).} \pending{solder: Pareto-set verification, 16 cycles, band,
-alternative law, parameter table}
-\item \textbf{Coupling (MC2).} Each coupling direction is classified (Section~II, new
-Fig.~2/Algorithm); the one first-order mechanical-to-thermal path---the top interface following a
-warped die---is implemented as an option and quantified.
-\item \textbf{Cooling (MC10).} Complete cold-plate specification, entrance-length check, pressure
-drop (\CoolDp~kPa) and pumping power (\CoolPhyd~W hydraulic per plate), heat balance per plate,
-a non-uniform die power map, and the correction of a conservative double count of the caloric
-resistance that this review led us to find.
-\item \textbf{Verification and uncertainty (MC12, MC13).} A complete-package cross-check against
-MOOSE on the identical mesh (agreement \FullPkgErrZone~K), refined MOOSE solutions that revised our
-discretization estimate upward, and a per-output uncertainty budget with an explicit rule
-(Table~V of the manuscript).
-\item \textbf{Feeds and platform accounting (MC16).} Two physical feeds are evaluated against the
-crossover resistance, and platform-inclusive losses including pumping power are reported.
-\item \textbf{Positioning (MC1).} A comparison table against the closest work, a precise
-statement of what is adopted, extended and new, and the removal of categorical claims.
+\item \textbf{Z3 (MC3).} The land-side and board-plane redistribution of the 1-V current is now in
+the coupled solution. Under two plates Z3 is \emph{behind} Z1 (\ZthreeLandBFortyPloss{} against
+\PlossBZone~W at 40~\textmu m of land-side copper) and ties only at \ZthreeLandTie~\textmu m: the
+reviewer was right, and the ranking is reversed.
+\item \textbf{Decoupling (MC4).} Implemented physically (seven interleaved clock phases and 56 rated
+1206 capacitors in a ring; $k = \DecapKeq$) and verified by circuit simulation; the coupled Z1 case is
+\DecapPlossZone~W with its joint at \DecapTjointZone\,$^\circ$C. With the same decoupling, Z1 and Z2
+tie electrically under one top plate.
+\item \textbf{Feasibility (MC5).} Component and material ratings filter every candidate before
+ranking; Z3 under one top plate fails six of them.
+\item \textbf{Coupling (MC2).} Every direction classified; the plate-interface feedback quantified:
+against a rigid plate on the free warpage the package-backside regulator has no operating point
+within its device rating.
+\item \textbf{Solder (MC8, MC9), verification (MC12), uncertainty (MC13).} Critical joint verified at
+\SolderSites{} competing sites, 48-cycle stabilized responses, band and alternative-law checks,
+complete-package MOOSE cross-check (\FullPkgErrZone~K), and a per-output uncertainty budget with an
+explicit comparison rule.
+\item \textbf{Count study (MC7).} The screen is rerun under the corrected capacitor rule (optimum
+$M = \DseCorrOptM$), and the strongest buildable candidate ($M = 64$) is carried through the full
+chain: \CountCellPloss--\CountSynPloss~W against \PlossZone~W for 49 cells.
+\item \textbf{Cooling, feeds, omitted losses, reproducibility (MC6, MC10, MC14--16).} Plate
+specification and hydraulics, physical feeds, platform-inclusive loss, omitted-loss bounds and a
+supplement generated from the solver inputs.
 \end{itemize}
 
 \section*{Major comments}
 
-\begin{comment}
-MC1 -- The novelty relative to existing DVPD frameworks must be established more precisely;
-comparison table; ablation.
-\end{comment}
+\begin{comment}MC1 -- Novelty relative to existing DVPD frameworks; comparison table;
+ablation.\end{comment}
 \begin{reply}
-We agree, and have rewritten the related-work and contribution statements (Section~I). A new
-Table~I compares the closest works---the DVPD design framework [1], the self-consistent
-electrothermal model [18], and commercial multiphysics sign-off tools---with this work, capability
-by capability; every cell for the other works is supported by a quoted passage (the detailed version
-with pointers is Table~S1). The text now states explicitly:
-(i) \emph{adopted from [1]}: the 1-kW specification, the embedded integration, the TSV and BGA
-technology, the routing model used in the count screen, and the input-current model used as
-scenario S2; \emph{adopted from our converter work [23], [24]}: the generalized hybrid family, its
-loss model, and catalog-part selection;
-(ii) \emph{extended}: the count optimization of [1], which sizes switch widths continuously for
-one topology, now re-synthesizes the topology from discrete parts at every count; the
-self-consistent electrothermal treatment of [18] is carried to an explicit mounted package with a
-declared cooling boundary;
-(iii) \emph{new}: the comparison of three placements of one synthesized regulator under identical
-cooling with a feasibility filter; the thermoelastic solution with an all-site joint search, the
-viscoplastic submodel and the optional interface feedback; and the per-net realizability check of
-the tier order evaluated together with its thermal consequences. We also state what this work does
-not do that [1] does (spatial IR drop, transient droop, automatic feedback into the synthesis).
-Categorical statements (``no tool can'', ``invisible to any single-domain analysis'') were removed.
-The ablation the reviewer suggested is now given explicitly in Section~VII: with electrical models
-only (common temperature) Z2 leads Z1 by \GapIsoHotZtwo~W; adding the electrothermal fixed point
-under one top plate reverses this order (Z1 ahead by \GapAZtwo~W) and removes Z3 (infeasible);
-adding the mechanics confirms Z1 under the top plate, while under top and bottom plates the
-electrically best integration (Z2) is the mechanically worst. \pending{update with coupled Z3}
+Section~I now states what is adopted from [1] (specification, embedded integration, TSV and BGA
+technology, the routing model of the count screen, the input-current model of S2) and from our
+converter work [23], [24] (the hybrid family, its loss model, catalog-part selection); what is
+extended (topology re-synthesis from discrete parts at every count, where [1] sizes switches
+continuously for one topology; the self-consistent electrothermal treatment of [18] carried to an
+explicit mounted package with a declared cooling boundary); and what is new (the comparison of three
+placements of one regulator under identical cooling after a rating filter; thermomechanics with an
+all-site joint search, a viscoplastic submodel and the interface feedback; tier-order realizability
+evaluated with its thermal consequences). New Table~I compares capabilities with [1], [18] and
+commercial sign-off tools; every cell for the other works rests on a quoted passage (Table~S0). We
+also state what this work does not do that [1] does. Categorical claims were removed. The ablation is
+in Section~VII: electrical models only rank Z2 marginally ahead; the electrothermal fixed point under
+one top plate reverses or ties Z1 and Z2 and removes Z3 by its ratings; the mechanics separates Z1 from
+Z2 and, through the interface, removes Z2 against a non-conforming plate; under two plates the
+electrically best integration is the mechanically worst.
 \end{reply}
 
-\begin{comment}
-MC2 -- The framework is not fully bidirectionally coupled; classify each coupling direction,
-identify neglected mechanisms, conditions; targeted sensitivity to contact resistance or interface
-conductance.
-\end{comment}
+\begin{comment}MC2 -- The framework is not fully bidirectionally coupled.\end{comment}
 \begin{reply}
-We agree that ``fully coupled'' was imprecise. Section~II now defines the three kinds of
-interaction the chain uses and classifies every direction: loss and temperature are solved together
-(bidirectional fixed point); temperature loads the mechanics and the critical joint drives the
-local submodel one way; mechanical feedback is neglected in production, with the reason stated
-for each path. The electrical feedback through thermal strain is two orders of magnitude below the
-resistivity change already in the fixed point. The thermal feedback through interface geometry is
-\emph{not} negligible in general, and we now quantify it: with the optional interface feedback
-(Section~IV-F), the top TIM follows the solved warpage under a flat, rigid plate and the
-electrothermal and thermoelastic solutions are iterated to convergence. Under cooling~A this bound
-raises the loss of Z1 by \FbAZonedP~W and of Z2 by \FbAZtwodP~W, widening Z1's lead; under cooling~B
-the effect is \FbBZonedP--\FbBZtwodP~W and changes no ranking. \pending{final feedback numbers}
-Contact and intermetallic resistance are carried in the attach and pad terms as the all-solder
-bound; damage, delamination and joint degradation are outside the intact-package scope, which is now
-stated in Sections~II and~IX.
+Agreed. Section~II defines coupled solution (loss and temperature), one-way transfer (temperature to
+mechanics; critical joint to the local submodel) and neglected feedback, with the reason for each, and
+Fig.~1 and the new algorithm listing show them. The electrical feedback of thermal strain is two
+orders of magnitude below the resistivity change in the fixed point. The thermal feedback through the
+plate interface is not negligible and is now an option of the framework: the interface follows the
+solved warpage under a flat, rigid plate, and the fixed point and mechanics are iterated. Under one
+top plate this bound raises the converged loss of Z1 by \FbAZonedP~W, while Z2 rises to
+\FbPassOneAZtwoPloss{} and \FbPassTwoAZtwoPloss~W and \FbPassTwoAZtwoTmax\,$^\circ$C in two passes,
+beyond its device rating; under two plates the effect is 0.7--2.2~W. The sequential approximation is
+therefore justified for a conforming interface, and the paper says when it is not. Contact resistance
+is carried in the attach and pad terms as the all-solder bound; damage and delamination are outside the
+intact-package scope.
 \end{reply}
 
-\begin{comment}
-MC3 -- The omitted Z3 redistribution losses can reverse a central conclusion.
-\end{comment}
+\begin{comment}MC3 -- The omitted Z3 redistribution losses can reverse a central
+conclusion.\end{comment}
 \begin{reply}
-We agree; this was the most important point of the review. The land-side redistribution is now a
-term of the coupled ledger: its loss $2\kappa I^2 R_s(T)$, with the shape factor $\kappa$ from the
-two-dimensional sheet solution and the sheet resistance at the converged temperature, is deposited
-in the substrate's land-side layer and iterated with the thermal solution, and the deformation, the
-critical joint, $R^*$ and the voltage drop are recomputed. \pending{z3land: per-thickness loss,
-drop, ranking, tie thickness, 30-mV thickness, board-plane bound}
+Agreed, and they do. The land-side term $2\kappa I^2R_s(T)$ (shape factor from the two-dimensional
+sheet, sheet resistance at the converged temperature) and the board-plane term (two 35-\textmu m
+planes per rail) are now ledger rows, deposited in the substrate land side and the board and iterated
+with the temperature field; deformation, critical joint, $R^*$ and drop are recomputed. Under two plates
+Z3 dissipates \ZthreeLandBTenPloss, \ZthreeLandBTwentyPloss{} and \ZthreeLandBFortyPloss~W at 10, 20 and
+40~\textmu m against \PlossBZone~W for Z1, and ties at \ZthreeLandTie~\textmu m; $R^*$ falls to zero. The
+land side drops \ZthreeLandBFortyDrop~mV per rail at 40~\textmu m and the planes \ZthreeLandPlaneDrop~mV;
+30~mV needs \ZthreeLandThirtyMv~\textmu m. At a common temperature Z3 dissipates \PIsoHotLandZthree~W
+against \PIsoHotZone~W. The calculation assumes the equal ball sharing that the 1.5-A rule enforces; with
+free division the loss would be about a fifth, but half the balls would exceed their rating.
+Section~VII, Tables~II--III and Fig.~9 now use the coupled Z3 throughout.
 \end{reply}
 
-\begin{comment}
-MC4 -- The Z1 design depends on input decoupling that is not in the physical stack.
-\end{comment}
+\begin{comment}MC4 -- The Z1 design depends on input decoupling not in the physical
+stack.\end{comment}
 \begin{reply}
-\pending{decap: requirement from the waveform, circuit simulation with ESR/ESL/DC bias and the
-package network, parts, placement, k achieved, ESR loss, coupled result, Table~II row, Fig.~3
-schematic}
+Agreed. From the phase-A pulse, charge balance gives \DecapConeV~\textmu F per cell for 1~V of ripple,
+but a time- and frequency-domain model of the cell against the package network (3.1-m$\Omega$ loop,
+about \DecapLpH~pH, capacitor ESR, ESL and DC-bias derating) shows that $k \le 1.2$ needs about
+\DecapCkTwo~\textmu F per cell, and that a few hundred nanofarads resonate and raise $k$ above its bare
+\DecapKopen. The stack cannot hold that. The implemented design interleaves the 49 clocks in seven
+phases and places 56 Murata GRM31CC72A475KE11 (1206, 4.7~\textmu F, 100~V, X7S; 65~\textmu F at 48~V) in a
+ring outside the grid: $k = \DecapKeq$ (\DecapKeqLo--\DecapKeqHi), robust to phase errors. The coupled Z1
+case is \DecapPlossZone~W, joint \DecapTjointZone\,$^\circ$C; ring ESR 0.08~W. The cells' own input loops
+carry the bare pulse whatever sits outside the cell; the revision charges it in every integration.
+Table~I and Fig.~2 show the implementation.
 \end{reply}
 
-\begin{comment}
-MC5 -- Z3 device temperatures exceed the published GaN limits; complete thermal-feasibility table.
-\end{comment}
+\begin{comment}MC5 -- Z3 device temperatures exceed GaN limits.\end{comment}
 \begin{reply}
-We agree. The framework now has an explicit feasibility stage (Section~II, Algorithm), and every
-compared case is checked against: the GaN junction rating ($T_J \le 150\,^\circ$C for EPC2014C and
-EPC2057), bounded from the tier maximum by the device's own $R_{\theta\mathrm{JC}}$ at its dissipated
-power; the range of the on-resistance fit (25--125\,$^\circ$C); the X7R/X7S class of the capacitors
-and the inductor rating (125\,$^\circ$C); the glass transition of the build-up dielectric and
-encapsulant (about 150\,$^\circ$C) and of the board (about 170\,$^\circ$C); and the solder law's
-range (125\,$^\circ$C) and the SAC305 solidus (Table~S5, Table~III). Z3 under the top plate alone
-fails six of them (GaN junction \TjAZthree\,$^\circ$C) and is now classified as infeasible and
-removed from the cooling-A ranking; Z2 under cooling~A passes with \TjMarginAZtwo~K of junction
-margin but only 0.7~K below the capacitor class; every cooling-B case passes. Without local
-decoupling (S1) the embedded design also fails (solder range, capacitor class). Fig.~8 marks the
-150-$^\circ$C isotherm and Fig.~9 marks infeasible cases.
+Agreed. A feasibility stage checks the GaN junction (150\,$^\circ$C, bounded from the tier maximum by
+$R_{\theta\mathrm{JC}}$ at the device power), the on-resistance fit range (125\,$^\circ$C), capacitor and
+inductor class (125\,$^\circ$C), dielectric, encapsulant and board limits, and the solder law
+(Table~S5). Z3 under one top plate fails six of them and leaves the cooling-A ranking; Z1 without
+decoupling (S1) fails three; every cooling-B case passes. Table~II and Fig.~9 mark feasibility.
 \end{reply}
 
-\begin{comment}
-MC6 -- The missing converter losses may not cancel between architectures.
-\end{comment}
+\begin{comment}MC6 -- Missing converter losses may not cancel.\end{comment}
 \begin{reply}
-We agree that cancellation had to be shown. Dead-time conduction (EPC2057 reverse conduction over a
-2--10-ns dead time, temperature dependent), inductor core loss (the material's loss line at the
-actual flux ripple), AC winding resistance and capacitor dielectric loss were evaluated for every
-compared case at its own tier temperatures and for every count of the screen (Section~VIII,
-Table~S7). They add \OmitLo--\OmitHi~W (\OmitNom~W nominal) to every integration. They change the
-Z1--Z2 gap under cooling~A by $+$\OmitGapAZoneZtwoLo{} to $+$\OmitGapAZoneZtwoHi~W and the Z2--Z3 gap
-under cooling~B by \OmitGapBZtwoZthreeLo{} to \OmitGapBZtwoZthreeHi~W; no ranking flips under any
-combination. The count optimum stays at $M = \OmitDseOpt$ (\OmitDseMarginLo--\OmitDseMarginHi~W
-ahead) at 25 and 100\,$^\circ$C. \pending{authors: C$_{\mathrm{oss}}$ term and per-switch stress}
+Dead time (EPC2057 reverse conduction, 2--10~ns), core loss, AC winding and dielectric loss, evaluated
+from datasheets at each case's temperatures, add \OmitLo--\OmitHi~W per integration and move the Z1--Z2
+gap under cooling~A by $+$\OmitGapAZoneZtwoLo{} to $+$\OmitGapAZoneZtwoHi~W; no ranking flips, and the count
+optimum stays at $M = \OmitDseOpt$ at 25 and 100\,$^\circ$C and on a 16-times-finer frequency grid
+(Section~VIII, Table~S7).
 \end{reply}
 
-\begin{comment}
-MC7 -- The 76-cell optimum is not an ETM optimum; evaluate candidates with the complete chain;
-report sampled counts; frequency grid; trade-off; constraints vs post-evaluation.
-\end{comment}
+\begin{comment}MC7 -- The 76-cell optimum is not an ETM optimum.\end{comment}
 \begin{reply}
-We agree and now present the count study as an electrical screen followed by coupled evaluation
-of the strongest candidates (Sections~III-C and~VIII). The \DseNcounts{} sampled counts are listed,
-each jump of Fig.~4 is attributed to the constraint that becomes active, and the infeasibility
-beyond $M = 76$ is explained (the area budget falls below the smallest rated device set). A
-switching-frequency grid up to sixteen times finer changes no optimum and no count by more than
-0.9~W. Temperature, manufacturability and mechanics are stated explicitly to be evaluated after
-the synthesis, not constraints of it. \pending{countopt: best square candidate through the full
-chain and the trade-off}
+Agreed. Section~VIII presents the count study as an electrical screen followed by coupled evaluation.
+The \DseNcounts{} sampled counts are listed and each jump attributed to the constraint that becomes
+active; under the corrected capacitor rule the screen keeps every member and its minimum at
+$M = \DseCorrOptM$. The minimum is not buildable on the square grid, and $M = 81$ admits no part pair, so
+the strongest buildable candidates ($M = 49$, $M = 64$) were carried through the full chain: the 64-cell
+regulator dissipates \CountSynPloss~W in its synthesized cell (five tiers, joint
+\CountSynTjoint\,$^\circ$C, beyond the solder law) and \CountCellPloss~W in a 4.0-mm$^2$ cell, against
+\PlossZone~W for 49 cells. The coupled chain confirms and widens the screen's ranking; temperature,
+manufacturability and mechanics are stated to be evaluated after synthesis.
 \end{reply}
 
-\begin{comment}
-MC8 -- Solder-joint assessment: parameters, cycles, cycle definition, constitutive accuracy,
-inelastic strain is not life, benchmarking.
-\end{comment}
+\begin{comment}MC8 -- Solder assessment needs stronger justification.\end{comment}
 \begin{reply}
-\pending{solder: parameter table S6, 16-cycle stabilization, ramp times and justification of the
-prescribed cycle, band sensitivity, alternative published SAC305 law, benchmark}
-We now use ``response'' consistently and never ``reliability'' or ``life'' for $\deps$.
+Section~IV-G and Table~S6 give the complete model with sources and calibration ranges. All compared
+joints were rerun for 48 cycles (changes $\le$\SolderStabA\,\% under cooling~A,
+\SolderStabBLo--\SolderStabBHi\,\% under~B; stabilized values used throughout). Each load is applied in
+a 3-s step and held for the 300-s dwell, a stand-in for power cycling whose package transient is seconds.
+Bands of 44--89~\textmu m change the response by $-4$ to $+8$\,\% and no ranking; the Garofalo law of
+Schubert et al. raises responses \SchubertRatioLo--\SchubertRatioHi-fold without changing any ordering.
+The law is not benchmarked against a measured joint; Libot et al.\ (EuroSimE 2023) is cited as the route
+to a predictive law. $\deps$ is called a response, never reliability or life.
 \end{reply}
 
-\begin{comment}
-MC9 -- Maximum displacement does not necessarily identify the joint with maximum inelastic response.
-\end{comment}
+\begin{comment}MC9 -- Maximum displacement need not identify the most damaged
+joint.\end{comment}
 \begin{reply}
-\pending{solder: Pareto set in ($\Delta u$, $T_{\mathrm{j}}$) plus corners solved at L0 for every
-compared case; site of largest response}
+The submodel was solved at every Pareto site of ($\Delta u$, $T_{\mathrm{j}}$) plus the corners
+(\SolderSites{} sites, \SolderCases{} cases). In every case the largest-$\Delta u$ joint has the largest
+response, and the response is monotone in both variables (\SolderViol{} violations in \SolderPairs{}
+ordered pairs), so no dominated site can exceed the front.
 \end{reply}
 
-\begin{comment}
-MC10 -- Cooling model: physical and energy assessment.
-\end{comment}
+\begin{comment}MC10 -- Cooling model.\end{comment}
 \begin{reply}
-Section~IV-E and Table~S4 now give the complete specification: 223 channels of
-$50\times300$~\textmu m and 22.36~mm length, water at 25\,$^\circ$C, 27~g\,s$^{-1}$ per plate ($Re =
-\CoolRe$), the Shah--London correlation with its validity, fin efficiency and area amplification
-defined in the rewritten Eq.~(3), and the entrance check: the thermal entrance length
-(\CoolLth~mm) is comparable to the channel, so the fully developed Nusselt number is conservative,
-consistent with the CFD comparison. The pressure drop is \CoolDpFd~kPa fully developed and about
-\CoolDp~kPa with entrance and plenum losses; the pumping power is \CoolPhyd~W hydraulic per plate
-(\CoolPshaftLo--\CoolPshaftHi~W at the shaft). Under cooling~B each plate receives the full flow,
-so the comparison is one of identical hardware; pumping power is charged in the new
-platform-inclusive accounting, which shows that the second plate costs about \PumpShaftPlate~W and
-is a mechanical rather than an efficiency decision for Z1. The heat balance per plate is reported
-(Table~II). A non-uniform die power map (75\,\% of the power in the central half of the die)
-raises the die peak by 15--20~K but changes the losses by less than 0.3~W and no ranking
-\pending{hotspot mechanics}. While documenting the boundary we found that the plate coefficient
-includes the caloric resistance of a uniform sink while the solver also resolves the coolant warming;
-this counts half the coolant rise (\CoolCalK~K per kW) twice. Removing it lowers every loss by
-1--5~W and changes no ranking (Section~VII); the production results are kept as the conservative
-case and the correction is reported.
+Section~IV-E and Table~S4 give the complete plate specification and the rewritten Eq.~(3); the thermal
+entrance length (\CoolLth~mm) makes the fully developed Nusselt number conservative, consistent with the
+CFD check. $\Delta p$ is \CoolDpFd~kPa fully developed, about \CoolDp~kPa with entrance and plenum losses;
+pumping \CoolPhyd~W hydraulic per plate. Each plate receives the full flow under cooling~B; pumping is
+charged in the platform-inclusive loss (Table~II). Heat to each plate is reported. A non-uniform die map
+raises the die peak by 15--20~K, changes losses by $<$0.3~W and no ranking. We also found that the plate
+coefficient counted half the coolant rise twice; removing it lowers every loss by 1--5~W and changes no
+ranking.
 \end{reply}
 
-\begin{comment}
-MC11 -- Feasibility checks do not cover the full interconnect and assembly.
-\end{comment}
+\begin{comment}MC11 -- Feasibility checks do not cover the full interconnect and
+assembly.\end{comment}
 \begin{reply}
-Section~IV-D now states the declared rule set (via formation in a build-up dielectric laminated
-around the components, capture planes and pads, overlay allowance, the 1:1 aspect-ratio limit),
-the condition under which the IPC-2226A practice transfers to the inter-tier dielectric, and
-distinguishes geometric feasibility under declared rules (what is shown), process feasibility
-(not shown) and assembly feasibility (not evaluated); the same distinction is made for the
-30-\textmu m-pitch Cu-pillar attach and the board opening. The ball-provisioning problem of Z3 is now
-a feasibility failure in its own right: 1334 of 1369 sites leave 35 for every signal and auxiliary
-rail, so Z3 is infeasible in this package irrespective of the electrical comparison unless the
-ball pitch falls to \PitchMaxZthree~mm (Section~VII, Table~III). \pending{flying-capacitor tier}
+Section~IV-D states the declared rules and separates geometric, process and assembly feasibility. The
+review led us to the flying-capacitor issue (end of letter): the 0.83 aspect ratio requires a thin
+capacitor technology that no vendor part meets at the required voltage, capacitance and area
+(Table~S13). The paper now carries two cases: A0, the technology-conditional reference, and A1, rated
+0603 MLCCs (1030-\textmu m tier), in which neither tier order meets the 1:1 rule (8.6 vs 5.3), copper posts
+are needed, and the Z2 converter no longer fits its board opening. The Z3 ball provisioning (1334 of
+1369 sites) is a feasibility failure in Table~II.
 \end{reply}
 
-\begin{comment}
-MC12 -- Verification is not sufficient for full-system accuracy; complete-package cross-check.
-\end{comment}
+\begin{comment}MC12 -- Verification is not sufficient for full-system accuracy.\end{comment}
 \begin{reply}
-We agree and have done both. Section~V now opens with Table~IV, which states for each kind of
-check what it establishes and what it does not, and Fig.~10 shows only matched-reference checks.
-A complete-package cross-check was added: the full Z1 package (all 16 layers, nine materials,
-\FullPkgElemsZone{} hexahedra, the converged heat map and a uniform plate film) solved by the
-production path and by MOOSE on the identical mesh agrees to \FullPkgErrZone~K (Z3:
-\FullPkgErrZthree~K). MOOSE solutions on refined copies of up to \FullPkgMaxElemsZone~M hexahedra
-showed that the production mesh leaves the converter stack and board of Z1 2--3~K cold (the die is
-converged), converging at order 0.6; our discretization uncertainty was revised upward
-accordingly (MC13).
+New Table~IV states what each check establishes and what it does not; Fig.~10 shows only
+matched-reference checks. The complete Z1 package on the identical mesh agrees with MOOSE to
+\FullPkgErrZone~K (Z3: \FullPkgErrZthree~K). MOOSE on refined copies (up to \FullPkgMaxElemsZone~M
+hexahedra) showed the production mesh leaves the converter stack and board 2--3~K cold, converging at
+order 0.6, and our uncertainty was revised upward.
 \end{reply}
 
-\begin{comment}
-MC13 -- The architecture ranking needs a more rigorous uncertainty treatment.
-\end{comment}
+\begin{comment}MC13 -- Ranking uncertainty.\end{comment}
 \begin{reply}
-The new Table~V lists $U$ for every compared output of every architecture in both cooling tiers,
-built from the extrapolated discretization error (at the order observed in the MOOSE ladder), the
-through-thickness split, the fixed-point tolerance and the matched-reference agreement, and states
-the rule: a gap is resolved when it exceeds $2(U_a+U_b)$, and resolved with correlation credit when
-it exceeds twice the paired estimate in which the signed discretization errors of two architectures
-on one mesh family cancel. The 3.1-W Z1--Z2 gap under cooling~A is resolved only with correlation
-credit (the gap changes by 0.04~W from r21 to r31). The reviewer was right about the solder
-response: under cooling~B the Z1--Z3 difference is not resolved, and neither is their warpage
-difference; the text now says so. Model-form uncertainty (material cards, boundaries, omitted
-physics) is handled by rerunning both architectures under each declared alternative (Fig.~11),
-and a resolved ranking that an alternative reverses is reported as conditional.
-\pending{update with the solder study's stabilized values}
+New Table~V gives $U$ for every compared output, from the extrapolated discretization error at the
+MOOSE-observed order, the through-thickness split, the fixed-point tolerance and the reference agreement,
+with the rule: resolved when the gap exceeds $2(U_a+U_b)$; resolved with correlation credit when it exceeds
+twice the paired estimate. The 3.1-W Z1--Z2 gap under cooling~A is resolved only with correlation credit.
+With Z3's redistribution coupled, the cooling-B Z1--Z3 joint response is resolved (\EpsBZone{} vs
+\EpsBZthree$\times10^{-3}$); on the uncoupled lower bound it was not, as the reviewer suspected.
+Model-form alternatives are rerun through the chain (Fig.~11).
 \end{reply}
 
-\begin{comment}
-MC14 -- The DC rail-aware ledger does not characterize high-frequency power integrity.
-\end{comment}
+\begin{comment}MC14 -- The DC ledger does not characterize high-frequency power
+integrity.\end{comment}
 \begin{reply}
-We agree and restrict the claims explicitly to steady-state conduction loss, temperature,
-deformation and joint response of an intact package (Sections~I and~IX). The ledger now states, net
-by net, which current it charges: the RMS currents of the converter model in the switched nets, the
-scenario RMS $kI$ in the 48-V nets wherever the pulsed waveform flows, and the RMS of the cell output
-current in the 1-V path. Frequency-dependent resistance, high-frequency return paths, droop and
-decoupling resonance are outside the ledger; the input network's resonance and impedance are
-checked by the circuit simulation of the decoupling design (MC4). \pending{decap circuit results}
+Claims are restricted to steady-state loss, temperature, deformation and joint response (Sections~I,
+IX). The ledger now states the current type of every net (converter-model RMS, scenario RMS $kI$ wherever
+the pulse flows, RMS of the cell output). The input network's resonance and impedance are checked by the
+decoupling circuit model; droop and HF return paths are out of scope.
 \end{reply}
 
-\begin{comment}
-MC15 -- Key geometry, material and solver parameters are missing.
-\end{comment}
+\begin{comment}MC15 -- Parameters missing.\end{comment}
 \begin{reply}
-The new supplementary material lists every material card with its value and status, every layer of
-every stack as meshed, mesh sizes and degrees of freedom, solver settings and tolerances, the
-hardware and software, runtimes by stage, the cold plate, the feasibility limits, the solder model,
-every varied input with its range, the S0--S2 states of the selected regulator, the verification
-matrix and the uncertainty budget. All tables are generated from the solver inputs and outputs.
+The supplementary material lists every material card, layer, mesh size and DOF, solver setting, runtime
+by stage, the cold plate, feasibility limits, the solder model, every varied input, the S0--S2 states,
+the verification matrix, the uncertainty budget, the Z3 redistribution runs, the review-round variants and
+the capacitor evidence, all generated from the solver inputs and outputs.
 \end{reply}
 
-\begin{comment}
-MC16 -- System boundaries and external power-feed assumptions.
-\end{comment}
+\begin{comment}MC16 -- System boundaries and feed.\end{comment}
 \begin{reply}
-Eq.~(1) is now fully defined, including where the RMS factor $k$ applies: wherever the pulsed
-current flows, in the package 48-V network of Z1 and in the external feed of Z2 and Z3 alike. Two
-physical feeds are evaluated: for Z2, 48~V through the BGA ring and a substrate 48-V RDL to the
-converter, solved by the same voltage-fed network as Z1 (loop \FeedRbgaZtwo~m$\Omega$,
-\FeedPbgaZtwo~W at S0, \FeedPbgaZtwoSone~W without local decoupling); and for Z3, the board's own
-48-V plane pair (\FeedRZthree~m$\Omega$). Both lie far below the cooling-B crossovers
-(\RstarTierBZtwo{} and \RstarTierBZthree~m$\Omega$). Platform-inclusive losses including the feed and
-the pumping power of every plate are reported for both tiers (Table~III). \pending{update after Z3}
+Eq.~(1) is fully defined, with $k$ applied wherever the pulse flows. Two physical feeds are evaluated: for
+Z2, 48~V through the BGA ring and a substrate RDL, solved by the package network (\FeedRbgaZtwo~m$\Omega$,
+\FeedPbgaZtwo~W at S0, \FeedPbgaZtwoSone~W without decoupling); for Z3, the board's plane pair
+(\FeedRZthree~m$\Omega$). Both lie far below the cooling-B crossover of Z2 (\RstarTierBZtwo~m$\Omega$).
+Platform-inclusive losses with feed and pumping are in Table~II.
 \end{reply}
 
-\section*{Figures}
-\begin{itemize}
-\item \textbf{Fig.~1:} coupling directions distinguished (double, single, dotted arrows), the
-package-internal boundary and the external feed marked, text enlarged. \pending{figure}
-\item \textbf{Fig.~2 (converter):} local input capacitor added; input-current waveform with
-amplitude and RMS from the circuit simulation. \pending{decap}
-\item \textbf{Fig.~3 (DSE):} sampled counts marked, each jump labeled with its cause, the
-infeasible range shaded, coupled-chain candidates marked; screen and package baselines
-reconciled in the text (96.1 against 94.1~W: same conversion loss, different routing model).
-\pending{figure}
-\item \textbf{Fig.~4 (sections):} input decoupling, return paths and critical dimensions; an
-enlarged inter-tier connection. \pending{figure}
-\item \textbf{Fig.~5 (realizability):} generation of the 144 assignments and the via construction
-explained in Section~IV-D. \pending{inset}
-\item \textbf{Fig.~6 (verification):} only matched-reference checks; mesh and solder-family results
-moved to Table~V.
-\item \textbf{Fig.~7 (fields):} full temperature scale, the 150-$^\circ$C device rating marked,
-critical joints enlarged. \pending{figure}
-\item \textbf{Fig.~8 (loss):} complete and bounded terms distinguished; waveform assumptions in the
-caption. \pending{figure after Z3}
-\item \textbf{Fig.~9 (comparison):} panel (e) described in the caption, L0 defined, $\deps$ stated to
-be a relative response, infeasible cases marked, $U$ shown. \pending{figure}
-\item \textbf{Fig.~10 (robustness):} the criterion stated numerically and the range of each gap
-under each decision added. \pending{figure}
-\end{itemize}
-
-\section*{Tables}
-\textbf{Table~I (specification)} now defines $J_{\mathrm{t}}$ as a minimum current density (the cell
-uses 5.61 of its \DseFortyNineBudget~mm$^2$, i.e., \DseFortyNineJ~A\,mm$^{-2}$), gives each device's
-rating against its operating stress, the inductor's saturation current against its peak current,
-the flying capacitors' voltages, the cooling specification and the input decoupling.
-\pending{flying-capacitor part and decoupling row}
-\textbf{Table~II (comparison)} is reorganized into calculated performance, completeness of the loss
-accounting and feasibility, with the maximum junction temperature, the bounded or coupled terms,
-the voltage drop, the feed and platform-inclusive loss, the uncertainty of the joint response and
-the heat balance per plate. \pending{table}
-
-\section*{Equations}
-Eq.~(1): $P_{\mathrm{int}}$ defined, $k$ justified and applied wherever the waveform flows, the
-thermal treatment of the feed loss stated, two physical feeds evaluated. Eq.~(2): $J_{\mathrm{d}}$
-(100~A\,mm$^{-2}$), the liner and the copper radius defined, contact resistance stated, the current
-type of every net given. Eq.~(3): rewritten exactly as implemented, with the correlation, its validity,
-$\eta_{\mathrm{f}}$, $\Lambda$, the caloric and base resistances, fluid properties, entrance effects
-and hydraulics. Eq.~(4): sampling and reference state stated; validated against the local response
-at competing sites (MC9). Eq.~(5): \pending{solder: law, calibration, time stepping, band meaning and
-sensitivity, stabilization}
+\section*{Figures, tables, equations}
+Fig.~1: coupling kinds, feed boundary, larger text. Fig.~2: $C_{\mathrm{in}}$ ring and interleaving,
+capacitor voltages, input pulse. Fig.~3: sampled counts, jump causes, infeasible range, corrected and
+published curves, coupled candidates. Fig.~4: decoupling ring, A0/A1 capacitor tier. Fig.~5: A0 and A1
+aspect ratios. Fig.~7: full scale, 150-$^\circ$C isotherm. Fig.~8: coupled Z3 terms. Fig.~9: coupled Z3,
+$\pm U$, infeasible marks, panel (e) defined. Fig.~10: matched checks only, full-package row. Fig.~11:
+numeric ranges, criterion. Table~I: $J_{\mathrm{t}}$ as a minimum density, ratings against stresses,
+capacitors (A0/A1), decoupling, cooling. Table~II: performance, accounting and platform, feasibility, with
+$\pm U$, junction bound, 1-V drop, feed, pumping, heat balance. Eqs.~(1)--(5): all symbols defined, Eq.~(3)
+as implemented, Eq.~(4) validated by MC9, Eq.~(5) with law, band and stabilization.
 
 \section*{Numerical audit}
-\begin{itemize}
-\item 96.1 vs 94.1~W: the screen and the package ledger share the conversion loss
-(\DseFortyNineConv~W) and differ only in the routing model; now stated in Section~III-C.
-\item 88.4 vs 88.5~W: the value is \DseOptLoss~W in both the figure and the text (generated).
-\item $J$ = 3.64 vs 3.5~A\,mm$^{-2}$: $J_{\mathrm{t}}$ is a minimum; defined in Section~III-B and Table~I.
-\item 5.71 vs 5.80$\times10^{-3}$: 5.71 is the finest local mesh (L3) of the evaluation and 5.80 the
-L0 level used for every comparison; both are now labeled. \pending{solder update}
-\item Z3 at 179.7\,$^\circ$C: now classified infeasible (MC5).
-\item Z3's 18.1-W advantage: re-evaluated with the coupled land side (MC3). \pending{z3land}
-\item 1334 of 1369 balls: a feasibility failure (MC11).
-\item Mesh criterion vs the 3.1-W gap: per-output budget and rule (MC13).
-\item Fig.~9 panel (e): described.
-\item S2: ``infeasible under the intact-solid solder model'' (Section~VI).
-\end{itemize}
+96.1 vs 94.1~W: same conversion loss, different routing model (Section~III-C). 88.4 vs 88.5~W: now
+generated (\DseOptLoss~W published, \DseCorrOptLoss~W corrected). 3.64 vs 3.5~A\,mm$^{-2}$: $J_{\mathrm{t}}$
+is a minimum. 5.71 vs 5.80: L3 four-cycle vs L0; every comparison now uses stabilized L0 values. Z3 at
+179.7\,$^\circ$C: infeasible. Z3's 18.1-W advantage: reversed (MC3). 1334 of 1369 balls: feasibility
+failure. Fig.~9 panel (e): described. S2: ``infeasible under the intact-solid solder model''.
 
 \section*{Minor comments}
+All fifteen are addressed: symbols defined at first use; ``package-backside'' and ``board-backside''
+throughout; resistance kinds distinguished; efficiencies labeled by boundary; the GaN fit range stated and
+extrapolation flagged; the 1.5-A rule stated as a derated design target; ball assignment per architecture in
+Table~II and S3; encapsulant and board properties in Table~S1; the evaluation time defined (Section~V); the
+fixed-point tolerance in $U$; varied ranges in Table~S7; S0--S2 states in Table~S8; ``reliability'' no longer
+used for $\deps$; legends and captions checked.
+
+\section*{Corrections found during the revision}
 \begin{enumerate}
-\item Abbreviations and symbols defined at first use (L0, $J_{\mathrm{d}}$, $\Lambda$, $U$, Z1--Z3).
-\item ``Package-backside'' (Z2) and ``board-backside'' (Z3) used throughout; ``substrate backside''
-appears only as a physical description.
-\item Thermal, electrical and feed resistance distinguished by symbol and adjective.
-\item Efficiencies labeled by boundary (package-internal or platform-inclusive).
-\item The GaN coefficients are fitted over 25--125\,$^\circ$C; extrapolation beyond is flagged by the
-feasibility stage.
-\item The 1.5-A-per-ball rule is a derated continuous design target, stated as such.
-\item Legal sites and power/return assignment per architecture: Table~S3. \pending{table}
-\item Encapsulant properties: Table~S1 ($k = 0.7$~W\,m$^{-1}$K$^{-1}$, $E = 8$~GPa, 30~ppm/K).
-\item The board's copper is homogenized by a verified mixing rule; stiffness is
-temperature-independent (Table~S1).
-\item The evaluation time includes the fixed point, the structural solve with the joint search and
-the local submodel; geometry and meshing take under two minutes; sensitivities are extra (Section~V).
-\item The fixed-point tolerance enters $U$ explicitly (Table~V).
-\item The range of every varied input: Table~S7.
-\item S0--S2 states of the selected regulator: Table~S8.
-\item ``Reliability'' is no longer used for $\deps$.
-\item Legends, notation and caption coverage checked throughout.
+\item \textbf{Flying-capacitor rule.} The synthesis compared every flying capacitor with $V_{\mathrm{in}}/N$;
+$C_1$ holds $(N-1)V_{\mathrm{in}}/N$ = 32~V, and the selected library part was rated 25~V. The rule now checks
+each capacitor's derated rating, its effective capacitance under bias, temperature and tolerance, and its ESR
+at $f_{\mathrm{sw}}$, with the published rule kept as a legacy configuration that reproduces the published
+screen exactly. The 49-cell design keeps its topology, devices and frequency with a rated 0603 100-V part
+(+3~W); the screen's optimum stays at $M = \DseCorrOptM$. No vendor part fits the 100-\textmu m tier
+(Table~S13), hence cases A0/A1.
+\item \textbf{Caloric double count} in the plate coefficient (common-mode, 1--5~W).
+\item \textbf{Cell-internal input loops} carry the bare pulse; charged with the implemented decoupling.
 \end{enumerate}
 \end{document}

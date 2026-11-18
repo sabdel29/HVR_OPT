@@ -136,7 +136,9 @@ def dse():
          "DseFortyNineBudget": fx(r49["area_budget_mm2"], 2),
          "DseFortyNineJ": fx(float(r49["I_vr_A"]) / float(r49["area_mm2"]), 2),
          "DseThreeBestM": str(int(float(b33["M"]))), "DseThreeBestLoss": fx(b33["total_loss_W"], 1)}
-    pc = TR / "dse_j35" / "data" / "case_D_etm35_caprule.csv"
+    pc = TR / "dse_j35" / "data" / "case_D_etm35_caprule_full.csv"
+    if not pc.is_file():
+        pc = TR / "dse_j35" / "data" / "case_D_etm35_caprule.csv"
     if pc.is_file():
         rc = [r for r in csv.DictReader(pc.open()) if r["feasible"] == "True"]
         bc = min(rc, key=lambda r: float(r["total_loss_W"]))
