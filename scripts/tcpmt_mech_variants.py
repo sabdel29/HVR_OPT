@@ -151,6 +151,67 @@ def coarse_check(arch, names, scen="HV_S0"):
     return out
 
 
+def judge_B():
+    """Finding 8: the cooling-B rows of the robustness map. For every mechanics-only variant
+    run on the cooling-B fields (final_closure_sensitivity NAME@B -> ..__NAME__B.json), the
+    change of each mechanical output against the cooling-B base case, and whether every
+    pairwise cooling-B ordering keeps its direction and stays resolved under the 2U rule
+    (relative U of uncertainty.json)."""
+    import itertools
+    import json
+    import final_closure_sensitivity as S
+    sens = S.OUT
+    unc = json.loads((LAW.TR / "uncertainty.json").read_text())["relative"]
+    archs = ("Z1", "Z2", "Z3")
+    base = {}
+    for a in archs:
+        try:
+            b, _frd, name = S.thermal_base(a, "B")
+        except Exception as e:                    # recorded, never silent
+            base[a] = {"error": str(e)[-200:]}
+            continue
+        me = b.get("mechanics") or {}
+        k = ((me.get("interconnects") or {}).get("bga") or {}).get("critical") or {}
+        base[a] = {"case": name, "warp": me.get("die_warpage_pv_um"),
+                   "du": (me.get("joint_search") or {}).get("critical", {}).get("du_um"),
+                   "du_def": k.get("du_def_xy_um"),
+                   "eps": (b.get("local") or {}).get("d_peeq_per_cycle")}
+    rows = {}
+    for f in sorted(sens.glob("etm_*_HV_S0__*__B.json")):
+        c = json.loads(f.read_text())
+        a, name = c["arch"], c["variant"]["name"].split("@")[0]
+        me = c.get("mechanics") or {}
+        k = ((me.get("interconnects") or {}).get("bga") or {}).get("critical") or {}
+        rows.setdefault(name, {})[a] = {
+            "warp": me.get("die_warpage_pv_um"),
+            "du": (me.get("joint_search") or {}).get("critical", {}).get("du_um"),
+            "du_def": k.get("du_def_xy_um"), "eps": (c.get("local") or {}).get("d_peeq_per_cycle")}
+    out = {"what": "cooling-B robustness of the mechanical orderings (finding 8)",
+           "base": base, "variants": {}}
+    for name, per in rows.items():
+        res = {"values": per, "change_rel": {}, "orderings": {}}
+        for a, v in per.items():
+            res["change_rel"][a] = {y: (v[y] / base[a][y] - 1) if (v.get(y) and (base.get(a) or {})
+                                                                    .get(y)) else None
+                                    for y in ("warp", "du", "du_def", "eps")}
+        for y, uy in (("warp", "warp"), ("du", "du"), ("du_def", "du"), ("eps", None)):
+            for a, b in itertools.combinations(archs, 2):
+                va, vb = (per.get(a) or {}).get(y), (per.get(b) or {}).get(y)
+                ba, bb = (base.get(a) or {}).get(y), (base.get(b) or {}).get(y)
+                if None in (va, vb, ba, bb):
+                    continue
+                u = (unc[a][uy]["total"] + unc[b][uy]["total"]) if uy else None
+                gap = abs(va - vb) / max(abs(va), abs(vb))
+                res["orderings"][f"{y}:{a}/{b}"] = {
+                    "base_lower": a if ba < bb else b, "variant_lower": a if va < vb else b,
+                    "same_direction": (ba < bb) == (va < vb), "gap_rel": gap,
+                    "resolved_2U": (gap > 2 * u) if u is not None else None}
+        out["variants"][name] = res
+    f = LAW.TR / "robustness_B.json"
+    f.write_text(json.dumps(out, indent=1, default=float) + "\n")
+    return out
+
+
 def register(VARIANTS: dict, apply_hook):
     """Add the round-3 variants to final_closure_sensitivity.VARIANTS. apply_hook(fn)
     appends a BUILD_HOOK in the variant's process."""
@@ -171,3 +232,7 @@ if __name__ == "__main__":
     # python tcpmt_mech_variants.py coarse ARCH VARIANT [...]
     if sys.argv[1:2] == ["coarse"]:
         coarse_check(sys.argv[2], sys.argv[3:])
+    elif sys.argv[1:2] == ["judgeB"]:            # python tcpmt_mech_variants.py judgeB
+        import json
+        print(json.dumps({k: v["orderings"] for k, v in judge_B()["variants"].items()},
+                         indent=1, default=float)[:3000])
