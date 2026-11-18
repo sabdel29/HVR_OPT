@@ -104,6 +104,53 @@ def bga_local_hook():
     return hook
 
 
+def coarse_check(arch, names, scen="HV_S0"):
+    """Mechanics-only check of material variants on the COARSE mesh (r11) against the
+    coarse production case, on its stored converged field (the mesh-study work tree):
+    a cheap reading of each variant's effect before the production-mesh campaign."""
+    import json
+    import os
+    import numpy as np
+    import final_closure_physical_etm as E
+    import production_et as PE
+    from hvr_scratch import path as scratch
+    d = Path(os.environ.get("HVR_FC_WORK", "/home/beams0/SABDELZAHER/ETM_project/scratch/fc_etm")) \
+        / f"{arch}_{scen}_h1.1"
+    its = sorted(d.glob("et*"), key=lambda p: int(p.name[2:]))
+    th = sorted(its[-1].glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))[-1]
+    base = json.loads(E.case_path(arch, scen, 1.1, (1, 1)).read_text())
+    out = {}
+    for name in ["production"] + list(names):
+        E.BUILD_HOOKS.clear()
+        if name in LAW.cfg()["encapsulant"]["variants"]:
+            E.BUILD_HOOKS.append(encap_hook(name))
+        elif name == LAW.cfg()["bga_global"]["reconciled_variant"]:
+            E.BUILD_HOOKS.append(bga_local_hook())
+        m, mats, st, tiles, info = E.build(arch, 1.1, (1, 1))
+        T = PE.ccxio.read_frd(th)["NDTEMP"][1:m.n_nodes + 1, 0]
+        if abs(float(np.nanmax(T)) - base["thermal"]["T_max_C"]) > 1e-6:
+            raise RuntimeError(f"{th} is not the converged coarse field of {arch}")
+        me = E.mechanics(m, mats, st, T, scratch("mech_coarse", f"{arch}_{name}"), arch,
+                         tiles, "", int(os.environ.get("FC_THREADS", "2")))
+        c = me["joint_search"]["critical"]
+        k = (me.get("interconnects") or {}).get("bga", {}).get("critical", {})
+        out[name] = {"die_warpage_pv_um": me["die_warpage_pv_um"], "du_c_um": c["du_um"],
+                     "site_mm": [c["x_mm"], c["y_mm"]], "du_def_xy_um": k.get("du_def_xy_um"),
+                     "du_z_um": k.get("du_z_um"),
+                     "interconnect_gamma": {n: v.get("gamma_max") for n, v in
+                                            (me.get("interconnects") or {}).items()},
+                     "decomposition_share": (me.get("decomposition_bga_critical") or {})
+                     .get("share_along_du"), "materials": info, "wall_s": me["wall_s"]}
+        print(arch, name, {kk: out[name][kk] for kk in ("die_warpage_pv_um", "du_c_um",
+                                                          "du_def_xy_um")}, flush=True)
+    E.BUILD_HOOKS.clear()
+    f = LAW.TR / "coarse_variant_checks.json"
+    d0 = json.loads(f.read_text()) if f.exists() else {}
+    d0[arch] = out
+    f.write_text(json.dumps(d0, indent=1, default=float) + "\n")
+    return out
+
+
 def register(VARIANTS: dict, apply_hook):
     """Add the round-3 variants to final_closure_sensitivity.VARIANTS. apply_hook(fn)
     appends a BUILD_HOOK in the variant's process."""
@@ -118,3 +165,9 @@ def register(VARIANTS: dict, apply_hook):
         kind="mech", archs=("Z1", "Z2", "Z3"), apply=lambda: apply_hook(bga_local_hook()),
         gates=["mat.bga_card_consistency"], nature="model-form check (finding 11a)",
         what="homogenised BGA layer from the local solder card E(T), nu, CTE")
+
+
+if __name__ == "__main__":
+    # python tcpmt_mech_variants.py coarse ARCH VARIANT [...]
+    if sys.argv[1:2] == ["coarse"]:
+        coarse_check(sys.argv[2], sys.argv[3:])

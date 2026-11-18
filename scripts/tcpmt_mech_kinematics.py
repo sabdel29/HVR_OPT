@@ -151,7 +151,14 @@ def site_kinematics(m, U, Tn, layer, sites, half, n_fit=5):
         tb = fb.sample(Tcol, x, y) if Tcol is not None else None
         tt = ft.sample(Tcol, x, y) if Tcol is not None else None
         du = ut[:3] - ub[:3]
+        # rigid rotation of the joint from the mean tilt of its two faces: u_x = theta_y z,
+        # u_z = -theta_y x  =>  du_rot = -h grad(u_z); it moves the faces without straining
+        # the joint, so the |du_xy| transfer of round 2 imposed it as spurious shear
+        du_rot = -h * 0.5 * (Gb[2, :2] + Gt[2, :2])
+        du_def = du[:2] - du_rot
         out.append({"x_mm": float(x), "y_mm": float(y), "h_mm": float(h),
+                    "du_rot_um": (du_rot * 1e3).tolist(),
+                    "du_def_xy_um": float(math.hypot(*du_def) * 1e3),
                     "u_bot_mm": ub[:3].tolist(), "G_bot": Gb[:3].tolist(),
                     "u_top_mm": ut[:3].tolist(), "G_top": Gt[:3].tolist(),
                     "T_bot_C": None if tb is None else float(tb[0]),
@@ -236,14 +243,15 @@ def interconnect_search(m, U, Tn, arch, cutout_mm=None, top_k=None, layers=None)
 
 def candidate_sites(kin, n_top=30):
     """Sites a local critical-joint check must cover once the transfer is the full
-    kinematics: the top n_top by |du_xy|, by |relative tilt| and by |eps_z|, the strict
-    Pareto front in (|du_xy|, T) and the four lattice corners."""
+    kinematics: the top n_top by |du_xy|, by |relative tilt|, by |eps_z| and by the
+    deforming (rotation-free) in-plane du, the strict Pareto front in (|du_xy|, T) and the
+    four lattice corners."""
     if not kin:
         return []
     key = lambda k: (round(k["x_mm"], 6), round(k["y_mm"], 6))              # noqa: E731
     pick = {}
     for f in (lambda k: k["du_xy_um"], lambda k: math.hypot(*k.get("tilt_rel", (0, 0))),
-              lambda k: abs(k["eps_z"])):
+              lambda k: abs(k["eps_z"]), lambda k: k.get("du_def_xy_um", 0.0)):
         for k in sorted(kin, key=f, reverse=True)[:n_top]:
             pick[key(k)] = k
     T = {key(k): site_T(k) or 0.0 for k in kin}
@@ -277,7 +285,12 @@ def expand_sites(c):
     for i in range(n):
         ub, ut = np.array(c["u_bot_mm"][i]), np.array(c["u_top_mm"][i])
         du = ut - ub
+        Gb, Gt = np.array(c["G_bot"][i]), np.array(c["G_top"][i])
+        du_rot = -c["h_mm"] * 0.5 * (Gb[2] + Gt[2])
         out.append({"x_mm": c["x_mm"][i], "y_mm": c["y_mm"][i], "h_mm": c["h_mm"],
+                    "du_rot_um": (du_rot * 1e3).tolist(),
+                    "du_def_xy_um": float(math.hypot(*(du[:2] - du_rot)) * 1e3),
+                    "tilt_rel": (Gt[2] - Gb[2]).tolist(),
                     "u_bot_mm": c["u_bot_mm"][i], "u_top_mm": c["u_top_mm"][i],
                     "G_bot": c["G_bot"][i], "G_top": c["G_top"][i],
                     "T_bot_C": c["T_bot_C"][i], "T_top_C": c["T_top_C"][i],
@@ -417,6 +430,13 @@ def decompose_site(m, U, Tn, mats, x, y, layer="bga", t_ref=25.0):
     mem = np.array(pt["membrane_mm"]) - np.array(pb["membrane_mm"])
     ben = np.array(pt["bending_mm"]) - np.array(pb["bending_mm"])
     res = du - mem - ben
+    half = 0.5 * float(LAW.cfg()["geometries"]["bga"]["pad"]) / 1e3
+    sk = site_kinematics(m, U, Tn, layer, [(x, y)], half)
+    if sk:
+        out["rigid_rotation_um"] = sk[0]["du_rot_um"]
+        out["deforming_xy_um"] = sk[0]["du_def_xy_um"]
+        out["rotation_note"] = ("rigid rotation of the joint = -h x the mean tilt of its two "
+                                "faces; it moves the faces without straining the joint")
     fm = free_mismatch_um(m, mats, Tcol, x, y, z_bot, z_top, t_ref)
     free = None if fm is None else np.array(fm) / 1e3
     nrm = float(np.hypot(*du))
@@ -512,8 +532,104 @@ def load_kinematics(case):
     return json.loads(f.read_text()) if f.exists() else None
 
 
+SUMMARY = R / "research" / "tcpmt_revision" / "interconnect_drivers.json"
+LADDER = R / "research" / "tcpmt_revision" / "interconnect_mesh_ladder.json"
+FC_WORK = Path(os.environ.get("HVR_FC_WORK",
+                              "/home/beams0/SABDELZAHER/ETM_project/scratch/fc_etm"))
+
+
+def ladder(arch, scen="HV_S0", levels=((1, 1), (2, 1), (3, 1))):
+    """Per-layer drivers of one case on the production mesh ladder (the case work trees of
+    the mesh study): is the critical-site driver of each interconnect layer mesh-converged?
+    A bimaterial corner (the die edge over the microbump row) is not, by construction."""
+    import final_closure_physical_etm as E
+    import production_et as PE
+    import pkg_rdl_network as K
+    cut = K.architecture_cutout_mm(arch) if arch != "Z3" else None
+    out = {}
+    for ref in levels:
+        d = FC_WORK / f"{arch}_{scen}_h1.1{E.refine_tag(ref)}"
+        sf = d / "structural.frd"
+        if not sf.exists():
+            continue
+        m, mats, st, tiles, _ = E.build(arch, 1.1, ref)
+        its = sorted(d.glob("et*"), key=lambda p: int(p.name[2:]))
+        th = sorted(its[-1].glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))[-1]
+        U = PE.ccxio.read_frd(sf)["DISP"][:, :3]
+        T = PE.ccxio.read_frd(th)["NDTEMP"][1:m.n_nodes + 1, 0]
+        res = interconnect_search(m, U, T, arch, cut)
+        out[f"r{ref[0]}{ref[1]}"] = {
+            k: {"gamma_max": v.get("gamma_max"), "critical_mm": [v["critical"]["x_mm"],
+                                                                  v["critical"]["y_mm"]],
+                "du_xy_um": v["critical"]["du_xy_um"],
+                "du_def_xy_um": v["critical"].get("du_def_xy_um"),
+                "n_elems": m.n_elems} for k, v in res.items() if "critical" in v}
+    d = json.loads(LADDER.read_text()) if LADDER.exists() else {}
+    d[f"{arch}_{scen}"] = out
+    LADDER.write_text(json.dumps(d, indent=1, default=float) + "\n")
+    return out
+
+
+def summary():
+    """Findings 4 and 9 across the stored cases: the critical site of every interconnect
+    layer, and the split of the BGA corner du (membrane / bending / residual; rigid joint
+    rotation / deforming part)."""
+    out = {"what": "interconnect drivers per layer (finding 4) and the composition of the "
+                   "BGA joint driver (finding 9), from the stored global fields",
+           "generator": "scripts/tcpmt_mech_kinematics.py --summary", "cases": {}}
+    n_bend_adds = n_bend_opposes = 0
+    for case in CASES:
+        k = load_kinematics(case)
+        if not k:
+            continue
+        lay = {}
+        for name, v in k["interconnects"].items():
+            if "critical" not in v:
+                continue
+            c = v["critical"]
+            lay[name] = {"label": v["label"], "h_um": v["h_um"], "x_mm": c["x_mm"],
+                         "y_mm": c["y_mm"], "gamma": c["gamma"], "du_xy_um": c["du_xy_um"],
+                         "du_z_um": c["du_z_um"], "eps_z": c["eps_z"], "T_C": c.get("T_C"),
+                         "du_def_xy_um": c.get("du_def_xy_um"), "n_sites": v["n_sites"]}
+        d = k.get("decomposition_bga_critical") or {}
+        sh = d.get("share_along_du") or {}
+        if sh.get("bending") is not None:
+            n_bend_adds += sh["bending"] > 0
+            n_bend_opposes += sh["bending"] < 0
+        nrm = lambda v: float(np.hypot(*v)) if v else None              # noqa: E731
+        out["cases"][case] = {
+            "layers": lay,
+            "governing_layer_by_gamma": max(lay, key=lambda n: lay[n]["gamma"]) if lay else None,
+            "bga_split": {"x_mm": d.get("x_mm"), "y_mm": d.get("y_mm"),
+                          "du_xy_um": d.get("du_xy_um"),
+                          "membrane_um": nrm(d.get("membrane_um")),
+                          "bending_um": nrm(d.get("bending_um")),
+                          "residual_um": nrm(d.get("residual_um")), "share_along_du": sh,
+                          "free_mismatch_um": nrm(d.get("free_expansion_estimate_um")),
+                          "rigid_rotation_um": nrm(d.get("rigid_rotation_um")),
+                          "deforming_xy_um": d.get("deforming_xy_um")}}
+    out["claim_test"] = {
+        "claim": "plate bending, not temperature, drives the joint",
+        "cases_where_bending_adds_to_du": n_bend_adds,
+        "cases_where_bending_opposes_du": n_bend_opposes,
+        "reading": "membrane = in-plane thermal-expansion mismatch at the neutral planes; the "
+                   "bending (rotation x lever-arm) part opposes it where its share is "
+                   "negative. The joint's rigid rotation (mean face tilt x height) is part of "
+                   "|du_xy| but strains nothing: the deforming part is what the joint sees."}
+    SUMMARY.write_text(json.dumps(out, indent=1, default=float) + "\n")
+    return out
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    if "--summary" in sys.argv:
+        s = summary()
+        print(json.dumps(s["claim_test"], indent=1))
+        return
+    if "--ladder" in sys.argv:
+        for a in [x for x in sys.argv[1:] if x in ("Z1", "Z2", "Z3")] or ["Z1", "Z2"]:
+            print(a, json.dumps(ladder(a), indent=1, default=float))
+        return
     for case in (sys.argv[1:] or list(CASES)):
         if not (CASES[case][3] / "structural.frd").exists():
             print(case, "no stored structural field, skipped", flush=True)

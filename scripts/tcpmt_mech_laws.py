@@ -283,7 +283,10 @@ def law_record() -> dict:
             ext["stress_cold"] = [max(0.0, s_cal[0] - win["cold"][0]),
                                   max(0.0, win["cold"][1] - s_cal[1])]
         if t_cal:
-            ext["rows_outside_T"] = [T for T in rows_C() if T < t_cal[0] or T > t_cal[1]]
+            lo = [T for T in rows_C() if T < t_cal[0]]
+            hi = [T for T in rows_C() if T > t_cal[1]]
+            ext["rows_outside_T"] = {"below": [min(lo), max(lo)] if lo else None,
+                                     "above": [min(hi), max(hi)] if hi else None}
             ext["cold_dwell_25C_extrapolated"] = 25.0 < t_cal[0]
         out["laws"][name] = {
             "form": law["form"], "alloy": law["alloy"], "source": law["source"],

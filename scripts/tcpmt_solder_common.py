@@ -1,6 +1,13 @@
 """Shared harness for the TCPMT-revision solder studies (critical joint, stabilisation,
 averaging band, constitutive law).
 
+ROUND-2 HARNESS. Since the round-3 review the production local model is v2
+(scripts/tcpmt_mech_submodel.py; configs/tcpmt_mech/mechanics_revision.yaml local.harness):
+zero-yield laws refitted over the visited window, full global cut-boundary kinematics on both
+pad faces, ramped loading. Its drivers are tcpmt_mech_law_band (replaces the constitutive
+study), tcpmt_mech_critical (replaces tcpmt_solder_critical) and tcpmt_mech_local_checks.
+This module and its drivers are kept to reproduce the round-2 numbers only.
+
 Nothing here re-implements the local model. Every solve goes through the production entry
 point final_closure_local_mesh._solve (block-order extraction, split 3 s + 297 s steps,
 first increment from local_time_study.json, CETOL 5e-2, Phase-0I/0I-R joint and card), i.e.
