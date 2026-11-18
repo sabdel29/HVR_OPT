@@ -3,10 +3,12 @@
 
 Exploration works at two levels. At the converter level the synthesis is repeated over the
 regulator count and the topology as an electrical screen (Section~\ref{sec:dse}, Fig.~\ref{fig:dse}).
-Under the corrected capacitor rule the screen keeps every member, device and frequency, the loss
-rises by \DseCorrDeltaLo--\DseCorrDeltaHi~W where a rated capacitor replaces the 25-V part, and the
-minimum stays at $M = \DseCorrOptM$ (\DseCorrOptLoss~W against \DseOptLoss~W with the published rule,
-which the legacy configuration reproduces exactly); the omitted converter terms and a frequency grid
+Under the corrected capacitor rule the minimum stays at $M = \DseCorrOptM$ (\DseCorrOptLoss~W
+against \DseOptLoss~W with the published rule, which the legacy configuration reproduces exactly).
+Every count's loss rises by \DseCorrDeltaLo--\DseCorrDeltaHi~W, and the selection changes only at
+$M = 36$--42, where the published choice relied on the 25-V capacitor or on a 22-\textmu F 50-V part
+that is not in the manufacturer's catalogue, so that its effective capacitance is unknown; the
+49-cell selection changes only in its capacitor (Table~S15); the omitted converter terms and a frequency grid
 sixteen times finer move no optimum. The screen's minimum is not buildable on the square grid of the
 package builder, and $M = 81$ admits no part pair in its 3.53-mm$^2$ budget, so the strongest buildable
 candidates are $M = 49$ and $M = 64$ ($N2K2K_A1$). Carried through the full coupled chain, the 64-cell

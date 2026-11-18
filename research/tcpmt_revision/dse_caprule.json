@@ -1,0 +1,720 @@
+{
+ "what": "Before/after regulator-count screen under the corrected flying-capacitor rule, with the\nattribution steps, and the 49-cell capacitor comparison (TCPMT revision, Option A).",
+ "legacy_reproduces_published": true,
+ "optimum": {
+  "etm35": {
+   "M": 76,
+   "arch": "N=2,K=2,K_A=1",
+   "P_total_W": 88.44620744199321
+  },
+  "etm35_legacycheck2": {
+   "M": 76,
+   "arch": "N=2,K=2,K_A=1",
+   "P_total_W": 88.44620744199321
+  },
+  "etm35_caprule": {
+   "M": 76,
+   "arch": "N=2,K=2,K_A=1",
+   "P_total_W": 89.92795361116897
+  },
+  "etm35_caprule_ripple": {
+   "M": 76,
+   "arch": "N=2,K=2,K_A=1",
+   "P_total_W": 89.92795361116897
+  },
+  "etm35_caprule_full": {
+   "M": 76,
+   "arch": "N=2,K=2,K_A=1",
+   "P_total_W": 90.14170754740739
+  },
+  "etm35_caprule_full125": {
+   "M": 76,
+   "arch": "N=2,K=2,K_A=1",
+   "P_total_W": 90.14170754740739
+  }
+ },
+ "steps": [
+  {
+   "step": "etm35_caprule",
+   "vs": "etm35",
+   "cause": "voltage screening and component selection (rated part, its ESR)",
+   "selection_changed_at_M": [],
+   "dP_min_W": 0.0,
+   "dP_max_W": 4.6969999999999885,
+   "optimum": {
+    "M": 76,
+    "arch": "N=2,K=2,K_A=1",
+    "P_total_W": 89.92795361116897
+   }
+  },
+  {
+   "step": "etm35_caprule_ripple",
+   "vs": "etm35_caprule",
+   "cause": "effective capacitance (and exclusion of parts without vendor data)",
+   "selection_changed_at_M": [
+    36,
+    40,
+    42
+   ],
+   "dP_min_W": 0.0,
+   "dP_max_W": 8.451999999999998,
+   "optimum": {
+    "M": 76,
+    "arch": "N=2,K=2,K_A=1",
+    "P_total_W": 89.92795361116897
+   }
+  },
+  {
+   "step": "etm35_caprule_full",
+   "vs": "etm35_caprule_ripple",
+   "cause": "ESR at the switching frequency",
+   "selection_changed_at_M": [],
+   "dP_min_W": -0.2990000000000066,
+   "dP_max_W": 0.6680000000000064,
+   "optimum": {
+    "M": 76,
+    "arch": "N=2,K=2,K_A=1",
+    "P_total_W": 90.14170754740739
+   }
+  },
+  {
+   "step": "etm35_caprule_full125",
+   "vs": "etm35_caprule_full",
+   "cause": "design temperature 125 C",
+   "selection_changed_at_M": [
+    42
+   ],
+   "dP_min_W": 0.0,
+   "dP_max_W": 0.9849999999999994,
+   "optimum": {
+    "M": 76,
+    "arch": "N=2,K=2,K_A=1",
+    "P_total_W": 90.14170754740739
+   }
+  }
+ ],
+ "per_count": [
+  {
+   "M": 36,
+   "etm35": {
+    "arch": "N=4,K=4,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 96.159
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=4,K=4,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 96.159
+   },
+   "etm35_caprule": {
+    "arch": "N=4,K=4,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 100.856
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=4,K=4,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 956.6,
+    "P_total_W": 106.233
+   },
+   "etm35_caprule_full": {
+    "arch": "N=4,K=4,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 956.6,
+    "P_total_W": 105.934
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=4,K=4,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 956.6,
+    "P_total_W": 105.934
+   }
+  },
+  {
+   "M": 40,
+   "etm35": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2212",
+    "ls": "EPC2090",
+    "f_sw_kHz": 340.1,
+    "P_total_W": 108.715
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2212",
+    "ls": "EPC2090",
+    "f_sw_kHz": 340.1,
+    "P_total_W": 108.715
+   },
+   "etm35_caprule": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2212",
+    "ls": "EPC2090",
+    "f_sw_kHz": 340.1,
+    "P_total_W": 108.715
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 117.167
+   },
+   "etm35_caprule_full": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 117.17
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 117.17
+   }
+  },
+  {
+   "M": 42,
+   "etm35": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2212",
+    "ls": "EPC2090",
+    "f_sw_kHz": 340.1,
+    "P_total_W": 104.372
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2212",
+    "ls": "EPC2090",
+    "f_sw_kHz": 340.1,
+    "P_total_W": 104.372
+   },
+   "etm35_caprule": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2212",
+    "ls": "EPC2090",
+    "f_sw_kHz": 340.1,
+    "P_total_W": 104.372
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 677.7,
+    "P_total_W": 110.983
+   },
+   "etm35_caprule_full": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 677.7,
+    "P_total_W": 111.529
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 112.514
+   }
+  },
+  {
+   "M": 45,
+   "etm35": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 677.7,
+    "P_total_W": 101.713
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 677.7,
+    "P_total_W": 101.713
+   },
+   "etm35_caprule": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 677.7,
+    "P_total_W": 105.048
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 677.7,
+    "P_total_W": 105.048
+   },
+   "etm35_caprule_full": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 677.7,
+    "P_total_W": 105.558
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2057",
+    "ls": "EPC2057",
+    "f_sw_kHz": 677.7,
+    "P_total_W": 105.558
+   }
+  },
+  {
+   "M": 48,
+   "etm35": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 97.706
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 97.706
+   },
+   "etm35_caprule": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 100.821
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 100.821
+   },
+   "etm35_caprule_full": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 100.823
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 100.823
+   }
+  },
+  {
+   "M": 49,
+   "etm35": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 96.115
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 96.115
+   },
+   "etm35_caprule": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 99.168
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 99.168
+   },
+   "etm35_caprule_full": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 99.171
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 99.171
+   }
+  },
+  {
+   "M": 50,
+   "etm35": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 94.615
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 94.615
+   },
+   "etm35_caprule": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 97.609
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 97.609
+   },
+   "etm35_caprule_full": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 97.611
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 97.611
+   }
+  },
+  {
+   "M": 52,
+   "etm35": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2214",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 92.798
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2214",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 92.798
+   },
+   "etm35_caprule": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2214",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 95.681
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2214",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 95.681
+   },
+   "etm35_caprule_full": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2214",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 95.683
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2214",
+    "ls": "EPC2057",
+    "f_sw_kHz": 805.2,
+    "P_total_W": 95.683
+   }
+  },
+  {
+   "M": 56,
+   "etm35": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 111.811
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 111.811
+   },
+   "etm35_caprule": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 111.811
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 114.002
+   },
+   "etm35_caprule_full": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 114.67
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 114.67
+   }
+  },
+  {
+   "M": 60,
+   "etm35": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 105.501
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 105.501
+   },
+   "etm35_caprule": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 105.501
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 107.551
+   },
+   "etm35_caprule_full": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 108.175
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 108.175
+   }
+  },
+  {
+   "M": 64,
+   "etm35": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 100.177
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 100.177
+   },
+   "etm35_caprule": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 101.936
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 101.936
+   },
+   "etm35_caprule_full": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 102.524
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 480.1,
+    "P_total_W": 102.524
+   }
+  },
+  {
+   "M": 70,
+   "etm35": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 94.255
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 94.255
+   },
+   "etm35_caprule": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 95.859
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 95.859
+   },
+   "etm35_caprule_full": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 96.09
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 96.09
+   }
+  },
+  {
+   "M": 76,
+   "etm35": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 88.446
+   },
+   "etm35_legacycheck2": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 88.446
+   },
+   "etm35_caprule": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 89.928
+   },
+   "etm35_caprule_ripple": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 89.928
+   },
+   "etm35_caprule_full": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 90.142
+   },
+   "etm35_caprule_full125": {
+    "arch": "N=2,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "f_sw_kHz": 570.4,
+    "P_total_W": 90.142
+   }
+  },
+  {
+   "M": 84,
+   "etm35": null,
+   "etm35_legacycheck2": null,
+   "etm35_caprule": null,
+   "etm35_caprule_ripple": null,
+   "etm35_caprule_full": null,
+   "etm35_caprule_full125": null
+  },
+  {
+   "M": 92,
+   "etm35": null,
+   "etm35_legacycheck2": null,
+   "etm35_caprule": null,
+   "etm35_caprule_ripple": null,
+   "etm35_caprule_full": null,
+   "etm35_caprule_full125": null
+  },
+  {
+   "M": 100,
+   "etm35": null,
+   "etm35_legacycheck2": null,
+   "etm35_caprule": null,
+   "etm35_caprule_ripple": null,
+   "etm35_caprule_full": null,
+   "etm35_caprule_full125": null
+  },
+  {
+   "M": 120,
+   "etm35": null,
+   "etm35_legacycheck2": null,
+   "etm35_caprule": null,
+   "etm35_caprule_ripple": null,
+   "etm35_caprule_full": null,
+   "etm35_caprule_full125": null
+  }
+ ],
+ "conclusion": "the optimum stays at M = 76 (90.14 W) under the full correction"
+}
