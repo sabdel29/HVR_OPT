@@ -330,10 +330,24 @@ def build(arch, h_xy=1.1, refine=(1, 1)):
                      "vr_attach_pcb_elements": int((mat_a == an).sum()),
                      "vr_attach_pcb_card_k_ortho": st["materials"][an]["k_ortho"]["value"],
                      "vr_attach_pcb_fraction": st["materials"][an]["geometry"]["f"]})
+    # TCPMT round 3 (finding 11a): the homogenised BGA layer takes the LOCAL solder card
+    # (E(T), nu, CTE of configs/tcpmt_mech solder) when bga_global.production says so;
+    # the default 'board_py' keeps the STAMP-2.5D card of board.py unchanged
+    if _bga_global_mode() == "local_card":
+        import tcpmt_mech_variants as MV
+        info.update(MV.bga_local_hook()(m, st, tiles) or {})
     for hook in BUILD_HOOKS:
         info.update(hook(m, st, tiles) or {})
     mats = PE.build_materials(st)
     return m, mats, st, tiles, info
+
+
+def _bga_global_mode():
+    try:
+        import tcpmt_mech_laws as LAW
+        return (LAW.cfg().get("bga_global") or {}).get("production", "board_py")
+    except Exception:                             # config absent: the historical card
+        return "board_py"
 
 
 def layer_mean_T(m, Tn, layers):
