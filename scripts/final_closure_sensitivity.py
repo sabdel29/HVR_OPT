@@ -281,21 +281,53 @@ def v_feed_heat():
 
 # ------------------------------------------------------------------ cooling model form
 def icepak_factor():
-    """h_eq / h_compact implied by the matched Icepak case: the compact model gives
-    dT = q''/h at the CFD's exact loading, so the coefficient that reproduces the CFD's
-    mean base rise is h * dT_compact / dT_CFD. A SENSITIVITY, never a recalibration."""
-    j = json.loads((R / "research/final_closure/reference_cooling_icepak.json").read_text())
-    lv = {k: v for k, v in j["levels"].items() if v.get("solved")}
-    fin = max(lv, key=lambda k: lv[k]["cells"])
-    return j["correlation_dT_matched_loading_K"] / lv[fin]["dT_base_mean_K"]
+    """h_eq / h_compact implied by the matched Icepak case, for BOTH coefficient forms,
+    from the compact model in force evaluated at the CFD's loading and property set
+    (cooling.cfd_comparison; the JSON's stored correlation value belongs to the superseded
+    Nu table). Uniform sink: h_eq = h dT_compact/dT_CFD. Streamwise sink: the local
+    resistance that reproduces the CFD's mean base rise, R_loc' = dT_CFD/Q - R_cal.
+    A SENSITIVITY, never a recalibration."""
+    import cooling as C
+    from cooling_production import CANDIDATES
+    cc = C.cfd_comparison()
+    j = json.loads(C.ICEPAK_REF.read_text())
+    q = j["inputs"]["Q_W"] * cc["loading_factor"]
+    c = CANDIDATES[E.COOLER]
+    s = c.channel().solve(j["inputs"]["Q_W"], props=C.LEGACY_PROPS, wall_viscosity=False)
+    r_loc_eq = cc["dT_base_mean_cfd_K"] / q - s["R_caloric_K_W"]
+    return {"uniform": cc["dT_base_mean_correlation_K"] / cc["dT_base_mean_cfd_K"],
+            "local": s["R_local_K_W"] / r_loc_eq, "cfd": cc}
 
 
 def v_icepak_equivalent():
     from cooling_production import CANDIDATES
     c = CANDIDATES[E.COOLER]
     f = icepak_factor()
-    orig = type(c).h_uniform
-    type(c).h_uniform = lambda self, q_w: orig(self, q_w) * f
+    ou, ol = type(c).h_uniform, type(c).h_local
+    type(c).h_uniform = lambda self, q_w: ou(self, q_w) * f["uniform"]
+    type(c).h_local = lambda self, q_w: ol(self, q_w) * f["local"]
+    return {"factor_uniform": f["uniform"], "factor_local": f["local"]}
+
+
+def v_cooling_model(nu=None, props=None, wall=None, top=None, bottom=None):
+    """Cooling-model form, one switch at a time (TCPMT revision): the superseded Nu table
+    (long wall adiabatic), the legacy constant properties (~50 C), the wall-viscosity
+    correction, the legacy top-plate coefficient with the caloric double count, the legacy
+    full-flow bottom plate."""
+    import cooling as C
+    if nu is not None:
+        C.NU_MODEL = nu
+    if props is not None:
+        C.PROPS_MODEL = props
+    if wall is not None:
+        C.WALL_VISCOSITY = bool(wall)
+    if top is not None:
+        E.TOP_PLATE_COEFF = top
+    if bottom is not None:
+        E.BOTTOM_PLATE_RULE = bottom
+    return {"NU_MODEL": C.NU_MODEL, "PROPS_MODEL": C.PROPS_MODEL,
+            "WALL_VISCOSITY": C.WALL_VISCOSITY, "TOP_PLATE_COEFF": E.TOP_PLATE_COEFF,
+            "BOTTOM_PLATE_RULE": E.BOTTOM_PLATE_RULE}
 def v_board_hbot(h_w_m2k):
     """Board thermal boundary (TCPMT revision). The production board is a 30 x 30 mm coupon
     with adiabatic sides and h_bottom = 10 W/m2K (natural convection), so heat can leave
@@ -309,44 +341,43 @@ def v_board_hbot(h_w_m2k):
     E.BUILD_HOOKS.append(hook)
 
 
-def v_z2_cooled():
-    """Z2-COOLED, bounding: a second cold plate of the SAME kind as the top one (uniform
-    h of the top microchannel plate at the dissipated power, fluid at the inlet
-    temperature) on the whole converter underside inside the PCB opening. The strongest
-    backside cooling this model can state without inventing a new cooler."""
-    from cooling_production import CANDIDATES
-    cooler = CANDIDATES[E.COOLER]
+def _z2_underside_faces(m):
+    inside = [L for L in m.layers if L.region == "inside_cutout"]
+    deepest = min(inside, key=lambda L: L.z0)
+    ids = m.elem_set(layer=deepest.name)
+    keep = [e for e in ids
+            if abs(m.nodes[m.elems[e - 1] - 1][:, 2].min() - deepest.z0) < 1e-9]
+    return np.array(keep, int), deepest.name
+
+
+def v_z2_cooled(legacy_flow=False):
+    """Z2-COOLED, bounding: a second cold plate of the SAME kind as the top one on the
+    whole converter underside inside the PCB opening, without an interface. Its flow and
+    sink follow final_closure_physical_etm.BOTTOM_PLATE_RULE (production: the coolant rise
+    of the top plate); legacy_flow=True restores the full-flow uniform-sink plate."""
+    if legacy_flow:
+        E.BOTTOM_PLATE_RULE = "fixed_flow_legacy"
 
     def film(m, tiles, q_w):
-        inside = [L for L in m.layers if L.region == "inside_cutout"]
-        deepest = min(inside, key=lambda L: L.z0)
-        ids = m.elem_set(layer=deepest.name)
-        keep = [e for e in ids
-                if abs(m.nodes[m.elems[e - 1] - 1][:, 2].min() - deepest.z0) < 1e-9]
-        return {"elems": np.array(keep, int), "h_W_m2K": float(cooler.h_uniform(q_w)),
-                "T_C": float(cooler.t_in_c), "layer": deepest.name,
-                "label": "second top-type cold plate on the converter underside"}
+        faces, layer = _z2_underside_faces(m)
+        return E.bottom_plate_film(faces, layer, "second top-type cold plate on the "
+                                   "converter underside (no interface)", q_w, tim=False)
     E.EXTRA_FILM = film
+    return {"bottom_plate_rule": E.BOTTOM_PLATE_RULE}
 
 
-def v_z2_cooled_tim():
+def v_z2_cooled_tim(legacy_flow=False):
     """Backside thermal interface: the Z2-COOLED plate, but through the stack's TIM card
-    (50 um at k = 3 W/mK, the top TIM) in series with the film."""
-    from cooling_production import CANDIDATES
-    cooler = CANDIDATES[E.COOLER]
+    (50 um at k = 3 W/mK, the top TIM) in series with the film (cooling B for Z2)."""
+    if legacy_flow:
+        E.BOTTOM_PLATE_RULE = "fixed_flow_legacy"
 
     def film(m, tiles, q_w):
-        inside = [L for L in m.layers if L.region == "inside_cutout"]
-        deepest = min(inside, key=lambda L: L.z0)
-        ids = m.elem_set(layer=deepest.name)
-        keep = [e for e in ids
-                if abs(m.nodes[m.elems[e - 1] - 1][:, 2].min() - deepest.z0) < 1e-9]
-        h = float(cooler.h_uniform(q_w))
-        r_tim = 50e-6 / 3.0
-        return {"elems": np.array(keep, int), "h_W_m2K": 1.0 / (1.0 / h + r_tim),
-                "T_C": float(cooler.t_in_c), "layer": deepest.name,
-                "label": "second cold plate on the converter underside through a 50 um TIM"}
+        faces, layer = _z2_underside_faces(m)
+        return E.bottom_plate_film(faces, layer, "second cold plate on the converter "
+                                   "underside through a 50 um TIM", q_w, tim=True)
     E.EXTRA_FILM = film
+    return {"bottom_plate_rule": E.BOTTOM_PLATE_RULE}
 
 
 def v_bga_population(frac):
@@ -383,59 +414,101 @@ def v_pad_drop():
 
 
 # ------------------------------------------------------------------ tier materials
-def _retag(m, st, new, base, card_edit, layer_has, base_mat):
-    card = copy.deepcopy(st["materials"][base])
-    card_edit(card)
-    card["status"] = "ASSUMPTION"
-    card["note"] = "class-B sensitivity bound (final_closure_sensitivity.py), not a property"
-    st["materials"][new] = card
+#: the materials a converter tier may carry besides its card (the fill between the cells)
+_FILL = ("underfill_homog",)
+
+
+def _retag(m, st, suffix, card_edit, layer_has):
+    """Every card carried by the IN-CELL elements of the tiers whose layer name contains one
+    of `layer_has` -> a copy with card_edit applied, named <card>_<suffix>, and those elements
+    retagged to it. Whatever card the tier carries (derived cards in production, the legacy
+    ones under conv_k_legacy) is bounded. A variant that retags nothing raises: a silently
+    empty sensitivity was possible when the tiers changed card."""
     mat = np.array(m.elem_material, dtype=object)
     lay = np.array(m.elem_layer, dtype=object)
-    sel = np.array([any(t in str(l) for t in layer_has) for l in lay]) & (mat == base_mat)
-    mat[sel] = new
+    in_t = np.array([any(t in str(l) for t in layer_has) for l in lay])
+    n, bases = 0, []
+    for base in sorted(set(mat[in_t]) - set(_FILL)):
+        card = copy.deepcopy(st["materials"][base])
+        card_edit(card)
+        card["status"] = "ASSUMPTION"
+        card["note"] = "class-B sensitivity bound (final_closure_sensitivity.py), not a property"
+        new = f"{base}_{suffix}"
+        st["materials"][new] = card
+        sel = in_t & (mat == base)
+        mat[sel] = new
+        n += int(sel.sum())
+        bases.append(base)
+    if n == 0:
+        raise RuntimeError(f"variant retagged no element in the tiers {layer_has}")
     m.elem_material = mat
-    return int(sel.sum())
+    return n, bases
+
+
+def _scale_k(card, factor):
+    v = card["k"]["value"] if isinstance(card["k"], dict) else card["k"]
+    card["k"] = {"value": v * factor, "status": "ASSUMPTION"}
+    if isinstance(card.get("k_ortho"), dict):
+        card["k_ortho"] = {"value": [x * factor for x in card["k_ortho"]["value"]],
+                           "status": "ASSUMPTION"}
 
 
 def v_gan_k_half():
-    """GaN epi bound: the two device tiers are meshed as their Si carrier. Halving the
-    tier conductivity adds t_tier/k_Si of through-thickness resistance (4.9e-6 and
-    5.3e-6 m^2K/W for the 638 and 685 um tiers at 130 W/mK) -- more than any epi stack
-    with t_epi/k_epi below that can add, e.g. 10 um at k > 2.1 W/mK. A stress bound,
-    not a GaN property."""
+    """GaN device-tier bound: the tier card (derived: dies + solder terminals + encapsulant;
+    legacy: the Si carrier) at half its conductivity, every component. On the legacy card this
+    adds t_tier/k_Si of through-thickness resistance (4.9e-6 and 5.3e-6 m^2K/W for the 638 and
+    685 um tiers at 130 W/mK) -- more than any epi stack with t_epi/k_epi below that can add,
+    e.g. 10 um at k > 2.1 W/mK. A stress bound, not a GaN property."""
     def hook(m, st, tiles):
-        def edit(c):
-            c["k"] = {"value": st["materials"]["silicon"]["k"]["value"] / 2.0,
-                      "status": "ASSUMPTION"}
-        n = _retag(m, st, "gan_tier_bound", "silicon", edit, ("gan_",), "silicon")
-        return {"variant_elements_retagged": n}
+        n, bases = _retag(m, st, "k_half", lambda c: _scale_k(c, 0.5), ("gan_",))
+        return {"variant_elements_retagged": n, "variant_base_cards": bases}
     E.BUILD_HOOKS.append(hook)
 
 
 def v_conv_k(factor):
-    """Converter-medium conductivity bound: the flying-cap and inductor/Cout tiers carry
-    the generic hvr_effective card (k 60 W/mK, PROVISIONAL, no sourced MLCC/ferrite
-    card in the framework). Reducing it tenfold is a declared stress test."""
+    """Converter-tier conductivity bound: the flying-cap and inductor/C_out tiers' cards
+    (derived by unit-cell homogenization in production; hvr_effective under conv_k_legacy) at
+    `factor` times their conductivity, every component. A declared stress test."""
     def hook(m, st, tiles):
-        def edit(c):
-            c["k"] = {"value": st["materials"]["hvr_effective"]["k"]["value"] * factor,
-                      "status": "ASSUMPTION"}
-        n = _retag(m, st, "hvr_effective_k_bound", "hvr_effective", edit, CONV_TIERS,
-                   "hvr_effective")
-        return {"variant_elements_retagged": n}
+        n, bases = _retag(m, st, "k_bound", lambda c: _scale_k(c, factor), CONV_TIERS)
+        return {"variant_elements_retagged": n, "variant_base_cards": bases}
     E.BUILD_HOOKS.append(hook)
 
 
 def v_conv_mech(E_mpa, cte):
-    """A corner of the converter medium's OWN declared range (package_stack.yaml:
-    'Sensitivity E = 80-160 GPa, CTE 4-10 ppm/K'). Conductivity unchanged."""
+    """A corner of the legacy converter medium's declared range (package_stack.yaml
+    hvr_effective: 'Sensitivity E = 80-160 GPa, CTE 4-10 ppm/K') imposed on the flying-cap and
+    inductor/C_out tiers' cards. Conductivity unchanged. The derived cards carry their own
+    Voigt/Reuss and Turner/volume bounds (research/tcpmt_revision/converter_cards.json)."""
     def hook(m, st, tiles):
         def edit(c):
             c["E"] = {"value": E_mpa, "status": "ASSUMPTION"}
             c["cte"] = {"value": cte, "status": "ASSUMPTION"}
-        n = _retag(m, st, "hvr_effective_corner", "hvr_effective", edit, CONV_TIERS,
-                   "hvr_effective")
-        return {"variant_elements_retagged": n}
+        n, bases = _retag(m, st, "corner", edit, CONV_TIERS)
+        return {"variant_elements_retagged": n, "variant_base_cards": bases}
+    E.BUILD_HOOKS.append(hook)
+
+
+def v_conv_k_legacy():
+    """The converter-tier cards BEFORE the homogenization: hvr_effective (k 60 W/mK iso, E 120
+    GPa, CTE 6 ppm/K, 'UNSPECIFIED surrogate') on the inductor/C_out and flying-cap tiers,
+    solid silicon on the GaN tiers."""
+    import tcpmt_converter_cards as CC
+
+    def hook(m, st, tiles):
+        mat = np.array(m.elem_material, dtype=object)
+        n = 0
+        for new, old in CC.LEGACY.items():
+            if old not in st["materials"]:
+                raise RuntimeError(f"legacy card {old} missing from the stack")
+            sel = mat == new
+            mat[sel] = old
+            n += int(sel.sum())
+        if n == 0:
+            raise RuntimeError("conv_k_legacy found no derived converter card to replace")
+        m.elem_material = mat
+        return {"converter_cards": "legacy (hvr_effective, silicon)",
+                "variant_elements_retagged": n}
     E.BUILD_HOOKS.append(hook)
 
 
@@ -458,7 +531,8 @@ def v_z3_top_only():
     def plate(m, q_w):
         p = orig(m, q_w)
         p.update({"h_W_m2K": float(bc["h"]), "T_C": float(bc["T"]),
-                  "label": "Z3 top-only: natural-convection film on the converter underside"})
+                  "label": "Z3 top-only: natural-convection film on the converter underside",
+                  "plate": False, "streamwise": False, "rule": "natural_convection"})
         return p
     E.z3_converter_cold_plate = plate
 
@@ -469,14 +543,15 @@ PLATE_HALF_MM = 10.68 + 1e-6
 TIM_R = 50e-6 / 3.0        # the top plate's TIM card: 50 um at k = 3 W/mK, in series
 
 
-def v_z1_bottom_plate_tim():
-    """Cooling B for Z1: the same second plate as the backside integrations get -- top-plate
-    coefficient at the dissipated power, inlet temperature, through the top plate's 50-um TIM --
-    under the board beneath the cell-grid footprint. Z1's converter reaches it only through the
-    substrate, the ball field and 2.4 mm of board; the natural-convection film stays on the rest
-    of the board underside."""
-    from cooling_production import CANDIDATES
-    cooler = CANDIDATES[E.COOLER]
+def v_z1_bottom_plate_tim(legacy_flow=False):
+    """Cooling B for Z1: the same second plate as the backside integrations get -- the top
+    plate's geometry, flow and sink by final_closure_physical_etm.BOTTOM_PLATE_RULE, through the
+    top plate's 50-um TIM -- under the board beneath the cell-grid footprint. Z1's converter
+    reaches it only through the substrate, the ball field and 2.4 mm of board; the
+    natural-convection film stays on the rest of the board underside. legacy_flow=True: the
+    full-flow uniform-sink plate of the historical setting."""
+    if legacy_flow:
+        E.BOTTOM_PLATE_RULE = "fixed_flow_legacy"
 
     def in_plate(m, e):
         c = m.nodes[m.elems[int(e) - 1][:4] - 1][:, :2].mean(0)
@@ -492,25 +567,31 @@ def v_z1_bottom_plate_tim():
 
     def film(m, tiles, q_w):
         faces = orig(m, "Z1")
-        h = float(cooler.h_uniform(q_w))
-        return {"elems": np.array([e for e in faces if in_plate(m, e)], int),
-                "h_W_m2K": 1.0 / (1.0 / h + TIM_R), "T_C": float(cooler.t_in_c),
-                "layer": "board",
-                "label": "Z1 cooling B: second plate under the board through a 50 um TIM"}
+        return E.bottom_plate_film([e for e in faces if in_plate(m, e)], "board",
+                                   "Z1 cooling B: second plate under the board through a "
+                                   "50 um TIM", q_w, tim=True)
     E.EXTRA_FILM = film
+    return {"bottom_plate_rule": E.BOTTOM_PLATE_RULE}
 
 
-def v_z3_plate_tim():
+def v_z3_plate_tim(legacy_flow=False):
     """Cooling B for Z3: its converter plate through the same 50-um TIM as the top plate (the
-    Z3 production plate sits on the converter without an interface: a bound)."""
+    Z3 production plate sits on the converter without an interface: a bound). Flow and sink by
+    final_closure_physical_etm.BOTTOM_PLATE_RULE; legacy_flow=True: the full-flow plate."""
+    if legacy_flow:
+        E.BOTTOM_PLATE_RULE = "fixed_flow_legacy"
     orig = E.z3_converter_cold_plate
 
     def plate(m, q_w):
         p = orig(m, q_w)
-        p.update({"h_W_m2K": 1.0 / (1.0 / p["h_W_m2K"] + TIM_R),
+        if abs(TIM_R - E.TIM_R_M2K_W) > 1e-15:
+            raise RuntimeError("cooling-B TIM card differs from the bottom-plate TIM")
+        p.update({"h_W_m2K": 1.0 / (1.0 / p["h_plate_W_m2K"] + TIM_R),
+                  "R_tim_m2K_W": TIM_R,
                   "label": "Z3 cooling B: converter plate through a 50 um TIM"})
         return p
     E.z3_converter_cold_plate = plate
+    return {"bottom_plate_rule": E.BOTTOM_PLATE_RULE}
 
 # ------------------------------------------------------------------ tier order (Z1)
 def v_z1_tier_reference():
@@ -657,7 +738,8 @@ VARIANTS = {
     "z2_cooled_tim": dict(kind="full", archs=("Z2",), apply=v_z2_cooled_tim,
                           gates=["therm.backside_interface"],
                           nature="backside thermal interface (bounding cooling)",
-                          what="Z2-COOLED plate through a 50 um TIM at k = 3 W/mK"),
+                          what="Z2-COOLED plate through a 50 um TIM at k = 3 W/mK (flow: the "
+                               "top plate's coolant rise)"),
     "bga_depop": dict(kind="full", archs=("Z2",), apply=lambda: v_bga_population(420 / 528),
                       gates=["mech.bga_population"],
                       nature="BGA mechanical population (smeared)",
@@ -666,10 +748,12 @@ VARIANTS = {
     "z1_bottom_plate_tim": dict(kind="full", archs=("Z1",), apply=v_z1_bottom_plate_tim,
                                 gates=[], nature="ENGINEERING_SENSITIVITY (cooling B)",
                                 what="Z1 with a second plate under the board beneath the cell "
-                                     "grid, through a 50 um TIM"),
+                                     "grid, through a 50 um TIM (flow: the top plate's "
+                                     "coolant rise)"),
     "z3_plate_tim": dict(kind="full", archs=("Z3",), apply=v_z3_plate_tim,
                          gates=[], nature="ENGINEERING_SENSITIVITY (cooling B)",
-                         what="Z3 converter plate through a 50 um TIM"),
+                         what="Z3 converter plate through a 50 um TIM (flow: the top plate's "
+                              "coolant rise)"),
     "z3_top_only": dict(kind="full", archs=("Z3",), apply=v_z3_top_only,
                         gates=[], nature="ENGINEERING_SENSITIVITY (cooling solution, Z3)",
                         what="Z3 with the top cold plate only (converter underside in the "
@@ -697,11 +781,64 @@ VARIANTS = {
                           "instead of 2040"),
     "gan_k_half": dict(kind="full", archs=("Z1", "Z2"), apply=v_gan_k_half,
                        gates=["mat.gan_bounded"], nature="bounding stress test",
-                       what="GaN device tiers at half the Si carrier conductivity"),
+                       what="GaN device-tier cards at half their conductivity"),
     "conv_k_tenth": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_conv_k(0.1),
                          gates=["mat.mlcc_bounded", "mat.inductor_tier_bounded"],
                          nature="bounding stress test",
-                         what="flying-cap and inductor/Cout tiers at k = 6 W/mK"),
+                         what="flying-cap and inductor/Cout tier cards at a tenth of their "
+                              "conductivity"),
+    # ---- TCPMT revision: the superseded settings of the thermal model, one at a time
+    "conv_k_legacy": dict(kind="full", archs=("Z1", "Z2", "Z3"), apply=v_conv_k_legacy,
+                          gates=["mat.mlcc_bounded", "mat.inductor_tier_bounded",
+                                 "mat.gan_bounded"],
+                          nature="LEGACY_SETTING (converter cards before the homogenization)",
+                          what="hvr_effective (k 60 W/mK) on the inductor/Cout and flying-cap "
+                               "tiers, solid silicon on the GaN tiers"),
+    "nu_legacy_table": dict(kind="full", archs=("Z1", "Z2", "Z3"),
+                            apply=lambda: v_cooling_model(nu="legacy_3w_table"),
+                            gates=["therm.cooling_model_form"],
+                            nature="LEGACY_SETTING (cold-plate Nu table with a long wall "
+                                   "adiabatic, alpha->0 limit 5.385)",
+                            what="cold-plate Nu from the superseded three-wall table instead of "
+                                 "the Shah & London short-wall-adiabatic H1 fit"),
+    "props_legacy_50C": dict(kind="full", archs=("Z1", "Z2", "Z3"),
+                             apply=lambda: v_cooling_model(props="legacy_50C"),
+                             gates=["therm.cooling_model_form"],
+                             nature="LEGACY_SETTING (water properties at ~50 C)",
+                             what="coolant properties at ~50 C instead of the bulk mean"),
+    "wall_viscosity": dict(kind="full", archs=("Z1", "Z2", "Z3"),
+                           apply=lambda: v_cooling_model(wall=True),
+                           gates=["therm.cooling_model_form"],
+                           nature="ENGINEERING_SENSITIVITY (property variation)",
+                           what="wall-viscosity correction (Nu (mu_b/mu_w)^0.14, "
+                                "f (mu_w/mu_b)^0.58)"),
+    "plate_caloric_legacy": dict(kind="full", archs=("Z1", "Z2", "Z3"),
+                                 apply=lambda: v_cooling_model(top="uniform_legacy"),
+                                 gates=["cooling.caloric_convention"],
+                                 nature="LEGACY_SETTING (caloric double count)",
+                                 what="top plate with the uniform-sink coefficient (R_cal "
+                                      "included) on the streamwise sink"),
+    "z1_bottom_plate_tim_fullflow": dict(
+        kind="full", archs=("Z1",), apply=lambda: v_z1_bottom_plate_tim(legacy_flow=True),
+        gates=[], nature="LEGACY_SETTING (cooling B, full-flow bottom plate)",
+        what="Z1 cooling B with the bottom plate at the full 27 g/s, uniform inlet sink"),
+    "z2_cooled_tim_fullflow": dict(
+        kind="full", archs=("Z2",), apply=lambda: v_z2_cooled_tim(legacy_flow=True),
+        gates=[], nature="LEGACY_SETTING (cooling B, full-flow bottom plate)",
+        what="Z2 cooling B with the bottom plate at the full 27 g/s, uniform inlet sink"),
+    "z3_plate_tim_fullflow": dict(
+        kind="full", archs=("Z3",), apply=lambda: v_z3_plate_tim(legacy_flow=True),
+        gates=[], nature="LEGACY_SETTING (cooling B, full-flow bottom plate)",
+        what="Z3 cooling B with the converter plate at the full 27 g/s, uniform inlet sink"),
+    "z2_cooled_fullflow": dict(
+        kind="full", archs=("Z2",), apply=lambda: v_z2_cooled(legacy_flow=True),
+        gates=["therm.z2_cooled"], nature="LEGACY_SETTING (interface-free plate, full flow)",
+        what="interface-free Z2 underside plate at the full 27 g/s, uniform inlet sink"),
+    "z3_plate_fullflow": dict(
+        kind="full", archs=("Z3",), apply=lambda: v_cooling_model(bottom="fixed_flow_legacy"),
+        gates=[], nature="LEGACY_SETTING (interface-free plate, full flow)",
+        what="Z3 production (interface-free) converter plate at the full 27 g/s, uniform "
+             "inlet sink"),
 }
 for _E in (80e3, 160e3):
     for _a in (4e-6, 10e-6):
@@ -734,6 +871,7 @@ def run_full(arch, variant):
            "ledger_rows": L["rows"], "P_loss_w": L["P_loss_w"],
            "i_hv_avg_a": L["i_hv_avg_a"], "energy_ledger": L["energy"],
            "thermal": {k: v for k, v in th.items() if k != "T_node"},
+           "die_T_max_C": th["die_T_max_C"], "die_T_mean_C": th["die_T_mean_C"],
            "et_history": hist,
            "et_converged": (hist[-1]["max_dT_K"] < E.ET_TOL_K
                             and hist[-1]["dP_rel"] < E.ET_TOL_P_REL),
@@ -763,7 +901,9 @@ def run_mech(arch, variant):
     res = {k: base[k] for k in ("arch", "scenario", "h_xy_mm", "refine", "ledger_rows",
                                 "P_loss_w", "i_hv_avg_a", "energy_ledger", "thermal",
                                 "et_history", "et_converged", "et_wall_s")}
-    res.update({"variant": _spec(variant), "materials": minfo,
+    die = E.die_stats(m, tn, arch)
+    res["thermal"] = {**res["thermal"], **die}
+    res.update({"variant": _spec(variant), "materials": minfo, **die,
                 "thermal_from": "production converged field (mechanics-only variant)",
                 "production_case": E.case_path(arch, SCEN).name})
     try:

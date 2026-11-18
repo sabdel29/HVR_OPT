@@ -14,7 +14,11 @@ MC2  mechanical -> thermal feedback through the top thermal interface. The produ
 
 MC10 non-uniform die power. The production die load (1 kW) is uniform over the die. Here
      75 % of it is dissipated in the central half of the die area and 25 % in the rest (a
-     3:1 flux ratio between core and periphery), the same total.
+     3:1 flux ratio between core and periphery), the same total. A second, realistic map
+     (hotmap): eight 1.5-mm hot spots at 8 x the background flux (HOTMAP), the same total.
+
+Cooling model form: the caloric correction is production; `caloric` now runs the
+superseded uniform-sink top-plate coefficient as variant plate_caloric_legacy_<tier>.
 
 Both use the hooks of final_closure_physical_etm (TOP_FILM_HOOK, and replacements of
 deposits_from_ledger / _region_elems inside this process only), so the production path is
@@ -23,6 +27,8 @@ identical bottom plate through a 50-um TIM (tcpmt_manuscript_macros.TIERS).
 
     python tcpmt_review_variants.py feedback ARCH TIER
     python tcpmt_review_variants.py hotspot  ARCH TIER
+    python tcpmt_review_variants.py hotmap   ARCH TIER
+    python tcpmt_review_variants.py caloric  ARCH TIER   (the legacy coefficient)
 """
 from __future__ import annotations
 
@@ -89,6 +95,7 @@ def _summary(m, L, th, hist, mech):
     crit = mech["joint_search"]["critical"] if mech else None
     return {"P_loss_w": L["P_loss_w"],
             "T_max_C": th["T_max_C"], "T_die_mean_C": last.get("T_die_mean_C"),
+            "die_T_max_C": th.get("die_T_max_C"), "die_T_mean_C": th.get("die_T_mean_C"),
             "T_hs_C": last.get("T_hs_C"), "T_ls_C": last.get("T_ls_C"),
             "q_top_W": th["q_top_W"], "q_bot_W": th["q_bot_W"],
             "q_bottom_plate_W": th.get("q_bottom_plate_W"), "q_extra_W": th.get("q_extra_W"),
@@ -122,6 +129,7 @@ def run_et_seeded(arch, scen, h_xy, refine, temps0=None):
         d_p = (abs(L["P_loss_w"] - hist[-1]["P_loss_w"]) / L["P_loss_w"]) if hist else 1.0
         hist.append({"iter": it, "P_loss_w": L["P_loss_w"], "T_max_C": th["T_max_C"],
                      "T_die_mean_C": E.layer_mean_T(m, Tn, [lay["die"]]),
+                     "die_T_max_C": th["die_T_max_C"],
                      **{f"T_{k}_C": v for k, v in new.items()},
                      "max_dT_K": d_t, "dP_rel": d_p,
                      "energy_residual_rel": th["energy_residual_rel"],
@@ -216,7 +224,8 @@ def run_feedback(arch, tier):
             raise RuntimeError("mesh changed between the gap map and the solve")
         rec = {"iter": it, "gap": dict(st_gap), "et_history": hist, "et_wall_s": t_et,
                "ledger_rows": L["rows"], "P_loss_w": L["P_loss_w"],
-               "thermal": {k: v for k, v in th.items() if k != "T_node"}}
+               "thermal": {k: v for k, v in th.items() if k != "T_node"},
+               "die_T_max_C": th["die_T_max_C"], "die_T_mean_C": th["die_T_mean_C"]}
         (OUT / f"etm_{arch}_{SCEN}__{tag}_it{it}.json").write_text(
             json.dumps(rec, indent=1, default=float))
         mech = E.mechanics(m, mats, st, th["T_node"], wd, arch, tiles,
@@ -267,6 +276,8 @@ def run_feedback(arch, tier):
            "aitken": {"die_warpage_pv_um": aitken(seq_w), "P_loss_w": aitken(seq_p)},
            "ledger_rows": last["ledger_rows"], "P_loss_w": last["P_loss_w"],
            "thermal": last["thermal"], "et_history": last["et_history"],
+           "die_T_max_C": last["thermal"]["die_T_max_C"],
+           "die_T_mean_C": last["thermal"]["die_T_mean_C"],
            "mechanics": last["mechanics"]}
     S.case_file(arch, tag).write_text(json.dumps(res, indent=1, default=float))
     return res
@@ -338,35 +349,116 @@ def run_hotspot(arch, tier):
     return S.run_full(arch, name)
 
 
-# ------------------------------------------------------------------ cooling model form
-def v_plate_local_h():
-    """The top plate's coefficient WITHOUT the caloric resistance. CoolingDesign.h_uniform
-    includes R_cal = 1/(2 m_dot c_p) (the mean-fluid convention of a uniform sink), while the
-    production solve ALSO resolves the coolant warming streamwise (T_fluid(x)); together they
-    count half the coolant rise twice. Here h_top = 1/((R_conv + R_base) A), the coefficient
-    consistent with the streamwise sink. Bottom plates (cooling B) use a uniform inlet sink, for
-    which h_uniform is the consistent form, so they are unchanged."""
-    from cooling_production import CANDIDATES
-    s_ = CANDIDATES[E.COOLER].compact(1000.0)
-    f = s_["R_total_K_W"] / (s_["R_conv_K_W"] + s_["R_base_K_W"])
-
-    def hook(m, top, h_face):
-        return np.asarray(h_face, float) * f
-    E.TOP_FILM_HOOK = hook
-    return {"h_factor": f, "R_cal_K_W": s_["R_caloric_K_W"], "R_total_K_W": s_["R_total_K_W"]}
+# ------------------------------------------------------------------ die power map (realistic)
+#: DECLARED realistic non-uniform die load (TCPMT revision): mm-scale hot spots at a fixed
+#: flux contrast over a uniform background, the same 1 kW. Eight 1.5-mm square core hot spots
+#: in a 4 x 2 array (centres x = +/-2.2, +/-6.5 mm; y = +/-3.5 mm; x is the coolant flow
+#: direction) at 8 x the background flux: nominal hot area 3.6 % of the 500-mm^2 die,
+#: background 160 W/cm^2, hot spots 1.28 kW/cm^2, 23 % of the load in the hot spots -- the
+#: magnitudes reported for on-chip hot spots (sub-mm to ~2 mm at 5-10 x the background
+#: flux). The contrast is held exactly on the mesh (the power split follows the realized
+#: hot volume). The 3:1 core/periphery map (v_die_hotspot) stays a separate variant.
+HOTMAP = {"side_mm": 1.5, "contrast": 8.0,
+          "centres_mm": [(x, y) for y in (-3.5, 3.5) for x in (-6.5, -2.2, 2.2, 6.5)]}
 
 
-def run_caloric(arch, tier):
+def v_die_hotmap(spec=None):
+    spec = dict(HOTMAP, **(spec or {}))
+    orig_dep, orig_reg = E.deposits_from_ledger, E._region_elems
+    info = {"spec": spec}
+
+    def split(m, layers, tiles):
+        ids = orig_reg(m, layers, False, tiles)
+        cen = m.elem_centroids()[ids - 1]
+        h = 0.5 * spec["side_mm"]
+        hot = np.zeros(len(ids), bool)
+        for cx, cy in spec["centres_mm"]:
+            sel = (np.abs(cen[:, 0] - cx) <= h) & (np.abs(cen[:, 1] - cy) <= h)
+            if not sel.any():
+                raise RuntimeError(f"hot spot at ({cx}, {cy}) captures no die element")
+            hot |= sel
+        V = m.elem_volumes()[ids - 1]
+        return ids, hot, float(V[hot].sum()), float(V[~hot].sum())
+
+    state = {}
+
+    def dep(arch, L):
+        d = orig_dep(arch, L)
+        key = ((FL.LAYERS[arch]["die"],), False)
+        w = d.pop(key)
+        rest = w - FL.P_LOAD_W
+        if rest > 1e-12:
+            d[key] = rest
+        c = spec["contrast"]
+        vh, vb = state["vh"], state["vb"]
+        p_hot = FL.P_LOAD_W * c * vh / (c * vh + vb)
+        d[(key[0], "hotmap_hot")] = p_hot
+        d[(key[0], "hotmap_bg")] = FL.P_LOAD_W - p_hot
+        info.update({"P_hot_W": p_hot, "hot_power_fraction": p_hot / FL.P_LOAD_W,
+                     "hot_volume_fraction_realized": vh / (vh + vb),
+                     "flux_hot_W_cm2": p_hot / (vh / state["t_die"]) * 100.0,
+                     "flux_bg_W_cm2": (FL.P_LOAD_W - p_hot) / (vb / state["t_die"]) * 100.0})
+        return d
+
+    def reg(m, layers, in_tiles, tiles):
+        if in_tiles not in ("hotmap_hot", "hotmap_bg"):
+            return orig_reg(m, layers, in_tiles, tiles)
+        ids, hot, _vh, _vb = split(m, layers, tiles)
+        return ids[hot] if in_tiles == "hotmap_hot" else ids[~hot]
+
+    def hook(m, st, tiles):
+        die = [L for L in m.layers if L.name == "die"][0]
+        ids, hot, vh, vb = split(m, ("die",), tiles)
+        state.update(vh=vh, vb=vb, t_die=die.z1 - die.z0)
+        return {"die_power_map": f"{len(spec['centres_mm'])} hot spots of {spec['side_mm']} mm "
+                                 f"at {spec['contrast']:g} x the background flux (1 kW total)",
+                "die_hot_elements": int(hot.sum())}
+    E.deposits_from_ledger = dep
+    E._region_elems = reg
+    E.BUILD_HOOKS.append(hook)
+    return info
+
+
+def run_hotmap(arch, tier):
     _long_ccx()
-    name = f"plate_local_h_{tier}"
+    name = f"die_hotmap_{tier}"
     S.VARIANTS[name] = dict(
-        kind="full", archs=(arch,), apply=None, gates=["cooling.caloric_convention"],
-        nature="model-form correction (consistency of the film with the streamwise sink)",
-        what="top-plate coefficient without the caloric resistance (streamwise sink kept)")
+        kind="full", archs=(arch,), apply=None, gates=["load.die_power_map"],
+        nature="declared realistic load map (mm-scale hot spots)",
+        what=f"8 x 1.5-mm die hot spots at 8 x the background flux, 1 kW (cooling {tier})")
 
     def apply():
         apply_tier(arch, tier)
-        v_plate_local_h()
+        return v_die_hotmap()
+    S.VARIANTS[name]["apply"] = apply
+    return S.run_full(arch, name)
+
+
+# ------------------------------------------------------------------ cooling model form
+def v_plate_local_h():
+    """SUPERSEDED: the caloric correction is PRODUCTION (final_closure_physical_etm.
+    TOP_PLATE_COEFF = "local"). Kept only so an old call cannot correct twice: it checks the
+    production setting and changes nothing."""
+    if E.TOP_PLATE_COEFF != "local":
+        raise RuntimeError("plate_local_h asked while the top plate is not on the local "
+                           "coefficient")
+    return {"h_factor": 1.0, "note": "production already uses the local coefficient"}
+
+
+def run_caloric(arch, tier):
+    """The superseded top-plate coefficient (uniform-sink h with the streamwise sink, i.e. the
+    caloric double count) as a variant of the tier's case."""
+    _long_ccx()
+    name = f"plate_caloric_legacy_{tier}"
+    S.VARIANTS[name] = dict(
+        kind="full", archs=(arch,), apply=None, gates=["cooling.caloric_convention"],
+        nature="LEGACY_SETTING (caloric double count)",
+        what="top-plate coefficient WITH the caloric resistance on the streamwise sink "
+             f"(the pre-revision production form), cooling {tier}")
+
+    def apply():
+        apply_tier(arch, tier)
+        return S.v_cooling_model(top="uniform_legacy")
     S.VARIANTS[name]["apply"] = apply
     return S.run_full(arch, name)
 
@@ -447,6 +539,23 @@ def v_z1_rated_cf(order="rep", cf_um=None, esr_mohm=None):
     import replay_production as RPX
     d = RPX.compiled_design()
     RPX._DESIGN_CACHE["d"] = replace(d, capacitor=replace(d.capacitor, esr_mohm=esr_mohm))
+
+    def hook(m, st, tiles):
+        """The rated 0603 MLCC tier carries its own derived card (case A1), at this height."""
+        import tcpmt_converter_cards as CC
+        c = CC.cards_for(CC.TierContents.from_design(), cfly_a1_um=cf_um,
+                         strict=False)["conv_cfly_a1"]
+        st["materials"]["conv_cfly_a1"] = json.loads(json.dumps(c))
+        mat = np.array(m.elem_material, dtype=object)
+        lay = np.array(m.elem_layer, dtype=object)
+        sel = (lay == FL.LAYERS["Z1"]["caps"]) & (mat == "conv_cfly_a0")
+        if not sel.any():
+            raise RuntimeError("A1: no flying-capacitor element carries the A0 card")
+        mat[sel] = "conv_cfly_a1"
+        m.elem_material = mat
+        return {"cfly_card": "conv_cfly_a1", "cfly_a1_elements": int(sel.sum()),
+                "cfly_a1_k_ortho": c["k_ortho"]["value"]}
+    E.BUILD_HOOKS.append(hook)
     return {"cf_um": cf_um, "dz_um": dz, "esr_mohm": esr_mohm, "order": order}
 
 
@@ -479,6 +588,8 @@ if __name__ == "__main__":
         print(json.dumps(r["iterations"], indent=1, default=float))
     elif mode == "hotspot":
         print(run_hotspot(arch, tier))
+    elif mode == "hotmap":
+        print(run_hotmap(arch, tier))
     elif mode == "caloric":
         print(run_caloric(arch, tier))
     elif mode == "sdec":

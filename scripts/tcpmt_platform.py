@@ -117,7 +117,24 @@ def main():
                    "I_in_A": i, "plates": n,
                    "P_pump_shaft_W": n * pump["0.55"],
                    "P_pump_band_W": [n * pump["0.75"], n * pump["0.35"]],
-                   "P_pump_hydraulic_W": n * pump["hyd"]}
+                   "P_pump_hydraulic_W": n * pump["hyd"],
+                   "pump_basis": f"{n} full plate(s)"}
+            # TCPMT revision: every plate at its OWN flow (cooling B's bottom plate sized to
+            # the top plate's coolant rise), from the case's own plate record
+            cool_case = (((cool.get("tiers") or {}).get(t) or {}).get("cases") or {}).get(a)
+            cool_rec = (c.get("thermal") or {}).get("cooling")
+            if cool_rec:
+                sh = cool_rec["P_pump_shaft_total_W"]
+                rec.update({"P_pump_shaft_W": sh["0.55"],
+                            "P_pump_band_W": [sh["0.75"], sh["0.35"]],
+                            "P_pump_hydraulic_W": cool_rec["P_pump_hydraulic_total_W"],
+                            "pump_basis": "each plate at its own flow (case record)"})
+            elif cool_case and cool_case.get("case_records_plates"):
+                sh = cool_case["P_shaft_W"]
+                rec.update({"P_pump_shaft_W": sh["0.55"],
+                            "P_pump_band_W": [sh["0.75"], sh["0.35"]],
+                            "P_pump_hydraulic_W": cool_case["P_pump_hydraulic_W"],
+                            "pump_basis": "each plate at its own flow (cooling_spec)"})
             rec["P_platform_W"] = p_int + pf + rec["P_pump_shaft_W"]
             rec["P_platform_no_pump_W"] = p_int + pf
             out["tiers"][t][a] = rec
