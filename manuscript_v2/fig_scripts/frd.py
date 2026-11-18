@@ -13,6 +13,10 @@ CACHE.mkdir(exist_ok=True)
 def read(path, blocks=("NDTEMP", "DISP")):
     path = Path(path)
     key = CACHE / (path.parent.name + "_" + path.stem + ".npz")
+    if path.parent.parent.name != "fields":          # solver scratch: names repeat across runs
+        import hashlib
+        h = hashlib.md5(str(path.resolve()).encode()).hexdigest()[:10]
+        key = CACHE / (path.parent.name + "_" + path.stem + "_" + h + ".npz")
     if key.exists():
         d = np.load(key, allow_pickle=True)
         return {k: d[k] for k in d.files}

@@ -14,13 +14,13 @@ from matplotlib.patches import Rectangle, FancyBboxPatch, FancyArrowPatch, Ellip
 import style as S
 
 S.setup()
-fig = plt.figure(figsize=(S.DBL_W, 2.78))
+fig = plt.figure(figsize=(S.DBL_W, 3.05))
 W_ARCH = 0.158
-axs = [fig.add_axes([k * W_ARCH, 0.0, W_ARCH, 0.93]) for k in range(3)]
-axd = fig.add_axes([3 * W_ARCH + 0.012, 0.0, 1 - 3 * W_ARCH - 0.012, 0.93])
+axs = [fig.add_axes([k * W_ARCH, 0.05, W_ARCH, 0.89]) for k in range(3)]
+axd = fig.add_axes([3 * W_ARCH + 0.012, 0.0, 1 - 3 * W_ARCH - 0.012, 0.94])
 for ax in axs + [axd]:
     ax.axis("off")
-FS = 5.9
+FS = 6.5
 
 
 def blk(ax, x, y, w, h, fc, txt=None, tc="white", fs=FS):
@@ -70,6 +70,18 @@ def note(ax, txt):
             linespacing=1.05)
 
 
+def boundary(ax, x0, y0, x1, y1):
+    """The package-internal loss boundary (dashed)."""
+    ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, fc="none", ec=S.INK2, lw=0.8,
+                           ls=(0, (3, 2)), zorder=6))
+
+
+def boundary_poly(ax, pts):
+    from matplotlib.patches import Polygon
+    ax.add_patch(Polygon(pts, closed=True, fc="none", ec=S.INK2, lw=0.8, ls=(0, (3, 2)),
+                         zorder=6))
+
+
 def common_top(ax, die_y):
     blk(ax, 2.0, die_y + 0.85, 6.0, 0.7, S.MAT["coldplate"])
     ax.text(5.0, die_y + 1.2, "cold plate", ha="center", va="center", fontsize=FS, color=S.INK)
@@ -93,6 +105,7 @@ arrow(ax, [(3.6, 9.3), (3.6, 10.2)], S.V1)
 ax.text(7.5, 2.6, "48 V", ha="left", va="center", fontsize=FS)
 note(ax, "48 V (≈24 A) crosses\nboard, BGA, substrate")
 ring(ax, (9.0, 6.45))
+boundary(ax, 0.35, 6.0, 9.65, 10.8)
 S.panel(ax, "a", "Z1 embedded", x=0.04, y=0.975)
 
 # ---- (b) Z2 package backside: converter in a board opening, BGA ring, direct 48-V feed
@@ -114,6 +127,8 @@ arrow(ax, [(6.4, 8.6), (6.4, 10.2)], S.V1)
 ax.text(3.5, 2.6, "48 V direct", ha="left", va="center", fontsize=FS)
 note(ax, "1 V (≈1 kA) crosses\nattach, substrate")
 ring(ax, (9.15, 8.95))
+boundary_poly(ax, [(0.35, 8.5), (1.5, 8.5), (1.5, 6.35), (8.5, 6.35), (8.5, 8.5), (9.65, 8.5),
+                   (9.65, 10.8), (0.35, 10.8)])
 S.panel(ax, "b", "Z2 pkg. backside", x=0.04, y=0.975)
 
 # ---- (c) Z3 board backside: converter under an uncut board, its own cold plate
@@ -130,88 +145,111 @@ bumps(ax, 1.7, 8.3, 5.35, 0.25, 14)
 cells(ax, 1.7, 8.3, 2.95, 2.4, flip=True)
 blk(ax, 1.7, 2.2, 6.6, 0.7, S.MAT["coldplate"])
 ax.text(5.0, 2.55, "cold plate", ha="center", va="center", fontsize=FS, color=S.INK)
-arrow(ax, [(0.15, 4.1), (2.3, 4.1)], S.V48)
+arrow(ax, [(0.05, 4.1), (2.3, 4.1)], S.V48)
 arrow(ax, [(6.4, 5.4), (6.4, 10.2)], S.V1)
-ax.text(0.2, 4.55, "48 V", ha="left", va="center", fontsize=FS)
+ax.text(0.05, 4.65, "48 V", ha="left", va="center", fontsize=FS, zorder=7,
+        bbox=dict(fc="white", ec="none", pad=0.3))
 note(ax, "1 V (≈1 kA) crosses\nboard, BGA, substrate")
 ring(ax, (9.0, 8.95))
+boundary(ax, 1.05, 2.85, 9.85, 10.8)
 S.panel(ax, "c", "Z3 board backside", x=0.04, y=0.975)
-axs[2].text(9.95, 1.95, "ringed:\ncritical joint", ha="right", va="top", fontsize=5.3,
-            color=S.INK2, linespacing=1.0)
+fig.text(1.5 * W_ARCH, 0.008, "ringed: critical joint   ·   dashed box: package-internal "
+         "loss boundary", ha="center", va="bottom", fontsize=FS, color=S.INK2)
 
 # ---------------------------------------------------------------- (d) framework
 ax = axd
-ax.set_xlim(0, 20)
-ax.set_ylim(0, 12.4)
+ax.set_xlim(0, 20.5)
+YT = 14.6
+ax.set_ylim(0, YT)
 BOX = dict(fc="#f3f2ee", ec=S.AXIS, lw=0.6)
 COLX = (1.0, 7.85, 14.7)
 BW = 5.1
+FT, FSUB = 7.0, 6.5
 
 
-def box(x, y, w, h, title, sub):
+def box(x, y, w, h, title, sub, fc=None):
+    kw = dict(BOX)
+    if fc:
+        kw["fc"] = fc
     ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.25",
-                                **BOX))
-    ax.text(x + w / 2, y + h * 0.67, title, ha="center", va="center", fontsize=6.4,
+                                **kw))
+    ax.text(x + w / 2, y + h * 0.72, title, ha="center", va="center", fontsize=FT,
             color=S.INK, fontweight="bold")
-    ax.text(x + w / 2, y + h * 0.29, sub, ha="center", va="center", fontsize=5.6,
+    ax.text(x + w / 2, y + h * 0.33, sub, ha="center", va="center", fontsize=FSUB,
             color=S.INK2, linespacing=1.0)
 
 
-def link(p0, p1, lab=None, at=None, ha="center", va="center", ls="-", col=S.INK, rad=0.0):
-    ax.add_patch(FancyArrowPatch(p0, p1, arrowstyle="-|>", mutation_scale=7, color=col,
-                                 lw=0.8, shrinkA=1, shrinkB=1, linestyle=ls,
+def link(p0, p1, lab=None, at=None, ha="center", va="center", ls="-", col=S.INK, rad=0.0,
+         style="-|>", lw=0.8):
+    ax.add_patch(FancyArrowPatch(p0, p1, arrowstyle=style, mutation_scale=7, color=col,
+                                 lw=lw, shrinkA=1, shrinkB=1, linestyle=ls,
                                  connectionstyle=f"arc3,rad={rad}"))
     if lab:
-        ax.text(at[0], at[1], lab, ha=ha, va=va, fontsize=5.6, color=S.INK2, linespacing=1.0)
+        ax.text(at[0], at[1], lab, ha=ha, va=va, fontsize=FSUB, color=S.INK2, linespacing=1.0)
 
 
-Y1, Y2, H = 8.95, 5.0, 2.25
-box(COLX[0], Y1, BW, H, "Converter synthesis", "spec. + 90-device library\n$N$, $K$, $K_A$, parts, $f_\\mathrm{sw}$")
+H = 2.35
+Y1, Y2, Y3 = 10.9, 7.15, 3.4
+box(COLX[0], Y1, BW, H, "Converter synthesis",
+    "spec. + device library\n$N$, $K$, $K_A$, parts, $f_\\mathrm{sw}$")
 box(COLX[1], Y1, BW, H, "Package stack", "tiers, cells, integration\n(a)–(c), cooling")
-box(COLX[2], Y1, BW, H, "Realizability", "conductor planes, via\naspect ratio, provisioning")
-box(COLX[0], Y2, BW, H, "Rail-aware ledger", "every conductor, its rail,\nits current, $R(T)$")
-box(COLX[1], Y2, BW, H, "Package thermal", "anisotropic layers +\nmicrochannel cold plate")
+box(COLX[2], Y1, BW, H, "Realizability", "planes, via aspect\nratio, provisioning")
+box(COLX[0], Y2, BW, H, "Rail-aware ledger", "every conductor, its\nrail, current, $R(T)$")
+box(COLX[1], Y2, BW, H, "Package thermal", "anisotropic layers,\ncold plates")
 box(COLX[2], Y2, BW, H, "Thermoelastic", "mounted package,\nall-site joint search")
-box(COLX[2], 1.05, BW, H, "Local solder joint", "viscoplastic,\n$\\Delta\\varepsilon_\\mathrm{in}$ per cycle")
-# arrows between stages
-link((COLX[0] + BW, Y1 + H / 2), (COLX[1], Y1 + H / 2), "cells", (6.97, Y1 + H / 2 + 0.42))
+box(COLX[2], Y3, BW, H, "Local solder joint",
+    "viscoplastic,\n$\\Delta\\varepsilon_\\mathrm{in}$ per cycle")
+box(COLX[0], Y3, COLX[1] + BW - COLX[0], H, "Feasibility filter",
+    "device and material ratings, solder-law\ntemperature range, interconnect rules", fc="white")
+# one-way transfers (single arrows)
+link((COLX[0] + BW, Y1 + H / 2), (COLX[1], Y1 + H / 2), "cells", (6.97, Y1 + H / 2 + 0.5))
 link((COLX[1] + BW, Y1 + H / 2), (COLX[2], Y1 + H / 2))
 link((3.55, Y1), (3.55, Y2 + H), "losses", (3.8, (Y1 + Y2 + H) / 2), ha="left")
 link((10.4, Y1), (10.4, Y2 + H), "geometry", (10.65, (Y1 + Y2 + H) / 2), ha="left")
-link((COLX[0] + BW, Y2 + 1.55), (COLX[1], Y2 + 1.55), "$q'''$", (6.97, Y2 + 1.95))
-link((COLX[1], Y2 + 0.7), (COLX[0] + BW, Y2 + 0.7), "$T$", (6.97, Y2 + 0.3))
-ax.text(6.97, Y2 - 0.55, "E–T fixed point", ha="center", va="center", fontsize=5.6,
+link((COLX[1] + BW, Y2 + 0.7 * H), (COLX[2], Y2 + 0.7 * H), "$T(\\mathbf{x})$",
+     (13.82, Y2 + 0.7 * H + 0.5))
+link((17.25, Y2), (17.25, Y3 + H), "$\\Delta u_\\mathrm{c}$, $T_\\mathrm{j}$",
+     (17.5, (Y2 + Y3 + H) / 2), ha="left")
+link((COLX[2], Y3 + H / 2), (COLX[1] + BW, Y3 + H / 2))
+# realizability -> feasibility (interconnect rules), down the right margin and under the joint
+rx, ry = COLX[2] + BW + 0.35, Y3 - 0.42
+ax.plot([COLX[2] + BW, rx, rx, 9.4], [Y1 + 0.55, Y1 + 0.55, ry, ry], color=S.INK, lw=0.8)
+link((9.4, ry), (9.4, Y3))
+# the electrothermal fixed point: ONE double arrow
+link((COLX[0] + BW, Y2 + H / 2), (COLX[1], Y2 + H / 2), style="<|-|>", lw=1.1)
+ax.text(6.97, Y2 + H / 2 + 0.5, "$q'''$, $T$", ha="center", va="center", fontsize=FSUB,
+        color=S.INK2)
+ax.text(6.97, Y2 - 0.5, "E–T fixed point", ha="center", va="center", fontsize=FSUB,
         color=S.INK)
-link((COLX[1] + BW, Y2 + H / 2), (COLX[2], Y2 + H / 2), "$T(\\mathbf{x})$",
-     (13.82, Y2 + H / 2 + 0.42))
-link((17.25, Y2), (17.25, 1.05 + H), "$\\Delta u_\\mathrm{c}$, $T_\\mathrm{j}$", (17.5, 4.15),
-     ha="left")
+# optional mechanical-to-thermal feedback through the top interface (dotted)
+link((COLX[2], Y2 + 0.28 * H), (COLX[1] + BW, Y2 + 0.28 * H), ls=(0, (1, 1.2)))
+ax.text(13.82, Y2 - 0.55, "interface gap\n(optional)", ha="center", va="center",
+        fontsize=FSUB, color=S.INK2, linespacing=1.0)
 # modes of use
-mx0, mx1, my0, my1 = COLX[0], COLX[1] + BW, 1.0, 3.55
+mx0, mx1, my0, my1 = COLX[0], COLX[2] + BW, 0.55, 2.5
 ax.add_patch(FancyBboxPatch((mx0, my0), mx1 - mx0, my1 - my0,
                             boxstyle="round,pad=0.02,rounding_size=0.25", fc="white",
                             ec=S.INK2, lw=0.7))
-modes = (("Evaluate", "one design vs.\npackage rules"),
-         ("Compare", "integrations,\nside by side"),
-         ("Explore", "count, topology,\npackage decisions"))
+modes = (("Evaluate", "one design vs. package rules"),
+         ("Compare", "integrations side by side"),
+         ("Explore", "count, topology, decisions"))
 cw = (mx1 - mx0) / 3
 for k, (t, sub) in enumerate(modes):
     cx = mx0 + (k + 0.5) * cw
-    ax.text(cx, 2.85, t, ha="center", va="center", fontsize=6.4, color=S.INK,
+    ax.text(cx, 1.98, t, ha="center", va="center", fontsize=FT, color=S.INK,
             fontweight="bold")
-    ax.text(cx, 1.75, sub, ha="center", va="center", fontsize=5.6, color=S.INK2,
-            linespacing=1.0)
+    ax.text(cx, 1.08, sub, ha="center", va="center", fontsize=FSUB, color=S.INK2)
     if k:
-        ax.plot([mx0 + k * cw] * 2, [my0 + 0.35, my1 - 0.35], color=S.GRID, lw=0.6)
-link((COLX[2], 2.2), (mx1, 2.2))
-# the exploration loop: from Explore back into synthesis along the bottom and left margin
+        ax.plot([mx0 + k * cw] * 2, [my0 + 0.3, my1 - 0.3], color=S.GRID, lw=0.6)
+link((5.0, Y3), (5.0, my1))
+# the exploration loop (dashed): from Explore back into synthesis along the bottom and left
 ex = mx0 + 2.5 * cw
-lp = [(ex, my0), (ex, 0.35), (0.35, 0.35), (0.35, Y1 + H / 2), (COLX[0], Y1 + H / 2)]
+lp = [(ex, my0), (ex, 0.12), (0.35, 0.12), (0.35, Y1 + H / 2), (COLX[0], Y1 + H / 2)]
 for (xa, ya), (xb, yb) in zip(lp[:-2], lp[1:-1]):
-    ax.plot([xa, xb], [ya, yb], color=S.INK2, lw=0.7, ls=(0, (2.2, 1.6)))
+    ax.plot([xa, xb], [ya, yb], color=S.INK2, lw=0.7, ls=(0, (3, 2)))
 ax.add_patch(FancyArrowPatch(lp[-2], lp[-1], arrowstyle="-|>", mutation_scale=7,
                              color=S.INK2, lw=0.7, shrinkA=0, shrinkB=0))
-ax.text(0.12, (0.35 + Y1 + H / 2) / 2, "repeat over design inputs", rotation=90, ha="right",
-        va="center", fontsize=5.6, color=S.INK2)
+ax.text(0.12, (Y3 + Y1) / 2 + 0.6, "repeat over design inputs", rotation=90, ha="right",
+        va="center", fontsize=FSUB, color=S.INK2)
 S.panel(ax, "d", "Device-to-joint framework on one geometry", x=0.0, y=0.975)
 S.save(fig, "fig1_concept_framework")

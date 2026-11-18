@@ -25,11 +25,20 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, Rectangle
 
 # ------------------------------------------------------------------ paths
-SRC = Path("/home/beams0/SABDELZAHER/ETM_project/HVR_OPT_work")      # revised lineage (working copy)
+#: the repository this script lives in (a worktree or the main checkout): figures are written here
+REPO = Path(__file__).resolve().parents[2]
+#: the revised lineage (working copy) the RESULTS are read from; it also holds the untracked case
+#: files of runs in progress. TCPMT_SRC points it elsewhere (e.g. at REPO for a clean checkout).
+SRC = Path(os.environ.get("TCPMT_SRC", "/home/beams0/SABDELZAHER/ETM_project/HVR_OPT_work"))
+if not (SRC / "research").is_dir():
+    SRC = REPO
 FC = Path(os.environ.get("TCPMT_RESULTS_DIR", SRC / "research" / "final_closure"))
+SENS = FC / "sensitivity"
+TR = SRC / "research" / "tcpmt_revision"
 FIELDS = Path("/home/beams0/SABDELZAHER/ETM_project/scratch/fields")
-OUT = SRC / "manuscript_v2" / "figs"
+OUT = REPO / "manuscript_v2" / "figs"
 OUT.mkdir(parents=True, exist_ok=True)
+MACROS = REPO / "manuscript_v2" / "results_macros.tex"
 
 # ------------------------------------------------------------------ geometry
 COL_W = 3.5      # in, single column
@@ -135,6 +144,43 @@ def J(name):
     return json.loads((FC / name).read_text())
 
 
+def JP(path):
+    """A JSON artifact by path, or None when it is missing or not yet complete."""
+    p = Path(path)
+    try:
+        return json.loads(p.read_text()) if p.is_file() else None
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def macro(name):
+    """One value of the generated results_macros.tex (itself generated from the artifacts),
+    or None when it is absent or printed as '--'."""
+    import re
+    if not MACROS.is_file():
+        return None
+    m = re.search(r"\\newcommand\{\\" + re.escape(name) + r"\}\{([^}]*)\}", MACROS.read_text())
+    if not m or m.group(1).strip() in ("--", ""):
+        return None
+    return m.group(1).strip()
+
+
+#: elements skipped because their artifact does not exist yet (printed by save())
+PENDING = []
+PENDING_COLOR = "#8a5a00"     # dark amber ink: visibly a placeholder, never a data mark
+
+
+def pending(ax, x, y, what, artifact, transform=None, **kw):
+    """A visible placeholder for an element whose artifact is still being produced. Rerunning
+    the script after the artifact appears replaces it with the data."""
+    PENDING.append(f"{what}: {artifact}")
+    kw.setdefault("fontsize", 6.5)
+    kw.setdefault("ha", "left")
+    kw.setdefault("va", "center")
+    ax.text(x, y, f"pending: {what}", transform=transform or ax.transAxes,
+            color=PENDING_COLOR, fontstyle="italic", **kw)
+
+
 def save(fig, stem):
     pdf = OUT / f"{stem}.pdf"
     png = OUT / f"{stem}.png"
@@ -142,3 +188,5 @@ def save(fig, stem):
     fig.savefig(png, dpi=220)
     plt.close(fig)
     print("wrote", pdf)
+    for p in PENDING:
+        print("  PENDING", p)

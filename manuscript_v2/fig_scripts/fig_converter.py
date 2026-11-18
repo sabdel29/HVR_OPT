@@ -4,18 +4,30 @@ schematic) and its two switching phases.
 (a) 3:1 switched-capacitor stage feeding K = 3 inductor branches (N = 3, K_A = 2):
     S1, S3 conduct in phase A (L1, L3 driven at 16 V), S2 in phase B (L2 driven at 16 V);
     S4-S6 freewheel the undriven inductors. C1 holds 32 V, C2 16 V.
-(b) Gate timing over one period T = 1/f_sw with D = 0.0625, and the input current drawn
+(b) Gate timing over one period T = 1/f_sw with D = D_DUTY, and the input current drawn
     from the 48-V rail (only in phase A) - the origin of the pulsed-input scenarios.
 """
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Arc, FancyArrowPatch
+import re
 import style as S
 
 S.setup()
+dec = S.JP(S.TR / "input_decoupling.json") or {}
+des = (dec.get("circuit") or {}).get("design") or {}
+rec = (dec.get("summary") or {}).get("recommended") or {}
+D_DUTY = des["D"]
+FSW_K = des["f_sw_hz"] / 1e3
+I_L = des["I_L_a"]
+m_ph = re.search(r"(\d+) clock phases", rec.get("interleaving", ""))
+N_PH = int(m_ph.group(1)) if m_ph else None
+m_cin = re.search(r"\((\d+) x (\d{4}) ([\d.]+-V \w+), ([\d.]+) uF",
+                  (dec.get("summary") or {}).get("figure_caption", ""))
+K_OPEN, K_EQ = S.macro("DecapKopen"), S.macro("DecapKeq")
 LW = 0.9
-fig = plt.figure(figsize=(S.COL_W, 3.75))
-ax = fig.add_axes([0.0, 0.30, 1.0, 0.68])
+fig = plt.figure(figsize=(S.COL_W, 4.25))
+ax = fig.add_axes([0.0, 0.385, 1.0, 0.60])
 ax.set_xlim(-0.2, 10.2)
 ax.set_ylim(0.0, 8.3)
 ax.set_aspect("equal")
@@ -88,10 +100,11 @@ def ind_v(x, yt, yb, name, cur):
                          lw=LW, zorder=2))
     w(x, ys[-1], x, yb)
     ax.text(x + 0.30, (yt + yb) / 2 + 0.25, name, ha="left", va="center", fontsize=7)
-    ax.text(x + 0.30, (yt + yb) / 2 - 0.15, cur, ha="left", va="center", fontsize=6,
+    ax.text(x + 0.30, (yt + yb) / 2 - 0.15, cur, ha="left", va="center", fontsize=6.5,
             color=S.INK2)
 
 
+IL_TXT = f"{I_L:.1f} A"
 # rails
 YIN, YB = 7.7, 1.25
 X = 5.0
@@ -102,6 +115,13 @@ ax.text(1.0, 6.78, "−", ha="center", va="center", fontsize=7)
 w(1.0, 7.24, 1.0, YIN, c=S.V48, lw=1.4)
 w(1.0, YIN, X, YIN, c=S.V48, lw=1.4)
 gnd(1.0, 6.56)
+# package input capacitance (ring outside the cell grid)
+XC = 2.75
+dot(XC, YIN)
+cap_v(XC, 6.75, YIN, "")
+gnd(XC, 6.75)
+ax.text(XC + 0.36, 7.25, "$C_\\mathrm{in}$", ha="left", va="center", fontsize=7)
+ax.text(XC + 0.36, 6.85, "(ring)", ha="left", va="center", fontsize=6.5, color=S.INK2)
 ax.text(0.5, 6.9, "48 V", ha="right", va="center", fontsize=7)
 # stack S1 - S2 - S3
 n1, n2, n3 = 6.35, 5.0, 3.35
@@ -116,17 +136,17 @@ XV1 = 8.3
 cap_h(X, XV1, n1, "C$_1$", "32 V")
 dot(XV1, n1)
 sw_h(XV1, XV1 + 1.25, n1, "S$_5$", r"$\overline{\mathrm{A}}$")
-ind_v(XV1, n1, YB, "L$_1$", "6.8 A")
+ind_v(XV1, n1, YB, "L$_1$", IL_TXT)
 # C2 to Vx2 (left), S6, L2
 XV2 = 2.1
 cap_h(XV2, X, n2, "C$_2$", "16 V")
 dot(XV2, n2)
 sw_h(XV2 - 1.25, XV2, n2, "S$_6$", r"$\overline{\mathrm{B}}$", gnd_right=False)
-ind_v(XV2, n2, YB, "L$_2$", "6.8 A")
+ind_v(XV2, n2, YB, "L$_2$", IL_TXT)
 # n3: S4, L3
 sw_h(X + 0.25, X + 1.5, n3, "S$_4$", r"$\overline{\mathrm{A}}$")
 w(X, n3, X + 0.25, n3)
-ind_v(X, n3, YB, "L$_3$", "6.8 A")
+ind_v(X, n3, YB, "L$_3$", IL_TXT)
 # output bus
 w(XV2, YB, XV1 + 0.9, YB, c=S.V1, lw=1.4)
 for xx in (XV2, X, XV1):
@@ -138,36 +158,53 @@ ax.add_patch(FancyArrowPatch((XV1 + 0.9, 1.0), (XV1 + 0.9, 0.58), arrowstyle="-|
                              mutation_scale=6, color=S.INK, lw=0.8, zorder=4))
 w(XV1 + 0.9, YB, XV1 + 0.9, 1.08)
 gnd(XV1 + 0.9, 0.52)
-ax.text(XV1 + 1.25, 0.8, "20.4 A", ha="left", va="center", fontsize=6.6)
+ax.text(XV1 + 1.25, 0.8, f"{3 * I_L:.1f} A", ha="left", va="center", fontsize=6.6)
 ax.text(XV2 - 0.15, YB + 0.18, "1 V", ha="right", va="bottom", fontsize=7)
 S.panel(ax, "a", "Hybrid cell: 3:1 SC stage + $K$ = 3 inductor branches", x=0.0, y=0.985)
 
 # ---------------------------------------------------------------- (b) timing
-bx = fig.add_axes([0.13, 0.055, 0.83, 0.20])
+bx = fig.add_axes([0.13, 0.135, 0.83, 0.20])
 T = 1.0
 D = 0.0625
 t = np.linspace(0, 2 * T, 4001)
 sig = {"A (S$_1$, S$_3$)": ((t % T) < D),
        "B (S$_2$)": (((t - T / 2) % T) < D),
-       "$i_\\mathrm{in}$": ((t % T) < D)}
+       "$i_\\mathrm{in}$, cell": ((t % T) < D)}
+if N_PH:
+    sig[f"$\\Sigma i_\\mathrm{{in}}$, {N_PH} ph."] = np.any(
+        [(((t - j * T / N_PH) % T) < D) for j in range(N_PH)], axis=0)
 for k, (name, s) in enumerate(sig.items()):
-    base = 2 - k
-    col = S.V48 if k == 2 else S.INK
-    bx.fill_between(t, base, base + 0.7 * s, step="pre", color=col, alpha=0.18 if k == 2 else 0.0,
-                    lw=0)
+    base = len(sig) - 1 - k
+    col = S.V48 if k >= 2 else S.INK
+    bx.fill_between(t, base, base + 0.7 * s, step="pre", color=col,
+                    alpha=0.18 if k >= 2 else 0.0, lw=0)
     bx.step(t, base + 0.7 * s, where="pre", color=col, lw=0.9)
     bx.text(-0.04, base + 0.25, name, ha="right", va="center", fontsize=6.6)
 bx.set_xlim(0, 2 * T)
-bx.set_ylim(-0.15, 2.95)
+bx.set_ylim(-0.15, len(sig) - 0.05)
 bx.set_yticks([])
 bx.set_xticks([0, T / 2, T, 1.5 * T, 2 * T], ["0", "$T$/2", "$T$", "3$T$/2", "2$T$"])
 bx.spines["left"].set_visible(False)
 bx.grid(False)
-bx.annotate("", (0.5 + D, 1.85), (0.5, 1.85), arrowprops=dict(arrowstyle="<->", lw=0.6,
-                                                     color=S.INK2, shrinkA=0, shrinkB=0))
-bx.text(0.5 + D + 0.03, 1.85, "$DT$ ($D$ = 0.0625)", ha="left", va="center", fontsize=6,
-        color=S.INK2)
-bx.text(0.14, 0.40, "input current only in phase A", ha="left", va="center",
-        fontsize=6, color=S.INK2)
-S.panel(bx, "b", "Two switching phases ($f_\\mathrm{sw}$ = 805 kHz)", x=-0.13, y=1.02)
+yb_ = len(sig) - 1
+bx.annotate("", (T + D, yb_ + 0.85), (T, yb_ + 0.85), arrowprops=dict(
+    arrowstyle="<->", lw=0.6, color=S.INK2, shrinkA=0, shrinkB=0))
+bx.text(T + D + 0.03, yb_ + 0.85, f"$DT$ ($D$ = {D:.4g})", ha="left", va="center",
+        fontsize=6.5, color=S.INK2)
+bx.text(0.14, len(sig) - 2.6, "input current only in phase A", ha="left", va="center",
+        fontsize=6.5, color=S.INK2)
+S.panel(bx, "b", f"Two switching phases ($f_\\mathrm{{sw}}$ = {FSW_K:.0f} kHz)", x=-0.13,
+        y=1.02)
+lines = []
+if m_cin:
+    n_, size_, rat_, c_ = m_cin.groups()
+    lines.append(f"$C_\\mathrm{{in}}$: {n_} × {size_} {rat_}, {float(c_):.0f} µF, "
+                 "in a ring outside the cell grid")
+else:
+    S.pending(bx, 0.0, -0.75, "C_in parts", "input_decoupling.json")
+if N_PH and K_OPEN and K_EQ:
+    lines.append(f"{N_PH} interleaved clock phases + $C_\\mathrm{{in}}$: "
+                 f"$k$ = {K_OPEN} (bare) → {K_EQ}")
+fig.text(0.02, 0.005, "\n".join(lines), ha="left", va="bottom", fontsize=6.5, color=S.INK,
+         linespacing=1.2)
 S.save(fig, "fig2_converter")
