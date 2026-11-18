@@ -142,10 +142,56 @@ TIERS = {
 EPS_L0 = {"A": {"Z1": 5.80, "Z2": 8.03, "Z3": 13.47}, "B": {"Z1": 2.08, "Z2": 4.15, "Z3": 2.52}}
 
 
+def local_u_v2():
+    """TCPMT round 3: the v2 local model (zero-yield production law, global kinematics,
+    ramped loading). Value = the production law in solder_law_band.json; numerical U = the
+    L0 -> L3 change (largest over the checked joints) + the 4 -> 8 cycle change of the joint
+    (solder_local_checks.json); the law spread is MODEL FORM, returned separately."""
+    band = J(TR / "solder_law_band.json")
+    if not band or not band.get("band"):
+        return None
+    chk = (J(TR / "solder_local_checks.json") or {}).get("groups", {})
+    mesh = [abs(r["L3"]["rel_to_v2"]) for r in (chk.get("mesh") or {}).values()
+            if (r.get("L3") or {}).get("rel_to_v2") is not None]
+    u_mesh = max(mesh) if mesh else None
+    eps, u_t, law = {"A": {}, "B": {}}, {}, {}
+    for lab, b in band["band"].items():
+        t, a = lab.split("_")
+        if not b.get("complete"):
+            continue
+        eps[t][a] = 1e3 * b["production"]
+        cyc = ((chk.get("cycles") or {}).get(lab) or {}).get("N8", {}).get("rel_to_v2")
+        u_t[(t, a)] = (u_mesh or 0.0) + abs(cyc or 0.0)
+        law[(t, a)] = {"U_law_rel": b["U_law_rel"], "values_x1e3": {
+            k: (1e3 * v if v is not None else None) for k, v in b["values"].items()}}
+    basis = ("v2 local model, production law " + band["production_law"] + " (4-cycle L0, "
+             f"U = mesh {u_mesh} + cycles; law band separate)")
+    return eps, u_t, law, basis, band
+
+
+def law_conditional(band, t, a, b):
+    """True when the order of a and b at tier t differs between the band laws."""
+    if not band:
+        return None
+    sgn = set()
+    for law, v in band["responses"].items():
+        ya, yb = v.get(f"{t}_{a}"), v.get(f"{t}_{b}")
+        if ya is not None and yb is not None:
+            sgn.add(yb > ya)
+    return len(sgn) > 1 if sgn else None
+
+
 def local_u():
     lm = (J(FC / "local_mesh_study.json") or {}).get("cases", {})
     u = {a: (lm.get(f"{a}_HV_S0") or {}).get("U") for a in ("Z1", "Z2", "Z3")}
     l3 = {a: (lm.get(f"{a}_HV_S0") or {}).get("production_value") for a in ("Z1", "Z2", "Z3")}
+    v2 = local_u_v2()
+    if v2 is not None:
+        eps, u_t, _law, basis, _band = v2
+        for t, d in EPS_L0.items():           # a joint the band has not solved keeps round 2
+            for a, x in d.items():
+                eps[t].setdefault(a, x)
+        return eps, u, u_t, l3, basis
     ss = J(TR / "solder_studies.json")
     eps, u_t, basis = {t: dict(v) for t, v in EPS_L0.items()}, {}, "4-cycle L0 (production)"
     if ss and (ss.get("stabilization") or {}).get("cases"):
@@ -211,11 +257,20 @@ def comparisons(rel):
             verdict = ("resolved" if abs(d) > 2 * ud else
                        "resolved with correlation credit" if abs(d) > 2 * up else
                        "not resolved")
-            res.append({"tier": t, "a": a, "b": b, "output": y, "y_a": ya, "y_b": yb,
-                        "D": d, "U_a": U.get((t, a, y)), "U_b": U.get((t, b, y)),
-                        "U_D": ud, "U_D_paired": up, "verdict": verdict,
-                        "resolved": verdict != "not resolved",
-                        "lower": a if d > 0 else b})
+            row = {"tier": t, "a": a, "b": b, "output": y, "y_a": ya, "y_b": yb,
+                   "D": d, "U_a": U.get((t, a, y)), "U_b": U.get((t, b, y)),
+                   "U_D": ud, "U_D_paired": up, "verdict": verdict,
+                   "resolved": verdict != "not resolved",
+                   "lower": a if d > 0 else b}
+            if y == "eps":
+                # TCPMT round 3: the solder-law band is model form -- a resolved local
+                # ranking that another declared law reverses is CONDITIONAL on the law
+                v2 = local_u_v2()
+                if v2 is not None:
+                    _e, _u, law, _b, band = v2
+                    row["law_band"] = {"a": law.get((t, a)), "b": law.get((t, b))}
+                    row["conditional_on_law"] = law_conditional(band, t, a, b)
+            res.append(row)
     return res, U, eps, eps_basis
 
 
@@ -275,6 +330,11 @@ def main():
            "U": {f"{t}.{a}.{y}": u for (t, a, y), u in U.items()},
            "eps_basis": eps_basis, "eps": eps, "comparisons": res, "macros": mac,
            "latex_supplement": latex(prod, rel, U, res)}
+    v2 = local_u_v2()
+    if v2 is not None:                     # the solder-law band, for the model-form step
+        out["eps_law_band"] = {f"{t}.{a}": v for (t, a), v in v2[2].items()}
+        out["eps_law_rankings"] = v2[4].get("rankings")
+        out["eps_law_rankings_hold"] = v2[4].get("rankings_hold_across_laws")
     OUT.write_text(json.dumps(out, indent=1, default=float))
     TAB.write_text("\n".join(latex(prod, rel, U, res)) + "\n")
     for r in res:
