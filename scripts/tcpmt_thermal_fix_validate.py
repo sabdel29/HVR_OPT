@@ -126,6 +126,8 @@ RUNS = {
                        "(new_Z1_B used 0.5 under-relaxation)"),
     "base_Z2_B": ("base", "Z2", ["z2_cooled_tim"], "before: Z2 cooling B"),
     "new_Z2_B": ("new", "Z2", ["z2_cooled_tim"], "after: Z2 cooling B (equal-rise plate)"),
+    "new_Z2_B_fullflow": ("new", "Z2", ["z2_cooled_tim_fullflow"],
+                          "after, bottom plate at the legacy full flow"),
 }
 KEYS = ("P_loss_w", "T_max_C", "die_T_max_C", "die_T_mean_C", "T_hs_C", "T_ls_C", "T_ind_C",
         "T_caps_C", "q_top_W", "q_extra_W", "energy_residual_rel", "et_iters", "et_converged",
@@ -177,6 +179,7 @@ def collect(out_json):
     rec["deltas"]["new_Z1_B - new_Z1_B_fullflow"] = d("new_Z1_B_fullflow", "new_Z1_B")
     rec["deltas"]["new_Z1_B_final - new_Z1_B"] = d("new_Z1_B", "new_Z1_B_final")
     rec["deltas"]["new_Z2_B - base_Z2_B"] = d("base_Z2_B", "new_Z2_B")
+    rec["deltas"]["new_Z2_B - new_Z2_B_fullflow"] = d("new_Z2_B_fullflow", "new_Z2_B")
     Path(out_json).write_text(json.dumps(rec, indent=1, default=float))
     return rec
 
