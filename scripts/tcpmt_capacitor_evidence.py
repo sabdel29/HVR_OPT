@@ -137,15 +137,16 @@ def latex(rows):
             ver = "fails the $C_1$ rating"
         else:
             ver = "fails capacitance or area"
-        L.append(f"{r['maker']} {r['part']}\\footnotemark & {r['status']} & {vr} & "
+        L.append(f"{r['maker']} {r['part']} & {r['status']} & {vr} & "
                  f"{f(r['C_eff_uF']['32V'], 3)}/{f(r['C_eff_uF']['16V'], 3)} & {size} & {parts} & "
                  f"{ver} \\\\")
-        L.append(f"\\footnotetext{{\\url{{{r['url']}}}}}")
     L += [r"\bottomrule", r"\end{longtable}",
           r"No part meets the 100-\textmu m or the 150-\textmu m constraint together with the "
           r"voltage, capacitance and area requirements. Not covered by this search: Samsung "
           r"Electro-Mechanics, Taiyo Yuden, Kyocera AVX and Vishay catalogues; TDK, Mouser and "
-          r"Digi-Key pages blocked automated access."]
+          r"Digi-Key pages blocked automated access.", "", r"\noindent Sources:", r"\begin{itemize}"]
+    L += [f"\\item {r['maker']} {r['part']}: \\url{{{r['url']}}}" for r in rows]
+    L += [r"\end{itemize}"]
     return L
 
 

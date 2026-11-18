@@ -31,8 +31,13 @@ def J(p):
 
 
 def tex(s):
-    return (str(s).replace("\\", r"\textbackslash{}").replace("_", r"\_").replace("%", r"\%")
-            .replace("&", r"\&").replace("#", r"\#"))
+    out = []
+    for ch in str(s):
+        out.append({"\\": r"\textbackslash{}", "_": r"\_", "%": r"\%", "&": r"\&",
+                    "#": r"\#", "^": r"\textasciicircum{}", "~": r"\textasciitilde{}",
+                    "<": r"\textless{}", ">": r"\textgreater{}", "$": r"\$", "{": r"\{",
+                    "}": r"\}"}.get(ch, ch))
+    return "".join(out)
 
 
 def num(x, d=3):
@@ -387,13 +392,39 @@ def capacitor_tables():
     d = J(TR / "cap49_comparison.json")
     if d:
         L += [r"\subsection*{S14. Flying capacitors of the 49-cell design}",
-              r"\begin{verbatim}"] + json_lines(d) + [r"\end{verbatim}", ""]
+              r"Worst position ripple $\Delta V_{C_i,pp}/V_{C_i}$ (limit 10\,\%) with $-10$\,\% "
+              r"tolerance; effective capacitance at bias and temperature from vendor data.",
+              r"\begin{tabular}{@{}lrrrrrr@{}}", r"\toprule",
+              r"Part & Rated V & $C_1$ rating & ESR (m$\Omega$) & \multicolumn{3}{c}{Ripple at "
+              r"25 / 105 / 125\,$^\circ$C} \\", r"\midrule"]
+        for name, c in d["parts"].items():
+            rp = [c["by_temperature"][k]["ripple_worst"] for k in ("25C", "105C", "125C")]
+            rs = " & ".join("--" if (x is None or x == float("inf") or x > 9) else
+                            f"{100 * x:.1f}\\,\\%" for x in rp)
+            L.append(f"{tex(name)} & {c['v_max']:.0f} & {'pass' if c['rating_ok_C1'] else 'fail'} "
+                     f"& {c['esr_mohm_at_fsw']:.2f} & {rs} \\\\")
+        L += [r"\bottomrule", r"\end{tabular}", ""]
     else:
         L += placeholder("S14. Flying capacitors of the 49-cell design", "cap49_comparison.json")
     d = J(TR / "dse_caprule.json")
     if d:
         L += [r"\subsection*{S15. Regulator-count screen before and after the capacitor-rule "
-              r"correction}", r"\begin{verbatim}"] + json_lines(d, 120) + [r"\end{verbatim}", ""]
+              r"correction}",
+              f"Legacy configuration reproduces the published screen: "
+              f"{'yes' if d['legacy_reproduces_published'] else 'no'}. Total loss (W) and member "
+              r"$N/K$ per count; --: infeasible.",
+              r"\begin{tabular}{@{}rllll@{}}", r"\toprule",
+              r"$M$ & Published & + voltage rule & + effective $C$ & + ESR($f$) \\", r"\midrule"]
+        for r in d["per_count"]:
+            def c(t):
+                x = r.get(t)
+                if not x:
+                    return "--"
+                nk = x["arch"].replace("N=", "").replace(",K=", "/").split(",")[0]
+                return f"{x['P_total_W']:.1f} ({nk})"
+            L.append(f"{r['M']} & {c('etm35')} & {c('etm35_caprule')} & {c('etm35_caprule_ripple')} "
+                     f"& {c('etm35_caprule_full')} \\\\")
+        L += [r"\bottomrule", r"\end{tabular}", "", tex(d["conclusion"]) + ".", ""]
     else:
         L += placeholder("S15. Regulator-count screen, corrected rule", "dse_caprule.json")
     return L
