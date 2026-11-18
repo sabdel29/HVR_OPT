@@ -1,0 +1,269 @@
+# TCPMT revision, round 3 -- mechanics and solder model (expert-review findings 1-11).
+#
+# ONE file for every new mechanical knob, so no card value is hard-coded in a script.
+# Tier cards (k, E, nu, CTE) are NOT repeated here: they are read from the stack the
+# builders assemble (configs/phase0b/package_stack.yaml and the per-architecture configs),
+# so a homogenized tier card merged there flows into every case below unchanged.
+# Status words follow configs/phase0b: SOURCE_BACKED, DERIVED, ASSUMPTION, PROVISIONAL.
+
+# ------------------------------------------------------------------------------------
+# 1. SOLDER CONSTITUTIVE LAWS (finding 1)
+# ------------------------------------------------------------------------------------
+# CalculiX 2.23 integrates eps_dot = A (sigma_vm - sigma_y)^n under *VISCO (overstress
+# law, results/phase0l/CALCULIX_CREEP_IMPLEMENTATION_AUDIT.md). Every law below is written
+# with a ZERO yield surface (a flat *PLASTIC at yield_zero_MPa), so the solver integrates
+# A sigma_vm^n: the law the card was fitted in. A Garofalo (sinh) law has no CalculiX
+# form without a recompiled user subroutine, so it is carried as a temperature-dependent
+# Norton surrogate refitted over the stress window the joints actually visit (iterated to
+# self-consistency, scripts/tcpmt_mech_law_band.py); the fit error travels with the card.
+solder:
+  production_law: schubert2003
+  band_laws: [schubert2003, xiao_armstrong2005, xa_measured_norton]
+  elastic:
+    E_ref_MPa: {value: 45000.0, status: ASSUMPTION,
+                note: "midpoint of the 40-50 GPa room-temperature band, Paska et al. 2024"}
+    E_slope_MPa_per_K: {value: -120.0, status: ASSUMPTION}
+    E_floor_MPa: 5000.0
+    T_ref_C: 25.0
+    nu: {value: 0.36, status: ASSUMPTION}
+  cte_per_K: {value: 21.5e-6, status: ASSUMPTION, note: "commonly quoted 21-24 ppm/K"}
+  yield_zero_MPa: 1.0e-6
+  card_rows_C: [-40.0, 150.0, 2.5]       # *ELASTIC / *PLASTIC / *CREEP rows (start, stop, step)
+  #: incplas.f replaces A t^m < 1e-20 by 1e-20; a fit needing less is constrained (5 % margin)
+  norton_A_floor: 1.05e-20
+  window:
+    weighting: strain                   # strain (d PEEQ x V) | time (dt x V)
+    quantiles: [0.05, 0.95]
+    initial_MPa: {hot: [5.0, 40.0], cold: [10.0, 60.0]}
+    max_iterations: 6
+    tol_window_rel: 0.10
+    tol_response_rel: 0.01
+    #: rows at and above this temperature use the hot-dwell window, at and below 25 C the
+    #: cold one, geometric blend between (visited only during the ramps)
+    T_hot_assign_C: 75.0
+  laws:
+    schubert2003:
+      form: garofalo
+      C1_per_s: 277984.0
+      alpha_per_MPa: 0.02447
+      n: 6.41
+      Q_over_R_K: 6500.0
+      alloy: "SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature"
+      source: >-
+        Schubert, Dudek, Auerswald, Gollhardt, Michel, Reichl, Proc. 53rd ECTC 2003,
+        pp. 603-610, doi:10.1109/ECTC.2003.1216343; reprinted Sci. Rep. 15 (2025)
+        doi:10.1038/s41598-025-06902-0 Table 2 and Materials 16 (2023) 4291 Table 4
+      calibration:
+        T_C: null                       # not stated in the reprints the project holds: OPEN
+        stress_MPa: null
+        note: "constants reprinted without their data window; compared against the measured
+               Sn3.9Ag0.6Cu points below inside that window"
+    xiao_armstrong2005:
+      form: garofalo
+      C1_per_s: 0.184
+      alpha_per_MPa: 0.221
+      n: 2.89
+      Q_J_per_mol: 62000.0
+      alloy: "Sn3.9Ag0.6Cu (NOT SAC305; DEFECT #41)"
+      source: >-
+        Xiao and Armstrong, J. Electron. Mater. 34(2):196-211, 2005,
+        doi:10.1007/s11664-005-0233-z, constants as tabulated by Yuan et al. 2023,
+        Materials 16(14):4922, Table 6
+      calibration: {T_C: [45.0, 150.0], stress_MPa: [7.51, 15.92],
+                    note: "19 steady-state tensile creep points (Yuan 2023 Table 5)"}
+    xa_measured_norton:
+      form: measured_norton             # solder_model.norton_at: per-temperature Norton fits
+      alloy: "Sn3.9Ag0.6Cu (NOT SAC305)"
+      source: "the 19 measured points of Xiao and Armstrong 2005 (Yuan 2023 Table 5), fitted
+               per temperature; Arrhenius in rate at 10 MPa between and outside 45-150 C"
+      calibration: {T_C: [45.0, 150.0], stress_MPa: [7.51, 15.92]}
+      note: "the Phase-0L NORTON-ZY form (variant M1 of the round-2 study): the production
+             calibration with the yield threshold removed"
+  #: kept only to reproduce the round-1/2 numbers (overstress card with the 2 % isotropic
+  #: hardening of the Chaboche fit); never a band member
+  legacy_law: phase0i_epc
+
+# ------------------------------------------------------------------------------------
+# 2-3. LOCAL SUBMODEL (findings 2, 3, 11b)
+# ------------------------------------------------------------------------------------
+local:
+  harness: v2                           # v2 = scripts/tcpmt_mech_submodel.py; legacy = Phase-0I
+  bc_mode: global                       # global | uz | legacy
+  #: global: both pad faces follow the global cut-boundary displacement field of their own
+  #: surface (translation, in-plane stretch, rotation), linearised over the pad footprint
+  pad_fit_samples: 5                    # samples per side over the pad when fitting the face field
+  element: C3D8                         # C3D8 | C3D8I | C3D8R (checked in tcpmt_mech_local_checks)
+  level: L0
+  n_cycles: 4
+  ramp_s: 3.0                           # linear ramp (AMPLITUDE=RAMP) at every load change
+  dwell_s: 300.0                        # hold at each extreme after the ramp
+  T_cold_C: 25.0
+  T_stress_free_C: 25.0
+  cetol: 0.05
+  increments:
+    ramp: {dt0_s: 0.01, dt_min_s: 1.0e-9, dt_max_s: 0.5}
+    dwell: {dt0_s: 0.05, dt_min_s: 1.0e-9, dt_max_s: 15.0}
+  dwell_sensitivity_s: [60.0, 300.0, 900.0]
+  ramp_sensitivity_s: [3.0, 30.0]
+  copper: {E_MPa: 117000.0, nu: 0.34, cte_per_K: 16.6e-6,
+           note: "the pad card of joint.write_inp, kept"}
+
+# ------------------------------------------------------------------------------------
+# 4. INTERCONNECT LAYERS SEARCHED (finding 4)
+# ------------------------------------------------------------------------------------
+# driver = relative in-plane displacement over the layer height (engineering shear strain)
+# at every site; the BGA keeps its legal 0.8-mm lattice, the fine-pitch layers are
+# evaluated at the global mesh nodes of the layer (their pitch is below the mesh size).
+interconnects:
+  Z1:
+    - {layer: bga, label: "BGA, SAC305 0.8 mm", sites: bga_lattice, geometry: bga}
+    - {layer: interface, label: "die-converter microbumps 10 um", sites: mesh_nodes,
+       geometry: microbump}
+  Z2:
+    - {layer: bga, label: "BGA, SAC305 0.8 mm", sites: bga_lattice, geometry: bga}
+    - {layer: conv_attach_vr_substrate, label: "VR-substrate Cu pillar 30 um",
+       sites: mesh_nodes, geometry: z2_pillar}
+    - {layer: interface, label: "die microbumps 10 um", sites: mesh_nodes, geometry: microbump}
+  Z3:
+    - {layer: bga, label: "BGA, SAC305 0.8 mm", sites: bga_lattice, geometry: bga}
+    - {layer: z3_attach_vr_pcb, label: "VR-board SAC attach 100 um", sites: mesh_nodes,
+       geometry: z3_bump}
+    - {layer: interface, label: "die microbumps 10 um", sites: mesh_nodes, geometry: microbump}
+  top_k: 10
+geometries:                             # um; equal-area square solder prism as the BGA model
+  bga: {solder_d: 400.0, solder_h: 300.0, pad: 400.0, pad_t: 20.0, cu_post_h: 0.0,
+        source: "Krishnakumar 2026 Table III (joint.py)"}
+  z2_pillar: {solder_d: 15.0, solder_h: 16.0, pad: 18.0, pad_t: 2.0, cu_post_h: 14.0,
+              source: "configs/phase0nt/z2_2p4mm_cutout.yaml vr_attach (Au et al. ECTC 2016)",
+              pad_note: "ASSUMPTION: UBM/pad 1.2 x the pillar, 2 um"}
+  z3_bump: {solder_d: 200.0, solder_h: 100.0, pad: 200.0, pad_t: 15.0, cu_post_h: 0.0,
+            source: "configs/phase0nz/z3_board_backside.yaml vr_attach",
+            pad_note: "ASSUMPTION: pad = bump diameter, 15 um"}
+  microbump: {solder_d: 10.0, solder_h: 10.0, pad: 12.0, pad_t: 1.5, cu_post_h: 0.0,
+              source: "results/phase0mr/bump_layer_effective_tensor.csv (r 5 um, pitch 20 um)",
+              pad_note: "ASSUMPTION: pad 1.2 x bump, 1.5 um"}
+
+# ------------------------------------------------------------------------------------
+# 5. REFLOW / BONDING WARPAGE (finding 5)
+# ------------------------------------------------------------------------------------
+reflow:
+  #: isothermal states; the warpage is measured against the stated stress-free reference
+  states:
+    bga_reflow: {T_C: 245.0, T_stress_free_C: 25.0,
+                 note: "SAC305 peak reflow; package reflowed onto the board unmounted"}
+    bga_solidus: {T_C: 217.0, T_stress_free_C: 25.0,
+                  note: "SAC305 solidus: the shape the BGA joints freeze in"}
+    tcb_bond: {T_C: 250.0, T_stress_free_C: 25.0,
+               note: "thermocompression bonding of the fine-pitch attach (SnAg cap)"}
+  cure_reference_variant_C: 150.0       # the same states against an encapsulant-cure reference
+  #: which part is reflowed in each architecture (layers kept in the unmounted model)
+  assemblies:
+    Z1: {bga: package, tcb: package}
+    Z2: {bga: package, tcb: package_no_converter}
+    Z3: {bga: package_no_converter, tcb: board_with_converter}
+  limits:
+    bga_coplanarity_room_um: {value: 80.0, status: SOURCE_BACKED,
+                              source: "JEP95 Table I as applied in the IMAPSource 2025 lidded
+                                       FC-CSP study (phase0h criterion DB)"}
+    bga_reflow_warpage_um: {value: [-120.0, 170.0], status: SOURCE_BACKED,
+                            source: "SPP-024 Table II, 245 C, as applied in the IMAPSource 2025
+                                     study (phase0h criterion DB); body 21 mm vs 30 mm here"}
+    tcb_coplanarity_um: {value: 8.0, status: ASSUMPTION,
+                         source: "declared: half the 16-um solder cap of the 30-um-pitch pillar
+                                  (Au et al. 2016 geometry) must absorb the non-coplanarity;
+                                  no standard limit found in the project's sources"}
+    z3_attach_coplanarity_um: {value: 50.0, status: ASSUMPTION,
+                               source: "declared: half the 100-um bump standoff"}
+
+# ------------------------------------------------------------------------------------
+# 6. BOARD, MOUNTING, CLAMP (finding 6)
+# ------------------------------------------------------------------------------------
+board:
+  extent_factor_options: [1.0, 2.0, 3.0]   # board side / package side
+  production_extent_factor: 1.0
+  far_field_h_max_mm: 4.0                  # coarsest in-plane element of the board ring
+  mounting:
+    #: free = 3-2-1 on the board underside (production); screws = u_z = 0 (and in-plane
+    #: pinned at one, sliding at another) on node patches at the board corners;
+    #: edge = u_z = 0 along the board-underside perimeter (simply supported)
+    options: [free, screws, edge]
+    screw_inset_mm: 3.0
+    screw_patch_mm: 2.0
+  clamp:
+    #: cold-plate clamping preload: uniform pressure on the TIM top (die footprint); the
+    #: reaction goes to the board mounting (screws) or a backplate under the package
+    force_N: {value: 200.0, status: ASSUMPTION,
+              note: "45 lbf class server cold-plate load on a 22-mm die (0.40 MPa); swept"}
+    force_sweep_N: [100.0, 200.0, 400.0]
+    support: screws                        # screws | backplate
+  h_bottom_W_m2K_variants: [10.0, 60.0, 100.0, 520.0]
+
+# ------------------------------------------------------------------------------------
+# 7. ENCAPSULANT VARIANTS (finding 7)
+# ------------------------------------------------------------------------------------
+# Applied to the out-of-cell converter fill (material underfill_homog of the physical
+# builders); conductivity unchanged, so they run on the converged fields (mechanics only).
+# E(T) = E_r + (E_g - E_r) / (1 + exp((T - Tg) / w)); the instantaneous CTE switches
+# from alpha1 to alpha2 over the same width, and the card carries the SECANT CTE about
+# the stress-free temperature, as *EXPANSION, ZERO= requires.
+encapsulant:
+  material: underfill_homog
+  T_rows_C: [-40.0, 260.0, 5.0]
+  variants:
+    encap_uf_tg:
+      what: "capillary underfill class with its glass transition"
+      E_g_MPa: 9000.0
+      E_r_MPa: 400.0
+      alpha1_per_K: 30.0e-6
+      alpha2_per_K: 95.0e-6
+      Tg_C: 130.0
+      width_K: 8.0
+      nu: 0.32
+      status: ASSUMPTION
+      source: "typical capillary-underfill datasheet class (Tg 120-140 C TMA); declared range"
+    encap_emc_lowcte:
+      what: "low-CTE mold compound class with its glass transition"
+      E_g_MPa: 22000.0
+      E_r_MPa: 1500.0
+      alpha1_per_K: 8.0e-6
+      alpha2_per_K: 35.0e-6
+      Tg_C: 165.0
+      width_K: 8.0
+      nu: 0.30
+      status: ASSUMPTION
+      source: "typical high-filler epoxy mold compound datasheet class; declared range"
+    encap_emc_lowcte_const:
+      what: "the same mold compound, glassy values at every temperature (isolates Tg)"
+      E_g_MPa: 22000.0
+      E_r_MPa: 22000.0
+      alpha1_per_K: 8.0e-6
+      alpha2_per_K: 8.0e-6
+      Tg_C: 165.0
+      width_K: 8.0
+      nu: 0.30
+      status: ASSUMPTION
+      source: "as encap_emc_lowcte without the transition"
+
+# ------------------------------------------------------------------------------------
+# 11a. GLOBAL BGA LAYER CARD (finding 11)
+# ------------------------------------------------------------------------------------
+bga_global:
+  #: production keeps board.py (E 20 GPa, 20.5 ppm/K, STAMP-2.5D) smeared by the ball area
+  #: fraction; the reconciled variant takes the local solder card above (E(T), nu, CTE)
+  #: smeared the same way, temperature-dependent
+  reconciled_variant: bga_card_local
+  area_fraction_from: board.AREA_FRACTION
+
+# ------------------------------------------------------------------------------------
+# 8. COOLING-B ROBUSTNESS (finding 8)
+# ------------------------------------------------------------------------------------
+# A mechanics-only variant NAME@B re-runs the thermoelastic solve on the converged field of
+# the architecture's cooling-B case instead of the production (cooling-A) field.
+cooling_B_base:
+  Z1: z1_bottom_plate_tim
+  Z2: z2_cooled_tim
+  Z3: z3_land_t40_B_fvmap
+#: converged-field directories when not under $HVR_FIELDS/etm_<arch>_HV_S0__<variant>
+#: (a case work tree is accepted: the last E-T iteration's thermal result is used)
+cooling_B_field_fallback:
+  Z3: /home/beams0/SABDELZAHER/ETM_project/scratch_z3land/fc_sens/z3_land_t40_B_fvmap/Z3_HV_S0_h1.1_r21
