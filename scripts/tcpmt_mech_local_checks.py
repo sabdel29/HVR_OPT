@@ -36,7 +36,9 @@ CHAIN = {"R2": dict(law="legacy", bc="legacy", ramp_s=0.0),
          "law": dict(bc="legacy"),
          "uz": dict(bc="uz"),
          "v2": dict(),
-         "v2_step": dict(ramp_s=0.0)}
+         # a STEP load on a zero-yield card meets the full elastic spike: the first increment
+         # must start at 1e-9 s (round-2 constitutive study: 1e-6 s fails, 1e-8 s runs)
+         "v2_step": dict(ramp_s=0.0, legacy_inc0=1e-9)}
 DWELL = {f"dwell{d:g}": dict(dwell_s=d) for d in LAW.cfg()["local"]["dwell_sensitivity_s"]
          if abs(d - LAW.cfg()["local"]["dwell_s"]) > 1e-9}
 DWELL.update({f"ramp{r:g}": dict(ramp_s=r) for r in LAW.cfg()["local"]["ramp_sensitivity_s"]
