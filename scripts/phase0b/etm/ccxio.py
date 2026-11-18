@@ -136,7 +136,11 @@ def write_thermal(m: Mesh, mats: dict, tiles, stack: dict, p_die: float,
 # ---------------------------------------------------------------------------
 
 def write_structural(m: Mesh, mats: dict, temps: np.ndarray, stack: dict,
-                     bc: str, path: Path, solver: str = "ITERATIVE CHOLESKY") -> dict:
+                     bc: str, path: Path, solver: str = "ITERATIVE CHOLESKY",
+                     bc_params: dict | None = None, loads: list | None = None) -> dict:
+    """`bc_params` and `loads` (TCPMT round 3, finding 6) serve the mounting variants:
+    BC_BOARD_SCREWS / _PINNED / BC_BOARD_EDGE / BC_BACKPLATE, and extra step load lines
+    (e.g. the cold-plate clamp *DLOAD). Both None reproduces every earlier deck."""
     sb = stack["structural_bc"]
     t_ref = sb["t_ref"]["value"]
 
@@ -146,7 +150,7 @@ def write_structural(m: Mesh, mats: dict, temps: np.ndarray, stack: dict,
     for mat in sorted(set(m.elem_material)):
         mm = mats[mat]
         L += [f"*MATERIAL, NAME={mat.upper()}"] + mm.ccx_elastic()
-        L += [f"*EXPANSION, ZERO={t_ref}", f"{mm.cte:.9g}"]
+        L += [f"*EXPANSION, ZERO={t_ref}"] + mm.ccx_expansion()
         L += [f"*SOLID SECTION, ELSET=E_{mat.upper()}, MATERIAL={mat.upper()}"]
 
     zbot = float(m.zs.min())
@@ -205,18 +209,66 @@ def write_structural(m: Mesh, mats: dict, temps: np.ndarray, stack: dict,
         info["anchor_nodes"] = {"A_xyz": A, "B_yz": B, "C_z": C}
         info["dofs_removed"] = 6
         info["note"] = "explicit BGA + PCB stack, free assembly (3-2-1 only)"
+    elif bc in ("BC_BOARD_SCREWS", "BC_BOARD_SCREWS_PINNED", "BC_BOARD_EDGE", "BC_BACKPLATE"):
+        # TCPMT round 3 (finding 6): mounting of a board region. u_z = 0 on node patches at
+        # the four board corners (screws; _PINNED also fixes x, y: a rigid cold chassis),
+        # along the underside perimeter (edge), or under the package footprint (a
+        # backplate reacting a clamp); the free in-plane rigid-body modes are removed at two
+        # constrained nodes, so thermal expansion stays free unless pinned.
+        bp = bc_params or {}
+        if bp.get("z_mm") is not None:        # the board underside when it is not lowest (Z3)
+            bot = m.node_ids_at_z(float(bp["z_mm"]))
+            info["mounting_plane_z_mm"] = float(bp["z_mm"])
+        q = m.nodes[bot - 1]
+        x0, x1, y0, y1 = q[:, 0].min(), q[:, 0].max(), q[:, 1].min(), q[:, 1].max()
+        if bc.startswith("BC_BOARD_SCREWS"):
+            ins = float(bp.get("inset_mm", 3.0))
+            hp = 0.5 * float(bp.get("patch_mm", 2.0))
+            sel = []
+            for cx in (x0 + ins, x1 - ins):
+                for cy in (y0 + ins, y1 - ins):
+                    d = np.maximum(np.abs(q[:, 0] - cx), np.abs(q[:, 1] - cy))
+                    pick = bot[d <= hp + 1e-9]
+                    if not len(pick):            # coarse far-field grid: the nearest node
+                        pick = bot[[int(np.argmin(d))]]
+                    sel.append(pick)
+            zn = np.unique(np.concatenate(sel))
+        elif bc == "BC_BOARD_EDGE":
+            zn = bot[(np.abs(q[:, 0] - x0) < 1e-9) | (np.abs(q[:, 0] - x1) < 1e-9)
+                     | (np.abs(q[:, 1] - y0) < 1e-9) | (np.abs(q[:, 1] - y1) < 1e-9)]
+        else:
+            h = float(bp["footprint_half_mm"])
+            zn = bot[(np.abs(q[:, 0]) <= h + 1e-9) & (np.abs(q[:, 1]) <= h + 1e-9)]
+        if bc == "BC_BOARD_SCREWS_PINNED":
+            L += ["*BOUNDARY"] + [f"{int(n)},1,3" for n in zn]
+            info["anchor_nodes"] = {}
+        else:
+            A, B, _ = _anchors(zn)
+            L += ["*BOUNDARY"] + [f"{int(n)},3,3" for n in zn] + [f"{A},1,2", f"{B},2,2"]
+            info["anchor_nodes"] = {"A_xy": A, "B_y": B}
+        info["mounting_nodes"] = int(len(zn))
+        info["dofs_removed"] = int(len(zn) * (3 if bc.endswith("PINNED") else 1)
+                                   + (0 if bc.endswith("PINNED") else 3))
+        info["bc_params"] = bp
     else:
         raise ValueError(f"unknown BC variant {bc!r}")
 
     # Reaction printout restricted to the constrained nodes: with BC-A only the three
     # anchors carry reactions, and printing RF for every node produces a huge .dat.
-    L += _fmt_set("NRF", np.array(sorted(info["anchor_nodes"].values()))
-                  if bc in ("BC_A", "BC_BOARD") else bot, "NSET")
+    if bc in ("BC_A", "BC_BOARD"):
+        L += _fmt_set("NRF", np.array(sorted(info["anchor_nodes"].values())), "NSET")
+    elif bc.startswith("BC_BOARD_") or bc == "BC_BACKPLATE":
+        L += _fmt_set("NRF", np.asarray(zn), "NSET")
+    else:
+        L += _fmt_set("NRF", bot, "NSET")
 
     L += ["*INITIAL CONDITIONS, TYPE=TEMPERATURE", f"NALL,{t_ref}"]
     step = "*STATIC" if not solver else f"*STATIC, SOLVER={solver}"
     L += ["*STEP", step, "*TEMPERATURE"]
     L += [f"{i+1},{temps[i]:.6f}" for i in range(m.n_nodes)]
+    if loads:
+        L += list(loads)
+        info["extra_load_lines"] = len(loads)
     L += ["*NODE FILE", "U", "*EL FILE", "S", "*NODE PRINT, NSET=NRF", "RF", "*END STEP"]
     info["solver"] = solver or "SPOOLES"
 

@@ -114,6 +114,17 @@ EXTRA_DEPOSITS = None
 #:                (the mechanical-to-thermal TIM feedback of the TCPMT revision,
 #:                tcpmt_review_variants.py); None on the production path
 TOP_FILM_HOOK = None
+#: TCPMT round 3 (findings 2, 4, 6, 9). Structural boundary and extra step loads of the
+#: thermoelastic solve, set only by the mounting/clamp studies (tcpmt_mech_board.py):
+#:   STRUCT_BC     ccxio boundary name; production "BC_BOARD" (3-2-1 on the board underside)
+#:   STRUCT_PARAMS dict for the mounting boundaries (screw inset/patch, footprint)
+#:   STRUCT_LOADS  callable (mesh) -> list of deck lines inserted in the structural step
+STRUCT_BC = "BC_BOARD"
+STRUCT_PARAMS = None
+STRUCT_LOADS = None
+#: every configured interconnect layer is searched and the cut-boundary kinematics of its
+#: candidate sites kept with the case (tcpmt_mech_kinematics); False skips it
+INTERCONNECT_SEARCH = True
 
 # --- material corrections -------------------------------------------------
 TSV_N_PER_CELL = 1444      # the adopted 'A_same_field' fabric (tsv_fields)
@@ -657,22 +668,48 @@ def joint_search(m, U, Tn, arch, tiles):
             "critical": ranked[0] if ranked else None}
 
 
+def interconnect_kinematics(m, U, Tn, mats, st, arch, js):
+    """Findings 2, 4, 9: every interconnect layer's site search (driver |du_xy| / h), the
+    cut-boundary kinematics of its candidate sites (the v2 local submodel's boundary
+    conditions), and the membrane / bending split of du at the BGA maximum-du site."""
+    import pkg_rdl_network as K
+    import tcpmt_mech_kinematics as KIN
+    cut = K.architecture_cutout_mm(arch) if arch != "Z3" else None
+    res = {"interconnects": KIN.interconnect_search(m, U, Tn, arch, cut)}
+    c = (js or {}).get("critical")
+    if c:
+        t_ref = st["structural_bc"]["t_ref"]["value"]
+        res["decomposition_bga_critical"] = KIN.decompose_site(m, U, Tn, mats, c["x_mm"],
+                                                               c["y_mm"], t_ref=t_ref)
+    return res
+
+
 def mechanics(m, mats, st, Tn, wd, arch, tiles, solver="", threads=None):
     import production_et as PE
     ccxio = PE.ccxio
     t0 = time.time()
     si = wd / "structural.inp"
     wd.mkdir(parents=True, exist_ok=True)
-    ccxio.write_structural(m, mats, Tn, st, "BC_BOARD", si, solver=solver)
+    info = ccxio.write_structural(m, mats, Tn, st, STRUCT_BC, si, solver=solver,
+                                  bc_params=STRUCT_PARAMS,
+                                  loads=STRUCT_LOADS(m) if STRUCT_LOADS else None)
     ccxio.run_ccx(si, threads=threads or THREADS)
     sres = ccxio.read_frd(si.with_suffix(".frd"))
     sm = PE.metrics.structural_metrics(m, sres["DISP"], sres["STRESS"], st)
     js = joint_search(m, sres["DISP"], Tn, arch, tiles)
-    return {"die_warpage_pv_um": sm["die_warpage_pv_um"],
-            "pkg_warpage_pv_um": sm.get("pkg_warpage_pv_um"),
-            "joint_search": js, "wall_s": time.time() - t0,
-            "structural_solver": solver or "SPOOLES",
-            "structural_threads": threads or THREADS}
+    out = {"die_warpage_pv_um": sm["die_warpage_pv_um"],
+           "pkg_warpage_pv_um": sm.get("pkg_warpage_pv_um"),
+           "joint_search": js, "wall_s": time.time() - t0,
+           "structural_solver": solver or "SPOOLES",
+           "structural_threads": threads or THREADS}
+    if STRUCT_BC != "BC_BOARD" or STRUCT_LOADS:
+        out["structural_bc"] = {k: v for k, v in info.items() if k != "anchor_coords"}
+    if INTERCONNECT_SEARCH:
+        try:
+            out.update(interconnect_kinematics(m, sres["DISP"], Tn, mats, st, arch, js))
+        except Exception as e:                    # recorded, never silently dropped
+            out["interconnect_error"] = str(e)[-600:]
+    return out
 
 
 def _raise_stack_limit():

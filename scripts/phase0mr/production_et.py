@@ -204,6 +204,13 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
         fill_extent = (min(t.x0 for t in tiles), max(t.x1 for t in tiles),
                        min(t.y0 for t in tiles), max(t.y1 for t in tiles))
         Z3P.check_fill_extent(physical_z3, fill_extent)
+    # TCPMT round 3 (finding 6): opt-in board LARGER than the package. HVR_BOARD_EXTENT_FACTOR
+    # = board side / substrate side (2-3 for a board region with far-field mounting);
+    # unset or 1 reproduces the historical coupon exactly.
+    _bf = float(os.environ.get("HVR_BOARD_EXTENT_FACTOR") or 1.0)
+    _lx = st["geometry"]["power_substrate"]["size_x"]["value"]
+    board_extent = _bf * _lx if _bf > 1.0 + 1e-9 else None
+    _bh = os.environ.get("HVR_BOARD_FAR_H_MM")
     m = build(tiles, st, h_sub_mm, h_xy=h_xy, z_scale=1.4, support_layer=False,
               extra_bottom_layers=extra, explicit_bottom_layers=explicit_bottom,
               extra_mid_layers=mid,
@@ -211,7 +218,8 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
                                       and ZG.CONV_PLACE.get(arch) == "in"),
               conv_fill_material=conv_fill, conv_layer_names=conv_names,
               interface_material=iface_mat, cutout_mm=cut,
-              conv_fill_extent=fill_extent)
+              conv_fill_extent=fill_extent, board_extent_mm=board_extent,
+              board_h_max_mm=float(_bh) if _bh else None)
     if physical_z3 is not None:
         # the PCB 1 V via fields exist only under the cells: those board elements take the
         # via-field card, the rest of the board keeps the board card
