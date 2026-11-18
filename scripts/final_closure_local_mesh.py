@@ -37,7 +37,7 @@ os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 R = Path(__file__).resolve().parents[1]
 # Amendment 5 (TCPMT revision): the fixed-width averaging band is read by joint.py at
 # import time, so it is set from the policy before the harness is imported.
-_A5 = next((a for a in json.loads((R / "research" / "final_closure" / "local_mesh_policy.json")
+_A5 = next((a for a in json.loads((Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "local_mesh_policy.json")
             .read_text()).get("amendments", []) if a.get("id") == 5), None)
 if _A5:
     os.environ["JOINT_BAND_FRAC"] = repr(float(_A5["band_frac"]))
@@ -48,7 +48,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import final_closure_local_extract as X                             # noqa: E402
 from hvr_scratch import path as scratch                             # noqa: E402
 
-OUT = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 POLICY = json.loads((OUT / "local_mesh_policy.json").read_text())
 LEVELS = POLICY["levels"]
 TOL = POLICY["tolerance_rel"]

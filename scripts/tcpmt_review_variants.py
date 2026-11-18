@@ -43,7 +43,7 @@ from hvr_scratch import path as scratch                             # noqa: E402
 
 E = S.E
 SCEN = "HV_S0"
-OUT = R / "research" / "tcpmt_revision" / "review_variants"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "review_variants"
 FIELDS = Path(os.environ.get("HVR_FIELDS",
                              "/home/beams0/SABDELZAHER/ETM_project/scratch/fields"))
 #: the cooling tiers of the comparison: arch, tier -> sensitivity variant (None = production)

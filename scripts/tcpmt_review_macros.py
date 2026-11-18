@@ -16,11 +16,12 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-TR = R / "research" / "tcpmt_revision"
-SENS = R / "research" / "final_closure" / "sensitivity"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
+SENS = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "sensitivity"
 ATAG = {"Z1": "Zone", "Z2": "Ztwo", "Z3": "Zthree"}
 NA = "--"
 
@@ -176,8 +177,8 @@ def _case(f):
 
 def variants():
     """Feedback, die power map and caloric correction, against each tier's base case."""
-    base = {("Z1", "A"): R / "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json",
-            ("Z2", "A"): R / "research/final_closure/etm_Z2_HV_S0_h1.1_r21.json",
+    base = {("Z1", "A"): SENS.parent / "etm_Z1_HV_S0_h1.1_r21.json",
+            ("Z2", "A"): SENS.parent / "etm_Z2_HV_S0_h1.1_r21.json",
             ("Z3", "A"): SENS / "etm_Z3_HV_S0__z3_top_only.json",
             ("Z1", "B"): SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
             ("Z2", "B"): SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
@@ -445,8 +446,8 @@ def solder():
 def vdrop():
     """Mean static drop of the 1-V path between converter output and die, per tier case:
     the 1-V conductor loss divided by the load current (both rails, supply + return)."""
-    cases = {("A", "Z1"): R / "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json",
-             ("A", "Z2"): R / "research/final_closure/etm_Z2_HV_S0_h1.1_r21.json",
+    cases = {("A", "Z1"): SENS.parent / "etm_Z1_HV_S0_h1.1_r21.json",
+             ("A", "Z2"): SENS.parent / "etm_Z2_HV_S0_h1.1_r21.json",
              ("A", "Z3"): SENS / "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json",
              ("B", "Z1"): SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
              ("B", "Z2"): SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",

@@ -45,10 +45,11 @@ from pathlib import Path
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
-INP = REPO / "research" / "tcpmt_revision" / "omitted_losses_inputs.json"
-OUT = REPO / "research" / "tcpmt_revision" / "omitted_losses.json"
-FC = REPO / "research" / "final_closure"
-CASE_D = REPO / "research" / "tcpmt_revision" / "dse_j35" / "data" / "case_D_etm35.csv"
+RES = Path(os.environ.get("ETM_RESULTS_ROOT") or REPO / "research")      # campaign hook
+INP = RES / "tcpmt_revision" / "omitted_losses_inputs.json"
+OUT = RES / "tcpmt_revision" / "omitted_losses.json"
+FC = RES / "final_closure"
+CASE_D = RES / "tcpmt_revision" / "dse_j35" / "data" / "case_D_etm35.csv"
 SCR = Path(os.environ.get("HVR_SCRATCH", "/home/beams0/SABDELZAHER/ETM_project/scratch_omitloss"))
 GRID = SCR / "dse_grid" / "data"
 

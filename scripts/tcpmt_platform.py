@@ -20,13 +20,14 @@ middle of the declared pump-efficiency band, with the band reported.
 from __future__ import annotations
 
 import json
+import os
 import math
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-FC = R / "research" / "final_closure"
+FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
 SENS = FC / "sensitivity"
-TR = R / "research" / "tcpmt_revision"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
 OUT = TR / "platform_inclusive.json"
 RHO_CU_20, ALPHA_CU = 1.72e-8, 3.93e-3
 T_FEED_C = 60.0                 # declared copper temperature of the feed conductors

@@ -37,7 +37,7 @@ import pkg_rdl_refined as RF                                         # noqa: E40
 import pkg_rdl_network as K                                          # noqa: E402
 import physical_coords as PCO                                        # noqa: E402
 
-OUT = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 OUT.mkdir(parents=True, exist_ok=True)
 I_CRIT_A = 1.5
 SCREEN_LEVEL, VERIFY_LEVEL, FINAL_LEVELS = 1, 2, (1, 2, 3)

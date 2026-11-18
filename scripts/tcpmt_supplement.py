@@ -18,9 +18,9 @@ os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
 R = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(R / "scripts"))
-FC = R / "research" / "final_closure"
-TR = R / "research" / "tcpmt_revision"
-OUT = R / "manuscript_v2" / "supplement" / "supp_tables.tex"
+FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R) / "manuscript_v2" / "supplement" / "supp_tables.tex"
 ARCHS = ("Z1", "Z2", "Z3")
 NAMES = {"Z1": "embedded", "Z2": "package-backside", "Z3": "board-backside"}
 
@@ -384,7 +384,7 @@ def review_variants_table():
 
 def capacitor_tables():
     L = []
-    f = R / "manuscript_v2" / "supplement" / "tab_capacitor_evidence.tex"
+    f = OUT.parent / "tab_capacitor_evidence.tex"
     if f.is_file():
         L += [r"\subsection*{S13. Flying-capacitor evidence matrix}", r"\input{tab_capacitor_evidence}", ""]
     else:

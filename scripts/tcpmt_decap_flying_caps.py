@@ -23,6 +23,7 @@ FACTS FROM THE FRAMEWORK
 from __future__ import annotations
 
 import json
+import os
 import math
 import sys
 from pathlib import Path
@@ -34,7 +35,7 @@ sys.path.insert(0, str(R / "scripts"))
 import tcpmt_decap_circuit as CI                                    # noqa: E402
 import tcpmt_decap_parts as PA                                      # noqa: E402
 
-OUT = R / "research" / "tcpmt_revision" / "flying_caps.json"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "flying_caps.json"
 V_C = {"C1": 32.0, "C2": 16.0}
 RIPPLE_FRAC = (0.05, 0.10)
 TIER_AREA_MM2 = 5.61                  # the cell's capacitor-tier footprint, two capacitors

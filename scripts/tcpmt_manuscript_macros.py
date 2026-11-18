@@ -16,8 +16,9 @@ import sys
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-D = Path(os.environ.get("TCPMT_RESULTS_DIR", R / "research" / "final_closure"))
-MS = R / "manuscript_v2"
+D = Path(os.environ.get("TCPMT_RESULTS_DIR",
+                        Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"))
+MS = Path(os.environ.get("ETM_RESULTS_ROOT") or R) / "manuscript_v2"   # outputs; campaign hook
 OUT_MAC = MS / "results_macros.tex"
 OUT_TAB = MS / "tab_compare.tex"
 sys.path.insert(0, str(R / "scripts"))
@@ -234,7 +235,7 @@ def main():
     T = tier_cases(S)
     mac.update(tier_macros(T))
     mac.update(isothermal_macros())
-    lt = R / "research" / "tcpmt_revision" / "layer_temperatures.json"
+    lt = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "layer_temperatures.json"
     if lt.exists():                 # board / substrate means per cooling tier (mechanism)
         for a, tiers in json.loads(lt.read_text())["cases"].items():
             for t, v in tiers.items():
@@ -254,7 +255,7 @@ def main():
         for k in a:
             if a[k] and b[k]:
                 mac[f"MeshZthree{k}"] = fx(100 * abs(b[k] - a[k]) / abs(b[k]), 1)
-    tf = R / "research" / "tcpmt_revision" / "tier_feed_crossover.json"
+    tf = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "tier_feed_crossover.json"
     if tf.exists():
         for t, row in json.loads(tf.read_text()).get("tiers", {}).items():
             for b, v in row.items():
@@ -431,7 +432,7 @@ def landside_macros():
     """Z3 land-side 1 V redistribution (NOT_MODELLED in the coupled ledger): the 2-D sheet
     bound of scripts/tcpmt_z3_landside_estimate.py, and the BGA pitch at which the 1 V balls
     would fit under the cell grid instead."""
-    f = R / "research" / "tcpmt_revision" / "z3_landside_spreading.json"
+    f = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "z3_landside_spreading.json"
     if not f.exists():
         return {}
     j = json.loads(f.read_text())

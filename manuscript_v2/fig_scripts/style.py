@@ -32,13 +32,14 @@ REPO = Path(__file__).resolve().parents[2]
 SRC = Path(os.environ.get("TCPMT_SRC", "/home/beams0/SABDELZAHER/ETM_project/HVR_OPT_work"))
 if not (SRC / "research").is_dir():
     SRC = REPO
-FC = Path(os.environ.get("TCPMT_RESULTS_DIR", SRC / "research" / "final_closure"))
+FC = Path(os.environ.get("TCPMT_RESULTS_DIR",
+                        Path(os.environ.get("ETM_RESULTS_ROOT") or SRC / "research") / "final_closure"))
 SENS = FC / "sensitivity"
-TR = SRC / "research" / "tcpmt_revision"
-FIELDS = Path("/home/beams0/SABDELZAHER/ETM_project/scratch/fields")
-OUT = REPO / "manuscript_v2" / "figs"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or SRC / "research") / "tcpmt_revision"
+FIELDS = Path(os.environ.get("HVR_FIELDS") or "/home/beams0/SABDELZAHER/ETM_project/scratch/fields")
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or REPO) / "manuscript_v2" / "figs"   # campaign hook
 OUT.mkdir(parents=True, exist_ok=True)
-MACROS = REPO / "manuscript_v2" / "results_macros.tex"
+MACROS = Path(os.environ.get("ETM_RESULTS_ROOT") or REPO) / "manuscript_v2" / "results_macros.tex"
 
 # ------------------------------------------------------------------ geometry
 COL_W = 3.5      # in, single column

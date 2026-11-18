@@ -2,13 +2,14 @@
 case, from the collected converged fields on the production mesh, plus the board and silicon
 in-plane CTE cards and the mismatch strain they imply."""
 import sys, json
+import os
 from pathlib import Path
 import numpy as np
-R = Path("/home/beams0/SABDELZAHER/ETM_project/HVR_OPT_work")
+R = Path(__file__).resolve().parents[1]      # the checkout this script is in (was a fixed path)
 sys.path.insert(0, str(R / "scripts"))
 import final_closure_physical_etm as E
 import production_et as PE
-F = Path("/home/beams0/SABDELZAHER/ETM_project/scratch/fields")
+F = Path(os.environ.get("HVR_FIELDS") or "/home/beams0/SABDELZAHER/ETM_project/scratch/fields")
 CASES = {"Z1": [("A", "etm_Z1_HV_S0_r21"), ("B", "etm_Z1_HV_S0__z1_bottom_plate_tim")],
          "Z2": [("A", "etm_Z2_HV_S0_r21"), ("B", "etm_Z2_HV_S0__z2_cooled_tim")],
          "Z3": [("A", "etm_Z3_HV_S0__z3_top_only"), ("B", "etm_Z3_HV_S0__z3_plate_tim")]}
@@ -39,7 +40,7 @@ for arch, cases in CASES.items():
         print(f"   {tier}: " + "  ".join(f"{k} {v:6.1f}" for k, v in out.items()))
         RES.setdefault(arch, {})[tier] = dict(out, field=d, cte_board=cte(board_mat[0]),
                                               cte_silicon=cte("silicon"))
-OUT = R / "research" / "tcpmt_revision" / "layer_temperatures.json"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "layer_temperatures.json"
 OUT.write_text(json.dumps({"rule": "layer means of the converged nodal temperature on the "
                                    "production mesh (r21), cooling tiers A and B, S0", "cases": RES},
                           indent=1))

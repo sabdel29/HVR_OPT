@@ -29,7 +29,7 @@ FIELDS = Path(os.environ.get("HVR_FIELDS", Path.home() / "claude_scratch" / "hvr
 
 def collect(arch, variant):
     import production_et as PE
-    f = R / "research" / "final_closure" / "sensitivity" / f"etm_{arch}_HV_S0__{variant}.json"
+    f = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "sensitivity" / f"etm_{arch}_HV_S0__{variant}.json"
     case = json.loads(f.read_text())
     wd = scratch("fc_sens", variant) / f"{arch}_HV_S0_h{E.PRODUCTION_H_XY}{E.refine_tag(E.PRODUCTION_REFINE)}"
     it = len(case["et_history"]) - 1

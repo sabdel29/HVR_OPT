@@ -27,6 +27,7 @@ compared with the load plus the ledger total of the case.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -40,8 +41,8 @@ import final_closure_sensitivity as S                               # noqa: E402
 import final_closure_physical_etm as E                              # noqa: E402
 import final_closure_ledger as FL                                   # noqa: E402
 
-OUT = R / "research" / "tcpmt_revision" / "z3_land_coupled.json"
-D = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "z3_land_coupled.json"
+D = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
 #: the three-tier reference cases (tcpmt_manuscript_macros.TIERS, S0)
 REF = {"A": {"Z1": D / "etm_Z1_HV_S0_h1.1_r21.json", "Z2": D / "etm_Z2_HV_S0_h1.1_r21.json",
              "Z3": S.OUT / "etm_Z3_HV_S0__z3_top_only.json"},

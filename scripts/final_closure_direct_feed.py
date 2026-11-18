@@ -21,6 +21,7 @@ class-B variant `feed_heat_at_crossover` (final_closure_sensitivity.py).
 from __future__ import annotations
 
 import json
+import os
 import math
 import sys
 from pathlib import Path
@@ -33,7 +34,7 @@ import final_closure_ledger as FL                                   # noqa: E402
 import final_closure_physical_etm as E                              # noqa: E402
 import final_closure_results as FR                                  # noqa: E402
 
-OUT = R / "research" / "final_closure" / "direct_feed_crossover.json"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "direct_feed_crossover.json"
 SPEC = json.loads((R / "research/final_closure/z2_direct_feed_architecture.json")
                   .read_text())["direct_feed"]
 
@@ -109,7 +110,7 @@ def attach_density_rstar(scen, p_z1):
     out, orig = {}, FL.attach_spec
     try:
         for name in ("dense", "sparse"):
-            f = R / "research/final_closure/sensitivity" / f"etm_Z2_{scen}__attach_{name}.json"
+            f = OUT.parent / "sensitivity" / f"etm_Z2_{scen}__attach_{name}.json"
             if not f.exists():
                 continue
             c = json.loads(f.read_text())

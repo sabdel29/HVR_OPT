@@ -10,11 +10,12 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import platform
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-D = R / "research" / "final_closure"
+D = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 import sys as _sys                                                    # noqa: E402
 _sys.path.insert(0, str(R / "scripts"))
 FIELDS = ["stage", "production_model", "model_type", "reference_tool", "reference_type",

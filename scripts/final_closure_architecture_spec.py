@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -22,7 +23,7 @@ R = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(R / "scripts"))
 import final_closure_physical_etm as E                              # noqa: E402
 
-OUT = R / "research" / "final_closure" / "architecture_geometry.json"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "architecture_geometry.json"
 
 #: plain-language role of each meshed layer, keyed by the ledger's role names
 ROLE_TEXT = {"hs": "high-side GaN device tier", "ls": "low-side GaN device tier",

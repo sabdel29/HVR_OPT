@@ -21,6 +21,7 @@ recorded as such).
 from __future__ import annotations
 
 import json
+import os
 import sys
 import urllib.request
 from pathlib import Path
@@ -28,7 +29,7 @@ from pathlib import Path
 import numpy as np
 
 R = Path(__file__).resolve().parents[1]
-OUT = R / "research" / "tcpmt_revision"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
 CACHE = OUT / "capacitor_datasheet_data.json"
 API = "https://pimapi.murata.com/public/api/pim/v1"
 HDR = {"Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (X11; Linux x86_64)",

@@ -34,8 +34,8 @@ import final_closure_ledger as FL                                   # noqa: E402
 
 FIELDS = Path(os.environ.get("HVR_FIELDS",
                              "/home/beams0/SABDELZAHER/ETM_project/scratch/fields"))
-SENS = R / "research" / "final_closure" / "sensitivity"
-OUT = R / "research" / "tcpmt_revision" / "feasibility.json"
+SENS = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "sensitivity"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "feasibility.json"
 
 CASES = {  # label -> (arch, field dir, case file)
     "A_Z1": ("Z1", "etm_Z1_HV_S0_r21", E.case_path("Z1", "HV_S0")),

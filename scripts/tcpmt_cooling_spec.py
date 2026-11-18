@@ -21,6 +21,7 @@ what the review asked for and the model did not report:
 from __future__ import annotations
 
 import json
+import os
 import math
 import sys
 from pathlib import Path
@@ -32,9 +33,9 @@ from cooling_production import CANDIDATES, ETA_PUMP_BAND                  # noqa
 from cooling import RHO_F, CP_F, K_F, MU_F                                # noqa: E402
 
 COOLER = "TOP_SI_MICROCHANNEL_27"
-OUT = R / "research" / "tcpmt_revision" / "cooling_spec.json"
-SENS = R / "research" / "final_closure" / "sensitivity"
-FC = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "cooling_spec.json"
+SENS = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "sensitivity"
+FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
 #: developing-flow incremental pressure-drop number for a rectangular duct of aspect ratio
 #: 1/6 (Shah & London 1978, interpolated between 0.125 and 0.25), and plenum losses:
 #: sudden contraction into and expansion out of the channel array (declared, typical)

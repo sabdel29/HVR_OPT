@@ -39,6 +39,7 @@ transient). They must agree; the comparison is recorded.
 from __future__ import annotations
 
 import json
+import os
 import math
 import sys
 from functools import lru_cache
@@ -51,10 +52,10 @@ for _p in ("scripts/phase0nw", "scripts/phase0mr", "scripts/phase0m", "scripts")
     if str(R / _p) not in sys.path:
         sys.path.insert(0, str(R / _p))
 
-OUT = R / "research" / "tcpmt_revision"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
 JSON_OUT = OUT / "input_decoupling.json"
-CASE_S0 = R / "research" / "final_closure" / "etm_Z1_HV_S0_h1.1_r21.json"
-NETWORK = R / "research" / "final_closure" / "package_network.json"
+CASE_S0 = OUT.parent / "final_closure" / "etm_Z1_HV_S0_h1.1_r21.json"
+NETWORK = OUT.parent / "final_closure" / "package_network.json"
 N_CELL = 49
 MU0 = 4e-7 * math.pi
 T_EDGE_S = 1.0e-9           # switching edge (sensitivity 0.5 - 5 ns)

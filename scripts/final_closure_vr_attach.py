@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import math
 import sys
 from functools import lru_cache
@@ -55,7 +56,7 @@ for _p in ("scripts", "scripts/phase0nw", "scripts/phase0m", "scripts/phase0mr",
            "scripts/phase0dr", "scripts/phase0i", "scripts/phase0g", "scripts/phase0b"):
     if str(R / _p) not in sys.path:
         sys.path.insert(0, str(R / _p))
-D = R / "research" / "final_closure"
+D = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 OUT_JSON = D / "vr_attach_density_study.json"
 OUT_CSV = D / "vr_attach_density_study.csv"
 RVE = D / "reference_attach_rve.json"

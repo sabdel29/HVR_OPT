@@ -38,14 +38,15 @@ is CONDITIONAL on that decision.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-FC = R / "research" / "final_closure"
+FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
 SENS = FC / "sensitivity"
-TR = R / "research" / "tcpmt_revision"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
 OUT = TR / "uncertainty.json"
-TAB = R / "manuscript_v2" / "tab_uncertainty.tex"
+TAB = Path(os.environ.get("ETM_RESULTS_ROOT") or R) / "manuscript_v2" / "tab_uncertainty.tex"
 ATAG = {"Z1": "Zone", "Z2": "Ztwo", "Z3": "Zthree"}
 OBS = ("P", "T", "warp", "du")
 U_ET = {"P_rel": 1e-3, "T_K": 0.25}

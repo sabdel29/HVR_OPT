@@ -31,9 +31,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from hvr_scratch import path as scratch                             # noqa: E402
 
 R = TC.R
-OUT = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 MOOSE = Path("/home/beams0/LPOPRYHO/projects/moose/modules/heat_transfer/heat_transfer-opt")
-EVID = R / "presentation" / "prelim_hvr" / "tool_evidence"
+EVID = Path(os.environ.get("ETM_RESULTS_ROOT") or R) / "presentation" / "prelim_hvr" / "tool_evidence"
 REPEATS = 3
 CCX_MESH = (6, 24, 0.04)                       # production-fine column of the AEDT benchmark
 MOOSE_MESHES = {"m1": (5, 20, 0.05), "m2": (8, 32, 0.025)}
