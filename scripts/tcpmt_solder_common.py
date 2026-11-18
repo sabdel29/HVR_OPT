@@ -70,10 +70,12 @@ CASES = {
     "Z3_S0": FC / "etm_Z3_HV_S0_h1.1_r21.json",
     "Z1_S1": FC / "etm_Z1_HV_S1_h1.1_r21.json",
     "Z2_S1": FC / "etm_Z2_HV_S1_h1.1_r21.json",
-    "A_Z3": FC / "sensitivity" / "etm_Z3_HV_S0__z3_top_only.json",
+    # review round 2: Z3 is the coupled land-side case (the uncoupled z3_top_only /
+    # z3_plate_tim are superseded; tcpmt_cases)
+    "A_Z3": FC / "sensitivity" / "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json",
     "B_Z1": FC / "sensitivity" / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
     "B_Z2": FC / "sensitivity" / "etm_Z2_HV_S0__z2_cooled_tim.json",
-    "B_Z3": FC / "sensitivity" / "etm_Z3_HV_S0__z3_plate_tim.json",
+    "B_Z3": FC / "sensitivity" / "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json",
 }
 TIERS = {"A": {"Z1": "Z1_S0", "Z2": "Z2_S0", "Z3": "A_Z3"},
          "B": {"Z1": "B_Z1", "Z2": "B_Z2", "Z3": "B_Z3"}}

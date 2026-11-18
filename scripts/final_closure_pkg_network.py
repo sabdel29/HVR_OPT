@@ -41,14 +41,46 @@ OUT = R / "research" / "final_closure"
 OUT.mkdir(parents=True, exist_ok=True)
 I_CRIT_A = 1.5
 SCREEN_LEVEL, VERIFY_LEVEL, FINAL_LEVELS = 1, 2, (1, 2, 3)
-SCEN = ("DC_AVERAGE", "HV_S0", "HV_S1", "HV_S2")
+#: TCPMT review round 2: HV_SDEC is the PRODUCTION waveform (implemented input decoupling,
+#: package-network k_eq = 1.65); the count is closed, and the two architectures matched, at it.
+#: TCPMT_BGA_MATCH_SCEN=HV_S0 reproduces the committed S0 closure (54 per rail).
+PRODUCTION_SCEN = "HV_SDEC"
+MATCH_SCEN = os.environ.get("TCPMT_BGA_MATCH_SCEN", PRODUCTION_SCEN)
+SCEN = ("DC_AVERAGE", "HV_S0", "HV_SDEC", "HV_S1", "HV_S2")
 WORKERS = int(os.environ.get("FC_WORKERS", "32"))
+PRODUCTION_OUT = OUT / "bga_count_production.json"
+
+
+def production_k():
+    """k_eq of the implemented decoupling (research/tcpmt_revision/input_decoupling.json):
+    nominal and the loop-inductance band."""
+    d = json.loads((R / "research/tcpmt_revision/input_decoupling.json").read_text())
+    rec = d["summary"]["recommended"]
+    return float(rec["k_eq"]), [float(x) for x in rec["k_eq_band"]]
+
+
+def production_i_avg(arch):
+    """The 48-V average current of the production state: the largest over the
+    implemented-decoupling case files of the architecture (both coolings; 'Z2' here is the
+    BGA-fed network, i.e. Z2's feed, which carries Z2's input current). None if none exists."""
+    import tcpmt_cases as TC
+    a = "Z1" if arch == "Z1" else "Z2"
+    vals = []
+    for t in TC.TIERS:
+        p = TC.case_path(TC.PRODUCTION_STATE, t, a)
+        if p is not None:
+            c = json.loads(p.read_text())
+            vals.append(float(c.get("i_hv_avg_a") or (1000.0 + c["P_loss_w"]) / 48.0))
+    return max(vals) if vals else None
 
 
 def scenarios(arch):
     import interconnect_loss as IL
     rb = IL.rms_scenarios(arch)
+    k, _band = production_k()
+    i_prod = production_i_avg(arch) or rb["hv_avg_a"]
     return {"DC_AVERAGE": rb["hv_avg_a"], "HV_S0": rb["hv_S0_a"],
+            "HV_SDEC": k * i_prod,
             "HV_S1": rb["hv_S1_a"], "HV_S2": rb["hv_S2_a"]}
 
 
@@ -107,7 +139,103 @@ def peak_rows(results):
     return rows
 
 
+def matched_count(screen, counts, kw, scen=None):
+    """Smallest legal count passing `scen` (default MATCH_SCEN) for both architectures on the
+    screen AND on the verification level."""
+    scen = scen or MATCH_SCEN
+    common = sorted(set(counts["Z1"]) & set(counts["Z2"]))
+    cand = [n for n in common
+            if all(next((r[f"pass__{scen}"] for r in screen
+                         if r["arch"] == a and r["n_per_rail"] == n), False)
+                   for a in ("Z1", "Z2"))]
+    for n in cand:
+        vj = [(a, rail, n, VERIFY_LEVEL, kw) for a in ("Z1", "Z2")
+              for rail in ("supply", "return")]
+        v = {r["arch"]: r for r in peak_rows(run_pool(vj))}
+        if all(v[a][f"pass__{scen}"] for a in ("Z1", "Z2")):
+            return n
+    return None
+
+
+def screen_from_csv(path=None):
+    """The committed exhaustive screen (per-ball peak fraction per ampere at every legal count),
+    re-scored at the CURRENT scenario currents: the fractions do not depend on the current."""
+    path = path or (OUT / "bga_count_screen.csv")
+    rows = []
+    cur = {a: scenarios(a) for a in ("Z1", "Z2")}
+    with open(path) as fh:
+        for r in csv.DictReader(fh):
+            a, n, pk = r["arch"], int(r["n_per_rail"]), float(r["peak_fraction"])
+            row = {"arch": a, "n_per_rail": n, "level": int(r["level"]),
+                   "terminal_mode": r["terminal_mode"], "peak_fraction": pk}
+            for s, i in cur[a].items():
+                row[f"i_ball_max_A__{s}"] = pk * i
+                row[f"pass__{s}"] = bool(pk * i <= I_CRIT_A)
+            rows.append(row)
+    return rows
+
+
+def reclose():
+    """Re-close the count at the production waveform WITHOUT regenerating the network: the
+    committed level-1 screen re-scored at the HV_SDEC current, the candidate minima verified on
+    the resolved level (n0 - 2, n0, n0 + 2, for both architectures), the matched count, and the
+    count at the upper end of the k_eq band. Writes bga_count_production.json; the campaign then
+    regenerates package_network.json at the matched count with main()."""
+    t0 = time.time()
+    screen = screen_from_csv()
+    counts = {a: sorted(r["n_per_rail"] for r in screen if r["arch"] == a) for a in ("Z1", "Z2")}
+    kw = {"mode": "VIN_PAD"}
+    k, band = production_k()
+    out = {"criterion_A_per_ball": I_CRIT_A, "k_eq": k, "k_eq_band": band,
+           "currents_A": {a: scenarios(a) for a in ("Z1", "Z2")},
+           "i_avg_production_A": {a: production_i_avg(a) for a in ("Z1", "Z2")},
+           "screen": "bga_count_screen.csv (level %d), re-scored" % SCREEN_LEVEL,
+           "verify_level": VERIFY_LEVEL, "closure": {}}
+    for a in ("Z1", "Z2"):
+        for s in ("HV_S0", PRODUCTION_SCEN):
+            ok = [r["n_per_rail"] for r in screen if r["arch"] == a and r[f"pass__{s}"]]
+            if not ok:
+                out["closure"][f"{a}__{s}"] = {"status": "NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT"}
+                continue
+            n0 = min(ok)
+            vj = [(a, rail, n, VERIFY_LEVEL, kw) for n in (n0 - 2, n0, n0 + 2)
+                  if n in counts[a] for rail in ("supply", "return")]
+            ver = {r["n_per_rail"]: r for r in peak_rows(run_pool(vj))}
+            fail_above = [r["n_per_rail"] for r in screen if r["arch"] == a
+                          and r["n_per_rail"] > n0 and not r[f"pass__{s}"]]
+            v0, lo = ver.get(n0), ver.get(n0 - 2)
+            out["closure"][f"{a}__{s}"] = {
+                "status": ("CLOSED" if v0 and v0[f"pass__{s}"] and (lo is None or not
+                                                                     lo[f"pass__{s}"])
+                           else "SCREEN_ONLY_NOT_VERIFIED" if not (v0 and v0[f"pass__{s}"])
+                           else "NOT_MINIMAL_LOWER_COUNT_ALSO_PASSES"),
+                "n_min": n0, "peak_at_n_min_A": v0[f"i_ball_max_A__{s}"] if v0 else None,
+                "peak_at_lower_A": lo[f"i_ball_max_A__{s}"] if lo else None,
+                "verified": {str(n): {"peak_A": r[f"i_ball_max_A__{s}"],
+                                      "peak_fraction": r["peak_fraction"],
+                                      "r_loop_ohm": r["supply_r_eff_ohm"] + r["return_r_eff_ohm"],
+                                      "pass": r[f"pass__{s}"]} for n, r in ver.items()},
+                "larger_counts_that_FAIL_on_screen": fail_above}
+        # the upper end of the loop-inductance band
+        i_hi = band[1] / k * scenarios(a)[PRODUCTION_SCEN]
+        ok = [r["n_per_rail"] for r in screen if r["arch"] == a and r["peak_fraction"] * i_hi
+              <= I_CRIT_A]
+        out["closure"][f"{a}__{PRODUCTION_SCEN}__k_hi"] = {"k": band[1],
+                                                         "n_min_screen": min(ok) if ok else None}
+    out["matched_count"] = matched_count(screen, counts, kw, PRODUCTION_SCEN)
+    out["matched_count_S0"] = matched_count(screen, counts, kw, "HV_S0")
+    out["wall_s"] = round(time.time() - t0, 1)
+    PRODUCTION_OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
+    print(json.dumps({k_: v for k_, v in out.items() if k_ != "closure"}, indent=1, default=float))
+    for k_, v in out["closure"].items():
+        print(k_, {x: v[x] for x in ("status", "n_min", "peak_at_n_min_A", "n_min_screen")
+                   if x in v})
+    return out
+
+
 def main():
+    if sys.argv[1:2] == ["reclose"]:
+        return reclose()
     t0 = time.time()
     counts = {a: legal_counts(a) for a in ("Z1", "Z2")}
     kw = {"mode": "VIN_PAD"}
@@ -163,21 +291,10 @@ def main():
     print("closure:", {k: (v["status"], v.get("n_min")) for k, v in closure.items()},
           flush=True)
 
-    # ---- 3. matched count: smallest N passing HV-S0 for BOTH, verified ---
-    common = sorted(set(counts["Z1"]) & set(counts["Z2"]))
-    cand = [n for n in common
-            if all(next((r[f"pass__HV_S0"] for r in screen
-                         if r["arch"] == a and r["n_per_rail"] == n), False)
-                   for a in ("Z1", "Z2"))]
-    n_match = None
-    for n in cand:
-        vj = [(a, rail, n, VERIFY_LEVEL, kw) for a in ("Z1", "Z2")
-              for rail in ("supply", "return")]
-        v = {r["arch"]: r for r in peak_rows(run_pool(vj))}
-        if all(v[a]["pass__HV_S0"] for a in ("Z1", "Z2")):
-            n_match = n
-            break
-    print("matched count:", n_match, flush=True)
+    # ---- 3. matched count: smallest N passing the PRODUCTION waveform (MATCH_SCEN; review
+    # round 2: the implemented decoupling, k_eq = 1.65) for BOTH, verified ---
+    n_match = matched_count(screen, counts, kw)
+    print(f"matched count at {MATCH_SCEN}:", n_match, flush=True)
 
     # ---- 4. converged networks at the matched count ----------------------
     fj = [(a, rail, n_match, lv, kw) for a in ("Z1", "Z2")
@@ -269,6 +386,7 @@ def main():
                     "conv_threshold": RF.CONV_THRESH,
                     "conv_metrics": list(RF.CONV_METRICS),
                     "exhaustive": True, "monotonicity_assumed": False,
+                    "match_scenario": MATCH_SCEN, "production_k_eq": production_k()[0],
                     "wall_s": round(time.time() - t0, 1)},
            "counts_legal": {a: len(v) for a, v in counts.items()},
            "closure": closure, "matched_count": n_match,
