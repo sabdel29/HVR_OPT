@@ -1,62 +1,19 @@
-% ============================================================================ PRIOR-WORK COMPARISON
-% Capability comparison with the closest prior work, for
-% "From Device to Solder Joint: An Electrothermal--Mechanical Framework for Co-Designing
-%  Voltage-Regulator Integration in Distributed Vertical Power Delivery" (IEEE TCPMT).
-%
-% Usage: \input{comparison} (IEEEtran journal class). Packages used are already in the
-% manuscript preamble: booktabs, array, amssymb. Bibliography keys are those of
-% manuscript_v2/refs.bib, plus two entries that are NOT yet in refs.bib (see below).
-%
-% Evidence: every cell for [Krishnakumar2026DVPD], [Choi2025SelfConsistent] and the
-% commercial tools is backed by a quote and a pointer in notes.txt (same directory).
-% Pointers to Krishnakumar2026DVPD are to arXiv:2606.28837v1 (14 pp.); check section and
-% table numbers against the published version (TCPMT 16(9), pp. 2089--2102) before use.
-% The full text of Choi2025SelfConsistent was not accessible (closed access, no preprint);
-% its column rests on its abstract and on what Krishnakumar2026DVPD states about it.
-%
-% Version switch: the detailed two-column table (table*) is the default. For a single-column
-% symbol table instead, put \def\PriorTableCompact{1} before \input{comparison}.
-%
-% Add to refs.bib (metadata verified on Crossref, 2026-11-16):
-%
-% @article{Choi2025EmbeddedCooling,
-%   author  = {Choi, Mingeun and Krishnakumar, Sriharini and Khorasani, Ramin Rahimzadeh and
-%              Swaminathan, Madhavan and Partin-Vaisband, Inna and Kumar, Satish},
-%   title   = {Substrate-Embedded Microfluidic Cooling of Distributed Vertical Power Delivery
-%              Architectures for High-Performance Computing Processors},
-%   journal = {IEEE Transactions on Components, Packaging and Manufacturing Technology},
-%   volume  = {15}, number = {9}, pages = {1912--1920}, month = sep, year = {2025},
-%   doi     = {10.1109/TCPMT.2025.3544105}
-% }
-% @inproceedings{Choi2025AutoET,
-%   author    = {Choi, Mingeun and Krishnakumar, Sriharini and Popryho, Yaroslav and
-%                Khorasani, Ramin Rahimzadeh and Swaminathan, Madhavan and
-%                Partin-Vaisband, Inna and Kumar, Satish},
-%   title     = {Automated Electro-Thermal Modeling Framework of Distributed Vertical Power
-%                Delivery Architectures with Substrate-Embedded Microfluidic Cooling},
-%   booktitle = {Proc. 24th IEEE Intersociety Conference on Thermal and Thermomechanical
-%                Phenomena in Electronic Systems (ITherm)},
-%   address   = {Dallas, TX, USA}, pages = {1--8}, month = may, year = {2025},
-%   doi       = {10.1109/ITherm55376.2025.11235621}
-% }
-% ============================================================================
-
-\providecommand{\PriorTableCompact}{0}
-\ifnum\PriorTableCompact=0
-% ---------------------------------------------------------------------------- detailed (table*)
-\begin{table*}[!t]
-\caption{Capabilities of the closest DVPD frameworks and of commercial multiphysics sign-off
-tools, as stated in the cited sources, and of this work.}
-\label{tab:prior}
-\centering
+% Capability comparison with the closest prior work: the detailed version of the compact
+% comparison table of the paper (manuscript tab_prior.tex), set as Table S1 of the supplementary
+% material. Every cell for [Krishnakumar2026DVPD], [Choi2025SelfConsistent] and the commercial
+% tools rests on a quoted passage of the cited source. Pointers to [Krishnakumar2026DVPD] are to
+% its preprint (arXiv:2606.28837v1; check section and table numbers against the published
+% version, TCPMT 16(9), pp. 2089--2102). The full text of [Choi2025SelfConsistent] was not
+% accessible (closed access, no preprint); its column rests on its abstract and on what
+% [Krishnakumar2026DVPD] states about it. Packages: booktabs, array, longtable, amssymb; the
+% column type L{w} (ragged-right p column) is defined in the supplement's preamble.
+\begingroup
 \scriptsize
 \setlength{\tabcolsep}{2.4pt}
 \renewcommand{\arraystretch}{1.12}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.25cm}
-                >{\raggedright\arraybackslash}p{3.90cm}
-                >{\raggedright\arraybackslash}p{2.95cm}
-                >{\raggedright\arraybackslash}p{2.80cm}
-                >{\raggedright\arraybackslash}p{4.75cm}@{}}
+\begin{longtable}{@{}L{2.25cm}L{3.90cm}L{2.95cm}L{2.80cm}L{4.75cm}@{}}
+\caption{Capabilities of the closest DVPD frameworks and of commercial multiphysics sign-off
+tools, as stated in the cited sources, and of this work}\label{tab:supp-prior}\\
 \toprule
 Capability
  & DVPD design framework~\cite{Krishnakumar2026DVPD}
@@ -64,6 +21,21 @@ Capability
  & Commercial sign-off~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius,Ansys_Sherlock}
  & This work \\
 \midrule
+\endfirsthead
+\multicolumn{5}{@{}l}{\emph{Table~\ref{tab:supp-prior} (continued)}}\\
+\toprule
+Capability
+ & DVPD design framework~\cite{Krishnakumar2026DVPD}
+ & Self-consistent electrothermal model~\cite{Choi2025SelfConsistent}
+ & Commercial sign-off~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius,Ansys_Sherlock}
+ & This work \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r@{}}{\emph{continued on next page}}\\
+\endfoot
+\bottomrule
+\endlastfoot
 Converter topology
  & Input; DSCH demonstrated, not searched\textsuperscript{a}
  & Supplied by the electrical framework\textsuperscript{b}
@@ -148,10 +120,8 @@ Runtime per evaluation
  & ?\textsuperscript{e}; meshing and per-iteration time $-30$\,\%
  & ?\textsuperscript{c}
  & Synthesis 4.6~s; count sweep $\approx$4~min; coupled evaluation 1.3--2.8~h \\
-\bottomrule
-\end{tabular}
-\par\smallskip
-\parbox{\textwidth}{\scriptsize
+\end{longtable}
+\nopagebreak\noindent
 Pointers to~\cite{Krishnakumar2026DVPD} refer to its preprint; the full text
 of~\cite{Choi2025SelfConsistent} was not accessible, so its column rests on its abstract and
 on~\cite[Fig.~4, Sec.~IV-D]{Krishnakumar2026DVPD}. VIC: vertical interconnect.
@@ -171,49 +141,6 @@ text not accessible.
 in-interposer converters~\cite{Choi2024ITherm}; three embedded-switch
 configurations~\cite{Choi2025EmbeddedCooling}.
 \textsuperscript{g}\,Circuit simulation of four other members at 30~A and
-500~kHz~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}, not of the synthesized design point.}
-\end{table*}
-\else
-% ---------------------------------------------------------------------------- compact (single column)
-\begin{table}[!t]
-\caption{Capability comparison with the closest prior work, as stated in the cited
-sources.}
-\label{tab:prior}
-\centering
-\footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}lcccc@{}}
-\toprule
- & \cite{Krishnakumar2026DVPD} & \cite{Choi2025SelfConsistent}
- & \cite{Synopsys_RedHawkSC_ET,Cadence_Celsius,Ansys_Sherlock} & This work \\
-\midrule
-Converter topology search          & --         & --\textsuperscript{a} & ?          & \checkmark\textsuperscript{b} \\
-Discrete device and passive library & --         & --\textsuperscript{a} & ?          & \checkmark \\
-Regulator-count optimization       & \checkmark & --                    & ?          & \checkmark \\
-Floorplan, interconnect allocation & \checkmark & --\textsuperscript{a} & ?          & $\circ$ \\
-IR drop, transient droop           & \checkmark & ?                     & $\circ$    & -- \\
-Package-explicit geometry          & $\circ$    & \checkmark            & \checkmark & \checkmark \\
-Integration-architecture comparison & $\circ$   & --                    & ?          & \checkmark \\
-Electrothermal coupling            & \checkmark & \checkmark            & \checkmark & \checkmark \\
-Cooling boundary generic           & --         & --                    & \checkmark & $\circ$ \\
-Thermomechanics                    & --         & ?                     & \checkmark & \checkmark \\
-All-site joint search              & --         & ?                     & ?          & \checkmark \\
-Local solder response              & --         & ?                     & \checkmark & \checkmark \\
-Interconnect realizability         & $\circ$    & ?                     & ?          & \checkmark \\
-Per-stage reference verification   & $\circ$    & ?                     & $\circ$    & \checkmark\textsuperscript{c} \\
-Runtime reported                   & --         & $\circ$               & ?          & \checkmark \\
-\bottomrule
-\end{tabular}
-\par\smallskip
-\parbox{\columnwidth}{\scriptsize
-\checkmark: stated and demonstrated; $\circ$: partial; --: not part of the work; ?: cannot
-be determined from the accessible text (full text of~\cite{Choi2025SelfConsistent} not
-accessible; product pages of~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius,Ansys_Sherlock}
-silent). \textsuperscript{a}\,Supplied by the electrical
-framework~\cite[Fig.~4]{Krishnakumar2026DVPD}.
-\textsuperscript{b}\,$(N,K)$ enumerated; $K_A$ and $\mathbf{B}$ set by rule.
-\textsuperscript{c}\,Except the converter loss model, validated on other
-members~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}, and the solder submodel
-(discretization only).}
-\end{table}
-\fi
+500~kHz~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}, not of the synthesized design point.\par
+\endgroup
+\medskip

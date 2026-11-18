@@ -1,9 +1,25 @@
 \documentclass[journal,onecolumn,10pt]{IEEEtran}
 \usepackage[T1]{fontenc}
-\usepackage{amsmath,amssymb,graphicx,booktabs,array,longtable,url,textcomp}
+\usepackage{amsmath,amssymb,graphicx,booktabs,array,longtable,needspace,url,textcomp}
 \usepackage[hidelinks]{hyperref}
 \newcommand{\du}{\Delta u_{\mathrm{c}}}
 \newcommand{\deps}{\Delta\varepsilon_{\mathrm{in}}}
+% Supplementary numbering: Table S1, S2, ... and Section S-I, S-II, ..., so that no number
+% clashes with a table or section of the paper.
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thesection}{S-\Roman{section}}
+% Ragged-right paragraph columns for wrapped table cells.
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+% Every table is a longtable (it may break across pages and stays in reading order); its
+% caption is set in the IEEE table-caption style: TABLE Sn, then the title in small capitals.
+\makeatletter
+\setlength{\LTcapwidth}{0.92\textwidth}
+\def\LT@makecaption#1#2#3{%
+  \LT@mcol\LT@cols c{\hbox to\z@{\hss\parbox[t]\LTcapwidth{\centering\normalfont
+    \footnotesize #1{#2\par}{\footnotesize\scshape #3\par}\vskip0.5\baselineskip}\hss}}}
+\makeatother
+\setlength{\LTpre}{8pt}
+\setlength{\LTpost}{2pt}
 \begin{document}
 \title{Supplementary Material for ``From Device to Solder Joint: An Electrothermal--Mechanical
 Framework for Co-Designing Voltage-Regulator Integration in Distributed Vertical Power
@@ -11,8 +27,13 @@ Delivery''}
 \author{Salma~Abdelzaher, Mohamed~Gharib, and Inna~Partin-Vaisband}
 \maketitle
 This document lists every material card, layer, mesh, boundary condition, solver setting,
-runtime, input variant and uncertainty behind the results of the paper. Every table is generated
-from the configuration and result files that the solvers read and write
-(\texttt{scripts/tcpmt\_supplement.py}); no value is transcribed by hand.
+runtime, input variant and uncertainty behind the results of the paper, together with the
+converter selected at each regulator count, the evidence for the flying-capacitor technology and
+the full parameter set of the local solder-joint model. Every table is generated directly from
+the configuration and result files that the solvers read and write; no value is transcribed by
+hand. Sections S-I to S-IX follow the order of the paper; the tables are numbered S1, S2, \dots{}
+in order of appearance, and the references are listed at the end.
 \input{supp_tables}
+\bibliographystyle{IEEEtran}
+\bibliography{../refs}
 \end{document}

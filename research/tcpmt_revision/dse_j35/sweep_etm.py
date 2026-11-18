@@ -136,6 +136,9 @@ def score(res, m, die, cc):
         for attr in ("name", "part_number", "width_mm", "w"):
             if hasattr(d, attr): return str(getattr(d, attr))
         return str(d)
+    # the selected passives (library names), so the per-count selection is complete
+    ind = getattr(res, "optimized_inductor", None)
+    cap = getattr(res, "optimized_capacitor", None)
     return dict(
         M=m, I_vr_A=i_vr, component_count=cc,
         arch=f"N={a.N},K={a.K},K_A={a.K_A}", N=a.N, K=a.K, K_A=a.K_A, D=a.D,
@@ -145,6 +148,8 @@ def score(res, m, die, cc):
         efficiency_pct=100.0 * P_LOAD / (P_LOAD + total),
         f_sw_Hz=res.optimized_f_sw,
         hs=dev(hs), ls=dev(ls),
+        inductor=getattr(ind, "name", "") if ind is not None else "",
+        capacitor=getattr(cap, "name", "") if cap is not None else "",
         p_cond_W=getattr(res, "p_cond_opt", float("nan")),
         p_sw_W=getattr(res, "p_sw_opt", float("nan")),
         area_mm2=res.total_area_mm2, area_budget_mm2=res.area_budget_mm2,
