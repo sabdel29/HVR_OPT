@@ -2,9 +2,21 @@
 \section{Exploring the Design Space}\label{sec:explore}
 
 Exploration works at two levels. At the converter level the synthesis is repeated over the
-regulator count and the topology (Section~\ref{sec:dse}, Fig.~\ref{fig:dse}): the optimum moves
-to 76 cells with a two-branch topology, and a sweep with the topology held fixed misses it
-because its feasible range ends at 52 cells. At the package level, every input without a single
+regulator count and the topology as an electrical screen (Section~\ref{sec:dse}, Fig.~\ref{fig:dse}).
+Under the corrected capacitor rule the screen keeps every member, device and frequency, the loss
+rises by \DseCorrDeltaLo--\DseCorrDeltaHi~W where a rated capacitor replaces the 25-V part, and the
+minimum stays at $M = \DseCorrOptM$ (\DseCorrOptLoss~W against \DseOptLoss~W with the published rule,
+which the legacy configuration reproduces exactly); the omitted converter terms and a frequency grid
+sixteen times finer move no optimum. The screen's minimum is not buildable on the square grid of the
+package builder, and $M = 81$ admits no part pair in its 3.53-mm$^2$ budget, so the strongest buildable
+candidates are $M = 49$ and $M = 64$ ($N2K2K_A1$). Carried through the full coupled chain, the 64-cell
+regulator dissipates \CountSynPloss~W in its synthesized 3.74-mm$^2$ cell, whose components need a fifth
+tier that pushes the peak to \CountSynTmax\,$^\circ$C and the critical joint to
+\CountSynTjoint\,$^\circ$C, beyond the solder law; in a 4.0-mm$^2$ cell that recovers the four-tier stack
+it dissipates \CountCellPloss~W at \CountCellTmax\,$^\circ$C, against \PlossZone~W and \TmaxZone\,$^\circ$C
+for 49 cells. The coupled chain confirms the screen's ranking of the buildable counts and widens it
+from 4~W to 10--17~W: the screen returns an electrical optimum, and the cell size that optimum implies is
+itself a thermal and mechanical decision. At the package level, every input without a single
 defensible value is varied on the production mesh and the whole chain is rerun, so that each
 ranking of Section~\ref{sec:compare} is reported together with the decisions that can change
 it. Fig.~\ref{fig:robust} summarizes \NvariantRuns{} such runs for the embedded and
