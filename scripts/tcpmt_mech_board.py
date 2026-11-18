@@ -21,6 +21,7 @@ wall time; effect: T_max, die warpage, critical du and site, interconnect driver
 to research/tcpmt_revision/board_study/ only; no production file is touched.
 
     FC_THREADS=2 python tcpmt_mech_board.py run ARCH [--factor 3] [--hbot 10] [--refine 11]
+    python tcpmt_mech_board.py local ARCH [--factor 3]   the clamp in the local response
     python tcpmt_mech_board.py summarize      -> research/tcpmt_revision/board_study.json
 """
 from __future__ import annotations
@@ -147,6 +148,37 @@ def run(arch, factor, hbot, refine):
     return f
 
 
+def local(arch, factor, hbot=10.0, refine=(1, 1)):
+    """The clamp in the local response: the critical joint of the screw-mounted larger board
+    cycled between the clamp-only state (cold) and clamp + heat (hot), against the same
+    mounting without clamp (cold = stress-free). In a linear global model the clamp leaves
+    the cyclic kinematics unchanged; what it adds is a mean load that the creep law sees."""
+    import tcpmt_mech_kinematics as KIN
+    import tcpmt_mech_submodel as SUB
+    r = json.loads((OUTD / f"{tag(arch, factor, hbot, refine)}.json").read_text())
+    me = r["mechanics"]
+    c = me["screws"]["joint_search"]["critical"]
+
+    def at(case):
+        cand = KIN.expand_sites(me[case]["interconnects"]["bga"]["candidates"])
+        return next(k for k in cand if abs(k["x_mm"] - c["x_mm"]) < 1e-6
+                    and abs(k["y_mm"] - c["y_mm"]) < 1e-6)
+    t = f"{arch}_x{factor:g}"
+    tasks = [dict(study="board_local", tag=f"{t}_screws_thermal", kin=at("screws"),
+                  meta={"arch": arch, "case": "screws (no clamp)"}),
+             dict(study="board_local", tag=f"{t}_screws_clamp", kin=at("clamp_screws"),
+                  kin_cold=at("clamp_only"), meta={"arch": arch, "case": "clamp, screws"})]
+    recs = SUB.run_tasks(tasks)
+    out = {t_["tag"]: {"d_eps": (recs.get(t_["tag"]) or {}).get("d_peeq_per_cycle"),
+                       "site_mm": [c["x_mm"], c["y_mm"]], "case": t_["meta"]["case"]}
+           for t_ in tasks}
+    a, b = (out[f"{t}_screws_thermal"]["d_eps"], out[f"{t}_screws_clamp"]["d_eps"])
+    out["clamp_effect_rel"] = (b / a - 1) if (a and b) else None
+    f = OUTD / f"{tag(arch, factor, hbot, refine)}_local.json"
+    f.write_text(json.dumps(out, indent=1, default=float) + "\n")
+    return out
+
+
 def baseline(arch, refine):
     import final_closure_physical_etm as E
     f = E.case_path(arch, SCEN, E.PRODUCTION_H_XY, refine)
@@ -242,6 +274,10 @@ def main():
         hbot = float(sys.argv[sys.argv.index("--hbot") + 1]) if "--hbot" in sys.argv else 10.0
         r = sys.argv[sys.argv.index("--refine") + 1] if "--refine" in sys.argv else "11"
         print(run(arch, factor, hbot, (int(r[0]), int(r[1]))))
+    elif sys.argv[1:2] == ["local"]:
+        factor = float(sys.argv[sys.argv.index("--factor") + 1]) if "--factor" in sys.argv \
+            else max(bcfg()["extent_factor_options"])
+        print(json.dumps(local(sys.argv[2], factor), indent=1, default=float))
     elif sys.argv[1:2] == ["summarize"]:
         s = summarize()
         print(json.dumps(s["recommendation"], indent=1, default=float))

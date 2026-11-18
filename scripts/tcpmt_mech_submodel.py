@@ -159,8 +159,9 @@ def build_mesh(geom: dict, n_xy=6, n_z_solder=8, n_z_pad=1, n_z_post=None,
 
 # --------------------------------------------------------------------------- boundary
 def frame(kin: dict) -> np.ndarray:
-    """2x2 rotation global -> local that puts the in-plane du on local +x."""
-    du = np.asarray(kin["du_mm"], float)
+    """2x2 rotation global -> local that puts the in-plane du on local +x (of the hot
+    state when a cold-state kinematics carries `_frame_du_mm`)."""
+    du = np.asarray(kin.get("_frame_du_mm", kin["du_mm"]), float)
     phi = math.atan2(du[1], du[0]) if math.hypot(du[0], du[1]) > 0 else 0.0
     c, s = math.cos(phi), math.sin(phi)
     return np.array([[c, s], [-s, c]])
@@ -176,12 +177,15 @@ def bc_values(m: JointMesh, kin: dict, mode: str) -> dict:
     R3[:2, :2] = Q
     out = {}
     if mode in ("legacy", "uz"):
-        dxy = math.hypot(du[0], du[1]) * k
         dz = du[2] * k if mode == "uz" else 0.0
+        if "_frame_du_mm" in kin:                 # a cold state in the hot state's frame
+            dx, dy = (Q @ du[:2]) * k
+        else:
+            dx, dy = math.hypot(du[0], du[1]) * k, 0.0
         for n in m.sets["NBOT"]:
             out[n] = (0.0, 0.0, 0.0)
         for n in m.sets["NTOP"]:
-            out[n] = (dxy, 0.0, dz)
+            out[n] = (dx, dy, dz)
         return out
     if mode != "global":
         raise ValueError(f"unknown bc mode {mode!r}")
@@ -223,7 +227,9 @@ def schedule(T_hot, n_cyc, ramp_s, dwell_s, T_cold):
 
 
 def write_deck(m: JointMesh, path: Path, card_text: str, segs, bcv: dict, etype="C3D8",
-               cetol=0.05, t_ref=25.0, legacy_inc0=0.002) -> str:
+               cetol=0.05, t_ref=25.0, legacy_inc0=0.002, bcv_cold: dict | None = None) -> str:
+    """`bcv` are the hot-state face displacements; `bcv_cold` (finding 6, a static clamp)
+    the cold-state ones, imposed instead of zero in every cold half-cycle."""
     cu = lcfg()["copper"]
     inc = lcfg()["increments"]
     L = ["*NODE"] + [f"{i + 1}, {p[0]:.9g}, {p[1]:.9g}, {p[2]:.9g}"
@@ -268,7 +274,12 @@ def write_deck(m: JointMesh, path: Path, card_text: str, segs, bcv: dict, etype=
               "*TEMPERATURE", f"NALL, {T:.4f}", "*BOUNDARY"]
         for n in nodes:
             v = bcv[n]
-            L += [f"{n}, {d + 1}, {d + 1}, {s * v[d]:.10g}" for d in range(3)]
+            if bcv_cold:
+                c = bcv_cold[n]
+                L += [f"{n}, {d + 1}, {d + 1}, {s * v[d] + (1.0 - s) * c[d]:.10g}"
+                      for d in range(3)]
+            else:
+                L += [f"{n}, {d + 1}, {d + 1}, {s * v[d]:.10g}" for d in range(3)]
         L += ["*EL PRINT, ELSET=ESOLCORE", "PEEQ, EVOL, S, E",
               "*NODE PRINT, NSET=NBOT", "NT", "*END STEP"]
     text = "\n".join(L) + "\n"
@@ -372,10 +383,17 @@ def deck_for(task, wd: Path):
     card, law, win, wstat = resolve_card(task)
     bcm = task.get("bc", lc["bc_mode"])
     p = wd / f"{task['tag']}.inp"
+    kc = task.get("kin_cold")
+    if kc is not None:
+        # the cold state carries its own kinematics (a static clamp): express it in the
+        # HOT state's frame so both halves of the cycle share one local orientation
+        kc = dict(kc)
+        kc["_frame_du_mm"] = kin["du_mm"]
     text = write_deck(m, p, card, segs, bc_values(m, kin, bcm), task.get("element",
                                                                          lc["element"]),
                       float(task.get("cetol", lc["cetol"])), float(lc["T_stress_free_C"]),
-                      legacy_inc0=float(task.get("legacy_inc0", 0.002)))
+                      legacy_inc0=float(task.get("legacy_inc0", 0.002)),
+                      bcv_cold=bc_values(m, kc, bcm) if kc is not None else None)
     info = {"geometry": task.get("geometry", "bga"), "unit": unit, "level":
             task.get("level", lc["level"]), "n_elem": len(m.elems),
             "n_core": len(m.sets["ESOLCORE"]), "T_hot_C": T_hot, "ramp_s": ramp,

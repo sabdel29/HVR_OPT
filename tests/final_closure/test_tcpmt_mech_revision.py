@@ -183,3 +183,16 @@ def test_tier_order_bookkeeping_counts():
     assert RS.net_levels(rep, "gan_hs", "cap_fly", "both", h) == []
     assert RS.net_levels(rep, "gan_hs", "cap_fly", "single", h) == [685.0]
     assert RS.net_levels(ref, "gan_hs", "cap_fly", "both", h) == [638.0]
+
+
+def test_cold_state_kinematics_replace_zero(tmp_path):
+    m = SUB.build_mesh(SUB.geometry("bga"), 6, 8, 1)
+    hot, cold = _kin(du=(2e-3, 0.0, 4e-4)), _kin(du=(-1e-3, 0.0, -2e-4))
+    cold["_frame_du_mm"] = hot["du_mm"]
+    segs, _ = SUB.schedule(110.0, 1, 3.0, 300.0, 25.0)
+    txt = SUB.write_deck(m, tmp_path / "c.inp", LAW.card("schubert2003")[0], segs,
+                         SUB.bc_values(m, hot, "global"),
+                         bcv_cold=SUB.bc_values(m, cold, "global"))
+    n = m.sets["NTOP"][0]
+    cold_step = txt.split("** ---- c0cold")[1].split("*END STEP")[0]
+    assert f"\n{n}, 1, 1, -0.001\n" in cold_step and f"\n{n}, 3, 3, -0.0002\n" in cold_step
