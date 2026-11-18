@@ -189,7 +189,9 @@ def summarize():
                      "P_loss_rel": row["P_loss_w"] / row["coupon"]["P_loss_w"] - 1,
                      "warp_rel": fr["die_warpage_pv_um"] / row["coupon"]["die_warpage_pv_um"] - 1,
                      "du_rel": fr["du_c_um"] / row["coupon"]["du_c_um"] - 1,
-                     "site_moved": fr["site_mm"] != row["coupon"]["site_mm"]}
+                     # a mirror-image twin (+-x, +-y swapped) is the same site
+                     "site_moved": sorted(abs(v) for v in fr["site_mm"])
+                     != sorted(abs(v) for v in row["coupon"]["site_mm"])}
                 u = U.get(a, {})
                 d["exceeds_2U"] = {
                     "T": abs(d["T_max_K"]) > 2 * u.get("T", 0) * (row["coupon"]["T_max_C"] - 25),

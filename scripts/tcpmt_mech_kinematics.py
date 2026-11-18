@@ -159,6 +159,8 @@ def site_kinematics(m, U, Tn, layer, sites, half, n_fit=5):
         out.append({"x_mm": float(x), "y_mm": float(y), "h_mm": float(h),
                     "du_rot_um": (du_rot * 1e3).tolist(),
                     "du_def_xy_um": float(math.hypot(*du_def) * 1e3),
+                    # = h (du_x/dz + du_z/dx): the layer's engineering transverse shear strain
+                    "gamma_def": float(math.hypot(*du_def) / h),
                     "u_bot_mm": ub[:3].tolist(), "G_bot": Gb[:3].tolist(),
                     "u_top_mm": ut[:3].tolist(), "G_top": Gt[:3].tolist(),
                     "T_bot_C": None if tb is None else float(tb[0]),
@@ -236,6 +238,9 @@ def interconnect_search(m, U, Tn, arch, cutout_mm=None, top_k=None, layers=None)
                     "top": [dict(k, T_C=site_T(k)) for k in kin[:top_k]],
                     "candidates": compact_sites(cand),
                     "gamma_max": crit["gamma"],
+                    "critical_by_shear_strain": (lambda k: dict(k, T_C=site_T(k)))(
+                        max(kin, key=lambda k: k["gamma_def"])),
+                    "gamma_def_max": max(k["gamma_def"] for k in kin),
                     "du_xy_um_max": max(k["du_xy_um"] for k in kin),
                     "eps_z_range": [min(k["eps_z"] for k in kin), max(k["eps_z"] for k in kin)]}
     return res
@@ -290,6 +295,7 @@ def expand_sites(c):
         out.append({"x_mm": c["x_mm"][i], "y_mm": c["y_mm"][i], "h_mm": c["h_mm"],
                     "du_rot_um": (du_rot * 1e3).tolist(),
                     "du_def_xy_um": float(math.hypot(*(du[:2] - du_rot)) * 1e3),
+                    "gamma_def": float(math.hypot(*(du[:2] - du_rot)) / c["h_mm"]),
                     "tilt_rel": (Gt[2] - Gb[2]).tolist(),
                     "u_bot_mm": c["u_bot_mm"][i], "u_top_mm": c["u_top_mm"][i],
                     "G_bot": c["G_bot"][i], "G_top": c["G_top"][i],
@@ -590,7 +596,12 @@ def summary():
             lay[name] = {"label": v["label"], "h_um": v["h_um"], "x_mm": c["x_mm"],
                          "y_mm": c["y_mm"], "gamma": c["gamma"], "du_xy_um": c["du_xy_um"],
                          "du_z_um": c["du_z_um"], "eps_z": c["eps_z"], "T_C": c.get("T_C"),
-                         "du_def_xy_um": c.get("du_def_xy_um"), "n_sites": v["n_sites"]}
+                         "du_def_xy_um": c.get("du_def_xy_um"), "n_sites": v["n_sites"],
+                         "gamma_def_max": v.get("gamma_def_max"),
+                         "critical_by_shear_strain_mm": (
+                             [v["critical_by_shear_strain"]["x_mm"],
+                              v["critical_by_shear_strain"]["y_mm"]]
+                             if v.get("critical_by_shear_strain") else None)}
         d = k.get("decomposition_bga_critical") or {}
         sh = d.get("share_along_du") or {}
         if sh.get("bending") is not None:
