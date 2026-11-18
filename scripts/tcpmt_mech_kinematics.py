@@ -370,15 +370,17 @@ def free_mismatch_um(m, mats, Tcol, x, y, z_bot, z_top, t_ref=25.0, n=24):
     if r == 0:
         return [0.0, 0.0]
     z_min, z_max = float(np.min(m.zs)), float(np.max(m.zs))
-    acc = 0.0
+    d = []
     for k in range(n):
         f = (k + 0.5) / n
         xp, yp = f * x, f * y
         ep = free_strain(m, mats, Tcol, xp, yp, z_top, z_max, t_ref)
         eb = free_strain(m, mats, Tcol, xp, yp, z_min, z_bot, t_ref)
-        if ep is None or eb is None:
-            return None
-        acc += (ep - eb) * r / n
+        if ep is not None and eb is not None:       # a ring (Z2 opening) expands about
+            d.append(ep - eb)                       # its centre too: average where present
+    if not d:
+        return None
+    acc = float(np.mean(d)) * r
     return [acc * x / r * 1e3, acc * y / r * 1e3]
 
 
