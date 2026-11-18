@@ -1,12 +1,28 @@
 #!/usr/bin/env python3
 """Phase-0M-R3C Section 4 --- bounded repartition search over EXISTING components.
 
-Enumerates every ordered assignment of the five existing component classes into tiers,
-subject to the cell-area budget, and scores by the dielectric depth each high-current net
-must cross. Nothing new is introduced: no device, no dimension change, no relaxed spec.
+Enumerates every ORDERED PARTITION of the five existing component classes (high-side GaN,
+low-side GaN, flying capacitors, output capacitor, inductor) into k = 2..5 non-empty,
+bottom-to-top ordered tiers -- k! S(5, k) candidates: 30 + 150 + 240 + 120 = 540 -- keeps
+those whose every tier fits the cell area (144 of the 540), and scores them by the
+dielectric depth each high-current net must cross. Nothing new is introduced: no device, no
+dimension change, no relaxed spec. (TCPMT round 3, finding 10: the 144 are NOT "the
+permutations of the four component tiers"; there are 4! = 24 of those. The correct
+statement and counts are written by --bookkeeping.)
 
 The objective is the brief's hierarchy: fewest vertical levels for the 20.408 A ls_to_L
 net, then the other vertical nets.
+
+Terminal assumption. The production rule takes the device dies to have terminals on BOTH
+faces, so a die connects up and down through the capture planes on either side of its tier.
+net_depth(..., terminals="single") instead takes every die face-down with terminals on its
+bottom face only (flip-chip on the RDL beneath its tier): a net leaving a die tier upward
+must then cross that tier itself. Capacitors keep wrap-around terminations (both faces).
+
+    python repartition_search.py                 the candidate CSV (production)
+    python repartition_search.py --bookkeeping   counts, statement and the terminal
+                                                 sensitivity -> research/tcpmt_revision/
+                                                 tier_order_bookkeeping.json
 """
 from __future__ import annotations
 import csv, itertools, sys
@@ -50,20 +66,145 @@ def geometry(tiers):
     return ext, areas, z - RP.RDL_UM
 
 
-def net_depth(tiers, ext, src, dst):
+#: device dies (the single-face option applies to these; capacitors have wrap-around ends)
+DIES = ("gan_hs", "gan_ls")
+
+
+def net_levels(tiers, src, dst, terminals="both", heights=None):
+    """Depth of every via level the net crosses (one per tier between capture planes).
+
+    terminals='both'   (production) a component connects from either face of its tier, so
+                       only the tiers strictly between the two ends are crossed;
+    terminals='single' every die is face-down with terminals on its bottom face: when the
+                       LOWER end of the net is a die, its own tier is crossed as well (the
+                       upper end, face-down, is reached on the plane beneath its tier)."""
+    h = heights or RP.H_UM
+    ta = next(i for i, t in enumerate(tiers) if src in t)
+    tb = next(i for i, t in enumerate(tiers) if dst in t)
+    if ta == tb:
+        return []
+    lo, hi = min(ta, tb), max(ta, tb)
+    lower = src if ta < tb else dst
+    first = lo if (terminals == "single" and lower in DIES) else lo + 1
+    return [max(h[c] for c in tiers[t]) for t in range(first, hi)]
+
+
+def net_depth(tiers, ext, src, dst, terminals="both"):
     """Total dielectric depth the net must cross, and how many via levels."""
     ta = next(i for i, t in enumerate(tiers) if src in t)
     tb = next(i for i, t in enumerate(tiers) if dst in t)
     if ta == tb:
         return 0.0, 0, "same tier -- lateral"
-    lo, hi = min(ta, tb), max(ta, tb)
-    depths = [max(RP.H_UM[c] for c in tiers[t]) for t in range(lo + 1, hi)]
+    depths = net_levels(tiers, src, dst, terminals)
     if not depths:
         return 0.0, 0, "adjacent tiers -- RDL-level transition, no build-up via"
     return sum(depths), len(depths), " + ".join(f"{d:.0f}" for d in depths)
 
 
+def stirling2(n, k):
+    from math import comb
+    return sum((-1) ** j * comb(k, j) * (k - j) ** n for j in range(k + 1)) // \
+        __import__("math").factorial(k)
+
+
+def bookkeeping():
+    """Finding 10: the correct count and statement, and the worst via aspect ratio of the
+    reference and repartitioned orders under both terminal options (heights from the Z1
+    config, capacitor cases A0 / A1 and via diameter from flying_caps.json as the
+    realizability figure uses them)."""
+    import json
+    import math
+    import yaml
+    counts = {}
+    n_all = n_pass = 0
+    for k in (2, 3, 4, 5):
+        n_k = sum(1 for _ in partitions(COMPS, k))
+        assert n_k == math.factorial(k) * stirling2(len(COMPS), k)
+        p_k = sum(1 for t in partitions(COMPS, k) if max(geometry(t)[1]) <= CELL_MM2 + 1e-9)
+        counts[k] = {"ordered_partitions": n_k, "pass_area_budget": p_k}
+        n_all += n_k
+        n_pass += p_k
+    # which groupings survive: every passing k-tier partition is an order of ONE grouping?
+    groupings = {}
+    for k in (2, 3, 4, 5):
+        g = {frozenset(frozenset(x) for x in t) for t in partitions(COMPS, k)
+             if max(geometry(t)[1]) <= CELL_MM2 + 1e-9}
+        groupings[k] = sorted(sorted(",".join(sorted(x)) for x in G) for G in g)
+        counts[k]["distinct_groupings"] = groupings[k]
+    cfg = yaml.safe_load((R / "configs" / "phase0nx" / "z1_physical.yaml").read_text())
+    tiers = cfg["converter"]["tiers_from_substrate_upward"]
+    um = lambda p: next(float(t["um"]) for t in tiers if t["name"].startswith(p))  # noqa: E731
+    fc = json.loads((R / "research" / "tcpmt_revision" / "flying_caps.json").read_text())["summary"]
+    d_via = float(fc["min_tier_um_10pct"][-1]) / float(fc["via_AR_10pct"][-1])
+    base_h = {"gan_hs": um("gan_hs"), "gan_ls": um("gan_ls"), "cap_fly": um("flying_caps"),
+              "cap_out": um("inductor_plus_cout"), "inductor": um("inductor_plus_cout")}
+    cases = {"A0": dict(base_h), "A1": dict(base_h, cap_fly=float(fc["min_tier_um_10pct"][-1]))}
+    orders = {"reference": [["gan_hs"], ["gan_ls"], ["cap_fly"], ["cap_out", "inductor"]],
+              "repartitioned": [["gan_hs"], ["cap_fly"], ["gan_ls"], ["cap_out", "inductor"]]}
+    nets = [("hs_to_cf", "gan_hs", "cap_fly"), ("hs_to_ls", "gan_hs", "gan_ls"),
+            ("ls_to_L", "gan_ls", "inductor")]
+    ar = {}
+    for cname, h in cases.items():
+        for oname, t in orders.items():
+            for term in ("both", "single"):
+                per = {}
+                for nm, a, b in nets:
+                    lv = net_levels(t, a, b, term, h)
+                    per[nm] = {"levels_um": lv, "worst_AR": (max(lv) / d_via) if lv else 0.0}
+                ar[f"{cname}/{oname}/{term}"] = {
+                    "nets": per, "worst_AR": max(v["worst_AR"] for v in per.values()),
+                    "worst_net": max(per, key=lambda n: per[n]["worst_AR"])}
+    # the best passing candidate under each option (same ranking rule as main())
+    best = {}
+    for term in ("both", "single"):
+        rows = []
+        for k in (2, 3, 4, 5):
+            for t in partitions(COMPS, k):
+                if max(geometry(t)[1]) > CELL_MM2 + 1e-9:
+                    continue
+                worst = max((max(net_levels(t, a, b, term) or [0.0]) for _, a, b in nets))
+                src_ok = "gan_hs" in t[0] and "inductor" in t[-1]
+                rows.append((not src_ok, worst, k, " | ".join(",".join(x) for x in t)))
+        rows.sort()
+        best[term] = {"partition": rows[0][3], "worst_level_um": rows[0][1],
+                      "worst_AR_RP_heights": rows[0][1] / d_via,
+                      "source_order_compatible": not rows[0][0]}
+    out = {"what": "tier-order bookkeeping (TCPMT round 3, finding 10)",
+           "generator": "scripts/phase0mr3c/repartition_search.py --bookkeeping",
+           "enumeration": "ordered partitions of the 5 component classes (gan_hs, gan_ls, "
+                          "cap_fly, cap_out, inductor) into k = 2..5 non-empty tiers ordered "
+                          "bottom to top: k! S(5,k) per k",
+           "counts_by_k": counts, "n_ordered_partitions": n_all,
+           "n_pass_area_budget": n_pass, "cell_area_mm2": CELL_MM2,
+           "statement_for_paper": (
+               f"The {n_pass} assignments are the ordered partitions of the five component "
+               "classes (high-side and low-side devices, flying and output capacitors, "
+               f"inductor) into two to five tiers whose every tier fits the cell area, out of "
+               f"{n_all}: " + "; ".join(
+                   f"{counts[k]['pass_area_budget']} with {k} tiers"
+                   + (f" (the {math.factorial(k)} orders of "
+                      + " / ".join("{" + g + "}" for g in groupings[k][0]) + ")"
+                      if len(groupings[k]) == 1 else "")
+                   for k in (2, 3, 4, 5) if counts[k]["pass_area_budget"]) +
+               "; no partition into two or three tiers fits."),
+           "wrong_statement": "the permutations of the four component tiers (there are 24)",
+           "via_diameter_um": d_via, "tier_heights_um": cases,
+           "terminal_options": {"both": "production: dies connect from either face",
+                                "single": "dies face-down, terminals on the bottom face only; "
+                                          "a net leaving a die tier upward crosses it"},
+           "worst_aspect_ratio": ar, "best_candidate_by_option": best}
+    f = R / "research" / "tcpmt_revision" / "tier_order_bookkeeping.json"
+    f.write_text(json.dumps(out, indent=1) + "\n")
+    return out
+
+
 def main() -> int:
+    if "--bookkeeping" in sys.argv:
+        b = bookkeeping()
+        print(b["statement_for_paper"])
+        print({k: v["worst_AR"] for k, v in b["worst_aspect_ratio"].items()})
+        print(b["best_candidate_by_option"])
+        return 0
     rows = []
     for k in (2, 3, 4, 5):
         for tiers in partitions(COMPS, k):
