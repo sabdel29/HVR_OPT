@@ -17,9 +17,11 @@ Loss boundary for every number written here: CONVERSION + ROUTING ("matched").
 The reference paper's end-to-end boundary is NOT reconstructed. See assumptions.md.
 """
 import sys, os, json, math, time, csv, argparse
-# engine directory: the published copy by default; HVR_DSE_ENGINE selects another (the
-# TCPMT-revision engine with the corrected capacitor rule; HVR_CAP_RULE=legacy reproduces it)
-ENGINE = os.environ.get("HVR_DSE_ENGINE", "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine")
+# engine and output locations may be redirected: HVR_DSE_ENGINE (or DSE_ENGINE) selects an engine
+# copy -- e.g. the TCPMT-revision engine with the corrected capacitor rule, where HVR_CAP_RULE=legacy
+# reproduces the published sweep -- and DSE_OUT the output directory
+ENGINE = os.environ.get("HVR_DSE_ENGINE", os.environ.get(
+    "DSE_ENGINE", "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine"))
 sys.path.insert(0, ENGINE)
 os.chdir(ENGINE)
 
@@ -30,7 +32,7 @@ from Framework_w_HVR_OPT_sizing_v2 import DieConfig, DVPDRoutingModel
 sys.path.insert(0, "/home/beams0/SABDELZAHER/Salma_Thesis/analysis/system_partitioning_comparison/scripts")
 import paper_routing as PR
 
-OUT = "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_j35"
+OUT = os.environ.get("DSE_OUT", "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_j35")
 
 # ---- reference-paper operating point (assumptions.md Sec. 1) -------------------
 V_IN, V_OUT      = 48.0, 1.0

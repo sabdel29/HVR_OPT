@@ -71,7 +71,9 @@ The plate interface separates the two further. A flat plate on a warped die leav
 thickest where the die falls away; with the interface following the free warpage (the upper bound
 of Section~\ref{sec:models}) the embedded regulator converges \FbAZonedP~W and \FbAZonedT~K higher,
 while the package-backside regulator, whose die warps \WarpRatioZtwo{} times as much, has no
-operating point within its device rating: each pass of the iteration warps it further. Under one
+operating point within its device rating: its loss rises to \FbPassOneAZtwoPloss{} and then
+\FbPassTwoAZtwoPloss~W and its peak to \FbPassTwoAZtwoTmax\,$^\circ$C in two passes, each warping it
+further. Under one
 top plate the embedded regulator is therefore the only integration that is feasible for any
 interface between a conforming one and a rigid plate on the free warpage, and it is electrically
 tied with Z2 only in the conforming limit.
@@ -114,9 +116,10 @@ be a fifth as large, but about half the balls would exceed their rating.
 With identical cooling the ranking therefore splits by domain (Fig.~\ref{fig:tiers}). Z2 has the
 lowest loss, \GapBZtwo~W below Z1 and ahead of it for any feed loop below \RstarTierBZtwo~m$\Omega$,
 far above the 0.6--2-m$\Omega$ physical feeds; the implemented decoupling and the interface feedback
-move it by 2~W. Z1 has the smallest die warpage and joint driver, both resolved; its joint response
-and that of Z3 are not resolved, and the alternative solder law narrows their gap further
-(Section~\ref{sec:verification}). Z3 is behind both on loss, drops tens of millivolts on its 1-V
+move it by 2~W. Z1 has the smallest die warpage, joint driver and joint response; against Z3 the warpage
+is resolved with correlation credit and the joint response is resolved now that Z3's
+redistribution heat is in the solution, which runs its critical joint 5~K hotter
+(\EpsBZone{} against \EpsBZthree$\times10^{-3}$ per cycle). Z3 is behind both on loss, drops tens of millivolts on its 1-V
 path, and needs nearly the whole ball field.
 
 \emph{Platform-inclusive.} With a physical feed and the pumping power of every plate charged, the

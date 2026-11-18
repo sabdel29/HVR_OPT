@@ -269,12 +269,15 @@ class HVRDesign:
 
 def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: float = 1.0,
                 target_component_count: int = 15,
-                inductor_library=None, capacitor_library=None) -> HVRDesign | None:
+                inductor_library=None, capacitor_library=None,
+                architecture: tuple | None = None) -> HVRDesign | None:
     """Run the upstream optimizer and wrap the best feasible design.
 
     `inductor_library` / `capacitor_library` are pass-throughs added in Phase 0F so a
     HEIGHT-CONSTRAINED subset can be supplied; leaving them None reproduces every earlier
     phase exactly, because the upstream optimizer then falls back to its own full libraries.
+    `architecture` = (N, K, K_A) (TCPMT revision) restricts the pick to that topology; None
+    keeps the unrestricted pick.
     """
     import os
     import HVR_FULL_OPT_EPC_V2 as H
@@ -298,6 +301,9 @@ def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: floa
         H.CAP_RULE = prev_rule
     feas = [r for r in res if r.area_feasible and r.ripple_satisfied
             and np.isfinite(r.optimized_loss)]
+    if architecture is not None:
+        feas = [r for r in feas if (r.architecture.N, r.architecture.K,
+                                    r.architecture.K_A) == tuple(architecture)]
     if not feas:
         return None
     b = min(feas, key=lambda r: r.optimized_loss)

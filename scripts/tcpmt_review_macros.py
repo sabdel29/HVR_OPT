@@ -136,6 +136,26 @@ def dse():
          "DseFortyNineBudget": fx(r49["area_budget_mm2"], 2),
          "DseFortyNineJ": fx(float(r49["I_vr_A"]) / float(r49["area_mm2"]), 2),
          "DseThreeBestM": str(int(float(b33["M"]))), "DseThreeBestLoss": fx(b33["total_loss_W"], 1)}
+    pc = TR / "dse_j35" / "data" / "case_D_etm35_caprule.csv"
+    if pc.is_file():
+        rc = [r for r in csv.DictReader(pc.open()) if r["feasible"] == "True"]
+        bc = min(rc, key=lambda r: float(r["total_loss_W"]))
+        c49 = next(r for r in rc if int(float(r["M"])) == 49)
+        m["DseCorrOptM"] = str(int(float(bc["M"])))
+        m["DseCorrOptLoss"] = fx(bc["total_loss_W"], 1)
+        m["DseCorrFortyNineLoss"] = fx(c49["total_loss_W"], 1)
+        old_by_m = {int(float(r["M"])): r for r in feas}
+        d = [float(r["total_loss_W"]) - float(old_by_m[int(float(r["M"]))]["total_loss_W"])
+             for r in rc if int(float(r["M"])) in old_by_m]
+        m["DseCorrDeltaLo"], m["DseCorrDeltaHi"] = fx(min(d), 1), fx(max(d), 1)
+        same = all(r["arch"] == old_by_m[int(float(r["M"]))]["arch"]
+                   and r["f_sw_Hz"] == old_by_m[int(float(r["M"]))]["f_sw_Hz"] for r in rc)
+        m["DseCorrSameMembers"] = "yes" if same else "no"
+    pl = TR / "dse_j35" / "data" / "case_D_etm35_legacycheck.csv"
+    if pl.is_file():
+        a = [(r["M"], r["arch"], r["total_loss_W"]) for r in csv.DictReader(pl.open())]
+        b = [(r["M"], r["arch"], r["total_loss_W"]) for r in rows]
+        m["DseLegacyReproduced"] = "yes" if a == b else "no"
     if first_inf:
         m["DseFirstInfeasibleM"] = str(int(float(first_inf["M"])))
         m["DseFirstInfeasibleBudget"] = fx(1000.0 / float(first_inf["M"]) / 3.5, 2)
@@ -496,9 +516,49 @@ def z3land():
     return m
 
 
+def feedback_passes():
+    """Interface feedback: per-pass values where a case does not converge (Z2 and Z3 under
+    cooling A run away; their passes are reported instead of a converged value)."""
+    m = {}
+    rv = TR / "review_variants"
+    for a in ("Z2", "Z3"):
+        for it in (1, 2, 3, 4, 5):
+            d = J(rv / f"etm_{a}_HV_S0__tim_warp_fb_A_it{it}.json")
+            if not d or "mechanics" not in d:
+                continue
+            k = f"FbPass{['', 'One', 'Two', 'Three', 'Four', 'Five'][it]}A{ATAG[a]}"
+            m[f"{k}Ploss"] = fx(d["P_loss_w"], 1)
+            m[f"{k}Tmax"] = fx(d["thermal"]["T_max_C"], 1)
+            m[f"{k}Warp"] = fx(d["mechanics"]["die_warpage_pv_um"], 1)
+    return m
+
+
+
+def countopt():
+    """The strongest buildable square count (M = 64, N2K2K_A1) through the full Z1 chain
+    (agent countopt): synthesized cell (3.74 mm2, five tiers) and the enlarged 4.0-mm2 cell."""
+    m = {}
+    d = TR / "countopt"
+    for tag, f in (("Syn", "etm_Z1_M64N2K2KA1_HV_S0_h1.1_r21.json"),
+                   ("Cell", "etm_Z1_M64N2K2KA1C4_HV_S0_h1.1_r21.json")):
+        c = _case(d / f)
+        if not c:
+            continue
+        m[f"Count{tag}Ploss"] = fx(c["P"], 1)
+        m[f"Count{tag}Tmax"] = fx(c["T"], 1)
+        if c["warp"] is not None:
+            m[f"Count{tag}Warp"] = fx(c["warp"], 1)
+            m[f"Count{tag}Du"] = fx(c["du"], 2)
+            m[f"Count{tag}Tjoint"] = fx(c["Tj"], 0)
+    r31 = _case(d / "etm_Z1_M64N2K2KA1_HV_S0_h1.1_r31.json")
+    if r31:
+        m["CountSynPlossFine"] = fx(r31["P"], 1)
+    return m
+
+
 def macros():
     m = {}
-    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, solder, vdrop, z3land, agents):
+    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, solder, vdrop, z3land, feedback_passes, countopt, agents):
         try:
             m.update(f())
         except Exception as e:          # a malformed artifact must not stop the paper build

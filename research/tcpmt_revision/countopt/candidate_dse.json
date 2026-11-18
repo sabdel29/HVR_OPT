@@ -1,0 +1,1008 @@
+{
+ "settings": {
+  "J_target": 3.5,
+  "ripple_factor": 0.5,
+  "v_ripple_frac": 0.25,
+  "routing_arch": "A2",
+  "selection": "case D: re-synthesized topology, discrete library, min conversion + routing over the sweep's cc set",
+  "engine": "/home/beams0/SABDELZAHER/ETM_project/scratch_countopt/dse_engine"
+ },
+ "counts": {
+  "49": {
+   "M": 49,
+   "I_vr_A": 20.408163265306122,
+   "area_budget_mm2": 5.830903790087463,
+   "component_count_candidates": [
+    {
+     "cc": 10,
+     "n_arch": 2,
+     "picked": "N=2,K=2,K_A=1",
+     "why_none": null
+    },
+    {
+     "cc": 15,
+     "n_arch": 9,
+     "picked": "N=3,K=3,K_A=2",
+     "why_none": null
+    }
+   ],
+   "feasible": true,
+   "sweep_record": {
+    "M": 49,
+    "I_vr_A": 20.408163265306122,
+    "component_count": 15,
+    "arch": "N=3,K=3,K_A=2",
+    "N": 3,
+    "K": 3,
+    "K_A": 2,
+    "D": 0.0625,
+    "conv_loss_per_vr_W": 1.8663308872777489,
+    "conv_loss_total_W": 91.45021347660969,
+    "routing_loss_W": 4.664969904925002,
+    "routing_vic_W": 3.2731316988743457,
+    "routing_lateral_W": 1.3918382060506556,
+    "total_loss_W": 96.11518338153469,
+    "efficiency_pct": 91.23128802166414,
+    "f_sw_Hz": 805170.3343770516,
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "p_cond_W": 1.6703662570513713,
+    "p_sw_W": 0.19596463022637747,
+    "area_mm2": 5.61,
+    "area_budget_mm2": 5.830903790087463,
+    "area_util": 0.9621150000000002,
+    "delta_i": 9.004305909518163,
+    "avg_nearest_dist_mm": 1.565647584249854,
+    "rho_ac_mohm_per_mm": 0.6821938531458165,
+    "feasible": 1,
+    "reason": ""
+   },
+   "topology": {
+    "N": 3,
+    "K": 3,
+    "K_A": 2,
+    "B_array": [
+     1,
+     1,
+     1
+    ],
+    "D": 0.0625,
+    "component_count": 11,
+    "label": "N3K3K_A2"
+   },
+   "hs_device": {
+    "part_number": "EPC2014C",
+    "VDSmax": 40.0,
+    "VGSmax": 6.0,
+    "R_DS_ON": 0.016,
+    "Q_G": 2e-09,
+    "Q_GD": 3e-10,
+    "Q_OSS": 4e-09,
+    "C_G": 4e-10,
+    "C_OSS": 1e-10,
+    "ID_A": 10.0,
+    "footprint_mm2": 1.87
+   },
+   "ls_device": {
+    "part_number": "EPC2057",
+    "VDSmax": 50.0,
+    "VGSmax": 6.0,
+    "R_DS_ON": 0.0085,
+    "Q_G": 3.0000000000000004e-09,
+    "Q_GD": 5e-10,
+    "Q_OSS": 7.900000000000001e-09,
+    "C_G": 6.000000000000001e-10,
+    "C_OSS": 1.5800000000000002e-10,
+    "ID_A": 9.6,
+    "footprint_mm2": 1.7999999999999998
+   },
+   "inductor": {
+    "name": "Shared_Core_UIC_250_nH",
+    "category": "silicon_interposer",
+    "l_nh": 250,
+    "r_dcr_mohm": 1.6,
+    "i_sat_a": 23,
+    "q_factor": 38,
+    "footprint_mm2": 1,
+    "height_um": 500,
+    "f_max_mhz": 100,
+    "coupling_k": 0.0,
+    "core_loss_k": 0.009,
+    "core_loss_alpha": 1.7
+   },
+   "capacitor": {
+    "name": "Murata-GCM21-10uF-25V",
+    "technology": "MLCC_embedded",
+    "c_uf": 10.0,
+    "esr_mohm": 2.5,
+    "esl_ph": 400,
+    "v_max": 25.0,
+    "footprint_mm2": 2.0
+   },
+   "f_sw_hz": 805170.3343770516,
+   "loss_per_vr_25C_W": {
+    "total": 1.8663308872777489,
+    "p_cond": 1.6703662570513713,
+    "p_sw": 0.19596463022637747,
+    "p_sw_hs": 0.10821153099362575,
+    "p_sw_gd": 0.060387775078278874,
+    "p_sw_coss": 0.02736532415447285
+   },
+   "conversion_total_W": 91.45021347660969,
+   "routing_W": 4.664969904925002,
+   "routing_vic_W": 3.2731316988743457,
+   "routing_lateral_W": 1.3918382060506556,
+   "total_W": 96.11518338153469,
+   "delta_i_out_A": 9.004305909518163,
+   "delta_v_out_V": 0.027957767211097825,
+   "area_mm2": 5.61,
+   "per_tier_area_mm2": {
+    "gan_hs": 5.61,
+    "gan_ls": 5.3999999999999995,
+    "inductor": 3,
+    "cap_fly": 4.0
+   }
+  },
+  "64": {
+   "M": 64,
+   "I_vr_A": 15.625,
+   "area_budget_mm2": 4.464285714285714,
+   "component_count_candidates": [
+    {
+     "cc": 10,
+     "n_arch": 2,
+     "picked": "N=2,K=2,K_A=1",
+     "why_none": null
+    },
+    {
+     "cc": 15,
+     "n_arch": 9,
+     "picked": "N=2,K=2,K_A=1",
+     "why_none": null
+    }
+   ],
+   "feasible": true,
+   "sweep_record": {
+    "M": 64,
+    "I_vr_A": 15.625,
+    "component_count": 10,
+    "arch": "N=2,K=2,K_A=1",
+    "N": 2,
+    "K": 2,
+    "K_A": 1,
+    "D": 0.041666666666666664,
+    "conv_loss_per_vr_W": 1.5008380238639538,
+    "conv_loss_total_W": 96.05363352729304,
+    "routing_loss_W": 4.123049625739984,
+    "routing_vic_W": 3.2731316988743457,
+    "routing_lateral_W": 0.8499179268656385,
+    "total_loss_W": 100.17668315303303,
+    "efficiency_pct": 90.89449134061509,
+    "f_sw_Hz": 480112.6858341158,
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "p_cond_W": 1.3754714873590528,
+    "p_sw_W": 0.125366536504901,
+    "area_mm2": 3.74,
+    "area_budget_mm2": 4.464285714285714,
+    "area_util": 0.8377600000000001,
+    "delta_i": 7.637095987781375,
+    "avg_nearest_dist_mm": 1.341640786499874,
+    "rho_ac_mohm_per_mm": 0.5267875590901127,
+    "feasible": 1,
+    "reason": ""
+   },
+   "topology": {
+    "N": 2,
+    "K": 2,
+    "K_A": 1,
+    "B_array": [
+     1,
+     1
+    ],
+    "D": 0.041666666666666664,
+    "component_count": 7,
+    "label": "N2K2K_A1"
+   },
+   "hs_device": {
+    "part_number": "EPC2014C",
+    "VDSmax": 40.0,
+    "VGSmax": 6.0,
+    "R_DS_ON": 0.016,
+    "Q_G": 2e-09,
+    "Q_GD": 3e-10,
+    "Q_OSS": 4e-09,
+    "C_G": 4e-10,
+    "C_OSS": 1e-10,
+    "ID_A": 10.0,
+    "footprint_mm2": 1.87
+   },
+   "ls_device": {
+    "part_number": "EPC2057",
+    "VDSmax": 50.0,
+    "VGSmax": 6.0,
+    "R_DS_ON": 0.0085,
+    "Q_G": 3.0000000000000004e-09,
+    "Q_GD": 5e-10,
+    "Q_OSS": 7.900000000000001e-09,
+    "C_G": 6.000000000000001e-10,
+    "C_OSS": 1.5800000000000002e-10,
+    "ID_A": 9.6,
+    "footprint_mm2": 1.7999999999999998
+   },
+   "inductor": {
+    "name": "Shared_Core_UIC_250_nH",
+    "category": "silicon_interposer",
+    "l_nh": 250,
+    "r_dcr_mohm": 1.6,
+    "i_sat_a": 23,
+    "q_factor": 38,
+    "footprint_mm2": 1,
+    "height_um": 500,
+    "f_max_mhz": 100,
+    "coupling_k": 0.0,
+    "core_loss_k": 0.009,
+    "core_loss_alpha": 1.7
+   },
+   "capacitor": {
+    "name": "Murata-GCM21-10uF-25V",
+    "technology": "MLCC_embedded",
+    "c_uf": 10.0,
+    "esr_mohm": 2.5,
+    "esl_ph": 400,
+    "v_max": 25.0,
+    "footprint_mm2": 2.0
+   },
+   "f_sw_hz": 480112.6858341158,
+   "loss_per_vr_25C_W": {
+    "total": 1.5008380238639538,
+    "p_cond": 1.3754714873590528,
+    "p_sw": 0.125366536504901,
+    "p_sw_hs": 0.0758870833282087,
+    "p_sw_gd": 0.024005634291705793,
+    "p_sw_coss": 0.025473818884986517
+   },
+   "conversion_total_W": 96.05363352729304,
+   "routing_W": 4.123049625739984,
+   "routing_vic_W": 3.2731316988743457,
+   "routing_lateral_W": 0.8499179268656385,
+   "total_W": 100.17668315303303,
+   "delta_i_out_A": 7.637095987781375,
+   "delta_v_out_V": 0.03976720576812709,
+   "area_mm2": 3.74,
+   "per_tier_area_mm2": {
+    "gan_hs": 3.74,
+    "gan_ls": 3.5999999999999996,
+    "inductor": 2,
+    "cap_fly": 2.0
+   }
+  },
+  "72": {
+   "M": 72,
+   "I_vr_A": 13.88888888888889,
+   "area_budget_mm2": 3.9682539682539684,
+   "component_count_candidates": [
+    {
+     "cc": 10,
+     "n_arch": 2,
+     "picked": "N=2,K=2,K_A=1",
+     "why_none": null
+    },
+    {
+     "cc": 15,
+     "n_arch": 9,
+     "picked": "N=2,K=2,K_A=1",
+     "why_none": null
+    }
+   ],
+   "feasible": true,
+   "sweep_record": {
+    "M": 72,
+    "I_vr_A": 13.88888888888889,
+    "component_count": 10,
+    "arch": "N=2,K=2,K_A=1",
+    "N": 2,
+    "K": 2,
+    "K_A": 1,
+    "D": 0.041666666666666664,
+    "conv_loss_per_vr_W": 1.223446808687413,
+    "conv_loss_total_W": 88.08817022549374,
+    "routing_loss_W": 4.109523093313599,
+    "routing_vic_W": 3.2731316988743457,
+    "routing_lateral_W": 0.8363913944392531,
+    "total_loss_W": 92.19769331880734,
+    "efficiency_pct": 91.55851601932515,
+    "f_sw_Hz": 570415.5759814612,
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "p_cond_W": 1.084599203128259,
+    "p_sw_W": 0.13884760555915407,
+    "area_mm2": 3.74,
+    "area_budget_mm2": 3.9682539682539684,
+    "area_util": 0.94248,
+    "delta_i": 6.428061962294371,
+    "avg_nearest_dist_mm": 1.7888543819998313,
+    "rho_ac_mohm_per_mm": 0.5741952654953579,
+    "feasible": 1,
+    "reason": ""
+   },
+   "topology": {
+    "N": 2,
+    "K": 2,
+    "K_A": 1,
+    "B_array": [
+     1,
+     1
+    ],
+    "D": 0.041666666666666664,
+    "component_count": 7,
+    "label": "N2K2K_A1"
+   },
+   "hs_device": {
+    "part_number": "EPC2014C",
+    "VDSmax": 40.0,
+    "VGSmax": 6.0,
+    "R_DS_ON": 0.016,
+    "Q_G": 2e-09,
+    "Q_GD": 3e-10,
+    "Q_OSS": 4e-09,
+    "C_G": 4e-10,
+    "C_OSS": 1e-10,
+    "ID_A": 10.0,
+    "footprint_mm2": 1.87
+   },
+   "ls_device": {
+    "part_number": "EPC2057",
+    "VDSmax": 50.0,
+    "VGSmax": 6.0,
+    "R_DS_ON": 0.0085,
+    "Q_G": 3.0000000000000004e-09,
+    "Q_GD": 5e-10,
+    "Q_OSS": 7.900000000000001e-09,
+    "C_G": 6.000000000000001e-10,
+    "C_OSS": 1.5800000000000002e-10,
+    "ID_A": 9.6,
+    "footprint_mm2": 1.7999999999999998
+   },
+   "inductor": {
+    "name": "Shared_Core_UIC_250_nH",
+    "category": "silicon_interposer",
+    "l_nh": 250,
+    "r_dcr_mohm": 1.6,
+    "i_sat_a": 23,
+    "q_factor": 38,
+    "footprint_mm2": 1,
+    "height_um": 500,
+    "f_max_mhz": 100,
+    "coupling_k": 0.0,
+    "core_loss_k": 0.009,
+    "core_loss_alpha": 1.7
+   },
+   "capacitor": {
+    "name": "Murata-GCM21-10uF-25V",
+    "technology": "MLCC_embedded",
+    "c_uf": 10.0,
+    "esr_mohm": 2.5,
+    "esl_ph": 400,
+    "v_max": 25.0,
+    "footprint_mm2": 2.0
+   },
+   "f_sw_hz": 570415.5759814612,
+   "loss_per_vr_25C_W": {
+    "total": 1.223446808687413,
+    "p_cond": 1.084599203128259,
+    "p_sw": 0.13884760555915407,
+    "p_sw_hs": 0.08006171712965665,
+    "p_sw_gd": 0.02852077879907306,
+    "p_sw_coss": 0.03026510963042437
+   },
+   "conversion_total_W": 88.08817022549374,
+   "routing_W": 4.109523093313599,
+   "routing_vic_W": 3.2731316988743457,
+   "routing_lateral_W": 0.8363913944392531,
+   "total_W": 92.19769331880734,
+   "delta_i_out_A": 6.428061962294371,
+   "delta_v_out_V": 0.02817271403938348,
+   "area_mm2": 3.74,
+   "per_tier_area_mm2": {
+    "gan_hs": 3.74,
+    "gan_ls": 3.5999999999999996,
+    "inductor": 2,
+    "cap_fly": 2.0
+   }
+  },
+  "76": {
+   "M": 76,
+   "I_vr_A": 13.157894736842104,
+   "area_budget_mm2": 3.759398496240601,
+   "component_count_candidates": [
+    {
+     "cc": 10,
+     "n_arch": 2,
+     "picked": "N=2,K=2,K_A=1",
+     "why_none": null
+    },
+    {
+     "cc": 15,
+     "n_arch": 9,
+     "picked": "N=2,K=2,K_A=1",
+     "why_none": null
+    }
+   ],
+   "feasible": true,
+   "sweep_record": {
+    "M": 76,
+    "I_vr_A": 13.157894736842104,
+    "component_count": 10,
+    "arch": "N=2,K=2,K_A=1",
+    "N": 2,
+    "K": 2,
+    "K_A": 1,
+    "D": 0.041666666666666664,
+    "conv_loss_per_vr_W": 1.1100945417648633,
+    "conv_loss_total_W": 84.36718517412962,
+    "routing_loss_W": 4.079022267863589,
+    "routing_vic_W": 3.2731316988743457,
+    "routing_lateral_W": 0.8058905689892432,
+    "total_loss_W": 88.44620744199321,
+    "efficiency_pct": 91.87408556920285,
+    "f_sw_Hz": 570415.5759814612,
+    "hs": "EPC2014C",
+    "ls": "EPC2057",
+    "p_cond_W": 0.9753847983042675,
+    "p_sw_W": 0.13470974346059583,
+    "area_mm2": 3.74,
+    "area_budget_mm2": 3.759398496240601,
+    "area_util": 0.9948400000000002,
+    "delta_i": 6.428061962294371,
+    "avg_nearest_dist_mm": 2.3478713763747785,
+    "rho_ac_mohm_per_mm": 0.5741952654953579,
+    "feasible": 1,
+    "reason": ""
+   },
+   "topology": {
+    "N": 2,
+    "K": 2,
+    "K_A": 1,
+    "B_array": [
+     1,
+     1
+    ],
+    "D": 0.041666666666666664,
+    "component_count": 7,
+    "label": "N2K2K_A1"
+   },
+   "hs_device": {
+    "part_number": "EPC2014C",
+    "VDSmax": 40.0,
+    "VGSmax": 6.0,
+    "R_DS_ON": 0.016,
+    "Q_G": 2e-09,
+    "Q_GD": 3e-10,
+    "Q_OSS": 4e-09,
+    "C_G": 4e-10,
+    "C_OSS": 1e-10,
+    "ID_A": 10.0,
+    "footprint_mm2": 1.87
+   },
+   "ls_device": {
+    "part_number": "EPC2057",
+    "VDSmax": 50.0,
+    "VGSmax": 6.0,
+    "R_DS_ON": 0.0085,
+    "Q_G": 3.0000000000000004e-09,
+    "Q_GD": 5e-10,
+    "Q_OSS": 7.900000000000001e-09,
+    "C_G": 6.000000000000001e-10,
+    "C_OSS": 1.5800000000000002e-10,
+    "ID_A": 9.6,
+    "footprint_mm2": 1.7999999999999998
+   },
+   "inductor": {
+    "name": "Shared_Core_UIC_250_nH",
+    "category": "silicon_interposer",
+    "l_nh": 250,
+    "r_dcr_mohm": 1.6,
+    "i_sat_a": 23,
+    "q_factor": 38,
+    "footprint_mm2": 1,
+    "height_um": 500,
+    "f_max_mhz": 100,
+    "coupling_k": 0.0,
+    "core_loss_k": 0.009,
+    "core_loss_alpha": 1.7
+   },
+   "capacitor": {
+    "name": "Murata-GCM21-10uF-25V",
+    "technology": "MLCC_embedded",
+    "c_uf": 10.0,
+    "esr_mohm": 2.5,
+    "esl_ph": 400,
+    "v_max": 25.0,
+    "footprint_mm2": 2.0
+   },
+   "f_sw_hz": 570415.5759814612,
+   "loss_per_vr_25C_W": {
+    "total": 1.1100945417648633,
+    "p_cond": 0.9753847983042675,
+    "p_sw": 0.13470974346059583,
+    "p_sw_hs": 0.0759238550310984,
+    "p_sw_gd": 0.02852077879907306,
+    "p_sw_coss": 0.03026510963042437
+   },
+   "conversion_total_W": 84.36718517412962,
+   "routing_W": 4.079022267863589,
+   "routing_vic_W": 3.2731316988743457,
+   "routing_lateral_W": 0.8058905689892432,
+   "total_W": 88.44620744199321,
+   "delta_i_out_A": 6.428061962294371,
+   "delta_v_out_V": 0.02817271403938348,
+   "area_mm2": 3.74,
+   "per_tier_area_mm2": {
+    "gan_hs": 3.74,
+    "gan_ls": 3.5999999999999996,
+    "inductor": 2,
+    "cap_fly": 2.0
+   }
+  },
+  "81": {
+   "M": 81,
+   "I_vr_A": 12.345679012345679,
+   "area_budget_mm2": 3.527336860670194,
+   "component_count_candidates": [
+    {
+     "cc": 10,
+     "n_arch": 2,
+     "picked": null,
+     "why_none": "no feasible architecture"
+    },
+    {
+     "cc": 15,
+     "n_arch": 9,
+     "picked": null,
+     "why_none": "no feasible architecture"
+    }
+   ],
+   "feasible": false,
+   "gate_census": [
+    {
+     "arch": "N=2,K=2,K_A=1",
+     "B_array": [
+      1,
+      1
+     ],
+     "area_budget_mm2": 3.527336860670194,
+     "n_hs_pass_filter": 69,
+     "n_ls_pass_filter": 69,
+     "n_inductors_pass_filter": 5,
+     "n_caps_pass_filter": 2,
+     "n_combos_within_area": 0,
+     "n_combos_within_area_and_ripple": 0,
+     "min_area_any_combo_mm2": 3.5999999999999996,
+     "min_area_parts": [
+      "EPC2057",
+      "EPC2057",
+      "High_AR_SPIRAL_UIC",
+      "Murata-GCM21-10uF-25V"
+     ],
+     "smallest_hs_passing_filter": [
+      [
+       "EPC2057",
+       1.7999999999999998,
+       9.6
+      ],
+      [
+       "EPC2039",
+       1.8225000000000002,
+       6.8
+      ],
+      [
+       "EPC2214",
+       1.8225000000000002,
+       10.0
+      ],
+      [
+       "EPC2014C",
+       1.87,
+       10.0
+      ],
+      [
+       "EPC7002",
+       1.87,
+       10.0
+      ]
+     ]
+    },
+    {
+     "arch": "N=3,K=2,K_A=1",
+     "B_array": [
+      1,
+      2
+     ],
+     "area_budget_mm2": 3.527336860670194,
+     "n_hs_pass_filter": 72,
+     "n_ls_pass_filter": 65,
+     "n_inductors_pass_filter": 5,
+     "n_caps_pass_filter": 2,
+     "n_combos_within_area": 0,
+     "n_combos_within_area_and_ripple": 0,
+     "min_area_any_combo_mm2": 4.59,
+     "min_area_parts": [
+      "EPC2012C",
+      "EPC2014C",
+      "High_AR_SPIRAL_UIC",
+      "Murata-GCM21-10uF-25V"
+     ],
+     "smallest_hs_passing_filter": [
+      [
+       "EPC2012C",
+       1.53,
+       5.0
+      ],
+      [
+       "EPC2057",
+       1.7999999999999998,
+       9.6
+      ],
+      [
+       "EPC2039",
+       1.8225000000000002,
+       6.8
+      ],
+      [
+       "EPC2214",
+       1.8225000000000002,
+       10.0
+      ],
+      [
+       "EPC2221",
+       1.8225000000000002,
+       5.0
+      ]
+     ]
+    },
+    {
+     "arch": "N=3,K=3,K_A=2",
+     "B_array": [
+      1,
+      1,
+      1
+     ],
+     "area_budget_mm2": 3.527336860670194,
+     "n_hs_pass_filter": 72,
+     "n_ls_pass_filter": 72,
+     "n_inductors_pass_filter": 6,
+     "n_caps_pass_filter": 2,
+     "n_combos_within_area": 0,
+     "n_combos_within_area_and_ripple": 0,
+     "min_area_any_combo_mm2": 4.59,
+     "min_area_parts": [
+      "EPC2012C",
+      "EPC2012C",
+      "High_AR_SPIRAL_UIC",
+      "Murata-GCM21-10uF-25V"
+     ],
+     "smallest_hs_passing_filter": [
+      [
+       "EPC2012C",
+       1.53,
+       5.0
+      ],
+      [
+       "EPC2057",
+       1.7999999999999998,
+       9.6
+      ],
+      [
+       "EPC2039",
+       1.8225000000000002,
+       6.8
+      ],
+      [
+       "EPC2214",
+       1.8225000000000002,
+       10.0
+      ],
+      [
+       "EPC2221",
+       1.8225000000000002,
+       5.0
+      ]
+     ]
+    },
+    {
+     "arch": "N=4,K=2,K_A=1",
+     "B_array": [
+      2,
+      2
+     ],
+     "area_budget_mm2": 3.527336860670194,
+     "n_hs_pass_filter": 78,
+     "n_ls_pass_filter": 69,
+     "n_inductors_pass_filter": 5,
+     "n_caps_pass_filter": 2,
+     "n_combos_within_area": 0,
+     "n_combos_within_area_and_ripple": 0,
+     "min_area_any_combo_mm2": 6.0,
+     "min_area_parts": [
+      "EPC2040",
+      "EPC2014C",
+      "Wen-CoupledMagCore-12nH",
+      "Murata-GCM21-10uF-25V"
+     ],
+     "smallest_hs_passing_filter": [
+      [
+       "EPC2040",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2216",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2012C",
+       1.53,
+       5.0
+      ],
+      [
+       "EPC8004",
+       1.7424999999999997,
+       4.0
+      ],
+      [
+       "EPC8009",
+       1.7424999999999997,
+       4.0
+      ]
+     ]
+    },
+    {
+     "arch": "N=4,K=3,K_A=2",
+     "B_array": [
+      1,
+      2,
+      1
+     ],
+     "area_budget_mm2": 3.527336860670194,
+     "n_hs_pass_filter": 78,
+     "n_ls_pass_filter": 69,
+     "n_inductors_pass_filter": 5,
+     "n_caps_pass_filter": 2,
+     "n_combos_within_area": 0,
+     "n_combos_within_area_and_ripple": 0,
+     "min_area_any_combo_mm2": 6.0,
+     "min_area_parts": [
+      "EPC2040",
+      "EPC2014C",
+      "High_AR_SPIRAL_UIC",
+      "Murata-GCM21-10uF-25V"
+     ],
+     "smallest_hs_passing_filter": [
+      [
+       "EPC2040",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2216",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2012C",
+       1.53,
+       5.0
+      ],
+      [
+       "EPC8004",
+       1.7424999999999997,
+       4.0
+      ],
+      [
+       "EPC8009",
+       1.7424999999999997,
+       4.0
+      ]
+     ]
+    },
+    {
+     "arch": "N=4,K=4,K_A=2",
+     "B_array": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "area_budget_mm2": 3.527336860670194,
+     "n_hs_pass_filter": 78,
+     "n_ls_pass_filter": 78,
+     "n_inductors_pass_filter": 8,
+     "n_caps_pass_filter": 2,
+     "n_combos_within_area": 0,
+     "n_combos_within_area_and_ripple": 0,
+     "min_area_any_combo_mm2": 6.0,
+     "min_area_parts": [
+      "EPC2040",
+      "EPC2040",
+      "High_AR_SPIRAL_UIC",
+      "Murata-GCM21-10uF-25V"
+     ],
+     "smallest_hs_passing_filter": [
+      [
+       "EPC2040",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2216",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2012C",
+       1.53,
+       5.0
+      ],
+      [
+       "EPC8004",
+       1.7424999999999997,
+       4.0
+      ],
+      [
+       "EPC8009",
+       1.7424999999999997,
+       4.0
+      ]
+     ]
+    },
+    {
+     "arch": "N=5,K=2,K_A=1",
+     "B_array": [
+      2,
+      3
+     ],
+     "area_budget_mm2": 3.527336860670194,
+     "n_hs_pass_filter": 80,
+     "n_ls_pass_filter": 67,
+     "n_inductors_pass_filter": 5,
+     "n_caps_pass_filter": 2,
+     "n_combos_within_area": 0,
+     "n_combos_within_area_and_ripple": 0,
+     "min_area_any_combo_mm2": 8.0,
+     "min_area_parts": [
+      "EPC2040",
+      "EPC2014C",
+      "Wen-CoupledMagCore-12nH",
+      "Murata-GCM21-10uF-25V"
+     ],
+     "smallest_hs_passing_filter": [
+      [
+       "EPC2121",
+       0.81,
+       2.5
+      ],
+      [
+       "EPC2040",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2216",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2012C",
+       1.53,
+       5.0
+      ],
+      [
+       "EPC2054",
+       1.6900000000000002,
+       3.0
+      ]
+     ]
+    },
+    {
+     "arch": "N=5,K=3,K_A=2",
+     "B_array": [
+      2,
+      2,
+      1
+     ],
+     "area_budget_mm2": 3.527336860670194,
+     "n_hs_pass_filter": 80,
+     "n_ls_pass_filter": 72,
+     "n_inductors_pass_filter": 6,
+     "n_caps_pass_filter": 2,
+     "n_combos_within_area": 0,
+     "n_combos_within_area_and_ripple": 0,
+     "min_area_any_combo_mm2": 8.0,
+     "min_area_parts": [
+      "EPC2040",
+      "EPC2014C",
+      "High_AR_SPIRAL_UIC",
+      "Murata-GCM21-10uF-25V"
+     ],
+     "smallest_hs_passing_filter": [
+      [
+       "EPC2121",
+       0.81,
+       2.5
+      ],
+      [
+       "EPC2040",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2216",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2012C",
+       1.53,
+       5.0
+      ],
+      [
+       "EPC2054",
+       1.6900000000000002,
+       3.0
+      ]
+     ]
+    },
+    {
+     "arch": "N=6,K=2,K_A=1",
+     "B_array": [
+      3,
+      3
+     ],
+     "area_budget_mm2": 3.527336860670194,
+     "n_hs_pass_filter": 81,
+     "n_ls_pass_filter": 69,
+     "n_inductors_pass_filter": 5,
+     "n_caps_pass_filter": 2,
+     "n_combos_within_area": 0,
+     "n_combos_within_area_and_ripple": 0,
+     "min_area_any_combo_mm2": 10.0,
+     "min_area_parts": [
+      "EPC2040",
+      "EPC2014C",
+      "Wen-CoupledMagCore-12nH",
+      "Murata-GCM21-10uF-25V"
+     ],
+     "smallest_hs_passing_filter": [
+      [
+       "EPC7014",
+       0.81,
+       2.4
+      ],
+      [
+       "EPC2121",
+       0.81,
+       2.5
+      ],
+      [
+       "EPC2040",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2216",
+       1.02,
+       3.4
+      ],
+      [
+       "EPC2012C",
+       1.53,
+       5.0
+      ]
+     ]
+    }
+   ]
+  }
+ }
+}

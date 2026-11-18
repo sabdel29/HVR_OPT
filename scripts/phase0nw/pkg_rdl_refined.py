@@ -276,17 +276,22 @@ def build_grid_general(ball_xy, squares, level, span=SUBSTRATE_MM, d_ball=0.400)
 
 def solve_rail(arch, rail, N, level, mode="VIN_PAD", t_cu_mm=5.0e-3, occupancy=0.30,
                rho_c=None, T_c=20.0, i_cells=None, candidate_override=None,
-               allocation_rule="nearest_symmetric"):
-    """One package HV sheet (supply OR return) at ball count N per rail."""
+               allocation_rule="nearest_symmetric", cells=None, tile=None):
+    """One package HV sheet (supply OR return) at ball count N per rail.
+
+    `cells` / `tile` (TCPMT revision) give another cell grid and tile side -- a count-optimal
+    Z1 candidate's (z1_design.cell_coordinates / cell_side_mm); None keeps the production
+    49-cell grid and 2.3685 mm tile."""
     import physical_coords as PCO
     import pad_interface as PI
     import pkg_rdl_network as K
     rho_c = RHO_C_CASES["CONTACT_N"] if rho_c is None else rho_c
-    cells = PCO.physical_cell_coordinates()
+    cells = PCO.physical_cell_coordinates() if cells is None else [tuple(c) for c in cells]
     cand = (candidate_override if candidate_override is not None
             else PCO.bga_lattice_sites(K.architecture_cutout_mm(arch)))
     sel = PCO.select_power_sites(cand, cells, N, N, allocation_rule)[rail]
-    sq = cell_terminals(cells, rail, mode)
+    sq = (cell_terminals(cells, rail, mode) if tile is None
+          else cell_terminals(cells, rail, mode, tile=tile))
     fx, fy = build_grid_general(sel, sq, level)
     rsq = sheet_resistance_ohm_sq(t_cu_mm, occupancy, T_c)
     net = RefinedVoltageFedNetwork(fx, fy, rsq)

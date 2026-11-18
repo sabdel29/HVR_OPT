@@ -50,6 +50,11 @@ TIER_MATERIAL = {
     "gan_ls_EPC2057":       ("silicon", "BOUNDED", "GaN-on-Si carrier; epi not resolved"),
     "gan_hs_EPC2014C":      ("silicon", "BOUNDED", "GaN-on-Si carrier; epi not resolved"),
     "flying_caps":          ("hvr_effective", "OPEN", "no sourced MLCC card in framework"),
+    # TCPMT revision (count-optimal candidate, configs/phase0nx/z1_physical_m64.yaml): a
+    # cell too small for the output capacitor to share the inductor tier carries the two
+    # in separate tiers, each mapped to the medium of the production tier it came from
+    "inductor":             ("hvr_effective", "PROVISIONAL", "existing converter medium"),
+    "output_caps":          ("hvr_effective", "OPEN", "no sourced MLCC card in framework"),
 }
 
 # Out-of-cell region (brief section 15).

@@ -66,6 +66,22 @@ from typing import Optional, List
 # Set per process with HVR_CAP_RULE / HVR_CAP_DERATING, or per call by assigning CAP_RULE.
 CAP_RULE = os.environ.get("HVR_CAP_RULE", "stress")
 CAP_V_DERATING = float(os.environ.get("HVR_CAP_DERATING", "0.8"))   # stress <= 80 % of rating
+# Effective-capacitance ripple check (corrected rule only): every flying-capacitor position i,
+# V_Ci = (N - i) V_in / N, must hold Delta V_Ci,pp = Q / C_eff,i <= CAP_RIPPLE_MAX * V_Ci with
+# Q = (I_out / N) * (D / f_sw) (each capacitor carries one SC-branch current, I_out/N in the
+# balanced allocation, for one high-side on-interval D/f_sw per cycle; losses lengthen the
+# interval slightly, an approximation) and C_eff,i = C(V_Ci, 25 C) x f_T(V_Ci, T) x (1 - tol)
+# from vendor data. An MLCC without vendor DC-bias data is not admitted (its C_eff is unknown);
+# silicon and thin-film parts keep their nominal capacitance (no DC-bias dependence) less
+# tolerance.
+CAP_RIPPLE = os.environ.get("HVR_CAP_RIPPLE", "1") == "1"
+CAP_RIPPLE_MAX = float(os.environ.get("HVR_CAP_RIPPLE_MAX", "0.10"))
+CAP_T_DESIGN_C = float(os.environ.get("HVR_CAP_T_DESIGN", "105"))
+# ESR at the switching frequency from vendor ESR(f) at the C_1 bias (corrected rule only)
+CAP_ESR_F = os.environ.get("HVR_CAP_ESR_F", "1") == "1"
+# optional capacitor height limit (um), e.g. 100 for the thin-tier technology question
+CAP_MAX_HEIGHT_UM = (float(os.environ["HVR_CAP_MAX_HEIGHT_UM"])
+                     if os.environ.get("HVR_CAP_MAX_HEIGHT_UM") else None)
 
 
 # ============================================================
@@ -252,16 +268,94 @@ def _rated_capacitors():
         Capacitor(
             "Murata-GRM188D72A105KE01-1uF-100V", "MLCC",
             c_uf=1.0, esr_mohm=7.8, esl_ph=400, v_max=100.0, footprint_mm2=1.28,
+            vendor_part="GRM188D72A105KE01", height_um=1000.0,
             source=("Murata GRM188D72A105KE01, 0603, 1 uF, 100 V, X7T; 0.272 uF at 32 V; "
                     "https://www.murata.com/en-us/products/productdetail?partno="
                     "GRM188D72A105KE01")),
         Capacitor(
             "Murata-GRM188D71H105KE01-1uF-50V", "MLCC",
             c_uf=1.0, esr_mohm=7.8, esl_ph=400, v_max=50.0, footprint_mm2=1.28,
+            vendor_part="GRM188D71H105KE01", height_um=1000.0,
             source=("Murata GRM188D71H105KE01, 0603, 1 uF, 50 V, X7T; 0.272 uF at 32 V; "
                     "https://www.murata.com/en-us/products/productdetail?partno="
                     "GRM188D71H105KE01")),
     ]
+
+
+# Thin-technology candidates, NOT used by default (research_capacitor_library()). Murata WLSC
+# silicon capacitors, 100 um thick: the rated working voltage is below the breakdown voltage
+# (Murata FAQ siliconcapacitors/qlty/0001: BV100 -> 32 V rated).
+def research_capacitor_library():
+    return [
+        Capacitor(
+            "Murata-WLSC-935146050510-10nF-BV100", "silicon_trench_MOS",
+            c_uf=0.010, esr_mohm=200.0, esl_ph=30, v_max=32.0, footprint_mm2=0.64,
+            source=("Murata WLSC 935146050510 (10 nF, BV 100 V, rated 32 V per Murata FAQ), "
+                    "0.8 x 0.8 x 0.1 mm; https://www.murata.com/en-us/products/capacitor/"
+                    "siliconcapacitors/overview/lineup/wlsc"),
+            height_um=100.0),
+    ]
+
+
+_VENDOR = {}
+
+
+def _vendor(part):
+    """Reduced vendor tables (HVR_capacitor_vendor_data.json, next to this module)."""
+    if not _VENDOR:
+        import json as _json
+        p = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         "HVR_capacitor_vendor_data.json")
+        _VENDOR.update(_json.load(open(p))["parts"] if os.path.isfile(p) else {})
+    return _VENDOR.get(part)
+
+
+def _interp(x, table):
+    xs = [a for a, _ in table]
+    ys = [b for _, b in table]
+    return float(np.interp(x, xs, ys))
+
+
+def cap_c_eff_uf(cap, v, t_c):
+    """Effective capacitance (uF) at DC bias v and temperature t_c, less tolerance; None when
+    unknown (an MLCC without vendor DC-bias data)."""
+    d = _vendor(cap.vendor_part) if getattr(cap, "vendor_part", None) else None
+    if d:
+        c25 = _interp(v, d["c_v_25c"])
+        biases = [b for b, _ in d["temp_factor"]]
+        b = min(biases, key=lambda x: abs(x - v))
+        ft = _interp(t_c, dict(d["temp_factor"])[b])
+        return c25 * ft * (1.0 - float(d.get("tolerance", 0.1)))
+    if cap.technology in ("silicon_trench_MOS", "TSV_MIM"):
+        return cap.c_uf * 0.9
+    return None
+
+
+def cap_esr_mohm(cap, f_hz, v):
+    """ESR (mOhm) at f_hz from vendor ESR(f) at the bias nearest v; else the library value."""
+    d = _vendor(cap.vendor_part) if getattr(cap, "vendor_part", None) else None
+    if d and d.get("esr_f"):
+        biases = [b for b, _ in d["esr_f"]]
+        b = min(biases, key=lambda x: abs(x - v))
+        tab = dict(d["esr_f"])[b]
+        lf = [math.log10(f) for f, _ in tab]
+        return 1e3 * float(np.interp(math.log10(f_hz), lf, [r for _, r in tab]))
+    return cap.esr_mohm
+
+
+def flying_cap_ripple(arch, cap, I_out, V_in, V_out, f_sw, t_c=None):
+    """Worst Delta V_Ci,pp / V_Ci over the flying-capacitor positions; inf when unknown."""
+    t_c = CAP_T_DESIGN_C if t_c is None else t_c
+    D = arch.N * V_out / V_in
+    q = (I_out / arch.N) * D / f_sw
+    worst = 0.0
+    for i in range(1, arch.N):
+        v_ci = (arch.N - i) * V_in / arch.N
+        c = cap_c_eff_uf(cap, v_ci, t_c)
+        if c is None or c <= 0:
+            return float("inf")
+        worst = max(worst, q / (c * 1e-6) / v_ci)
+    return worst
 
 
 def default_capacitor_library(rule=None):
@@ -576,6 +670,8 @@ class Capacitor:
     v_max: float         # Voltage rating (V)
     footprint_mm2: float # Die / package footprint (mm²)
     source: str          # Full citation with DOI or stable URL
+    vendor_part: Optional[str] = None   # key into HVR_capacitor_vendor_data.json (revision)
+    height_um: Optional[float] = None   # maximum component height (revision)
 
 
 CAPACITOR_LIBRARY: List[Capacitor] = [
@@ -846,7 +942,11 @@ def filter_candidate_capacitors(library, arch, V_in, rule=None):
     if rule == "legacy":
         return [cap for cap in library if cap.v_max > V_in / arch.N]
     v_stress = (arch.N - 1) * V_in / arch.N          # C_1, the most stressed capacitor
-    return [cap for cap in library if cap.v_max * CAP_V_DERATING >= v_stress]
+    ok = [cap for cap in library if cap.v_max * CAP_V_DERATING >= v_stress]
+    if CAP_MAX_HEIGHT_UM is not None:
+        ok = [c for c in ok if getattr(c, "height_um", None) is not None
+              and c.height_um <= CAP_MAX_HEIGHT_UM]
+    return ok
 
 
 # ============================================================
@@ -956,9 +1056,18 @@ def optimize_architecture(arch: VRArchitecture,
                         continue
 
                     for f_sw in f_valid:
+                        cap_f = cap
+                        if CAP_RULE != "legacy":
+                            if CAP_RIPPLE and flying_cap_ripple(
+                                    arch, cap, I_out, V_in, V_out, f_sw) > CAP_RIPPLE_MAX:
+                                continue
+                            if CAP_ESR_F and getattr(cap, "vendor_part", None):
+                                from dataclasses import replace as _rep
+                                cap_f = _rep(cap, esr_mohm=cap_esr_mohm(
+                                    cap, f_sw, (arch.N - 1) * V_in / arch.N))
                         lr = compute_total_loss(arch, LossModelInputs(
                             hs_device=hs, ls_device=ls,
-                            inductor=ind, capacitor=cap,
+                            inductor=ind, capacitor=cap_f,
                             I_out=I_out, V_out=V_out,
                             V_in=V_in, f_sw=f_sw,
                         ))
