@@ -20,6 +20,17 @@ PUMPING POWER IS REPORTED, NEVER FOLDED IN. `P_electronics` and `P_pumping` are 
 separate quantities and a `P_total_facility_side` is offered only when both are named. Pump
 efficiency is NOT sourced, so hydraulic power is the primary number and an efficiency
 sensitivity is carried beside it.
+
+TWO COEFFICIENTS (TCPMT revision). `h_uniform` = 1/((R_conv + R_cal + R_base) A) is the
+coefficient of a UNIFORM sink at the inlet temperature: R_cal = 1/(2 m_dot c_p) lifts the
+sink to the mean fluid temperature. `h_local` = 1/((R_conv + R_base) A) is the coefficient of
+a sink that follows the coolant along the flow (T_fluid(x) resolved), which already contains
+the caloric rise; using h_uniform there counts half the coolant rise twice.
+
+PLATE FLOW (TCPMT revision). `plate_at_flow` evaluates the same plate at another mass flow
+(laminar: Nu, hence h, does not depend on the flow; dp_fd ~ m_dot, the entrance and plenum
+terms ~ m_dot^2, so P_hydraulic ~ m_dot^2 to m_dot^3). `equal_rise_flow_g_s` is the declared
+rule for a second plate: the flow that gives it the same coolant rise as the top plate.
 """
 from __future__ import annotations
 import csv, math, sys
@@ -58,11 +69,12 @@ class CoolingDesign:
     two_sided: bool = False
     src: str = "geometry and flow; Nu from Shah & London laminar rectangular duct"
 
-    def channel(self) -> Microchannel:
+    def channel(self, m_dot_g_s: float | None = None) -> Microchannel:
         return Microchannel(w_ch_um=self.w_ch_um, h_ch_um=self.h_ch_um,
                             t_fin_um=self.t_fin_um, length_mm=self.length_mm,
                             width_mm=self.width_mm, t_base_um=self.t_base_um,
-                            k_solid=self.k_solid, m_dot_g_s=self.m_dot_g_s,
+                            k_solid=self.k_solid,
+                            m_dot_g_s=self.m_dot_g_s if m_dot_g_s is None else m_dot_g_s,
                             t_in_c=self.t_in_c)
 
     def compact(self, q_w: float) -> dict:
@@ -75,7 +87,38 @@ class CoolingDesign:
         return s
 
     def h_uniform(self, q_w: float) -> float:
+        """Uniform-sink coefficient (sink at the inlet temperature): includes R_cal."""
         return self.compact(q_w)["h_effective_W_m2K"]
+
+    def h_local(self, q_w: float) -> float:
+        """Streamwise-sink coefficient (sink = local coolant temperature): no R_cal."""
+        return self.compact(q_w)["h_local_W_m2K"]
+
+    def plate_at_flow(self, m_dot_g_s: float, q_w: float) -> dict:
+        """ONE plate of this geometry at mass flow m_dot_g_s carrying q_w: heat transfer,
+        pressure drop and pumping (hydraulic, and shaft over the efficiency band)."""
+        if m_dot_g_s <= 0.0:
+            return {"m_dot_g_s": 0.0, "Q_W": q_w, "P_pump_hydraulic_W": 0.0,
+                    "dp_kPa": 0.0, "note": "no flow"}
+        s = self.channel(m_dot_g_s).solve(max(q_w, 0.0))
+        out = {"m_dot_g_s": m_dot_g_s, "Q_W": q_w, "Re": s["Re"], "Nu": s["Nu"],
+               "T_bulk_mean_C": s["T_bulk_mean_C"], "dT_coolant_K": s["dT_fluid_K"],
+               "h_local_W_m2K": s["h_local_W_m2K"],
+               "h_uniform_W_m2K": s["h_effective_W_m2K"],
+               "dp_fd_kPa": s["dp_fd_kPa"], "dp_kPa": s["dp_kPa"],
+               "P_pump_hydraulic_W": s["pump_W"], "P_pump_fd_W": s["pump_fd_W"]}
+        for e in ETA_PUMP_BAND:
+            out["P_pump_shaft_at_eta_%.2f_W" % e] = s["pump_W"] / e
+        return out
+
+
+def equal_rise_flow_g_s(q_plate_w: float, q_ref_w: float, m_ref_g_s: float) -> float:
+    """DECLARED FLOW RULE for a second plate: the mass flow that gives it the same coolant
+    temperature rise as the reference (top) plate, m = m_ref Q_plate / Q_ref -- the parallel
+    branches of one loop balanced to a common outlet temperature."""
+    if q_ref_w <= 0.0:
+        raise ValueError("the reference plate carries no heat")
+    return max(m_ref_g_s * q_plate_w / q_ref_w, 0.0)
 
 
 def streamwise_fluid_temperature(design: CoolingDesign, x_frac: np.ndarray,
