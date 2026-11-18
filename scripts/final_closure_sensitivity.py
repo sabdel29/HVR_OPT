@@ -814,7 +814,7 @@ VARIANTS = {
                                 "f (mu_w/mu_b)^0.58)"),
     "plate_caloric_legacy": dict(kind="full", archs=("Z1", "Z2", "Z3"),
                                  apply=lambda: v_cooling_model(top="uniform_legacy"),
-                                 gates=["cooling.caloric_convention"],
+                                 gates=["therm.cooling_model_form"],
                                  nature="LEGACY_SETTING (caloric double count)",
                                  what="top plate with the uniform-sink coefficient (R_cal "
                                       "included) on the streamwise sink"),

@@ -451,7 +451,7 @@ def run_caloric(arch, tier):
     _long_ccx()
     name = f"plate_caloric_legacy_{tier}"
     S.VARIANTS[name] = dict(
-        kind="full", archs=(arch,), apply=None, gates=["cooling.caloric_convention"],
+        kind="full", archs=(arch,), apply=None, gates=["therm.cooling_model_form"],
         nature="LEGACY_SETTING (caloric double count)",
         what="top-plate coefficient WITH the caloric resistance on the streamwise sink "
              f"(the pre-revision production form), cooling {tier}")

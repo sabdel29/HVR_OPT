@@ -118,7 +118,9 @@ class TestCoolingRegime:
         assert r["in_domain"] is False
         assert r["nu_correlation"] == CR.OUT_OF_DOMAIN
         assert np.isnan(r["h_effective_W_m2K"])
-        assert r["bracket_ratio"] > 2.5, "the two neighbours differ by 2.76x"
+        # TCPMT revision: the laminar neighbour now uses the short-wall-adiabatic H1 Nu
+        # (6.32, was 4.60), which narrows the bracket from 2.76x to ~2.0x
+        assert r["bracket_ratio"] > 1.5, "the two neighbours differ by ~2x"
 
     def test_regime_selection_is_explicit_and_covers_the_three_cases(self):
         c = CR.cfg()

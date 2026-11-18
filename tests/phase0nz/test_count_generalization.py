@@ -39,15 +39,30 @@ pytestmark = pytest.mark.skipif(bool(os.environ.get("HVR_Z1_CONFIG")),
 
 
 # ------------------------------------------------------------------ 1. 49 cells unchanged
+#: entries the TCPMT thermal-model correction changed ON PURPOSE (derived converter-tier cards,
+#: film coefficients in the thermal deck, material cards in both decks); everything else --
+#: mesh, tags, ledgers, deposits, temperature regions -- must still equal the record taken
+#: before the count generalization
+THERMAL_FIX_KEYS = ("elem_material_sha", "stack_materials_sha", "material_cards",
+                    "thermal_deck_sha", "structural_deck_sha")
+
+
 def test_49_cell_fingerprint_equals_the_pre_change_record():
+    """The reference is the fingerprint of the CORRECTED production
+    (fingerprint_49_thermal_fix.json); the pre-generalization record
+    (fingerprint_49_before.json) must differ from it only in THERMAL_FIX_KEYS."""
     import fingerprint_49 as F
     before = json.loads((CO / "fingerprint_49_before.json").read_text())["cases"]
+    ref = json.loads((CO / "fingerprint_49_thermal_fix.json").read_text())["cases"]
     now = {}
     for arch in ("Z1", "Z2", "Z3"):
         for rf in ((1, 1), (2, 1)):
             now[f"{arch}_h1.1_r{rf[0]}{rf[1]}"] = F.fingerprint(arch, 1.1, rf)
-    assert set(now) == set(before)
-    assert F.compare_fingerprints(before, now) == []
+    assert set(now) == set(before) == set(ref)
+    assert F.compare_fingerprints(ref, now) == []
+    stray = [d for d in F.compare_fingerprints(before, ref)
+             if d.split("/")[2].split(":")[0] not in THERMAL_FIX_KEYS]
+    assert stray == [], stray
 
 
 def test_the_committed_after_record_equals_the_before_record():
