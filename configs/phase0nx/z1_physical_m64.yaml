@@ -1,0 +1,168 @@
+# =====================================================================================
+# TCPMT REVISION --- Z1-EMBEDDED-PHYSICAL for the count-optimal SQUARE candidate, M = 64
+# =====================================================================================
+# CONFIGURATION ONLY. Selected explicitly (physical_package.load_z1_package_config(path),
+# final_closure_countopt.py --z1-config) or through the environment variable
+# HVR_Z1_CONFIG; without either, every tool keeps reading configs/phase0nx/z1_physical.yaml
+# (the 49-cell production design) and its results stay byte-identical.
+#
+# Everything outside `converter`, `design`, `package_network`, `results` and `expected` is
+# the production Z1 file verbatim: the SAME board, BGA, substrate, TSV geometry, interface,
+# die, TIM and cooling, so the comparison with the 49-cell Z1 changes the regulator only.
+#
+# Candidate: regulator-count DSE at J_t = 3.5 A/mm2 (research/tcpmt_revision/countopt/
+# candidate_dse.json). The package builder meshes square cell grids only, so the candidate
+# is the best FEASIBLE perfect-square count near the optimum (M = 76): M = 64 (8 x 8);
+# M = 81 has no feasible design (2 x EPC2057 = 3.60 mm2 > the 3.53 mm2 budget).
+# Physical cell: research/tcpmt_revision/countopt/physical_cell.json.
+# =====================================================================================
+
+architecture: ARCH_Z1_EMBEDDED
+label: Z1-EMBEDDED-PHYSICAL-M64-N2K2KA1
+
+board:
+  case: it968g_2p4mm           # identical to Z2 -- the comparison requires it
+  thickness_sensitivity_case: it968g_3p2mm
+  model_level: PCB-H0
+  eta_nominal: 0.50
+  eta_sensitivity: [0.25, 0.50, 0.75]
+  thickness_um: 2400.0
+  tolerance_pct: 10.0
+  status: VENDOR_EVIDENCE
+  source: >-
+    18-layer server/HPC PCB offered at 2.4 mm +-10 % (ugpcb); laminate ITEQ IT-968G.
+    Board-level E/CTE/k are DERIVED estimates conditional on eta, not measured board
+    properties -- see research/PCB_MATERIAL_PROPERTY_AUDIT.md Sec.5.
+
+bga:
+  pitch_mm: 0.8
+  diameter_mm: 0.4
+  height_um: 300.0
+  status: SOURCE_BACKED        # Krishnakumar 2026 Table III
+  lattice: centred
+  note: >-
+    Z1 has NO PCB cutout, so the full lattice survives. The 528-site figure is Z2's.
+
+substrate:
+  thickness_um: 300.0
+  size_mm: [30.0, 30.0]
+  status: SOURCE_BACKED
+  tile_band_um: 20.0           # thin RDL band; NOT the 1226 um embedded-cell proxy
+
+cutout:
+  present: false               # Z1 is substrate-side; the board is a full slab
+
+supply_return:
+  # Z1's through-substrate field carries the 48 V INPUT at low current. The lattice is the
+  # production rule (30 um / 60 um checkerboard, maximum density) on the 64-cell side:
+  # 31 x 31 = 961 vias per cell (481 VDD + 480 GND), tsv_fields._lattice.
+  rail_v: 48.0
+  current_rule: "I = P_in / 48 V, from the physical electrical solution"
+  current_status: OPEN         # no physical electrical solve exists yet
+  vdd_field: {status: SPECIFIED, interleave: checkerboard}
+  gnd_field: {status: SPECIFIED, interleave: checkerboard}
+  tsv:
+    diameter_um: 30.0
+    pitch_um: 60.0
+    status: SOURCE_BACKED      # June-2026 Table III
+    count_rule: >-
+      Bracketed by voltage drop and geometry, not by an invented EM allowable. See
+      tsv_fields.sizing_study(); the adopted point is MAXIMUM DENSITY and is labelled so.
+
+converter:
+  # N2K2K_A1 with the production parts (EPC2014C / EPC2057, 250 nH shared-core inductor,
+  # 10 uF MLCC). At the synthesized 3.74 mm2 cell no two component classes fit one tier
+  # (any pair needs >= 4.0 mm2), so the production four-tier cell (L and C_out sharing the
+  # top tier) is not available: the output capacitor takes its OWN tier above the
+  # inductors. Of the 120 area-feasible orders, the only one with the high-side device on
+  # the bottom landing RDL that passes the realizability rule is HS -> C_f -> LS -> L ->
+  # C_out (worst via AR 0.83: HS -> LS across C_f and L -> output across C_out).
+  # Tier heights are the production parts' (datasheet mounted heights; MLCC at the
+  # production BOUNDED 100 um). Ten RDL-separated tiers + landing and output RDLs.
+  #
+  # FLYING-CAPACITOR TECHNOLOGY ASSUMPTION, stated explicitly: the 100-um C_f (and C_out)
+  # tier is the SAME thin embedded-capacitor assumption the 49-cell production stack makes,
+  # kept so that the two remain comparable. It is not a rated part: C1 holds V_in / 2 = 24 V
+  # here, the library 25-V GCM21 (0805, 1.25 mm) is not adequately derated, and no part of
+  # <= 150 um meets the requirement (research/tcpmt_revision/flying_caps.json). With the rated
+  # GRM188D71H105KE01 (0603, 1 uF, 50 V; 830-um tier, 1030 um at tolerance) no tier order of
+  # this cell, nor of the 49-cell cell, passes the AR <= 1 rule: this order gives 6.92 (8.58)
+  # for HS -> LS across C_f, the best order 5.32 (physical_cell.json, rated_flying_cap).
+  #
+  # HIGH-SIDE VOLTAGE STRESS, FLAGGED (unconfirmed reading of the generalized schematic): if
+  # S2..SN block 2 V_in / N, S2 sees 48 V at N = 2 against the 40-V EPC2014C (32 V at N = 3,
+  # within rating). Re-synthesized with that filter the M = 64 high side becomes EPC2214
+  # (80 V): 96.90 W conversion, +0.85 W (candidate_dse_hs_2vin_over_n.json). Not carried
+  # through the ETM chain.
+  total_um: 2083.0
+  tiers_from_substrate_upward:
+    - {name: bottom_substrate_rdl, um: 10.0,  status: SOURCE_BACKED}
+    - {name: gan_hs_EPC2014C,      um: 685.0, status: SOURCE_BACKED}
+    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
+    - {name: flying_caps,          um: 100.0, status: BOUNDED}
+    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
+    - {name: gan_ls_EPC2057,       um: 638.0, status: SOURCE_BACKED}
+    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
+    - {name: inductor,             um: 500.0, status: SOURCE_BACKED}
+    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
+    - {name: output_caps,          um: 100.0, status: BOUNDED}
+    - {name: output_rdl,           um: 10.0,  status: SOURCE_BACKED}
+  cells: 64
+  cell_area_mm2: 3.74
+  cell_side_mm: 1.9339
+  material_mapping:
+    rule: >-
+      Each tier maps to a medium already in the framework (as the production Z1): RDL tiers
+      rdl_tier; GaN tiers silicon (BOUNDED); the inductor tier hvr_effective (PROVISIONAL);
+      flying and output capacitor tiers hvr_effective (OPEN, no sourced MLCC card).
+
+design:
+  # The converter the ledger, the intra-VR routing and the rail currents are evaluated
+  # with. It is COMPILED (kw1.design_1kw at this count and topology) and must reproduce
+  # every value below; a mismatch refuses to run (scripts/phase0nw/z1_design.py).
+  tag: M64N2K2KA1
+  n_vr: 64
+  j_target_A_mm2: 3.5
+  topology: {N: 2, K: 2, K_A: 1}
+  hs_part: EPC2014C
+  ls_part: EPC2057
+  inductor: Shared_Core_UIC_250_nH
+  capacitor: Murata-GCM21-10uF-25V
+  f_sw_hz: 480112.6858341158
+  area_mm2: 3.74
+  conversion_25C_W: 96.05363352729304
+  dse_source: research/tcpmt_revision/countopt/candidate_dse.json
+
+package_network:
+  # the Z1 48 V package network (BGA -> package 48 V RDL sheet -> cell VIN pads) on THIS
+  # cell grid, at the production matched count (54 per rail): final_closure_countopt.py net
+  file: research/tcpmt_revision/countopt/package_network_M64N2K2KA1.json
+
+results:
+  dir: research/tcpmt_revision/countopt
+
+out_of_cell:
+  primary: F1_encapsulated
+  cases:
+    F1_encapsulated: {material: underfill_homog, status: PROVISIONAL}
+    F2_void:         {material: null, status: BOUNDED}
+  bracket_required: true
+
+interface:
+  thickness_um: 10.0
+  material: microbump
+  status: DERIVED
+  source: results/phase0mr/bump_layer_effective_tensor.csv
+
+die:
+  thickness_um: 300.0
+  status: SOURCE_BACKED
+
+tim:
+  thickness_um: 50.0
+  status: DESIGN_CHOICE
+
+expected:
+  # board 2400 + BGA 300 + substrate 300 + converter 2083 + interface 10 + die 300 + TIM 50
+  package_top_um: 5443.0       # above the PCB backside
+  converter_span_um: [3000.0, 5083.0]

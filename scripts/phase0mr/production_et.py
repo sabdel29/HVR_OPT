@@ -131,8 +131,15 @@ def build_global(arch: str, h_sub_mm: float, h_xy: float = 1.1, doe=None,
     else:
         st, extra, _t_tile = ZG.stack_for(arch, h_sub_mm, board_case=board_case)
     mid = ZG.mid_layers(arch, os.environ.get("PHASE0MR2_Z4_VARIANT", z4_variant))
-    side = math.sqrt(HVR_AREA_MM2 / N_VR)
-    xy = kw1.tiles_for("uniform", side, st, doe, N_VR)
+    side, n_cells = math.sqrt(HVR_AREA_MM2 / N_VR), N_VR
+    # TCPMT revision: a Z1 config of ANOTHER cell count/area (a count-optimal candidate)
+    # meshes its own cells -- same placement rule, its count, side sqrt(cell area). The
+    # production config states 49 x 5.61 mm2 and keeps the historical tiles exactly.
+    _z1c = physical_z1[0] if isinstance(physical_z1, tuple) else None
+    if _z1c is not None and (_z1c.cells != N_VR or
+                             abs(_z1c.cells * _z1c.cell_area_mm2 - HVR_AREA_MM2) > 1e-9):
+        side, n_cells = math.sqrt(_z1c.cell_area_mm2), _z1c.cells
+    xy = kw1.tiles_for("uniform", side, st, doe, n_cells)
     tiles = [Tile(cx, cy, side, side, 0.0) for cx, cy in xy]
     # PHASE 0M-R2. For ARCH_Z2 and ARCH_Z4 the converter is NOT in the substrate, so the
     # 20 um band `stack_for` reserves at the substrate top is a thin RDL band, not a

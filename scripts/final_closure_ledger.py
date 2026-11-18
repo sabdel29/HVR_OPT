@@ -28,12 +28,22 @@ for _p in ("scripts/phase0nw", "scripts/phase0m", "scripts/phase0mr", "scripts/p
     if str(R / _p) not in sys.path:
         sys.path.insert(0, str(R / _p))
 
+#: TCPMT revision: the regulator count, topology and Z1 cell come from the Z1 design in force
+#: (scripts/phase0nw/z1_design.py): the production 49-cell N3K3K_A2 unless HVR_Z1_CONFIG (or
+#: an explicit config) selects a count-optimal candidate. Every production constant below is
+#: kept literally and replaced only off the production path.
+import z1_design as Z1D                                              # noqa: E402
+
 P_LOAD_W, V_IN, V_OUT, N_VR = 1000.0, 48.0, 1.0, 49
+if not Z1D.is_default():
+    N_VR = Z1D.n_vr()
 SCENARIOS = ("HV_S0", "HV_S1", "HV_S2")
 #: HV RMS / HV average for each named scenario -- the rms_currents definitions
 #: (S0 continuous; S1 square pulse at the buck duty; S2 square pulse at 1/48).
 SCEN_RATIO = {"HV_S0": 1.0, "HV_S1": 1.0 / math.sqrt(0.0625),
               "HV_S2": math.sqrt(V_IN / V_OUT)}
+if not Z1D.is_default():          # the buck duty D = V_out N / V_in of the design in force
+    SCEN_RATIO["HV_S1"] = 1.0 / math.sqrt(Z1D.buck_duty())
 
 LAYERS = {
     "Z1": {"hs": "z1conv_1_gan_hs_EPC2014C", "ls": "z1conv_5_gan_ls_EPC2057",
@@ -54,6 +64,9 @@ LAYERS = {
 #: the BGA-fed CONTROL shares Z2's geometry (attach, clearance) and differs only in its
 #: 48 V path (Z2_DIRECT_FEED_ARCHITECTURE.md section 8)
 LAYERS["Z2BF"] = dict(LAYERS["Z2"])
+if not Z1D.is_default():
+    # the candidate's tier list (it may carry a separate output-capacitor tier, key "cout")
+    LAYERS["Z1"] = Z1D.z1_layers()
 
 #: architecture identity, carried into every artifact so the two Z2s can never be confused
 VARIANT = {"Z1": "Z1_EMBEDDED", "Z2": "Z2_DIRECT_FEED", "Z2BF": "Z2_BGA_FED_CONTROL"}
@@ -126,16 +139,24 @@ def converter_terms(t_conv_c):
 # ---------------------------------------------------------------------------
 # intra-VR: R0 traces and via stacks, R2 output plane
 # ---------------------------------------------------------------------------
+def routing_design() -> dict:
+    """routing.DESIGN of the design in force (the production dict itself by default)."""
+    import routing as RT
+    return Z1D.routing_design(RT.DESIGN)
+
+
 @lru_cache(maxsize=4)
 def vout_plane_r2(occupancy=VOUT_PLANE_OCCUPANCY, level=2):
-    """Output plane on the tile: three inductor footprints inject I/3 each, the pad
-    field over the tile extracts uniformly. Returns R_eff (Ohm) at 20 C."""
+    """Output plane on the tile: the K inductor footprints inject I/K each (three for the
+    production N3K3K_A2), the pad field over the tile extracts uniformly. Returns R_eff
+    (Ohm) at 20 C."""
     import routing as RT
     import pkg_rdl_refined as RF
     from interconnect import rho_cu
-    s = RT.DESIGN["tile_side_mm"]
-    comps = {c.name: c for c in RT.tile_layout(s)}
-    legs = [comps[f"L{k}"] for k in range(3)]
+    d = routing_design()
+    s = d["tile_side_mm"]
+    comps = {c.name: c for c in RT.tile_layout(s, d)}
+    legs = [comps[f"L{k}"] for k in range(d["K"])]
     h_fine, h_coarse = RF.LEVELS[level]
     tx = sorted({round(c.x_mm + k * c.w_mm / 2, 9) for c in legs for k in (-1, 1)})
     ty = sorted({round(c.y_mm + k * c.h_mm / 2, 9) for c in legs for k in (-1, 1)})
@@ -147,7 +168,7 @@ def vout_plane_r2(occupancy=VOUT_PLANE_OCCUPANCY, level=2):
     rhs = np.zeros(sh.n)
     area = np.outer(sh.dx, sh.dy).ravel()
     rhs -= area / area.sum()                       # uniform extraction, 1 A total
-    for c in legs:                                  # 1/3 A over each footprint
+    for c in legs:                                  # 1/K A over each footprint
         ar = np.zeros(sh.n)
         for i in range(sh.nx):
             ox = min(sh.fx[i + 1], c.x_mm + c.w_mm / 2) - max(sh.fx[i], c.x_mm - c.w_mm / 2)
@@ -158,7 +179,7 @@ def vout_plane_r2(occupancy=VOUT_PLANE_OCCUPANCY, level=2):
                       - max(sh.fy[j], c.y_mm - c.h_mm / 2))
                 if oy > 0:
                     ar[sh.node(i, j)] = ox * oy
-        rhs += (1.0 / 3.0) * ar / ar.sum()
+        rhs += (1.0 / len(legs)) * ar / ar.sum()
     ref = int(np.argmin(np.abs(sh.cx - 0)[:, None] + np.abs(sh.cy - s / 2)[None, :]))
     G[ref, :] = 0.0
     G[ref, ref] = 1.0
@@ -171,9 +192,11 @@ def vout_plane_r2(occupancy=VOUT_PLANE_OCCUPANCY, level=2):
     return p, sh.n
 
 
-#: component class of each converter tier name in the architecture configs
+#: component class of each converter tier name in the architecture configs. A tier named
+#: output_caps* (TCPMT revision: a cell too small for the output capacitor to share the
+#: inductor tier) is the output capacitor's own tier; no production config has one.
 _TIER_CLASS = (("gan_hs", "gan_hs"), ("gan_ls", "gan_ls"), ("flying_caps", "cap_fly"),
-               ("inductor", "inductor"))
+               ("inductor", "inductor"), ("output_caps", "cap_out"))
 
 
 def cell_tiers(arch):
@@ -183,8 +206,8 @@ def cell_tiers(arch):
     (TCPMT revision: the physical-lineage ledger used one legacy layout for every
     architecture, with mid-plane via heights, whatever order the mesh carried)."""
     import yaml
-    if arch == "Z1":
-        cfg = yaml.safe_load((R / "configs" / "phase0nx" / "z1_physical.yaml").read_text())
+    if arch == "Z1":                         # the Z1 config in force (z1_design.config_path)
+        cfg = yaml.safe_load(Z1D.config_path().read_text())
         raw = cfg["converter"]["tiers_from_substrate_upward"]          # HS end first
     elif arch == "Z3":                       # board-backside Z3: its OWN list, HS deepest
         cfg = yaml.safe_load(Z3_CFG.read_text())
@@ -201,14 +224,20 @@ def cell_tiers(arch):
 
 def face_span_um(tiers, a, b):
     """Dielectric/RDL depth a via must cross between the terminal faces of component
-    classes a and b (cap_out shares the inductor tier; 'out' is the output plane)."""
+    classes a and b ('out' is the output plane). cap_out shares the inductor tier unless the
+    cell carries an output-capacitor tier of its own; a component tier between a terminal and
+    the output plane (that own C_out tier) is crossed in full, up to the output RDL."""
     cls = [c for c, _ in tiers]
+    own_cout = "cap_out" in cls
     def idx(c):
-        c = "inductor" if c == "cap_out" else c
+        c = "inductor" if (c == "cap_out" and not own_cout) else c
         return len(tiers) if c == "out" else cls.index(c)
     i, j = sorted((idx(a), idx(b)))
-    if j == len(tiers):          # inductor terminal -> the output RDL plane above it
-        nxt = [h for c, h in tiers[i + 1:] if c == "rdl"]
+    if j == len(tiers):          # terminal -> the output RDL plane above it
+        above = tiers[i + 1:]
+        if any(c != "rdl" for c, _ in above):
+            return sum(h for _, h in above)
+        nxt = [h for c, h in above if c == "rdl"]
         return nxt[0] if nxt else 10.0
     return sum(h for _, h in tiers[i + 1:j])
 
@@ -221,10 +250,13 @@ def intra_vr(t_conv_c, scen, arch="Z1"):
     face-to-face span of that order (Phase-0M-R3B DEFECT #62 convention), and links
     between components in the same tier are lateral R0 runs."""
     import routing as RT
-    d = RT.DESIGN
+    d = routing_design()
     comps = {c.name: c for c in RT.tile_layout(d["tile_side_mm"], d)}
     tiers = cell_tiers(arch)
     tier_cls = {c for c, _ in tiers}
+    # cap_out shares the inductor tier unless the cell gives it a tier of its own
+    tkey = (lambda k: k) if "cap_out" in tier_cls else (
+        lambda k: "inductor" if k == "cap_out" else k)
     s_m = d["tile_side_mm"] * 1e-3
     k_t = rho_ratio_cu(t_conv_c, RT.T_C)
     p_lat = p_vert = 0.0
@@ -236,8 +268,7 @@ def intra_vr(t_conv_c, scen, arch="Z1"):
         ka = a.kind if a.kind in tier_cls or a.kind == "cap_out" else None
         kb = ("out" if b.kind == "pad_out" else
               b.kind if b.kind in tier_cls or b.kind == "cap_out" else None)
-        same = (ka is None or kb is None or
-                ("inductor" if ka == "cap_out" else ka) == ("inductor" if kb == "cap_out" else kb))
+        same = (ka is None or kb is None or tkey(ka) == tkey(kb))
         if not same:
             hgt = face_span_um(tiers, ka, kb)
             fp = min(a.w_mm * a.h_mm, b.w_mm * b.h_mm)
@@ -259,7 +290,7 @@ def intra_vr(t_conv_c, scen, arch="Z1"):
                      "model": FIDELITY_POLICY[geom], "length_mm": length_mm,
                      "R_ohm": seg["R_ohm"] * k_t, "P_w_per_vr": p})
     r_plane_20, n_cv = vout_plane_r2()
-    i_out = RT.DESIGN["i_out_per_vr_a"]
+    i_out = d["i_out_per_vr_a"]
     import rms_currents as RMS
     i_out_rms = RMS.cell_currents()["i_cell_out_rms_a"]
     p_plane = i_out_rms ** 2 * r_plane_20 * rho_ratio_cu(t_conv_c)
@@ -275,18 +306,21 @@ def intra_vr(t_conv_c, scen, arch="Z1"):
 # ---------------------------------------------------------------------------
 @lru_cache(maxsize=1)
 def package_network():
-    return json.loads((R / "research/final_closure/package_network.json").read_text())
+    """The package 48 V network (research/final_closure/package_network.json; a non-default
+    Z1 design names its own, solved on its own cell grid)."""
+    return json.loads(Z1D.package_network_file().read_text())
 
 
 def pad_count(case):
     import pad_interface as PAD
     import rms_currents as RMS
     i = RMS.cell_currents()["i_cell_out_rms_a"]
-    base = PAD.size_for_cell(i)
+    a_cell = 5.61 if Z1D.is_default() else Z1D.cell_area_mm2()
+    base = PAD.size_for_cell(i) if Z1D.is_default() else PAD.size_for_cell(i, a_cell)
     if case == "DISTRIBUTED":
         return base["PAD_GEOM_MAX"]["n_per_rail"]
     if case == "COMPACT":
-        return PAD.geometric_capacity(5.61 / 4.0, 0.30)["n_vdd"]
+        return PAD.geometric_capacity(a_cell / 4.0, 0.30)["n_vdd"]
     if case == "SOURCE_ANCHORED":
         return int(200_000 / N_VR / 2)
     raise ValueError(case)
@@ -479,6 +513,7 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
     import physical_package as PPK
     if arch not in VARIANT:
         raise KeyError(f"unknown architecture {arch!r}; known {sorted(VARIANT)}")
+    Z1D.require_z1(arch, "the ledger")
     t_conv, t_bga, t_sub, t_if = (temps["conv"], temps["bga"], temps["sub"],
                                   temps["interface"])
     lay = LAYERS[arch]
@@ -564,8 +599,12 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
                 ("Au et al. ECTC 2016 geometry (CLOSE_ANALOG); R_bump = %.4g mOhm at %.1f C"
                  % (r_b * 1e3, t_att)))
 
-    # Z3's TSV field is Z2's, but its cells and substrate come from Z3's own config
+    # Z3's TSV field is Z2's, but its cells and substrate come from Z3's own config; a
+    # non-default Z1 design takes its cells from its own Z1 config (the production Z1 cell
+    # count and side equal Z2's, which this has always read)
     cfg = (z3_spec()["cfg"] if arch == "Z3" else
+           PPK.load_z1_package_config(Z1D.config_path())
+           if (arch == "Z1" and not Z1D.is_default()) else
            PPK.load_physical_package_config(R / "configs/phase0nt/z2_2p4mm_cutout.yaml"))
     h_tsv = cfg.substrate_mm if arch == "Z3" else 0.300
     if arch == "Z1":
@@ -675,10 +714,11 @@ def lv_alternative_r_ohm(level=2):
     from interconnect import rho_cu
     import scipy.sparse as sp
     import scipy.sparse.linalg as spla
-    cells = PCO.physical_cell_coordinates()
+    cells = (PCO.physical_cell_coordinates() if Z1D.is_default()
+             else Z1D.cell_coordinates())
     xs = sorted({round(x, 6) for x, _ in cells})
     p = xs[1] - xs[0]
-    s = RT.DESIGN["tile_side_mm"]
+    s = routing_design()["tile_side_mm"]
     h_fine, h_coarse = RF.LEVELS[level]
     fx = RF.axis_faces(-p / 2, p / 2, [-s / 2, s / 2], [], h_fine / 2, h_coarse / 2)
     sh = RF.RefinedSheet(fx, fx, rho_cu(20.0) / (LV_ALT_T_CU_M * LV_ALT_OCC))
