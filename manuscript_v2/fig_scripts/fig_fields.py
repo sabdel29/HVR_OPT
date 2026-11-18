@@ -6,6 +6,11 @@
         (peak-to-valley = die warpage); shared scale.
 (g)-(i) In-plane relative displacement across the ball layer at every legal BGA site;
         critical joint ringed; shared scale.
+Z3 under cooling A is the coupled land-side case z3_land_t40_A_fvmap: its fields are read from
+the solver scratch (last E-T iteration's thermal deck and the structural run, located as in
+scripts/tcpmt_z3land_variants.py: scratch_dir / last_thermal_frd) and checked against the
+case file's T_max; if they are missing or do not match, the top-only Z3 fields are used and
+the panel says so. The 150-C GaN-rating isotherm is drawn on every section.
 Data: converged production fields ($HVR_FIELDS/etm_*_HV_S0_r21), the case files and
 architecture_geometry.json (die-top height).
 """
@@ -14,16 +19,58 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 from matplotlib import colors as mcolors
+import matplotlib.tri as mtri
 import style as S
 import frd
 
 S.setup()
+_g = S.macro("GanTjMax")
+GAN = float(_g) if _g else None
+iso_drawn = False
 F = S.FIELDS
 #: cooling A (the same top cold plate): production fields for Z1/Z2, the top-only case for Z3
-SRC_FIELD = {"Z1": ("etm_Z1_HV_S0_r21", "etm_Z1_HV_S0_h1.1_r21.json"),
-             "Z2": ("etm_Z2_HV_S0_r21", "etm_Z2_HV_S0_h1.1_r21.json"),
-             "Z3": ("etm_Z3_HV_S0__z3_top_only", "sensitivity/etm_Z3_HV_S0__z3_top_only.json")}
-ARCHS = [a for a in ("Z1", "Z2", "Z3") if (F / SRC_FIELD[a][0] / "structural.frd").exists()]
+from pathlib import Path
+
+
+def _pair(dirname):
+    return (F / dirname / "thermal_converged.frd", F / dirname / "structural.frd")
+
+
+def _scratch_pair(variant):
+    """last E-T thermal deck and the structural run of a Z3 land-side variant"""
+    import os
+    roots = [Path(os.environ["HVR_SCRATCH"])] if os.environ.get("HVR_SCRATCH") else []
+    roots += [Path.home() / "claude_scratch" / "hvr_work",
+              Path("/home/beams0/SABDELZAHER/ETM_project/scratch_z3land"),
+              Path("/home/beams0/SABDELZAHER/ETM_project/scratch")]
+    for r in roots:
+        wd = r / "fc_sens" / variant / "Z3_HV_S0_h1.1_r21"
+        its = sorted(wd.glob("et*"), key=lambda p: int(p.name[2:])) if wd.is_dir() else []
+        if its and (wd / "structural.frd").is_file():
+            ths = sorted(its[-1].glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))
+            if ths:
+                return ths[-1], wd / "structural.frd"
+    return None
+
+
+SRC_FIELD = {"Z1": (_pair("etm_Z1_HV_S0_r21"), "etm_Z1_HV_S0_h1.1_r21.json"),
+             "Z2": (_pair("etm_Z2_HV_S0_r21"), "etm_Z2_HV_S0_h1.1_r21.json"),
+             "Z3": (_pair("etm_Z3_HV_S0__z3_top_only"),
+                    "sensitivity/etm_Z3_HV_S0__z3_top_only.json")}
+Z3_NOTE = "top-only Z3 (land-side fields not found)"
+_land = _scratch_pair("z3_land_t40_A_fvmap")
+_lcase = "sensitivity/etm_Z3_HV_S0__z3_land_t40_A_fvmap.json"
+if _land and (S.FC / _lcase).is_file():
+    _tl = frd.read(_land[0])["NDTEMP"][:, 0].max()
+    _tc = json.loads((S.FC / _lcase).read_text())["thermal"]["T_max_C"]
+    if abs(_tl - _tc) < 0.05:
+        SRC_FIELD["Z3"] = (_land, _lcase)
+        Z3_NOTE = None
+    else:
+        Z3_NOTE = f"top-only Z3 (land-side field T_max {_tl:.1f} != case {_tc:.1f})"
+if Z3_NOTE:
+    print("NOTE:", Z3_NOTE)
+ARCHS = [a for a in ("Z1", "Z2", "Z3") if SRC_FIELD[a][0][1].exists()]
 N = len(ARCHS)
 VEX = 2.0                                   # vertical exaggeration of the sections
 GEO = (S.J("architecture_geometry.json") or {}).get("architectures", {})
@@ -59,8 +106,8 @@ def die_top(ds, a):
 
 data = {}
 for a in ARCHS:
-    dt = frd.read(F / SRC_FIELD[a][0] / "thermal_converged.frd")
-    ds = frd.read(F / SRC_FIELD[a][0] / "structural.frd")
+    dt = frd.read(SRC_FIELD[a][0][0])
+    ds = frd.read(SRC_FIELD[a][0][1])
     case = json.loads((S.FC / SRC_FIELD[a][1]).read_text())
     T = dt["NDTEMP"][:, 0]
     data[a] = dict(sec=section(dt, T), tmax=float(T.max()), die=die_top(ds, a),
@@ -99,6 +146,17 @@ for k, a in enumerate(ARCHS):
     polys, val, _, _ = data[a]["sec"]
     ax.add_collection(PolyCollection(polys, array=val, cmap=tcmap, norm=tnorm,
                                      edgecolors="face", linewidths=0.05))
+    # GaN-rating isotherm, on the element-centre values of the section
+    if GAN and val.max() > GAN:
+        pc = np.array([[sum(p[i][0] for i in range(4)) / 4, sum(p[i][1] for i in range(4)) / 4]
+                       for p in polys])
+        tri = mtri.Triangulation(pc[:, 0], pc[:, 1])
+        ed = np.array([[np.hypot(*(pc[t[i]] - pc[t[(i + 1) % 3]])) for i in range(3)]
+                       for t in tri.triangles])
+        tri.set_mask(ed.max(1) > 1.6)                 # no contour across voids
+        ax.tricontour(tri, val, levels=[GAN], colors=S.INK, linewidths=0.7,
+                      linestyles="--")
+        iso_drawn = True
     ax.set_xlim(-15.6, 15.6)
     ax.set_ylim((zlo - 0.15) * VEX, (zhi + 0.15) * VEX)
     ax.set_aspect("equal")
@@ -109,8 +167,17 @@ for k, a in enumerate(ARCHS):
     if k == 0:
         ax.set_ylabel(f"$z$ (mm), vertical ×{VEX:g}", labelpad=1)
     S.panel(ax, LET[k], f"{a}, $T_\\max$ = {data[a]['tmax']:.1f} °C", y=1.02)
+    if a == "Z3":
+        ax.text(1.0, 1.02, "coupled land side" if not Z3_NOTE else Z3_NOTE, transform=ax.transAxes,
+                ha="right", va="bottom", fontsize=6.5, color=S.INK2)
 cb = fig.colorbar(plt.cm.ScalarMappable(norm=tnorm, cmap=tcmap), cax=caxT)
 cb.set_label("Temperature (°C)", labelpad=2)
+if GAN:
+    cb.ax.axhline(GAN, color=S.INK, lw=0.7, ls=(0, (3, 1.5)))
+    if iso_drawn:
+        axS[0].text(0.0, -0.32, f"dashed: {GAN:.0f}-°C GaN-rating isotherm",
+                    transform=axS[0].transAxes, ha="left", va="top", fontsize=6.5,
+                    color=S.INK2)
 cb.outline.set_linewidth(0.4)
 
 vmax_d = max(d["die"][2].max() for d in data.values())
