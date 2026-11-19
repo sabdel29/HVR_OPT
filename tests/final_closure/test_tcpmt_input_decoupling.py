@@ -8,6 +8,7 @@ smooth and the undecoupled limits, and no thin flying capacitor may be claimed."
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -15,8 +16,31 @@ import pytest
 
 R = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(R / "scripts"))
-DEC = R / "research" / "tcpmt_revision" / "input_decoupling.json"
+sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+#: the results root in force (a campaign root through ETM_RESULTS_ROOT), as the scripts read it
+ROOT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research")
+DEC = ROOT / "tcpmt_revision" / "input_decoupling.json"
+NET = ROOT / "final_closure" / "package_network.json"
 FLY = R / "research" / "tcpmt_revision" / "flying_caps.json"
+
+
+def _of_design_in_force(dec_doc):
+    """True when the decoupling record and the package network are of the design in force
+    (TCPMT round 3: the frozen research/ artifacts are the round-2 49-cell design's until the
+    campaign regenerates them; a model-vs-artifact check needs both of the same design)."""
+    import design_record as DR
+    d = (dec_doc.get("circuit") or {}).get("design") or {}
+    pn = json.loads(NET.read_text())
+    pd = ((pn.get("meta") or {}).get("design") or {}).get("design")
+    return (d.get("n_cell", 49) == DR.n_vr() and d.get("design_record") == DR.name()
+            and pd == DR.name())
+
+
+def _require_design_in_force(dec_doc):
+    if not _of_design_in_force(dec_doc):
+        pytest.skip("the decoupling record / package network in the results root are of "
+                    "another design than the record in force (frozen round-2 artifacts): "
+                    "run with ETM_RESULTS_ROOT at a root regenerated for the design")
 
 
 @pytest.fixture(scope="module")
@@ -29,7 +53,8 @@ def fly():
     return json.loads(FLY.read_text())
 
 
-def test_port_model_reproduces_package_network():
+def test_port_model_reproduces_package_network(dec):
+    _require_design_in_force(dec)
     import tcpmt_decap_network as NW
     assert abs(NW.self_check()["rel_diff"]) < 5e-3
 
@@ -70,6 +95,7 @@ def test_ring_parts_fit_the_converter_layer(dec):
 def test_variant_hooks_reproduce_the_ledger_consequence(dec):
     """The coupled variant's ledger hooks, evaluated at the S0 temperatures, give the recorded
     fixed-temperature package-internal loss of the recommended design."""
+    _require_design_in_force(dec)
     import tcpmt_decap_circuit as CI
     import tcpmt_decap_framework as F
     rk = F.recommended_k()
@@ -85,6 +111,19 @@ def test_variant_hooks_reproduce_the_ledger_consequence(dec):
         assert abs(FL.self_consistent("Z1", "HV_S0", CI.s0_temperatures())["P_loss_w"]
                    - json.loads(CI.CASE_S0.read_text())["P_loss_w"]) < 1e-9
     RPX._DESIGN_CACHE.clear()
+
+
+def test_recommend_rule_reproduces_the_round2_choice():
+    """The declared rule (the n-phase interleavings + ring, least nominal k_eq; the
+    one-phase-per-cell spread is the limit, not a candidate) returns the round-2
+    recommendation on the frozen round-2 7 x 7 options."""
+    import tcpmt_decap_placement as PL
+    frozen = json.loads((R / "research" / "tcpmt_revision" / "input_decoupling.json")
+                        .read_text())
+    if ((frozen.get("circuit") or {}).get("design") or {}).get("n_cell", 49) != 49:
+        pytest.skip("the frozen decoupling record is no longer the round-2 7 x 7 one")
+    assert (PL.recommend(frozen["placement"]["options"], 7)
+            == frozen["summary"]["recommended"]["option"] == "i_latin7+c_ring")
 
 
 def test_no_thin_flying_capacitor_claimed(fly):

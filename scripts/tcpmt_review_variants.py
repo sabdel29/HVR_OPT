@@ -601,8 +601,10 @@ def run_state(arch, tier, scen, name=None):
 
 
 def run_sdec(arch, tier):
-    """The physically implemented input decoupling (tcpmt_decap_framework: 7 interleaved
-    clock phases + a ring of 56 x 1206 100-V capacitors) for any architecture and tier: the
+    """The physically implemented input decoupling (tcpmt_decap_framework: the design's
+    interleaved clock phases + a ring of 1206 100-V capacitors; round 2's 49 cells: 7 phases,
+    TCPMT round 3's 6 x 6: 6 phases, input_decoupling.json placement) for any architecture
+    and tier: the
     package 48-V network (Z1 only) at k_eq, the cell-internal VIN->HS runs at the bare-pulse
     k_open (the hot loop, common to every integration), ring ESR as a ledger row (Z1). Review
     round 2: this is the PRODUCTION state, and Z3 runs on its coupled land-side base."""

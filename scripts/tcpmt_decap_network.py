@@ -150,8 +150,12 @@ def reduce_sheet(rail, ring_xy, level=LEVEL):
     lu = spla.splu(Gii, permc_spec="COLAMD")
     X = lu.solve(Gip)
     Gred = Gpp - Gip.T @ X
+    # the ball nodes' voltages from the port voltages (Kron back-substitution: internal
+    # nodes carry no injection, so V_int = -Gii^-1 Gip V_ports) and the ball conductance:
+    # the ball currents of any port solution (ball_rms)
     return 0.5 * (Gred + Gred.T), {"n_sheet": ns, "n_balls": nb, "n_ports": len(P),
-                                    "level": level}
+                                    "level": level, "ball_map": -X[ns:ns + nb, :],
+                                    "g_ball_S": 1.0 / r_ball}
 
 
 def _geometry_key():
@@ -370,6 +374,51 @@ def evaluate(I_harm, f_sw, l_loop_h, ring_branch=None, local_branch=None, phase=
         res.update({"I_local_rms_A_max": float(np.sqrt(i2_loc.max())),
                     "I_local_rms_A_mean": float(np.sqrt(i2_loc.mean())),
                     "P_local_esr_W": p_loc})
+    return res
+
+
+def ball_rms(I_harm, f_sw, l_loop_h, ring_branch=None, phase="sync", ring_xy=None,
+             r_scale=1.0, n_harm=128):
+    """RMS current of every BGA ball over DC and the harmonics, on the same reduced network
+    and port solution as evaluate() (each ball's current from its sheet-side node voltage,
+    recovered by Kron back-substitution, and its conductance). The ball-level counterpart of
+    k_eq: k_eq is LOSS-equivalent over the whole network, and with the cells interleaved most
+    of its AC part circulates cell to cell in the sheets rather than through the balls.
+    TCPMT round 3: a diagnostic recorded beside the count closure, which still takes
+    k_eq x I as the production ball current."""
+    ring_xy = ring_xy if ring_xy is not None else []
+    Gs, Gr = port_matrices(ring_xy)
+    maps = {rail: reduce_sheet(rail, ring_xy)[1] for rail in ("supply", "return")}
+    nc = len(cells())
+    ph = phases(phase)
+    I0 = float(np.real(I_harm[0]))
+
+    def currents(s):
+        out = {}
+        for rail, V in (("supply", s["V_s"]), ("return", s["V_r"])):
+            m = maps[rail]
+            out[rail] = (m["g_ball_S"] / r_scale) * (V[0] - m["ball_map"] @ V)
+        return out
+    dc = currents(solve_harmonic(Gs, Gr, np.full(nc, I0), 0.0, l_loop_h, r_scale=r_scale))
+    i2 = {r: np.abs(v) ** 2 for r, v in dc.items()}
+    ac2 = {r: np.zeros(len(v)) for r, v in dc.items()}
+    for n in range(1, n_harm + 1):
+        Ic = I_harm[n] * np.exp(-1j * n * ph)
+        c = currents(solve_harmonic(Gs, Gr, Ic, n * f_sw, l_loop_h, ring_branch, None,
+                                    r_scale))
+        for r in c:
+            ac2[r] += np.abs(c[r]) ** 2 / 2
+    res = {"I_total_dc_A": nc * I0}
+    for r in dc:
+        tot = i2[r] + ac2[r]
+        j = int(np.argmax(tot))
+        res[r] = {"n_balls": int(len(tot)), "sum_dc_A": float(np.real(np.sum(dc[r]))),
+                  "I_dc_max_A": float(np.sqrt(i2[r].max())),
+                  "I_rms_max_A": float(np.sqrt(tot.max())),
+                  "k_ball_at_max": float(np.sqrt(tot[j] / i2[r][j])) if i2[r][j] > 0 else None,
+                  "I_ac_rms_max_A": float(np.sqrt(ac2[r].max())),
+                  "peak_fraction_dc": float(np.sqrt(i2[r].max()) / (nc * I0))}
+    res["I_rms_max_A"] = max(res[r]["I_rms_max_A"] for r in dc)
     return res
 
 

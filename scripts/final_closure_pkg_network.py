@@ -165,6 +165,36 @@ def matched_count(screen, counts, kw, scen=None):
     return None
 
 
+#: declared before use (TCPMT round 3): when no legal count closes the production state for
+#: both architectures, the network is built at the count of least worst production ball
+#: current (minimax over Z1/Z2 on the level-1 screen; k_eq scales every count alike, so the
+#: count does not depend on it), verified on the resolved level and flagged NOT_CLOSED.
+FALLBACK_RULE = ("no legal count closes the production state for both architectures: the "
+                 "count of least worst (Z1, Z2) production ball current on the screen, "
+                 "verified on the resolved level; the ball criterion is VIOLATED there")
+
+
+def fallback_count(screen, counts, kw, scen=None):
+    """The FALLBACK_RULE count and its record."""
+    scen = scen or MATCH_SCEN
+    common = sorted(set(counts["Z1"]) & set(counts["Z2"]))
+    by = {(r["arch"], r["n_per_rail"]): r for r in screen}
+
+    def worst(n):
+        return max(by[(a, n)][f"i_ball_max_A__{scen}"] for a in ("Z1", "Z2"))
+    n = min((m for m in common if ("Z1", m) in by and ("Z2", m) in by),
+            key=lambda m: (worst(m), m))
+    vj = [(a, rail, n, VERIFY_LEVEL, kw) for a in ("Z1", "Z2") for rail in ("supply", "return")]
+    v = {r["arch"]: r for r in peak_rows(run_pool(vj))}
+    return n, {"status": "NOT_CLOSED", "rule": FALLBACK_RULE, "scenario": scen,
+               "n_per_rail": n, "criterion_A": I_CRIT_A,
+               "screen_peak_A": {a: by[(a, n)][f"i_ball_max_A__{scen}"] for a in ("Z1", "Z2")},
+               "verified_peak_A": {a: v[a][f"i_ball_max_A__{scen}"] for a in v},
+               "verified_level": VERIFY_LEVEL,
+               "k_eq_that_closes_at_n": {a: production_k()[0] * I_CRIT_A
+                                         / v[a][f"i_ball_max_A__{scen}"] for a in v}}
+
+
 def screen_from_csv(path=None):
     """The committed exhaustive screen (per-ball peak fraction per ampere at every legal count),
     re-scored at the CURRENT scenario currents: the fractions do not depend on the current."""
@@ -231,8 +261,14 @@ def reclose():
         out["closure"][f"{a}__{PRODUCTION_SCEN}__k_hi"] = {"k": band[1],
                                                          "n_min_screen": min(ok) if ok else None}
     out["matched_count"] = matched_count(screen, counts, kw, PRODUCTION_SCEN)
+    out["match_fallback"] = None
+    if out["matched_count"] is None:
+        out["matched_count"], out["match_fallback"] = fallback_count(screen, counts, kw,
+                                                                     PRODUCTION_SCEN)
     out["matched_count_S0"] = matched_count(screen, counts, kw, "HV_S0")
     out["wall_s"] = round(time.time() - t0, 1)
+    import design_record as DR
+    out["design"] = DR.design_identity()
     PRODUCTION_OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
     print(json.dumps({k_: v for k_, v in out.items() if k_ != "closure"}, indent=1, default=float))
     for k_, v in out["closure"].items():
@@ -315,6 +351,11 @@ def main():
     # round 2: the implemented decoupling, k_eq = 1.65) for BOTH, verified ---
     n_match = matched_count(screen, counts, kw)
     print(f"matched count at {MATCH_SCEN}:", n_match, flush=True)
+    fallback = None
+    if n_match is None:
+        n_match, fallback = fallback_count(screen, counts, kw)
+        print(f"NOT CLOSED at {MATCH_SCEN}: network built at the fallback count {n_match} "
+              f"({fallback['verified_peak_A']} A per ball vs {I_CRIT_A} A)", flush=True)
 
     # ---- 4. converged networks at the matched count ----------------------
     fj = [(a, rail, n_match, lv, kw) for a in ("Z1", "Z2")
@@ -409,10 +450,12 @@ def main():
                     "match_scenario": MATCH_SCEN, "production_k_eq": production_k()[0],
                     "wall_s": round(time.time() - t0, 1)},
            "counts_legal": {a: len(v) for a, v in counts.items()},
-           "closure": closure, "matched_count": n_match,
+           "closure": closure, "matched_count": n_match, "match_fallback": fallback,
            "convergence": conv, "loop": loop, "controlled": ctrl,
            "sensitivity": sens_rows}
     res["meta"]["screen_reused"] = "--reuse-screen" in sys.argv[1:]
+    import design_record as DR
+    res["meta"]["design"] = DR.design_identity()          # the cell grid it was closed on
     (OUT / "package_network.json").write_text(json.dumps(res, indent=1))
     if not res["meta"]["screen_reused"]:     # a re-scored screen keeps the committed CSV
         with (OUT / "bga_count_screen.csv").open("w", newline="") as fh:

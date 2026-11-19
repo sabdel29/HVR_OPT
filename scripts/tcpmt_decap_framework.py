@@ -304,6 +304,7 @@ def summary():
     doc = json.loads(CI.JSON_OUT.read_text())
     doc["placement"]["connection_inductance"] = PL.connection_inductance()
     doc["placement"]["robustness_recommended"] = PL.robustness()
+    doc["placement"]["ball_currents"] = PL.ball_currents()
     ci, pl, fw = doc["circuit"], doc["placement"], doc["framework"]
     cb = ci["charge_balance"]["ramp_deff"]
     lnom = ci["loop_inductance_estimate"]["nominal_pH"]
@@ -367,6 +368,12 @@ def summary():
     s["other_options_coupled_estimate"] = cc.get("other_options_estimated") if cc else None
     s["robustness_recommended"] = doc["placement"]["robustness_recommended"]
     s["connection_inductance_nH"] = doc["placement"]["connection_inductance"]
+    bc = doc["placement"]["ball_currents"]
+    s["ball_currents_recommended"] = {
+        "n_per_rail": bc["n_per_rail"], "criterion_A": bc["criterion_A"],
+        **{k: bc["options"][f"i_{ph}+c_ring"][k] for k in (
+            "k_eq", "I_ball_rms_max_A", "I_ball_closure_rule_A", "passes_rms",
+            "passes_closure_rule")}}
     data = PA.load()
     s["parts_table_input_48V"] = [
         {k: x[k] for k in x if k not in ("roles",)} | {"url": data["parts"][x["part"]]["url"]}

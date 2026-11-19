@@ -3,6 +3,7 @@
 
     python tcpmt_design_comparison.py            -> tcpmt_revision/design_comparison.json
     python tcpmt_design_comparison.py kcheck     -> tcpmt_revision/k_check.json
+    python tcpmt_design_comparison.py commit-k   -> research/tcpmt_revision/decoupling_by_design.json
 
 compare  the production state (implemented decoupling) of every design the campaign ran:
          the production m36 (campaign root), the 5-tier co-design comparison m36t5, the
@@ -115,8 +116,58 @@ def kcheck():
     return out
 
 
+DECOUPLING_FILE = R / "research" / "tcpmt_revision" / "decoupling_by_design.json"
+
+
+def commit_k():
+    """Record the decoupling chain's result for the design in force (the results root's
+    input_decoupling.json and package_network.json) in research/tcpmt_revision/
+    decoupling_by_design.json, the generator's source of each design's committed production
+    k (scripts/tcpmt_design_record.py `decoupling`). A development step outside the campaign
+    (it writes the repository); the campaign re-derives k and kcheck compares."""
+    import datetime
+    dec = json.loads((ROOT / "tcpmt_revision" / "input_decoupling.json").read_text())
+    pn = json.loads((ROOT / "final_closure" / "package_network.json").read_text())
+    ci, pl, s = dec["circuit"], dec["placement"], dec["summary"]
+    if (ci.get("design") or {}).get("n_cell") != DR.n_vr():
+        raise SystemExit("input_decoupling.json is not of the design in force")
+    if ((pn.get("meta") or {}).get("design") or {}).get("design") != DR.name():
+        raise SystemExit("package_network.json is not of the design in force")
+    rec = s["recommended"]
+    s0 = ROOT / "final_closure" / ci["design"]["source"].split("I_in from ")[-1]
+    ref = json.loads(s0.read_text()).get("refine") if s0.is_file() else None
+    fb = pn.get("match_fallback")
+    entry = {
+        "k_eq": rec["k_eq"], "k_eq_band": rec["k_eq_band"], "option": rec["option"],
+        "phase_pattern": pl.get("recommended_phase"), "n_ring": rec["count"],
+        "k_open": ci["waveform"]["ramp_deff"]["k_open"], "P_ring_esr_W": rec["P_ring_esr_W"],
+        "rule": pl.get("recommend_rule"),
+        "bga": {"n_per_rail": pn["matched_count"],
+                "status": fb["status"] if fb else "CLOSED",
+                "closed_at_k_eq": pn["meta"].get("production_k_eq"),
+                "verified_peak_A": (fb or {}).get("verified_peak_A"),
+                "criterion_A": pn["meta"].get("criterion_A_per_ball"),
+                "r_loop_mohm": {a: pn["loop"][a]["r_loop_ohm"] * 1e3 for a in pn["loop"]}},
+        "ball_rms": s.get("ball_currents_recommended"),
+        "source": (f"decoupling chain (tcpmt_decap_circuit/placement/framework) on the "
+                   f"design's own package network and S0 case ({s0.name}, mesh rung "
+                   f"r{''.join(str(x) for x in ref) if ref else '?'}), "
+                   f"{datetime.date.today().isoformat()}")}
+    doc = json.loads(DECOUPLING_FILE.read_text()) if DECOUPLING_FILE.is_file() else {
+        "what": "committed production k of each design's implemented input decoupling (the "
+                "package network is closed at it); written by tcpmt_design_comparison.py "
+                "commit-k from a decoupling chain run, read by tcpmt_design_record.py",
+        "designs": {}}
+    doc["designs"][DR.name()] = entry
+    DECOUPLING_FILE.write_text(json.dumps(doc, indent=1, default=float) + "\n")
+    print(json.dumps(entry, indent=1, default=float))
+    return entry
+
+
 if __name__ == "__main__":
     if sys.argv[1:2] == ["kcheck"]:
         kcheck()
+    elif sys.argv[1:2] == ["commit-k"]:
+        commit_k()
     else:
         compare()

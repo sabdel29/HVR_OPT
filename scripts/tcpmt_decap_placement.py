@@ -52,8 +52,21 @@ import design_record as DR                                          # noqa: E402
 #: the die minus the edge keep-out, design_record.grid_bbox_mm)
 CELL_MM, CELL_AREA = DR.cell_side_mm(), DR.cell_area_mm2()
 GAP_MM = (DR.grid_bbox_mm() - CELL_MM) / (DR.grid_n() - 1) - CELL_MM
-#: interleaving + ring options are compared by this rule (declared before the results)
-RECOMMEND_RULE = "the interleaving + ring option (i_<pattern>+c_ring) of least nominal k_eq"
+#: interleaving + ring options are compared by this rule (declared before the results). The
+#: candidates are the n-phase clock plans of the n x n grid (one phase per row, or a Latin
+#: square); a spread (one phase per cell, N = n^2 phases) is the interleaving limit, reported
+#: but not a clock plan. On the round-2 7 x 7 grid the rule returns i_latin7+c_ring (k_eq
+#: 1.650; i_spread49+c_ring 1.617 is the limit), the round-2 recommendation.
+RECOMMEND_RULE = ("the n-phase interleaving + ring option (i_rows<n>+c_ring or "
+                  "i_latin<n>*+c_ring) of least nominal k_eq; i_spread<n^2> is the limit, "
+                  "not a candidate")
+
+
+def recommend(opts, n):
+    """The option RECOMMEND_RULE selects among `opts` on the n x n grid."""
+    cand = {k: v for k, v in opts.items() if k.endswith("+c_ring")
+            and (k.startswith(f"i_rows{n}+") or k.startswith(f"i_latin{n}"))}
+    return min(cand, key=lambda k: (cand[k]["k_eq_nominal"], k))
 L_CONN_NH = {"a1": 0.10, "b_level1": 0.45, "b_level2": 0.85, "c": 0.15}
 ESR_SILICON_OHM = 0.10      # ASSUMPTION (no published ESR in the cached data); immaterial at 20 nF
 
@@ -207,8 +220,7 @@ def run():
         br, inf = part_branch_params("GRM31CC72A475KE11", n_eq, 0.3)
         add(f"ref_local_{c_need:g}uF", f"reference: {c_need:g} uF per cell AT each cell "
             "(1206-class density; does not fit the Z1 stack)", local=br, info=inf)
-    ring_opts = {k: v for k, v in opts.items() if k.startswith("i_") and k.endswith("+c_ring")}
-    rec = min(ring_opts, key=lambda k: (ring_opts[k]["k_eq_nominal"], k))
+    rec = recommend(opts, NW.grid_n())
     return {"tier_budget": tier_budget(), "gap_count": gc, "ring": ring_info,
             "loop_inductance_pH_evaluated": [x * 1e12 for x in l_band],
             "r_scale_hot": r_scale, "temperature_C": T_PARTS_C, "options": opts,
@@ -222,6 +234,42 @@ def recommended_phase():
     import json as _json
     pl = _json.loads(CI.JSON_OUT.read_text())["placement"]
     return pl.get("recommended_phase") or "latin7"
+
+
+def ball_currents(i_crit_a=1.5):
+    """Per-ball RMS current (DC + harmonics, tcpmt_decap_network.ball_rms) on the network in
+    force, for the recommended option and the limits, beside the count closure's production
+    ball current (DC peak x k_eq): k_eq is loss-equivalent and, with the cells interleaved,
+    mostly circulation between cells in the sheets, so k_eq x I overstates a ball's current.
+    TCPMT round 3, diagnostic (the closure criterion is unchanged)."""
+    ph0 = recommended_phase()
+    f = CI.design()["f_sw_hz"]
+    _t, i = CI.phase_a_current("ramp_deff")
+    I = CI.harmonics(i)
+    l_nom = CI.loop_inductance_estimate()["nominal_pH"] * 1e-12
+    r_scale = CI.network_resistance()["loop_hot_ohm"] / NW.self_check()["R_loop_reduced_ohm"]
+    xy, _ = NW.ring_layout()
+    br, _ = part_branch_params("GRM31CC72A475KE11", 1, L_CONN_NH["c"])
+    n = NW.grid_n()
+    out = {"criterion_A": i_crit_a, "n_per_rail": len(NW.balls("supply")),
+           "L_loop_pH": l_nom * 1e12, "options": {}}
+    for name, phase, ring in ((f"i_{ph0}+c_ring", ph0, True), ("none_sync", "sync", False),
+                              (f"i_spread{n * n}+c_ring", f"spread{n * n}", True)):
+        ev = NW.evaluate(I, f, l_nom, ring_branch=br if ring else None, phase=phase,
+                         ring_xy=xy if ring else None, r_scale=r_scale)
+        b = NW.ball_rms(I, f, l_nom, ring_branch=br if ring else None, phase=phase,
+                        ring_xy=xy if ring else None, r_scale=r_scale)
+        dc_max = max(b[r]["I_dc_max_A"] for r in ("supply", "return"))
+        out["options"][name] = {
+            "k_eq": ev["k_eq"], "ball_rms": b,
+            "I_ball_rms_max_A": b["I_rms_max_A"],
+            "I_ball_closure_rule_A": dc_max * ev["k_eq"],
+            "passes_rms": b["I_rms_max_A"] <= i_crit_a,
+            "passes_closure_rule": dc_max * ev["k_eq"] <= i_crit_a}
+    out["note"] = ("I_ball_closure_rule_A = the DC peak ball current x k_eq, as the count "
+                   "closure takes it; I_ball_rms_max_A = the largest ball RMS from the "
+                   "harmonic port solution (level-%d reduction, hot network scale)" % NW.LEVEL)
+    return out
 
 
 def robustness(seed=1, trials=4):

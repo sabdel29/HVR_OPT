@@ -26,8 +26,11 @@ PRODUCTION STATE = the implemented input decoupling (HV_SDEC, tcpmt_cases); S0 a
 references. Z3 runs ONLY on the coupled land-side bases (z3_land_t40_{A,B}_fvmap); the
 superseded uncoupled bases (z3_top_only, z3_plate_tim, the plain production-boundary Z3
 cases) are gone from the manifest. The production k the package network is closed at is the
-committed one (research/tcpmt_revision/input_decoupling.json, seeded); the campaign's own
-decoupling chain re-derives it and derived.k_check records the difference.
+committed one (the design record's `decoupling` block, configs/design_points.yaml, from
+research/tcpmt_revision/decoupling_by_design.json); the campaign's own decoupling chain
+re-derives it and derived.k_check records the difference. If no legal BGA count closes the
+production state, the network is built at the declared fallback count and flagged NOT_CLOSED
+(final_closure_pkg_network.FALLBACK_RULE).
 Paths in `outputs` are relative to the campaign results root (= the stand-in for research/);
 `@fields/` is $HVR_FIELDS of the campaign.
 """
@@ -269,8 +272,9 @@ def prep_jobs(d=None):
         evidence="final_closure_pkg_network.py (FC_WORKERS pool): exhaustive level-1 screen of "
                  "every legal count, level-2 verification, levels 1-3 at the matched count",
         validate=[{"file": sub + fc("package_network.json"), "kind": "json"}],
-        notes="the count is closed and matched at the PRODUCTION state, k_eq of the seeded "
-              "input_decoupling.json (the committed production k of the design record)")
+        notes="the count is closed and matched at the PRODUCTION state, at the committed "
+              "production k of the design record (`decoupling`); no closing count -> the "
+              "declared fallback count, flagged NOT_CLOSED (match_fallback)")
     out["land_est"] = post(f"{pre}prep.z3land_estimate", "prep", "tcpmt_z3_landside_estimate.py",
                            [sub + tr("z3_landside_spreading.json")], est_h=0.1, design=d,
                            evidence="2-D FV sheet on the design's cell grid, minutes")
