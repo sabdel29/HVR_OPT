@@ -52,8 +52,16 @@ PRODUCTION_OUT = OUT / "bga_count_production.json"
 
 
 def production_k():
-    """k_eq of the implemented decoupling (research/tcpmt_revision/input_decoupling.json):
-    nominal and the loop-inductance band."""
+    """k_eq of the implemented decoupling the count is closed at: the design record's
+    `decoupling` block (TCPMT round 3: the committed production k of the design in force; the
+    campaign's decoupling chain re-derives it, tcpmt_design_comparison.py kcheck), else the
+    summary of input_decoupling.json (the round-2 source). Nominal and the loop-inductance
+    band."""
+    import design_record as DR
+    dec = DR.get().get("decoupling") or {}
+    if dec.get("k_eq"):
+        return float(dec["k_eq"]), [float(x) for x in dec.get("k_eq_band") or
+                                    (dec["k_eq"], dec["k_eq"])]
     d = json.loads((Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "input_decoupling.json").read_text())
     rec = d["summary"]["recommended"]
     return float(rec["k_eq"]), [float(x) for x in rec["k_eq_band"]]

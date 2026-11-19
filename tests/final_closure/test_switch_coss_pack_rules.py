@@ -336,17 +336,18 @@ def test_legacy_flags_reproduce_the_49_cell_selection(cap_rule, tag):
 
 # ---------------------------------------------------------------- production pin
 def test_production_pin_sets_and_restores_rules(monkeypatch):
-    """One mechanism (electrical): production = the corrected rules with packing off (merge
-    decision, review round 3); HVR_PRODUCTION_RULES=legacy = the published rules; one rule
-    overridable on its own; the engine's values restored afterwards."""
+    """One mechanism (electrical): production = the corrected rules with packing ON (TCPMT
+    round 3: the design record's M = 36 point places; electrical.PRODUCTION_PACKING);
+    HVR_PRODUCTION_RULES=legacy = the published rules (packing off); one rule overridable on
+    its own; the engine's values restored afterwards."""
     import electrical as E
     for k in E.PRODUCTION_ENV:
         monkeypatch.delenv(k, raising=False)
     old = (H.CAP_RULE, H.SW_RULE, H.COSS_RULE, H.PACK_RULE, H.SW_V_DERATING)
     keys = ("CAP_RULE", "SW_RULE", "COSS_RULE", "PACK_RULE", "SW_V_DERATING")
-    cases = ((None, None, ("stress", "stress", "corrected", "off", 0.9)),
+    cases = ((None, None, ("stress", "stress", "corrected", "on", 0.9)),
              ("legacy", None, ("legacy", "legacy", "legacy", "off", 0.9)),
-             (None, "0.95", ("stress", "stress", "corrected", "off", 0.95)))
+             (None, "0.95", ("stress", "stress", "corrected", "on", 0.95)))
     try:
         for allv, derate, want in cases:
             monkeypatch.delenv("HVR_PRODUCTION_RULES", raising=False)

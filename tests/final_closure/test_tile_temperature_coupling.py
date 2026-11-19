@@ -28,8 +28,9 @@ KEY_OF = {"P_conv_hs": "hs", "P_conv_ls": "ls", "P_conv_inductor_dcr": "ind",
           "P_BGA_supply": "bga", "P_BGA_return": "bga"}
 #: the regions the E-T loop used before the fix (verbatim from final_closure_physical_etm
 #: at the start of the corrected lineage): whole layers, no cell restriction
-DEFECTIVE = lambda lay: {"conv": ([lay["hs"], lay["ls"], lay["caps"], lay["ind"]] + lay["rdl"],
-                                  False),
+_flat = lambda *v: [x for y in v for x in (y if isinstance(y, list) else [y])]  # noqa: E731
+DEFECTIVE = lambda lay: {"conv": (list(dict.fromkeys(_flat(lay["hs"], lay["ls"], lay["caps"],
+                                                           lay["ind"]))) + lay["rdl"], False),
                          "bga": ([lay["bga"]], False), "sub": ([lay["tsv"]], False),
                          "interface": ([lay["pads"]], False)}
 TEMPS = {"conv": 100.0, "hs": 100.0, "ls": 100.0, "ind": 100.0, "caps": 100.0, "bga": 70.0,

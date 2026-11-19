@@ -67,6 +67,17 @@ def recommended_k():
 
 
 def k_open():
+    """k of the cell's bare phase-A pulse (the hot loop). TCPMT round 3: the value the circuit
+    step stored (input_decoupling.json circuit.waveform.ramp_deff.k_open, computed from the
+    design's own S0 case), so a production-state run needs only the decoupling record of its
+    design; recomputed from the S0 case when the record has none."""
+    try:
+        doc = json.loads(CI.JSON_OUT.read_text())
+        k = doc["circuit"]["waveform"]["ramp_deff"]["k_open"]
+        if doc.get("circuit", {}).get("design", {}).get("n_cell", CI.N_CELL) == CI.N_CELL:
+            return float(k)
+    except (FileNotFoundError, KeyError, TypeError, ValueError):
+        pass
     _t, i = CI.phase_a_current("ramp_deff")
     return CI.k_of(CI.harmonics(i))
 
@@ -249,7 +260,7 @@ def collect():
         return {"P_loss_W": x["P_loss_w"], "T_max_C": x["thermal"]["T_max_C"],
                 "T_joint_C": cr["T_C"], "du_um": cr["du_um"],
                 "die_warpage_um": x["mechanics"]["die_warpage_pv_um"]}
-    out = {"file": str(f.relative_to(R)), "et_converged": c["et_converged"],
+    out = {"file": str(f.relative_to(R)) if f.is_relative_to(R) else str(f), "et_converged": c["et_converged"],
            "P_loss_W": c["P_loss_w"], "T_max_C": c["thermal"]["T_max_C"],
            "T_joint_C": crit["T_C"] if crit else None, "du_um": crit["du_um"] if crit else None,
            "die_warpage_um": c.get("mechanics", {}).get("die_warpage_pv_um"),

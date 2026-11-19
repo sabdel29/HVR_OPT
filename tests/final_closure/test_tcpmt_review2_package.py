@@ -31,9 +31,10 @@ def clean_env(monkeypatch):
 
 
 # ------------------------------------------------------------------ production converter rules
-def test_production_rules_default_corrected_packing_off(clean_env):
-    """Merge decision (review round 3): corrected capacitor, switch (0.9), C_oss, R_g and
-    footprint rules; packing off until the design point moves (electrical.PRODUCTION_PACKING)."""
+def test_production_rules_default_corrected_packing_on(clean_env):
+    """Corrected capacitor, switch (0.9), C_oss, R_g and footprint rules; packing ON since the
+    design point moved to the design record's M = 36 (TCPMT round 3,
+    electrical.PRODUCTION_PACKING)."""
     import electrical as EL
     r = EL.production_rules()
     assert r == EL.PRODUCTION_DEFAULTS
@@ -42,7 +43,7 @@ def test_production_rules_default_corrected_packing_off(clean_env):
         "CAP_RULE": "stress", "SW_RULE": "stress", "SW_V_DERATING": 0.9,
         "COSS_RULE": "corrected", "RG_RULE": "datasheet", "FOOTPRINT_RULE": "body",
         "PACK_RULE": EL.PRODUCTION_PACKING}
-    assert EL.PRODUCTION_PACKING == "off"
+    assert EL.PRODUCTION_PACKING == "on"
 
 
 def test_legacy_reachable_by_environment(clean_env):
@@ -70,13 +71,21 @@ def test_production_converter_is_the_rated_part(clean_env):
     d = RPX.compiled_design()
     assert d.capacitor.name == "Murata-GRM188D72A105KE01-1uF-100V"
     assert 7.0 < d.capacitor.esr_mohm < 8.6
-    assert d.rules["CAP_RULE"] == "stress"
+    assert d.rules["CAP_RULE"] == "stress" and d.rules["PACK_RULE"] == "on"
+    # the design record re-synthesizes its entry under the process rules: the legacy lineage
+    # selects another converter and is refused, never silently substituted
+    import design_record as DR
     with EL.pinned_rules(EL.LEGACY_RULES):
-        dl = RPX.compiled_design()
-        assert dl.capacitor.name == "Murata-GCM21-10uF-25V" and dl.capacitor.esr_mohm == 2.5
+        import pytest as _pt
+        with _pt.raises(DR.DesignRecordError):
+            RPX.compiled_design()
     assert RPX.compiled_design().capacitor.name == d.capacitor.name     # cache re-keyed
 
 
+@pytest.mark.skip(reason="TCPMT round 3: the committed S0 ledger is the frozen 49-cell legacy "
+                         "lineage; the chain now takes its count and converter from the design "
+                         "record (M = 36), which refuses the legacy synthesis. Reproducible at "
+                         "31a846c; the campaign regenerates the S0 cases for the record")
 def test_legacy_lineage_reproduces_the_committed_S0_ledger(clean_env):
     import final_closure_ledger as FL
     import final_closure_physical_etm as E

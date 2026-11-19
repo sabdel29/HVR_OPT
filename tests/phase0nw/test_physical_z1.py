@@ -21,16 +21,25 @@ from physical_package import (PhysicalConfigError,  # noqa: E402
 
 CFG = R / "configs/phase0nt/z2_2p4mm_cutout.yaml"
 
-# research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md section 1, PCB-backside frame, with the
-# TCPMT-revision REPARTITIONED tier order (HS -> C_f -> LS -> L, configs/phase0nx).
-SPEC_Z1 = {
-    "bottom_substrate_rdl": (3000.0, 3010.0),
-    "gan_hs_EPC2014C":      (3010.0, 3695.0),
-    "flying_caps":          (3705.0, 3805.0),
-    "gan_ls_EPC2057":       (3815.0, 4453.0),
-    "inductor_plus_cout":   (4463.0, 4963.0),
-    "output_rdl":           (4963.0, 4973.0),
-}
+import design_record as DR             # noqa: E402
+
+# The Z1 converter on the bottom substrate, PCB-backside frame: board + BGA + substrate below
+# it, then the design record's tiers upward from the input (high-side) end with a landing RDL
+# at both ends (TCPMT round 3: derived from the record, never retyped).
+_C1 = load_z1_package_config()
+_Z0 = _C1.board_thickness_um + 300.0 + _C1.substrate_um
+
+
+def _spec_z1():
+    z, out = _Z0, {}
+    for i, (n, um) in enumerate(DR.converter_tiers("Z1")):
+        out[f"z1conv_{i}_{n}"] = (z, z + um)
+        z += um
+    return out
+
+
+SPEC_Z1 = _spec_z1()
+PACKAGE_TOP = _Z0 + sum(u for _n, u in DR.converter_tiers("Z1")) + 10.0 + 300.0 + 50.0
 
 
 @pytest.fixture(scope="module")
@@ -45,16 +54,17 @@ def z1():
 def test_each_z1_tier_sits_at_its_specified_depth(z1, tier, z):
     _cfg, m, _lay, off = z1
     cfg = _cfg
-    r = next(r for r in Z1P.tier_report(m, cfg) if r["tier"].endswith(tier))
+    r = next(r for r in Z1P.tier_report(m, cfg) if r["tier"] == tier)
     assert r["z0_um"] - off == pytest.approx(z[0], abs=0.5), f"{tier} bottom"
     assert r["z1_um"] - off == pytest.approx(z[1], abs=0.5), f"{tier} top"
 
 
 def test_z1_package_top_matches_the_specification(z1):
-    """5333 um. An extra microbump layer put it at 5343 on the first build."""
+    """The stated package top (an extra microbump layer once put it 10 um too high)."""
     _cfg, _m, lay, off = z1
-    assert lay["tim"]["z1_um"] - off == pytest.approx(5333.0, abs=0.5)
-    assert lay["die"]["z0_um"] - off == pytest.approx(4983.0, abs=0.5)
+    assert lay["tim"]["z1_um"] - off == pytest.approx(PACKAGE_TOP, abs=0.5)
+    assert lay["tim"]["z1_um"] - off == pytest.approx(_cfg.package_top_um, abs=0.5)
+    assert lay["die"]["z0_um"] - off == pytest.approx(PACKAGE_TOP - 350.0, abs=0.5)
 
 
 def test_z1_substrate_is_300um_not_the_1p3mm_embedded_proxy(z1):
@@ -74,10 +84,16 @@ def test_z1_has_no_homogenised_converter_band(z1):
 
 
 def test_z1_high_side_is_explicitly_present(z1):
+    """Every tier holding high-side dies is meshed at its height; the input-end tier (the
+    first above the bottom substrate) holds high-side dies."""
     _cfg, m, _lay, off = z1
-    hs = next((r for r in Z1P.tier_report(m, _cfg) if "gan_hs" in r["tier"]), None)
-    assert hs is not None and hs["mesh_um"] == pytest.approx(685.0, abs=1e-6), (
-        "EPC2014C is absent from the physical Z1 geometry")
+    parts = DR.tier_parts()
+    rows = {r["tier"].split("_", 2)[2]: r for r in Z1P.tier_report(m, _cfg)}
+    hs = [t for t in DR.tiers() if t["parts"].get("gan_hs")]
+    assert hs, "no tier of the design holds a high-side die"
+    for t in hs:
+        assert rows[t["name"]]["mesh_um"] == pytest.approx(t["height_um"], abs=1e-6)
+    assert parts[DR.tiers()[0]["name"]].get("gan_hs")
 
 
 def test_z1_converter_is_discrete_cells_not_a_slab(z1):
@@ -98,15 +114,16 @@ def inv():
     return INV.audit()
 
 
-def test_both_architectures_have_49_cells(inv):
-    assert inv["cells_z1"] == inv["cells_z2"] == 49
+def test_both_architectures_have_the_record_cells(inv):
+    assert inv["cells_z1"] == inv["cells_z2"] == DR.n_vr()
 
 
-@pytest.mark.parametrize("comp,per_cell,total", [
-    ("hs", 3, 147), ("ls", 3, 147), ("inductor", 3, 147), ("flying_cap", 2, 98)])
-def test_component_counts_match_the_specified_inventory(inv, comp, per_cell, total):
+@pytest.mark.parametrize("comp,cls", [("hs", "gan_hs"), ("ls", "gan_ls"),
+                                      ("inductor", "inductor"), ("flying_cap", "cap_fly")])
+def test_component_counts_match_the_specified_inventory(inv, comp, cls):
     c = next(c for c in inv["components"] if c["component"] == comp)
-    assert (c["count_per_cell"], c["count_total"]) == (per_cell, total)
+    n = DR.part_counts()[cls]
+    assert (c["count_per_cell"], c["count_total"]) == (n, n * DR.n_vr())
 
 
 @pytest.mark.parametrize("comp", ["hs", "ls", "inductor", "flying_cap"])
@@ -124,7 +141,7 @@ def test_total_active_converter_volume_is_equal(inv):
 
 
 def test_the_rdl_difference_is_the_only_one_and_is_justified(inv):
-    """Z1 1973 um vs Z2 1963 um. The 10 um is one RDL, and the reason is recorded."""
+    """Z1 vs Z2 converter height: the 10 um is one RDL, and the reason is recorded."""
     j = inv["rdl_justified_difference"]
     assert (j["z1_rdl_count"], j["z2_rdl_count"]) == (5, 4)
     assert inv["z1_total_converter_um"] - inv["z2_total_converter_um"] == 10.0
@@ -149,6 +166,8 @@ Z1CFG = R / "configs" / "phase0nx" / "z1_physical.yaml"
 def _tmp_z1(tmp_path, **edits):
     import yaml
     c = yaml.safe_load(Z1CFG.read_text())
+    if any(k.startswith("converter.") for k in edits):
+        c["converter"].pop("design", None)        # the loader's own checks
     for dotted, val in edits.items():
         node = c
         *path, leaf = dotted.split(".")
@@ -163,8 +182,8 @@ def _tmp_z1(tmp_path, **edits):
 def test_z1_has_its_own_physical_config():
     c = Z1P.load_z1_config()
     assert c["architecture"] == "ARCH_Z1_EMBEDDED"
-    assert c["board"]["case"] == "it968g_2p4mm"
-    assert len(c["converter"]["tiers_from_substrate_upward"]) == 9
+    assert c["board"]["case"] == "it968g_3p2mm"
+    assert len(c["converter"]["tiers_from_substrate_upward"]) == len(DR.converter_tiers("Z1"))
     assert c["supply_return"]["rail_v"] == 48.0, (
         "Z1's through-substrate field carries the 48 V input, not the 1 V output")
     assert c["cutout"]["present"] is False
@@ -194,7 +213,7 @@ def test_editing_the_z1_config_changes_the_mesh(tmp_path):
 
     edited = load_z1_package_config(_tmp_z1(
         tmp_path, **{"substrate.thickness_um": 400.0,
-                     "expected.package_top_um": 5433.0}))
+                     "expected.package_top_um": base.package_top_um + 100.0}))
     m1 = build_physical_z1(edited)[0]
     l1 = measure_layers(m1)
     t1 = l1["sub_lower"]["t_um"] + l1["tile_band"]["t_um"]
@@ -202,7 +221,8 @@ def test_editing_the_z1_config_changes_the_mesh(tmp_path):
     assert t1 == pytest.approx(400.0, abs=0.5), (
         f"the Z1 config said 400 um and the mesh built {t1:.0f} um")
     assert t1 != t0
-    assert (l1["tim"]["z1_um"] - l1["board"]["z0_um"]) == pytest.approx(5433.0, abs=0.5)
+    assert (l1["tim"]["z1_um"] - l1["board"]["z0_um"]) == pytest.approx(
+        base.package_top_um + 100.0, abs=0.5)
 
 
 def test_z1_refuses_to_be_built_from_the_z2_config():
@@ -214,16 +234,18 @@ def test_z1_refuses_to_be_built_from_the_z2_config():
 
 def test_z1_config_object_carries_its_own_geometry():
     c = load_z1_package_config()
-    assert c.board_case == "it968g_2p4mm"
-    assert (c.substrate_um, c.cells, c.conv_total_um) == (300.0, 49, 1973.0)
+    assert c.board_case == "it968g_3p2mm"
+    tot = sum(u for _n, u in DR.converter_tiers("Z1"))
+    assert (c.substrate_um, c.cells, c.conv_total_um) == (300.0, DR.n_vr(), tot)
     assert (c.interface_um, c.die_um, c.tim_um) == (10.0, 300.0, 50.0)
-    assert c.rail_v == 48.0 and c.package_top_um == 5333.0
-    assert len(c.tiers) == 9
+    assert c.rail_v == 48.0 and c.package_top_um == PACKAGE_TOP
+    assert len(c.tiers) == len(DR.converter_tiers("Z1"))
 
 
 def test_z1_loader_rejects_an_inconsistent_tier_sum(tmp_path):
     import yaml
     c = yaml.safe_load(Z1CFG.read_text())
+    c["converter"].pop("design", None)            # the loader's own check
     c["converter"]["tiers_from_substrate_upward"][0]["um"] = 20.0
     p = tmp_path / "bad.yaml"
     p.write_text(yaml.safe_dump(c, sort_keys=False))

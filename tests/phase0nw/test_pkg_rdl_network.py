@@ -24,7 +24,7 @@ def art():
 def test_a_continuous_conductor_now_joins_bga_to_the_cells():
     """The physical mesh had cell-local RDL and nothing linking it to the BGA ring."""
     c = NET.solve_case("Z2", 41, NET.T_CU_CASES["RDL_T2"], NET.OCCUPANCY_CASES["RDL_M"])
-    assert c["n_sources"] == 16 and c["n_sinks"] == 49
+    assert c["n_sources"] == 16 and c["n_sinks"] == 36      # the record's cells
     assert c["r_eff_ohm"] > 0 and c["v_drop_at_1A"] != 0
 
 

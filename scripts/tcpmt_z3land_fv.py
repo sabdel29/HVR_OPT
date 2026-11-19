@@ -79,7 +79,7 @@ def land_shape():
             raise RuntimeError(f"land-side shape factor differs between solved points: {v}")
     c10 = min(j["cases"], key=lambda c: c["t_cu_um"])
     return {"kappa_one_rail": float(np.mean(ks)), "kappa_V_one_rail": float(np.mean(kv)),
-            "source": LAND_JSON.relative_to(R).as_posix(),
+            "source": (LAND_JSON.relative_to(R).as_posix() if LAND_JSON.is_relative_to(R) else LAND_JSON.as_posix()),
             "solved_point": {"t_cu_um": c10["t_cu_um"], "T_C": j["T_C"],
                              "occupancy": j["occupancy"], "I_rail_A": i_a,
                              "R_s_mohm_sq": c10["R_s_mohm_sq"],

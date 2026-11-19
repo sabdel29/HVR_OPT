@@ -113,9 +113,12 @@ def cards():
     return json.loads(CARDS.read_text())
 
 
-def test_cards_record_both_designs_with_ordered_bounds(cards):
-    assert set(cards["designs"]) == {"N3K3K_A2_49", "N4K4K_A2_36"}
+def test_cards_record_every_design_with_ordered_bounds(cards):
+    """TCPMT round 3: one card per MIXED tier for every design of the design record."""
+    import design_record as DR
+    assert set(cards["designs"]) == set(DR.keys())
     for key, d in cards["designs"].items():
+        assert set(d["cards"]) == {"conv_" + t["name"].split("_")[0] for t in DR.tiers(key)}
         for name, c in d["cards"].items():
             b, mech = c["derivation"]["bounds"], c["derivation"]["mechanical"]
             kz = c["k_ortho"]["value"][2]
@@ -127,40 +130,36 @@ def test_cards_record_both_designs_with_ordered_bounds(cards):
 
 
 def test_cards_are_functions_of_the_tier_contents(cards):
-    d49, d36 = cards["designs"]["N3K3K_A2_49"], cards["designs"]["N4K4K_A2_36"]
-    p49 = d49["cards"]["conv_gan_hs"]["derivation"]
-    p36 = d36["cards"]["conv_gan_hs"]["derivation"]
-    assert p49["dies_per_cell"] == 3 and p36["dies_per_cell"] == 4
-    assert p36["part"] == "EPC2057"
-    assert not p49["packing"]["fits"]                 # 3 x EPC2014C + 50 um: 2.89 mm > 2.37 mm
-    assert p36["packing"]["fits"] and p36["packing"]["best_layout"] == "pinwheel"
-    assert d36["cards"]["conv_ind_cout"]["derivation"]["area_fractions"]["inductors"] == \
-        pytest.approx(4 * 1.0 / 7.94, rel=1e-6)
-    # a real MLCC tier: k of a few W/mK, CTE ~ 10-13 ppm/K
-    for d in (d49, d36):
-        a1 = d["cards"]["conv_cfly_a1"]
-        assert 2.0 < a1["k_ortho"]["value"][2] < 7.0
-        assert 10e-6 < a1["cte"]["value"] < 13.5e-6
+    """A tier card follows what the tier holds: the parts it lists, their areas in the cell,
+    the encapsulant cap above shorter parts, and the capacitor height (thin vs rated)."""
+    import design_record as DR
+    d = cards["designs"]["m36"]
+    for t in DR.tiers("m36"):
+        der = d["cards"]["conv_" + t["name"].split("_")[0]]["derivation"]
+        assert der["parts"] == t["parts"] and der["tier_um"] == t["height_um"]
+        assert set(der["prisms"]) == set(t["parts"])
+    t1 = d["cards"]["conv_tier1"]["derivation"]                 # 2 x EPC2014C + 2 x 0603
+    assert t1["prisms"]["gan_hs"]["cap_um"] == pytest.approx(1000.0 - 685.0)
+    # the thin-capacitor sensitivity: the same contents in a 685-um tier, no cap above the dies
+    thin = cards["designs"]["m36thin"]["cards"]["conv_tier1"]
+    assert thin["derivation"]["tier_um"] == 685.0
+    assert thin["k_ortho"]["value"][2] > d["cards"]["conv_tier1"]["k_ortho"]["value"][2]
+    # inductor tiers carry their output posts; a tier without inductors has none
+    t4 = d["cards"]["conv_tier4"]["derivation"]
+    assert t4["area_fractions"]["posts"] > 0 and t1["area_fractions"]["posts"] == 0
 
 
 def test_cards_record_matches_the_code(cards):
-    """The committed 49-cell record was derived from the converter of the published lineage
-    (25-V 0805 flying capacitor): evaluate the live cards in that lineage (the corrected
-    production converter carries the rated 0603 part, whose record the campaign regenerates)."""
+    """The committed record equals the live cards of every design (the record's tiers)."""
     import tcpmt_converter_cards as CC
-    import replay_production as RPX
-    import electrical as EL
-    with EL.pinned_rules(EL.LEGACY_RULES):
-        RPX._DESIGN_CACHE.clear()
-        try:
-            live = CC.cards_for(CC.TierContents.from_design())
-        finally:
-            RPX._DESIGN_CACHE.clear()
-    for name, c in live.items():
-        rec = cards["designs"]["N3K3K_A2_49"]["cards"][name]
-        assert c["k_ortho"]["value"] == pytest.approx(rec["k_ortho"]["value"], rel=1e-12)
-        assert c["E"]["value"] == pytest.approx(rec["E"]["value"], rel=1e-12)
-        assert c["cte"]["value"] == pytest.approx(rec["cte"]["value"], rel=1e-12)
+    import design_record as DR
+    for key in DR.keys():
+        live = CC.mixed_cards(key)
+        for name, c in live.items():
+            rec = cards["designs"][key]["cards"][name]
+            assert c["k_ortho"]["value"] == pytest.approx(rec["k_ortho"]["value"], rel=1e-12)
+            assert c["E"]["value"] == pytest.approx(rec["E"]["value"], rel=1e-12)
+            assert c["cte"]["value"] == pytest.approx(rec["cte"]["value"], rel=1e-12)
 
 
 def test_inductor_geometry_reproduces_the_papers_dcr():
@@ -176,13 +175,16 @@ def z1_build():
 
 
 def test_converter_tiers_carry_the_derived_cards(z1_build):
+    """Every mixed tier of the mesh carries its own card inside the cells (TCPMT round 3)."""
+    import design_record as DR
     m, mats, st, tiles, info = z1_build
     mat = np.array(m.elem_material, dtype=object)
     lay = np.array(m.elem_layer, dtype=object)
-    for tier, card in (("gan_hs", "conv_gan_hs"), ("gan_ls", "conv_gan_ls"),
-                       ("flying_caps", "conv_cfly_a0"), ("inductor_plus_cout", "conv_ind_cout")):
-        sel = np.array([tier in str(x) for x in lay])
-        assert set(mat[sel]) == {card, "underfill_homog"}, tier
+    for t in DR.tiers():
+        card = "conv_" + t["name"].split("_")[0]
+        sel = np.array([str(x).endswith("_" + t["name"]) for x in lay])
+        assert sel.any(), t["name"]
+        assert set(mat[sel]) == {card, "underfill_homog"}, t["name"]
         assert mats[card].k_ortho is not None
 
 

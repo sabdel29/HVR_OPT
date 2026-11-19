@@ -51,12 +51,13 @@ def test_pad_loss_is_a_count_scenario_not_closed(sysrep):
 
 def test_the_count_span_is_enormous_and_reported(sysrep):
     s = sysrep["sensitivity"]
-    assert s["n_drop"] == 4 and s["n_geom_max"] > 4000
-    assert s["loss_span_factor"] > 1000, "the hidden sensitivity exceeds 1000x"
+    # TCPMT round 3: the design record's cell (36 cells of 7.94 mm2 at 27.9 A RMS)
+    assert s["n_drop"] == 5 and s["n_geom_max"] > 4000
+    assert s["loss_span_factor"] > 900, "the hidden sensitivity is about three decades"
     lo = next(r for r in s["counts"] if r["is_drop_floor"])
     hi = next(r for r in s["counts"] if r["is_geom_ceiling"])
-    assert lo["p_system_both_rails_w"] > 17.0      # ~17.6 W
-    assert hi["p_system_both_rails_w"] < 0.02      # ~0.014 W
+    assert lo["p_system_both_rails_w"] > 17.0      # ~19.1 W
+    assert hi["p_system_both_rails_w"] < 0.02      # ~0.019 W
 
 
 def test_keepout_is_actually_swept(sysrep):
@@ -69,7 +70,7 @@ def test_em_context_is_a_warning_not_an_allowable(sysrep):
     s = sysrep["sensitivity"]
     assert s["em_context_doi"] == "10.3390/ma14216394"
     assert "not an allowable" in s["em_context_status"]
-    assert 4 in s["counts_in_multi_MA_regime"], (
+    assert s["n_drop"] in s["counts_in_multi_MA_regime"], (
         "the drop-floor count sits above 1e6 A/cm2 and must be flagged")
     assert "does not set a limit" in s["em_context_note"]
 
@@ -83,11 +84,11 @@ def test_pad_shape_is_source_effective_not_asserted_square():
 # ---------------------------------------------------- coordinates have ONE source
 def test_cell_coordinates_come_from_the_fe_placement():
     c = PCO.physical_cell_coordinates()
-    assert len(c) == 49
-    assert PCO.cell_pitch_mm(c) == pytest.approx(3.165243, abs=1e-5), (
+    assert len(c) == 36                     # the design record's cells (6 x 6)
+    assert PCO.cell_pitch_mm(c) == pytest.approx(3.708564, abs=1e-5), (  # 6 x 6, record
         "the RDL solver had hard-coded 3.0 mm")
     xs = sorted({round(x, 6) for x, _ in c})
-    assert xs[0] == pytest.approx(-9.495728, abs=1e-5)
+    assert xs[0] == pytest.approx(-9.27141, abs=1e-5)       # -(21.36 - 2.817) / 2
 
 
 def test_bga_sites_are_on_the_centred_lattice():

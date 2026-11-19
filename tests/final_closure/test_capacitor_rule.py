@@ -52,11 +52,20 @@ def test_production_lineage_selection(monkeypatch):
     import kw1
     for k in ("HVR_PRODUCTION_RULES", "HVR_PRODUCTION_CAP_RULE"):
         monkeypatch.delenv(k, raising=False)
+    # TCPMT round 3: the production point is M = 36 with packing on (the design record);
+    # at M = 49 the packing rule moves the free pick (N3K2K_A1 / EPC2090, the m49 neighbour)
+    d, _g, why = kw1.design_1kw(m_vr=36)
+    assert d is not None, why
+    assert d.capacitor.name == "Murata-GRM188D72A105KE01-1uF-100V"
+    assert (d.hs.part_number, d.ls.part_number) == ("EPC2014C", "EPC2055")
+    assert (d.arch.N, d.arch.K, d.arch.K_A) == (3, 3, 2)
+    monkeypatch.setenv("HVR_PRODUCTION_PACK_RULE", "off")      # the round-2 production
     d, _g, why = kw1.design_1kw()
     assert d is not None, why
     assert d.capacitor.name == "Murata-GRM188D72A105KE01-1uF-100V"
     assert (d.hs.part_number, d.ls.part_number) == ("EPC2014C", "EPC2057")
     assert (d.arch.N, d.arch.K, d.arch.K_A) == (3, 3, 2)
+    monkeypatch.delenv("HVR_PRODUCTION_PACK_RULE")
     monkeypatch.setenv("HVR_PRODUCTION_RULES", "legacy")
     d, _g, why = kw1.design_1kw()
     assert d is not None, why

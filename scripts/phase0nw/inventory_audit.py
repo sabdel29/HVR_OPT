@@ -26,13 +26,20 @@ from physical_package import (build_physical_package, build_physical_z1,  # noqa
 
 CFG = R / "configs/phase0nt/z2_2p4mm_cutout.yaml"
 
-# Per-cell component counts (established in the Phase-0N topology audit: N = 3 series
-# capacitor stages, K = 3 parallel inductor branches, two switching phases).
-PER_CELL = {"hs": 3, "ls": 3, "inductor": 3, "flying_cap": 2}
+import design_record as DR                                               # noqa: E402
 
-# Which tier carries which active component. RDLs are interconnect, not active content.
-ACTIVE_TIER = {"gan_hs_EPC2014C": "hs", "gan_ls_EPC2057": "ls",
-               "inductor_plus_cout": "inductor", "flying_caps": "flying_cap"}
+#: the record's class -> the audit's component key
+COMPONENT = {"gan_hs": "hs", "gan_ls": "ls", "inductor": "inductor", "cap_fly": "flying_cap"}
+
+
+def per_cell() -> dict:
+    """Per-cell component counts of the design in force (THE design record: N high-side and
+    K low-side dies, K inductors, N - 1 flying capacitors; 3/3/3/2 for N3K3K_A2)."""
+    return {COMPONENT[c]: n for c, n in DR.part_counts().items()}
+
+
+#: kept for importers; the counts of the design in force
+PER_CELL = per_cell()
 
 
 def _tier_volumes(mesh, layer_names) -> dict:
@@ -48,43 +55,58 @@ def _tier_volumes(mesh, layer_names) -> dict:
 
 
 def audit() -> dict:
+    """TCPMT round 3: the converter tiers are the design record's MIXED tiers, identical in
+    Z1 and Z2 (same contents, heights and cells). The audit measures every tier's in-cell
+    volume on both meshes and requires equality tier by tier; a component class is equal when
+    every tier holding it is."""
     cfg = load_physical_package_config(CFG)
     m2 = build_physical_package(cfg)[0]
-    m1 = build_physical_z1(load_z1_package_config())[0]
-
+    z1cfg = load_z1_package_config()
+    m1 = build_physical_z1(z1cfg)[0]
     z2_names = [t[0] for t in Z2C.converter_layers(cfg)]
-    z1_names = [t[0] for t in Z1P.mid_layers(load_z1_package_config()) if t[0].startswith("z1conv_")]
+    z1_names = [t[0] for t in Z1P.mid_layers(z1cfg) if t[0].startswith("z1conv_")]
     v2, v1 = _tier_volumes(m2, z2_names), _tier_volumes(m1, z1_names)
+    parts = DR.tier_parts()
 
-    def by_component(vols):
-        agg = {k: 0.0 for k in PER_CELL}
-        rdl = 0.0
+    def by_tier(vols):
+        act, rdl = {}, 0.0
         for nm, v in vols.items():
             key = nm.split("_", 2)[2]
-            if key in ACTIVE_TIER:
-                agg[ACTIVE_TIER[key]] += v
+            if key in parts:
+                act[key] = act.get(key, 0.0) + v
             else:
                 rdl += v
-        return agg, rdl
+        return act, rdl
 
-    a2, rdl2 = by_component(v2)
-    a1, rdl1 = by_component(v1)
-
-    comps = []
-    for k in PER_CELL:
-        n = PER_CELL[k] * cfg.cells
-        d = a1[k] - a2[k]
-        rel = abs(d) / max(a1[k], a2[k], 1e-30)
-        comps.append({"component": k, "count_per_cell": PER_CELL[k], "count_total": n,
-                      "z1_volume_mm3": a1[k], "z2_volume_mm3": a2[k],
-                      "delta_mm3": d, "rel_delta": rel,
+    a2, rdl2 = by_tier(v2)
+    a1, rdl1 = by_tier(v1)
+    tiers = []
+    for t in parts:
+        d = a1.get(t, 0.0) - a2.get(t, 0.0)
+        rel = abs(d) / max(a1.get(t, 0.0), a2.get(t, 0.0), 1e-30)
+        tiers.append({"tier": t, "parts": parts[t], "z1_volume_mm3": a1.get(t, 0.0),
+                      "z2_volume_mm3": a2.get(t, 0.0), "rel_delta": rel,
                       "equal": rel < 1e-9})
-
-    active1 = sum(a1.values())
-    active2 = sum(a2.values())
+    eq = {r["tier"]: r["equal"] for r in tiers}
+    pc = per_cell()
+    comps = []
+    for c, key in COMPONENT.items():
+        holding = [t for t in parts if parts[t].get(c)]
+        comps.append({"component": key, "count_per_cell": pc[key],
+                      "count_total": pc[key] * cfg.cells, "tiers": holding,
+                      "z1_volume_mm3": sum(a1.get(t, 0.0) for t in holding),
+                      "z2_volume_mm3": sum(a2.get(t, 0.0) for t in holding),
+                      "rel_delta": max((r["rel_delta"] for r in tiers if r["tier"] in holding),
+                                       default=0.0),
+                      "equal": all(eq[t] for t in holding)})
+    active1, active2 = sum(a1.values()), sum(a2.values())
+    n_rdl1 = sum(1 for n in z1_names if n.endswith("_rdl"))
+    n_rdl2 = sum(1 for n in z2_names if n.endswith("_rdl"))
     return {
-        "cells_z1": int((np.array(m1.elem_tile) >= 0).any() and cfg.cells),
+        "design": DR.name(),
+        "cells_z1": int((np.array(m1.elem_tile) >= 0).any() and z1cfg.cells),
         "cells_z2": cfg.cells,
+        "tiers": tiers,
         "components": comps,
         "active_volume_z1_mm3": active1,
         "active_volume_z2_mm3": active2,
@@ -92,7 +114,7 @@ def audit() -> dict:
         "rdl_volume_z1_mm3": rdl1,
         "rdl_volume_z2_mm3": rdl2,
         "rdl_justified_difference": {
-            "z1_rdl_count": 5, "z2_rdl_count": 4,
+            "z1_rdl_count": n_rdl1, "z2_rdl_count": n_rdl2,
             "reason": ("Z1's converter is sandwiched -- it lands on the bottom-substrate "
                        "RDL below and must present an output RDL to the microbumps above, "
                        "so it carries a landing RDL at BOTH ends. Z2 attaches only at the "

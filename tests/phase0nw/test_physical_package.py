@@ -29,9 +29,16 @@ def cfg():
     return load_physical_package_config(CFG)
 
 
+import design_record as DR  # noqa: E402
+
+
 def _tmp_cfg(tmp_path, **edits):
-    """Write a copy of the physical config with nested edits applied."""
+    """Write a copy of the physical config with nested edits applied. An edit of the
+    converter block makes the copy a free-standing config (no design-record restatement), so
+    the loader's OWN cross-checks are what is tested."""
     c = yaml.safe_load(CFG.read_text())
+    if any(k.startswith("converter.") for k in edits):
+        c["converter"].pop("design", None)
     for dotted, val in edits.items():
         node = c
         *path, leaf = dotted.split(".")
@@ -52,14 +59,17 @@ def test_board_thickness_in_the_config_changes_the_meshed_board(tmp_path):
     assert t0 == pytest.approx(base.board_thickness_um, abs=1e-6)
 
     edited = load_physical_package_config(
-        _tmp_cfg(tmp_path, **{"board.case": "it968g_3p2mm", "board.thickness_um": 3200.0}))
+        _tmp_cfg(tmp_path, **{"board.case": "it968g_2p4mm", "board.thickness_um": 2400.0}))
     m1, *_ = build_physical_package(edited)
     t1 = measure_layers(m1)["board"]["t_um"]
 
-    assert t1 == pytest.approx(3200.0, abs=1e-6), (
-        f"the config said 3200 um and the mesh built {t1:.0f} um -- the YAML is not "
+    assert t1 == pytest.approx(2400.0, abs=1e-6), (
+        f"the config said 2400 um and the mesh built {t1:.0f} um -- the YAML is not "
         f"driving the solver")
     assert t1 != t0
+    # TCPMT round 3: the four-tier converter does not fit the 2.4-mm board + BGA; the loader
+    # records the protrusion instead of hiding it
+    assert edited.cutout_fit_margin_um < 0 < base.cutout_fit_margin_um
 
 
 def test_cutout_width_in_the_config_changes_the_mesh(tmp_path):
@@ -102,6 +112,7 @@ def test_loader_refuses_a_legacy_board_case(tmp_path, legacy):
 def test_loader_refuses_tiers_that_do_not_sum_to_the_stated_total(tmp_path):
     """NEGATIVE: a tier list and its total are two statements of one fact."""
     c = yaml.safe_load(CFG.read_text())
+    c["converter"].pop("design", None)        # a free-standing config: the loader's own check
     c["converter"]["tiers_from_substrate_downward"][0]["um"] = 20.0   # 10 -> 20
     p = tmp_path / "bad.yaml"
     p.write_text(yaml.safe_dump(c, sort_keys=False))
@@ -112,6 +123,7 @@ def test_loader_refuses_tiers_that_do_not_sum_to_the_stated_total(tmp_path):
 @pytest.mark.parametrize("proxy", FORBIDDEN_CONV_TOTAL_UM)
 def test_loader_refuses_the_embedded_cell_proxy_as_a_z2_total(tmp_path, proxy):
     c = yaml.safe_load(CFG.read_text())
+    c["converter"].pop("design", None)        # a free-standing config: the loader's own check
     c["converter"]["with_land_side_rdl_um"] = proxy
     c["converter"]["tiers_from_substrate_downward"] = [
         {"name": "bogus", "um": proxy, "status": "OPEN"}]
@@ -128,22 +140,28 @@ def test_loader_refuses_inconsistent_cell_area_and_side(tmp_path):
 
 # ------------------------------------------------------------------------- what it reads
 def test_config_states_the_physical_package(cfg):
+    """TCPMT round 3: the converter block restates THE design record's production entry
+    (36 cells, four mixed tiers, 3001 um with the land-side RDL) on the 3.2-mm board."""
     assert cfg.architecture == "ARCH_Z2_BACKSIDE"
-    assert cfg.board_case == "it968g_2p4mm"
-    assert cfg.board_thickness_um == 2400.0
+    assert cfg.board_case == "it968g_3p2mm"
+    assert cfg.board_thickness_um == 3200.0
     assert cfg.cutout_mm == 23.36
-    assert cfg.cells == 49 and cfg.cell_grid_n == 7
-    assert cfg.conv_total_um == 1963.0
-    assert len(cfg.tiers) == 8
-    assert sum(t.um for t in cfg.tiers) == 1963.0
+    assert cfg.cells == DR.n_vr() == 36 and cfg.cell_grid_n == 6
+    assert cfg.design == DR.production_key()
+    want = DR.converter_tiers("Z2")
+    assert [(t.name, t.um) for t in cfg.tiers] == want
+    assert cfg.conv_total_um == pytest.approx(sum(u for _n, u in want)) == 3001.0
+    # the converter and its attach fit the 3.2-mm board + BGA (3500 um)
+    assert cfg.cutout_fit_margin_um == pytest.approx(3200.0 + 300.0 - 30.0 - 3001.0)
 
 
 def test_high_side_device_is_present_in_the_tier_list(cfg):
-    names = " ".join(cfg.tier_names()).lower()
-    assert "hs" in names and "2014" in names, (
-        "the EPC2014C high-side device must appear explicitly; its absence is what makes "
-        "1226/1258 um wrong as a Z2 total")
-    assert "2057" in names, "the EPC2057 low-side device must appear explicitly"
+    """Every class of the cell sits in some tier, the high side explicitly (its absence is
+    what made 1226/1258 um wrong as a Z2 total); the deepest tier is the input end."""
+    parts = DR.tier_parts()
+    held = {c for t in cfg.tier_names() for c in parts.get(t, {})}
+    assert held == {"gan_hs", "gan_ls", "inductor", "cap_fly"}
+    assert parts[cfg.tier_names()[-1]].get("gan_hs"), "the deepest tier holds no high side"
 
 
 def test_mesh_matches_the_configured_converter_total(cfg):
@@ -177,9 +195,8 @@ def test_material_mapping_is_declared_with_status(cfg):
     import yaml as _y
     c = _y.safe_load(CFG.read_text())
     mm = c["converter"]["material_mapping"]
-    assert mm["flying_caps"]["status"] == "OPEN", (
-        "the MLCC tier has no sourced card; it must stay OPEN")
-    assert mm["gan_hs_and_ls"]["status"] == "BOUNDED"
+    assert mm["mixed_tiers"]["status"] == "BOUNDED", (
+        "the mixed-tier cards rest on declared inputs; they must stay BOUNDED")
     # per-tier material fidelity remains open -- asserted against the GATE REGISTRY,
     # which owns that state, not against a config field
     import json as _j
@@ -200,26 +217,31 @@ def test_out_of_cell_is_declared_with_every_case(cfg):
     assert "SENSITIVITY ONLY" in o["cases"]["F1_encapsulated"]["note"]
     assert o["bracket_required"] is True
     # the governing fraction is of the OPENING, not of the substrate
-    assert abs(o["fraction_of_opening_pct"] - 100 * (1 - 49 * 5.61 / 23.36 ** 2)) < 0.2
+    assert abs(o["fraction_of_opening_pct"]
+               - 100 * (1 - DR.n_vr() * DR.cell_area_mm2() / 23.36 ** 2)) < 0.2
 
 
-# ===================================================== 49-cell converter (brief 13, 14, 15)
+# ===================================================== the converter (brief 13, 14, 15)
 import numpy as np  # noqa: E402
 
 import z2_converter as Z2C  # noqa: E402
 
-# The specified Z2 table, in the PCB-backside frame, from
-# research/Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md section 6, shifted down by the explicit
-# 30 um VR-to-substrate attach (Z2_DIRECT_FEED_ARCHITECTURE.md section 4) that now sits
-# between the land-side attach RDL and the substrate.
+# The converter hangs from the substrate underside (z = 0) through the explicit 30 um
+# VR-to-substrate attach (Z2_DIRECT_FEED_ARCHITECTURE.md section 4), tier by tier in the
+# order the design record states (TCPMT round 3: output end against the attach, input end
+# deepest); the expected depths are derived from the record, never retyped.
 ATTACH_UM = 30.0
-SPEC_Z = {
-    "land_side_attach_rdl": (2700.0 - ATTACH_UM, 2690.0 - ATTACH_UM),
-    "inductor_plus_cout":   (2690.0 - ATTACH_UM, 2190.0 - ATTACH_UM),
-    "gan_ls_EPC2057":       (2180.0 - ATTACH_UM, 1542.0 - ATTACH_UM),
-    "flying_caps":          (1532.0 - ATTACH_UM, 1432.0 - ATTACH_UM),
-    "gan_hs_EPC2014C":      (1422.0 - ATTACH_UM, 737.0 - ATTACH_UM),
-}
+
+
+def _spec_z():
+    z, out = -ATTACH_UM, {}
+    for i, (n, um) in enumerate(DR.converter_tiers("Z2")):
+        out[f"conv_{i}_{n}"] = (z, z - um)
+        z -= um
+    return out
+
+
+SPEC_Z = _spec_z()
 
 
 @pytest.fixture(scope="module")
@@ -229,7 +251,8 @@ def built(cfg):
 
 
 def _pcb_backside(cfg):
-    return -cfg.board_thickness_um - 300.0      # board z0 in the mesh frame
+    return -cfg.board_thickness_um - 300.0      # board z0 in the mesh frame (unused: depths
+                                                # are measured from the substrate underside)
 
 
 def test_full_area_converter_slab_is_gone(built):
@@ -238,28 +261,25 @@ def test_full_area_converter_slab_is_gone(built):
         "the full-area 1226 um converter slab is still in the physical mesh")
 
 
-def test_converter_totals_1963um_in_the_mesh(built):
+def test_converter_totals_the_record_in_the_mesh(built):
     cfg, m, _ = built
     rows = Z2C.tier_report(cfg, m)
-    assert len(rows) == 8
+    assert len(rows) == len(DR.converter_tiers("Z2"))
     for r in rows:
         assert r["mesh_um"] == pytest.approx(r["spec_um"], abs=1e-6), (
             f"{r['tier']}: config {r['spec_um']} um, mesh {r['mesh_um']} um")
-    assert sum(r["mesh_um"] for r in rows) == pytest.approx(1963.0, abs=1e-6)
+    assert sum(r["mesh_um"] for r in rows) == pytest.approx(
+        sum(u for _n, u in DR.converter_tiers("Z2")), abs=1e-6)
 
 
 @pytest.mark.parametrize("tier,z", sorted(SPEC_Z.items()))
 def test_each_tier_sits_at_its_specified_depth(built, tier, z):
-    """Totalling 1963 um is not enough: the tiers must be in the right ORDER.
-
-    An inverted stack still totals 1963 um but puts the high-side device against the
-    substrate and the land-side attach RDL at the bottom of the hole.
-    """
+    """Totalling right is not enough: the tiers must be in the record's ORDER. An inverted
+    stack totals the same but puts the high side against the substrate."""
     cfg, m, _ = built
-    off = _pcb_backside(cfg)
-    r = next(r for r in Z2C.tier_report(cfg, m) if r["tier"].endswith(tier))
-    assert r["z1_um"] - off == pytest.approx(z[0], abs=0.5), f"{tier} top"
-    assert r["z0_um"] - off == pytest.approx(z[1], abs=0.5), f"{tier} bottom"
+    r = next(r for r in Z2C.tier_report(cfg, m) if r["tier"] == tier)
+    assert r["z1_um"] == pytest.approx(z[0], abs=0.5), f"{tier} top"
+    assert r["z0_um"] == pytest.approx(z[1], abs=0.5), f"{tier} bottom"
 
 
 def test_high_side_is_deepest_and_clears_the_pcb_backside(built):
@@ -267,9 +287,10 @@ def test_high_side_is_deepest_and_clears_the_pcb_backside(built):
     off = _pcb_backside(cfg)
     rows = Z2C.tier_report(cfg, m)
     deepest = min(rows, key=lambda r: r["z0_um"])
-    assert "gan_hs" in deepest["tier"], (
-        f"the deepest tier is {deepest['tier']}, not the high-side device")
-    assert deepest["z0_um"] - off == pytest.approx(737.0 - ATTACH_UM, abs=0.5)
+    first = DR.tiers()[0]["name"]
+    assert deepest["tier"].endswith(first), (
+        f"the deepest tier is {deepest['tier']}, not the input-end tier {first}")
+    assert deepest["z0_um"] > off, "the converter protrudes below the PCB backside"
 
 
 def test_the_attach_tier_sits_between_the_converter_and_the_substrate(built):
@@ -286,7 +307,7 @@ def test_converter_descends_into_the_cutout_not_in_series_below_the_bga(built):
     """The HVR shares the board's z range; it does not push the board further down."""
     cfg, m, _ = built
     lay = measure_layers(m)
-    assert lay["board"]["z0_um"] == pytest.approx(-2700.0, abs=1e-6)
+    assert lay["board"]["z0_um"] == pytest.approx(-cfg.board_thickness_um - 300.0, abs=1e-6)
     assert lay["board"]["z1_um"] == pytest.approx(-300.0, abs=1e-6)
     assert lay["bga"]["z1_um"] == pytest.approx(0.0, abs=1e-6)
     conv_bottom = min(r["z0_um"] for r in Z2C.tier_report(cfg, m))

@@ -54,7 +54,7 @@ def test_branch_current_is_i_cell_over_three_not_the_cell_current(s):
     assert d["K"] == 3 and d["K_A"] == 2 and d["K_B"] == 1
     for b in s["branches"]:
         assert b["i_avg_a"] == pytest.approx(d["i_cell_out_avg_a"] / 3, rel=1e-9)
-        assert b["i_avg_a"] == pytest.approx(6.8027, abs=1e-3)
+        assert b["i_avg_a"] == pytest.approx(1000.0 / 36 / 3, abs=1e-3)   # record m36
         assert b["i_avg_a"] < 10.0, "20.4 A must not be put through every branch"
 
 
@@ -102,7 +102,7 @@ def test_individual_branch_rms_is_open(s):
     for b in s["branches"]:
         assert b["i_rms_a"] is None and b["ripple_pp_a"] is None
         assert b["rms_status"].startswith("OPEN")
-        assert b["i_avg_a"] == pytest.approx(6.8027, abs=1e-3)
+        assert b["i_avg_a"] == pytest.approx(1000.0 / 36 / 3, abs=1e-3)   # record m36
         assert b["i_avg_status"].startswith("KNOWN")
 
 
@@ -130,7 +130,7 @@ def test_z2_tsv_uses_per_cell_rms_with_no_cross_terms(s):
         v = s["architectures"][arch]
         assert v["inter_cell_phase_matters"] is False
         assert "no conductor is shared between cells" in v["inter_cell_phase_reason"]
-        assert v["i_cell_rms_a"] == pytest.approx(20.5730, abs=1e-3)
+        assert v["i_cell_rms_a"] == pytest.approx(27.8991, abs=1e-3)       # record m36
         assert 1.0 < v["cell_rms_over_avg"] < 1.02
         # the aggregate 1000 + 49*di form must be gone
         assert "lv_rms_worst_a" not in v
@@ -172,8 +172,8 @@ def test_z2_substrate_tsv_is_rms_closed_from_local_cell_currents():
     t = L["terms"]["P_TSV_VDD"]
     assert t["maturity"] == {"geometry": "CLOSED", "current": "CLOSED", "loss": "CLOSED"}
     assert t["scenario_w"] is None
-    assert t["w"] * 1e3 == pytest.approx(213.0, abs=1.0)
-    assert L["rms"]["i_cell_rms_a"] == pytest.approx(20.5730, abs=1e-3)
+    assert t["w"] * 1e3 == pytest.approx(287.8, abs=1.0)                  # record m36
+    assert L["rms"]["i_cell_rms_a"] == pytest.approx(27.8991, abs=1e-3)   # record m36
 
 
 # ================= brief 1, 2, 3: no stale bound/bracket wording left ===============

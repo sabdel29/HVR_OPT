@@ -286,7 +286,8 @@ def tsv_n_per_cell(path=None) -> int:
     of the design in force (a candidate config: its cell side, the same rule)."""
     if is_default(path):
         return _dr().tsv_n_per_cell()
-    return _dr().tsv_n_side(cell_side=cell_side_mm(path)) ** 2
+    return _dr().tsv_n_side(cell_side=cell_side_mm(path),
+                            i_cell=P_LOAD_W / V_OUT / n_vr(path)) ** 2
 
 
 #: component class of a Z1 tier name -> the final_closure_ledger.LAYERS key

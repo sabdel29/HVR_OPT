@@ -41,6 +41,11 @@ def z3():
             "cfg": PP.load_z3_package_config()}
 
 
+def led_cfg():
+    import physical_package as PP
+    return PP.load_z3_package_config()
+
+
 @pytest.fixture(scope="module")
 def led():
     import final_closure_ledger as FL
@@ -63,8 +68,11 @@ def test_tier_order_and_z_extents_are_measured_on_the_mesh(z3):
         assert lay[name]["z1_um"] == pytest.approx(z, abs=1e-6), name
         assert lay[name]["z0_um"] == pytest.approx(z - t, abs=1e-6), name
         z -= t
-    assert [n for n, _ in expect][-1] == FL.LAYERS["Z3"]["hs"] == "z3conv_7_gan_hs_EPC2014C"
-    assert min(m.layers, key=lambda L: L.z0).name == FL.LAYERS["Z3"]["hs"]
+    # TCPMT round 3: the deepest tier is the design record's input-end tier, which holds
+    # high-side dies (FL.LAYERS lists every tier holding a class)
+    deepest = [n for n, _ in expect][-1]
+    assert deepest == FL.input_end_layer("Z3") and deepest in FL.LAYERS["Z3"]["hs"]
+    assert min(m.layers, key=lambda L: L.z0).name == deepest
     assert [lay["board"]["z0_um"], lay["board"]["z1_um"]] == pytest.approx(ex["board_span_um"])
     assert [lay["bga"]["z0_um"], lay["bga"]["z1_um"]] == pytest.approx([-300.0, 0.0], abs=1e-6)
     conv = [lay[n] for n, _ in expect[1:]]
@@ -80,7 +88,8 @@ def test_tier_order_and_z_extents_are_measured_on_the_mesh(z3):
     # the ledger's layer map names exactly the meshed tiers, and the intra-VR routing reads
     # the same tier order as Z2's
     for k in ("hs", "ls", "caps", "ind", "attach", "pcb_via", "lv", "tsv", "pads", "bga"):
-        assert FL.LAYERS["Z3"][k] in lay, k
+        v = FL.LAYERS["Z3"][k]
+        assert all(n in lay for n in (v if isinstance(v, list) else [v])), k
     assert all(n in lay for n in FL.LAYERS["Z3"]["rdl"])
     assert FL.cell_tiers("Z3") == FL.cell_tiers("Z2")
 
@@ -88,6 +97,7 @@ def test_tier_order_and_z_extents_are_measured_on_the_mesh(z3):
 def test_the_routing_reads_z3s_own_tier_list(tmp_path, monkeypatch):
     import final_closure_ledger as FL
     c = yaml.safe_load(CFG.read_text())
+    c["converter"].pop("design", None)        # a free-standing tier list (not the record's)
     c["converter"]["tiers_from_board_downward"].reverse()
     p = tmp_path / "z3_reordered.yaml"
     p.write_text(yaml.safe_dump(c, sort_keys=False))
@@ -96,11 +106,18 @@ def test_the_routing_reads_z3s_own_tier_list(tmp_path, monkeypatch):
 
 
 def test_a_tier_list_that_differs_from_z2s_is_refused(tmp_path):
+    """Two tiers swapped (same total): refused -- by the design record when the block
+    restates it, by the comparison with Z2 when it is free-standing."""
     import physical_package as PP
+    import design_record as DR
     c = yaml.safe_load(CFG.read_text())
     t = c["converter"]["tiers_from_board_downward"]
-    t[3], t[7] = t[7], t[3]                             # LS and HS swapped: same total
+    t[3], t[7] = t[7], t[3]                             # two tiers swapped: same total
     p = tmp_path / "z3_swapped.yaml"
+    p.write_text(yaml.safe_dump(c, sort_keys=False))
+    with pytest.raises(DR.DesignRecordError):
+        PP.load_z3_package_config(p)
+    c["converter"].pop("design")
     p.write_text(yaml.safe_dump(c, sort_keys=False))
     with pytest.raises(PP.PhysicalConfigError):
         PP.load_z3_package_config(p)
@@ -161,7 +178,7 @@ def test_bottom_films_cover_the_exposed_underside_exactly_once(z3):
     bot = set(map(int, E.board_bottom_faces(m, "Z3")))
     plate = E.z3_converter_cold_plate(m, 1100.0)
     pl = set(map(int, plate["elems"]))
-    assert plate["layer"] == FL.LAYERS["Z3"]["hs"] and not bot & pl
+    assert plate["layer"] == FL.input_end_layer("Z3") and not bot & pl
     tops = {tuple(sorted(r[4:])) for r in m.elems}
     exposed = {i + 1 for i, r in enumerate(m.elems) if tuple(sorted(r[:4])) not in tops}
     assert exposed == bot | pl
@@ -194,24 +211,32 @@ def test_attach_pcb_via_and_bga_1v_rows_are_present_in_their_own_regions(led):
     from interconnect import rho_cu
     rows = {r["term"]: r for r in led["rows"]}
     lay = FL.LAYERS["Z3"]
+    import design_record as DR
+    import z3_package as Z3P
     i_cell = RMS.cell_currents()["i_cell_out_rms_a"]
-    n_att = {"VDD": 13, "GND": 12}          # the 5 x 5 legal lattice, checkerboard
+    n_cells = DR.n_vr()
+    lat = Z3P.attach_lattice(led_cfg())
+    n_att = {"VDD": int(lat["n_vdd"]), "GND": int(lat["n_gnd"])}   # the legal lattice
+    assert lat["n_per_axis"] == 7 and n_att == {"VDD": 25, "GND": 24}   # 7 x 7 on 2.817 mm
     a_ann = np.pi / 4.0 * (250.0 ** 2 - 200.0 ** 2) * 1e-12
+    t_board_m = led_cfg().board_thickness_um * 1e-6
     for rail in ("VDD", "GND"):
         a, v, b = (rows[f"P_VR_PCB_attach_{rail}"], rows[f"P_PCB_via_{rail}"],
                    rows[f"P_BGA_1V_{rail}"])
         assert (a["deposit_layer"], v["deposit_layer"], b["deposit_layer"]) == (
             lay["attach"], "board", "bga")
         assert min(a["P_w"], v["P_w"], b["P_w"]) > 0 and {a["rail"], v["rail"], b["rail"]} == {"1V"}
-        # PCB vias: rho_Cu(T) L / A_annulus, n in parallel per rail per cell, 49 cells
-        r_via = rho_cu(TEMPS["pcb_via"]) * 2.4e-3 / a_ann
-        assert v["P_w"] == pytest.approx(49 * i_cell ** 2 * r_via / n_att[rail], rel=1e-12)
-        # BGA: 667 balls per rail, equal sharing, Table III ball at the BGA temperature
-        assert b["P_w"] == pytest.approx((49 * i_cell) ** 2 * PAD.bga_ball_resistance_ohm(
+        # PCB vias: rho_Cu(T) L / A_annulus, n in parallel per rail per cell, every cell
+        r_via = rho_cu(TEMPS["pcb_via"]) * t_board_m / a_ann
+        assert v["P_w"] == pytest.approx(n_cells * i_cell ** 2 * r_via / n_att[rail],
+                                         rel=1e-12)
+        # BGA: 667 balls per rail (1 kA, whatever the count), equal sharing, Table III ball
+        assert b["P_w"] == pytest.approx((n_cells * i_cell) ** 2 * PAD.bga_ball_resistance_ohm(
             TEMPS["bga"]) / 667, rel=1e-12)
     d = led["z3_design"]
     assert d["vr_attach"]["bumps_per_rail_per_cell"] == n_att
-    assert (d["pcb_via_field"]["n_vdd"], d["pcb_via_field"]["n_gnd"]) == (13, 12)
+    assert (d["pcb_via_field"]["n_vdd"], d["pcb_via_field"]["n_gnd"]) == (n_att["VDD"],
+                                                                          n_att["GND"])
     assert d["pcb_via_field"]["cu_fraction_unit_cell"] == pytest.approx(0.1104, abs=1e-4)
     assert (d["bga_1v"]["n_per_rail"], d["bga_1v"]["n_total"]) == (667, 1334)
     # the spreading the model does not carry is RECORDED, never silently absent

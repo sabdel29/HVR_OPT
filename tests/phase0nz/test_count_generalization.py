@@ -47,6 +47,9 @@ THERMAL_FIX_KEYS = ("elem_material_sha", "stack_materials_sha", "material_cards"
                     "thermal_deck_sha", "structural_deck_sha")
 
 
+@pytest.mark.skip(reason="TCPMT round 3: the production design is THE design record's M = 36 "
+                         "point; the 49-cell fingerprint is a frozen-lineage record, no longer "
+                         "the production build (test_production_path_reads_the_design_record)")
 def test_49_cell_fingerprint_equals_the_pre_change_record():
     """The reference is the fingerprint of the CORRECTED production
     (fingerprint_49_thermal_fix.json); the pre-generalization record
@@ -73,39 +76,42 @@ def test_the_committed_after_record_equals_the_before_record():
     assert F.compare_fingerprints(before["cases"], after["cases"]) == []
 
 
-def test_production_path_reads_no_derived_value():
+def test_production_path_reads_the_design_record(monkeypatch):
+    """TCPMT round 3: count, duty, TSV fabric, tiles and routing of the production chain all
+    come from THE design record (no 49-cell literal on the production path)."""
+    monkeypatch.delenv("HVR_PRODUCTION_RULES", raising=False)
     import final_closure_ledger as FL
     import final_closure_physical_etm as E
     import production_et as PE
     import replay_production as RP
+    import design_record as DR
     import z1_design as Z1D
-    assert Z1D.is_default() and Z1D.n_vr() == 49 and Z1D.tag() == ""
-    assert FL.N_VR == 49 == RP.n_vr() == PE.N_VR
-    assert FL.SCEN_RATIO["HV_S1"] == 4.0
-    assert E.TSV_N_PER_CELL == 1444 and E.DESIGN_TAG == ""
-    assert E.case_path("Z1", "HV_S0") == R / "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json"
-    assert Z1D.package_network_file() == R / "research/final_closure/package_network.json"
-    import routing as RT
-    assert FL.routing_design() is RT.DESIGN
+    RP._DESIGN_CACHE.clear()
+    assert Z1D.is_default() and DR.is_production() and Z1D.tag() == ""
+    assert FL.N_VR == DR.n_vr() == RP.n_vr() == PE.design_cells()[0] == 36
+    assert PE.design_cells()[1] == DR.cell_side_mm()
+    assert FL.SCEN_RATIO["HV_S1"] == 1.0 / math.sqrt(DR.buck_duty()) == 4.0
+    assert E.TSV_N_PER_CELL == DR.tsv_n_per_cell() == 45 * 45 and E.DESIGN_TAG == ""
+    assert not hasattr(PE, "N_VR") and not hasattr(PE, "HVR_AREA_MM2")
+    d = FL.routing_design()
+    assert d["n_vr"] == 36 and d["tile_side_mm"] == DR.cell_side_mm() and d["layout"]
+    assert d["i_out_per_vr_a"] == pytest.approx(1000.0 / 36)
 
 
-def test_derived_rules_reproduce_the_production_literals():
-    """Each rule the candidate path uses, applied to the production design, gives the
-    production constant it replaces."""
-    import final_closure_ledger as FL
-    import kw1
-    import routing as RT
-    import z1_design as Z1D
-    assert Z1D.z1_layers(Z1D.DEFAULT_CFG) == FL.LAYERS["Z1"]
-    assert list(Z1D.z1_layers(Z1D.DEFAULT_CFG)) == list(FL.LAYERS["Z1"])
-    assert Z1D.tsv_n_per_cell(Z1D.DEFAULT_CFG) == 1444
-    d = Z1D.design_dict(kw1.design_1kw()[0], 49, RT.DESIGN)
-    for k, v in RT.DESIGN.items():
-        if k == "f_sw_hz":              # the literal was typed from a printed value (1 ulp)
-            assert d[k] == pytest.approx(v, rel=1e-15)
-        else:
-            assert d[k] == v, k
-    assert 1.0 / math.sqrt(3 * 1.0 / 48.0) == FL.SCEN_RATIO["HV_S1"]
+def test_the_record_reproduces_its_synthesis(monkeypatch):
+    """Every design of the record re-synthesizes to its recorded parts, f_sw, area and 25-C
+    loss under the production rules (design_record.compiled refuses otherwise), and its tier
+    contents are the engine's stack plan."""
+    monkeypatch.delenv("HVR_PRODUCTION_RULES", raising=False)
+    import design_record as DR
+    for k in DR.keys():
+        des = DR.compiled(k)
+        assert des.arch.N == DR.topology(k)[0]
+        held = {}
+        for t in DR.tiers(k):
+            for c, n in t["parts"].items():
+                held[c] = held.get(c, 0) + n
+        assert held == DR.part_counts(k), k
 
 
 def test_kw1_takes_count_and_topology():
@@ -162,9 +168,11 @@ def test_the_enlarged_cell_sensitivity_recovers_the_production_order():
     assert d["area_mm2"] == 3.74 and Z1D.cell_area_mm2(cfg) == 4.0
     assert Z1D.cell_side_mm(cfg) == 2.0 and Z1D.tsv_n_per_cell(cfg) == 32 * 32
     c = yaml.safe_load(cfg.read_text())
-    assert (c["converter"]["tiers_from_substrate_upward"] == yaml.safe_load(
-        (R / "configs/phase0nx/z1_physical.yaml").read_text())["converter"][
-        "tiers_from_substrate_upward"])
+    # the round-2 49-cell production order (the reference of this superseded study)
+    assert [(t["name"], t["um"]) for t in c["converter"]["tiers_from_substrate_upward"]] == [
+        ("bottom_substrate_rdl", 10.0), ("gan_hs_EPC2014C", 685.0), ("interlayer_rdl", 10.0),
+        ("flying_caps", 100.0), ("interlayer_rdl", 10.0), ("gan_ls_EPC2057", 638.0),
+        ("interlayer_rdl", 10.0), ("inductor_plus_cout", 500.0), ("output_rdl", 10.0)]
 
 
 def test_a_cell_outside_the_synthesized_area_and_budget_is_refused(tmp_path):
@@ -296,13 +304,15 @@ def test_candidate_mesh_carries_its_cells_and_tiers(cand):
     assert z == pytest.approx(300.0 + c["converter"]["total_um"])
     assert cand["z_max"] - cand["z_min"] == pytest.approx(c["expected"]["package_top_um"])
     # the ledger's layer map names meshed tiers only, the output capacitor tier included
+    as_list = lambda v: v if isinstance(v, list) else [v]                 # noqa: E731
     for k in ("hs", "ls", "caps", "ind", "cout", "lv"):
-        assert cand["layers"][k] in cand["layers_mesh"], k
+        assert all(n in cand["layers_mesh"] for n in as_list(cand["layers"][k])), k
     assert all(n in cand["layers_mesh"] for n in cand["layers"]["rdl"])
-    assert cand["layers"]["cout"] in cand["conv_region"]
-    assert [x[0] for x in cand["tiers"]] == ["rdl", "gan_hs", "rdl", "cap_fly", "rdl",
-                                             "gan_ls", "rdl", "inductor", "rdl", "cap_out",
-                                             "rdl"]
+    assert all(n in cand["conv_region"] for n in as_list(cand["layers"]["cout"]))
+    # cell_tiers: (name, um, contents) per tier, input end first (TCPMT round 3)
+    cls = [next(iter(x[2]), "rdl") if x[2] else "rdl" for x in cand["tiers"]]
+    assert cls == ["rdl", "gan_hs", "rdl", "cap_fly", "rdl", "gan_ls", "rdl", "inductor",
+                   "rdl", "cap_out", "rdl"]
     assert cand["info"]["tsv_tile_cu_fraction"] == pytest.approx(
         961 * math.pi * 0.015 ** 2 / 3.74, rel=1e-9)
 
@@ -317,8 +327,9 @@ def test_candidate_energy_balance_and_regions(cand):
               "P_pkg_RDL_HV_return", "P_BGA_supply", "P_BGA_return", "P_TSV_VDD", "P_TSV_GND",
               "P_pad_VDD", "P_pad_GND"):
         assert rows[t][0] > 0, t
-    assert rows["P_conv_cap_esr"][1] == cand["layers"]["caps"]
-    assert rows["P_conv_inductor_dcr"][1] == cand["layers"]["ind"]
+    joined = lambda v: ",".join(v) if isinstance(v, list) else v           # noqa: E731
+    assert rows["P_conv_cap_esr"][1] == joined(cand["layers"]["caps"])
+    assert rows["P_conv_inductor_dcr"][1] == joined(cand["layers"]["ind"])
     # the low-side tier temperature moves only the low-side term (each device term is
     # evaluated where its loss is deposited, final_closure_physical_etm.temperature_regions)
     assert cand["moved_by_ls"] == ["P_conv_ls"]

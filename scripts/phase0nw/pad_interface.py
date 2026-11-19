@@ -149,7 +149,14 @@ def geometric_capacity(footprint_mm2: float, keepout_frac: float = 0.30) -> dict
 KEEPOUT_CASES = {"KO_LOW": 0.10, "KO_NOM": 0.30, "KO_HIGH": 0.60}
 
 
-def size_for_cell(i_cell_rms_a: float, footprint_mm2: float = 5.61,
+def _record_cell():
+    """(cell area mm2, cell count) of the design in force (THE design record, TCPMT round 3:
+    the 5.61-mm2 / 49-cell defaults of the round-2 build are gone)."""
+    import design_record as DR
+    return DR.cell_area_mm2(), DR.n_vr()
+
+
+def size_for_cell(i_cell_rms_a: float, footprint_mm2: float | None = None,
                   drop_budget_frac: float = 0.01, v_rail: float = 1.0,
                   T_c: float = 20.0, keepout_frac: float = 0.30) -> dict:
     """PAD-DROP and PAD-GEOM-MAX. NO adopted count is selected.
@@ -163,6 +170,7 @@ def size_for_cell(i_cell_rms_a: float, footprint_mm2: float = 5.61,
     interface loss is 17.6 W, and at N = 4908 it is 0.014 W -- a factor of about 1250.
     Until a defensible criterion exists, no nominal count is chosen here.
     """
+    footprint_mm2 = _record_cell()[0] if footprint_mm2 is None else footprint_mm2
     r_one = pad_bulk_resistance_ohm(T_c)
     budget_v = drop_budget_frac * v_rail
     n_drop = max(1, math.ceil(i_cell_rms_a * r_one / budget_v))
@@ -191,9 +199,12 @@ def size_for_cell(i_cell_rms_a: float, footprint_mm2: float = 5.61,
             "em_allowable": None, "em_status": SRC_PER_VIA_LIMIT_STATUS}
 
 
-def density_sensitivity(i_cell_rms_a: float, footprint_mm2: float = 5.61,
-                        cells: int = 49, T_c: float = 20.0) -> dict:
+def density_sensitivity(i_cell_rms_a: float, footprint_mm2: float | None = None,
+                        cells: int | None = None, T_c: float = 20.0) -> dict:
     """Pad count swept across its full range, and keepout swept across its cases."""
+    a_rec, n_rec = _record_cell()
+    footprint_mm2 = a_rec if footprint_mm2 is None else footprint_mm2
+    cells = n_rec if cells is None else cells
     r_one = pad_bulk_resistance_ohm(T_c)
     base = size_for_cell(i_cell_rms_a, footprint_mm2, T_c=T_c)
     n_drop = base["PAD_DROP"]["n_per_rail"]
@@ -235,8 +246,9 @@ def density_sensitivity(i_cell_rms_a: float, footprint_mm2: float = 5.61,
                            f"count range; no nominal count is selected")}
 
 
-def system(i_cell_rms_a: float, cells: int = 49, **kw) -> dict:
+def system(i_cell_rms_a: float, cells: int | None = None, **kw) -> dict:
     """System totals as a COUNT-DEPENDENT SCENARIO, never a single closed number."""
+    cells = _record_cell()[1] if cells is None else cells
     c = size_for_cell(i_cell_rms_a, **kw)
     sens = density_sensitivity(i_cell_rms_a, cells=cells)
     return {"interface": "IF_PAD_SRC", "source": f"{DOI} Table III ({ARXIV})",

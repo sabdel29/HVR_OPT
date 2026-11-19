@@ -189,7 +189,7 @@ def test_z2_rail_is_1v_and_high_current(cfg):
     r = TSV.z2_rail_report(cfg)
     assert r["rail_v"] == 1.0
     assert r["i_total_a"] == pytest.approx(1000.0)
-    assert r["i_cell_a"] == pytest.approx(1000.0 / 49, rel=1e-9)
+    assert r["i_cell_a"] == pytest.approx(1000.0 / cfg.cells, rel=1e-9)
 
 
 def test_the_two_architectures_do_not_share_a_tsv_current(cfg):
@@ -274,15 +274,17 @@ def test_a_much_smaller_field_would_still_meet_the_drop_budget(cfg):
 
 
 # ===================================== brief A, B, D, Q: exact lattice + BGA capacity
-def test_z2_minimum_is_64_not_81(cfg):
-    """An 8x8 field passes the 1 % drop budget; the sparse search never evaluated it."""
+def test_z2_minimum_is_the_first_passing_lattice(cfg):
+    """The exhaustive sweep finds the smallest field passing the 1 % drop budget. TCPMT round
+    3 (36 cells of 2.817 mm at 27.8 A each): 10 x 10 passes, 9 x 9 does not (the 49-cell
+    build's minimum was 8 x 8)."""
     s = TSV.z2_sizing_study(cfg)
-    assert s["n_min_checkerboard"] == 64, (
-        f"Z2 checkerboard minimum is {s['n_min_checkerboard']}, expected 64")
+    assert s["n_min_checkerboard"] == 100, (
+        f"Z2 checkerboard minimum is {s['n_min_checkerboard']}, expected 100")
     rows = {r["n_total"]: r for r in s["sweep_rows"]}
-    assert rows[64]["meets_budget"] and rows[64]["v_drop_v"] * 1e3 < 10.0
-    assert not rows[49]["meets_budget"], "7x7 must fail the budget"
-    assert rows[49]["v_drop_v"] * 1e3 > 12.0
+    assert rows[100]["meets_budget"] and rows[100]["v_drop_v"] * 1e3 < 10.0
+    assert not rows[81]["meets_budget"], "9x9 must fail the budget"
+    assert rows[81]["v_drop_v"] * 1e3 > 10.0
 
 
 def test_the_lattice_sweep_is_exhaustive_over_n(cfg):
@@ -298,7 +300,7 @@ def test_electrical_and_checkerboard_minima_are_reported_separately(cfg):
     e = s1["n_min_electrical"]
     assert e["n_total"] == 2 and e["meets_budget"], (
         "one VDD + one return already satisfies Z1's 480 mV budget")
-    assert e["v_drop_v"] * 1e3 < 10.0
+    assert e["v_drop_v"] * 1e3 < 12.0                  # 10.2 mV at 27.8 A per cell
     assert s1["n_min_checkerboard"] == 4
     assert "SYMMETRY/representability choice" in s1["symmetry_note"]
     assert "No EM or redundancy criterion is invented" in s1["symmetry_note"]

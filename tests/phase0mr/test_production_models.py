@@ -491,8 +491,9 @@ class TestETFixedPoint:
         parts = sum(dec[k] for k in (
             "P_switch_hs_conduction", "P_switch_ls_conduction", "P_inductor_DCR",
             "P_cap_ESR", "P_switching_hard", "P_gate", "P_Coss"))
-        # the components are PER REGULATOR; the aggregate is system-wide across 49 cells
-        assert parts * 49 == pytest.approx(dec["p_conv_total_w"], rel=1e-9)
+        # the components are PER REGULATOR; the aggregate is system-wide across the cells of
+        # the design in force (TCPMT round 3: the design record's count)
+        assert parts * RPX.n_vr() == pytest.approx(dec["p_conv_total_w"], rel=1e-9)
         # and the ledger must have applied exactly that scaling, once
         assert d["ledger"].converter_total() == pytest.approx(
             dec["p_conv_total_w"], rel=1e-9)

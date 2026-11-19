@@ -79,7 +79,8 @@ def design():
     s0 = json.loads(CASE_S0.read_text())
     i_avg = s0["i_hv_avg_a"] / N_CELL
     i_l = c["i_cell_out_avg_a"] / c["K"]
-    return {"f_sw_hz": float(c["f_sw_hz"]), "D": float(c["D"]), "L_H": c["L_nH"] * 1e-9,
+    return {"n_cell": N_CELL, "design_record": _DR.name(),
+            "f_sw_hz": float(c["f_sw_hz"]), "D": float(c["D"]), "L_H": c["L_nH"] * 1e-9,
             "v_mid": float(c["v_mid"]), "v_out": float(c["v_out"]), "v_in": float(c["v_in"]),
             "I_L_a": float(i_l), "I_in_avg_a": float(i_avg),
             "I_in_total_a": float(s0["i_hv_avg_a"]), "D_eff": float(i_avg / i_l),

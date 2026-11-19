@@ -358,15 +358,17 @@ def design_identity(key=None) -> dict:
 
 
 # --------------------------------------------------------------------------- geometry
-def tsv_n_side(key=None, cell_side=None) -> int:
+def tsv_n_side(key=None, cell_side=None, i_cell=None) -> int:
     """Side of the 30-um / 60-um checkerboard TSV lattice of one cell, scaled with the cell
     current at the 49-cell field's current per via (38 x 38 at 1000/49 A), capped at the
-    cell's geometric maximum (tsv_fields._lattice)."""
+    cell's geometric maximum (tsv_fields._lattice). `cell_side` / `i_cell` give another cell
+    (a count-study candidate) the same rule."""
     _paths()
     import tsv_fields as TF
     side = float(cell_side if cell_side is not None else cell_side_mm(key))
+    i = float(i_cell if i_cell is not None else i_cell_a(key))
     n_max = TF._lattice(side, TF.P_TSV_MM)[0]
-    n = int(math.ceil(TSV_REF_SIDE * math.sqrt(i_cell_a(key) / TSV_REF_I_CELL_A) - 1e-9))
+    n = int(math.ceil(TSV_REF_SIDE * math.sqrt(i / TSV_REF_I_CELL_A) - 1e-9))
     return min(n_max, max(2, n))
 
 

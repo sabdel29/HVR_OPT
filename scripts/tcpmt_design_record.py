@@ -53,6 +53,13 @@ DESIGNS = {
                 label="4-tier screen pick at M = 49 (count neighbour)"),
 }
 CLASSES = ("gan_hs", "gan_ls", "inductor", "cap_fly")
+#: the committed production k of each design's implemented decoupling (the package network is
+#: closed at it; the campaign's decoupling chain re-derives it and tcpmt_design_comparison.py
+#: kcheck records the difference). Filled from the decoupling chain run on the design
+#: (scripts/tcpmt_decap_{circuit,placement,framework}.py); a design without its own value
+#: takes the production design's and says so.
+DECOUPLING = {}
+DECOUPLING_FILE = R / "research" / "tcpmt_revision" / "decoupling_by_design.json"
 
 
 def per_part_25c(des):
@@ -313,6 +320,22 @@ def orient_layout(d):
     d["output_plane_r2_mohm"] = {"dse_placement": r2_id * 1e3, "adopted": best[0] * 1e3}
 
 
+def _decoupling(key):
+    """The committed production k of a design (decoupling_by_design.json, written from the
+    decoupling chain runs), the production design's when the design has none of its own."""
+    if not DECOUPLING_FILE.is_file():
+        return None
+    d = json.loads(DECOUPLING_FILE.read_text())
+    own = (d.get("designs") or {}).get(key)
+    if own:
+        return dict(own, own=True)
+    prod = (d.get("designs") or {}).get(PRODUCTION)
+    if prod:
+        return dict(prod, own=False, note=f"the production design's ({PRODUCTION}) k: this "
+                                          f"design's own decoupling chain runs in the campaign")
+    return None
+
+
 def main():
     import yaml
     dse = json.loads(DSE.read_text())
@@ -335,6 +358,9 @@ def main():
         e["routing"] = routing_block(e, compile_design(
             dict(DESIGNS.get(DESIGNS[key].get("base", ""), {}),
                  **{k: v for k, v in DESIGNS[key].items() if k != "base"}))[0])
+        dec = _decoupling(key)
+        if dec:
+            e["decoupling"] = dec
         out[key] = e
         recs[key] = rec
         c = e["tier_order"]
