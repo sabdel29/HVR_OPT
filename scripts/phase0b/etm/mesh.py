@@ -165,13 +165,21 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
           interface_material: str = "underfill_homog",
           cutout_mm: float | None = None,
           cutout_layers: tuple = ("board", "bga"),
-          conv_fill_extent: tuple | None = None) -> Mesh:
+          conv_fill_extent: tuple | None = None,
+          board_extent_mm: float | None = None,
+          board_layers: tuple = ("board",),
+          board_h_max_mm: float | None = None) -> Mesh:
     """Build the mesh.
 
     `h_xy`    in-plane element size at material boundaries (mm)
     `z_scale` multiplies the per-layer through-thickness element counts
     `graded`  grade the in-plane grid away from material boundaries (default) so
               resolution is spent at tile/die edges rather than in the far field
+    `board_extent_mm` (TCPMT round 3, finding 6): side of a board LARGER than the package.
+              The layers in `board_layers` then span +-board_extent/2; every other
+              'substrate'-footprint layer stays within the substrate. The grid between the
+              substrate edge and the board edge is graded up to `board_h_max_mm`. None (the
+              default) is the historical coupon, board side = substrate side, unchanged.
     """
     g = stack["geometry"]
     Lx = g["power_substrate"]["size_x"]["value"]
@@ -280,6 +288,28 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
         xs, ys = _grid_1d_graded(xb, h_xy, hm), _grid_1d_graded(yb, h_xy, hm)
     else:
         xs, ys = _grid_1d(xb, h_xy), _grid_1d(yb, h_xy)
+    big = board_extent_mm is not None and board_extent_mm > max(Lx, Ly) + 1e-9
+    if big:
+        # the package grid is kept exactly; the board ring outside it is graded from the
+        # package grid's edge spacing up to board_h_max_mm
+        Bh = board_extent_mm / 2.0
+        hb = board_h_max_mm or h_xy * h_max_factor
+
+        def ring(g):
+            h0 = float(g[1] - g[0])
+            out = []
+            x, h = float(g[-1]), h0
+            while x + h < Bh - 1e-9:
+                h = min(h * 1.35, hb)
+                if x + h > Bh - 0.5 * h:
+                    break
+                x += h
+                out.append(x)
+            out.append(Bh)
+            return np.array(out)
+        rx, ry = ring(xs), ring(ys)
+        xs = np.unique(np.round(np.concatenate([-rx[::-1], xs, rx]), 9))
+        ys = np.unique(np.round(np.concatenate([-ry[::-1], ys, ry]), 9))
 
     zb: list[float] = []
     for L in layers:
@@ -308,6 +338,8 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
 
     in_die_x = (np.abs(xc) <= Dx / 2 + 1e-9)
     in_die_y = (np.abs(yc) <= Dy / 2 + 1e-9)
+    in_sub_x = (np.abs(xc) <= Lx / 2 + 1e-9)
+    in_sub_y = (np.abs(yc) <= Ly / 2 + 1e-9)
 
     via_idx = np.zeros((len(xc), len(yc)), bool)
     for (bx0, bx1, by0, by1) in via_boxes:
@@ -327,11 +359,16 @@ def build(tiles: list[Tile], stack: dict, h_sub: float, *,
       for L in Ls:
         in_cut = cutout_mm is not None and L.name in cutout_layers
         half = (cutout_mm / 2.0) if cutout_mm else 0.0
+        on_board = big and L.name in board_layers
         for i in range(len(xc)):
             if L.footprint == "die" and not in_die_x[i]:
                 continue
+            if big and not on_board and not in_sub_x[i]:
+                continue
             for j in range(len(yc)):
                 if L.footprint == "die" and not in_die_y[j]:
+                    continue
+                if big and not on_board and not in_sub_y[j]:
                     continue
                 if L.region != "all":
                     inside = (cutout_mm is not None

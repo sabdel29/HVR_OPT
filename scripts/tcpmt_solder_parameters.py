@@ -150,7 +150,110 @@ def interpolation_audit():
     return out
 
 
+def v2_parameters():
+    """The v2 production local model (TCPMT round 3; configs/tcpmt_mech): law, alloy,
+    calibration window, what is extrapolated, boundary conditions and loading -- the
+    statement Table S6 needs (finding 1: 'write down the alloy, the calibration window and
+    what is extrapolated')."""
+    import tcpmt_mech_laws as LAW
+    import tcpmt_mech_submodel as SUB
+    rec = LAW.law_record()
+    lc = LAW.cfg()["local"]
+    prod = rec["production_law"]
+    win, status = LAW.stored_window(prod)
+    rows = {r["T_C"]: r for r in LAW.card(prod, win)[1]}
+    show = [T for T in (25.0, 50.0, 75.0, 100.0, 125.0, 150.0) if T in rows]
+    geo = LAW.cfg()["geometries"]["bga"]
+    lv = SUB.LEVELS[lc["level"]]
+    m = SUB.build_mesh(geo, lv["n_xy"], lv["n_z_solder"], 1)
+    band = json.loads((C.OUT / "solder_law_band.json").read_text()) \
+        if (C.OUT / "solder_law_band.json").exists() else None
+    law = rec["laws"][prod]
+    P = {
+        "what": "parameters of the production local solder-joint model, v2 (TCPMT round 3), "
+                "with sources, calibration windows and what is extrapolated",
+        "generator": "scripts/tcpmt_solder_parameters.py (v2)",
+        "code_path": ["configs/tcpmt_mech/mechanics_revision.yaml (every value below)",
+                      "scripts/tcpmt_mech_laws.py (laws, Norton surrogate, record)",
+                      "scripts/tcpmt_mech_submodel.py (geometry, BCs, loading, extraction)",
+                      "scripts/tcpmt_mech_kinematics.py (global cut-boundary kinematics)",
+                      "research/tcpmt_revision/solder_law_cards.json (visited windows)"],
+        "solder": {
+            "alloy_of_the_joint": "SAC305 (BGA)",
+            "elastic": {"E_MPa": f"{rec['elastic']['E_ref_MPa']:g} + "
+                                 f"({rec['elastic']['E_slope_MPa_per_K']:g})(T - 25), floor "
+                                 f"{LAW.solder_cfg()['elastic']['E_floor_MPa']:g}",
+                        "nu": rec["elastic"]["nu"], "kind": rec["elastic"]["status"]},
+            "yield_and_hardening": rec["hardening"] + "; *PLASTIC flat at "
+                                   f"{LAW.solder_cfg()['yield_zero_MPa']:g} MPa (zero yield)",
+            "creep": {
+                "production_law": prod, "form": law["form"], "source": law["source"],
+                "alloy_of_the_law": law["alloy"],
+                "calibration_window": law["calibration_window"],
+                "solver_form": rec["solver_form"],
+                "surrogate": "temperature-dependent Norton A(T) sigma^n(T), least squares in "
+                             "ln-ln at every 2.5-C row over the stress window the joints "
+                             "visit (hot window at and above 75 C, cold at and below 25 C)",
+                "visited_window_MPa": win, "window_status": status,
+                "surrogate_max_rate_err_rel": {
+                    "hot": law["surrogate_max_rate_err_rel_hot"],
+                    "cold": law["surrogate_max_rate_err_rel_cold"]},
+                "rows": [{"T_C": T, "A": rows[T]["A_MPa_units"], "n": rows[T]["n"]}
+                         for T in show],
+                "extrapolated": law["extrapolation_MPa_beyond_calibration"],
+                "rate_vs_measured_Sn3.9Ag0.6Cu": law["rate_vs_measured_Sn3.9Ag0.6Cu"]},
+            "band_laws": {k: {"alloy": v["alloy"], "calibration_window":
+                              v["calibration_window"], "visited_window_MPa":
+                              v["visited_window_MPa"], "window_status": v["window_status"]}
+                          for k, v in rec["laws"].items() if k != prod},
+            "expansion": {"alpha_per_K": rec["elastic"]["cte_per_K"], "T_ref_C":
+                          lc["T_stress_free_C"], "kind": "ASSUMPTION (21-24 ppm/K quoted)"}},
+        "copper_pads": dict(lc["copper"]),
+        "geometry": {"ball_diameter_um": geo["solder_d"], "standoff_um": geo["solder_h"],
+                     "pad_um": geo["pad"], "pad_thickness_um": geo["pad_t"],
+                     "solder_shape": "equal-area square prism", "source": geo["source"],
+                     "averaging_band_frac": SUB.BAND_FRAC},
+        "mesh": {"element": lc["element"], "level": lc["level"], "n_elements": len(m.elems),
+                 "n_core_elements": len(m.sets["ESOLCORE"])},
+        "boundary_conditions": {
+            "mode": lc["bc_mode"],
+            "pad_faces": "both pad faces follow the global displacement field of their own "
+                         "surface at the site (board top / substrate underside), fitted "
+                         "linearly over the pad footprint: translation, in-plane stretch and "
+                         "shear, rotation; frame turned so the in-plane du lies on local +x",
+            "transfer_from_global": "u_x, u_y, u_z and their in-plane gradients of both "
+                                    "faces of the BGA layer at the site (tcpmt_mech_kinematics)",
+            "temperature": "uniform, the mean of the two face temperatures at the site",
+            "stress_free_temperature_C": lc["T_stress_free_C"]},
+        "loading_cycle": {
+            "ramp": f"{lc['ramp_s']:g} s linear ramp of temperature and displacements at every "
+                    "load change (*STEP, AMPLITUDE=RAMP)",
+            "dwell_hot_s": lc["dwell_s"], "dwell_cold_s": lc["dwell_s"],
+            "period_s": 2 * (lc["ramp_s"] + lc["dwell_s"]), "n_cycles": lc["n_cycles"],
+            "T_cold_C": lc["T_cold_C"],
+            "dwell_sensitivity_s": lc["dwell_sensitivity_s"],
+            "ramp_sensitivity_s": lc["ramp_sensitivity_s"]},
+        "time_integration": {"procedure": "*VISCO", "CETOL": lc["cetol"],
+                             "ramp_step": lc["increments"]["ramp"],
+                             "dwell_step": lc["increments"]["dwell"]},
+        "response": {"name": "d_eps_in (d_peeq_per_cycle)",
+                     "definition": "last-cycle increment of the volume-averaged PEEQ of the "
+                                   "solder core (fixed-width band)",
+                     "extraction": "block order (final_closure_local_extract)"},
+        "law_band": ({"laws": band["band_laws"], "rankings": band["rankings"],
+                      "rankings_hold_across_laws": band["rankings_hold_across_laws"],
+                      "U_law_rel": {k: v.get("U_law_rel") for k, v in band["band"].items()}}
+                     if band else None)}
+    return P
+
+
 def main():
+    import tcpmt_mech_laws as LAW
+    if LAW.cfg()["local"]["harness"] == "v2" and "--legacy" not in sys.argv:
+        P = v2_parameters()
+        OUTF.write_text(json.dumps(P, indent=1, default=float) + "\n")
+        print("wrote", C.rel(OUTF), "(v2)")
+        return
     card = card_rows(DEC.material(LR.MATKIND))
     deck, crit = production_deck()
     d = parse_deck(deck)

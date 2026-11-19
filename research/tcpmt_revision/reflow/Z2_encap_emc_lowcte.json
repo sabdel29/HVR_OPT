@@ -1,0 +1,192 @@
+{
+ "arch": "Z2",
+ "refine": [
+  1,
+  1
+ ],
+ "encapsulant": "encap_emc_lowcte",
+ "n_elems_full": 36280,
+ "parts": {
+  "bga_package@bga_reflow": {
+   "part": "bga_package_bga_reflow",
+   "layers": [
+    "conv_attach_vr_substrate",
+    "conv_0_land_side_attach_rdl",
+    "conv_1_inductor_plus_cout",
+    "conv_2_interlayer_rdl",
+    "conv_3_gan_ls_EPC2057",
+    "conv_4_interlayer_rdl",
+    "conv_5_flying_caps",
+    "conv_6_interlayer_rdl",
+    "conv_7_gan_hs_EPC2014C",
+    "sub_lower",
+    "tile_band",
+    "z2_top_rdl",
+    "interface",
+    "die"
+   ],
+   "n_elems": 26821,
+   "T_C": 245.0,
+   "T_stress_free_C": 25.0,
+   "surface": [
+    "sub_lower",
+    "bot"
+   ],
+   "footprint": "bga",
+   "wall_s": 123.2991087436676,
+   "warpage": {
+    "pv_raw_um": 69.1701,
+    "pv_plane_removed_um": 69.17010001903262,
+    "bow_corner_minus_centre_um": 67.31303999999999,
+    "n_nodes": 396
+   }
+  },
+  "bga_package@bga_solidus": {
+   "part": "bga_package_bga_solidus",
+   "layers": [
+    "conv_attach_vr_substrate",
+    "conv_0_land_side_attach_rdl",
+    "conv_1_inductor_plus_cout",
+    "conv_2_interlayer_rdl",
+    "conv_3_gan_ls_EPC2057",
+    "conv_4_interlayer_rdl",
+    "conv_5_flying_caps",
+    "conv_6_interlayer_rdl",
+    "conv_7_gan_hs_EPC2014C",
+    "sub_lower",
+    "tile_band",
+    "z2_top_rdl",
+    "interface",
+    "die"
+   ],
+   "n_elems": 26821,
+   "T_C": 217.0,
+   "T_stress_free_C": 25.0,
+   "surface": [
+    "sub_lower",
+    "bot"
+   ],
+   "footprint": "bga",
+   "wall_s": 129.26610136032104,
+   "warpage": {
+    "pv_raw_um": 48.9516,
+    "pv_plane_removed_um": 48.9516,
+    "bow_corner_minus_centre_um": 47.60349999999999,
+    "n_nodes": 396
+   }
+  },
+  "tcb_receiving@tcb_bond": {
+   "part": "tcb_receiving_tcb_bond",
+   "layers": [
+    "sub_lower",
+    "tile_band",
+    "z2_top_rdl",
+    "interface",
+    "die"
+   ],
+   "n_elems": 15157,
+   "T_C": 250.0,
+   "T_stress_free_C": 25.0,
+   "surface": [
+    "sub_lower",
+    "bot"
+   ],
+   "footprint": "cells",
+   "wall_s": 30.725703477859497,
+   "warpage": {
+    "pv_raw_um": 59.605500000000006,
+    "pv_plane_removed_um": 59.60550422612817,
+    "bow_corner_minus_centre_um": 59.605500000000006,
+    "n_nodes": 784
+   }
+  },
+  "tcb_attached@tcb_bond": {
+   "part": "tcb_attached_tcb_bond",
+   "layers": [
+    "conv_0_land_side_attach_rdl",
+    "conv_1_inductor_plus_cout",
+    "conv_2_interlayer_rdl",
+    "conv_3_gan_ls_EPC2057",
+    "conv_4_interlayer_rdl",
+    "conv_5_flying_caps",
+    "conv_6_interlayer_rdl",
+    "conv_7_gan_hs_EPC2014C"
+   ],
+   "n_elems": 10935,
+   "T_C": 250.0,
+   "T_stress_free_C": 25.0,
+   "surface": [
+    "conv_0_land_side_attach_rdl",
+    "top"
+   ],
+   "footprint": "cells",
+   "wall_s": 17.193501949310303,
+   "warpage": {
+    "pv_raw_um": 28.74767,
+    "pv_plane_removed_um": 28.74767,
+    "bow_corner_minus_centre_um": -28.74767,
+    "n_nodes": 784
+   }
+  }
+ },
+ "checks": {
+  "bga@bga_reflow": {
+   "T_C": 245.0,
+   "warpage": {
+    "pv_raw_um": 69.1701,
+    "pv_plane_removed_um": 69.17010001903262,
+    "bow_corner_minus_centre_um": 67.31303999999999,
+    "n_nodes": 396
+   },
+   "cure_reference_150C": null,
+   "limit_reflow_um": [
+    -120.0,
+    170.0
+   ],
+   "limit_room_coplanarity_um": 80.0,
+   "within_reflow_limit_magnitude": true,
+   "pv_over_room_coplanarity": 0.8646262502379077
+  },
+  "bga@bga_solidus": {
+   "T_C": 217.0,
+   "warpage": {
+    "pv_raw_um": 48.9516,
+    "pv_plane_removed_um": 48.9516,
+    "bow_corner_minus_centre_um": 47.60349999999999,
+    "n_nodes": 396
+   },
+   "cure_reference_150C": null,
+   "limit_reflow_um": [
+    -120.0,
+    170.0
+   ],
+   "limit_room_coplanarity_um": 80.0,
+   "within_reflow_limit_magnitude": true,
+   "pv_over_room_coplanarity": 0.611895
+  },
+  "tcb": {
+   "T_C": 250.0,
+   "gap_nonuniformity": {
+    "pv_raw_um": 88.35317,
+    "pv_plane_removed_um": 88.35317422612817,
+    "bow_corner_minus_centre_um": 88.35317,
+    "n_nodes": 784
+   },
+   "receiving": {
+    "pv_raw_um": 59.605500000000006,
+    "pv_plane_removed_um": 59.60550422612817,
+    "bow_corner_minus_centre_um": 59.605500000000006,
+    "n_nodes": 784
+   },
+   "attached": {
+    "pv_raw_um": 28.74767,
+    "pv_plane_removed_um": 28.74767,
+    "bow_corner_minus_centre_um": -28.74767,
+    "n_nodes": 784
+   },
+   "limit_um": 8.0,
+   "limit_status": "ASSUMPTION",
+   "within_limit": false
+  }
+ }
+}

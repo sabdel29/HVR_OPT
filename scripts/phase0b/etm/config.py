@@ -102,9 +102,22 @@ class Material:
     C12: float | None = None
     C44: float | None = None
     k_ortho: list[float] | None = None
+    # TCPMT round 3 (finding 7): optional temperature tables [(T_C, value), ...] for an
+    # isotropic card -- E(T) and the SECANT CTE about the stress-free temperature, as
+    # *EXPANSION, ZERO= requires. None (every existing card) writes the constant rows.
+    E_T: list | None = None
+    cte_T: list | None = None
+
+    def ccx_expansion(self) -> list[str]:
+        """*EXPANSION data lines (after the keyword line, which carries ZERO=)."""
+        if self.cte_T:
+            return [f"{a:.9g},{T:.6g}" for T, a in self.cte_T]
+        return [f"{self.cte:.9g}"]
 
     def ccx_elastic(self) -> list[str]:
         """CalculiX *ELASTIC card lines. Units: MPa."""
+        if self.E_T and self.elastic_type != "ortho":
+            return ["*ELASTIC"] + [f"{E:.6g},{self.nu:.6g},{T:.6g}" for T, E in self.E_T]
         if self.elastic_type == "ortho":
             # CalculiX ORTHO order: D1111,D1122,D2222,D1133,D2233,D3333,D1212,D1313,D2323
             c11, c12, c44 = self.C11, self.C12, self.C44
@@ -155,6 +168,7 @@ def build_materials(stack: dict, overrides: dict | None = None) -> dict[str, Mat
             C12=(m.get("C12", 0) * scale.get("E", 1.0)) if et == "ortho" else None,
             C44=(m.get("C44", 0) * scale.get("E", 1.0)) if et == "ortho" else None,
             k_ortho=(m.get("k_ortho", {}) or {}).get("value") if isinstance(m.get("k_ortho"), dict) else None,
+            E_T=m.get("E_T"), cte_T=m.get("cte_T"),
         )
     return out
 

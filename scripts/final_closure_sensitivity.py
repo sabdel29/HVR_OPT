@@ -762,11 +762,11 @@ VARIANTS = {
                               gates=["geom.tier_order"], nature="ENGINEERING_SENSITIVITY (tier order)",
                               what="Z1 in the reference tier order HS-LS-Cf-L (production: "
                                    "repartitioned HS-Cf-LS-L); components, heights unchanged"),
-    "board_hbot100": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_hbot(100.0),
+    "board_hbot100": dict(kind="full", archs=("Z1", "Z2", "Z3"), apply=lambda: v_board_hbot(100.0),
                           gates=["board.bottom_boundary"], nature="ENGINEERING_SENSITIVITY (board thermal boundary)",
                           what="effective board-bottom coefficient 100 W/m2K instead of 10 "
                                "(full server board, forced air)"),
-    "board_hbot500": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_hbot(500.0),
+    "board_hbot500": dict(kind="full", archs=("Z1", "Z2", "Z3"), apply=lambda: v_board_hbot(500.0),
                           gates=["board.bottom_boundary"], nature="ENGINEERING_SENSITIVITY (board thermal boundary)",
                           what="effective board-bottom coefficient 500 W/m2K instead of 10 "
                                "(upper end of board spreading)"),
@@ -840,6 +840,20 @@ VARIANTS = {
         what="Z3 production (interface-free) converter plate at the full 27 g/s, uniform "
              "inlet sink"),
 }
+# TCPMT round 3 (finding 6): the authors' own 60-520 W/m2K board-spreading estimate, both ends,
+# on all three architectures (the 100/500 pair above predates Z3 and the estimate)
+for _h in (60.0, 520.0):
+    VARIANTS[f"board_hbot{_h:g}"] = dict(
+        kind="full", archs=("Z1", "Z2", "Z3"), apply=(lambda h_=_h: v_board_hbot(h_)),
+        gates=["board.bottom_boundary"],
+        nature="ENGINEERING_SENSITIVITY (board thermal boundary, finding 6)",
+        what=f"effective board-bottom coefficient {_h:g} W/m2K instead of 10 (end of the "
+             "60-520 W/m2K full-board estimate)")
+# TCPMT round 3 (findings 7, 11a): encapsulant classes with their glass transition and the
+# BGA layer from the local solder card, all from configs/tcpmt_mech/mechanics_revision.yaml
+import tcpmt_mech_variants as _MV                                     # noqa: E402
+_MV.register(VARIANTS, lambda h: E.BUILD_HOOKS.append(h))
+
 for _E in (80e3, 160e3):
     for _a in (4e-6, 10e-6):
         VARIANTS[f"conv_E{_E / 1e3:.0f}_a{_a * 1e6:.0f}"] = dict(
@@ -851,13 +865,47 @@ for _E in (80e3, 160e3):
 
 
 def case_file(arch, variant, scen=SCEN):
-    return OUT / f"etm_{arch}_{scen}__{variant}.json"
+    """A variant NAME@B (mechanics only on the cooling-B field, finding 8) is stored as
+    etm_<arch>_<scen>__NAME__B.json."""
+    return OUT / f"etm_{arch}_{scen}__{variant.replace('@', '__')}.json"
+
+
+def split_tier(variant):
+    """'NAME@B' -> ('NAME', 'B'); 'NAME' -> ('NAME', 'A')."""
+    name, _, tier = variant.partition("@")
+    return name, (tier or "A")
+
+
+def thermal_base(arch, tier):
+    """(base case dict, converged-field .frd, base label) of a mechanics-only variant: the
+    production (cooling-A) case, or the architecture's cooling-B case
+    (configs/tcpmt_mech: cooling_B_base)."""
+    if tier == "A":
+        return (json.loads(E.case_path(arch, SCEN).read_text()),
+                FIELDS / f"etm_{arch}_{SCEN}_r21" / "thermal_converged.frd",
+                E.case_path(arch, SCEN).name)
+    import tcpmt_mech_laws as LAW
+    cfg = LAW.cfg()
+    bv = cfg["cooling_B_base"][arch]
+    d = FIELDS / f"etm_{arch}_{SCEN}__{bv}"
+    if not (d / "thermal_converged.frd").exists():
+        d = Path((cfg.get("cooling_B_field_fallback") or {}).get(arch) or d)
+    frd = d / "thermal_converged.frd"
+    if not frd.exists():
+        its = sorted(d.glob("et*"), key=lambda p: int(p.name[2:]))
+        if not its:
+            raise FileNotFoundError(f"no converged cooling-B field for {arch} under {d} "
+                                    "(set HVR_FIELDS or cooling_B_field_fallback)")
+        frd = sorted(its[-1].glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))[-1]
+    base = json.loads(case_file(arch, bv).read_text())
+    return base, frd, case_file(arch, bv).name
 
 
 def _spec(variant):
-    v = VARIANTS[variant]
+    name, tier = split_tier(variant)
+    v = VARIANTS[name]
     return {"name": variant, "kind": v["kind"], "gates": v["gates"],
-            "nature": v["nature"], "what": v["what"]}
+            "nature": v["nature"], "what": v["what"], "cooling_tier": tier}
 
 
 def run_full(arch, variant):
@@ -889,25 +937,31 @@ def run_full(arch, variant):
 
 
 def run_mech(arch, variant):
+    """Mechanics only on a converged field: the production (cooling-A) field, or with
+    variant NAME@B the cooling-B field of the architecture (finding 8)."""
     import production_et as PE
-    VARIANTS[variant]["apply"]()
+    name, tier = split_tier(variant)
+    if VARIANTS[name]["kind"] != "mech":
+        raise ValueError(f"{name} changes heat paths: it cannot run on a converged field")
+    VARIANTS[name]["apply"]()
     E._raise_stack_limit()
-    base = json.loads(E.case_path(arch, SCEN).read_text())
+    base, frd, base_name = thermal_base(arch, tier)
     m, mats, st, tiles, minfo = E.build(arch, E.PRODUCTION_H_XY, E.PRODUCTION_REFINE)
-    frd = FIELDS / f"etm_{arch}_{SCEN}_r21" / "thermal_converged.frd"
     tn = PE.ccxio.read_frd(frd)["NDTEMP"][1:m.n_nodes + 1, 0]
     if abs(float(np.nanmax(tn)) - base["thermal"]["T_max_C"]) > 1e-6:
-        raise RuntimeError(f"{frd} is not the converged field of {base['arch']}")
+        raise RuntimeError(f"{frd} is not the converged field of {base_name}")
     res = {k: base[k] for k in ("arch", "scenario", "h_xy_mm", "refine", "ledger_rows",
                                 "P_loss_w", "i_hv_avg_a", "energy_ledger", "thermal",
                                 "et_history", "et_converged", "et_wall_s")}
     die = E.die_stats(m, tn, arch)
     res["thermal"] = {**res["thermal"], **die}
     res.update({"variant": _spec(variant), "materials": minfo, **die,
-                "thermal_from": "production converged field (mechanics-only variant)",
-                "production_case": E.case_path(arch, SCEN).name})
+                "thermal_from": (f"converged field of {base_name} (mechanics-only variant, "
+                                 f"cooling {tier})"),
+                "production_case": E.case_path(arch, SCEN).name, "thermal_case": base_name})
     try:
-        res["mechanics"] = E.mechanics(m, mats, st, tn, scratch("fc_sens", variant, arch),
+        res["mechanics"] = E.mechanics(m, mats, st, tn,
+                                       scratch("fc_sens", variant.replace("@", "_"), arch),
                                        arch, tiles, E.PRODUCTION_SOLVER, 1)
     except Exception as e:
         res["mechanics_error"] = str(e)[-600:]
@@ -920,7 +974,7 @@ def _task(t):
     arch, variant = t
     t0 = time.time()
     try:
-        fn = run_full if VARIANTS[variant]["kind"] == "full" else run_mech
+        fn = run_full if VARIANTS[split_tier(variant)[0]]["kind"] == "full" else run_mech
         name, ok = fn(arch, variant)
         return {"arch": arch, "variant": variant, "file": name, "mechanics_ok": ok,
                 "wall_s": time.time() - t0}
@@ -929,18 +983,33 @@ def _task(t):
                 "wall_s": time.time() - t0}
 
 
+def _bga_kin(c):
+    return ((c.get("mechanics") or {}).get("interconnects") or {}).get("bga", {}).get("critical")
+
+
 def _local_task(t):
-    """The local response at a variant's own critical joint, at the SAME level and
-    settings as the production pass-3 L0 solve (block-order extraction, split load step,
-    the temporal study's first increment), so variant and production differ only in the
-    joint's du and temperature."""
+    """The local response at a variant's own critical joint. With the v2 local model
+    (configs/tcpmt_mech local.harness = v2; TCPMT round 3) the joint is driven by the full
+    cut-boundary kinematics the case stores (mechanics.interconnects.bga.critical), with the
+    production law and ramped loading; the legacy harness (split load step, the temporal
+    study's first increment, |du_xy| and T only) is kept for cases without kinematics."""
     arch, variant = t
-    import final_closure_local_mesh as LM
     c = json.loads(case_file(arch, variant).read_text())
+    kin = _bga_kin(c)
+    import tcpmt_mech_laws as LAW
+    if kin and LAW.cfg()["local"]["harness"] == "v2":
+        import tcpmt_mech_submodel as SUB
+        r = SUB.solve(dict(study="sens_local", tag=f"{arch}_{variant.replace('@', '_')}",
+                           kin=kin, meta={"arch": arch, "variant": variant}))
+        r["du_um"], r["T_joint_C"] = kin["du_xy_um"], SUB.site_temperature(kin)
+        r["harness"] = "v2"
+        return arch, variant, r
+    import final_closure_local_mesh as LM
     crit = c["mechanics"]["joint_search"]["critical"]
     inc0 = json.loads(LM.TIME_STUDY.read_text())["production_dt0_s"]
     r = LM._solve(f"{arch}_{variant}", crit["du_um"], crit["T_C"],
                   scratch("fc_sens_local", variant, arch), "L0", inc0, True)
+    r["harness"] = "legacy"
     return arch, variant, r
 
 
@@ -951,13 +1020,17 @@ def _needs_local(a, v):
     if "mechanics" not in c:
         return False
     crit, loc = c["mechanics"]["joint_search"]["critical"], c.get("local") or {}
+    kin = _bga_kin(c)
+    if kin and loc.get("harness") == "v2":
+        return not (loc.get("d_peeq_per_cycle")
+                    and abs(loc.get("du_um", -1.0) - kin["du_xy_um"]) < 1e-12)
     return not (loc.get("d_peeq_per_cycle") and loc.get("du_um") == crit["du_um"]
                 and loc.get("T_joint_C") == crit["T_C"])
 
 
 def local_main(names):
-    tasks = [(a, v) for v in (names or list(VARIANTS)) for a in VARIANTS[v]["archs"]
-             if _needs_local(a, v)]
+    tasks = [(a, v) for v in (names or list(VARIANTS))
+             for a in VARIANTS[split_tier(v)[0]]["archs"] if _needs_local(a, v)]
     if not tasks:
         print("no variant needs a local solve", flush=True)
         return
@@ -977,8 +1050,8 @@ def main():
         return local_main(sys.argv[2:])
     tasks = []
     for a in (sys.argv[1:] or list(VARIANTS)):
-        v, *arch = a.split(":")
-        tasks += [(x, v) for x in (arch or VARIANTS[v]["archs"])]
+        v, *arch = a.split(":")                   # VARIANT[@B][:ARCH ...]
+        tasks += [(x, v) for x in (arch or VARIANTS[split_tier(v)[0]]["archs"])]
     with mp.Pool(min(len(tasks), POOL_MAX)) as p:
         out = p.map(_task, tasks)
     log = OUT / "run_log.json"

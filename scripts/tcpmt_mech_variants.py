@@ -1,0 +1,238 @@
+"""Material variants of the mechanics revision, from configs/tcpmt_mech (findings 7, 11).
+
+  encapsulant (finding 7)  the out-of-cell converter fill (underfill_homog of the physical
+                           builders) as a capillary underfill or a low-CTE mold compound WITH
+                           its glass transition: E(T) logistic between the glassy and rubbery
+                           moduli, the instantaneous CTE switching from alpha1 to alpha2 over
+                           the same width, written as the SECANT CTE about the stress-free
+                           temperature (*EXPANSION, ZERO=). Conductivity is untouched, so the
+                           variants run on the converged fields (mechanics only).
+  bga_card_local (11a)     the homogenised BGA layer from the LOCAL solder card -- E(T), nu
+                           and CTE of tcpmt_mech_laws -- smeared by the ball area fraction,
+                           instead of board.py's STAMP-2.5D values (E 20 GPa, 20.5 ppm/K).
+
+Every number comes from the config or from the stack the builder assembled, so a tier card
+merged into the stack flows through unchanged. The hooks are BUILD_HOOKS of
+final_closure_physical_etm (applied after the builders' own material assignment).
+"""
+from __future__ import annotations
+
+import math
+import sys
+from pathlib import Path
+
+R = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(R / "scripts"))
+import tcpmt_mech_laws as LAW                                       # noqa: E402
+
+
+def _rows(a, b, s):
+    n = int(round((b - a) / s)) + 1
+    return [round(a + s * k, 6) for k in range(n)]
+
+
+def encap_tables(v: dict, t_ref: float = 25.0, rows=None):
+    """[(T, E)], [(T, alpha_secant)] of one encapsulant variant."""
+    rows = rows or _rows(*LAW.cfg()["encapsulant"]["T_rows_C"])
+    Eg, Er = float(v["E_g_MPa"]), float(v["E_r_MPa"])
+    a1, a2 = float(v["alpha1_per_K"]), float(v["alpha2_per_K"])
+    Tg, w = float(v["Tg_C"]), float(v["width_K"])
+
+    def E(T):
+        return Er + (Eg - Er) / (1.0 + math.exp((T - Tg) / w))
+
+    def strain(T):                       # integral of the logistic instantaneous CTE
+        sp = lambda t: w * math.log1p(math.exp((t - Tg) / w))      # noqa: E731
+        return a1 * (T - t_ref) + (a2 - a1) * (sp(T) - sp(t_ref))
+
+    def inst(T):
+        return a1 + (a2 - a1) / (1.0 + math.exp(-(T - Tg) / w))
+    sec = [(T, strain(T) / (T - t_ref) if abs(T - t_ref) > 1e-9 else inst(T)) for T in rows]
+    return [(T, E(T)) for T in rows], sec
+
+
+def encap_card(name: str, base: dict, t_ref: float = 25.0) -> dict:
+    v = LAW.cfg()["encapsulant"]["variants"][name]
+    E_T, cte_T = encap_tables(v, t_ref)
+    c = dict(base)
+    c.update({"status": "ASSUMPTION", "elastic_type": "iso",
+              "E": {"value": dict(E_T)[min(dict(E_T), key=lambda T: abs(T - t_ref))],
+                    "status": "ASSUMPTION"},
+              "nu": {"value": float(v["nu"]), "status": "ASSUMPTION"},
+              "cte": {"value": float(v["alpha1_per_K"]), "status": "ASSUMPTION"},
+              "E_T": E_T, "cte_T": cte_T,
+              "note": f"encapsulant variant {name}: {v['what']} ({v['source']})"})
+    return c
+
+
+def encap_hook(name: str):
+    mat = LAW.cfg()["encapsulant"]["material"]
+
+    def hook(m, st, tiles, _n=name):
+        t_ref = st["structural_bc"]["t_ref"]["value"]
+        st["materials"][mat] = encap_card(_n, st["materials"][mat], t_ref)
+        n_el = int(sum(1 for x in m.elem_material if x == mat))
+        return {"encapsulant_variant": _n, "encapsulant_material": mat,
+                "encapsulant_elements": n_el}
+    return hook
+
+
+def bga_local_card(base: dict, t_ref: float = 25.0) -> dict:
+    import board as BRD
+    f = BRD.AREA_FRACTION
+    rows = LAW.rows_C()
+    c = dict(base)
+    c.update({"status": "DERIVED", "elastic_type": "iso",
+              "E": {"value": f * LAW.E_of_T(t_ref), "status": "DERIVED"},
+              "nu": {"value": LAW.nu(), "status": "ASSUMPTION"},
+              "cte": {"value": LAW.cte(), "status": "ASSUMPTION"},
+              "E_T": [(T, f * LAW.E_of_T(T)) for T in rows],
+              "note": "BGA layer from the local solder card (tcpmt_mech_laws), smeared by "
+                      f"the ball area fraction {f:.5f}"})
+    return c
+
+
+def bga_local_hook():
+    def hook(m, st, tiles):
+        t_ref = st["structural_bc"]["t_ref"]["value"]
+        old = st["materials"]["bga_homog"]
+        st["materials"]["bga_homog"] = bga_local_card(old, t_ref)
+        v = lambda x: x["value"] if isinstance(x, dict) else x       # noqa: E731
+        return {"bga_card": "local solder card", "bga_E_25C_MPa":
+                st["materials"]["bga_homog"]["E"]["value"], "bga_E_prod_MPa": v(old["E"]),
+                "bga_cte": LAW.cte(), "bga_cte_prod": v(old["cte"])}
+    return hook
+
+
+def coarse_check(arch, names, scen="HV_S0"):
+    """Mechanics-only check of material variants on the COARSE mesh (r11) against the
+    coarse production case, on its stored converged field (the mesh-study work tree):
+    a cheap reading of each variant's effect before the production-mesh campaign."""
+    import json
+    import os
+    import numpy as np
+    import final_closure_physical_etm as E
+    import production_et as PE
+    from hvr_scratch import path as scratch
+    d = Path(os.environ.get("HVR_FC_WORK", "/home/beams0/SABDELZAHER/ETM_project/scratch/fc_etm")) \
+        / f"{arch}_{scen}_h1.1"
+    its = sorted(d.glob("et*"), key=lambda p: int(p.name[2:]))
+    th = sorted(its[-1].glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))[-1]
+    base = json.loads(E.case_path(arch, scen, 1.1, (1, 1)).read_text())
+    out = {}
+    for name in ["production"] + list(names):
+        E.BUILD_HOOKS.clear()
+        if name in LAW.cfg()["encapsulant"]["variants"]:
+            E.BUILD_HOOKS.append(encap_hook(name))
+        elif name == LAW.cfg()["bga_global"]["reconciled_variant"]:
+            E.BUILD_HOOKS.append(bga_local_hook())
+        m, mats, st, tiles, info = E.build(arch, 1.1, (1, 1))
+        T = PE.ccxio.read_frd(th)["NDTEMP"][1:m.n_nodes + 1, 0]
+        if abs(float(np.nanmax(T)) - base["thermal"]["T_max_C"]) > 1e-6:
+            raise RuntimeError(f"{th} is not the converged coarse field of {arch}")
+        me = E.mechanics(m, mats, st, T, scratch("mech_coarse", f"{arch}_{name}"), arch,
+                         tiles, "", int(os.environ.get("FC_THREADS", "2")))
+        c = me["joint_search"]["critical"]
+        k = (me.get("interconnects") or {}).get("bga", {}).get("critical", {})
+        out[name] = {"die_warpage_pv_um": me["die_warpage_pv_um"], "du_c_um": c["du_um"],
+                     "site_mm": [c["x_mm"], c["y_mm"]], "du_def_xy_um": k.get("du_def_xy_um"),
+                     "du_z_um": k.get("du_z_um"),
+                     "interconnect_gamma": {n: v.get("gamma_max") for n, v in
+                                            (me.get("interconnects") or {}).items()},
+                     "decomposition_share": (me.get("decomposition_bga_critical") or {})
+                     .get("share_along_du"), "materials": info, "wall_s": me["wall_s"]}
+        print(arch, name, {kk: out[name][kk] for kk in ("die_warpage_pv_um", "du_c_um",
+                                                          "du_def_xy_um")}, flush=True)
+    E.BUILD_HOOKS.clear()
+    f = LAW.TR / "coarse_variant_checks.json"
+    d0 = json.loads(f.read_text()) if f.exists() else {}
+    d0[arch] = out
+    f.write_text(json.dumps(d0, indent=1, default=float) + "\n")
+    return out
+
+
+def judge_B():
+    """Finding 8: the cooling-B rows of the robustness map. For every mechanics-only variant
+    run on the cooling-B fields (final_closure_sensitivity NAME@B -> ..__NAME__B.json), the
+    change of each mechanical output against the cooling-B base case, and whether every
+    pairwise cooling-B ordering keeps its direction and stays resolved under the 2U rule
+    (relative U of uncertainty.json)."""
+    import itertools
+    import json
+    import final_closure_sensitivity as S
+    sens = S.OUT
+    unc = json.loads((LAW.TR / "uncertainty.json").read_text())["relative"]
+    archs = ("Z1", "Z2", "Z3")
+    base = {}
+    for a in archs:
+        try:
+            b, _frd, name = S.thermal_base(a, "B")
+        except Exception as e:                    # recorded, never silent
+            base[a] = {"error": str(e)[-200:]}
+            continue
+        me = b.get("mechanics") or {}
+        k = ((me.get("interconnects") or {}).get("bga") or {}).get("critical") or {}
+        base[a] = {"case": name, "warp": me.get("die_warpage_pv_um"),
+                   "du": (me.get("joint_search") or {}).get("critical", {}).get("du_um"),
+                   "du_def": k.get("du_def_xy_um"),
+                   "eps": (b.get("local") or {}).get("d_peeq_per_cycle")}
+    rows = {}
+    for f in sorted(sens.glob("etm_*_HV_S0__*__B.json")):
+        c = json.loads(f.read_text())
+        a, name = c["arch"], c["variant"]["name"].split("@")[0]
+        me = c.get("mechanics") or {}
+        k = ((me.get("interconnects") or {}).get("bga") or {}).get("critical") or {}
+        rows.setdefault(name, {})[a] = {
+            "warp": me.get("die_warpage_pv_um"),
+            "du": (me.get("joint_search") or {}).get("critical", {}).get("du_um"),
+            "du_def": k.get("du_def_xy_um"), "eps": (c.get("local") or {}).get("d_peeq_per_cycle")}
+    out = {"what": "cooling-B robustness of the mechanical orderings (finding 8)",
+           "base": base, "variants": {}}
+    for name, per in rows.items():
+        res = {"values": per, "change_rel": {}, "orderings": {}}
+        for a, v in per.items():
+            res["change_rel"][a] = {y: (v[y] / base[a][y] - 1) if (v.get(y) and (base.get(a) or {})
+                                                                    .get(y)) else None
+                                    for y in ("warp", "du", "du_def", "eps")}
+        for y, uy in (("warp", "warp"), ("du", "du"), ("du_def", "du"), ("eps", None)):
+            for a, b in itertools.combinations(archs, 2):
+                va, vb = (per.get(a) or {}).get(y), (per.get(b) or {}).get(y)
+                ba, bb = (base.get(a) or {}).get(y), (base.get(b) or {}).get(y)
+                if None in (va, vb, ba, bb):
+                    continue
+                u = (unc[a][uy]["total"] + unc[b][uy]["total"]) if uy else None
+                gap = abs(va - vb) / max(abs(va), abs(vb))
+                res["orderings"][f"{y}:{a}/{b}"] = {
+                    "base_lower": a if ba < bb else b, "variant_lower": a if va < vb else b,
+                    "same_direction": (ba < bb) == (va < vb), "gap_rel": gap,
+                    "resolved_2U": (gap > 2 * u) if u is not None else None}
+        out["variants"][name] = res
+    f = LAW.TR / "robustness_B.json"
+    f.write_text(json.dumps(out, indent=1, default=float) + "\n")
+    return out
+
+
+def register(VARIANTS: dict, apply_hook):
+    """Add the round-3 variants to final_closure_sensitivity.VARIANTS. apply_hook(fn)
+    appends a BUILD_HOOK in the variant's process."""
+    cfg = LAW.cfg()
+    for name, v in cfg["encapsulant"]["variants"].items():
+        VARIANTS[name] = dict(kind="mech", archs=("Z1", "Z2", "Z3"),
+                              apply=(lambda n=name: apply_hook(encap_hook(n))),
+                              gates=["mat.encapsulant_card"],
+                              nature="declared range (encapsulant class, finding 7)",
+                              what=f"out-of-cell encapsulant: {v['what']}")
+    VARIANTS[cfg["bga_global"]["reconciled_variant"]] = dict(
+        kind="mech", archs=("Z1", "Z2", "Z3"), apply=lambda: apply_hook(bga_local_hook()),
+        gates=["mat.bga_card_consistency"], nature="model-form check (finding 11a)",
+        what="homogenised BGA layer from the local solder card E(T), nu, CTE")
+
+
+if __name__ == "__main__":
+    # python tcpmt_mech_variants.py coarse ARCH VARIANT [...]
+    if sys.argv[1:2] == ["coarse"]:
+        coarse_check(sys.argv[2], sys.argv[3:])
+    elif sys.argv[1:2] == ["judgeB"]:            # python tcpmt_mech_variants.py judgeB
+        import json
+        print(json.dumps({k: v["orderings"] for k, v in judge_B()["variants"].items()},
+                         indent=1, default=float)[:3000])

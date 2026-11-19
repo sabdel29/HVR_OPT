@@ -1,0 +1,270 @@
+{
+ "what": "tier-order bookkeeping (TCPMT round 3, finding 10)",
+ "generator": "scripts/phase0mr3c/repartition_search.py --bookkeeping",
+ "enumeration": "ordered partitions of the 5 component classes (gan_hs, gan_ls, cap_fly, cap_out, inductor) into k = 2..5 non-empty tiers ordered bottom to top: k! S(5,k) per k",
+ "counts_by_k": {
+  "2": {
+   "ordered_partitions": 30,
+   "pass_area_budget": 0,
+   "distinct_groupings": []
+  },
+  "3": {
+   "ordered_partitions": 150,
+   "pass_area_budget": 0,
+   "distinct_groupings": []
+  },
+  "4": {
+   "ordered_partitions": 240,
+   "pass_area_budget": 24,
+   "distinct_groupings": [
+    [
+     "cap_fly",
+     "cap_out,inductor",
+     "gan_hs",
+     "gan_ls"
+    ]
+   ]
+  },
+  "5": {
+   "ordered_partitions": 120,
+   "pass_area_budget": 120,
+   "distinct_groupings": [
+    [
+     "cap_fly",
+     "cap_out",
+     "gan_hs",
+     "gan_ls",
+     "inductor"
+    ]
+   ]
+  }
+ },
+ "n_ordered_partitions": 540,
+ "n_pass_area_budget": 144,
+ "cell_area_mm2": 5.610000000000001,
+ "statement_for_paper": "The 144 assignments are the ordered partitions of the five component classes (high-side and low-side devices, flying and output capacitors, inductor) into two to five tiers whose every tier fits the cell area, out of 540: 24 with 4 tiers (the 24 orders of {cap_fly} / {cap_out,inductor} / {gan_hs} / {gan_ls}); 120 with 5 tiers (the 120 orders of {cap_fly} / {cap_out} / {gan_hs} / {gan_ls} / {inductor}); no partition into two or three tiers fits.",
+ "wrong_statement": "the permutations of the four component tiers (there are 24)",
+ "via_diameter_um": 119.99999999999999,
+ "tier_heights_um": {
+  "A0": {
+   "gan_hs": 685.0,
+   "gan_ls": 638.0,
+   "cap_fly": 100.0,
+   "cap_out": 500.0,
+   "inductor": 500.0
+  },
+  "A1": {
+   "gan_hs": 685.0,
+   "gan_ls": 638.0,
+   "cap_fly": 1030.0,
+   "cap_out": 500.0,
+   "inductor": 500.0
+  }
+ },
+ "terminal_options": {
+  "both": "production: dies connect from either face",
+  "single": "dies face-down, terminals on the bottom face only; a net leaving a die tier upward crosses it"
+ },
+ "worst_aspect_ratio": {
+  "A0/reference/both": {
+   "nets": {
+    "hs_to_cf": {
+     "levels_um": [
+      638.0
+     ],
+     "worst_AR": 5.316666666666667
+    },
+    "hs_to_ls": {
+     "levels_um": [],
+     "worst_AR": 0.0
+    },
+    "ls_to_L": {
+     "levels_um": [
+      100.0
+     ],
+     "worst_AR": 0.8333333333333335
+    }
+   },
+   "worst_AR": 5.316666666666667,
+   "worst_net": "hs_to_cf"
+  },
+  "A0/reference/single": {
+   "nets": {
+    "hs_to_cf": {
+     "levels_um": [
+      685.0,
+      638.0
+     ],
+     "worst_AR": 5.708333333333334
+    },
+    "hs_to_ls": {
+     "levels_um": [
+      685.0
+     ],
+     "worst_AR": 5.708333333333334
+    },
+    "ls_to_L": {
+     "levels_um": [
+      638.0,
+      100.0
+     ],
+     "worst_AR": 5.316666666666667
+    }
+   },
+   "worst_AR": 5.708333333333334,
+   "worst_net": "hs_to_cf"
+  },
+  "A0/repartitioned/both": {
+   "nets": {
+    "hs_to_cf": {
+     "levels_um": [],
+     "worst_AR": 0.0
+    },
+    "hs_to_ls": {
+     "levels_um": [
+      100.0
+     ],
+     "worst_AR": 0.8333333333333335
+    },
+    "ls_to_L": {
+     "levels_um": [],
+     "worst_AR": 0.0
+    }
+   },
+   "worst_AR": 0.8333333333333335,
+   "worst_net": "hs_to_ls"
+  },
+  "A0/repartitioned/single": {
+   "nets": {
+    "hs_to_cf": {
+     "levels_um": [
+      685.0
+     ],
+     "worst_AR": 5.708333333333334
+    },
+    "hs_to_ls": {
+     "levels_um": [
+      685.0,
+      100.0
+     ],
+     "worst_AR": 5.708333333333334
+    },
+    "ls_to_L": {
+     "levels_um": [
+      638.0
+     ],
+     "worst_AR": 5.316666666666667
+    }
+   },
+   "worst_AR": 5.708333333333334,
+   "worst_net": "hs_to_cf"
+  },
+  "A1/reference/both": {
+   "nets": {
+    "hs_to_cf": {
+     "levels_um": [
+      638.0
+     ],
+     "worst_AR": 5.316666666666667
+    },
+    "hs_to_ls": {
+     "levels_um": [],
+     "worst_AR": 0.0
+    },
+    "ls_to_L": {
+     "levels_um": [
+      1030.0
+     ],
+     "worst_AR": 8.583333333333334
+    }
+   },
+   "worst_AR": 8.583333333333334,
+   "worst_net": "ls_to_L"
+  },
+  "A1/reference/single": {
+   "nets": {
+    "hs_to_cf": {
+     "levels_um": [
+      685.0,
+      638.0
+     ],
+     "worst_AR": 5.708333333333334
+    },
+    "hs_to_ls": {
+     "levels_um": [
+      685.0
+     ],
+     "worst_AR": 5.708333333333334
+    },
+    "ls_to_L": {
+     "levels_um": [
+      638.0,
+      1030.0
+     ],
+     "worst_AR": 8.583333333333334
+    }
+   },
+   "worst_AR": 8.583333333333334,
+   "worst_net": "ls_to_L"
+  },
+  "A1/repartitioned/both": {
+   "nets": {
+    "hs_to_cf": {
+     "levels_um": [],
+     "worst_AR": 0.0
+    },
+    "hs_to_ls": {
+     "levels_um": [
+      1030.0
+     ],
+     "worst_AR": 8.583333333333334
+    },
+    "ls_to_L": {
+     "levels_um": [],
+     "worst_AR": 0.0
+    }
+   },
+   "worst_AR": 8.583333333333334,
+   "worst_net": "hs_to_ls"
+  },
+  "A1/repartitioned/single": {
+   "nets": {
+    "hs_to_cf": {
+     "levels_um": [
+      685.0
+     ],
+     "worst_AR": 5.708333333333334
+    },
+    "hs_to_ls": {
+     "levels_um": [
+      685.0,
+      1030.0
+     ],
+     "worst_AR": 8.583333333333334
+    },
+    "ls_to_L": {
+     "levels_um": [
+      638.0
+     ],
+     "worst_AR": 5.316666666666667
+    }
+   },
+   "worst_AR": 8.583333333333334,
+   "worst_net": "hs_to_ls"
+  }
+ },
+ "best_candidate_by_option": {
+  "both": {
+   "partition": "gan_hs | cap_fly | gan_ls | cap_out,inductor",
+   "worst_level_um": 100.0,
+   "worst_AR_RP_heights": 0.8333333333333335,
+   "source_order_compatible": true
+  },
+  "single": {
+   "partition": "gan_hs | cap_fly | gan_ls | cap_out,inductor",
+   "worst_level_um": 685.0,
+   "worst_AR_RP_heights": 5.708333333333334,
+   "source_order_compatible": true
+  }
+ }
+}

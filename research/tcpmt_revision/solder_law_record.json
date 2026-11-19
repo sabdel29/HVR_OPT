@@ -1,0 +1,297 @@
+{
+ "what": "constitutive laws of the local solder submodel (TCPMT round 3, finding 1)",
+ "solver_form": "eps_dot = A(T) (sigma_vm - sigma_y)^n(T), sigma_y = 1e-06 MPa (zero yield: the solver integrates the applied von Mises stress the laws were fitted in)",
+ "production_law": "schubert2003",
+ "band_laws": [
+  "schubert2003",
+  "xiao_armstrong2005",
+  "xa_measured_norton"
+ ],
+ "elastic": {
+  "E_ref_MPa": 45000.0,
+  "E_slope_MPa_per_K": -120.0,
+  "nu": 0.36,
+  "cte_per_K": 2.15e-05,
+  "status": "ASSUMPTION (room-temperature band, Paska 2024; slope assumed)"
+ },
+ "hardening": "none: the zero-yield laws carry no rate-independent hardening (the round-2 card's isotropic 2 % saturation of a kinematic Chaboche fit is retired)",
+ "laws": {
+  "schubert2003": {
+   "form": "garofalo",
+   "alloy": "SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature",
+   "source": "Schubert, Dudek, Auerswald, Gollhardt, Michel, Reichl, Proc. 53rd ECTC 2003, pp. 603-610, doi:10.1109/ECTC.2003.1216343; reprinted Sci. Rep. 15 (2025) doi:10.1038/s41598-025-06902-0 Table 2 and Materials 16 (2023) 4291 Table 4",
+   "calibration_window": {
+    "T_C": null,
+    "stress_MPa": null,
+    "note": "constants reprinted without their data window; compared against the measured Sn3.9Ag0.6Cu points below inside that window"
+   },
+   "visited_window_MPa": {
+    "hot": [
+     9.212660355794526,
+     35.88007898464141
+    ],
+    "cold": [
+     17.039523097531973,
+     50.26882954597612
+    ]
+   },
+   "card_fit_window_MPa": {
+    "hot": [
+     9.208722697250574,
+     35.884151157691285
+    ],
+    "cold": [
+     16.99923040011729,
+     50.359739890825395
+    ]
+   },
+   "window_status": "converged",
+   "visited_joint_T_C": [
+    78.68,
+    85.8,
+    97.22,
+    105.76,
+    114.96,
+    117.09
+   ],
+   "extrapolation_MPa_beyond_calibration": {
+    "stress_hot": null,
+    "stress_cold": null,
+    "rows_outside_T": null
+   },
+   "surrogate_max_rate_err_rel_hot": 0.17021965090168334,
+   "surrogate_max_rate_err_rel_cold": 0.23174833222375202,
+   "rows_floor_constrained_C": [],
+   "rate_vs_measured_Sn3.9Ag0.6Cu": {
+    "ratio_min": 13.114503812121148,
+    "ratio_max": 72.8381603081154,
+    "ratio_geomean": 39.850268370623006
+   },
+   "card_sha": "97f0a0e1e918"
+  },
+  "xiao_armstrong2005": {
+   "form": "garofalo",
+   "alloy": "Sn3.9Ag0.6Cu (NOT SAC305; DEFECT #41)",
+   "source": "Xiao and Armstrong, J. Electron. Mater. 34(2):196-211, 2005, doi:10.1007/s11664-005-0233-z, constants as tabulated by Yuan et al. 2023, Materials 16(14):4922, Table 6",
+   "calibration_window": {
+    "T_C": [
+     45.0,
+     150.0
+    ],
+    "stress_MPa": [
+     7.51,
+     15.92
+    ],
+    "note": "19 steady-state tensile creep points (Yuan 2023 Table 5)"
+   },
+   "visited_window_MPa": {
+    "hot": [
+     13.94439516468053,
+     32.24962516003326
+    ],
+    "cold": [
+     18.36864517958839,
+     41.12944140731622
+    ]
+   },
+   "card_fit_window_MPa": {
+    "hot": [
+     13.948539081654165,
+     32.161463492104154
+    ],
+    "cold": [
+     17.646538484339175,
+     39.20590353400845
+    ]
+   },
+   "window_status": "iterated, not converged",
+   "visited_joint_T_C": [
+    78.68,
+    85.8,
+    97.22,
+    105.76,
+    114.96,
+    117.09
+   ],
+   "extrapolation_MPa_beyond_calibration": {
+    "stress_hot": [
+     0.0,
+     16.32962516003326
+    ],
+    "stress_cold": [
+     0.0,
+     25.20944140731622
+    ],
+    "rows_outside_T": {
+     "below": [
+      -40.0,
+      42.5
+     ],
+     "above": null
+    },
+    "cold_dwell_25C_extrapolated": true
+   },
+   "surrogate_max_rate_err_rel_hot": 0.8547876232295912,
+   "surrogate_max_rate_err_rel_cold": 5.405222397504482,
+   "rows_floor_constrained_C": [
+    -40.0,
+    -37.5,
+    -35.0,
+    -32.5,
+    -30.0,
+    -27.5,
+    -25.0,
+    -22.5,
+    -20.0,
+    -17.5,
+    -15.0,
+    -12.5,
+    -10.0,
+    -7.5,
+    -5.0,
+    -2.5,
+    0.0,
+    2.5,
+    5.0,
+    7.5,
+    10.0,
+    12.5,
+    15.0,
+    17.5,
+    20.0,
+    22.5,
+    25.0,
+    27.5,
+    30.0,
+    32.5,
+    35.0,
+    37.5,
+    40.0,
+    42.5,
+    45.0,
+    47.5,
+    50.0,
+    52.5,
+    55.0,
+    57.5,
+    60.0,
+    62.5,
+    65.0,
+    67.5,
+    70.0,
+    72.5,
+    75.0,
+    77.5,
+    80.0,
+    82.5,
+    85.0,
+    87.5,
+    90.0,
+    92.5,
+    95.0,
+    97.5,
+    100.0,
+    102.5,
+    105.0,
+    107.5,
+    110.0,
+    112.5,
+    115.0,
+    117.5,
+    120.0,
+    122.5,
+    125.0,
+    127.5,
+    130.0,
+    132.5,
+    135.0,
+    137.5,
+    140.0,
+    142.5,
+    145.0,
+    147.5,
+    150.0
+   ],
+   "rate_vs_measured_Sn3.9Ag0.6Cu": {
+    "ratio_min": 0.6663698681448029,
+    "ratio_max": 2.1502636282512153,
+    "ratio_geomean": 1.3820336540600404
+   },
+   "card_sha": "00b3c3fc3ffc"
+  },
+  "xa_measured_norton": {
+   "form": "measured_norton",
+   "alloy": "Sn3.9Ag0.6Cu (NOT SAC305)",
+   "source": "the 19 measured points of Xiao and Armstrong 2005 (Yuan 2023 Table 5), fitted per temperature; Arrhenius in rate at 10 MPa between and outside 45-150 C",
+   "calibration_window": {
+    "T_C": [
+     45.0,
+     150.0
+    ],
+    "stress_MPa": [
+     7.51,
+     15.92
+    ]
+   },
+   "visited_window_MPa": {
+    "hot": [
+     14.09907097826498,
+     46.50221373514187
+    ],
+    "cold": [
+     25.57032021948627,
+     70.2811457482192
+    ]
+   },
+   "card_fit_window_MPa": null,
+   "window_status": "converged",
+   "visited_joint_T_C": [
+    78.68,
+    85.8,
+    97.22,
+    105.76,
+    114.96,
+    117.09
+   ],
+   "extrapolation_MPa_beyond_calibration": {
+    "stress_hot": [
+     0.0,
+     30.58221373514187
+    ],
+    "stress_cold": [
+     0.0,
+     54.3611457482192
+    ],
+    "rows_outside_T": {
+     "below": [
+      -40.0,
+      42.5
+     ],
+     "above": null
+    },
+    "cold_dwell_25C_extrapolated": true
+   },
+   "surrogate_max_rate_err_rel_hot": 5.995204332975845e-15,
+   "surrogate_max_rate_err_rel_cold": 5.218048215738236e-15,
+   "rows_floor_constrained_C": [
+    -40.0,
+    -37.5,
+    -35.0,
+    -32.5,
+    -30.0,
+    -27.5,
+    -25.0,
+    -22.5,
+    -20.0,
+    -17.5,
+    -15.0
+   ],
+   "rate_vs_measured_Sn3.9Ag0.6Cu": {
+    "ratio_min": 0.8753173438667393,
+    "ratio_max": 1.1479786236019345,
+    "ratio_geomean": 1.0000000000000024
+   },
+   "card_sha": "71fd13796c2c"
+  }
+ }
+}
