@@ -247,10 +247,24 @@ print("JSON" + json.dumps(out, default=float))
 """
 
 
+@pytest.fixture(autouse=True)
+def legacy_lineage(monkeypatch):
+    """The committed count-study artifacts (routing.DESIGN literal, the M = 64 config's declared
+    parts and loss) belong to the published converter lineage: pin it (review round 2 made the
+    corrected rules the production default)."""
+    monkeypatch.setenv("HVR_PRODUCTION_RULES", "legacy")
+    try:
+        import replay_production as RPX
+        RPX._DESIGN_CACHE.clear()
+    except ImportError:
+        pass
+    yield
+
+
 @pytest.fixture(scope="module")
 def cand():
     env = dict(os.environ, HVR_Z1_CONFIG=str(CFG64.relative_to(R)), PYTHONDONTWRITEBYTECODE="1",
-               OPENBLAS_NUM_THREADS="1")
+               OPENBLAS_NUM_THREADS="1", HVR_PRODUCTION_RULES="legacy")
     r = subprocess.run([sys.executable, "-B", "-c", _PROBE, str(R)], env=env, cwd=str(R),
                        capture_output=True, text=True, timeout=1800)
     assert r.returncode == 0, r.stderr[-3000:]

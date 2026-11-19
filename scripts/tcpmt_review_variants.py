@@ -25,10 +25,18 @@ deposits_from_ledger / _region_elems inside this process only), so the productio
 unchanged. Cooling tiers: A = the same top plate (Z3 top-only), B = top plate plus the
 identical bottom plate through a 50-um TIM (tcpmt_manuscript_macros.TIERS).
 
-    python tcpmt_review_variants.py feedback ARCH TIER
-    python tcpmt_review_variants.py hotspot  ARCH TIER
-    python tcpmt_review_variants.py hotmap   ARCH TIER
-    python tcpmt_review_variants.py caloric  ARCH TIER   (the legacy coefficient)
+    python tcpmt_review_variants.py feedback ARCH TIER [SCEN]
+    python tcpmt_review_variants.py hotspot  ARCH TIER [SCEN]
+    python tcpmt_review_variants.py hotmap   ARCH TIER [SCEN]
+    python tcpmt_review_variants.py caloric  ARCH TIER [SCEN]   (the legacy coefficient)
+    python tcpmt_review_variants.py sdec     ARCH TIER          (the PRODUCTION state)
+    python tcpmt_review_variants.py state    ARCH TIER SCEN     (a cooling tier at a scenario)
+    python tcpmt_review_variants.py ratedcfmax Z1 TIER [SCEN]   (case A1)
+
+REVIEW ROUND 2. The production state is the implemented decoupling (HV_SDEC, tcpmt_cases);
+SCEN defaults to HV_S0 only so that the committed S0 variants stay reproducible -- the campaign
+runs the variants at HV_SDEC. Z3's tier base is the COUPLED land-side case
+(tcpmt_cases.Z3_LAND), never the superseded uncoupled z3_top_only / z3_plate_tim.
 """
 from __future__ import annotations
 
@@ -52,12 +60,32 @@ SCEN = "HV_S0"
 OUT = R / "research" / "tcpmt_revision" / "review_variants"
 FIELDS = Path(os.environ.get("HVR_FIELDS",
                              "/home/beams0/SABDELZAHER/ETM_project/scratch/fields"))
-#: the cooling tiers of the comparison: arch, tier -> sensitivity variant (None = production)
-TIER_BASE = {("Z1", "A"): None, ("Z2", "A"): None, ("Z3", "A"): "z3_top_only",
-             ("Z1", "B"): "z1_bottom_plate_tim", ("Z2", "B"): "z2_cooled_tim",
-             ("Z3", "B"): "z3_plate_tim"}
+import tcpmt_cases as TC                                           # noqa: E402
+
+#: the cooling tiers of the comparison: arch, tier -> sensitivity variant (None = production).
+#: Review round 2: Z3 is the coupled land-side case (the uncoupled bases are superseded).
+TIER_BASE = dict(TC.COOLING_BASE)
 HOT_AREA, HOT_POWER = 0.5, 0.75
 FB_TOL_WARP, FB_TOL_P_W, FB_MAX_ITER = 0.01, 0.05, 5
+
+
+def set_scenario(scen):
+    """Run this process's variants at `scen` (module SCEN, the sensitivity driver's scenario
+    and its case-file name); HV_SDEC also registers the implemented-decoupling hooks."""
+    global SCEN
+    SCEN = scen
+    S.SCEN = scen
+    S.case_file = lambda a, v, scen=scen: S.OUT / f"etm_{a}_{scen}__{v}.json"
+    if scen == TC.SCEN["SDEC"]:
+        import tcpmt_decap_framework as DF
+        rk = DF.recommended_k()
+        DF._register(rk["k_eq"], DF.k_open(), rk["P_ring_esr_W"], key=scen)
+    return scen
+
+
+def _z3land():
+    import tcpmt_z3land_variants as ZL      # registers the z3_land_* variants
+    return ZL
 
 
 def _long_ccx(timeout=43200):
@@ -73,19 +101,43 @@ def _long_ccx(timeout=43200):
     PE.ccxio.run_ccx = run
 
 
+def _state_of(scen):
+    return {v: k for k, v in TC.SCEN.items()}.get(scen)
+
+
 def base_case(arch, tier):
-    v = TIER_BASE[(arch, tier)]
-    return E.case_path(arch, SCEN) if v is None else S.case_file(arch, v)
+    """The compared case of this tier at the process scenario (tcpmt_cases)."""
+    st = _state_of(SCEN)
+    p = TC.case_path(st, tier, arch) if st else None
+    if p is None:
+        v = TIER_BASE[(arch, tier)]
+        p = E.case_path(arch, SCEN) if v is None else S.case_file(arch, v)
+    if not Path(p).is_file():
+        raise FileNotFoundError(f"no {SCEN} cooling-{tier} base case for {arch} ({p}): run "
+                                f"it first (python tcpmt_cases.py lists the commands)")
+    return Path(p)
 
 
 def base_field(arch, tier):
+    """(thermal frd, structural frd) of the base case's converged state: a collected field
+    directory ($HVR_FIELDS) or the base's own work tree (tcpmt_cases.converged_field)."""
+    p = base_case(arch, tier)
     v = TIER_BASE[(arch, tier)]
-    return FIELDS / (f"etm_{arch}_{SCEN}_r21" if v is None else f"etm_{arch}_{SCEN}__{v}")
+    d = FIELDS / (f"etm_{arch}_{SCEN}_r21" if v is None and p == E.case_path(arch, SCEN)
+                  else f"etm_{arch}_{SCEN}__{p.stem.split('__', 1)[-1]}")
+    if (d / "thermal_converged.frd").is_file() and (d / "structural.frd").is_file():
+        return d / "thermal_converged.frd", d / "structural.frd"
+    f = TC.converged_field(p)
+    if not f or not f.get("structural"):
+        raise FileNotFoundError(f"no converged field with a structural solution for {p.name}")
+    return f["thermal"], f["structural"]
 
 
 def apply_tier(arch, tier):
     v = TIER_BASE[(arch, tier)]
     if v is not None:
+        if v.startswith("z3_land"):
+            _z3land()
         S.VARIANTS[v]["apply"]()
 
 
@@ -139,6 +191,7 @@ def run_et_seeded(arch, scen, h_xy, refine, temps0=None):
               f"dT={d_t:.3f} K", flush=True)
         if d_t < E.ET_TOL_K and d_p < E.ET_TOL_P_REL and it > 0:
             break
+    E.record_region_maxima(m, th, arch, tiles)          # review round 2 (feasibility stage)
     return m, mats, st, tiles, minfo, L, th, hist, time.time() - t0, wd, temps
 
 
@@ -200,12 +253,13 @@ def run_feedback(arch, tier):
     h, r = E.PRODUCTION_H_XY, E.PRODUCTION_REFINE
     m0, _, _, _, _ = E.build(arch, h, r)
     # the first map comes from the tier's converged case; check it IS that field
-    fld = base_field(arch, tier)
+    th_frd, st_frd = base_field(arch, tier)
     import production_et as PE
-    tn = PE.ccxio.read_frd(fld / "thermal_converged.frd")["NDTEMP"][1:m0.n_nodes + 1, 0]
+    tn = PE.ccxio.read_frd(th_frd)["NDTEMP"][1:m0.n_nodes + 1, 0]
     if abs(float(np.nanmax(tn)) - base["thermal"]["T_max_C"]) > 1e-3:
-        raise RuntimeError(f"{fld} is not the converged field of {base_case(arch, tier).name}")
-    prev_frd = fld / "structural.frd"
+        raise RuntimeError(f"{th_frd} is not the converged field of "
+                           f"{base_case(arch, tier).name}")
+    prev_frd = st_frd
     prev = {"P_loss_w": base["P_loss_w"],
             "die_warpage_pv_um": base["mechanics"]["die_warpage_pv_um"]}
     tag = f"tim_warp_fb_{tier}"
@@ -280,6 +334,7 @@ def run_feedback(arch, tier):
            "die_T_mean_C": last["thermal"]["die_T_mean_C"],
            "mechanics": last["mechanics"]}
     S.case_file(arch, tag).write_text(json.dumps(res, indent=1, default=float))
+    _augment_z3(arch, tag, tier)
     return res
 
 
@@ -346,7 +401,9 @@ def run_hotspot(arch, tier):
         v_die_hotspot()
     S.VARIANTS[name]["apply"] = apply
     S.VARIANTS[name]["archs"] = (arch,)
-    return S.run_full(arch, name)
+    out = S.run_full(arch, name)
+    _augment_z3(arch, name, tier)
+    return out
 
 
 # ------------------------------------------------------------------ die power map (realistic)
@@ -431,7 +488,9 @@ def run_hotmap(arch, tier):
         apply_tier(arch, tier)
         return v_die_hotmap()
     S.VARIANTS[name]["apply"] = apply
-    return S.run_full(arch, name)
+    out = S.run_full(arch, name)
+    _augment_z3(arch, name, tier)
+    return out
 
 
 # ------------------------------------------------------------------ cooling model form
@@ -460,32 +519,64 @@ def run_caloric(arch, tier):
         apply_tier(arch, tier)
         return S.v_cooling_model(top="uniform_legacy")
     S.VARIANTS[name]["apply"] = apply
-    return S.run_full(arch, name)
+    out = S.run_full(arch, name)
+    _augment_z3(arch, name, tier)
+    return out
 
 
 # ------------------------------------------------------------------ implemented decoupling
+def _augment_z3(arch, name, tier):
+    """A Z3 run on the coupled land-side base carries the z3_land block (shape factors, the two
+    spreading rows' temperatures, sheet resistances and static spreads) like its base."""
+    if arch != "Z3" or not str(TIER_BASE[(arch, tier)] or "").startswith("z3_land"):
+        return
+    ZL = _z3land()
+    f = S.case_file(arch, name)
+    c = json.loads(f.read_text())
+    if "ledger_rows" not in c:
+        return
+    c["z3_land"] = ZL.z3_land_block(TIER_BASE[(arch, tier)], c)
+    c["z3_land"]["base_variant"] = TIER_BASE[(arch, tier)]
+    f.write_text(json.dumps(c, indent=1, default=float))
+
+
+def run_state(arch, tier, scen, name=None):
+    """One integration under one cooling tier at a named input scenario, on the tier's base
+    (Z3: the coupled land side). HV_SDEC is the production state (set_scenario registers the
+    implemented-decoupling hooks); the file is etm_<arch>_<scen>__<name>.json, name defaulting
+    to the tier base (sdec_<tier> for the production state)."""
+    _long_ccx()
+    set_scenario(scen)
+    base = TIER_BASE[(arch, tier)]
+    if name is None:
+        name = f"sdec_{tier}" if scen == TC.SCEN["SDEC"] else base
+    if name is None:
+        raise SystemExit(f"{arch} cooling {tier} at {scen} is a production-boundary case: run "
+                         f"final_closure_physical_etm.py {arch}:{scen}")
+    what = f"cooling {tier} ({base or 'production boundary'}) at {scen}"
+    if scen == TC.SCEN["SDEC"]:
+        import tcpmt_decap_framework as DF
+        rk = DF.recommended_k()
+        what = (f"implemented decoupling: k_eq = {rk['k_eq']:.3f}, cell-internal VIN runs at "
+                f"k_open = {DF.k_open():.3f}; " + what)
+    S.VARIANTS[name] = dict(
+        kind="full", archs=(arch,), apply=lambda: apply_tier(arch, tier),
+        gates=["decap.implemented"] if scen == TC.SCEN["SDEC"] else [],
+        nature=("PRODUCTION STATE (implemented input decoupling, hot loop)"
+                if scen == TC.SCEN["SDEC"] else f"REFERENCE STATE ({scen})"),
+        what=what + (f"; base {base}" if base else ""))
+    out = S.run_full(arch, name)
+    _augment_z3(arch, name, tier)
+    return out
+
+
 def run_sdec(arch, tier):
     """The physically implemented input decoupling (tcpmt_decap_framework: 7 interleaved
     clock phases + a ring of 56 x 1206 100-V capacitors) for any architecture and tier: the
     package 48-V network (Z1 only) at k_eq, the cell-internal VIN->HS runs at the bare-pulse
-    k_open (the hot loop, common to every integration), ring ESR as a ledger row (Z1)."""
-    import tcpmt_decap_framework as DF
-    _long_ccx()
-    rk = DF.recommended_k()
-    DF._register(rk["k_eq"], DF.k_open(), rk["P_ring_esr_W"])
-    name = f"sdec_{tier}"
-    S.VARIANTS[name] = dict(
-        kind="full", archs=(arch,), apply=None, gates=["decap.implemented"],
-        nature="PHYSICAL_DESIGN (implemented input decoupling, hot loop)",
-        what=f"implemented decoupling: k_eq = {rk['k_eq']:.3f}, cell-internal VIN runs at "
-             f"k_open = {DF.k_open():.3f} (cooling {tier})")
-
-    def apply():
-        apply_tier(arch, tier)
-    S.VARIANTS[name]["apply"] = apply
-    S.SCEN = DF.SCEN_KEY
-    S.case_file = lambda a, v, scen=DF.SCEN_KEY: S.OUT / f"etm_{a}_{scen}__{v}.json"
-    return S.run_full(arch, name)
+    k_open (the hot loop, common to every integration), ring ESR as a ledger row (Z1). Review
+    round 2: this is the PRODUCTION state, and Z3 runs on its coupled land-side base."""
+    return run_state(arch, tier, TC.SCEN["SDEC"])
 
 
 # ------------------------------------------------------------------ rated flying capacitors
@@ -494,9 +585,14 @@ CF_RATED_ESR_MOHM = 7.3      # mean of C1 (7.8) and C2 (6.8) at 805 kHz, datashe
 
 
 def v_z1_rated_cf(order="rep", cf_um=None, esr_mohm=None):
-    """Z1 with flying capacitors of a rated part (GRM188D71H105KE01, 0603, 1 uF, 50 V, X7T):
-    the tier grows from the 100-um assumption to 830 um and the capacitor ESR from 2.5 to
-    7.3 mOhm; order 'ref' also swaps LS and C_f (the reference order)."""
+    """Z1 with flying capacitors of a rated part (0603, 1 uF, X7T): the tier grows from the
+    100-um assumption to cf_um; order 'ref' also swaps LS and C_f (the reference order).
+
+    Review round 2: the PRODUCTION converter already carries the rated part (its ESR at f_sw,
+    electrical.production_rules), so case A1 changes the tier only -- esr_mohm None keeps the
+    production capacitor. Only under the legacy production lineage (whose capacitor is the
+    published 25-V part) does None mean the earlier 7.3-mOhm override, so the committed A1
+    runs stay reproducible; an explicit esr_mohm always overrides."""
     import yaml
     import physical_package as PP
     from dataclasses import replace
@@ -507,7 +603,7 @@ def v_z1_rated_cf(order="rep", cf_um=None, esr_mohm=None):
     names = [x["name"] for x in t]
     i_cf = names.index("flying_caps")
     cf_um = CF_RATED_UM if cf_um is None else float(cf_um)
-    esr_mohm = CF_RATED_ESR_MOHM if esr_mohm is None else float(esr_mohm)
+    esr_mohm = _a1_esr(esr_mohm)
     dz = cf_um - float(t[i_cf]["um"])
     t[i_cf]["um"] = cf_um
     t[i_cf]["status"] = "RATED_PART"
@@ -538,7 +634,8 @@ def v_z1_rated_cf(order="rep", cf_um=None, esr_mohm=None):
         FL.LAYERS["Z1"] = lay
     import replay_production as RPX
     d = RPX.compiled_design()
-    RPX._DESIGN_CACHE["d"] = replace(d, capacitor=replace(d.capacitor, esr_mohm=esr_mohm))
+    if esr_mohm is not None:
+        RPX._DESIGN_CACHE["d"] = replace(d, capacitor=replace(d.capacitor, esr_mohm=esr_mohm))
 
     def hook(m, st, tiles):
         """The rated 0603 MLCC tier carries its own derived card (case A1), at this height."""
@@ -556,7 +653,20 @@ def v_z1_rated_cf(order="rep", cf_um=None, esr_mohm=None):
         return {"cfly_card": "conv_cfly_a1", "cfly_a1_elements": int(sel.sum()),
                 "cfly_a1_k_ortho": c["k_ortho"]["value"]}
     E.BUILD_HOOKS.append(hook)
-    return {"cf_um": cf_um, "dz_um": dz, "esr_mohm": esr_mohm, "order": order}
+    return {"cf_um": cf_um, "dz_um": dz, "order": order,
+            "esr_mohm": float(RPX.compiled_design().capacitor.esr_mohm),
+            "capacitor": RPX.compiled_design().capacitor.name}
+
+
+def _a1_esr(esr_mohm):
+    """The ESR override of case A1: None under the corrected production (the production
+    capacitor is already the rated part), the earlier 7.3 mOhm under the legacy lineage."""
+    if esr_mohm is not None:
+        return float(esr_mohm)
+    sys.path.insert(0, str(R / "scripts" / "phase0mr"))
+    import replay_production  # noqa: F401  (puts phase0d on the path)
+    import electrical as EL
+    return CF_RATED_ESR_MOHM if EL.production_rules()["CAP_RULE"] == "legacy" else None
 
 
 def run_ratedcf(tier, order="rep", cf_um=None, esr_mohm=None, tag="cf"):
@@ -565,12 +675,13 @@ def run_ratedcf(tier, order="rep", cf_um=None, esr_mohm=None, tag="cf"):
     (1030 um) and the corrected synthesis's ESR at 32 V (7.8 mOhm, Murata data)."""
     _long_ccx()
     cf = CF_RATED_UM if cf_um is None else cf_um
-    esr = CF_RATED_ESR_MOHM if esr_mohm is None else esr_mohm
+    esr = _a1_esr(esr_mohm)
     name = f"z1_rated_{tag}_{order}_{tier}"
     S.VARIANTS[name] = dict(
         kind="full", archs=("Z1",), apply=None, gates=["geom.flying_cap_rated"],
         nature="PHYSICAL_DESIGN (case A1: rated flying capacitors)",
-        what=f"flying-cap tier {cf:.0f} um (rated 0603 MLCC), ESR {esr} mOhm, "
+        what=f"flying-cap tier {cf:.0f} um (rated 0603 MLCC), ESR "
+             f"{'of the production capacitor' if esr is None else f'{esr} mOhm'}, "
              f"{'reference' if order == 'ref' else 'repartitioned'} order, cooling {tier}")
 
     def apply():
@@ -581,8 +692,19 @@ def run_ratedcf(tier, order="rep", cf_um=None, esr_mohm=None, tag="cf"):
 
 if __name__ == "__main__":
     mode, arch, tier = sys.argv[1], sys.argv[2], sys.argv[3]
+    scen_arg = sys.argv[4] if len(sys.argv) > 4 else None
     if (arch, tier) not in TIER_BASE:
         raise SystemExit(f"unknown case {arch} {tier}")
+    if mode == "state":
+        if not scen_arg:
+            raise SystemExit("state ARCH TIER SCEN")
+        print(run_state(arch, tier, scen_arg))
+        raise SystemExit(0)
+    if mode == "sdec":
+        print(run_sdec(arch, tier))
+        raise SystemExit(0)
+    # every other variant at the named scenario (default HV_S0: the committed variants)
+    set_scenario(scen_arg or "HV_S0")
     if mode == "feedback":
         r = run_feedback(arch, tier)
         print(json.dumps(r["iterations"], indent=1, default=float))
@@ -592,12 +714,15 @@ if __name__ == "__main__":
         print(run_hotmap(arch, tier))
     elif mode == "caloric":
         print(run_caloric(arch, tier))
-    elif mode == "sdec":
-        print(run_sdec(arch, tier))
     elif mode in ("ratedcf", "ratedcfref"):
         print(run_ratedcf(tier, "ref" if mode == "ratedcfref" else "rep"))
     elif mode in ("ratedcfmax", "ratedcfmaxref"):
-        print(run_ratedcf(tier, "ref" if mode == "ratedcfmaxref" else "rep", 1030.0, 7.8,
+        # the documented maximum part height (1.0 mm + 30-um mounting); the ESR is the
+        # production capacitor's (the rated part) unless the legacy lineage is pinned, where
+        # the corrected synthesis's 7.8 mOhm at 32 V reproduces the committed runs
+        esr = 7.8 if _a1_esr(None) is not None else None
+        print(run_ratedcf(tier, "ref" if mode == "ratedcfmaxref" else "rep", 1030.0, esr,
                           "cfmax"))
     else:
-        raise SystemExit("mode is feedback or hotspot")
+        raise SystemExit("mode is state, sdec, feedback, hotspot, hotmap, caloric, "
+                         "ratedcf[max][ref]")

@@ -142,8 +142,18 @@ def test_cards_are_functions_of_the_tier_contents(cards):
 
 
 def test_cards_record_matches_the_code(cards):
+    """The committed 49-cell record was derived from the converter of the published lineage
+    (25-V 0805 flying capacitor): evaluate the live cards in that lineage (the corrected
+    production converter carries the rated 0603 part, whose record the campaign regenerates)."""
     import tcpmt_converter_cards as CC
-    live = CC.cards_for(CC.TierContents.from_design())
+    import replay_production as RPX
+    import electrical as EL
+    with EL.pinned_rules(EL.LEGACY_RULES):
+        RPX._DESIGN_CACHE.clear()
+        try:
+            live = CC.cards_for(CC.TierContents.from_design())
+        finally:
+            RPX._DESIGN_CACHE.clear()
     for name, c in live.items():
         rec = cards["designs"]["N3K3K_A2_49"]["cards"][name]
         assert c["k_ortho"]["value"] == pytest.approx(rec["k_ortho"]["value"], rel=1e-12)

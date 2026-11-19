@@ -647,10 +647,20 @@ def production_cards(tiers=None):
         for key in ("gan_hs", "gan_ls", "flying_caps", "inductor"):
             if name.startswith(key):
                 heights[key] = float(um)
-    key = tuple(sorted(heights.items()))
+    key = (tuple(sorted(heights.items())),) + _design_key()
     if key not in _CACHE:
         _CACHE[key] = cards_for(TierContents.from_design(), heights=heights, strict=False)
     return _CACHE[key]
+
+
+def _design_key() -> tuple:
+    """What the design in force depends on: the converter rules of this process
+    (electrical.production_rules; a pinned lineage compiles another converter) and the Z1
+    config, so the card cache follows replay_production's design cache."""
+    import replay_production  # noqa: F401  (puts scripts/phase0d on the path)
+    import electrical as EL
+    import z1_design as Z1D
+    return (tuple(sorted(EL.production_rules().items())), str(Z1D.config_path()))
 
 
 def install(stack: dict, tiers=None) -> dict:

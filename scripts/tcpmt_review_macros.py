@@ -70,6 +70,8 @@ def cooling():
          "CoolVdot": fx(fl["V_dot_ml_min"], 0)}
     for t, v in c["tiers"].items():
         for a, x in v["cases"].items():
+            if x.get("missing"):                # a compared case not run yet (tcpmt_cases)
+                continue
             k = f"{t}{ATAG[a]}"
             m[f"QplTop{k}"] = fx(x["q_top_plate_W"], 0)
             m[f"QplBot{k}"] = fx(x["q_bottom_plate_W"], 0)
@@ -78,37 +80,163 @@ def cooling():
     return m
 
 
+#: feasibility-stage check names -> the short label the tables print
+CHECK_LABEL = {"operating_point": "no operating point", "gan_Tj_hs": "GaN T_J (HS)",
+               "gan_Tj_ls": "GaN T_J (LS)", "ron_fit": "R_DS(on) fit range",
+               "mlcc": "MLCC 125 C", "inductor": "inductor 125 C", "buildup": "dielectric Tg",
+               "encapsulant": "encapsulant Tg", "board": "board Tg", "die": "die 105 C",
+               "solder_law": "solder law 125 C", "solder_solidus": "solder solidus",
+               "bga_current": "BGA 1.5 A/ball", "bga_sites": "BGA sites",
+               "ir_drop": "IR drop 30 mV"}
+THERMAL_CHECKS = ("gan_Tj_hs", "gan_Tj_ls", "ron_fit", "mlcc", "inductor", "buildup",
+                  "encapsulant", "board", "die")
+
+
+def _feas_tag(key):
+    """feasibility.json case key -> macro tag: production state '<t>_<a>' -> '<t><A>';
+    references 'S0_<t>_<a>' -> '<t><A>Szero', 'S1_A_<a>' -> 'Sone<A>' (the earlier name) and
+    'S1_B_<a>' -> 'B<A>Sone'."""
+    p = key.split("_")
+    if len(p) == 2:
+        return f"{p[0]}{ATAG[p[1]]}"
+    st, t, a = p
+    if st == "S1" and t == "A":
+        return f"Sone{ATAG[a]}"
+    return f"{t}{ATAG[a]}{'Szero' if st == 'S0' else 'Sone'}"
+
+
 def feasibility():
+    """The feasibility stage (tcpmt_feasibility): per compared case the junction bound of the
+    hotter device tier, component and material maxima, the die, the verdict and the failing
+    limits; the ranking of each cooling tier counts only feasible candidates."""
     f = J(TR / "feasibility.json")
-    if not f:
+    if not f or "records" not in f:
         return {}
-    m = {"GanTjMax": fx(f["limits"]["gan_Tj_C"], 0), "RonFitMax": fx(f["limits"]["ron_fit_max_C"], 0)}
-    tag = {"A_Z1": "AZone", "A_Z2": "AZtwo", "A_Z3": "AZthree", "B_Z1": "BZone",
-           "B_Z2": "BZtwo", "B_Z3": "BZthree", "I_Z3": "IZthree", "S1_Z1": "SoneZone",
-           "S1_Z2": "SoneZtwo"}
-    for lab, c in f["cases"].items():
-        k = tag.get(lab)
-        if not k:
-            continue
-        rg = c["regions"]
-        tj = max(rg["hs"]["device"]["Tj_bound_C"], rg["ls"]["device"]["Tj_bound_C"])
-        m[f"Tj{k}"] = fx(tj, 1)
-        m[f"TjMargin{k}"] = fx(150.0 - tj, 0)
-        m[f"Tcap{k}"] = fx(max(rg["caps"]["in_cells"]["max_C"], rg["ind"]["in_cells"]["max_C"]), 1)
-        m[f"Trdl{k}"] = fx(rg["rdl"]["all"]["max_C"], 1)
-        m[f"Tenc{k}"] = fx(rg["encapsulant"]["all"]["max_C"], 1)
-        fails = [x for x, v in c["checks"].items() if isinstance(v, dict) and not v["ok"]]
-        m[f"Nfail{k}"] = str(len(fails))
-        m[f"Feasible{k}"] = "yes" if not fails else "no"
-    # Z3 with the coupled land side: the whole-field maximum bounds every component and material
-    # temperature (feasibility.json evaluated the fields without the land-side heat)
-    for t, v in (("A", "z3_land_t40_A_fvmap"), ("B", "z3_land_t40_B_fvmap")):
-        c = J(SENS / f"etm_Z3_HV_S0__{v}.json")
-        if c:
-            tmax = c["thermal"]["T_max_C"]
-            m[f"Tj{t}Zthree"] = fx(tmax, 1)
-            m[f"TjMargin{t}Zthree"] = fx(150.0 - tmax, 0)
-            m[f"Feasible{t}Zthree"] = "yes" if tmax <= 125.0 else "no"
+    lim = f["limits"]
+    m = {"GanTjMax": fx(lim["gan_Tj_C"], 0), "RonFitMax": fx(lim["ron_fit_max_C"], 0),
+         "DieTmax": fx(lim["die_C"], 0), "IrDropMax": fx(lim["ir_drop_mV_per_rail"], 0),
+         "BgaPowerFracMax": fx(100 * lim["bga_power_site_fraction_max"], 0),
+         "FeasNcases": str(f["summary"]["n_cases"]),
+         "FeasNinfeasible": str(len(f["summary"]["infeasible"])),
+         "FeasNunresolved": str(len(f["summary"]["unresolved"]))}
+    for key, c in f["cases"].items():
+        k = _feas_tag(key)
+        ch = c["checks"]
+        tj = [v for v in (c.get("junction_C") or {}).values() if v is not None]
+        if tj:
+            m[f"Tj{k}"] = fx(max(tj), 1)
+            m[f"TjMargin{k}"] = fx(lim["gan_Tj_C"] - max(tj), 0)
+        rg = c.get("regions") or {}
+        cap = [rg.get("caps_in_cells"), rg.get("ind_in_cells")]
+        if all(x is not None for x in cap):
+            m[f"Tcap{k}"] = fx(max(cap), 1)
+        for name, reg in (("Trdl", "rdl_all"), ("Tenc", "encapsulant"), ("Tboardmax", "board")):
+            if rg.get(reg) is not None:
+                m[f"{name}{k}"] = fx(rg[reg], 1)
+        if c.get("die_T_max_C") is not None:
+            m[f"Tdiemax{k}"] = fx(c["die_T_max_C"], 1)
+        if (ch.get("ir_drop") or {}).get("value") is not None:
+            m[f"VdropMax{k}"] = fx(ch["ir_drop"]["value"], 1)
+            m[f"VdropLoop{k}"] = fx(ch["ir_drop"]["loop_mV"], 1)
+        if (ch.get("bga_current") or {}).get("value") is not None:
+            m[f"BgaPeak{k}"] = fx(ch["bga_current"]["value"], 2)
+        th = [x for x in THERMAL_CHECKS if x in ch]
+        thermal_fail = [x for x in th if ch[x]["ok"] is False]
+        thermal_open = [x for x in th if ch[x]["ok"] is None]
+        m[f"FeasThermal{k}"] = ("no" if thermal_fail else "open" if thermal_open else "yes")
+        for grp, names in (("Solder", ("solder_law", "solder_solidus")),
+                           ("Bga", ("bga_current", "bga_sites")), ("Drop", ("ir_drop",)),
+                           ("Die", ("die",))):
+            oks = [ch[x]["ok"] for x in names if x in ch]
+            m[f"Feas{grp}{k}"] = ("n/a" if not oks else "no" if False in oks
+                                  else "open" if None in oks else "yes")
+        m[f"Nfail{k}"] = str(len(c["fails"]))
+        m[f"Feasible{k}"] = {"feasible": "yes", "infeasible": "no"}.get(c["verdict"], "open")
+        m[f"FeasFails{k}"] = ", ".join(CHECK_LABEL.get(x, x) for x in c["fails"]) or "none"
+        hb = ((c.get("omitted_losses") or {}).get("bundles") or {}).get("high") or {}
+        if hb:
+            m[f"OmitHiFails{k}"] = (", ".join(CHECK_LABEL.get(x, x) for x in hb["fails"])
+                                    or "none")
+            m[f"OmitHiDp{k}"] = fx(hb["dP_w"], 0)
+            for chk in ("mlcc", "ron_fit", "solder_law", "die"):
+                if chk in hb["checks"]:
+                    m[f"OmitHi{chk.title().replace('_', '')}{k}"] = fx(hb["checks"][chk]["value"], 1)
+    for key, rk in (f.get("rankings") or {}).items():
+        st, t = key.split("_")
+        tag = t + ("" if st == f.get("production_state", "SDEC") else
+                   {"S0": "Szero", "S1": "Sone"}.get(st, st))
+        m[f"Rank{tag}"] = (" < ".join(rk["ranked"]) if rk["ranked"] else "none feasible")
+        m[f"RankComplete{tag}"] = "yes" if rk["complete"] else "no"
+        m[f"Excluded{tag}"] = "; ".join(
+            f"{e['arch']} ({', '.join(CHECK_LABEL.get(x, x) for x in (e['fails'] or e['unresolved']))})"
+            for e in rk["excluded"]) or "none"
+    og = f.get("omitted_gap_shift") or {}
+    for t, v in (og.get("by_tier") or {}).items():
+        for b in ("nominal", "high"):
+            bt = "Nom" if b == "nominal" else "Hi"
+            m[f"OmitShiftDirect{t}{bt}"] = fx(v["direct_max_w"][b], 2)
+            m[f"OmitShiftFb{t}{bt}"] = fx(v["feedback_max_w"][b], 1)
+            m[f"OmitShiftTot{t}{bt}"] = fx(v["total_max_w"][b], 1)
+        m[f"OmitSmallestGap{t}"] = fx(v["smallest_gap_w"], 1)
+    return m
+
+
+def bga_count():
+    """The 48-V ball count re-closed at the production waveform (final_closure_pkg_network
+    reclose -> research/final_closure/bga_count_production.json)."""
+    d = J(R / "research/final_closure/bga_count_production.json")
+    if not d:
+        return {}
+    cl = d["closure"]
+    m = {"BgaKeq": fx(d["k_eq"], 2), "BgaNmatch": str(d.get("matched_count") or NA),
+         "BgaNmatchSzero": str(d.get("matched_count_S0") or NA),
+         "BgaIrmsZone": fx(d["currents_A"]["Z1"]["HV_SDEC"], 1)}
+    for a, tag in (("Z1", "Zone"), ("Z2", "Ztwo")):
+        for s, st in (("HV_S0", "Szero"), ("HV_SDEC", "")):
+            v = cl.get(f"{a}__{s}") or {}
+            if v.get("n_min"):
+                m[f"BgaNmin{tag}{st}"] = str(v["n_min"])
+                m[f"BgaPeakAtNmin{tag}{st}"] = fx(v.get("peak_at_n_min_A"), 2)
+        hi = cl.get(f"{a}__HV_SDEC__k_hi") or {}
+        if hi.get("n_min_screen"):
+            m[f"BgaNminKhi{tag}"] = str(hi["n_min_screen"])
+    pn = J(R / "research/final_closure/package_network.json") or {}
+    if pn:
+        conv = pn["convergence"]
+        f1 = max(conv["Z1_supply"]["final"]["i_ball_max_a"],
+                 conv["Z1_return"]["final"]["i_ball_max_a"])
+        m["BgaNcurrent"] = str(pn["matched_count"])
+        m["BgaPeakCurrentCountProd"] = fx(f1 * d["currents_A"]["Z1"]["HV_SDEC"], 2)
+    m.update(bga_sites())
+    return m
+
+
+def bga_sites():
+    """Ball sites carrying power, per compared case (Table V): Z1 its 48-V balls (the case's
+    own count), Z2 the BGA-ring feed of the platform accounting (outside its package-internal
+    boundary, but power sites of the package), Z3 its 1-V balls."""
+    import re
+    import tcpmt_cases as TC
+    pl = J(TR / "platform_inclusive.json") or {}
+    ring = (pl.get("feed_design") or {}).get("Z2_bga_ring") or {}
+    m = {}
+    for st, suf in ((TC.PRODUCTION_STATE, ""), ("S0", "Szero")):
+        for t in TC.TIERS:
+            for a in TC.ARCHS:
+                p = TC.case_path(st, t, a)
+                c = J(p) if p else None
+                if not c:
+                    continue
+                rows = {r["term"]: r for r in c["ledger_rows"]}
+                n = None
+                if "P_BGA_supply" in rows:
+                    n = 2 * int(re.search(r"N=(\d+)", rows["P_BGA_supply"]["conductor"]).group(1))
+                elif a == "Z2" and ring.get("n_per_rail"):
+                    n = 2 * int(ring["n_per_rail"])
+                elif "P_BGA_1V_VDD" in rows:
+                    n = 2 * int(re.search(r"N=(\d+)", rows["P_BGA_1V_VDD"]["conductor"]).group(1))
+                if n is not None:
+                    m[f"BgaSites{t}{ATAG[a]}{suf}"] = str(n)
     return m
 
 
@@ -175,51 +303,60 @@ def _case(f):
 
 
 def variants():
-    """Feedback, die power map and caloric correction, against each tier's base case."""
-    base = {("Z1", "A"): R / "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json",
-            ("Z2", "A"): R / "research/final_closure/etm_Z2_HV_S0_h1.1_r21.json",
-            ("Z3", "A"): SENS / "etm_Z3_HV_S0__z3_top_only.json",
-            ("Z1", "B"): SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
-            ("Z2", "B"): SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
-            ("Z3", "B"): SENS / "etm_Z3_HV_S0__z3_plate_tim.json"}
+    """Feedback, die power map and caloric correction, against each tier's base case: the
+    production state (implemented decoupling, HV_SDEC runs) under the plain names, the S0
+    reference under '...Szero' names. A variant built on a superseded uncoupled Z3 case is never
+    quoted (tcpmt_cases.SUPERSEDED)."""
+    import tcpmt_cases as TC
     m = {}
-    # every expected key exists ("--" until its run is complete), so the paper always builds
-    for (a, t) in base:
-        for tag in ("Fb", "Hot", "Cal"):
-            k = f"{tag}{t}{ATAG[a]}"
-            for f in ("Ploss", "dP", "Tmax", "dT", "Warp", "Du", "Tjoint"):
-                m[f"{k}{f}"] = NA
-            if tag == "Fb":
-                for f in ("GapMean", "GapPv", "Iters", "Conv"):
-                    m[f"{k}{f}"] = NA
+    for st, suf in ((TC.PRODUCTION_STATE, ""), ("S0", "Szero")):
+        scen = TC.SCEN[st]
+        base = {(a, t): TC.case_path(st, t, a) for a in TC.ARCHS for t in TC.TIERS}
+        # every expected key exists ("--" until its run is complete), so the paper always builds
+        for (a, t) in base:
+            for tag in ("Fb", "Hot", "Cal"):
+                k = f"{tag}{t}{ATAG[a]}"
+                for fld in ("Ploss", "dP", "Tmax", "dT", "Warp", "Du", "Tjoint"):
+                    m[f"{k}{fld}{suf}"] = NA
+                if tag == "Fb":
+                    for fld in ("GapMean", "GapPv", "Iters", "Conv"):
+                        m[f"{k}{fld}{suf}"] = NA
+        m.update(_variant_rows(base, scen, suf, TC))
+    return m
+
+
+def _variant_rows(base, scen, suf, TC):
+    m = {}
     for (a, t), bf in base.items():
-        b = _case(bf)
+        b = _case(bf) if bf else None
         if not b:
             continue
-        for tag, f in (("Fb", SENS / f"etm_{a}_HV_S0__tim_warp_fb_{t}.json"),
-                       ("Hot", SENS / f"etm_{a}_HV_S0__die_hotspot_{t}.json"),
-                       ("Cal", SENS / f"etm_{a}_HV_S0__plate_local_h_{t}.json")):
+        for tag, f in (("Fb", SENS / f"etm_{a}_{scen}__tim_warp_fb_{t}.json"),
+                       ("Hot", SENS / f"etm_{a}_{scen}__die_hotspot_{t}.json"),
+                       ("Cal", SENS / f"etm_{a}_{scen}__plate_local_h_{t}.json")):
+            if TC.is_superseded(f):
+                continue
             v = _case(f)
             if not v or v["P"] is None:
                 continue
             k = f"{tag}{t}{ATAG[a]}"
-            m[f"{k}Ploss"] = fx(v["P"], 1)
-            m[f"{k}dP"] = fx(v["P"] - b["P"], 1)
-            m[f"{k}Tmax"] = fx(v["T"], 1)
-            m[f"{k}dT"] = fx(v["T"] - b["T"], 1)
+            m[f"{k}Ploss{suf}"] = fx(v["P"], 1)
+            m[f"{k}dP{suf}"] = fx(v["P"] - b["P"], 1)
+            m[f"{k}Tmax{suf}"] = fx(v["T"], 1)
+            m[f"{k}dT{suf}"] = fx(v["T"] - b["T"], 1)
             if v["warp"] is not None:
-                m[f"{k}Warp"] = fx(v["warp"], 1)
-                m[f"{k}Du"] = fx(v["du"], 2)
-                m[f"{k}Tjoint"] = fx(v["Tj"], 0)
+                m[f"{k}Warp{suf}"] = fx(v["warp"], 1)
+                m[f"{k}Du{suf}"] = fx(v["du"], 2)
+                m[f"{k}Tjoint{suf}"] = fx(v["Tj"], 0)
             if tag == "Fb":
                 fb = J(f)
                 it = fb.get("iterations") or []
                 if it:
                     g = it[0].get("gap") or {}
-                    m[f"{k}GapMean"] = fx(g.get("gap_mean_um"), 0)
-                    m[f"{k}GapPv"] = fx(g.get("gap_pv_um"), 0)
-                    m[f"{k}Iters"] = str(len(it))
-                m[f"{k}Conv"] = "yes" if fb.get("converged") else "no"
+                    m[f"{k}GapMean{suf}"] = fx(g.get("gap_mean_um"), 0)
+                    m[f"{k}GapPv{suf}"] = fx(g.get("gap_pv_um"), 0)
+                    m[f"{k}Iters{suf}"] = str(len(it))
+                m[f"{k}Conv{suf}"] = "yes" if fb.get("converged") else "no"
     return m
 
 
@@ -262,7 +399,7 @@ def agents():
     m = {}
     for p in ("z3_land_coupled.json", "input_decoupling.json", "flying_caps.json",
               "omitted_losses.json", "count_optimum_etm.json", "solder_studies.json",
-              "fullpkg_verification.json"):
+              "fullpkg_verification.json", "production_converter.json"):
         d = J(TR / p)
         if d and isinstance(d.get("macros"), dict):
             m.update({k: str(v) for k, v in d["macros"].items()})
@@ -378,9 +515,11 @@ def decap():
         m["FlyEsrLoss"] = fx(s["P_cap_ESR_W"]["10pct_model"], 1)
         m["FlyEsrLossLib"] = fx(s["P_cap_ESR_W"]["library_2p5mohm"], 2)
     # implemented decoupling for the other cases (sdec_A/B), coupled
+    import tcpmt_cases as TC
     for a in ("Z1", "Z2", "Z3"):
         for t in ("A", "B"):
-            c = _case(SENS / f"etm_{a}_HV_SDEC__sdec_{t}.json")
+            pth = TC.case_path(TC.PRODUCTION_STATE, t, a)
+            c = _case(pth) if pth else None
             k = f"Sdec{t}{ATAG[a]}"
             if c and c.get("P") is not None:
                 m[f"{k}Ploss"] = fx(c["P"], 1)
@@ -414,9 +553,11 @@ def solder():
     ch_a, ch_b = [], []
     for lab, v in st.items():
         t, a = lab.split("_")
-        m[f"Eps{t}{ATAG[a]}"] = fx(1e3 * v["stabilised"], 2)
-        m[f"EpsU{t}{ATAG[a]}"] = fx(100 * v["U_stab_num"], 1)
-        m[f"EpsFour{t}{ATAG[a]}"] = fx(1e3 * v["v4"], 2)
+        # the solder study solved the S0 tier cases: the S0 REFERENCE names (review round 2:
+        # the production state is the implemented decoupling, solved by the campaign)
+        m[f"Eps{t}{ATAG[a]}Szero"] = fx(1e3 * v["stabilised"], 2)
+        m[f"EpsU{t}{ATAG[a]}Szero"] = fx(100 * v["U_stab_num"], 1)
+        m[f"EpsFour{t}{ATAG[a]}Szero"] = fx(1e3 * v["v4"], 2)
         (ch_a if t == "A" else ch_b).append(abs(v["change_4_to_48_rel"]))
     m["SolderStabA"] = fx(100 * max(ch_a), 1)
     m["SolderStabBLo"], m["SolderStabBHi"] = fx(100 * min(ch_b), 1), fx(100 * max(ch_b), 1)
@@ -436,36 +577,42 @@ def solder():
     zl = J(TR / "solder_z3land.json")              # Z3 with the coupled land side
     for t, v in ((zl or {}).get("cases") or {}).items():
         if v.get("stabilised") is not None:
-            m[f"Eps{t}Zthree"] = fx(1e3 * v["stabilised"], 2)
+            m[f"Eps{t}ZthreeSzero"] = fx(1e3 * v["stabilised"], 2)
             if v.get("U_stab_num") is not None:
-                m[f"EpsU{t}Zthree"] = fx(100 * v["U_stab_num"], 1)
+                m[f"EpsU{t}ZthreeSzero"] = fx(100 * v["U_stab_num"], 1)
     return m
 
 
 def vdrop():
-    """Mean static drop of the 1-V path between converter output and die, per tier case:
-    the 1-V conductor loss divided by the load current (both rails, supply + return)."""
-    cases = {("A", "Z1"): R / "research/final_closure/etm_Z1_HV_S0_h1.1_r21.json",
-             ("A", "Z2"): R / "research/final_closure/etm_Z2_HV_S0_h1.1_r21.json",
-             ("A", "Z3"): SENS / "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json",
-             ("B", "Z1"): SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
-             ("B", "Z2"): SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
-             ("B", "Z3"): SENS / "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json"}
-    land = J(TR / "z3_land_coupled.json") or {}
-    pick = land.get("recommended_case_files") or {}
-    for t in ("A", "B"):
-        if pick.get(t) and (SENS / pick[t]).is_file():
-            cases[(t, "Z3")] = SENS / pick[t]
+    """Static 1-V drop per tier case (review round 2): the per-rail MAXIMUM drop between the
+    converter output and the die (tcpmt_ir_drop: series maxima of the rail -- lumped rows, Z3's
+    land side and board planes, the cell's output plane), for the production state under the
+    plain names and the S0 reference under '...Szero'; the earlier loss/current mean is kept
+    as VdropMean."""
+    import tcpmt_cases as TC
+    import tcpmt_ir_drop as IR
     m = {}
-    for (t, a), f in cases.items():
-        c = J(f)
-        if not c:
-            continue
-        p1 = sum(r["P_w"] for r in c["ledger_rows"] if r.get("rail") == "1V")
-        v = 1e3 * p1 / 1000.0                                    # mV at 1000 A
-        m[f"Vdrop{t}{ATAG[a]}"] = fx(v, 2 if v < 1 else 1)
+    for st, suf in ((TC.PRODUCTION_STATE, ""), ("S0", "Szero")):
+        for t in TC.TIERS:
+            for a in TC.ARCHS:
+                p = TC.case_path(st, t, a)
+                c = J(p) if p else None
+                if not c:
+                    continue
+                d = IR.static_drop(c, n_vr=(c.get("design") or {}).get("n_vr"))
+                k = f"{t}{ATAG[a]}{suf}"
+                m[f"Vdrop{k}"] = fx(d["max_mV"], 1)
+                m[f"VdropVdd{k}"] = fx(d["VDD_mV"], 1)
+                m[f"VdropGnd{k}"] = fx(d["GND_mV"], 1)
+                m[f"VdropLoop{k}"] = fx(d["loop_mV"], 1)
+                v = d["mean_loss_over_I_mV"]
+                m[f"VdropMean{k}"] = fx(v, 2 if v < 1 else 1)
+                if a == "Z3":
+                    tl = d["terms"]["VDD"]
+                    m[f"VdropLand{k}"] = fx(tl.get("land_side_sheet"), 1)
+                    m[f"VdropPlanes{k}"] = fx(tl.get("board_plane_sheet"), 1)
+    m["VdropLimit"] = fx(IR.LIMIT_MV_PER_RAIL, 0)
     return m
-
 
 
 def z3land():
@@ -560,7 +707,8 @@ def countopt():
 
 def macros():
     m = {}
-    for f in (cooling, feasibility, dse, variants, platform, uncertainty, omitted, fullpkg, decap, solder, vdrop, z3land, feedback_passes, countopt, agents):
+    for f in (cooling, feasibility, bga_count, dse, variants, platform, uncertainty, omitted,
+              fullpkg, decap, solder, vdrop, z3land, feedback_passes, countopt, agents):
         try:
             m.update(f())
         except Exception as e:          # a malformed artifact must not stop the paper build

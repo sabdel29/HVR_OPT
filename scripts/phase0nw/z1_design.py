@@ -184,6 +184,23 @@ def compiled(path=None):
     return _compiled(str(config_path(path).resolve()))
 
 
+# --------------------------------------------------------------------------- design point
+# TCPMT review round 2: the regulator count and topology of the converter a run uses come from
+# the Z1 config in force -- the production config's converter block, or a candidate's design:
+# block -- never from a literal, so the campaign can run the 49-cell point or another one (e.g.
+# M = 36, N4K4K_A2) by pointing HVR_Z1_CONFIG at that design's config.
+def design_point(path=None) -> dict:
+    """{'n_vr', 'topology' (None = the synthesis's free pick, the production behaviour), 'tag',
+    'production', 'config'} of the design in force."""
+    p = config_path(path)
+    if is_default(path):
+        return {"n_vr": int(raw(path)["converter"]["cells"]), "topology": None, "tag": "",
+                "production": True, "config": str(p)}
+    d = declared(path)
+    return {"n_vr": int(d["n_vr"]), "topology": topology(path), "tag": str(d["tag"]),
+            "production": False, "config": str(p)}
+
+
 def routing_design(base: dict, path=None) -> dict:
     """routing.DESIGN for the design in force: `base` itself on the production config, else
     rebuilt from the compiled design by the rule that produced the production dict

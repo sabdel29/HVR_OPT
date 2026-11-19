@@ -61,16 +61,37 @@ def _z1_design():
 
 
 def compiled_design():
-    if "d" not in _DESIGN_CACHE:
+    """The converter of the design in force, synthesized under the production rules
+    (electrical.production_rules). The cache is keyed by those rules, so a process that pins a
+    stored case's lineage (electrical.pinned_rules) gets that lineage's converter."""
+    import electrical as EL
+    sig = tuple(sorted(EL.production_rules().items()))
+    if "d" not in _DESIGN_CACHE or _DESIGN_CACHE.get("rules") != sig:
         Z1D = _z1_design()
         if Z1D.is_default():
-            d, g, why = kw1.design_1kw()
+            # the count of the production config (49 cells); the topology is the synthesis's
+            # own pick, as it always was (kw1.design_1kw at its defaults)
+            d, g, why = kw1.design_1kw(m_vr=Z1D.design_point()["n_vr"])
         else:                       # a count-optimal candidate (HVR_Z1_CONFIG), compiled
             d, why = Z1D.compiled(), "realizable"    # and checked against its config
         if d is None:
-            raise RuntimeError(f"no compiled converter: {why}")
+            raise RuntimeError(f"no compiled converter under {dict(sig)}: {why}")
         _DESIGN_CACHE["d"] = d
+        _DESIGN_CACHE["rules"] = sig
     return _DESIGN_CACHE["d"]
+
+
+def design_identity() -> dict:
+    """What a ledger row records about the converter it was evaluated with (review round 2):
+    the rules, parts, frequency and the capacitor ESR used."""
+    import electrical as EL
+    d = compiled_design()
+    a = d.arch
+    return {"rules": dict(d.rules or EL.production_rules()), "label": d.label,
+            "n_vr": n_vr(), "topology": [a.N, a.K, a.K_A],
+            "hs": d.hs.part_number, "ls": d.ls.part_number, "inductor": d.inductor.name,
+            "capacitor": d.capacitor.name, "cap_esr_mohm": float(d.capacitor.esr_mohm),
+            "f_sw_hz": float(d.f_sw_hz)}
 
 
 def n_vr() -> int:
@@ -94,18 +115,17 @@ def converter_terms(t_c: float) -> dict:
     hs = dc_replace(d.hs, R_DS_ON=rdson_at(d.hs.R_DS_ON, t_c, a_hs))
     ls = dc_replace(d.ls, R_DS_ON=rdson_at(d.ls.R_DS_ON, t_c, a_ls))
     ind = dc_replace(d.inductor, r_dcr_mohm=dcr_at(d.inductor.r_dcr_mohm, t_c))
-    # the production lineage keeps the published C_OSS and gate-resistance terms (engine defaults:
-    # corrected since the TCPMT revision); HVR_PRODUCTION_COSS_RULE / _RG_RULE switch them, as in
-    # electrical.loss_at
+    # the loss terms of the converter's own lineage (electrical.pin_loss_rules: the C_oss and
+    # gate-resistance switches the design was synthesized under), as in electrical.loss_at
     import HVR_FULL_OPT_EPC_V2 as _H
-    from electrical import _pin_production_rules, _restore_rules
-    prev_rules = _pin_production_rules(_H, ("COSS_RULE", "RG_RULE"))
+    import electrical as _EL
+    prev = _EL.pin_loss_rules(_H, d)
     try:
         lr = compute_total_loss(d.arch, LossModelInputs(
             hs_device=hs, ls_device=ls, inductor=ind, capacitor=d.capacitor,
             I_out=d.i_out_a, V_out=d.v_out, V_in=d.v_in, f_sw=d.f_sw_hz))
     finally:
-        _restore_rules(_H, prev_rules)
+        _EL._restore_rules(_H, prev)
     dec = converter_decomposition(d.arch, hs, ls, ind, d.capacitor, d.i_out_a,
                                   d.v_out, d.v_in, d.f_sw_hz, lr)
     dec["p_conv_total_w"] = lr.total_loss * n_vr()

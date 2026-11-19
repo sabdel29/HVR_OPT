@@ -60,23 +60,30 @@ RHO_CU_20 = 1.72e-8                      # Ohm m, reference of the FEM AC-resist
 MU0 = 4e-7 * math.pi
 
 # ---------------------------------------------------------------------------------- cases
-CASES = {
-    "A_Z1": ("cooling A (top plate)", "Z1", "etm_Z1_HV_S0_h1.1_r21.json"),
-    "A_Z2": ("cooling A (top plate)", "Z2", "etm_Z2_HV_S0_h1.1_r21.json"),
-    "A_Z3_toponly": ("cooling A (top plate)", "Z3", "sensitivity/etm_Z3_HV_S0__z3_top_only.json"),
-    "A_Z3_secondplate": ("production Z3 (interface-free second plate)", "Z3",
-                         "etm_Z3_HV_S0_h1.1_r21.json"),
-    "B_Z1": ("cooling B (top + bottom plate)", "Z1",
-             "sensitivity/etm_Z1_HV_S0__z1_bottom_plate_tim.json"),
-    "B_Z2": ("cooling B (top + bottom plate)", "Z2", "sensitivity/etm_Z2_HV_S0__z2_cooled_tim.json"),
-    "B_Z3": ("cooling B (top + bottom plate)", "Z3", "sensitivity/etm_Z3_HV_S0__z3_plate_tim.json"),
-}
-PAIRS = [  # (better-in-paper, worse-in-paper) under one cooling configuration
-    ("A_Z1", "A_Z2"), ("A_Z1", "A_Z3_toponly"), ("A_Z2", "A_Z3_toponly"),
-    ("B_Z2", "B_Z3"), ("B_Z2", "B_Z1"), ("B_Z3", "B_Z1"),
-    ("A_Z3_secondplate", "A_Z1"), ("A_Z3_secondplate", "A_Z2"),
-]
-HEADLINE = [("A_Z1", "A_Z2"), ("B_Z2", "B_Z3")]
+#: review round 2: the compared cases come from tcpmt_cases -- the PRODUCTION state (implemented
+#: input decoupling) by default, TCPMT_OMIT_STATE=S0 for the reference -- with Z3 on its COUPLED
+#: land side; the superseded uncoupled Z3 cases (z3_top_only, z3_plate_tim, the interface-free
+#: second plate) are no longer evaluated. A case not run yet is left out.
+def _registry_cases():
+    sys.path.insert(0, str(REPO / "scripts"))
+    import tcpmt_cases as TC
+    st = os.environ.get("TCPMT_OMIT_STATE", TC.PRODUCTION_STATE)
+    label = {"A": "cooling A (top plate)", "B": "cooling B (top + bottom plate)"}
+    out = {}
+    for t in TC.TIERS:
+        for a in TC.ARCHS:
+            pth = TC.case_path(st, t, a)
+            if pth is not None:
+                out[f"{t}_{a}"] = (f"{label[t]}, {TC.STATE_LABEL[st]}", a,
+                                   pth.relative_to(FC).as_posix())
+    return out
+
+
+CASES = _registry_cases()
+PAIRS = [p for p in (  # (better-in-paper, worse-in-paper) under one cooling configuration
+    ("A_Z1", "A_Z2"), ("A_Z1", "A_Z3"), ("A_Z2", "A_Z3"),
+    ("B_Z2", "B_Z3"), ("B_Z2", "B_Z1"), ("B_Z3", "B_Z1")) if p[0] in CASES and p[1] in CASES]
+HEADLINE = [p for p in (("A_Z1", "A_Z2"), ("B_Z2", "B_Z3")) if p in PAIRS]
 
 # ------------------------------------------------------------------------------ inputs
 DIG = json.loads(INP.read_text())

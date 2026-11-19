@@ -1,177 +1,672 @@
-"""Component- and material-temperature feasibility of every compared case (TCPMT review MC5).
+"""The feasibility stage (TCPMT review round 2): every declared limit, on every case and variant,
+BEFORE any ranking.
 
-For each case, from its CONVERGED nodal field on the production mesh (scratch/fields), the
-maximum and mean temperature of every tier and material region, inside the cell footprints
-where the region holds devices. The power-device junction is bounded from the tier maximum
-by the device's own junction-to-case resistance at its dissipated power (conservative: the
-homogenised tier temperature is a die-average, the junction sits on one face).
+A candidate that fails any limit is not ranked. Every case file of the study is evaluated --
+the compared cases of each input state (tcpmt_cases: production = implemented decoupling,
+references S0 and S1), the robustness variants (interface feedback, die hot spot, conductivity,
+cooling-model form, decoupling, attach/board/TSV decisions), case A1 (rated flying capacitors)
+and the regulator-count study.
 
-Limits (declared, with sources):
-  GaN FETs EPC2014C / EPC2057   T_J <= 150 C (datasheets, Maximum Ratings); the R_DS(on)
-                                temperature coefficients are fitted over 25-125 C
-  solder law (SAC305)           calibrated <= 125 C; solidus 217 C
-  MLCC flying / output caps     X7R/X7S class <= 125 C (declared class of the library parts)
-  build-up dielectric (RDL)     Tg ~ 150 C (ABF-class film, declared)
-  encapsulant / underfill       Tg ~ 150 C (declared)
-  board laminate (high-Tg FR-4) Tg ~ 170 C (declared)
+LIMITS (declared, with sources; LIMITS below)
+  GaN junction        T_J <= 150 C per device tier (EPC2014C / EPC2057 datasheets): the tier's
+                      maximum inside the cells plus the device's R_thJC at its own dissipation
+                      (P_tier / (N cells x devices per cell)); never the whole-field maximum
+  R_DS(on) fit        the junction bound <= 125 C (the datasheet curves the coefficients are
+                      fitted over span 25-125 C)
+  MLCC                X7R/X7S/X7T class <= 125 C: flying-capacitor tier and the inductor tier
+                      (it holds C_out), in the cells
+  inductor            <= 125 C (inductor tier in the cells)
+  build-up dielectric Tg ~ 150 C, every RDL tier element (converter and package RDL)
+  encapsulant         Tg ~ 150 C, converter-tier elements outside the cells
+  board laminate      Tg ~ 170 C (high-Tg FR-4 class), every board element
+  processor die       T_die,max <= 105 C (NEW, declared): die_T_max_C of the case file when the
+                      chain recorded it, else the die layer of the converged field
+  solder law          the hottest joint of the all-site search <= 125 C (the calibrated range of
+                      the SAC305 law; the critical joint is reported too); solidus 217 C
+  BGA provisioning    (a) every power ball at or below 1.5 A (the 1.5-A engineering rule) at the
+                      case's own waveform: the solved per-ball peak fraction of the package
+                      network at the case's ball count x the case's 48-V RMS current (Z1; Z2's
+                      BGA-ring feed); Z3's 1-V balls at DC with equal sharing; (b) at least 25 %
+                      of the package's own ball sites left for signal and auxiliary nets
+  static IR drop      per-rail MAXIMUM static drop of the 1-V path <= 30 mV (tcpmt_ir_drop)
+  operating point     the E-T fixed point (and, for the interface feedback, the feedback
+                      iteration) converged; a run-away has no operating point
 
-    python tcpmt_feasibility.py      -> research/tcpmt_revision/feasibility.json
+SOURCES OF THE REGION TEMPERATURES, in order: the case's thermal.region_T_max_C (recorded by the
+chain since review round 2) / die_T_max_C; the stored converged deck and field
+(tcpmt_region_temps.deck_region_maxima, located by tcpmt_cases.converged_field); else the
+whole-field peak as a BOUND -- a check that passes on the bound passes, one that fails only on
+the bound is UNRESOLVED (the candidate is then not ranked either).
+
+OMITTED CONVERTER LOSSES. The margins are re-checked with the high bundle of
+research/tcpmt_revision/omitted_losses.json (dead time, core, AC winding, dielectric) plus its
+electrothermal feedback, each region raised by its own dT/dP from the case's first two E-T
+iterations (the slope the omitted-loss study used).
+
+    python tcpmt_feasibility.py [--no-fields]   -> research/tcpmt_revision/feasibility.json
 """
 from __future__ import annotations
 
+import csv
 import json
+import math
 import os
 import sys
 from pathlib import Path
 
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
-import numpy as np  # noqa: E402
 
 R = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(R / "scripts"))
-import final_closure_physical_etm as E                              # noqa: E402
-import final_closure_ledger as FL                                   # noqa: E402
+for _p in ("scripts/phase0nw", "scripts/phase0mr", "scripts/phase0d", "scripts"):
+    if str(R / _p) not in sys.path:
+        sys.path.insert(0, str(R / _p))
+import tcpmt_cases as TC                                            # noqa: E402
 
-FIELDS = Path(os.environ.get("HVR_FIELDS",
-                             "/home/beams0/SABDELZAHER/ETM_project/scratch/fields"))
-SENS = R / "research" / "final_closure" / "sensitivity"
-OUT = R / "research" / "tcpmt_revision" / "feasibility.json"
+FC = TC.FC
+SENS = TC.SENS
+TR = TC.TR
+OUT = TR / "feasibility.json"
 
-CASES = {  # label -> (arch, field dir, case file)
-    "A_Z1": ("Z1", "etm_Z1_HV_S0_r21", E.case_path("Z1", "HV_S0")),
-    "A_Z2": ("Z2", "etm_Z2_HV_S0_r21", E.case_path("Z2", "HV_S0")),
-    "A_Z3": ("Z3", "etm_Z3_HV_S0__z3_top_only", SENS / "etm_Z3_HV_S0__z3_top_only.json"),
-    "B_Z1": ("Z1", "etm_Z1_HV_S0__z1_bottom_plate_tim",
-             SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json"),
-    "B_Z2": ("Z2", "etm_Z2_HV_S0__z2_cooled_tim", SENS / "etm_Z2_HV_S0__z2_cooled_tim.json"),
-    "B_Z3": ("Z3", "etm_Z3_HV_S0__z3_plate_tim", SENS / "etm_Z3_HV_S0__z3_plate_tim.json"),
-    "I_Z3": ("Z3", "etm_Z3_HV_S0_r21", E.case_path("Z3", "HV_S0")),
-    "S1_Z1": ("Z1", "etm_Z1_HV_S1_r21", E.case_path("Z1", "HV_S1")),
-    "S1_Z2": ("Z2", "etm_Z2_HV_S1_r21", E.case_path("Z2", "HV_S1")),
-}
+LIMITS = {"gan_Tj_C": 150.0, "ron_fit_max_C": 125.0, "mlcc_C": 125.0, "inductor_C": 125.0,
+          "buildup_Tg_C": 150.0, "encapsulant_Tg_C": 150.0, "board_Tg_C": 170.0,
+          "die_C": 105.0, "solder_cal_C": 125.0, "solder_solidus_C": 217.0,
+          "bga_A_per_ball": 1.5, "bga_power_site_fraction_max": 0.75,
+          "ir_drop_mV_per_rail": 30.0}
+LIMIT_SOURCES = {
+    "gan_Tj_C": "EPC2014C / EPC2057 datasheets, Maximum Ratings",
+    "ron_fit_max_C": "datasheet normalized R_DS(on)(T_J) curves the coefficients are fitted "
+                     "over (25-125 C; scripts/phase0d/electrical.py)",
+    "mlcc_C": "X7R/X7S/X7T temperature class of the library parts",
+    "inductor_C": "declared (125 C class of the interposer inductor)",
+    "buildup_Tg_C": "ABF-class build-up film Tg (declared)",
+    "encapsulant_Tg_C": "encapsulant / underfill Tg (declared)",
+    "board_Tg_C": "high-Tg FR-4 class laminate (declared)",
+    "die_C": "processor die junction limit (DECLARED, review round 2)",
+    "solder_cal_C": "calibrated range of the SAC305 constitutive law",
+    "solder_solidus_C": "SAC305 solidus",
+    "bga_A_per_ball": "1.5-A per-ball engineering rule (the count closure's criterion)",
+    "bga_power_site_fraction_max": "DECLARED: at least 25 % of the package's own ball sites "
+                                   "left for signal and auxiliary nets",
+    "ir_drop_mV_per_rail": "DECLARED: 30 mV per rail (3 % of the 1-V rail), maximum static "
+                           "drop of the 1-V path"}
 #: datasheet values (review_work/dl_epc): T_J max, R_thetaJC (K/W), die (mm)
-DEVICES = {"hs": {"part": "EPC2014C", "Tj_max_C": 150.0, "R_jc_K_W": 3.6,
-                  "R_jb_K_W": 9.3, "die_mm": [1.7, 1.1], "V_DS_V": 40.0, "I_D_A": 10.0,
-                  "per_cell": 3},
-           "ls": {"part": "EPC2057", "Tj_max_C": 150.0, "R_jc_K_W": 2.3,
-                  "R_jb_K_W": 7.0, "die_mm": [1.5, 1.2], "V_DS_V": 50.0, "I_D_A": 9.6,
-                  "per_cell": 3}}
-LIMITS = {"gan_Tj_C": 150.0, "ron_fit_max_C": 125.0, "solder_cal_C": 125.0,
-          "solder_solidus_C": 217.0, "mlcc_C": 125.0, "inductor_C": 125.0,
-          "buildup_Tg_C": 150.0, "encapsulant_Tg_C": 150.0, "board_Tg_C": 170.0}
+DEVICES = {"EPC2014C": {"Tj_max_C": 150.0, "R_jc_K_W": 3.6, "R_jb_K_W": 9.3,
+                        "die_mm": [1.7, 1.1], "V_DS_V": 40.0, "I_D_A": 10.0},
+           "EPC2057": {"Tj_max_C": 150.0, "R_jc_K_W": 2.3, "R_jb_K_W": 7.0,
+                       "die_mm": [1.5, 1.2], "V_DS_V": 50.0, "I_D_A": 9.6}}
+#: the BGA field of each package outline (0.8-mm lattice): Z2 has the board opening
+BGA_SITES = {"Z1": 1369, "Z3": 1369, "Z2": 528, "Z2BF": 528}
+#: a temperature check within this of its limit is reported MARGINAL (the numerical uncertainty
+#: of the compared peak temperatures is 1.9-3.2 K, uncertainty.json); the verdict is unchanged
+MARGINAL_K = 2.0
+
+LAYER_KEYS = ("hs", "ls", "caps", "ind")
 
 
-def node_stats(m, Tn, ids):
-    if len(ids) == 0:
-        return None
-    nodes = np.unique(m.elems[ids - 1].ravel())
-    t = Tn[nodes - 1]
-    return {"max_C": float(np.nanmax(t)), "mean_C": float(np.nanmean(t)),
-            "n_elems": int(len(ids))}
+# ------------------------------------------------------------------ the case list
+def _variant_name(path):
+    s = Path(path).stem
+    return s.split("__", 1)[1] if "__" in s else None
 
 
-def device_power(case, key):
-    """Tier loss of one device kind (sum of ledger rows deposited in that tier)."""
-    lay = FL.LAYERS[case["arch"]][key]
-    p = sum(r["P_w"] for r in case["ledger_rows"] if r["deposit_layer"] == lay)
-    return p
+def classify(path, case):
+    """(role, state, tier) of a case file. Roles: compared (a cell of a tcpmt_cases table),
+    variant (robustness / design variant), count (regulator-count study), superseded."""
+    p = Path(path)
+    for st in TC.STATES:
+        for t in TC.TIERS:
+            for a in TC.ARCHS:
+                q = TC.case_path(st, t, a)
+                if q is not None and q.resolve() == p.resolve():
+                    return "compared", st, t
+    if TC.is_superseded(p):
+        return "superseded", _state(case), _tier(p, case)
+    if "countopt" in p.parts:
+        return "count", _state(case), "A"
+    return "variant", _state(case), _tier(p, case)
 
 
-def evaluate(label, arch, field, case_file):
-    import production_et as PE
-    case = json.loads(Path(case_file).read_text())
-    m, mats, st, tiles, info = E.build(arch, E.PRODUCTION_H_XY, E.PRODUCTION_REFINE)
-    Tn = PE.ccxio.read_frd(FIELDS / field / "thermal_converged.frd")["NDTEMP"][
-        1:m.n_nodes + 1, 0]
-    if abs(float(np.nanmax(Tn)) - case["thermal"]["T_max_C"]) > 1e-3:
-        raise RuntimeError(f"{field} is not the converged field of {case_file}")
-    lay = FL.LAYERS[arch]
-    out = {"arch": arch, "field": field, "case": Path(case_file).name,
-           "T_max_C": case["thermal"]["T_max_C"], "regions": {}}
-    names = [L.name for L in m.layers]
-    for key in ("hs", "ls", "caps", "ind", "attach", "lv", "die", "bga", "pads", "tsv"):
-        if key not in lay:
-            continue
-        layers = lay[key] if isinstance(lay[key], list) else [lay[key]]
-        ids_all = np.concatenate([PE._layer_elems(m, x) for x in layers])
-        ids_in = E._region_elems(m, layers, True, tiles)
-        out["regions"][key] = {"layers": layers, "all": node_stats(m, Tn, ids_all),
-                               "in_cells": node_stats(m, Tn, ids_in)}
-    rdl = lay["rdl"]
-    out["regions"]["rdl"] = {"layers": rdl, "all": node_stats(
-        m, Tn, np.concatenate([PE._layer_elems(m, x) for x in rdl]))}
-    # encapsulant: converter-tier elements outside the cell footprints
-    conv = [lay[k] for k in ("hs", "ls", "caps", "ind")]
-    ids_c = np.concatenate([PE._layer_elems(m, x) for x in conv])
-    ids_in = E._region_elems(m, conv, True, tiles)
-    enc = np.setdiff1d(ids_c, ids_in)
-    out["regions"]["encapsulant"] = {"layers": conv, "all": node_stats(m, Tn, enc)}
-    board = [n for n in names if n.startswith("board") or n.startswith("pcb")]
-    if board:
-        ids_b = np.concatenate([PE._layer_elems(m, x) for x in board])
-        out["regions"]["board"] = {"layers": board, "all": node_stats(m, Tn, ids_b)}
-    # junction bound per device kind
-    for key, dev in DEVICES.items():
-        p_tier = device_power(case, key)
-        p_dev = p_tier / (FL.N_VR * dev["per_cell"])
-        t_tier = out["regions"][key]["in_cells"]["max_C"]
-        out["regions"][key]["device"] = {
-            **dev, "P_tier_W": p_tier, "P_device_W": p_dev,
-            "Tj_bound_C": t_tier + p_dev * dev["R_jc_K_W"],
-            "margin_K": dev["Tj_max_C"] - (t_tier + p_dev * dev["R_jc_K_W"])}
-    crit = case.get("mechanics", {}).get("joint_search", {})
-    ranked = crit.get("ranked") or []
-    out["joints"] = {"T_critical_C": crit.get("critical", {}).get("T_C") if crit else None,
-                     "T_hottest_C": max((r["T_C"] for r in ranked), default=None)}
-    out["checks"] = checks(out)
-    print(label, {k: round(v["device"]["Tj_bound_C"], 1) for k, v in out["regions"].items()
-                  if "device" in v}, flush=True)
+def _state(case):
+    inv = {v: k for k, v in TC.SCEN.items()}
+    return inv.get(case.get("scenario"), case.get("scenario"))
+
+
+def _tier(path, case):
+    v = _variant_name(path) or ""
+    if case.get("tier") in ("A", "B"):
+        return case["tier"]
+    if v.endswith("_A") or v.endswith("_A_fvmap") or "_A_" in v or v in ("z3_top_only",):
+        return "A"
+    if (v.endswith("_B") or "_B_" in v or v.endswith("_B_fvmap") or v in (
+            "z1_bottom_plate_tim", "z2_cooled_tim", "z3_plate_tim")):
+        return "B"
+    if v == "z2_cooled" or (case.get("arch") == "Z3" and not v):
+        return "I"            # interface-free bottom plate (a bound)
+    return "A"
+
+
+def all_case_files():
+    out = []
+    for f in sorted(FC.glob("etm_*_h1.1_r21.json")):
+        out.append(f)
+    out += sorted(SENS.glob("etm_*__*.json"))
+    out += sorted((TR / "countopt").glob("etm_Z1_*_h1.1_r21.json"))
     return out
 
 
-def checks(o):
-    rg = o["regions"]
-    c = {}
-    tj = max(rg["hs"]["device"]["Tj_bound_C"], rg["ls"]["device"]["Tj_bound_C"])
-    c["gan_Tj"] = {"value_C": tj, "limit_C": LIMITS["gan_Tj_C"], "ok": tj <= LIMITS["gan_Tj_C"]}
-    c["ron_fit"] = {"value_C": max(rg["hs"]["in_cells"]["max_C"], rg["ls"]["in_cells"]["max_C"]),
-                    "limit_C": LIMITS["ron_fit_max_C"]}
-    c["ron_fit"]["ok"] = c["ron_fit"]["value_C"] <= LIMITS["ron_fit_max_C"]
-    t_cap = rg["caps"]["in_cells"]["max_C"]
-    t_ind = rg["ind"]["in_cells"]["max_C"]
-    c["mlcc"] = {"value_C": max(t_cap, t_ind), "limit_C": LIMITS["mlcc_C"],
-                 "ok": max(t_cap, t_ind) <= LIMITS["mlcc_C"]}
-    c["inductor"] = {"value_C": t_ind, "limit_C": LIMITS["inductor_C"],
-                     "ok": t_ind <= LIMITS["inductor_C"]}
-    tj_s = o["joints"]["T_hottest_C"]
-    c["solder_cal"] = {"value_C": o["joints"]["T_critical_C"], "limit_C": LIMITS["solder_cal_C"]}
-    c["solder_cal"]["ok"] = (o["joints"]["T_critical_C"] or 0) <= LIMITS["solder_cal_C"]
-    c["solder_solidus"] = {"value_C": tj_s, "limit_C": LIMITS["solder_solidus_C"],
-                           "ok": (tj_s or 0) <= LIMITS["solder_solidus_C"]}
-    c["buildup"] = {"value_C": rg["rdl"]["all"]["max_C"], "limit_C": LIMITS["buildup_Tg_C"]}
-    c["buildup"]["ok"] = c["buildup"]["value_C"] <= LIMITS["buildup_Tg_C"]
-    c["encapsulant"] = {"value_C": rg["encapsulant"]["all"]["max_C"],
-                        "limit_C": LIMITS["encapsulant_Tg_C"]}
-    c["encapsulant"]["ok"] = c["encapsulant"]["value_C"] <= LIMITS["encapsulant_Tg_C"]
-    if "board" in rg:
-        c["board"] = {"value_C": rg["board"]["all"]["max_C"], "limit_C": LIMITS["board_Tg_C"]}
-        c["board"]["ok"] = c["board"]["value_C"] <= LIMITS["board_Tg_C"]
-    c["all_ok"] = all(v["ok"] for v in c.values() if isinstance(v, dict))
-    return c
+def runaway_records():
+    """Interface-feedback runs without a converged case file (run-away): the last pass."""
+    rv = TR / "review_variants"
+    out = []
+    for a in TC.ARCHS:
+        for scen in sorted({p.name.split("_")[2] + "_" + p.name.split("_")[3]
+                            for p in rv.glob(f"etm_{a}_HV_*__tim_warp_fb_*_it*.json")}):
+            for t in ("A", "B"):
+                if (SENS / f"etm_{a}_{scen}__tim_warp_fb_{t}.json").is_file():
+                    continue
+                its = sorted(rv.glob(f"etm_{a}_{scen}__tim_warp_fb_{t}_it*.json"),
+                             key=lambda p: int(p.stem.rsplit("_it", 1)[1]))
+                if its:
+                    out.append(its[-1])
+    return out
 
 
-def main(labels=None):
-    res = json.loads(OUT.read_text()) if OUT.is_file() else {}
-    res.setdefault("limits", LIMITS)
-    res.setdefault("devices", DEVICES)
-    res.setdefault("cases", {})
-    for label, (arch, field, cf) in CASES.items():
-        if labels and label not in labels:
+# ------------------------------------------------------------------ inputs per case
+def design_of(case):
+    """n_vr, devices per cell, parts of the converter the case was computed with."""
+    d = case.get("design") or {}
+    conv = next((r.get("converter") for r in case.get("ledger_rows") or []
+                 if isinstance(r.get("converter"), dict)), None) or {}
+    topo = d.get("topology") or {}
+    if isinstance(topo, dict) and topo:
+        n_, k_ = int(topo["N"]), int(topo["K"])
+    elif conv.get("topology"):
+        n_, k_ = int(conv["topology"][0]), int(conv["topology"][1])
+    else:
+        n_, k_ = 3, 3                          # the production N3K3K_A2 (legacy records)
+    return {"n_vr": int(d.get("n_vr") or conv.get("n_vr") or 49),
+            "hs_part": d.get("hs_part") or conv.get("hs") or "EPC2014C",
+            "ls_part": d.get("ls_part") or conv.get("ls") or "EPC2057",
+            "hs_per_cell": n_, "ls_per_cell": k_}
+
+
+def _tier_power(case, key):
+    term = {"hs": "P_conv_hs", "ls": "P_conv_ls"}[key]
+    return sum(r["P_w"] for r in case["ledger_rows"] if r["term"] == term)
+
+
+def region_temperatures(path, case, use_fields=True):
+    """({region: max C}, source) -- recorded, deck, or the whole-field bound."""
+    th = case.get("thermal") or {}
+    rec = th.get("region_T_max_C") or case.get("region_T_max_C")
+    if isinstance(rec, dict) and rec.get("hs_in_cells") is not None:
+        return dict(rec), "case file (chain)"
+    if use_fields:
+        p = Path(path)
+        if "production converged field" in str(case.get("thermal_from", "")):
+            # a mechanics-only variant: its thermal state IS the production case's
+            import final_closure_physical_etm as E
+            p = E.case_path(case["arch"], case["scenario"])
+            case = json.loads(p.read_text())
+        f = TC.converged_field(p, case)
+        if f and f.get("inp"):
+            import tcpmt_region_temps as RT
+            try:
+                r = RT.deck_region_maxima(f["inp"], f["thermal"], case)
+                return r, "converged deck" + ("" if p == Path(path) else f" of {p.name}")
+            except Exception as e:                          # noqa: BLE001 -- recorded
+                return {"error": str(e)[-300:]}, "deck failed"
+    return {}, "bound (whole-field peak)"
+
+
+def die_max(case, reg):
+    for v in (case.get("die_T_max_C"), (case.get("thermal") or {}).get("die_T_max_C"),
+              (case.get("z3_land") or {}).get("T_die_max_C")):
+        if isinstance(v, (int, float)):
+            return float(v), "die_T_max_C (case file)"
+    if reg.get("die") is not None:
+        return float(reg["die"]), "die layer of the converged field"
+    return None, None
+
+
+def joints(case):
+    js = (case.get("mechanics") or {}).get("joint_search") or {}
+    ranked = js.get("ranked") or []
+    crit = js.get("critical") or {}
+    return {"T_critical_C": crit.get("T_C"),
+            "T_hottest_C": max((r["T_C"] for r in ranked), default=None),
+            "du_um": crit.get("du_um")}
+
+
+# ------------------------------------------------------------------ BGA provisioning
+_NET = {}
+
+
+def _network(path=None):
+    p = Path(path) if path else FC / "package_network.json"
+    if p not in _NET:
+        _NET[p] = json.loads(p.read_text()) if p.is_file() else {}
+    return _NET[p]
+
+
+def _screen():
+    if "screen" not in _NET:
+        f = FC / "bga_count_screen.csv"
+        _NET["screen"] = list(csv.DictReader(f.open())) if f.is_file() else []
+    return _NET["screen"]
+
+
+def peak_fraction(net_arch, n, network=None):
+    """Largest per-ball current per ampere of the 48-V rail current at n balls per rail:
+    the converged network when n is its matched count, else the exhaustive screen (level 1) of
+    the production network (never for another design's network)."""
+    pn = _network(network)
+    if pn and pn.get("matched_count") == n:
+        conv = pn.get("convergence") or {}
+        v = [conv.get(f"{net_arch}_{r}", {}).get("final", {}).get("i_ball_max_a")
+             for r in ("supply", "return")]
+        if all(x is not None for x in v):
+            lv = max((pn.get("meta") or {}).get("final_levels") or [0])
+            return max(v), f"package network (level {lv})"
+    if network is None or Path(network).resolve() == (FC / "package_network.json").resolve():
+        for r in _screen():
+            if r["arch"] == net_arch and int(r["n_per_rail"]) == int(n):
+                return float(r["peak_fraction"]), "count screen (level 1)"
+    return None, None
+
+
+def scen_ratio(scen):
+    """48-V RMS / average of a named scenario (the ledger's SCEN_RATIO; HV_SDEC: the
+    implemented decoupling's k_eq)."""
+    if scen == TC.SCEN["SDEC"]:
+        d = json.loads((TR / "input_decoupling.json").read_text())
+        return float(d["summary"]["recommended"]["k_eq"])
+    import final_closure_ledger as FL
+    return float(FL.SCEN_RATIO[scen])
+
+
+def bga_check(arch, case, feed=None):
+    """[(name, value, limit, ok, basis)] of the BGA provisioning of one case."""
+    rows = {r["term"]: r for r in case.get("ledger_rows") or []}
+    out = []
+    if "P_BGA_supply" in rows:                       # BGA-fed 48 V (Z1, the Z2BF control)
+        import re
+        n = int(re.search(r"N=(\d+)", rows["P_BGA_supply"]["conductor"]).group(1))
+        i_rms = float(rows["P_BGA_supply"]["I_a"])
+        net = (case.get("design") or {}).get("package_network")
+        frac, src = peak_fraction("Z2" if arch == "Z2BF" else "Z1", n,
+                                  R / net if net else None)
+        sites = BGA_SITES.get(arch, 1369)
+        out.append(("bga_current", None if frac is None else frac * i_rms,
+                    LIMITS["bga_A_per_ball"],
+                    None if frac is None else frac * i_rms <= LIMITS["bga_A_per_ball"],
+                    f"48-V balls: {n}/rail, peak fraction {frac} ({src}) x I_rms {i_rms:.2f} A"))
+        out.append(("bga_sites", 2 * n / sites, LIMITS["bga_power_site_fraction_max"],
+                    2 * n / sites <= LIMITS["bga_power_site_fraction_max"],
+                    f"{2 * n} of {sites} sites carry 48 V"))
+    elif arch == "Z3":
+        z = case.get("z3_design") or {}
+        b = z.get("bga_1v") or {}
+        if not b:                    # a sensitivity record: the count of Z3's own config
+            import final_closure_ledger as FL
+            sp = FL.z3_spec()["bga"]
+            b = {"n_per_rail": sp["n_per_rail"], "sites_total": sp["sites_total"],
+                 "I_per_ball_A_dc_equal_sharing": sp["criterion_current_a"] / sp["n_per_rail"]}
+        if b:
+            n, tot = int(b["n_per_rail"]), int(b["sites_total"])
+            i_dc = float(b["I_per_ball_A_dc_equal_sharing"])
+            out.append(("bga_current", i_dc, LIMITS["bga_A_per_ball"],
+                        i_dc <= LIMITS["bga_A_per_ball"] * (1 + 1e-9),
+                        f"1-V balls: {n}/rail at DC, equal sharing (the ledger's assumption)"))
+            out.append(("bga_sites", 2 * n / tot, LIMITS["bga_power_site_fraction_max"],
+                        2 * n / tot <= LIMITS["bga_power_site_fraction_max"],
+                        f"{2 * n} of {tot} sites carry 1 V; {tot - 2 * n} left for signals"))
+    elif arch == "Z2" and feed:
+        # the package-internal boundary has no power ball; the BGA-RING FEED the platform
+        # accounting uses carries the 48 V through the package's ring of balls
+        n, frac, src = feed["n_per_rail"], feed.get("peak_fraction"), feed.get("source")
+        ext = case.get("external_feed") or {}
+        i_rms = ext.get("i_48_rms_a")
+        if i_rms is None:
+            i_avg = case.get("i_hv_avg_a") or ((1000.0 + case["P_loss_w"]) / 48.0
+                                               if case.get("P_loss_w") else None)
+            if i_avg is not None:
+                i_rms = float(i_avg) * scen_ratio(case.get("scenario"))
+        val = None if (frac is None or i_rms is None) else frac * i_rms
+        out.append(("bga_current", val, LIMITS["bga_A_per_ball"],
+                    None if val is None else val <= LIMITS["bga_A_per_ball"],
+                    f"BGA-ring feed: {n}/rail, peak fraction {frac} ({src}) x I_rms {i_rms}"))
+        out.append(("bga_sites", 2 * n / BGA_SITES["Z2"], LIMITS["bga_power_site_fraction_max"],
+                    2 * n / BGA_SITES["Z2"] <= LIMITS["bga_power_site_fraction_max"],
+                    f"{2 * n} of {BGA_SITES['Z2']} sites carry the 48-V feed"))
+    return out
+
+
+def z2_ring_feed():
+    """The Z2 BGA-ring feed of the platform accounting (tcpmt_platform feed design)."""
+    p = TR / "platform_inclusive.json"
+    d = json.loads(p.read_text()) if p.is_file() else {}
+    fd = (d.get("feed_design") or {}).get("Z2_bga_ring")
+    if fd:
+        return {"n_per_rail": fd["n_per_rail"], "peak_fraction": fd.get("peak_fraction"),
+                "source": fd.get("peak_fraction_source")}
+    pn = _network()
+    n = pn.get("matched_count")
+    if not n:
+        return None
+    frac, src = peak_fraction("Z2", n)
+    return {"n_per_rail": n, "peak_fraction": frac, "source": src}
+
+
+# ------------------------------------------------------------------ the checks of one case
+def evaluate(path, case, use_fields=True, feed=None):
+    arch = case["arch"]
+    role, state, tier = classify(path, case)
+    des = design_of(case)
+    th = case.get("thermal") or {}
+    t_max = th.get("T_max_C")
+    reg, src = region_temperatures(path, case, use_fields)
+    bound = src.startswith("bound") or "error" in reg
+    checks = {}
+
+    def put(name, value, limit, basis, on_bound=False):
+        if value is None:
+            checks[name] = {"value": None, "limit": limit, "ok": None, "basis": basis}
+            return
+        ok = value <= limit
+        if on_bound and not ok:
+            ok = None                          # fails only on the bound: unresolved
+        checks[name] = {"value": float(value), "limit": limit, "ok": ok, "basis": basis,
+                        "margin": float(limit - value), "on_bound": bool(on_bound),
+                        # within the numerical uncertainty of a peak temperature: the verdict
+                        # stands, but it is stated as marginal
+                        "marginal": abs(limit - value) <= MARGINAL_K}
+
+    def region(key):
+        v = reg.get(key)
+        if v is None:                  # not resolved from the field: the whole-field bound
+            return t_max, True
+        return v, False
+
+    # operating point
+    conv = case.get("et_converged")
+    if "converged" in case and case.get("variant", {}).get("name", "").startswith("tim_warp"):
+        conv = bool(case.get("converged"))
+    if case.get("_runaway"):
+        conv = False
+    checks["operating_point"] = {"value": None, "limit": None, "ok": bool(conv),
+                                 "basis": "E-T fixed point" + (" + interface feedback"
+                                                               if "tim_warp" in str(path) else "")}
+    # junction per device tier
+    tj, tj_bound = {}, False
+    for key, part_key, per_key in (("hs", "hs_part", "hs_per_cell"),
+                                   ("ls", "ls_part", "ls_per_cell")):
+        part = des[part_key]
+        dev = DEVICES.get(part)
+        t_in, b = region(f"{key}_in_cells")
+        tj_bound = tj_bound or b
+        p_tier = _tier_power(case, key)
+        p_dev = p_tier / (des["n_vr"] * des[per_key])
+        if dev is None or t_in is None:
+            tj[key] = None
+            put(f"gan_Tj_{key}", None, LIMITS["gan_Tj_C"], f"no datasheet record for {part}")
             continue
-        res["cases"][label] = evaluate(label, arch, field, cf)
-        OUT.write_text(json.dumps(res, indent=1, default=float))
-    return res
+        tj[key] = t_in + p_dev * dev["R_jc_K_W"]
+        put(f"gan_Tj_{key}", tj[key], LIMITS["gan_Tj_C"],
+            f"{part}: {'bound' if b else 'tier max in cells'} {t_in:.2f} C + {p_dev:.3f} W x "
+            f"{dev['R_jc_K_W']} K/W", on_bound=b)
+    tjs = [v for v in tj.values() if v is not None]
+    h_last = (case.get("et_history") or [{}])[-1]
+    t_eval = max((h_last.get(f"T_{k}_C") or -1e9) for k in ("hs", "ls"))
+    put("ron_fit", max(tjs) if tjs else None, LIMITS["ron_fit_max_C"],
+        "hottest junction bound against the 25-125 C fit range (the ledger evaluates R_DS(on) "
+        f"at the tier in-cell means, here up to {t_eval:.1f} C)", on_bound=tj_bound)
+    t_cap, b1 = region("caps_in_cells")
+    t_ind, b2 = region("ind_in_cells")
+    put("mlcc", None if t_cap is None else max(t_cap, t_ind or -1e9), LIMITS["mlcc_C"],
+        "flying-capacitor tier and the inductor/C_out tier, in the cells", on_bound=b1 or b2)
+    put("inductor", t_ind, LIMITS["inductor_C"], "inductor tier, in the cells", on_bound=b2)
+    v, b = region("rdl_all")
+    put("buildup", v, LIMITS["buildup_Tg_C"], "every RDL tier element", on_bound=b)
+    v, b = region("encapsulant")
+    put("encapsulant", v, LIMITS["encapsulant_Tg_C"], "converter tiers outside the cells",
+        on_bound=b)
+    v, b = region("board")
+    put("board", v, LIMITS["board_Tg_C"], "every board element", on_bound=b)
+    dmax, dsrc = die_max(case, reg)
+    if dmax is None and t_max is not None:
+        put("die", t_max, LIMITS["die_C"], "bound (whole-field peak)", on_bound=True)
+    else:
+        put("die", dmax, LIMITS["die_C"], dsrc or "n/a")
+    jt = joints(case)
+    put("solder_law", jt["T_hottest_C"], LIMITS["solder_cal_C"],
+        f"hottest joint of the all-site search (critical joint {jt['T_critical_C']})")
+    put("solder_solidus", jt["T_hottest_C"], LIMITS["solder_solidus_C"], "hottest joint")
+    for name, val, lim, ok, basis in bga_check(arch, case, feed if arch == "Z2" else None):
+        checks[name] = {"value": val, "limit": lim, "ok": ok, "basis": basis}
+    try:
+        import tcpmt_ir_drop as IR
+        d = IR.static_drop(case, n_vr=des["n_vr"])
+        checks["ir_drop"] = {"value": d["max_mV"], "limit": LIMITS["ir_drop_mV_per_rail"],
+                             "ok": d["max_mV"] <= LIMITS["ir_drop_mV_per_rail"],
+                             "basis": f"per-rail maximum (VDD {d['VDD_mV']:.2f}, GND "
+                                      f"{d['GND_mV']:.2f} mV)",
+                             "VDD_mV": d["VDD_mV"], "GND_mV": d["GND_mV"],
+                             "loop_mV": d["loop_mV"], "terms": d["terms"],
+                             "mean_loss_over_I_mV": d["mean_loss_over_I_mV"]}
+    except Exception as e:                                   # noqa: BLE001 -- recorded
+        checks["ir_drop"] = {"value": None, "limit": LIMITS["ir_drop_mV_per_rail"], "ok": None,
+                             "basis": f"not evaluated: {str(e)[-200:]}"}
+    fails = sorted(k for k, c in checks.items() if c["ok"] is False)
+    open_ = sorted(k for k, c in checks.items() if c["ok"] is None)
+    verdict = "infeasible" if fails else ("unresolved" if open_ else "feasible")
+    return {"case": Path(path).name, "path": str(Path(path).relative_to(R)), "arch": arch,
+            "scenario": case.get("scenario"), "state": state, "tier": tier, "role": role,
+            "variant": _variant_name(path), "P_loss_w": case.get("P_loss_w"), "T_max_C": t_max,
+            "design": des, "regions": reg, "region_source": src, "die_T_max_C": dmax,
+            "junction_C": tj, "joints": jt, "checks": checks, "fails": fails,
+            "unresolved": open_, "verdict": verdict}
+
+
+# ------------------------------------------------------------------ omitted-loss margins
+OMIT_KEY = {("A", "Z1"): "A_Z1", ("A", "Z2"): "A_Z2", ("A", "Z3"): "A_Z3_toponly",
+            ("B", "Z1"): "B_Z1", ("B", "Z2"): "B_Z2", ("B", "Z3"): "B_Z3",
+            ("I", "Z3"): "A_Z3_secondplate", ("I", "Z2"): "B_Z2"}
+
+
+def slopes(case):
+    """dT/dP (K/W) of the recorded regions from the case's first two E-T iterations."""
+    h = case.get("et_history") or []
+    if len(h) < 2 or abs(h[1]["P_loss_w"] - h[0]["P_loss_w"]) < 1e-6:
+        return None
+    dp = h[1]["P_loss_w"] - h[0]["P_loss_w"]
+    out = {}
+    for k in ("hs", "ls", "caps", "ind", "bga", "interface", "sub"):
+        a, b = h[0].get(f"T_{k}_C"), h[1].get(f"T_{k}_C")
+        if a is not None and b is not None:
+            out[k] = (b - a) / dp
+    out["die"] = (h[1]["T_die_mean_C"] - h[0]["T_die_mean_C"]) / dp
+    out["T_max"] = (h[1]["T_max_C"] - h[0]["T_max_C"]) / dp
+    return out
+
+
+def omitted_margins(rec, case, omit):
+    """The high bundle (+ its feedback) applied to the checked temperatures."""
+    if not omit:
+        return None
+    key = f"{rec['tier']}_{rec['arch']}"           # the registry keys of the regenerated study
+    if key not in omit["cases"]:
+        key = OMIT_KEY.get((rec["tier"], rec["arch"]))  # the committed (earlier) study's keys
+    if key not in omit["cases"]:
+        return None
+    hi = omit["cases"][key]["omitted"]["high"]["total_w"]
+    nom = omit["cases"][key]["omitted"]["nominal"]["total_w"]
+    fb = ((omit.get("electrothermal_feedback_estimate") or {}).get("per_case") or {}).get(key, {})
+    s = slopes(case)
+    if s is None:
+        return None
+    src = omit["cases"][key].get("file", "")
+    out = {"omitted_case": key, "omitted_case_file": src,
+           # the bundle was evaluated on another (superseded) case of the same integration
+           "approximate": bool(src) and TC.is_superseded(R / src),
+           "bundles": {}}
+    for name, p_om, f in (("nominal", nom, fb.get("feedback_nominal_w", 0.0)),
+                          ("high", hi, fb.get("feedback_high_w", 0.0))):
+        dp = p_om + f
+        c = rec["checks"]
+        shifted = {}
+        for chk, reg in (("gan_Tj_hs", "hs"), ("gan_Tj_ls", "ls"), ("ron_fit", "ls"),
+                         ("mlcc", "caps"), ("inductor", "ind"), ("die", "die"),
+                         ("solder_law", "bga"), ("encapsulant", "T_max"),
+                         ("buildup", "T_max")):
+            if chk not in c or c[chk]["value"] is None:
+                continue
+            sl = s.get(reg, s["T_max"])
+            if chk == "ron_fit":
+                sl = max(s.get("hs", 0.0), s.get("ls", 0.0))
+            v = c[chk]["value"] + sl * dp
+            shifted[chk] = {"value": v, "limit": c[chk]["limit"], "dT_K": sl * dp,
+                            "ok": v <= c[chk]["limit"]}
+        out["bundles"][name] = {"dP_w": dp, "P_omitted_w": p_om, "feedback_w": f,
+                                "checks": shifted,
+                                "fails": sorted(k for k, v in shifted.items() if not v["ok"])}
+    return out
+
+
+def gap_shift_reconciliation(omit):
+    """The three statements of the paper on how far the omitted terms move a gap, on one
+    basis: the direct shift (the difference of the omitted terms between the two
+    integrations at their own temperatures) and its electrothermal feedback, per bundle."""
+    if not omit:
+        return None
+    pairs = (omit.get("summary") or {}).get("pairs") or {}
+    rows = []
+    for key, v in pairs.items():
+        lo, nom, hi = v["delta_omitted_w_low_nom_high"]
+        fnom, fhi = v["delta_feedback_w_nom_high"]
+        tier = key.split("_")[0]
+        rows.append({"pair": key, "tier": tier, "gap_w": v["gap_paper_w"],
+                     "direct_w": {"low": lo, "nominal": nom, "high": hi},
+                     "feedback_w": {"nominal": fnom, "high": fhi},
+                     "total_w": {"nominal": nom + fnom, "high": hi + fhi},
+                     "superseded_z3": "Z3" in key})
+    out = {"rows": rows, "by_tier": {}, "by_tier_with_z3": {}}
+    for t in ("A", "B"):
+        # the I configuration ('secondplate') is not a cooling tier of the comparison
+        tier_rows = [r for r in rows if r["tier"] == t and "secondplate" not in r["pair"]]
+        for blk, rr in (("by_tier", [r for r in tier_rows if not r["superseded_z3"]]),
+                        ("by_tier_with_z3", tier_rows)):
+            if not rr:
+                continue
+            out[blk][t] = {
+                "direct_max_w": {b: max(abs(r["direct_w"][b]) for r in rr)
+                                 for b in ("nominal", "high")},
+                "feedback_max_w": {b: max(abs(r["feedback_w"][b]) for r in rr)
+                                   for b in ("nominal", "high")},
+                "total_max_w": {b: max(abs(r["total_w"][b]) for r in rr)
+                                for b in ("nominal", "high")},
+                "smallest_gap_w": min(r["gap_w"] for r in rr),
+                "pairs": [r["pair"] for r in rr]}
+    out["statement"] = (
+        "the 'at most 0.2 W' of the text is the DIRECT shift of the cooling-A Z1-Z2 gap (0.10 W "
+        "nominal, 0.17 W high); the '+0.8 W' is the ELECTROTHERMAL FEEDBACK of the nominal "
+        "bundle on that gap; '1.0-1.15 W' is the DIRECT shift of the cooling-B gaps against Z1 "
+        "with the high bundle (Z2-Z1 1.0 W; Z3-Z1 1.15 W on the superseded uncoupled Z3). One "
+        "statement covers all three, per tier: direct shift <= direct_max, with its feedback <= "
+        "total_max (by_tier: the ranked Z1-Z2 pairs; by_tier_with_z3 adds the Z3 pairs, whose "
+        "omitted-loss inputs are the superseded uncoupled Z3 cases until omitted_losses.json is "
+        "regenerated on the coupled cases)")
+    return out
+
+
+# ------------------------------------------------------------------ ranking
+def rankings(records):
+    """Per input state and cooling: feasible candidates ranked by package-internal loss; the
+    excluded ones with the limits they fail (or leave unresolved)."""
+    out = {}
+    by_case = {r["path"]: r for r in records}
+    for st in TC.STATES:
+        for t in TC.TIERS:
+            cand, excl, missing = [], [], []
+            for a in TC.ARCHS:
+                p = TC.case_path(st, t, a)
+                if p is None:
+                    missing.append(a)
+                    continue
+                r = by_case.get(str(p.relative_to(R)))
+                if r is None:
+                    missing.append(a)
+                elif r["verdict"] == "feasible":
+                    cand.append((r["P_loss_w"], a))
+                else:
+                    excl.append({"arch": a, "verdict": r["verdict"], "fails": r["fails"],
+                                 "unresolved": r["unresolved"]})
+            cand.sort()
+            out[f"{st}_{t}"] = {"ranked": [a for _p, a in cand],
+                                "loss_w": {a: p for p, a in cand}, "excluded": excl,
+                                "missing": missing,
+                                "complete": not missing}
+    return out
+
+
+# ------------------------------------------------------------------ main
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    use_fields = "--no-fields" not in argv
+    omit_p = TR / "omitted_losses.json"
+    omit = json.loads(omit_p.read_text()) if omit_p.is_file() else None
+    feed = z2_ring_feed()
+    files = all_case_files()
+    records = []
+    for f in files:
+        c = json.loads(f.read_text())
+        if "ledger_rows" not in c or "thermal" not in c:
+            continue
+        r = evaluate(f, c, use_fields, feed)
+        m = omitted_margins(r, c, omit) if r["role"] in ("compared",) else None
+        if m:
+            r["omitted_losses"] = m
+        records.append(r)
+        print(f"{r['verdict']:11s} {r['role']:10s} {r['state']!s:5s} {r['tier']} "
+              f"{f.name:58s} fails={','.join(r['fails']) or '-'} "
+              f"open={','.join(r['unresolved']) or '-'}", flush=True)
+    for f in runaway_records():
+        c = json.loads(f.read_text())
+        c.setdefault("arch", f.name.split("_")[1])
+        c.setdefault("scenario", "_".join(f.name.split("_")[2:4]))
+        c["_runaway"] = True
+        r = evaluate(f, c, use_fields, feed)
+        r["role"], r["verdict"] = "variant", "infeasible"
+        r["fails"] = sorted(set(r["fails"]) | {"operating_point"})
+        records.append(r)
+        print(f"{r['verdict']:11s} runaway    {f.name}", flush=True)
+    rk = rankings(records)
+    # the comparison tables of the paper: the compared cells, keyed <tier>_<arch> for the
+    # production state (fig_tiers reads cases[<tier>_<arch>]["case"/"checks"])
+    cases = {}
+    for r in records:
+        if r["role"] == "compared":
+            key = (f"{r['tier']}_{r['arch']}" if r["state"] == TC.PRODUCTION_STATE
+                   else f"{r['state']}_{r['tier']}_{r['arch']}")
+            cases[key] = r
+    out = {"rule": "a candidate that fails any limit is not ranked; a check that fails only on "
+                   "the whole-field bound is unresolved and the candidate is not ranked either",
+           "limits": LIMITS, "limit_sources": LIMIT_SOURCES, "devices": DEVICES,
+           "bga_sites": BGA_SITES, "production_state": TC.PRODUCTION_STATE,
+           "cases": cases, "rankings": rk, "records": records,
+           "z2_ring_feed": feed,
+           "omitted_gap_shift": gap_shift_reconciliation(omit),
+           "summary": {"n_cases": len(records),
+                       "infeasible": sorted(r["case"] for r in records
+                                            if r["verdict"] == "infeasible"),
+                       "unresolved": sorted(r["case"] for r in records
+                                            if r["verdict"] == "unresolved")}}
+    OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
+    print(f"wrote {OUT}: {len(records)} cases, "
+          f"{len(out['summary']['infeasible'])} infeasible, "
+          f"{len(out['summary']['unresolved'])} unresolved")
+    return out
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:] or None)
+    main()

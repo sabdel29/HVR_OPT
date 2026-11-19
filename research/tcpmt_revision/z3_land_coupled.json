@@ -12923,5 +12923,130 @@
    }
   },
   "note": "free sharing puts ~365 of ~685 balls per rail above the 1.5 A criterion that set the 667-ball count (max ~3.3-3.4 A); equal sharing is what that criterion presumes"
+ },
+ "documentation": {
+  "what": "Z3 1-V land-side and board-plane redistribution in the coupled ledger",
+  "land_side": {
+   "model": "P = 2 kappa I_rail^2 R_s(T_land), R_s = rho_Cu(T_land) / (t_Cu occ); static spread per rail dV = kappa_V I_dc R_s",
+   "kappa_one_rail": 0.012164295548097444,
+   "kappa_V_one_rail": 0.05949803091271717,
+   "occupancy": 0.8,
+   "t_Cu_um_compared": 40.0,
+   "source": "research/tcpmt_revision/z3_landside_spreading.json",
+   "deposit": "the whole substrate land-side layer (sub_lower); FV-map cases: 32 power-density bins along the FV loss map",
+   "temperature": "node mean of the whole land-side layer (where it is deposited)"
+  },
+  "board_planes": {
+   "model": "P = (kappa_VDD + kappa_GND) I_rail^2 R_s,b(T_board)",
+   "kappa_two_rails": 0.025904292545726557,
+   "kappa_V": {
+    "VDD": 0.06057552424212608,
+    "GND": 0.05997986795657644
+   },
+   "planes_per_rail": 2,
+   "t_plane_um": 35.0,
+   "occupancy": 0.8,
+   "status": "DECLARED, not in the Z3 design record: two 35-um (1-oz) planes per rail, four of the fourteen 1-oz layers of the 18-layer schedule",
+   "deposit": "the whole board (board layer); FV-map cases: power-density bins",
+   "temperature": "node mean of the whole board"
+  },
+  "cases": {
+   "S0_A": {
+    "case": "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json",
+    "T_land_C": 106.60201070224161,
+    "R_s_land_mohm_sq": 0.712058760469274,
+    "P_land_w": 17.604410923499742,
+    "dV_land_one_rail_mV": 42.36609414207194,
+    "T_board_C": 136.53193777689611,
+    "R_s_board_mohm_sq": 0.44259819219418634,
+    "P_board_planes_w": 11.651184409970817,
+    "dV_board_mV": {
+     "VDD": 26.810617520780113,
+     "GND": 26.54698112562674
+    },
+    "P_loss_w": 232.9699734404515,
+    "I_rail_rms_A": 1008.0784996431805,
+    "two_oz_planes": {
+     "t_plane_um": 69.6,
+     "coupled_increment_1oz_w": 12.295589957384909,
+     "saving_w": 6.112462823642497,
+     "gap_to_Z1_1oz_w": 88.6602477484054,
+     "gap_to_Z1_2oz_w": 82.5477849247629,
+     "threshold_unpaired_w": 7.973495462371268,
+     "threshold_paired_w": 1.8826449291268221,
+     "resolved_unpaired": true,
+     "resolved_with_correlation_credit": true,
+     "rule": "a difference D = y_b - y_a between two architectures is RESOLVED when",
+     "basis": "the plane term scales as 1/t; its coupled increment (row + thermal feedback) from the cooling-B no-plane control"
+    },
+    "R_star": {
+     "label": "none",
+     "R_star_mohm": 0.0,
+     "advantage_at_zero_feed_w": -88.6602477484054,
+     "case": "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json"
+    }
+   },
+   "S0_B": {
+    "case": "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json",
+    "T_land_C": 81.32193401110891,
+    "R_s_land_mohm_sq": 0.6592787003525683,
+    "P_land_w": 16.29951599284942,
+    "dV_land_one_rail_mV": 39.22578449367311,
+    "T_board_C": 74.93282746148252,
+    "R_s_board_mohm_sq": 0.3691082536196723,
+    "P_board_planes_w": 9.71659714389039,
+    "dV_board_mV": {
+     "VDD": 22.358925965107282,
+     "GND": 22.139064313790474
+    },
+    "P_loss_w": 151.32082378620896,
+    "I_rail_rms_A": 1008.0784996431805,
+    "two_oz_planes": {
+     "t_plane_um": 69.6,
+     "coupled_increment_1oz_w": 10.254004233263423,
+     "saving_w": 5.097536587225782,
+     "gap_to_Z1_1oz_w": 8.691416486423947,
+     "gap_to_Z1_2oz_w": 3.593879899198165,
+     "threshold_unpaired_w": 6.308682851730655,
+     "threshold_paired_w": 0.9279027466704721,
+     "resolved_unpaired": false,
+     "resolved_with_correlation_credit": true,
+     "rule": "a difference D = y_b - y_a between two architectures is RESOLVED when",
+     "basis": "the plane term scales as 1/t; its coupled increment (row + thermal feedback) from the cooling-B no-plane control"
+    },
+    "R_star": {
+     "label": "none",
+     "R_star_mohm": 0.0,
+     "advantage_at_zero_feed_w": -8.691416486423947,
+     "case": "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json"
+    }
+   }
+  }
+ },
+ "macros": {
+  "ZthreeLandKappa": "0.0122",
+  "ZthreeLandKappaV": "0.0595",
+  "ZthreeBoardKappa": "0.0259",
+  "ZthreeLandOcc": "80",
+  "ZthreeBoardPlanes": "2",
+  "ZthreeBoardPlaneUm": "35",
+  "ZthreeRsLandARefSzero": "0.712",
+  "ZthreeTLandARefSzero": "107",
+  "ZthreeRsBoardARefSzero": "0.443",
+  "ZthreeTBoardPlARefSzero": "137",
+  "ZthreeTwoOzSaveARefSzero": "6.1",
+  "ZthreeTwoOzGapARefSzero": "82.5",
+  "ZthreeTwoOzThrARefSzero": "8.0",
+  "ZthreeTwoOzResARefSzero": "resolved",
+  "ZthreeRstarARefSzero": "none",
+  "ZthreeRsLandBRefSzero": "0.659",
+  "ZthreeTLandBRefSzero": "81",
+  "ZthreeRsBoardBRefSzero": "0.369",
+  "ZthreeTBoardPlBRefSzero": "75",
+  "ZthreeTwoOzSaveBRefSzero": "5.1",
+  "ZthreeTwoOzGapBRefSzero": "3.6",
+  "ZthreeTwoOzThrBRefSzero": "6.3",
+  "ZthreeTwoOzResBRefSzero": "resolved with correlation credit",
+  "ZthreeRstarBRefSzero": "none"
  }
 }

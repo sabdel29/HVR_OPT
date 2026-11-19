@@ -246,6 +246,8 @@ class HVRDesign:
     area_budget_mm2: float
     loss_25c_w: float
     j_target: float
+    #: the engine rule switches this design was synthesized under (production_rules())
+    rules: dict | None = None
 
     def loss_at(self, T_c: float, alpha_gan: float = ALPHA_GAN_RDSON) -> dict:
         import HVR_FULL_OPT_EPC_V2 as H
@@ -254,7 +256,7 @@ class HVRDesign:
         ls_t = replace(self.ls, R_DS_ON=rdson_at(self.ls.R_DS_ON, T_c, alpha_gan))
         ind_t = replace(self.inductor,
                         r_dcr_mohm=dcr_at(self.inductor.r_dcr_mohm, T_c))
-        prev_rules = _pin_production_rules(H, ("COSS_RULE", "RG_RULE"))  # published terms
+        prev_rules = pin_loss_rules(H, self)    # the loss terms of the design's own lineage
         try:
             r = compute_total_loss(self.arch, LossModelInputs(
                 hs_device=hs_t, ls_device=ls_t, inductor=ind_t, capacitor=self.capacitor,
@@ -272,29 +274,162 @@ class HVRDesign:
         return a, a
 
 
-_RULES = (("CAP_RULE", "HVR_PRODUCTION_CAP_RULE", "legacy"),
-          ("SW_RULE", "HVR_PRODUCTION_SW_RULE", "legacy"),
-          ("COSS_RULE", "HVR_PRODUCTION_COSS_RULE", "legacy"),
-          ("PACK_RULE", "HVR_PRODUCTION_PACK_RULE", "off"),
-          ("RG_RULE", "HVR_PRODUCTION_RG_RULE", "legacy"),
-          ("FOOTPRINT_RULE", "HVR_PRODUCTION_FOOTPRINT_RULE", "legacy"))
+# ---------------------------------------------------------------------------------------------
+# PRODUCTION CONVERTER RULES (TCPMT revision, review rounds 2-3) -- the ONE mechanism.
+#
+# The synthesis engine (HVR_FULL_OPT_EPC_V2) has a module switch per rule, whose engine
+# default may change with every engine revision. The production converter never takes those
+# defaults: every switch below is set to its PRODUCTION value for the synthesis
+# (compile_hvr) and for every loss evaluation (HVRDesign.loss_at, replay_production,
+# tcpmt_production_converter), and restored afterwards.
+#
+#   default             the production rules (PRODUCTION_DEFAULTS): corrected capacitor rule
+#                       (rated part, 0.8 derating, its ESR at f_sw), per-switch voltage stress
+#                       at 0.9 derating, corrected C_oss term, datasheet R_g, capacitor body
+#                       footprints; tier packing per PRODUCTION_PACKING (off for now)
+#   HVR_PRODUCTION_RULES=legacy
+#                       every rule at its published value: the frozen lineage of every result
+#                       computed before review round 2, reproduced exactly
+#   HVR_PRODUCTION_<NAME>=value
+#                       one rule overridden on top of either (env names in _RULES), e.g.
+#                       HVR_PRODUCTION_SW_DERATING=0.95 (the switch-derating sensitivity) or
+#                       HVR_PRODUCTION_RULES=legacy HVR_PRODUCTION_CAP_RULE=stress
+#
+# A stored result records the rules it was computed with (the `converter` stamp on its
+# converter ledger rows; rules_of reads it back, pinned_rules re-evaluates in that lineage).
+#
+#: THE DESIGN-POINT SWITCH. The tier packing check (50-um keep-out, mixed tiers, at most
+#: MAX_TIERS) stays OFF in production until the package builders (Z1/Z2/Z3) are generalized to
+#: the authors' design point: M = 36 (6 x 6 cells), N3K3, EPC2014C / EPC2055, 805 kHz, at most
+#: 4 mixed tiers, rated Murata 0603 GRM188D72A105KE01 flying capacitor. With packing on, the
+#: 49-cell point of the current chain does not place, so this switch moves together with the
+#: Z1 config's design point (configs/phase0nx/z1_physical.yaml, converter.cells). Set it to
+#: "on" then; nothing else in this block changes.
+PRODUCTION_PACKING = "off"
+
+#: (engine attribute, production env variable, production value, published value, type).
+#: Derating, tier rule and tier limit are inert under the published rules (legacy voltage rules,
+#: packing off), so their published value is the production one.
+_RULES = (
+    ("CAP_RULE", "HVR_PRODUCTION_CAP_RULE", "stress", "legacy", str),
+    ("CAP_V_DERATING", "HVR_PRODUCTION_CAP_DERATING", 0.8, 0.8, float),
+    ("SW_RULE", "HVR_PRODUCTION_SW_RULE", "stress", "legacy", str),
+    ("SW_V_DERATING", "HVR_PRODUCTION_SW_DERATING", 0.9, 0.9, float),
+    ("COSS_RULE", "HVR_PRODUCTION_COSS_RULE", "corrected", "legacy", str),
+    ("RG_RULE", "HVR_PRODUCTION_RG_RULE", "datasheet", "legacy", str),
+    ("FOOTPRINT_RULE", "HVR_PRODUCTION_FOOTPRINT_RULE", "body", "legacy", str),
+    ("PACK_RULE", "HVR_PRODUCTION_PACK_RULE", PRODUCTION_PACKING, "off", str),
+    ("TIER_RULE", "HVR_PRODUCTION_TIER_RULE", "mixed", "mixed", str),
+    ("MAX_TIERS", "HVR_PRODUCTION_MAX_TIERS", 4, 4, int),
+)
+#: every environment variable of the mechanism (the all-rules switch first)
+PRODUCTION_ENV = ("HVR_PRODUCTION_RULES",) + tuple(r[1] for r in _RULES)
+#: the production values (no environment)
+PRODUCTION_DEFAULTS = {attr: prod for attr, _env, prod, _legacy, _t in _RULES}
+#: the published values: the lineage of every result before review round 2
+LEGACY_RULES = {attr: legacy for attr, _env, _prod, legacy, _t in _RULES}
+#: the switches compute_total_loss reads (pinned for every loss evaluation)
+LOSS_RULES = ("COSS_RULE", "RG_RULE")
+
+
+def production_rules(H=None) -> dict:
+    """attribute -> value of the production converter in this process (environment-resolved,
+    typed); with the engine module given, only the rules it has (an older engine checkout
+    behaves as published for the others)."""
+    import os
+    allv = os.environ.get("HVR_PRODUCTION_RULES", "").strip().lower()
+    if allv not in ("", "production", "legacy"):
+        raise ValueError(f"HVR_PRODUCTION_RULES={allv!r}: expected 'legacy' or 'production'")
+    out = {}
+    for attr, env, prod, legacy, typ in _RULES:
+        if H is not None and not hasattr(H, attr):
+            continue
+        raw = os.environ.get(env, "").strip()
+        out[attr] = typ(raw) if raw else (legacy if allv == "legacy" else prod)
+    return out
+
+
+def pin_rules(H, rules: dict, only=None) -> dict:
+    """Set the engine's switches to `rules` (all, or those named in `only`; a rule the engine
+    does not have is skipped); return the previous values for _restore_rules."""
+    prev = {}
+    for attr, v in rules.items():
+        if hasattr(H, attr) and (only is None or attr in only):
+            prev[attr] = getattr(H, attr)
+            setattr(H, attr, v)
+    return prev
 
 
 def _pin_production_rules(H, only=None) -> dict:
     """Set the engine's rule switches (all, or those named in `only`) to the production
     values; return the previous ones."""
-    import os
-    prev = {}
-    for attr, env, default in _RULES:
-        if hasattr(H, attr) and (only is None or attr in only):
-            prev[attr] = getattr(H, attr)
-            setattr(H, attr, os.environ.get(env, default))
-    return prev
+    return pin_rules(H, production_rules(H), only)
+
+
+def pin_loss_rules(H, design=None) -> dict:
+    """Pin the loss-term switches (LOSS_RULES) for one loss evaluation: the design's own rules
+    (those it was synthesized under; a rule it does not record behaves as published) when it
+    carries them, else the production rules."""
+    own = getattr(design, "rules", None)
+    rules = {**LEGACY_RULES, **own} if own else production_rules(H)
+    return pin_rules(H, rules, LOSS_RULES)
 
 
 def _restore_rules(H, prev: dict) -> None:
     for attr, val in prev.items():
         setattr(H, attr, val)
+
+
+def rules_of(record) -> dict:
+    """The converter rules a stored result was computed with: the `converter` stamp of its
+    converter ledger rows (written since review round 2), else the legacy lineage. A stamp
+    written before a rule existed lacks that rule: it behaved as published (pinned_rules)."""
+    rows = (record or {}).get("ledger_rows") or []
+    for r in rows:
+        c = r.get("converter") if isinstance(r, dict) else None
+        if isinstance(c, dict) and isinstance(c.get("rules"), dict):
+            return dict(c["rules"])
+    return dict(LEGACY_RULES)
+
+
+class pinned_rules:
+    """Context manager: evaluate under the given converter rules (e.g. rules_of(case), to
+    re-evaluate a stored case in its own lineage) by setting the production environment; a
+    rule absent from `rules` takes its published value."""
+
+    def __init__(self, rules: dict):
+        self.rules = dict(rules or {})
+
+    def __enter__(self):
+        import os
+        self.prev = {k: os.environ.get(k) for k in PRODUCTION_ENV}
+        os.environ.pop("HVR_PRODUCTION_RULES", None)
+        for attr, env, _prod, legacy, _typ in _RULES:
+            os.environ[env] = str(self.rules.get(attr, legacy))
+        return self
+
+    def __exit__(self, *exc):
+        import os
+        for k, v in self.prev.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        return False
+
+
+def _esr_at_fsw(H, design: HVRDesign, rules: dict) -> HVRDesign:
+    """The engine's selection loop evaluates the corrected-rule loss with the capacitor's ESR at
+    f_sw (vendor ESR(f) at the C_1 bias) but returns the library part; carry the evaluated ESR in
+    the design, so every later loss evaluation (the ledger) uses the same value."""
+    cap = design.capacitor
+    if (rules.get("CAP_RULE", "legacy") == "legacy" or not getattr(H, "CAP_ESR_F", False)
+            or not getattr(cap, "vendor_part", None) or not hasattr(H, "cap_esr_mohm")):
+        return design
+    n = design.arch.N
+    esr = float(H.cap_esr_mohm(cap, design.f_sw_hz, (n - 1) * design.v_in / n))
+    return replace(design, capacitor=replace(cap, esr_mohm=esr))
+# ---------------------------------------------------------------------------------------------
 
 
 def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: float = 1.0,
@@ -312,16 +447,12 @@ def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: floa
     import os
     import HVR_FULL_OPT_EPC_V2 as H
     from HVR_FULL_OPT_EPC_V2 import run_hvr_optimization
-    # The production lineage of the ETM study was synthesized with the published capacitor rule
-    # (v_max > V_in/N). The corrected rule is the engine default; the production path pins the
-    # published one so every existing result stays reproducible, unless HVR_PRODUCTION_CAP_RULE
-    # asks for the corrected selection (TCPMT revision, review round 2). The same holds for the
-    # phase-1 rules: the switch-voltage rule (engine default "stress"; HVR_PRODUCTION_SW_RULE),
-    # the output-capacitance term (HVR_PRODUCTION_COSS_RULE) and the tier packing check
-    # (HVR_PRODUCTION_PACK_RULE) are pinned to the published behaviour here, as are the phase-2
-    # gate-resistance and capacitor-footprint rules (HVR_PRODUCTION_RG_RULE,
-    # HVR_PRODUCTION_FOOTPRINT_RULE).
+    # The production converter is synthesized under the production rules (production_rules():
+    # the corrected rules by default; HVR_PRODUCTION_RULES=legacy restores the published
+    # lineage exactly; see the block above). The engine's own switches are restored afterwards.
     prev_rules = _pin_production_rules(H)
+    # a rule the engine does not have behaves as published: recorded as its legacy value
+    rules = {**LEGACY_RULES, **production_rules(H)}
     cwd = os.getcwd()
     os.chdir(SIVR)                     # the optimizer opens EPC-Product-Table.csv by bare name
     try:
@@ -341,10 +472,11 @@ def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: floa
     if not feas:
         return None
     b = min(feas, key=lambda r: r.optimized_loss)
-    return HVRDesign(label=f"N{b.architecture.N}K{b.architecture.K}KA{b.architecture.K_A}"
-                           f"_J{j_target:g}",
-                     arch=b.architecture, hs=b.optimized_hs_device, ls=b.optimized_ls_device,
-                     inductor=b.optimized_inductor, capacitor=b.optimized_capacitor,
-                     f_sw_hz=b.optimized_f_sw, i_out_a=i_out_a, v_in=v_in, v_out=v_out,
-                     area_mm2=b.total_area_mm2, area_budget_mm2=b.area_budget_mm2,
-                     loss_25c_w=b.optimized_loss, j_target=j_target)
+    des = HVRDesign(label=f"N{b.architecture.N}K{b.architecture.K}KA{b.architecture.K_A}"
+                          f"_J{j_target:g}",
+                    arch=b.architecture, hs=b.optimized_hs_device, ls=b.optimized_ls_device,
+                    inductor=b.optimized_inductor, capacitor=b.optimized_capacitor,
+                    f_sw_hz=b.optimized_f_sw, i_out_a=i_out_a, v_in=v_in, v_out=v_out,
+                    area_mm2=b.total_area_mm2, area_budget_mm2=b.area_budget_mm2,
+                    loss_25c_w=b.optimized_loss, j_target=j_target, rules=rules)
+    return _esr_at_fsw(H, des, rules)

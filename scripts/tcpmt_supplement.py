@@ -451,6 +451,9 @@ def cooling_tables():
     body = []
     for t, v in c["tiers"].items():
         for a, x in v["cases"].items():
+            if x.get("missing"):                # a compared case not run yet (tcpmt_cases)
+                body.append(f"{t} & {a} & -- & -- & -- & -- \\\\")
+                continue
             body.append(f"{t} & {a} & {x['Q_total_W']:.1f} & {x['q_top_plate_W']:.1f} & "
                         f"{x['q_bottom_plate_W']:.1f} & "
                         f"{x['q_board_natural_W'] + x['q_converter_underside_natural_W']:.2f} \\\\")
@@ -997,6 +1000,10 @@ def uncertainty_table():
     if not u:
         return placeholder("uncertainty", "uncertainty.json")
     U, rel = u.get("U", {}), u.get("relative", {})
+    # the input state of the compared cases (tcpmt_uncertainty: the production state writes
+    # uncertainty.json); a file without the field predates it -- S0 when it holds local responses
+    st = u.get("state") or ("S0" if any(k.endswith(".eps") for k in U) else "SDEC")
+    st_lab = {"SDEC": "implemented decoupling", "S0": "S0"}.get(st, st)
     body = []
     for y in ("P", "T", "warp", "du", "eps"):
         if body:
@@ -1027,35 +1034,51 @@ def uncertainty_table():
             r"r21$\to$r31 at the lowest order observed in the independent full-package ladders "
             r"(0.6), the through-thickness split, the E--T stop and the matched-reference "
             r"agreement of the solver; relative to the value (temperatures: to the rise above the "
-            r"inlet); $\deps$: stabilized L0 response. Model-form uncertainty is not part of $U$: "
+            r"inlet); $\deps$: stabilized L0 response" +
+            ("" if st == "S0" else r" (solved on the S0 cases; not compared in this state)") +
+            r". Model-form uncertainty is not part of $U$: "
             r"it is covered by rerunning both integrations under each declared alternative "
             r"(Table~\ref{tab:supp-variants}). Comparisons, lower integration first (R: gap "
             r"$>2(U_a+U_b)$; Rc: resolved only with the paired discretization errors of one mesh "
             r"family; --: not resolved): " + ". ".join(c[:1].upper() + c[1:] for c in comps)
             + ".")
     return ltab(r"@{}llrrrrrrr@{}", 9, head, body,
-                "Numerical uncertainty of each compared output (S0, production mesh)",
+                f"Numerical uncertainty of each compared output ({st_lab}, production mesh)",
                 "tab:supp-unc", note)
 
 
 # ---------------------------------------------------------------- S-VII feasibility, scenarios
-CHECK_LABEL = {"gan_Tj": r"GaN $T_J$", "ron_fit": r"$R_{DS(on)}$ fit range",
+CHECK_LABEL = {"gan_Tj": r"GaN $T_J$", "gan_Tj_hs": r"GaN $T_J$ (HS)",
+               "gan_Tj_ls": r"GaN $T_J$ (LS)", "ron_fit": r"$R_{DS(on)}$ fit range",
                "mlcc": "capacitors", "inductor": "inductor", "solder_cal": "solder calibration",
-               "solder_solidus": "solder solidus", "buildup": r"build-up $T_g$",
-               "encapsulant": r"encapsulant $T_g$", "board": r"board $T_g$"}
+               "solder_law": "solder law", "solder_solidus": "solder solidus",
+               "buildup": r"build-up $T_g$", "encapsulant": r"encapsulant $T_g$",
+               "board": r"board $T_g$", "die": "processor die", "bga_current": "ball current",
+               "bga_sites": "ball sites", "ir_drop": "static drop",
+               "operating_point": "operating point"}
 VARIANT_SHORT = {"z3_top_only": "top plate only", "z1_bottom_plate_tim": "plate under board",
                  "z2_cooled_tim": "backside plate", "z3_plate_tim": "converter plate"}
 
 
-def case_label(lab, case_file):
-    """Readable label of a compared case from its key (tier_arch) and its result file."""
-    tier, arch = lab.split("_", 1) if "_" in lab else ("", lab)
-    scen = re.search(r"HV_(S\d)", case_file or "")
-    var = re.search(r"__(\w+)\.json$", case_file or "")
-    t = {"A": "A", "B": "B", "I": "I"}.get(tier, "A")
-    s = arch + ", " + t
-    if scen and scen.group(1) != "S0":
-        s += ", " + scen.group(1)
+def case_state(c):
+    """Input state of a case record ('SDEC', 'S0', ...): its own field, else its file name."""
+    st = c.get("state")
+    if st:
+        return st[3:] if str(st).startswith("HV_") else st
+    m = re.search(r"HV_(SDEC|S\d)", c.get("case") or c.get("file") or "")
+    return m.group(1) if m else None
+
+
+def case_label(c):
+    """Readable label of a compared case from its feasibility record: integration, cooling and
+    the input state when it is not S0 (SDEC: the implemented decoupling, the production state)."""
+    case_file = c.get("case") or ""
+    t = {"A": "A", "B": "B", "I": "I"}.get(c.get("tier"), "A")
+    s = f"{c.get('arch', '?')}, {t}"
+    st = case_state(c)
+    if st and st != "S0":
+        s += ", " + tex(st)
+    var = re.search(r"__(\w+)\.json$", case_file)
     if var and var.group(1) in VARIANT_SHORT and t == "A":
         s += f" ({VARIANT_SHORT[var.group(1)]})"
     return s
@@ -1065,81 +1088,137 @@ def feas_labels(f=None):
     """key -> (label, critical-joint temperature, marked) of the feasibility cases."""
     f = f or J(TR / "feasibility.json") or {"cases": {}}
     out = {}
-    for lab, c in f["cases"].items():
+    for key, c in f["cases"].items():
         d = z3_dag(c.get("arch"), c.get("case"))
-        out[lab] = (case_label(lab, c.get("case")) + d,
-                    (c.get("joints") or {}).get("T_critical_C"), bool(d))
+        out[key] = (case_label(c) + d, (c.get("joints") or {}).get("T_critical_C"), bool(d))
     return out
 
 
 def joint_label(key, t_joint, fl):
-    """Label of a solder-study joint: the feasibility case with the same key and joint."""
-    lab, tc, mark = fl.get(key, (None, None, False))
-    if lab is not None and tc is not None and abs(tc - t_joint) < 1e-6:
-        return lab, mark
+    """Label of a solder-study joint (key tier_arch): the feasibility case of that cooling and
+    integration, in any input state, whose critical joint it is."""
+    for k, (lab, tc, mark) in fl.items():
+        if (k == key or k.endswith("_" + key)) and tc is not None and abs(tc - t_joint) < 1e-6:
+            return lab, mark
     return JOINT_CASE.get(key, tex(key)), False
 
 
+def record_label(r):
+    """Readable label of any case or variant of the feasibility stage."""
+    st = case_state(r)
+    var = r.get("variant") or ("production case" if "__" not in (r.get("case") or "") else
+                               (r.get("case") or "").split("__", 1)[1].rsplit(".", 1)[0])
+    tag = r", superseded (uncoupled Z3)" if r.get("role") == "superseded" else ""
+    return f"{tex(r.get('arch', '?'))}, {tex(st or '--')}: {tex(var)}{tag}"
+
+
 def feasibility_table():
+    """The feasibility stage (tcpmt_feasibility): every declared limit on every compared case
+    of every input state (tcpmt_cases), and the verdict of every case and variant."""
     f = J(TR / "feasibility.json")
-    if not f:
-        return placeholder("temperature feasibility", "feasibility.json")
+    if not f or "records" not in f:
+        return placeholder("feasibility stage", "feasibility.json")
     lim = f["limits"]
-    body = []
     labels = feas_labels(f)
-    for lab, c in f["cases"].items():
-        rg = c["regions"]
-        fails = [CHECK_LABEL.get(k, tex(k)) for k, v in c["checks"].items()
-                 if isinstance(v, dict) and not v["ok"]]
-        body.append(f"{labels[lab][0]} & {rg['hs']['device']['Tj_bound_C']:.1f} & "
-                    f"{rg['ls']['device']['Tj_bound_C']:.1f} & {rg['caps']['in_cells']['max_C']:.1f} & "
-                    f"{rg['ind']['in_cells']['max_C']:.1f} & {rg['rdl']['all']['max_C']:.1f} & "
-                    f"{rg['encapsulant']['all']['max_C']:.1f} & {c['joints']['T_critical_C']:.1f} & "
+
+    def v(x, d=1):
+        return "--" if x is None else f"{x:.{d}f}"
+    order = {"SDEC": 0, "S0": 1, "S1": 2}
+    keys = sorted(f["cases"], key=lambda k: (order.get(case_state(f["cases"][k]), 9),
+                                             f["cases"][k].get("tier") or "",
+                                             f["cases"][k].get("arch") or ""))
+    body = []
+    for key in keys:
+        c = f["cases"][key]
+        rg, ch, tj = c.get("regions") or {}, c.get("checks") or {}, c.get("junction_C") or {}
+        fails = [CHECK_LABEL.get(k, tex(k)) for k in c.get("fails") or []]
+        fails += [CHECK_LABEL.get(k, tex(k)) + " (unresolved)" for k in c.get("unresolved") or []]
+        body.append(f"{labels[key][0]} & {v(tj.get('hs'))} & {v(tj.get('ls'))} & "
+                    f"{v(rg.get('caps_in_cells'))} & {v(rg.get('ind_in_cells'))} & "
+                    f"{v(rg.get('rdl_all'))} & {v(rg.get('encapsulant'))} & "
+                    f"{v(c.get('die_T_max_C'))} & {v((c.get('joints') or {}).get('T_hottest_C'))} & "
+                    f"{v((ch.get('ir_drop') or {}).get('value'))} & "
                     f"{', '.join(fails) or 'none'} \\\\")
-    head = [r"Case & \multicolumn{2}{c}{GaN $T_J$, bound} & Capacitors & Inductor & RDL & "
-            r"Encapsulant & Joint & Limits exceeded \\", r"\cmidrule(lr){2-3}",
-            r" & HS & LS & & & & & & \\"]
-    note = (r"Maximum temperatures ($^\circ$C) of the converged fields; the GaN junction is "
-            r"bounded from the tier maximum by $R_{\theta\mathrm{JC}}$ at the device's own "
-            r"dissipation. Limits: GaN $T_J\le" + f"{lim['gan_Tj_C']:.0f}" +
+    recs = f.get("records") or []
+    if recs:
+        body += [r"\midrule",
+                 r"\multicolumn{11}{@{}l}{\emph{Every case and variant of the study (a candidate "
+                 r"that fails any limit is not ranked)}} \\"]
+        for r in recs:
+            fl = ([CHECK_LABEL.get(k, tex(k)) for k in r.get("fails") or []]
+                  + [CHECK_LABEL.get(k, tex(k)) + " (unresolved)"
+                     for k in r.get("unresolved") or []])
+            body.append(rf"\multicolumn{{6}}{{@{{}}L{{7.0cm}}}}{{{record_label(r)}}} & "
+                        rf"\multicolumn{{2}}{{l}}{{{tex(r.get('verdict', '--'))}}} & "
+                        rf"\multicolumn{{3}}{{L{{4.8cm}}}}{{{', '.join(fl) or '--'}}} \\")
+    head = [r"Case & \multicolumn{2}{c}{GaN $T_J$} & Capacitors & Inductor & RDL & "
+            r"Encapsulant & Die & Joint & Drop & Limits exceeded \\", r"\cmidrule(lr){2-3}",
+            r" & HS & LS & & & & & & & (mV) & \\"]
+    note = (r"Maximum temperatures ($^\circ$C) of the converged fields; GaN junction per device "
+            r"tier: the tier maximum in the cells plus $R_{\theta\mathrm{JC}}$ at the device's own "
+            r"dissipation; joint: the hottest joint of the all-site search; drop: per-rail maximum "
+            r"static drop of the 1-V path. Limits: GaN $T_J\le" + f"{lim['gan_Tj_C']:.0f}" +
             r"$; $R_{DS(on)}$ temperature fit $\le" + f"{lim['ron_fit_max_C']:.0f}" +
             r"$; X7R/X7S capacitors $\le" + f"{lim['mlcc_C']:.0f}" + r"$; inductor $\le" +
             f"{lim['inductor_C']:.0f}" + r"$; build-up dielectric and encapsulant $T_g\approx" +
             f"{lim['buildup_Tg_C']:.0f}" + r"$; board $T_g\approx" + f"{lim['board_Tg_C']:.0f}" +
+            r"$; processor die $\le" + f"{lim['die_C']:.0f}" +
             r"$; solder law calibrated $\le" + f"{lim['solder_cal_C']:.0f}" +
-            r"$, solidus " + f"{lim.get('solder_solidus_C', 217):.0f}" + r". Cases: "
-            r"integration, cooling (A: top plate; B: top plate and bottom plate, the bottom one "
-            r"behind a 50-\textmu m TIM; I: bottom plate without the interface) and input "
-            r"scenario when not S0." + (DAGGER_NOTE if any(v[2] for v in labels.values()) else ""))
-    return ltab(r"@{}L{3.3cm}rrrrrrrL{3.8cm}@{}", 9, head, body,
-                "Component and material temperature feasibility", "tab:supp-feas", note)
+            r"$, solidus " + f"{lim.get('solder_solidus_C', 217):.0f}" +
+            r"; every power ball $\le" + f"{lim['bga_A_per_ball']:.1f}" + r"$~A at the case's "
+            r"waveform, with at least " + f"{100 * (1 - lim['bga_power_site_fraction_max']):.0f}" +
+            r"\,\% of the ball sites left for signals; static drop $\le" +
+            f"{lim['ir_drop_mV_per_rail']:.0f}" + r"$~mV per rail. Cases: integration, cooling "
+            r"(A: top plate; B: top plate and bottom plate, the bottom one behind a 50-\textmu m "
+            r"TIM) and input state when not S0 (SDEC: the implemented decoupling, the production "
+            r"state; S1: no decoupling). A check that fails only on the whole-field bound is "
+            r"unresolved; such a candidate is not ranked either." +
+            (DAGGER_NOTE if any(v_[2] for v_ in labels.values()) else ""))
+    return ltab(r"@{}L{3.0cm}rrrrrrrrrL{3.4cm}@{}", 11, head, body,
+                "Feasibility stage: every limit on every case", "tab:supp-feas", note)
 
 
 def scenario_table():
-    kmap = {"S0": "1", "S1": "4", "S2": f"{math.sqrt(48):.2f}"}
-    body = []
+    """The selected regulator under every input state, cooling A: the production state
+    (implemented decoupling) and the S0/S1 references from tcpmt_cases (Z3 on its coupled land
+    side), S2 for the Z1/Z2 production-boundary cases; a case not run yet is a row of dashes."""
+    import tcpmt_cases as TC
+    dec = J(TR / "input_decoupling.json") or {}
+    k_eq = ((dec.get("summary") or {}).get("recommended") or {}).get("k_eq")
+    kmap = {"SDEC": "--" if k_eq is None else f"{k_eq:.2f}", "S0": "1", "S1": "4",
+            "S2": f"{math.sqrt(48):.2f}"}
+    body, marked = [], False
     for a in ARCHS:
-        for s in ("S0", "S1", "S2"):
-            c = J(FC / f"etm_{a}_HV_{s}_h1.1_r21.json")
+        for s in ("SDEC", "S0", "S1", "S2"):
+            if s == "S2":
+                pth = FC / f"etm_{a}_HV_S2_h1.1_r21.json"
+                pth = None if (a == "Z3" or not pth.is_file()) else pth
+            else:
+                pth = TC.case_path(s, "A", a)
+            c = J(pth) if pth else None
             if not c:
+                body.append(f"{a} & {s} & -- & -- & -- & -- & -- & {kmap[s]} \\\\")
                 continue
             me = c.get("mechanics") or {}
             cr = (me.get("joint_search") or {}).get("critical") or {}
             h = c["et_history"][-1]
             du = f"{cr['du_um']:.2f} at {cr['T_C']:.0f}" if cr else "--"
             warp = f"{me['die_warpage_pv_um']:.1f}" if me else "--"
-            body.append(f"{a}{z3_dag(a, f'etm_{a}_HV_{s}_h1.1_r21.json')} & {s} & "
+            marked |= bool(z3_dag(a, pth.name))
+            body.append(f"{a}{z3_dag(a, pth.name)} & {s} & "
                         f"{c['P_loss_w']:.1f} & {c['thermal']['T_max_C']:.1f} & "
                         f"{h.get('T_ls_C', float('nan')):.1f} & {du} & {warp} & {kmap[s]} \\\\")
-    head = [r"Integration & Scenario & $P$ (W) & $T_{\max}$ & $T_{\mathrm{LS}}$ & "
+    head = [r"Integration & State & $P$ (W) & $T_{\max}$ & $T_{\mathrm{LS}}$ & "
             r"$\du$ (\textmu m) & Warpage & $k$ \\",
             r" & & & ($^\circ$C) & ($^\circ$C) & at $T_{\mathrm{j}}$ ($^\circ$C) & (\textmu m) & \\"]
     note = (r"Package-internal loss, peak and low-side tier temperature, critical joint and die "
-            r"warpage of the production cases (Z1, Z2: cooling~A; Z3: its production cooling, a "
-            r"bottom plate without the interface). $k$: RMS-to-average ratio of the current the "
-            r"48-V feed carries." + DAGGER_NOTE)
+            r"warpage under cooling~A (Z3: the coupled land-side case) per input state: SDEC, the "
+            r"implemented decoupling (the production state); S0, ideal input smoothing; S1, no "
+            r"decoupling; S2, the BGA/direct-fed scenario of the production-boundary cases. "
+            r"$k$: RMS-to-average ratio of the current the 48-V feed carries; --: not run yet."
+            + (DAGGER_NOTE if marked else ""))
     return ltab(r"@{}llrrrrrr@{}", 8, head, body,
-                "The selected regulator under the three input scenarios", "tab:supp-scen", note)
+                "The selected regulator under the input states", "tab:supp-scen", note)
 
 
 # ---------------------------------------------------------------- S-VIII comparison
@@ -1344,6 +1423,7 @@ def review_label(name):
 
 
 def review_variants_table():
+    import tcpmt_cases as TC
     SENS = FC / "sensitivity"
     body = []
     k_eq = k_op = None
@@ -1355,6 +1435,8 @@ def review_variants_table():
         me = c.get("mechanics") or {}
         cr = (me.get("joint_search") or {}).get("critical") or {}
         lab, tier = review_label(name)
+        if TC.is_superseded(f):
+            lab += " (superseded base)"
         arch = f.stem.split("_")[1]
         if not tier and arch in ("Z1", "Z2") and \
                 str(c.get("production_case", "")).endswith("_h1.1_r21.json"):
@@ -1405,9 +1487,9 @@ def main():
                  r"does not establish, and the numerical uncertainty of each compared output.")
     L += mesh_runtime_table() + verification_table() + uncertainty_table()
     L += section("Evaluating a Design",
-                 r"Table~\ref{tab:supp-feas} lists every temperature limit and case of the "
+                 r"Table~\ref{tab:supp-feas} lists every limit, case and variant of the "
                  r"feasibility stage and Table~\ref{tab:supp-scen} the selected regulator under "
-                 r"the three input scenarios.")
+                 r"the input states.")
     L += feasibility_table() + scenario_table()
     L += section("Comparing Integrations",
                  r"Table~\ref{tab:supp-z3land} gives the board-backside integration with its "

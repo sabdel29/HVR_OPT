@@ -44,13 +44,13 @@ SENS = R / "research" / "final_closure" / "sensitivity"
 FC = R / "research" / "final_closure"
 TIM_UM, TIM_K = 50.0, 3.0
 Q_REF_W = 1000.0
-TIER_CASES = {
-    "A": {"Z1": FC / "etm_Z1_HV_S0_h1.1_r21.json", "Z2": FC / "etm_Z2_HV_S0_h1.1_r21.json",
-          "Z3": SENS / "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json"},
-    "B": {"Z1": SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
-          "Z2": SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
-          "Z3": SENS / "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json"},
-}
+#: review round 2: the production state of every integration and cooling (tcpmt_cases: the
+#: implemented input decoupling, Z3 on its coupled land side); a case not run yet is listed
+#: under the file the campaign must produce and recorded as missing
+import tcpmt_cases as TC                                                  # noqa: E402
+TIER_CASES = {t: {a: (p if p is not None else TC.expected_path(TC.PRODUCTION_STATE, t, a))
+                  for a, p in row.items()}
+              for t, row in TC.table(TC.PRODUCTION_STATE).items()}
 NU_SOURCE = ("Shah & London (1978), Laminar Flow Forced Convection in Ducts: three-wall H1 fit, "
              "one short wall adiabatic, Nu = 8.235(1 - 1.883/b + 3.767/b^2 - 5.814/b^3 + "
              "5.361/b^4 - 2/b^5), b = H/w (as used by Qu & Mudawar, IJHMT 45 (2002) 2549)")

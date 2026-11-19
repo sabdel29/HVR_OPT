@@ -1,0 +1,286 @@
+{
+ "what": "The production converter of the package chain, as one artifact (TCPMT review round 2).",
+ "production": {
+  "rules": {
+   "CAP_RULE": "stress",
+   "SW_RULE": "legacy",
+   "COSS_RULE": "legacy",
+   "PACK_RULE": "off"
+  },
+  "design_point": {
+   "n_vr": 49,
+   "label": "N3K3KA2_J3.5",
+   "topology": [
+    3,
+    3,
+    2
+   ],
+   "B_array": [
+    1,
+    1,
+    1
+   ],
+   "D": 0.0625,
+   "f_sw_hz": 805170.3343770516,
+   "i_out_per_cell_A": 20.408163265306122,
+   "j_target_A_mm2": 3.5,
+   "config": {
+    "n_vr": 49,
+    "topology": null,
+    "tag": "",
+    "production": true,
+    "config": "/home/beams0/SABDELZAHER/ETM_project/HVR_OPT_work/.claude/worktrees/agent-a2a7404bcab6b25af/configs/phase0nx/z1_physical.yaml"
+   }
+  },
+  "devices": {
+   "high_side": {
+    "part": "EPC2014C",
+    "V_DS_max_V": 40.0,
+    "V_stress_V": 16.0,
+    "I_D_A": 10.0,
+    "R_DS_on_25C_ohm": 0.016,
+    "per_cell": 3,
+    "footprint_mm2": 1.87
+   },
+   "low_side": {
+    "part": "EPC2057",
+    "V_DS_max_V": 50.0,
+    "V_stress_V": 16.0,
+    "I_D_A": 9.6,
+    "R_DS_on_25C_ohm": 0.0085,
+    "per_cell": 3,
+    "footprint_mm2": 1.7999999999999998
+   }
+  },
+  "inductor": {
+   "name": "Shared_Core_UIC_250_nH",
+   "per_cell": 3,
+   "L_nH": 250.0,
+   "DCR_mohm": 1.6,
+   "I_sat_A": 23.0,
+   "I_branch_avg_A": 6.802721088435374,
+   "I_branch_peak_A": 9.131420892621104,
+   "delta_I_branch_A": 4.657399608371462,
+   "delta_I_out_A": 9.004305909518163,
+   "height_um": 500.0,
+   "footprint_mm2": 1.0,
+   "coupling_k": 0.0
+  },
+  "flying_capacitors": {
+   "part": "Murata-GRM188D72A105KE01-1uF-100V",
+   "vendor_part": "GRM188D72A105KE01",
+   "per_cell": 2,
+   "V_max_V": 100.0,
+   "stress_V": {
+    "C1": 32.0,
+    "C2": 16.0
+   },
+   "C_nominal_uF": 1.0,
+   "C_bias_25C_uF": {
+    "C1": 0.27187,
+    "C2": 0.58938
+   },
+   "C_eff_uF": {
+    "25C": {
+     "C1": 0.244683,
+     "C2": 0.5304420000000001
+    },
+    "105C": {
+     "C1": 0.25255445211,
+     "C2": 0.4606623549
+    },
+    "125C": {
+     "C1": 0.26049686228999996,
+     "C2": 0.43868614284
+    }
+   },
+   "C_eff_basis": "vendor C(V, 25 C) x f_T(V, T) x (1 - tolerance)",
+   "ESR_at_fsw_mohm": 7.803875693180282,
+   "ripple_worst_at_design_T": 0.07164274394822417,
+   "height_um": 1000.0,
+   "footprint_mm2": 1.28,
+   "source": "Murata GRM188D72A105KE01, 0603, 1 uF, 100 V, X7T; 0.272 uF at 32 V; https://www.murata.com/en-us/products/productdetail?partno=GRM188D72A105KE01"
+  },
+  "output_capacitance_uF_per_cell": 50.0,
+  "cell": {
+   "area_mm2": 5.61,
+   "side_mm": 2.3685438564654024,
+   "area_budget_mm2": 5.830903790087463,
+   "current_density_A_mm2": 3.6378187638691837
+  },
+  "loss_25C_per_cell_W": {
+   "total": 1.9286881984829805,
+   "conduction": 1.732723568256603,
+   "switching": 0.19596463022637747,
+   "split": {
+    "P_switch_hs_conduction": 0.1410831960909129,
+    "P_switch_ls_conduction": 1.2741576146960574,
+    "P_inductor_DCR": 0.22573311374546068,
+    "P_cap_ESR": 0.0917496437241719,
+    "P_switching_hard": 0.10821153099362575,
+    "P_gate": 0.060387775078278874,
+    "P_Coss": 0.027365324154472848
+   },
+   "optimizer_W": 1.9286881984829805
+  },
+  "loss_25C_system_W": 94.50572172566604,
+  "cell_output_rms_A": 20.573030604962867
+ },
+ "legacy_lineage": {
+  "rules": {
+   "CAP_RULE": "legacy",
+   "SW_RULE": "legacy",
+   "COSS_RULE": "legacy",
+   "PACK_RULE": "off"
+  },
+  "design_point": {
+   "n_vr": 49,
+   "label": "N3K3KA2_J3.5",
+   "topology": [
+    3,
+    3,
+    2
+   ],
+   "B_array": [
+    1,
+    1,
+    1
+   ],
+   "D": 0.0625,
+   "f_sw_hz": 805170.3343770516,
+   "i_out_per_cell_A": 20.408163265306122,
+   "j_target_A_mm2": 3.5,
+   "config": {
+    "n_vr": 49,
+    "topology": null,
+    "tag": "",
+    "production": true,
+    "config": "/home/beams0/SABDELZAHER/ETM_project/HVR_OPT_work/.claude/worktrees/agent-a2a7404bcab6b25af/configs/phase0nx/z1_physical.yaml"
+   }
+  },
+  "devices": {
+   "high_side": {
+    "part": "EPC2014C",
+    "V_DS_max_V": 40.0,
+    "V_stress_V": 16.0,
+    "I_D_A": 10.0,
+    "R_DS_on_25C_ohm": 0.016,
+    "per_cell": 3,
+    "footprint_mm2": 1.87
+   },
+   "low_side": {
+    "part": "EPC2057",
+    "V_DS_max_V": 50.0,
+    "V_stress_V": 16.0,
+    "I_D_A": 9.6,
+    "R_DS_on_25C_ohm": 0.0085,
+    "per_cell": 3,
+    "footprint_mm2": 1.7999999999999998
+   }
+  },
+  "inductor": {
+   "name": "Shared_Core_UIC_250_nH",
+   "per_cell": 3,
+   "L_nH": 250.0,
+   "DCR_mohm": 1.6,
+   "I_sat_A": 23.0,
+   "I_branch_avg_A": 6.802721088435374,
+   "I_branch_peak_A": 9.131420892621104,
+   "delta_I_branch_A": 4.657399608371462,
+   "delta_I_out_A": 9.004305909518163,
+   "height_um": 500.0,
+   "footprint_mm2": 1.0,
+   "coupling_k": 0.0
+  },
+  "flying_capacitors": {
+   "part": "Murata-GCM21-10uF-25V",
+   "vendor_part": null,
+   "per_cell": 2,
+   "V_max_V": 25.0,
+   "stress_V": {
+    "C1": 32.0,
+    "C2": 16.0
+   },
+   "C_nominal_uF": 10.0,
+   "C_bias_25C_uF": null,
+   "C_eff_uF": {
+    "25C": {
+     "C1": null,
+     "C2": null
+    },
+    "105C": {
+     "C1": null,
+     "C2": null
+    },
+    "125C": {
+     "C1": null,
+     "C2": null
+    }
+   },
+   "C_eff_basis": "vendor C(V, 25 C) x f_T(V, T) x (1 - tolerance)",
+   "ESR_at_fsw_mohm": 2.5,
+   "ripple_worst_at_design_T": Infinity,
+   "height_um": null,
+   "footprint_mm2": 2.0,
+   "source": "Murata GCM21BR71E106KA73 datasheet. 0805 package (2.0 \u00d7 1.25 mm), 10 \u00b5F, 25 V, X7R dielectric. https://www.murata.com"
+  },
+  "output_capacitance_uF_per_cell": 50.0,
+  "cell": {
+   "area_mm2": 5.61,
+   "side_mm": 2.3685438564654024,
+   "area_budget_mm2": 5.830903790087463,
+   "current_density_A_mm2": 3.6378187638691837
+  },
+  "loss_25C_per_cell_W": {
+   "total": 1.8663308872777489,
+   "conduction": 1.6703662570513713,
+   "switching": 0.19596463022637747,
+   "split": {
+    "P_switch_hs_conduction": 0.1410831960909129,
+    "P_switch_ls_conduction": 1.2741576146960574,
+    "P_inductor_DCR": 0.22573311374546068,
+    "P_cap_ESR": 0.029392332518940193,
+    "P_switching_hard": 0.10821153099362575,
+    "P_gate": 0.060387775078278874,
+    "P_Coss": 0.027365324154472848
+   },
+   "optimizer_W": 1.8663308872777489
+  },
+  "loss_25C_system_W": 91.45021347660969,
+  "cell_output_rms_A": 20.573030604962867
+ },
+ "macros": {
+  "ConvM": "49",
+  "ConvTopo": "3/3/2",
+  "ConvFswKhz": "805",
+  "ConvDuty": "0.0625",
+  "ConvHsPart": "EPC2014C",
+  "ConvLsPart": "EPC2057",
+  "ConvHsVmax": "40",
+  "ConvLsVmax": "50",
+  "ConvVstress": "16",
+  "ConvIndL": "250",
+  "ConvIndDcr": "1.6",
+  "ConvIndIsat": "23",
+  "ConvIndIpk": "9.1",
+  "ConvCapPart": "GRM188D72A105KE01",
+  "ConvCapVmax": "100",
+  "ConvCapEsr": "7.8",
+  "ConvCellArea": "5.61",
+  "ConvCellSide": "2.37",
+  "ConvCellJ": "3.64",
+  "ConvLossCell": "1.93",
+  "ConvCondCell": "1.73",
+  "ConvSwCell": "0.20",
+  "ConvCapEsrCell": "92",
+  "ConvLossSys": "94.5",
+  "ConvLossSysLegacy": "91.5",
+  "ConvLossSysDelta": "3.1",
+  "ConvCapEsrLegacy": "2.5",
+  "ConvCapCeffOne": "0.24",
+  "ConvCapCeffTwo": "0.53",
+  "ConvCapCbiasOne": "0.27",
+  "ConvCapCbiasTwo": "0.59",
+  "ConvCapHeight": "1.0"
+ }
+}

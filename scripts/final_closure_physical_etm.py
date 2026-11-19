@@ -820,7 +820,19 @@ def run_et(arch, scen, h_xy=1.1, refine=(1, 1)):
         if d_t < ET_TOL_K and d_p < ET_TOL_P_REL:
             break
     t_et = time.time() - t0
+    record_region_maxima(m, th, arch, tiles)
     return m, mats, st, tiles, minfo, L, th, hist, t_et, wd
+
+
+def record_region_maxima(m, th, arch, tiles):
+    """TCPMT review round 2: the component- and material-region maxima of the converged field
+    (device tiers in the cells, die, encapsulant, build-up, board; tcpmt_region_temps), kept in
+    the case's thermal record for the feasibility stage. Recorded, never fatal."""
+    try:
+        import tcpmt_region_temps as RT
+        th["region_T_max_C"] = RT.region_maxima(m, th["T_node"], arch, tiles)
+    except Exception as e:                                   # noqa: BLE001 -- recorded
+        th["region_T_max_C"] = {"error": str(e)[-300:]}
 
 
 def joint_search(m, U, Tn, arch, tiles):

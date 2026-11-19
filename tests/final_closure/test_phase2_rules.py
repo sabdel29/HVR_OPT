@@ -2,8 +2,9 @@
 
 Defaults: datasheet R_G per part (HVR_RG_RULE=legacy restores 6e-4 Ohm), capacitor body areas in
 the area rule (HVR_FOOTPRINT_RULE=legacy restores the library values), mixed tiers with at most
-HVR_MAX_TIERS (4; 0 = no limit) when the packing check is on. The production lineage pins the
-published behaviour.
+HVR_MAX_TIERS (4; 0 = no limit) when the packing check is on. The production converter pins
+its own values (electrical: the corrected rules, packing off for now; HVR_PRODUCTION_RULES=legacy
+the published behaviour).
 """
 import math
 import os
@@ -208,16 +209,23 @@ def test_tier_limit_is_monotone(dev):
 
 
 # ---------------------------------------------------------------- legacy and production
-def test_production_pin_covers_phase2_rules():
+def test_production_pin_covers_phase2_rules(monkeypatch):
+    """The production pin (electrical, one mechanism) sets the phase-2 switches: the corrected
+    datasheet R_g and body footprints by default (merge decision, review round 3), the published
+    values under HVR_PRODUCTION_RULES=legacy; the engine's own values come back afterwards."""
     import electrical as E
+    for k in E.PRODUCTION_ENV:
+        monkeypatch.delenv(k, raising=False)
     old = {k: getattr(H, k) for k in ("RG_RULE", "FOOTPRINT_RULE", "COSS_RULE")}
     try:
-        H.RG_RULE, H.FOOTPRINT_RULE = "datasheet", "body"
-        prev = E._pin_production_rules(H)
-        if not any(k.startswith("HVR_PRODUCTION_") for k in os.environ):
-            assert (H.RG_RULE, H.FOOTPRINT_RULE) == ("legacy", "legacy")
-        E._restore_rules(H, prev)
-        assert (H.RG_RULE, H.FOOTPRINT_RULE) == ("datasheet", "body")
+        for env, want in ((None, ("datasheet", "body")), ("legacy", ("legacy", "legacy"))):
+            if env:
+                monkeypatch.setenv("HVR_PRODUCTION_RULES", env)
+            H.RG_RULE, H.FOOTPRINT_RULE = "engine-rg", "engine-fp"
+            prev = E._pin_production_rules(H)
+            assert (H.RG_RULE, H.FOOTPRINT_RULE) == want
+            E._restore_rules(H, prev)
+            assert (H.RG_RULE, H.FOOTPRINT_RULE) == ("engine-rg", "engine-fp")
     finally:
         for k, v in old.items():
             setattr(H, k, v)

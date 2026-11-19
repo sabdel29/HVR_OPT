@@ -4,12 +4,14 @@ Same pattern as the flying-capacitor rule (test_capacitor_rule.py): the correcte
 engine defaults (switch derating 0.9, corrected C_OSS, tier packing with a 50-um keep-out), each
 published behaviour stays behind its flag (HVR_SW_RULE=legacy, HVR_COSS_RULE=legacy,
 HVR_PACK_RULE=off; with HVR_CAP_RULE=legacy they reproduce the published results), and the
-production lineage pins all of them to the published behaviour.
+production converter pins its own values (electrical: the corrected rules, packing off for now;
+HVR_PRODUCTION_RULES=legacy pins the published behaviour).
 """
 import csv
 import math
 import os
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -333,41 +335,67 @@ def test_legacy_flags_reproduce_the_49_cell_selection(cap_rule, tag):
 
 
 # ---------------------------------------------------------------- production pin
-def test_production_pin_sets_and_restores_rules():
+def test_production_pin_sets_and_restores_rules(monkeypatch):
+    """One mechanism (electrical): production = the corrected rules with packing off (merge
+    decision, review round 3); HVR_PRODUCTION_RULES=legacy = the published rules; one rule
+    overridable on its own; the engine's values restored afterwards."""
     import electrical as E
-    old = (H.CAP_RULE, H.SW_RULE, H.COSS_RULE, H.PACK_RULE)
+    for k in E.PRODUCTION_ENV:
+        monkeypatch.delenv(k, raising=False)
+    old = (H.CAP_RULE, H.SW_RULE, H.COSS_RULE, H.PACK_RULE, H.SW_V_DERATING)
+    keys = ("CAP_RULE", "SW_RULE", "COSS_RULE", "PACK_RULE", "SW_V_DERATING")
+    cases = ((None, None, ("stress", "stress", "corrected", "off", 0.9)),
+             ("legacy", None, ("legacy", "legacy", "legacy", "off", 0.9)),
+             (None, "0.95", ("stress", "stress", "corrected", "off", 0.95)))
     try:
-        H.SW_RULE, H.COSS_RULE, H.PACK_RULE = "stress", "corrected", "on"
-        prev = E._pin_production_rules(H)
-        if not any(k.startswith("HVR_PRODUCTION_") for k in os.environ):
-            assert (H.CAP_RULE, H.SW_RULE, H.COSS_RULE, H.PACK_RULE) == \
-                ("legacy", "legacy", "legacy", "off")
-        E._restore_rules(H, prev)
-        assert (H.SW_RULE, H.COSS_RULE, H.PACK_RULE) == ("stress", "corrected", "on")
+        for allv, derate, want in cases:
+            monkeypatch.delenv("HVR_PRODUCTION_RULES", raising=False)
+            monkeypatch.delenv("HVR_PRODUCTION_SW_DERATING", raising=False)
+            if allv:
+                monkeypatch.setenv("HVR_PRODUCTION_RULES", allv)
+            if derate:
+                monkeypatch.setenv("HVR_PRODUCTION_SW_DERATING", derate)
+            H.SW_RULE, H.COSS_RULE, H.PACK_RULE, H.SW_V_DERATING = "x", "y", "on", 0.5
+            prev = E._pin_production_rules(H)
+            assert tuple(getattr(H, k) for k in keys) == want
+            E._restore_rules(H, prev)
+            assert (H.SW_RULE, H.COSS_RULE, H.PACK_RULE, H.SW_V_DERATING) == ("x", "y", "on", 0.5)
     finally:
-        H.CAP_RULE, H.SW_RULE, H.COSS_RULE, H.PACK_RULE = old
+        H.CAP_RULE, H.SW_RULE, H.COSS_RULE, H.PACK_RULE, H.SW_V_DERATING = old
 
 
-def test_production_loss_at_keeps_the_published_coss_term(dev):
+def test_production_loss_at_uses_the_lineage_loss_terms(dev, monkeypatch):
+    """loss_at pins the C_oss and R_g terms: the design's own rules when it carries them, else
+    the production rules (corrected by default, published under HVR_PRODUCTION_RULES=legacy);
+    the engine's switches are restored."""
     import electrical as E
+    for k in E.PRODUCTION_ENV:
+        monkeypatch.delenv(k, raising=False)
     a = _arch(3, 3)
     ind = [i for i in H.INDUCTOR_LIBRARY if i.name == "Shared_Core_UIC_250_nH"][0]
     cap = [c for c in H.CAPACITOR_LIBRARY if c.name == "Murata-GCM21-10uF-25V"][0]
     d = E.HVRDesign(label="t", arch=a, hs=dev["EPC2014C"], ls=dev["EPC2057"], inductor=ind,
                     capacitor=cap, f_sw_hz=F49, i_out_a=I49, v_in=V_IN, v_out=V_OUT,
                     area_mm2=5.61, area_budget_mm2=I49 / 3.5, loss_25c_w=0.0, j_target=3.5)
-    old = H.COSS_RULE
-    try:
-        H.COSS_RULE = "corrected"
-        p = d.loss_at(25.0)["p_conv_w"]
-        assert H.COSS_RULE == "corrected"                       # restored
-    finally:
-        H.COSS_RULE = old
-    if not any(k in os.environ for k in ("HVR_PRODUCTION_COSS_RULE", "HVR_PRODUCTION_RG_RULE")):
+
+    def ref(coss, rg):
         old_rg = H.RG_RULE
         try:
-            H.RG_RULE = "legacy"                                # production: published terms
-            ref = _loss49(dev, "legacy").total_loss
+            H.RG_RULE = rg
+            return _loss49(dev, coss).total_loss
         finally:
             H.RG_RULE = old_rg
-        assert p == pytest.approx(ref, rel=1e-12)
+    old = (H.COSS_RULE, H.RG_RULE)
+    try:
+        H.COSS_RULE, H.RG_RULE = "engine-coss", "engine-rg"
+        p_prod = d.loss_at(25.0)["p_conv_w"]
+        assert (H.COSS_RULE, H.RG_RULE) == ("engine-coss", "engine-rg")      # restored
+        p_own_legacy = replace(d, rules=dict(E.LEGACY_RULES)).loss_at(25.0)["p_conv_w"]
+        monkeypatch.setenv("HVR_PRODUCTION_RULES", "legacy")
+        p_legacy = d.loss_at(25.0)["p_conv_w"]
+        assert (H.COSS_RULE, H.RG_RULE) == ("engine-coss", "engine-rg")
+    finally:
+        H.COSS_RULE, H.RG_RULE = old
+    assert p_prod == pytest.approx(ref("corrected", "datasheet"), rel=1e-12)
+    assert p_legacy == pytest.approx(ref("legacy", "legacy"), rel=1e-12)
+    assert p_own_legacy == pytest.approx(p_legacy, rel=1e-12)

@@ -90,12 +90,20 @@ def fingerprint(arch: str, h_xy: float, refine: tuple) -> dict:
         regs[k] = [int(len(nd)), sha(np.asarray(nd, dtype=np.int64).tobytes())]
     out["region_nodes"] = regs
     out["ledger"], out["self_consistent"], out["deposits"] = {}, {}, {}
+
+    def unstamped(L):
+        """review round 2 stamps each converter row with the converter lineage it was
+        evaluated with (electrical.rules_of reads it back); the stamp is provenance, not a
+        ledger value, so the fingerprint compares the ledger without it"""
+        L = dict(L)
+        L["rows"] = [{k: v for k, v in r.items() if k != "converter"} for r in L["rows"]]
+        return L
     for scen in SCENARIOS:
-        L = FL.ledger(arch, scen, TEMPS, I_HV)
+        L = unstamped(FL.ledger(arch, scen, TEMPS, I_HV))
         out["ledger"][scen] = {"P_loss_w": repr(L["P_loss_w"]), "n_rows": len(L["rows"]),
                                "rows_sha": sha(jdump(L["rows"])),
                                "all_sha": sha(jdump({k: v for k, v in L.items()}))}
-        S = FL.self_consistent(arch, scen, TEMPS)
+        S = unstamped(FL.self_consistent(arch, scen, TEMPS))
         out["self_consistent"][scen] = {"P_loss_w": repr(S["P_loss_w"]),
                                         "i_hv_avg_a": repr(S["i_hv_avg_a"]),
                                         "all_sha": sha(jdump(S))}

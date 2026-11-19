@@ -18,8 +18,10 @@ from pathlib import Path
 R = Path(__file__).resolve().parents[1]
 D = Path(os.environ.get("TCPMT_RESULTS_DIR", R / "research" / "final_closure"))
 MS = R / "manuscript_v2"
-OUT_MAC = MS / "results_macros.tex"
-OUT_TAB = MS / "tab_compare.tex"
+#: TCPMT_MACROS_OUT_DIR writes the two generated files elsewhere (validation runs)
+_OUT_DIR = Path(os.environ["TCPMT_MACROS_OUT_DIR"]) if os.environ.get("TCPMT_MACROS_OUT_DIR") else MS
+OUT_MAC = _OUT_DIR / "results_macros.tex"
+OUT_TAB = _OUT_DIR / "tab_compare.tex"
 sys.path.insert(0, str(R / "scripts"))
 
 ARCHS = ("Z1", "Z2", "Z3")
@@ -231,17 +233,24 @@ def main():
             mac[f"DuRatio{ATAG[b]}"] = fx(zb["du_c_um"] / z1["du_c_um"], 2)
     mac.update(landside_macros())
     mac.update(sensitivity_macros(S))
-    T = tier_cases(S)
+    T = tier_cases(S)                       # the production state (implemented decoupling)
     mac.update(tier_macros(T))
+    for st, suf in (("S0", "Szero"), ("S1", "Sone")):     # the reference states
+        mac.update(tier_macros(tier_cases(S, st), suf))
     mac.update(isothermal_macros())
     lt = R / "research" / "tcpmt_revision" / "layer_temperatures.json"
     if lt.exists():                 # board / substrate means per cooling tier (mechanism)
-        for a, tiers in json.loads(lt.read_text())["cases"].items():
-            for t, v in tiers.items():
-                mac[f"Tboard{t}{ATAG[a]}"] = fx(v["board"], 0)
-                mac[f"TboardBot{t}{ATAG[a]}"] = fx(v["board_bottom"], 0)
-                mac[f"Tsub{t}{ATAG[a]}"] = fx(v["substrate"], 0)
-                mac["CteBoard"], mac["CteSi"] = fx(1e6 * v["cte_board"], 1), fx(1e6 * v["cte_silicon"], 1)
+        ltd = json.loads(lt.read_text())
+        states = ltd.get("states") or {"S0": ltd["cases"]}
+        for st, archs in states.items():
+            suf = "" if st == ltd.get("production_state", "SDEC") else {"S0": "Szero"}.get(st, st)
+            for a, tiers in archs.items():
+                for t, v in tiers.items():
+                    mac[f"Tboard{t}{ATAG[a]}{suf}"] = fx(v["board"], 0)
+                    mac[f"TboardBot{t}{ATAG[a]}{suf}"] = fx(v["board_bottom"], 0)
+                    mac[f"Tsub{t}{ATAG[a]}{suf}"] = fx(v["substrate"], 0)
+                    mac["CteBoard"] = fx(1e6 * v["cte_board"], 1)
+                    mac["CteSi"] = fx(1e6 * v["cte_silicon"], 1)
     # Z3 is outside the Z1/Z2 mesh ladder: its own r21 -> r31 change, per observable
     f21, f31 = D / "etm_Z3_HV_S0_h1.1_r21.json", D / "etm_Z3_HV_S0_h1.1_r31.json"
     if f21.exists() and f31.exists():
@@ -256,11 +265,17 @@ def main():
                 mac[f"MeshZthree{k}"] = fx(100 * abs(b[k] - a[k]) / abs(b[k]), 1)
     tf = R / "research" / "tcpmt_revision" / "tier_feed_crossover.json"
     if tf.exists():
-        for t, row in json.loads(tf.read_text()).get("tiers", {}).items():
-            for b, v in row.items():
-                r = v.get("R_star_mohm")
-                mac[f"RstarTier{t}{ATAG[b]}"] = (NA if r is None else "none" if r == 0
-                                                  else fx(r, 1))
+        tfd = json.loads(tf.read_text())
+        states = tfd.get("states") or {"S0": tfd.get("tiers", {})}
+        for st, tiers in states.items():
+            suf = "" if st == tfd.get("production_state", "SDEC") else {"S0": "Szero",
+                                                                         "S1": "Sone"}.get(st, st)
+            for t, row in tiers.items():
+                for b, v in row.items():
+                    r = v.get("R_star_mohm")
+                    mac[f"RstarTier{t}{ATAG[b]}{suf}"] = (
+                        NA if (r is None or v.get("error")) else "none" if r == 0
+                        else fx(r, 1))
     mac.update(feed_macros())
     mac.update(verification_macros(S))
     mac.update(network_macros())
@@ -325,18 +340,16 @@ def sensitivity_macros(S):
 #: the three-tier comparison (TCPMT revision). Common temperature: no coupling. A: the same
 #: top cold plate for every integration. B: the same top plate plus the same bottom plate
 #: (top-plate coefficient, inlet temperature, 50-um TIM) under the cell-grid footprint.
-#: I: interface-free bottom plates, reported as bounds. ("prod", None) = production case.
-TIERS = {"A": {"Z1": ("prod", None), "Z2": ("prod", None), "Z3": ("sens", "z3_land_t40_A_fvmap")},
-         "B": {"Z1": ("sens", "z1_bottom_plate_tim"), "Z2": ("sens", "z2_cooled_tim"),
-               "Z3": ("sens", "z3_land_t40_B_fvmap")},
-         "I": {"Z2": ("sens", "z2_cooled"), "Z3": ("prod", None)}}
+#: REVIEW ROUND 2: the cases of each cooling come from tcpmt_cases -- the PRODUCTION state is the
+#: implemented input decoupling (k_eq = 1.65) for every integration, S0 and S1 are references,
+#: and Z3 is always the coupled land-side case. I: interface-free bottom plates (bounds, S0).
+TIERS_I = {"Z2": "sensitivity/etm_Z2_HV_S0__z2_cooled.json"}
 
 
-def case_record(kind, arch, variant):
+def case_record(path):
     """One integration under one cooling configuration, read from its case file."""
-    f = (D / f"etm_{arch}_HV_S0_h1.1_r21.json" if kind == "prod"
-         else D / "sensitivity" / f"etm_{arch}_HV_S0__{variant}.json")
-    if not f.exists():
+    f = Path(path) if path else None
+    if f is None or not f.exists():
         return None
     c = json.loads(f.read_text())
     m = c.get("mechanics") or {}
@@ -353,28 +366,38 @@ def case_record(kind, arch, variant):
             "Tj": crit.get("T_C"), "qb": q_bottom, "eps": loc,
             "Tjhot": max((x["T_C"] for x in (m.get("joint_search") or {}).get("ranked", [])),
                          default=None),
-            "converged": c.get("et_converged"), "file": f.name}
+            "converged": c.get("et_converged"), "file": f.name,
+            "production_boundary": "__" not in f.stem, "scenario": c.get("scenario")}
 
 
-def tier_cases(S):
+def tier_cases(S, state=None):
+    """{(tier, arch): record} of one input state (default: the production state)."""
+    import tcpmt_cases as TC
+    state = state or TC.PRODUCTION_STATE
     out = {}
-    for t, row in TIERS.items():
-        for a, (kind, v) in row.items():
-            r = case_record(kind, a, v)
+    for t in TC.TIERS:
+        for a in ARCHS:
+            r = case_record(TC.case_path(state, t, a))
             if r is None:
                 continue
-            if kind == "prod":
+            if r["production_boundary"] and r["eps"] is None:
                 # every tier entry at the base local level L0 with the production settings --
                 # the level every variant's local response is solved at -- so the column is
                 # comparable; the declared production level (L3) is reported in Section V
-                lm = ((J("local_mesh_study.json") or {}).get("cases") or {}).get(f"{a}_HV_S0") or {}
+                lm = ((J("local_mesh_study.json") or {}).get("cases") or {}).get(
+                    f"{a}_{r['scenario']}") or {}
                 r["eps"] = ((lm.get("levels") or {}).get("L0") or {}).get("d_peeq_per_cycle")
             out[(t, a)] = r
+    if state == "S0":
+        for a, rel in TIERS_I.items():
+            r = case_record(D / rel)
+            if r is not None:
+                out[("I", a)] = r
     return out
 
 
-def tier_macros(T):
-    """\\<Obs><Tier><Arch>, e.g. \\PlossAZthree, \\WarpBZone, \\QbotBZtwo."""
+def tier_macros(T, suffix=""):
+    """\\<Obs><Tier><Arch><suffix>, e.g. \\PlossAZthree, \\WarpBZone, \\PlossAZoneSzero."""
     nd = {"Ploss": ("P", 1), "Pconv": ("conv", 1), "Proute": ("route", 1),
           "Tmax": ("Tmax", 1), "Tdie": ("Tdie", 1), "Tls": ("Tls", 1), "Warp": ("warp", 1),
           "Du": ("du", 2), "Tjoint": ("Tj", 1), "TjointHot": ("Tjhot", 1), "Qbot": ("qb", 0)}
@@ -382,22 +405,22 @@ def tier_macros(T):
     for (t, a), r in T.items():
         for name, (key, n) in nd.items():
             if r.get(key) is not None:
-                out[f"{name}{t}{ATAG[a]}"] = fx(r[key], n)
+                out[f"{name}{t}{ATAG[a]}{suffix}"] = fx(r[key], n)
         if r.get("eps"):
-            out[f"Eps{t}{ATAG[a]}"] = fx(1e3 * r["eps"], 2)
+            out[f"Eps{t}{ATAG[a]}{suffix}"] = fx(1e3 * r["eps"], 2)
     # differences against Z1 within a tier, and the gain of each integration from A to B
     for t in ("A", "B"):
         for b in ("Z2", "Z3"):
             if (t, "Z1") in T and (t, b) in T:
                 d = T[(t, b)]["P"] - T[(t, "Z1")]["P"]
-                out[f"Gap{t}{ATAG[b]}"] = fx(abs(d), 1)
-                out[f"Lead{t}{ATAG[b]}"] = "Z1" if d > 0 else b
-                out[f"dTmaxTier{t}{ATAG[b]}"] = fx(abs(T[(t, b)]["Tmax"]
-                                                       - T[(t, "Z1")]["Tmax"]), 0)
+                out[f"Gap{t}{ATAG[b]}{suffix}"] = fx(abs(d), 1)
+                out[f"Lead{t}{ATAG[b]}{suffix}"] = "Z1" if d > 0 else b
+                out[f"dTmaxTier{t}{ATAG[b]}{suffix}"] = fx(abs(T[(t, b)]["Tmax"]
+                                                               - T[(t, "Z1")]["Tmax"]), 0)
     for a in ARCHS:
         if ("A", a) in T and ("B", a) in T:
-            out[f"GainB{ATAG[a]}"] = fx(T[("A", a)]["P"] - T[("B", a)]["P"], 1)
-            out[f"CoolB{ATAG[a]}"] = fx(T[("A", a)]["Tmax"] - T[("B", a)]["Tmax"], 0)
+            out[f"GainB{ATAG[a]}{suffix}"] = fx(T[("A", a)]["P"] - T[("B", a)]["P"], 1)
+            out[f"CoolB{ATAG[a]}{suffix}"] = fx(T[("A", a)]["Tmax"] - T[("B", a)]["Tmax"], 0)
     return out
 
 
@@ -565,7 +588,8 @@ def compare_table(S, mac):
         return f"{label} & " + " & ".join(f(t, a) for t in T for a in A) + r" \\"
 
     def feas(key):
-        return lambda t, a: {"yes": "pass", "no": r"\textbf{fail}"}.get(m(f"{key}{t}{ATAG[a]}"), NA)
+        return lambda t, a: {"yes": "pass", "no": r"\textbf{fail}", "open": "open",
+                             "n/a": "n/a"}.get(m(f"{key}{t}{ATAG[a]}"), NA)
 
     def du_at(t, a):
         du, tj = m(f"Du{t}{ATAG[a]}"), m(f"Tjoint{t}{ATAG[a]}")
@@ -577,14 +601,20 @@ def compare_table(S, mac):
         return m(f"RstarTier{t}{ATAG[a]}")
 
     def sites(t, a):
-        return {"Z1": str(2 * int(mac.get("NballMatched", 0))) if mac.get("NballMatched") else NA,
-                "Z2": "0", "Z3": r"1334\textsuperscript{c}"}[a]
+        v = m(f"BgaSites{t}{ATAG[a]}")
+        if v == NA:
+            return NA
+        return v + {"Z1": "", "Z2": r"\textsuperscript{c}", "Z3": r"\textsuperscript{d}"}[a]
 
     L = [r"% GENERATED by scripts/tcpmt_manuscript_macros.py -- do not edit",
          r"\begin{table*}[!t]",
-         r"\caption{The three integrations at S0 under cooling~A (one top cold plate) and cooling~B "
-         r"(top and bottom plates), reference capacitor case A0. Loss inside the package-internal "
-         r"boundary unless stated; $\pm U$: numerical uncertainty (Table~\ref{tab:uncertainty}).}",
+         r"\caption{The three integrations in the production state---the implemented input "
+         r"decoupling (seven interleaved clock phases and a ring of input capacitors, $k=1.65$; "
+         r"S0 and S1 are reference scenarios)---under cooling~A (one top cold plate) and cooling~B "
+         r"(top and bottom plates), capacitor case A0 (100-\textmu m tier; the rated part "
+         r"electrically). Loss inside the package-internal boundary unless stated; $\pm U$: "
+         r"numerical uncertainty (Table~\ref{tab:uncertainty}). A candidate failing any limit "
+         r"of the feasibility block is not ranked.}",
          r"\label{tab:compare}", r"\centering", r"\footnotesize",
          r"\setlength{\tabcolsep}{3.5pt}",
          r"\begin{tabular}{@{}lrrrrrr@{}}", r"\toprule",
@@ -596,7 +626,8 @@ def compare_table(S, mac):
          row(r"\quad conversion / routing", lambda t, a: NA if m(f"Pconv{t}{ATAG[a]}") == NA
              else f"{m(f'Pconv{t}{ATAG[a]}')} / {m(f'Proute{t}{ATAG[a]}')}"),
          row(r"Peak temperature ($^\circ$C)", lambda t, a: cell(t, a, "Tmax")),
-         row(r"GaN junction, bound ($^\circ$C)", lambda t, a: m(f"Tj{t}{ATAG[a]}")),
+         row(r"GaN junction, hotter device tier ($^\circ$C)", lambda t, a: m(f"Tj{t}{ATAG[a]}")),
+         row(r"Processor die, maximum ($^\circ$C)", lambda t, a: m(f"Tdiemax{t}{ATAG[a]}")),
          row(r"Board, mean ($^\circ$C)", lambda t, a: cell(t, a, "Tboard")),
          row(r"Die warpage (\textmu m)", lambda t, a: cell(t, a, "Warp", "U{t}{a}Warp")),
          row(r"$\du$ (\textmu m) at $T_{\mathrm{j}}$ ($^\circ$C)", du_at),
@@ -605,25 +636,33 @@ def compare_table(S, mac):
          row("Heat to top / bottom plate (W)", lambda t, a: NA if m(f"QplTop{t}{ATAG[a]}") == NA
              else f"{m(f'QplTop{t}{ATAG[a]}')} / {m(f'QplBot{t}{ATAG[a]}')}"),
          r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Loss accounting and platform}}\\",
-         row(r"Static 1-V drop to the die (mV)\textsuperscript{b}", lambda t, a: m(f"Vdrop{t}{ATAG[a]}")),
+         row(r"Static 1-V drop per rail, maximum (mV)\textsuperscript{b}",
+             lambda t, a: m(f"Vdrop{t}{ATAG[a]}")),
          row(r"Feed limit $R^*$ (m$\Omega$)", rstar),
          row(r"Physical feed loss (W)", lambda t, a: "--" if a == "Z1" else m(f"PlatFeed{t}{ATAG[a]}")),
          row(r"Pumping, shaft (W)", lambda t, a: m(f"PlatPump{t}{ATAG[a]}")),
          row(r"Platform-inclusive loss (W)", lambda t, a: m(f"Plat{t}{ATAG[a]}")),
          r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Feasibility}}\\",
-         row(r"All component and material limits", feas("Feasible")),
-         row(r"Joint within solder law ($\le125\,^\circ$C)",
-             lambda t, a: NA if m(f"TjointHot{t}{ATAG[a]}") == NA else
-             ("pass" if float(m(f"TjointHot{t}{ATAG[a]}")) <= NORTON_T_MAX_C else r"\textbf{fail}")),
-         row(r"BGA sites carrying power (of 1369)", sites),
+         row(r"Component and material ratings", feas("FeasThermal")),
+         row(r"Processor die ($\le105\,^\circ$C)", feas("FeasDie")),
+         row(r"Hottest joint within solder law ($\le125\,^\circ$C)", feas("FeasSolder")),
+         row(r"BGA provisioning (1.5~A/ball, $\ge25\,\%$ sites free)", feas("FeasBga")),
+         row(r"Static drop ($\le30$~mV per rail)", feas("FeasDrop")),
+         row(r"\textbf{Ranked} (every limit met)",
+             lambda t, a: {"yes": "yes", "no": r"\textbf{no}", "open": "open"}.get(
+                 m(f"Feasible{t}{ATAG[a]}"), NA)),
+         row(r"BGA sites carrying power", sites),
          row(r"Worst via aspect ratio, A0 / A1", lambda t, a: "0.83 / 8.6"),
          row(r"Fits the 2.4-mm board opening, A1", lambda t, a: {"Z2": r"\textbf{no}"}.get(a, "n/a")),
          r"\bottomrule", r"\end{tabular}",
          r"\par\smallskip\raggedright\footnotesize "
          r"\textsuperscript{a}Stabilized cycle, L0 mesh. "
-         r"\textsuperscript{b}1-V conductor loss divided by the load current. "
-         r"\textsuperscript{c}Leaves 35 sites for every signal and auxiliary rail: a feasibility "
-         r"failure of this package. " + mac.get("ZthreeLandNote", "") +
+         r"\textsuperscript{b}Sum of the series maxima of one rail at 1000~A: vertical "
+         r"conductors, the cell output plane and, for Z3, the land side and board planes. "
+         r"\textsuperscript{c}48-V balls of the BGA-ring feed, of the 528 sites around the board "
+         r"opening (outside the package-internal boundary). "
+         r"\textsuperscript{d}Of 1369: leaves 35 sites for every signal and auxiliary rail. "
+         + mac.get("ZthreeLandNote", "") +
          r" A1: rated MLCC flying capacitors (1030-\textmu m tier).",
          r"\end{table*}", ""]
     return "\n".join(L)

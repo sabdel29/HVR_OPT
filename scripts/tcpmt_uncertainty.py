@@ -38,6 +38,8 @@ is CONDITIONAL on that decision.
 from __future__ import annotations
 
 import json
+import os
+import sys
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
@@ -131,13 +133,17 @@ def assemble():
     return prod, rel
 
 
-TIERS = {
-    "A": {"Z1": FC / "etm_Z1_HV_S0_h1.1_r21.json", "Z2": FC / "etm_Z2_HV_S0_h1.1_r21.json",
-          "Z3": SENS / "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json"},
-    "B": {"Z1": SENS / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
-          "Z2": SENS / "etm_Z2_HV_S0__z2_cooled_tim.json",
-          "Z3": SENS / "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json"},
-}
+#: review round 2: the compared cases of each cooling from tcpmt_cases -- the production state
+#: (implemented decoupling) by default, TCPMT_UNC_STATE=S0 for the reference; the relative mesh,
+#: tolerance and reference uncertainties of the production meshes apply to either state
+sys.path.insert(0, str(R / "scripts"))
+import tcpmt_cases as _TC                                           # noqa: E402
+UNC_STATE = os.environ.get("TCPMT_UNC_STATE", _TC.PRODUCTION_STATE)
+TIERS = {t: {a: p for a, p in row.items() if p is not None}
+         for t, row in _TC.table(UNC_STATE).items()}
+#: the local solder responses (solder study, EPS_L0) were solved on the S0 tier cases: they enter
+#: the comparisons of the S0 state only, until the study is rerun on the production cases
+EPS_STATE = "S0"
 #: tier L0 local responses (x1e-3 / cycle), replaced by the solder study when present
 EPS_L0 = {"A": {"Z1": 5.80, "Z2": 8.03, "Z3": 13.47}, "B": {"Z1": 2.08, "Z2": 4.15, "Z3": 2.52}}
 
@@ -226,6 +232,8 @@ def comparisons(rel):
                 base = (x - T_IN) if y == "T" else x
                 U[(t, a, y)] = rel[a][y]["total"] * abs(base)
             # local response: own U (or the production arch's) + L0 -> L3 offset
+            if UNC_STATE != EPS_STATE or eps.get(t, {}).get(a) is None:
+                continue
             u_rel = u_t.get((t, a), u_loc.get(a) or 0.0)
             off = 0.0
             if not u_t and l3.get(a) and t == "A" and a in ("Z1", "Z2"):
@@ -235,9 +243,11 @@ def comparisons(rel):
     pairs = [("A", "Z1", "Z2"), ("A", "Z1", "Z3"), ("B", "Z2", "Z1"), ("B", "Z3", "Z1"),
              ("B", "Z2", "Z3")]
     for t, a, b in pairs:
-        for y in OBS + ("eps",):
-            ya = eps[t][a] if y == "eps" else (cases[t][a] or {}).get(y)
-            yb = eps[t][b] if y == "eps" else (cases[t][b] or {}).get(y)
+        for y in OBS + (("eps",) if UNC_STATE == EPS_STATE else ()):
+            ya = (eps.get(t, {}).get(a) if y == "eps"
+                  else (cases[t].get(a) or {}).get(y))
+            yb = (eps.get(t, {}).get(b) if y == "eps"
+                  else (cases[t].get(b) or {}).get(y))
             if ya is None or yb is None:
                 continue
             d = yb - ya
@@ -331,11 +341,16 @@ def main():
            "eps_basis": eps_basis, "eps": eps, "comparisons": res, "macros": mac,
            "latex_supplement": latex(prod, rel, U, res)}
     v2 = local_u_v2()
-    if v2 is not None:                     # the solder-law band, for the model-form step
+    if v2 is not None and UNC_STATE == EPS_STATE:
+        # the solder-law band (solved on the S0 tier joints, like every local response), for
+        # the model-form step
         out["eps_law_band"] = {f"{t}.{a}": v for (t, a), v in v2[2].items()}
         out["eps_law_rankings"] = v2[4].get("rankings")
         out["eps_law_rankings_hold"] = v2[4].get("rankings_hold_across_laws")
-    OUT.write_text(json.dumps(out, indent=1, default=float))
+    out["state"] = UNC_STATE
+    # the production state writes uncertainty.json (Table V); a reference state its own file
+    dst = OUT if UNC_STATE == _TC.PRODUCTION_STATE else OUT.with_name(f"uncertainty_{UNC_STATE}.json")
+    dst.write_text(json.dumps(out, indent=1, default=float))
     TAB.write_text("\n".join(latex(prod, rel, U, res)) + "\n")
     for r in res:
         print(f"{r['tier']} {r['a']}/{r['b']} {r['output']:5s} D={r['D']:+8.3f} U_D={r['U_D']:.3f} "
