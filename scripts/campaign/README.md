@@ -152,7 +152,31 @@ queue waits come on top. The runner launches ready jobs longest-remaining-path f
 `--backend both` it keeps at most `hybrid_buffer` (4) campaign jobs waiting in the PBS queue and
 runs the rest locally, and jobs shorter than 15 min prefer the local cores.
 
-## 4. Smoke tests (2026-11-18, scratch root `/home/beams0/SABDELZAHER/ETM_project/scratch_campaign/smoke`)
+## 4. Smoke tests, design m36 (2026-11-19, root `/home/beams0/SABDELZAHER/ETM_project/scratch_campaign/m36smoke/root`)
+
+The production state (HV_SDEC: i_latin6z + ring, k_eq 2.787; package network at the fallback count
+of 220 balls per rail) of Z1/Z2/Z3 x A/B on the coarse rung r11. The root was pre-populated with the
+development run's M = 36 upstream results (package network, decoupling record, Z3 land sheets, the Z1
+S0 case at r11 under the decoupling chain's S0 name), then seeded and run:
+
+    run.py --campaign m36smoke --results-root $ROOT seed --upstream-of 'ladder.*.sdec_*.r11'
+    run.py --campaign m36smoke --results-root $ROOT run --backend both --max-cores 6 --only 'ladder.*.sdec_*.r11'
+
+| job | where | wall | P_loss (W) | T_max (C) | die max (C) | energy residual | E-T it |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `ladder.Z1.sdec_A.r11` | local | 343 s | 140.59 | 135.64 | 88.33 | 8.6e-8 | 4 |
+| `ladder.Z1.sdec_B.r11` | local | 534 s | 139.08 | 120.46 | 87.61 | 1.2e-7 | 4 |
+| `ladder.Z2.sdec_A.r11` | local | 409 s | 138.93 | 141.69 | 86.71 | 8.1e-8 | 4 |
+| `ladder.Z2.sdec_B.r11` | califone PBS 15792 | 234 s | 130.99 | 98.56 | 83.41 | -1.4e-7 | 3 |
+| `ladder.Z3.sdec_A.r11` | local (2nd run) | 434 s | 206.66 | 213.36 | 91.81 | 9.6e-8 | 6 |
+| `ladder.Z3.sdec_B.r11` | local (2nd run) | 488 s | 181.17 | 127.57 | 86.06 | -4.0e-8 | 5 |
+
+All converged with mechanics and validated. The peak sits in the input-end tier (2 HS + 2 C_fly, card
+k_z 1.83 W/m K) everywhere. Z3 under cooling A is as hot as round 2's Z3 A (233 W, 194 C at 49 cells).
+The first Z3 attempts (califone) failed in 10 s: the Z3 land-side deposit wrapper did not forward the
+manifold plate's keywords (fixed in 717a36c); after `reset` the runner relaunched them.
+
+## 4a. Smoke tests, round 2 (2026-11-18, scratch root `/home/beams0/SABDELZAHER/ETM_project/scratch_campaign/smoke`)
 
     run.py --campaign smoke --results-root $ROOT seed --upstream-of 'ladder.Z1.r11' --upstream-of 'ladder.Z2.r11'
     run.py --campaign smoke --results-root $ROOT run --backend local --only ladder.Z1.r11
