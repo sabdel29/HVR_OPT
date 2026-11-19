@@ -48,6 +48,31 @@ CORRELATIONS, all for the laminar regime these channels are in (Re < 2300):
   The previous constant property set (water at ~50 C) is kept as LEGACY_PROPS: it is the
   set the conjugate CFD reference (research/final_closure/reference_cooling_icepak.json) was
   solved with, so the CFD comparison evaluates the correlation with it (cfd_comparison()).
+
+MANIFOLD PLATE (TCPMT round 3, approved by the authors). Microchannel.n_zones = n splits the
+  plate into n streamwise zones fed by ALTERNATING inlet and outlet headers in a manifold layer
+  over the channels (headers at x = 0, L/n, 2L/n, ... : in, out, in, out, ...; zone k flows +x
+  for even k, -x for odd k). Every zone is one pass of length L/n carrying m_dot/n through all
+  the channels, so per pass:
+       u, Re  -> 1/n          fully developed laminar Nu, hence h: unchanged
+       dp_fd  = f (L/n) / D_h rho u^2/2  -> 1/n^2  (f Re fixed)
+       entrance K(inf) and plenum terms  -> 1/n^2  (on the zone's dynamic pressure)
+       coolant rise per zone (Q/n)/((m_dot/n) c_p) = Q/(m_dot c_p): unchanged
+       bulk mean temperature, caloric resistance R_cal = 1/(2 m_dot c_p): unchanged
+  plus a DECLARED header estimate (manifold only): two 90-degree turns header -> channel ->
+  header (K_TURN each, on the channel dynamic pressure) and the dividing / combining header
+  losses (K_HEADER_IN + K_HEADER_OUT on the header dynamic pressure of an interior header,
+  which feeds or collects two zones, 2 m_dot/n, through a slot HEADER_SLOT_FRAC x L/n wide and
+  HEADER_DEPTH_MM deep) -- typical sharp-turn and dividing/combining-flow coefficients of the
+  order tabulated by Idelchik (Handbook of Hydraulic Resistance), not a manifold CFD.
+  Developing flow: L_h and L_th scale with Re, so L_th/L_zone and x* = L_zone/(D_h Re Pr) are
+  the SAME as for the single pass (L/n and m_dot/n leave L/(Re D_h) unchanged): each short
+  zone is thermally developing over the same fraction as the single-pass channel and the fully
+  developed Nu stays a lower bound on the pass-mean Nu (developing_flow_check()).
+  PLATE_MODEL selects the PRODUCTION plate's construction ("manifold": MANIFOLD_ZONES zones;
+  "single_pass": the pre-round-3 plate, variant plate_single_pass); it acts only on designs
+  that ask for the production construction (cooling_production.CoolingDesign n_zones=None).
+  A bare Microchannel is single pass unless n_zones is given.
 """
 from __future__ import annotations
 import csv, json, math, sys
@@ -101,6 +126,39 @@ WALL_VISCOSITY = False               # Sieder-Tate/Deissler-type correction (opt
 #: expansion out of the channel array (declared, typical values)
 K_INF, K_CONTRACTION, K_EXPANSION = 0.85, 0.5, 1.0
 NU_WALL_EXP, F_WALL_EXP = 0.14, 0.58
+#: production plate construction (TCPMT round 3): "manifold" (MANIFOLD_ZONES streamwise zones,
+#: alternating inlet/outlet headers) | "single_pass" (variant plate_single_pass)
+PLATE_MODEL = "manifold"
+MANIFOLD_ZONES = 4
+#: DECLARED manifold header estimate: a 90-degree turn into and out of the channels (each on the
+#: channel dynamic pressure); dividing (inlet) and combining (outlet, incl. the exit) header
+#: losses on the dynamic pressure of an interior header slot (HEADER_SLOT_FRAC of the zone
+#: length wide, HEADER_DEPTH_MM deep, carrying two zones' flow)
+K_TURN = 1.0
+K_HEADER_IN, K_HEADER_OUT = 1.0, 1.5
+HEADER_SLOT_FRAC = 0.5
+HEADER_DEPTH_MM = 2.0
+PLATE_MODELS = ("manifold", "single_pass")
+
+
+def production_zones() -> int:
+    """Streamwise zones of the PRODUCTION plate under PLATE_MODEL."""
+    if PLATE_MODEL == "manifold":
+        return int(MANIFOLD_ZONES)
+    if PLATE_MODEL == "single_pass":
+        return 1
+    raise ValueError(f"unknown PLATE_MODEL {PLATE_MODEL!r} (known {PLATE_MODELS})")
+
+
+def nu_mean_developing_ratio(x_star: float) -> float:
+    """Pass-mean over fully developed Nu for thermally developing laminar flow, H boundary
+    condition, at x* = L/(D_h Re Pr): Shah's circular-duct fit (Shah & London 1978),
+    Nu_m = 1.953 x*^(-1/3) (x* <= 0.03), 4.364 + 0.0722/x* (x* > 0.03), divided by 4.364.
+    INDICATIVE for the rectangular channel (the ratio, not the level, is transferred)."""
+    if x_star <= 0.0:
+        return float("inf")
+    nu_m = 1.953 * x_star ** (-1.0 / 3.0) if x_star <= 0.03 else 4.364 + 0.0722 / x_star
+    return nu_m / 4.364
 
 
 def water_props(t_c: float) -> dict:
@@ -174,6 +232,12 @@ class Microchannel:
     m_dot_g_s: float = 1.6
     t_in_c: float = 25.0
     walls_heated: int = 3
+    #: streamwise manifold zones (1 = single pass; see MANIFOLD PLATE in the module notes)
+    n_zones: int = 1
+
+    @property
+    def zones(self) -> int:
+        return max(int(self.n_zones), 1)
 
     @property
     def n_channels(self) -> int:
@@ -218,7 +282,10 @@ class Microchannel:
         a_foot = (self.width_mm * 1e-3) * L
         m_dot = self.m_dot_g_s * 1e-3
         a_flow = n * w * h
-        u = m_dot / (rho * a_flow)
+        # one pass: the whole channel (single pass) or one manifold zone (L/nz, m_dot/nz)
+        nz = self.zones
+        L_pass, m_pass = L / nz, m_dot / nz
+        u = m_pass / (rho * a_flow)
         re = rho * u * self.d_h_m / mu
         pr = mu * cp / kf
         regime = "laminar" if re < 2300 else ("transitional" if re < 4000 else "turbulent")
@@ -263,12 +330,15 @@ class Microchannel:
         dt_fluid = q_w / (m_dot * cp)
         h_eff = 1.0 / (r_tot * a_foot)
         h_loc = 1.0 / (r_loc * a_foot)
-        # pressure drop and pumping power
+        # pressure drop and pumping power: one pass (the zones are in parallel)
         q_dyn = 0.5 * rho * u ** 2
-        dp_fd = f * (L / self.d_h_m) * q_dyn
+        dp_fd = f * (L_pass / self.d_h_m) * q_dyn
         dp_ent = K_INF * q_dyn if re < 2300 else 0.0
         dp_pl = (K_CONTRACTION + K_EXPANSION) * q_dyn
-        dp = dp_fd + dp_ent + dp_pl
+        hdr = self.header_estimate(rho, q_dyn) if nz > 1 else None
+        dp_turn = hdr["dp_turns_Pa"] if hdr else 0.0
+        dp_hdr = hdr["dp_headers_Pa"] if hdr else 0.0
+        dp = dp_fd + dp_ent + dp_pl + dp_turn + dp_hdr
         v_dot = m_dot / rho
         p_pump = dp * v_dot
         return {"w_ch_um": self.w_ch_um, "h_ch_um": self.h_ch_um,
@@ -291,14 +361,53 @@ class Microchannel:
                 "dT_fluid_K": dt_fluid, "dT_junction_K": q_w * r_tot,
                 "T_j_C": self.t_in_c + q_w * r_tot,
                 "dp_fd_kPa": dp_fd / 1e3, "dp_entrance_kPa": dp_ent / 1e3,
-                "dp_plenum_kPa": dp_pl / 1e3, "dp_kPa": dp / 1e3,
+                "dp_plenum_kPa": dp_pl / 1e3, "dp_turns_kPa": dp_turn / 1e3,
+                "dp_header_kPa": dp_hdr / 1e3, "dp_kPa": dp / 1e3,
                 "K_inf": K_INF, "K_contraction": K_CONTRACTION, "K_expansion": K_EXPANSION,
                 "pump_fd_W": dp_fd * v_dot, "pump_W": p_pump,
                 "V_dot_ml_min": v_dot * 6e7,
                 "pump_frac_of_load_pct": 100 * p_pump / 1000.0,
                 "L_hydrodynamic_entrance_mm": 0.05 * re * self.d_h_m * 1e3,
                 "L_thermal_entrance_mm": 0.05 * re * pr * self.d_h_m * 1e3,
+                "n_zones": nz, "pass_length_mm": L_pass * 1e3,
+                "m_dot_per_pass_g_s": m_pass * 1e3,
+                "header": ({k: v for k, v in hdr.items() if not k.endswith("_Pa")}
+                           if hdr else None),
+                "developing_flow": self.developing_flow_check(re, pr),
                 "q_w": q_w}
+
+    def header_estimate(self, rho: float, q_dyn_channel: float) -> dict:
+        """DECLARED header losses of the manifold (module notes): two 90-degree turns on the
+        channel dynamic pressure, and the dividing/combining losses of an interior header slot
+        (two zones' flow) on its own dynamic pressure."""
+        nz = self.zones
+        m_hdr = self.m_dot_g_s * 1e-3 * min(2.0, float(nz)) / nz
+        w_slot = HEADER_SLOT_FRAC * self.length_mm / nz
+        a_hdr = w_slot * 1e-3 * HEADER_DEPTH_MM * 1e-3
+        u_hdr = m_hdr / (rho * a_hdr)
+        q_hdr = 0.5 * rho * u_hdr ** 2
+        return {"K_turn": K_TURN, "K_header_in": K_HEADER_IN, "K_header_out": K_HEADER_OUT,
+                "slot_width_mm": w_slot, "depth_mm": HEADER_DEPTH_MM,
+                "m_dot_interior_header_g_s": m_hdr * 1e3, "u_header_m_s": u_hdr,
+                "q_dyn_header_kPa": q_hdr / 1e3,
+                "dp_turns_Pa": 2.0 * K_TURN * q_dyn_channel,
+                "dp_headers_Pa": (K_HEADER_IN + K_HEADER_OUT) * q_hdr,
+                "basis": "declared: 90-degree turns + dividing/combining interior header "
+                         "(Idelchik-order coefficients), not a manifold CFD"}
+
+    def developing_flow_check(self, re: float, pr: float) -> dict:
+        """Entrance lengths against ONE pass (the zone for a manifold): the fraction of the pass
+        that is still developing and the indicative pass-mean Nu enhancement over the fully
+        developed value used in production."""
+        L_pass = self.length_mm / self.zones
+        dh_mm = self.d_h_m * 1e3
+        l_h, l_th = 0.05 * re * dh_mm, 0.05 * re * pr * dh_mm
+        x_star = L_pass / (dh_mm * re * pr) if re > 0 else float("inf")
+        return {"pass_length_mm": L_pass, "L_h_mm": l_h, "L_th_mm": l_th,
+                "L_h_over_pass": l_h / L_pass, "L_th_over_pass": l_th / L_pass,
+                "x_star": x_star, "Graetz_pass": 1.0 / x_star if x_star else float("inf"),
+                "Nu_mean_developing_over_fd": nu_mean_developing_ratio(x_star),
+                "production_h": "fully developed Nu (a lower bound on the pass mean)"}
 
 
 def required_flow(dt_fluid_target_k: float, q_w: float = Q_TOTAL_W) -> float:

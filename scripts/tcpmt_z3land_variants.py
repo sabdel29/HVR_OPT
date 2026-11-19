@@ -29,10 +29,15 @@ final_closure_sensitivity.VARIANTS from this module and patch the ledger, the te
 regions, the deposit map and the CalculiX timeout inside their own apply(), in their own
 process, exactly as the existing hooks do.
 
-    python tcpmt_z3land_variants.py run VARIANT      E-T + mechanics (S.run_full via S._task)
-    python tcpmt_z3land_variants.py remech VARIANT [HOURS]   mechanics only, converged field
-    python tcpmt_z3land_variants.py check VARIANT    patches on the mesh, no solve
-    python tcpmt_z3land_variants.py augment VARIANT  rewrite the case's z3_land block
+    python tcpmt_z3land_variants.py run VARIANT [rXZ]      E-T + mechanics (S.run_full via S._task)
+    python tcpmt_z3land_variants.py remech VARIANT [HOURS] [rXZ]   mechanics only, converged field
+    python tcpmt_z3land_variants.py check VARIANT [rXZ]    patches on the mesh, no solve
+    python tcpmt_z3land_variants.py augment VARIANT [rXZ]  rewrite the case's z3_land block
+
+MESH LADDERS (TCPMT round 3): the optional rung rXZ (r11, r21 = production, r31, r12) solves
+the variant on that rung of the production nested refinement (final_closure_sensitivity.
+set_refine) and writes sensitivity/ladder/etm_Z3_<SCEN>__<VARIANT>_rXZ.json; the FV-map bins
+are re-derived on the rung's mesh (patch_fvmap bins whatever mesh E.build returns).
 """
 from __future__ import annotations
 
@@ -411,9 +416,10 @@ for _name, (_t, _tier, _plane) in RUNS.items():
 
 # ------------------------------------------------------------------ case records
 def scratch_dir(variant):
+    """The solver work tree of the variant at this process's mesh rung (S.run_full's)."""
     from hvr_scratch import path as scratch
-    return scratch("fc_sens", variant) / (f"Z3_{S.SCEN}_h{E.PRODUCTION_H_XY}"
-                                          f"{E.refine_tag(E.PRODUCTION_REFINE)}")
+    return scratch("fc_sens", S.work_name(variant)) / (f"Z3_{S.SCEN}_h{E.PRODUCTION_H_XY}"
+                                                       f"{E.refine_tag(S.mesh_level())}")
 
 
 def last_thermal_frd(variant):
@@ -468,7 +474,7 @@ def augment(variant, task=None):
     if STATE["t_um"] is None:                     # standalone: the ledger/region patches only
         configure(RUNS[variant][0], RUNS[variant][2], variant in FVMAP)
         patch_all()
-    f = S.case_file("Z3", variant)
+    f = S.variant_file("Z3", variant)             # the rung's file on a ladder run
     c = json.loads(f.read_text())
     c["z3_land"] = z3_land_block(variant, c)
     if task is not None:
@@ -495,9 +501,9 @@ def remech(variant, hours=12.0):
     apply(t_um, tier, plane, variant in FVMAP)
     patch_ccx_timeout(int(hours * 3600))
     E._raise_stack_limit()
-    f = S.case_file("Z3", variant)
+    f = S.variant_file("Z3", variant)
     res = json.loads(f.read_text())
-    m, mats, st, tiles, _ = E.build("Z3", E.PRODUCTION_H_XY, E.PRODUCTION_REFINE)
+    m, mats, st, tiles, _ = E.build("Z3", E.PRODUCTION_H_XY, S.mesh_level())
     frd = last_thermal_frd(variant)
     tn = PE.ccxio.read_frd(frd)["NDTEMP"][1:m.n_nodes + 1, 0]
     if abs(float(np.nanmax(tn)) - res["thermal"]["T_max_C"]) > 1e-6:
@@ -522,7 +528,7 @@ def check(variant):
     temps = E.temps_from_history(ref["et_history"][-1])
     temps.setdefault(LAND_KEY, temps["sub"])
     temps.setdefault(BOARD_KEY, temps["pcb_via"])
-    m, mats, st, tiles, _ = E.build("Z3", E.PRODUCTION_H_XY, E.PRODUCTION_REFINE)
+    m, mats, st, tiles, _ = E.build("Z3", E.PRODUCTION_H_XY, S.mesh_level())
     L = FL.self_consistent("Z3", S.SCEN, temps)
     dep = E.deposits_from_ledger("Z3", L)
     V = m.elem_volumes()
@@ -540,13 +546,18 @@ def check(variant):
 
 
 def main():
-    cmd, variant = sys.argv[1], sys.argv[2]
+    argv = list(sys.argv[1:])
+    rung = next((a for a in argv[2:] if len(a) == 3 and a[0] == "r" and a[1:].isdigit()), None)
+    if rung:
+        argv.remove(rung)
+    S.set_refine(rung)                            # None: the production mesh
+    cmd, variant = argv[0], argv[1]
     if variant not in RUNS:
         raise SystemExit(f"unknown variant {variant}; known {sorted(RUNS)}")
     if cmd == "run":
         run(variant)
     elif cmd == "remech":
-        remech(variant, float(sys.argv[3]) if len(sys.argv) > 3 else 12.0)
+        remech(variant, float(argv[2]) if len(argv) > 2 else 12.0)
     elif cmd == "check":
         check(variant)
     elif cmd == "augment":

@@ -15,7 +15,14 @@ Two kinds:
 
 Variants that are bounding stress tests, not property claims, say so in `nature`.
 
-    python final_closure_sensitivity.py [VARIANT[:ARCH] ...]     (default: all)
+MESH LADDERS (TCPMT round 3). A full variant can also be solved on another rung of the
+production nested refinement (r11, r31, r12, ...: E.build(arch, h_xy, refine), the mechanism of
+the production ladder), so cooling-B, Z3 land-side and production-state cases get ladders of
+their own. The rung is a process setting (set_refine / --refine rXZ); a rung other than the
+production mesh writes research/final_closure/sensitivity/ladder/etm_{ARCH}_{SCEN}__{VARIANT}_
+{rXZ}.json (variant_file) and solves in its own work tree, never replacing the production case.
+
+    python final_closure_sensitivity.py [--refine rXZ] [VARIANT[:ARCH] ...]   (default: all)
 """
 from __future__ import annotations
 
@@ -50,6 +57,66 @@ CONV_TIERS = ("flying_caps", "inductor_plus_cout")
 
 #: cap on concurrent solver processes (shared host); unset = the previous behaviour
 POOL_MAX = int(os.environ.get("FC_POOL_MAX", "10000"))
+
+#: TCPMT round 3: the mesh rung of THIS process's full-variant runs. None = the production
+#: mesh (E.PRODUCTION_REFINE); otherwise a nested-refinement rung (rx, rz) of the same h_xy grid
+#: (E.build), written under LADDER with the rung in the name (variant_file).
+REFINE = None
+LADDER = OUT / "ladder"
+
+
+def parse_refine(tok):
+    """'r31' -> (3, 1); None / '' -> None."""
+    if not tok:
+        return None
+    t = str(tok).strip().lower()
+    if len(t) != 3 or t[0] != "r" or not t[1:].isdigit() or "0" in t[1:]:
+        raise ValueError(f"refinement rung {tok!r} is not rXZ (e.g. r11, r21, r31, r12)")
+    return int(t[1]), int(t[2])
+
+
+def set_refine(refine):
+    """Solve this process's full variants on rung `refine` ('r31', (3, 1) or None)."""
+    global REFINE
+    r = parse_refine(refine) if isinstance(refine, str) or refine is None else tuple(refine)
+    REFINE = None if r is None or tuple(r) == tuple(E.PRODUCTION_REFINE) else tuple(r)
+    return mesh_level()
+
+
+def mesh_level():
+    """The (rx, rz) rung of this process's variant runs."""
+    return tuple(E.PRODUCTION_REFINE) if REFINE is None else tuple(REFINE)
+
+
+def is_production_level():
+    return mesh_level() == tuple(E.PRODUCTION_REFINE)
+
+
+def rung_tag(refine=None):
+    r = mesh_level() if refine is None else tuple(refine)
+    return f"r{r[0]}{r[1]}"
+
+
+def work_name(variant):
+    """Work-tree name of a variant run at this process's rung (tcpmt_cases.converged_field
+    looks for fc_sens/<case-file suffix>/...)."""
+    return variant if is_production_level() else f"{variant}_{rung_tag()}"
+
+
+def ladder_file(path, refine=None):
+    """The rung file of a production-mesh variant case file."""
+    p = Path(path)
+    r = mesh_level() if refine is None else tuple(refine)
+    if r == tuple(E.PRODUCTION_REFINE):
+        return p
+    return p.parent / "ladder" / f"{p.stem}_{rung_tag(r)}.json"
+
+
+def variant_file(arch, variant, refine=None):
+    """The case file of a variant run at this process's rung (the production name at the
+    production mesh); whatever case_file the process uses (a driver may replace it to name
+    another scenario) gives the production name."""
+    return ladder_file(case_file(arch, variant), refine)
 
 
 # ------------------------------------------------------------------ board variants
@@ -309,11 +376,12 @@ def v_icepak_equivalent():
     return {"factor_uniform": f["uniform"], "factor_local": f["local"]}
 
 
-def v_cooling_model(nu=None, props=None, wall=None, top=None, bottom=None):
+def v_cooling_model(nu=None, props=None, wall=None, top=None, bottom=None, plate=None):
     """Cooling-model form, one switch at a time (TCPMT revision): the superseded Nu table
     (long wall adiabatic), the legacy constant properties (~50 C), the wall-viscosity
     correction, the legacy top-plate coefficient with the caloric double count, the legacy
-    full-flow bottom plate."""
+    full-flow bottom plate, the single-pass plate (round 3: production is the 4-zone
+    manifold)."""
     import cooling as C
     if nu is not None:
         C.NU_MODEL = nu
@@ -325,9 +393,13 @@ def v_cooling_model(nu=None, props=None, wall=None, top=None, bottom=None):
         E.TOP_PLATE_COEFF = top
     if bottom is not None:
         E.BOTTOM_PLATE_RULE = bottom
+    if plate is not None:
+        if plate not in C.PLATE_MODELS:
+            raise ValueError(f"unknown plate model {plate!r}")
+        C.PLATE_MODEL = plate
     return {"NU_MODEL": C.NU_MODEL, "PROPS_MODEL": C.PROPS_MODEL,
             "WALL_VISCOSITY": C.WALL_VISCOSITY, "TOP_PLATE_COEFF": E.TOP_PLATE_COEFF,
-            "BOTTOM_PLATE_RULE": E.BOTTOM_PLATE_RULE}
+            "BOTTOM_PLATE_RULE": E.BOTTOM_PLATE_RULE, "PLATE_MODEL": C.PLATE_MODEL}
 def v_board_hbot(h_w_m2k):
     """Board thermal boundary (TCPMT revision). The production board is a 30 x 30 mm coupon
     with adiabatic sides and h_bottom = 10 W/m2K (natural convection), so heat can leave
@@ -818,6 +890,14 @@ VARIANTS = {
                                  nature="LEGACY_SETTING (caloric double count)",
                                  what="top plate with the uniform-sink coefficient (R_cal "
                                       "included) on the streamwise sink"),
+    "plate_single_pass": dict(kind="full", archs=("Z1", "Z2", "Z3"),
+                              apply=lambda: v_cooling_model(plate="single_pass"),
+                              gates=["therm.cooling_model_form"],
+                              nature="LEGACY_SETTING (single-pass cold plate, before the "
+                                     "round-3 manifold)",
+                              what="every plate single pass (one inlet, one outlet, full "
+                                   "length and flow; ~16 x the manifold pressure drop) instead "
+                                   "of the 4-zone manifold; same h, one-way coolant sink"),
     "z1_bottom_plate_tim_fullflow": dict(
         kind="full", archs=("Z1",), apply=lambda: v_z1_bottom_plate_tim(legacy_flow=True),
         gates=[], nature="LEGACY_SETTING (cooling B, full-flow bottom plate)",
@@ -909,12 +989,15 @@ def _spec(variant):
 
 
 def run_full(arch, variant):
-    E.WD = scratch("fc_sens", variant)
+    """E-T fixed point + mechanics of one full variant, on this process's mesh rung (the
+    production mesh unless set_refine chose a ladder rung)."""
+    E.WD = scratch("fc_sens", work_name(variant))
     VARIANTS[variant]["apply"]()
     E._raise_stack_limit()
-    h, r = E.PRODUCTION_H_XY, E.PRODUCTION_REFINE
+    h, r = E.PRODUCTION_H_XY, mesh_level()
     m, mats, st, tiles, minfo, L, th, hist, t_et, wd = E.run_et(arch, SCEN, h, r)
     res = {"arch": arch, "scenario": SCEN, "h_xy_mm": h, "refine": list(r),
+           "mesh_rung": rung_tag(r), "production_mesh": is_production_level(),
            "variant": _spec(variant), "materials": minfo,
            "ledger_rows": L["rows"], "P_loss_w": L["P_loss_w"],
            "i_hv_avg_a": L["i_hv_avg_a"], "energy_ledger": L["energy"],
@@ -925,7 +1008,8 @@ def run_full(arch, variant):
                             and hist[-1]["dP_rel"] < E.ET_TOL_P_REL),
            "et_wall_s": t_et, "threads": E.THREADS,
            "production_case": E.case_path(arch, SCEN).name}
-    f = case_file(arch, variant)
+    f = variant_file(arch, variant)
+    f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps(res, indent=1, default=float))
     try:
         res["mechanics"] = E.mechanics(m, mats, st, th["T_node"], wd, arch, tiles,
@@ -943,6 +1027,8 @@ def run_mech(arch, variant):
     name, tier = split_tier(variant)
     if VARIANTS[name]["kind"] != "mech":
         raise ValueError(f"{name} changes heat paths: it cannot run on a converged field")
+    if not is_production_level():
+        raise ValueError("mechanics-only variants run on the production-mesh field only")
     VARIANTS[name]["apply"]()
     E._raise_stack_limit()
     base, frd, base_name = thermal_base(arch, tier)
@@ -1048,8 +1134,12 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     if sys.argv[1:2] == ["--local"]:
         return local_main(sys.argv[2:])
+    args = sys.argv[1:]
+    if args[:1] == ["--refine"]:                  # a ladder rung for every task of this call
+        set_refine(args[1])
+        args = args[2:]
     tasks = []
-    for a in (sys.argv[1:] or list(VARIANTS)):
+    for a in (args or list(VARIANTS)):
         v, *arch = a.split(":")                   # VARIANT[@B][:ARCH ...]
         tasks += [(x, v) for x in (arch or VARIANTS[split_tier(v)[0]]["archs"])]
     with mp.Pool(min(len(tasks), POOL_MAX)) as p:

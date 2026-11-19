@@ -184,8 +184,74 @@ def collect(out_json):
     return rec
 
 
+#: TCPMT round 3, the manifold plate: label -> (tree, arch, toggles, what); "base" = the tree
+#: before round 3 (31a846c), "new" = this tree (production: the 4-zone manifold)
+MANIFOLD_RUNS = {
+    "base_Z1_A": ("base", "Z1", [], "before round 3: single pass, per-face argsort sink"),
+    "sp_Z1_A": ("new", "Z1", ["plate_single_pass"],
+                "variant plate_single_pass (one coolant temperature per streamwise column)"),
+    "mf_Z1_A": ("new", "Z1", [], "production: 4-zone manifold"),
+    "sp_Z1_B": ("new", "Z1", ["plate_single_pass", "z1_bottom_plate_tim"],
+                "cooling B, both plates single pass"),
+    "mf_Z1_B3": ("new", "Z1", ["z1_bottom_plate_tim"],
+                 "cooling B, both plates 4-zone manifolds (bottom flow: equal rise)"),
+}
+
+
+def collect_manifold(out_json, root=None):
+    """The coarse manifold-vs-single-pass record from the run summaries under $HVR_VALIDATE."""
+    root = Path(root or os.environ.get("HVR_VALIDATE", Path.home() / "claude_scratch"
+                                       / "hvr_work" / "thermal_fix_validate"))
+    rec = {"what": "coarse check (h_xy 1.1 mm, r11, E-T only, HV-S0) of the round-3 manifold "
+                   "plate against the single pass, same code otherwise",
+           "driver": "scripts/tcpmt_thermal_fix_validate.py TREE LABEL Z1 HV_S0 [TOGGLES]",
+           "runs": {}, "deltas": {}}
+    for lab, (tree, arch, tg, what) in MANIFOLD_RUNS.items():
+        f = root / lab / "summary.json"
+        if not f.is_file():
+            rec["runs"][lab] = {"missing": True, "what": what}
+            continue
+        s = json.loads(f.read_text())
+        r = {k: s.get(k) for k in KEYS}
+        r.update(what=what, tree=tree, arch=arch, toggles=tg)
+        case = Path(s["file"])
+        if case.is_file():
+            th = json.loads(case.read_text())["thermal"]
+            r["coolant_passes_last_et_iteration"] = th.get("fluid_iters")
+            r["coolant_residual_last_pass_K"] = (th.get("fluid_hist") or [{}])[-1].get(
+                "max_dT_fluid_K")
+        cool = s.get("cooling") or {}
+        r["plate_model"] = cool.get("plate_model", "single_pass")
+        r["plates"] = [{k: p.get(k) for k in ("name", "n_zones", "m_dot_g_s", "Q_W",
+                                              "dT_coolant_K", "Re", "dp_fd_kPa",
+                                              "dp_entrance_kPa", "dp_plenum_kPa",
+                                              "dp_turns_kPa", "dp_header_kPa", "dp_kPa",
+                                              "P_pump_hydraulic_W")}
+                       for p in cool.get("plates", [])]
+        r["P_pump_hydraulic_total_W"] = cool.get("P_pump_hydraulic_total_W")
+        rec["runs"][lab] = r
+
+    def d(a, b):
+        ra, rb = rec["runs"].get(a, {}), rec["runs"].get(b, {})
+        if ra.get("missing") or rb.get("missing") or not ra or not rb:
+            return None
+        return {k: rb[k] - ra[k] for k in ("P_loss_w", "T_max_C", "die_T_max_C",
+                                           "die_T_mean_C", "T_hs_C", "T_ls_C")
+                if isinstance(ra.get(k), (int, float)) and isinstance(rb.get(k), (int, float))}
+    rec["deltas"]["sp_Z1_A - base_Z1_A (sink discretization only)"] = d("base_Z1_A", "sp_Z1_A")
+    rec["deltas"]["mf_Z1_A - sp_Z1_A (manifold, cooling A)"] = d("sp_Z1_A", "mf_Z1_A")
+    rec["deltas"]["mf_Z1_B3 - sp_Z1_B (manifold, cooling B)"] = d("sp_Z1_B", "mf_Z1_B3")
+    Path(out_json).write_text(json.dumps(rec, indent=1, default=float))
+    return rec
+
+
 if __name__ == "__main__":
-    if sys.argv[1:2] == ["collect"]:
+    if sys.argv[1:2] == ["collect_manifold"]:
+        collect_manifold(sys.argv[2] if len(sys.argv) > 2 else
+                         Path(os.environ.get("ETM_RESULTS_ROOT")
+                              or Path(__file__).resolve().parents[1] / "research")
+                         / "tcpmt_revision" / "manifold_validation.json")
+    elif sys.argv[1:2] == ["collect"]:
         collect(sys.argv[2] if len(sys.argv) > 2 else
                 Path(os.environ.get("ETM_RESULTS_ROOT")
                      or Path(__file__).resolve().parents[1] / "research") / "tcpmt_revision"

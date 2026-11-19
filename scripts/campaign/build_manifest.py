@@ -464,17 +464,20 @@ def build(design):
                       "tcpmt_revision/countopt/etm_Z1_M64N2K2KA1_HV_S0_h1.1_r31.json",
                       deps=[cnt[("M64N2K2KA1", "Z1", "A")]], mechanics=False, n_el_k=279,
                       ncpus=4, speed=0.8)
-    ladder_gap = ("a sensitivity variant solves only at E.PRODUCTION_REFINE "
-                  "(final_closure_sensitivity.run_full, tcpmt_z3land_variants.run); a rung needs "
-                  "a refine parameter (e.g. FC_REFINE) and its own case name -- not in the code")
+    # TCPMT round 3: the variant drivers take a refinement rung (final_closure_sensitivity
+    # --refine rXZ, tcpmt_z3land_variants run VARIANT rXZ, tcpmt_review_variants ... rXZ) and
+    # write sensitivity/ladder/<case>_rXZ.json; the full list of rungs the unified comparison rule
+    # still needs is in uncertainty.json / classB_resolution.json (ladder_runs_needed)
     for a, v in (("Z1", "z1_bottom_plate_tim"), ("Z2", "z2_cooled_tim"), ("Z3", "z3_plate_tim"),
                  ("Z3", "z3_land_t40_A_fvmap"), ("Z3", "z3_land_t40_B_fvmap")):
-        for r, n_k in (("r11", 36), ("r31", 326)):
-            etm_job(f"ladder.{a}.{v}.{r}", "refinement_ladders",
-                    ["scripts/final_closure_sensitivity.py", f"{v}:{a}"],
+        for r, n_k in (("r11", 36), ("r31", 326), ("r12", 72)):
+            cmd = (["scripts/tcpmt_z3land_variants.py", "run", v, r] if v.startswith("z3_land")
+                   else ["scripts/final_closure_sensitivity.py", "--refine", r, f"{v}:{a}"])
+            etm_job(f"ladder.{a}.{v}.{r}", "refinement_ladders", cmd,
                     f"final_closure/sensitivity/ladder/etm_{a}_HV_S0__{v}_{r}.json",
                     analog=case(a, "HV_S0", r), n_el_k=n_k, ncpus=4 if r == "r31" else 2,
-                    deps=[tier.get((a, "B"), prod[(a, "HV_S0")])], blocked=ladder_gap)
+                    deps=[tier.get((a, "B"), prod[(a, "HV_S0")])],
+                    blocked=blk.get(a) if nondefault else None)
 
     # ------------------------------------------------------------------ robustness map
     class_b = [  # (variant, archs, kind)  -- final_closure_sensitivity.VARIANTS

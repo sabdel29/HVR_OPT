@@ -22,6 +22,13 @@ what the review asked for and the model did not report:
   * per cooling tier and case: every plate's heat, mass flow (cooling B: the bottom plate at
     the flow that gives it the top plate's coolant rise), coolant rise and pumping, read from
     the case file's thermal.cooling record when present
+  * TCPMT round 3, the MANIFOLD plate (production, cooling.PLATE_MODEL): four streamwise zones
+    with alternating inlet/outlet headers; the plate record gives its zone geometry, the
+    pressure drop split into fully developed, entrance, plenum, turns and header terms, the
+    developing-length check of one zone, and the same plate single pass (variant
+    plate_single_pass) for comparison; every case gets each plate's dp and pumping at its own
+    heat and flow under the manifold AND single pass (hydraulics depend only on Q and m_dot,
+    so this needs no new solve), whichever construction the case was solved with
 
     python tcpmt_cooling_spec.py   -> research/tcpmt_revision/cooling_spec.json
 """
@@ -73,7 +80,18 @@ def _plate_record(s, c, q_w):
                   "mu_Pa_s": p["mu"], "Pr": s["Pr"], "T_bulk_mean_C": s["T_bulk_mean_C"],
                   "T_inlet_C": c.t_in_c, "m_dot_g_s": c.m_dot_g_s,
                   "V_dot_ml_min": s["V_dot_ml_min"], "source": C.WATER_SOURCE,
-                  "flow_distribution": "uniform over the channels (ideal plenum)"},
+                  "flow_distribution": ("uniform over the channels (ideal plenum)"
+                                        if s["n_zones"] == 1 else
+                                        f"uniform over the channels and over the "
+                                        f"{s['n_zones']} manifold zones (ideal headers)")},
+        "construction": {"plate_model": C.PLATE_MODEL, "n_zones": s["n_zones"],
+                         "pass_length_mm": s["pass_length_mm"],
+                         "m_dot_per_pass_g_s": s["m_dot_per_pass_g_s"],
+                         "headers": ("alternating inlet/outlet headers at x = 0, L/n, 2L/n, "
+                                     "...; zone k flows +x (k even) or -x (k odd)"
+                                     if s["n_zones"] > 1 else "one inlet, one outlet"),
+                         "header_estimate": s["header"]},
+        "developing_flow_check": s["developing_flow"],
         "regime": {"velocity_m_s": s["velocity_m_s"], "Re": s["Re"], "regime": s["regime"],
                    "L_hydrodynamic_entrance_mm": s["L_hydrodynamic_entrance_mm"],
                    "L_thermal_entrance_mm": s["L_thermal_entrance_mm"],
@@ -98,7 +116,12 @@ def _plate_record(s, c, q_w):
         "hydraulics": {"dp_fully_developed_kPa": s["dp_fd_kPa"],
                        "dp_entrance_kPa": s["dp_entrance_kPa"],
                        "dp_plenum_kPa": s["dp_plenum_kPa"],
+                       "dp_turns_kPa": s["dp_turns_kPa"],
+                       "dp_header_kPa": s["dp_header_kPa"],
+                       "dp_fd_plus_entrance_kPa": s["dp_fd_kPa"] + s["dp_entrance_kPa"],
+                       # the total of every term (manifold: turns and header included)
                        "dp_with_entrance_and_plenum_kPa": s["dp_kPa"],
+                       "dp_total_kPa": s["dp_kPa"],
                        "fRe": s["fRe"], "K_inf": K_INF, "K_contraction": K_CONTRACTION,
                        "K_expansion": K_EXPANSION,
                        "P_hydraulic_fd_W": s["pump_fd_W"], "P_hydraulic_W": s["pump_W"],
@@ -120,12 +143,12 @@ def plate():
         "T_wall_mean_C": sw["T_wall_mean_C"], "Nu": sw["Nu"], "fRe": sw["fRe"],
         "h_eff_streamwise_sink_W_m2K": sw["h_local_W_m2K"], "dp_kPa": sw["dp_kPa"],
         "P_hydraulic_W": sw["pump_W"]}
-    nu0, pr0 = C.NU_MODEL, C.PROPS_MODEL
-    try:
-        C.NU_MODEL, C.PROPS_MODEL = "legacy_3w_table", "legacy_50C"
+    nu0, pr0, pl0 = C.NU_MODEL, C.PROPS_MODEL, C.PLATE_MODEL
+    try:                                  # the pre-revision plate: single pass as well
+        C.NU_MODEL, C.PROPS_MODEL, C.PLATE_MODEL = "legacy_3w_table", "legacy_50C", "single_pass"
         sl = c.channel().solve(Q_REF_W)
     finally:
-        C.NU_MODEL, C.PROPS_MODEL = nu0, pr0
+        C.NU_MODEL, C.PROPS_MODEL, C.PLATE_MODEL = nu0, pr0, pl0
     rec["legacy"] = {"Nu": sl["Nu"], "props": "water at ~50 C",
                      "Re": sl["Re"], "h_channel_W_m2K": sl["h_channel_W_m2K"],
                      "h_eff_uniform_sink_W_m2K": sl["h_effective_W_m2K"],
@@ -134,7 +157,61 @@ def plate():
                      "dp_fd_kPa": sl["dp_fd_kPa"], "dp_kPa": sl["dp_kPa"],
                      "P_hydraulic_fd_W": sl["pump_fd_W"]}
     rec["cfd_comparison"] = C.cfd_comparison()
+    # round 3: the same plate under the other construction (production manifold <-> variant
+    # plate_single_pass), same heat and flow
+    rec["single_pass"] = _construction("single_pass", c, Q_REF_W)
+    rec["manifold"] = _construction("manifold", c, Q_REF_W)
+    sp, mf = rec["single_pass"], rec["manifold"]
+    rec["manifold_vs_single_pass"] = {
+        "dp_ratio": sp["dp_total_kPa"] / mf["dp_total_kPa"],
+        "dp_fd_ratio": sp["dp_fully_developed_kPa"] / mf["dp_fully_developed_kPa"],
+        "pump_ratio": sp["P_hydraulic_W"] / mf["P_hydraulic_W"],
+        "h_local_change_rel": mf["h_eff_streamwise_sink_W_m2K"]
+                              / sp["h_eff_streamwise_sink_W_m2K"] - 1.0,
+        "coolant_rise_change_K": mf["dT_coolant_K"] - sp["dT_coolant_K"]}
     return rec
+
+
+def _construction(model, c, q_w, m_dot_g_s=None):
+    """One plate of design c at heat q_w (and flow m_dot_g_s) under plate construction
+    `model`: the hydraulic terms and the film coefficient."""
+    p0 = C.PLATE_MODEL
+    try:
+        C.PLATE_MODEL = model
+        s = c.channel(m_dot_g_s).solve(max(q_w, 0.0))
+    finally:
+        C.PLATE_MODEL = p0
+    return {"plate_model": model, "n_zones": s["n_zones"], "Re": s["Re"],
+            "velocity_m_s": s["velocity_m_s"], "m_dot_g_s": s["m_dot_g_s"],
+            "dT_coolant_K": s["dT_fluid_K"],
+            "h_eff_streamwise_sink_W_m2K": s["h_local_W_m2K"],
+            "dp_fully_developed_kPa": s["dp_fd_kPa"], "dp_entrance_kPa": s["dp_entrance_kPa"],
+            "dp_plenum_kPa": s["dp_plenum_kPa"], "dp_turns_kPa": s["dp_turns_kPa"],
+            "dp_header_kPa": s["dp_header_kPa"],
+            "dp_fd_plus_entrance_kPa": s["dp_fd_kPa"] + s["dp_entrance_kPa"],
+            "dp_total_kPa": s["dp_kPa"], "P_hydraulic_W": s["pump_W"],
+            **{f"P_shaft_eta_{e:.2f}_W": s["pump_W"] / e for e in ETA_PUMP_BAND},
+            "developing_flow": s["developing_flow"]}
+
+
+def _per_plate_constructions(c, plates):
+    """Each recorded plate (heat, flow) of a case under both constructions."""
+    out = {}
+    for model in C.PLATE_MODELS:
+        rows = []
+        for p in plates:
+            q, m = p.get("Q_W"), p.get("m_dot_g_s")
+            if not q or not m:
+                continue
+            r = _construction(model, c, q, m)
+            rows.append({"name": p.get("name"), "Q_W": q, "m_dot_g_s": m,
+                         "dp_total_kPa": r["dp_total_kPa"],
+                         "dp_fd_plus_entrance_kPa": r["dp_fd_plus_entrance_kPa"],
+                         "dp_header_kPa": r["dp_header_kPa"] + r["dp_turns_kPa"],
+                         "P_hydraulic_W": r["P_hydraulic_W"]})
+        out[model] = {"plates": rows,
+                      "P_hydraulic_total_W": sum(r["P_hydraulic_W"] for r in rows)}
+    return out
 
 
 def tiers(p):
@@ -167,11 +244,15 @@ def tiers(p):
             if cool:
                 pl = cool["plates"]
                 rec.update({"plates": pl, "case_records_plates": True,
+                            "plate_model_of_case": cool.get("plate_model", "single_pass"),
                             "dT_fluid_top_K": pl[0]["dT_coolant_K"],
                             "dT_fluid_bottom_K": pl[1]["dT_coolant_K"] if len(pl) > 1 else 0.0,
                             "m_dot_bottom_g_s": pl[1]["m_dot_g_s"] if len(pl) > 1 else 0.0,
                             "P_pump_hydraulic_W": cool["P_pump_hydraulic_total_W"],
-                            "P_shaft_W": cool["P_pump_shaft_total_W"]})
+                            "P_shaft_W": cool["P_pump_shaft_total_W"],
+                            # each plate at its own heat and flow under both constructions
+                            "constructions": _per_plate_constructions(
+                                CANDIDATES[COOLER], pl)})
             else:                 # a case file of the superseded lineage: every plate full
                 n = 1 if t == "A" else 2
                 hy = p["hydraulics"]
@@ -194,7 +275,10 @@ def main():
            "rule": "cooling A: one top plate; cooling B: the top plate plus an identical "
                    "plate under the cell grid through the same 50-um TIM, its mass flow "
                    "sized so its coolant rises as much as the top plate's (equal_rise); "
-                   "pumping counts every plate at its own flow"}
+                   "pumping counts every plate at its own flow; every plate is a "
+                   f"{p['construction']['n_zones']}-zone manifold "
+                   f"({p['construction']['plate_model']}; the single pass is variant "
+                   "plate_single_pass)"}
     OUT.write_text(json.dumps(res, indent=1, default=float))
     h, ht, cc = p["hydraulics"], p["heat_transfer"], p["cfd_comparison"]
     print(f"Nu={ht['Nu_fully_developed_3walls']:.3f} Re={p['regime']['Re']:.0f} "

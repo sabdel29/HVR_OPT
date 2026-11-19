@@ -434,14 +434,27 @@ def cooling_tables():
             ("Base, solid", f"{g['t_base_um']:.0f}~\\textmu m Si, $k$ = {g['k_solid_W_mK']:.0f}~W\\,m$^{{-1}}$K$^{{-1}}$"),
             ("Hydraulic diameter, aspect ratio", f"{g['D_h_um']:.1f}~\\textmu m, {g['aspect_ratio']:.3f}"),
             ("Coolant, inlet", f"water, {f['T_inlet_C']:.0f}\\,$^\\circ$C, {f['m_dot_g_s']:.0f}~g/s ({f['V_dot_ml_min']:.0f} ml/min) per plate"),
-            ("Flow distribution", "uniform over the channels (ideal plenum)"),
+            ("Flow distribution", f.get("flow_distribution",
+                                        "uniform over the channels (ideal plenum)")),
+            *([("Construction", f"{p['construction']['n_zones']}-zone manifold, alternating "
+                                f"inlet/outlet headers; pass {p['construction']['pass_length_mm']:.2f} mm, "
+                                f"{p['construction']['m_dot_per_pass_g_s']:.2f} g/s per zone")]
+              if (p.get("construction") or {}).get("n_zones", 1) > 1 else []),
             ("Velocity, $Re$, $Pr$", f"{rg['velocity_m_s']:.2f} m/s, {rg['Re']:.0f} (laminar), {f['Pr']:.2f}"),
             ("Entrance lengths $L_h$ / $L_{th}$", f"{rg['L_hydrodynamic_entrance_mm']:.1f} / {rg['L_thermal_entrance_mm']:.1f} mm"),
             ("$Nu$ (Shah--London, 3 walls, fully developed)", f"{ht['Nu_fully_developed_3walls']:.2f}"),
             ("$h_{\\mathrm{ch}}$, $\\eta_{\\mathrm{f}}$, $\\Lambda$", f"{ht['h_channel_W_m2K']:.0f} W\\,m$^{{-2}}$K$^{{-1}}$, {ht['fin_efficiency']:.3f}, {ht['area_amplification_Lambda']:.2f}"),
             ("$R_{\\mathrm{conv}}$, $R_{\\mathrm{cal}}$, $R_{\\mathrm{base}}$", f"{ht['R_conv_K_W'] * 1e3:.2f}, {ht['R_caloric_K_W'] * 1e3:.2f}, {ht['R_base_K_W'] * 1e3:.2f} mK/W"),
             ("$h_{\\mathrm{eff}}$ uniform sink / streamwise sink", f"{ht['h_eff_uniform_sink_W_m2K']:.0f} / {ht['h_eff_streamwise_sink_W_m2K']:.0f} W\\,m$^{{-2}}$K$^{{-1}}$"),
-            ("$\\Delta p$ fully developed / with entrance and plenum", f"{hy['dp_fully_developed_kPa']:.0f} / {hy['dp_with_entrance_and_plenum_kPa']:.0f} kPa"),
+            ("$\\Delta p$ fully developed / with entrance and plenum", f"{hy['dp_fully_developed_kPa']:.0f} / {hy['dp_with_entrance_and_plenum_kPa']:.0f} kPa")
+            if "dp_header_kPa" not in hy else
+            ("$\\Delta p$ fully developed + entrance / plenum / turns + headers (est.) / total",
+             f"{hy['dp_fd_plus_entrance_kPa']:.1f} / {hy['dp_plenum_kPa']:.1f} / "
+             f"{hy['dp_turns_kPa'] + hy['dp_header_kPa']:.1f} / {hy['dp_total_kPa']:.1f} kPa"),
+            *([("Single pass (variant)", f"$\\Delta p$ {p['single_pass']['dp_total_kPa']:.0f} kPa, "
+                                         f"{p['single_pass']['P_hydraulic_W']:.1f} W hydraulic per plate")]
+              if p.get("single_pass") and (p.get("construction") or {}).get("n_zones", 1) > 1
+              else []),
             ("Pumping power, hydraulic", f"{hy['P_hydraulic_W']:.1f} W per plate"),
             ("Pumping power, shaft ($\\eta$ = 0.75/0.55/0.35)", f"{hy['P_shaft_eta_0.75_W']:.1f} / {hy['P_shaft_eta_0.55_W']:.1f} / {hy['P_shaft_eta_0.35_W']:.1f} W per plate"),
             ("TIM", f"{ti['thickness_um']:.0f}~\\textmu m, $k$ = {ti['k_W_mK']:.0f}~W\\,m$^{{-1}}$K$^{{-1}}$, $h$ = {ti['h_W_m2K']:.0f} W\\,m$^{{-2}}$K$^{{-1}}$"),
@@ -1008,44 +1021,64 @@ def uncertainty_table():
     st = u.get("state") or ("S0" if any(k.endswith(".eps") for k in U) else "SDEC")
     st_lab = {"SDEC": "implemented decoupling", "S0": "S0"}.get(st, st)
     body = []
+    cases = u.get("cases") or {}
     for y in ("P", "T", "warp", "du", "eps"):
         if body:
             body.append(r"\midrule")
         for a in ARCHS:
             c = rel.get(a, {}).get(y)
             comp = (" & ".join(f"{100 * c[k]:.2f}" for k in ("mesh", "tt", "et", "ref", "total"))
-                    if c else r"\multicolumn{5}{c}{mesh, time, cycle and card grid}")
-            ua = [U.get(f"{t}.{a}.{y}") for t in ("A", "B")]
-            us = " & ".join("--" if x is None else (f"{x:.2f}" if x < 10 else f"{x:.1f}")
-                            for x in ua)
-            body.append(f"{UNC_NAME[y] if a == 'Z1' else ''} & {a} & {comp} & {us} \\\\")
-    code = {"resolved": "R", "resolved with correlation credit": "Rc", "not resolved": "--"}
+                    + (f" & {100 * c['bias_rel']:+.2f}" if "bias_rel" in c else " & --")
+                    if c else r"\multicolumn{6}{c}{local mesh and cycle count; law band in the "
+                              r"resolution}")
+            cells = []
+            for t in ("A", "B"):
+                x = U.get(f"{t}.{a}.{y}")
+                o = ((cases.get(t) or {}).get(a) or {}).get("outputs", {}).get(y) or {}
+                cells.append("--" if x is None else
+                             (f"{x:.2f}" if x < 10 else f"{x:.1f}")
+                             + (r"$^\dagger$" if o.get("provisional") else ""))
+            body.append(f"{UNC_NAME[y] if a == 'Z1' else ''} & {a} & {comp} & "
+                        f"{' & '.join(cells)} \\\\")
+    code = {"resolved": "R", "not resolved": "--", "law-conditional": "L", "pending": "P",
+            # a file of the superseded rule
+            "resolved with correlation credit": "Rc"}
     seen = {}
     for r in u.get("comparisons", []):
         seen.setdefault((r["tier"], r["a"], r["b"]), []).append(r)
     comps = [rf"cooling~{t}, {a}/{b}: " +
-             "; ".join(f"{UNC_NAME[r['output']].split(' (')[0]} {r['lower']} "
-                       f"{code[r['verdict']]}" for r in rows)
+             "; ".join(f"{UNC_NAME[r['output']].split(' (')[0]} {r.get('lower') or ''} "
+                       f"{code.get(r['verdict'], r['verdict'])}"
+                       + (r"$^\dagger$" if r.get("provisional") else "") for r in rows)
              for (t, a, b), rows in seen.items()]
-    head = [r"Output & Int. & \multicolumn{5}{c}{Relative components (\%)} & "
-            r"\multicolumn{2}{c}{$\pm U$} \\",
-            r"\cmidrule(lr){3-7}\cmidrule(l){8-9}",
-            r" & & mesh & through-thickness & E--T stop & reference & total & cooling A & "
-            r"cooling B \\"]
-    note = (r"$U = U_{\mathrm{mesh}} + U_{\mathrm{tt}} + U_{\mathrm{ET}} + U_{\mathrm{ref}}$ "
-            r"(linear sum, no credit for independence): extrapolation of the production ladder "
-            r"r21$\to$r31 at the lowest order observed in the independent full-package ladders "
-            r"(0.6), the through-thickness split, the E--T stop and the matched-reference "
-            r"agreement of the solver; relative to the value (temperatures: to the rise above the "
-            r"inlet); $\deps$: stabilized L0 response" +
+    n_need = len(u.get("ladder_runs_needed") or [])
+    head = [r"Output & Int. & \multicolumn{6}{c}{Relative to the value, S0 reference ladder (\%)} & "
+            r"\multicolumn{2}{c}{$U_{95}$} \\",
+            r"\cmidrule(lr){3-8}\cmidrule(l){9-10}",
+            r" & & mesh & through-thickness & E--T stop & reference & total & bias $\beta$ & "
+            r"cooling A & cooling B \\"]
+    note = (r"One rule for every comparison: $D = y_b - y_a$ is resolved when "
+            r"$|D+\beta_D| > U_{95}(D)$, with $\beta_D$ the signed production-mesh bias and "
+            r"$U_{95}(D)$ the uncertainty of the difference at about 95\,\% coverage. "
+            r"Discretization: a GCI-type estimate on the nested ladder r11/r21/r31 of $D$ itself "
+            r"(the observed order with $F_s = 1.25$ where the ladder is asymptotic, "
+            r"$|p - 2| \leq 0.2$; otherwise $F_s = 3$ with the order limited to [0.5, 2]), so "
+            r"errors shared on one mesh family cancel only where they move together; the "
+            r"through-thickness split r11$\to$r12 ($F_s = 3$), the E--T stop of each case and "
+            r"the matched-reference agreement of the solver, in quadrature. Columns: the "
+            r"components of each integration's S0 reference ladder, relative to the value "
+            r"(temperatures: to the rise above the inlet); $U_{95}$ of each compared case; "
+            r"$\dagger$: the case has no ladder of its own and carries its reference's estimate "
+            rf"provisionally (identical mesh; {n_need} ladder rungs listed for the campaign). "
+            r"$\deps$: own local numerical $U$ (L0$\to$L3, cycle count), resolved only when "
+            r"resolved under every law of the solder-law band (L: production law only)" +
             ("" if st == "S0" else r" (solved on the S0 cases; not compared in this state)") +
             r". Model-form uncertainty is not part of $U$: "
             r"it is covered by rerunning both integrations under each declared alternative "
-            r"(Table~\ref{tab:supp-variants}). Comparisons, lower integration first (R: gap "
-            r"$>2(U_a+U_b)$; Rc: resolved only with the paired discretization errors of one mesh "
-            r"family; --: not resolved): " + ". ".join(c[:1].upper() + c[1:] for c in comps)
-            + ".")
-    return ltab(r"@{}llrrrrrrr@{}", 9, head, body,
+            r"(Table~\ref{tab:supp-variants}). Comparisons, lower integration first (R: "
+            r"resolved; --: not resolved; P: pending): " +
+            ". ".join(c[:1].upper() + c[1:] for c in comps) + ".")
+    return ltab(r"@{}llrrrrrrrr@{}", 10, head, body,
                 f"Numerical uncertainty of each compared output ({st_lab}, production mesh)",
                 "tab:supp-unc", note)
 
