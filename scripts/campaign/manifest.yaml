@@ -3552,6 +3552,106 @@ jobs:
     kind: etm
     mechanics: true
   evidence: no evidence
+- id: robust.Z1.conv_posts_lower
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - conv_posts_lower:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_posts_lower.json
+  deps:
+  - prod.Z1.S0.A
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 1.8
+  walltime_h: 5.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_posts_lower.json
+    kind: etm
+    mechanics: true
+  evidence: no evidence
+- id: robust.Z2.conv_posts_lower
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - conv_posts_lower:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_posts_lower.json
+  deps:
+  - prod.Z2.S0.A
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 1.8
+  walltime_h: 5.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_posts_lower.json
+    kind: etm
+    mechanics: true
+  evidence: no evidence
+- id: robust.Z1.conv_posts_upper
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - conv_posts_upper:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_posts_upper.json
+  deps:
+  - prod.Z1.S0.A
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 1.8
+  walltime_h: 5.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_posts_upper.json
+    kind: etm
+    mechanics: true
+  evidence: no evidence
+- id: robust.Z2.conv_posts_upper
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - conv_posts_upper:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_posts_upper.json
+  deps:
+  - prod.Z2.S0.A
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 1.8
+  walltime_h: 5.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_posts_upper.json
+    kind: etm
+    mechanics: true
+  evidence: no evidence
 - id: robust.caloric.Z1.A
   stage: robustness_map
   argv:
@@ -5898,6 +5998,76 @@ jobs:
   workers: 2
   evidence: 'local.wall_s of the frozen variant cases: 77-134 s per architecture'
   notes: adds the L0 local solder response at the variant's own critical joint
+- id: robust.local.conv_posts_lower
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --local
+  - conv_posts_lower
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_posts_lower.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_posts_lower.json
+  deps:
+  - robust.Z1.conv_posts_lower
+  - robust.Z2.conv_posts_lower
+  - local.temporal
+  - local.mesh_study
+  ncpus: 4
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_posts_lower.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_posts_lower.json
+    kind: etm
+    local: true
+  workers: 2
+  evidence: 'local.wall_s of the frozen variant cases: 77-134 s per architecture'
+  notes: adds the L0 local solder response at the variant's own critical joint
+- id: robust.local.conv_posts_upper
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --local
+  - conv_posts_upper
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_posts_upper.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_posts_upper.json
+  deps:
+  - robust.Z1.conv_posts_upper
+  - robust.Z2.conv_posts_upper
+  - local.temporal
+  - local.mesh_study
+  ncpus: 4
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_posts_upper.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_posts_upper.json
+    kind: etm
+    local: true
+  workers: 2
+  evidence: 'local.wall_s of the frozen variant cases: 77-134 s per architecture'
+  notes: adds the L0 local solder response at the variant's own critical joint
 - id: solder.studies
   stage: solder_submodels
   argv:
@@ -7048,6 +7218,10 @@ jobs:
   - robust.Z2.conv_E160_a4
   - robust.Z1.conv_E160_a10
   - robust.Z2.conv_E160_a10
+  - robust.Z1.conv_posts_lower
+  - robust.Z2.conv_posts_lower
+  - robust.Z1.conv_posts_upper
+  - robust.Z2.conv_posts_upper
   - robust.local.attach_dense
   - robust.local.attach_eng_p34
   - robust.local.attach_eng_p37
@@ -7073,6 +7247,8 @@ jobs:
   - robust.local.conv_E80_a10
   - robust.local.conv_E80_a4
   - robust.local.conv_k_tenth
+  - robust.local.conv_posts_lower
+  - robust.local.conv_posts_upper
   - robust.local.f1_sidewall_filled
   - robust.local.f2_void
   - robust.local.feed_heat_at_crossover
@@ -7524,6 +7700,12 @@ jobs:
   - robust.Z1.conv_E160_a10
   - robust.Z2.conv_E160_a10
   - robust.local.conv_E160_a10
+  - robust.Z1.conv_posts_lower
+  - robust.Z2.conv_posts_lower
+  - robust.local.conv_posts_lower
+  - robust.Z1.conv_posts_upper
+  - robust.Z2.conv_posts_upper
+  - robust.local.conv_posts_upper
   - robust.caloric.Z1.A
   - robust.caloric.Z2.A
   - robust.caloric.Z3.A

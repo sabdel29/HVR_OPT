@@ -585,12 +585,11 @@ def v_conv_k_legacy():
     E.BUILD_HOOKS.append(hook)
 
 
-def v_conv_gap_legacy():
-    """The mixed-tier cards BEFORE review round 3: a part shorter than its tier sits under an
-    ENCAPSULANT cap (tcpmt_converter_cards GAP_MODEL 'encapsulant', with the declared EPC2055
-    / EPC2090 terminal patterns) instead of being bridged to the RDLs by copper posts on its
-    terminals. Every conv_tier<i> card of the stack is replaced by that tier's legacy card
-    (its own contents and height), under the name conv_tier<i>_gapenc."""
+def v_conv_tier_cards(gap="posts", post_basis=None, suffix="gapenc"):
+    """Every mixed-tier card conv_tier<i> of the stack replaced by that tier's card (its own
+    contents and height) under another gap model / post basis of tcpmt_converter_cards,
+    under the name conv_tier<i>_<suffix>: the legacy encapsulant gap (conv_gap_legacy) or
+    the lower / upper bound of the copper posts (conv_posts_lower / conv_posts_upper)."""
     import re
     import tcpmt_converter_cards as CC
 
@@ -605,22 +604,30 @@ def v_conv_gap_legacy():
             der = st["materials"][name]["derivation"]
             tier = der["tier"]
             if tier not in {t["name"] for t in DR.tiers()}:
-                raise RuntimeError(f"conv_gap_legacy: {tier} is not a tier of {DR.name()}")
-            card = CC.mixed_tier(mc, tier, der["parts"], float(der["tier_um"]),
-                                 gap="encapsulant")
-            new = f"{name}_gapenc"
+                raise RuntimeError(f"{suffix}: {tier} is not a tier of {DR.name()}")
+            card = CC.mixed_tier(mc, tier, der["parts"], float(der["tier_um"]), gap=gap,
+                                 post_basis=post_basis)
+            new = f"{name}_{suffix}"
             st["materials"][new] = json.loads(json.dumps(card))
             sel = mat == name
             mat[sel] = new
             n += int(sel.sum())
-            swapped[name] = {"k_ortho_posts": st["materials"][name]["k_ortho"]["value"],
-                             "k_ortho_legacy": card["k_ortho"]["value"]}
+            swapped[name] = {"k_ortho_production": st["materials"][name]["k_ortho"]["value"],
+                             "k_ortho_variant": card["k_ortho"]["value"]}
         if n == 0:
-            raise RuntimeError("conv_gap_legacy found no mixed-tier card to replace")
+            raise RuntimeError(f"{suffix}: found no mixed-tier card to replace")
         m.elem_material = mat
-        return {"converter_cards": "legacy gap model (encapsulant over shorter parts)",
+        return {"converter_cards": f"gap model {gap}, post basis {post_basis}",
                 "variant_elements_retagged": n, "cards": swapped}
     E.BUILD_HOOKS.append(hook)
+
+
+def v_conv_gap_legacy():
+    """The mixed-tier cards BEFORE review round 3: a part shorter than its tier sits under an
+    ENCAPSULANT cap (tcpmt_converter_cards GAP_MODEL 'encapsulant', with the declared EPC2055
+    / EPC2090 terminal patterns) instead of being bridged to the RDLs by copper posts on its
+    terminals."""
+    v_conv_tier_cards(gap="encapsulant", suffix="gapenc")
 
 
 
@@ -928,6 +935,23 @@ VARIANTS = {
                             what="encapsulant cap over the parts shorter than their tier "
                                  "(dies, inductors, capacitors) instead of copper posts on "
                                  "their terminals"),
+    "conv_posts_lower": dict(kind="full", archs=("Z1", "Z2", "Z3"),
+                             apply=lambda: v_conv_tier_cards(post_basis="current",
+                                                             suffix="posts_lo"),
+                             gates=["mat.mlcc_bounded", "mat.inductor_tier_bounded",
+                                    "mat.gan_bounded"],
+                             nature="declared range end (copper-post cross-section)",
+                             what="gap posts carrying only the terminal RMS currents at the "
+                                  "intra-VR density (the lower end of kz_post_range)"),
+    "conv_posts_upper": dict(kind="full", archs=("Z1", "Z2", "Z3"),
+                             apply=lambda: v_conv_tier_cards(post_basis="terminal",
+                                                             suffix="posts_hi"),
+                             gates=["mat.mlcc_bounded", "mat.inductor_tier_bounded",
+                                    "mat.gan_bounded"],
+                             nature="declared range end (copper-post cross-section)",
+                             what="gap posts of the full solder-bar outline, the widest MLCC "
+                                  "band and half the inductor post density (the upper end of "
+                                  "kz_post_range)"),
     "nu_legacy_table": dict(kind="full", archs=("Z1", "Z2", "Z3"),
                             apply=lambda: v_cooling_model(nu="legacy_3w_table"),
                             gates=["therm.cooling_model_form"],

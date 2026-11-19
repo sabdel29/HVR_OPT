@@ -539,7 +539,9 @@ def build(design):
         ("pad_drop", "Z1 Z2", "full"), ("gan_k_half", "Z1 Z2", "full"),
         ("conv_k_tenth", "Z1 Z2", "full"), ("conv_E80_a4", "Z1 Z2", "mech"),
         ("conv_E80_a10", "Z1 Z2", "mech"), ("conv_E160_a4", "Z1 Z2", "mech"),
-        ("conv_E160_a10", "Z1 Z2", "mech")]
+        ("conv_E160_a10", "Z1 Z2", "mech"),
+        # review round 3: the range of the gap-post cards (tcpmt_converter_cards POST_BASES)
+        ("conv_posts_lower", "Z1 Z2", "full"), ("conv_posts_upper", "Z1 Z2", "full")]
     rb = {}
     for v, archs, kind in class_b:
         for a in archs.split():
