@@ -1,0 +1,4768 @@
+{
+ "what": "Regulator-count screen, TCPMT revision phase 2: datasheet gate resistance, capacitor body\nfootprints, mixed tiers with a tier limit, counts extended down to 16.",
+ "driver": "research/tcpmt_revision/dse_j35/sweep_etm.py",
+ "launcher": "scripts/tcpmt_dse_phase2_runs.sh",
+ "engine_snapshot": {
+  "path": "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine_phase2",
+  "md5": {
+   "EPC-Product-Table.csv": "5583e8a54c365a4f542aa05fe46be3a9",
+   "Framework_w_HVR_OPT_sizing_v2.py": "c68f6a195506465b9db77d93e0c11b0f",
+   "HVR_FULL_OPT_EPC_V2.py": "60c3798d306ee26df7daf7288829b97f",
+   "HVR_FULL_OPT_sizing.py": "4e7d52404804ff6b64f9f9362d62e818",
+   "HVR_capacitor_vendor_data.json": "22cf2748b8521a8aeaf56102d857529e",
+   "HVR_epc_device_data.json": "69dda85b0c5324ac641d81534673a6d3"
+  }
+ },
+ "assumptions": {
+  "R_G": "datasheet RG (typ) of the high-side part, 81 of 90 parts; the other 9 (EPC7xxx, EPC210x) take the median 0.4 Ohm (HVR_epc_device_data.json)",
+  "Q_OSS_test_voltage": "datasheet test V_DS where it differs from V_DS,max/2 and the datasheet Q_OSS equals the table (9 parts, e.g. 50 V for EPC2204A/2218A/2202/2252/2203)",
+  "capacitor_footprints": "body area: 0603 1.28, 0805 2.5, 1206 5.12 mm2",
+  "tiers": "a tier may hold parts of different classes; placement with a 50-um keep-out (25 um to the cell edge) in the square cell of side sqrt(I/J)",
+  "heights_um": "EPC parts: datasheet Side View nominal mounted height incl. the terminal (HVR_epc_device_data.json); inductor tier 500 (library); flying capacitor 1000 = 0603 body 0.8 mm + 0.2 mm tolerance margin",
+  "rdl_um": "10.0 per inter-tier interface (production-cell convention)",
+  "placement_exactness": "one class per tier: exact; mixed tiers up to 3 parts exact (guillotine), 4-6 parts exact for guillotine layouts plus a budgeted search for pinwheels at 4, more than 6 parts constructive (MaxRects); unresolved cases count as not placeable (tier counts can only be high)"
+ },
+ "legacy_reproduction": {
+  "env": "HVR_CAP_RULE=legacy HVR_SW_RULE=legacy HVR_COSS_RULE=legacy HVR_PACK_RULE=off HVR_RG_RULE=legacy HVR_FOOTPRINT_RULE=legacy",
+  "reference": "etm35",
+  "files": {
+   "case_A": {
+    "rows_equal_on_reference_columns": true,
+    "extra_columns": [
+     "capacitor",
+     "inductor"
+    ]
+   },
+   "case_B": {
+    "rows_equal_on_reference_columns": true,
+    "extra_columns": [
+     "capacitor",
+     "inductor"
+    ]
+   },
+   "case_C": {
+    "rows_equal_on_reference_columns": true,
+    "extra_columns": [
+     "capacitor",
+     "inductor"
+    ]
+   },
+   "case_D": {
+    "rows_equal_on_reference_columns": true,
+    "extra_columns": [
+     "capacitor",
+     "inductor"
+    ]
+   },
+   "all_architectures": {
+    "rows_equal_on_reference_columns": true,
+    "extra_columns": []
+   }
+  },
+  "reproduces_reference": true
+ },
+ "runs": {
+  "etm35_p2_t4": {
+   "label": "i",
+   "what": "full set, at most 4 tiers",
+   "max_tiers": 4,
+   "env": "HVR_CAP_RULE=stress HVR_SW_RULE=stress HVR_SW_DERATING=0.9 HVR_COSS_RULE=corrected HVR_PACK_RULE=on HVR_PACK_KEEPOUT_UM=50 HVR_RG_RULE=datasheet HVR_FOOTPRINT_RULE=body HVR_TIER_RULE=mixed HVR_MAX_TIERS=4",
+   "optimum": {
+    "M": 36,
+    "square": true,
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2055",
+    "inductor": "Shared_Core_UIC_250_nH",
+    "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+    "f_sw_kHz": 805.17,
+    "conv_per_cell_W": 2.70125,
+    "conv_total_W": 97.245,
+    "routing_W": 5.18,
+    "P_total_W": 102.425,
+    "cell_side_mm": 2.8172,
+    "component_count": 15,
+    "tiers": 4,
+    "stack_height_um": 2991.0,
+    "height_known": true,
+    "part_heights_um": {
+     "hs": 685.0,
+     "ls": 638.0,
+     "inductor": 500.0,
+     "capacitor": 1000.0
+    },
+    "tiers_plan": [
+     {
+      "gan_hs": 2,
+      "cap_fly": 2,
+      "height_um": 1000.0
+     },
+     {
+      "gan_hs": 1,
+      "gan_ls": 1,
+      "height_um": 685.0
+     },
+     {
+      "gan_ls": 1,
+      "inductor": 2,
+      "height_um": 638.0
+     },
+     {
+      "gan_ls": 1,
+      "inductor": 1,
+      "height_um": 638.0
+     }
+    ]
+   },
+   "square_grid_P_total_W": {
+    "16": 147.997,
+    "25": 110.553,
+    "36": 102.425,
+    "49": 119.979,
+    "64": null,
+    "81": null
+   },
+   "best_square_grid": 36,
+   "best_square_grid_stack": {
+    "tiers": 4,
+    "stack_height_um": 2991.0,
+    "height_known": true,
+    "rdl_um_per_interface": 10.0,
+    "per_tier": [
+     {
+      "parts": {
+       "gan_hs": "2 x EPC2014C",
+       "cap_fly": "2 x Murata-GRM188D72A105KE01-1uF-100V"
+      },
+      "part_dims_mm": {
+       "gan_hs": [
+        1.7,
+        1.1
+       ],
+       "cap_fly": [
+        1.6,
+        0.8
+       ]
+      },
+      "tier_height_um": 1000.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.15,
+        1.75,
+        "gan_hs"
+       ],
+       [
+        1.15,
+        0.0,
+        1.65,
+        0.85,
+        "cap_fly"
+       ],
+       [
+        1.65,
+        0.85,
+        1.15,
+        1.75,
+        "gan_hs"
+       ],
+       [
+        0.0,
+        1.75,
+        1.65,
+        0.85,
+        "cap_fly"
+       ]
+      ],
+      "keepout_headroom_um": 8.6,
+      "max_keepout_um": 58.6,
+      "min_cell_side_mm": 2.8001,
+      "cell_side_mm": 2.8172,
+      "side_slack_mm": 0.0171
+     },
+     {
+      "parts": {
+       "gan_hs": "1 x EPC2014C",
+       "gan_ls": "1 x EPC2055"
+      },
+      "part_dims_mm": {
+       "gan_hs": [
+        1.7,
+        1.1
+       ],
+       "gan_ls": [
+        2.5,
+        1.5
+       ]
+      },
+      "tier_height_um": 685.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        2.55,
+        1.55,
+        "gan_ls"
+       ],
+       [
+        0.0,
+        1.55,
+        1.75,
+        1.15,
+        "gan_hs"
+       ]
+      ],
+      "keepout_headroom_um": 58.5,
+      "max_keepout_um": 108.5,
+      "min_cell_side_mm": 2.7001,
+      "cell_side_mm": 2.8172,
+      "side_slack_mm": 0.1171
+     },
+     {
+      "parts": {
+       "gan_ls": "1 x EPC2055",
+       "inductor": "2 x Shared_Core_UIC_250_nH"
+      },
+      "part_dims_mm": {
+       "gan_ls": [
+        2.5,
+        1.5
+       ],
+       "inductor": [
+        1.0,
+        1.0
+       ]
+      },
+      "tier_height_um": 638.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.05,
+        1.05,
+        "inductor"
+       ],
+       [
+        1.05,
+        0.0,
+        1.05,
+        1.05,
+        "inductor"
+       ],
+       [
+        0.0,
+        1.05,
+        2.55,
+        1.55,
+        "gan_ls"
+       ]
+      ],
+      "keepout_headroom_um": 108.6,
+      "max_keepout_um": 158.6,
+      "min_cell_side_mm": 2.6,
+      "cell_side_mm": 2.8172,
+      "side_slack_mm": 0.2172
+     },
+     {
+      "parts": {
+       "gan_ls": "1 x EPC2055",
+       "inductor": "1 x Shared_Core_UIC_250_nH"
+      },
+      "part_dims_mm": {
+       "gan_ls": [
+        2.5,
+        1.5
+       ],
+       "inductor": [
+        1.0,
+        1.0
+       ]
+      },
+      "tier_height_um": 638.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.05,
+        1.05,
+        "inductor"
+       ],
+       [
+        0.0,
+        1.05,
+        2.55,
+        1.55,
+        "gan_ls"
+       ]
+      ],
+      "keepout_headroom_um": 108.6,
+      "max_keepout_um": 158.6,
+      "min_cell_side_mm": 2.6,
+      "cell_side_mm": 2.8172,
+      "side_slack_mm": 0.2172
+     }
+    ]
+   },
+   "M49": {
+    "square": true,
+    "arch": "N=3,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2090",
+    "inductor": "Shared_Core_UIC_250_nH",
+    "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+    "f_sw_kHz": 677.7,
+    "conv_per_cell_W": 2.35555,
+    "conv_total_W": 115.422,
+    "routing_W": 4.557,
+    "P_total_W": 119.979,
+    "cell_side_mm": 2.4147,
+    "component_count": 10,
+    "tiers": 4,
+    "stack_height_um": 3400.0,
+    "height_known": true,
+    "part_heights_um": {
+     "hs": 685.0,
+     "ls": 606.0,
+     "inductor": 500.0,
+     "capacitor": 1000.0
+    },
+    "tiers_plan": [
+     {
+      "gan_hs": 2,
+      "height_um": 685.0
+     },
+     {
+      "gan_hs": 1,
+      "inductor": 2,
+      "height_um": 685.0
+     },
+     {
+      "gan_ls": 1,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     },
+     {
+      "gan_ls": 1,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     }
+    ]
+   },
+   "feasible_counts": [
+    16,
+    20,
+    25,
+    28,
+    30,
+    32,
+    33,
+    34,
+    35,
+    36,
+    40,
+    42,
+    45,
+    48,
+    49,
+    50,
+    52,
+    56
+   ],
+   "per_count": {
+    "16": {
+     "square": true,
+     "arch": "N=7,K=4,K_A=2",
+     "hs": "EPC2214",
+     "ls": "EPC2366",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 3196.49,
+     "conv_per_cell_W": 8.50008,
+     "conv_total_W": 136.001,
+     "routing_W": 11.995,
+     "P_total_W": 147.997,
+     "cell_side_mm": 4.2258,
+     "component_count": 22,
+     "tiers": 4,
+     "stack_height_um": 4030.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 700.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 3,
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 3,
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 4,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "20": {
+     "square": false,
+     "arch": "N=5,K=3,K_A=2",
+     "hs": "EPC7003",
+     "ls": "EPC2366",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1906.03,
+     "conv_per_cell_W": 6.35473,
+     "conv_total_W": 127.095,
+     "routing_W": 8.612,
+     "P_total_W": 135.706,
+     "cell_side_mm": 3.7796,
+     "component_count": 15,
+     "tiers": 4,
+     "stack_height_um": 3512.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 782.0,
+      "ls": 700.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 5,
+       "height_um": 782.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 3,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "25": {
+     "square": true,
+     "arch": "N=4,K=2,K_A=1",
+     "hs": "EPC2014C",
+     "ls": "EPC2366",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1350.31,
+     "conv_per_cell_W": 4.14958,
+     "conv_total_W": 103.74,
+     "routing_W": 6.813,
+     "P_total_W": 110.553,
+     "cell_side_mm": 3.3806,
+     "component_count": 15,
+     "tiers": 4,
+     "stack_height_um": 3115.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 700.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 3,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      }
+     ]
+    },
+    "28": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 3.64871,
+     "conv_total_W": 102.164,
+     "routing_W": 6.193,
+     "P_total_W": 108.357,
+     "cell_side_mm": 3.1944,
+     "component_count": 15,
+     "tiers": 4,
+     "stack_height_um": 3306.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "inductor": 3,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 2,
+       "inductor": 1,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 2,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "30": {
+     "square": false,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2214",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1350.31,
+     "conv_per_cell_W": 4.0445,
+     "conv_total_W": 121.335,
+     "routing_W": 6.212,
+     "P_total_W": 127.547,
+     "cell_side_mm": 3.0861,
+     "component_count": 22,
+     "tiers": 4,
+     "stack_height_um": 3473.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 3,
+       "inductor": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 2,
+       "gan_ls": 1,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 4,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 4,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "32": {
+     "square": false,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2214",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 3.5302,
+     "conv_total_W": 112.966,
+     "routing_W": 5.836,
+     "P_total_W": 118.802,
+     "cell_side_mm": 2.9881,
+     "component_count": 22,
+     "tiers": 4,
+     "stack_height_um": 3640.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 4,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 3,
+       "height_um": 805.0
+      },
+      {
+       "gan_ls": 2,
+       "inductor": 1,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "inductor": 4,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "33": {
+     "square": false,
+     "arch": "N=4,K=3,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 956.61,
+     "conv_per_cell_W": 3.36473,
+     "conv_total_W": 111.036,
+     "routing_W": 5.553,
+     "P_total_W": 116.589,
+     "cell_side_mm": 2.9424,
+     "component_count": 15,
+     "tiers": 4,
+     "stack_height_um": 3085.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 1,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "34": {
+     "square": false,
+     "arch": "N=3,K=3,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 956.61,
+     "conv_per_cell_W": 3.06931,
+     "conv_total_W": 104.357,
+     "routing_W": 5.478,
+     "P_total_W": 109.834,
+     "cell_side_mm": 2.8989,
+     "component_count": 15,
+     "tiers": 4,
+     "stack_height_um": 2991.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "35": {
+     "square": false,
+     "arch": "N=3,K=3,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 956.61,
+     "conv_per_cell_W": 2.93663,
+     "conv_total_W": 102.782,
+     "routing_W": 5.409,
+     "P_total_W": 108.191,
+     "cell_side_mm": 2.8571,
+     "component_count": 15,
+     "tiers": 4,
+     "stack_height_um": 2991.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "36": {
+     "square": true,
+     "arch": "N=3,K=3,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 2.70125,
+     "conv_total_W": 97.245,
+     "routing_W": 5.18,
+     "P_total_W": 102.425,
+     "cell_side_mm": 2.8172,
+     "component_count": 15,
+     "tiers": 4,
+     "stack_height_um": 2991.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "40": {
+     "square": false,
+     "arch": "N=4,K=2,K_A=1",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 2.73459,
+     "conv_total_W": 109.384,
+     "routing_W": 4.995,
+     "P_total_W": 114.378,
+     "cell_side_mm": 2.6726,
+     "component_count": 15,
+     "tiers": 4,
+     "stack_height_um": 3668.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 2,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "42": {
+     "square": false,
+     "arch": "N=4,K=2,K_A=1",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 2.51327,
+     "conv_total_W": 105.557,
+     "routing_W": 4.903,
+     "P_total_W": 110.46,
+     "cell_side_mm": 2.6082,
+     "component_count": 15,
+     "tiers": 4,
+     "stack_height_um": 3668.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 2,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "45": {
+     "square": false,
+     "arch": "N=3,K=3,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 2.47161,
+     "conv_total_W": 111.223,
+     "routing_W": 4.678,
+     "P_total_W": 115.9,
+     "cell_side_mm": 2.5198,
+     "component_count": 15,
+     "tiers": 4,
+     "stack_height_um": 3400.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 2,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "48": {
+     "square": false,
+     "arch": "N=3,K=2,K_A=1",
+     "hs": "EPC2014C",
+     "ls": "EPC2090",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 2.43668,
+     "conv_total_W": 116.96,
+     "routing_W": 4.584,
+     "P_total_W": 121.544,
+     "cell_side_mm": 2.4398,
+     "component_count": 10,
+     "tiers": 4,
+     "stack_height_um": 3400.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 606.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "49": {
+     "square": true,
+     "arch": "N=3,K=2,K_A=1",
+     "hs": "EPC2014C",
+     "ls": "EPC2090",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 2.35555,
+     "conv_total_W": 115.422,
+     "routing_W": 4.557,
+     "P_total_W": 119.979,
+     "cell_side_mm": 2.4147,
+     "component_count": 10,
+     "tiers": 4,
+     "stack_height_um": 3400.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 606.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "50": {
+     "square": false,
+     "arch": "N=3,K=2,K_A=1",
+     "hs": "EPC2014C",
+     "ls": "EPC2090",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 570.42,
+     "conv_per_cell_W": 2.21849,
+     "conv_total_W": 110.924,
+     "routing_W": 4.452,
+     "P_total_W": 115.376,
+     "cell_side_mm": 2.3905,
+     "component_count": 10,
+     "tiers": 4,
+     "stack_height_um": 3400.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 606.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "52": {
+     "square": false,
+     "arch": "N=2,K=2,K_A=1",
+     "hs": "EPC7003",
+     "ls": "EPC2212",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 570.42,
+     "conv_per_cell_W": 3.6639,
+     "conv_total_W": 190.523,
+     "routing_W": 4.403,
+     "P_total_W": 194.925,
+     "cell_side_mm": 2.344,
+     "component_count": 10,
+     "tiers": 4,
+     "stack_height_um": 3182.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 782.0,
+      "ls": 685.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 782.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 685.0
+      }
+     ]
+    },
+    "56": {
+     "square": false,
+     "arch": "N=2,K=2,K_A=1",
+     "hs": "EPC7003",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 480.11,
+     "conv_per_cell_W": 2.26288,
+     "conv_total_W": 126.721,
+     "routing_W": 4.238,
+     "P_total_W": 130.959,
+     "cell_side_mm": 2.2588,
+     "component_count": 10,
+     "tiers": 4,
+     "stack_height_um": 3088.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 782.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 782.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "60": null,
+    "64": null,
+    "70": null,
+    "76": null,
+    "81": null,
+    "84": null,
+    "92": null,
+    "100": null,
+    "120": null
+   }
+  },
+  "etm35_p2_tinf": {
+   "label": "ii",
+   "what": "full set, no tier limit",
+   "max_tiers": null,
+   "env": "HVR_CAP_RULE=stress HVR_SW_RULE=stress HVR_SW_DERATING=0.9 HVR_COSS_RULE=corrected HVR_PACK_RULE=on HVR_PACK_KEEPOUT_UM=50 HVR_RG_RULE=datasheet HVR_FOOTPRINT_RULE=body HVR_TIER_RULE=mixed HVR_MAX_TIERS=0",
+   "optimum": {
+    "M": 42,
+    "square": false,
+    "arch": "N=4,K=4,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2055",
+    "inductor": "Shared_Core_UIC_250_nH",
+    "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+    "f_sw_kHz": 805.17,
+    "conv_per_cell_W": 1.83209,
+    "conv_total_W": 76.948,
+    "routing_W": 4.903,
+    "P_total_W": 81.851,
+    "cell_side_mm": 2.6082,
+    "component_count": 15,
+    "tiers": 6,
+    "stack_height_um": 4964.0,
+    "height_known": true,
+    "part_heights_um": {
+     "hs": 685.0,
+     "ls": 638.0,
+     "inductor": 500.0,
+     "capacitor": 1000.0
+    },
+    "tiers_plan": [
+     {
+      "gan_hs": 2,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     },
+     {
+      "gan_hs": 2,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     },
+     {
+      "gan_ls": 1,
+      "inductor": 2,
+      "height_um": 638.0
+     },
+     {
+      "gan_ls": 1,
+      "inductor": 2,
+      "height_um": 638.0
+     },
+     {
+      "gan_ls": 1,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     },
+     {
+      "gan_ls": 1,
+      "height_um": 638.0
+     }
+    ]
+   },
+   "square_grid_P_total_W": {
+    "16": 138.395,
+    "25": 98.03,
+    "36": 91.483,
+    "49": 83.42,
+    "64": 85.698,
+    "81": 86.562
+   },
+   "best_square_grid": 49,
+   "best_square_grid_stack": {
+    "tiers": 7,
+    "stack_height_um": 5536.0,
+    "height_known": true,
+    "rdl_um_per_interface": 10.0,
+    "per_tier": [
+     {
+      "parts": {
+       "gan_hs": "2 x EPC2014C"
+      },
+      "part_dims_mm": {
+       "gan_hs": [
+        1.7,
+        1.1
+       ]
+      },
+      "tier_height_um": 685.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.75,
+        1.15,
+        "gan_hs"
+       ],
+       [
+        0.0,
+        1.15,
+        1.75,
+        1.15,
+        "gan_hs"
+       ]
+      ],
+      "keepout_headroom_um": 57.3,
+      "max_keepout_um": 107.3,
+      "min_cell_side_mm": 2.3001,
+      "cell_side_mm": 2.4147,
+      "side_slack_mm": 0.1147
+     },
+     {
+      "parts": {
+       "gan_hs": "2 x EPC2014C"
+      },
+      "part_dims_mm": {
+       "gan_hs": [
+        1.7,
+        1.1
+       ]
+      },
+      "tier_height_um": 685.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.75,
+        1.15,
+        "gan_hs"
+       ],
+       [
+        0.0,
+        1.15,
+        1.75,
+        1.15,
+        "gan_hs"
+       ]
+      ],
+      "keepout_headroom_um": 57.3,
+      "max_keepout_um": 107.3,
+      "min_cell_side_mm": 2.3001,
+      "cell_side_mm": 2.4147,
+      "side_slack_mm": 0.1147
+     },
+     {
+      "parts": {
+       "gan_ls": "1 x EPC2090",
+       "cap_fly": "1 x Murata-GRM188D72A105KE01-1uF-100V"
+      },
+      "part_dims_mm": {
+       "gan_ls": [
+        2.3,
+        1.45
+       ],
+       "cap_fly": [
+        1.6,
+        0.8
+       ]
+      },
+      "tier_height_um": 1000.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.65,
+        0.85,
+        "cap_fly"
+       ],
+       [
+        0.0,
+        0.85,
+        2.35,
+        1.5,
+        "gan_ls"
+       ]
+      ],
+      "keepout_headroom_um": 32.3,
+      "max_keepout_um": 82.3,
+      "min_cell_side_mm": 2.35,
+      "cell_side_mm": 2.4147,
+      "side_slack_mm": 0.0647
+     },
+     {
+      "parts": {
+       "gan_ls": "1 x EPC2090",
+       "cap_fly": "1 x Murata-GRM188D72A105KE01-1uF-100V"
+      },
+      "part_dims_mm": {
+       "gan_ls": [
+        2.3,
+        1.45
+       ],
+       "cap_fly": [
+        1.6,
+        0.8
+       ]
+      },
+      "tier_height_um": 1000.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.65,
+        0.85,
+        "cap_fly"
+       ],
+       [
+        0.0,
+        0.85,
+        2.35,
+        1.5,
+        "gan_ls"
+       ]
+      ],
+      "keepout_headroom_um": 32.3,
+      "max_keepout_um": 82.3,
+      "min_cell_side_mm": 2.35,
+      "cell_side_mm": 2.4147,
+      "side_slack_mm": 0.0647
+     },
+     {
+      "parts": {
+       "gan_ls": "1 x EPC2090",
+       "cap_fly": "1 x Murata-GRM188D72A105KE01-1uF-100V"
+      },
+      "part_dims_mm": {
+       "gan_ls": [
+        2.3,
+        1.45
+       ],
+       "cap_fly": [
+        1.6,
+        0.8
+       ]
+      },
+      "tier_height_um": 1000.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.65,
+        0.85,
+        "cap_fly"
+       ],
+       [
+        0.0,
+        0.85,
+        2.35,
+        1.5,
+        "gan_ls"
+       ]
+      ],
+      "keepout_headroom_um": 32.3,
+      "max_keepout_um": 82.3,
+      "min_cell_side_mm": 2.35,
+      "cell_side_mm": 2.4147,
+      "side_slack_mm": 0.0647
+     },
+     {
+      "parts": {
+       "gan_ls": "1 x EPC2090"
+      },
+      "part_dims_mm": {
+       "gan_ls": [
+        2.3,
+        1.45
+       ]
+      },
+      "tier_height_um": 606.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.5,
+        2.35,
+        "gan_ls"
+       ]
+      ],
+      "keepout_headroom_um": 64.6,
+      "max_keepout_um": 114.6,
+      "min_cell_side_mm": 2.35,
+      "cell_side_mm": 2.4147,
+      "side_slack_mm": 0.0647
+     },
+     {
+      "parts": {
+       "inductor": "4 x Shared_Core_UIC_250_nH"
+      },
+      "part_dims_mm": {
+       "inductor": [
+        1.0,
+        1.0
+       ]
+      },
+      "tier_height_um": 500.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.05,
+        1.05,
+        "inductor"
+       ],
+       [
+        1.05,
+        0.0,
+        1.05,
+        1.05,
+        "inductor"
+       ],
+       [
+        0.0,
+        1.05,
+        1.05,
+        1.05,
+        "inductor"
+       ],
+       [
+        1.05,
+        1.05,
+        1.05,
+        1.05,
+        "inductor"
+       ]
+      ],
+      "keepout_headroom_um": 157.3,
+      "max_keepout_um": 207.3,
+      "min_cell_side_mm": 2.1001,
+      "cell_side_mm": 2.4147,
+      "side_slack_mm": 0.3147
+     }
+    ]
+   },
+   "M49": {
+    "square": true,
+    "arch": "N=4,K=4,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2090",
+    "inductor": "Shared_Core_UIC_250_nH",
+    "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+    "f_sw_kHz": 677.7,
+    "conv_per_cell_W": 1.60944,
+    "conv_total_W": 78.862,
+    "routing_W": 4.557,
+    "P_total_W": 83.42,
+    "cell_side_mm": 2.4147,
+    "component_count": 15,
+    "tiers": 7,
+    "stack_height_um": 5536.0,
+    "height_known": true,
+    "part_heights_um": {
+     "hs": 685.0,
+     "ls": 606.0,
+     "inductor": 500.0,
+     "capacitor": 1000.0
+    },
+    "tiers_plan": [
+     {
+      "gan_hs": 2,
+      "height_um": 685.0
+     },
+     {
+      "gan_hs": 2,
+      "height_um": 685.0
+     },
+     {
+      "gan_ls": 1,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     },
+     {
+      "gan_ls": 1,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     },
+     {
+      "gan_ls": 1,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     },
+     {
+      "gan_ls": 1,
+      "height_um": 606.0
+     },
+     {
+      "inductor": 4,
+      "height_um": 500.0
+     }
+    ]
+   },
+   "feasible_counts": [
+    16,
+    20,
+    25,
+    28,
+    30,
+    32,
+    33,
+    34,
+    35,
+    36,
+    40,
+    42,
+    45,
+    48,
+    49,
+    50,
+    52,
+    56,
+    60,
+    64,
+    70,
+    76,
+    81,
+    84,
+    92,
+    100
+   ],
+   "per_count": {
+    "16": {
+     "square": true,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2212",
+     "ls": "EPC2366",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 2264.52,
+     "conv_per_cell_W": 7.98442,
+     "conv_total_W": 127.751,
+     "routing_W": 10.644,
+     "P_total_W": 138.395,
+     "cell_side_mm": 4.2258,
+     "component_count": 22,
+     "tiers": 7,
+     "stack_height_um": 5230.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 700.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 4,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 4,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 4,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      }
+     ]
+    },
+    "20": {
+     "square": false,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2214",
+     "ls": "EPC2366",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1906.03,
+     "conv_per_cell_W": 5.47625,
+     "conv_total_W": 109.525,
+     "routing_W": 8.612,
+     "P_total_W": 118.137,
+     "cell_side_mm": 3.7796,
+     "component_count": 22,
+     "tiers": 7,
+     "stack_height_um": 5365.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 700.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 3,
+       "cap_fly": 4,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 2,
+       "height_um": 805.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 3,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      }
+     ]
+    },
+    "25": {
+     "square": true,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2366",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1350.31,
+     "conv_per_cell_W": 3.64867,
+     "conv_total_W": 91.217,
+     "routing_W": 6.813,
+     "P_total_W": 98.03,
+     "cell_side_mm": 3.3806,
+     "component_count": 15,
+     "tiers": 6,
+     "stack_height_um": 4535.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 700.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 4,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "inductor": 4,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "28": {
+     "square": false,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2214",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1350.31,
+     "conv_per_cell_W": 3.58161,
+     "conv_total_W": 100.285,
+     "routing_W": 6.445,
+     "P_total_W": 106.73,
+     "cell_side_mm": 3.1944,
+     "component_count": 22,
+     "tiers": 5,
+     "stack_height_um": 4121.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 3,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 2,
+       "gan_ls": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_ls": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 2,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 5,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "30": {
+     "square": false,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2214",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1350.31,
+     "conv_per_cell_W": 3.24434,
+     "conv_total_W": 97.33,
+     "routing_W": 6.212,
+     "P_total_W": 103.542,
+     "cell_side_mm": 3.0861,
+     "component_count": 22,
+     "tiers": 6,
+     "stack_height_um": 4574.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "gan_ls": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 2,
+       "gan_ls": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 4,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "32": {
+     "square": false,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2214",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 2.81344,
+     "conv_total_W": 90.03,
+     "routing_W": 5.836,
+     "P_total_W": 95.866,
+     "cell_side_mm": 2.9881,
+     "component_count": 22,
+     "tiers": 6,
+     "stack_height_um": 4741.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "gan_ls": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 2,
+       "gan_ls": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 1,
+       "cap_fly": 4,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "33": {
+     "square": false,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2214",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 2.69347,
+     "conv_total_W": 88.885,
+     "routing_W": 5.748,
+     "P_total_W": 94.633,
+     "cell_side_mm": 2.9424,
+     "component_count": 22,
+     "tiers": 7,
+     "stack_height_um": 5779.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 4,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "34": {
+     "square": false,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2214",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 2.58374,
+     "conv_total_W": 87.847,
+     "routing_W": 5.666,
+     "P_total_W": 93.514,
+     "cell_side_mm": 2.8989,
+     "component_count": 22,
+     "tiers": 7,
+     "stack_height_um": 5779.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 4,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "35": {
+     "square": false,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2214",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 2.4831,
+     "conv_total_W": 86.909,
+     "routing_W": 5.591,
+     "P_total_W": 92.5,
+     "cell_side_mm": 2.8571,
+     "component_count": 22,
+     "tiers": 7,
+     "stack_height_um": 5779.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 4,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "36": {
+     "square": true,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 956.61,
+     "conv_per_cell_W": 2.3928,
+     "conv_total_W": 86.141,
+     "routing_W": 5.342,
+     "P_total_W": 91.483,
+     "cell_side_mm": 2.8172,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 3733.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 1,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "40": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 1.96404,
+     "conv_total_W": 78.562,
+     "routing_W": 4.995,
+     "P_total_W": 83.556,
+     "cell_side_mm": 2.6726,
+     "component_count": 15,
+     "tiers": 6,
+     "stack_height_um": 4964.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 2,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "42": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 1.83209,
+     "conv_total_W": 76.948,
+     "routing_W": 4.903,
+     "P_total_W": 81.851,
+     "cell_side_mm": 2.6082,
+     "component_count": 15,
+     "tiers": 6,
+     "stack_height_um": 4964.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 2,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "45": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2090",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 1.89614,
+     "conv_total_W": 85.326,
+     "routing_W": 4.796,
+     "P_total_W": 90.122,
+     "cell_side_mm": 2.5198,
+     "component_count": 15,
+     "tiers": 7,
+     "stack_height_um": 5536.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 606.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 606.0
+      },
+      {
+       "inductor": 4,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "48": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2090",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 1.65459,
+     "conv_total_W": 79.42,
+     "routing_W": 4.584,
+     "P_total_W": 84.004,
+     "cell_side_mm": 2.4398,
+     "component_count": 15,
+     "tiers": 7,
+     "stack_height_um": 5536.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 606.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 606.0
+      },
+      {
+       "inductor": 4,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "49": {
+     "square": true,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2090",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 1.60944,
+     "conv_total_W": 78.862,
+     "routing_W": 4.557,
+     "P_total_W": 83.42,
+     "cell_side_mm": 2.4147,
+     "component_count": 15,
+     "tiers": 7,
+     "stack_height_um": 5536.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 606.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 606.0
+      },
+      {
+       "inductor": 4,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "50": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2090",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 1.56692,
+     "conv_total_W": 78.346,
+     "routing_W": 4.551,
+     "P_total_W": 82.897,
+     "cell_side_mm": 2.3905,
+     "component_count": 15,
+     "tiers": 7,
+     "stack_height_um": 5536.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 606.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 606.0
+      },
+      {
+       "inductor": 4,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "52": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 1.65068,
+     "conv_total_W": 85.835,
+     "routing_W": 4.601,
+     "P_total_W": 90.436,
+     "cell_side_mm": 2.344,
+     "component_count": 15,
+     "tiers": 7,
+     "stack_height_um": 5344.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "cap_fly": 2,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "56": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 1.47255,
+     "conv_total_W": 82.463,
+     "routing_W": 4.501,
+     "P_total_W": 86.965,
+     "cell_side_mm": 2.2588,
+     "component_count": 15,
+     "tiers": 8,
+     "stack_height_um": 6354.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "60": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 1.32837,
+     "conv_total_W": 79.702,
+     "routing_W": 4.431,
+     "P_total_W": 84.133,
+     "cell_side_mm": 2.1822,
+     "component_count": 15,
+     "tiers": 9,
+     "stack_height_um": 6817.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 4,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "64": {
+     "square": true,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 956.61,
+     "conv_per_cell_W": 1.26952,
+     "conv_total_W": 81.249,
+     "routing_W": 4.448,
+     "P_total_W": 85.698,
+     "cell_side_mm": 2.1129,
+     "component_count": 15,
+     "tiers": 9,
+     "stack_height_um": 6817.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 4,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "70": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 956.61,
+     "conv_per_cell_W": 1.12727,
+     "conv_total_W": 78.909,
+     "routing_W": 4.373,
+     "P_total_W": 83.282,
+     "cell_side_mm": 2.0203,
+     "component_count": 15,
+     "tiers": 12,
+     "stack_height_um": 8347.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "76": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 1.09046,
+     "conv_total_W": 82.875,
+     "routing_W": 4.394,
+     "P_total_W": 87.269,
+     "cell_side_mm": 1.9389,
+     "component_count": 15,
+     "tiers": 12,
+     "stack_height_um": 8902.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "inductor": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "inductor": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "81": {
+     "square": true,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 1.01529,
+     "conv_total_W": 82.238,
+     "routing_W": 4.323,
+     "P_total_W": 86.562,
+     "cell_side_mm": 1.8781,
+     "component_count": 15,
+     "tiers": 14,
+     "stack_height_um": 9422.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "84": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 0.9763,
+     "conv_total_W": 82.01,
+     "routing_W": 4.271,
+     "P_total_W": 86.281,
+     "cell_side_mm": 1.8443,
+     "component_count": 15,
+     "tiers": 14,
+     "stack_height_um": 9422.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "92": {
+     "square": false,
+     "arch": "N=4,K=2,K_A=1",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 0.9417,
+     "conv_total_W": 86.637,
+     "routing_W": 3.969,
+     "P_total_W": 90.605,
+     "cell_side_mm": 1.7623,
+     "component_count": 15,
+     "tiers": 10,
+     "stack_height_um": 7106.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "100": {
+     "square": false,
+     "arch": "N=6,K=2,K_A=1",
+     "hs": "EPC2035",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 0.82645,
+     "conv_total_W": 82.645,
+     "routing_W": 3.912,
+     "P_total_W": 86.557,
+     "cell_side_mm": 1.6903,
+     "component_count": 15,
+     "tiers": 15,
+     "stack_height_um": 11166.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 625.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "height_um": 625.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 625.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 625.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 625.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 625.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 625.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      },
+      {
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "120": null
+   }
+  },
+  "etm35_p2_t5": {
+   "label": "iii",
+   "what": "full set, at most 5 tiers",
+   "max_tiers": 5,
+   "env": "HVR_CAP_RULE=stress HVR_SW_RULE=stress HVR_SW_DERATING=0.9 HVR_COSS_RULE=corrected HVR_PACK_RULE=on HVR_PACK_KEEPOUT_UM=50 HVR_RG_RULE=datasheet HVR_FOOTPRINT_RULE=body HVR_TIER_RULE=mixed HVR_MAX_TIERS=5",
+   "optimum": {
+    "M": 42,
+    "square": false,
+    "arch": "N=3,K=3,K_A=2",
+    "hs": "EPC2014C",
+    "ls": "EPC2055",
+    "inductor": "Shared_Core_UIC_250_nH",
+    "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+    "f_sw_kHz": 677.7,
+    "conv_per_cell_W": 2.05715,
+    "conv_total_W": 86.4,
+    "routing_W": 4.776,
+    "P_total_W": 91.177,
+    "cell_side_mm": 2.6082,
+    "component_count": 15,
+    "tiers": 5,
+    "stack_height_um": 3639.0,
+    "height_known": true,
+    "part_heights_um": {
+     "hs": 685.0,
+     "ls": 638.0,
+     "inductor": 500.0,
+     "capacitor": 1000.0
+    },
+    "tiers_plan": [
+     {
+      "gan_hs": 2,
+      "height_um": 685.0
+     },
+     {
+      "gan_hs": 1,
+      "cap_fly": 2,
+      "height_um": 1000.0
+     },
+     {
+      "gan_ls": 1,
+      "inductor": 2,
+      "height_um": 638.0
+     },
+     {
+      "gan_ls": 1,
+      "inductor": 1,
+      "height_um": 638.0
+     },
+     {
+      "gan_ls": 1,
+      "height_um": 638.0
+     }
+    ]
+   },
+   "square_grid_P_total_W": {
+    "16": 140.415,
+    "25": 104.756,
+    "36": 91.483,
+    "49": 110.287,
+    "64": 117.506,
+    "81": null
+   },
+   "best_square_grid": 36,
+   "best_square_grid_stack": {
+    "tiers": 5,
+    "stack_height_um": 3733.0,
+    "height_known": true,
+    "rdl_um_per_interface": 10.0,
+    "per_tier": [
+     {
+      "parts": {
+       "gan_hs": "1 x EPC2014C",
+       "gan_ls": "1 x EPC2055",
+       "inductor": "1 x Shared_Core_UIC_250_nH"
+      },
+      "part_dims_mm": {
+       "gan_hs": [
+        1.7,
+        1.1
+       ],
+       "gan_ls": [
+        2.5,
+        1.5
+       ],
+       "inductor": [
+        1.0,
+        1.0
+       ]
+      },
+      "tier_height_um": 685.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.55,
+        2.55,
+        "gan_ls"
+       ],
+       [
+        1.55,
+        0.0,
+        1.05,
+        1.05,
+        "inductor"
+       ],
+       [
+        1.55,
+        1.05,
+        1.15,
+        1.75,
+        "gan_hs"
+       ]
+      ],
+      "keepout_headroom_um": 8.6,
+      "max_keepout_um": 58.6,
+      "min_cell_side_mm": 2.8001,
+      "cell_side_mm": 2.8172,
+      "side_slack_mm": 0.0171
+     },
+     {
+      "parts": {
+       "gan_hs": "1 x EPC2014C",
+       "gan_ls": "1 x EPC2055"
+      },
+      "part_dims_mm": {
+       "gan_hs": [
+        1.7,
+        1.1
+       ],
+       "gan_ls": [
+        2.5,
+        1.5
+       ]
+      },
+      "tier_height_um": 685.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        2.55,
+        1.55,
+        "gan_ls"
+       ],
+       [
+        0.0,
+        1.55,
+        1.75,
+        1.15,
+        "gan_hs"
+       ]
+      ],
+      "keepout_headroom_um": 58.5,
+      "max_keepout_um": 108.5,
+      "min_cell_side_mm": 2.7001,
+      "cell_side_mm": 2.8172,
+      "side_slack_mm": 0.1171
+     },
+     {
+      "parts": {
+       "gan_hs": "1 x EPC2014C",
+       "gan_ls": "1 x EPC2055"
+      },
+      "part_dims_mm": {
+       "gan_hs": [
+        1.7,
+        1.1
+       ],
+       "gan_ls": [
+        2.5,
+        1.5
+       ]
+      },
+      "tier_height_um": 685.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        2.55,
+        1.55,
+        "gan_ls"
+       ],
+       [
+        0.0,
+        1.55,
+        1.75,
+        1.15,
+        "gan_hs"
+       ]
+      ],
+      "keepout_headroom_um": 58.5,
+      "max_keepout_um": 108.5,
+      "min_cell_side_mm": 2.7001,
+      "cell_side_mm": 2.8172,
+      "side_slack_mm": 0.1171
+     },
+     {
+      "parts": {
+       "gan_hs": "1 x EPC2014C",
+       "inductor": "1 x Shared_Core_UIC_250_nH",
+       "cap_fly": "3 x Murata-GRM188D72A105KE01-1uF-100V"
+      },
+      "part_dims_mm": {
+       "gan_hs": [
+        1.7,
+        1.1
+       ],
+       "inductor": [
+        1.0,
+        1.0
+       ],
+       "cap_fly": [
+        1.6,
+        0.8
+       ]
+      },
+      "tier_height_um": 1000.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        0.85,
+        1.65,
+        "cap_fly"
+       ],
+       [
+        0.85,
+        0.0,
+        0.85,
+        1.65,
+        "cap_fly"
+       ],
+       [
+        1.7,
+        0.0,
+        0.85,
+        1.65,
+        "cap_fly"
+       ],
+       [
+        0.0,
+        1.65,
+        1.05,
+        1.05,
+        "inductor"
+       ],
+       [
+        1.05,
+        1.65,
+        1.75,
+        1.15,
+        "gan_hs"
+       ]
+      ],
+      "keepout_headroom_um": 8.6,
+      "max_keepout_um": 58.6,
+      "min_cell_side_mm": 2.8001,
+      "cell_side_mm": 2.8172,
+      "side_slack_mm": 0.0171
+     },
+     {
+      "parts": {
+       "gan_ls": "1 x EPC2055",
+       "inductor": "2 x Shared_Core_UIC_250_nH"
+      },
+      "part_dims_mm": {
+       "gan_ls": [
+        2.5,
+        1.5
+       ],
+       "inductor": [
+        1.0,
+        1.0
+       ]
+      },
+      "tier_height_um": 638.0,
+      "placement_mm_grown_by_keepout": [
+       [
+        0.0,
+        0.0,
+        1.05,
+        1.05,
+        "inductor"
+       ],
+       [
+        1.05,
+        0.0,
+        1.05,
+        1.05,
+        "inductor"
+       ],
+       [
+        0.0,
+        1.05,
+        2.55,
+        1.55,
+        "gan_ls"
+       ]
+      ],
+      "keepout_headroom_um": 108.6,
+      "max_keepout_um": 158.6,
+      "min_cell_side_mm": 2.6,
+      "cell_side_mm": 2.8172,
+      "side_slack_mm": 0.2172
+     }
+    ]
+   },
+   "M49": {
+    "square": true,
+    "arch": "N=4,K=2,K_A=1",
+    "hs": "EPC2014C",
+    "ls": "EPC2090",
+    "inductor": "Shared_Core_UIC_250_nH",
+    "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+    "f_sw_kHz": 677.7,
+    "conv_per_cell_W": 2.15776,
+    "conv_total_W": 105.73,
+    "routing_W": 4.557,
+    "P_total_W": 110.287,
+    "cell_side_mm": 2.4147,
+    "component_count": 15,
+    "tiers": 5,
+    "stack_height_um": 4410.0,
+    "height_known": true,
+    "part_heights_um": {
+     "hs": 685.0,
+     "ls": 606.0,
+     "inductor": 500.0,
+     "capacitor": 1000.0
+    },
+    "tiers_plan": [
+     {
+      "gan_hs": 2,
+      "height_um": 685.0
+     },
+     {
+      "gan_hs": 1,
+      "inductor": 2,
+      "height_um": 685.0
+     },
+     {
+      "gan_hs": 1,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     },
+     {
+      "gan_ls": 1,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     },
+     {
+      "gan_ls": 1,
+      "cap_fly": 1,
+      "height_um": 1000.0
+     }
+    ]
+   },
+   "feasible_counts": [
+    16,
+    20,
+    25,
+    28,
+    30,
+    32,
+    33,
+    34,
+    35,
+    36,
+    40,
+    42,
+    45,
+    48,
+    49,
+    50,
+    52,
+    56,
+    60,
+    64,
+    70
+   ],
+   "per_count": {
+    "16": {
+     "square": true,
+     "arch": "N=8,K=4,K_A=2",
+     "hs": "EPC2057",
+     "ls": "EPC2366",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 3196.49,
+     "conv_per_cell_W": 8.02622,
+     "conv_total_W": 128.42,
+     "routing_W": 11.995,
+     "P_total_W": 140.415,
+     "cell_side_mm": 4.2258,
+     "component_count": 30,
+     "tiers": 5,
+     "stack_height_um": 3840.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 638.0,
+      "ls": 700.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 3,
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_hs": 2,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "cap_fly": 7,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "20": {
+     "square": false,
+     "arch": "N=7,K=3,K_A=2",
+     "hs": "EPC2057",
+     "ls": "EPC2366",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 2264.52,
+     "conv_per_cell_W": 5.76598,
+     "conv_total_W": 115.32,
+     "routing_W": 9.078,
+     "P_total_W": 124.397,
+     "cell_side_mm": 3.7796,
+     "component_count": 22,
+     "tiers": 5,
+     "stack_height_um": 3778.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 638.0,
+      "ls": 700.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 5,
+       "height_um": 638.0
+      },
+      {
+       "gan_hs": 2,
+       "cap_fly": 6,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 3,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      }
+     ]
+    },
+    "25": {
+     "square": true,
+     "arch": "N=4,K=3,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2366",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1350.31,
+     "conv_per_cell_W": 3.9177,
+     "conv_total_W": 97.942,
+     "routing_W": 6.813,
+     "P_total_W": 104.756,
+     "cell_side_mm": 3.3806,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 3825.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 700.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 3,
+       "inductor": 3,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 700.0
+      }
+     ]
+    },
+    "28": {
+     "square": false,
+     "arch": "N=5,K=5,K_A=3",
+     "hs": "EPC2214",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1350.31,
+     "conv_per_cell_W": 3.58161,
+     "conv_total_W": 100.285,
+     "routing_W": 6.445,
+     "P_total_W": 106.73,
+     "cell_side_mm": 3.1944,
+     "component_count": 22,
+     "tiers": 5,
+     "stack_height_um": 4121.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 3,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 2,
+       "gan_ls": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_ls": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 2,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 5,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "30": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 3.28152,
+     "conv_total_W": 98.445,
+     "routing_W": 5.98,
+     "P_total_W": 104.425,
+     "cell_side_mm": 3.0861,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 3733.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 1,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "32": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 1136.54,
+     "conv_per_cell_W": 2.97985,
+     "conv_total_W": 95.355,
+     "routing_W": 5.836,
+     "P_total_W": 101.191,
+     "cell_side_mm": 2.9881,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 3733.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 1,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "33": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 956.61,
+     "conv_per_cell_W": 2.7227,
+     "conv_total_W": 89.849,
+     "routing_W": 5.553,
+     "P_total_W": 95.402,
+     "cell_side_mm": 2.9424,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 3733.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 1,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "34": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 956.61,
+     "conv_per_cell_W": 2.60317,
+     "conv_total_W": 88.508,
+     "routing_W": 5.478,
+     "P_total_W": 93.986,
+     "cell_side_mm": 2.8989,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 3733.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 1,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "35": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 956.61,
+     "conv_per_cell_W": 2.49356,
+     "conv_total_W": 87.275,
+     "routing_W": 5.409,
+     "P_total_W": 92.683,
+     "cell_side_mm": 2.8571,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 3733.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 1,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "36": {
+     "square": true,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 956.61,
+     "conv_per_cell_W": 2.3928,
+     "conv_total_W": 86.141,
+     "routing_W": 5.342,
+     "P_total_W": 91.483,
+     "cell_side_mm": 2.8172,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 3733.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 1,
+       "cap_fly": 3,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "40": {
+     "square": false,
+     "arch": "N=3,K=3,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 2.30151,
+     "conv_total_W": 92.06,
+     "routing_W": 4.995,
+     "P_total_W": 97.055,
+     "cell_side_mm": 2.6726,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 3639.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "42": {
+     "square": false,
+     "arch": "N=3,K=3,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2055",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 2.05715,
+     "conv_total_W": 86.4,
+     "routing_W": 4.776,
+     "P_total_W": 91.177,
+     "cell_side_mm": 2.6082,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 3639.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 2,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      }
+     ]
+    },
+    "45": {
+     "square": false,
+     "arch": "N=4,K=4,K_A=2",
+     "hs": "EPC2057",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 2.2114,
+     "conv_total_W": 99.513,
+     "routing_W": 4.796,
+     "P_total_W": 104.309,
+     "cell_side_mm": 2.5198,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 4178.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 638.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 4,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "48": {
+     "square": false,
+     "arch": "N=4,K=2,K_A=1",
+     "hs": "EPC2014C",
+     "ls": "EPC2090",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 2.23464,
+     "conv_total_W": 107.263,
+     "routing_W": 4.584,
+     "P_total_W": 111.847,
+     "cell_side_mm": 2.4398,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 4410.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 606.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "49": {
+     "square": true,
+     "arch": "N=4,K=2,K_A=1",
+     "hs": "EPC2014C",
+     "ls": "EPC2090",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 2.15776,
+     "conv_total_W": 105.73,
+     "routing_W": 4.557,
+     "P_total_W": 110.287,
+     "cell_side_mm": 2.4147,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 4410.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 606.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "50": {
+     "square": false,
+     "arch": "N=4,K=2,K_A=1",
+     "hs": "EPC2014C",
+     "ls": "EPC2090",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 677.7,
+     "conv_per_cell_W": 2.0854,
+     "conv_total_W": 104.27,
+     "routing_W": 4.551,
+     "P_total_W": 108.821,
+     "cell_side_mm": 2.3905,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 4410.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 606.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "52": {
+     "square": false,
+     "arch": "N=3,K=3,K_A=2",
+     "hs": "EPC2014C",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 805.17,
+     "conv_per_cell_W": 1.99142,
+     "conv_total_W": 103.554,
+     "routing_W": 4.601,
+     "P_total_W": 108.155,
+     "cell_side_mm": 2.344,
+     "component_count": 15,
+     "tiers": 5,
+     "stack_height_um": 4001.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 2,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "inductor": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      }
+     ]
+    },
+    "56": {
+     "square": false,
+     "arch": "N=2,K=2,K_A=1",
+     "hs": "EPC2214",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 480.11,
+     "conv_per_cell_W": 2.22041,
+     "conv_total_W": 124.343,
+     "routing_W": 4.238,
+     "P_total_W": 128.58,
+     "cell_side_mm": 2.2588,
+     "component_count": 10,
+     "tiers": 5,
+     "stack_height_um": 3621.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 2,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "60": {
+     "square": false,
+     "arch": "N=2,K=2,K_A=1",
+     "hs": "EPC2214",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 480.11,
+     "conv_per_cell_W": 1.9739,
+     "conv_total_W": 118.434,
+     "routing_W": 4.181,
+     "P_total_W": 122.616,
+     "cell_side_mm": 2.1822,
+     "component_count": 10,
+     "tiers": 5,
+     "stack_height_um": 3788.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 2,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "64": {
+     "square": true,
+     "arch": "N=2,K=2,K_A=1",
+     "hs": "EPC2214",
+     "ls": "EPC2057",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 480.11,
+     "conv_per_cell_W": 1.77161,
+     "conv_total_W": 113.383,
+     "routing_W": 4.123,
+     "P_total_W": 117.506,
+     "cell_side_mm": 2.1129,
+     "component_count": 10,
+     "tiers": 5,
+     "stack_height_um": 3788.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 805.0,
+      "ls": 638.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_hs": 1,
+       "height_um": 805.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "height_um": 638.0
+      },
+      {
+       "inductor": 2,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "70": {
+     "square": false,
+     "arch": "N=3,K=2,K_A=1",
+     "hs": "EPC2012C",
+     "ls": "EPC7002",
+     "inductor": "Shared_Core_UIC_250_nH",
+     "capacitor": "Murata-GRM188D72A105KE01-1uF-100V",
+     "f_sw_kHz": 570.42,
+     "conv_per_cell_W": 2.60486,
+     "conv_total_W": 182.34,
+     "routing_W": 4.133,
+     "P_total_W": 186.473,
+     "cell_side_mm": 2.0203,
+     "component_count": 10,
+     "tiers": 5,
+     "stack_height_um": 3910.0,
+     "height_known": true,
+     "part_heights_um": {
+      "hs": 685.0,
+      "ls": 782.0,
+      "inductor": 500.0,
+      "capacitor": 1000.0
+     },
+     "tiers_plan": [
+      {
+       "gan_hs": 2,
+       "height_um": 685.0
+      },
+      {
+       "gan_hs": 1,
+       "inductor": 1,
+       "height_um": 685.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "gan_ls": 1,
+       "cap_fly": 1,
+       "height_um": 1000.0
+      },
+      {
+       "inductor": 1,
+       "height_um": 500.0
+      }
+     ]
+    },
+    "76": null,
+    "81": null,
+    "84": null,
+    "92": null,
+    "100": null,
+    "120": null
+   }
+  }
+ },
+ "design_49_cell_full_set": {
+  "design": "N3K3K_A2 EPC2014C/EPC2057 805 kHz, Shared_Core_UIC_250_nH, GRM188 0603",
+  "tiers": 5,
+  "stack_height_um": 3595.0,
+  "plan": [
+   {
+    "gan_hs": 1,
+    "gan_ls": 1,
+    "height_um": 685.0
+   },
+   {
+    "gan_hs": 1,
+    "gan_ls": 1,
+    "height_um": 685.0
+   },
+   {
+    "gan_hs": 1,
+    "gan_ls": 1,
+    "height_um": 685.0
+   },
+   {
+    "inductor": 3,
+    "height_um": 500.0
+   },
+   {
+    "cap_fly": 2,
+    "height_um": 1000.0
+   }
+  ],
+  "conv_per_cell_W_at_fixed_fsw_esr_library": 2.1920783485258566
+ },
+ "tier_check_conservative_cases_M36_M49": {
+  "exact_searches": 62,
+  "undecided": 13,
+  "guillotine_only": 26
+ },
+ "robustness_larger_placement_budgets": {
+  "max_tiers_4_M36": {
+   "arch": "N=3,K=3,K_A=2",
+   "hs": "EPC2014C",
+   "ls": "EPC2055",
+   "f_sw_kHz": 805.17,
+   "conv_per_cell_W": 2.701254394890748,
+   "tiers": 4,
+   "same_as_sweep_pick": true
+  },
+  "max_tiers_4_M49": {
+   "arch": "N=3,K=2,K_A=1",
+   "hs": "EPC2014C",
+   "ls": "EPC2090",
+   "f_sw_kHz": 677.7,
+   "conv_per_cell_W": 2.3555471404498687,
+   "tiers": 4,
+   "same_as_sweep_pick": true
+  },
+  "max_tiers_5_M36": {
+   "arch": "N=4,K=4,K_A=2",
+   "hs": "EPC2014C",
+   "ls": "EPC2055",
+   "f_sw_kHz": 956.61,
+   "conv_per_cell_W": 2.3927984004059506,
+   "tiers": 5,
+   "same_as_sweep_pick": true
+  },
+  "max_tiers_5_M49": {
+   "arch": "N=4,K=2,K_A=1",
+   "hs": "EPC2014C",
+   "ls": "EPC2090",
+   "f_sw_kHz": 677.7,
+   "conv_per_cell_W": 2.157756599413803,
+   "tiers": 5,
+   "same_as_sweep_pick": true
+  }
+ }
+}

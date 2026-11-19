@@ -41,6 +41,9 @@ Adds on top of V2:
 ################################################################################
 """
 
+import bisect
+import functools
+import itertools
 import math
 import os
 import re
@@ -82,6 +85,86 @@ CAP_ESR_F = os.environ.get("HVR_CAP_ESR_F", "1") == "1"
 # optional capacitor height limit (um), e.g. 100 for the thin-tier technology question
 CAP_MAX_HEIGHT_UM = (float(os.environ["HVR_CAP_MAX_HEIGHT_UM"])
                      if os.environ.get("HVR_CAP_MAX_HEIGHT_UM") else None)
+
+# ── Switch voltage rule (TCPMT revision, phase 1) ────────────────────────────────────────────
+# Topology (Fig. 2, generalized): S1..SN form a ladder from V_in, X_i is the node between S_i
+# and S_{i+1}, C_i (holding (N - i) V_in / N) joins X_i to the switch node of branch i, and S_N
+# drives the last switch node directly; odd switches conduct in phase A, even ones in phase B,
+# and each switch node has one low-side switch (the conduction model below is this circuit).
+# Rule specified by the authors: the top switch S1 blocks V_in / N, the stacked switches
+# S2..SN block max(N - 1, 2) V_in / N (V_in at N = 2, 2 V_in / 3 at N = 3, 3 V_in / 4 at N = 4)
+# and the low-side switches block the switch-node swing V_in / N. (Node analysis of the ladder
+# gives 2 V_in / N for every stacked switch, the same as the rule at N = 2, 3 and below it for
+# N >= 4, so the rule is conservative there.) The published filter compared the high-side part
+# with V_in / N and the low-side part with V_out, which admitted 40-V parts at 48 V (N = 2).
+#   "stress"  (default) V_DS,max * SW_V_DERATING >= stress; one high-side part type covers the
+#             largest high-side stress (the stacked one), the low-side part covers V_in / N.
+#             SW_V_DERATING = 0.9: a switch operates at no more than 90 % of its rated V_DS
+#             (authors' decision; 0.95 is the sensitivity; the capacitor derating stays 0.8)
+#   "legacy"  the published filter (HS V_DS,max >= V_in / N, LS V_DS,max >= V_out)
+# Set per process with HVR_SW_RULE / HVR_SW_DERATING, or per call by assigning SW_RULE.
+# HVR_CAP_RULE=legacy HVR_SW_RULE=legacy HVR_COSS_RULE=legacy HVR_PACK_RULE=off together
+# reproduce every published result exactly.
+SW_RULE = os.environ.get("HVR_SW_RULE", "stress")
+SW_V_DERATING = float(os.environ.get("HVR_SW_DERATING", "0.9"))
+SW_V_TOL = 1e-9          # relative tolerance: a rating exactly at the threshold passes
+
+# ── Output-capacitance loss (TCPMT revision, phase 1) ────────────────────────────────────────
+#   "legacy"     the published term  f_sw/2 [N C_OSS,HS (V_in/N - V_out)^2 + K C_OSS,LS V_out^2]
+#                with C_OSS = Q_OSS / V_DS,max
+#   "corrected"  (default, adopted by the authors) energy of the hard-switched transitions at
+#                the real node swings, per period:
+#                N E_OSS,HS(V_in/N)                      every high-side switch turns on from the
+#                                                        freewheel state, where it blocks V_in/N;
+#                + K [Q_OSS,LS(V_in/N) V_in/N - E_OSS,LS(V_in/N)]
+#                                                        each switch node is charged 0 -> V_in/N
+#                                                        through the turning-on switch;
+#                + (N - 1) [V_2 dQ_OSS,HS - dE_OSS,HS]   each stacked switch is charged from V_in/N
+#                                                        to V_2 = 2 V_in/N through the switch that
+#                                                        turns on in the other phase (V_2 is the
+#                                                        ladder's node swing, see above);
+#                the transitions at turn-off are driven by the positive inductor currents and
+#                are lossless. Q_OSS(V) = Q_OSS,table sqrt(V / V_test) and E_OSS = Q_OSS V / 3;
+#                the product table gives Q_OSS only (no E_OSS), at V_test = V_DS,max / 2 (EPC
+#                datasheets: EPC2014C 4 nC at 20 V, EPC2057 7.9 nC at 25 V, EPC2090 27 nC at
+#                50 V, all "VGS = 0 V").
+COSS_RULE = os.environ.get("HVR_COSS_RULE", "corrected")
+QOSS_V_TEST_FRAC = 0.5
+
+# ── Tier packing check (TCPMT revision, phase 1) ─────────────────────────────────────────────
+# The area rule (_compute_area) puts one component class per tier (HS dies, LS dies, inductors,
+# flying capacitors) and compares each tier's summed footprint with the cell area, with zero
+# keep-out. With the packing check on (default, adopted by the authors; HVR_PACK_RULE=off
+# restores the published area rule alone) every tier must also be placeable: its parts
+# (identical rectangles, rotation allowed) are placed without overlap in the square cell of the
+# area budget, side sqrt(I_out / J), each part grown by PACK_KEEPOUT_UM / 2 on every side (the
+# keep-out between parts, half of it to the cell edge so neighbouring cells keep the full gap).
+PACK_RULE = os.environ.get("HVR_PACK_RULE", "on")
+PACK_KEEPOUT_UM = float(os.environ.get("HVR_PACK_KEEPOUT_UM", "50"))
+
+# ── Gate resistance in the overlap (hard-switching) term (TCPMT revision, phase 2) ──────────
+#   "datasheet" (default) R_g,int of the high-side part = its datasheet R_G (typ), from
+#               HVR_epc_device_data.json (EPC "RG Gate Resistance": 0.2-1.3 Ohm for most parts);
+#               a part whose datasheet gives none (rad-hard EPC7xxx, EPC210x) takes the median
+#               of the others (0.4 Ohm)
+#   "legacy"    R_g,int = 6e-4 Ohm, the continuous model's per-unit-width value
+RG_RULE = os.environ.get("HVR_RG_RULE", "datasheet")
+RG_LEGACY_OHM = 6e-4
+
+# ── Capacitor footprints in the area rule (TCPMT revision, phase 2) ─────────────────────────
+#   "body" (default) the body area (CAP_DIMS_MM: 0603 1.28, 0805 2.5, 1206 5.12 mm^2)
+#   "legacy"         the library footprint_mm2 (0805 2.0, 1206 4.5 mm^2)
+FOOTPRINT_RULE = os.environ.get("HVR_FOOTPRINT_RULE", "body")
+
+# ── Tiers (TCPMT revision, phase 2; applies with the packing check on) ──────────────────────
+#   "mixed" (default) a tier may hold parts of different classes (e.g. one HS and one LS die);
+#                     the stack uses as many tiers as packing needs, at most MAX_TIERS (0 = no
+#                     limit), and each design carries its minimum tier count and stack height
+#   "class"           one class per tier (HS dies | LS dies | inductors | flying caps): phase 1
+# Stack height = sum of the tier heights (tallest part in each tier) + (tiers - 1) * RDL_UM.
+TIER_RULE = os.environ.get("HVR_TIER_RULE", "mixed")
+MAX_TIERS = int(os.environ.get("HVR_MAX_TIERS", "4"))
+RDL_UM = 10.0            # inter-tier RDL allowance (ECTC-2024 stack, as in the production cell)
 
 
 # ============================================================
@@ -195,6 +278,27 @@ def _parse_package_area_mm2(pkg: str) -> float:
     return np.nan
 
 
+def _parse_package_dims_mm(pkg: str, i: int) -> float:
+    """Lateral dimension i (0 or 1) of a 'TYPE W x H' package string, mm (packing check)."""
+    if not isinstance(pkg, str):
+        return np.nan
+    floats = [float(n) for n in re.findall(r'\d+\.?\d*', pkg) if float(n) < 100]
+    return floats[i] if len(floats) >= 2 else np.nan
+
+
+_DEVDATA: dict = {}
+
+
+def _device_data() -> dict:
+    """Per-part datasheet data (HVR_epc_device_data.json, next to this module): R_G (typ),
+    Q_OSS test voltage, mounted height. Empty when the file is absent."""
+    if not _DEVDATA:
+        import json as _json
+        p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HVR_epc_device_data.json")
+        _DEVDATA.update(_json.load(open(p)) if os.path.isfile(p) else {"parts": {}})
+    return _DEVDATA
+
+
 def load_epc_devices(csv_path: str, V_gs_op: float) -> pd.DataFrame:
     df_raw = pd.read_csv(csv_path, thousands=None, dtype=str, encoding='utf-8-sig')
     df_raw.columns = df_raw.columns.str.strip()
@@ -211,6 +315,20 @@ def load_epc_devices(csv_path: str, V_gs_op: float) -> pd.DataFrame:
     df['QOSS_nC']       = df_raw['QOSStyp(nC)'].apply(_parse_first_number)
     df['ID_A']          = df_raw['ID (A)'].apply(_parse_first_number)
     df['footprint_mm2'] = df_raw['Package(mm)'].apply(_parse_package_area_mm2)
+    df['pkg_x_mm']      = df_raw['Package(mm)'].apply(_parse_package_dims_mm, args=(0,))
+    df['pkg_y_mm']      = df_raw['Package(mm)'].apply(_parse_package_dims_mm, args=(1,))
+    dd = _device_data()                       # datasheet R_G, Q_OSS test voltage, height
+    med = dd.get("R_G_median_ohm", np.nan)
+    parts = dd.get("parts", {})
+    pn = df['PartNumber']
+
+    def _get(p, k):
+        v = parts.get(p, {}).get(k)
+        return np.nan if v is None else float(v)
+    df['R_G']           = [(_get(p, "R_G_ohm") if np.isfinite(_get(p, "R_G_ohm")) else med)
+                           for p in pn]
+    df['QOSS_V_test']   = [_get(p, "QOSS_V_test_V") for p in pn]
+    df['height_um']     = [_get(p, "height_um") for p in pn]
 
     df = df.dropna(subset=['R_DS_ON_mOhm', 'QG_nC', 'QGD_nC',
                             'QOSS_nC', 'VDSmax', 'VGSmax']).copy()
@@ -241,6 +359,11 @@ class EPCDevice:
     C_OSS: float
     ID_A: float
     footprint_mm2: float   # parsed from Package column; NaN if unparseable
+    pkg_x_mm: float = np.nan   # lateral dimensions from the Package column (packing check)
+    pkg_y_mm: float = np.nan
+    R_G: float = np.nan        # datasheet gate resistance, typ (RG_RULE "datasheet")
+    QOSS_V_test: float = np.nan   # datasheet Q_OSS test voltage (NaN: V_DS,max / 2)
+    height_um: float = np.nan     # datasheet mounted height (stack report)
 
 
 def row_to_device(row) -> EPCDevice:
@@ -251,7 +374,66 @@ def row_to_device(row) -> EPCDevice:
         Q_OSS=row['Q_OSS'], C_G=row['C_G'], C_OSS=row['C_OSS'],
         ID_A=row['ID_A'],
         footprint_mm2=row.get('footprint_mm2', np.nan),
+        pkg_x_mm=row.get('pkg_x_mm', np.nan),
+        pkg_y_mm=row.get('pkg_y_mm', np.nan),
+        R_G=row.get('R_G', np.nan),
+        QOSS_V_test=row.get('QOSS_V_test', np.nan),
+        height_um=row.get('height_um', np.nan),
     )
+
+
+# ── Switch stresses and output charge (TCPMT revision, phase 1) ─────────────────────────────
+
+def switch_stresses(N: int, V_in: float):
+    """Blocking voltages (S1, stacked S2..SN, low side) used by the "stress" rule (SW_RULE)."""
+    v_n = V_in / N
+    return v_n, (max(N - 1, 2) * v_n if N >= 2 else v_n), v_n
+
+
+def stacked_swing(N: int, V_in: float) -> float:
+    """Node swing of a stacked high-side switch in the ladder: from V_in/N (freewheel) to
+    2 V_in/N while the other phase conducts (V_in at N = 2, 32 V at N = 3 from 48 V)."""
+    return 2.0 * V_in / N
+
+
+def q_oss_at(dev: EPCDevice, v: float) -> float:
+    """Output charge (C) at V_DS = v: the table value scaled as sqrt(v / V_test), V_test = the
+    datasheet test voltage where it differs from the usual V_DS,max / 2 (e.g. 50 V for several
+    80-V parts; HVR_epc_device_data.json)."""
+    if v <= 0.0:
+        return 0.0
+    vt = getattr(dev, "QOSS_V_test", np.nan)
+    if vt is None or not np.isfinite(vt) or vt <= 0:
+        vt = QOSS_V_TEST_FRAC * dev.VDSmax
+    return dev.Q_OSS * math.sqrt(v / vt)
+
+
+def e_oss_at(dev: EPCDevice, v: float) -> float:
+    """Energy (J) stored in C_OSS at V_DS = v; with Q ~ sqrt(v), E = Q v / 3."""
+    return q_oss_at(dev, v) * v / 3.0
+
+
+def gate_resistance(dev) -> float:
+    """Internal gate resistance (Ohm) of a part in the overlap term (RG_RULE)."""
+    if RG_RULE == "legacy":
+        return RG_LEGACY_OHM
+    rg = getattr(dev, "R_G", np.nan)
+    if rg is None or not np.isfinite(rg):
+        rg = _device_data().get("R_G_median_ohm", 0.4)
+    return float(rg)
+
+
+def coss_energy_per_period(arch, hs: EPCDevice, ls: EPCDevice, V_in: float) -> dict:
+    """Hard-switched output-capacitance energy per switching period (J), COSS_RULE "corrected"
+    (see the header): high-side turn-on at V_in/N, switch-node charge, stacked-switch charge."""
+    N, K = arch.N, arch.K
+    v1, v2 = V_in / N, stacked_swing(N, V_in)
+    e_hs = N * e_oss_at(hs, v1)
+    e_ls = K * (q_oss_at(ls, v1) * v1 - e_oss_at(ls, v1))
+    e_stk = (N - 1) * (v2 * (q_oss_at(hs, v2) - q_oss_at(hs, v1))
+                       - (e_oss_at(hs, v2) - e_oss_at(hs, v1)))
+    return {"hs_turn_on": e_hs, "switch_node": e_ls, "stacked": e_stk,
+            "total": e_hs + e_ls + e_stk}
 
 
 
@@ -895,12 +1077,19 @@ def compute_total_loss(arch: VRArchitecture, inp: LossModelInputs) -> LossResult
 
     # ── Switching loss ────────────────────────────────────────────────────────
     V_gs_drive = 5.0; V_th = 1.0; V_pl = 1.6
-    R_g_int = 6e-4;   R_drv = 0.7
+    R_g_int = gate_resistance(hs);   R_drv = 0.7      # RG_RULE (legacy: 6e-4 Ohm)
     I_g = (V_gs_drive - 0.5 * (V_th + V_pl)) / (R_g_int + R_drv)
 
     P_sw_HS   = f_sw*(V_in/N - V_out)*I_out_rms*((hs.Q_GD + hs.Q_G)/I_g)
     P_sw_GD   = f_sw*(N*hs.C_G + K*ls.C_G)*V_gs_drive**2
-    P_sw_COSS = (f_sw/2)*(N*hs.C_OSS*(V_in/N - V_out)**2 + K*ls.C_OSS*V_out**2)
+    # Output capacitance (COSS_RULE, see the header). "corrected" (default) evaluates every
+    # hard-switched transition at its node swing. "legacy" is the published term: C_OSS =
+    # Q_OSS / V_DS,max (the table Q_OSS is specified at V_DS,max / 2), the high side at
+    # V_in/N - V_out and the low side at V_out (its node actually swings V_in/N).
+    if COSS_RULE == "legacy":
+        P_sw_COSS = (f_sw/2)*(N*hs.C_OSS*(V_in/N - V_out)**2 + K*ls.C_OSS*V_out**2)
+    else:
+        P_sw_COSS = f_sw * coss_energy_per_period(arch, hs, ls, V_in)["total"]
     P_sw = P_sw_HS + P_sw_GD + P_sw_COSS
 
     return LossResult(
@@ -920,12 +1109,28 @@ def compute_total_loss(arch: VRArchitecture, inp: LossModelInputs) -> LossResult
 # 5) FILTERING
 # ============================================================
 
-def filter_candidate_devices(df, arch, V_in, V_out, V_gs_drive, I_out,max_B):
+def filter_candidate_devices(df, arch, V_in, V_out, V_gs_drive, I_out, max_B, rule=None):
+    """Voltage, gate-drive and current screens of the high- and low-side parts (see SW_RULE).
+
+    "legacy": HS V_DS,max >= V_in/N and LS V_DS,max >= V_out (published). "stress": one HS type
+    for S1..SN covers the largest high-side stress, max(N-1, 2) V_in/N, and the LS covers the
+    switch-node swing V_in/N, both at V_DS,max * SW_V_DERATING (a rating exactly at the
+    threshold passes). The current screens are unchanged: HS I_D >= I_out/N (one branch),
+    LS I_D >= max(B) I_out/N (the busiest inductor).
+    """
+    rule = rule or SW_RULE
     N = arch.N
-    hs_df = df[(df['VDSmax'] >= V_in/N) & (df['VGSmax'] >= V_gs_drive)
-               & (df['ID_A'] >= I_out/N)].copy()
-    ls_df = df[(df['VDSmax'] >= V_out) & (df['VGSmax'] >= V_gs_drive)
-               & (df['ID_A'] >= I_out*max_B/N)].copy()
+    if rule == "legacy":
+        hs_df = df[(df['VDSmax'] >= V_in/N) & (df['VGSmax'] >= V_gs_drive)
+                   & (df['ID_A'] >= I_out/N)].copy()
+        ls_df = df[(df['VDSmax'] >= V_out) & (df['VGSmax'] >= V_gs_drive)
+                   & (df['ID_A'] >= I_out*max_B/N)].copy()
+    else:
+        _v_s1, v_hs, v_ls = switch_stresses(N, V_in)
+        hs_df = df[(df['VDSmax'] * SW_V_DERATING >= v_hs * (1.0 - SW_V_TOL))
+                   & (df['VGSmax'] >= V_gs_drive) & (df['ID_A'] >= I_out/N)].copy()
+        ls_df = df[(df['VDSmax'] * SW_V_DERATING >= v_ls * (1.0 - SW_V_TOL))
+                   & (df['VGSmax'] >= V_gs_drive) & (df['ID_A'] >= I_out*max_B/N)].copy()
     return ([row_to_device(r) for _, r in hs_df.iterrows()],
             [row_to_device(r) for _, r in ls_df.iterrows()])
 
@@ -957,7 +1162,10 @@ _DEFAULT_FP = 2.0   # mm² fallback for devices with unparseable package strings
 
 def _compute_area(arch: VRArchitecture, hs: EPCDevice, ls: EPCDevice,
                   ind: Inductor, cap: Capacitor) -> float:
-    """Total estimated component footprint (mm²)."""
+    """Cell footprint (mm²): one component class per tier (N HS dies, K LS dies, K inductors,
+    N-1 flying capacitors), each tier's summed part area with zero keep-out; the cell is the
+    largest tier. Whether a tier's parts can actually be placed is checked separately
+    (tier_packs, with PACK_RULE on)."""
     fp_hs = hs.footprint_mm2 if not (isinstance(hs.footprint_mm2, float)
                                       and np.isnan(hs.footprint_mm2)) else _DEFAULT_FP
     fp_ls = ls.footprint_mm2 if not (isinstance(ls.footprint_mm2, float)
@@ -965,7 +1173,581 @@ def _compute_area(arch: VRArchitecture, hs: EPCDevice, ls: EPCDevice,
     return (max(arch.N * fp_hs
             , arch.K * fp_ls
             , arch.K * ind.footprint_mm2
-            , (arch.N - 1) * cap.footprint_mm2))
+            , (arch.N - 1) * cap_footprint_mm2(cap)))
+
+
+def cap_footprint_mm2(cap) -> float:
+    """Capacitor footprint in the area rule (FOOTPRINT_RULE): body area or library value."""
+    if FOOTPRINT_RULE == "legacy" or cap.name not in CAP_DIMS_MM:
+        return cap.footprint_mm2
+    x, y = CAP_DIMS_MM[cap.name]
+    return round(x * y, 9)
+
+
+# ── Tier packing check (PACK_RULE, see the header) ──────────────────────────────────────────
+# Body dimensions (mm) of the capacitor-library parts; a part not listed (and every inductor:
+# the library gives a footprint area only) is taken as a square of its library footprint.
+# EPC devices use the Package(mm) column (e.g. EPC2014C 1.7 x 1.1, EPC2057 1.5 x 1.2 = the
+# datasheet die outlines, nominal 1702 x 1087 and 1500 x 1200 um).
+CAP_DIMS_MM = {
+    "Murata-GRM155-10uF-6V3": (1.0, 0.5),                  # 0402
+    "Murata-GCM21-10uF-25V": (2.0, 1.25),                  # 0805
+    "Murata-GRM31-22uF-50V": (3.2, 1.6),                   # 1206
+    "Murata-UBSC-22nF-6V": (0.8, 0.6),                     # die
+    "Murata-GRM188D72A105KE01-1uF-100V": (1.6, 0.8),       # 0603
+    "Murata-GRM188D71H105KE01-1uF-50V": (1.6, 0.8),        # 0603
+    "Murata-WLSC-935146050510-10nF-BV100": (0.8, 0.8),
+}
+_PACK_EPS = 1e-9
+PACK_NODE_LIMIT = 300000          # search budget of the exact (non-guillotine) placement
+PACK_STATS = {"exact_searches": 0, "undecided": 0}
+_PACK_CACHE: dict = {}
+_GUIL_CACHE: dict = {}
+
+
+def pack_enabled(rule=None) -> bool:
+    r = PACK_RULE if rule is None else rule
+    return str(r).strip().lower() in ("on", "1", "true", "yes")
+
+
+def part_dims_mm(part):
+    """Lateral body dimensions (x, y) in mm of an EPC device, capacitor or inductor."""
+    x, y = getattr(part, "pkg_x_mm", np.nan), getattr(part, "pkg_y_mm", np.nan)
+    if x is not None and y is not None and np.isfinite(x) and np.isfinite(y):
+        return float(x), float(y)
+    if isinstance(part, Capacitor) and part.name in CAP_DIMS_MM:
+        return CAP_DIMS_MM[part.name]
+    fp = getattr(part, "footprint_mm2", np.nan)
+    if fp is None or not np.isfinite(fp):
+        fp = _DEFAULT_FP
+    s = math.sqrt(fp)
+    return s, s
+
+
+def _normal_patterns(a, b, limit):
+    """Sums i a + j b <= limit (positions a packing can be pushed to, Herz 1972)."""
+    out, i = set(), 0
+    while i * a <= limit + _PACK_EPS:
+        j = 0
+        while i * a + j * b <= limit + _PACK_EPS:
+            out.add(round(i * a + j * b, 9))
+            j += 1
+        i += 1
+    return sorted(out)
+
+
+def _guillotine_count(a, b, side):
+    """Most a x b rectangles (rotation allowed) in a side x side square by guillotine cuts."""
+    key = (a, b, side)
+    if key in _GUIL_CACHE:
+        return _GUIL_CACHE[key]
+    P = _normal_patterns(a, b, side)
+    eps = _PACK_EPS
+
+    def red(v):
+        k = bisect.bisect_right(P, v + eps) - 1
+        return P[k] if k >= 0 else 0.0
+
+    memo = {}
+
+    def g(W, H):
+        k2 = (W, H) if W <= H else (H, W)          # identical rotatable parts: g(W,H) = g(H,W)
+        if k2 in memo:
+            return memo[k2]
+        best = 0
+        for w_, h_ in ((a, b), (b, a)):
+            if w_ <= W + eps and h_ <= H + eps:
+                best = max(best, int((W + eps) // w_) * int((H + eps) // h_))
+        for x in P:
+            if eps < x < W - eps:
+                best = max(best, g(red(x), H) + g(red(W - x), H))
+        for y in P:
+            if eps < y < H - eps:
+                best = max(best, g(W, red(y)) + g(W, red(H - y)))
+        memo[k2] = best
+        return best
+
+    s = red(side)
+    _GUIL_CACHE[key] = g(s, s)
+    return _GUIL_CACHE[key]
+
+
+class _PackBudget(Exception):
+    pass
+
+
+def _exact_pack(n, a, b, side, node_limit):
+    """Exact placement search over normal-pattern positions (catches non-guillotine layouts,
+    e.g. four parts in a pinwheel). Placements are chosen in increasing (y, x) order, and the
+    first one sits on the bottom edge (the lowest part of a pushed-down packing has y = 0)."""
+    P = _normal_patterns(a, b, side - b)
+    orients = ((a, b),) if abs(a - b) < _PACK_EPS else ((a, b), (b, a))
+    cands = sorted((y, x, w_, h_) for y in P for x in P for (w_, h_) in orients
+                   if x + w_ <= side + _PACK_EPS and y + h_ <= side + _PACK_EPS)
+    placed, nodes = [], [0]
+
+    def free(c):
+        y, x, w_, h_ = c
+        for py, px, pw, ph in placed:
+            if (x < px + pw - _PACK_EPS and px < x + w_ - _PACK_EPS
+                    and y < py + ph - _PACK_EPS and py < y + h_ - _PACK_EPS):
+                return False
+        return True
+
+    def rec(start, k):
+        if k == n:
+            return True
+        for i in range(start, len(cands) - (n - k) + 1):
+            if k == 0 and cands[i][0] > _PACK_EPS:
+                break
+            nodes[0] += 1
+            if nodes[0] > node_limit:
+                raise _PackBudget
+            if free(cands[i]):
+                placed.append(cands[i])
+                if rec(i + 1, k + 1):
+                    return True
+                placed.pop()
+        return False
+
+    return rec(0, 0)
+
+
+def pack_identical(n, w, h, side, keepout_mm=0.0, node_limit=None):
+    """True when n identical w x h rectangles (rotation allowed), each grown by keepout_mm/2 on
+    every side, fit without overlap in a side x side square (mm). Decided by an area bound, a
+    guillotine count and, when those disagree, an exact search; a search that exhausts its
+    budget counts as no placement found (PACK_STATS["undecided"])."""
+    if n <= 0:
+        return True
+    return _pack_inflated(n, w + keepout_mm, h + keepout_mm, side, node_limit)
+
+
+def _pack_inflated(n, a, b, side, node_limit=None):
+    """pack_identical on parts already grown by the keep-out."""
+    if n <= 0:
+        return True
+    if a < b:
+        a, b = b, a
+    a, b, side = round(a, 9), round(b, 9), round(side, 9)
+    key = (n, a, b, side)
+    if key in _PACK_CACHE:
+        return _PACK_CACHE[key]
+    if a > side + _PACK_EPS or n * a * b > side * side + _PACK_EPS:
+        res = False
+    elif _guillotine_count(a, b, side) >= n:
+        res = True
+    else:
+        PACK_STATS["exact_searches"] += 1
+        try:
+            res = _exact_pack(n, a, b, side, node_limit or PACK_NODE_LIMIT)
+        except _PackBudget:
+            PACK_STATS["undecided"] += 1
+            res = False
+    _PACK_CACHE[key] = res
+    return res
+
+
+def tier_packs(count, part, side_mm, keepout_um=None) -> bool:
+    """Can `count` copies of `part` be placed in the square cell of side side_mm?"""
+    k_mm = (PACK_KEEPOUT_UM if keepout_um is None else keepout_um) * 1e-3
+    x, y = part_dims_mm(part)
+    return pack_identical(count, x, y, side_mm, k_mm)
+
+
+def tier_report(arch, hs, ls, ind, cap, side_mm, keepout_um=None) -> dict:
+    """Per-tier placement verdicts of one design in a square cell of side side_mm."""
+    return {"gan_hs": tier_packs(arch.N, hs, side_mm, keepout_um),
+            "gan_ls": tier_packs(arch.K, ls, side_mm, keepout_um),
+            "inductor": tier_packs(arch.K, ind, side_mm, keepout_um),
+            "cap_fly": tier_packs(arch.N - 1, cap, side_mm, keepout_um)}
+
+
+# ── Mixed tiers (TIER_RULE "mixed", TCPMT revision phase 2) ─────────────────────────────────
+# A tier may hold parts of several classes. The stack of a design is the smallest number of
+# tiers whose contents each place in the square cell (same keep-out convention as above), then
+# the lowest stack: tier height = tallest part in it; stack = sum + (tiers - 1) * RDL_UM.
+# Heights: EPC parts from the datasheet Side View (HVR_epc_device_data.json; a part not read
+# takes EPC_HEIGHT_DEFAULT_UM and the stack is flagged), inductors from the library, flying
+# capacitors from the library height (rated 0603: 0.8 mm body + 0.2 mm tolerance as margin).
+EPC_HEIGHT_DEFAULT_UM = 700.0
+PLACE_NODE_LIMIT = 5000           # search budget of the exact mixed-tier placement (4 parts)
+MIXED_EXACT_MAX_ITEMS = 4         # mixed tiers of 4 parts may be pinwheels: exact search
+FRONTIER_MAX_ITEMS = 6            # mixed tiers of more parts: constructive placement only
+_COMP_CACHE: dict = {}
+_STACK_CACHE: dict = {}
+
+
+def part_height_um(part):
+    """(height in um, known?) of a part for the stack report."""
+    if isinstance(part, EPCDevice):
+        h = part.height_um
+        return (float(h), True) if h is not None and np.isfinite(h) else (EPC_HEIGHT_DEFAULT_UM,
+                                                                           False)
+    h = getattr(part, "height_um", None)
+    if h is None:
+        return (1000.0, False)
+    return float(h), True
+
+
+def _overlap(r, q):
+    return (r[0] < q[0] + q[2] - _PACK_EPS and q[0] < r[0] + r[2] - _PACK_EPS
+            and r[1] < q[1] + q[3] - _PACK_EPS and q[1] < r[1] + r[3] - _PACK_EPS)
+
+
+def _contains(g, f):
+    return (g[0] <= f[0] + _PACK_EPS and g[1] <= f[1] + _PACK_EPS
+            and g[0] + g[2] >= f[0] + f[2] - _PACK_EPS and g[1] + g[3] >= f[1] + f[3] - _PACK_EPS)
+
+
+def _maxrects(items, side):
+    """MaxRects placement (best short-side fit) of items [(a, b, tag)], rotation allowed, in a
+    side x side square: [(x, y, w, h, tag)] or None (a heuristic: None is not a proof)."""
+    free, out = [(0.0, 0.0, side, side)], []
+    for a, b, tag in items:
+        best = None
+        for fx, fy, fw, fh in free:
+            for w, h in ((a, b), (b, a)):
+                if w <= fw + _PACK_EPS and h <= fh + _PACK_EPS:
+                    k = (min(fw - w, fh - h), max(fw - w, fh - h), fy, fx)
+                    if best is None or k < best[0]:
+                        best = (k, fx, fy, w, h)
+        if best is None:
+            return None
+        _, x, y, w, h = best
+        r = (x, y, w, h)
+        out.append((x, y, w, h, tag))
+        nf = []
+        for f in free:
+            if not _overlap(f, r):
+                nf.append(f)
+                continue
+            fx, fy, fw, fh = f
+            if x > fx + _PACK_EPS:
+                nf.append((fx, fy, x - fx, fh))
+            if x + w < fx + fw - _PACK_EPS:
+                nf.append((x + w, fy, fx + fw - x - w, fh))
+            if y > fy + _PACK_EPS:
+                nf.append((fx, fy, fw, y - fy))
+            if y + h < fy + fh - _PACK_EPS:
+                nf.append((fx, y + h, fw, fy + fh - y - h))
+        free = [f for i, f in enumerate(nf)
+                if not any(j != i and _contains(g, f) and (g != f or j < i)
+                           for j, g in enumerate(nf))]
+    return out
+
+
+def _exact_place(items, side, node_limit):
+    """Exact placement of items [(a, b, tag)] (identical items interchangeable) over normal
+    positions, placements in increasing (y, x) order with the first on the bottom edge:
+    [(x, y, w, h, tag)] or None. Raises _PackBudget when the budget is exhausted."""
+    types = {}
+    for it in items:
+        types[it] = types.get(it, 0) + 1
+    tk = list(types)
+    rem = [types[t] for t in tk]
+    mind = min(min(a, b) for a, b, _ in items)
+    P = {0.0}
+    for a, b, _ in items:
+        P |= {round(p + d, 9) for p in P for d in (a, b) if p + d <= side - mind + _PACK_EPS}
+    P = sorted(P)
+    cands = sorted((y, x, ti, w, h) for y in P for x in P for ti, (a, b, _) in enumerate(tk)
+                   for w, h in {(a, b), (b, a)}
+                   if x + w <= side + _PACK_EPS and y + h <= side + _PACK_EPS)
+    placed, nodes, n = [], [0], len(items)
+
+    def rec(start, k):
+        if k == n:
+            return True
+        for i in range(start, len(cands)):
+            y, x, ti, w, h = cands[i]
+            if k == 0 and y > _PACK_EPS:
+                break
+            if rem[ti] == 0:
+                continue
+            nodes[0] += 1
+            if nodes[0] > node_limit:
+                raise _PackBudget
+            r = (x, y, w, h)
+            if all(not _overlap(r, q) for q in placed):
+                placed.append((x, y, w, h, tk[ti][2]))
+                rem[ti] -= 1
+                if rec(i + 1, k + 1):
+                    return True
+                placed.pop()
+                rem[ti] += 1
+        return False
+
+    return list(placed) if rec(0, 0) else None
+
+
+def place_items(items, side, node_limit=None, exact_max_items=None):
+    """Placement of items [(a, b, tag)] (sizes grown by the keep-out) in a side x side square:
+    MaxRects under four orderings, then the exact search (only up to exact_max_items parts when
+    given); None when no placement is found."""
+    if not items:
+        return []
+    if (sum(a * b for a, b, _ in items) > side * side + _PACK_EPS
+            or any(max(a, b) > side + _PACK_EPS for a, b, _ in items)
+            or sum(1 for a, b, _ in items if min(a, b) > side / 2 + _PACK_EPS) > 1):
+        return None                    # area, length, or two parts wider than half the cell
+    for key in (lambda t: -t[0] * t[1], lambda t: -max(t[0], t[1]), lambda t: -min(t[0], t[1]),
+                lambda t: -(t[0] + t[1])):
+        p = _maxrects(sorted(items, key=key), side)
+        if p is not None:
+            return p
+    if exact_max_items is not None and len(items) > exact_max_items:
+        PACK_STATS["heuristic_only"] = PACK_STATS.get("heuristic_only", 0) + 1
+        return None
+    PACK_STATS["exact_searches"] += 1
+    try:
+        return _exact_place(items, side, node_limit or PLACE_NODE_LIMIT)
+    except _PackBudget:
+        PACK_STATS["undecided"] += 1
+        return None
+
+
+_FRONT_CACHE: dict = {}
+
+
+def _frontier(types, counts, side):
+    """Pareto-minimal bounding boxes (w, h, how) of the guillotine arrangements of a multiset
+    (counts of part types (a, b), rotation allowed) that fit in side x side; `how` records the
+    arrangement for _frontier_place. Exact for guillotine layouts (every layout of up to three
+    parts is one); empty when none fits."""
+    key = (types, counts, side)
+    if key in _FRONT_CACHE:
+        return _FRONT_CACHE[key]
+    cand = []
+    if sum(counts) == 1:
+        t = next(i for i, c in enumerate(counts) if c)
+        a, b = types[t]
+        cand = [(a, b, ("leaf", t, a, b)), (b, a, ("leaf", t, b, a))]
+    else:
+        for s1 in itertools.product(*[range(c + 1) for c in counts]):
+            if not any(s1) or s1 == counts:
+                continue
+            s2 = tuple(c - x for c, x in zip(counts, s1))
+            if s1 > s2:
+                continue
+            f1 = _frontier(types, s1, side)
+            if not f1:
+                continue
+            f2 = _frontier(types, s2, side)
+            lim = side + _PACK_EPS
+            for w1, h1, _ in f1:
+                for w2, h2, _ in f2:
+                    if w1 + w2 <= lim and h1 <= lim and h2 <= lim:
+                        cand.append((w1 + w2, max(h1, h2), ("row", s1, w1, h1, s2, w2, h2)))
+                    if h1 + h2 <= lim and w1 <= lim and w2 <= lim:
+                        cand.append((max(w1, w2), h1 + h2, ("col", s1, w1, h1, s2, w2, h2)))
+    cand = sorted((round(w, 9), round(h, 9), how) for w, h, how in cand
+                  if w <= side + _PACK_EPS and h <= side + _PACK_EPS)
+    front, best_h = [], float("inf")
+    for w, h, how in cand:
+        if h < best_h - _PACK_EPS:
+            front.append((w, h, how))
+            best_h = h
+    _FRONT_CACHE[key] = front
+    return front
+
+
+def _frontier_place(types, counts, side, w, h, x0=0.0, y0=0.0, tags=None):
+    """Coordinates [(x, y, w, h, tag)] of the guillotine arrangement with box (w, h)."""
+    for fw, fh, how in _frontier(types, counts, side):
+        if abs(fw - w) < 1e-9 and abs(fh - h) < 1e-9:
+            break
+    else:
+        raise KeyError((counts, w, h))
+    if how[0] == "leaf":
+        _, t, a, b = how
+        return [(x0, y0, a, b, tags[t] if tags else t)]
+    kind, s1, w1, h1, s2, w2, h2 = how
+    out = _frontier_place(types, s1, side, w1, h1, x0, y0, tags)
+    if kind == "row":
+        return out + _frontier_place(types, s2, side, w2, h2, x0 + w1, y0, tags)
+    return out + _frontier_place(types, s2, side, w2, h2, x0, y0 + h1, tags)
+
+
+def _multiset_fits(cd, side):
+    """cd: ((a, b), count) per class with parts grown by the keep-out; one tier? One class:
+    the exact identical-part test. Several classes, up to FRONTIER_MAX_ITEMS parts: the exact
+    guillotine test, then for four parts (which admit a pinwheel) the exact placement search;
+    more parts: a constructive MaxRects placement. Where neither proves a placement the tier is
+    taken as not placeable (conservative; PACK_STATS counts these)."""
+    key = (side, cd)
+    if key in _COMP_CACHE:
+        return _COMP_CACHE[key]
+    n = sum(c for _, c in cd)
+    items = [(a, b, i) for i, ((a, b), c) in enumerate(cd) for _ in range(c)]
+    if len(cd) == 1:
+        (a, b), c = cd[0]
+        res = _pack_inflated(c, a, b, side)
+    elif (sum(a * b for a, b, _ in items) > side * side + _PACK_EPS
+          or any(a > side + _PACK_EPS for a, b, _ in items)
+          or sum(1 for a, b, _ in items if b > side / 2 + _PACK_EPS) > 1):
+        res = False
+    elif n > FRONTIER_MAX_ITEMS:
+        res = any(_maxrects(sorted(items, key=k), side) is not None
+                  for k in (lambda t: -t[0] * t[1], lambda t: -t[0], lambda t: -t[1],
+                            lambda t: -(t[0] + t[1])))
+        if not res:
+            PACK_STATS["constructive_only"] = PACK_STATS.get("constructive_only", 0) + 1
+    elif _frontier(tuple(d for d, _ in cd), tuple(c for _, c in cd), side):
+        res = True
+    elif n <= 3:
+        res = False                         # three parts or fewer: guillotine is exact
+    elif n <= MIXED_EXACT_MAX_ITEMS:
+        PACK_STATS["exact_searches"] += 1
+        try:
+            res = _exact_place(items, side, PLACE_NODE_LIMIT) is not None
+        except _PackBudget:
+            PACK_STATS["undecided"] += 1
+            res = False
+    else:
+        PACK_STATS["guillotine_only"] = PACK_STATS.get("guillotine_only", 0) + 1
+        res = False
+    _COMP_CACHE[key] = res
+    return res
+
+
+def tier_placement(cd_tagged, side):
+    """Coordinates of one tier's parts for the report: cd_tagged = [((a, b), count, tag)]."""
+    types = tuple(d for d, _, _ in cd_tagged)
+    counts = tuple(c for _, c, _ in cd_tagged)
+    tags = [t for _, _, t in cd_tagged]
+    items = [(a, b, t) for (a, b), c, t in cd_tagged for _ in range(c)]
+    if sum(counts) <= FRONTIER_MAX_ITEMS:
+        f = _frontier(types, counts, side)
+        if f:
+            return _frontier_place(types, counts, side, f[0][0], f[0][1], tags=tags)
+    for k in (lambda t: -t[0] * t[1], lambda t: -t[0], lambda t: -t[1], lambda t: -(t[0] + t[1])):
+        pl = _maxrects(sorted(items, key=k), side)
+        if pl is not None:
+            return pl
+    try:
+        return _exact_place(items, side, 2000000)
+    except _PackBudget:
+        return None
+
+
+def _greedy_tiers(cls, side):
+    """Tier count of a first-fit-decreasing mixed stack (an upper bound on the minimum)."""
+    order = sorted((i for i, c in enumerate(cls) for _ in range(c[1])),
+                   key=lambda i: -cls[i][2][0] * cls[i][2][1])
+    tiers = []
+    for i in order:
+        for t in tiers:
+            t[i] += 1
+            if _multiset_fits(tuple(sorted((cls[j][2], t[j]) for j in range(len(cls)) if t[j])),
+                              side):
+                break
+            t[i] -= 1
+        else:
+            tiers.append([1 if j == i else 0 for j in range(len(cls))])
+    return len(tiers)
+
+
+def _stack_classes(arch, hs, ls, ind, cap, keepout_um=None):
+    k = (PACK_KEEPOUT_UM if keepout_um is None else keepout_um) * 1e-3
+    out = []
+    for name, n, part in (("gan_hs", arch.N, hs), ("gan_ls", arch.K, ls),
+                          ("inductor", arch.K, ind), ("cap_fly", arch.N - 1, cap)):
+        if n > 0:
+            x, y = part_dims_mm(part)
+            h, known = part_height_um(part)
+            out.append((name, n, (round(max(x, y) + k, 9), round(min(x, y) + k, 9)), h, known))
+    return out
+
+
+def tier_bounds(arch, hs, ls, ind, cap, side_mm, keepout_um=None):
+    """(lower, upper) bounds on the minimum tier count: the area bound and the per-class bound
+    ceil(n / most per tier) below; one class per tier above. None when a part does not fit."""
+    side = round(side_mm, 9)
+    cls = _stack_classes(arch, hs, ls, ind, cap, keepout_um)
+    if any(c[2][0] > side + _PACK_EPS for c in cls):
+        return None
+    area = sum(n * a * b for _, n, (a, b), _, _ in cls)
+    lb, ub = math.ceil(area / (side * side) - 1e-9), 0
+    for _, n, (a, b), _, _ in cls:
+        per = max(j for j in range(1, n + 1) if _pack_inflated(j, a, b, side))
+        t = math.ceil(n / per)
+        lb, ub = max(lb, t), ub + t
+    return lb, ub
+
+
+def stack_plan(arch, hs, ls, ind, cap, side_mm, keepout_um=None, placement=False):
+    """Minimum-tier stack of one design in the square cell of side side_mm (tiers may mix
+    classes): {"tiers", "height_um", "height_known", "plan": [{class: count, ..., "height_um"}]}
+    (with placement=True each tier also carries its part coordinates), or None when a part does
+    not fit the cell. Minimizes the tier count, then the stack height."""
+    side = round(side_mm, 9)
+    cls = _stack_classes(arch, hs, ls, ind, cap, keepout_um)
+    if any(c[2][0] > side + _PACK_EPS for c in cls):
+        return None
+    key = (side, tuple(c[:4] for c in cls), placement)
+    if key in _STACK_CACHE:
+        return _STACK_CACHE[key]
+    counts = [c[1] for c in cls]
+    hts = [c[3] for c in cls]
+    vecs = sorted((v for v in itertools.product(*[range(n + 1) for n in counts]) if any(v)),
+                  key=sum)
+    ok = {}
+    for v in vecs:
+        if any(v[i] and not ok.get(v[:i] + (v[i] - 1,) + v[i + 1:], True)
+               for i in range(len(v))):
+            ok[v] = False                      # a sub-composition already fails
+            continue
+        ok[v] = _multiset_fits(tuple(sorted((cls[i][2], v[i]) for i in range(len(v)) if v[i])),
+                               side)
+    comps = [v for v in vecs if ok[v]]
+
+    def th(v):
+        return max(hts[i] for i in range(len(v)) if v[i])
+
+    @functools.lru_cache(maxsize=None)
+    def best(rem):
+        if not any(rem):
+            return (0, 0.0, ())
+        first = next(i for i, r in enumerate(rem) if r)
+        res = None
+        for v in comps:
+            if v[first] == 0 or any(v[i] > rem[i] for i in range(len(v))):
+                continue
+            t, hh, plan = best(tuple(r - x for r, x in zip(rem, v)))
+            cand = (t + 1, hh + th(v), (v,) + plan)
+            if res is None or cand[:2] < res[:2]:
+                res = cand
+        return res
+
+    t, hsum, plan = best(tuple(counts))
+    tiers = []
+    for v in sorted(plan, key=lambda v: [-x for x in v]):
+        rec = {cls[i][0]: v[i] for i in range(len(v)) if v[i]}
+        rec["height_um"] = th(v)
+        if placement:
+            rec["placement_mm"] = tier_placement(
+                [(cls[i][2], v[i], cls[i][0]) for i in range(len(v)) if v[i]], side)
+        tiers.append(rec)
+    out = {"tiers": t, "height_um": hsum + (t - 1) * RDL_UM,
+           "height_known": all(c[4] for c in cls), "plan": tiers}
+    _STACK_CACHE[key] = out
+    return out
+
+
+def tiers_within(arch, hs, ls, ind, cap, side_mm, max_tiers, keepout_um=None) -> bool:
+    """Does the design fit at most max_tiers mixed tiers (0: any number)?"""
+    b = tier_bounds(arch, hs, ls, ind, cap, side_mm, keepout_um)
+    if b is None:
+        return False
+    if max_tiers <= 0 or b[1] <= max_tiers:
+        return True
+    if b[0] > max_tiers:
+        return False
+    cls = _stack_classes(arch, hs, ls, ind, cap, keepout_um)
+    if _greedy_tiers(cls, round(side_mm, 9)) <= max_tiers:
+        return True
+    return stack_plan(arch, hs, ls, ind, cap, side_mm, keepout_um)["tiers"] <= max_tiers
 
 
 # ============================================================
@@ -996,6 +1778,140 @@ class OptimizationResult:
     p_sw_hs_opt:          float                = np.nan
     p_sw_gd_opt:          float                = np.nan
     p_sw_coss_opt:        float                = np.nan
+    # mixed tiers (TCPMT revision phase 2): minimum tier count and stack height of the pick
+    n_tiers:              int                  = 0
+    stack_height_um:      float                = np.nan
+
+
+def _optimize_mixed(arch, hs_devs, ls_devs, inds, caps, f_sw_values, I_out, V_out, V_in,
+                    ripple_factor, v_ripple_frac, area_budget_mm2, base, default_loss):
+    """Selection with mixed tiers (TIER_RULE "mixed", packing on): every part must fit the
+    square cell of the area budget, and the design must stack in at most MAX_TIERS tiers
+    (0: no limit). For a given inductor, capacitor and f_sw the loss of compute_total_loss
+    splits into a high-side term A(hs) + a low-side term B(ls) + a passive term C, and the
+    ripple gates depend only on the inductor (and capacitor) and f_sw; so the best pair is the
+    lowest A + B over the (hs, ls) footprint pairs that stack within the limit (any pair when
+    there is no limit). The pick is re-evaluated with compute_total_loss."""
+    side = math.sqrt(area_budget_mm2)
+    k_mm = PACK_KEEPOUT_UM * 1e-3
+
+    def fits(p):
+        x, y = part_dims_mm(p)
+        return max(x, y) + k_mm <= side + _PACK_EPS
+    hs_devs = [d for d in hs_devs if fits(d)]
+    ls_devs = [d for d in ls_devs if fits(d)]
+    inds = [i for i in inds if fits(i)]
+    caps = [c for c in caps if fits(c)]
+    if not hs_devs or not ls_devs or not inds or not caps:
+        return base
+    N, K, K_A, B_arr, D = arch.N, arch.K, arch.K_A, arch.B_array, arch.D
+    B_k, B_sum = B_arr[-1], sum(b ** 2 for b in B_arr)
+    c_k = (4 * B_k - 1) if B_k > 1 else 3
+    alpha = (V_in / (N ** 2 * V_out)) * B_sum + (2 * B_sum - c_k) / N
+    V_gs, V_th, V_pl, R_drv, C_out = 5.0, 1.0, 1.6, 0.7, 50e-6
+    v1, v2 = V_in / N, stacked_swing(N, V_in)
+    R_h = np.array([d.R_DS_ON for d in hs_devs])
+    Qs_h = np.array([d.Q_GD + d.Q_G for d in hs_devs])
+    Ig_h = (V_gs - 0.5 * (V_th + V_pl)) / (np.array([gate_resistance(d) for d in hs_devs])
+                                           + R_drv)
+    CG_h = np.array([d.C_G for d in hs_devs])
+    R_l = np.array([d.R_DS_ON for d in ls_devs])
+    CG_l = np.array([d.C_G for d in ls_devs])
+    if COSS_RULE == "legacy":
+        Eh = np.array([0.5 * N * d.C_OSS * (V_in / N - V_out) ** 2 for d in hs_devs])
+        El = np.array([0.5 * K * d.C_OSS * V_out ** 2 for d in ls_devs])
+    else:
+        Eh = np.array([N * e_oss_at(d, v1) + (N - 1) * (v2 * (q_oss_at(d, v2) - q_oss_at(d, v1))
+                                                       - (e_oss_at(d, v2) - e_oss_at(d, v1)))
+                       for d in hs_devs])
+        El = np.array([K * (q_oss_at(d, v1) * v1 - e_oss_at(d, v1)) for d in ls_devs])
+    gkey = lambda p: tuple(sorted(part_dims_mm(p)))          # noqa: E731
+    hg, lg = {}, {}
+    for i, d in enumerate(hs_devs):
+        hg.setdefault(gkey(d), []).append(i)
+    for i, d in enumerate(ls_devs):
+        lg.setdefault(gkey(d), []).append(i)
+    hkeys, lkeys = list(hg), list(lg)
+    hidx = [np.array(hg[k]) for k in hkeys]
+    lidx = [np.array(lg[k]) for k in lkeys]
+    i_lim, v_lim = ripple_factor * I_out, v_ripple_frac * V_out
+    best = (float("inf"), None)
+    for ind in inds:
+        f_valid = f_sw_values[f_sw_values <= ind.f_max_mhz * 1e6]
+        if len(f_valid) == 0:
+            continue
+        L, R_L = ind.l_nh * 1e-9, ind.r_dcr_mohm * 1e-3
+        boost = 1.0 + ind.coupling_k * max(K - 1, 0)
+        for cap in caps:
+            Fc = {}                            # (hs footprint, ls footprint) -> within the limit
+
+            def feasible(a_, b_):
+                if (a_, b_) not in Fc:
+                    Fc[(a_, b_)] = tiers_within(arch, hs_devs[hg[hkeys[a_]][0]],
+                                                ls_devs[lg[lkeys[b_]][0]], ind, cap, side,
+                                                MAX_TIERS)
+                return Fc[(a_, b_)]
+            for f_sw in f_valid:
+                cap_f = cap
+                if CAP_RULE != "legacy":
+                    if CAP_RIPPLE and flying_cap_ripple(
+                            arch, cap, I_out, V_in, V_out, f_sw) > CAP_RIPPLE_MAX:
+                        continue
+                    if CAP_ESR_F and getattr(cap, "vendor_part", None):
+                        from dataclasses import replace as _rep
+                        cap_f = _rep(cap, esr_mohm=cap_esr_mohm(cap, f_sw, (N - 1) * V_in / N))
+                d_raw = (D / (f_sw * L)) * (V_in / N * K_A - V_out * K)
+                d_eff = d_raw / boost
+                if abs(d_eff) >= i_lim or abs(d_eff) / (8.0 * f_sw * C_out) >= v_lim:
+                    continue
+                I_rms = np.sqrt(I_out ** 2 + (d_raw / boost) ** 2 / 12.0)
+                kc = (V_out / V_in) * I_rms ** 2
+                A = (kc * R_h + f_sw * (V_in / N - V_out) * I_rms * (Qs_h / Ig_h)
+                     + f_sw * N * CG_h * V_gs ** 2 + f_sw * Eh)
+                Bv = kc * alpha * R_l + f_sw * K * CG_l * V_gs ** 2 + f_sw * El
+                C = kc * (2 * (1 - 1 / N) * cap_f.esr_mohm * 1e-3
+                          + (V_in / (N ** 2 * V_out)) * B_sum * R_L)
+                if MAX_TIERS > 0:
+                    ia = [ix[np.argmin(A[ix])] for ix in hidx]
+                    ib = [ix[np.argmin(Bv[ix])] for ix in lidx]
+                    S = np.array([A[i] for i in ia])[:, None] + np.array([Bv[j] for j in ib])[None, :]
+                    if S.min() + C >= best[0]:
+                        continue                 # cannot beat the pick even without the limit
+                    pick = None
+                    for flat in np.argsort(S, axis=None, kind="stable"):
+                        a_, b_ = divmod(int(flat), S.shape[1])
+                        if S[a_, b_] + C >= best[0]:
+                            break
+                        if feasible(a_, b_):
+                            pick = (a_, b_)
+                            break
+                    if pick is None:
+                        continue
+                    ih, il = ia[pick[0]], ib[pick[1]]
+                else:
+                    ih, il = int(np.argmin(A)), int(np.argmin(Bv))
+                tot = A[ih] + Bv[il] + C
+                if tot < best[0]:
+                    best = (tot, (hs_devs[ih], ls_devs[il], ind, cap, cap_f, f_sw))
+    if best[1] is None:
+        return base
+    hs, ls, ind, cap, cap_f, f_sw = best[1]
+    lr = compute_total_loss(arch, LossModelInputs(hs_device=hs, ls_device=ls, inductor=ind,
+                                                  capacitor=cap_f, I_out=I_out, V_out=V_out,
+                                                  V_in=V_in, f_sw=f_sw))
+    plan = stack_plan(arch, hs, ls, ind, cap, side)
+    areas = {"gan_hs": hs.footprint_mm2, "gan_ls": ls.footprint_mm2,
+             "inductor": ind.footprint_mm2, "cap_fly": cap_footprint_mm2(cap)}
+    tier_area = max(sum(areas[c] * n for c, n in t.items() if c in areas) for t in plan["plan"])
+    return OptimizationResult(
+        architecture=arch, default_loss=default_loss,
+        optimized_hs_device=hs, optimized_ls_device=ls, optimized_inductor=ind,
+        optimized_capacitor=cap, optimized_f_sw=f_sw, optimized_loss=lr.total_loss,
+        ripple_satisfied=True, total_area_mm2=tier_area, area_budget_mm2=area_budget_mm2,
+        area_feasible=True, delta_i_out_opt=lr.delta_i_out, delta_v_out_opt=lr.delta_v_out,
+        coupling_boost_opt=lr.coupling_boost, p_cond_opt=lr.p_cond, p_sw_opt=lr.p_sw,
+        p_sw_hs_opt=lr.p_sw_hs, p_sw_gd_opt=lr.p_sw_gd, p_sw_coss_opt=lr.p_sw_coss,
+        n_tiers=plan["tiers"], stack_height_um=plan["height_um"])
 
 
 def optimize_architecture(arch: VRArchitecture,
@@ -1024,6 +1940,21 @@ def optimize_architecture(arch: VRArchitecture,
         df_devices, arch, V_in, V_out, V_gs_drive, I_out, max(arch.B_array))
     inds = filter_candidate_inductors(inductor_library, arch, I_out)
     caps = filter_candidate_capacitors(capacitor_library, arch, V_in)
+    if pack_enabled() and TIER_RULE == "mixed" and np.isfinite(area_budget_mm2):
+        base = OptimizationResult(architecture=arch, default_loss=default_lr.total_loss,
+                                  area_budget_mm2=area_budget_mm2)
+        return _optimize_mixed(arch, hs_devs, ls_devs, inds, caps, f_sw_values, I_out, V_out,
+                               V_in, ripple_factor, v_ripple_frac, area_budget_mm2, base,
+                               default_lr.total_loss)
+    # Tier packing (PACK_RULE, TIER_RULE "class"): each tier holds one class, so its
+    # placeability depends on that class's part alone and screening each list here equals
+    # checking every combination at the area gate below (loop order and tie-breaking unchanged).
+    if pack_enabled() and np.isfinite(area_budget_mm2):
+        side = math.sqrt(area_budget_mm2)
+        hs_devs = [d for d in hs_devs if tier_packs(arch.N, d, side)]
+        ls_devs = [d for d in ls_devs if tier_packs(arch.K, d, side)]
+        inds = [i for i in inds if tier_packs(arch.K, i, side)]
+        caps = [c for c in caps if tier_packs(arch.N - 1, c, side)]
 
     base = OptimizationResult(architecture=arch,
                                default_loss=default_lr.total_loss,
@@ -1142,7 +2073,12 @@ def optimize_all_architectures(architectures, df_devices,
             caps = filter_candidate_capacitors(capacitor_library, arch, V_in)
             print(f"\nOptimising arch {idx}/{len(architectures)}: "
                   f"N={arch.N}, K={arch.K}, K_A={arch.K_A}")
-            print(f"  HS VDSmax≥{V_in/arch.N:.1f}V | ID_A≥{I_out/arch.N:.1f}A "
+            if SW_RULE == "legacy":
+                v_txt = f"HS VDSmax≥{V_in/arch.N:.1f}V"
+            else:
+                _s1, v_hs, v_ls = switch_stresses(arch.N, V_in)
+                v_txt = (f"VDSmax·{SW_V_DERATING:g} ≥ HS {v_hs:.1f}V / LS {v_ls:.1f}V")
+            print(f"  {v_txt} | ID_A≥{I_out/arch.N:.1f}A "
                   f"| HS:{len(hs_d)}, LS:{len(ls_d)}")
             print(f"  Isat≥{max(arch.B_array)*I_out/arch.N:.1f}A | inds:{len(inds)}")
             print(f"  Cap V_max>{V_in/arch.N:.1f}V | caps:{len(caps)}")

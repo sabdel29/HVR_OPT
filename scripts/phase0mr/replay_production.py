@@ -94,9 +94,18 @@ def converter_terms(t_c: float) -> dict:
     hs = dc_replace(d.hs, R_DS_ON=rdson_at(d.hs.R_DS_ON, t_c, a_hs))
     ls = dc_replace(d.ls, R_DS_ON=rdson_at(d.ls.R_DS_ON, t_c, a_ls))
     ind = dc_replace(d.inductor, r_dcr_mohm=dcr_at(d.inductor.r_dcr_mohm, t_c))
-    lr = compute_total_loss(d.arch, LossModelInputs(
-        hs_device=hs, ls_device=ls, inductor=ind, capacitor=d.capacitor,
-        I_out=d.i_out_a, V_out=d.v_out, V_in=d.v_in, f_sw=d.f_sw_hz))
+    # the production lineage keeps the published C_OSS and gate-resistance terms (engine defaults:
+    # corrected since the TCPMT revision); HVR_PRODUCTION_COSS_RULE / _RG_RULE switch them, as in
+    # electrical.loss_at
+    import HVR_FULL_OPT_EPC_V2 as _H
+    from electrical import _pin_production_rules, _restore_rules
+    prev_rules = _pin_production_rules(_H, ("COSS_RULE", "RG_RULE"))
+    try:
+        lr = compute_total_loss(d.arch, LossModelInputs(
+            hs_device=hs, ls_device=ls, inductor=ind, capacitor=d.capacitor,
+            I_out=d.i_out_a, V_out=d.v_out, V_in=d.v_in, f_sw=d.f_sw_hz))
+    finally:
+        _restore_rules(_H, prev_rules)
     dec = converter_decomposition(d.arch, hs, ls, ind, d.capacitor, d.i_out_a,
                                   d.v_out, d.v_in, d.f_sw_hz, lr)
     dec["p_conv_total_w"] = lr.total_loss * n_vr()

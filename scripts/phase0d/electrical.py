@@ -248,14 +248,19 @@ class HVRDesign:
     j_target: float
 
     def loss_at(self, T_c: float, alpha_gan: float = ALPHA_GAN_RDSON) -> dict:
+        import HVR_FULL_OPT_EPC_V2 as H
         from HVR_FULL_OPT_EPC_V2 import LossModelInputs, compute_total_loss
         hs_t = replace(self.hs, R_DS_ON=rdson_at(self.hs.R_DS_ON, T_c, alpha_gan))
         ls_t = replace(self.ls, R_DS_ON=rdson_at(self.ls.R_DS_ON, T_c, alpha_gan))
         ind_t = replace(self.inductor,
                         r_dcr_mohm=dcr_at(self.inductor.r_dcr_mohm, T_c))
-        r = compute_total_loss(self.arch, LossModelInputs(
-            hs_device=hs_t, ls_device=ls_t, inductor=ind_t, capacitor=self.capacitor,
-            I_out=self.i_out_a, V_out=self.v_out, V_in=self.v_in, f_sw=self.f_sw_hz))
+        prev_rules = _pin_production_rules(H, ("COSS_RULE", "RG_RULE"))  # published terms
+        try:
+            r = compute_total_loss(self.arch, LossModelInputs(
+                hs_device=hs_t, ls_device=ls_t, inductor=ind_t, capacitor=self.capacitor,
+                I_out=self.i_out_a, V_out=self.v_out, V_in=self.v_in, f_sw=self.f_sw_hz))
+        finally:
+            _restore_rules(H, prev_rules)
         return {"p_conv_w": r.total_loss, "p_cond_w": r.p_cond, "p_sw_w": r.p_sw,
                 "delta_i_out_a": r.delta_i_out, "delta_v_out_v": r.delta_v_out,
                 "T_c": T_c}
@@ -265,6 +270,31 @@ class HVRDesign:
         """Square-tile approximation - see electrical_model_validation.md section 3.3."""
         a = math.sqrt(self.area_mm2)
         return a, a
+
+
+_RULES = (("CAP_RULE", "HVR_PRODUCTION_CAP_RULE", "legacy"),
+          ("SW_RULE", "HVR_PRODUCTION_SW_RULE", "legacy"),
+          ("COSS_RULE", "HVR_PRODUCTION_COSS_RULE", "legacy"),
+          ("PACK_RULE", "HVR_PRODUCTION_PACK_RULE", "off"),
+          ("RG_RULE", "HVR_PRODUCTION_RG_RULE", "legacy"),
+          ("FOOTPRINT_RULE", "HVR_PRODUCTION_FOOTPRINT_RULE", "legacy"))
+
+
+def _pin_production_rules(H, only=None) -> dict:
+    """Set the engine's rule switches (all, or those named in `only`) to the production
+    values; return the previous ones."""
+    import os
+    prev = {}
+    for attr, env, default in _RULES:
+        if hasattr(H, attr) and (only is None or attr in only):
+            prev[attr] = getattr(H, attr)
+            setattr(H, attr, os.environ.get(env, default))
+    return prev
+
+
+def _restore_rules(H, prev: dict) -> None:
+    for attr, val in prev.items():
+        setattr(H, attr, val)
 
 
 def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: float = 1.0,
@@ -285,9 +315,13 @@ def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: floa
     # The production lineage of the ETM study was synthesized with the published capacitor rule
     # (v_max > V_in/N). The corrected rule is the engine default; the production path pins the
     # published one so every existing result stays reproducible, unless HVR_PRODUCTION_CAP_RULE
-    # asks for the corrected selection (TCPMT revision, review round 2).
-    prev_rule = H.CAP_RULE
-    H.CAP_RULE = os.environ.get("HVR_PRODUCTION_CAP_RULE", "legacy")
+    # asks for the corrected selection (TCPMT revision, review round 2). The same holds for the
+    # phase-1 rules: the switch-voltage rule (engine default "stress"; HVR_PRODUCTION_SW_RULE),
+    # the output-capacitance term (HVR_PRODUCTION_COSS_RULE) and the tier packing check
+    # (HVR_PRODUCTION_PACK_RULE) are pinned to the published behaviour here, as are the phase-2
+    # gate-resistance and capacitor-footprint rules (HVR_PRODUCTION_RG_RULE,
+    # HVR_PRODUCTION_FOOTPRINT_RULE).
+    prev_rules = _pin_production_rules(H)
     cwd = os.getcwd()
     os.chdir(SIVR)                     # the optimizer opens EPC-Product-Table.csv by bare name
     try:
@@ -298,7 +332,7 @@ def compile_hvr(i_out_a: float, j_target: float, v_in: float = 48.0, v_out: floa
                                    capacitor_library=capacitor_library)
     finally:
         os.chdir(cwd)
-        H.CAP_RULE = prev_rule
+        _restore_rules(H, prev_rules)
     feas = [r for r in res if r.area_feasible and r.ripple_satisfied
             and np.isfinite(r.optimized_loss)]
     if architecture is not None:
