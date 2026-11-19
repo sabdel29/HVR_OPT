@@ -60,6 +60,20 @@ CONV = ["conv_k_tenth", "conv_E80_a4", "conv_E80_a10", "conv_E160_a4", "conv_E16
 WAVE = ("named 48 V scenarios HV-S0 / HV-S1 / HV-S2 (rms_currents definitions): each "
         "scenario solved through the full lineage")
 
+
+def mech_revision_cases():
+    """(encapsulant variants, BGA-card variants) of the mechanics revision, as
+    tcpmt_mech_variants.register names them from configs/tcpmt_mech/mechanics_revision.yaml
+    (read here directly: the gate lists follow the config, so a variant added there is a case
+    of its gate)."""
+    import yaml
+    c = yaml.safe_load((R / "configs" / "tcpmt_mech" / "mechanics_revision.yaml").read_text())
+    return list(c["encapsulant"]["variants"]), [c["bga_global"]["reconciled_variant"]]
+
+
+#: TCPMT round 3 (findings 7, 11a): mechanics-only variants on the production field
+ENCAP_CASES, BGA_CARD_CASES = mech_revision_cases()
+
 #: gate -> (subtype, observables, range / source, method, cases, rationale)
 GATES = {
     "board.h1_meshed": ("B1", GLOBAL, "PCB-H1: the 18-layer schedule as five depth blocks "
@@ -154,6 +168,22 @@ GATES = {
     "mat.inductor_tier_bounded": ("B1", GLOBAL, "converter medium k/10, and the card's own "
                                   "E 80-160 GPa x CTE 4-10 ppm/K corners", "runs", CONV,
                                   "inductor/Cout tier on the same generic card"),
+    # TCPMT round 3 (tcpmt_mech_variants.register): mechanics only on the converged production
+    # field (conductivity unchanged), so the mechanical observables are the ones that can move
+    "mat.encapsulant_card": ("B1", MECH, "out-of-cell converter fill (underfill_homog) as a "
+                             "capillary underfill or a low-CTE mold compound WITH its glass "
+                             "transition (logistic E(T), secant CTE about the stress-free "
+                             "temperature), and the mold compound without it (declared classes, "
+                             "configs/tcpmt_mech encapsulant; finding 7)", "runs", ENCAP_CASES,
+                             "the fill carries load between the cells; its modulus and CTE "
+                             "across Tg move the warpage and the joint driver"),
+    "mat.bga_card_consistency": ("B1", MECH, "the homogenised BGA layer from the local solder "
+                                 "card (E(T), nu, CTE of tcpmt_mech_laws, smeared by the ball "
+                                 "area fraction) instead of board.py's STAMP-2.5D card (E 20 "
+                                 "GPa, 20.5 ppm/K) (model-form check, finding 11a)", "runs",
+                                 BGA_CARD_CASES,
+                                 "the global BGA layer and the local solder model must describe "
+                                 "the same joints"),
     "elec.contact_resistance_bounded": ("B1", ("P_loss_package_internal_w",), "rho_c 1e-6 / 1e-5 / 1e-4 "
                                         "ohm mm^2 on the package 48 V RDL (package_network "
                                         "sensitivity; Z1 only: the direct-fed Z2 has no package "

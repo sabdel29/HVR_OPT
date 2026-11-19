@@ -136,6 +136,29 @@ def test_every_class_b_variant_and_gate_agree():
     assert "f1_clearance" not in S.VARIANTS        # the clearance is the baseline now
 
 
+def test_mechanics_revision_variants_are_cases_of_their_gates():
+    """TCPMT round 3 (findings 7, 11a): every encapsulant class and the local-card BGA layer
+    is a CASE of the gate it names (so the resolution table judges it, not only knows the
+    name), on the mechanical observables (the variants run on the production field), and the
+    campaign manifest runs each of them for Z1 and Z2 with its local response."""
+    import yaml
+    import final_closure_classB as C
+    import final_closure_sensitivity as S
+    import tcpmt_mech_laws as LAW
+    cfg = LAW.cfg()
+    mech = list(cfg["encapsulant"]["variants"]) + [cfg["bga_global"]["reconciled_variant"]]
+    assert sorted(C.ENCAP_CASES + C.BGA_CARD_CASES) == sorted(mech)
+    jobs = {j["id"] for j in yaml.safe_load(
+        (R / "scripts" / "campaign" / "manifest.yaml").read_text())["jobs"]}
+    for v in mech:
+        assert S.VARIANTS[v]["kind"] == "mech", v
+        for g in S.VARIANTS[v]["gates"]:
+            sub, obs, _rng, method, cases, _why = C.GATES[g]
+            assert method == "runs" and v in cases, (v, g)
+            assert sub == "B1" and tuple(obs) == C.MECH, (v, g)
+        assert {f"robust.Z1.{v}", f"robust.Z2.{v}", f"robust.local.{v}"} <= jobs, v
+
+
 def test_crossover_is_a_requirement_not_a_value():
     import math
     cx = json.loads((D / "direct_feed_crossover.json").read_text())

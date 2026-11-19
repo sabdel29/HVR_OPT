@@ -972,7 +972,11 @@ def cmd_reset(a):
 
 #: files whose research/ reads are STATIC inputs by design (hand-written spec, constants)
 AUDIT_OK = {"z2_direct_feed_architecture.json", "pcb_homogenization.json",
-            "reference_cooling_icepak.json", "scratch_z3land", "ETM_project/scratch\")"}
+            "reference_cooling_icepak.json", "scratch_z3land", "ETM_project/scratch\")",
+            # the committed production k of each design: read and written only by the
+            # development step `tcpmt_design_comparison.py commit-k` (never by a campaign job;
+            # the campaign reads it through the design record)
+            "decoupling_by_design.json"}
 
 
 def cmd_audit_hooks(a):

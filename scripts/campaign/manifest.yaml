@@ -4715,6 +4715,114 @@ jobs:
     mechanics: true
   evidence: 'final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a4.json: et 0 s + mech 2524 s + local 85
     s (2 thr, 145120 el)'
+- id: robust.Z2.encap_uf_tg
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - encap_uf_tg:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_uf_tg.json
+  deps:
+  - prod.Z2.S0.A
+  - fields.Z2.HV_S0
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 0.725
+  walltime_h: 2.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_uf_tg.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a4.json: et 0 s + mech 2524 s + local
+    85 s (2 thr, 145120 el)'
+- id: robust.Z2.encap_emc_lowcte
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - encap_emc_lowcte:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte.json
+  deps:
+  - prod.Z2.S0.A
+  - fields.Z2.HV_S0
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 0.725
+  walltime_h: 2.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a4.json: et 0 s + mech 2524 s + local
+    85 s (2 thr, 145120 el)'
+- id: robust.Z2.encap_emc_lowcte_const
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - encap_emc_lowcte_const:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte_const.json
+  deps:
+  - prod.Z2.S0.A
+  - fields.Z2.HV_S0
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 0.725
+  walltime_h: 2.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte_const.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a4.json: et 0 s + mech 2524 s + local
+    85 s (2 thr, 145120 el)'
+- id: robust.Z2.bga_card_local
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - bga_card_local:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_S0__bga_card_local.json
+  deps:
+  - prod.Z2.S0.A
+  - fields.Z2.HV_S0
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 0.725
+  walltime_h: 2.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__bga_card_local.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a4.json: et 0 s + mech 2524 s + local
+    85 s (2 thr, 145120 el)'
 - id: robust.Z2.conv_E80_a10
   stage: robustness_map
   argv:
@@ -4850,6 +4958,114 @@ jobs:
     mechanics: true
   evidence: 'final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a4.json: et 0 s + mech 1378 s + local 85
     s (2 thr, 144512 el)'
+- id: robust.Z1.encap_uf_tg
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - encap_uf_tg:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_uf_tg.json
+  deps:
+  - prod.Z1.S0.A
+  - fields.Z1.HV_S0
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 0.406
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_uf_tg.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a4.json: et 0 s + mech 1378 s + local
+    85 s (2 thr, 144512 el)'
+- id: robust.Z1.encap_emc_lowcte
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - encap_emc_lowcte:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte.json
+  deps:
+  - prod.Z1.S0.A
+  - fields.Z1.HV_S0
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 0.406
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a4.json: et 0 s + mech 1378 s + local
+    85 s (2 thr, 144512 el)'
+- id: robust.Z1.encap_emc_lowcte_const
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - encap_emc_lowcte_const:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte_const.json
+  deps:
+  - prod.Z1.S0.A
+  - fields.Z1.HV_S0
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 0.406
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte_const.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a4.json: et 0 s + mech 1378 s + local
+    85 s (2 thr, 144512 el)'
+- id: robust.Z1.bga_card_local
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - bga_card_local:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__bga_card_local.json
+  deps:
+  - prod.Z1.S0.A
+  - fields.Z1.HV_S0
+  ncpus: 2
+  mem_gb: 9.0
+  est_wall_h: 0.406
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__bga_card_local.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a4.json: et 0 s + mech 1378 s + local
+    85 s (2 thr, 144512 el)'
 - id: robust.Z1.conv_E160_a10
   stage: robustness_map
   argv:
@@ -6068,6 +6284,146 @@ jobs:
   workers: 2
   evidence: 'local.wall_s of the frozen variant cases: 77-134 s per architecture'
   notes: adds the L0 local solder response at the variant's own critical joint
+- id: robust.local.encap_uf_tg
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --local
+  - encap_uf_tg
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_uf_tg.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_uf_tg.json
+  deps:
+  - robust.Z1.encap_uf_tg
+  - robust.Z2.encap_uf_tg
+  - local.temporal
+  - local.mesh_study
+  ncpus: 4
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_uf_tg.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_uf_tg.json
+    kind: etm
+    local: true
+  workers: 2
+  evidence: 'local.wall_s of the frozen variant cases: 77-134 s per architecture'
+  notes: adds the L0 local solder response at the variant's own critical joint
+- id: robust.local.encap_emc_lowcte
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --local
+  - encap_emc_lowcte
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte.json
+  deps:
+  - robust.Z1.encap_emc_lowcte
+  - robust.Z2.encap_emc_lowcte
+  - local.temporal
+  - local.mesh_study
+  ncpus: 4
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte.json
+    kind: etm
+    local: true
+  workers: 2
+  evidence: 'local.wall_s of the frozen variant cases: 77-134 s per architecture'
+  notes: adds the L0 local solder response at the variant's own critical joint
+- id: robust.local.encap_emc_lowcte_const
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --local
+  - encap_emc_lowcte_const
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte_const.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte_const.json
+  deps:
+  - robust.Z1.encap_emc_lowcte_const
+  - robust.Z2.encap_emc_lowcte_const
+  - local.temporal
+  - local.mesh_study
+  ncpus: 4
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte_const.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte_const.json
+    kind: etm
+    local: true
+  workers: 2
+  evidence: 'local.wall_s of the frozen variant cases: 77-134 s per architecture'
+  notes: adds the L0 local solder response at the variant's own critical joint
+- id: robust.local.bga_card_local
+  stage: robustness_map
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --local
+  - bga_card_local
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__bga_card_local.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__bga_card_local.json
+  deps:
+  - robust.Z1.bga_card_local
+  - robust.Z2.bga_card_local
+  - local.temporal
+  - local.mesh_study
+  ncpus: 4
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__bga_card_local.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__bga_card_local.json
+    kind: etm
+    local: true
+  workers: 2
+  evidence: 'local.wall_s of the frozen variant cases: 77-134 s per architecture'
+  notes: adds the L0 local solder response at the variant's own critical joint
 - id: solder.studies
   stage: solder_submodels
   argv:
@@ -6530,8 +6886,9 @@ jobs:
     keys:
     - placement
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-  notes: interleaving patterns of the design's n x n grid; RECOMMENDED = the interleaving + ring option
-    of least nominal k_eq (declared rule)
+  notes: 'interleaving patterns of the design''s n x n grid; RECOMMENDED = the implementable interleaving
+    + ring option of least nominal k_eq (declared rule: one or two n-phase clock groups; m36: dual6, 12
+    phases)'
 - id: m36t5.derived.decap_placement
   stage: derived
   argv:
@@ -6554,8 +6911,9 @@ jobs:
     keys:
     - placement
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-  notes: interleaving patterns of the design's n x n grid; RECOMMENDED = the interleaving + ring option
-    of least nominal k_eq (declared rule)
+  notes: 'interleaving patterns of the design''s n x n grid; RECOMMENDED = the implementable interleaving
+    + ring option of least nominal k_eq (declared rule: one or two n-phase clock groups; m36: dual6, 12
+    phases)'
   design: m36t5
 - id: m36thin.derived.decap_placement
   stage: derived
@@ -6579,8 +6937,9 @@ jobs:
     keys:
     - placement
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-  notes: interleaving patterns of the design's n x n grid; RECOMMENDED = the interleaving + ring option
-    of least nominal k_eq (declared rule)
+  notes: 'interleaving patterns of the design''s n x n grid; RECOMMENDED = the implementable interleaving
+    + ring option of least nominal k_eq (declared rule: one or two n-phase clock groups; m36: dual6, 12
+    phases)'
   design: m36thin
 - id: m25.derived.decap_placement
   stage: derived
@@ -6604,8 +6963,9 @@ jobs:
     keys:
     - placement
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-  notes: interleaving patterns of the design's n x n grid; RECOMMENDED = the interleaving + ring option
-    of least nominal k_eq (declared rule)
+  notes: 'interleaving patterns of the design''s n x n grid; RECOMMENDED = the implementable interleaving
+    + ring option of least nominal k_eq (declared rule: one or two n-phase clock groups; m36: dual6, 12
+    phases)'
   design: m25
 - id: m49.derived.decap_placement
   stage: derived
@@ -6629,8 +6989,9 @@ jobs:
     keys:
     - placement
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-  notes: interleaving patterns of the design's n x n grid; RECOMMENDED = the interleaving + ring option
-    of least nominal k_eq (declared rule)
+  notes: 'interleaving patterns of the design''s n x n grid; RECOMMENDED = the implementable interleaving
+    + ring option of least nominal k_eq (declared rule: one or two n-phase clock groups; m36: dual6, 12
+    phases)'
   design: m49
 - id: derived.bga_reclose
   stage: derived
@@ -6661,7 +7022,9 @@ jobs:
     kind: json
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
   notes: re-closes the count at the production state with the production cases' 48-V currents (level-2
-    verification)
+    verification), at the k this campaign's decoupling chain derives, at most 220 balls per rail; the
+    closure current is the worse of the DC peak x k_eq rule and Z1's worst-ball RMS of the port model
+    (both recorded)
 - id: derived.results
   stage: derived
   argv:
@@ -6716,6 +7079,30 @@ jobs:
   - file: final_closure/ordering.json
     kind: json
   evidence: JSON work + 12 ledger points
+- id: derived.decap_limits
+  stage: derived
+  argv:
+  - scripts/tcpmt_decap_placement.py
+  - limits
+  outputs:
+  - tcpmt_revision/decoupling_limits.json
+  deps:
+  - derived.bga_reclose
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.15
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/decoupling_limits.json
+    kind: json
+  evidence: 'input_decoupling limits of the m36 development run: wall 321 s'
+  notes: 'the alternatives of the adopted clock plan: every plan of the grid with the ring and its closure-rule
+    ball current, the interleaving limit (optimal 6/9/12/36-phase assignments), ring bounds, and k_eq
+    against the BGA count'
 - id: derived.feasibility
   stage: derived
   argv:
@@ -7100,11 +7487,14 @@ jobs:
   - local
   - pbs
   prefer: local
+  env:
+    HVR_DSE_ENGINE: '{scratch}/dse_engine'
   validate:
   - file: tcpmt_revision/dse_phase2_summary.json
     kind: json
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-  notes: the screen the design record entries reproduce (configs/design_points.yaml)
+  notes: the screen the design record entries reproduce (configs/design_points.yaml); reads the sweeps
+    under the root, records the md5 of the campaign's engine
 - id: derived.flying_caps
   stage: derived
   argv:
@@ -7222,6 +7612,14 @@ jobs:
   - robust.Z2.conv_posts_lower
   - robust.Z1.conv_posts_upper
   - robust.Z2.conv_posts_upper
+  - robust.Z1.encap_uf_tg
+  - robust.Z2.encap_uf_tg
+  - robust.Z1.encap_emc_lowcte
+  - robust.Z2.encap_emc_lowcte
+  - robust.Z1.encap_emc_lowcte_const
+  - robust.Z2.encap_emc_lowcte_const
+  - robust.Z1.bga_card_local
+  - robust.Z2.bga_card_local
   - robust.local.attach_dense
   - robust.local.attach_eng_p34
   - robust.local.attach_eng_p37
@@ -7234,6 +7632,7 @@ jobs:
   - robust.local.attach_stiff
   - robust.local.attach_uf_soft
   - robust.local.attach_uf_stiff
+  - robust.local.bga_card_local
   - robust.local.bga_depop
   - robust.local.board_eta025
   - robust.local.board_eta075
@@ -7249,6 +7648,9 @@ jobs:
   - robust.local.conv_k_tenth
   - robust.local.conv_posts_lower
   - robust.local.conv_posts_upper
+  - robust.local.encap_emc_lowcte
+  - robust.local.encap_emc_lowcte_const
+  - robust.local.encap_uf_tg
   - robust.local.f1_sidewall_filled
   - robust.local.f2_void
   - robust.local.feed_heat_at_crossover
@@ -7596,6 +7998,7 @@ jobs:
   - derived.design_comparison
   - derived.k_check
   - derived.bga_reclose
+  - derived.decap_limits
   - ladder.Z1.r11
   - ladder.Z1.r12
   - ladder.Z1.r31
@@ -7706,6 +8109,18 @@ jobs:
   - robust.Z1.conv_posts_upper
   - robust.Z2.conv_posts_upper
   - robust.local.conv_posts_upper
+  - robust.Z1.encap_uf_tg
+  - robust.Z2.encap_uf_tg
+  - robust.local.encap_uf_tg
+  - robust.Z1.encap_emc_lowcte
+  - robust.Z2.encap_emc_lowcte
+  - robust.local.encap_emc_lowcte
+  - robust.Z1.encap_emc_lowcte_const
+  - robust.Z2.encap_emc_lowcte_const
+  - robust.local.encap_emc_lowcte_const
+  - robust.Z1.bga_card_local
+  - robust.Z2.bga_card_local
+  - robust.local.bga_card_local
   - robust.caloric.Z1.A
   - robust.caloric.Z2.A
   - robust.caloric.Z3.A

@@ -30,7 +30,11 @@ committed one (the design record's `decoupling` block, configs/design_points.yam
 research/tcpmt_revision/decoupling_by_design.json); the campaign's own decoupling chain
 re-derives it and derived.k_check records the difference. If no legal BGA count closes the
 production state, the network is built at the declared fallback count and flagged NOT_CLOSED
-(final_closure_pkg_network.FALLBACK_RULE).
+(final_closure_pkg_network.FALLBACK_RULE). Review round 3: at most 220 balls per rail;
+derived.bga_reclose re-closes at the k the campaign's chain derived and judges the worse of the
+DC peak x k_eq rule and Z1's worst-ball RMS of the port model (both recorded); the feasibility
+stage reads the 1.5-A per-ball target per TCPMT_BGA_POLICY ('requirement' by default, 'hard' a
+filter; both policies' verdicts are stored).
 Paths in `outputs` are relative to the campaign results root (= the stand-in for research/);
 `@fields/` is $HVR_FIELDS of the campaign.
 """
@@ -217,6 +221,14 @@ def post(id, stage, script, outputs, *, args=(), deps=(), est_h=0.05, evidence="
                notes=notes, design=design)
 
 
+def mech_revision_variants():
+    """The encapsulant classes and the local-card BGA layer of configs/tcpmt_mech (the
+    variants tcpmt_mech_variants.register adds), in config order."""
+    import yaml
+    c = yaml.safe_load((REPO / "configs" / "tcpmt_mech" / "mechanics_revision.yaml").read_text())
+    return list(c["encapsulant"]["variants"]) + [c["bga_global"]["reconciled_variant"]]
+
+
 def fc(name):
     return f"final_closure/{name}"
 
@@ -274,8 +286,9 @@ def prep_jobs(d=None, land=True):
                  "every legal count, level-2 verification, levels 1-3 at the matched count",
         validate=[{"file": sub + fc("package_network.json"), "kind": "json"}],
         notes="the count is closed and matched at the PRODUCTION state, at the committed "
-              "production k of the design record (`decoupling`); no closing count -> the "
-              "declared fallback count, flagged NOT_CLOSED (match_fallback)")
+              "production k of the design record (`decoupling`), at most 220 balls per rail; "
+              "no closing count -> the declared fallback count, flagged NOT_CLOSED "
+              "(match_fallback); the worst-ball RMS check follows in derived.bga_reclose")
     if not land:
         return out
     out["land_est"] = post(f"{pre}prep.z3land_estimate", "prep", "tcpmt_z3_landside_estimate.py",
@@ -299,7 +312,8 @@ def decap_chain(z1_s0, network, d=None):
              deps=[c], est_h=0.3, design=d,
              validate=[{"file": f, "kind": "json", "keys": ["placement"]}],
              notes="interleaving patterns of the design's n x n grid; RECOMMENDED = the "
-                   "interleaving + ring option of least nominal k_eq (declared rule)")
+                   "implementable interleaving + ring option of least nominal k_eq (declared "
+                   "rule: one or two n-phase clock groups; m36: dual6, 12 phases)")
     return c, p
 
 
@@ -497,7 +511,16 @@ def build(design):
                                         for t in TIERS],
          ncpus=4, env={"FC_WORKERS": 4}, est_h=0.3,
          notes="re-closes the count at the production state with the production cases' "
-               "48-V currents (level-2 verification)")
+               "48-V currents (level-2 verification), at the k this campaign's decoupling "
+               "chain derives, at most 220 balls per rail; the closure current is the worse "
+               "of the DC peak x k_eq rule and Z1's worst-ball RMS of the port model (both "
+               "recorded)")
+    post("derived.decap_limits", "derived", "tcpmt_decap_placement.py",
+         [tr("decoupling_limits.json")], args=["limits"], deps=["derived.bga_reclose"],
+         est_h=0.15, evidence="input_decoupling limits of the m36 development run: wall 321 s",
+         notes="the alternatives of the adopted clock plan: every plan of the grid with the "
+               "ring and its closure-rule ball current, the interleaving limit (optimal 6/9/12/"
+               "36-phase assignments), ring bounds, and k_eq against the BGA count")
 
     # ------------------------------------------------------------------ refinement ladders
     lad = {}
@@ -542,6 +565,10 @@ def build(design):
         ("conv_E160_a10", "Z1 Z2", "mech"),
         # review round 3: the range of the gap-post cards (tcpmt_converter_cards POST_BASES)
         ("conv_posts_lower", "Z1 Z2", "full"), ("conv_posts_upper", "Z1 Z2", "full")]
+    # TCPMT round 3 (findings 7, 11a): the mechanics-revision variants, cases of the class-B
+    # gates mat.encapsulant_card / mat.bga_card_consistency (final_closure_classB), mechanics
+    # only on the production field; the list follows configs/tcpmt_mech like the gates do
+    class_b += [(v, "Z1 Z2", "mech") for v in mech_revision_variants()]
     rb = {}
     for v, archs, kind in class_b:
         for a in archs.split():
@@ -550,7 +577,10 @@ def build(design):
                 deps.append("derived.direct_feed")
             rb[(a, v)] = etm_job(f"robust.{a}.{v}", "robustness_map",
                                  ["scripts/final_closure_sensitivity.py", f"{v}:{a}"],
-                                 sens(a, v), deps=deps)
+                                 sens(a, v), deps=deps,
+                                 # a mechanics-only variant without a frozen case: costed as
+                                 # the frozen mechanics-only conv_E80_a4 of the same arch
+                                 analog=sens(a, "conv_E80_a4") if kind == "mech" else None)
         job(f"robust.local.{v}", "robustness_map", ["scripts/final_closure_sensitivity.py",
                                                     "--local", v],
             [sens(a, v) for a in archs.split()],
@@ -642,7 +672,9 @@ def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s,
     post("derived.dse_phase2_summary", "derived", "tcpmt_dse_phase2_summary.py",
          [tr("dse_phase2_summary.json")],
          deps=[dse["etm35_p2_t4"], dse["etm35_p2_t5"], dse["etm35_p2_tinf"]],
-         notes="the screen the design record entries reproduce (configs/design_points.yaml)")
+         env={"HVR_DSE_ENGINE": "{scratch}/dse_engine"},
+         notes="the screen the design record entries reproduce (configs/design_points.yaml); "
+               "reads the sweeps under the root, records the md5 of the campaign's engine")
 
     # ------------------------------------------------------------ capacitors
     fcaps = post("derived.flying_caps", "derived", "tcpmt_decap_flying_caps.py",

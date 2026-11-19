@@ -27,7 +27,7 @@ from pathlib import Path
 import numpy as np
 
 R = Path(__file__).resolve().parents[1]
-TR = R / "research" / "tcpmt_revision"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"  # campaign hook
 D = TR / "dse_j35" / "data"
 SIVR = R / "Scalable_Integrated_VR"
 sys.path.insert(0, str(SIVR / "src"))
@@ -43,7 +43,10 @@ FULL_ENV = ("HVR_CAP_RULE=stress HVR_SW_RULE=stress HVR_SW_DERATING=0.9 HVR_COSS
             "HVR_FOOTPRINT_RULE=body HVR_TIER_RULE=mixed")
 LEGACY_ENV = ("HVR_CAP_RULE=legacy HVR_SW_RULE=legacy HVR_COSS_RULE=legacy HVR_PACK_RULE=off "
               "HVR_RG_RULE=legacy HVR_FOOTPRINT_RULE=legacy")
-ENGINE = Path("/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine_phase2")
+#: the engine snapshot the sweeps ran (its md5 goes into the record): the campaign's
+#: HVR_DSE_ENGINE (prep.dse_engine), else the phase-2 snapshot of the development runs
+ENGINE = Path(os.environ.get("HVR_DSE_ENGINE")
+              or "/home/beams0/SABDELZAHER/ETM_project/scratch/dse_engine_phase2")
 KEEP_UM = 50.0
 
 DEV = {r["PartNumber"]: H.row_to_device(r) for _, r in
