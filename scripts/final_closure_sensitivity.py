@@ -585,6 +585,44 @@ def v_conv_k_legacy():
     E.BUILD_HOOKS.append(hook)
 
 
+def v_conv_gap_legacy():
+    """The mixed-tier cards BEFORE review round 3: a part shorter than its tier sits under an
+    ENCAPSULANT cap (tcpmt_converter_cards GAP_MODEL 'encapsulant', with the declared EPC2055
+    / EPC2090 terminal patterns) instead of being bridged to the RDLs by copper posts on its
+    terminals. Every conv_tier<i> card of the stack is replaced by that tier's legacy card
+    (its own contents and height), under the name conv_tier<i>_gapenc."""
+    import re
+    import tcpmt_converter_cards as CC
+
+    def hook(m, st, tiles):
+        import design_record as DR
+        mc = CC.MixedContents.from_record()
+        mat = np.array(m.elem_material, dtype=object)
+        n, swapped = 0, {}
+        for name in sorted(set(mat)):
+            if not re.match(r"^conv_tier\d+$", str(name)):
+                continue
+            der = st["materials"][name]["derivation"]
+            tier = der["tier"]
+            if tier not in {t["name"] for t in DR.tiers()}:
+                raise RuntimeError(f"conv_gap_legacy: {tier} is not a tier of {DR.name()}")
+            card = CC.mixed_tier(mc, tier, der["parts"], float(der["tier_um"]),
+                                 gap="encapsulant")
+            new = f"{name}_gapenc"
+            st["materials"][new] = json.loads(json.dumps(card))
+            sel = mat == name
+            mat[sel] = new
+            n += int(sel.sum())
+            swapped[name] = {"k_ortho_posts": st["materials"][name]["k_ortho"]["value"],
+                             "k_ortho_legacy": card["k_ortho"]["value"]}
+        if n == 0:
+            raise RuntimeError("conv_gap_legacy found no mixed-tier card to replace")
+        m.elem_material = mat
+        return {"converter_cards": "legacy gap model (encapsulant over shorter parts)",
+                "variant_elements_retagged": n, "cards": swapped}
+    E.BUILD_HOOKS.append(hook)
+
+
 
 # ------------------------------------------------------------------ cooling (Z3)
 def v_z3_top_only():
@@ -881,6 +919,15 @@ VARIANTS = {
                           nature="LEGACY_SETTING (converter cards before the homogenization)",
                           what="hvr_effective (k 60 W/mK) on the inductor/Cout and flying-cap "
                                "tiers, solid silicon on the GaN tiers"),
+    # ---- review round 3: parts shorter than their tier bridged by copper posts (production);
+    # the encapsulant cap of the earlier mixed-tier cards is this legacy setting
+    "conv_gap_legacy": dict(kind="full", archs=("Z1", "Z2", "Z3"), apply=v_conv_gap_legacy,
+                            gates=["mat.mlcc_bounded", "mat.inductor_tier_bounded",
+                                   "mat.gan_bounded"],
+                            nature="LEGACY_SETTING (mixed-tier cards before review round 3)",
+                            what="encapsulant cap over the parts shorter than their tier "
+                                 "(dies, inductors, capacitors) instead of copper posts on "
+                                 "their terminals"),
     "nu_legacy_table": dict(kind="full", archs=("Z1", "Z2", "Z3"),
                             apply=lambda: v_cooling_model(nu="legacy_3w_table"),
                             gates=["therm.cooling_model_form"],

@@ -17,7 +17,10 @@ WHAT REPLACES IT
 METHOD (all tiers)
   conductivity  through the thickness: parallel prisms that span the tier (exact for
                 prisms), each prism a SERIES stack of its own layers (die body + solder
-                terminal; capacitor mount + body + encapsulant cap); in plane: each component
+                terminal; capacitor mount + body) and, over a part shorter than its tier,
+                the gap layer: copper posts on the part's terminals in the encapsulant
+                (review round 3; the legacy encapsulant cap is variant conv_gap_legacy);
+                in plane: each component
                 in its share of the cell, the classical series-parallel (Kirchhoff/Rayleigh)
                 bounds of a rectangular inclusion in a periodic rectangular cell (adiabatic
                 planes -> lower, isothermal planes -> upper), averaged over the two in-plane
@@ -76,6 +79,15 @@ CONSTRUCTIONS (sources)
                       are vertical metal prisms of the tier (a flying capacitor is contacted
                       from both faces: HS tier below, LS tier above). The no-conduction
                       case is reported as kz_without_terminations.
+  gap posts           (review round 3, mixed tiers) a part shorter than its tier reaches the
+                      RDLs through copper posts on its terminals (terminals on both faces, the
+                      authors' assumption): production cross-section = the die's datasheet
+                      RECOMMENDED LAND PATTERN (EPC2014C 0.295 of the die, EPC2055 0.371; a
+                      Cu-pillar die its pillars), the MLCC's electrode bands (Murata GRM18 e =
+                      0.35 mm nominal, 0.2-0.5), the inductor's current at J_POST; range for
+                      the uncertainty step: posts carrying only the terminal RMS currents at
+                      J_POST (lower) to the full solder-bar outline / widest band / J_POST/2
+                      (upper). POST_BASES, post_area_mm2.
 
     python tcpmt_converter_cards.py  -> research/tcpmt_revision/converter_cards.json
 """
@@ -161,10 +173,13 @@ DEVICES = {
     "EPC2014C": {"die_mm": (1.702, 1.087), "body_um": 585.0, "terminal_um": 100.0,
                  "overall_um": 685.0,
                  "pads_um": [(200.0, 834.0)] * 3 + [(200.0, 316.0)] * 2,
+                 "land_um": [(180.0, 814.0)] * 3 + [(180.0, 296.0)] * 2,
                  "terminal": "solder bars (SAC305 class)",
                  "source": "EPC2014C datasheet, DIE OUTLINE: A 1702, B 1087; bars 3-5 "
                            "200 x 834 um, pads 1-2 200 x 316 um; terminal 100 +/- 20 um; "
-                           "overall 685 um (815 max)"},
+                           "overall 685 um (815 max)",
+                 "land_source": "EPC2014C datasheet, RECOMMENDED LAND PATTERN (solder mask "
+                                "defined): bars 3-5 180 x 814 um, pads 1-2 180 x 296 um"},
     "EPC2057": {"die_mm": (1.500, 1.200), "body_um": 518.0, "terminal_um": 120.0,
                 "overall_um": 638.0,
                 "pads_um": [(250.0, 300.0), (250.0, 525.0), (250.0, 1050.0), (250.0, 1050.0)],
@@ -174,22 +189,35 @@ DEVICES = {
                           "120 +/- 12 um; overall 638 um"},
 }
 #: TCPMT round 3: the parts of the decided design point and of the count neighbours. Overall
-#: heights from HVR_epc_device_data.json (datasheet Side View, the engine's stack heights);
-#: the land/bump pattern under the die is not tabulated here, so the solder fraction is
-#: DECLARED (between the EPC2014C outline's 0.34 and the EPC2057 outline's 0.41).
+#: heights from HVR_epc_device_data.json (datasheet Side View, the engine's stack heights).
+#: Review round 3: the terminal (solder bar / bump / pillar) pattern of EPC2055 and EPC2090
+#: and the EPC2055 land pattern are read from the public EPC datasheets (the earlier entries
+#: DECLARED six 250 x 1000-um lands, 40 %, and five 250 x 1000-um bumps, 37 %).
 DEVICES.update({
     "EPC2055": {"die_mm": (2.500, 1.500), "body_um": 518.0, "terminal_um": 120.0,
-                "overall_um": 638.0, "pads_um": [(250.0, 1000.0)] * 6,
-                "terminal": "solder lands (LGA)", "status": "ASSUMPTION (land pattern)",
-                "source": "EPC-Product-Table: LGA 2.5 x 1.5 mm; HVR_epc_device_data.json: "
-                          "518 +/- 25 die + 120 +/- 12 bump = 638 um; land pattern DECLARED "
-                          "as six 250 x 1000-um lands (40 % of the die)"},
+                "overall_um": 638.0,
+                "pads_um": [(250.0, 300.0), (250.0, 825.0), (250.0, 1175.0),
+                            (250.0, 1350.0), (250.0, 1175.0), (250.0, 1350.0)],
+                "land_um": [(230.0, 280.0), (230.0, 805.0), (230.0, 1155.0),
+                            (230.0, 1330.0), (230.0, 1155.0), (230.0, 1330.0)],
+                "pads_um_legacy": [(250.0, 1000.0)] * 6,
+                "terminal": "solder bars (bump view)", "status": "DATASHEET",
+                "source": "EPC2055 datasheet, DIE OUTLINE (solder bump view): A 2500, B "
+                          "1500; pad 1 (gate) 250 x 300, pad 2 (source) 250 x 825, bars 3, 5 "
+                          "(drain) 250 x 1175, bars 4, 6 (source) 250 x 1350 um; die 518 +/- "
+                          "25, bump 120 +/- 12, overall 638 um",
+                "land_source": "EPC2055 datasheet, RECOMMENDED LAND PATTERN (solder mask "
+                               "defined): 230 x 280, 230 x 805, 230 x 1155 (x2), 230 x 1330 "
+                               "(x2) um"},
     "EPC2090": {"die_mm": (2.300, 1.450), "body_um": 518.0, "terminal_um": 88.0,
-                "overall_um": 606.0, "pads_um": [(250.0, 1000.0)] * 5,
-                "terminal": "Cu pillar + solder bumps", "status": "ASSUMPTION (bump pattern)",
-                "source": "EPC-Product-Table: BGA 2.3 x 1.45 mm; HVR_epc_device_data.json: "
-                          "518 die + 50 Cu + 3 Ni + solder = 606 um; bump fraction DECLARED "
-                          "(37 % of the die, solder card for the whole terminal)"},
+                "overall_um": 606.0, "pads_um": [(150.0, 180.0)] * 35, "corner_r_um": 75.0,
+                "pads_um_legacy": [(250.0, 1000.0)] * 5,
+                "terminal": "Cu pillar + solder bumps", "status": "DATASHEET",
+                "source": "EPC2090 datasheet, DIE OUTLINE (solder bump view): A 2300, B 1450; "
+                          "35 bumps c x d = 150 x 180 um, radius 75; 518 die + 50 Cu + 3 Ni + "
+                          "35 solder = 606 um (solder card for the whole terminal). Cu pillar "
+                          "die for use in a package: no land pattern (the posts take the "
+                          "pillar footprint)"},
     # a packaged QFN: the die sits on an exposed Cu pad under a mould cap, so the vertical path
     # through the part is pad + die + mould, not a bare die (body phase 'qfn_body' below)
     "EPC2366": {"die_mm": (3.300, 2.600), "body_um": 650.0, "terminal_um": 50.0,
@@ -200,6 +228,21 @@ DEVICES.update({
                           "A = 0.70 mm; construction DECLARED (qfn_body)"},
 })
 KEEPOUT_UM = 50.0                    # declared die-to-die keep-out (design rule)
+
+
+def pad_area_mm2(dev: dict, key: str = "pads_um") -> float:
+    """Total area (mm^2) of a die's terminal pattern (key 'pads_um': the solder bars / bumps
+    of the DIE OUTLINE; 'land_um': the recommended land pattern; 'pads_um_legacy': the
+    DECLARED pattern of the cards before review round 3, falling back to 'pads_um'), each pad
+    w x l less the rounded corners when the datasheet gives a radius (corner_r_um)."""
+    legacy = key == "pads_um_legacy"
+    if legacy and key not in dev:
+        key = "pads_um"
+    r = 0.0 if (legacy and "pads_um_legacy" in dev) else float(dev.get("corner_r_um", 0.0))
+    return sum(w * l - (4.0 - math.pi) * min(r, w / 2, l / 2) ** 2
+               for w, l in dev[key]) * 1e-6
+
+
 #: inductor paper, Fig. 7 (micrometres): one vertical two-turn two-layer segment
 IND_SEGMENT = {"outer_um": 800.0, "ring_outer_w_um": 110.0, "ring_inner_w_um": 145.0,
                "turn_gap_um": 20.0, "layer_um": 114.0, "layer_gap_um": 20.0,
@@ -400,7 +443,7 @@ def gan_tier(tc: TierContents, which: str, height_um: float | None = None):
     pack = die_packing(n, a, b, tc.keepout_um, tc.cell_side_mm)
     # vertical prisms: the dies' TOTAL cross-section in the drawn cell (cell-preserving)
     f_d = min(1.0, n * a * b / A_cell)
-    f_s = sum(w * l for w, l in dev["pads_um"]) * 1e-6 / (a * b)
+    f_s = pad_area_mm2(dev) / (a * b)
     si, enc, sol = PHASES["silicon"], PHASES["encapsulant"], PHASES["solder"]
     kz_body = f_d * si["k"] + (1 - f_d) * enc["k"]
     kz_term_die = f_s * sol["k"] + (1 - f_s) * enc["k"]
@@ -653,13 +696,46 @@ def cards_for(tc: TierContents, cfly_a1_um=None, heights=None, strict=True):
 # ------------------------------------------------------------------ mixed tiers (round 3)
 #: the rated 0603 flying capacitor of the decided design (Murata GRM188D72A105KE01): 1.6 x
 #: 0.8 mm body, 0.8 mm nominal thickness; the DSE stacks it at 1000 um (0.8 mm + 0.2 mm
-#: tolerance margin), so its prism is a 30-um solder mount, the nominal body and an
-#: encapsulant cap up to the tier top. A thin part (the 100-um sensitivity) fills its tier.
-CF_0603 = {"L_mm": 1.6, "W_mm": 0.8, "T_nom_um": 800.0, "mount_um": 30.0}
+#: tolerance margin), so its prism is a 30-um solder mount, the nominal body and the gap up
+#: to the tier top (copper posts on its electrode bands; the legacy card: encapsulant). A thin
+#: part (the 100-um sensitivity) sits on the RDL with the rest of its tier as the gap.
+CF_0603 = {"L_mm": 1.6, "W_mm": 0.8, "T_nom_um": 800.0, "mount_um": 30.0,
+           # external-electrode band e (the termination's wrap onto the top and bottom faces):
+           # Murata GRM18 dimension table e = 0.2 - 0.5 mm; nominal the midpoint
+           "band_mm": 0.35, "band_mm_range": [0.2, 0.5],
+           "band_source": "Murata GRM18 (0603) series dimensions: external electrode e = "
+                          "0.2 to 0.5 mm"}
 #: output-post current density: the framework's intra-VR density (final_closure_ledger.
 #: INTRA_J_MAX, checked equal by the tests); a constant here so the cards import nothing of
 #: the package chain
 J_POST = 1.0e8
+
+#: REVIEW ROUND 3 -- parts shorter than their tier. A part's terminals must reach the RDLs
+#: above and below its tier (the authors' assumption: die terminals on BOTH faces), so the gap
+#: between a shorter part and the tier faces is bridged by COPPER POSTS on the part's
+#: terminals, not filled with encapsulant: the part's column is its own layers plus a post
+#: layer (Cu posts in the encapsulant over the part's footprint) in SERIES; the columns act in
+#: parallel with the encapsulant fill. The split of the gap between the two faces does not
+#: change a series column, so the post layer is carried as one layer of the gap height.
+#: GAP_MODEL 'encapsulant' is the earlier card, reproduced exactly (an encapsulant cap over a
+#: shorter part, and the DECLARED EPC2055 / EPC2090 terminal patterns the datasheet ones
+#: replaced), kept as the legacy variant conv_gap_legacy (final_closure_sensitivity).
+GAP_MODELS = ("posts", "encapsulant")
+GAP_MODEL = "posts"
+#: post cross-section per part (one face), three bases:
+#:   current   LOWER bound: posts carry the part's terminal RMS currents (the ledger's
+#:             netlist, routing.nets) at J_POST -- two power terminals per die and per MLCC
+#:             (drain/source; the two ends), one per inductor (the terminal facing the gap)
+#:   land      PRODUCTION: a die's posts continue its datasheet RECOMMENDED LAND PATTERN (a
+#:             Cu-pillar die without one: its pillar footprint); an MLCC's posts cover its
+#:             external-electrode bands (2 W e, e nominal); an inductor has no published land
+#:             pattern, so its post is sized by current at J_POST
+#:   terminal  UPPER bound: a die's full solder-bar / bump outline (DIE OUTLINE), an MLCC's
+#:             bands at the largest e, an inductor post at J_POST / 2
+POST_BASES = ("current", "land", "terminal")
+POST_BASIS = "land"
+#: inductor post current density at each basis (no land pattern: a declared density range)
+J_IND = {"current": 2.0 * J_POST, "land": J_POST, "terminal": 0.5 * J_POST}
 
 
 @dataclass(frozen=True)
@@ -676,10 +752,21 @@ class MixedContents:
     cf_um: float
     n_ind_total: int
     keepout_um: float = KEEPOUT_UM
+    #: largest RMS terminal current of each part class, ((class, A), ...), from the ledger's
+    #: cell netlist (routing.nets); empty -> every class at the inductor branch current
+    #: (only the lower-bound post basis 'current' reads it, and the inductor's posts)
+    i_terminal_a: tuple = ()
 
     @property
     def cell_area_mm2(self) -> float:
         return self.cell_side_mm ** 2
+
+    def i_terminal(self, cls: str) -> float:
+        """RMS terminal current (A) of a part of class `cls`."""
+        d = dict(self.i_terminal_a)
+        if cls in d:
+            return float(d[cls])
+        return float(self.i_out_rms_a) / max(int(self.n_ind_total), 1)
 
     @staticmethod
     def from_record(key=None) -> "MixedContents":
@@ -698,12 +785,81 @@ class MixedContents:
             hs_part=d["hs_part"], ls_part=d["ls_part"],
             ind_footprint_mm2=float(des.inductor.footprint_mm2),
             ind_um=float(d["part_heights_um"]["inductor"]),
-            cf_um=float(d["part_heights_um"]["cap_fly"]), n_ind_total=int(d["topology"]["K"]))
+            cf_um=float(d["part_heights_um"]["cap_fly"]), n_ind_total=int(d["topology"]["K"]),
+            i_terminal_a=terminal_currents(d.get("routing")))
 
 
-def _die_prism(part, H):
-    """One GaN die of `part` as a vertical prism spanning a tier of height H: solder terminal
-    (its land fraction in the encapsulant), body, encapsulant cap above a shorter part."""
+#: part-name prefix in the ledger's cell netlist -> part class
+_NET_PREFIX = (("HS", "gan_hs"), ("LS", "gan_ls"), ("CF", "cap_fly"), ("L", "inductor"))
+
+
+def terminal_currents(routing_dict) -> tuple:
+    """((class, A), ...): the largest RMS current of a net ending on a part of each class, in
+    the ledger's cell netlist (routing.nets of the design record's routing block). The HV
+    nets (VIN -> high side) carry the scenario factor in the ledger, not here: their stated
+    value is the average share, below the high side's flying-capacitor loop current."""
+    if not routing_dict:
+        return ()
+    import routing as RT
+    best: dict = {}
+    for n in RT.nets(routing_dict):
+        for end in (n.src, n.dst):
+            cls = next((c for p, c in _NET_PREFIX if end.startswith(p) and end[len(p):]
+                        .isdigit()), None)
+            if cls:
+                best[cls] = max(best.get(cls, 0.0), float(n.i_rms_a))
+    return tuple(sorted(best.items()))
+
+
+def post_area_mm2(kind: str, mc: "MixedContents", part: str | None = None,
+                  basis: str | None = None, dims=None) -> tuple:
+    """(post cross-section in mm^2 per part, source) on one face of one part of `kind`
+    ('gan_hs', 'gan_ls', 'inductor', 'cap_fly') at a POST_BASES basis (default POST_BASIS)."""
+    basis = basis or POST_BASIS
+    if basis not in POST_BASES:
+        raise ValueError(f"post basis {basis!r} not in {POST_BASES}")
+    i = mc.i_terminal(kind)
+    if kind in ("gan_hs", "gan_ls"):
+        dev = DEVICES[part]
+        if basis == "current":
+            return 2 * i / J_POST * 1e6, (f"2 power terminals x {i:.3f} A RMS (ledger netlist) "
+                                         f"at {J_POST:.0e} A/m^2")
+        if basis == "land" and "land_um" in dev:
+            return pad_area_mm2(dev, "land_um"), dev.get("land_source", dev["source"])
+        why = ("no land pattern: " if basis == "land" else "") + "terminal outline"
+        return pad_area_mm2(dev), f"{why} ({dev['source']})"
+    if kind == "inductor":
+        j = J_IND[basis]
+        return i / j * 1e6, (f"1 terminal x {i:.3f} A RMS at {j:.1e} A/m^2 (no published land "
+                             f"pattern for the library inductor: current sizing)")
+    if kind == "cap_fly":
+        W = dims[1] if dims else CF_0603["W_mm"]
+        if basis == "current":
+            return 2 * i / J_POST * 1e6, (f"2 terminations x {i:.3f} A RMS (ledger netlist) "
+                                         f"at {J_POST:.0e} A/m^2")
+        e = CF_0603["band_mm"] if basis == "land" else CF_0603["band_mm_range"][1]
+        return 2 * W * e, f"2 electrode bands {W:g} x {e:g} mm ({CF_0603['band_source']})"
+    raise ValueError(f"no post model for {kind}")
+
+
+def post_layer(f_cu):
+    """(k_z, k_in) of a layer of copper posts (area fraction f_cu) in the encapsulant: the
+    posts span the layer, so through it they conduct in parallel with the fill (exact); in
+    plane they are isolated inclusions -- the midpoint of the parallel value and the 2-D
+    Maxwell-Garnett (isolated-cylinder) value, as the solder-terminal layer."""
+    enc, cu = PHASES["encapsulant"], PHASES["copper"]
+    f = min(max(float(f_cu), 0.0), 1.0)
+    kz = f * cu["k"] + (1 - f) * enc["k"]
+    k_in = 0.5 * (kz + maxwell_garnett(cu["k"], enc["k"], f, dim=2)) if f < 1.0 else cu["k"]
+    return kz, k_in
+
+
+def _die_prism(part, H, a_post=0.0, legacy=False):
+    """One GaN die of `part` as a vertical column spanning a tier of height H, its layers in
+    series: solder terminal (its bar fraction in the encapsulant), body, and -- over a die
+    shorter than its tier -- the gap layer: copper posts of cross-section a_post (mm^2) in
+    the encapsulant (GAP_MODEL 'posts'). legacy: the card before review round 3 (encapsulant
+    cap, a_post = 0, and the DECLARED terminal pattern where the datasheet one replaced it)."""
     dev = DEVICES[part]
     a, b = dev["die_mm"]
     body = PHASES[dev.get("body_phase", "silicon")]
@@ -712,99 +868,124 @@ def _die_prism(part, H):
     cap = H - dev["overall_um"]
     if cap < -1e-9:
         raise ValueError(f"{part} ({dev['overall_um']} um) is taller than its {H} um tier")
-    f_s = min(1.0, sum(w * l for w, l in dev["pads_um"]) * 1e-6 / (a * b))
+    cap = max(cap, 0.0)
+    area = a * b
+    f_s = min(1.0, pad_area_mm2(dev, "pads_um_legacy" if legacy else "pads_um") / area)
+    f_p = min(1.0, float(a_post) / area) if (cap > 1e-12 and not legacy) else 0.0
     k_term = f_s * sol["k"] + (1 - f_s) * enc["k"]
-    kz = series([x for x in ((t_term, k_term), (t_body, body["k"]), (cap, enc["k"]))
+    kz_gap, k_in_gap = post_layer(f_p)
+    kz = series([x for x in ((t_term, k_term), (t_body, body["k"]), (cap, kz_gap))
                  if x[0] > 1e-12])
     k_in_term = 0.5 * ((f_s * sol["k"] + (1 - f_s) * enc["k"])
                        + maxwell_garnett(sol["k"], enc["k"], f_s, dim=2))
-    k_in = (t_body * body["k"] + t_term * k_in_term + max(cap, 0.0) * enc["k"]) / H
-    area = a * b
+    k_in = (t_body * body["k"] + t_term * k_in_term + cap * k_in_gap) / H
     vol = {dev.get("body_phase", "silicon"): area * t_body, "solder": area * f_s * t_term,
-           "encapsulant": area * ((1 - f_s) * t_term + max(cap, 0.0))}
+           "copper": area * f_p * cap,
+           "encapsulant": area * ((1 - f_s) * t_term + (1 - f_p) * cap)}
     return {"kind": "die", "part": part, "dims": (a, b), "area": area, "kz": kz,
-            "k_in": k_in, "vol_um_mm2": vol, "solder_fraction": f_s, "cap_um": max(cap, 0.0)}
+            "k_in": k_in, "vol_um_mm2": vol, "solder_fraction": f_s, "cap_um": cap,
+            "post_fraction": f_p, "post_mm2": area * f_p,
+            "kz_layers": {"terminal": k_term, "body": body["k"], "gap": kz_gap}}
 
 
-def _inductor_prism(fp_mm2, h_ind, H, k_core=None):
+def _inductor_prism(fp_mm2, h_ind, H, k_core=None, a_post=0.0):
+    """The inductor envelope and, over an inductor shorter than its tier, the gap layer of
+    copper posts (a_post mm^2) in the encapsulant, in series."""
     env = inductor_envelope(k_core)
-    enc = PHASES["encapsulant"]
     cap = H - h_ind
     if cap < -1e-9:
         raise ValueError(f"inductor ({h_ind} um) is taller than its {H} um tier")
-    kz = series([x for x in ((h_ind, env["kz"]), (cap, enc["k"])) if x[0] > 1e-12])
-    k_in = (h_ind * env["k_in_orientation_avg"] + max(cap, 0.0) * enc["k"]) / H
+    cap = max(cap, 0.0)
+    f_p = min(1.0, float(a_post) / fp_mm2) if cap > 1e-12 else 0.0
+    kz_gap, k_in_gap = post_layer(f_p)
+    kz = series([x for x in ((h_ind, env["kz"]), (cap, kz_gap)) if x[0] > 1e-12])
+    k_in = (h_ind * env["k_in_orientation_avg"] + cap * k_in_gap) / H
     s = math.sqrt(fp_mm2)
     fr = env["fractions"]
-    vol = {"copper": fp_mm2 * h_ind * fr["copper"], "tym5": fp_mm2 * h_ind * fr["tym5_rod"],
-           "encapsulant": fp_mm2 * (h_ind * fr["fill"] + max(cap, 0.0))}
+    vol = {"copper": fp_mm2 * (h_ind * fr["copper"] + f_p * cap),
+           "tym5": fp_mm2 * h_ind * fr["tym5_rod"],
+           "encapsulant": fp_mm2 * (h_ind * fr["fill"] + (1 - f_p) * cap)}
     return {"kind": "inductor", "dims": (s, s), "area": fp_mm2, "kz": kz, "k_in": k_in,
-            "vol_um_mm2": vol, "envelope_kz": env["kz"], "cap_um": max(cap, 0.0),
-            "tym5": env["tym5"]}
+            "vol_um_mm2": vol, "envelope_kz": env["kz"], "cap_um": cap,
+            "post_fraction": f_p, "post_mm2": fp_mm2 * f_p, "tym5": env["tym5"]}
 
 
-def _mlcc_prism(L, W, T_part, mount, H, t_term_um=None):
-    """One MLCC (body + Cu end terminations) on its solder mount, encapsulant cap above."""
+def _mlcc_prism(L, W, T_part, mount, H, t_term_um=None, a_post=0.0):
+    """One MLCC (body + Cu end terminations) on its solder mount; over an MLCC shorter than
+    its tier the gap carries copper posts on its terminations (a_post mm^2 per part: first
+    over the end walls, the rest over the electrode bands on the body ends), encapsulant
+    elsewhere. Parallel prisms, each a series of mount, part and gap: end walls (Cu
+    termination), body under the posts, body under the encapsulant."""
     t_term = (MLCC["termination_um"] if t_term_um is None else t_term_um) * 1e-3
     body = mlcc_body()
-    enc, cu, sol = PHASES["encapsulant"], PHASES["termination"], PHASES["solder"]
+    enc, term, sol, cu = (PHASES["encapsulant"], PHASES["termination"], PHASES["solder"],
+                          PHASES["copper"])
     cap = H - mount - T_part
     if cap < -1e-9:
         raise ValueError(f"MLCC ({mount + T_part} um) is taller than its {H} um tier")
+    cap = max(cap, 0.0)
     a_term, a_body = 2 * W * t_term, (L - 2 * t_term) * W
-    lay = lambda k_part: [x for x in ((mount, sol["k"]), (T_part, k_part),        # noqa: E731
-                                      (cap, enc["k"])) if x[0] > 1e-12]
-    kz_b, kz_t = series(lay(body["k"])), series(lay(cu["k"]))
-    kz = (a_body * kz_b + a_term * kz_t) / (a_body + a_term)
-    k_part_in = (body["k_in"] * a_body + cu["k"] * a_term) / (a_body + a_term)
-    k_in = (T_part * k_part_in + mount * sol["k"] + max(cap, 0.0) * enc["k"]) / H
+    a_p = min(float(a_post), a_term + a_body) if cap > 1e-12 else 0.0
+    f_wall = min(1.0, a_p / a_term)                     # post fraction over the end walls
+    a_bp = max(0.0, a_p - a_term)                       # body area under posts
+    a_be = a_body - a_bp                                # body area under the encapsulant
+
+    def col(k_part, k_gap):
+        return series([x for x in ((mount, sol["k"]), (T_part, k_part), (cap, k_gap))
+                       if x[0] > 1e-12])
+    kz_gap_wall, k_in_gap_wall = post_layer(f_wall)
+    kz_t = col(term["k"], kz_gap_wall)
+    kz_bp, kz_be = col(body["k"], cu["k"]), col(body["k"], enc["k"])
+    kz = (a_term * kz_t + a_bp * kz_bp + a_be * kz_be) / (a_body + a_term)
+    k_part_in = (body["k_in"] * a_body + term["k"] * a_term) / (a_body + a_term)
+    f_cap = a_p / (a_body + a_term)
+    k_in_cap = post_layer(f_cap)[1]
+    k_in = (T_part * k_part_in + mount * sol["k"] + cap * k_in_cap) / H
     vol = {"mlcc_body": a_body * T_part, "termination": a_term * T_part,
-           "solder": (a_body + a_term) * mount, "encapsulant": (a_body + a_term) * max(cap, 0.0)}
+           "solder": (a_body + a_term) * mount, "copper": a_p * cap,
+           "encapsulant": (a_body + a_term - a_p) * cap}
     return {"kind": "mlcc", "dims": (L, W), "area": L * W, "kz": kz, "k_in": k_in,
-            "vol_um_mm2": vol, "kz_without_terminations": kz_b, "cap_um": max(cap, 0.0),
+            "vol_um_mm2": vol, "kz_without_terminations": col(body["k"], enc["k"]),
+            "cap_um": cap, "post_fraction": a_p / (L * W), "post_mm2": a_p,
             "mlcc_body": body}
 
 
-def mixed_tier(mc: MixedContents, name, parts, H, j_post=None, k_core=None, t_term_um=None):
-    """The card of one MIXED converter tier from what it holds (TCPMT round 3).
-
-    Every part is a vertical prism spanning the tier (a series stack of its own layers and an
-    encapsulant cap up to the tier top: a part shorter than its tier conducts through the
-    cap); prisms and the encapsulant fill act in parallel through the thickness. A tier
-    holding inductors also carries their output-current posts (Cu prisms sized at the
-    intra-VR current density for the share of the cell output current those inductors
-    deliver; the legacy inductor-tier convention). In plane: each component in its area share
-    of the cell (series-parallel bracket, midpoint). Mechanics: Voigt/Reuss/Hill and
-    Turner/volume-mean over the volume fractions, as the single-class cards.
-    The via conductors of nets crossing the tier are NOT in the card (declared,
-    conservative for k_z)."""
-    enc, cu = PHASES["encapsulant"], PHASES["copper"]
-    A = mc.cell_area_mm2
-    comps = []                                    # (prism, count)
+def _prisms(mc: MixedContents, name, parts, H, k_core=None, t_term_um=None, gap=None,
+            basis=None):
+    """[(class, prism, count)] of a mixed tier under a gap model and post basis."""
+    gap = gap or GAP_MODEL
+    if gap not in GAP_MODELS:
+        raise ValueError(f"gap model {gap!r} not in {GAP_MODELS}")
+    posts = gap == "posts"
+    comps = []
     for cls, n in parts.items():
         if not n:
             continue
         if cls in ("gan_hs", "gan_ls"):
-            p = _die_prism(mc.hs_part if cls == "gan_hs" else mc.ls_part, H)
+            part = mc.hs_part if cls == "gan_hs" else mc.ls_part
+            ap = post_area_mm2(cls, mc, part, basis)[0] if posts else 0.0
+            p = _die_prism(part, H, ap, legacy=not posts)
         elif cls == "inductor":
-            p = _inductor_prism(mc.ind_footprint_mm2, mc.ind_um, H, k_core)
+            ap = post_area_mm2(cls, mc, basis=basis)[0] if posts else 0.0
+            p = _inductor_prism(mc.ind_footprint_mm2, mc.ind_um, H, k_core, ap)
         elif cls == "cap_fly":
+            dims = (CF_0603["L_mm"], CF_0603["W_mm"])
+            ap = post_area_mm2(cls, mc, basis=basis, dims=dims)[0] if posts else 0.0
             thin = mc.cf_um < CF_0603["T_nom_um"] + CF_0603["mount_um"] - 1e-9
-            p = (_mlcc_prism(CF_0603["L_mm"], CF_0603["W_mm"], mc.cf_um, 0.0, H, t_term_um)
-                 if thin else
-                 _mlcc_prism(CF_0603["L_mm"], CF_0603["W_mm"], CF_0603["T_nom_um"],
-                             CF_0603["mount_um"], H, t_term_um))
+            p = (_mlcc_prism(*dims, mc.cf_um, 0.0, H, t_term_um, ap) if thin else
+                 _mlcc_prism(*dims, CF_0603["T_nom_um"], CF_0603["mount_um"], H, t_term_um,
+                             ap))
         else:
             raise ValueError(f"tier {name}: unknown class {cls}")
         comps.append((cls, p, int(n)))
-    J = J_POST if j_post is None else j_post
-    n_ind = int(parts.get("inductor", 0))
-    a_post = (n_ind / mc.n_ind_total) * mc.i_out_rms_a / J * 1e6 if n_ind else 0.0
+    return comps
+
+
+def _tier_k(mc, comps, a_post, A):
+    """(k_z, in-plane bracket lo, up, midpoint) of a tier from its prisms."""
+    enc, cu = PHASES["encapsulant"], PHASES["copper"]
     a_parts = sum(p["area"] * n for _c, p, n in comps)
     a_enc = A - a_parts - a_post
-    if a_enc < -1e-9:
-        raise ValueError(f"tier {name} over-full: {a_parts + a_post:.3f} mm^2 of parts in a "
-                         f"{A:.3f} mm^2 cell")
     kz = (sum(p["kz"] * p["area"] * n for _c, p, n in comps) + a_post * cu["k"]
           + a_enc * enc["k"]) / A
     lo = up = 0.0
@@ -818,7 +999,44 @@ def mixed_tier(mc: MixedContents, name, parts, H, j_post=None, k_core=None, t_te
         l_, u_, _ = rect_cell_bounds(k_i, a_, b_, enc["k"], share)
         lo += area / a_comp * l_
         up += area / a_comp * u_
-    k_in = 0.5 * (lo + up)
+    return kz, lo, up, 0.5 * (lo + up)
+
+
+def mixed_tier(mc: MixedContents, name, parts, H, j_post=None, k_core=None, t_term_um=None,
+               gap=None, post_basis=None):
+    """The card of one MIXED converter tier from what it holds (TCPMT round 3; gap posts:
+    review round 3).
+
+    Every part is a vertical COLUMN spanning the tier, a series stack of its own layers (die:
+    solder terminal + body; MLCC: mount + part, with its Cu end terminations as a parallel
+    prism; inductor: its homogenized envelope) and, over a part shorter than its tier, the
+    GAP LAYER: copper posts on the part's terminals bridging it to the RDLs (the authors'
+    assumption: terminals on both faces; the split of the gap between the faces does not
+    change a series column), sized by POST_BASIS (production 'land': a die's datasheet land
+    pattern, an MLCC's electrode bands, an inductor's current at J_POST), the rest of the gap
+    encapsulant. The columns and the encapsulant fill act in parallel through the thickness.
+    A tier holding inductors also carries their output-current posts (Cu prisms spanning the
+    tier, sized at the intra-VR current density for the share of the cell output current
+    those inductors deliver). In plane: each component in its area share of the cell
+    (series-parallel bracket, midpoint). Mechanics: Voigt/Reuss/Hill and Turner/volume-mean
+    over the volume fractions, as the single-class cards. The card records the k_z / k_xy
+    range over the post bases ('current' lower, 'terminal' upper) for the uncertainty step
+    and the legacy encapsulant-gap value (GAP_MODEL 'encapsulant', variant conv_gap_legacy).
+    The via conductors of nets crossing the tier are NOT in the card (declared, conservative
+    for k_z)."""
+    gap = gap or GAP_MODEL
+    basis = post_basis or POST_BASIS
+    A = mc.cell_area_mm2
+    comps = _prisms(mc, name, parts, H, k_core, t_term_um, gap, basis)
+    J = J_POST if j_post is None else j_post
+    n_ind = int(parts.get("inductor", 0))
+    a_post = (n_ind / mc.n_ind_total) * mc.i_out_rms_a / J * 1e6 if n_ind else 0.0
+    a_parts = sum(p["area"] * n for _c, p, n in comps)
+    a_enc = A - a_parts - a_post
+    if a_enc < -1e-9:
+        raise ValueError(f"tier {name} over-full: {a_parts + a_post:.3f} mm^2 of parts in a "
+                         f"{A:.3f} mm^2 cell")
+    kz, lo, up, k_in = _tier_k(mc, comps, a_post, A)
     vol = {}
     for _c, p, n in comps:
         for ph, v in p["vol_um_mm2"].items():
@@ -836,21 +1054,51 @@ def mixed_tier(mc: MixedContents, name, parts, H, j_post=None, k_core=None, t_te
     bounds = {"kz_reuss": mech["k_reuss"], "kz_voigt": mech["k_voigt"], "kz_estimate": kz,
               "kxy_series_parallel": [lo, up], "kxy_reuss": mech["k_reuss"],
               "kxy_voigt": mech["k_voigt"]}
+    gap_posts = {}
+    for c, p, n in comps:
+        if p["cap_um"] > 1e-12:
+            part = p.get("part")
+            dims = p["dims"] if c == "cap_fly" else None
+            a_, src = (post_area_mm2(c, mc, part, basis, dims) if gap == "posts"
+                       else (0.0, "legacy: encapsulant cap"))
+            gap_posts[c] = {"gap_um": p["cap_um"], "post_mm2_per_part": p["post_mm2"],
+                            "post_fraction_of_part": p["post_fraction"],
+                            "basis": basis if gap == "posts" else None, "source": src,
+                            "I_terminal_A": mc.i_terminal(c)}
+    if gap == "posts" and post_basis is None:
+        # the range for the uncertainty step: the same tier at the lower / upper post basis
+        rng = {}
+        for b_ in ("current", "terminal"):
+            cb = _prisms(mc, name, parts, H, k_core, t_term_um, "posts", b_)
+            rng[b_] = _tier_k(mc, cb, a_post, A)
+        legacy = _tier_k(mc, _prisms(mc, name, parts, H, k_core, t_term_um, "encapsulant"),
+                         a_post, A)
+        bounds["kz_post_range"] = [rng["current"][0], rng["terminal"][0]]
+        bounds["kxy_post_range"] = [rng["current"][3], rng["terminal"][3]]
+        bounds["kz_gap_encapsulant_legacy"] = legacy[0]
+        bounds["kxy_gap_encapsulant_legacy"] = legacy[3]
     extra = {"tier": name, "tier_um": H, "parts": dict(parts),
+             "gap_model": gap, "post_basis": basis if gap == "posts" else None,
              "area_fractions": {**{f"{c}": p["area"] * n / A for c, p, n in comps},
                                 "posts": a_post / A, "encapsulant": a_enc / A},
              "prisms": {c: {"kind": p["kind"], "part": p.get("part"), "count": n,
-                            "kz": p["kz"], "k_in": p["k_in"], "cap_um": p["cap_um"]}
+                            "kz": p["kz"], "k_in": p["k_in"], "cap_um": p["cap_um"],
+                            "gap_um": p["cap_um"], "post_fraction": p["post_fraction"]}
                         for c, p, n in comps},
+             "gap_posts": gap_posts,
              "posts": {"I_rms_A": mc.i_out_rms_a * (n_ind / mc.n_ind_total if n_ind else 0),
-                       "J_A_m2": J, "area_mm2": a_post},
+                       "J_A_m2": J, "area_mm2": a_post,
+                       "what": "output-current posts spanning the tier"},
              "volume_fractions": {("tym5" if isinstance(p, dict) and "bounds" in p else
                                    "mlcc_body" if isinstance(p, dict) else p): f
                                   for p, f in fr}}
+    fill = ("every part spans the tier" if not gap_posts else
+            "copper posts over the shorter parts" if gap == "posts" else
+            "encapsulant over the shorter parts (legacy)")
     return card(card_name(name), k_in, k_in, kz, mech, bounds,
                 f"mixed tier {name}: " + ", ".join(f"{n} x {c}" for c, n in parts.items() if n)
-                + f" in the encapsulant, {H:.0f} um, cell {mc.cell_side_mm:.4f} mm ({mc.label})",
-                extra)
+                + f" in the encapsulant ({fill}), {H:.0f} um, cell {mc.cell_side_mm:.4f} mm "
+                f"({mc.label})", extra)
 
 
 def card_name(tier_name: str) -> str:
@@ -858,14 +1106,15 @@ def card_name(tier_name: str) -> str:
     return "conv_" + tier_name.split("_")[0]
 
 
-def mixed_cards(key=None, heights=None):
-    """Every tier card of a record design (mixed tiers), keyed by card name."""
+def mixed_cards(key=None, heights=None, gap=None):
+    """Every tier card of a record design (mixed tiers), keyed by card name; gap: GAP_MODEL
+    by default ('encapsulant' = the legacy cards of variant conv_gap_legacy)."""
     import design_record as DR
     mc = MixedContents.from_record(key)
     out = {}
     for t in DR.tiers(key):
         h = float((heights or {}).get(t["name"], t["height_um"]))
-        out[card_name(t["name"])] = mixed_tier(mc, t["name"], t["parts"], h)
+        out[card_name(t["name"])] = mixed_tier(mc, t["name"], t["parts"], h, gap=gap)
     return out
 
 
@@ -901,7 +1150,8 @@ def production_cards(tiers=None):
         if set(heights) - known:
             raise ValueError(f"tiers {sorted(set(heights) - known)} are not tiers of design "
                              f"{DR.name()} ({sorted(known)})")
-        key = ("mixed", DR.name(), tuple(sorted(heights.items()))) + _design_key()
+        key = ("mixed", DR.name(), tuple(sorted(heights.items())), GAP_MODEL,
+               POST_BASIS) + _design_key()
         if key not in _CACHE:
             _CACHE[key] = mixed_cards(heights=heights)
         return _CACHE[key]
@@ -978,6 +1228,10 @@ def summary_rows(cards):
                    "kz": c["k_ortho"]["value"][2],
                    "kz_bounds": [d["bounds"]["kz_reuss"], d["bounds"]["kz_voigt"]],
                    "kxy_bracket": d["bounds"]["kxy_series_parallel"],
+                   "kz_post_range": d["bounds"].get("kz_post_range"),
+                   "kxy_post_range": d["bounds"].get("kxy_post_range"),
+                   "kz_gap_encapsulant_legacy": d["bounds"].get("kz_gap_encapsulant_legacy"),
+                   "kxy_gap_encapsulant_legacy": d["bounds"].get("kxy_gap_encapsulant_legacy"),
                    "E_GPa": c["E"]["value"] / 1e3,
                    "E_bounds_GPa": [d["mechanical"]["E_reuss_MPa"] / 1e3,
                                     d["mechanical"]["E_voigt_MPa"] / 1e3],
@@ -997,6 +1251,9 @@ def mixed_sensitivity(key):
     for t in DR.tiers(key):
         n, parts, h = t["name"], t["parts"], float(t["height_um"])
         rec = {"base": kz(mixed_tier(mc, n, parts, h))}
+        for b_ in POST_BASES:
+            rec[f"posts_{b_}"] = kz(mixed_tier(mc, n, parts, h, post_basis=b_))
+        rec["gap_encapsulant_legacy"] = kz(mixed_tier(mc, n, parts, h, gap="encapsulant"))
         if parts.get("inductor"):
             for k in TYM5["k_range"]:
                 rec[f"TYM5_k_{k:g}"] = kz(mixed_tier(mc, n, parts, h, k_core=k))
@@ -1030,6 +1287,18 @@ def main():
            "replaces": {"mixed tiers": "the single-class tier cards (conv_gan_hs, conv_gan_ls, "
                                        "conv_cfly_a0/a1, conv_ind_cout) of the 49-cell build"},
            "legacy_variant": "conv_k_legacy (final_closure_sensitivity)",
+           "legacy_gap_variant": "conv_gap_legacy (final_closure_sensitivity): the encapsulant "
+                                 "cap over parts shorter than their tier (GAP_MODEL "
+                                 "'encapsulant'), the cards before review round 3",
+           "gap_model": GAP_MODEL, "post_basis": POST_BASIS, "post_bases": {
+               "current": "lower bound: posts carry the terminal RMS currents (ledger "
+                          "netlist) at J_POST",
+               "land": "production: die datasheet land pattern (Cu-pillar die: pillar "
+                       "footprint), MLCC electrode bands at the nominal e, inductor current "
+                       "at J_POST",
+               "terminal": "upper bound: die solder-bar / bump outline, MLCC bands at the "
+                           "largest e, inductor current at J_POST / 2"},
+           "j_inductor_post_A_m2": J_IND,
            "method": __doc__.split("METHOD (all tiers)")[1].split("PHASES (sources")[0].strip(),
            "mixed_tier_method": mixed_tier.__doc__,
            "phases": PHASES, "tym5": TYM5, "devices": DEVICES, "inductor_segment": IND_SEGMENT,
@@ -1038,18 +1307,24 @@ def main():
     for key in DR.keys():
         mc = MixedContents.from_record(key)
         cards = mixed_cards(key)
+        legacy = mixed_cards(key, gap="encapsulant")
         rec["designs"][key] = {"tier_contents": asdict(mc),
                                "tiers": [{k: t[k] for k in ("name", "height_um", "parts")}
                                          for t in DR.tiers(key)],
                                "cards": cards, "summary": summary_rows(cards),
+                               "legacy_gap_encapsulant_summary": summary_rows(legacy),
                                "sensitivity": mixed_sensitivity(key)}
     OUT.write_text(json.dumps(rec, indent=1, default=float))
     for key, d in rec["designs"].items():
         print(f"== {key}")
         for n, r in d["summary"].items():
             print(f"  {n:12s} kx={r['kx']:7.2f} kz={r['kz']:7.2f} "
-                  f"[{r['kz_bounds'][0]:6.2f}, {r['kz_bounds'][1]:6.2f}]  "
-                  f"E={r['E_GPa']:6.1f} GPa nu={r['nu']:.3f} CTE={r['cte_ppm']:5.2f} ppm/K")
+                  f"[{r['kz_bounds'][0]:6.2f}, {r['kz_bounds'][1]:6.2f}]  posts kz "
+                  f"[{r['kz_post_range'][0]:6.2f}, {r['kz_post_range'][1]:6.2f}] kxy "
+                  f"[{r['kxy_post_range'][0]:5.2f}, {r['kxy_post_range'][1]:5.2f}]  legacy kz "
+                  f"{r['kz_gap_encapsulant_legacy']:6.2f} kxy "
+                  f"{r['kxy_gap_encapsulant_legacy']:5.2f}  E={r['E_GPa']:6.1f} GPa "
+                  f"nu={r['nu']:.3f} CTE={r['cte_ppm']:5.2f} ppm/K")
     print(f"wrote {OUT}")
     return rec
 
