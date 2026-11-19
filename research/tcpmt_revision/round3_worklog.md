@@ -65,3 +65,18 @@
   - Hot-spot variant die_hotmap: die max 157 C.
   - Z1-A coarse result: 138.6 W, 107.5 C, die 88.3 C.
 - Proposal awaiting the user: a 4-zone manifold plate to bring dp to about 55 kPa.
+
+## Decisions (2026-11-19, user: "yes to all")
+1. Design point M=36 (6x6), the best square grid: N3K3, EPC2014C/EPC2055, 805 kHz, at most 4 mixed tiers, 2.99 mm,
+   102.4 W screen.
+2. Also run the 5-tier version through the chain as the co-design comparison: M=36, N4K4, EPC2014C/EPC2055,
+   957 kHz, 91.5 W, 3.73 mm.
+3. The rated Murata 0603 GRM188D72A105KE01 is the main capacitor reference; the thin-capacitor A0 is a sensitivity only.
+4. Manifold cold plate with 4 streamwise zones, to bring dp from 862 kPa to about 55 kPa.
+
+Merges so far:
+- a784d6f converter
+- 52e8aa5 thermal
+- 95e1eda mechanical
+Electrical and campaign merges are being done by the merge agent. Next: generalize Z1/Z2/Z3 for M=36 with mixed tiers,
+add the manifold plate, redo the tier order for the new stack, update the manifest, then run the campaign.
