@@ -8,7 +8,7 @@ mesh, S0) and rerun it with mechanics, under cooling B (z3_plate_tim) or A (z3_t
   land side   P = 2 kappa I_rail^2 R_s(T_land),   R_s = rho_Cu(T_land) / (t_Cu occ)
               kappa = P_one_rail / (I^2 R_s) of the committed 2-D FV sheet at its solved
               point (tcpmt_z3land_fv.land_shape), I_rail = the 1 V rail RMS current the
-              ledger's 1 V BGA rows use (49 x cell output RMS), occ = 0.80, t_Cu swept;
+              ledger's 1 V BGA rows use (N_cell x cell output RMS), occ = 0.80, t_Cu swept;
               T_land = node mean of the WHOLE substrate land-side layer (sub_lower),
               where the heat is deposited: uniformly over all of it, not over the cells
   board planes P = (kappa_VDD + kappa_GND) I_rail^2 R_s,b(T_board), the same FV approach on
@@ -412,8 +412,8 @@ for _name, (_t, _tier, _plane) in RUNS.items():
 # ------------------------------------------------------------------ case records
 def scratch_dir(variant):
     from hvr_scratch import path as scratch
-    return scratch("fc_sens", variant) / (f"Z3_{S.SCEN}_h{E.PRODUCTION_H_XY}"
-                                          f"{E.refine_tag(E.PRODUCTION_REFINE)}")
+    return scratch("fc_sens", variant + S.refine_suffix()) / (f"Z3_{S.SCEN}_h{E.PRODUCTION_H_XY}"
+                                          f"{E.refine_tag(S.refine_in_force())}")
 
 
 def last_thermal_frd(variant):
@@ -497,7 +497,7 @@ def remech(variant, hours=12.0):
     E._raise_stack_limit()
     f = S.case_file("Z3", variant)
     res = json.loads(f.read_text())
-    m, mats, st, tiles, _ = E.build("Z3", E.PRODUCTION_H_XY, E.PRODUCTION_REFINE)
+    m, mats, st, tiles, _ = E.build("Z3", E.PRODUCTION_H_XY, S.refine_in_force())
     frd = last_thermal_frd(variant)
     tn = PE.ccxio.read_frd(frd)["NDTEMP"][1:m.n_nodes + 1, 0]
     if abs(float(np.nanmax(tn)) - res["thermal"]["T_max_C"]) > 1e-6:
@@ -522,7 +522,7 @@ def check(variant):
     temps = E.temps_from_history(ref["et_history"][-1])
     temps.setdefault(LAND_KEY, temps["sub"])
     temps.setdefault(BOARD_KEY, temps["pcb_via"])
-    m, mats, st, tiles, _ = E.build("Z3", E.PRODUCTION_H_XY, E.PRODUCTION_REFINE)
+    m, mats, st, tiles, _ = E.build("Z3", E.PRODUCTION_H_XY, S.refine_in_force())
     L = FL.self_consistent("Z3", S.SCEN, temps)
     dep = E.deposits_from_ledger("Z3", L)
     V = m.elem_volumes()

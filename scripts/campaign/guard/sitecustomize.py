@@ -32,7 +32,9 @@ def _install():
     readlog_prefixes = frozen[:2]
     allow = (root + os.sep,)
     job = os.environ.get("ETM_JOB_ID", "adhoc").replace(os.sep, "_")
-    log_dir = os.path.join(root, "_campaign", "frozen_reads")
+    # a design-subroot job (TCPMT round 3) logs into the campaign's own state directory
+    state = os.environ.get("ETM_CAMPAIGN_STATE", "").strip()
+    log_dir = os.path.join(state or os.path.join(root, "_campaign"), "frozen_reads")
     seen = set()
     W = os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND
 

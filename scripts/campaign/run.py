@@ -97,7 +97,19 @@ class Campaign:
         self.order = [j["id"] for j in m["jobs"]]
         self.stages = [s["name"] for s in m.get("stages", [])]
         self.static_inputs = m.get("static_inputs", [])
+        #: TCPMT round 3: the non-production designs of the design record run in their own
+        #: SUBROOTS (<root>/designs/<key>, <scratch>/designs/<key>) with HVR_DESIGN=<key>; a
+        #: job of such a design carries `design: <key>` and lists its outputs with the
+        #: designs/<key>/ prefix (relative to the campaign root, as every output)
+        self.design_subroots = list(m.get("design_subroots") or [])
+        self.production_design = (m["campaign"].get("design_point") or {}).get("name")
         self._producers = None
+
+    def design_root(self, design):
+        return self.root if not design else self.root / "designs" / design
+
+    def design_scratch(self, design):
+        return self.scratch if not design else self.scratch / "designs" / design
 
     # ----------------------------------------------------------------- paths
     def out_path(self, rel):
@@ -155,9 +167,16 @@ class Campaign:
                   "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "BLIS_NUM_THREADS"):
             env[k] = per                       # the requested cores, split over the workers
         env.update({k: expand(self, str(v)) for k, v in (job.get("env") or {}).items()})
-        env.update({"ETM_RESULTS_ROOT": str(self.root), "ETM_REPO": str(REPO),
+        d = job.get("design")
+        root, scr = self.design_root(d), self.design_scratch(d)
+        if d:
+            env["HVR_DESIGN"] = d
+        elif self.production_design:
+            env["HVR_DESIGN"] = self.production_design
+        env.update({"ETM_RESULTS_ROOT": str(root), "ETM_REPO": str(REPO),
+                    "ETM_CAMPAIGN_STATE": str(self.state_dir),
                     "ETM_JOB_ID": job["id"], "ETM_CAMPAIGN": self.name,
-                    "HVR_SCRATCH": str(self.scratch), "HVR_FIELDS": str(self.fields),
+                    "HVR_SCRATCH": str(scr), "HVR_FIELDS": str(scr / "fields"),
                     "TCPMT_SRC": str(REPO), "MPLBACKEND": "Agg",
                     "PYTHONPATH": ":".join([str(HERE / "guard")] +
                                            ([env["PYTHONPATH"]] if env.get("PYTHONPATH")
@@ -246,7 +265,8 @@ def cmd_exec_job(a):
     led = Ledger(camp)
     backend = a.backend
     env = camp.job_env(job, backend)
-    for d in (camp.root, camp.scratch, camp.fields):
+    for d in (camp.root, camp.scratch, camp.fields,
+              camp.design_root(job.get("design")), camp.design_scratch(job.get("design"))):
         d.mkdir(parents=True, exist_ok=True)
     for o in job.get("outputs", []):
         camp.out_path(o).parent.mkdir(parents=True, exist_ok=True)
@@ -889,6 +909,8 @@ def cmd_seed(a):
     if sf.exists():
         rec = json.loads(sf.read_text())
     todo = [(s, None) for s in camp.static_inputs]
+    # TCPMT round 3: every design subroot gets the static inputs as well
+    todo += [(f"designs/{d}/{s}", None) for d in camp.design_subroots for s in camp.static_inputs]
     if a.upstream_of:
         sel = camp.select(None, a.upstream_of)
         for jid in camp.closure(sel):
@@ -898,7 +920,8 @@ def cmd_seed(a):
                 todo.append((o, jid))
     n = 0
     for rel, jid in todo:
-        src = camp.frozen_path(rel) if not rel.startswith("@fields/") else \
+        rel_src = rel.split("/", 2)[2] if rel.startswith("designs/") and jid is None else rel
+        src = camp.frozen_path(rel_src) if not rel.startswith("@fields/") else \
             Path(camp.m["campaign"].get("frozen_fields", "")) / rel[len("@fields/"):]
         dst = camp.out_path(rel)
         if src is None or not src.exists():

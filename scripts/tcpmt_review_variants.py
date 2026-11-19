@@ -75,7 +75,7 @@ def set_scenario(scen):
     global SCEN
     SCEN = scen
     S.SCEN = scen
-    S.case_file = lambda a, v, scen=scen: S.OUT / f"etm_{a}_{scen}__{v}.json"
+    S.case_file = lambda a, v, scen=scen: S.OUT / f"etm_{a}_{scen}__{v}{S.refine_suffix()}.json"
     if scen == TC.SCEN["SDEC"]:
         import tcpmt_decap_framework as DF
         rk = DF.recommended_k()
@@ -601,6 +601,13 @@ def v_z1_rated_cf(order="rep", cf_um=None, esr_mohm=None):
     cfg = yaml.safe_load(Z1P.Z1_CFG.read_text())
     t = cfg["converter"]["tiers_from_substrate_upward"]
     names = [x["name"] for x in t]
+    if "flying_caps" not in names:
+        # TCPMT round 3: the design record's production capacitor IS the rated 0603 part in a
+        # mixed tier (case A1 is the production state); the thin-capacitor sensitivity is the
+        # design m36thin (HVR_DESIGN), not this tier edit
+        raise RuntimeError("case A1 edits the single-class 100-um flying-capacitor tier of the "
+                           "49-cell stack: not applicable to the design record's mixed tiers "
+                           "(run HVR_DESIGN=m36thin for the thin-capacitor sensitivity)")
     i_cf = names.index("flying_caps")
     cf_um = CF_RATED_UM if cf_um is None else float(cf_um)
     esr_mohm = _a1_esr(esr_mohm)

@@ -41,6 +41,22 @@ from hvr_scratch import path as scratch                             # noqa: E402
 
 OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "sensitivity"   # campaign hook
 SCEN = "HV_S0"
+#: TCPMT round 3: the mesh level of a full variant run. FC_REFINE=r<xy><z> (e.g. r11 for the
+#: coarse smoke tests or a ladder rung) solves at that nested refinement and suffixes the case
+#: name (etm_<arch>_<scen>__<variant>_r11.json) so it never overwrites the production (r21)
+#: file; unset = the production mesh, production names.
+_FR = os.environ.get("FC_REFINE", "").strip().lower()
+REFINE = ((int(_FR[1]), int(_FR[2])) if _FR else None)
+
+
+def refine_in_force():
+    return tuple(REFINE) if REFINE else tuple(E.PRODUCTION_REFINE)
+
+
+def refine_suffix():
+    """'' at the production mesh, else '_r<xy><z>'."""
+    r = refine_in_force()
+    return "" if r == tuple(E.PRODUCTION_REFINE) else f"_r{r[0]}{r[1]}"
 #: converged production temperature fields kept outside the repo (scratch), see README
 FIELDS = Path(os.environ.get("HVR_FIELDS", Path.home() / "claude_scratch" / "hvr_work"
                              / "fields"))
@@ -275,7 +291,7 @@ def v_feed_heat():
         if FL.HV_FEED[arch] != "DIRECT_FEED":
             return {}
         p = L["i_hv_rms_a"] ** 2 * r_b
-        return {((FL.LAYERS[arch]["hs"],), True): p}
+        return {((FL.input_end_layer(arch),), True): p}
     E.EXTRA_DEPOSITS = extra
 
 
@@ -609,6 +625,11 @@ def v_z1_tier_reference():
     cfg = yaml.safe_load(Z1P.Z1_CFG.read_text())
     t = cfg["converter"]["tiers_from_substrate_upward"]
     names = [x["name"] for x in t]
+    if "gan_ls_EPC2057" not in names or "flying_caps" not in names:
+        # TCPMT round 3: a mixed-tier design has no class tiers to swap; its tier orders
+        # are evaluated by scripts/tcpmt_tier_order.py (research/tcpmt_revision/tier_order.json)
+        raise RuntimeError("z1_tier_reference is a single-class (49-cell) stack variant: not "
+                           "applicable to the design record's mixed tiers")
     i_ls, i_cf = names.index("gan_ls_EPC2057"), names.index("flying_caps")
     t[i_ls], t[i_cf] = t[i_cf], t[i_ls]
     tmp = scratch("fc_sens", "z1_tier_reference") / "z1_physical_reference_order.yaml"
@@ -866,8 +887,8 @@ for _E in (80e3, 160e3):
 
 def case_file(arch, variant, scen=SCEN):
     """A variant NAME@B (mechanics only on the cooling-B field, finding 8) is stored as
-    etm_<arch>_<scen>__NAME__B.json."""
-    return OUT / f"etm_{arch}_{scen}__{variant.replace('@', '__')}.json"
+    etm_<arch>_<scen>__NAME__B.json (a non-production mesh level adds its suffix)."""
+    return OUT / f"etm_{arch}_{scen}__{variant.replace('@', '__')}{refine_suffix()}.json"
 
 
 def split_tier(variant):
@@ -909,10 +930,10 @@ def _spec(variant):
 
 
 def run_full(arch, variant):
-    E.WD = scratch("fc_sens", variant)
+    E.WD = scratch("fc_sens", variant + refine_suffix())
     VARIANTS[variant]["apply"]()
     E._raise_stack_limit()
-    h, r = E.PRODUCTION_H_XY, E.PRODUCTION_REFINE
+    h, r = E.PRODUCTION_H_XY, refine_in_force()
     m, mats, st, tiles, minfo, L, th, hist, t_et, wd = E.run_et(arch, SCEN, h, r)
     res = {"arch": arch, "scenario": SCEN, "h_xy_mm": h, "refine": list(r),
            "variant": _spec(variant), "materials": minfo,
