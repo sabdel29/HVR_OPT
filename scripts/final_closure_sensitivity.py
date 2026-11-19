@@ -1022,7 +1022,10 @@ def run_full(arch, variant):
            "et_converged": (hist[-1]["max_dT_K"] < E.ET_TOL_K
                             and hist[-1]["dP_rel"] < E.ET_TOL_P_REL),
            "et_wall_s": t_et, "threads": E.THREADS,
-           "production_case": E.case_path(arch, SCEN).name}
+           "production_case": E.case_path(arch, SCEN).name,
+           # TCPMT round 3: the design record entry it was computed with (tcpmt_cases.guard
+           # refuses a case of another design; without this a variant file passed unchecked)
+           "design": E.Z1D.summary()}
     f = variant_file(arch, variant)
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps(res, indent=1, default=float))
@@ -1059,7 +1062,8 @@ def run_mech(arch, variant):
     res.update({"variant": _spec(variant), "materials": minfo, **die,
                 "thermal_from": (f"converged field of {base_name} (mechanics-only variant, "
                                  f"cooling {tier})"),
-                "production_case": E.case_path(arch, SCEN).name, "thermal_case": base_name})
+                "production_case": E.case_path(arch, SCEN).name, "thermal_case": base_name,
+                "design": base.get("design") or E.Z1D.summary()})
     try:
         res["mechanics"] = E.mechanics(m, mats, st, tn,
                                        scratch("fc_sens", variant.replace("@", "_"), arch),
