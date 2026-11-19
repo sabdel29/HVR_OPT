@@ -7,7 +7,7 @@ without touching the frozen results in `research/`.
 | file | role |
 |---|---|
 | `build_manifest.py` | generates `manifest.yaml` (edit the generator, never the YAML) |
-| `manifest.yaml` | 262 jobs: command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
+| `manifest.yaml` | 267 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
 | `run.py` | runner: `plan`, `seed`, `run`, `status`, `validate`, `reset`, `audit-hooks`, `exec-job` |
 | `validators.py` | output checks (`etm`, `feedback`, `json`, `csv`, `frd`, `exists`) |
 | `guard/sitecustomize.py` | write guard + frozen-read log, injected into every job via PYTHONPATH |
@@ -64,11 +64,21 @@ the frozen copy of an artifact that another manifest job regenerates, the runner
 mesh policy, ANSYS AEDT/Icepak references, web/PDF-derived vendor data, `z3_land_isothermal.json`)
 into the root. `seed --upstream-of GLOB` also copies the frozen outputs of the dependencies of the
 selected jobs and marks those jobs `seeded`, so a subset (a smoke test) runs on frozen upstream data.
+Seeding never overwrites: files placed in the root beforehand (e.g. a development run of the design's
+own upstream results) win over the frozen copies.
+
+**Designs (TCPMT round 3).** The design record (`configs/design_points.yaml`, selector `HVR_DESIGN`)
+fixes the regulator count, converter, tiers, routing and the committed production k. The production
+design (m36) runs in the root; a job carrying `design: <key>` runs in `<root>/designs/<key>` with its
+own scratch and `HVR_DESIGN=<key>` (m36t5: the 5-tier co-design comparison; m36thin: the thin-capacitor
+sensitivity; m25 / m49: the count neighbours). `seed` copies the static inputs into every design subroot.
+The frozen `research/` artifacts are the round-2 49-cell design's: a model-vs-artifact test reads the
+root in force (`ETM_RESULTS_ROOT`) and skips when the artifact is of another design.
 
 ## 2. Runner
 
     PY=/home/beams0/MGHARIB/envs/etm/bin/python
-    $PY scripts/campaign/build_manifest.py                 # design m49 (default) -> manifest.yaml
+    $PY scripts/campaign/build_manifest.py                 # design m36 (default) -> manifest.yaml
     $PY scripts/campaign/run.py plan [-v]                  # stages, core-h, makespan
     $PY scripts/campaign/run.py seed
     nohup $PY scripts/campaign/run.py run --backend both > campaign.log 2>&1 &   # local + califone
@@ -109,29 +119,33 @@ CalculiX solve on a host loaded to ~85 of 96 cores, so the estimates are conserv
 dependency-aware makespan (longest-path-first list schedule) for 8 concurrent califone jobs + 30
 local cores. Proposed priority order (the runner follows the manifest order within what is ready):
 
-| # | stage | jobs (blocked) | core-h | longest job | notes |
-|---|---|---|---:|---:|---|
-| 1 | prep | 5 | 4 | 0.5 h | package network, attach lattices, rules, DSE engine |
-| 2 | production | 29 | 134 | 2.8 h | 9 r21 cases + Z2BF control, tier bases (Z3 A, Z1/Z2/Z3 B), 9 field copies, local chain (temporal, cycles, mesh study, solder S0-S2) |
-| 3 | refinement_ladders | 22 (10) | 77 (+147) | 6.3 h | start early: Z3 r31 is the longest job; r11/r12/r31 x Z1/Z2/Z3 (Z3 r12 new), M64 r31, solver checks |
-| 4 | z3_landside | 14 | 28 | 1.4 h | FV sheets, 11 coupled land-side cases, report |
-| 5 | interface_feedback | 6 | 35 | 4.2 h | TIM warpage feedback Z1/Z2/Z3 x A/B (Z2 A new) |
-| 6 | hotspots | 6 | 19 | 1.8 h | die power map Z1/Z2/Z3 x A/B (Z3 A new) |
-| 7 | a1 | 12 (4) | 12 (+5) | 0.9 h | rated flying caps, Z1 both orders x A/B; Z2/Z3 blocked |
-| 8 | count_study | 19 (8) | 5 (+9) | 0.6 h | M64 synthesized + 4.0-mm2 cell, Z1 under A; B and Z2/Z3 blocked |
-| 9 | robustness_map | 100 | 182 | 3.3 h | 53 class-B runs + 35 local responses + 6 caloric + 5 implemented-decoupling + decap run |
-| 10 | solder_submodels | 3 | 31 | 2.5 h | constitutive/critical/cycles/band/units (one job, 6 slots), parameters, Z3 land |
-| 11 | moose_checks | 5 | 17 | 1.5 h | **local only**: MOOSE does not load on califone |
-| 12 | dse_sweeps | 7 | 1 | 0.1 h | 7 tags x 17 counts, one core each (any time, local) |
-| 13 | derived | 20 | 2 | 0.4 h | results, class B, accuracy matrix, tiers, feasibility, uncertainty, decap chain, ... |
-| 14 | manuscript | 14 | 1 | 0.2 h | macros, supplement, 12 figures under the root |
-|  | **total** | **262 (22)** | **548 (+161)** | | sensitivity files: 100 runs (the 94 frozen + 6 new) |
+Design m36 (TCPMT round 3; `plan` on the generated manifest, 0 blocked):
 
-Makespan (estimate, all jobs starting on demand): **~11.7 h** with 8 califone jobs + 30 local cores
-(califone alone 25.8 h, local alone 22.2 h); the critical path is 11.0 h: package network -> Z3
-production (2.8 h) -> local temporal (2.0) -> cycles (1.6) -> mesh study (1.0) -> solder studies (2.5)
--> solder Z3 land -> uncertainty -> macros. With the blocked jobs implemented: 709 core-h, ~14.8 h
-(critical path: Z3 cooling-B r31 rung). The smoke tests ran 3.6x (califone) and 1.9x (local, at
+| # | stage | jobs | core-h | longest job | notes |
+|---|---|---:|---:|---:|---|
+| 1 | prep | 17 | 25 | 0.6 h | package network of each design, Z3 land sheets, attach lattices, rules, tier order, DSE engine |
+| 2 | production | 35 | 141 | 2.4 h | Z1/Z2/Z3 x A/B in the production state (HV_SDEC) + S0/S1 references, Z3 on the coupled land-side bases, field copies, local chain |
+| 3 | z3_landside | 10 | 24 | 1.4 h | FV sheets, coupled land-side cases, report |
+| 4 | interface_feedback | 6 | 35 | 4.2 h | TIM warpage feedback Z1/Z2/Z3 x A/B |
+| 5 | hotspots | 6 | 20 | 1.8 h | die power map Z1/Z2/Z3 x A/B (production state) |
+| 6 | count_study | 6 | 18 | 1.6 h | count neighbours m25 / m49: own network + decoupling, Z1 x A/B |
+| 7 | thin_cap | 7 | 22 | 1.6 h | m36thin (100-um capacitor), Z1/Z2/Z3 x A/B |
+| 8 | co_design | 7 | 22 | 1.6 h | m36t5 (5 tiers, N4K4 at 957 kHz), Z1/Z2/Z3 x A/B |
+| 9 | refinement_ladders | 20 | 158 | 5.1 h | production-state rungs r11 (smoke tests) and r31, S0 rungs, solver checks |
+| 10 | robustness_map | 92 | 173 | 3.3 h | class-B runs, local responses, caloric (HV_SDEC) |
+| 11 | solder_submodels | 3 | 31 | 2.5 h | constitutive/critical/cycles/band/units, parameters, Z3 land |
+| 12 | moose_checks | 5 | 17 | 1.5 h | **local only**: MOOSE does not load on califone |
+| 13 | dse_sweeps | 5 | 1 | 0.4 h | p2_t4 / t5 / tinf sweeps + phase-2 summary |
+| 14 | derived | 30 | 5 | 0.3 h | results, class B, decoupling chain, design comparison, k check, BGA re-closure, ... |
+| 15 | manuscript | 14 | 1 | 0.1 h | macros, supplement, figures under the root |
+|  | **total** | **263** | **693** | | |
+
+Makespan (dependency-aware list schedule): **~13.2 h** with 8 califone jobs + 30 local cores
+(califone alone 31.4 h, local alone 27.9 h).
+
+Round-2 (m49) table, for reference: 262 jobs (22 blocked), 548 core-h (+161), ~11.7 h; critical
+path package network -> Z3 production -> local temporal -> cycles -> mesh study -> solder studies
+-> solder Z3 land -> uncertainty -> macros. The round-2 smoke tests ran 3.6x (califone) and 1.9x (local, at
 load ~80) faster than the frozen walls the estimates use, so these are upper bounds for the compute
 itself; but califone is heavily booked (106/112 cpus and 1.6 of 2 TB assigned when checked), so
 queue waits come on top. The runner launches ready jobs longest-remaining-path first; in

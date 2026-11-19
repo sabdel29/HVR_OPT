@@ -259,9 +259,10 @@ def state_spec(a, state, t, sub="", refine=None):
     return argv, out, env
 
 
-def prep_jobs(d=None):
+def prep_jobs(d=None, land=True):
     """The per-design inputs: the Z1 package network closed at the production state (the
-    seeded production k), the Z3 land-side sheets, and the cell's decoupling chain."""
+    design record's committed production k) and, for a design that runs Z3 (`land`), the
+    Z3 land-side sheets."""
     sub = f"designs/{d}/" if d else ""
     pre = f"{d}." if d else ""
     out = {}
@@ -275,6 +276,8 @@ def prep_jobs(d=None):
         notes="the count is closed and matched at the PRODUCTION state, at the committed "
               "production k of the design record (`decoupling`); no closing count -> the "
               "declared fallback count, flagged NOT_CLOSED (match_fallback)")
+    if not land:
+        return out
     out["land_est"] = post(f"{pre}prep.z3land_estimate", "prep", "tcpmt_z3_landside_estimate.py",
                            [sub + tr("z3_landside_spreading.json")], est_h=0.1, design=d,
                            evidence="2-D FV sheet on the design's cell grid, minutes")
@@ -465,7 +468,7 @@ def build(design):
     alt = {}
     for dk, spec in ALTERNATES.items():
         sub = f"designs/{dk}/"
-        ap = prep_jobs(dk)
+        ap = prep_jobs(dk, land="Z3" in spec["archs"])
         argv, out, env = state_spec("Z1", "S0", "A", sub)
         z1s0 = etm_job(f"{dk}.prod.Z1.S0.A", spec["stage"], argv, out, deps=[ap["network"]],
                        n_el_k=120, design=dk, analog=case("Z1", "HV_S0"))
