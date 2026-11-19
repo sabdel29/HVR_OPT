@@ -192,6 +192,11 @@ def order_entry(key, e, sp, chosen_order=None):
                  if [list(map(int, v)) for v in r["tiers"]] == [list(map(int, v))
                                                                for v in chosen_order])
         rec["chosen"] = c
+    rank = rec["rule_ranking"]
+    # the runner-up: the best order other than the production one under the rule (for a
+    # forced order, the best of the others on the design's own numbers)
+    ru = next((r for r in rank if r["order"] != c["order"]), None)
+    sf = rec["single_face"]["rule_choice"]
     e["tier_order"] = {"rule": rec["rule"], "basis": rec["chosen_basis"],
                        "order_input_to_output": c["order"],
                        "worst_via_ar_both_faces": c["worst_ar_both"],
@@ -200,10 +205,26 @@ def order_entry(key, e, sp, chosen_order=None):
                        "heat_path_K": c["heat_path_K"],
                        "heat_path_two_sided_K": c["heat_path_two_sided_K"],
                        "assignment": c["assignment"],
+                       "rank_by_rule": next(r["rank"] for r in rank if r["order"] == c["order"]),
+                       "n_orders": rec["n_decided_orders"],
+                       "runner_up": None if ru is None else {
+                           "order_input_to_output": ru["order"],
+                           "heat_path_K": ru["heat_path_K"],
+                           "heat_path_above_chosen_K": ru["heat_path_K"] - c["heat_path_K"],
+                           "worst_via_ar_both_faces": ru["worst_ar_both"],
+                           "worst_via_ar_single_face": ru["worst_ar_single"]},
+                       "single_face_sensitivity": {
+                           "chosen_order_worst_via_ar": c["worst_ar_single"],
+                           "chosen_order_worst_net": c["worst_net_single"],
+                           "rule_choice_single_face": sf["order"],
+                           "rule_choice_worst_via_ar": sf["worst_ar_single"],
+                           "rule_choice_heat_path_K": sf["heat_path_K"],
+                           "same_order": sf["order"] == c["order"]},
                        "best_heat_path_order": rec["best_heat_path_order"]["order"],
                        "best_heat_path_K": rec["best_heat_path_order"]["heat_path_K"],
                        "best_heat_path_worst_via_ar": rec["best_heat_path_order"]["worst_ar_both"],
-                       "source": "research/tcpmt_revision/tier_order.json"}
+                       "source": "research/tcpmt_revision/tier_order.json (rule_ranking: every "
+                                 "order with its heat path and worst via aspect ratios)"}
     e["converter_stack_um"] = sum(t["height_um"] for t in out) + (len(out) - 1) * 10.0
     return e, rec
 

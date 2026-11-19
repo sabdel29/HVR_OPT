@@ -810,19 +810,19 @@
      }
     },
     {
-     "name": "tier2_hs1ls1",
-     "height_um": 685.0,
-     "parts": {
-      "gan_hs": 1,
-      "gan_ls": 1
-     }
-    },
-    {
-     "name": "tier3_ls1l1",
+     "name": "tier2_ls1l1",
      "height_um": 638.0,
      "parts": {
       "gan_ls": 1,
       "inductor": 1
+     }
+    },
+    {
+     "name": "tier3_hs1ls1",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 1,
+      "gan_ls": 1
      }
     },
     {
@@ -970,127 +970,6 @@
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
-      "value": 48848.701163977676,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.2993535221670073,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 4.46607627049472e-06,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 51.61999798772649,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       4.089773446742951,
-       4.089773446742951,
-       51.61999798772649
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "mixed tier tier2_hs1ls1: 1 x gan_hs, 1 x gan_ls in the encapsulant (copper posts over the shorter parts), 685 um, cell 2.8172 mm (M36N3K3KA2 (36 cells, design m36))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_tier2",
-      "bounds": {
-       "kz_reuss": 1.7969578544225833,
-       "kz_voigt": 80.01566333534598,
-       "kz_estimate": 51.61999798772649,
-       "kxy_series_parallel": [
-        3.796133906988663,
-        4.383412986497239
-       ],
-       "kxy_reuss": 1.7969578544225833,
-       "kxy_voigt": 80.01566333534598,
-       "kz_post_range": [
-        45.52581516272419,
-        51.734795569680266
-       ],
-       "kxy_post_range": [
-        4.084908590999101,
-        4.090356956264714
-       ],
-       "kz_gap_encapsulant_legacy": 21.156333088853973,
-       "kxy_gap_encapsulant_legacy": 4.084056960828537
-      },
-      "mechanical": {
-       "E_voigt_MPa": 79022.46699340145,
-       "E_reuss_MPa": 18674.935334553895,
-       "E_hill_MPa": 48848.701163977676,
-       "nu_mean": 0.2993535221670073,
-       "cte_turner_per_K": 4.46607627049472e-06,
-       "cte_volume_per_K": 1.4229593547127006e-05,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "tier2_hs1ls1",
-      "tier_um": 685.0,
-      "parts": {
-       "gan_hs": 1,
-       "gan_ls": 1
-      },
-      "gap_model": "posts",
-      "post_basis": "land",
-      "area_fractions": {
-       "gan_hs": 0.233109324,
-       "gan_ls": 0.47250000000000003,
-       "posts": 0.0,
-       "encapsulant": 0.2943906759999999
-      },
-      "prisms": {
-       "gan_hs": {
-        "kind": "die",
-        "part": "EPC2014C",
-        "count": 1,
-        "kz": 71.67466675684226,
-        "k_in": 112.56683493327978,
-        "cap_um": 0.0,
-        "gap_um": 0.0,
-        "post_fraction": 0.0
-       },
-       "gan_ls": {
-        "kind": "die",
-        "part": "EPC2055",
-        "count": 1,
-        "kz": 73.45162200828301,
-        "k_in": 105.70515537398279,
-        "cap_um": 47.0,
-        "gap_um": 47.0,
-        "post_fraction": 0.37137333333333333
-       }
-      },
-      "gap_posts": {
-       "gan_ls": {
-        "gap_um": 47.0,
-        "post_mm2_per_part": 1.39265,
-        "post_fraction_of_part": 0.37137333333333333,
-        "basis": "land",
-        "source": "EPC2055 datasheet, RECOMMENDED LAND PATTERN (solder mask defined): 230 x 280, 230 x 805, 230 x 1155 (x2), 230 x 1330 (x2) um",
-        "I_terminal_A": 9.25925925925926
-       }
-      },
-      "posts": {
-       "I_rms_A": 0.0,
-       "J_A_m2": 100000000.0,
-       "area_mm2": 0.0,
-       "what": "output-current posts spanning the tier"
-      },
-      "volume_fractions": {
-       "silicon": 0.5563853350948905,
-       "solder": 0.04560464233576642,
-       "copper": 0.01203981503649635,
-       "encapsulant": 0.38597020753284667
-      }
-     }
-    },
-    "conv_tier3": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
       "value": 38210.525724395746,
       "status": "DERIVED"
      },
@@ -1114,10 +993,10 @@
       ],
       "status": "DERIVED"
      },
-     "provenance": "mixed tier tier3_ls1l1: 1 x gan_ls, 1 x inductor in the encapsulant (copper posts over the shorter parts), 638 um, cell 2.8172 mm (M36N3K3KA2 (36 cells, design m36))",
+     "provenance": "mixed tier tier2_ls1l1: 1 x gan_ls, 1 x inductor in the encapsulant (copper posts over the shorter parts), 638 um, cell 2.8172 mm (M36N3K3KA2 (36 cells, design m36))",
      "derivation": {
       "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_tier3",
+      "card": "conv_tier2",
       "bounds": {
        "kz_reuss": 1.3313269870027595,
        "kz_voigt": 72.0318066874997,
@@ -1148,7 +1027,7 @@
        "cte_volume_per_K": 1.836890841727731e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
-      "tier": "tier3_ls1l1",
+      "tier": "tier2_ls1l1",
       "tier_um": 638.0,
       "parts": {
        "gan_ls": 1,
@@ -1206,6 +1085,127 @@
        "copper": 0.049202853920692756,
        "encapsulant": 0.5209400242141035,
        "tym5": 0.009643172021943574
+      }
+     }
+    },
+    "conv_tier3": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 48848.701163977676,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.2993535221670073,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 4.46607627049472e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 51.61999798772649,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       4.089773446742951,
+       4.089773446742951,
+       51.61999798772649
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier3_hs1ls1: 1 x gan_hs, 1 x gan_ls in the encapsulant (copper posts over the shorter parts), 685 um, cell 2.8172 mm (M36N3K3KA2 (36 cells, design m36))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier3",
+      "bounds": {
+       "kz_reuss": 1.7969578544225833,
+       "kz_voigt": 80.01566333534598,
+       "kz_estimate": 51.61999798772649,
+       "kxy_series_parallel": [
+        3.796133906988663,
+        4.383412986497239
+       ],
+       "kxy_reuss": 1.7969578544225833,
+       "kxy_voigt": 80.01566333534598,
+       "kz_post_range": [
+        45.52581516272419,
+        51.734795569680266
+       ],
+       "kxy_post_range": [
+        4.084908590999101,
+        4.090356956264714
+       ],
+       "kz_gap_encapsulant_legacy": 21.156333088853973,
+       "kxy_gap_encapsulant_legacy": 4.084056960828537
+      },
+      "mechanical": {
+       "E_voigt_MPa": 79022.46699340145,
+       "E_reuss_MPa": 18674.935334553895,
+       "E_hill_MPa": 48848.701163977676,
+       "nu_mean": 0.2993535221670073,
+       "cte_turner_per_K": 4.46607627049472e-06,
+       "cte_volume_per_K": 1.4229593547127006e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier3_hs1ls1",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 1,
+       "gan_ls": 1
+      },
+      "gap_model": "posts",
+      "post_basis": "land",
+      "area_fractions": {
+       "gan_hs": 0.233109324,
+       "gan_ls": 0.47250000000000003,
+       "posts": 0.0,
+       "encapsulant": 0.2943906759999999
+      },
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 1,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0,
+        "gap_um": 0.0,
+        "post_fraction": 0.0
+       },
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 73.45162200828301,
+        "k_in": 105.70515537398279,
+        "cap_um": 47.0,
+        "gap_um": 47.0,
+        "post_fraction": 0.37137333333333333
+       }
+      },
+      "gap_posts": {
+       "gan_ls": {
+        "gap_um": 47.0,
+        "post_mm2_per_part": 1.39265,
+        "post_fraction_of_part": 0.37137333333333333,
+        "basis": "land",
+        "source": "EPC2055 datasheet, RECOMMENDED LAND PATTERN (solder mask defined): 230 x 280, 230 x 805, 230 x 1155 (x2), 230 x 1330 (x2) um",
+        "I_terminal_A": 9.25925925925926
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0,
+       "what": "output-current posts spanning the tier"
+      },
+      "volume_fractions": {
+       "silicon": 0.5563853350948905,
+       "solder": 0.04560464233576642,
+       "copper": 0.01203981503649635,
+       "encapsulant": 0.38597020753284667
       }
      }
     },
@@ -1368,40 +1368,6 @@
      ]
     },
     "conv_tier2": {
-     "kx": 4.089773446742951,
-     "ky": 4.089773446742951,
-     "kz": 51.61999798772649,
-     "kz_bounds": [
-      1.7969578544225833,
-      80.01566333534598
-     ],
-     "kxy_bracket": [
-      3.796133906988663,
-      4.383412986497239
-     ],
-     "kz_post_range": [
-      45.52581516272419,
-      51.734795569680266
-     ],
-     "kxy_post_range": [
-      4.084908590999101,
-      4.090356956264714
-     ],
-     "kz_gap_encapsulant_legacy": 21.156333088853973,
-     "kxy_gap_encapsulant_legacy": 4.084056960828537,
-     "E_GPa": 48.84870116397767,
-     "E_bounds_GPa": [
-      18.674935334553894,
-      79.02246699340145
-     ],
-     "nu": 0.2993535221670073,
-     "cte_ppm": 4.46607627049472,
-     "cte_bounds_ppm": [
-      4.46607627049472,
-      14.229593547127006
-     ]
-    },
-    "conv_tier3": {
      "kx": 2.8256159930370153,
      "ky": 2.8256159930370153,
      "kz": 44.15214481698865,
@@ -1433,6 +1399,40 @@
      "cte_bounds_ppm": [
       6.354776437030447,
       18.368908417277307
+     ]
+    },
+    "conv_tier3": {
+     "kx": 4.089773446742951,
+     "ky": 4.089773446742951,
+     "kz": 51.61999798772649,
+     "kz_bounds": [
+      1.7969578544225833,
+      80.01566333534598
+     ],
+     "kxy_bracket": [
+      3.796133906988663,
+      4.383412986497239
+     ],
+     "kz_post_range": [
+      45.52581516272419,
+      51.734795569680266
+     ],
+     "kxy_post_range": [
+      4.084908590999101,
+      4.090356956264714
+     ],
+     "kz_gap_encapsulant_legacy": 21.156333088853973,
+     "kxy_gap_encapsulant_legacy": 4.084056960828537,
+     "E_GPa": 48.84870116397767,
+     "E_bounds_GPa": [
+      18.674935334553894,
+      79.02246699340145
+     ],
+     "nu": 0.2993535221670073,
+     "cte_ppm": 4.46607627049472,
+     "cte_bounds_ppm": [
+      4.46607627049472,
+      14.229593547127006
      ]
     },
     "conv_tier4": {
@@ -1500,34 +1500,6 @@
      ]
     },
     "conv_tier2": {
-     "kx": 4.084056960828537,
-     "ky": 4.084056960828537,
-     "kz": 21.156333088853973,
-     "kz_bounds": [
-      1.7390447370202207,
-      75.15379665112702
-     ],
-     "kxy_bracket": [
-      3.791441548650619,
-      4.376672373006454
-     ],
-     "kz_post_range": null,
-     "kxy_post_range": null,
-     "kz_gap_encapsulant_legacy": null,
-     "kxy_gap_encapsulant_legacy": null,
-     "E_GPa": 47.960461469580956,
-     "E_bounds_GPa": [
-      18.167076203570666,
-      77.75384673559125
-     ],
-     "nu": 0.2990837550633577,
-     "cte_ppm": 4.28165644369726,
-     "cte_bounds_ppm": [
-      4.28165644369726,
-      14.397930227159124
-     ]
-    },
-    "conv_tier3": {
      "kx": 2.7733712605006433,
      "ky": 2.7733712605006433,
      "kz": 38.283959698801354,
@@ -1553,6 +1525,34 @@
      "cte_bounds_ppm": [
       6.3061881220302185,
       18.41086672448734
+     ]
+    },
+    "conv_tier3": {
+     "kx": 4.084056960828537,
+     "ky": 4.084056960828537,
+     "kz": 21.156333088853973,
+     "kz_bounds": [
+      1.7390447370202207,
+      75.15379665112702
+     ],
+     "kxy_bracket": [
+      3.791441548650619,
+      4.376672373006454
+     ],
+     "kz_post_range": null,
+     "kxy_post_range": null,
+     "kz_gap_encapsulant_legacy": null,
+     "kxy_gap_encapsulant_legacy": null,
+     "E_GPa": 47.960461469580956,
+     "E_bounds_GPa": [
+      18.167076203570666,
+      77.75384673559125
+     ],
+     "nu": 0.2990837550633577,
+     "cte_ppm": 4.28165644369726,
+     "cte_bounds_ppm": [
+      4.28165644369726,
+      14.397930227159124
      ]
     },
     "conv_tier4": {
@@ -1598,14 +1598,7 @@
      "termination_k_0.7": 39.19317253256988,
      "termination_k_400": 42.59978563730255
     },
-    "tier2_hs1ls1": {
-     "base": 51.61999798772649,
-     "posts_current": 45.52581516272419,
-     "posts_land": 51.61999798772649,
-     "posts_terminal": 51.734795569680266,
-     "gap_encapsulant_legacy": 21.156333088853973
-    },
-    "tier3_ls1l1": {
+    "tier2_ls1l1": {
      "base": 44.15214481698865,
      "posts_current": 42.998204179129225,
      "posts_land": 44.15214481698865,
@@ -1614,6 +1607,13 @@
      "TYM5_k_1.5": 44.14277501885827,
      "TYM5_k_6": 44.16002742499946,
      "posts_at_half_J": 48.83099614422804
+    },
+    "tier3_hs1ls1": {
+     "base": 51.61999798772649,
+     "posts_current": 45.52581516272419,
+     "posts_land": 51.61999798772649,
+     "posts_terminal": 51.734795569680266,
+     "gap_encapsulant_legacy": 21.156333088853973
     },
     "tier4_ls1l2": {
      "base": 54.47872803090294,
@@ -1686,20 +1686,20 @@
      }
     },
     {
-     "name": "tier4_hs1ls1l1",
+     "name": "tier4_ls1l2",
+     "height_um": 638.0,
+     "parts": {
+      "gan_ls": 1,
+      "inductor": 2
+     }
+    },
+    {
+     "name": "tier5_hs1ls1l1",
      "height_um": 685.0,
      "parts": {
       "gan_hs": 1,
       "gan_ls": 1,
       "inductor": 1
-     }
-    },
-    {
-     "name": "tier5_ls1l2",
-     "height_um": 638.0,
-     "parts": {
-      "gan_ls": 1,
-      "inductor": 2
      }
     }
    ],
@@ -2102,6 +2102,128 @@
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
+      "value": 41352.85374501431,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.30734515918156086,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 6.984703732781641e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 51.210242701517664,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       4.225711446164471,
+       4.225711446164471,
+       51.210242701517664
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier4_ls1l2: 1 x gan_ls, 2 x inductor in the encapsulant (copper posts over the shorter parts), 638 um, cell 2.8172 mm (M36N4K4KA2T5 (36 cells, design m36t5))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier4",
+      "bounds": {
+       "kz_reuss": 1.4691506559722975,
+       "kz_voigt": 88.8269139336868,
+       "kz_estimate": 51.210242701517664,
+       "kxy_series_parallel": [
+        3.988591467142757,
+        4.462831425186185
+       ],
+       "kxy_reuss": 1.4691506559722975,
+       "kxy_voigt": 88.8269139336868,
+       "kz_post_range": [
+        48.745987454618415,
+        53.18873842499819
+       ],
+       "kxy_post_range": [
+        4.164400236123474,
+        4.316505406032483
+       ],
+       "kz_gap_encapsulant_legacy": 40.89208070484965,
+       "kxy_gap_encapsulant_legacy": 4.086768116050179
+      },
+      "mechanical": {
+       "E_voigt_MPa": 66940.15672275909,
+       "E_reuss_MPa": 15765.550767269538,
+       "E_hill_MPa": 41352.85374501431,
+       "nu_mean": 0.30734515918156086,
+       "cte_turner_per_K": 6.984703732781641e-06,
+       "cte_volume_per_K": 1.7637930148277056e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier4_ls1l2",
+      "tier_um": 638.0,
+      "parts": {
+       "gan_ls": 1,
+       "inductor": 2
+      },
+      "gap_model": "posts",
+      "post_basis": "land",
+      "area_fractions": {
+       "gan_ls": 0.47250000000000003,
+       "inductor": 0.252,
+       "posts": 0.017499999999999998,
+       "encapsulant": 0.25799999999999995
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 70.80700868375523,
+        "k_in": 107.94828006767099,
+        "cap_um": 0.0,
+        "gap_um": 0.0,
+        "post_fraction": 0.0
+       },
+       "inductor": {
+        "kind": "inductor",
+        "part": null,
+        "count": 2,
+        "kz": 41.95766308906075,
+        "k_in": 9.584869163881978,
+        "cap_um": 138.0,
+        "gap_um": 138.0,
+        "post_fraction": 0.06944444444444443
+       }
+      },
+      "gap_posts": {
+       "inductor": {
+        "gap_um": 138.0,
+        "post_mm2_per_part": 0.06944444444444443,
+        "post_fraction_of_part": 0.06944444444444443,
+        "basis": "land",
+        "source": "1 terminal x 6.944 A RMS at 1.0e+08 A/m^2 (no published land pattern for the library inductor: current sizing)",
+        "I_terminal_A": 6.944444444444445
+       }
+      },
+      "posts": {
+       "I_rms_A": 13.88888888888889,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.13888888888888887,
+       "what": "output-current posts spanning the tier"
+      },
+      "volume_fractions": {
+       "silicon": 0.3836285266457681,
+       "solder": 0.03658542319749217,
+       "copper": 0.0912086839996725,
+       "encapsulant": 0.46929102211318013,
+       "tym5": 0.01928634404388715
+      }
+     }
+    },
+    "conv_tier5": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
       "value": 52571.186118617356,
       "status": "DERIVED"
      },
@@ -2125,10 +2247,10 @@
       ],
       "status": "DERIVED"
      },
-     "provenance": "mixed tier tier4_hs1ls1l1: 1 x gan_hs, 1 x gan_ls, 1 x inductor in the encapsulant (copper posts over the shorter parts), 685 um, cell 2.8172 mm (M36N4K4KA2T5 (36 cells, design m36t5))",
+     "provenance": "mixed tier tier5_hs1ls1l1: 1 x gan_hs, 1 x gan_ls, 1 x inductor in the encapsulant (copper posts over the shorter parts), 685 um, cell 2.8172 mm (M36N4K4KA2T5 (36 cells, design m36t5))",
      "derivation": {
       "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_tier4",
+      "card": "conv_tier5",
       "bounds": {
        "kz_reuss": 2.064520156583015,
        "kz_voigt": 97.47615358329648,
@@ -2159,7 +2281,7 @@
        "cte_volume_per_K": 1.348804182055822e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
-      "tier": "tier4_hs1ls1l1",
+      "tier": "tier5_hs1ls1l1",
       "tier_um": 685.0,
       "parts": {
        "gan_hs": 1,
@@ -2237,128 +2359,6 @@
        "copper": 0.05571582992101537,
        "encapsulant": 0.33331266892569994,
        "tym5": 0.008981523722627739
-      }
-     }
-    },
-    "conv_tier5": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
-      "value": 41352.85374501431,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.30734515918156086,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 6.984703732781641e-06,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 51.210242701517664,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       4.225711446164471,
-       4.225711446164471,
-       51.210242701517664
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "mixed tier tier5_ls1l2: 1 x gan_ls, 2 x inductor in the encapsulant (copper posts over the shorter parts), 638 um, cell 2.8172 mm (M36N4K4KA2T5 (36 cells, design m36t5))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_tier5",
-      "bounds": {
-       "kz_reuss": 1.4691506559722975,
-       "kz_voigt": 88.8269139336868,
-       "kz_estimate": 51.210242701517664,
-       "kxy_series_parallel": [
-        3.988591467142757,
-        4.462831425186185
-       ],
-       "kxy_reuss": 1.4691506559722975,
-       "kxy_voigt": 88.8269139336868,
-       "kz_post_range": [
-        48.745987454618415,
-        53.18873842499819
-       ],
-       "kxy_post_range": [
-        4.164400236123474,
-        4.316505406032483
-       ],
-       "kz_gap_encapsulant_legacy": 40.89208070484965,
-       "kxy_gap_encapsulant_legacy": 4.086768116050179
-      },
-      "mechanical": {
-       "E_voigt_MPa": 66940.15672275909,
-       "E_reuss_MPa": 15765.550767269538,
-       "E_hill_MPa": 41352.85374501431,
-       "nu_mean": 0.30734515918156086,
-       "cte_turner_per_K": 6.984703732781641e-06,
-       "cte_volume_per_K": 1.7637930148277056e-05,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "tier5_ls1l2",
-      "tier_um": 638.0,
-      "parts": {
-       "gan_ls": 1,
-       "inductor": 2
-      },
-      "gap_model": "posts",
-      "post_basis": "land",
-      "area_fractions": {
-       "gan_ls": 0.47250000000000003,
-       "inductor": 0.252,
-       "posts": 0.017499999999999998,
-       "encapsulant": 0.25799999999999995
-      },
-      "prisms": {
-       "gan_ls": {
-        "kind": "die",
-        "part": "EPC2055",
-        "count": 1,
-        "kz": 70.80700868375523,
-        "k_in": 107.94828006767099,
-        "cap_um": 0.0,
-        "gap_um": 0.0,
-        "post_fraction": 0.0
-       },
-       "inductor": {
-        "kind": "inductor",
-        "part": null,
-        "count": 2,
-        "kz": 41.95766308906075,
-        "k_in": 9.584869163881978,
-        "cap_um": 138.0,
-        "gap_um": 138.0,
-        "post_fraction": 0.06944444444444443
-       }
-      },
-      "gap_posts": {
-       "inductor": {
-        "gap_um": 138.0,
-        "post_mm2_per_part": 0.06944444444444443,
-        "post_fraction_of_part": 0.06944444444444443,
-        "basis": "land",
-        "source": "1 terminal x 6.944 A RMS at 1.0e+08 A/m^2 (no published land pattern for the library inductor: current sizing)",
-        "I_terminal_A": 6.944444444444445
-       }
-      },
-      "posts": {
-       "I_rms_A": 13.88888888888889,
-       "J_A_m2": 100000000.0,
-       "area_mm2": 0.13888888888888887,
-       "what": "output-current posts spanning the tier"
-      },
-      "volume_fractions": {
-       "silicon": 0.3836285266457681,
-       "solder": 0.03658542319749217,
-       "copper": 0.0912086839996725,
-       "encapsulant": 0.46929102211318013,
-       "tym5": 0.01928634404388715
       }
      }
     }
@@ -2467,40 +2467,6 @@
      ]
     },
     "conv_tier4": {
-     "kx": 7.345557008795892,
-     "ky": 7.345557008795892,
-     "kz": 60.14518288157551,
-     "kz_bounds": [
-      2.064520156583015,
-      97.47615358329648
-     ],
-     "kxy_bracket": [
-      7.079665320508417,
-      7.611448697083368
-     ],
-     "kz_post_range": [
-      50.93511606309998,
-      61.46545121517122
-     ],
-     "kxy_post_range": [
-      7.266992121002275,
-      7.440577197809944
-     ],
-     "kz_gap_encapsulant_legacy": 24.876277071059004,
-     "kxy_gap_encapsulant_legacy": 7.1855620139745096,
-     "E_GPa": 52.571186118617355,
-     "E_bounds_GPa": [
-      21.060666565643242,
-      84.08170567159146
-     ],
-     "nu": 0.30011926418002616,
-     "cte_ppm": 5.097948109632827,
-     "cte_bounds_ppm": [
-      5.097948109632827,
-      13.48804182055822
-     ]
-    },
-    "conv_tier5": {
      "kx": 4.225711446164471,
      "ky": 4.225711446164471,
      "kz": 51.210242701517664,
@@ -2532,6 +2498,40 @@
      "cte_bounds_ppm": [
       6.984703732781641,
       17.637930148277057
+     ]
+    },
+    "conv_tier5": {
+     "kx": 7.345557008795892,
+     "ky": 7.345557008795892,
+     "kz": 60.14518288157551,
+     "kz_bounds": [
+      2.064520156583015,
+      97.47615358329648
+     ],
+     "kxy_bracket": [
+      7.079665320508417,
+      7.611448697083368
+     ],
+     "kz_post_range": [
+      50.93511606309998,
+      61.46545121517122
+     ],
+     "kxy_post_range": [
+      7.266992121002275,
+      7.440577197809944
+     ],
+     "kz_gap_encapsulant_legacy": 24.876277071059004,
+     "kxy_gap_encapsulant_legacy": 7.1855620139745096,
+     "E_GPa": 52.571186118617355,
+     "E_bounds_GPa": [
+      21.060666565643242,
+      84.08170567159146
+     ],
+     "nu": 0.30011926418002616,
+     "cte_ppm": 5.097948109632827,
+     "cte_bounds_ppm": [
+      5.097948109632827,
+      13.48804182055822
      ]
     }
    },
@@ -2621,34 +2621,6 @@
      ]
     },
     "conv_tier4": {
-     "kx": 7.1855620139745096,
-     "ky": 7.1855620139745096,
-     "kz": 24.876277071059004,
-     "kz_bounds": [
-      1.9752059667465411,
-      91.67068562170525
-     ],
-     "kxy_bracket": [
-      6.926748742235569,
-      7.44437528571345
-     ],
-     "kz_post_range": null,
-     "kxy_post_range": null,
-     "kz_gap_encapsulant_legacy": null,
-     "kxy_gap_encapsulant_legacy": null,
-     "E_GPa": 51.437748488960494,
-     "E_bounds_GPa": [
-      20.303451710125145,
-      82.57204526779586
-     ],
-     "nu": 0.2998022343026539,
-     "cte_ppm": 4.903300272157339,
-     "cte_bounds_ppm": [
-      4.903300272157339,
-      13.687902770663328
-     ]
-    },
-    "conv_tier5": {
      "kx": 4.086768116050179,
      "ky": 4.086768116050179,
      "kz": 40.89208070484965,
@@ -2674,6 +2646,34 @@
      "cte_bounds_ppm": [
       6.9257783858555015,
       17.696720273668905
+     ]
+    },
+    "conv_tier5": {
+     "kx": 7.1855620139745096,
+     "ky": 7.1855620139745096,
+     "kz": 24.876277071059004,
+     "kz_bounds": [
+      1.9752059667465411,
+      91.67068562170525
+     ],
+     "kxy_bracket": [
+      6.926748742235569,
+      7.44437528571345
+     ],
+     "kz_post_range": null,
+     "kxy_post_range": null,
+     "kz_gap_encapsulant_legacy": null,
+     "kxy_gap_encapsulant_legacy": null,
+     "E_GPa": 51.437748488960494,
+     "E_bounds_GPa": [
+      20.303451710125145,
+      82.57204526779586
+     ],
+     "nu": 0.2998022343026539,
+     "cte_ppm": 4.903300272157339,
+     "cte_bounds_ppm": [
+      4.903300272157339,
+      13.687902770663328
      ]
     }
    },
@@ -2708,17 +2708,7 @@
      "posts_terminal": 51.734795569680266,
      "gap_encapsulant_legacy": 21.156333088853973
     },
-    "tier4_hs1ls1l1": {
-     "base": 60.14518288157551,
-     "posts_current": 50.93511606309998,
-     "posts_land": 60.14518288157551,
-     "posts_terminal": 61.46545121517122,
-     "gap_encapsulant_legacy": 24.876277071059004,
-     "TYM5_k_1.5": 60.13822897509489,
-     "TYM5_k_6": 60.15103008445362,
-     "posts_at_half_J": 63.6390578815755
-    },
-    "tier5_ls1l2": {
+    "tier4_ls1l2": {
      "base": 51.210242701517664,
      "posts_current": 48.745987454618415,
      "posts_land": 51.210242701517664,
@@ -2727,6 +2717,16 @@
      "TYM5_k_1.5": 51.19432165902238,
      "TYM5_k_6": 51.22363357429085,
      "posts_at_half_J": 58.19799270151766
+    },
+    "tier5_hs1ls1l1": {
+     "base": 60.14518288157551,
+     "posts_current": 50.93511606309998,
+     "posts_land": 60.14518288157551,
+     "posts_terminal": 61.46545121517122,
+     "gap_encapsulant_legacy": 24.876277071059004,
+     "TYM5_k_1.5": 60.13822897509489,
+     "TYM5_k_6": 60.15103008445362,
+     "posts_at_half_J": 63.6390578815755
     }
    }
   },
@@ -2772,19 +2772,19 @@
      }
     },
     {
-     "name": "tier2_hs1ls1",
-     "height_um": 685.0,
-     "parts": {
-      "gan_hs": 1,
-      "gan_ls": 1
-     }
-    },
-    {
-     "name": "tier3_ls1l1",
+     "name": "tier2_ls1l1",
      "height_um": 638.0,
      "parts": {
       "gan_ls": 1,
       "inductor": 1
+     }
+    },
+    {
+     "name": "tier3_hs1ls1",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 1,
+      "gan_ls": 1
      }
     },
     {
@@ -2924,127 +2924,6 @@
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
-      "value": 48848.701163977676,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.2993535221670073,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 4.46607627049472e-06,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 51.61999798772649,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       4.089773446742951,
-       4.089773446742951,
-       51.61999798772649
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "mixed tier tier2_hs1ls1: 1 x gan_hs, 1 x gan_ls in the encapsulant (copper posts over the shorter parts), 685 um, cell 2.8172 mm (M36N3K3KA2THIN (36 cells, design m36thin))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_tier2",
-      "bounds": {
-       "kz_reuss": 1.7969578544225833,
-       "kz_voigt": 80.01566333534598,
-       "kz_estimate": 51.61999798772649,
-       "kxy_series_parallel": [
-        3.796133906988663,
-        4.383412986497239
-       ],
-       "kxy_reuss": 1.7969578544225833,
-       "kxy_voigt": 80.01566333534598,
-       "kz_post_range": [
-        45.52581516272419,
-        51.734795569680266
-       ],
-       "kxy_post_range": [
-        4.084908590999101,
-        4.090356956264714
-       ],
-       "kz_gap_encapsulant_legacy": 21.156333088853973,
-       "kxy_gap_encapsulant_legacy": 4.084056960828537
-      },
-      "mechanical": {
-       "E_voigt_MPa": 79022.46699340145,
-       "E_reuss_MPa": 18674.935334553895,
-       "E_hill_MPa": 48848.701163977676,
-       "nu_mean": 0.2993535221670073,
-       "cte_turner_per_K": 4.46607627049472e-06,
-       "cte_volume_per_K": 1.4229593547127006e-05,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "tier2_hs1ls1",
-      "tier_um": 685.0,
-      "parts": {
-       "gan_hs": 1,
-       "gan_ls": 1
-      },
-      "gap_model": "posts",
-      "post_basis": "land",
-      "area_fractions": {
-       "gan_hs": 0.233109324,
-       "gan_ls": 0.47250000000000003,
-       "posts": 0.0,
-       "encapsulant": 0.2943906759999999
-      },
-      "prisms": {
-       "gan_hs": {
-        "kind": "die",
-        "part": "EPC2014C",
-        "count": 1,
-        "kz": 71.67466675684226,
-        "k_in": 112.56683493327978,
-        "cap_um": 0.0,
-        "gap_um": 0.0,
-        "post_fraction": 0.0
-       },
-       "gan_ls": {
-        "kind": "die",
-        "part": "EPC2055",
-        "count": 1,
-        "kz": 73.45162200828301,
-        "k_in": 105.70515537398279,
-        "cap_um": 47.0,
-        "gap_um": 47.0,
-        "post_fraction": 0.37137333333333333
-       }
-      },
-      "gap_posts": {
-       "gan_ls": {
-        "gap_um": 47.0,
-        "post_mm2_per_part": 1.39265,
-        "post_fraction_of_part": 0.37137333333333333,
-        "basis": "land",
-        "source": "EPC2055 datasheet, RECOMMENDED LAND PATTERN (solder mask defined): 230 x 280, 230 x 805, 230 x 1155 (x2), 230 x 1330 (x2) um",
-        "I_terminal_A": 9.25925925925926
-       }
-      },
-      "posts": {
-       "I_rms_A": 0.0,
-       "J_A_m2": 100000000.0,
-       "area_mm2": 0.0,
-       "what": "output-current posts spanning the tier"
-      },
-      "volume_fractions": {
-       "silicon": 0.5563853350948905,
-       "solder": 0.04560464233576642,
-       "copper": 0.01203981503649635,
-       "encapsulant": 0.38597020753284667
-      }
-     }
-    },
-    "conv_tier3": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
       "value": 38207.31271751033,
       "status": "DERIVED"
      },
@@ -3068,10 +2947,10 @@
       ],
       "status": "DERIVED"
      },
-     "provenance": "mixed tier tier3_ls1l1: 1 x gan_ls, 1 x inductor in the encapsulant (copper posts over the shorter parts), 638 um, cell 2.8172 mm (M36N3K3KA2THIN (36 cells, design m36thin))",
+     "provenance": "mixed tier tier2_ls1l1: 1 x gan_ls, 1 x inductor in the encapsulant (copper posts over the shorter parts), 638 um, cell 2.8172 mm (M36N3K3KA2THIN (36 cells, design m36thin))",
      "derivation": {
       "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_tier3",
+      "card": "conv_tier2",
       "bounds": {
        "kz_reuss": 1.3311981732731366,
        "kz_voigt": 72.0114553602603,
@@ -3102,7 +2981,7 @@
        "cte_volume_per_K": 1.8369588323877293e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
-      "tier": "tier3_ls1l1",
+      "tier": "tier2_ls1l1",
       "tier_um": 638.0,
       "parts": {
        "gan_ls": 1,
@@ -3160,6 +3039,127 @@
        "copper": 0.04915188640944961,
        "encapsulant": 0.5209909917253466,
        "tym5": 0.009643172021943574
+      }
+     }
+    },
+    "conv_tier3": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 48848.701163977676,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.2993535221670073,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 4.46607627049472e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 51.61999798772649,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       4.089773446742951,
+       4.089773446742951,
+       51.61999798772649
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier3_hs1ls1: 1 x gan_hs, 1 x gan_ls in the encapsulant (copper posts over the shorter parts), 685 um, cell 2.8172 mm (M36N3K3KA2THIN (36 cells, design m36thin))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier3",
+      "bounds": {
+       "kz_reuss": 1.7969578544225833,
+       "kz_voigt": 80.01566333534598,
+       "kz_estimate": 51.61999798772649,
+       "kxy_series_parallel": [
+        3.796133906988663,
+        4.383412986497239
+       ],
+       "kxy_reuss": 1.7969578544225833,
+       "kxy_voigt": 80.01566333534598,
+       "kz_post_range": [
+        45.52581516272419,
+        51.734795569680266
+       ],
+       "kxy_post_range": [
+        4.084908590999101,
+        4.090356956264714
+       ],
+       "kz_gap_encapsulant_legacy": 21.156333088853973,
+       "kxy_gap_encapsulant_legacy": 4.084056960828537
+      },
+      "mechanical": {
+       "E_voigt_MPa": 79022.46699340145,
+       "E_reuss_MPa": 18674.935334553895,
+       "E_hill_MPa": 48848.701163977676,
+       "nu_mean": 0.2993535221670073,
+       "cte_turner_per_K": 4.46607627049472e-06,
+       "cte_volume_per_K": 1.4229593547127006e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier3_hs1ls1",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 1,
+       "gan_ls": 1
+      },
+      "gap_model": "posts",
+      "post_basis": "land",
+      "area_fractions": {
+       "gan_hs": 0.233109324,
+       "gan_ls": 0.47250000000000003,
+       "posts": 0.0,
+       "encapsulant": 0.2943906759999999
+      },
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 1,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0,
+        "gap_um": 0.0,
+        "post_fraction": 0.0
+       },
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 73.45162200828301,
+        "k_in": 105.70515537398279,
+        "cap_um": 47.0,
+        "gap_um": 47.0,
+        "post_fraction": 0.37137333333333333
+       }
+      },
+      "gap_posts": {
+       "gan_ls": {
+        "gap_um": 47.0,
+        "post_mm2_per_part": 1.39265,
+        "post_fraction_of_part": 0.37137333333333333,
+        "basis": "land",
+        "source": "EPC2055 datasheet, RECOMMENDED LAND PATTERN (solder mask defined): 230 x 280, 230 x 805, 230 x 1155 (x2), 230 x 1330 (x2) um",
+        "I_terminal_A": 9.25925925925926
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0,
+       "what": "output-current posts spanning the tier"
+      },
+      "volume_fractions": {
+       "silicon": 0.5563853350948905,
+       "solder": 0.04560464233576642,
+       "copper": 0.01203981503649635,
+       "encapsulant": 0.38597020753284667
       }
      }
     },
@@ -3322,40 +3322,6 @@
      ]
     },
     "conv_tier2": {
-     "kx": 4.089773446742951,
-     "ky": 4.089773446742951,
-     "kz": 51.61999798772649,
-     "kz_bounds": [
-      1.7969578544225833,
-      80.01566333534598
-     ],
-     "kxy_bracket": [
-      3.796133906988663,
-      4.383412986497239
-     ],
-     "kz_post_range": [
-      45.52581516272419,
-      51.734795569680266
-     ],
-     "kxy_post_range": [
-      4.084908590999101,
-      4.090356956264714
-     ],
-     "kz_gap_encapsulant_legacy": 21.156333088853973,
-     "kxy_gap_encapsulant_legacy": 4.084056960828537,
-     "E_GPa": 48.84870116397767,
-     "E_bounds_GPa": [
-      18.674935334553894,
-      79.02246699340145
-     ],
-     "nu": 0.2993535221670073,
-     "cte_ppm": 4.46607627049472,
-     "cte_bounds_ppm": [
-      4.46607627049472,
-      14.229593547127006
-     ]
-    },
-    "conv_tier3": {
      "kx": 2.8251810050456663,
      "ky": 2.8251810050456663,
      "kz": 44.13179348974925,
@@ -3387,6 +3353,40 @@
      "cte_bounds_ppm": [
       6.354000095778732,
       18.36958832387729
+     ]
+    },
+    "conv_tier3": {
+     "kx": 4.089773446742951,
+     "ky": 4.089773446742951,
+     "kz": 51.61999798772649,
+     "kz_bounds": [
+      1.7969578544225833,
+      80.01566333534598
+     ],
+     "kxy_bracket": [
+      3.796133906988663,
+      4.383412986497239
+     ],
+     "kz_post_range": [
+      45.52581516272419,
+      51.734795569680266
+     ],
+     "kxy_post_range": [
+      4.084908590999101,
+      4.090356956264714
+     ],
+     "kz_gap_encapsulant_legacy": 21.156333088853973,
+     "kxy_gap_encapsulant_legacy": 4.084056960828537,
+     "E_GPa": 48.84870116397767,
+     "E_bounds_GPa": [
+      18.674935334553894,
+      79.02246699340145
+     ],
+     "nu": 0.2993535221670073,
+     "cte_ppm": 4.46607627049472,
+     "cte_bounds_ppm": [
+      4.46607627049472,
+      14.229593547127006
      ]
     },
     "conv_tier4": {
@@ -3454,34 +3454,6 @@
      ]
     },
     "conv_tier2": {
-     "kx": 4.084056960828537,
-     "ky": 4.084056960828537,
-     "kz": 21.156333088853973,
-     "kz_bounds": [
-      1.7390447370202207,
-      75.15379665112702
-     ],
-     "kxy_bracket": [
-      3.791441548650619,
-      4.376672373006454
-     ],
-     "kz_post_range": null,
-     "kxy_post_range": null,
-     "kz_gap_encapsulant_legacy": null,
-     "kxy_gap_encapsulant_legacy": null,
-     "E_GPa": 47.960461469580956,
-     "E_bounds_GPa": [
-      18.167076203570666,
-      77.75384673559125
-     ],
-     "nu": 0.2990837550633577,
-     "cte_ppm": 4.28165644369726,
-     "cte_bounds_ppm": [
-      4.28165644369726,
-      14.397930227159124
-     ]
-    },
-    "conv_tier3": {
      "kx": 2.7729450697804294,
      "ky": 2.7729450697804294,
      "kz": 38.26360837156196,
@@ -3507,6 +3479,34 @@
      "cte_bounds_ppm": [
       6.305403900281467,
       18.41154663108733
+     ]
+    },
+    "conv_tier3": {
+     "kx": 4.084056960828537,
+     "ky": 4.084056960828537,
+     "kz": 21.156333088853973,
+     "kz_bounds": [
+      1.7390447370202207,
+      75.15379665112702
+     ],
+     "kxy_bracket": [
+      3.791441548650619,
+      4.376672373006454
+     ],
+     "kz_post_range": null,
+     "kxy_post_range": null,
+     "kz_gap_encapsulant_legacy": null,
+     "kxy_gap_encapsulant_legacy": null,
+     "E_GPa": 47.960461469580956,
+     "E_bounds_GPa": [
+      18.167076203570666,
+      77.75384673559125
+     ],
+     "nu": 0.2990837550633577,
+     "cte_ppm": 4.28165644369726,
+     "cte_bounds_ppm": [
+      4.28165644369726,
+      14.397930227159124
      ]
     },
     "conv_tier4": {
@@ -3552,14 +3552,7 @@
      "termination_k_0.7": 36.40645362606363,
      "termination_k_400": 40.39060982695699
     },
-    "tier2_hs1ls1": {
-     "base": 51.61999798772649,
-     "posts_current": 45.52581516272419,
-     "posts_land": 51.61999798772649,
-     "posts_terminal": 51.734795569680266,
-     "gap_encapsulant_legacy": 21.156333088853973
-    },
-    "tier3_ls1l1": {
+    "tier2_ls1l1": {
      "base": 44.13179348974925,
      "posts_current": 42.97785285188983,
      "posts_land": 44.13179348974925,
@@ -3568,6 +3561,13 @@
      "TYM5_k_1.5": 44.122423691618884,
      "TYM5_k_6": 44.139676097760066,
      "posts_at_half_J": 48.79029348974926
+    },
+    "tier3_hs1ls1": {
+     "base": 51.61999798772649,
+     "posts_current": 45.52581516272419,
+     "posts_land": 51.61999798772649,
+     "posts_terminal": 51.734795569680266,
+     "gap_encapsulant_legacy": 21.156333088853973
     },
     "tier4_ls1l2": {
      "base": 54.438025376424164,
@@ -4474,301 +4474,39 @@
    },
    "tiers": [
     {
-     "name": "tier1_ls1cf1",
-     "height_um": 1000.0,
-     "parts": {
-      "gan_ls": 1,
-      "cap_fly": 1
-     }
-    },
-    {
-     "name": "tier2_ls1cf1",
-     "height_um": 1000.0,
-     "parts": {
-      "gan_ls": 1,
-      "cap_fly": 1
-     }
-    },
-    {
-     "name": "tier3_hs2",
+     "name": "tier1_hs2",
      "height_um": 685.0,
      "parts": {
       "gan_hs": 2
      }
     },
     {
-     "name": "tier4_hs1l2",
+     "name": "tier2_hs1l2",
      "height_um": 685.0,
      "parts": {
       "gan_hs": 1,
       "inductor": 2
      }
+    },
+    {
+     "name": "tier3_ls1cf1",
+     "height_um": 1000.0,
+     "parts": {
+      "gan_ls": 1,
+      "cap_fly": 1
+     }
+    },
+    {
+     "name": "tier4_ls1cf1",
+     "height_um": 1000.0,
+     "parts": {
+      "gan_ls": 1,
+      "cap_fly": 1
+     }
     }
    ],
    "cards": {
     "conv_tier1": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
-      "value": 45247.429604823425,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.30705695178102027,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 8.34959173834413e-06,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 41.641772667740916,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       5.7565856263255695,
-       5.7565856263255695,
-       41.641772667740916
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "mixed tier tier1_ls1cf1: 1 x gan_ls, 1 x cap_fly in the encapsulant (copper posts over the shorter parts), 1000 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_tier1",
-      "bounds": {
-       "kz_reuss": 1.4535387960821278,
-       "kz_voigt": 69.26897239412416,
-       "kz_estimate": 41.641772667740916,
-       "kxy_series_parallel": [
-        5.480491894338401,
-        6.032679358312738
-       ],
-       "kxy_reuss": 1.4535387960821278,
-       "kxy_voigt": 69.26897239412416,
-       "kz_post_range": [
-        24.0440727365956,
-        41.718124568661054
-       ],
-       "kxy_post_range": [
-        5.553466294702448,
-        5.795874905985926
-       ],
-       "kz_gap_encapsulant_legacy": 1.5988678152939342,
-       "kxy_gap_encapsulant_legacy": 5.5227871100881565
-      },
-      "mechanical": {
-       "E_voigt_MPa": 73753.08117607344,
-       "E_reuss_MPa": 16741.778033573413,
-       "E_hill_MPa": 45247.429604823425,
-       "nu_mean": 0.30705695178102027,
-       "cte_turner_per_K": 8.34959173834413e-06,
-       "cte_volume_per_K": 1.754835778294231e-05,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "tier1_ls1cf1",
-      "tier_um": 1000.0,
-      "parts": {
-       "gan_ls": 1,
-       "cap_fly": 1
-      },
-      "gap_model": "posts",
-      "post_basis": "land",
-      "area_fractions": {
-       "gan_ls": 0.5719525,
-       "cap_fly": 0.21952000000000005,
-       "posts": 0.0,
-       "encapsulant": 0.20852749999999992
-      },
-      "prisms": {
-       "gan_ls": {
-        "kind": "die",
-        "part": "EPC2090",
-        "count": 1,
-        "kz": 68.63277953589427,
-        "k_in": 86.65856252181374,
-        "cap_um": 394.0,
-        "gap_um": 394.0,
-        "post_fraction": 0.23268397411558941
-       },
-       "cap_fly": {
-        "kind": "mlcc",
-        "part": null,
-        "count": 1,
-        "kz": 10.209154428923778,
-        "k_in": 36.1300447184121,
-        "cap_um": 170.0,
-        "gap_um": 170.0,
-        "post_fraction": 0.4374999999999999
-       }
-      },
-      "gap_posts": {
-       "gan_ls": {
-        "gap_um": 394.0,
-        "post_mm2_per_part": 0.7760010536754905,
-        "post_fraction_of_part": 0.23268397411558941,
-        "basis": "land",
-        "source": "no land pattern: terminal outline (EPC2090 datasheet, DIE OUTLINE (solder bump view): A 2300, B 1450; 35 bumps c x d = 150 x 180 um, radius 75; 518 die + 50 Cu + 3 Ni + 35 solder = 606 um (solder card for the whole terminal). Cu pillar die for use in a package: no land pattern (the posts take the pillar footprint))",
-        "I_terminal_A": 10.204081632653061
-       },
-       "cap_fly": {
-        "gap_um": 170.0,
-        "post_mm2_per_part": 0.5599999999999999,
-        "post_fraction_of_part": 0.4374999999999999,
-        "basis": "land",
-        "source": "2 electrode bands 0.8 x 0.35 mm (Murata GRM18 (0603) series dimensions: external electrode e = 0.2 to 0.5 mm)",
-        "I_terminal_A": 1.0310909004051063
-       }
-      },
-      "posts": {
-       "I_rms_A": 0.0,
-       "J_A_m2": 100000000.0,
-       "area_mm2": 0.0,
-       "what": "output-current posts spanning the tier"
-      },
-      "volume_fractions": {
-       "silicon": 0.296271395,
-       "solder": 0.018297007902070506,
-       "copper": 0.06876196719790657,
-       "encapsulant": 0.4410536299000229,
-       "mlcc_body": 0.17012800000000006,
-       "termination": 0.0054880000000000016
-      }
-     }
-    },
-    "conv_tier2": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
-      "value": 45247.429604823425,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.30705695178102027,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 8.34959173834413e-06,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 41.641772667740916,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       5.7565856263255695,
-       5.7565856263255695,
-       41.641772667740916
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "mixed tier tier2_ls1cf1: 1 x gan_ls, 1 x cap_fly in the encapsulant (copper posts over the shorter parts), 1000 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_tier2",
-      "bounds": {
-       "kz_reuss": 1.4535387960821278,
-       "kz_voigt": 69.26897239412416,
-       "kz_estimate": 41.641772667740916,
-       "kxy_series_parallel": [
-        5.480491894338401,
-        6.032679358312738
-       ],
-       "kxy_reuss": 1.4535387960821278,
-       "kxy_voigt": 69.26897239412416,
-       "kz_post_range": [
-        24.0440727365956,
-        41.718124568661054
-       ],
-       "kxy_post_range": [
-        5.553466294702448,
-        5.795874905985926
-       ],
-       "kz_gap_encapsulant_legacy": 1.5988678152939342,
-       "kxy_gap_encapsulant_legacy": 5.5227871100881565
-      },
-      "mechanical": {
-       "E_voigt_MPa": 73753.08117607344,
-       "E_reuss_MPa": 16741.778033573413,
-       "E_hill_MPa": 45247.429604823425,
-       "nu_mean": 0.30705695178102027,
-       "cte_turner_per_K": 8.34959173834413e-06,
-       "cte_volume_per_K": 1.754835778294231e-05,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "tier2_ls1cf1",
-      "tier_um": 1000.0,
-      "parts": {
-       "gan_ls": 1,
-       "cap_fly": 1
-      },
-      "gap_model": "posts",
-      "post_basis": "land",
-      "area_fractions": {
-       "gan_ls": 0.5719525,
-       "cap_fly": 0.21952000000000005,
-       "posts": 0.0,
-       "encapsulant": 0.20852749999999992
-      },
-      "prisms": {
-       "gan_ls": {
-        "kind": "die",
-        "part": "EPC2090",
-        "count": 1,
-        "kz": 68.63277953589427,
-        "k_in": 86.65856252181374,
-        "cap_um": 394.0,
-        "gap_um": 394.0,
-        "post_fraction": 0.23268397411558941
-       },
-       "cap_fly": {
-        "kind": "mlcc",
-        "part": null,
-        "count": 1,
-        "kz": 10.209154428923778,
-        "k_in": 36.1300447184121,
-        "cap_um": 170.0,
-        "gap_um": 170.0,
-        "post_fraction": 0.4374999999999999
-       }
-      },
-      "gap_posts": {
-       "gan_ls": {
-        "gap_um": 394.0,
-        "post_mm2_per_part": 0.7760010536754905,
-        "post_fraction_of_part": 0.23268397411558941,
-        "basis": "land",
-        "source": "no land pattern: terminal outline (EPC2090 datasheet, DIE OUTLINE (solder bump view): A 2300, B 1450; 35 bumps c x d = 150 x 180 um, radius 75; 518 die + 50 Cu + 3 Ni + 35 solder = 606 um (solder card for the whole terminal). Cu pillar die for use in a package: no land pattern (the posts take the pillar footprint))",
-        "I_terminal_A": 10.204081632653061
-       },
-       "cap_fly": {
-        "gap_um": 170.0,
-        "post_mm2_per_part": 0.5599999999999999,
-        "post_fraction_of_part": 0.4374999999999999,
-        "basis": "land",
-        "source": "2 electrode bands 0.8 x 0.35 mm (Murata GRM18 (0603) series dimensions: external electrode e = 0.2 to 0.5 mm)",
-        "I_terminal_A": 1.0310909004051063
-       }
-      },
-      "posts": {
-       "I_rms_A": 0.0,
-       "J_A_m2": 100000000.0,
-       "area_mm2": 0.0,
-       "what": "output-current posts spanning the tier"
-      },
-      "volume_fractions": {
-       "silicon": 0.296271395,
-       "solder": 0.018297007902070506,
-       "copper": 0.06876196719790657,
-       "encapsulant": 0.4410536299000229,
-       "mlcc_body": 0.17012800000000006,
-       "termination": 0.0054880000000000016
-      }
-     }
-    },
-    "conv_tier3": {
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
@@ -4795,10 +4533,10 @@
       ],
       "status": "DERIVED"
      },
-     "provenance": "mixed tier tier3_hs2: 2 x gan_hs in the encapsulant (every part spans the tier), 685 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
+     "provenance": "mixed tier tier1_hs2: 2 x gan_hs in the encapsulant (every part spans the tier), 685 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
      "derivation": {
       "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_tier3",
+      "card": "conv_tier1",
       "bounds": {
        "kz_reuss": 1.6279782765126753,
        "kz_voigt": 72.53942539295039,
@@ -4829,7 +4567,7 @@
        "cte_volume_per_K": 1.4899850046601458e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
-      "tier": "tier3_hs2",
+      "tier": "tier1_hs2",
       "tier_um": 685.0,
       "parts": {
        "gan_hs": 2
@@ -4867,7 +4605,7 @@
       }
      }
     },
-    "conv_tier4": {
+    "conv_tier2": {
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
@@ -4894,10 +4632,10 @@
       ],
       "status": "DERIVED"
      },
-     "provenance": "mixed tier tier4_hs1l2: 1 x gan_hs, 2 x inductor in the encapsulant (copper posts over the shorter parts), 685 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
+     "provenance": "mixed tier tier2_hs1l2: 1 x gan_hs, 2 x inductor in the encapsulant (copper posts over the shorter parts), 685 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
      "derivation": {
       "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_tier4",
+      "card": "conv_tier2",
       "bounds": {
        "kz_reuss": 1.2424944702307945,
        "kz_voigt": 89.82115583698274,
@@ -4928,7 +4666,7 @@
        "cte_volume_per_K": 2.0241826811436873e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
-      "tier": "tier4_hs1l2",
+      "tier": "tier2_hs1l2",
       "tier_um": 685.0,
       "parts": {
        "gan_hs": 1,
@@ -4988,78 +4726,272 @@
        "tym5": 0.024449703467153285
       }
      }
+    },
+    "conv_tier3": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 45247.429604823425,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.30705695178102027,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 8.34959173834413e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 41.641772667740916,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       5.7565856263255695,
+       5.7565856263255695,
+       41.641772667740916
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier3_ls1cf1: 1 x gan_ls, 1 x cap_fly in the encapsulant (copper posts over the shorter parts), 1000 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier3",
+      "bounds": {
+       "kz_reuss": 1.4535387960821278,
+       "kz_voigt": 69.26897239412416,
+       "kz_estimate": 41.641772667740916,
+       "kxy_series_parallel": [
+        5.480491894338401,
+        6.032679358312738
+       ],
+       "kxy_reuss": 1.4535387960821278,
+       "kxy_voigt": 69.26897239412416,
+       "kz_post_range": [
+        24.0440727365956,
+        41.718124568661054
+       ],
+       "kxy_post_range": [
+        5.553466294702448,
+        5.795874905985926
+       ],
+       "kz_gap_encapsulant_legacy": 1.5988678152939342,
+       "kxy_gap_encapsulant_legacy": 5.5227871100881565
+      },
+      "mechanical": {
+       "E_voigt_MPa": 73753.08117607344,
+       "E_reuss_MPa": 16741.778033573413,
+       "E_hill_MPa": 45247.429604823425,
+       "nu_mean": 0.30705695178102027,
+       "cte_turner_per_K": 8.34959173834413e-06,
+       "cte_volume_per_K": 1.754835778294231e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier3_ls1cf1",
+      "tier_um": 1000.0,
+      "parts": {
+       "gan_ls": 1,
+       "cap_fly": 1
+      },
+      "gap_model": "posts",
+      "post_basis": "land",
+      "area_fractions": {
+       "gan_ls": 0.5719525,
+       "cap_fly": 0.21952000000000005,
+       "posts": 0.0,
+       "encapsulant": 0.20852749999999992
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2090",
+        "count": 1,
+        "kz": 68.63277953589427,
+        "k_in": 86.65856252181374,
+        "cap_um": 394.0,
+        "gap_um": 394.0,
+        "post_fraction": 0.23268397411558941
+       },
+       "cap_fly": {
+        "kind": "mlcc",
+        "part": null,
+        "count": 1,
+        "kz": 10.209154428923778,
+        "k_in": 36.1300447184121,
+        "cap_um": 170.0,
+        "gap_um": 170.0,
+        "post_fraction": 0.4374999999999999
+       }
+      },
+      "gap_posts": {
+       "gan_ls": {
+        "gap_um": 394.0,
+        "post_mm2_per_part": 0.7760010536754905,
+        "post_fraction_of_part": 0.23268397411558941,
+        "basis": "land",
+        "source": "no land pattern: terminal outline (EPC2090 datasheet, DIE OUTLINE (solder bump view): A 2300, B 1450; 35 bumps c x d = 150 x 180 um, radius 75; 518 die + 50 Cu + 3 Ni + 35 solder = 606 um (solder card for the whole terminal). Cu pillar die for use in a package: no land pattern (the posts take the pillar footprint))",
+        "I_terminal_A": 10.204081632653061
+       },
+       "cap_fly": {
+        "gap_um": 170.0,
+        "post_mm2_per_part": 0.5599999999999999,
+        "post_fraction_of_part": 0.4374999999999999,
+        "basis": "land",
+        "source": "2 electrode bands 0.8 x 0.35 mm (Murata GRM18 (0603) series dimensions: external electrode e = 0.2 to 0.5 mm)",
+        "I_terminal_A": 1.0310909004051063
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0,
+       "what": "output-current posts spanning the tier"
+      },
+      "volume_fractions": {
+       "silicon": 0.296271395,
+       "solder": 0.018297007902070506,
+       "copper": 0.06876196719790657,
+       "encapsulant": 0.4410536299000229,
+       "mlcc_body": 0.17012800000000006,
+       "termination": 0.0054880000000000016
+      }
+     }
+    },
+    "conv_tier4": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 45247.429604823425,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.30705695178102027,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 8.34959173834413e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 41.641772667740916,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       5.7565856263255695,
+       5.7565856263255695,
+       41.641772667740916
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier4_ls1cf1: 1 x gan_ls, 1 x cap_fly in the encapsulant (copper posts over the shorter parts), 1000 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier4",
+      "bounds": {
+       "kz_reuss": 1.4535387960821278,
+       "kz_voigt": 69.26897239412416,
+       "kz_estimate": 41.641772667740916,
+       "kxy_series_parallel": [
+        5.480491894338401,
+        6.032679358312738
+       ],
+       "kxy_reuss": 1.4535387960821278,
+       "kxy_voigt": 69.26897239412416,
+       "kz_post_range": [
+        24.0440727365956,
+        41.718124568661054
+       ],
+       "kxy_post_range": [
+        5.553466294702448,
+        5.795874905985926
+       ],
+       "kz_gap_encapsulant_legacy": 1.5988678152939342,
+       "kxy_gap_encapsulant_legacy": 5.5227871100881565
+      },
+      "mechanical": {
+       "E_voigt_MPa": 73753.08117607344,
+       "E_reuss_MPa": 16741.778033573413,
+       "E_hill_MPa": 45247.429604823425,
+       "nu_mean": 0.30705695178102027,
+       "cte_turner_per_K": 8.34959173834413e-06,
+       "cte_volume_per_K": 1.754835778294231e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier4_ls1cf1",
+      "tier_um": 1000.0,
+      "parts": {
+       "gan_ls": 1,
+       "cap_fly": 1
+      },
+      "gap_model": "posts",
+      "post_basis": "land",
+      "area_fractions": {
+       "gan_ls": 0.5719525,
+       "cap_fly": 0.21952000000000005,
+       "posts": 0.0,
+       "encapsulant": 0.20852749999999992
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2090",
+        "count": 1,
+        "kz": 68.63277953589427,
+        "k_in": 86.65856252181374,
+        "cap_um": 394.0,
+        "gap_um": 394.0,
+        "post_fraction": 0.23268397411558941
+       },
+       "cap_fly": {
+        "kind": "mlcc",
+        "part": null,
+        "count": 1,
+        "kz": 10.209154428923778,
+        "k_in": 36.1300447184121,
+        "cap_um": 170.0,
+        "gap_um": 170.0,
+        "post_fraction": 0.4374999999999999
+       }
+      },
+      "gap_posts": {
+       "gan_ls": {
+        "gap_um": 394.0,
+        "post_mm2_per_part": 0.7760010536754905,
+        "post_fraction_of_part": 0.23268397411558941,
+        "basis": "land",
+        "source": "no land pattern: terminal outline (EPC2090 datasheet, DIE OUTLINE (solder bump view): A 2300, B 1450; 35 bumps c x d = 150 x 180 um, radius 75; 518 die + 50 Cu + 3 Ni + 35 solder = 606 um (solder card for the whole terminal). Cu pillar die for use in a package: no land pattern (the posts take the pillar footprint))",
+        "I_terminal_A": 10.204081632653061
+       },
+       "cap_fly": {
+        "gap_um": 170.0,
+        "post_mm2_per_part": 0.5599999999999999,
+        "post_fraction_of_part": 0.4374999999999999,
+        "basis": "land",
+        "source": "2 electrode bands 0.8 x 0.35 mm (Murata GRM18 (0603) series dimensions: external electrode e = 0.2 to 0.5 mm)",
+        "I_terminal_A": 1.0310909004051063
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0,
+       "what": "output-current posts spanning the tier"
+      },
+      "volume_fractions": {
+       "silicon": 0.296271395,
+       "solder": 0.018297007902070506,
+       "copper": 0.06876196719790657,
+       "encapsulant": 0.4410536299000229,
+       "mlcc_body": 0.17012800000000006,
+       "termination": 0.0054880000000000016
+      }
+     }
     }
    },
    "summary": {
     "conv_tier1": {
-     "kx": 5.7565856263255695,
-     "ky": 5.7565856263255695,
-     "kz": 41.641772667740916,
-     "kz_bounds": [
-      1.4535387960821278,
-      69.26897239412416
-     ],
-     "kxy_bracket": [
-      5.480491894338401,
-      6.032679358312738
-     ],
-     "kz_post_range": [
-      24.0440727365956,
-      41.718124568661054
-     ],
-     "kxy_post_range": [
-      5.553466294702448,
-      5.795874905985926
-     ],
-     "kz_gap_encapsulant_legacy": 1.5988678152939342,
-     "kxy_gap_encapsulant_legacy": 5.5227871100881565,
-     "E_GPa": 45.247429604823424,
-     "E_bounds_GPa": [
-      16.741778033573414,
-      73.75308117607344
-     ],
-     "nu": 0.30705695178102027,
-     "cte_ppm": 8.34959173834413,
-     "cte_bounds_ppm": [
-      8.34959173834413,
-      17.54835778294231
-     ]
-    },
-    "conv_tier2": {
-     "kx": 5.7565856263255695,
-     "ky": 5.7565856263255695,
-     "kz": 41.641772667740916,
-     "kz_bounds": [
-      1.4535387960821278,
-      69.26897239412416
-     ],
-     "kxy_bracket": [
-      5.480491894338401,
-      6.032679358312738
-     ],
-     "kz_post_range": [
-      24.0440727365956,
-      41.718124568661054
-     ],
-     "kxy_post_range": [
-      5.553466294702448,
-      5.795874905985926
-     ],
-     "kz_gap_encapsulant_legacy": 1.5988678152939342,
-     "kxy_gap_encapsulant_legacy": 5.5227871100881565,
-     "E_GPa": 45.247429604823424,
-     "E_bounds_GPa": [
-      16.741778033573414,
-      73.75308117607344
-     ],
-     "nu": 0.30705695178102027,
-     "cte_ppm": 8.34959173834413,
-     "cte_bounds_ppm": [
-      8.34959173834413,
-      17.54835778294231
-     ]
-    },
-    "conv_tier3": {
      "kx": 3.171370845328374,
      "ky": 3.171370845328374,
      "kz": 45.73877626954588,
@@ -5093,7 +5025,7 @@
       14.899850046601458
      ]
     },
-    "conv_tier4": {
+    "conv_tier2": {
      "kx": 3.443247930176009,
      "ky": 3.443247930176009,
      "kz": 52.813632372249735,
@@ -5126,66 +5058,78 @@
       8.936083709448129,
       20.241826811436873
      ]
+    },
+    "conv_tier3": {
+     "kx": 5.7565856263255695,
+     "ky": 5.7565856263255695,
+     "kz": 41.641772667740916,
+     "kz_bounds": [
+      1.4535387960821278,
+      69.26897239412416
+     ],
+     "kxy_bracket": [
+      5.480491894338401,
+      6.032679358312738
+     ],
+     "kz_post_range": [
+      24.0440727365956,
+      41.718124568661054
+     ],
+     "kxy_post_range": [
+      5.553466294702448,
+      5.795874905985926
+     ],
+     "kz_gap_encapsulant_legacy": 1.5988678152939342,
+     "kxy_gap_encapsulant_legacy": 5.5227871100881565,
+     "E_GPa": 45.247429604823424,
+     "E_bounds_GPa": [
+      16.741778033573414,
+      73.75308117607344
+     ],
+     "nu": 0.30705695178102027,
+     "cte_ppm": 8.34959173834413,
+     "cte_bounds_ppm": [
+      8.34959173834413,
+      17.54835778294231
+     ]
+    },
+    "conv_tier4": {
+     "kx": 5.7565856263255695,
+     "ky": 5.7565856263255695,
+     "kz": 41.641772667740916,
+     "kz_bounds": [
+      1.4535387960821278,
+      69.26897239412416
+     ],
+     "kxy_bracket": [
+      5.480491894338401,
+      6.032679358312738
+     ],
+     "kz_post_range": [
+      24.0440727365956,
+      41.718124568661054
+     ],
+     "kxy_post_range": [
+      5.553466294702448,
+      5.795874905985926
+     ],
+     "kz_gap_encapsulant_legacy": 1.5988678152939342,
+     "kxy_gap_encapsulant_legacy": 5.5227871100881565,
+     "E_GPa": 45.247429604823424,
+     "E_bounds_GPa": [
+      16.741778033573414,
+      73.75308117607344
+     ],
+     "nu": 0.30705695178102027,
+     "cte_ppm": 8.34959173834413,
+     "cte_bounds_ppm": [
+      8.34959173834413,
+      17.54835778294231
+     ]
     }
    },
    "legacy_gap_encapsulant_summary": {
     "conv_tier1": {
-     "kx": 5.5227871100881565,
-     "ky": 5.5227871100881565,
-     "kz": 1.5988678152939342,
-     "kz_bounds": [
-      1.2887566265006358,
-      42.2150661271135
-     ],
-     "kxy_bracket": [
-      5.271142639157482,
-      5.774431581018832
-     ],
-     "kz_post_range": null,
-     "kxy_post_range": null,
-     "kz_gap_encapsulant_legacy": null,
-     "kxy_gap_encapsulant_legacy": null,
-     "E_GPa": 40.988185428560534,
-     "E_bounds_GPa": [
-      14.936559467121066,
-      67.03981139
-     ],
-     "nu": 0.30589632019999996,
-     "cte_ppm": 7.6439638907820635,
-     "cte_bounds_ppm": [
-      7.6439638907820635,
-      18.408413688578946
-     ]
-    },
-    "conv_tier2": {
-     "kx": 5.5227871100881565,
-     "ky": 5.5227871100881565,
-     "kz": 1.5988678152939342,
-     "kz_bounds": [
-      1.2887566265006358,
-      42.2150661271135
-     ],
-     "kxy_bracket": [
-      5.271142639157482,
-      5.774431581018832
-     ],
-     "kz_post_range": null,
-     "kxy_post_range": null,
-     "kz_gap_encapsulant_legacy": null,
-     "kxy_gap_encapsulant_legacy": null,
-     "E_GPa": 40.988185428560534,
-     "E_bounds_GPa": [
-      14.936559467121066,
-      67.03981139
-     ],
-     "nu": 0.30589632019999996,
-     "cte_ppm": 7.6439638907820635,
-     "cte_bounds_ppm": [
-      7.6439638907820635,
-      18.408413688578946
-     ]
-    },
-    "conv_tier3": {
      "kx": 3.171370845328374,
      "ky": 3.171370845328374,
      "kz": 45.73877626954588,
@@ -5213,7 +5157,7 @@
       14.899850046601458
      ]
     },
-    "conv_tier4": {
+    "conv_tier2": {
      "kx": 3.185922962245199,
      "ky": 3.185922962245199,
      "kz": 37.81029814188663,
@@ -5240,43 +5184,73 @@
       8.821060035133524,
       20.36792389172884
      ]
+    },
+    "conv_tier3": {
+     "kx": 5.5227871100881565,
+     "ky": 5.5227871100881565,
+     "kz": 1.5988678152939342,
+     "kz_bounds": [
+      1.2887566265006358,
+      42.2150661271135
+     ],
+     "kxy_bracket": [
+      5.271142639157482,
+      5.774431581018832
+     ],
+     "kz_post_range": null,
+     "kxy_post_range": null,
+     "kz_gap_encapsulant_legacy": null,
+     "kxy_gap_encapsulant_legacy": null,
+     "E_GPa": 40.988185428560534,
+     "E_bounds_GPa": [
+      14.936559467121066,
+      67.03981139
+     ],
+     "nu": 0.30589632019999996,
+     "cte_ppm": 7.6439638907820635,
+     "cte_bounds_ppm": [
+      7.6439638907820635,
+      18.408413688578946
+     ]
+    },
+    "conv_tier4": {
+     "kx": 5.5227871100881565,
+     "ky": 5.5227871100881565,
+     "kz": 1.5988678152939342,
+     "kz_bounds": [
+      1.2887566265006358,
+      42.2150661271135
+     ],
+     "kxy_bracket": [
+      5.271142639157482,
+      5.774431581018832
+     ],
+     "kz_post_range": null,
+     "kxy_post_range": null,
+     "kz_gap_encapsulant_legacy": null,
+     "kxy_gap_encapsulant_legacy": null,
+     "E_GPa": 40.988185428560534,
+     "E_bounds_GPa": [
+      14.936559467121066,
+      67.03981139
+     ],
+     "nu": 0.30589632019999996,
+     "cte_ppm": 7.6439638907820635,
+     "cte_bounds_ppm": [
+      7.6439638907820635,
+      18.408413688578946
+     ]
     }
    },
    "sensitivity": {
-    "tier1_ls1cf1": {
-     "base": 41.641772667740916,
-     "posts_current": 24.0440727365956,
-     "posts_land": 41.641772667740916,
-     "posts_terminal": 41.718124568661054,
-     "gap_encapsulant_legacy": 1.5988678152939342,
-     "termination_15um": 40.99132814685899,
-     "termination_40um": 42.6174394490638,
-     "batio3_k_2": 41.53043844471034,
-     "batio3_k_3.5": 41.796332761169126,
-     "termination_k_0.7": 39.99528206130305,
-     "termination_k_400": 42.31367153535723
-    },
-    "tier2_ls1cf1": {
-     "base": 41.641772667740916,
-     "posts_current": 24.0440727365956,
-     "posts_land": 41.641772667740916,
-     "posts_terminal": 41.718124568661054,
-     "gap_encapsulant_legacy": 1.5988678152939342,
-     "termination_15um": 40.99132814685899,
-     "termination_40um": 42.6174394490638,
-     "batio3_k_2": 41.53043844471034,
-     "batio3_k_3.5": 41.796332761169126,
-     "termination_k_0.7": 39.99528206130305,
-     "termination_k_400": 42.31367153535723
-    },
-    "tier3_hs2": {
+    "tier1_hs2": {
      "base": 45.73877626954588,
      "posts_current": 45.73877626954588,
      "posts_land": 45.73877626954588,
      "posts_terminal": 45.73877626954588,
      "gap_encapsulant_legacy": 45.73877626954588
     },
-    "tier4_hs1l2": {
+    "tier2_hs1l2": {
      "base": 52.813632372249735,
      "posts_current": 49.23624728899708,
      "posts_land": 52.813632372249735,
@@ -5285,6 +5259,32 @@
      "TYM5_k_1.5": 52.78912424085523,
      "TYM5_k_6": 52.83424718094971,
      "posts_at_half_J": 66.78913237224974
+    },
+    "tier3_ls1cf1": {
+     "base": 41.641772667740916,
+     "posts_current": 24.0440727365956,
+     "posts_land": 41.641772667740916,
+     "posts_terminal": 41.718124568661054,
+     "gap_encapsulant_legacy": 1.5988678152939342,
+     "termination_15um": 40.99132814685899,
+     "termination_40um": 42.6174394490638,
+     "batio3_k_2": 41.53043844471034,
+     "batio3_k_3.5": 41.796332761169126,
+     "termination_k_0.7": 39.99528206130305,
+     "termination_k_400": 42.31367153535723
+    },
+    "tier4_ls1cf1": {
+     "base": 41.641772667740916,
+     "posts_current": 24.0440727365956,
+     "posts_land": 41.641772667740916,
+     "posts_terminal": 41.718124568661054,
+     "gap_encapsulant_legacy": 1.5988678152939342,
+     "termination_15um": 40.99132814685899,
+     "termination_40um": 42.6174394490638,
+     "batio3_k_2": 41.53043844471034,
+     "batio3_k_3.5": 41.796332761169126,
+     "termination_k_0.7": 39.99528206130305,
+     "termination_k_400": 42.31367153535723
     }
    }
   }

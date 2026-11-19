@@ -40,7 +40,10 @@ recorded beside it.
 RULE (declared before the result): the production order is the order of the decided tiers
 with the best heat path among those meeting the via rule (both-face terminals); when none
 meets it, the order with the best worst-via aspect ratio, ties broken by the heat path. Both
-the chosen order and the best heat-path order are recorded for the paper.
+the chosen order and the best heat-path order are recorded for the paper, with every decided
+order ranked by the rule (rule_ranking: heat path, worst via aspect ratio with both- and
+single-face terminals), the runner-up, and the rule applied to the single-face aspect ratios
+(single_face: the order it picks and the chosen order's single-face worst via).
 
     python tcpmt_tier_order.py [design ...]   -> research/tcpmt_revision/tier_order.json
 """
@@ -253,6 +256,25 @@ def label(order, cls):
                       for v in order)
 
 
+def rule_key(r, terminals="both"):
+    """Sort key of RULE over evaluated orders: the orders meeting the via rule first, by heat
+    path; then the rest by worst-via aspect ratio, ties broken by the heat path. `terminals`
+    'single' applies the same rule to the single-face aspect ratios (the sensitivity)."""
+    ar = r[f"worst_ar_{terminals}"]
+    if ar <= AR_MAX + 1e-12:
+        return (0, r["heat_path_K"], ar)
+    return (1, round(ar, 9), r["heat_path_K"])
+
+
+def order_row(r):
+    """The paper's row of one evaluated order."""
+    return {"order": r["order"], "heat_path_K": r["heat_path_K"],
+            "heat_path_two_sided_K": r["heat_path_two_sided_K"],
+            "worst_ar_both": r["worst_ar_both"], "worst_net_both": r["worst_net_both"],
+            "worst_ar_single": r["worst_ar_single"], "worst_net_single": r["worst_net_single"],
+            "via_rule_met": r["via_rule_met"]}
+
+
 def analyse(entry, decided, max_tiers, full_search=True):
     """The tier-order record of one design entry. `decided`: the decided tiers as
     [{class: n}] (any order). Returns the record with 'chosen' (production order)."""
@@ -312,6 +334,12 @@ def analyse(entry, decided, max_tiers, full_search=True):
         basis = ("no order of the decided tiers meets the via rule: best worst-via aspect "
                  "ratio, ties broken by the heat path")
     best_heat = min(dec, key=lambda r: (r["heat_path_K"], r["worst_ar_both"]))
+    # every decided order ranked by the rule (rank 1 = the production order), and the rule
+    # applied to the single-face aspect ratios (the terminal sensitivity of the paper)
+    ranking = sorted(dec, key=rule_key)
+    if ranking[0] is not chosen:
+        raise RuntimeError("the rule ranking disagrees with the chosen order")
+    single = sorted(dec, key=lambda r: rule_key(r, "single"))[0]
     rec = {"design": entry["tag"], "rule": RULE, "via_diameter_um": d_via,
            "ar_limit": AR_MAX, "rdl_um": RDL_UM, "k_z_rdl_W_mK": k_rdl,
            "per_part_25C_W": p_part, "nets": [n for n, _a, _b in nets],
@@ -323,7 +351,15 @@ def analyse(entry, decided, max_tiers, full_search=True):
            "decided_tiers": [list(v) for v in vecs_dec],
            "decided_orders": sorted(dec, key=lambda r: (r["worst_ar_both"], r["heat_path_K"])),
            "n_decided_orders": len(dec), "n_meeting_via_rule": len(meets),
-           "chosen": chosen, "chosen_basis": basis, "best_heat_path_order": best_heat}
+           "chosen": chosen, "chosen_basis": basis, "best_heat_path_order": best_heat,
+           "rule_ranking": [dict(order_row(r), rank=i + 1) for i, r in enumerate(ranking)],
+           "runner_up": order_row(ranking[1]) if len(ranking) > 1 else None,
+           "single_face": {
+               "rule_choice": order_row(single),
+               "same_as_chosen": single["order"] == chosen["order"],
+               "chosen_order_worst_ar_single": chosen["worst_ar_single"],
+               "what": "RULE applied with single-face terminals (dies face the input end): "
+                       "the order it picks, and the chosen order's single-face worst via"}}
     # 2. the full repartition search with packing (context)
     if full_search:
         gs, _ = groupings(entry, max_tiers)
