@@ -120,12 +120,12 @@
    "source": "Fe-based soft-magnetic alloy powder (Fe-Si/Fe-Si-Cr/amorphous class; pure Fe 80 W/mK, amorphous ~9 W/mK)",
    "status": "LITERATURE_TYPICAL"
   },
-  "qfn_body": {
-   "k": 1.7970526185629767,
-   "E": 25000.0,
+  "mould": {
+   "k": 0.9,
+   "E": 20000.0,
    "nu": 0.3,
-   "cte": 9e-06,
-   "source": "DECLARED QFN construction: Cu pad 200 um + Si die 250 um + mould 200 um over 45 % of the package, mould compound (k 0.9 W/mK) elsewhere; E/CTE of a filled mould compound with the pad and die",
+   "cte": 1e-05,
+   "source": "filled epoxy mould compound class (k 0.9 W/mK, E 20 GPa, CTE 10 ppm/K below Tg; the mould values of the earlier declared QFN body)",
    "status": "ASSUMPTION"
   }
  },
@@ -504,19 +504,228 @@
     3.3,
     2.6
    ],
-   "body_um": 650.0,
-   "terminal_um": 50.0,
+   "body_um": 500.0,
+   "terminal_um": 200.0,
    "overall_um": 700.0,
-   "pads_um": [
+   "qfn": {
+    "exposed_die_mm": [
+     2.5,
+     1.8
+    ],
+    "leadframe_um": 200.0,
+    "R_jc_K_W": 0.6,
+    "R_jb_K_W": 1.8,
+    "land_rects_mm": [
+     [
+      -1.85,
+      -0.975,
+      0.676,
+      1.026
+     ],
+     [
+      -1.325,
+      -0.975,
+      1.026,
+      1.45
+     ],
+     [
+      -1.85,
+      -0.975,
+      -0.024,
+      0.326
+     ],
+     [
+      -1.55,
+      -0.975,
+      -1.175,
+      -0.024
+     ],
+     [
+      -1.325,
+      -0.975,
+      -1.45,
+      -1.175
+     ],
+     [
+      -1.85,
+      -1.55,
+      -1.175,
+      -0.775
+     ],
+     [
+      -0.625,
+      -0.175,
+      -1.45,
+      1.45
+     ],
+     [
+      0.175,
+      0.625,
+      -1.45,
+      1.45
+     ],
+     [
+      0.975,
+      1.325,
+      -1.45,
+      1.45
+     ],
+     [
+      1.325,
+      1.55,
+      -1.175,
+      1.175
+     ],
+     [
+      1.55,
+      1.85,
+      0.775,
+      1.175
+     ],
+     [
+      1.55,
+      1.85,
+      0.125,
+      0.525
+     ],
+     [
+      1.55,
+      1.85,
+      -0.525,
+      -0.125
+     ],
+     [
+      1.55,
+      1.85,
+      -1.175,
+      -0.775
+     ]
+    ],
+    "joint_metal_fraction": 0.4,
+    "die_thickness_rule": "the silicon path of the card reproduces the published R_thJC (Case TOP = the exposed die): t_Si = R_thJC k_Si A_die; the internal joint takes the rest of A - A3",
+    "leadframe_rule": "the leadframe spans A3 = 0.20 mm at the published land pattern inside the outline (the terminals seen from the bottom); mould between"
+   },
+   "terminal": "PQFN leadframe terminals (gate, 2 x source, 2 x drain; wettable flanks)",
+   "status": "DATASHEET (outline, exposed die, leadframe A3, land pattern, R_thJC / R_thJB) + DECLARED (die / joint split by R_thJC, joint bar fraction, mould card)",
+   "source": "EPC2366 datasheet (epc_ds/EPC2366/EPC2366.pdf, rev. June 12, 2026): PACKAGE OUTLINE (p. 9: E 3.30 x D 2.60 mm, A 0.70 max, A3 0.20 ref, exposed die 2.5 x 1.8 mm, 'the exposed die is the silicon substrate'), Thermal Characteristics (p. 1: R_thJC 0.6 K/W to Case TOP, R_thJB 1.8 K/W), RECOMMENDED LAND PATTERN (p. 10)",
+   "land_source": "EPC2366 datasheet, RECOMMENDED LAND PATTERN (solder mask defined, p. 10)",
+   "superseded": "the DECLARED QFN body of the cards before review round 3 (Cu pad 200 + die 250 + mould CAP 200 um over 45 % of the package, mould elsewhere: part k_z 1.93, tier k_z 1.62 W/mK) contradicted the published exposed die",
+   "land_um": [
     [
-     3300.0,
-     1430.0000000000002
+     875.0,
+     350.0
+    ],
+    [
+     350.0,
+     424.0
+    ],
+    [
+     875.0,
+     350.0
+    ],
+    [
+     575.0,
+     1151.0
+    ],
+    [
+     350.0,
+     275.0
+    ],
+    [
+     300.0,
+     400.0
+    ],
+    [
+     450.0,
+     2900.0
+    ],
+    [
+     450.0,
+     2900.0
+    ],
+    [
+     350.0,
+     2900.0
+    ],
+    [
+     225.0,
+     2350.0
+    ],
+    [
+     300.0,
+     400.0
+    ],
+    [
+     300.0,
+     400.0
+    ],
+    [
+     300.0,
+     400.0
+    ],
+    [
+     300.0,
+     400.0
     ]
    ],
-   "body_phase": "qfn_body",
-   "terminal": "QFN exposed pad + leads (55 %)",
-   "status": "ASSUMPTION (package construction)",
-   "source": "EPC-Product-Table: QFN 3.3 x 2.6 mm; HVR_epc_device_data.json: A = 0.70 mm; construction DECLARED (qfn_body)"
+   "pads_um": [
+    [
+     875.0,
+     350.0
+    ],
+    [
+     350.0,
+     424.0
+    ],
+    [
+     875.0,
+     350.0
+    ],
+    [
+     575.0,
+     1151.0
+    ],
+    [
+     350.0,
+     275.0
+    ],
+    [
+     300.0,
+     400.0
+    ],
+    [
+     450.0,
+     2900.0
+    ],
+    [
+     450.0,
+     2900.0
+    ],
+    [
+     350.0,
+     2900.0
+    ],
+    [
+     225.0,
+     2350.0
+    ],
+    [
+     300.0,
+     400.0
+    ],
+    [
+     300.0,
+     400.0
+    ],
+    [
+     300.0,
+     400.0
+    ],
+    [
+     300.0,
+     400.0
+    ]
+   ]
   }
  },
  "inductor_segment": {
@@ -3441,26 +3650,26 @@
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
-      "value": 18526.09172070889,
+      "value": 35041.40055290102,
       "status": "DERIVED"
      },
      "nu": {
-      "value": 0.30694231250000004,
+      "value": 0.307965225,
       "status": "DERIVED"
      },
      "cte": {
-      "value": 1.2086743097542717e-05,
+      "value": 9.345582329614279e-06,
       "status": "DERIVED"
      },
      "k": {
-      "value": 1.6210768442260488,
+      "value": 28.24868416691067,
       "status": "DERIVED"
      },
      "k_ortho": {
       "value": [
-       1.8815924743482888,
-       1.8815924743482888,
-       1.6210768442260488
+       4.408580608009207,
+       4.408580608009207,
+       28.24868416691067
       ],
       "status": "DERIVED"
      },
@@ -3469,33 +3678,33 @@
       "script": "scripts/tcpmt_converter_cards.py",
       "card": "conv_tier1",
       "bounds": {
-       "kz_reuss": 1.2837152593886738,
-       "kz_voigt": 3.1252809317157153,
-       "kz_estimate": 1.6210768442260488,
+       "kz_reuss": 1.2655996697330882,
+       "kz_voigt": 80.6291474375,
+       "kz_estimate": 28.24868416691067,
        "kxy_series_parallel": [
-        1.858179887797828,
-        1.9050050608987497
+        4.176861293677895,
+        4.640299922340519
        ],
-       "kxy_reuss": 1.2837152593886738,
-       "kxy_voigt": 3.1252809317157153,
+       "kxy_reuss": 1.2655996697330882,
+       "kxy_voigt": 80.6291474375,
        "kz_post_range": [
-        1.6210768442260488,
-        1.6210768442260488
+        28.24868416691067,
+        28.24868416691067
        ],
        "kxy_post_range": [
-        1.8815924743482888,
-        1.8815924743482888
+        4.408580608009207,
+        4.408580608009207
        ],
-       "kz_gap_encapsulant_legacy": 1.6210768442260488,
-       "kxy_gap_encapsulant_legacy": 1.8815924743482888
+       "kz_gap_encapsulant_legacy": 28.24868416691067,
+       "kxy_gap_encapsulant_legacy": 4.408580608009207
       },
       "mechanical": {
-       "E_voigt_MPa": 21089.8625,
-       "E_reuss_MPa": 15962.320941417782,
-       "E_hill_MPa": 18526.09172070889,
-       "nu_mean": 0.30694231250000004,
-       "cte_turner_per_K": 1.2086743097542717e-05,
-       "cte_volume_per_K": 1.5124425e-05,
+       "E_voigt_MPa": 51551.50625,
+       "E_reuss_MPa": 18531.294855802043,
+       "E_hill_MPa": 35041.40055290102,
+       "nu_mean": 0.307965225,
+       "cte_turner_per_K": 9.345582329614279e-06,
+       "cte_volume_per_K": 1.4800841212500002e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
       "tier": "tier1_ls1",
@@ -3515,11 +3724,35 @@
         "kind": "die",
         "part": "EPC2366",
         "count": 1,
-        "kz": 1.9268755833846802,
-        "k_in": 2.8824955524984786,
+        "kz": 37.394884005209015,
+        "k_in": 37.6284764641695,
         "cap_um": 0.0,
         "gap_um": 0.0,
-        "post_fraction": 0.0
+        "post_fraction": 0.0,
+        "qfn": {
+         "A_package_mm2": 8.58,
+         "A_die_mm2": 4.5,
+         "A_beside_mm2": 4.08,
+         "land_mm2": 6.272725,
+         "land_in_outline_mm2": 5.252725000000001,
+         "land_under_die_mm2": 2.5137500000000004,
+         "leadframe_um": 200.0,
+         "joint_um": 149.00000000000006,
+         "silicon_um": 350.99999999999994,
+         "f_cu_leadframe_under_die": 0.5586111111111112,
+         "f_cu_leadframe_beside": 0.6713174019607844,
+         "f_cu_leadframe": 0.6122057109557111,
+         "f_joint": 0.4,
+         "k_z_part": 37.394884005209015,
+         "check_vs_datasheet": {
+          "R_top_card_K_W": 0.6,
+          "R_thJC_datasheet_K_W": 0.6,
+          "R_bottom_card_K_W": 1.617195312725561,
+          "R_thJB_datasheet_K_W": 1.8,
+          "note": "1-D columns over the exposed die (um / (W/mK) / mm^2 = K/W); R_thJB also holds the device metallization (not resolved)"
+         },
+         "construction": "exposed die (published): leadframe + joint + silicon under the die, leadframe + mould beside it"
+        }
        }
       },
       "gap_posts": {},
@@ -3530,9 +3763,11 @@
        "what": "output-current posts spanning the tier"
       },
       "volume_fractions": {
-       "qfn_body": 0.697125,
-       "solder": 0.029493750000000003,
-       "encapsulant": 0.27338125
+       "silicon": 0.19743749999999996,
+       "solder": 0.03352500000000001,
+       "copper": 0.131318125,
+       "mould": 0.388469375,
+       "encapsulant": 0.24925000000000003
       }
      }
     },
@@ -3540,26 +3775,26 @@
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
-      "value": 18526.09172070889,
+      "value": 35041.40055290102,
       "status": "DERIVED"
      },
      "nu": {
-      "value": 0.30694231250000004,
+      "value": 0.307965225,
       "status": "DERIVED"
      },
      "cte": {
-      "value": 1.2086743097542717e-05,
+      "value": 9.345582329614279e-06,
       "status": "DERIVED"
      },
      "k": {
-      "value": 1.6210768442260488,
+      "value": 28.24868416691067,
       "status": "DERIVED"
      },
      "k_ortho": {
       "value": [
-       1.8815924743482888,
-       1.8815924743482888,
-       1.6210768442260488
+       4.408580608009207,
+       4.408580608009207,
+       28.24868416691067
       ],
       "status": "DERIVED"
      },
@@ -3568,33 +3803,33 @@
       "script": "scripts/tcpmt_converter_cards.py",
       "card": "conv_tier2",
       "bounds": {
-       "kz_reuss": 1.2837152593886738,
-       "kz_voigt": 3.1252809317157153,
-       "kz_estimate": 1.6210768442260488,
+       "kz_reuss": 1.2655996697330882,
+       "kz_voigt": 80.6291474375,
+       "kz_estimate": 28.24868416691067,
        "kxy_series_parallel": [
-        1.858179887797828,
-        1.9050050608987497
+        4.176861293677895,
+        4.640299922340519
        ],
-       "kxy_reuss": 1.2837152593886738,
-       "kxy_voigt": 3.1252809317157153,
+       "kxy_reuss": 1.2655996697330882,
+       "kxy_voigt": 80.6291474375,
        "kz_post_range": [
-        1.6210768442260488,
-        1.6210768442260488
+        28.24868416691067,
+        28.24868416691067
        ],
        "kxy_post_range": [
-        1.8815924743482888,
-        1.8815924743482888
+        4.408580608009207,
+        4.408580608009207
        ],
-       "kz_gap_encapsulant_legacy": 1.6210768442260488,
-       "kxy_gap_encapsulant_legacy": 1.8815924743482888
+       "kz_gap_encapsulant_legacy": 28.24868416691067,
+       "kxy_gap_encapsulant_legacy": 4.408580608009207
       },
       "mechanical": {
-       "E_voigt_MPa": 21089.8625,
-       "E_reuss_MPa": 15962.320941417782,
-       "E_hill_MPa": 18526.09172070889,
-       "nu_mean": 0.30694231250000004,
-       "cte_turner_per_K": 1.2086743097542717e-05,
-       "cte_volume_per_K": 1.5124425e-05,
+       "E_voigt_MPa": 51551.50625,
+       "E_reuss_MPa": 18531.294855802043,
+       "E_hill_MPa": 35041.40055290102,
+       "nu_mean": 0.307965225,
+       "cte_turner_per_K": 9.345582329614279e-06,
+       "cte_volume_per_K": 1.4800841212500002e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
       "tier": "tier2_ls1",
@@ -3614,11 +3849,35 @@
         "kind": "die",
         "part": "EPC2366",
         "count": 1,
-        "kz": 1.9268755833846802,
-        "k_in": 2.8824955524984786,
+        "kz": 37.394884005209015,
+        "k_in": 37.6284764641695,
         "cap_um": 0.0,
         "gap_um": 0.0,
-        "post_fraction": 0.0
+        "post_fraction": 0.0,
+        "qfn": {
+         "A_package_mm2": 8.58,
+         "A_die_mm2": 4.5,
+         "A_beside_mm2": 4.08,
+         "land_mm2": 6.272725,
+         "land_in_outline_mm2": 5.252725000000001,
+         "land_under_die_mm2": 2.5137500000000004,
+         "leadframe_um": 200.0,
+         "joint_um": 149.00000000000006,
+         "silicon_um": 350.99999999999994,
+         "f_cu_leadframe_under_die": 0.5586111111111112,
+         "f_cu_leadframe_beside": 0.6713174019607844,
+         "f_cu_leadframe": 0.6122057109557111,
+         "f_joint": 0.4,
+         "k_z_part": 37.394884005209015,
+         "check_vs_datasheet": {
+          "R_top_card_K_W": 0.6,
+          "R_thJC_datasheet_K_W": 0.6,
+          "R_bottom_card_K_W": 1.617195312725561,
+          "R_thJB_datasheet_K_W": 1.8,
+          "note": "1-D columns over the exposed die (um / (W/mK) / mm^2 = K/W); R_thJB also holds the device metallization (not resolved)"
+         },
+         "construction": "exposed die (published): leadframe + joint + silicon under the die, leadframe + mould beside it"
+        }
        }
       },
       "gap_posts": {},
@@ -3629,9 +3888,11 @@
        "what": "output-current posts spanning the tier"
       },
       "volume_fractions": {
-       "qfn_body": 0.697125,
-       "solder": 0.029493750000000003,
-       "encapsulant": 0.27338125
+       "silicon": 0.19743749999999996,
+       "solder": 0.03352500000000001,
+       "copper": 0.131318125,
+       "mould": 0.388469375,
+       "encapsulant": 0.24925000000000003
       }
      }
     },
@@ -3889,71 +4150,71 @@
    },
    "summary": {
     "conv_tier1": {
-     "kx": 1.8815924743482888,
-     "ky": 1.8815924743482888,
-     "kz": 1.6210768442260488,
+     "kx": 4.408580608009207,
+     "ky": 4.408580608009207,
+     "kz": 28.24868416691067,
      "kz_bounds": [
-      1.2837152593886738,
-      3.1252809317157153
+      1.2655996697330882,
+      80.6291474375
      ],
      "kxy_bracket": [
-      1.858179887797828,
-      1.9050050608987497
+      4.176861293677895,
+      4.640299922340519
      ],
      "kz_post_range": [
-      1.6210768442260488,
-      1.6210768442260488
+      28.24868416691067,
+      28.24868416691067
      ],
      "kxy_post_range": [
-      1.8815924743482888,
-      1.8815924743482888
+      4.408580608009207,
+      4.408580608009207
      ],
-     "kz_gap_encapsulant_legacy": 1.6210768442260488,
-     "kxy_gap_encapsulant_legacy": 1.8815924743482888,
-     "E_GPa": 18.52609172070889,
+     "kz_gap_encapsulant_legacy": 28.24868416691067,
+     "kxy_gap_encapsulant_legacy": 4.408580608009207,
+     "E_GPa": 35.04140055290102,
      "E_bounds_GPa": [
-      15.962320941417781,
-      21.0898625
+      18.531294855802045,
+      51.551506249999996
      ],
-     "nu": 0.30694231250000004,
-     "cte_ppm": 12.086743097542717,
+     "nu": 0.307965225,
+     "cte_ppm": 9.34558232961428,
      "cte_bounds_ppm": [
-      12.086743097542717,
-      15.124425
+      9.34558232961428,
+      14.800841212500002
      ]
     },
     "conv_tier2": {
-     "kx": 1.8815924743482888,
-     "ky": 1.8815924743482888,
-     "kz": 1.6210768442260488,
+     "kx": 4.408580608009207,
+     "ky": 4.408580608009207,
+     "kz": 28.24868416691067,
      "kz_bounds": [
-      1.2837152593886738,
-      3.1252809317157153
+      1.2655996697330882,
+      80.6291474375
      ],
      "kxy_bracket": [
-      1.858179887797828,
-      1.9050050608987497
+      4.176861293677895,
+      4.640299922340519
      ],
      "kz_post_range": [
-      1.6210768442260488,
-      1.6210768442260488
+      28.24868416691067,
+      28.24868416691067
      ],
      "kxy_post_range": [
-      1.8815924743482888,
-      1.8815924743482888
+      4.408580608009207,
+      4.408580608009207
      ],
-     "kz_gap_encapsulant_legacy": 1.6210768442260488,
-     "kxy_gap_encapsulant_legacy": 1.8815924743482888,
-     "E_GPa": 18.52609172070889,
+     "kz_gap_encapsulant_legacy": 28.24868416691067,
+     "kxy_gap_encapsulant_legacy": 4.408580608009207,
+     "E_GPa": 35.04140055290102,
      "E_bounds_GPa": [
-      15.962320941417781,
-      21.0898625
+      18.531294855802045,
+      51.551506249999996
      ],
-     "nu": 0.30694231250000004,
-     "cte_ppm": 12.086743097542717,
+     "nu": 0.307965225,
+     "cte_ppm": 9.34558232961428,
      "cte_bounds_ppm": [
-      12.086743097542717,
-      15.124425
+      9.34558232961428,
+      14.800841212500002
      ]
     },
     "conv_tier3": {
@@ -4027,59 +4288,59 @@
    },
    "legacy_gap_encapsulant_summary": {
     "conv_tier1": {
-     "kx": 1.8815924743482888,
-     "ky": 1.8815924743482888,
-     "kz": 1.6210768442260488,
+     "kx": 4.408580608009207,
+     "ky": 4.408580608009207,
+     "kz": 28.24868416691067,
      "kz_bounds": [
-      1.2837152593886738,
-      3.1252809317157153
+      1.2655996697330882,
+      80.6291474375
      ],
      "kxy_bracket": [
-      1.858179887797828,
-      1.9050050608987497
+      4.176861293677895,
+      4.640299922340519
      ],
      "kz_post_range": null,
      "kxy_post_range": null,
      "kz_gap_encapsulant_legacy": null,
      "kxy_gap_encapsulant_legacy": null,
-     "E_GPa": 18.52609172070889,
+     "E_GPa": 35.04140055290102,
      "E_bounds_GPa": [
-      15.962320941417781,
-      21.0898625
+      18.531294855802045,
+      51.551506249999996
      ],
-     "nu": 0.30694231250000004,
-     "cte_ppm": 12.086743097542717,
+     "nu": 0.307965225,
+     "cte_ppm": 9.34558232961428,
      "cte_bounds_ppm": [
-      12.086743097542717,
-      15.124425
+      9.34558232961428,
+      14.800841212500002
      ]
     },
     "conv_tier2": {
-     "kx": 1.8815924743482888,
-     "ky": 1.8815924743482888,
-     "kz": 1.6210768442260488,
+     "kx": 4.408580608009207,
+     "ky": 4.408580608009207,
+     "kz": 28.24868416691067,
      "kz_bounds": [
-      1.2837152593886738,
-      3.1252809317157153
+      1.2655996697330882,
+      80.6291474375
      ],
      "kxy_bracket": [
-      1.858179887797828,
-      1.9050050608987497
+      4.176861293677895,
+      4.640299922340519
      ],
      "kz_post_range": null,
      "kxy_post_range": null,
      "kz_gap_encapsulant_legacy": null,
      "kxy_gap_encapsulant_legacy": null,
-     "E_GPa": 18.52609172070889,
+     "E_GPa": 35.04140055290102,
      "E_bounds_GPa": [
-      15.962320941417781,
-      21.0898625
+      18.531294855802045,
+      51.551506249999996
      ],
-     "nu": 0.30694231250000004,
-     "cte_ppm": 12.086743097542717,
+     "nu": 0.307965225,
+     "cte_ppm": 9.34558232961428,
      "cte_bounds_ppm": [
-      12.086743097542717,
-      15.124425
+      9.34558232961428,
+      14.800841212500002
      ]
     },
     "conv_tier3": {
@@ -4141,18 +4402,18 @@
    },
    "sensitivity": {
     "tier1_ls1": {
-     "base": 1.6210768442260488,
-     "posts_current": 1.6210768442260488,
-     "posts_land": 1.6210768442260488,
-     "posts_terminal": 1.6210768442260488,
-     "gap_encapsulant_legacy": 1.6210768442260488
+     "base": 28.24868416691067,
+     "posts_current": 28.24868416691067,
+     "posts_land": 28.24868416691067,
+     "posts_terminal": 28.24868416691067,
+     "gap_encapsulant_legacy": 28.24868416691067
     },
     "tier2_ls1": {
-     "base": 1.6210768442260488,
-     "posts_current": 1.6210768442260488,
-     "posts_land": 1.6210768442260488,
-     "posts_terminal": 1.6210768442260488,
-     "gap_encapsulant_legacy": 1.6210768442260488
+     "base": 28.24868416691067,
+     "posts_current": 28.24868416691067,
+     "posts_land": 28.24868416691067,
+     "posts_terminal": 28.24868416691067,
+     "gap_encapsulant_legacy": 28.24868416691067
     },
     "tier3_hs3": {
      "base": 35.16845122669327,

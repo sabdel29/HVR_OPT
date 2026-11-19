@@ -88,6 +88,15 @@ CONSTRUCTIONS (sources)
                       the uncertainty step: posts carrying only the terminal RMS currents at
                       J_POST (lower) to the full solder-bar outline / widest band / J_POST/2
                       (upper). POST_BASES, post_area_mm2.
+  PQFN (EPC2366)      (review round 3, count neighbour m25) as PUBLISHED: the die is EXPOSED
+                      on top (its silicon back is the package top), flip-chip on a 200-um Cu
+                      leadframe (A3) whose terminals are the published land pattern; mould
+                      beside the die and between the terminals. Two parallel columns over the
+                      3.3 x 2.6 mm package: leadframe + internal joint (solder bars, 0.40,
+                      declared) + silicon under the 2.5 x 1.8 mm die, leadframe + mould beside
+                      it; the silicon thickness reproduces the published R_thJC (0.6 K/W), the
+                      bottom path is checked against R_thJB. Replaces the declared mould-cap
+                      body (tier k_z 1.62 W/mK). _qfn_prism.
 
     python tcpmt_converter_cards.py  -> research/tcpmt_revision/converter_cards.json
 """
@@ -149,15 +158,15 @@ PHASES = {
                            "class; pure Fe 80 W/mK, amorphous ~9 W/mK)",
                  "status": "LITERATURE_TYPICAL"},
 }
-#: QFN body (EPC2366, count neighbour M = 25): a 200-um Cu exposed pad, ~250 um of die and a
-#: 200-um mould cap over 45 % of the package, mould elsewhere (k 0.9 W/mK, E 20 GPa, CTE
-#: 10 ppm/K: filled epoxy mould compound) -- DECLARED construction, used only by that design
-_QFN_K = 0.45 * 650.0 / (200.0 / 400.0 + 250.0 / 130.0 + 200.0 / 0.9) + 0.55 * 0.9
-PHASES["qfn_body"] = {"k": _QFN_K, "E": 25000.0, "nu": 0.30, "cte": 9.0e-6,
-                      "source": "DECLARED QFN construction: Cu pad 200 um + Si die 250 um + "
-                                "mould 200 um over 45 % of the package, mould compound "
-                                "(k 0.9 W/mK) elsewhere; E/CTE of a filled mould compound with "
-                                "the pad and die", "status": "ASSUMPTION"}
+#: mould compound of a packaged part (EPC2366 PQFN: beside the exposed die, between the
+#: leadframe terminals and in the internal flip-chip joint). Review round 3: replaces the
+#: DECLARED 'qfn_body', which put a 200-um mould cap over a die the datasheet shows EXPOSED
+#: (that body gave the EPC2366 tiers of m25 k_z 1.62 W/mK); the values are those the declared
+#: body used for its mould
+PHASES["mould"] = {"k": 0.9, "E": 20000.0, "nu": 0.30, "cte": 10.0e-6,
+                   "source": "filled epoxy mould compound class (k 0.9 W/mK, E 20 GPa, CTE 10 "
+                             "ppm/K below Tg; the mould values of the earlier declared QFN "
+                             "body)", "status": "ASSUMPTION"}
 #: TY-M5 metal composite, declared (the paper gives no composition or k; see docstring)
 TYM5 = {"metal_fraction": 0.70, "metal_fraction_range": [0.58, 0.80],
         "k": 3.0, "k_range": [1.5, 6.0], "B_sat_T": 1.25, "mu_r": 15.0,
@@ -218,15 +227,73 @@ DEVICES.update({
                           "35 solder = 606 um (solder card for the whole terminal). Cu pillar "
                           "die for use in a package: no land pattern (the posts take the "
                           "pillar footprint)"},
-    # a packaged QFN: the die sits on an exposed Cu pad under a mould cap, so the vertical path
-    # through the part is pad + die + mould, not a bare die (body phase 'qfn_body' below)
-    "EPC2366": {"die_mm": (3.300, 2.600), "body_um": 650.0, "terminal_um": 50.0,
-                "overall_um": 700.0, "pads_um": [(3300.0, 2600.0 * 0.55)],
-                "body_phase": "qfn_body", "terminal": "QFN exposed pad + leads (55 %)",
-                "status": "ASSUMPTION (package construction)",
-                "source": "EPC-Product-Table: QFN 3.3 x 2.6 mm; HVR_epc_device_data.json: "
-                          "A = 0.70 mm; construction DECLARED (qfn_body)"},
+    # Review round 3: a PQFN WITH THE DIE EXPOSED ON TOP, modelled as published (_qfn_prism):
+    # the GaN-on-Si die is flip-chip on a 200-um Cu leadframe whose five terminals form the
+    # bottom face, and its silicon back IS the package top; mould fills beside the die,
+    # between the terminals and in the internal joint. die_mm is the package body (the
+    # engine's part footprint); body_um / terminal_um are the die + joint and the leadframe.
+    "EPC2366": {"die_mm": (3.300, 2.600), "body_um": 500.0, "terminal_um": 200.0,
+                "overall_um": 700.0,
+                "qfn": {"exposed_die_mm": (2.500, 1.800), "leadframe_um": 200.0,
+                        "R_jc_K_W": 0.6, "R_jb_K_W": 1.8,
+                        #: published RECOMMENDED LAND PATTERN (solder mask defined, radius
+                        #: 0.05 mm not subtracted: < 0.2 %) as rectangles (x0, x1, y0, y1) in
+                        #: mm about the package centre, x along the 3.3-mm side (E), y along
+                        #: the 2.6-mm side (D): gate, source (pin 2), drain, source, drain (pin
+                        #: 5 with its four wettable-flank toes)
+                        "land_rects_mm": [
+                            (-1.850, -0.975, 0.676, 1.026), (-1.325, -0.975, 1.026, 1.450),
+                            (-1.850, -0.975, -0.024, 0.326), (-1.550, -0.975, -1.175, -0.024),
+                            (-1.325, -0.975, -1.450, -1.175), (-1.850, -1.550, -1.175, -0.775),
+                            (-0.625, -0.175, -1.450, 1.450), (0.175, 0.625, -1.450, 1.450),
+                            (0.975, 1.325, -1.450, 1.450), (1.325, 1.550, -1.175, 1.175),
+                            (1.550, 1.850, 0.775, 1.175), (1.550, 1.850, 0.125, 0.525),
+                            (1.550, 1.850, -0.525, -0.125), (1.550, 1.850, -1.175, -0.775)],
+                        #: DECLARED: the internal flip-chip joint as solder bars at the EPC
+                        #: bare-die bar fraction (DIE OUTLINE: EPC2014C 0.34, EPC2055 0.41,
+                        #: EPC2057 0.41 of the die) in the mould
+                        "joint_metal_fraction": 0.40,
+                        "die_thickness_rule": "the silicon path of the card reproduces the "
+                                              "published R_thJC (Case TOP = the exposed die): "
+                                              "t_Si = R_thJC k_Si A_die; the internal joint "
+                                              "takes the rest of A - A3",
+                        "leadframe_rule": "the leadframe spans A3 = 0.20 mm at the published "
+                                          "land pattern inside the outline (the terminals "
+                                          "seen from the bottom); mould between"},
+                "terminal": "PQFN leadframe terminals (gate, 2 x source, 2 x drain; wettable "
+                            "flanks)", "status": "DATASHEET (outline, exposed die, leadframe "
+                            "A3, land pattern, R_thJC / R_thJB) + DECLARED (die / joint split "
+                            "by R_thJC, joint bar fraction, mould card)",
+                "source": "EPC2366 datasheet (epc_ds/EPC2366/EPC2366.pdf, rev. June 12, 2026): "
+                          "PACKAGE OUTLINE (p. 9: E 3.30 x D 2.60 mm, A 0.70 max, A3 0.20 ref, "
+                          "exposed die 2.5 x 1.8 mm, 'the exposed die is the silicon substrate'), "
+                          "Thermal Characteristics (p. 1: R_thJC 0.6 K/W to Case TOP, R_thJB "
+                          "1.8 K/W), RECOMMENDED LAND PATTERN (p. 10)",
+                "land_source": "EPC2366 datasheet, RECOMMENDED LAND PATTERN (solder mask "
+                               "defined, p. 10)",
+                "superseded": "the DECLARED QFN body of the cards before review round 3 (Cu pad "
+                              "200 + die 250 + mould CAP 200 um over 45 % of the package, mould "
+                              "elsewhere: part k_z 1.93, tier k_z 1.62 W/mK) contradicted the "
+                              "published exposed die"},
 })
+
+
+def _qfn_land_mm2(q, hx=None, hy=None):
+    """Area (mm^2) of a PQFN's published land pattern, optionally clipped to |x| <= hx,
+    |y| <= hy (the package outline, the exposed die)."""
+    tot = 0.0
+    for x0, x1, y0, y1 in q["land_rects_mm"]:
+        if hx is not None:
+            x0, x1, y0, y1 = max(x0, -hx), min(x1, hx), max(y0, -hy), min(y1, hy)
+        tot += max(0.0, x1 - x0) * max(0.0, y1 - y0)
+    return tot
+
+
+for _dev in DEVICES.values():                 # a PQFN's land / terminal patterns (w x l, um)
+    if "qfn" in _dev:
+        _dev["land_um"] = [(round((x1 - x0) * 1e3, 6), round((y1 - y0) * 1e3, 6))
+                           for x0, x1, y0, y1 in _dev["qfn"]["land_rects_mm"]]
+        _dev["pads_um"] = list(_dev["land_um"])
 KEEPOUT_UM = 50.0                    # declared die-to-die keep-out (design rule)
 
 
@@ -861,6 +928,8 @@ def _die_prism(part, H, a_post=0.0, legacy=False):
     the encapsulant (GAP_MODEL 'posts'). legacy: the card before review round 3 (encapsulant
     cap, a_post = 0, and the DECLARED terminal pattern where the datasheet one replaced it)."""
     dev = DEVICES[part]
+    if dev.get("qfn"):                 # a packaged part with an exposed die (EPC2366): its own
+        return _qfn_prism(part, H, 0.0 if legacy else a_post)      # column, as published
     a, b = dev["die_mm"]
     body = PHASES[dev.get("body_phase", "silicon")]
     enc, sol = PHASES["encapsulant"], PHASES["solder"]
@@ -886,6 +955,97 @@ def _die_prism(part, H, a_post=0.0, legacy=False):
             "k_in": k_in, "vol_um_mm2": vol, "solder_fraction": f_s, "cap_um": cap,
             "post_fraction": f_p, "post_mm2": area * f_p,
             "kz_layers": {"terminal": k_term, "body": body["k"], "gap": kz_gap}}
+
+
+def qfn_construction(part):
+    """The published PQFN of `part` (DEVICES[part]['qfn']) as card inputs: package, exposed
+    die and land areas (mm^2), leadframe / internal joint / silicon thicknesses (um, the
+    silicon set by the published R_thJC through the silicon card) and the leadframe copper
+    fraction under the die and beside it."""
+    dev = DEVICES[part]
+    q = dev["qfn"]
+    a, b = dev["die_mm"]
+    da, db = q["exposed_die_mm"]
+    A, Ad = a * b, da * db
+    land_in = _qfn_land_mm2(q, a / 2, b / 2)
+    land_die = _qfn_land_mm2(q, da / 2, db / 2)
+    t_lf = float(q["leadframe_um"])
+    t_si = float(q["R_jc_K_W"]) * PHASES["silicon"]["k"] * Ad * 1e-6 * 1e6
+    t_j = float(dev["overall_um"]) - t_lf - t_si
+    if t_j <= 0:
+        raise ValueError(f"{part}: R_thJC {q['R_jc_K_W']} K/W needs {t_si:.0f} um of silicon, "
+                         f"more than A - A3")
+    return {"A_package_mm2": A, "A_die_mm2": Ad, "A_beside_mm2": A - Ad,
+            "land_mm2": _qfn_land_mm2(q), "land_in_outline_mm2": land_in,
+            "land_under_die_mm2": land_die, "leadframe_um": t_lf, "joint_um": t_j,
+            "silicon_um": t_si, "f_cu_leadframe_under_die": land_die / Ad,
+            "f_cu_leadframe_beside": (land_in - land_die) / (A - Ad),
+            "f_cu_leadframe": land_in / A, "f_joint": float(q["joint_metal_fraction"])}
+
+
+def _qfn_prism(part, H, a_post=0.0):
+    """A packaged part with its die EXPOSED ON TOP (review round 3: EPC2366 as published), a
+    column spanning a tier of height H. Over the package two parallel columns: under the die,
+    the leadframe (Cu at the land pattern, mould between) + the internal flip-chip joint
+    (solder bars in mould) + the silicon die reaching the package top; beside the die, the
+    leadframe + mould to the top. Over a part shorter than its tier the gap layer (copper
+    posts of a_post mm^2 in the encapsulant) is in series with both. In plane: the leadframe
+    layer as the solder-terminal layer (parallel / 2-D Maxwell-Garnett midpoint), the
+    die-and-mould layer as the die in its package (series-parallel midpoint). The card's
+    silicon path reproduces R_thJC by construction; its bottom path (joint + leadframe under
+    the die) is recorded against R_thJB, which also holds the device metallization the
+    Si-carrier convention does not resolve."""
+    dev = DEVICES[part]
+    q = qfn_construction(part)
+    a, b = dev["die_mm"]
+    cu, sol, mld, si = (PHASES["copper"], PHASES["solder"], PHASES["mould"],
+                        PHASES["silicon"])
+    A, Ad, Am = q["A_package_mm2"], q["A_die_mm2"], q["A_beside_mm2"]
+    t_lf, t_j, t_si = q["leadframe_um"], q["joint_um"], q["silicon_um"]
+    h_part = float(dev["overall_um"])
+    cap = H - h_part
+    if cap < -1e-9:
+        raise ValueError(f"{part} ({h_part} um) is taller than its {H} um tier")
+    cap = max(cap, 0.0)
+
+    def mix(f, k_i, k_m):
+        return f * k_i["k"] + (1 - f) * k_m["k"]
+    k_lf_d = mix(q["f_cu_leadframe_under_die"], cu, mld)
+    k_lf_m = mix(q["f_cu_leadframe_beside"], cu, mld)
+    k_j = mix(q["f_joint"], sol, mld)
+    r_die = t_lf / k_lf_d + t_j / k_j + t_si / si["k"]           # um / (W/mK): series column
+    r_bes = t_lf / k_lf_m + (t_j + t_si) / mld["k"]
+    k_part = h_part * (Ad / r_die + Am / r_bes) / A               # the two columns in parallel
+    f_p = min(1.0, float(a_post) / A) if cap > 1e-12 else 0.0
+    kz_gap, k_in_gap = post_layer(f_p)
+    kz = series([x for x in ((h_part, k_part), (cap, kz_gap)) if x[0] > 1e-12])
+
+    def lay_in(f, k_i, k_m):
+        return 0.5 * (mix(f, k_i, k_m) + maxwell_garnett(k_i["k"], k_m["k"], f, dim=2))
+    k_in_lf = lay_in(q["f_cu_leadframe"], cu, mld)
+    k_die_layer = (t_j * lay_in(q["f_joint"], sol, mld) + t_si * si["k"]) / (t_j + t_si)
+    lo, up, _ = rect_cell_bounds(k_die_layer, *dev["qfn"]["exposed_die_mm"], mld["k"], A)
+    k_in = (t_lf * k_in_lf + (t_j + t_si) * 0.5 * (lo + up) + cap * k_in_gap) / H
+    land_in = q["land_in_outline_mm2"]
+    vol = {"silicon": Ad * t_si, "solder": Ad * q["f_joint"] * t_j,
+           "copper": land_in * t_lf + A * f_p * cap,
+           "mould": Ad * (1 - q["f_joint"]) * t_j + Am * (t_j + t_si) + (A - land_in) * t_lf,
+           "encapsulant": A * (1 - f_p) * cap}
+    pub = dev["qfn"]
+    check = {"R_top_card_K_W": t_si / si["k"] / Ad,
+             "R_thJC_datasheet_K_W": pub["R_jc_K_W"],
+             "R_bottom_card_K_W": (t_j / k_j + t_lf / k_lf_d) / Ad,
+             "R_thJB_datasheet_K_W": pub["R_jb_K_W"],
+             "note": "1-D columns over the exposed die (um / (W/mK) / mm^2 = K/W); R_thJB "
+                     "also holds the device metallization (not resolved)"}
+    return {"kind": "die", "part": part, "dims": (a, b), "area": A, "kz": kz, "k_in": k_in,
+            "vol_um_mm2": vol, "solder_fraction": q["f_joint"], "cap_um": cap,
+            "post_fraction": f_p, "post_mm2": A * f_p,
+            "kz_layers": {"column_under_die": h_part / r_die, "column_beside_die": h_part / r_bes,
+                          "part": k_part, "gap": kz_gap},
+            "qfn": {**q, "k_z_part": k_part, "check_vs_datasheet": check,
+                    "construction": "exposed die (published): leadframe + joint + silicon under "
+                                    "the die, leadframe + mould beside it"}}
 
 
 def _inductor_prism(fp_mm2, h_ind, H, k_core=None, a_post=0.0):
@@ -1083,7 +1243,8 @@ def mixed_tier(mc: MixedContents, name, parts, H, j_post=None, k_core=None, t_te
                                 "posts": a_post / A, "encapsulant": a_enc / A},
              "prisms": {c: {"kind": p["kind"], "part": p.get("part"), "count": n,
                             "kz": p["kz"], "k_in": p["k_in"], "cap_um": p["cap_um"],
-                            "gap_um": p["cap_um"], "post_fraction": p["post_fraction"]}
+                            "gap_um": p["cap_um"], "post_fraction": p["post_fraction"],
+                            **({"qfn": p["qfn"]} if p.get("qfn") else {})}
                         for c, p, n in comps},
              "gap_posts": gap_posts,
              "posts": {"I_rms_A": mc.i_out_rms_a * (n_ind / mc.n_ind_total if n_ind else 0),

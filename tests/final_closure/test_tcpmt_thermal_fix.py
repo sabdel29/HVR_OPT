@@ -219,6 +219,42 @@ def test_inductor_geometry_reproduces_the_papers_dcr():
     assert CC.inductor_envelope()["dcr_from_dimensions_mohm"] == pytest.approx(5.0, rel=0.1)
 
 
+def test_pqfn_is_modelled_as_published(cards):
+    """Review round 3: the EPC2366 (m25) is a PQFN with its die EXPOSED on top (datasheet
+    p. 9), not a die under a mould cap: two parallel columns over the package (leadframe +
+    joint + silicon under the 2.5 x 1.8 mm die, leadframe + mould beside it), the published
+    land pattern for the terminals and posts, the silicon path at the published R_thJC and the
+    bottom path checked against R_thJB."""
+    import tcpmt_converter_cards as CC
+    dev = CC.DEVICES["EPC2366"]
+    q = CC.qfn_construction("EPC2366")
+    assert dev["qfn"]["exposed_die_mm"] == (2.5, 1.8) and q["leadframe_um"] == 200.0
+    assert q["leadframe_um"] + q["joint_um"] + q["silicon_um"] == dev["overall_um"] == 700.0
+    # the published land pattern: 0.45 x 2.90 bars (x2) and the rest of the five pads
+    assert q["land_mm2"] == pytest.approx(6.2727, abs=1e-3)
+    assert q["land_in_outline_mm2"] < q["land_mm2"] < q["A_package_mm2"]
+    assert CC.pad_area_mm2(dev, "land_um") == pytest.approx(q["land_mm2"], rel=1e-9)
+    p = CC._qfn_prism("EPC2366", 700.0)
+    chk = p["qfn"]["check_vs_datasheet"]
+    assert chk["R_top_card_K_W"] == pytest.approx(dev["qfn"]["R_jc_K_W"], rel=1e-9)
+    assert chk["R_bottom_card_K_W"] == pytest.approx(dev["qfn"]["R_jb_K_W"], rel=0.15)
+    assert p["kz_layers"]["column_under_die"] > 50 * p["kz_layers"]["column_beside_die"]
+    assert "qfn_body" not in CC.PHASES and "mould" in CC.PHASES
+    m25 = cards["designs"]["m25"]["cards"]
+    for name, c in m25.items():
+        der = c["derivation"]
+        if der["parts"] == {"gan_ls": 1}:              # the EPC2366 tiers (no gap above it)
+            assert der["prisms"]["gan_ls"]["qfn"]["construction"].startswith("exposed die")
+            assert c["k_ortho"]["value"][2] > 20.0      # the mould-cap body gave 1.62 W/mK
+            assert der["bounds"]["kz_gap_encapsulant_legacy"] == pytest.approx(
+                c["k_ortho"]["value"][2])
+    # in a taller tier the posts go on its published land pattern
+    tall = CC._qfn_prism("EPC2366", 1000.0, CC.post_area_mm2(
+        "gan_ls", CC.MixedContents.from_record("m25"), "EPC2366", "land")[0])
+    assert tall["post_mm2"] == pytest.approx(q["land_mm2"])
+
+
+
 # ------------------------------------------------------------------ mesh-level checks
 @pytest.fixture(scope="module")
 def z1_build():
