@@ -89,3 +89,16 @@ add the manifold plate, redo the tier order for the new stack, update the manife
   - OPEN: the electrical model uses EPC2057's R_on tempco (8e-3/K) for EPC2055 (datasheet 6e-3/K) -> fix per device.
   - OPEN: verification.tex / compare.tex text and ordering.json still use the old rule.
 - Generalization to M=36 (agent running in a worktree based on 31a846c).
+- M=36 generalization (merged ff, d506e04).
+  - Design record configs/design_points.yaml (HVR_DESIGN, production m36).
+  - Mixed-tier cards; per-device R_on tempco.
+  - Tier order: all 24 orders AR 8.33 (the 1-mm T1 is always crossed). Chosen order:
+    [2HS+2Cf]|[HS+LS]|[LS+L]|[LS+2L].
+  - Decoupling: latin6z + 56x1206, k_eq 2.79. Z1 BGA does NOT close at 1.5 A (fallback 220/rail, 1.83 A);
+    Z2 closes at 202.
+  - Boards: Z1/Z2/Z3 on the 3.2-mm board. The m36t5 design protrudes 273 um below the Z2 board.
+  - Smoke r11 results (Z1A/Z1B/Z2A/Z2B/Z3A/Z3B, W / C):
+    140.6/135.6, 139.1/120.5, 138.9/141.7, 131.0/98.6, 206.7/213.4, 181.2/127.6.
+    The peaks sit in T1 (card kz 1.83: encapsulant gap over the dies).
+  - Manifest m36: 263 jobs, 693 core-h, about 13 h.
+- Fix agent running: copper posts across the die-to-tier gap; decoupling change to close the Z1 BGA (k_eq <= 2.29).
