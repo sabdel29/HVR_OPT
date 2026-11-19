@@ -8,12 +8,21 @@ Subtypes (declared in the brief, applied here per gate):
 
 A run-based gate is judged on the sensitivity cases written by final_closure_sensitivity.py
 (production mesh, HV-S0): for every observable the variant's Z1/Z2 verdict is formed with
-THE SAME rule as ordering.json (gap > 2 x the measured discretisation uncertainty) and
-compared with the production verdict. A gate is RESOLVED when every case it needs exists
-and has a verdict; whether the ordering survives is reported, never assumed. A declared
-B2 gate whose runs DO move an ordering is promoted to B1 automatically.
+THE comparison rule of the revision (TCPMT round 3, scripts/tcpmt_resolution.py; the same rule
+as Table IV): resolved when |D + beta_D| > U95(D), D = Z2 - Z1. The production verdict is that
+rule on the production pair's own nested ladders; a variant pair has no ladder of its own, so
+the production pair's beta and discretization U are transferred PROVISIONALLY when both cases
+pass the transfer check (solved on the production mesh), else the verdict is PENDING; the
+variant's own E-T stop and reference terms enter U95. The local response is judged on each
+joint's numerical U (production joints', provisional) under the production law (the law band is
+solved for the tier joints only). The verdict of the superseded rule (gap > 2 x the r21 -> r31
+step, ordering.json) is kept beside it (legacy_verdict) and the changes are counted
+(summary.rule_change). A gate is RESOLVED when every case it needs exists and has a verdict;
+whether the ordering survives is reported, never assumed. A declared B2 gate whose runs DO move
+an ordering is promoted to B1 automatically.
 
-Writes research/final_closure/classB_resolution.{csv,json}.
+Writes research/final_closure/classB_resolution.{csv,json} and classB_sensitivity_rows.csv
+(every robustness row, including the newer cooling-A decisions of Fig. 11).
 """
 from __future__ import annotations
 
@@ -190,12 +199,78 @@ def _vals(case):
 
 
 def _verdict(a, b, u):
+    """SUPERSEDED rule (kept for the legacy column): gap > 2 x the relative r21 -> r31 step."""
     if a is None or b is None:
         return "not rankable", None
     gap = abs(a - b) / max(abs(a), abs(b))
     if u is None:
         return "unresolved", gap
     return ("Z1 lower" if a < b else "Z2 lower") if gap > 2 * u else "unresolved", gap
+
+
+# ------------------------------------------------------------------ the unified rule
+#: observable -> tcpmt_uncertainty output key
+UKEY = {"P_loss_package_internal_w": "P", "P_loss_platform_inclusive_w": "P",
+        "T_max_C": "T", "die_warpage_pv_um": "warp", "du_c_um": "du"}
+_RULE_CACHE: dict = {}
+
+
+def _rule():
+    """(tcpmt_uncertainty, tcpmt_resolution, reference pairs), loaded once."""
+    if not _RULE_CACHE:
+        import tcpmt_resolution as RULE
+        import tcpmt_uncertainty as TU
+        _RULE_CACHE.update(TU=TU, RULE=RULE, pairs=TU.reference_pairs())
+    return _RULE_CACHE["TU"], _RULE_CACHE["RULE"], _RULE_CACHE["pairs"]
+
+
+def _mesh(case):
+    import tcpmt_uncertainty as TU
+    return TU.mesh_signature(case)
+
+
+def _local_u():
+    """Relative numerical U of the production local response of each integration (round-2
+    local mesh study at the variants' level and settings)."""
+    lm = (J(D / "local_mesh_study.json") or {}).get("cases", {})
+    return {a: (lm.get(f"{a}_{SCEN}") or {}).get("U") for a in ("Z1", "Z2")}
+
+
+def rule_verdict(k, va, vb, mesh_a=None, mesh_b=None):
+    """Z1/Z2 verdict of one observable under the unified rule. Returns (verdict, record)."""
+    TU, RULE, pairs = _rule()
+    if va is None or vb is None:
+        return "not rankable", {"resolved": None}
+    if k == "d_eps_in_per_cycle":
+        u = _local_u()
+        if u.get("Z1") is None or u.get("Z2") is None:
+            return RULE.PENDING, {"resolved": None}
+        u95 = RULE.quad(u["Z1"] * va, u["Z2"] * vb)
+        j = RULE.judge(vb - va, 0.0, u95)
+        j.update({"provisional": True, "law_band": "not evaluated for this case (the band is "
+                                                   "solved on the tier joints)",
+                  "basis": "production joints' local numerical U"})
+        return RULE.verdict_label(j["resolved"], j["D_corrected"], "Z1", "Z2"), j
+    rec = TU.variant_judgement("Z1", "Z2", UKEY[k], va, vb, mesh_a, mesh_b, pairs)
+    return rec["verdict"], rec
+
+
+def production_rule_verdicts(base):
+    """The production Z1/Z2 verdict of every observable under the unified rule: the pair's
+    own nested ladders (tcpmt_uncertainty.compare on the S0 production cases)."""
+    TU, RULE, _pairs = _rule()
+    out = {}
+    for k in GLOBAL:
+        va, vb = (base.get("Z1") or {}).get(k), (base.get("Z2") or {}).get(k)
+        if va is None or vb is None:
+            continue
+        if k == "d_eps_in_per_cycle":
+            out[k] = rule_verdict(k, va, vb)
+            continue
+        r = TU.compare("A", "Z1", "Z2", UKEY[k], TU.reference_path("Z1"),
+                       TU.reference_path("Z2"), va, vb)
+        out[k] = (RULE.verdict_label(r["resolved"], r["D_corrected"], "Z1", "Z2"), r)
+    return out
 
 
 def _uncertainty(od):
@@ -216,19 +291,21 @@ def judge_runs(cases, observables, od, unc):
         if base[a] is not None:
             base[a]["d_eps_in_per_cycle"] = (((lm.get(f"{a}_{SCEN}") or {}).get("levels")
                                               or {}).get("L0") or {}).get("d_peeq_per_cycle")
+    prod_rule = production_rule_verdicts(base)
+    base_mesh = {a: _mesh(base_case(a)) for a in ("Z1", "Z2")}
     rows, missing = [], []
     for v in cases:
-        var = {}
+        var, mesh = {}, {}
         for a in ("Z1", "Z2"):
             f = SENS / f"etm_{a}_{SCEN}__{v}.json"
             c = J(f)
             if c is None and v in Z2_ONLY and a == "Z1":
-                var[a] = base[a]                         # Z1 is unchanged by definition
+                var[a], mesh[a] = base[a], "reference"   # Z1 is unchanged by definition
                 continue
             if c is None and v in Z1_ONLY and a == "Z2":
-                var[a] = base[a]                         # Z2 is unchanged by definition
+                var[a], mesh[a] = base[a], "reference"   # Z2 is unchanged by definition
                 continue
-            var[a] = _vals(c)
+            var[a], mesh[a] = _vals(c), _mesh(c)
             if var[a] is None:
                 missing.append(f.name)
         for k in observables:
@@ -238,14 +315,24 @@ def judge_runs(cases, observables, od, unc):
             if k == "d_eps_in_per_cycle" and (va is None or vb is None):
                 continue
             u = unc.get(k)
-            verdict, gap = _verdict(va, vb, u)
-            prod = (od.get(k) or {}).get("per_scenario", {}).get(SCEN)
+            legacy, gap = _verdict(va, vb, u)
+            verdict, rec = rule_verdict(k, va, vb, mesh["Z1"], mesh["Z2"])
+            prod = (prod_rule.get(k) or (None,))[0]
+            legacy_prod = (od.get(k) or {}).get("per_scenario", {}).get(SCEN)
             ch = {a: ((var[a][k] - base[a][k]) / base[a][k]
                       if base[a] and base[a].get(k) else None) for a in ("Z1", "Z2")}
             rows.append({"case": v, "observable": k, "Z1": va, "Z2": vb,
-                         "change_rel": ch, "gap_rel": gap, "uncertainty_rel": u,
+                         "change_rel": ch, "gap_rel": gap,
+                         "D": vb - va, "bias": rec.get("bias"),
+                         "D_corrected": rec.get("D_corrected"), "U95": rec.get("U95"),
+                         "provisional": rec.get("provisional"),
+                         "transfer_checks": rec.get("transfer_checks"),
+                         "uncertainty_rel": (rec["U95"] / max(abs(va), abs(vb))
+                                             if rec.get("U95") is not None else None),
                          "verdict": verdict, "production_verdict": prod,
-                         "robust": verdict == prod})
+                         "robust": (verdict == prod) if verdict != "pending" else None,
+                         "legacy_verdict": legacy, "legacy_production_verdict": legacy_prod,
+                         "legacy_uncertainty_rel": u})
     return rows, missing
 
 
@@ -296,17 +383,25 @@ def judge_network(params, od):
                   if a in fed else 0.0) for a in ("Z1", "Z2")}
         loss = {a: fin[(a, SCEN)]["P_loss_w"] + dp[a] for a in ("Z1", "Z2")}
         u = (od.get("P_loss_package_internal_w") or {}).get("uncertainty_rel", {}).get(SCEN)
-        verdict, gap = _verdict(loss["Z1"], loss["Z2"], u)
+        legacy, gap = _verdict(loss["Z1"], loss["Z2"], u)
+        # the production solve, adjusted: the production meshes (transfer check passes)
+        verdict, rec = rule_verdict("P_loss_package_internal_w", loss["Z1"], loss["Z2"],
+                                    *(_mesh(base_case(a)) for a in ("Z1", "Z2")))
+        prod_v = production_rule_verdicts({a: _vals(base_case(a)) for a in ("Z1", "Z2")}).get(
+            "P_loss_package_internal_w", (None,))[0]
         rows.append({"case": ", ".join(f"{p}={c:g}" for p, c in zip(params, combo)),
                      "observable": "P_loss_package_internal_w", "Z1": loss["Z1"],
                      "Z2": loss["Z2"],
                      "change_rel": {a: dp[a] / fin[(a, SCEN)]["P_loss_w"] for a in dp},
-                     "delta_W": dp, "gap_rel": gap, "uncertainty_rel": u,
-                     "verdict": verdict,
-                     "production_verdict": (od.get("P_loss_package_internal_w") or {}).get(
-                         "per_scenario", {}).get(SCEN),
-                     "robust": verdict == (od.get("P_loss_package_internal_w") or {}).get(
-                         "per_scenario", {}).get(SCEN),
+                     "delta_W": dp, "gap_rel": gap, "D_corrected": rec.get("D_corrected"),
+                     "U95": rec.get("U95"), "provisional": rec.get("provisional"),
+                     "uncertainty_rel": (rec["U95"] / max(loss.values())
+                                         if rec.get("U95") is not None else None),
+                     "verdict": verdict, "production_verdict": prod_v,
+                     "robust": verdict == prod_v,
+                     "legacy_verdict": legacy, "legacy_uncertainty_rel": u,
+                     "legacy_production_verdict": (od.get("P_loss_package_internal_w") or {})
+                     .get("per_scenario", {}).get(SCEN),
                      "method": "first order: the 48 V RDL rows scale with the swept loop "
                                "resistance at the solved HV-S0 current; the thermal "
                                "feedback of a <= 2 W change is second order"})
@@ -362,16 +457,27 @@ def judge_direct_feed(od):
     # 10 mOhm, inside the sweep) where it is not (R* = 0)
     pts = ([(f"{fac:g} R*", sc["R_star_mohm"] * fac) for fac in (0.1, 1.0, 10.0)]
            if sc["R_star_mohm"] else [(f"{r:g} mOhm", r) for r in (0.1, 1.0, 10.0)])
+    prod_legacy = prod
+    prod = production_rule_verdicts({a: _vals(base_case(a)) for a in ("Z1", "Z2")}).get(
+        "P_loss_package_internal_w", (None,))[0]
     for lab, r in pts:
         pt = min(sw, key=lambda q: abs(math.log(q["R_mohm"] / r)) if q["R_mohm"] > 0 else 9e9)
-        verdict, gap = _verdict(sc["P_Z1_w"], pt["P_total_w"], u)
+        legacy, gap = _verdict(sc["P_Z1_w"], pt["P_total_w"], u)
+        verdict, rec = rule_verdict("P_loss_platform_inclusive_w", sc["P_Z1_w"],
+                                    pt["P_total_w"],
+                                    *(_mesh(base_case(a)) for a in ("Z1", "Z2")))
         rows.append({"case": f"R_feed = {lab} = {r:.4g} mOhm",
                      "observable": "P_loss_platform_inclusive_w",
                      "Z1": sc["P_Z1_w"], "Z2": pt["P_total_w"],
                      "change_rel": {"Z1": 0.0, "Z2": (pt["P_total_w"] - sc["P_Z2_internal_w"])
                                     / sc["P_Z2_internal_w"]},
-                     "gap_rel": gap, "uncertainty_rel": u, "verdict": verdict,
-                     "production_verdict": prod, "robust": verdict == prod,
+                     "gap_rel": gap, "D_corrected": rec.get("D_corrected"),
+                     "U95": rec.get("U95"), "provisional": rec.get("provisional"),
+                     "uncertainty_rel": (rec["U95"] / max(sc["P_Z1_w"], pt["P_total_w"])
+                                         if rec.get("U95") is not None else None),
+                     "verdict": verdict, "production_verdict": prod, "robust": verdict == prod,
+                     "legacy_verdict": legacy, "legacy_uncertainty_rel": u,
+                     "legacy_production_verdict": prod_legacy,
                      "R_star_mohm": sc["R_star_mohm"],
                      "method": "self-consistent I_48 with the feed loss; sweep point nearest"})
     return rows
@@ -432,22 +538,27 @@ def attach_density_crossover(od, unc):
                     "n_vdd": L["n_vdd"], "n_gnd": L["n_gnd"],
                     "network_minus_block_penalty_w": (p.get("network_w", 0.0)
                                                       - p.get("block_w", 0.0)),
-                    "obs": {r["observable"]: {k: r[k] for k in ("Z1", "Z2", "gap_rel",
-                                                                "verdict")}
+                    "obs": {r["observable"]: {k: r.get(k) for k in ("Z1", "Z2", "gap_rel",
+                                                                    "verdict", "bias", "U95")}
                             for r in rows if r["case"] == v}})
     cross = {}
+    base = {a: _vals(base_case(a)) for a in ("Z1", "Z2")}
+    prod_rule = production_rule_verdicts(base)
     for k in ATTACH_OBS:
-        prod = (od.get(k) or {}).get("per_scenario", {}).get(SCEN)
+        prod = (prod_rule.get(k) or (None,))[0]
         u = unc.get(k)
-        if prod not in ("Z1 lower", "Z2 lower") or u is None:
+        if prod not in ("Z1 lower", "Z2 lower") or any(
+                x["obs"].get(k, {}).get("U95") is None for x in pts):
             cross[k] = {"production_verdict": prod, "status": "no resolved production verdict "
-                        "to lose; verdicts per point listed"}
+                        "to lose (or a point without a transferable U); verdicts per point "
+                        "listed"}
             continue
         sgn = 1.0 if prod == "Z2 lower" else -1.0
 
         def margin(o, dz2=0.0):
-            z1, z2 = o["Z1"], o["Z2"] + dz2
-            return sgn * (z1 - z2) / max(abs(z1), abs(z2)) - 2.0 * u
+            # the unified rule: signed corrected gap toward the production verdict minus U95
+            d_star = (o["Z2"] + dz2 - o["Z1"]) + (o.get("bias") or 0.0)
+            return -sgn * d_star - o["U95"]
         for x in pts:
             o = x["obs"][k]
             o["margin"] = margin(o)
@@ -475,9 +586,111 @@ def attach_density_crossover(od, unc):
                                 for x in pts)
         cross[k] = c
     return {"class": "ENGINEERING_SENSITIVITY",
-            "rule": "each point judged as the production pair (gap > 2U); margin = signed gap "
-                    "- 2U, interpolated linearly between points",
+            "rule": "each point judged with the unified rule (|D + beta| > U95, the production "
+                    "pair's beta and discretization U transferred provisionally); margin = the "
+                    "corrected gap toward the production verdict - U95 (W, K or um), "
+                    "interpolated linearly between points",
             "points": pts, "crossover": cross}
+
+
+def _outcome(pv, av):
+    """preserved / reversed / withdrawn (unresolved) / created / changed."""
+    if pv == av:
+        return "preserved"
+    if str(pv).endswith("lower") and str(av).endswith("lower"):
+        return "reversed"
+    if str(pv).endswith("lower"):
+        return "withdrawn (unresolved)"
+    return "created" if str(av).endswith("lower") else "changed"
+
+
+#: the newer cooling-A decisions of the robustness map (Fig. 11), judged with the same rule
+NEWER = ("die_hotspot_A", "plate_local_h_A", "tim_warp_fb_A")
+NEWER_GATE = "robustness.newer_decisions_A"
+#: the SUPERSEDED rule Fig. 11 applied to them: twice the paired estimate U_D_paired of the
+#: cooling-A Z1/Z2 comparison of research/tcpmt_revision/uncertainty.json at 31a846c
+LEGACY_NEWER_UPAIR = {"P_loss_package_internal_w": 0.5087008910215145,
+                      "T_max_C": 1.5943253297846707,
+                      "die_warpage_pv_um": 0.969029215012697, "du_c_um": 0.07492434332368746}
+
+
+def judge_newer(od, unc):
+    """The newer decisions with the unified rule; their legacy verdict is Fig. 11's old one
+    (|D| > 2 U_D_paired), against the ordering.json production verdict."""
+    obs = ("P_loss_package_internal_w", "T_max_C", "die_warpage_pv_um", "du_c_um")
+    rows, missing = judge_runs(list(NEWER), obs, od, unc)
+    for r in rows:
+        up = LEGACY_NEWER_UPAIR.get(r["observable"])
+        d = r["Z2"] - r["Z1"]
+        r["legacy_verdict"] = (("Z1 lower" if d > 0 else "Z2 lower") if abs(d) > 2 * up
+                               else "unresolved")
+        r["legacy_rule"] = "|D| > 2 U_D_paired (Fig. 11, newer rows)"
+    return rows, missing
+
+
+def rule_change(out, newer):
+    """How many robustness verdicts the unified rule changes against the superseded ones."""
+    rows = [(g["gate"], r) for g in out for r in g["rows"]] + [(NEWER_GATE, r) for r in newer]
+    seen, n, ch_v, ch_o, pend, changes = set(), 0, 0, 0, 0, []
+    for gate, r in rows:
+        if not r.get("legacy_verdict") or r.get("verdict") in (None, "not rankable"):
+            continue
+        key = (r["case"], r["observable"])
+        if key in seen:                           # a case can serve several gates
+            continue
+        seen.add(key)
+        n += 1
+        lo = _outcome(r.get("legacy_production_verdict"), r["legacy_verdict"])
+        no = "pending" if r["verdict"] == "pending" else _outcome(r.get("production_verdict"),
+                                                                 r["verdict"])
+        pend += r["verdict"] == "pending"
+        if r["verdict"] != r["legacy_verdict"] or lo != no:
+            ch_v += r["verdict"] != r["legacy_verdict"]
+            ch_o += lo != no
+            changes.append({"case": r["case"], "observable": r["observable"],
+                            "legacy": f"{r['legacy_verdict']} ({lo})",
+                            "unified": f"{r['verdict']} ({no})",
+                            "D": r.get("D", (r.get("Z2") or 0) - (r.get("Z1") or 0)),
+                            "U95": r.get("U95"), "D_corrected": r.get("D_corrected")})
+    return {"rows_judged": n, "verdicts_changed": ch_v, "outcomes_changed": ch_o,
+            "now_pending": pend, "changes": changes,
+            "note": "unique (case, observable) robustness rows; legacy = gap > 2 x the r21 -> "
+                    "r31 step (old rows) or |D| > 2 U_D_paired (newer rows); unified = "
+                    "tcpmt_resolution.RULE; all variant verdicts are provisional (production "
+                    "pair's U transferred on the identical mesh, r11 check runs pending)"}
+
+
+def robustness_ladder_runs(out, newer):
+    """The rungs the campaign must add before the robustness verdicts stop being provisional:
+    the r11 check rung of every variant case solved on the production mesh, and an own ladder
+    (r11 + r31) for a case whose mesh differs from the production pair's."""
+    need = {}
+    rows = [r for g in out for r in g["rows"]] + list(newer)
+    for r in rows:
+        for a, st in (r.get("transfer_checks") or {}).items():
+            if st.startswith("refused: mesh differs"):
+                rungs = ("r11", "r31")
+            elif "r11 step check pending" in st:
+                rungs = ("r11",)
+            else:
+                continue
+            for rg in rungs:
+                need[(r["case"], a, rg)] = st
+    cmds = []
+    for (v, a, rg), st in sorted(need.items()):
+        if v.startswith("die_hotspot_"):
+            cmd = (f"python scripts/tcpmt_review_variants.py hotspot {a} {v.rsplit('_', 1)[1]} "
+                   f"{SCEN} {rg}")
+        elif v.startswith(("tim_warp_fb_", "plate_local_h_")):
+            cmd = None                       # production-mesh-only / superseded variants
+        else:
+            cmd = f"python scripts/final_closure_sensitivity.py --refine {rg} {v}:{a}"
+        cmds.append({"case": v, "arch": a, "rung": rg, "reason": st,
+                     "file": f"research/final_closure/sensitivity/ladder/etm_{a}_{SCEN}__{v}_"
+                             f"{rg}.json",
+                     "command": cmd or "no rung: the variant runs on the production mesh only "
+                                       "(its verdict stays provisional)"})
+    return cmds
 
 
 def main():
@@ -501,6 +714,7 @@ def main():
             rows = judge_scenarios(od, sc)
         complete = (not missing) and bool(rows)
         moved = [r for r in rows if r.get("robust") is False]
+        pend = [r for r in rows if r.get("verdict") == "pending"]
         new_sub = sub
         if sub == "B2" and moved:
             new_sub = "B1"                           # the B2 assumption failed: promote
@@ -511,13 +725,17 @@ def main():
             status = ("RESOLVED -- scenario-conditioned: every named scenario is solved and "
                       "each ordering is stated per scenario")
         elif not moved:
-            status = ("RESOLVED -- ordering robust" if new_sub == "B1"
-                      else "BOUNDED -- magnitude only")
+            status = (("RESOLVED -- ordering robust" + (" where judged" if pend else ""))
+                      if new_sub == "B1" else "BOUNDED -- magnitude only")
         else:
             status = ("RESOLVED -- ordering changes in: " + "; ".join(
                 f"{r['observable']} under {r['case']} ("
                 + (f"{r['production_verdict']} -> " if r.get("production_verdict") else "")
                 + f"{r['verdict']})" for r in moved) + " -- the claim is narrowed accordingly")
+        if complete and pend:
+            status += (" -- verdict pending (no transferable U: the case's mesh differs from "
+                       "the laddered production pair; own ladder needed) for: " + "; ".join(
+                           sorted({f"{r['observable']} under {r['case']}" for r in pend})))
         mx = max((abs(x) for r in rows for x in (r.get("change_rel") or {}).values()
                   if isinstance(x, (int, float))), default=None)
         gaps = [r["gap_rel"] for r in rows if isinstance(r.get("gap_rel"), (int, float))]
@@ -526,7 +744,8 @@ def main():
                     "range_source": rng, "rationale": why, "method": method,
                     "cases_run": cases, "max_change_rel": mx,
                     "architecture_gap_rel_min": min(gaps) if gaps else None,
-                    "ordering_robust": complete and not moved, "final_status": status,
+                    "ordering_robust": complete and not moved and not pend,
+                    "final_status": status,
                     "resolved": complete,
                     "evidence_path": ("research/final_closure/sensitivity/" if method == "runs"
                                       else "research/final_closure/package_network.json"
@@ -538,17 +757,25 @@ def main():
                                       "research/final_closure/ordering.json"),
                     "rows": rows})
     b1 = [g for g in out if g["new_subtype"] == "B1"]
+    newer, newer_missing = judge_newer(od, unc)
     summary = {"n_gates": len(out),
                "subtypes": {s: sum(g["new_subtype"] == s for g in out) for s in ("B1", "B2", "B3")},
                "b1_resolved": sum(g["resolved"] for g in b1), "b1_total": len(b1),
                "all_b1_resolved": all(g["resolved"] for g in b1),
                "orderings_that_move": sorted({f"{r['observable']} under {r['case']}"
                                              for g in out for r in g["rows"]
-                                             if r.get("robust") is False})}
+                                             if r.get("robust") is False}),
+               "rule_change": rule_change(out, newer)}
+    _tu, RULE, _p = _rule()
     (D / "classB_resolution.json").write_text(json.dumps(
         {"rule": "a B1 gate is resolved when every case it needs exists and carries a "
-                 "verdict formed with the ordering.json rule; PAPER_READY requires every "
-                 "B1 gate resolved", "summary": summary, "gates": out,
+                 "verdict; every verdict is formed with the unified comparison rule of the "
+                 "revision (" + RULE.RULE + "); PAPER_READY requires every B1 gate resolved",
+         "summary": summary, "gates": out,
+         "newer_decisions": {"what": "the newer cooling-A decisions of the robustness map "
+                                     "(Fig. 11), judged with the same rule; not gates",
+                             "rows": newer, "missing": newer_missing},
+         "ladder_runs_needed": robustness_ladder_runs(out, newer),
          "attach_density_crossover": attach_density_crossover(od, unc)},
         indent=1, default=float))
     cols = ["gate", "old_class", "new_subtype", "observable", "range_source", "cases_run",
@@ -563,31 +790,38 @@ def main():
     # and whether the ordering is preserved, reversed, created or withdrawn
     rcols = ["gate", "case", "observable", "nominal_Z1", "nominal_Z2", "alternate_Z1",
              "alternate_Z2", "change_Z1_rel", "change_Z2_rel", "architecture_gap_rel",
-             "uncertainty_rel", "production_verdict", "alternate_verdict", "outcome"]
+             "uncertainty_rel", "bias", "U95", "provisional", "production_verdict",
+             "alternate_verdict", "outcome", "legacy_production_verdict", "legacy_verdict",
+             "legacy_outcome"]
     with (D / "classB_sensitivity_rows.csv").open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=rcols)
         w.writeheader()
-        for g in out:
-            for r in g["rows"]:
+        groups = [(g["gate"], g["rows"]) for g in out] + [(NEWER_GATE, newer)]
+        for gate, grows in groups:
+            for r in grows:
                 if "observable" not in r or "verdict" not in r:
                     continue
                 ch = r.get("change_rel") or {}
                 pv, av = r.get("production_verdict"), r.get("verdict")
-                outcome = ("n/a" if r.get("robust") is None else "preserved" if pv == av
-                           else "reversed" if (str(pv).endswith("lower") and str(av).endswith("lower"))
-                           else "withdrawn (unresolved)" if str(pv).endswith("lower")
-                           else "created" if str(av).endswith("lower") else "changed")
+                outcome = ("pending" if av == "pending" else
+                           "n/a" if r.get("robust") is None else _outcome(pv, av))
+                lo = (_outcome(r.get("legacy_production_verdict"), r.get("legacy_verdict"))
+                      if r.get("legacy_verdict") else "")
                 nz = {a: ((r.get(a) / (1 + ch[a])) if isinstance(r.get(a), (int, float))
                           and isinstance(ch.get(a), (int, float)) and ch[a] != -1 else None)
                       for a in ("Z1", "Z2")}
-                w.writerow({"gate": g["gate"], "case": r["case"], "observable": r["observable"],
+                w.writerow({"gate": gate, "case": r["case"], "observable": r["observable"],
                             "nominal_Z1": nz["Z1"], "nominal_Z2": nz["Z2"],
                             "alternate_Z1": r.get("Z1"), "alternate_Z2": r.get("Z2"),
                             "change_Z1_rel": ch.get("Z1"), "change_Z2_rel": ch.get("Z2"),
                             "architecture_gap_rel": r.get("gap_rel"),
                             "uncertainty_rel": r.get("uncertainty_rel"),
+                            "bias": r.get("bias"), "U95": r.get("U95"),
+                            "provisional": r.get("provisional"),
                             "production_verdict": pv, "alternate_verdict": av,
-                            "outcome": outcome})
+                            "outcome": outcome,
+                            "legacy_production_verdict": r.get("legacy_production_verdict"),
+                            "legacy_verdict": r.get("legacy_verdict"), "legacy_outcome": lo})
     print(json.dumps(summary, indent=1))
     for g in out:
         print(f"{g['gate']:36s} {g['new_subtype']} {g['final_status'][:110]}")

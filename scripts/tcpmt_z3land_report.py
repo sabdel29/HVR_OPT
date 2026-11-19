@@ -549,23 +549,19 @@ def documentation():
             if z1 is not None:
                 gap = c["P_loss_w"] - z1["P_loss_w"]
                 gap2 = gap - save_2oz
-                ua = (U.get(f"{t}.Z1.P") or {}).get("U") if isinstance(U.get(f"{t}.Z1.P"),
-                                                                     dict) else U.get(f"{t}.Z1.P")
-                ub = (U.get(f"{t}.Z3.P") or {}).get("U") if isinstance(U.get(f"{t}.Z3.P"),
-                                                                     dict) else U.get(f"{t}.Z3.P")
-                cmp_ = comps.get((t, "Z1", "Z3", "P")) or comps.get((t, "Z3", "Z1", "P")) or {}
-                up = cmp_.get("U_D_paired")
-                if ua is None or ub is None:
-                    ua, ub = cmp_.get("U_a"), cmp_.get("U_b")
-                thr = 2.0 * (ua + ub) if ua is not None and ub is not None else None
+                # TCPMT round 3: the unified rule (tcpmt_resolution): the comparison's bias
+                # and U95 of the difference, oriented to Z3 - Z1
+                cmp_, sgn = comps.get((t, "Z1", "Z3", "P")) or {}, 1.0
+                if not cmp_:
+                    cmp_, sgn = comps.get((t, "Z3", "Z1", "P")) or {}, -1.0
+                u95 = cmp_.get("U95")
+                beta = sgn * (cmp_.get("bias") or 0.0)
                 rec["two_oz_planes"] = {
                     "t_plane_um": TWO_OZ_T_PLANE_UM, "coupled_increment_1oz_w": inc,
                     "saving_w": save_2oz, "gap_to_Z1_1oz_w": gap, "gap_to_Z1_2oz_w": gap2,
-                    "threshold_unpaired_w": thr,
-                    "threshold_paired_w": 2.0 * up if up is not None else None,
-                    "resolved_unpaired": None if thr is None else abs(gap2) > thr,
-                    "resolved_with_correlation_credit": (None if up is None
-                                                         else abs(gap2) > 2.0 * up),
+                    "bias_w": beta, "U95_w": u95,
+                    "resolved": None if u95 is None else abs(gap2 + beta) > u95,
+                    "provisional": cmp_.get("provisional"),
                     "rule": rule.split("\n")[0] if rule else None,
                     "basis": "the plane term scales as 1/t; its coupled increment (row + "
                              "thermal feedback) from the cooling-B no-plane control"}
@@ -596,12 +592,11 @@ def documentation():
         if two:
             m[f"ZthreeTwoOzSave{tag}"] = f"{two['saving_w']:.1f}"
             m[f"ZthreeTwoOzGap{tag}"] = f"{two['gap_to_Z1_2oz_w']:.1f}"
-            if two["threshold_unpaired_w"] is not None:
-                m[f"ZthreeTwoOzThr{tag}"] = f"{two['threshold_unpaired_w']:.1f}"
-                m[f"ZthreeTwoOzRes{tag}"] = (
-                    "resolved" if two["resolved_unpaired"] else
-                    "resolved with correlation credit" if two["resolved_with_correlation_credit"]
-                    else "not resolved")
+            if two.get("U95_w") is not None:
+                m[f"ZthreeTwoOzThr{tag}"] = f"{two['U95_w']:.1f}"
+                m[f"ZthreeTwoOzRes{tag}"] = (("resolved" if two["resolved"] else "not resolved")
+                                             + (" (provisional)" if two.get("provisional")
+                                                else ""))
         rs = rec.get("R_star")
         if rs and rs.get("label"):
             m[f"ZthreeRstar{tag}"] = rs["label"].replace(" mOhm", "")

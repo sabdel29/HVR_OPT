@@ -8,10 +8,12 @@ Columns: the orderings. Cell state is carried by a glyph AND a fill, never colou
   reversed toward Z1 / Z2  -> that architecture's identity colour with its label
 Top row: the production verdict. Each cell prints the gap Z2 - Z1 under that decision
 (min...max over the merged variants; units in the header). Positive: Z1 lower.
-Rows of the newer decisions (cooling A, case files sensitivity/etm_{Z1,Z2}_HV_S0__<v>.json)
-are classified with the same rule, against twice the paired uncertainty of the production
-comparison (research/tcpmt_revision/uncertainty.json, comparisons A Z1/Z2).
-Data: classB_sensitivity_rows.csv, ordering.json, uncertainty.json, the case files.
+ONE RULE (TCPMT round 3, scripts/tcpmt_resolution.py): every cell, the production row and the
+newer cooling-A decisions included, is the verdict final_closure_classB.py formed with the
+rule of Table IV, |D + beta_D| > U95(D); this script classifies nothing itself. A variant has no
+ladder of its own: its U is the production pair's, transferred provisionally on the identical
+mesh; a variant on another mesh is PENDING (own ladder needed), drawn as '?'.
+Data: classB_sensitivity_rows.csv (gate rows and robustness.newer_decisions_A rows).
 """
 import csv
 from collections import OrderedDict
@@ -72,52 +74,22 @@ LAYOUT = [
     ]),
 ]
 
-# newer decisions: (label, variant) run for Z1 and Z2 under cooling A
+# newer decisions: (label, variant) run for Z1 and Z2 under cooling A, classified by
+# final_closure_classB.py (gate robustness.newer_decisions_A) with the same rule
 NEW_A = [("Die hot-spot power map", "die_hotspot_A"),
          ("Local cold-plate $h$ map", "plate_local_h_A"),
          ("TIM warpage feedback", "tim_warp_fb_A")]
-OKEY = {"P_loss_package_internal_w": "P", "T_max_C": "T", "die_warpage_pv_um": "warp",
-        "du_c_um": "du"}
-unc = S.JP(S.TR / "uncertainty.json") or {}
-UPAIR = {c["output"]: c["U_D_paired"] for c in unc.get("comparisons", [])
-         if c.get("tier") == "A" and {c.get("a"), c.get("b")} == {"Z1", "Z2"}}
-
-
-def case_obs(c):
-    m = c.get("mechanics") or {}
-    return {"P_loss_package_internal_w": c.get("P_loss_w"),
-            "T_max_C": (c.get("thermal") or {}).get("T_max_C"),
-            "die_warpage_pv_um": m.get("die_warpage_pv_um"),
-            "du_c_um": ((m.get("joint_search") or {}).get("critical") or {}).get("du_um")}
-
-
-NEWROWS = {}
-for lab, v in NEW_A:
-    c1 = S.JP(S.SENS / f"etm_Z1_HV_S0__{v}.json")
-    c2 = S.JP(S.SENS / f"etm_Z2_HV_S0__{v}.json")
-    if not (c1 and c2):
-        continue
-    o1, o2 = case_obs(c1), case_obs(c2)
-    NEWROWS[v] = {}
-    for obs, k in OKEY.items():
-        if o1[obs] is None or o2[obs] is None or k not in UPAIR:
-            NEWROWS[v][obs] = None
-            continue
-        d = o2[obs] - o1[obs]
-        verdict = ("Z1 lower" if d > 0 else "Z2 lower") if abs(d) > 2 * UPAIR[k] else "unresolved"
-        NEWROWS[v][obs] = (d, verdict)
-if NEWROWS:
+NEWER_GATE = "robustness.newer_decisions_A"
+_have = {r["case"] for r in rows if r["gate"] == NEWER_GATE}
+if _have:
     LAYOUT.append(("Newer decisions (cooling A)",
-                   [(lab, ["new:" + v]) for lab, v in NEW_A if v in NEWROWS]))
+                   [(lab, [v]) for lab, v in NEW_A if v in _have]))
 
-RANK = {"n/a": 0, "preserved": 1, "withdrawn": 2, "reversed": 3}
+RANK = {"n/a": 0, "preserved": 1, "pending": 2, "withdrawn": 3, "reversed": 4}
 
 
 def gap(case, obs):
     """Z2 - Z1 under the decision, or None."""
-    if case.startswith("new:"):
-        x = NEWROWS.get(case[4:], {}).get(obs)
-        return x[0] if x else None
     rs = [r for r in rows if r["case"] == case and r["observable"] == obs]
     if not rs or rs[0]["outcome"] in ("n/a", ""):
         return None
@@ -149,21 +121,13 @@ def gtxt(vals, obs):
 
 
 def state(case, obs):
-    if case.startswith("new:"):
-        x = NEWROWS.get(case[4:], {}).get(obs)
-        if not x:
-            return ("n/a", None)
-        alt, prod = x[1], f"{PROD[[o for o, _ in OBS].index(obs)]} lower"
-        if alt == prod:
-            return ("preserved", None)
-        if alt == "unresolved":
-            return ("withdrawn", None)
-        return ("reversed", alt.split()[0])
     rs = [r for r in rows if r["case"] == case and r["observable"] == obs]
     if not rs:
         return ("n/a", None)
     r = rs[0]
     alt, prod = r["alternate_verdict"].strip(), r["production_verdict"].strip()
+    if alt == "pending" or r["outcome"] == "pending":
+        return ("pending", None)
     if r["outcome"] in ("n/a", "") or alt in ("", "--", "n/a"):
         return ("n/a", None)
     if alt == prod:
@@ -184,13 +148,11 @@ def merged(cases, obs):
 
 
 def _prod(key):
-    """The production verdict at S0, read from ordering.json (never typed in)."""
-    v = (S.J("ordering.json")["orderings"][key]["per_scenario"] or {}).get("HV_S0", "")
+    """The production verdict at S0 under the unified rule, as classB formed it on the
+    production pair's own ladders (never typed in)."""
+    v = next((r["production_verdict"].strip() for r in rows
+              if r["observable"] == key and r.get("production_verdict")), "")
     if v.endswith("lower"):
-        return v.split()[0]
-    if v.startswith("conditional"):
-        return "cond."
-    if v.startswith("Z1 lower for any") or v.startswith("Z2 lower for any"):
         return v.split()[0]
     return "≈" if v == "unresolved" else "–"
 
@@ -200,7 +162,7 @@ HEAD = ["Int. loss\n(W)", "Peak\ntemp. (K)", "Die warp.\n(µm)", "Joint\n$\\Delt
 
 COLW_IN, ROWH_IN, LAB_IN = 0.45, 0.145, 1.64
 n_body = sum(len(g[1]) for g in LAYOUT) + len(LAYOUT)
-HEAD_R, LEG_R = 2.4, 4.0                       # header and legend heights, in rows
+HEAD_R, LEG_R = 2.4, 5.0                       # header and legend heights, in rows
 W = S.COL_W
 H = (n_body + 1 + HEAD_R + LEG_R) * ROWH_IN + 0.05
 fig = plt.figure(figsize=(W, H))
@@ -210,8 +172,8 @@ xr = (W - LAB_IN) / COLW_IN
 ax.set_xlim(xl, xr)
 ax.set_ylim(n_body + 1 + 0.15, -(HEAD_R + LEG_R))
 ax.axis("off")
-FILL = {"preserved": "#f3f2ee", "withdrawn": "#cfcdc6", "n/a": "white"}
-GLYPH = {"preserved": "·", "withdrawn": "≈", "n/a": "–"}
+FILL = {"preserved": "#f3f2ee", "withdrawn": "#cfcdc6", "pending": "#e4e2dc", "n/a": "white"}
+GLYPH = {"preserved": "·", "withdrawn": "≈", "pending": "?", "n/a": "–"}
 x0c = 0.12                                      # left inset of the cell block
 
 
@@ -231,7 +193,8 @@ def cell(ix, iy, st, who=None, note=None, val=None):
                            lw=0.5))
     big = st in ("reversed", "prod")
     if val is not None:
-        txt = val if st != "prod" else f"{who} {val}"
+        txt = (f"{who} {val}" if st == "prod" else f"{val} ?" if st == "pending"
+               else f"≈{val}" if st == "withdrawn" else val)
     ax.text(x + 0.5, y + 0.5 + (0.0 if (big or val) else 0.02), txt, ha="center",
             va="center", fontsize=6.5 if (big or val) else 7.5, color=tc,
             fontweight="bold" if st == "reversed" else "normal")
@@ -240,10 +203,11 @@ def cell(ix, iy, st, who=None, note=None, val=None):
 # legend block (top)
 ly = -(HEAD_R + LEG_R) + 0.55
 items = [("prod", "Z1", "Z1 lower"), ("prod", "Z2", "Z2 lower"),
-         ("preserved", None, "preserved"), ("withdrawn", None, "withdrawn (gap < 2$U$)"),
-         ("n/a", None, "not evaluated")]
+         ("preserved", None, "preserved"),
+         ("withdrawn", None, "withdrawn ($|D+\\beta|\\leq U_{95}$)"),
+         ("pending", None, "pending (own ladder)"), ("n/a", None, "not evaluated")]
 pos = [(xl + 0.15, ly), (xl + 2.65, ly), (xl + 5.15, ly), (xl + 0.15, ly + 1.0),
-       (xl + 5.15, ly + 1.0)]
+       (xl + 0.15, ly + 2.0), (xl + 5.15, ly + 1.0)]
 for (st, who, lab), (lx, lyy) in zip(items, pos):
     fc = S.ARCH[who] if who else FILL[st]
     ax.add_patch(Rectangle((lx, lyy), 0.62, 0.78, fc=fc, ec="none"))
@@ -251,7 +215,7 @@ for (st, who, lab), (lx, lyy) in zip(items, pos):
             fontsize=5.6 if who else 7.5, color="white" if who else S.INK2,
             fontweight="bold" if who else "normal")
     ax.text(lx + 0.8, lyy + 0.41, lab, ha="left", va="center", fontsize=6.5, color=S.INK2)
-ax.text(xl + 0.15, ly + 2.75, "Numbers: gap Z2 − Z1 (min…max over merged variants);\n"
+ax.text(xl + 0.15, ly + 3.75, "Numbers: gap Z2 − Z1 (min…max over merged variants);\n"
         "colored: the ordering reverses toward that architecture.", ha="left", va="center",
         fontsize=6.5, color=S.INK2)
 
