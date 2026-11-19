@@ -1,243 +1,1145 @@
 {
- "rule": "a difference D = y_b - y_a between two architectures is RESOLVED when\n|D| > 2 (U_a + U_b), i.e. without credit for the correlation of errors on one mesh family.\nIt is RESOLVED WITH CORRELATION CREDIT when it exceeds twice the paired estimate, in which\nthe signed discretization errors of the two architectures (same mesh family, same direction)\ncancel, the matched-reference agreement (common solver) cancels, and the fixed-point stops\nand local-response uncertainties add. MODEL-FORM uncertainty (material cards, boundaries, omitted physics)\nis not added to U: it is handled by rerunning both architectures under each declared\nalternative (the robustness map), and a resolved ranking that a declared alternative reverses\nis CONDITIONAL on that decision.",
- "production": {
+ "rule": "resolved when |D + beta_D| > U95(D): D the difference at the production mesh, beta_D its signed discretization bias and U95(D) the uncertainty of the difference (about 95 %: GCI-type discretization bands (Roache; Fs = 1.25 asymptotic, 3 otherwise) and the other components as 95 % half-widths, in quadrature); the joint response must be resolved under every law of the solder-law band; a case without a ladder of its own carries no U (provisional only with a checked transfer)",
+ "rule_doc": "a difference D = y_b - y_a is RESOLVED when its bias-corrected value exceeds the\nuncertainty of the difference at about 95 % coverage,  |D + beta_D| > U95(D).\n\nDISCRETIZATION, GCI type (Roache 1998, Verification and Validation in Computational Science and\nEngineering; Oberkampf & Roy 2010, Verification and Validation in Scientific Computing, 8.6).\nRungs of the production nested refinement: r11 (h = 1), r21 (h = 1/2, PRODUCTION), r31 (h = 1/3).\n  e21 = y21 - y11, e32 = y31 - y21\n  observed order p_obs: the positive root of (1 - 2^-p) / (2^-p - 3^-p) = e21 / e32 (none when\n                the steps do not shrink like any positive order)\n  ASYMPTOTIC    monotone (e21 e32 > 0) and |p_obs - P_FORMAL| <= 0.10 P_FORMAL (P_FORMAL = 2,\n                trilinear hexahedra, nodal temperature and displacement)  ->  Fs = 1.25, p = p_obs\n  NOT ASYMPTOTIC monotone otherwise  ->  Fs = 3, p = min(max(p_obs, 0.5), P_FORMAL)\n                (p = 0.5 when there is no positive order)\n  OSCILLATORY   e21 e32 < 0  ->  Fs = 3, no signed estimate, U = Fs (max - min) / 2 over the rungs\n  bias (signed, production -> extrapolated)  beta = e32 r^p / (r^p - 1),  r = h21 / h31 = 1.5\n  U_mesh = Fs |beta|\n  The difference D is put through the SAME procedure on its own rung sequence D_r = y_b,r - y_a,r:\n  errors the two cases share on one mesh family cancel where they move together, without a\n  separate \"paired\" estimate. Through-thickness (r11 -> r12, two rungs, z refined by 2): Fs = 3 at\n  P_FORMAL, beta_tt = (D12 - D11) 4/3, U_tt = 3 |beta_tt|.\n\nOTHER COMPONENTS, as 95 % half-widths combined in quadrature with the discretization terms:\n  the E-T stop of each case (0.1 % of the loss, 0.25 K of a temperature), the matched-reference\n  agreement of the solver applied to the difference (0.13 % of a temperature difference, 0.43 %\n  of a displacement difference), the local response's own numerical U of each case.\n  U95(D) = sqrt(U_mesh^2 + U_tt^2 + U_et,a^2 + U_et,b^2 + U_ref^2 [+ U_loc,a^2 + U_loc,b^2])\n\nJOINT RESPONSE: the solder-law band (tcpmt_mech_law_band -> solder_law_band.json) is part of the\nresolution: the comparison is evaluated under EVERY law of the band; RESOLVED when it is resolved\nwith one sign under all of them, LAW-CONDITIONAL when it is resolved under the production law\nonly (or the sign changes between laws), NOT RESOLVED otherwise.\n\nNO TRANSFER WITHOUT A CHECK. A case with a ladder of its own (r11, r21, r31) carries its own\nbeta and U. A case without one carries no U of its own: it is MARKED, and the ladder runs the\ncampaign must add are listed. A laddered reference's beta and U may be transferred to it only\nas a PROVISIONAL estimate, and only when the transfer check passes:\n  mesh       the case was solved on the reference's production mesh (same element and node\n             counts at the same h_xy and rung)            -- checked from the case files now\n  r11 step   once the case's r11 rung exists, its r11 -> r21 step must agree with the\n             reference's within the reference U_mesh; failing it, the transfer is refused\nA verdict on a transferred U is reported as provisional; with no transferable reference the\nverdict is PENDING.",
+ "coverage": "about 95 %: GCI-type discretization bands (Roache; Fs = 1.25 asymptotic, 3 otherwise) and the other components as 95 % half-widths, in quadrature",
+ "state": "SDEC",
+ "cases": {
+  "A": {
+   "Z1": {
+    "file": "etm_Z1_HV_SDEC__z1_input_decoupling.json",
+    "own_ladder": false,
+    "missing_rungs": [
+     "r11",
+     "r31",
+     "r12"
+    ],
+    "ladder_files": {
+     "r11": "etm_Z1_HV_SDEC__sdec_A_r11.json",
+     "r21": "etm_Z1_HV_SDEC__z1_input_decoupling.json",
+     "r31": "etm_Z1_HV_SDEC__sdec_A_r31.json",
+     "r12": "etm_Z1_HV_SDEC__sdec_A_r12.json"
+    },
+    "transfer": {
+     "reference": "etm_Z1_HV_S0_h1.1_r21.json",
+     "ok": true,
+     "status": "mesh identical; r11 step check pending (provisional)",
+     "provisional": true
+    },
+    "outputs": {
+     "P": {
+      "value": 149.65984668142073,
+      "bias": 0.6405598969386685,
+      "bias_mesh": 0.6025631491844335,
+      "bias_tt": 0.037996747754234964,
+      "value_corrected": 150.30040657835937,
+      "U_mesh": 1.8076894475533005,
+      "U_tt": 0.1139902432627049,
+      "U_et": 0.14965984668142074,
+      "U_ref": 0.0,
+      "U95": 1.8174523333676054,
+      "class": "not asymptotic",
+      "p_obs": 2.5463441857468467,
+      "Fs": 3.0,
+      "U95_rel": 0.012143887446553358,
+      "basis": "transferred from etm_Z1_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "T": {
+      "value": 118.016,
+      "bias": 1.1828557066646048,
+      "bias_mesh": 1.1117229476192125,
+      "bias_tt": 0.07113275904539232,
+      "value_corrected": 119.19885570666462,
+      "U_mesh": 3.335168842857638,
+      "U_tt": 0.21339827713617696,
+      "U_et": 0.25,
+      "U_ref": 0.1209208,
+      "U95": 3.353507398966891,
+      "class": "not asymptotic",
+      "p_obs": 2.4755566463083145,
+      "Fs": 3.0,
+      "U95_rel": 0.036053016674194666,
+      "basis": "transferred from etm_Z1_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "warp": {
+      "value": 26.37741,
+      "bias": 0.44132424043532664,
+      "bias_mesh": 0.5416885828857794,
+      "bias_tt": -0.10036434245045273,
+      "value_corrected": 26.81873424043533,
+      "U_mesh": 1.625065748657338,
+      "U_tt": 0.3010930273513582,
+      "U_et": 0.0,
+      "U_ref": 0.113422863,
+      "U95": 1.6566111325323023,
+      "class": "not asymptotic",
+      "p_obs": 2.83524338800878,
+      "Fs": 3.0,
+      "U95_rel": 0.06280416206641601,
+      "basis": "transferred from etm_Z1_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "du": {
+      "value": 2.2721530234704956,
+      "bias": 0.0010486517743724874,
+      "bias_mesh": 0.019413486190064985,
+      "bias_tt": -0.018364834415692498,
+      "value_corrected": 2.273201675244868,
+      "U_mesh": 0.058240458570194956,
+      "U_tt": 0.0550945032470775,
+      "U_et": 0.0,
+      "U_ref": 0.009770258000923132,
+      "U95": 0.08076393529239044,
+      "class": "not asymptotic",
+      "p_obs": 1.342046787337206,
+      "Fs": 3.0,
+      "U95_rel": 0.035545112700653976,
+      "basis": "transferred from etm_Z1_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     }
+    }
+   },
+   "Z2": {
+    "file": "etm_Z2_HV_SDEC__sdec_A.json",
+    "own_ladder": false,
+    "missing_rungs": [
+     "r11",
+     "r31",
+     "r12"
+    ],
+    "ladder_files": {
+     "r11": "etm_Z2_HV_SDEC__sdec_A_r11.json",
+     "r21": "etm_Z2_HV_SDEC__sdec_A.json",
+     "r31": "etm_Z2_HV_SDEC__sdec_A_r31.json",
+     "r12": "etm_Z2_HV_SDEC__sdec_A_r12.json"
+    },
+    "transfer": {
+     "reference": "etm_Z2_HV_S0_h1.1_r21.json",
+     "ok": true,
+     "status": "mesh identical; r11 step check pending (provisional)",
+     "provisional": true
+    },
+    "outputs": {
+     "P": {
+      "value": 149.22369088634457,
+      "bias": 0.5732054039156023,
+      "bias_mesh": 0.5242431021733707,
+      "bias_tt": 0.04896230174223162,
+      "value_corrected": 149.79689629026015,
+      "U_mesh": 1.572729306520112,
+      "U_tt": 0.14688690522669487,
+      "U_et": 0.14922369088634457,
+      "U_ref": 0.0,
+      "U95": 1.5866067390617158,
+      "class": "not asymptotic",
+      "p_obs": 2.6709737802270626,
+      "Fs": 3.0,
+      "U95_rel": 0.010632405147183676,
+      "basis": "transferred from etm_Z2_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "T": {
+      "value": 124.776,
+      "bias": 0.723873369977397,
+      "bias_mesh": 0.7051236434654811,
+      "bias_tt": 0.018749726511916,
+      "value_corrected": 125.4998733699774,
+      "U_mesh": 2.1153709303964434,
+      "U_tt": 0.056249179535748005,
+      "U_et": 0.25,
+      "U_ref": 0.12970879999999999,
+      "U95": 2.134779266379126,
+      "class": "not asymptotic",
+      "p_obs": 2.7454341062636782,
+      "Fs": 3.0,
+      "U95_rel": 0.02139571907451818,
+      "basis": "transferred from etm_Z2_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "warp": {
+      "value": 68.9746,
+      "bias": -0.08375822864434529,
+      "bias_mesh": 0.22596644418427353,
+      "bias_tt": -0.3097246728286188,
+      "value_corrected": 68.89084177135565,
+      "U_mesh": 0.6778993325528205,
+      "U_tt": 0.9291740184858565,
+      "U_et": 0.0,
+      "U_ref": 0.29659078,
+      "U95": 1.187803835860839,
+      "class": "not asymptotic",
+      "p_obs": 4.033067683171751,
+      "Fs": 3.0,
+      "U95_rel": 0.017220887629081416,
+      "basis": "transferred from etm_Z2_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "du": {
+      "value": 3.094377440850787,
+      "bias": -0.003647667595022856,
+      "bias_mesh": 0.0,
+      "bias_tt": -0.003647667595022856,
+      "value_corrected": 3.0907297732557644,
+      "U_mesh": 0.08948093486254709,
+      "U_tt": 0.010943002785068568,
+      "U_et": 0.0,
+      "U_ref": 0.013305822995658384,
+      "U95": 0.09112426646849457,
+      "class": "oscillatory",
+      "p_obs": null,
+      "Fs": 3.0,
+      "U95_rel": 0.029448335961058555,
+      "basis": "transferred from etm_Z2_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     }
+    }
+   }
+  },
+  "B": {
+   "Z1": {
+    "file": "etm_Z1_HV_SDEC__sdec_B.json",
+    "own_ladder": false,
+    "missing_rungs": [
+     "r11",
+     "r31",
+     "r12"
+    ],
+    "ladder_files": {
+     "r11": "etm_Z1_HV_SDEC__sdec_B_r11.json",
+     "r21": "etm_Z1_HV_SDEC__sdec_B.json",
+     "r31": "etm_Z1_HV_SDEC__sdec_B_r31.json",
+     "r12": "etm_Z1_HV_SDEC__sdec_B_r12.json"
+    },
+    "transfer": {
+     "reference": "etm_Z1_HV_S0_h1.1_r21.json",
+     "ok": true,
+     "status": "mesh identical; r11 step check pending (provisional)",
+     "provisional": true
+    },
+    "outputs": {
+     "P": {
+      "value": 147.86294463270082,
+      "bias": 0.6328689670288772,
+      "bias_mesh": 0.5953284300445866,
+      "bias_tt": 0.037540536984290655,
+      "value_corrected": 148.4958135997297,
+      "U_mesh": 1.7859852901337598,
+      "U_tt": 0.11262161095287197,
+      "U_et": 0.14786294463270083,
+      "U_ref": 0.0,
+      "U95": 1.7956309571354698,
+      "class": "not asymptotic",
+      "p_obs": 2.5463441857468467,
+      "Fs": 3.0,
+      "U95_rel": 0.01214388744655336,
+      "basis": "transferred from etm_Z1_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "T": {
+      "value": 112.617,
+      "bias": 1.1141982933133296,
+      "bias_mesh": 1.0471943483008572,
+      "bias_tt": 0.06700394501247246,
+      "value_corrected": 113.73119829331334,
+      "U_mesh": 3.141583044902572,
+      "U_tt": 0.2010118350374174,
+      "U_et": 0.25,
+      "U_ref": 0.1139021,
+      "U95": 3.1599720685836505,
+      "class": "not asymptotic",
+      "p_obs": 2.4755566463083145,
+      "Fs": 3.0,
+      "U95_rel": 0.036065741449532056,
+      "basis": "transferred from etm_Z1_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "warp": {
+      "value": 5.907200000000001,
+      "bias": 0.09883421280177099,
+      "bias_mesh": 0.12131072750595591,
+      "bias_tt": -0.02247651470418492,
+      "value_corrected": 6.006034212801772,
+      "U_mesh": 0.3639321825178677,
+      "U_tt": 0.06742954411255477,
+      "U_et": 0.0,
+      "U_ref": 0.025400960000000007,
+      "U95": 0.3709967461587327,
+      "class": "not asymptotic",
+      "p_obs": 2.83524338800878,
+      "Fs": 3.0,
+      "U95_rel": 0.062804162066416,
+      "basis": "transferred from etm_Z1_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "du": {
+      "value": 0.6988565295469344,
+      "bias": 0.00032253863721811403,
+      "bias_mesh": 0.0059710950121103605,
+      "bias_tt": -0.0056485563748922465,
+      "value_corrected": 0.6991790681841525,
+      "U_mesh": 0.01791328503633108,
+      "U_tt": 0.01694566912467674,
+      "U_et": 0.0,
+      "U_ref": 0.003005083077051818,
+      "U95": 0.024840934104333696,
+      "class": "not asymptotic",
+      "p_obs": 1.342046787337206,
+      "Fs": 3.0,
+      "U95_rel": 0.03554511270065397,
+      "basis": "transferred from etm_Z1_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     }
+    }
+   },
+   "Z2": {
+    "file": "etm_Z2_HV_SDEC__sdec_B.json",
+    "own_ladder": false,
+    "missing_rungs": [
+     "r11",
+     "r31",
+     "r12"
+    ],
+    "ladder_files": {
+     "r11": "etm_Z2_HV_SDEC__sdec_B_r11.json",
+     "r21": "etm_Z2_HV_SDEC__sdec_B.json",
+     "r31": "etm_Z2_HV_SDEC__sdec_B_r31.json",
+     "r12": "etm_Z2_HV_SDEC__sdec_B_r12.json"
+    },
+    "transfer": {
+     "reference": "etm_Z2_HV_S0_h1.1_r21.json",
+     "ok": true,
+     "status": "mesh identical; r11 step check pending (provisional)",
+     "provisional": true
+    },
+    "outputs": {
+     "P": {
+      "value": 116.56122064167866,
+      "bias": 0.44774071169233587,
+      "bias_mesh": 0.40949540612053165,
+      "bias_tt": 0.038245305571804236,
+      "value_corrected": 117.00896135337099,
+      "U_mesh": 1.2284862183615948,
+      "U_tt": 0.11473591671541271,
+      "U_et": 0.11656122064167866,
+      "U_ref": 0.0,
+      "U95": 1.2393261223125962,
+      "class": "not asymptotic",
+      "p_obs": 2.6709737802270626,
+      "Fs": 3.0,
+      "U95_rel": 0.010632405147183674,
+      "basis": "transferred from etm_Z2_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "T": {
+      "value": 81.584,
+      "bias": 0.4105160636505877,
+      "bias_mesh": 0.3998829001147649,
+      "bias_tt": 0.010633163535822793,
+      "value_corrected": 81.9945160636506,
+      "U_mesh": 1.1996487003442948,
+      "U_tt": 0.031899490607468384,
+      "U_et": 0.25,
+      "U_ref": 0.0735592,
+      "U95": 1.2280413419927734,
+      "class": "not asymptotic",
+      "p_obs": 2.7454341062636782,
+      "Fs": 3.0,
+      "U95_rel": 0.021702978615735426,
+      "basis": "transferred from etm_Z2_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "warp": {
+      "value": 17.643600000000003,
+      "bias": -0.02142523019936863,
+      "bias_mesh": 0.05780188003423941,
+      "bias_tt": -0.07922711023360804,
+      "value_corrected": 17.622174769800637,
+      "U_mesh": 0.17340564010271822,
+      "U_tt": 0.23768133070082412,
+      "U_et": 0.0,
+      "U_ref": 0.07586748000000001,
+      "U95": 0.3038384529724609,
+      "class": "not asymptotic",
+      "p_obs": 4.033067683171751,
+      "Fs": 3.0,
+      "U95_rel": 0.017220887629081416,
+      "basis": "transferred from etm_Z2_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     },
+     "du": {
+      "value": 2.1022451437993865,
+      "bias": -0.0024781370839243254,
+      "bias_mesh": 0.0,
+      "bias_tt": -0.0024781370839243254,
+      "value_corrected": 2.0997670067154623,
+      "U_mesh": 0.06079118154561601,
+      "U_tt": 0.007434411251772977,
+      "U_et": 0.0,
+      "U_ref": 0.009039654118337362,
+      "U95": 0.06190762126710819,
+      "class": "oscillatory",
+      "p_obs": null,
+      "Fs": 3.0,
+      "U95_rel": 0.029448335961058558,
+      "basis": "transferred from etm_Z2_HV_S0_h1.1_r21.json (mesh identical; r11 step check pending (provisional))",
+      "provisional": true
+     }
+    }
+   }
+  }
+ },
+ "reference_cases": {
   "Z1": {
-   "P": {
-    "value_r21": 144.3097256920461,
-    "U_mesh": 1.4947637357341526,
-    "e_mesh_signed": 1.4947637357341526,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 144.8110555296056,
-    "tt_rel": 0.00019367300050587976
+   "file": "etm_Z1_HV_S0_h1.1_r21.json",
+   "own_ladder": true,
+   "missing_rungs": [],
+   "ladder_files": {
+    "r11": "etm_Z1_HV_S0_h1.1.json",
+    "r21": "etm_Z1_HV_S0_h1.1_r21.json",
+    "r31": "etm_Z1_HV_S0_h1.1_r31.json",
+    "r12": "etm_Z1_HV_S0_h1.1_r12.json"
    },
-   "T": {
-    "value_r21": 115.663,
-    "U_mesh": 2.787716951949459,
-    "e_mesh_signed": 2.787716951949459,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 116.61327894489193,
-    "tt_rel": 0.0004670882437481361
-   },
-   "warp": {
-    "value_r21": 25.53876,
-    "U_mesh": 1.3492642662616448,
-    "e_mesh_signed": 1.3492642662616448,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 25.965217051221813,
-    "tt_rel": 0.0031795129080457573
-   },
-   "du": {
-    "value_r21": 2.2082761910295026,
-    "U_mesh": 0.036667079121535336,
-    "e_mesh_signed": 0.036667079121535336,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 2.227143907638184,
-    "tt_rel": 0.006142492561614195
+   "transfer": null,
+   "outputs": {
+    "P": {
+     "value": 144.3097256920461,
+     "bias": 0.6176608159523141,
+     "bias_mesh": 0.5810223964484124,
+     "bias_tt": 0.03663841950390179,
+     "value_corrected": 144.92738650799842,
+     "U_mesh": 1.7430671893452372,
+     "U_tt": 0.10991525851170536,
+     "U_et": 0.14430972569204611,
+     "U_ref": 0.0,
+     "U95": 1.7524810662471972,
+     "class": "not asymptotic",
+     "p_obs": 2.5463441857468467,
+     "Fs": 3.0,
+     "U95_rel": 0.012143887446553358,
+     "basis": "own ladder",
+     "provisional": false
+    },
+    "T": {
+     "value": 115.663,
+     "bias": 1.1529333333333303,
+     "bias_mesh": 1.083600000000007,
+     "bias_tt": 0.06933333333332332,
+     "value_corrected": 116.81593333333332,
+     "U_mesh": 3.2508000000000212,
+     "U_tt": 0.20799999999997,
+     "U_et": 0.25,
+     "U_ref": 0.11786189999999999,
+     "U95": 3.269152193990322,
+     "class": "not asymptotic",
+     "p_obs": 2.4755566463083145,
+     "Fs": 3.0,
+     "U95_rel": 0.03605828390843367,
+     "basis": "own ladder",
+     "provisional": false
+    },
+    "warp": {
+     "value": 25.53876,
+     "bias": 0.42729266666667054,
+     "bias_mesh": 0.524466000000001,
+     "bias_tt": -0.09717333333333045,
+     "value_corrected": 25.96605266666667,
+     "U_mesh": 1.573398000000003,
+     "U_tt": 0.29151999999999134,
+     "U_et": 0.0,
+     "U_ref": 0.109816668,
+     "U95": 1.6039404220153024,
+     "class": "not asymptotic",
+     "p_obs": 2.83524338800878,
+     "Fs": 3.0,
+     "U95_rel": 0.06280416206641601,
+     "basis": "own ladder",
+     "provisional": false
+    },
+    "du": {
+     "value": 2.2082761910295026,
+     "bias": 0.001019171121886226,
+     "bias_mesh": 0.018867716608681674,
+     "bias_tt": -0.017848545486795448,
+     "value_corrected": 2.2092953621513884,
+     "U_mesh": 0.05660314982604502,
+     "U_tt": 0.05354563646038635,
+     "U_et": 0.0,
+     "U_ref": 0.009495587621426861,
+     "U95": 0.07849342608431455,
+     "class": "not asymptotic",
+     "p_obs": 1.342046787337206,
+     "Fs": 3.0,
+     "U95_rel": 0.03554511270065397,
+     "basis": "own ladder",
+     "provisional": false
+    }
    }
   },
   "Z2": {
-   "P": {
-    "value_r21": 147.43752380684376,
-    "U_mesh": 1.3325473663383662,
-    "e_mesh_signed": 1.3325473663383662,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 147.87258963334187,
-    "tt_rel": 0.0002500463031029184
+   "file": "etm_Z2_HV_S0_h1.1_r21.json",
+   "own_ladder": true,
+   "missing_rungs": [],
+   "ladder_files": {
+    "r11": "etm_Z2_HV_S0_h1.1.json",
+    "r21": "etm_Z2_HV_S0_h1.1_r21.json",
+    "r31": "etm_Z2_HV_S0_h1.1_r31.json",
+    "r12": "etm_Z2_HV_S0_h1.1_r12.json"
    },
-   "T": {
-    "value_r21": 124.334,
-    "U_mesh": 1.8059960319938264,
-    "e_mesh_signed": 1.8059960319938264,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 124.91480084328767,
-    "tt_rel": 0.00011568335812270704
-   },
-   "warp": {
-    "value_r21": 68.67960000000001,
-    "U_mesh": 0.5788448820492367,
-    "e_mesh_signed": 0.5788448820492367,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 68.83486023297202,
-    "tt_rel": 0.0034890508966997245
-   },
-   "du": {
-    "value_r21": 3.0873385652177823,
-    "U_mesh": 0.10114877235005774,
-    "e_mesh_signed": 0.10114877235005774,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": null,
-    "tt_rel": 0.0008673822012361517
+   "transfer": null,
+   "outputs": {
+    "P": {
+     "value": 147.43752380684376,
+     "bias": 0.5663442908029007,
+     "bias_mesh": 0.5179680545237944,
+     "bias_tt": 0.0483762362791064,
+     "value_corrected": 148.00386809764666,
+     "U_mesh": 1.553904163571383,
+     "U_tt": 0.1451287088373192,
+     "U_et": 0.14743752380684377,
+     "U_ref": 0.0,
+     "U95": 1.5676154870119012,
+     "class": "not asymptotic",
+     "p_obs": 2.6709737802270626,
+     "Fs": 3.0,
+     "U95_rel": 0.010632405147183676,
+     "basis": "own ladder",
+     "provisional": false
+    },
+    "T": {
+     "value": 124.334,
+     "bias": 0.7206666666666811,
+     "bias_mesh": 0.7020000000000011,
+     "bias_tt": 0.018666666666680005,
+     "value_corrected": 125.05466666666668,
+     "U_mesh": 2.1060000000000034,
+     "U_tt": 0.05600000000004002,
+     "U_et": 0.25,
+     "U_ref": 0.1291342,
+     "U95": 2.1254523381176202,
+     "class": "not asymptotic",
+     "p_obs": 2.7454341062636782,
+     "Fs": 3.0,
+     "U95_rel": 0.02139702758489158,
+     "basis": "own ladder",
+     "provisional": false
+    },
+    "warp": {
+     "value": 68.67960000000001,
+     "bias": -0.08340000000003159,
+     "bias_mesh": 0.22499999999997441,
+     "bias_tt": -0.308400000000006,
+     "value_corrected": 68.59619999999998,
+     "U_mesh": 0.6749999999999232,
+     "U_tt": 0.925200000000018,
+     "U_et": 0.0,
+     "U_ref": 0.29532228000000005,
+     "U95": 1.1827236740102602,
+     "class": "not asymptotic",
+     "p_obs": 4.033067683171751,
+     "Fs": 3.0,
+     "U95_rel": 0.017220887629081416,
+     "basis": "own ladder",
+     "provisional": false
+    },
+    "du": {
+     "value": 3.0873385652177823,
+     "bias": -0.0036393701332417074,
+     "bias_mesh": 0.0,
+     "bias_tt": -0.0036393701332417074,
+     "value_corrected": 3.0836991950845407,
+     "U_mesh": 0.08927738982511646,
+     "U_tt": 0.010918110399725123,
+     "U_et": 0.0,
+     "U_ref": 0.013275555830436464,
+     "U95": 0.09091698329406574,
+     "class": "oscillatory",
+     "p_obs": null,
+     "Fs": 3.0,
+     "U95_rel": 0.029448335961058555,
+     "basis": "own ladder",
+     "provisional": false
+    }
    }
   },
   "Z3": {
-   "P": {
-    "value_r21": 120.32261821657468,
-    "U_mesh": 1.047665852852805,
-    "e_mesh_signed": 1.047665852852805,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 120.64220856804533,
-    "tt_rel": 0.0002500463031029184
+   "file": "etm_Z3_HV_S0_h1.1_r21.json",
+   "own_ladder": true,
+   "missing_rungs": [
+    "r12"
+   ],
+   "ladder_files": {
+    "r11": "etm_Z3_HV_S0_h1.1.json",
+    "r21": "etm_Z3_HV_S0_h1.1_r21.json",
+    "r31": "etm_Z3_HV_S0_h1.1_r31.json",
+    "r12": "etm_Z3_HV_S0_h1.1_r12.json"
    },
-   "T": {
-    "value_r21": 82.44,
-    "U_mesh": 0.28571783377954435,
-    "e_mesh_signed": 0.28571783377954435,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 82.52520174385222,
-    "tt_rel": 0.0004670882437481361
+   "transfer": null,
+   "outputs": {
+    "P": {
+     "value": 120.32261821657468,
+     "bias": 0.40723313654832227,
+     "bias_mesh": 0.40723313654832227,
+     "bias_tt": 0.0,
+     "value_corrected": 120.72985135312301,
+     "U_mesh": 1.221699409644967,
+     "U_tt": null,
+     "U_et": 0.12032261821657468,
+     "U_ref": 0.0,
+     "U95": 1.2276102720250237,
+     "class": "not asymptotic",
+     "p_obs": 3.0352479863940287,
+     "Fs": 3.0,
+     "U95_rel": 0.0102026559114213,
+     "basis": "own ladder",
+     "provisional": false
+    },
+    "T": {
+     "value": 82.44,
+     "bias": 0.11106000000000335,
+     "bias_mesh": 0.11106000000000335,
+     "bias_tt": 0.0,
+     "value_corrected": 82.55106,
+     "U_mesh": 0.33318000000001,
+     "U_tt": null,
+     "U_et": 0.25,
+     "U_ref": 0.07467199999999999,
+     "U95": 0.42318414429655404,
+     "class": "not asymptotic",
+     "p_obs": 3.176468827390793,
+     "Fs": 3.0,
+     "U95_rel": 0.007367411982878726,
+     "basis": "own ladder",
+     "provisional": false
+    },
+    "warp": {
+     "value": 4.733221,
+     "bias": 0.2787407999999994,
+     "bias_mesh": 0.2787407999999994,
+     "bias_tt": 0.0,
+     "value_corrected": 5.0119618,
+     "U_mesh": 0.8362223999999983,
+     "U_tt": null,
+     "U_et": 0.0,
+     "U_ref": 0.020352850300000003,
+     "U95": 0.8364700477465354,
+     "class": "not asymptotic",
+     "p_obs": 3.3561277773523264,
+     "Fs": 3.0,
+     "U95_rel": 0.17672321823691212,
+     "basis": "own ladder",
+     "provisional": false
+    },
+    "du": {
+     "value": 1.4056356392811624,
+     "bias": 0.04208967396787287,
+     "bias_mesh": 0.04208967396787287,
+     "bias_tt": 0.0,
+     "value_corrected": 1.4477253132490353,
+     "U_mesh": 0.1262690219036186,
+     "U_tt": null,
+     "U_et": 0.0,
+     "U_ref": 0.006044233248908998,
+     "U95": 0.12641360151527894,
+     "class": "not asymptotic",
+     "p_obs": 1.0980017442220995,
+     "Fs": 3.0,
+     "U95_rel": 0.08993340662586391,
+     "basis": "own ladder",
+     "provisional": false
+    }
+   }
+  }
+ },
+ "reference_pairs": {
+  "Z1/Z2": {
+   "a": "Z1",
+   "b": "Z2",
+   "files": [
+    "etm_Z1_HV_S0_h1.1_r21.json",
+    "etm_Z2_HV_S0_h1.1_r21.json"
+   ],
+   "own_ladders": true,
+   "mesh": {
+    "Z1": [
+     144512,
+     153873,
+     1.1,
+     [
+      2,
+      1
+     ]
+    ],
+    "Z2": [
+     145120,
+     159241,
+     1.1,
+     [
+      2,
+      1
+     ]
+    ]
    },
-   "warp": {
-    "value_r21": 4.733221,
-    "U_mesh": 0.7171008244370127,
-    "e_mesh_signed": 0.7171008244370127,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 4.941488824723699,
-    "tt_rel": 0.0034890508966997245
+   "outputs": {
+    "P": {
+     "D": 3.127798114797656,
+     "D_rungs": {
+      "r11": 3.219307669876372,
+      "r21": 3.127798114797656,
+      "r31": 3.092767924839535,
+      "r12": 3.2281110324577753
+     },
+     "class": "not asymptotic",
+     "p_obs": 0.7581905953367309,
+     "p": 0.7581905953367309,
+     "Fs": 3.0,
+     "beta_mesh": -0.1323601237881941,
+     "U_mesh": 0.3970803713645823,
+     "beta_tt": 0.011737816775204616,
+     "U_tt": 0.03521345032561385,
+     "tt_basis": "own r12"
+    },
+    "T": {
+     "D": 8.671000000000006,
+     "D_rungs": {
+      "r11": 9.691999999999993,
+      "r21": 8.671000000000006,
+      "r31": 8.459000000000003,
+      "r12": 9.65400000000001
+     },
+     "class": "asymptotic",
+     "p_obs": 1.8084834013584992,
+     "p": 1.8084834013584992,
+     "Fs": 1.25,
+     "beta_mesh": -0.4079530826885118,
+     "U_mesh": 0.5099413533606398,
+     "beta_tt": -0.05066666666664332,
+     "U_tt": 0.15199999999992997,
+     "tt_basis": "own r12"
+    },
+    "warp": {
+     "D": 43.14084000000001,
+     "D_rungs": {
+      "r11": 43.37134999999999,
+      "r21": 43.14084000000001,
+      "r31": 42.97447,
+      "r12": 43.212929999999986
+     },
+     "class": "not asymptotic",
+     "p_obs": null,
+     "p": 0.5,
+     "Fs": 3.0,
+     "beta_mesh": -0.9066316085069183,
+     "U_mesh": 2.719894825520755,
+     "beta_tt": -0.21122666666667556,
+     "U_tt": 0.6336800000000267,
+     "tt_basis": "own r12"
+    },
+    "du": {
+     "D": 0.8790623741882797,
+     "D_rungs": {
+      "r11": 0.9675446027712482,
+      "r21": 0.8790623741882797,
+      "r31": 0.8929870229215111,
+      "r12": 0.9782014842864135
+     },
+     "class": "oscillatory",
+     "p_obs": null,
+     "p": null,
+     "Fs": 3.0,
+     "beta_mesh": 0.0,
+     "U_mesh": 0.13272334287445275,
+     "beta_tt": 0.014209175353553741,
+     "U_tt": 0.042627526060661225,
+     "tt_basis": "own r12"
+    }
+   }
+  },
+  "Z1/Z3": {
+   "a": "Z1",
+   "b": "Z3",
+   "files": [
+    "etm_Z1_HV_S0_h1.1_r21.json",
+    "etm_Z3_HV_S0_h1.1_r21.json"
+   ],
+   "own_ladders": true,
+   "mesh": {
+    "Z1": [
+     144512,
+     153873,
+     1.1,
+     [
+      2,
+      1
+     ]
+    ],
+    "Z3": [
+     126536,
+     135731,
+     1.1,
+     [
+      2,
+      1
+     ]
+    ]
    },
-   "du": {
-    "value_r21": 1.4056356392811624,
-    "U_mesh": 0.07003106478854564,
-    "e_mesh_signed": 0.07003106478854564,
-    "mesh_basis": "extrapolation of r21 -> r31 at order 0.6 (lowest MOOSE-ladder order)",
-    "richardson_three_level": 1.4477253132490353,
-    "tt_rel": 0.006142492561614195
+   "outputs": {
+    "P": {
+     "D": -23.98710747547142,
+     "D_rungs": {
+      "r11": -23.860276048848363,
+      "r21": -23.98710747547142,
+      "r31": -24.083657064304802,
+      "r12": null
+     },
+     "class": "not asymptotic",
+     "p_obs": null,
+     "p": 0.5,
+     "Fs": 3.0,
+     "beta_mesh": -0.5261459940174562,
+     "U_mesh": 1.5784379820523686,
+     "beta_tt": 0.0,
+     "U_tt": null,
+     "tt_basis": "no r12 rung"
+    },
+    "T": {
+     "D": -33.223,
+     "D_rungs": {
+      "r11": -29.573099999999997,
+      "r21": -33.223,
+      "r31": -33.7633,
+      "r12": null
+     },
+     "class": "not asymptotic",
+     "p_obs": 2.37071258479855,
+     "p": 2.0,
+     "Fs": 3.0,
+     "beta_mesh": -0.9725400000000036,
+     "U_mesh": 2.917620000000011,
+     "beta_tt": 0.0,
+     "U_tt": null,
+     "tt_basis": "no r12 rung"
+    },
+    "warp": {
+     "D": -20.805539,
+     "D_rungs": {
+      "r11": -20.1129,
+      "r21": -20.805539,
+      "r31": -20.942053,
+      "r12": null
+     },
+     "class": "asymptotic",
+     "p_obs": 1.8958970537528503,
+     "p": 1.8958970537528503,
+     "Fs": 1.25,
+     "beta_mesh": -0.25450324638461197,
+     "U_mesh": 0.31812905798076496,
+     "beta_tt": 0.0,
+     "U_tt": null,
+     "tt_basis": "no r12 rung"
+    },
+    "du": {
+     "D": -0.8026405517483401,
+     "D_rungs": {
+      "r11": -0.8216832227440753,
+      "r21": -0.8026405517483401,
+      "r31": -0.7954356885151863,
+      "r12": null
+     },
+     "class": "not asymptotic",
+     "p_obs": 0.7787254628232627,
+     "p": 0.7787254628232627,
+     "Fs": 3.0,
+     "beta_mesh": 0.02661023423366895,
+     "U_mesh": 0.07983070270100684,
+     "beta_tt": 0.0,
+     "U_tt": null,
+     "tt_basis": "no r12 rung"
+    }
+   }
+  },
+  "Z2/Z3": {
+   "a": "Z2",
+   "b": "Z3",
+   "files": [
+    "etm_Z2_HV_S0_h1.1_r21.json",
+    "etm_Z3_HV_S0_h1.1_r21.json"
+   ],
+   "own_ladders": true,
+   "mesh": {
+    "Z2": [
+     145120,
+     159241,
+     1.1,
+     [
+      2,
+      1
+     ]
+    ],
+    "Z3": [
+     126536,
+     135731,
+     1.1,
+     [
+      2,
+      1
+     ]
+    ]
+   },
+   "outputs": {
+    "P": {
+     "D": -27.114905590269075,
+     "D_rungs": {
+      "r11": -27.079583718724734,
+      "r21": -27.114905590269075,
+      "r31": -27.176424989144337,
+      "r12": null
+     },
+     "class": "not asymptotic",
+     "p_obs": null,
+     "p": 0.5,
+     "Fs": 3.0,
+     "beta_mesh": -0.33524933315292876,
+     "U_mesh": 1.0057479994587863,
+     "beta_tt": 0.0,
+     "U_tt": null,
+     "tt_basis": "no r12 rung"
+    },
+    "T": {
+     "D": -41.894000000000005,
+     "D_rungs": {
+      "r11": -39.26509999999999,
+      "r21": -41.894000000000005,
+      "r31": -42.222300000000004,
+      "r12": null
+     },
+     "class": "not asymptotic",
+     "p_obs": 2.6489341716136634,
+     "p": 2.0,
+     "Fs": 3.0,
+     "beta_mesh": -0.5909399999999977,
+     "U_mesh": 1.7728199999999932,
+     "beta_tt": 0.0,
+     "U_tt": null,
+     "tt_basis": "no r12 rung"
+    },
+    "warp": {
+     "D": -63.94637900000001,
+     "D_rungs": {
+      "r11": -63.484249999999996,
+      "r21": -63.94637900000001,
+      "r31": -63.91652299999999,
+      "r12": null
+     },
+     "class": "oscillatory",
+     "p_obs": null,
+     "p": null,
+     "Fs": 3.0,
+     "beta_mesh": 0.0,
+     "U_mesh": 0.6931935000000173,
+     "beta_tt": 0.0,
+     "U_tt": null,
+     "tt_basis": "no r12 rung"
+    },
+    "du": {
+     "D": -1.6817029259366199,
+     "D_rungs": {
+      "r11": -1.7892278255153236,
+      "r21": -1.6817029259366199,
+      "r31": -1.6884227114366974,
+      "r12": null
+     },
+     "class": "oscillatory",
+     "p_obs": null,
+     "p": null,
+     "Fs": 3.0,
+     "beta_mesh": 0.0,
+     "U_mesh": 0.16128734936805555,
+     "beta_tt": 0.0,
+     "U_tt": null,
+     "tt_basis": "no r12 rung"
+    }
    }
   }
  },
  "relative": {
   "Z1": {
    "P": {
-    "mesh": 0.010358024925665418,
-    "tt": 0.00019367300050587976,
+    "mesh": 0.012078653611087209,
+    "tt": 0.0007616621678448907,
     "et": 0.001,
     "ref": 0.0,
-    "total": 0.011551697926171299,
-    "e_mesh_rel_signed": 0.010358024925665418
+    "total": 0.012143887446553358,
+    "bias_rel": 0.004280105259644033,
+    "class": "not asymptotic",
+    "p_obs": 2.5463441857468467,
+    "Fs": 3.0
    },
    "T": {
-    "mesh": 0.030748121636714636,
-    "tt": 0.0004670882437481361,
+    "mesh": 0.035855861817941405,
+    "tt": 0.002294210427627257,
     "et": 0.0027574644562831587,
     "ref": 0.0013,
-    "total": 0.035272674336745934,
-    "e_mesh_rel_signed": 0.030748121636714636
+    "total": 0.03605828390843367,
+    "bias_rel": 0.012716690748522885,
+    "class": "not asymptotic",
+    "p_obs": 2.4755566463083145,
+    "Fs": 3.0
    },
    "warp": {
-    "mesh": 0.05283201949748714,
-    "tt": 0.0031795129080457573,
+    "mesh": 0.061608237831437505,
+    "tt": 0.011414806357081994,
     "et": 0.0,
     "ref": 0.0043,
-    "total": 0.0603115324055329,
-    "e_mesh_rel_signed": 0.05283201949748714
+    "total": 0.06280416206641601,
+    "bias_rel": 0.01673114382478517,
+    "class": "not asymptotic",
+    "p_obs": 2.83524338800878,
+    "Fs": 3.0
    },
    "du": {
-    "mesh": 0.0166043900081362,
-    "tt": 0.006142492561614195,
+    "mesh": 0.025632278270254105,
+    "tt": 0.024247708089187553,
     "et": 0.0,
     "ref": 0.0043,
-    "total": 0.027046882569750394,
-    "e_mesh_rel_signed": 0.0166043900081362
+    "total": 0.03554511270065397,
+    "bias_rel": 0.0004615233936888513,
+    "class": "not asymptotic",
+    "p_obs": 1.342046787337206,
+    "Fs": 3.0
    }
   },
   "Z2": {
    "P": {
-    "mesh": 0.00903804765525038,
-    "tt": 0.0002500463031029184,
+    "mesh": 0.010539407631446222,
+    "tt": 0.000984340384252863,
     "et": 0.001,
     "ref": 0.0,
-    "total": 0.010288093958353298,
-    "e_mesh_rel_signed": 0.00903804765525038
+    "total": 0.010632405147183676,
+    "bias_rel": 0.0038412493385663613,
+    "class": "not asymptotic",
+    "p_obs": 2.6709737802270626,
+    "Fs": 3.0
    },
    "T": {
-    "mesh": 0.018181046086876863,
-    "tt": 0.00011568335812270704,
+    "mesh": 0.021201199991946397,
+    "tt": 0.0005637546056741902,
     "et": 0.0025167616324722653,
     "ref": 0.0013,
-    "total": 0.022113491077471834,
-    "e_mesh_rel_signed": 0.018181046086876863
+    "total": 0.02139702758489158,
+    "bias_rel": 0.007254984865873528,
+    "class": "not asymptotic",
+    "p_obs": 2.7454341062636782,
+    "Fs": 3.0
    },
    "warp": {
-    "mesh": 0.008428192389723246,
-    "tt": 0.0034890508966997245,
+    "mesh": 0.009828245942025334,
+    "tt": 0.013471249104537853,
     "et": 0.0,
     "ref": 0.0043,
-    "total": 0.016217243286422968,
-    "e_mesh_rel_signed": 0.008428192389723246
+    "total": 0.017220887629081416,
+    "bias_rel": -0.0012143343875041727,
+    "class": "not asymptotic",
+    "p_obs": 4.033067683171751,
+    "Fs": 3.0
    },
    "du": {
-    "mesh": 0.03276244901988022,
-    "tt": 0.0008673822012361517,
+    "mesh": 0.028917265774127624,
+    "tt": 0.00353641499598699,
     "et": 0.0,
     "ref": 0.0043,
-    "total": 0.03792983122111637,
-    "e_mesh_rel_signed": 0.03276244901988022
+    "total": 0.029448335961058555,
+    "bias_rel": -0.00117880499866233,
+    "class": "oscillatory",
+    "p_obs": null,
+    "Fs": 3.0
    }
   },
   "Z3": {
    "P": {
-    "mesh": 0.008707139757938602,
-    "tt": 0.0002500463031029184,
+    "mesh": 0.010153530797060693,
+    "tt": 0.0,
     "et": 0.001,
     "ref": 0.0,
-    "total": 0.009957186061041519,
-    "e_mesh_rel_signed": 0.008707139757938602
+    "total": 0.0102026559114213,
+    "bias_rel": 0.0033845102656868973,
+    "class": "not asymptotic",
+    "p_obs": 3.0352479863940287,
+    "Fs": 3.0
    },
    "T": {
-    "mesh": 0.004974196270535243,
-    "tt": 0.0004670882437481361,
+    "mesh": 0.005800487465181233,
+    "tt": 0.0,
     "et": 0.004352367688022284,
     "ref": 0.0013,
-    "total": 0.011093652202305664,
-    "e_mesh_rel_signed": 0.004974196270535243
+    "total": 0.007367411982878726,
+    "bias_rel": 0.001933495821727078,
+    "class": "not asymptotic",
+    "p_obs": 3.176468827390793,
+    "Fs": 3.0
    },
    "warp": {
-    "mesh": 0.15150376972404472,
-    "tt": 0.0034890508966997245,
+    "mesh": 0.17667089704875352,
+    "tt": 0.0,
     "et": 0.0,
     "ref": 0.0043,
-    "total": 0.15929282062074446,
-    "e_mesh_rel_signed": 0.15150376972404472
+    "total": 0.17672321823691212,
+    "bias_rel": 0.05889029901625117,
+    "class": "not asymptotic",
+    "p_obs": 3.3561277773523264,
+    "Fs": 3.0
    },
    "du": {
-    "mesh": 0.04982163430656845,
-    "tt": 0.006142492561614195,
+    "mesh": 0.08983054952149064,
+    "tt": 0.0,
     "et": 0.0,
     "ref": 0.0043,
-    "total": 0.06026412686818264,
-    "e_mesh_rel_signed": 0.04982163430656845
+    "total": 0.08993340662586391,
+    "bias_rel": 0.029943516507163547,
+    "class": "not asymptotic",
+    "p_obs": 1.0980017442220995,
+    "Fs": 3.0
    }
   }
  },
  "U": {
-  "A.Z1.P": 1.7288253405408824,
-  "A.Z1.T": 3.28092307610676,
-  "A.Z1.warp": 1.5908620179890276,
-  "A.Z1.du": 0.0614546560063098,
-  "A.Z2.P": 1.5352273526509816,
-  "A.Z2.T": 2.2063956857458296,
-  "A.Z2.warp": 1.1185778687837096,
-  "A.Z2.du": 0.11736921406590037,
-  "B.Z1.P": 1.7080680708711515,
-  "B.Z1.T": 3.0904859073626687,
-  "B.Z1.warp": 0.356272284225964,
-  "B.Z1.du": 0.018901890487759233,
-  "B.Z2.P": 1.19919278986194,
-  "B.Z2.T": 1.2512697791276663,
-  "B.Z2.warp": 0.28613055364833234,
-  "B.Z2.du": 0.07973780348972224
+  "A.Z1.P": 1.8174523333676054,
+  "A.Z1.T": 3.353507398966891,
+  "A.Z1.warp": 1.6566111325323023,
+  "A.Z1.du": 0.08076393529239044,
+  "A.Z2.P": 1.5866067390617158,
+  "A.Z2.T": 2.134779266379126,
+  "A.Z2.warp": 1.187803835860839,
+  "A.Z2.du": 0.09112426646849457,
+  "B.Z1.P": 1.7956309571354698,
+  "B.Z1.T": 3.1599720685836505,
+  "B.Z1.warp": 0.3709967461587327,
+  "B.Z1.du": 0.024840934104333696,
+  "B.Z2.P": 1.2393261223125962,
+  "B.Z2.T": 1.2280413419927734,
+  "B.Z2.warp": 0.3038384529724609,
+  "B.Z2.du": 0.06190762126710819
  },
- "eps_basis": "stabilized L0 (48 cycles; U = mesh + time + cycle + card grid)",
+ "eps_basis": "v2 local model, production law schubert2003 (4-cycle L0; U = own L0->L3 mesh change, else the largest checked joint's, and the 4->8 cycle change, in quadrature; law band in the resolution)",
  "eps": {
   "A": {
-   "Z1": 5.727284355468735,
-   "Z2": 8.017956132812486,
-   "Z3": 14.61370585937495
+   "Z1": 6.876602292968769,
+   "Z2": 1.9698302353515678,
+   "Z3": 3.146641180664073
   },
   "B": {
-   "Z1": 1.8936538132812473,
-   "Z2": 4.043239316406232,
-   "Z3": 2.945600241796866
+   "Z1": 4.246852464843761,
+   "Z2": 1.3242824306640661,
+   "Z3": 2.1487120224609435
   }
+ },
+ "eps_U_rel": {
+  "A.Z1": 0.01569837370354643,
+  "A.Z2": 0.9362362652867016,
+  "A.Z3": 0.02450580634789,
+  "B.Z1": 0.3855785795264149,
+  "B.Z2": 0.09584091787541861,
+  "B.Z3": 0.024505867058538525
  },
  "comparisons": [
   {
@@ -248,12 +1150,34 @@
    "y_a": 149.65984668142073,
    "y_b": 149.22369088634457,
    "D": -0.43615579507616076,
-   "U_a": 1.7288253405408824,
-   "U_b": 1.5352273526509816,
-   "U_D": 3.2640526931918643,
-   "U_D_paired": 0.5087008910215145,
-   "verdict": "not resolved",
-   "resolved": false,
+   "basis": "transferred from the reference pair etm_Z2_HV_S0_h1.1_r21.json - etm_Z1_HV_S0_h1.1_r21.json",
+   "provisional": true,
+   "reference": "etm_Z2_HV_S0_h1.1_r21.json - etm_Z1_HV_S0_h1.1_r21.json",
+   "transfer_checks": {
+    "Z1": "mesh identical; r11 step check pending (provisional)",
+    "Z2": "mesh identical; r11 step check pending (provisional)"
+   },
+   "bias": -0.12062230701298947,
+   "bias_mesh": -0.1323601237881941,
+   "bias_tt": 0.011737816775204616,
+   "D_corrected": -0.5567781020891502,
+   "U95": 0.45119683956929346,
+   "U_D": 0.45119683956929346,
+   "components": {
+    "mesh": 0.3970803713645823,
+    "tt": 0.03521345032561385,
+    "et_a": 0.14965984668142074,
+    "et_b": 0.14922369088634457,
+    "ref": 0.0
+   },
+   "ladder_class": "not asymptotic",
+   "p_obs": 0.7581905953367309,
+   "p": 0.7581905953367309,
+   "Fs": 3.0,
+   "tt_basis": "reference r12",
+   "ratio": 1.2340026641601551,
+   "resolved": true,
+   "verdict": "resolved",
    "lower": "Z2"
   },
   {
@@ -264,12 +1188,34 @@
    "y_a": 118.016,
    "y_b": 124.776,
    "D": 6.759999999999991,
-   "U_a": 3.28092307610676,
-   "U_b": 2.2063956857458296,
-   "U_D": 5.48731876185259,
-   "U_D_paired": 1.5943253297846707,
-   "verdict": "resolved with correlation credit",
+   "basis": "transferred from the reference pair etm_Z2_HV_S0_h1.1_r21.json - etm_Z1_HV_S0_h1.1_r21.json",
+   "provisional": true,
+   "reference": "etm_Z2_HV_S0_h1.1_r21.json - etm_Z1_HV_S0_h1.1_r21.json",
+   "transfer_checks": {
+    "Z1": "mesh identical; r11 step check pending (provisional)",
+    "Z2": "mesh identical; r11 step check pending (provisional)"
+   },
+   "bias": -0.45861974935515515,
+   "bias_mesh": -0.4079530826885118,
+   "bias_tt": -0.05066666666664332,
+   "D_corrected": 6.3013802506448355,
+   "U95": 0.6389220710002588,
+   "U_D": 0.6389220710002588,
+   "components": {
+    "mesh": 0.5099413533606398,
+    "tt": 0.15199999999992997,
+    "et_a": 0.25,
+    "et_b": 0.25,
+    "ref": 0.008787999999999989
+   },
+   "ladder_class": "asymptotic",
+   "p_obs": 1.8084834013584992,
+   "p": 1.8084834013584992,
+   "Fs": 1.25,
+   "tt_basis": "reference r12",
+   "ratio": 9.862517725799902,
    "resolved": true,
+   "verdict": "resolved",
    "lower": "Z1"
   },
   {
@@ -280,12 +1226,34 @@
    "y_a": 26.37741,
    "y_b": 68.9746,
    "D": 42.59719,
-   "U_a": 1.5908620179890276,
-   "U_b": 1.1185778687837096,
-   "U_D": 2.709439886772737,
-   "U_D_paired": 0.969029215012697,
-   "verdict": "resolved",
+   "basis": "transferred from the reference pair etm_Z2_HV_S0_h1.1_r21.json - etm_Z1_HV_S0_h1.1_r21.json",
+   "provisional": true,
+   "reference": "etm_Z2_HV_S0_h1.1_r21.json - etm_Z1_HV_S0_h1.1_r21.json",
+   "transfer_checks": {
+    "Z1": "mesh identical; r11 step check pending (provisional)",
+    "Z2": "mesh identical; r11 step check pending (provisional)"
+   },
+   "bias": -1.1178582751735937,
+   "bias_mesh": -0.9066316085069183,
+   "bias_tt": -0.21122666666667556,
+   "D_corrected": 41.4793317248264,
+   "U95": 2.7987369812314857,
+   "U_D": 2.7987369812314857,
+   "components": {
+    "mesh": 2.719894825520755,
+    "tt": 0.6336800000000267,
+    "et_a": 0.0,
+    "et_b": 0.0,
+    "ref": 0.18316791699999999
+   },
+   "ladder_class": "not asymptotic",
+   "p_obs": null,
+   "p": 0.5,
+   "Fs": 3.0,
+   "tt_basis": "reference r12",
+   "ratio": 14.820732352839702,
    "resolved": true,
+   "verdict": "resolved",
    "lower": "Z1"
   },
   {
@@ -296,12 +1264,34 @@
    "y_a": 2.2721530234704956,
    "y_b": 3.094377440850787,
    "D": 0.8222244173802915,
-   "U_a": 0.0614546560063098,
-   "U_b": 0.11736921406590037,
-   "U_D": 0.17882387007221018,
-   "U_D_paired": 0.07492434332368746,
-   "verdict": "resolved",
+   "basis": "transferred from the reference pair etm_Z2_HV_S0_h1.1_r21.json - etm_Z1_HV_S0_h1.1_r21.json",
+   "provisional": true,
+   "reference": "etm_Z2_HV_S0_h1.1_r21.json - etm_Z1_HV_S0_h1.1_r21.json",
+   "transfer_checks": {
+    "Z1": "mesh identical; r11 step check pending (provisional)",
+    "Z2": "mesh identical; r11 step check pending (provisional)"
+   },
+   "bias": 0.014209175353553741,
+   "bias_mesh": 0.0,
+   "bias_tt": 0.014209175353553741,
+   "D_corrected": 0.8364335927338452,
+   "U95": 0.13944565945791895,
+   "U_D": 0.13944565945791895,
+   "components": {
+    "mesh": 0.13272334287445275,
+    "tt": 0.042627526060661225,
+    "et_a": 0.0,
+    "et_b": 0.0,
+    "ref": 0.0035355649947352535
+   },
+   "ladder_class": "oscillatory",
+   "p_obs": null,
+   "p": null,
+   "Fs": 3.0,
+   "tt_basis": "reference r12",
+   "ratio": 5.998276289024679,
    "resolved": true,
+   "verdict": "resolved",
    "lower": "Z1"
   },
   {
@@ -312,12 +1302,34 @@
    "y_a": 116.56122064167866,
    "y_b": 147.86294463270082,
    "D": 31.301723991022158,
-   "U_a": 1.19919278986194,
-   "U_b": 1.7080680708711515,
-   "U_D": 2.9072608607330914,
-   "U_D_paired": 0.7430150066044995,
-   "verdict": "resolved",
+   "basis": "transferred from the reference pair etm_Z1_HV_S0_h1.1_r21.json - etm_Z2_HV_S0_h1.1_r21.json",
+   "provisional": true,
+   "reference": "etm_Z1_HV_S0_h1.1_r21.json - etm_Z2_HV_S0_h1.1_r21.json",
+   "transfer_checks": {
+    "Z2": "mesh identical; r11 step check pending (provisional)",
+    "Z1": "mesh identical; r11 step check pending (provisional)"
+   },
+   "bias": 0.12062230701298947,
+   "bias_mesh": 0.1323601237881941,
+   "bias_tt": -0.011737816775204616,
+   "D_corrected": 31.422346298035148,
+   "U95": 0.4408659398953386,
+   "U_D": 0.4408659398953386,
+   "components": {
+    "mesh": 0.3970803713645823,
+    "tt": 0.03521345032561385,
+    "et_a": 0.11656122064167866,
+    "et_b": 0.14786294463270083,
+    "ref": 0.0
+   },
+   "ladder_class": "not asymptotic",
+   "p_obs": 0.7581905953367309,
+   "p": 0.7581905953367309,
+   "Fs": 3.0,
+   "tt_basis": "reference r12",
+   "ratio": 71.2741526494308,
    "resolved": true,
+   "verdict": "resolved",
    "lower": "Z2"
   },
   {
@@ -328,12 +1340,34 @@
    "y_a": 81.584,
    "y_b": 112.617,
    "D": 31.033,
-   "U_a": 1.2512697791276663,
-   "U_b": 3.0904859073626687,
-   "U_D": 4.341755686490335,
-   "U_D_paired": 2.092475230799259,
-   "verdict": "resolved",
+   "basis": "transferred from the reference pair etm_Z1_HV_S0_h1.1_r21.json - etm_Z2_HV_S0_h1.1_r21.json",
+   "provisional": true,
+   "reference": "etm_Z1_HV_S0_h1.1_r21.json - etm_Z2_HV_S0_h1.1_r21.json",
+   "transfer_checks": {
+    "Z2": "mesh identical; r11 step check pending (provisional)",
+    "Z1": "mesh identical; r11 step check pending (provisional)"
+   },
+   "bias": 0.45861974935515515,
+   "bias_mesh": 0.4079530826885118,
+   "bias_tt": 0.05066666666664332,
+   "D_corrected": 31.491619749355156,
+   "U95": 0.640134152695878,
+   "U_D": 0.640134152695878,
+   "components": {
+    "mesh": 0.5099413533606398,
+    "tt": 0.15199999999992997,
+    "et_a": 0.25,
+    "et_b": 0.25,
+    "ref": 0.0403429
+   },
+   "ladder_class": "asymptotic",
+   "p_obs": 1.8084834013584992,
+   "p": 1.8084834013584992,
+   "Fs": 1.25,
+   "tt_basis": "reference r12",
+   "ratio": 49.195343845864976,
    "resolved": true,
+   "verdict": "resolved",
    "lower": "Z2"
   },
   {
@@ -344,12 +1378,34 @@
    "y_a": 17.643600000000003,
    "y_b": 5.907200000000001,
    "D": -11.736400000000001,
-   "U_a": 0.28613055364833234,
-   "U_b": 0.356272284225964,
-   "U_D": 0.6424028378742963,
-   "U_D_paired": 0.2061630500788384,
-   "verdict": "resolved",
+   "basis": "transferred from the reference pair etm_Z1_HV_S0_h1.1_r21.json - etm_Z2_HV_S0_h1.1_r21.json",
+   "provisional": true,
+   "reference": "etm_Z1_HV_S0_h1.1_r21.json - etm_Z2_HV_S0_h1.1_r21.json",
+   "transfer_checks": {
+    "Z2": "mesh identical; r11 step check pending (provisional)",
+    "Z1": "mesh identical; r11 step check pending (provisional)"
+   },
+   "bias": 1.1178582751735937,
+   "bias_mesh": 0.9066316085069183,
+   "bias_tt": 0.21122666666667556,
+   "D_corrected": -10.618541724826407,
+   "U95": 2.793192631011245,
+   "U_D": 2.793192631011245,
+   "components": {
+    "mesh": 2.719894825520755,
+    "tt": 0.6336800000000267,
+    "et_a": 0.0,
+    "et_b": 0.0,
+    "ref": 0.05046652000000001
+   },
+   "ladder_class": "not asymptotic",
+   "p_obs": null,
+   "p": 0.5,
+   "Fs": 3.0,
+   "tt_basis": "reference r12",
+   "ratio": 3.80157874073371,
    "resolved": true,
+   "verdict": "resolved",
    "lower": "Z1"
   },
   {
@@ -360,92 +1416,275 @@
    "y_a": 2.1022451437993865,
    "y_b": 0.6988565295469344,
    "D": -1.403388614252452,
-   "U_a": 0.07973780348972224,
-   "U_b": 0.018901890487759233,
-   "U_D": 0.09863969397748149,
-   "U_D_paired": 0.05973988398869915,
-   "verdict": "resolved",
+   "basis": "transferred from the reference pair etm_Z1_HV_S0_h1.1_r21.json - etm_Z2_HV_S0_h1.1_r21.json",
+   "provisional": true,
+   "reference": "etm_Z1_HV_S0_h1.1_r21.json - etm_Z2_HV_S0_h1.1_r21.json",
+   "transfer_checks": {
+    "Z2": "mesh identical; r11 step check pending (provisional)",
+    "Z1": "mesh identical; r11 step check pending (provisional)"
+   },
+   "bias": -0.014209175353553741,
+   "bias_mesh": 0.0,
+   "bias_tt": -0.014209175353553741,
+   "D_corrected": -1.417597789606006,
+   "U95": 0.13953138632391718,
+   "U_D": 0.13953138632391718,
+   "components": {
+    "mesh": 0.13272334287445275,
+    "tt": 0.042627526060661225,
+    "et_a": 0.0,
+    "et_b": 0.0,
+    "ref": 0.006034571041285544
+   },
+   "ladder_class": "oscillatory",
+   "p_obs": null,
+   "p": null,
+   "Fs": 3.0,
+   "tt_basis": "reference r12",
+   "ratio": 10.15970547526205,
    "resolved": true,
+   "verdict": "resolved",
    "lower": "Z1"
   }
  ],
+ "ladder_runs_needed": [
+  {
+   "state": "SDEC",
+   "tier": "A",
+   "arch": "Z1",
+   "rung": "r11",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z1_HV_SDEC__sdec_A_r11.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z1 A r11"
+  },
+  {
+   "state": "SDEC",
+   "tier": "A",
+   "arch": "Z1",
+   "rung": "r31",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z1_HV_SDEC__sdec_A_r31.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z1 A r31"
+  },
+  {
+   "state": "SDEC",
+   "tier": "A",
+   "arch": "Z1",
+   "rung": "r12",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z1_HV_SDEC__sdec_A_r12.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z1 A r12"
+  },
+  {
+   "state": "SDEC",
+   "tier": "A",
+   "arch": "Z2",
+   "rung": "r11",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z2_HV_SDEC__sdec_A_r11.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z2 A r11"
+  },
+  {
+   "state": "SDEC",
+   "tier": "A",
+   "arch": "Z2",
+   "rung": "r31",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z2_HV_SDEC__sdec_A_r31.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z2 A r31"
+  },
+  {
+   "state": "SDEC",
+   "tier": "A",
+   "arch": "Z2",
+   "rung": "r12",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z2_HV_SDEC__sdec_A_r12.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z2 A r12"
+  },
+  {
+   "state": "SDEC",
+   "tier": "A",
+   "arch": "Z3",
+   "rung": "r11",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z3_HV_SDEC__sdec_A_r11.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z3 A r11"
+  },
+  {
+   "state": "SDEC",
+   "tier": "A",
+   "arch": "Z3",
+   "rung": "r31",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z3_HV_SDEC__sdec_A_r31.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z3 A r31"
+  },
+  {
+   "state": "SDEC",
+   "tier": "A",
+   "arch": "Z3",
+   "rung": "r12",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z3_HV_SDEC__sdec_A_r12.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z3 A r12"
+  },
+  {
+   "state": "SDEC",
+   "tier": "B",
+   "arch": "Z1",
+   "rung": "r11",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z1_HV_SDEC__sdec_B_r11.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z1 B r11"
+  },
+  {
+   "state": "SDEC",
+   "tier": "B",
+   "arch": "Z1",
+   "rung": "r31",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z1_HV_SDEC__sdec_B_r31.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z1 B r31"
+  },
+  {
+   "state": "SDEC",
+   "tier": "B",
+   "arch": "Z1",
+   "rung": "r12",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z1_HV_SDEC__sdec_B_r12.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z1 B r12"
+  },
+  {
+   "state": "SDEC",
+   "tier": "B",
+   "arch": "Z2",
+   "rung": "r11",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z2_HV_SDEC__sdec_B_r11.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z2 B r11"
+  },
+  {
+   "state": "SDEC",
+   "tier": "B",
+   "arch": "Z2",
+   "rung": "r31",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z2_HV_SDEC__sdec_B_r31.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z2 B r31"
+  },
+  {
+   "state": "SDEC",
+   "tier": "B",
+   "arch": "Z2",
+   "rung": "r12",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z2_HV_SDEC__sdec_B_r12.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z2 B r12"
+  },
+  {
+   "state": "SDEC",
+   "tier": "B",
+   "arch": "Z3",
+   "rung": "r11",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z3_HV_SDEC__sdec_B_r11.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z3 B r11"
+  },
+  {
+   "state": "SDEC",
+   "tier": "B",
+   "arch": "Z3",
+   "rung": "r31",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z3_HV_SDEC__sdec_B_r31.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z3 B r31"
+  },
+  {
+   "state": "SDEC",
+   "tier": "B",
+   "arch": "Z3",
+   "rung": "r12",
+   "file": "research/final_closure/sensitivity/ladder/etm_Z3_HV_SDEC__sdec_B_r12.json",
+   "command": "python scripts/tcpmt_review_variants.py sdec Z3 B r12"
+  }
+ ],
  "macros": {
-  "UAZonePloss": "1.73",
-  "UAZoneTmax": "3.28",
-  "UAZoneWarp": "1.59",
-  "UAZoneDu": "0.06",
-  "UAZtwoPloss": "1.54",
-  "UAZtwoTmax": "2.21",
-  "UAZtwoWarp": "1.12",
-  "UAZtwoDu": "0.12",
-  "UBZonePloss": "1.71",
-  "UBZoneTmax": "3.09",
-  "UBZoneWarp": "0.36",
+  "UAZonePloss": "1.82",
+  "UAZoneTmax": "3.35",
+  "UAZoneWarp": "1.66",
+  "UAZoneDu": "0.08",
+  "UAZtwoPloss": "1.59",
+  "UAZtwoTmax": "2.13",
+  "UAZtwoWarp": "1.19",
+  "UAZtwoDu": "0.09",
+  "UBZonePloss": "1.80",
+  "UBZoneTmax": "3.16",
+  "UBZoneWarp": "0.37",
   "UBZoneDu": "0.02",
-  "UBZtwoPloss": "1.20",
-  "UBZtwoTmax": "1.25",
-  "UBZtwoWarp": "0.29",
-  "UBZtwoDu": "0.08",
-  "UrelZonePloss": "1.16",
-  "UrelZoneTmax": "3.53",
-  "UrelZoneWarp": "6.03",
-  "UrelZoneDu": "2.70",
-  "UrelZtwoPloss": "1.03",
-  "UrelZtwoTmax": "2.21",
-  "UrelZtwoWarp": "1.62",
-  "UrelZtwoDu": "3.79",
-  "UrelZthreePloss": "1.00",
-  "UrelZthreeTmax": "1.11",
-  "UrelZthreeWarp": "15.93",
-  "UrelZthreeDu": "6.03",
-  "ResAZoneZtwoPloss": "not resolved",
-  "ResAZoneZtwoPlossRatio": "0.1",
-  "ResAZoneZtwoPlossRatioPaired": "0.9",
-  "ResAZoneZtwoTmax": "resolved with correlation credit",
-  "ResAZoneZtwoTmaxRatio": "1.2",
-  "ResAZoneZtwoTmaxRatioPaired": "4.2",
+  "UBZtwoPloss": "1.24",
+  "UBZtwoTmax": "1.23",
+  "UBZtwoWarp": "0.30",
+  "UBZtwoDu": "0.06",
+  "BiasAZonePloss": "+0.64",
+  "BiasAZoneTmax": "+1.18",
+  "BiasAZoneWarp": "+0.44",
+  "BiasAZoneDu": "+0.00",
+  "BiasAZtwoPloss": "+0.57",
+  "BiasAZtwoTmax": "+0.72",
+  "BiasAZtwoWarp": "-0.08",
+  "BiasAZtwoDu": "-0.00",
+  "BiasBZonePloss": "+0.63",
+  "BiasBZoneTmax": "+1.11",
+  "BiasBZoneWarp": "+0.10",
+  "BiasBZoneDu": "+0.00",
+  "BiasBZtwoPloss": "+0.45",
+  "BiasBZtwoTmax": "+0.41",
+  "BiasBZtwoWarp": "-0.02",
+  "BiasBZtwoDu": "-0.00",
+  "UrelZonePloss": "1.21",
+  "UrelZoneTmax": "3.61",
+  "UrelZoneWarp": "6.28",
+  "UrelZoneDu": "3.55",
+  "UrelZtwoPloss": "1.06",
+  "UrelZtwoTmax": "2.14",
+  "UrelZtwoWarp": "1.72",
+  "UrelZtwoDu": "2.94",
+  "UrelZthreePloss": "1.02",
+  "UrelZthreeTmax": "0.74",
+  "UrelZthreeWarp": "17.67",
+  "UrelZthreeDu": "8.99",
+  "ResAZoneZtwoPloss": "resolved",
+  "ResAZoneZtwoPlossRatio": "1.2",
+  "ResAZoneZtwoPlossBasis": "provisional",
+  "ResAZoneZtwoTmax": "resolved",
+  "ResAZoneZtwoTmaxRatio": "9.9",
+  "ResAZoneZtwoTmaxBasis": "provisional",
   "ResAZoneZtwoWarp": "resolved",
-  "ResAZoneZtwoWarpRatio": "15.7",
-  "ResAZoneZtwoWarpRatioPaired": "44.0",
+  "ResAZoneZtwoWarpRatio": "14.8",
+  "ResAZoneZtwoWarpBasis": "provisional",
   "ResAZoneZtwoDu": "resolved",
-  "ResAZoneZtwoDuRatio": "4.6",
-  "ResAZoneZtwoDuRatioPaired": "11.0",
+  "ResAZoneZtwoDuRatio": "6.0",
+  "ResAZoneZtwoDuBasis": "provisional",
   "ResBZtwoZonePloss": "resolved",
-  "ResBZtwoZonePlossRatio": "10.8",
-  "ResBZtwoZonePlossRatioPaired": "42.1",
+  "ResBZtwoZonePlossRatio": "71.3",
+  "ResBZtwoZonePlossBasis": "provisional",
   "ResBZtwoZoneTmax": "resolved",
-  "ResBZtwoZoneTmaxRatio": "7.1",
-  "ResBZtwoZoneTmaxRatioPaired": "14.8",
+  "ResBZtwoZoneTmaxRatio": "49.2",
+  "ResBZtwoZoneTmaxBasis": "provisional",
   "ResBZtwoZoneWarp": "resolved",
-  "ResBZtwoZoneWarpRatio": "18.3",
-  "ResBZtwoZoneWarpRatioPaired": "56.9",
+  "ResBZtwoZoneWarpRatio": "3.8",
+  "ResBZtwoZoneWarpBasis": "provisional",
   "ResBZtwoZoneDu": "resolved",
-  "ResBZtwoZoneDuRatio": "14.2",
-  "ResBZtwoZoneDuRatioPaired": "23.5"
+  "ResBZtwoZoneDuRatio": "10.2",
+  "ResBZtwoZoneDuBasis": "provisional"
  },
  "latex_supplement": [
   "% GENERATED by scripts/tcpmt_uncertainty.py -- do not edit",
   "\\begin{table}[!t]",
-  "\\caption{Numerical uncertainty $U$ of each compared output (S0, production mesh) and the comparisons it resolves: a gap is resolved when it exceeds $2(U_a+U_b)$.}",
+  "\\caption{Signed production-mesh bias $\\beta$ and numerical uncertainty $U_{95}$ of each compared output (implemented decoupling, production mesh), and the comparisons they resolve: a difference is resolved when $|D+\\beta_D| > U_{95}(D)$.}",
   "\\label{tab:uncertainty}",
   "\\centering",
   "\\footnotesize",
-  "\\setlength{\\tabcolsep}{2.5pt}",
+  "\\setlength{\\tabcolsep}{2.0pt}",
   "\\begin{tabular}{@{}lrrrrrr@{}}",
   "\\toprule",
-  " & \\multicolumn{3}{c}{Cooling A: $\\pm U$} & \\multicolumn{3}{c}{Cooling B: $\\pm U$}\\\\",
+  " & \\multicolumn{3}{c}{Cooling A: $\\beta/U_{95}$} & \\multicolumn{3}{c}{Cooling B: $\\beta/U_{95}$}\\\\",
   "\\cmidrule(lr){2-4}\\cmidrule(l){5-7}",
   "Output & Z1 & Z2 & Z3 & Z1 & Z2 & Z3 \\\\",
   "\\midrule",
-  "Loss (W) & 1.73 & 1.54 & -- & 1.71 & 1.20 & -- \\\\",
-  "Peak temp.\\ (K) & 3.28 & 2.21 & -- & 3.09 & 1.25 & -- \\\\",
-  "Die warpage (\\textmu m) & 1.59 & 1.12 & -- & 0.36 & 0.29 & -- \\\\",
-  "$\\du$ (\\textmu m) & 0.06 & 0.12 & -- & 0.02 & 0.08 & -- \\\\",
-  "$\\deps$ ($10^{-3}$/cycle) & -- & -- & -- & -- & -- & -- \\\\",
+  "Loss (W) & +0.64/1.82$^\\dagger$ & +0.57/1.59$^\\dagger$ & -- & +0.63/1.80$^\\dagger$ & +0.45/1.24$^\\dagger$ & -- \\\\",
+  "Peak temp.\\ (K) & +1.18/3.35$^\\dagger$ & +0.72/2.13$^\\dagger$ & -- & +1.11/3.16$^\\dagger$ & +0.41/1.23$^\\dagger$ & -- \\\\",
+  "Die warpage (\\textmu m) & +0.44/1.66$^\\dagger$ & -0.08/1.19$^\\dagger$ & -- & +0.10/0.37$^\\dagger$ & -0.02/0.30$^\\dagger$ & -- \\\\",
+  "$\\du$ (\\textmu m) & +0.00/0.08$^\\dagger$ & -0.00/0.09$^\\dagger$ & -- & +0.00/0.02$^\\dagger$ & -0.00/0.06$^\\dagger$ & -- \\\\",
   "\\midrule",
-  "\\multicolumn{7}{@{}p{0.95\\columnwidth}@{}}{\\emph{Comparisons (lower first). R: gap $>2(U_a+U_b)$; Rc: resolved only with the paired discretization errors (same mesh family); --: not resolved.}}\\\\",
-  "\\multicolumn{7}{@{}p{0.95\\columnwidth}@{}}{A, Z1/Z2: Loss Z2 --; Peak temp.\\ Z1 Rc; Die warpage Z1 R; $\\du$ Z1 R}\\\\",
-  "\\multicolumn{7}{@{}p{0.95\\columnwidth}@{}}{B, Z2/Z1: Loss Z2 R; Peak temp.\\ Z2 R; Die warpage Z1 R; $\\du$ Z1 R}\\\\",
+  "\\multicolumn{7}{@{}p{0.95\\columnwidth}@{}}{\\emph{Comparisons (lower first). R: $|D+\\beta_D|>U_{95}(D)$, $U_{95}$ of the difference ($\\approx$95\\,\\%: GCI with $F_s$ = 1.25 asymptotic, 3 otherwise; other terms in quadrature); L: resolved under the production solder law only; --: not resolved; P: pending (no ladder); $\\dagger$: provisional, $U$ of the laddered S0 reference (own ladder pending).}}\\\\",
+  "\\multicolumn{7}{@{}p{0.95\\columnwidth}@{}}{A, Z1/Z2: Loss Z2 R$^\\dagger$; Peak temp.\\ Z1 R$^\\dagger$; Die warpage Z1 R$^\\dagger$; $\\du$ Z1 R$^\\dagger$}\\\\",
+  "\\multicolumn{7}{@{}p{0.95\\columnwidth}@{}}{B, Z2/Z1: Loss Z2 R$^\\dagger$; Peak temp.\\ Z2 R$^\\dagger$; Die warpage Z1 R$^\\dagger$; $\\du$ Z1 R$^\\dagger$}\\\\",
   "\\bottomrule",
   "\\end{tabular}",
   "\\end{table}"

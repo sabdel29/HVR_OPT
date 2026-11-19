@@ -236,7 +236,9 @@ def state_spec(a, state, t, sub="", refine=None):
     """(argv, output, env) of one integration in one input state and cooling (tcpmt_cases):
     the production boundary for Z1/Z2 under A at a reference state, the implemented
     decoupling (sdec) or a tier base otherwise (Z3: the coupled land side). `refine` (e.g.
-    'r11') runs it on a coarser nested mesh under its own name (FC_REFINE)."""
+    'r11') solves it on that rung of the nested refinement: the variant drivers take the rung
+    token and write sensitivity/ladder/<case>_<rung>.json (final_closure_sensitivity.
+    set_refine), the production boundary its own h1.1[_rXZ] name."""
     scen = STATES[state]
     base = TIER_BASE[(a, t)]
     env = {}
@@ -245,15 +247,12 @@ def state_spec(a, state, t, sub="", refine=None):
         argv = ["scripts/final_closure_physical_etm.py", f"{a}:{scen}:1.1:{r}:ITERATIVE CHOLESKY:1"]
         out = sub + fc(f"etm_{a}_{scen}_h1.1{'' if r == 'r11' else '_' + r}.json")
         return argv, out, env
-    suffix = f"_{refine}" if refine and refine != "r21" else ""
-    if refine and refine != "r21":
-        env["FC_REFINE"] = refine
-    if state == "SDEC":
-        argv = ["scripts/tcpmt_review_variants.py", "sdec", a, t]
-        out = sub + fc(f"sensitivity/etm_{a}_{scen}__sdec_{t}{suffix}.json")
-    else:
-        argv = ["scripts/tcpmt_review_variants.py", "state", a, t, scen]
-        out = sub + fc(f"sensitivity/etm_{a}_{scen}__{base}{suffix}.json")
+    rung = refine if refine and refine != "r21" else None
+    name = f"sdec_{t}" if state == "SDEC" else base
+    argv = (["scripts/tcpmt_review_variants.py", "sdec", a, t] if state == "SDEC" else
+            ["scripts/tcpmt_review_variants.py", "state", a, t, scen]) + ([rung] if rung else [])
+    out = sub + fc(f"sensitivity/{'ladder/' if rung else ''}etm_{a}_{scen}__{name}"
+                   f"{'_' + rung if rung else ''}.json")
     return argv, out, env
 
 
@@ -501,7 +500,7 @@ def build(design):
             lad[(a, r)] = etm_job(f"ladder.{a}.{r}", "refinement_ladders", argv, out,
                                   deps=[prep["network"]], analog=case("Z1", "HV_S0", r),
                                   n_el_k=n_k, ncpus=thr, speed=(0.8 if r == "r31" else 1.0))
-    # the production state at the coarse and fine rungs (FC_REFINE): r11 is also the smoke test
+    # the production state at the coarse and fine rungs (rung token): r11 is also the smoke test
     for a in D["archs"]:
         for t in TIERS:
             for r, thr, n_k in (("r11", 2, 30), ("r31", 4, 270)):
@@ -511,7 +510,7 @@ def build(design):
                     deps=[prep["network"], dplace] + (land_deps if a == "Z3" else []),
                     analog=case("Z1", "HV_S0", r), n_el_k=n_k, ncpus=thr, env=env,
                     speed=(0.8 if r == "r31" else 1.0),
-                    notes="production state on the nested mesh rung (FC_REFINE)" +
+                    notes="production state on the nested mesh rung" +
                           ("; the coarse smoke test of the campaign" if r == "r11" else ""))
 
     # ------------------------------------------------------------------ robustness map

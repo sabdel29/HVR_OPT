@@ -8,11 +8,14 @@ cooling-model form, decoupling, attach/board/TSV decisions), case A1 (rated flyi
 and the regulator-count study.
 
 LIMITS (declared, with sources; LIMITS below)
-  GaN junction        T_J <= 150 C per device tier (EPC2014C / EPC2057 datasheets): the tier's
-                      maximum inside the cells plus the device's R_thJC at its own dissipation
-                      (P_tier / (N cells x devices per cell)); never the whole-field maximum
-  R_DS(on) fit        the junction bound <= 125 C (the datasheet curves the coefficients are
-                      fitted over span 25-125 C)
+  GaN junction        T_J <= the device's own T_J maximum, per device tier (DEVICES: the EPC
+                      datasheet of every part the converter synthesis can select; 150 C for all
+                      of them): the tier's maximum inside the cells plus the device's R_thJC at
+                      its own dissipation (P_tier / (N cells x devices per cell)); never the
+                      whole-field maximum
+  R_DS(on) fit        each device's junction bound <= the upper end of its own fit range
+                      (DEVICES ron_fit_C: the coefficients are linear-equivalent fits of the
+                      datasheet normalized R_DS(on) vs T_J curves over 25-125 C)
   MLCC                X7R/X7S/X7T class <= 125 C: flying-capacitor tier and the inductor tier
                       (it holds C_out), in the cells
   inductor            <= 125 C (inductor tier in the cells)
@@ -73,9 +76,14 @@ LIMITS = {"gan_Tj_C": 150.0, "ron_fit_max_C": 125.0, "mlcc_C": 125.0, "inductor_
           "bga_A_per_ball": 1.5, "bga_power_site_fraction_max": 0.75,
           "ir_drop_mV_per_rail": 30.0}
 LIMIT_SOURCES = {
-    "gan_Tj_C": "EPC2014C / EPC2057 datasheets, Maximum Ratings",
-    "ron_fit_max_C": "datasheet normalized R_DS(on)(T_J) curves the coefficients are fitted "
-                     "over (25-125 C; scripts/phase0d/electrical.py)",
+    "gan_Tj_C": "per device: the T_J maximum of the part's EPC datasheet, Maximum Ratings "
+                "(DEVICES[part]['Tj_max_C']; 150 C for every part of the table); this value "
+                "applies only to a part without a record",
+    "ron_fit_max_C": "per device: the upper end of the T_J range the part's R_DS(on)(T_J) "
+                     "coefficient is fitted over (DEVICES[part]['ron_fit_C'], 25-125 C: "
+                     "linear-equivalent fit of the datasheet normalized R_DS(on) vs T_J curve, "
+                     "scripts/phase0d/electrical.py); this value applies only to a part without "
+                     "a record",
     "mlcc_C": "X7R/X7S/X7T temperature class of the library parts",
     "inductor_C": "declared (125 C class of the interposer inductor)",
     "buildup_Tg_C": "ABF-class build-up film Tg (declared)",
@@ -89,11 +97,146 @@ LIMIT_SOURCES = {
                                    "left for signal and auxiliary nets",
     "ir_drop_mV_per_rail": "DECLARED: 30 mV per rail (3 % of the 1-V rail), maximum static "
                            "drop of the 1-V path"}
-#: datasheet values (review_work/dl_epc): T_J max, R_thetaJC (K/W), die (mm)
-DEVICES = {"EPC2014C": {"Tj_max_C": 150.0, "R_jc_K_W": 3.6, "R_jb_K_W": 9.3,
-                        "die_mm": [1.7, 1.1], "V_DS_V": 40.0, "I_D_A": 10.0},
-           "EPC2057": {"Tj_max_C": 150.0, "R_jc_K_W": 2.3, "R_jb_K_W": 7.0,
-                       "die_mm": [1.5, 1.2], "V_DS_V": 50.0, "I_D_A": 9.6}}
+#: GaN DEVICE TABLE: every part the converter synthesis can select (every "hs" / "ls" of
+#: research/tcpmt_revision/dse_phase2_summary.json -- runs.*.optimum, .M49, .per_count.*,
+#: robustness_larger_placement_budgets.* -- and the parts of design_49_cell_full_set). Values
+#: from the public EPC datasheets (epc-co.com, retrieved 2026-11-18); "source" names the copy in
+#: ETM_project/scratch/epc_ds/ (outside the repository; the EPC2014C / EPC2057 copies in
+#: review_work/dl_epc are byte-identical), its revision, and the tables / figure used.
+#:   Tj_max_C          upper end of the operating T_J range (Maximum Ratings)
+#:   R_jc_K_W          R_thJC junction-to-case, typ (Thermal Characteristics); the case is the
+#:                     die back ("Case TOP" where stated; EPC2366, PQFN: the exposed die on top)
+#:   R_jb_K_W          R_thJB junction-to-board, typ
+#:   R_ja_K_W          R_thJA, typ: on 1 in2 of 2-oz Cu, single-layer FR4 (datasheet note) where
+#:                     given, else on the JEDEC 51-2 board (R_ja_note); None: not given
+#:   die_mm            die size (bare die); package body (EPC2366)
+#:   V_DS_V, I_D_A     continuous ratings; I_D at the printed condition I_D_cond
+#:   R_ds_on_max_mohm  R_DS(on) max at V_GS = 5 V, T_J = 25 C (test current in R_ds_on_cond)
+#:   height_um         mounted height incl. terminal, nominal (Side View; the values of
+#:                     Scalable_Integrated_VR/src/HVR_epc_device_data.json)
+#:   ron_curve_C       T_J span of the datasheet curve "normalized R_DS(on) vs T_J"
+#:   ron_fit_C         T_J range of the model's linear-equivalent R_DS(on)(T_J) coefficient
+#:                     (scripts/phase0d/electrical.py: 25-125 C); its upper end is the device's
+#:                     limit in the ron_fit check
+#:   ron_norm_125C     normalized R_DS(on) at T_J = 125 C, READ FROM THE FIGURE (300-dpi render,
+#:                     axes calibrated on the grid lines; the same reading gives 1.00 +/- 0.004
+#:                     at 25 C): +/- 0.01; alpha_ron_per_K = (ron_norm_125C - 1) / 100 K
+DEVICES = {
+    "EPC2014C": {"Tj_max_C": 150.0, "R_jc_K_W": 3.6, "R_jb_K_W": 9.3, "die_mm": [1.7, 1.1],
+                 "V_DS_V": 40.0, "I_D_A": 10.0, "I_D_cond": "T_A = 25 C, R_thJA = 43 C/W",
+                 "R_ja_K_W": 80.0, "R_ja_note": "1 in2 Cu, single-layer 2-oz FR4 (Note 1)",
+                 "R_ds_on_max_mohm": 16.0, "R_ds_on_cond": "V_GS = 5 V, I_D = 10 A",
+                 "package": "bare passivated die, solder bumps (outline: solder bars)",
+                 "height_um": 685.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                 "ron_norm_125C": 1.60, "alpha_ron_per_K": 6.0e-3,
+                 "source": "epc_ds/EPC2014C/EPC2014C.pdf, rev. May 22, 2021: Maximum Ratings, "
+                           "Thermal and Static Characteristics (p. 1); Fig. 8 (p. 3)"},
+    "EPC2057": {"Tj_max_C": 150.0, "R_jc_K_W": 2.3, "R_jb_K_W": 7.0, "die_mm": [1.5, 1.2],
+                "V_DS_V": 50.0, "I_D_A": 9.6, "I_D_cond": "T_A = 25 C",
+                "R_ja_K_W": 72.5, "R_ja_note": "1 in2 Cu, single-layer 2-oz FR4 (note 2); "
+                                               "JEDEC 51-2 PCB 82, EPC90155 EVB 68.5",
+                "R_ds_on_max_mohm": 8.5, "R_ds_on_cond": "V_GS = 5 V, I_D = 6 A",
+                "package": "bare passivated die, solder bars",
+                "height_um": 638.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                "ron_norm_125C": 1.80, "alpha_ron_per_K": 8.0e-3,
+                "source": "epc_ds/EPC2057/EPC2057.pdf, rev. April 8, 2025: Maximum Ratings, "
+                          "Thermal and Static Characteristics (p. 1); Fig. 9 (p. 3)"},
+    "EPC2055": {"Tj_max_C": 150.0, "R_jc_K_W": 1.0, "R_jb_K_W": 2.5, "die_mm": [2.5, 1.5],
+                "V_DS_V": 40.0, "I_D_A": 29.0, "I_D_cond": "T_A = 25 C",
+                "R_ja_K_W": 64.0, "R_ja_note": "1 in2 Cu, single-layer 2-oz FR4 (Note 1)",
+                "R_ds_on_max_mohm": 4.2, "R_ds_on_cond": "V_GS = 5 V, I_D = 15 A",
+                "package": "bare passivated die, solder bars (outline: solder bumps)",
+                "height_um": 638.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                "ron_norm_125C": 1.60, "alpha_ron_per_K": 6.0e-3,
+                "source": "epc_ds/EPC2055/EPC2055.pdf, rev. June 20, 2025: Maximum Ratings, "
+                          "Thermal and Static Characteristics (p. 1); Fig. 9 (p. 3)"},
+    "EPC2090": {"Tj_max_C": 150.0, "R_jc_K_W": 1.07, "R_jb_K_W": 2.9, "die_mm": [2.3, 1.45],
+                "V_DS_V": 100.0, "I_D_A": 46.0, "I_D_cond": "T_J <= 125 C",
+                "R_ja_K_W": None, "R_ja_note": "not given",
+                "R_ds_on_max_mohm": 5.2, "R_ds_on_cond": "V_GS = 5 V, I_D = 16 A",
+                "package": "bare passivated die, Cu pillars (datasheet: for use inside a "
+                           "package, not for PCB mounting); R_thJC to Case TOP, R_thJB to Case "
+                           "BOTTOM",
+                "height_um": 606.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                "ron_norm_125C": 1.57, "alpha_ron_per_K": 5.7e-3,
+                "source": "epc_ds/EPC2090/EPC2090.pdf, rev. December 19, 2024 (last page: July "
+                          "2024): Maximum Ratings, Thermal and Static Characteristics (p. 1); "
+                          "Fig. 9 (p. 3)"},
+    "EPC2214": {"Tj_max_C": 150.0, "R_jc_K_W": 2.7, "R_jb_K_W": 7.5, "die_mm": [1.35, 1.35],
+                "V_DS_V": 80.0, "I_D_A": 10.0, "I_D_cond": "T_A = 25 C",
+                "R_ja_K_W": 81.0, "R_ja_note": "1 in2 Cu, single-layer 2-oz FR4 (Note 1)",
+                "R_ds_on_max_mohm": 20.0, "R_ds_on_cond": "V_GS = 5 V, I_D = 6 A",
+                "package": "bare passivated die, solder bumps (AEC-Q101)",
+                "height_um": 805.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                "ron_norm_125C": 1.65, "alpha_ron_per_K": 6.5e-3,
+                "source": "epc_ds/EPC2214/EPC2214.pdf, rev. April 25, 2025: Maximum Ratings, "
+                          "Thermal and Static Characteristics (p. 1); Fig. 9 (p. 3)"},
+    "EPC2366": {"Tj_max_C": 150.0, "R_jc_K_W": 0.6, "R_jb_K_W": 1.8, "die_mm": [3.3, 2.6],
+                "V_DS_V": 40.0, "I_D_A": 88.0, "I_D_cond": "T_J < 125 C",
+                "R_ja_K_W": 54.0, "R_ja_note": "JEDEC 51-2 PCB (no 1-in2 value); EPC90167 EVB "
+                                               "26",
+                "R_ds_on_max_mohm": 1.0, "R_ds_on_cond": "V_GS = 5 V, I_D = 30 A",
+                "package": "PQFN 3.3 x 2.6 mm (die_mm: the package body), exposed die 2.5 x "
+                           "1.8 mm on top; R_thJC to Case TOP (the exposed die), R_thJB to Case "
+                           "BOTTOM (terminals)",
+                "height_um": 700.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                "ron_norm_125C": 1.53, "alpha_ron_per_K": 5.3e-3,
+                "source": "epc_ds/EPC2366/EPC2366.pdf, rev. June 12, 2026: Maximum Ratings, "
+                          "Thermal Characteristics (p. 1), Static Characteristics (p. 2), "
+                          "Package Outline (p. 9); Fig. 9 (p. 4)"},
+    "EPC7003": {"Tj_max_C": 150.0, "R_jc_K_W": 2.8, "R_jb_K_W": 5.6, "die_mm": [1.7, 1.1],
+                "V_DS_V": 100.0, "I_D_A": 10.0, "I_D_cond": "not stated",
+                "R_ja_K_W": 130.0, "R_ja_note": "JEDEC 51-2 PCB (no 1-in2 value); EPC9006C EVB "
+                                                "88",
+                "R_ds_on_max_mohm": 30.0, "R_ds_on_cond": "V_GS = 5 V, I_D = 6 A",
+                "package": "bare passivated die (rad hard), 95Pb/5Sn solder bars (text: solder "
+                           "bumps); R_thJC to Case TOP, R_thJB to Case BOTTOM",
+                "height_um": 782.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                "ron_norm_125C": 1.77, "alpha_ron_per_K": 7.7e-3,
+                "source": "epc_ds/EPC7003/EPC7003.pdf, PRELIMINARY (stamp on p. 1), rev. July "
+                          "17, 2025: Maximum Ratings, Thermal and Static Characteristics "
+                          "(p. 1); Fig. 9 (p. 3)"},
+    "EPC2212": {"Tj_max_C": 150.0, "R_jc_K_W": 2.0, "R_jb_K_W": 4.0, "die_mm": [2.1, 1.6],
+                "V_DS_V": 100.0, "I_D_A": 18.0, "I_D_cond": "T_A = 25 C",
+                "R_ja_K_W": 69.0, "R_ja_note": "1 in2 Cu, single-layer 2-oz FR4 (Note 1)",
+                "R_ds_on_max_mohm": 13.5, "R_ds_on_cond": "V_GS = 5 V, I_D = 11 A",
+                "package": "bare passivated die, solder bars (AEC-Q101)",
+                "height_um": 685.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                "ron_norm_125C": 1.75, "alpha_ron_per_K": 7.5e-3,
+                "source": "epc_ds/EPC2212/EPC2212.pdf, rev. April 4, 2026: Maximum Ratings, "
+                          "Thermal and Static Characteristics (p. 1); Fig. 9 (p. 3)"},
+    "EPC2035": {"Tj_max_C": 150.0, "R_jc_K_W": 6.5, "R_jb_K_W": 65.0, "die_mm": [0.9, 0.9],
+                "V_DS_V": 60.0, "I_D_A": 1.7, "I_D_cond": "T_A = 25 C, R_thJA = 546 C/W "
+                                                          "(as printed)",
+                "R_ja_K_W": 100.0, "R_ja_note": "1 in2 Cu, single-layer 2-oz FR4 (Note 1)",
+                "R_ds_on_max_mohm": 45.0, "R_ds_on_cond": "V_GS = 5 V, I_D = 1 A",
+                "package": "bare passivated die, solder bumps",
+                "height_um": 625.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                "ron_norm_125C": 1.57, "alpha_ron_per_K": 5.7e-3,
+                "source": "epc_ds/EPC2035/EPC2035.pdf, rev. April 22, 2021: Maximum Ratings, "
+                          "Thermal (R_thJB 65 C/W as printed) and Static Characteristics "
+                          "(p. 1); Fig. 8 (p. 3)"},
+    "EPC2012C": {"Tj_max_C": 150.0, "R_jc_K_W": 4.2, "R_jb_K_W": 12.5, "die_mm": [1.7, 0.9],
+                 "V_DS_V": 200.0, "I_D_A": 5.0, "I_D_cond": "T_A = 25 C, R_thJA = 26 C/W",
+                 "R_ja_K_W": 85.0, "R_ja_note": "1 in2 Cu, single-layer 2-oz FR4 (Note 1)",
+                 "R_ds_on_max_mohm": 100.0, "R_ds_on_cond": "V_GS = 5 V, I_D = 3 A",
+                 "package": "bare passivated die, solder bars",
+                 "height_um": 685.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                 "ron_norm_125C": 1.68, "alpha_ron_per_K": 6.8e-3,
+                 "source": "epc_ds/EPC2012C/EPC2012C.pdf, rev. April 22, 2021: Maximum Ratings, "
+                           "Thermal and Static Characteristics (p. 1); Fig. 8 (p. 3; axis "
+                           "labelled from -25 C, curve drawn 0-150 C)"},
+    "EPC7002": {"Tj_max_C": 150.0, "R_jc_K_W": 3.6, "R_jb_K_W": 9.3, "die_mm": [1.7, 1.1],
+                "V_DS_V": 40.0, "I_D_A": 10.0, "I_D_cond": "not stated",
+                "R_ja_K_W": 80.0, "R_ja_note": "1 in2 Cu, single-layer 2-oz FR4 (Note 1)",
+                "R_ds_on_max_mohm": 14.5, "R_ds_on_cond": "V_GS = 5 V, I_D = 10 A",
+                "package": "bare passivated die (rad hard), 95Pb/5Sn solder bars",
+                "height_um": 782.0, "ron_curve_C": [0.0, 150.0], "ron_fit_C": [25.0, 125.0],
+                "ron_norm_125C": 1.71, "alpha_ron_per_K": 7.1e-3,
+                "source": "epc_ds/EPC7002/EPC7002.pdf, PRELIMINARY (stamp on p. 1), rev. July "
+                          "17, 2025: Maximum Ratings, Thermal and Static Characteristics "
+                          "(p. 1); Fig. 9 (p. 3)"},
+}
 #: the BGA field of each package outline (0.8-mm lattice): Z2 has the board opening
 BGA_SITES = {"Z1": 1369, "Z3": 1369, "Z2": 528, "Z2BF": 528}
 #: a temperature check within this of its limit is reported MARGINAL (the numerical uncertainty
@@ -397,8 +540,8 @@ def evaluate(path, case, use_fields=True, feed=None):
     checks["operating_point"] = {"value": None, "limit": None, "ok": bool(conv),
                                  "basis": "E-T fixed point" + (" + interface feedback"
                                                                if "tim_warp" in str(path) else "")}
-    # junction per device tier
-    tj, tj_bound = {}, False
+    # junction per device tier, against the device's own T_J maximum (DEVICES)
+    tj, tj_bound, fit_hi = {}, False, {}
     for key, part_key, per_key in (("hs", "hs_part", "hs_per_cell"),
                                    ("ls", "ls_part", "ls_per_cell")):
         part = des[part_key]
@@ -407,20 +550,27 @@ def evaluate(path, case, use_fields=True, feed=None):
         tj_bound = tj_bound or b
         p_tier = _tier_power(case, key)
         p_dev = p_tier / (des["n_vr"] * des[per_key])
+        tj_max = (dev or {}).get("Tj_max_C", LIMITS["gan_Tj_C"])
         if dev is None or t_in is None:
             tj[key] = None
-            put(f"gan_Tj_{key}", None, LIMITS["gan_Tj_C"], f"no datasheet record for {part}")
+            put(f"gan_Tj_{key}", None, tj_max, f"no datasheet record for {part}")
             continue
         tj[key] = t_in + p_dev * dev["R_jc_K_W"]
-        put(f"gan_Tj_{key}", tj[key], LIMITS["gan_Tj_C"],
+        fit_hi[key] = (part, (dev.get("ron_fit_C") or [None, LIMITS["ron_fit_max_C"]])[1])
+        put(f"gan_Tj_{key}", tj[key], tj_max,
             f"{part}: {'bound' if b else 'tier max in cells'} {t_in:.2f} C + {p_dev:.3f} W x "
             f"{dev['R_jc_K_W']} K/W", on_bound=b)
-    tjs = [v for v in tj.values() if v is not None]
     h_last = (case.get("et_history") or [{}])[-1]
     t_eval = max((h_last.get(f"T_{k}_C") or -1e9) for k in ("hs", "ls"))
-    put("ron_fit", max(tjs) if tjs else None, LIMITS["ron_fit_max_C"],
-        "hottest junction bound against the 25-125 C fit range (the ledger evaluates R_DS(on) "
-        f"at the tier in-cell means, here up to {t_eval:.1f} C)", on_bound=tj_bound)
+    # each device's junction bound against the upper end of ITS OWN R_DS(on)(T_J) fit range
+    # (DEVICES ron_fit_C); the binding device (smallest margin) gives the value and the limit
+    k_fit = min(fit_hi, key=lambda k: fit_hi[k][1] - tj[k], default=None)
+    per = ", ".join(f"{k} {p} {tj[k]:.2f} vs {hi:g} C" for k, (p, hi) in fit_hi.items())
+    put("ron_fit", None if k_fit is None else tj[k_fit],
+        LIMITS["ron_fit_max_C"] if k_fit is None else fit_hi[k_fit][1],
+        f"junction bound of each device against the upper end of its own R_DS(on) fit range "
+        f"(DEVICES ron_fit_C): {per or 'no junction'}; binding: {k_fit} (the ledger evaluates "
+        f"R_DS(on) at the tier in-cell means, here up to {t_eval:.1f} C)", on_bound=tj_bound)
     t_cap, b1 = region("caps_in_cells")
     t_ind, b2 = region("ind_in_cells")
     put("mlcc", None if t_cap is None else max(t_cap, t_ind or -1e9), LIMITS["mlcc_C"],

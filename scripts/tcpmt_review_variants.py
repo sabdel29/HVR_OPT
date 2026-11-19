@@ -29,9 +29,18 @@ identical bottom plate through a 50-um TIM (tcpmt_manuscript_macros.TIERS).
     python tcpmt_review_variants.py hotspot  ARCH TIER [SCEN]
     python tcpmt_review_variants.py hotmap   ARCH TIER [SCEN]
     python tcpmt_review_variants.py caloric  ARCH TIER [SCEN]   (the legacy coefficient)
+    python tcpmt_review_variants.py singlepass ARCH TIER [SCEN] (the single-pass plate)
     python tcpmt_review_variants.py sdec     ARCH TIER          (the PRODUCTION state)
     python tcpmt_review_variants.py state    ARCH TIER SCEN     (a cooling tier at a scenario)
     python tcpmt_review_variants.py ratedcfmax Z1 TIER [SCEN]   (case A1)
+
+MESH LADDERS (TCPMT round 3). Every mode that solves through final_closure_sensitivity.run_full
+(state, sdec, hotspot, hotmap, caloric, singlepass, ratedcf*) takes an optional refinement rung
+token rXZ anywhere after the mode (r11, r21 = production, r31, r12): the case is solved on that
+rung of the production nested refinement and written to sensitivity/ladder/..._rXZ.json, so the
+campaign can run r11/r21/r31 for the cooling-B and Z3 land-side cases, e.g.
+    python tcpmt_review_variants.py sdec Z1 B r31
+The interface feedback runs on the production mesh only.
 
 REVIEW ROUND 2. The production state is the implemented decoupling (HV_SDEC, tcpmt_cases);
 SCEN defaults to HV_S0 only so that the committed S0 variants stay reproducible -- the campaign
@@ -75,7 +84,7 @@ def set_scenario(scen):
     global SCEN
     SCEN = scen
     S.SCEN = scen
-    S.case_file = lambda a, v, scen=scen: S.OUT / f"etm_{a}_{scen}__{v}{S.refine_suffix()}.json"
+    S.case_file = lambda a, v, scen=scen: S.OUT / f"etm_{a}_{scen}__{v}.json"
     if scen == TC.SCEN["SDEC"]:
         import tcpmt_decap_framework as DF
         rk = DF.recommended_k()
@@ -238,6 +247,8 @@ def _tim_k(st):
 
 
 def run_feedback(arch, tier):
+    if not S.is_production_level():
+        raise SystemExit("the interface feedback runs on the production mesh only")
     _long_ccx()
     apply_tier(arch, tier)
     E._raise_stack_limit()
@@ -524,6 +535,25 @@ def run_caloric(arch, tier):
     return out
 
 
+def run_single_pass(arch, tier):
+    """The single-pass cold plate (the construction before the round-3 manifold) on every plate
+    of the tier's case: variant plate_single_pass_<tier>."""
+    _long_ccx()
+    name = f"plate_single_pass_{tier}"
+    S.VARIANTS[name] = dict(
+        kind="full", archs=(arch,), apply=None, gates=["therm.cooling_model_form"],
+        nature="LEGACY_SETTING (single-pass cold plate, before the round-3 manifold)",
+        what=f"every plate single pass instead of the 4-zone manifold, cooling {tier}")
+
+    def apply():
+        apply_tier(arch, tier)
+        return S.v_cooling_model(plate="single_pass")
+    S.VARIANTS[name]["apply"] = apply
+    out = S.run_full(arch, name)
+    _augment_z3(arch, name, tier)
+    return out
+
+
 # ------------------------------------------------------------------ implemented decoupling
 def _augment_z3(arch, name, tier):
     """A Z3 run on the coupled land-side base carries the z3_land block (shape factors, the two
@@ -531,7 +561,7 @@ def _augment_z3(arch, name, tier):
     if arch != "Z3" or not str(TIER_BASE[(arch, tier)] or "").startswith("z3_land"):
         return
     ZL = _z3land()
-    f = S.case_file(arch, name)
+    f = S.variant_file(arch, name)                 # the rung's file on a ladder run
     c = json.loads(f.read_text())
     if "ledger_rows" not in c:
         return
@@ -697,9 +727,23 @@ def run_ratedcf(tier, order="rep", cf_um=None, esr_mohm=None, tag="cf"):
     S.VARIANTS[name]["apply"] = apply
     return S.run_full("Z1", name)
 
+def _split_rung(argv):
+    """(argv without a refinement-rung token, the rung or None): 'r31' etc. anywhere after
+    the mode selects a ladder rung (final_closure_sensitivity.set_refine)."""
+    rest, rung = [], None
+    for a in argv:
+        if len(a) == 3 and a[0] == "r" and a[1:].isdigit():
+            rung = a
+        else:
+            rest.append(a)
+    return rest, rung
+
+
 if __name__ == "__main__":
-    mode, arch, tier = sys.argv[1], sys.argv[2], sys.argv[3]
-    scen_arg = sys.argv[4] if len(sys.argv) > 4 else None
+    _argv, _rung = _split_rung(sys.argv[1:])
+    S.set_refine(_rung)
+    mode, arch, tier = _argv[0], _argv[1], _argv[2]
+    scen_arg = _argv[3] if len(_argv) > 3 else None
     if (arch, tier) not in TIER_BASE:
         raise SystemExit(f"unknown case {arch} {tier}")
     if mode == "state":
@@ -721,6 +765,8 @@ if __name__ == "__main__":
         print(run_hotmap(arch, tier))
     elif mode == "caloric":
         print(run_caloric(arch, tier))
+    elif mode == "singlepass":
+        print(run_single_pass(arch, tier))
     elif mode in ("ratedcf", "ratedcfref"):
         print(run_ratedcf(tier, "ref" if mode == "ratedcfref" else "rep"))
     elif mode in ("ratedcfmax", "ratedcfmaxref"):
@@ -732,4 +778,4 @@ if __name__ == "__main__":
                           "cfmax"))
     else:
         raise SystemExit("mode is state, sdec, feedback, hotspot, hotmap, caloric, "
-                         "ratedcf[max][ref]")
+                         "singlepass, ratedcf[max][ref] (optional rung rXZ)")

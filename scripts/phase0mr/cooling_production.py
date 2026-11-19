@@ -31,6 +31,15 @@ PLATE FLOW (TCPMT revision). `plate_at_flow` evaluates the same plate at another
 (laminar: Nu, hence h, does not depend on the flow; dp_fd ~ m_dot, the entrance and plenum
 terms ~ m_dot^2, so P_hydraulic ~ m_dot^2 to m_dot^3). `equal_rise_flow_g_s` is the declared
 rule for a second plate: the flow that gives it the same coolant rise as the top plate.
+
+MANIFOLD PLATE (TCPMT round 3). The production plate (CANDIDATES["TOP_SI_MICROCHANNEL_27"],
+n_zones=None) takes its construction from cooling.PLATE_MODEL: production "manifold" = four
+streamwise zones fed by alternating inlet/outlet headers (dp about 1/16 of the single pass,
+same h and the same coolant rise per zone); "single_pass" is variant plate_single_pass. Every
+plate of that design -- the top plate and any second plate under its own flow rule -- follows
+the same construction. `streamwise_cumulative` is the 1-D coolant model of such a plate on the
+FE faces: one coolant temperature per streamwise column of faces, rising from the zone's inlet
+header in its own flow direction (a sawtooth/triangle wave over the plate for n > 1).
 """
 from __future__ import annotations
 import csv, math, sys
@@ -42,6 +51,7 @@ import numpy as np
 R = Path(__file__).resolve().parents[2]
 for d in ("phase0mr", "phase0m", "phase0b"):
     sys.path.insert(0, str(R / "scripts" / d))
+import cooling as _C                                                     # noqa: E402
 from cooling import (Microchannel, RHO_F, CP_F, K_F, MU_F, nu_lam,         # noqa: E402
                      f_re, required_flow)
 
@@ -68,6 +78,12 @@ class CoolingDesign:
     width_mm: float = 22.36
     two_sided: bool = False
     src: str = "geometry and flow; Nu from Shah & London laminar rectangular duct"
+    #: streamwise manifold zones; None = the PRODUCTION construction (cooling.PLATE_MODEL)
+    n_zones: int | None = 1
+
+    def zones(self) -> int:
+        """Streamwise zones of this plate (the production plate follows cooling.PLATE_MODEL)."""
+        return _C.production_zones() if self.n_zones is None else max(int(self.n_zones), 1)
 
     def channel(self, m_dot_g_s: float | None = None) -> Microchannel:
         return Microchannel(w_ch_um=self.w_ch_um, h_ch_um=self.h_ch_um,
@@ -75,7 +91,7 @@ class CoolingDesign:
                             width_mm=self.width_mm, t_base_um=self.t_base_um,
                             k_solid=self.k_solid,
                             m_dot_g_s=self.m_dot_g_s if m_dot_g_s is None else m_dot_g_s,
-                            t_in_c=self.t_in_c)
+                            t_in_c=self.t_in_c, n_zones=self.zones())
 
     def compact(self, q_w: float) -> dict:
         s = self.channel().solve(q_w / (2.0 if self.two_sided else 1.0))
@@ -105,7 +121,10 @@ class CoolingDesign:
                "T_bulk_mean_C": s["T_bulk_mean_C"], "dT_coolant_K": s["dT_fluid_K"],
                "h_local_W_m2K": s["h_local_W_m2K"],
                "h_uniform_W_m2K": s["h_effective_W_m2K"],
-               "dp_fd_kPa": s["dp_fd_kPa"], "dp_kPa": s["dp_kPa"],
+               "n_zones": s["n_zones"], "dp_fd_kPa": s["dp_fd_kPa"],
+               "dp_entrance_kPa": s["dp_entrance_kPa"], "dp_plenum_kPa": s["dp_plenum_kPa"],
+               "dp_turns_kPa": s["dp_turns_kPa"], "dp_header_kPa": s["dp_header_kPa"],
+               "dp_kPa": s["dp_kPa"],
                "P_pump_hydraulic_W": s["pump_W"], "P_pump_fd_W": s["pump_fd_W"]}
         for e in ETA_PUMP_BAND:
             out["P_pump_shaft_at_eta_%.2f_W" % e] = s["pump_W"] / e
@@ -128,6 +147,70 @@ def streamwise_fluid_temperature(design: CoolingDesign, x_frac: np.ndarray,
     return design.t_in_c + q_cumulative_w / (m_dot * CP_F)
 
 
+def streamwise_cumulative(x_mm, w, n_zones: int = 1, x_range=None,
+                          tol_mm: float = 1e-6) -> np.ndarray:
+    """Upstream sum of `w` (heat, or area for a uniform first guess) seen by each face of a
+    plate under the 1-D coolant model of an n-zone manifold (n = 1: the single pass).
+
+    Faces at one streamwise position (centroid x within tol_mm) form a COLUMN with ONE coolant
+    temperature: every face of a column gets the w of the columns upstream of it in its
+    zone plus half the column's own w (mid-column convention). The plate's streamwise extent
+    x_range = (x_lo, x_hi) (default: the face centroids' range) is cut into n equal zones; a
+    face belongs to the zone of its centroid; zone k flows +x from its inlet header at its low
+    end when k is even and -x from its high end when k is odd (alternating inlet and outlet
+    headers). The coolant temperature of a face is then T_in + n cum / (m_dot c_p): each zone
+    carries m_dot / n."""
+    x = np.asarray(x_mm, float)
+    w = np.asarray(w, float)
+    n = max(int(n_zones), 1)
+    lo, hi = ((float(x.min()), float(x.max())) if x_range is None
+              else (float(x_range[0]), float(x_range[1])))
+    if n == 1 or hi <= lo:
+        zone = np.zeros(len(x), int)
+    else:
+        zone = np.clip(np.floor((x - lo) / (hi - lo) * n).astype(int), 0, n - 1)
+    cum = np.zeros(len(x))
+    for z in range(n):
+        sel = np.flatnonzero(zone == z)
+        if not len(sel):
+            continue
+        cols, inv = np.unique(np.round(x[sel] / tol_mm).astype(np.int64), return_inverse=True)
+        qc = np.bincount(inv, weights=w[sel], minlength=len(cols))
+        if z % 2:                                   # flows toward -x
+            before = (np.cumsum(qc[::-1]) - qc[::-1])[::-1]
+        else:
+            before = np.cumsum(qc) - qc
+        cum[sel] = before[inv] + 0.5 * qc[inv]
+    return cum
+
+
+def zone_of(x_mm, n_zones: int = 1, x_range=None) -> np.ndarray:
+    """Manifold zone of each face (the assignment streamwise_cumulative uses)."""
+    x = np.asarray(x_mm, float)
+    n = max(int(n_zones), 1)
+    lo, hi = ((float(x.min()), float(x.max())) if x_range is None
+              else (float(x_range[0]), float(x_range[1])))
+    if n == 1 or hi <= lo:
+        return np.zeros(len(x), int)
+    return np.clip(np.floor((x - lo) / (hi - lo) * n).astype(int), 0, n - 1)
+
+
+def zone_relaxation(x_mm, area_mm2, h_w_m2k, n_zones, x_range, alpha_k_per_w) -> np.ndarray:
+    """Per-face relaxation of a manifold plate's sink update, w = 1 / (1 + alpha G_zone).
+
+    A zone's coolant rise is alpha q_zone (alpha = n dT / Q_plate for a sized plate,
+    n / (m_dot c_p) at a fixed flow), and the heat it takes falls by at most G_zone = h A_zone
+    per kelvin its sink rises (the film conductance: the bound reached when the solid behind
+    the plate is laterally isothermal, e.g. a board of high in-plane conductivity). Direct
+    substitution then has a loop gain up to alpha G_zone (about 18 for the Z1 cooling-B plate),
+    and the linearized consistent update s_new = s + (s_target - s) / (1 + alpha G_zone) is
+    stable for any smaller true sensitivity."""
+    z = zone_of(x_mm, n_zones, x_range)
+    a = np.asarray(area_mm2, float) * 1e-6
+    g = np.bincount(z, weights=float(h_w_m2k) * a, minlength=max(int(n_zones), 1))
+    return 1.0 / (1.0 + float(alpha_k_per_w) * g[z])
+
+
 def face_boundary(design: CoolingDesign, centroids_mm: np.ndarray, flux_w: np.ndarray,
                   q_total_w: float, axis: int = 0) -> dict:
     """Per-face (h, T_sink) from the CURRENT flux distribution.
@@ -147,7 +230,12 @@ def face_boundary(design: CoolingDesign, centroids_mm: np.ndarray, flux_w: np.nd
 
 
 CANDIDATES = {
-    "TOP_SI_MICROCHANNEL_27": CoolingDesign("TOP_SI_MICROCHANNEL_27", 50, 300, 50, 27.0),
+    # the PRODUCTION plate: its construction follows cooling.PLATE_MODEL (round 3: the 4-zone
+    # manifold; variant plate_single_pass restores the single pass)
+    "TOP_SI_MICROCHANNEL_27": CoolingDesign(
+        "TOP_SI_MICROCHANNEL_27", 50, 300, 50, 27.0, n_zones=None,
+        src="geometry and flow; Nu from Shah & London laminar rectangular duct; "
+            "construction from cooling.PLATE_MODEL (production: 4-zone manifold)"),
     "TOP_SI_MICROCHANNEL_50": CoolingDesign("TOP_SI_MICROCHANNEL_50", 50, 300, 50, 50.0),
     "TOP_CU_COLDPLATE_27": CoolingDesign("TOP_CU_COLDPLATE_27", 100, 500, 100, 27.0,
                                          t_base_um=200.0, k_solid=385.0),

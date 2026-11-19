@@ -37,6 +37,13 @@ wall adiabatic and the coolant properties are taken at the bulk mean temperature
 every case records the processor-die temperature (die_T_max_C, die_T_mean_C). Each
 superseded setting is a variant (final_closure_sensitivity: nu_legacy_table,
 props_legacy_50C, plate_caloric_legacy, *_fullflow, conv_k_legacy).
+
+TCPMT ROUND 3 (manifold plate). Every plate of the production design is a 4-zone manifold
+(cooling.PLATE_MODEL; alternating inlet/outlet headers, each zone L/4 long with 1/4 of its
+plate's flow): the same film coefficient, a coolant sink that rises from each zone's inlet
+header in that zone's direction (a 4-zone sawtooth, one temperature per streamwise column of
+faces), about 1/16 of the single-pass pressure drop; a second plate keeps its own flow rule.
+The single-pass plate is variant plate_single_pass.
 """
 from __future__ import annotations
 
@@ -620,6 +627,19 @@ def film_face_heat(m, Tn, film):
     return film["h_W_m2K"] * PE.W_M2K_TO_W_MM2K * a * (t - sink)
 
 
+#: last sink of every manifold plate solved in this process (warm start across E-T iterations)
+_SINK_WARM: dict = {}
+
+
+def _face_x_range(m, elems, upper):
+    """Streamwise (x) extent of a plate's face set: the min/max node x of the faces (top faces
+    = element nodes 4-7, bottom faces = nodes 0-3); the manifold zones cut this extent."""
+    e = np.asarray(elems, int)
+    xs = m.nodes[m.elems[e - 1][:, 4:] - 1][:, :, 0] if upper else \
+        m.nodes[m.elems[e - 1][:, :4] - 1][:, :, 0]
+    return float(xs.min()), float(xs.max())
+
+
 def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02, arch=None):
     import production_et as PE
     from cooling_production import CANDIDATES
@@ -634,9 +654,15 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
     if TOP_FILM_HOOK is not None:
         h_face = np.asarray(TOP_FILM_HOOK(m, top, h_face), float)
     m_dot = cooler.m_dot_g_s * 1e-3 * (2.0 if cooler.two_sided else 1.0)
-    order = np.argsort(cen[:, 0])
-    frac = np.zeros(len(top))
-    frac[order] = (np.cumsum(areas[order]) - 0.5 * areas[order]) / areas.sum()
+    # TCPMT round 3 (manifold plate): the coolant of every plate follows the 1-D model of its
+    # n-zone construction (cooling_production.streamwise_cumulative: one temperature per
+    # streamwise column, each zone carrying m_dot/n from its own inlet header; n = 1 is the
+    # single pass). nz * cum / (m_dot c_p) is the coolant rise of a face.
+    from cooling_production import streamwise_cumulative as _cum
+    nz = cooler.zones()
+    x_top = cen[:, 0]
+    rng_top = _face_x_range(m, top, upper=True)
+    frac = nz * _cum(x_top, areas, nz, rng_top) / areas.sum()
     t_face = cooler.t_in_c + frac * Q / (m_dot * PE.CP_F)
     # the bottom films, built ONCE so a sized plate's streamwise sink can be iterated
     plate = z3_converter_cold_plate(m, Q) if arch == "Z3" else None
@@ -647,12 +673,19 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
             xb = np.array([m.nodes[m.elems[int(e) - 1][:4] - 1][:, 0].mean()
                            for e in f["elems"]])
             ab = np.array([ccxio.face_area(m, e) for e in f["elems"]])
-            ob = np.argsort(xb)
-            fb = np.zeros(len(ab))
-            fb[ob] = (np.cumsum(ab[ob]) - 0.5 * ab[ob]) / ab.sum()
-            # first guess: the top plate's full rise spread over the plate's own area
+            f["_x"], f["_range"] = xb, _face_x_range(m, f["elems"], upper=False)
+            f["_area"] = ab
+            f["n_zones"] = nz
+            fb = nz * _cum(xb, ab, nz, f["_range"]) / ab.sum()
+            # first guess: the top plate's full rise spread over the plate's own area; a
+            # manifold plate starts from its sink of the previous E-T iteration (same mesh,
+            # same faces), whose zone shares converge slowly from the uniform guess
             f["T_face"] = f["T_C"] + fb * Q / (m_dot * PE.CP_F)
-            f["_order"] = ob
+            key = (m.n_elems, m.n_nodes, f.get("label"), nz, len(f["elems"]),
+                   int(f["elems"][0]), int(f["elems"][-1]))
+            f["_key"] = key
+            if nz > 1 and key in _SINK_WARM:
+                f["T_face"], f["_w"] = _SINK_WARM[key]
             swept.append(f)
     hist, t0 = [], time.time()
     for it in range(max_fluid_iter):
@@ -667,20 +700,33 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
         Tnode = Tn[1:m.n_nodes + 1, 0]
         ts = np.array([float(np.nanmean(Tn[m.elems[int(e) - 1][4:], 0])) for e in top])
         q_face = h_face * PE.W_M2K_TO_W_MM2K * areas * (ts - t_face)
-        q_up = np.zeros_like(q_face)
-        q_up[order] = np.cumsum(q_face[order]) - 0.5 * q_face[order]
-        t_new = cooler.t_in_c + q_up / (m_dot * PE.CP_F)
+        q_up = _cum(x_top, q_face, nz, rng_top)
+        t_new = cooler.t_in_c + nz * q_up / (m_dot * PE.CP_F)
         dmax = float(np.max(np.abs(t_new - t_face)))
-        # equal-rise rule: every sized plate's coolant rises by the top plate's dT
+        # equal-rise rule: every sized plate's coolant rises by the top plate's dT (per zone)
         dt_top = float(q_face.sum()) / (m_dot * PE.CP_F)
         new_sw = []
         for f in swept:
             qb = film_face_heat(m, Tn, f)
-            ob = f["_order"]
             if qb.sum() > 1e-9:
-                cum = np.zeros_like(qb)
-                cum[ob] = np.cumsum(qb[ob]) - 0.5 * qb[ob]
-                tb = f["T_C"] + dt_top * cum / qb.sum()
+                cum = _cum(f["_x"], qb, nz, f["_range"])
+                tb = f["T_C"] + dt_top * nz * cum / qb.sum()
+                if nz > 1:
+                    # manifold: a zone's rise follows its share of the plate's heat, which
+                    # shifts between zones as their sinks move (direct substitution can cycle):
+                    # adaptive damping, 0.5 halved whenever the residual grows, never below the
+                    # stable bound of cooling_production.zone_relaxation (converged value
+                    # unchanged)
+                    from cooling_production import zone_relaxation
+                    res = float(np.max(np.abs(tb - f["T_face"])))
+                    if f.get("_res") is not None and res > f["_res"]:
+                        f["_w"] = 0.5 * f.get("_w", 0.5)
+                    f["_res"] = res
+                    w = np.maximum(f.get("_w", 0.5),
+                                   zone_relaxation(f["_x"], f["_area"], f["h_W_m2K"], nz,
+                                                   f["_range"], nz * dt_top / qb.sum()))
+                    dmax = max(dmax, res)
+                    tb = f["T_face"] + w * (tb - f["T_face"])
             else:
                 tb = np.full(len(qb), f["T_C"])
             dmax = max(dmax, float(np.max(np.abs(tb - f["T_face"]))))
@@ -695,6 +741,9 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
         # first guess, ~1.4 K off on Z1 cooling B, needed the full 8 coolant passes)
         for f, tb in zip(swept, new_sw):
             f["T_face"] = tb
+    for f, tb in zip(swept, new_sw):      # the manifold warm start of the next E-T iteration:
+        if nz > 1:                        # the last (relaxed) update, not yet solved
+            _SINK_WARM[f["_key"]] = (np.array(tb, float), f.get("_w", 0.5))
     # the bottom heat flow, COMPUTED from the solved field
     bot = info["bot"]
     tb = np.array([float(np.nanmean(Tn[m.elems[int(e) - 1][:4], 0])) for e in bot])
@@ -712,7 +761,9 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
     q_known = q_top + q_bot
 
     def film_record(f):
-        r = {k: v for k, v in f.items() if k not in ("elems", "T_face", "_order")}
+        r = {k: v for k, v in f.items() if k not in ("elems", "T_face", "_order", "_x",
+                                                      "_range", "_area", "_res", "_w",
+                                                      "_key")}
         if f.get("T_face") is not None:
             r["T_sink_min_C"] = float(np.min(f["T_face"]))
             r["T_sink_max_C"] = float(np.max(f["T_face"]))
@@ -763,6 +814,7 @@ def plate_records(cooler, q_top, films):
         plates.append(rec)
     tot = sum(p.get("P_pump_hydraulic_W", 0.0) for p in plates)
     return {"top_plate_coefficient": TOP_PLATE_COEFF, "bottom_plate_rule": BOTTOM_PLATE_RULE,
+            "plate_model": C.PLATE_MODEL, "n_zones": cooler.zones(),
             "nu_model": C.NU_MODEL, "props_model": C.PROPS_MODEL,
             "wall_viscosity": C.WALL_VISCOSITY, "plates": plates,
             "P_pump_hydraulic_total_W": tot,

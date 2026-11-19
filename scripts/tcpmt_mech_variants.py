@@ -155,14 +155,19 @@ def judge_B():
     """Finding 8: the cooling-B rows of the robustness map. For every mechanics-only variant
     run on the cooling-B fields (final_closure_sensitivity NAME@B -> ..__NAME__B.json), the
     change of each mechanical output against the cooling-B base case, and whether every
-    pairwise cooling-B ordering keeps its direction and stays resolved under the 2U rule
-    (relative U of uncertainty.json)."""
+    pairwise cooling-B ordering keeps its direction and stays resolved under THE comparison
+    rule of the revision (TCPMT round 3, tcpmt_resolution: |D + beta| > U95(D)); the cooling-B
+    cases have no ladder of their own, so the laddered reference pair's beta and U are
+    transferred provisionally when the case passes the transfer check (identical mesh), else the
+    verdict is pending."""
     import itertools
     import json
     import final_closure_sensitivity as S
+    import tcpmt_uncertainty as TU
     sens = S.OUT
-    unc = json.loads((LAW.TR / "uncertainty.json").read_text())["relative"]
+    pairs = TU.reference_pairs()
     archs = ("Z1", "Z2", "Z3")
+    mesh = {}
     base = {}
     for a in archs:
         try:
@@ -182,6 +187,7 @@ def judge_B():
         a, name = c["arch"], c["variant"]["name"].split("@")[0]
         me = c.get("mechanics") or {}
         k = ((me.get("interconnects") or {}).get("bga") or {}).get("critical") or {}
+        mesh[(name, a)] = TU.mesh_signature(c)
         rows.setdefault(name, {})[a] = {
             "warp": me.get("die_warpage_pv_um"),
             "du": (me.get("joint_search") or {}).get("critical", {}).get("du_um"),
@@ -200,13 +206,18 @@ def judge_B():
                 ba, bb = (base.get(a) or {}).get(y), (base.get(b) or {}).get(y)
                 if None in (va, vb, ba, bb):
                     continue
-                u = (unc[a][uy]["total"] + unc[b][uy]["total"]) if uy else None
                 gap = abs(va - vb) / max(abs(va), abs(vb))
+                j = (TU.variant_judgement(a, b, uy, va, vb, mesh.get((name, a)),
+                                          mesh.get((name, b)), pairs) if uy else None)
                 res["orderings"][f"{y}:{a}/{b}"] = {
                     "base_lower": a if ba < bb else b, "variant_lower": a if va < vb else b,
                     "same_direction": (ba < bb) == (va < vb), "gap_rel": gap,
-                    "resolved_2U": (gap > 2 * u) if u is not None else None}
+                    "verdict": j["verdict"] if j else None,
+                    "resolved": j.get("resolved") if j else None,
+                    "U95": j.get("U95") if j else None,
+                    "provisional": j.get("provisional") if j else None}
         out["variants"][name] = res
+    out["rule"] = TU.RULE.RULE
     f = LAW.TR / "robustness_B.json"
     f.write_text(json.dumps(out, indent=1, default=float) + "\n")
     return out

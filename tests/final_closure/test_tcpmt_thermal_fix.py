@@ -53,9 +53,11 @@ def test_water_at_the_bulk_mean_temperature():
     assert s["h_channel_W_m2K"] == pytest.approx(s["Nu"] * s["props"]["k"]
                                                  / (s["D_h_um"] * 1e-6), rel=1e-12)
     assert s["Re"] < 2300
-    # pressure drop = fully developed + entrance + plenum, pumping = dp V
+    # pressure drop = fully developed + entrance + plenum (+ the manifold's turns and headers,
+    # round 3), pumping = dp V
     assert s["dp_kPa"] == pytest.approx(s["dp_fd_kPa"] + s["dp_entrance_kPa"]
-                                        + s["dp_plenum_kPa"], rel=1e-12)
+                                        + s["dp_plenum_kPa"] + s["dp_turns_kPa"]
+                                        + s["dp_header_kPa"], rel=1e-12)
     assert s["pump_W"] == pytest.approx(s["dp_kPa"] * 1e3 * 27e-3 / s["props"]["rho"],
                                         rel=1e-12)
 

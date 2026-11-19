@@ -69,6 +69,20 @@ def cooling():
          "CoolDTf": fx(p["dT_fluid_K_per_kW"], 1),
          "TimH": fx(ti["h_W_m2K"] / 1e3, 0),
          "CoolVdot": fx(fl["V_dot_ml_min"], 0)}
+    # TCPMT round 3: the manifold plate (production) against the single pass (variant)
+    con, sp = p.get("construction") or {}, p.get("single_pass") or {}
+    if con:
+        m.update({"CoolZones": str(con["n_zones"]),
+                  "CoolPassMm": fx(con["pass_length_mm"], 2),
+                  "CoolDpFdEnt": fx(hy.get("dp_fd_plus_entrance_kPa"), 0),
+                  "CoolDpPlenum": fx(hy.get("dp_plenum_kPa"), 1),
+                  "CoolDpHeader": fx((hy.get("dp_turns_kPa") or 0.0)
+                                     + (hy.get("dp_header_kPa") or 0.0), 1)})
+    if sp:
+        m.update({"CoolDpSinglePass": fx(sp["dp_total_kPa"], 0),
+                  "CoolPhydSinglePass": fx(sp["P_hydraulic_W"], 1),
+                  "CoolDpRatio": fx(sp["dp_total_kPa"] / hy["dp_total_kPa"], 1)
+                  if hy.get("dp_total_kPa") else NA})
     for t, v in c["tiers"].items():
         for a, x in v["cases"].items():
             if x.get("missing"):                # a compared case not run yet (tcpmt_cases)

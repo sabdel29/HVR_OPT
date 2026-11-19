@@ -2533,6 +2533,8 @@ jobs:
   stage: refinement_ladders
   argv:
   - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
   - z3_plate_tim:Z3
   outputs:
   - final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_plate_tim_r31.json
@@ -2555,14 +2557,13 @@ jobs:
     mechanics: true
   evidence: 'analog final_closure/etm_Z3_HV_S0_h1.1_r31.json: et 25909 s + mech 2590 s (2 thr, 284706
     el)'
-  blocked: a sensitivity variant solves only at E.PRODUCTION_REFINE (final_closure_sensitivity.run_full,
-    tcpmt_z3land_variants.run); a rung needs a refine parameter (e.g. FC_REFINE) and its own case name
-    -- not in the code
 - id: ladder.Z3.z3_land_t40_A_fvmap.r31
   stage: refinement_ladders
   argv:
-  - scripts/final_closure_sensitivity.py
-  - z3_land_t40_A_fvmap:Z3
+  - scripts/tcpmt_z3land_variants.py
+  - run
+  - z3_land_t40_A_fvmap
+  - r31
   outputs:
   - final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_land_t40_A_fvmap_r31.json
   deps:
@@ -2584,14 +2585,13 @@ jobs:
     mechanics: true
   evidence: 'analog final_closure/etm_Z3_HV_S0_h1.1_r31.json: et 25909 s + mech 2590 s (2 thr, 284706
     el)'
-  blocked: a sensitivity variant solves only at E.PRODUCTION_REFINE (final_closure_sensitivity.run_full,
-    tcpmt_z3land_variants.run); a rung needs a refine parameter (e.g. FC_REFINE) and its own case name
-    -- not in the code
 - id: ladder.Z3.z3_land_t40_B_fvmap.r31
   stage: refinement_ladders
   argv:
-  - scripts/final_closure_sensitivity.py
-  - z3_land_t40_B_fvmap:Z3
+  - scripts/tcpmt_z3land_variants.py
+  - run
+  - z3_land_t40_B_fvmap
+  - r31
   outputs:
   - final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_land_t40_B_fvmap_r31.json
   deps:
@@ -2613,13 +2613,12 @@ jobs:
     mechanics: true
   evidence: 'analog final_closure/etm_Z3_HV_S0_h1.1_r31.json: et 25909 s + mech 2590 s (2 thr, 284706
     el)'
-  blocked: a sensitivity variant solves only at E.PRODUCTION_REFINE (final_closure_sensitivity.run_full,
-    tcpmt_z3land_variants.run); a rung needs a refine parameter (e.g. FC_REFINE) and its own case name
-    -- not in the code
 - id: ladder.Z2.z2_cooled_tim.r31
   stage: refinement_ladders
   argv:
   - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
   - z2_cooled_tim:Z2
   outputs:
   - final_closure/sensitivity/ladder/etm_Z2_HV_S0__z2_cooled_tim_r31.json
@@ -2642,9 +2641,6 @@ jobs:
     mechanics: true
   evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1_r31.json: et 16138 s + mech 6747 s (2 thr, 326520
     el)'
-  blocked: a sensitivity variant solves only at E.PRODUCTION_REFINE (final_closure_sensitivity.run_full,
-    tcpmt_z3land_variants.run); a rung needs a refine parameter (e.g. FC_REFINE) and its own case name
-    -- not in the code
 - id: ladder.Z3.r31
   stage: refinement_ladders
   argv:
@@ -2674,6 +2670,8 @@ jobs:
   stage: refinement_ladders
   argv:
   - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
   - z1_bottom_plate_tim:Z1
   outputs:
   - final_closure/sensitivity/ladder/etm_Z1_HV_S0__z1_bottom_plate_tim_r31.json
@@ -2696,9 +2694,6 @@ jobs:
     mechanics: true
   evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1_r31.json: et 17180 s + mech 3637 s (2 thr, 325152
     el)'
-  blocked: a sensitivity variant solves only at E.PRODUCTION_REFINE (final_closure_sensitivity.run_full,
-    tcpmt_z3land_variants.run); a rung needs a refine parameter (e.g. FC_REFINE) and its own case name
-    -- not in the code
 - id: ladder.Z2.r31
   stage: refinement_ladders
   argv:
@@ -2749,6 +2744,87 @@ jobs:
     kind: etm
     mechanics: true
   evidence: 'final_closure/etm_Z1_HV_S0_h1.1_r31.json: et 17180 s + mech 3637 s (2 thr, 325152 el)'
+- id: ladder.Z3.z3_plate_tim.r12
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r12
+  - z3_plate_tim:Z3
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_plate_tim_r12.json
+  deps:
+  - tier.Z3.B.z3_plate_tim
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 1.8
+  walltime_h: 5.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_plate_tim_r12.json
+    kind: etm
+    mechanics: true
+  evidence: no evidence
+- id: ladder.Z3.z3_land_t40_A_fvmap.r12
+  stage: refinement_ladders
+  argv:
+  - scripts/tcpmt_z3land_variants.py
+  - run
+  - z3_land_t40_A_fvmap
+  - r12
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_land_t40_A_fvmap_r12.json
+  deps:
+  - tier.Z3.B.z3_plate_tim
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 1.8
+  walltime_h: 5.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_land_t40_A_fvmap_r12.json
+    kind: etm
+    mechanics: true
+  evidence: no evidence
+- id: ladder.Z3.z3_land_t40_B_fvmap.r12
+  stage: refinement_ladders
+  argv:
+  - scripts/tcpmt_z3land_variants.py
+  - run
+  - z3_land_t40_B_fvmap
+  - r12
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_land_t40_B_fvmap_r12.json
+  deps:
+  - tier.Z3.B.z3_plate_tim
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 1.8
+  walltime_h: 5.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_land_t40_B_fvmap_r12.json
+    kind: etm
+    mechanics: true
+  evidence: no evidence
 - id: ladder.count.M64N2K2KA1.r31
   stage: refinement_ladders
   argv:
@@ -2807,6 +2883,33 @@ jobs:
     kind: etm
     mechanics: true
   evidence: 'final_closure/etm_Z2_HV_S0_h1.1_r12.json: et 552 s + mech 3096 s (2 thr, 72560 el)'
+- id: ladder.Z2.z2_cooled_tim.r12
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r12
+  - z2_cooled_tim:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__z2_cooled_tim_r12.json
+  deps:
+  - tier.Z2.B.z2_cooled_tim
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 1.013
+  walltime_h: 3.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__z2_cooled_tim_r12.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1_r12.json: et 552 s + mech 3096 s (2 thr, 72560 el)'
 - id: ladder.Z1.r12
   stage: refinement_ladders
   argv:
@@ -2858,6 +2961,33 @@ jobs:
     mechanics: true
   evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1_r12.json: et 527 s + mech 1143 s (2 thr, 72256 el)'
   notes: no frozen Z3 r12 rung (tcpmt_uncertainty probes it)
+- id: ladder.Z1.z1_bottom_plate_tim.r12
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r12
+  - z1_bottom_plate_tim:Z1
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z1_HV_S0__z1_bottom_plate_tim_r12.json
+  deps:
+  - tier.Z1.B.z1_bottom_plate_tim
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 0.464
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z1_HV_S0__z1_bottom_plate_tim_r12.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1_r12.json: et 527 s + mech 1143 s (2 thr, 72256 el)'
 - id: ladder.Z2.r11
   stage: refinement_ladders
   argv:
@@ -2887,6 +3017,8 @@ jobs:
   stage: refinement_ladders
   argv:
   - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
   - z2_cooled_tim:Z2
   outputs:
   - final_closure/sensitivity/ladder/etm_Z2_HV_S0__z2_cooled_tim_r11.json
@@ -2908,9 +3040,6 @@ jobs:
     kind: etm
     mechanics: true
   evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1.json: et 289 s + mech 967 s (2 thr, 36280 el)'
-  blocked: a sensitivity variant solves only at E.PRODUCTION_REFINE (final_closure_sensitivity.run_full,
-    tcpmt_z3land_variants.run); a rung needs a refine parameter (e.g. FC_REFINE) and its own case name
-    -- not in the code
 - id: ladder.Z3.r11
   stage: refinement_ladders
   argv:
@@ -2940,6 +3069,8 @@ jobs:
   stage: refinement_ladders
   argv:
   - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
   - z3_plate_tim:Z3
   outputs:
   - final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_plate_tim_r11.json
@@ -2961,14 +3092,13 @@ jobs:
     kind: etm
     mechanics: true
   evidence: 'analog final_closure/etm_Z3_HV_S0_h1.1.json: et 977 s + mech 164 s (2 thr, 31634 el)'
-  blocked: a sensitivity variant solves only at E.PRODUCTION_REFINE (final_closure_sensitivity.run_full,
-    tcpmt_z3land_variants.run); a rung needs a refine parameter (e.g. FC_REFINE) and its own case name
-    -- not in the code
 - id: ladder.Z3.z3_land_t40_A_fvmap.r11
   stage: refinement_ladders
   argv:
-  - scripts/final_closure_sensitivity.py
-  - z3_land_t40_A_fvmap:Z3
+  - scripts/tcpmt_z3land_variants.py
+  - run
+  - z3_land_t40_A_fvmap
+  - r11
   outputs:
   - final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_land_t40_A_fvmap_r11.json
   deps:
@@ -2989,14 +3119,13 @@ jobs:
     kind: etm
     mechanics: true
   evidence: 'analog final_closure/etm_Z3_HV_S0_h1.1.json: et 977 s + mech 164 s (2 thr, 31634 el)'
-  blocked: a sensitivity variant solves only at E.PRODUCTION_REFINE (final_closure_sensitivity.run_full,
-    tcpmt_z3land_variants.run); a rung needs a refine parameter (e.g. FC_REFINE) and its own case name
-    -- not in the code
 - id: ladder.Z3.z3_land_t40_B_fvmap.r11
   stage: refinement_ladders
   argv:
-  - scripts/final_closure_sensitivity.py
-  - z3_land_t40_B_fvmap:Z3
+  - scripts/tcpmt_z3land_variants.py
+  - run
+  - z3_land_t40_B_fvmap
+  - r11
   outputs:
   - final_closure/sensitivity/ladder/etm_Z3_HV_S0__z3_land_t40_B_fvmap_r11.json
   deps:
@@ -3017,9 +3146,6 @@ jobs:
     kind: etm
     mechanics: true
   evidence: 'analog final_closure/etm_Z3_HV_S0_h1.1.json: et 977 s + mech 164 s (2 thr, 31634 el)'
-  blocked: a sensitivity variant solves only at E.PRODUCTION_REFINE (final_closure_sensitivity.run_full,
-    tcpmt_z3land_variants.run); a rung needs a refine parameter (e.g. FC_REFINE) and its own case name
-    -- not in the code
 - id: ladder.Z1.r11
   stage: refinement_ladders
   argv:
@@ -3049,6 +3175,8 @@ jobs:
   stage: refinement_ladders
   argv:
   - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
   - z1_bottom_plate_tim:Z1
   outputs:
   - final_closure/sensitivity/ladder/etm_Z1_HV_S0__z1_bottom_plate_tim_r11.json
@@ -3070,9 +3198,6 @@ jobs:
     kind: etm
     mechanics: true
   evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1.json: et 307 s + mech 556 s (2 thr, 36128 el)'
-  blocked: a sensitivity variant solves only at E.PRODUCTION_REFINE (final_closure_sensitivity.run_full,
-    tcpmt_z3land_variants.run); a rung needs a refine parameter (e.g. FC_REFINE) and its own case name
-    -- not in the code
 - id: ladder.solver_check.SPOOLES_t1
   stage: refinement_ladders
   argv:
@@ -7221,6 +7346,21 @@ jobs:
   - ladder.Z3.r12
   - ladder.Z3.r31
   - ladder.count.M64N2K2KA1.r31
+  - ladder.Z1.z1_bottom_plate_tim.r11
+  - ladder.Z1.z1_bottom_plate_tim.r31
+  - ladder.Z1.z1_bottom_plate_tim.r12
+  - ladder.Z2.z2_cooled_tim.r11
+  - ladder.Z2.z2_cooled_tim.r31
+  - ladder.Z2.z2_cooled_tim.r12
+  - ladder.Z3.z3_plate_tim.r11
+  - ladder.Z3.z3_plate_tim.r31
+  - ladder.Z3.z3_plate_tim.r12
+  - ladder.Z3.z3_land_t40_A_fvmap.r11
+  - ladder.Z3.z3_land_t40_A_fvmap.r31
+  - ladder.Z3.z3_land_t40_A_fvmap.r12
+  - ladder.Z3.z3_land_t40_B_fvmap.r11
+  - ladder.Z3.z3_land_t40_B_fvmap.r31
+  - ladder.Z3.z3_land_t40_B_fvmap.r12
   - robust.Z1.board_t3p2
   - robust.Z2.board_t3p2
   - robust.local.board_t3p2
