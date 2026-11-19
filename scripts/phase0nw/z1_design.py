@@ -1,5 +1,12 @@
 """TCPMT REVISION --- the converter design a Z1 evaluation runs with.
 
+TCPMT ROUND 3. The count and the design of EVERY integration now come from THE design record
+(configs/design_points.yaml, scripts/phase0nw/design_record.py; HVR_DESIGN selects an entry,
+default the production M = 36 point). On the default path (no HVR_Z1_CONFIG) every function
+below answers from the record; HVR_Z1_CONFIG keeps selecting a count-study candidate config
+(configs/phase0nx/z1_physical_m64*.yaml) for Z1 only, as before. The 49-cell literals the
+historical text below refers to are gone from the production path.
+
 The production chain was written around one regulator: the 49-cell N3K3K_A2 design of
 kw1.design_1kw(). Its count, topology and cell geometry reached the chain through constants
 in several modules (final_closure_ledger.N_VR, routing.DESIGN, production_et.N_VR /
@@ -33,9 +40,19 @@ R = Path(__file__).resolve().parents[2]
 ENV = "HVR_Z1_CONFIG"
 DEFAULT_CFG = R / "configs" / "phase0nx" / "z1_physical.yaml"
 DEFAULT_PACKAGE_NETWORK = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "package_network.json"
-#: the production regulator count (final_closure_ledger.N_VR, production_et.N_VR)
-PRODUCTION_N_VR = 49
 P_LOAD_W, V_IN, V_OUT = 1000.0, 48.0, 1.0
+
+
+def _dr():
+    if str(R / "scripts/phase0nw") not in sys.path:
+        sys.path.insert(0, str(R / "scripts/phase0nw"))
+    import design_record
+    return design_record
+
+
+def production_n_vr() -> int:
+    """The regulator count of the design in force (the design record)."""
+    return _dr().n_vr()
 
 
 class DesignError(ValueError):
@@ -91,7 +108,7 @@ def declared(path=None):
 
 def n_vr(path=None) -> int:
     d = declared(path)
-    return PRODUCTION_N_VR if d is None else int(d["n_vr"])
+    return production_n_vr() if d is None else int(d["n_vr"])
 
 
 def tag(path=None) -> str:
@@ -100,10 +117,10 @@ def tag(path=None) -> str:
 
 
 def topology(path=None):
-    """(N, K, K_A) of a non-default design; None on the production config."""
+    """(N, K, K_A) of the design: a candidate config's, else the design record's."""
     d = declared(path)
     if d is None:
-        return None
+        return _dr().topology()
     t = d["topology"]
     return int(t["N"]), int(t["K"]), int(t["K_A"])
 
@@ -114,12 +131,16 @@ def buck_duty(path=None) -> float:
 
 
 def cell_area_mm2(path=None) -> float:
+    if is_default(path):
+        return _dr().cell_area_mm2()
     return float(raw(path)["converter"]["cell_area_mm2"])
 
 
 def cell_side_mm(path=None) -> float:
-    """The FE / routing tile side of a non-default design: sqrt of the synthesized area
-    (the production tile is sqrt(274.89 / 49), kept by its consumers)."""
+    """The FE / routing tile side: the design record's cell (sqrt of the area budget
+    I_cell / J_t), or sqrt of a candidate config's cell area."""
+    if is_default(path):
+        return _dr().cell_side_mm()
     return math.sqrt(cell_area_mm2(path))
 
 
@@ -144,12 +165,14 @@ def _results_path(rel: str) -> Path:
 
 
 def require_z1(arch: str, what: str = "") -> None:
-    """Refuse a non-Z1 architecture in a process whose Z1 design is not the production one."""
+    """Refuse a non-Z1 architecture in a process whose Z1 design is a count-study candidate
+    config (HVR_Z1_CONFIG). A design of the design record (HVR_DESIGN) applies to every
+    integration and is never refused here."""
     if arch != "Z1" and not is_default():
         raise RuntimeError(
             f"{what or 'this step'} for {arch}: {ENV}={os.environ.get(ENV)} selects a "
-            f"non-production Z1 design ({tag()}); Z2/Z3 carry the production regulator and "
-            f"must run in a process without {ENV}")
+            f"Z1-only candidate config ({tag()}); select a design of the design record with "
+            f"HVR_DESIGN instead (every integration takes it)")
 
 
 # --------------------------------------------------------------------------- the converter
@@ -198,23 +221,27 @@ def compiled(path=None):
 # block -- never from a literal, so the campaign can run the 49-cell point or another one (e.g.
 # M = 36, N4K4K_A2) by pointing HVR_Z1_CONFIG at that design's config.
 def design_point(path=None) -> dict:
-    """{'n_vr', 'topology' (None = the synthesis's free pick, the production behaviour), 'tag',
-    'production', 'config'} of the design in force."""
+    """{'n_vr', 'topology', 'tag', 'production', 'config', 'design'} of the design in force:
+    the design record's entry (HVR_DESIGN), or a candidate config's design block."""
     p = config_path(path)
     if is_default(path):
-        return {"n_vr": int(raw(path)["converter"]["cells"]), "topology": None, "tag": "",
-                "production": True, "config": str(p)}
+        DR = _dr()
+        return {"n_vr": DR.n_vr(), "topology": DR.topology(),
+                "tag": "" if DR.is_production() else DR.tag(),
+                "production": DR.is_production(), "config": str(p), "design": DR.name()}
     d = declared(path)
     return {"n_vr": int(d["n_vr"]), "topology": topology(path), "tag": str(d["tag"]),
             "production": False, "config": str(p)}
 
 
 def routing_design(base: dict, path=None) -> dict:
-    """routing.DESIGN for the design in force: `base` itself on the production config, else
-    rebuilt from the compiled design by the rule that produced the production dict
-    (p_conv_total_w = loss_at(85 C) x n_vr, tile side = sqrt(synthesized area))."""
+    """The routing dict of the design in force: the design record's (routing.design_in_force,
+    the compiled converter at the record's cell with the mixed-tier layout), else rebuilt for
+    a candidate config from its compiled design by the same rule (p_conv_total_w =
+    loss_at(85 C) x n_vr, tile side = sqrt(cell area))."""
     if is_default(path):
-        return base
+        import routing as RT
+        return RT.design_in_force()
     return _routing_design(str(config_path(path).resolve()), tuple(sorted(base.items())))
 
 
@@ -246,14 +273,12 @@ def design_dict(des, n: int, base: dict, tile_side_mm: float | None = None) -> d
 
 # --------------------------------------------------------------------------- geometry
 def tsv_n_per_cell(path=None) -> int:
-    """The production TSV rule (30 um / 60 um checkerboard at maximum density,
-    tsv_fields._lattice) on the cell side of the design in force."""
-    if str(R / "scripts/phase0nw") not in sys.path:
-        sys.path.insert(0, str(R / "scripts/phase0nw"))
-    import tsv_fields as TF
-    side = (float(raw(path)["converter"]["cell_side_mm"]) if is_default(path)
-            else cell_side_mm(path))
-    return TF._lattice(side, TF.P_TSV_MM)[0] ** 2
+    """The TSV fabric of one cell: the 30 um / 60 um checkerboard scaled with the cell current
+    at the 49-cell field's current per via (design_record.tsv_n_side, round 3), on the cell
+    of the design in force (a candidate config: its cell side, the same rule)."""
+    if is_default(path):
+        return _dr().tsv_n_per_cell()
+    return _dr().tsv_n_side(cell_side=cell_side_mm(path)) ** 2
 
 
 #: component class of a Z1 tier name -> the final_closure_ledger.LAYERS key
@@ -262,9 +287,9 @@ _LAYER_KEY = (("gan_hs", "hs"), ("gan_ls", "ls"), ("flying_caps", "caps"),
 
 
 def z1_layers(path=None) -> dict:
-    """final_closure_ledger.LAYERS['Z1'] derived from the config's tier list (layer names are
-    z1conv_<index>_<tier name>, z1_package.mid_layers). On the production config this
-    reproduces the ledger's literal map exactly (tests/phase0nz/test_count_generalization)."""
+    """final_closure_ledger.LAYERS['Z1'] of a single-class candidate config (layer names are
+    z1conv_<index>_<tier name>, z1_package.mid_layers). The design record's mixed tiers are
+    mapped by final_closure_ledger.layers_for."""
     tiers = raw(path)["converter"]["tiers_from_substrate_upward"]
     names = [f"z1conv_{i}_{t['name']}" for i, t in enumerate(tiers)]
     lay = {}
@@ -287,7 +312,8 @@ def z1_layers(path=None) -> dict:
 
 
 def cell_coordinates(path=None) -> list:
-    """The Z1 cell centres FROM THE FE PLACEMENT GENERATOR, as physical_coords does for Z2."""
+    """The Z1 cell centres FROM THE FE PLACEMENT GENERATOR, as physical_coords does for Z2
+    (the same uniform placement of the design in force for every integration)."""
     if str(R / "scripts/phase0nw") not in sys.path:
         sys.path.insert(0, str(R / "scripts/phase0nw"))
     import physical_package as PP
@@ -299,8 +325,10 @@ def cell_coordinates(path=None) -> list:
 def summary(path=None) -> dict:
     """What a case file records about the design it was computed with."""
     if is_default(path):
-        return {"config": str(DEFAULT_CFG.relative_to(R)), "tag": "", "n_vr": PRODUCTION_N_VR,
-                "production": True}
+        DR = _dr()
+        return {"config": str(DEFAULT_CFG.relative_to(R)), "tag": DR.tag(), "n_vr": DR.n_vr(),
+                "production": DR.is_production(), "design": DR.name(),
+                "record": DR.summary()}
     des = compiled(path)
     d = declared(path)
     rd = routing_design({}, path)

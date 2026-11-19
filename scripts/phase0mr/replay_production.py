@@ -40,7 +40,20 @@ WD = OUT / "replay"
 OUT.mkdir(parents=True, exist_ok=True)
 WD.mkdir(parents=True, exist_ok=True)
 
-DIE_MM, N_VR, LOAD_W = 22.36, 49, 1000.0
+DIE_MM, LOAD_W = 22.36, 1000.0
+
+
+def _dr():
+    """scripts/phase0nw/design_record: THE design record (TCPMT round 3)."""
+    if str(R / "scripts" / "phase0nw") not in sys.path:
+        sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+    import design_record
+    return design_record
+
+
+#: TCPMT round 3: the regulator count is the design record's; N_VR is kept as a name for old
+#: callers and resolves to the design in force at import (n_vr() is the live value)
+N_VR = _dr().n_vr()
 H_SUB = {"ARCH_Z1_EMBEDDED": 1.30, "ARCH_Z2_BACKSIDE": 0.30, "ARCH_Z4_POWER_DIE": 0.30}
 # production transition geometry per interconnect class: (r_via, r_pad, w_trace, t_rdl, l)
 TRANSITION_GEOM = {
@@ -62,20 +75,22 @@ def _z1_design():
 
 def compiled_design():
     """The converter of the design in force, synthesized under the production rules
-    (electrical.production_rules). The cache is keyed by those rules, so a process that pins a
-    stored case's lineage (electrical.pinned_rules) gets that lineage's converter."""
+    (electrical.production_rules) with the design's own overrides: the design record's entry
+    (design_record.compiled, checked against the record), or a count-study candidate of
+    HVR_Z1_CONFIG (z1_design.compiled). The cache is keyed by the rules and the design, so a
+    process that pins a stored case's lineage (electrical.pinned_rules) gets that lineage's
+    converter."""
     import electrical as EL
-    sig = tuple(sorted(EL.production_rules().items()))
+    Z1D = _z1_design()
+    DR = _dr()
+    sig = (tuple(sorted(EL.production_rules().items())), DR.name(), str(Z1D.config_path()))
     if "d" not in _DESIGN_CACHE or _DESIGN_CACHE.get("rules") != sig:
-        Z1D = _z1_design()
         if Z1D.is_default():
-            # the count of the production config (49 cells); the topology is the synthesis's
-            # own pick, as it always was (kw1.design_1kw at its defaults)
-            d, g, why = kw1.design_1kw(m_vr=Z1D.design_point()["n_vr"])
+            d, why = DR.compiled(), "design record"
         else:                       # a count-optimal candidate (HVR_Z1_CONFIG), compiled
             d, why = Z1D.compiled(), "realizable"    # and checked against its config
         if d is None:
-            raise RuntimeError(f"no compiled converter under {dict(sig)}: {why}")
+            raise RuntimeError(f"no compiled converter under {sig}: {why}")
         _DESIGN_CACHE["d"] = d
         _DESIGN_CACHE["rules"] = sig
     return _DESIGN_CACHE["d"]
@@ -95,9 +110,10 @@ def design_identity() -> dict:
 
 
 def n_vr() -> int:
-    """Regulator count of the compiled design: N_VR (49) on the production path."""
+    """Regulator count of the compiled design: the design record's (a count-study candidate's
+    under HVR_Z1_CONFIG)."""
     Z1D = _z1_design()
-    return N_VR if Z1D.is_default() else Z1D.n_vr()
+    return _dr().n_vr() if Z1D.is_default() else Z1D.n_vr()
 
 
 def converter_terms(t_c: float) -> dict:
@@ -124,12 +140,19 @@ def converter_terms(t_c: float) -> dict:
         lr = compute_total_loss(d.arch, LossModelInputs(
             hs_device=hs, ls_device=ls, inductor=ind, capacitor=d.capacitor,
             I_out=d.i_out_a, V_out=d.v_out, V_in=d.v_in, f_sw=d.f_sw_hz))
+        dec = converter_decomposition(d.arch, hs, ls, ind, d.capacitor, d.i_out_a,
+                                      d.v_out, d.v_in, d.f_sw_hz, lr)
+        dec.update(_device_split(d, hs, ls, dec))
     finally:
         _EL._restore_rules(_H, prev)
-    dec = converter_decomposition(d.arch, hs, ls, ind, d.capacitor, d.i_out_a,
-                                  d.v_out, d.v_in, d.f_sw_hz, lr)
     dec["p_conv_total_w"] = lr.total_loss * n_vr()
     return dec
+
+
+def _device_split(d, hs, ls, dec) -> dict:
+    """The per-device split of the converter terms (ledger.device_split)."""
+    from ledger import device_split
+    return device_split(d, hs, ls, dec)
 
 
 def tier_resistance(tier_name: str, tier_cfg: dict, i_total: float, footprint_mm2: float,
@@ -166,7 +189,7 @@ def electrical(arch: str, h_sub_mm: float, mode: str, t_conv_c: float, t_pkg_c: 
                template: str = "T1_EMBEDDED_4LAYER") -> dict:
     d = compiled_design()
     dec = converter_terms(t_conv_c)
-    led = LossLedger(n_vr=N_VR)
+    led = LossLedger(n_vr=n_vr())
     for k in ("P_switch_hs_conduction", "P_switch_ls_conduction", "P_inductor_DCR",
               "P_cap_ESR", "P_switching_hard", "P_gate", "P_Coss"):
         led.add(k, dec[k], scope="PER_REGULATOR")
@@ -207,8 +230,8 @@ def electrical(arch: str, h_sub_mm: float, mode: str, t_conv_c: float, t_pkg_c: 
     # package RDL
     stack = stacks_from_cfg()["ectc2024_primary"]
     from etm.config import load_doe, load_stack
-    side = math.sqrt(274.89 / N_VR)
-    src = kw1.tiles_for("uniform", side, load_stack(), load_doe(), N_VR)
+    side = _dr().cell_side_mm()
+    src = kw1.tiles_for("uniform", side, load_stack(), load_doe(), n_vr())
     pol = pol_grid()
     sol = rdl_network_solve(stack, src, [LOAD_W / len(src)] * len(src), pol,
                             [LOAD_W / len(pol)] * len(pol), span_mm=DIE_MM, T_c=t_pkg_c,
@@ -308,9 +331,9 @@ def _solve_legacy(arch: str, h_sub_mm: float, hm, wd: Path, h_xy: float) -> dict
     wd.mkdir(parents=True, exist_ok=True)
     doe = PE.load_doe()
     st, extra, _ = ZG.stack_for(arch, h_sub_mm)
-    side = math.sqrt(274.89 / N_VR)
-    xy = kw1.tiles_for("uniform", side, st, doe, N_VR)
-    tiles = [PE.Tile(cx, cy, side, side, hm.converter_w / N_VR) for cx, cy in xy]
+    side = _dr().cell_side_mm()
+    xy = kw1.tiles_for("uniform", side, st, doe, n_vr())
+    tiles = [PE.Tile(cx, cy, side, side, hm.converter_w / n_vr()) for cx, cy in xy]
     m = PE.build(tiles, st, h_sub_mm, h_xy=h_xy, z_scale=1.4, support_layer=False,
                  extra_bottom_layers=extra)
     mats = PE.build_materials(st)

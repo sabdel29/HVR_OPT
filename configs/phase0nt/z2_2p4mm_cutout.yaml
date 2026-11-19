@@ -38,18 +38,24 @@ vr_attach:
   status: CLOSE_ANALOG
 
 board:
-  case: it968g_2p4mm           # PHASE 0N-V. The legacy fr4_2p4mm is UNSOURCED and is
+  # TCPMT ROUND 3: the 3.2-mm board. The decided converter (four mixed tiers, 2991 um + the
+  # 10-um land-side RDL) and its 30-um attach hang 3031 um below the substrate, deeper than
+  # the 2.4-mm board + 0.3-mm BGA (2700 um) of the 49-cell build: the 3.2-mm board + BGA
+  # (3500 um) holds it with 469 um to spare (checked by physical_package.check_cutout_fit).
+  # The file keeps its historical name; the board is set here, not in the name.
+  case: it968g_3p2mm           # PHASE 0N-V. The legacy fr4_* cases are UNSOURCED and are
                                # forbidden on any physical path; a guard enforces it.
   thickness_sensitivity_case: it968g_3p2mm
   model_level: PCB-H0          # single homogenized orthotropic board; H1 validates it
   eta_nominal: 0.50            # conditional: whole-board values are estimates at this
   eta_sensitivity: [0.25, 0.50, 0.75]
-  thickness_um: 2400.0
+  thickness_um: 3200.0
   tolerance_pct: 10.0
   status: VENDOR_EVIDENCE
   source: >-
-    18-layer server/HPC PCB offered at 2.4 mm +-10 % (ugpcb); within Schweizer standard
-    multilayer 0.6-3.2 mm; PCBWay rigid list. NOT peer-reviewed.
+    Server/HPC multilayer PCB at 3.2 mm, the upper end of Schweizer standard multilayer
+    0.6-3.2 mm (the 18-layer 2.4-mm offer of ugpcb is the 49-cell build's); laminate ITEQ
+    IT-968G. NOT peer-reviewed.
   note: >-
     The historical fr4_* cases are preserved for reproduction only (results/phase0mr3c
     runs on fr4_1p6mm). Commit 30f717b described an annular mesh as "2.4 mm" while it
@@ -64,7 +70,7 @@ substrate:
 
 cutout:
   width_mm: 23.36
-  rule: "49-cell grid bbox 21.36 mm + 2 x 1.0 mm sidewall clearance"
+  rule: "cell-grid bbox 21.36 mm (6 x 6 cells of 2.817 mm, uniform placement) + 2 x 1.0 mm sidewall clearance"
   sidewall_clearance_mm: 1.0
   sidewall_status: BOUNDED     # unsourced; 0.5-1.0 mm carried as a range
   sidewall_content: VOID       # DEFECT #66: the ring between the cell grid and the PCB wall is
@@ -100,23 +106,28 @@ bga:
       recomputed as (P_load + P_converter + P_package)/48 V and this allocation redone.
 
 converter:
-  # NOT the Z1 embedded-cell proxy. CONV_CELL_MM (1226/1258 um) structurally excludes
-  # the high-side device and must never be used as a Z2 total.
-  four_tier_um: 1953.0
-  with_land_side_rdl_um: 1963.0
+  # TCPMT ROUND 3 -- the authors' design point, restated from THE design record
+  # (configs/design_points.yaml, entry m36; the loader checks this block against it, another
+  # HVR_DESIGN entry replaces it at load): 36 cells (6 x 6) of 2.8172 mm, N3K3K_A2,
+  # EPC2014C / EPC2055, 805 kHz, rated 0603 flying capacitors, FOUR MIXED TIERS in the
+  # production order (scripts/tcpmt_tier_order.py), hung from the substrate with the OUTPUT
+  # end (1 V, the attach side) first and the input end (high side, 48 V direct feed) deepest.
+  four_tier_um: 2991.0
+  with_land_side_rdl_um: 3001.0
   tiers_from_substrate_downward:
-    - {name: land_side_attach_rdl, um: 10.0, status: SOURCE_BACKED}
-    - {name: inductor_plus_cout,   um: 500.0, status: SOURCE_BACKED}
-    - {name: interlayer_rdl,       um: 10.0, status: SOURCE_BACKED}
-    - {name: gan_ls_EPC2057,       um: 638.0, status: SOURCE_BACKED}
-    - {name: interlayer_rdl,       um: 10.0, status: SOURCE_BACKED}
-    - {name: flying_caps,          um: 100.0, status: BOUNDED}
-    - {name: interlayer_rdl,       um: 10.0, status: SOURCE_BACKED}
-    - {name: gan_hs_EPC2014C,      um: 685.0, status: SOURCE_BACKED}
-  cells: 49
-  cell_area_mm2: 5.61
-  cell_side_mm: 2.3685
-  coverage_pct: 30.5
+    - {name: land_side_attach_rdl, um: 10.0,   status: SOURCE_BACKED}
+    - {name: tier4_ls1l2,          um: 638.0,  status: DESIGN_CHOICE}   # EPC2055 + 2 inductors
+    - {name: interlayer_rdl,       um: 10.0,   status: SOURCE_BACKED}
+    - {name: tier3_ls1l1,          um: 638.0,  status: DESIGN_CHOICE}   # EPC2055 + 1 inductor
+    - {name: interlayer_rdl,       um: 10.0,   status: SOURCE_BACKED}
+    - {name: tier2_hs1ls1,         um: 685.0,  status: DESIGN_CHOICE}   # EPC2014C + EPC2055
+    - {name: interlayer_rdl,       um: 10.0,   status: SOURCE_BACKED}
+    - {name: tier1_hs2cf2,         um: 1000.0, status: DESIGN_CHOICE}   # 2 x EPC2014C + 2 x 0603
+  cells: 36
+  cell_area_mm2: 7.936507936507937
+  cell_side_mm: 2.817180849095055
+  coverage_pct: 31.7
+  design: m36                  # the design record entry this block restates
   material_mapping:
     rule: >-
       The geometry gate does not license inventing material data. Every tier maps to a
@@ -124,29 +135,21 @@ converter:
       reproduced in the mesh audit.
     rdl_tiers:      {material: rdl_composite, status: DERIVED,
                      note: framework RDL+bump homogenization}
-    # TCPMT revision: cards DERIVED by unit-cell homogenization of the tier contents of the
-    # design in force (scripts/tcpmt_converter_cards.py -> research/tcpmt_revision/
-    # converter_cards.json, with Voigt/Reuss bounds). The statuses below stay those of the
-    # PROPERTY: several inputs are declared (MLCC construction, TY-M5 core k, encapsulant),
-    # not sourced. Legacy assignment (silicon / hvr_effective): variant conv_k_legacy.
-    gan_hs_and_ls:  {material: conv_gan_hs / conv_gan_ls, status: BOUNDED,
-                     note: "dies at their area fraction with their solder terminals in the
-                            encapsulant (EPC datasheet outlines); the GaN epi is NOT resolved"}
-    inductor_cout:  {material: conv_ind_cout, status: PROVISIONAL,
-                     note: "Cu windings (inductor paper Fig. 7), TY-M5 rod, C_out MLCC,
-                            output-current posts, encapsulant"}
-    flying_caps:    {material: conv_cfly_a0, status: OPEN,
-                     note: "MLCC (BaTiO3/Ni body, Cu terminations) in the encapsulant;
-                            case A1 (rated 0603 parts) carries conv_cfly_a1"}
+    # TCPMT round 3: one card per MIXED tier (conv_tier<i>), DERIVED by unit-cell
+    # homogenization of what the tier holds in the design in force
+    # (scripts/tcpmt_converter_cards.mixed_tier -> research/tcpmt_revision/converter_cards.json,
+    # with Voigt/Reuss bounds): GaN dies with their solder terminals (EPC outlines), inductors
+    # (Cu windings of the inductor paper Fig. 7, TY-M5 rod), rated 0603 MLCCs (BaTiO3/Ni body,
+    # Cu terminations), output-current posts, encapsulant. The statuses stay those of the
+    # PROPERTY: several inputs are declared, not sourced; the GaN epi is NOT resolved.
+    mixed_tiers:    {material: "conv_tier<i> (one card per tier)", status: BOUNDED}
 
 out_of_cell:
-  # Brief section 15. The opening is 23.36^2 = 545.69 mm2; the 49 cells occupy
-  # 49 x 5.61 = 274.89 mm2, so 49.6 % OF THE OPENING is outside a cell.
-  # NOTE: the 69.5 % figure in the brief is the fraction of the 30 x 30 mm SUBSTRATE
-  # footprint, which applied when the converter was a full-area slab. Now that the
-  # converter exists only inside the cutout, 49.6 % is the governing number.
-  fraction_of_opening_pct: 49.6
-  fraction_of_substrate_pct: 69.5
+  # Brief section 15. The opening is 23.36^2 = 545.69 mm2; the 36 cells occupy
+  # 36 x 7.937 = 285.71 mm2, so 47.6 % OF THE OPENING is outside a cell (49.6 % for the
+  # 49-cell build). The substrate-footprint fraction (30 x 30 mm) is 68.3 %.
+  fraction_of_opening_pct: 47.6
+  fraction_of_substrate_pct: 68.3
   primary: F1_clearance        # encapsulant between the cells, 1.0 mm clearance ring VOID
   cases:
     F1_clearance:    {material: underfill_homog, ring: VOID, status: PROVISIONAL,

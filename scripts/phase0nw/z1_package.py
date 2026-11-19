@@ -10,7 +10,8 @@ bottom substrate carrying a stacked converter beneath the compute die:
     PCB 2400 | BGA 300 | bottom substrate 300 | <converter 1973> | ubump 10 | die 300 | TIM 50
 
 The converter is the SAME tier set as Z2 with one extra RDL, and for the same reason the
-Z2 cells are discrete: it occupies 49 cell footprints, not a full-area slab.
+Z2 cells are discrete: it occupies the cell footprints of the design in force (36 in the
+TCPMT round-3 production design record), not a full-area slab.
 
 WHY Z1 HAS NINE TIERS AND Z2 HAS EIGHT. Z1's converter is sandwiched -- it lands on the
 bottom-substrate RDL underneath and must present an output RDL to the microbumps above, so
@@ -51,6 +52,10 @@ def load_z1_config(path=None) -> dict:
     # a count-optimal candidate (z1_design.config_path)
     p = Path(path) if path else Z1D.config_path()
     c = yaml.safe_load(p.read_text())
+    # TCPMT round 3: the converter block restates THE design record (checked) or, for another
+    # HVR_DESIGN entry, is replaced by it (design_record.apply_converter)
+    import design_record as DR
+    c = DR.apply_converter(c, "Z1", source=p.name)
     conv = c["converter"]
     tiers = conv["tiers_from_substrate_upward"]
     summed = sum(float(t["um"]) for t in tiers)
@@ -100,7 +105,7 @@ def _material(tier_name: str) -> str:
 def mid_layers(cfg=None, nz_thin: int = 1, nz_thick: int = 2) -> list:
     """(name, thickness_mm, material, nz, footprint) stacked UPWARD from the substrate top.
 
-    Footprint 'substrate' so the 49 cell footprints and the out-of-cell rule apply; the
+    Footprint 'substrate' so the cell footprints and the out-of-cell rule apply; the
     historical 4-tuple form would silently give these the die footprint.
     """
     tiers = cfg.tiers if cfg is not None else Z1_TIERS

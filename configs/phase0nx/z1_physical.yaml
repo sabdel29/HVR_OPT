@@ -63,24 +63,29 @@ supply_return:
       tsv_fields.sizing_study(); the adopted point is MAXIMUM DENSITY and is labelled so.
 
 converter:
-  # TCPMT revision: REPARTITIONED tier order (HS -> C_f -> LS -> L), the same order as Z2,
-  # so the architecture comparison changes placement only (worst via AR 0.83, not 5.32).
-  # Stacked above the bottom substrate, beneath the compute die. NINE tiers: Z1 is
-  # sandwiched and needs a landing RDL at BOTH ends, where Z2 needs one.
-  total_um: 1973.0
+  # TCPMT ROUND 3 -- the authors' design point, restated from THE design record
+  # (configs/design_points.yaml, entry m36; scripts/phase0nw/design_record.py checks this block
+  # against it and refuses any difference; another HVR_DESIGN entry replaces it at load):
+  # M = 36 cells (6 x 6) of 2.8172 mm (the 7.94-mm2 budget I_cell / J_t at J_t = 3.5 A/mm2),
+  # N3K3K_A2, EPC2014C / EPC2055, 805 kHz, rated Murata 0603 flying capacitors, FOUR MIXED
+  # TIERS (a tier may hold parts of several classes; DSE packing, 50-um keep-out), in the
+  # production order of the tier-order analysis (scripts/tcpmt_tier_order.py), input end
+  # (high side, against the bottom substrate) first. Sandwiched: a landing RDL at both ends.
+  total_um: 3011.0
   tiers_from_substrate_upward:
-    - {name: bottom_substrate_rdl, um: 10.0,  status: SOURCE_BACKED}
-    - {name: gan_hs_EPC2014C,      um: 685.0, status: SOURCE_BACKED}
-    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
-    - {name: flying_caps,          um: 100.0, status: BOUNDED}
-    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
-    - {name: gan_ls_EPC2057,       um: 638.0, status: SOURCE_BACKED}
-    - {name: interlayer_rdl,       um: 10.0,  status: SOURCE_BACKED}
-    - {name: inductor_plus_cout,   um: 500.0, status: SOURCE_BACKED}
-    - {name: output_rdl,           um: 10.0,  status: SOURCE_BACKED}
-  cells: 49
-  cell_area_mm2: 5.61
-  cell_side_mm: 2.3685
+    - {name: bottom_substrate_rdl, um: 10.0,   status: SOURCE_BACKED}
+    - {name: tier1_hs2cf2,         um: 1000.0, status: DESIGN_CHOICE}   # 2 x EPC2014C + 2 x 0603
+    - {name: interlayer_rdl,       um: 10.0,   status: SOURCE_BACKED}
+    - {name: tier2_hs1ls1,         um: 685.0,  status: DESIGN_CHOICE}   # EPC2014C + EPC2055
+    - {name: interlayer_rdl,       um: 10.0,   status: SOURCE_BACKED}
+    - {name: tier3_ls1l1,          um: 638.0,  status: DESIGN_CHOICE}   # EPC2055 + 1 inductor
+    - {name: interlayer_rdl,       um: 10.0,   status: SOURCE_BACKED}
+    - {name: tier4_ls1l2,          um: 638.0,  status: DESIGN_CHOICE}   # EPC2055 + 2 inductors
+    - {name: output_rdl,           um: 10.0,   status: SOURCE_BACKED}
+  cells: 36
+  cell_area_mm2: 7.936507936507937
+  cell_side_mm: 2.817180849095055
+  design: m36                  # the design record entry this block restates
   material_mapping:
     rule: >-
       Each tier maps to a medium already in the framework. The geometry gate does not
@@ -88,14 +93,13 @@ converter:
     rdl_tiers:     {material: rdl_tier, status: DERIVED,
                     note: "Phase-0M-R results/phase0mr/rdl_effective_tensor.csv, RDL
                            ALONE -- NOT the old 40 um RDL + 10 um bump composite"}
-    # TCPMT revision: cards derived by unit-cell homogenization of the tier contents
-    # (scripts/tcpmt_converter_cards.py); statuses are those of the property (declared
-    # inputs remain). Legacy silicon / hvr_effective: variant conv_k_legacy.
-    gan_hs_and_ls: {material: conv_gan_hs / conv_gan_ls, status: BOUNDED,
-                    note: "dies + solder terminals + encapsulant; the epi is not resolved"}
-    inductor_cout: {material: conv_ind_cout, status: PROVISIONAL}
-    flying_caps:   {material: conv_cfly_a0, status: OPEN,
-                    note: "MLCC in encapsulant (case A1: conv_cfly_a1)"}
+    # TCPMT round 3: every MIXED tier carries its own card, derived by unit-cell
+    # homogenization of what it holds (scripts/tcpmt_converter_cards.mixed_tier: GaN dies with
+    # their solder terminals, inductors, 0603 MLCCs, output-current posts, encapsulant);
+    # statuses are those of the property (declared inputs remain).
+    mixed_tiers: {material: "conv_tier<i> (one card per tier)", status: BOUNDED,
+                  note: "dies + terminals + inductors + MLCCs + posts in encapsulant; the GaN
+                         epi is not resolved"}
 
 out_of_cell:
   primary: F1_encapsulated
@@ -123,5 +127,5 @@ tim:
 
 expected:
   # Cross-checks the loader re-derives rather than trusts.
-  package_top_um: 5333.0       # above the PCB backside
-  converter_span_um: [3000.0, 4973.0]
+  package_top_um: 6371.0       # above the PCB backside
+  converter_span_um: [3000.0, 6011.0]

@@ -14,8 +14,9 @@ historical form was wrong for the physical packages:
    Here q_bot is integrated from the board-bottom film faces of the SOLVED field, so the
    residual can actually fail.
 2. THE FE SUBSTRATE NOW HOLDS THE ELECTRICAL TSV FIELD. The substrate carried a
-   19.6 % Cu fraction smeared over all 900 mm^2. The adopted field is 1444 vias of
-   30 um per cell, i.e. 18.2 % inside the 49 tiles and plain silicon elsewhere.
+   19.6 % Cu fraction smeared over all 900 mm^2. The adopted field is the cell's 30-um via
+   lattice (scaled with the cell current since TCPMT round 3: 2025 per cell at M = 36)
+   inside the tiles and plain silicon elsewhere.
 3. THE RDL TIER TENSOR IS THE TIER'S OWN. A four-metal-layer, 40 um stack tensor was
    applied to single 10 um tiers. It is replaced by the laminate of one 10 um tier
    (validated separately against an explicit RVE).
@@ -199,10 +200,12 @@ def die_stats(m, Tn, arch=None):
     return {"die_T_max_C": float(np.nanmax(t)), "die_T_mean_C": float(np.nanmean(t))}
 
 # --- material corrections -------------------------------------------------
-TSV_N_PER_CELL = 1444      # the adopted 'A_same_field' fabric (tsv_fields)
+#: TCPMT round 3: the TSV fabric of one cell scaled with the cell current at the 49-cell
+#: field's current per via (38 x 38 = 1444 at 1000/49 A; 45 x 45 = 2025 at 1000/36 A), on the
+#: cell of the design in force (design_record.tsv_n_side) -- the ledger's TSV rows use the same
+#: lattice (final_closure_ledger.ledger -> tsv_fields.system_report(n_side=...))
+TSV_N_PER_CELL = Z1D.tsv_n_per_cell()
 TSV_D_MM = 0.030
-if not Z1D.is_default():   # the same maximum-density rule on the candidate's cell side
-    TSV_N_PER_CELL = Z1D.tsv_n_per_cell()
 
 
 def tsv_tile_fraction(tile_side_mm):
@@ -429,14 +432,14 @@ def layer_mean_T(m, Tn, layers):
     return float(np.nanmean(Tn[nodes - 1]))
 
 
-#: which deposits are confined to the 49 cell footprints. The physical converter
+#: which deposits are confined to the cell footprints. The physical converter
 #: tiers contain OUT-OF-CELL encapsulant as well as the devices; depositing a tier's
 #: loss over every element of the layer put GaN device loss into the underfill out
 #: to the package corners, where it has almost no path to the cold plate, and
 #: produced a 362 C hot spot at (15, 15) mm in an element carrying no device at all.
 IN_TILE_KEYS = ("hs", "ls", "caps", "ind", "rdl", "lv", "tsv", "pads", "attach")
 #: Z3 also confines its PCB 1 V via-field loss to the cells: the plated through-holes exist
-#: only in the board under the 49 footprints, so that loss goes into those board elements and
+#: only in the board under the cell footprints, so that loss goes into those board elements and
 #: never into the board out to the package corners. Every other architecture keeps
 #: IN_TILE_KEYS unchanged.
 IN_TILE_KEYS_BY_ARCH = {"Z3": IN_TILE_KEYS + ("pcb_via",)}
@@ -447,9 +450,11 @@ def in_tile_keys(arch):
 
 
 def deposits_from_ledger(arch, L):
-    """(layers tuple, in_tiles) -> W."""
+    """(layers tuple, in_tiles) -> W. A converter row carries its per-tier split (TCPMT round
+    3, final_closure_ledger.converter_rows_split): each tier's share is deposited in that tier
+    alone, inside the cells, so a part's loss lands in the tier holding it."""
     lay = FL.LAYERS[arch]
-    tile_layers = set()
+    tile_layers = set(lay.get("converter", []))
     for k in in_tile_keys(arch):
         if k not in lay:
             continue
@@ -459,10 +464,22 @@ def deposits_from_ledger(arch, L):
     for r in L["rows"]:
         if r["P_w"] <= 0:
             continue
-        layers = tuple(r["deposit_layer"].split(","))
-        key = (layers, all(x in tile_layers for x in layers))
-        dep[key] = dep.get(key, 0.0) + r["P_w"]
+        for layers, w in _row_regions(r):
+            key = (layers, all(x in tile_layers for x in layers))
+            dep[key] = dep.get(key, 0.0) + w
     return dep
+
+
+def _row_regions(r):
+    """[(layers tuple, W)] of one ledger row: its per-tier split when it has one, else its
+    whole loss over its deposit layers."""
+    sp = r.get("deposit_split")
+    if sp:
+        tot = sum(x["P_w"] for x in sp)
+        if abs(tot - r["P_w"]) > 1e-9 * max(1.0, abs(r["P_w"])):
+            raise ValueError(f"{r['term']}: deposit split {tot} W != row {r['P_w']} W")
+        return [((x["layer"],), x["P_w"]) for x in sp if x["P_w"] > 0]
+    return [(tuple(r["deposit_layer"].split(",")), r["P_w"])]
 
 
 def _region_elems(m, layers, in_tiles, tiles):
@@ -501,20 +518,23 @@ def exposed_bottom_faces(m, layer):
 
 
 def board_bottom_faces(m, arch=None):
-    """The faces that carry the production natural-convection (h_bottom) film."""
+    """The faces that carry the production natural-convection (h_bottom) film: the board's
+    exposed underside. Z3's converter hangs below the board, and a Z2 converter deeper than
+    the board + BGA protrudes below the board backside (TCPMT round 3, PhysicalPackage.
+    cutout_fit_margin_um < 0): in both the board faces are taken, never the converter's."""
     import production_et as PE
-    if arch != "Z3":
-        return PE.ccxio.bottom_film_faces(m)
-    return exposed_bottom_faces(m, "board")
+    if arch in ("Z3", "Z2", "Z2BF"):
+        return exposed_bottom_faces(m, "board")
+    return PE.ccxio.bottom_film_faces(m)
 
 
 def z3_converter_cold_plate(m, q_w):
     """Z3's converter-underside cold plate: the bottom faces of the DEEPEST tier, which the
     tier order makes the high-side GaN, over the whole cell-grid bbox (cells + encapsulant)."""
     deepest = min(m.layers, key=lambda L: L.z0)
-    if deepest.name != FL.LAYERS["Z3"]["hs"]:
-        raise ValueError(f"the Z3 cold plate belongs on the high-side tier, but the deepest "
-                         f"layer is {deepest.name}")
+    if deepest.name not in FL.LAYERS["Z3"]["hs"]:
+        raise ValueError(f"the Z3 cold plate belongs on the input-end (high-side) tier, but the "
+                         f"deepest layer is {deepest.name}")
     return bottom_plate_film(
         exposed_bottom_faces(m, deepest.name), deepest.name,
         "Z3 production: second top-type cold plate on the converter underside", q_w,
@@ -760,15 +780,18 @@ def temperature_regions(arch):
     while the device losses were deposited only inside the 49 cells -- 7.8 K below the
     in-cell mean for the direct-fed Z2 and 1.2 K above it for Z1 at HV-S0."""
     lay = FL.LAYERS[arch]
-    # a separate output-capacitor tier (a non-default design) is converter metal's region too
-    conv_layers = ([lay["hs"], lay["ls"], lay["caps"], lay["ind"]]
-                   + ([lay["cout"]] if "cout" in lay else []) + lay["rdl"])
+    # every converter tier (a mixed tier holds several classes) and the RDL tiers
+    conv_layers = list(lay["converter"]) + lay["rdl"]
     reg = {"conv": (conv_layers, True),
-           "hs": ([lay["hs"]], True), "ls": ([lay["ls"]], True),
-           "ind": ([lay["ind"]], True), "caps": ([lay["caps"]], True),
+           "hs": (list(lay["hs"]), True), "ls": (list(lay["ls"]), True),
+           "ind": (list(lay["ind"]), True), "caps": (list(lay["caps"]), True),
            "bga": ([lay["bga"]], False),
            "sub": ([lay["tsv"]], True),
            "interface": ([lay["pads"]], True)}
+    # TCPMT round 3: the in-cell temperature of EVERY converter tier -- each part's loss is
+    # evaluated at the tier holding it and deposited there (converter_rows_split)
+    for ln in lay["converter"]:
+        reg[f"tier:{ln}"] = ([ln], True)
     if "attach" in lay:
         reg["attach"] = ([lay["attach"]], True)
     if "pcb_via" in lay:                  # Z3: the board elements under the cells (via fields)
@@ -783,9 +806,13 @@ def region_nodes(m, tiles, layers, in_tiles):
 
 
 def temps_from_history(h):
-    """The ledger temperatures of one recorded E-T iteration (keys present in it)."""
-    return {k: h[f"T_{k}_C"] for k in ("conv", "hs", "ls", "ind", "caps", "bga", "sub",
-                                         "interface", "attach", "pcb_via") if f"T_{k}_C" in h}
+    """The ledger temperatures of one recorded E-T iteration (keys present in it), the
+    per-tier keys (T_tier:<layer>_C) included."""
+    out = {k: h[f"T_{k}_C"] for k in ("conv", "hs", "ls", "ind", "caps", "bga", "sub",
+                                        "interface", "attach", "pcb_via") if f"T_{k}_C" in h}
+    out.update({k[2:-2]: v for k, v in h.items() if k.startswith("T_tier:") and
+                k.endswith("_C")})
+    return out
 
 
 def run_et(arch, scen, h_xy=1.1, refine=(1, 1)):
@@ -944,8 +971,10 @@ def run_case(arch, scen, h_xy=1.1, do_mech=True, refine=(1, 1), solver="", threa
             "board_underside_outside_converter": "production h_bottom natural convection",
             "q_split_W": {"top": th["q_top_W"], "converter_plate": th.get("q_bottom_plate_W"),
                           "board_bottom": th["q_bot_W"]}}
-    if not Z1D.is_default():
-        res["design"] = Z1D.summary()
+    # TCPMT round 3: every case records the design it was computed with (the design record
+    # entry, or a count-study candidate config); tcpmt_cases refuses a case of another design
+    res["design"] = Z1D.summary()
+    res["tsv_per_cell"] = TSV_N_PER_CELL
     # write THIS case now, and again after mechanics: a failure in another worker, or a
     # long structural solve, must not withhold the converged thermal state
     f = case_path(arch, scen, h_xy, refine)

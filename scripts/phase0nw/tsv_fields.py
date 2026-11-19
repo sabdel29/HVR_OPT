@@ -57,7 +57,8 @@ TSV_D_PROVENANCE = ("30 um reproduces the source single-via resistance as a COND
                     "0.5 um liner gives 7.721 mOhm and does not")
 
 
-def _lattice(cell_side_mm: float, pitch_mm: float, keepout_mm: float = 0.05):
+def _lattice(cell_side_mm: float, pitch_mm: float, keepout_mm: float = 0.05,
+             n_side: int | None = None):
     """Interleaved VDD/GND sites on a square lattice, centred on the cell.
 
     ONE CONVENTION, USED EVERYWHERE IN THIS MODULE: n sites span (n - 1) gaps, so the
@@ -74,6 +75,13 @@ def _lattice(cell_side_mm: float, pitch_mm: float, keepout_mm: float = 0.05):
     n = int(usable // pitch_mm) + 1
     if n < 2:
         raise ValueError(f"cell side {cell_side_mm} mm holds no TSV lattice at {pitch_mm} mm")
+    if n_side is not None:
+        # TCPMT round 3: a lattice SIZED for the cell current (design_record.tsv_n_side), at
+        # most the geometric maximum of the cell
+        if not 2 <= int(n_side) <= n:
+            raise ValueError(f"{n_side} x {n_side} vias do not fit a {cell_side_mm} mm cell "
+                             f"(at most {n} x {n} at {pitch_mm} mm)")
+        n = int(n_side)
     off = (n - 1) * pitch_mm / 2.0          # centred, as in the BGA lattice fix
     vdd, gnd = [], []
     for i in range(n):
@@ -135,9 +143,10 @@ def spreading_resistance(n_via: int, d_mm: float, pitch_mm: float, T_C: float = 
 
 def cell_report(cell_side_mm: float, h_tsv_mm: float, i_cell_a: float,
                 pitch_mm: float = P_TSV_MM, d_mm: float = D_TSV_MM,
-                T_C: float = 20.0) -> dict:
-    """Everything brief section 16 asks for, for ONE cell."""
-    n, vdd, gnd = _lattice(cell_side_mm, pitch_mm)
+                T_C: float = 20.0, n_side: int | None = None) -> dict:
+    """Everything brief section 16 asks for, for ONE cell (n_side: a current-sized lattice,
+    default the maximum density)."""
+    n, vdd, gnd = _lattice(cell_side_mm, pitch_mm, n_side=n_side)
     a_via_mm2 = math.pi * (d_mm / 2) ** 2
     a_cell_mm2 = cell_side_mm ** 2
 

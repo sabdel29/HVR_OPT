@@ -38,13 +38,38 @@ from stack import multilayer_sheet_solve                                   # noq
 OUT = R / "results" / "phase0m"
 OUT.mkdir(parents=True, exist_ok=True)
 
-# ---- the compiled 1 kW design (scripts/phase0f/kw1.py::design_1kw) ----------------------
-DESIGN = dict(label="N3K3KA2_J3.5", N=3, K=3, K_A=2, f_sw_hz=805170.3343770515,
-              i_out_per_vr_a=1000.0 / 49, v_in=48.0, v_out=1.0, n_vr=49,
-              tile_side_mm=2.3685438564654024, p_conv_total_w=125.26443889730017,
-              hs_part="EPC2014C", hs_footprint_mm2=1.87, hs_rdson_ohm=0.016,
-              ind_l_nh=250, ind_dcr_mohm=1.6, ind_footprint_mm2=1.0, ind_h_um=500,
-              cap_uf=10.0, cap_esr_mohm=2.5, cap_esl_ph=400.0, cap_footprint_mm2=2.0)
+# ---- the compiled 1 kW design ----------------------------------------------------------
+#: The FROZEN 49-cell design of the published lineage (kw1.design_1kw() before review round 2:
+#: N3K3K_A2, legacy capacitor rule). Kept literally for the frozen phases (Phase 0M .. 0N) and
+#: as the key template of the routing dict; never the design of the production chain.
+DESIGN_49_LEGACY = dict(label="N3K3KA2_J3.5", N=3, K=3, K_A=2, f_sw_hz=805170.3343770515,
+                        i_out_per_vr_a=1000.0 / 49, v_in=48.0, v_out=1.0, n_vr=49,
+                        tile_side_mm=2.3685438564654024, p_conv_total_w=125.26443889730017,
+                        hs_part="EPC2014C", hs_footprint_mm2=1.87, hs_rdson_ohm=0.016,
+                        ind_l_nh=250, ind_dcr_mohm=1.6, ind_footprint_mm2=1.0, ind_h_um=500,
+                        cap_uf=10.0, cap_esr_mohm=2.5, cap_esl_ph=400.0,
+                        cap_footprint_mm2=2.0)
+
+
+def design_in_force() -> dict:
+    """TCPMT round 3: the routing dict of the design in force, from THE design record
+    (configs/design_points.yaml, entry `routing`: the compiled converter's fields by the rule
+    of z1_design.design_dict, the B-vector and the part-level cell layout of the mixed
+    tiers). Falls back to the frozen 49-cell dict only when no record exists."""
+    try:
+        if str(R / "scripts" / "phase0nw") not in sys.path:
+            sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+        import design_record as DR
+        d = DR.get()
+        if "routing" in d:
+            return dict(d["routing"])
+    except Exception:                                     # noqa: BLE001
+        pass
+    return dict(DESIGN_49_LEGACY)
+
+
+#: the design in force at import (HVR_DESIGN / the record's production design)
+DESIGN = design_in_force()
 
 T_C = 85.0
 J_RDL_A_PER_M2 = 1.0e10     # 10 kA/mm^2 -- see note in ROUTING_SCOPE_AUDIT.md
@@ -102,6 +127,8 @@ def tile_layout(side_mm: float, d: dict = DESIGN) -> list[Comp]:
     2.3685 mm square = 5.61 mm^2. The area budget is ONE column per phase, and the
     passives are stacked inside that column's shadow -- they cannot be beside it.
     """
+    if d.get("layout"):
+        return _layout_from_record(side_mm, d)
     K, N = d["K"], d["N"]
     s = side_mm
     col_w = s / K
@@ -130,6 +157,37 @@ def tile_layout(side_mm: float, d: dict = DESIGN) -> list[Comp]:
     return out
 
 
+def _layout_from_record(side_mm: float, d: dict) -> list[Comp]:
+    """TCPMT round 3: the cell of a mixed-tier design as the DSE placed it (design record,
+    entry routing.layout: each part's tier and its keep-out-grown rectangle in the cell, with
+    the part index of the tier-order assignment). Positions relative to the cell centre; the
+    component carries its tier name as its layer. VIN / VOUT as the column layout."""
+    s = side_mm
+    sc = s / float(d["layout_cell_side_mm"])
+    out = []
+    for p in d["layout"]:
+        out.append(Comp(p["name"], (p["x_mm"] + p["w_mm"] / 2) * sc - s / 2,
+                        (p["y_mm"] + p["h_mm"] / 2) * sc - s / 2, float(p["tier"]),
+                        p["part_w_mm"], p["part_h_mm"], p["tier_name"], p["kind"],
+                        int(p.get("index", -1))))
+    out.append(Comp("VIN", -0.45 * s, -0.45 * s, 0.0, 0.2, 0.2, "input_plane", "pad_in", -1))
+    out.append(Comp("VOUT", 0.0, 0.0, 1e9, s, s, "output_plane", "pad_out", -1))
+    return out
+
+
+def branch_inductor(d: dict) -> list:
+    """The inductor (low-side) index each high-side branch drives: the B-vector allocation in
+    branch order (identity for N = K, the production N3K3K_A2)."""
+    N, K = d["N"], d["K"]
+    B = d.get("B_array") or [1] * K
+    out = []
+    for j, b in enumerate(B):
+        out += [j] * int(b)
+    if len(out) != N:
+        out = [min(k, K - 1) for k in range(N)]
+    return out
+
+
 def nets(d: dict = DESIGN) -> list[Net]:
     """Every metallization edge, with the current it carries and whether it is a lateral
     run in one layer or a vertical via stack between layers.
@@ -151,7 +209,8 @@ def nets(d: dict = DESIGN) -> list[Net]:
     out += [Net(f"hs{k}_to_cf", f"HS{k}", f"CF{min(k, N - 2)}", 0.0, i_cap_rms, "SC",
                 "lateral", "PL2", "flying-capacitor loop: AC only, no DC term")
             for k in range(N)]
-    out += [Net(f"hs{k}_to_ls{k}", f"HS{k}", f"LS{k}", i_mid / N, i_mid / N, "MID",
+    bi = branch_inductor(d)
+    out += [Net(f"hs{k}_to_ls{bi[k]}", f"HS{k}", f"LS{bi[k]}", i_mid / N, i_mid / N, "MID",
                 "vertical") for k in range(N)]
     out += [Net(f"ls{k}_to_L{k}", f"LS{k}", f"L{k}", i_ph, i_ph, "SW", "vertical")
             for k in range(K)]
@@ -160,6 +219,53 @@ def nets(d: dict = DESIGN) -> list[Net]:
     out += [Net("vout_plane", "VOUT", "VOUT", i_out, i_out, "LV", "lateral", "PL3",
                 "output plane spreading across the tile")]
     return out
+
+
+def output_plane_r2(d: dict, occupancy: float = 0.80, level: int = 2,
+                    t_cu_m: float = 10e-6):
+    """The cell's output plane as an R2 sheet: the K inductor footprints inject I/K each, a
+    pad field over the whole tile extracts uniformly (final_closure_ledger.vout_plane_r2, made
+    a pure function of the routing dict so a layout can be scored before it is adopted).
+    Returns (R_eff ohm at 20 C, number of control volumes)."""
+    if str(R / "scripts" / "phase0nw") not in sys.path:
+        sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+    import pkg_rdl_refined as RF
+    import scipy.sparse.linalg as spla
+    s = d["tile_side_mm"]
+    comps = {c.name: c for c in tile_layout(s, d)}
+    legs = [comps[f"L{k}"] for k in range(d["K"])]
+    h_fine, h_coarse = RF.LEVELS[level]
+    tx = sorted({round(c.x_mm + k * c.w_mm / 2, 9) for c in legs for k in (-1, 1)})
+    ty = sorted({round(c.y_mm + k * c.h_mm / 2, 9) for c in legs for k in (-1, 1)})
+    fx = RF.axis_faces(-s / 2, s / 2, tx, [], h_fine / 4, h_coarse / 4)
+    fy = RF.axis_faces(-s / 2, s / 2, ty, [], h_fine / 4, h_coarse / 4)
+    rsq = rho_cu(20.0) / (t_cu_m * occupancy)
+    sh = RF.RefinedSheet(fx, fy, rsq)
+    G = sh.laplacian().tolil()
+    rhs = np.zeros(sh.n)
+    area = np.outer(sh.dx, sh.dy).ravel()
+    rhs -= area / area.sum()                       # uniform extraction, 1 A total
+    for c in legs:                                  # 1/K A over each footprint
+        ar = np.zeros(sh.n)
+        for i in range(sh.nx):
+            ox = min(sh.fx[i + 1], c.x_mm + c.w_mm / 2) - max(sh.fx[i], c.x_mm - c.w_mm / 2)
+            if ox <= 0:
+                continue
+            for j in range(sh.ny):
+                oy = (min(sh.fy[j + 1], c.y_mm + c.h_mm / 2)
+                      - max(sh.fy[j], c.y_mm - c.h_mm / 2))
+                if oy > 0:
+                    ar[sh.node(i, j)] = ox * oy
+        rhs += (1.0 / len(legs)) * ar / ar.sum()
+    ref = int(np.argmin(np.abs(sh.cx - 0)[:, None] + np.abs(sh.cy - s / 2)[None, :]))
+    G[ref, :] = 0.0
+    G[ref, ref] = 1.0
+    rhs[ref] = 0.0
+    V = spla.spsolve(G.tocsr(), rhs)
+    Lp = sh.laplacian().tocoo()
+    up = Lp.row < Lp.col
+    p = float(np.sum(-Lp.data[up] * (V[Lp.row[up]] - V[Lp.col[up]]) ** 2))
+    return p, sh.n
 
 
 def manhattan(a: Comp, b: Comp) -> float:

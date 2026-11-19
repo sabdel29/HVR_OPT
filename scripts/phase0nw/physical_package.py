@@ -77,6 +77,11 @@ class PhysicalPackage:
     clearance_mm: float | None = None
     clearance_void: bool = False
     out_of_cell_primary: str = "F1_encapsulated"
+    #: board + BGA depth minus attach + converter (um): < 0 = the converter protrudes below
+    #: the board backside (TCPMT round 3, check_cutout_fit)
+    cutout_fit_margin_um: float | None = None
+    #: the design record entry the converter block restates ('' = not record-driven)
+    design: str = ""
     source_path: Path = field(compare=False, default=None)
 
     # ---- derived, never stored twice -------------------------------------------------
@@ -107,6 +112,11 @@ def load_physical_package_config(path) -> PhysicalPackage:
     """Parse, validate and cross-check one physical package YAML."""
     path = Path(path)
     c = yaml.safe_load(path.read_text())
+    # TCPMT round 3: the converter block restates THE design record (checked) or, for another
+    # HVR_DESIGN entry, is replaced by it (design_record.apply_converter)
+    sys.path.insert(0, str(R / "scripts/phase0nw"))
+    import design_record as DR
+    c = DR.apply_converter(c, "Z2", source=path.name)
 
     def need(d, key, where):
         if key not in d:
@@ -183,6 +193,16 @@ def load_physical_package_config(path) -> PhysicalPackage:
                                     ooc == "F1_clearance")) if not ok]
         if missing:
             raise PhysicalConfigError(f"{path.name}: Z2_DIRECT_FEED lacks {missing}")
+    # --- cross-check 5 (TCPMT round 3): does the converter FIT the cutout? It hangs from the
+    # substrate underside through the attach; the cutout is as deep as the board + BGA. A
+    # converter deeper than that protrudes below the board backside: recorded (the board film
+    # then takes only the exposed board faces), never silently clipped.
+    import board as BRD
+    t_board_mesh = BRD.BOARD_CASES[case]["t_mm"] * 1e3
+    if abs(t_board_mesh - float(need(b, "thickness_um", "board"))) > 1e-9:
+        raise PhysicalConfigError(f"{path.name}: board.thickness_um {b['thickness_um']} but "
+                                  f"board case {case} meshes {t_board_mesh} um")
+    fit = t_board_mesh + BRD.BALL_H_MM * 1e3 - (attach_um + stated)
     return PhysicalPackage(
         label=c.get("label", path.stem),
         architecture=need(c, "architecture", "root"),
@@ -201,6 +221,8 @@ def load_physical_package_config(path) -> PhysicalPackage:
         attach=tuple(sorted((k, v) for k, v in va.items() if not isinstance(v, (dict, list)))),
         clearance_mm=float(clr) if clr is not None else None, clearance_void=clr_void,
         out_of_cell_primary=ooc,
+        cutout_fit_margin_um=fit if cut_mm is not None else None,
+        design=str((c.get("converter") or {}).get("design") or ""),
         source_path=path,
     )
 
@@ -436,6 +458,11 @@ def load_z3_package_config(path=None) -> Z3Package:
     p = Path(path) if path else Z3_CFG
     c = yaml.safe_load(p.read_text())
     sys.path.insert(0, str(R / "scripts/phase0nw"))
+    # TCPMT round 3: the converter block restates THE design record (checked) or, for another
+    # HVR_DESIGN entry, is replaced by it (design_record.apply_converter)
+    import design_record as DR
+    c = DR.apply_converter(c, "Z3", source=p.name)
+    record_driven = bool((c.get("converter") or {}).get("design"))
     import board as BRD
     import physical_coords as PCO
     import z2_converter as Z2C
@@ -473,16 +500,23 @@ def load_z3_package_config(path=None) -> Z3Package:
     stated = float(need(conv, "with_land_side_rdl_um", "converter"))
     if abs(sum(t.um for t in tiers) - stated) > 1e-9:
         bad(f"converter tiers sum to {sum(t.um for t in tiers)} um, not {stated} um")
-    if tiers and tiers[-1].name != "gan_hs_EPC2014C":
-        bad("the high-side GaN must be the DEEPEST tier (last from the board downward)")
+    # the input-end tier (the high side, fed directly with 48 V) is the DEEPEST: the record's
+    # first tier (a mixed tier holding high-side dies), or the legacy single-class HS tier
+    deepest = DR.tiers()[0]["name"] if record_driven else "gan_hs_EPC2014C"
+    if tiers and tiers[-1].name != deepest:
+        bad(f"the input-end (high-side) tier {deepest} must be the DEEPEST tier (last from the "
+            f"board downward), not {tiers[-1].name}")
     z2 = load_physical_package_config(Z2_CFG)
-    if [(t.name, t.um) for t in tiers] != [(t.name, t.um) for t in z2.tiers]:
-        bad("converter tiers differ from Z2's: Z3 carries the SAME regulator in the SAME order")
     cells = int(need(conv, "cells", "converter"))
     area = float(need(conv, "cell_area_mm2", "converter"))
     side = float(need(conv, "cell_side_mm", "converter"))
     if abs(side * side - area) / area > 2e-4:
         bad(f"cell_side {side} mm squares to {side * side:.4f} mm2, not {area}")
+    # the SAME regulator in the SAME order as Z2: both restate the design record (checked by
+    # apply_converter against the record, never against each other's file); a config that is
+    # not record-driven is still compared with the Z2 file
+    if [(t.name, t.um) for t in tiers] != [(t.name, t.um) for t in z2.tiers]:
+        bad("converter tiers differ from Z2's: Z3 carries the SAME regulator in the SAME order")
     if (cells, area, side) != (z2.cells, z2.cell_area_mm2, z2.cell_side_mm):
         bad("cell count/area/side differ from Z2's")
 
