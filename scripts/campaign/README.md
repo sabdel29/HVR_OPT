@@ -7,7 +7,7 @@ without touching the frozen results in `research/`.
 | file | role |
 |---|---|
 | `build_manifest.py` | generates `manifest.yaml` (edit the generator, never the YAML) |
-| `manifest.yaml` | 267 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
+| `manifest.yaml` | 269 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
 | `run.py` | runner: `plan`, `seed`, `run`, `status`, `validate`, `reset`, `audit-hooks`, `exec-job` |
 | `validators.py` | output checks (`etm`, `feedback`, `json`, `csv`, `frd`, `exists`) |
 | `guard/sitecustomize.py` | write guard + frozen-read log, injected into every job via PYTHONPATH |
@@ -132,16 +132,16 @@ Design m36 (TCPMT round 3; `plan` on the generated manifest, 0 blocked):
 | 7 | thin_cap | 7 | 22 | 1.6 h | m36thin (100-um capacitor), Z1/Z2/Z3 x A/B |
 | 8 | co_design | 7 | 22 | 1.6 h | m36t5 (5 tiers, N4K4 at 957 kHz), Z1/Z2/Z3 x A/B |
 | 9 | refinement_ladders | 20 | 158 | 5.1 h | production-state rungs r11 (smoke tests) and r31, S0 rungs, solver checks |
-| 10 | robustness_map | 92 | 173 | 3.3 h | class-B runs, local responses, caloric (HV_SDEC) |
+| 10 | robustness_map | 98 | 188 | 3.3 h | class-B runs (incl. the gap-post range conv_posts_lower/upper), local responses, caloric (HV_SDEC) |
 | 11 | solder_submodels | 3 | 31 | 2.5 h | constitutive/critical/cycles/band/units, parameters, Z3 land |
 | 12 | moose_checks | 5 | 17 | 1.5 h | **local only**: MOOSE does not load on califone |
 | 13 | dse_sweeps | 5 | 1 | 0.4 h | p2_t4 / t5 / tinf sweeps + phase-2 summary |
 | 14 | derived | 30 | 5 | 0.3 h | results, class B, decoupling chain, design comparison, k check, BGA re-closure, ... |
 | 15 | manuscript | 14 | 1 | 0.1 h | macros, supplement, figures under the root |
-|  | **total** | **263** | **693** | | |
+|  | **total** | **269** | **707** | | |
 
-Makespan (dependency-aware list schedule): **~13.2 h** with 8 califone jobs + 30 local cores
-(califone alone 31.4 h, local alone 27.9 h).
+Makespan (dependency-aware list schedule): **~13.6 h** with 8 califone jobs + 30 local cores
+(califone alone 32.3 h, local alone 28.4 h).
 
 Round-2 (m49) table, for reference: 262 jobs (22 blocked), 548 core-h (+161), ~11.7 h; critical
 path package network -> Z3 production -> local temporal -> cycles -> mesh study -> solder studies
@@ -175,6 +175,40 @@ All converged with mechanics and validated. The peak sits in the input-end tier 
 k_z 1.83 W/m K) everywhere. Z3 under cooling A is as hot as round 2's Z3 A (233 W, 194 C at 49 cells).
 The first Z3 attempts (califone) failed in 10 s: the Z3 land-side deposit wrapper did not forward the
 manifold plate's keywords (fixed in 717a36c); after `reset` the runner relaunched them.
+
+## 4b. Smoke tests with the gap-post converter cards (2026-11-19, root `/home/beams0/SABDELZAHER/ETM_project/scratch_campaign/m36fix/smoke/root`)
+
+The same six jobs, upstream inputs and decoupling (k_eq 2.787, 220 balls per rail, NOT_CLOSED) as
+section 4; only the mixed-tier cards changed: a part shorter than its tier is bridged to the RDLs by
+copper posts on its terminals (`tcpmt_converter_cards.py` GAP_MODEL 'posts', production post basis
+'land'; the old encapsulant cap is variant `conv_gap_legacy`). m36 cards k_z / k_xy (W/m K): T1 41.6
+/ 5.66 (was 1.83 / 5.38), T2 51.6 / 4.09 (21.2), T3 44.2 / 2.83 (38.3), T4 54.5 / 4.37 (43.3).
+
+    run.py --campaign m36posts --results-root $ROOT seed --upstream-of 'ladder.*.sdec_*.r11'
+    run.py --campaign m36posts --results-root $ROOT run --backend both --max-cores 6 --only 'ladder.*.sdec_*.r11'
+
+| job | where | wall | P_loss (W) | T_max (C) | peak at | die max (C) | energy residual | E-T it |
+|---|---|---:|---:|---:|---|---:|---:|---:|
+| `ladder.Z1.sdec_A.r11` | local | 356 s | 138.73 (-1.87) | 110.38 (-25.3) | T1 | 87.94 | -1.7e-7 | 4 |
+| `ladder.Z1.sdec_B.r11` | local | 543 s | 137.94 (-1.14) | 107.49 (-13.0) | T1 | 87.44 | -1.5e-7 | 4 |
+| `ladder.Z2.sdec_A.r11` | local | 495 s | 137.48 (-1.44) | 117.55 (-24.1) | T1 | 86.61 | -3.2e-7 | 4 |
+| `ladder.Z2.sdec_B.r11` | califone PBS 15800 | 287 s | 120.83 (-10.15) | 77.08 (-21.5) | die (T4 74.7) | 77.08 | -2.3e-8 | 4 |
+| `ladder.Z3.sdec_A.r11` | califone PBS 15801 | 211 s | 204.78 (-1.88) | 186.09 (-27.3) | T1 | 91.70 | -2.0e-7 | 6 |
+| `ladder.Z3.sdec_B.r11` | califone PBS 15802 | 206 s | 157.10 (-24.08) | 79.71 (-47.9) | BGA / board (T4 73.6) | 79.40 | 1.6e-7 | 4 |
+
+All converged with mechanics and validated (differences against section 4 in brackets). Under cooling A
+the peak stays in the input-end tier T1 but drops 24-27 K; under cooling B the converter tiers now pass
+their heat to the second plate (T1 becomes the coolest tier, 52 C) and the peak moves to the die (Z2)
+or the 1 V BGA (Z3), which also lowers the loss of Z2-B and Z3-B by 10 and 24 W (the R_on tempco).
+
+Two consequences for the campaign. (i) The tier-order rule breaks its ties (every order has the
+worst via AR 8.33) by the heat path, which uses these cards: with the posts it prefers T2 and T3
+swapped for m36 (21.40 vs 21.71 K for the recorded order, 1.4 %), and reorders m36t5 and m49; the
+design record keeps its order until the authors decide, so `prep.tier_order` will report a chosen
+order different from the record. (ii) The Z1 BGA stays NOT_CLOSED: `tcpmt_decap_placement.py limits`
+(on the 220-ball network) gives 2.635 for 12 clock phases (dual6, Z1 1.73 A per ball), 2.61 at the
+interleaving limit and < 0.03 from any ring, against the 2.29 Z1 needs; only about 2.9 uF at every
+cell (which the stack cannot hold) reaches 1.9.
 
 ## 4a. Smoke tests, round 2 (2026-11-18, scratch root `/home/beams0/SABDELZAHER/ETM_project/scratch_campaign/smoke`)
 

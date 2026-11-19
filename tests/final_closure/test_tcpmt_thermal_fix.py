@@ -103,7 +103,7 @@ def test_legacy_settings_are_variants():
     for v in ("conv_k_legacy", "nu_legacy_table", "props_legacy_50C", "plate_caloric_legacy",
               "z1_bottom_plate_tim_fullflow", "z2_cooled_tim_fullflow",
               "z3_plate_tim_fullflow", "z2_cooled_fullflow", "z3_plate_fullflow",
-              "wall_viscosity"):
+              "wall_viscosity", "conv_gap_legacy"):
         assert v in S.VARIANTS, v
 
 
@@ -131,7 +131,7 @@ def test_cards_record_every_design_with_ordered_bounds(cards):
 
 def test_cards_are_functions_of_the_tier_contents(cards):
     """A tier card follows what the tier holds: the parts it lists, their areas in the cell,
-    the encapsulant cap above shorter parts, and the capacitor height (thin vs rated)."""
+    the gap above shorter parts, and the capacitor height (thin vs rated)."""
     import design_record as DR
     d = cards["designs"]["m36"]
     for t in DR.tiers("m36"):
@@ -139,14 +139,66 @@ def test_cards_are_functions_of_the_tier_contents(cards):
         assert der["parts"] == t["parts"] and der["tier_um"] == t["height_um"]
         assert set(der["prisms"]) == set(t["parts"])
     t1 = d["cards"]["conv_tier1"]["derivation"]                 # 2 x EPC2014C + 2 x 0603
-    assert t1["prisms"]["gan_hs"]["cap_um"] == pytest.approx(1000.0 - 685.0)
-    # the thin-capacitor sensitivity: the same contents in a 685-um tier, no cap above the dies
+    assert t1["prisms"]["gan_hs"]["gap_um"] == pytest.approx(1000.0 - 685.0)
+    assert t1["prisms"]["cap_fly"]["gap_um"] == pytest.approx(1000.0 - 830.0)
+    # the thin-capacitor sensitivity: the same contents in a 685-um tier, no gap above the
+    # dies; with the legacy encapsulant gap it conducts better than the rated 1000-um tier
     thin = cards["designs"]["m36thin"]["cards"]["conv_tier1"]
     assert thin["derivation"]["tier_um"] == 685.0
-    assert thin["k_ortho"]["value"][2] > d["cards"]["conv_tier1"]["k_ortho"]["value"][2]
+    assert thin["derivation"]["prisms"]["gan_hs"]["gap_um"] == 0.0
+    leg = {k: cards["designs"][k]["legacy_gap_encapsulant_summary"]["conv_tier1"]["kz"]
+           for k in ("m36", "m36thin")}
+    assert leg["m36thin"] > leg["m36"]
     # inductor tiers carry their output posts; a tier without inductors has none
     t4 = d["cards"]["conv_tier4"]["derivation"]
     assert t4["area_fractions"]["posts"] > 0 and t1["area_fractions"]["posts"] == 0
+
+
+def test_gap_posts_bridge_parts_shorter_than_their_tier(cards):
+    """Review round 3: a part shorter than its tier is bridged to the RDLs by copper posts on
+    its terminals (production: the die's datasheet land pattern, the MLCC's electrode bands,
+    the inductor's current at J_POST); the range over the post bases is ordered and recorded
+    for the uncertainty step; the encapsulant cap is the legacy card."""
+    import tcpmt_converter_cards as CC
+    land = {p: CC.pad_area_mm2(CC.DEVICES[p], "land_um") / (CC.DEVICES[p]["die_mm"][0]
+                                                             * CC.DEVICES[p]["die_mm"][1])
+            for p in ("EPC2014C", "EPC2055")}
+    assert land["EPC2014C"] == pytest.approx((3 * 180 * 814 + 2 * 180 * 296) * 1e-6
+                                             / (1.702 * 1.087))
+    assert land["EPC2055"] == pytest.approx((230 * 280 + 230 * 805 + 2 * 230 * 1155
+                                             + 2 * 230 * 1330) * 1e-6 / 3.75)
+    assert cards["gap_model"] == "posts" and cards["post_basis"] == "land"
+    for key, d in cards["designs"].items():
+        for name, c in d["cards"].items():
+            der, b = c["derivation"], c["derivation"]["bounds"]
+            kz, kxy = c["k_ortho"]["value"][2], c["k_ortho"]["value"][0]
+            lo, hi = b["kz_post_range"]
+            assert lo - 1e-9 <= kz <= hi + 1e-9, (key, name)
+            assert b["kxy_post_range"][0] - 1e-9 <= kxy <= b["kxy_post_range"][1] + 1e-9
+            assert b["kz_gap_encapsulant_legacy"] <= lo + 1e-9, (key, name)
+            for cls, g in der["gap_posts"].items():
+                assert g["gap_um"] > 0 and g["post_fraction_of_part"] > 0, (key, name, cls)
+            if not der["gap_posts"]:            # nothing shorter than the tier: no change
+                assert b["kz_gap_encapsulant_legacy"] == pytest.approx(kz)
+    t1 = cards["designs"]["m36"]["cards"]["conv_tier1"]["derivation"]["gap_posts"]
+    assert t1["gan_hs"]["post_fraction_of_part"] == pytest.approx(land["EPC2014C"])
+    assert t1["cap_fly"]["post_mm2_per_part"] == pytest.approx(
+        2 * CC.CF_0603["W_mm"] * CC.CF_0603["band_mm"])
+
+
+def test_legacy_gap_cards_are_the_cards_before_review_round_3(cards):
+    """GAP_MODEL 'encapsulant' (variant conv_gap_legacy) reproduces the recorded legacy
+    summary, and on a tier with no gap equals the production card."""
+    import tcpmt_converter_cards as CC
+    import design_record as DR
+    for key in DR.keys():
+        leg = CC.mixed_cards(key, gap="encapsulant")
+        for name, c in leg.items():
+            rec = cards["designs"][key]["legacy_gap_encapsulant_summary"][name]
+            assert c["k_ortho"]["value"][2] == pytest.approx(rec["kz"], rel=1e-12)
+            assert c["k_ortho"]["value"][0] == pytest.approx(rec["kx"], rel=1e-12)
+    m36 = cards["designs"]["m36"]["legacy_gap_encapsulant_summary"]
+    assert m36["conv_tier1"]["kz"] == pytest.approx(1.83, abs=0.01)   # the smoke-test card
 
 
 def test_cards_record_matches_the_code(cards):
