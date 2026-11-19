@@ -201,6 +201,15 @@ the peak stays in the input-end tier T1 but drops 24-27 K; under cooling B the c
 their heat to the second plate (T1 becomes the coolest tier, 52 C) and the peak moves to the die (Z2)
 or the 1 V BGA (Z3), which also lowers the loss of Z2-B and Z3-B by 10 and 24 W (the R_on tempco).
 
+Two consequences for the campaign. (i) The tier-order rule breaks its ties (every order has the
+worst via AR 8.33) by the heat path, which uses these cards: with the posts it prefers T2 and T3
+swapped for m36 (21.40 vs 21.71 K for the recorded order, 1.4 %), and reorders m36t5 and m49; the
+design record keeps its order until the authors decide, so `prep.tier_order` will report a chosen
+order different from the record. (ii) The Z1 BGA stays NOT_CLOSED: `tcpmt_decap_placement.py limits`
+(on the 220-ball network) gives 2.635 for 12 clock phases (dual6, Z1 1.73 A per ball), 2.61 at the
+interleaving limit and < 0.03 from any ring, against the 2.29 Z1 needs; only about 2.9 uF at every
+cell (which the stack cannot hold) reaches 1.9.
+
 ## 4a. Smoke tests, round 2 (2026-11-18, scratch root `/home/beams0/SABDELZAHER/ETM_project/scratch_campaign/smoke`)
 
     run.py --campaign smoke --results-root $ROOT seed --upstream-of 'ladder.Z1.r11' --upstream-of 'ladder.Z2.r11'
