@@ -193,8 +193,9 @@ MANIFOLD_RUNS = {
     "mf_Z1_A": ("new", "Z1", [], "production: 4-zone manifold"),
     "sp_Z1_B": ("new", "Z1", ["plate_single_pass", "z1_bottom_plate_tim"],
                 "cooling B, both plates single pass"),
-    "mf_Z1_B3": ("new", "Z1", ["z1_bottom_plate_tim"],
-                 "cooling B, both plates 4-zone manifolds (bottom flow: equal rise)"),
+    "mf_Z1_B4": ("new", "Z1", ["z1_bottom_plate_tim"],
+                 "cooling B, both plates 4-zone manifolds (bottom flow: equal rise; adaptive "
+                 "damping and E-T warm start of the bottom sink, the committed code)"),
 }
 
 
@@ -240,7 +241,7 @@ def collect_manifold(out_json, root=None):
                 if isinstance(ra.get(k), (int, float)) and isinstance(rb.get(k), (int, float))}
     rec["deltas"]["sp_Z1_A - base_Z1_A (sink discretization only)"] = d("base_Z1_A", "sp_Z1_A")
     rec["deltas"]["mf_Z1_A - sp_Z1_A (manifold, cooling A)"] = d("sp_Z1_A", "mf_Z1_A")
-    rec["deltas"]["mf_Z1_B3 - sp_Z1_B (manifold, cooling B)"] = d("sp_Z1_B", "mf_Z1_B3")
+    rec["deltas"]["mf_Z1_B4 - sp_Z1_B (manifold, cooling B)"] = d("sp_Z1_B", "mf_Z1_B4")
     Path(out_json).write_text(json.dumps(rec, indent=1, default=float))
     return rec
 
