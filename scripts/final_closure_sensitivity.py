@@ -709,8 +709,17 @@ VARIANTS = {
     "board_t3p2": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_thickness(
         "it968g_3p2mm", 3200.0), gates=["board.t_only_comparison_run",
                                         "mech.t_only_mechanical"],
+        nature="declared case (the round-2 thickness_sensitivity_case)",
+        what="PCB 3.2 mm instead of 2.4 mm, same IT-968G material dict (TCPMT round 3: the "
+             "production board; kept for the frozen lineage)"),
+    # TCPMT round 3: the production board is 3.2 mm (Z2's four-tier converter needs it); the
+    # thickness sensitivity is the 2.4-mm board (config thickness_sensitivity_case). Z2's
+    # converter then protrudes below the board backside (recorded, cutout_fit_margin_um < 0).
+    "board_t2p4": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_thickness(
+        "it968g_2p4mm", 2400.0), gates=["board.t_only_comparison_run",
+                                        "mech.t_only_mechanical"],
         nature="declared case (config thickness_sensitivity_case)",
-        what="PCB 3.2 mm instead of 2.4 mm, same IT-968G material dict"),
+        what="PCB 2.4 mm instead of 3.2 mm, same IT-968G material dict"),
     "board_eta025": dict(kind="full", archs=("Z1", "Z2"), apply=lambda: v_board_eta(0.25),
                          gates=["board.eta_sensitivity_run"],
                          nature="declared range (config eta_sensitivity)",

@@ -15,16 +15,20 @@ architecture: ARCH_Z1_EMBEDDED
 label: Z1-EMBEDDED-PHYSICAL
 
 board:
-  case: it968g_2p4mm           # identical to Z2 -- the comparison requires it
-  thickness_sensitivity_case: it968g_3p2mm
+  # identical to Z2 -- the comparison requires it. TCPMT round 3: the 3.2-mm board, which Z2's
+  # four-tier converter needs (3031 um below the substrate); the 2.4-mm board is the
+  # thickness sensitivity (variant board_t2p4)
+  case: it968g_3p2mm
+  thickness_sensitivity_case: it968g_2p4mm
   model_level: PCB-H0
   eta_nominal: 0.50
   eta_sensitivity: [0.25, 0.50, 0.75]
-  thickness_um: 2400.0
+  thickness_um: 3200.0
   tolerance_pct: 10.0
   status: VENDOR_EVIDENCE
   source: >-
-    18-layer server/HPC PCB offered at 2.4 mm +-10 % (ugpcb); laminate ITEQ IT-968G.
+    Server/HPC multilayer PCB at 3.2 mm (upper end of Schweizer standard multilayer
+    0.6-3.2 mm; the 18-layer 2.4-mm ugpcb offer is the 49-cell build's); laminate ITEQ IT-968G.
     Board-level E/CTE/k are DERIVED estimates conditional on eta, not measured board
     properties -- see research/PCB_MATERIAL_PROPERTY_AUDIT.md Sec.5.
 
@@ -127,5 +131,5 @@ tim:
 
 expected:
   # Cross-checks the loader re-derives rather than trusts.
-  package_top_um: 6371.0       # above the PCB backside
-  converter_span_um: [3000.0, 6011.0]
+  package_top_um: 7171.0       # above the PCB backside
+  converter_span_um: [3800.0, 6811.0]

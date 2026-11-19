@@ -515,7 +515,7 @@ def build(design):
 
     # ------------------------------------------------------------------ robustness map
     class_b = [  # (variant, archs, kind)  -- final_closure_sensitivity.VARIANTS
-        ("board_t3p2", "Z1 Z2", "full"), ("board_eta025", "Z1 Z2", "full"),
+        ("board_t2p4", "Z1 Z2", "full"), ("board_eta025", "Z1 Z2", "full"),
         ("board_eta075", "Z1 Z2", "full"), ("board_h1", "Z1 Z2", "full"),
         ("board_h0_h1grid", "Z1 Z2", "full"), ("tsv_min", "Z1 Z2", "full"),
         ("tsv_mid", "Z1 Z2", "full"), ("f2_void", "Z1 Z2", "full"),

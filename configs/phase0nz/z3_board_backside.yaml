@@ -57,15 +57,15 @@ substrate:
   tsv_field: "1 V VDD/GND, 30-um vias at 60 um under each cell footprint, scaled with the cell current (45 x 45 = 2025 per cell at M = 36; design_record.tsv_n_side), as Z2"
 
 board:
-  case: it968g_2p4mm           # the same IT-968G board as Z1/Z2
-  thickness_um: 2400.0
+  case: it968g_3p2mm           # the same IT-968G board as Z1/Z2 (3.2 mm since TCPMT round 3)
+  thickness_um: 3200.0
   model_level: PCB-H0
   eta_nominal: 0.50
   cutout: none                 # FULL slab: Z3 has no PCB opening
   status: VENDOR_EVIDENCE
   source: >-
-    18-layer server/HPC PCB offered at 2.4 mm +-10 % (ugpcb); laminate ITEQ IT-968G.
-    Board-level E/CTE/k are DERIVED estimates conditional on eta.
+    Server/HPC multilayer PCB at 3.2 mm (Schweizer standard multilayer 0.6-3.2 mm); laminate
+    ITEQ IT-968G. Board-level E/CTE/k are DERIVED estimates conditional on eta.
 
 bga:
   pitch_mm: 0.8
@@ -204,7 +204,7 @@ mechanics:
 
 expected:
   # re-derived by the loader from the layer list; the tests check them on the MESH
-  z_min_um: -5801.0            # converter underside (substrate underside z = 0)
+  z_min_um: -6601.0            # converter underside (substrate underside z = 0)
   z_max_um: 670.0              # TIM top
-  board_span_um: [-2700.0, -300.0]
-  converter_span_um: [-5801.0, -2800.0]
+  board_span_um: [-3500.0, -300.0]
+  converter_span_um: [-6601.0, -3600.0]
