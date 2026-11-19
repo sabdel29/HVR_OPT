@@ -271,8 +271,10 @@ def patch_write_thermal():
         return
     orig = E.write_thermal
 
-    def write_thermal(m, mats, st, deposits, h_face, t_face, path, tiles, arch=None):
-        info = orig(m, mats, st, deposits, h_face, t_face, path, tiles, arch=arch)
+    def write_thermal(m, mats, st, deposits, h_face, t_face, path, tiles, arch=None, **kw):
+        # **kw: the prebuilt plate / film of the manifold cold plate (round 3, de50954); the
+        # wrapper predates them and dropped them with a TypeError on every Z3 land-side run
+        info = orig(m, mats, st, deposits, h_face, t_face, path, tiles, arch=arch, **kw)
         V = m.elem_volumes()
         regs = []
         for k, ((layers, in_tiles), w) in enumerate(deposits.items(), start=1):

@@ -37,8 +37,14 @@ def recon():
 
 @pytest.fixture(scope="module")
 def design():
+    """The Phase-0N design: the 49-cell point of the pre-round-3 production synthesis
+    (packing off). TCPMT round 3 turned packing on in production, under which the 49-cell
+    point synthesizes differently (the record's m49); the topology and device guards below
+    are about the Phase-0N design, so they evaluate it in its own lineage."""
     import kw1
-    d, _g, why = kw1.design_1kw()
+    import electrical as EL
+    with EL.pinned_rules({**EL.PRODUCTION_DEFAULTS, "PACK_RULE": "off"}):
+        d, _g, why = kw1.design_1kw()
     assert d is not None, why
     return d
 
@@ -171,8 +177,13 @@ def test_conv_fill_option_restores_symmetry():
     vol = sum(V[i] for i, (lay, mat) in
               enumerate(zip(m.elem_layer, m.elem_material))
               if lay == "conv" and mat == "hvr_effective")
-    assert vol == pytest.approx(337.02, abs=0.5), (
-        f"corrected Z2 converter volume {vol:.2f} mm3 != Z1's 337.02 mm3")
+    # Z1's tile band: the cells x the 1.226-mm embedded cell (Phase 0N: 49 x 5.61 mm2 ->
+    # 337.02 mm3; TCPMT round 3: the cells of the design record)
+    sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+    import design_record as DR
+    z1 = DR.n_vr() * DR.cell_area_mm2() * 1.226
+    assert vol == pytest.approx(z1, abs=0.5), (
+        f"corrected Z2 converter volume {vol:.2f} mm3 != Z1's {z1:.2f} mm3")
 
 
 def test_default_build_is_unchanged():
@@ -339,8 +350,12 @@ def test_converter_inventory_is_identical_across_architectures(design):
         inv[arch] = (len(tiles), round(sum(t.ax * t.ay for t in tiles), 6))
     assert inv["ARCH_Z1_EMBEDDED"] == inv["ARCH_Z2_BACKSIDE"], (
         f"cell count / footprint differ between architectures: {inv}")
-    assert inv["ARCH_Z1_EMBEDDED"][0] == 49
-    assert inv["ARCH_Z1_EMBEDDED"][1] == pytest.approx(274.89, abs=0.1)
+    # Phase 0N: 49 cells, 274.89 mm2; TCPMT round 3: the cells of the design record
+    sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+    import design_record as DR
+    assert inv["ARCH_Z1_EMBEDDED"][0] == DR.n_vr()
+    assert inv["ARCH_Z1_EMBEDDED"][1] == pytest.approx(DR.n_vr() * DR.cell_area_mm2(),
+                                                       abs=0.1)
 
 
 SPEC = R / "research" / "Z1_Z2_PHYSICALLY_SPECIFIED_STACKS.md"
@@ -548,8 +563,15 @@ def test_default_build_is_still_the_full_slab():
     import os, production_et as PE
     assert "PHASE0NT_CUTOUT_MM" not in os.environ
     m, _mats, _st, _t = PE.build_global("ARCH_Z2_BACKSIDE", 0.30)
-    n_board = sum(1 for l in m.elem_layer if l == "board")
-    assert n_board == 2450, f"frozen full-slab board drifted to {n_board} elements"
+    # TCPMT round 3: the element count follows the cell grid of the design record (the
+    # Phase-0N 49-cell grid gave 2450), so the full slab is checked as such: the board's
+    # elements fill the whole footprint (no cutout removed any)
+    V = m.elem_volumes()
+    vb = sum(V[i] for i, l in enumerate(m.elem_layer) if l == "board")
+    L = m.layer("board")
+    full = (m.xs.max() - m.xs.min()) * (m.ys.max() - m.ys.min()) * (L.z1 - L.z0)
+    assert vb == pytest.approx(full, rel=1e-9), (
+        f"the default board is no longer a full slab: {vb:.3f} of {full:.3f} mm3")
 
 
 def test_surviving_bga_count_and_allocation(ann):
@@ -634,18 +656,24 @@ def test_bga_lattice_is_centred_and_allocation_symmetric(ann):
 def test_z2_physical_config_forbids_the_embedded_cell_proxy():
     import yaml
     c = yaml.safe_load((R / "configs/phase0nt/z2_2p4mm_cutout.yaml").read_text())
+    # TCPMT round 3: the converter is the design record's (Phase 0N: 1953 um of four
+    # homogeneous tiers + the 10-um land-side RDL = 1963 um)
+    sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+    import design_record as DR
     tot = c["converter"]["with_land_side_rdl_um"]
-    assert tot == pytest.approx(1963.0)
-    assert c["converter"]["four_tier_um"] == pytest.approx(1953.0)
+    assert tot == pytest.approx(DR.converter_stack_um() + 10.0)
     for forbidden in (1226.0, 1258.0):
         assert tot != forbidden, (
             f"the physical Z2 config uses {forbidden} um -- that is the Z1 "
             f"embedded-cell proxy and excludes the high-side device")
-    names = [t["name"] for t in c["converter"]["tiers_from_substrate_downward"]]
-    assert names[-1] == "gan_hs_EPC2014C", "the high side must be the deepest tier"
-    assert names[1] == "inductor_plus_cout", "the inductor must stay nearest the POL"
-    assert sum(t["um"] for t in c["converter"]["tiers_from_substrate_downward"]) == \
-        pytest.approx(1963.0)
+    tiers = c["converter"]["tiers_from_substrate_downward"]
+    names = [t["name"] for t in tiers]
+    rec = DR.tiers()
+    assert names[-1] == rec[0]["name"] and rec[0]["parts"].get("gan_hs"), (
+        "the high side (the input-end tier) must be the deepest tier")
+    assert names[1] == rec[-1]["name"] and rec[-1]["parts"].get("inductor"), (
+        "the inductor tier must stay nearest the POL")
+    assert sum(t["um"] for t in tiers) == pytest.approx(tot)
 
 
 # ============================================== PCB THICKNESS / BGA / LATERAL
@@ -1023,6 +1051,12 @@ def test_no_live_config_attributes_heights_to_the_wrong_parts():
     for f in glob.glob(str(R / "configs" / "**" / "*.yaml"), recursive=True):
         t = Path(f).read_text()
         for m in re.finditer(r"EPC2212|EPC2090", t):
+            # TCPMT round 3: the design record names each design's SELECTED parts (re-
+            # synthesized and checked by design_record); a selection is not a height
+            # attribution (the record's tier heights come from the parts' own dimensions)
+            line = t[t.rfind("\n", 0, m.start()) + 1: t.find("\n", m.end())]
+            if Path(f).name == "design_points.yaml" and re.match(r"\s*(hs|ls)_part:", line):
+                continue
             w = t[max(0, m.start() - 300): m.end() + 300]
             assert re.search(r"mis-attribution|CORRECTED|wrong|Phase 0N-R|frozen", w, re.I), (
                 f"{Path(f).name}: live attribution to {m.group(0)} at offset {m.start()}")
@@ -1365,8 +1399,10 @@ def test_legacy_board_guard_negative(injected):
 def test_physical_z2_config_selects_it968g():
     import yaml
     c = yaml.safe_load((R / "configs/phase0nt/z2_2p4mm_cutout.yaml").read_text())
-    assert c["board"]["case"] == "it968g_2p4mm"
-    assert c["board"]["thickness_sensitivity_case"] == "it968g_3p2mm"
+    # TCPMT round 3: one 3.2-mm it968g board for Z1/Z2/Z3 (the decided converter does not fit
+    # the 2.4-mm board's cutout); Phase 0N-V selected it968g_2p4mm
+    assert c["board"]["case"] == "it968g_3p2mm"
+    assert c["board"]["thickness_sensitivity_case"].startswith("it968g_")
     assert c["board"]["eta_sensitivity"] == [0.25, 0.50, 0.75], (
         "the coverage sweep must stay live; eta = 0.5 is a midpoint, not a measurement")
     assert c["board"]["model_level"] == "PCB-H0"
