@@ -147,6 +147,43 @@ def converter_decomposition(arch, hs, ls, ind, cap, i_out, v_out, v_in, f_sw,
             "i_rms_a": i_rms, "delta_i_a": di}
 
 
+def device_split(d, hs, ls, dec) -> dict:
+    """TCPMT round 3: the gate-drive and output-capacitance terms split between the high- and
+    low-side devices that dissipate them (gate: f N C_G,hs V^2 : f K C_G,ls V^2; C_oss: the
+    corrected rule's high-side turn-on and stacked-switch energies : the switch-node energy,
+    or the published term's two parts), so each die's conduction and switching loss is its
+    own. Per cell; the parts sum exactly to the engine's terms. Evaluated with the loss rules
+    pinned (inside converter_terms)."""
+    import HVR_FULL_OPT_EPC_V2 as _H
+    a = d.arch
+    g_hs, g_ls = a.N * float(hs.C_G), a.K * float(ls.C_G)
+    f_gate_hs = g_hs / (g_hs + g_ls) if (g_hs + g_ls) > 0 else 1.0
+    if getattr(_H, "COSS_RULE", "legacy") == "legacy" or not hasattr(_H,
+                                                                      "coss_energy_per_period"):
+        e_hs = a.N * float(hs.C_OSS) * (d.v_in / a.N - d.v_out) ** 2
+        e_ls = a.K * float(ls.C_OSS) * d.v_out ** 2
+    else:
+        e = _H.coss_energy_per_period(a, hs, ls, d.v_in)
+        e_hs, e_ls = e["hs_turn_on"] + e["stacked"], e["switch_node"]
+    f_coss_hs = e_hs / (e_hs + e_ls) if (e_hs + e_ls) > 0 else 1.0
+    p_gate, p_coss = dec["P_gate"], dec["P_Coss"]
+    hs_sw = dec["P_switching_hard"] + f_gate_hs * p_gate + f_coss_hs * p_coss
+    ls_sw = (1 - f_gate_hs) * p_gate + (1 - f_coss_hs) * p_coss
+    B = list(a.B_array)
+    b2 = sum(b * b for b in B)
+    return {"P_gate_hs": f_gate_hs * p_gate, "P_gate_ls": (1 - f_gate_hs) * p_gate,
+            "P_Coss_hs": f_coss_hs * p_coss, "P_Coss_ls": (1 - f_coss_hs) * p_coss,
+            "P_hs_total": dec["P_switch_hs_conduction"] + hs_sw,
+            "P_ls_total": dec["P_switch_ls_conduction"] + ls_sw,
+            "per_part": {"gan_hs": (dec["P_switch_hs_conduction"] + hs_sw) / a.N,
+                         "gan_ls": (dec["P_switch_ls_conduction"] + ls_sw) / a.K,
+                         "inductor": [dec["P_inductor_DCR"] * b * b / b2 for b in B],
+                         "cap_fly": dec["P_cap_ESR"] / max(a.N - 1, 1)},
+            "split_rule": ("high/low-side dies: equal share of their class's conduction, hard-"
+                           "switching, gate (N C_G,hs : K C_G,ls) and C_oss (turn-on + stacked "
+                           ": switch node) terms; inductors by B_k^2; flying capacitors equal")}
+
+
 @dataclass
 class FacilityLedger:
     """Power spent OUTSIDE the package to operate the electronics.

@@ -286,7 +286,7 @@ class HVRDesign:
 #   default             the production rules (PRODUCTION_DEFAULTS): corrected capacitor rule
 #                       (rated part, 0.8 derating, its ESR at f_sw), per-switch voltage stress
 #                       at 0.9 derating, corrected C_oss term, datasheet R_g, capacitor body
-#                       footprints; tier packing per PRODUCTION_PACKING (off for now)
+#                       footprints; tier packing per PRODUCTION_PACKING (on since round 3)
 #   HVR_PRODUCTION_RULES=legacy
 #                       every rule at its published value: the frozen lineage of every result
 #                       computed before review round 2, reproduced exactly
@@ -299,13 +299,15 @@ class HVRDesign:
 # converter ledger rows; rules_of reads it back, pinned_rules re-evaluates in that lineage).
 #
 #: THE DESIGN-POINT SWITCH. The tier packing check (50-um keep-out, mixed tiers, at most
-#: MAX_TIERS) stays OFF in production until the package builders (Z1/Z2/Z3) are generalized to
-#: the authors' design point: M = 36 (6 x 6 cells), N3K3, EPC2014C / EPC2055, 805 kHz, at most
-#: 4 mixed tiers, rated Murata 0603 GRM188D72A105KE01 flying capacitor. With packing on, the
-#: 49-cell point of the current chain does not place, so this switch moves together with the
-#: Z1 config's design point (configs/phase0nx/z1_physical.yaml, converter.cells). Set it to
-#: "on" then; nothing else in this block changes.
-PRODUCTION_PACKING = "off"
+#: MAX_TIERS) is ON in production (TCPMT round 3): the package builders (Z1/Z2/Z3) are
+#: generalized to the authors' design point -- M = 36 (6 x 6 cells), N3K3, EPC2014C / EPC2055,
+#: 805 kHz, at most 4 mixed tiers, rated Murata 0603 GRM188D72A105KE01 flying capacitor -- and
+#: take it from the design record (configs/design_points.yaml, scripts/phase0nw/
+#: design_record.py), whose production entry the Z1 config's converter block
+#: (configs/phase0nx/z1_physical.yaml, converter.cells = 36) restates and is checked against.
+#: HVR_PRODUCTION_PACK_RULE=off (or HVR_PRODUCTION_RULES=legacy) restores the pre-round-3
+#: synthesis; the 49-cell point does not place with packing on.
+PRODUCTION_PACKING = "on"
 
 #: (engine attribute, production env variable, production value, published value, type).
 #: Derating, tier rule and tier limit are inert under the published rules (legacy voltage rules,

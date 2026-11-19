@@ -83,6 +83,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import os
 import sys
 from dataclasses import asdict, dataclass, field, replace
@@ -136,6 +137,15 @@ PHASES = {
                            "class; pure Fe 80 W/mK, amorphous ~9 W/mK)",
                  "status": "LITERATURE_TYPICAL"},
 }
+#: QFN body (EPC2366, count neighbour M = 25): a 200-um Cu exposed pad, ~250 um of die and a
+#: 200-um mould cap over 45 % of the package, mould elsewhere (k 0.9 W/mK, E 20 GPa, CTE
+#: 10 ppm/K: filled epoxy mould compound) -- DECLARED construction, used only by that design
+_QFN_K = 0.45 * 650.0 / (200.0 / 400.0 + 250.0 / 130.0 + 200.0 / 0.9) + 0.55 * 0.9
+PHASES["qfn_body"] = {"k": _QFN_K, "E": 25000.0, "nu": 0.30, "cte": 9.0e-6,
+                      "source": "DECLARED QFN construction: Cu pad 200 um + Si die 250 um + "
+                                "mould 200 um over 45 % of the package, mould compound "
+                                "(k 0.9 W/mK) elsewhere; E/CTE of a filled mould compound with "
+                                "the pad and die", "status": "ASSUMPTION"}
 #: TY-M5 metal composite, declared (the paper gives no composition or k; see docstring)
 TYM5 = {"metal_fraction": 0.70, "metal_fraction_range": [0.58, 0.80],
         "k": 3.0, "k_range": [1.5, 6.0], "B_sat_T": 1.25, "mu_r": 15.0,
@@ -163,6 +173,32 @@ DEVICES = {
                           "pad 2 250 x 525, pads 3-4 250 x 1050 um; die 518 +/- 25, bump "
                           "120 +/- 12 um; overall 638 um"},
 }
+#: TCPMT round 3: the parts of the decided design point and of the count neighbours. Overall
+#: heights from HVR_epc_device_data.json (datasheet Side View, the engine's stack heights);
+#: the land/bump pattern under the die is not tabulated here, so the solder fraction is
+#: DECLARED (between the EPC2014C outline's 0.34 and the EPC2057 outline's 0.41).
+DEVICES.update({
+    "EPC2055": {"die_mm": (2.500, 1.500), "body_um": 518.0, "terminal_um": 120.0,
+                "overall_um": 638.0, "pads_um": [(250.0, 1000.0)] * 6,
+                "terminal": "solder lands (LGA)", "status": "ASSUMPTION (land pattern)",
+                "source": "EPC-Product-Table: LGA 2.5 x 1.5 mm; HVR_epc_device_data.json: "
+                          "518 +/- 25 die + 120 +/- 12 bump = 638 um; land pattern DECLARED "
+                          "as six 250 x 1000-um lands (40 % of the die)"},
+    "EPC2090": {"die_mm": (2.300, 1.450), "body_um": 518.0, "terminal_um": 88.0,
+                "overall_um": 606.0, "pads_um": [(250.0, 1000.0)] * 5,
+                "terminal": "Cu pillar + solder bumps", "status": "ASSUMPTION (bump pattern)",
+                "source": "EPC-Product-Table: BGA 2.3 x 1.45 mm; HVR_epc_device_data.json: "
+                          "518 die + 50 Cu + 3 Ni + solder = 606 um; bump fraction DECLARED "
+                          "(37 % of the die, solder card for the whole terminal)"},
+    # a packaged QFN: the die sits on an exposed Cu pad under a mould cap, so the vertical path
+    # through the part is pad + die + mould, not a bare die (body phase 'qfn_body' below)
+    "EPC2366": {"die_mm": (3.300, 2.600), "body_um": 650.0, "terminal_um": 50.0,
+                "overall_um": 700.0, "pads_um": [(3300.0, 2600.0 * 0.55)],
+                "body_phase": "qfn_body", "terminal": "QFN exposed pad + leads (55 %)",
+                "status": "ASSUMPTION (package construction)",
+                "source": "EPC-Product-Table: QFN 3.3 x 2.6 mm; HVR_epc_device_data.json: "
+                          "A = 0.70 mm; construction DECLARED (qfn_body)"},
+})
 KEEPOUT_UM = 50.0                    # declared die-to-die keep-out (design rule)
 #: inductor paper, Fig. 7 (micrometres): one vertical two-turn two-layer segment
 IND_SEGMENT = {"outer_um": 800.0, "ring_outer_w_um": 110.0, "ring_inner_w_um": 145.0,
@@ -627,6 +663,225 @@ def cards_for(tc: TierContents, cfly_a1_um=None, heights=None, strict=True):
     return out
 
 
+# ------------------------------------------------------------------ mixed tiers (round 3)
+#: the rated 0603 flying capacitor of the decided design (Murata GRM188D72A105KE01): 1.6 x
+#: 0.8 mm body, 0.8 mm nominal thickness; the DSE stacks it at 1000 um (0.8 mm + 0.2 mm
+#: tolerance margin), so its prism is a 30-um solder mount, the nominal body and an
+#: encapsulant cap up to the tier top. A thin part (the 100-um sensitivity) fills its tier.
+CF_0603 = {"L_mm": 1.6, "W_mm": 0.8, "T_nom_um": 800.0, "mount_um": 30.0}
+#: output-post current density: the framework's intra-VR density (final_closure_ledger.
+#: INTRA_J_MAX, checked equal by the tests); a constant here so the cards import nothing of
+#: the package chain
+J_POST = 1.0e8
+
+
+@dataclass(frozen=True)
+class MixedContents:
+    """One cell of a design with mixed tiers (configs/design_points.yaml)."""
+    label: str
+    n_cells: int
+    cell_side_mm: float
+    i_out_rms_a: float
+    hs_part: str
+    ls_part: str
+    ind_footprint_mm2: float
+    ind_um: float
+    cf_um: float
+    n_ind_total: int
+    keepout_um: float = KEEPOUT_UM
+
+    @property
+    def cell_area_mm2(self) -> float:
+        return self.cell_side_mm ** 2
+
+    @staticmethod
+    def from_record(key=None) -> "MixedContents":
+        import design_record as DR
+        d = DR.get(key)
+        des = DR.compiled(key)
+        import rms_currents as RMS
+        try:
+            i_rms = float(RMS.cell_currents()["i_cell_out_rms_a"]) if DR.name(key) == \
+                DR.name() else float(des.i_out_a)
+        except Exception:                                   # noqa: BLE001
+            i_rms = float(des.i_out_a)
+        return MixedContents(
+            label=f"{d['tag']} ({d['n_vr']} cells, design {DR.name(key)})",
+            n_cells=int(d["n_vr"]), cell_side_mm=float(d["cell_side_mm"]), i_out_rms_a=i_rms,
+            hs_part=d["hs_part"], ls_part=d["ls_part"],
+            ind_footprint_mm2=float(des.inductor.footprint_mm2),
+            ind_um=float(d["part_heights_um"]["inductor"]),
+            cf_um=float(d["part_heights_um"]["cap_fly"]), n_ind_total=int(d["topology"]["K"]))
+
+
+def _die_prism(part, H):
+    """One GaN die of `part` as a vertical prism spanning a tier of height H: solder terminal
+    (its land fraction in the encapsulant), body, encapsulant cap above a shorter part."""
+    dev = DEVICES[part]
+    a, b = dev["die_mm"]
+    body = PHASES[dev.get("body_phase", "silicon")]
+    enc, sol = PHASES["encapsulant"], PHASES["solder"]
+    t_term, t_body = dev["terminal_um"], dev["body_um"]
+    cap = H - dev["overall_um"]
+    if cap < -1e-9:
+        raise ValueError(f"{part} ({dev['overall_um']} um) is taller than its {H} um tier")
+    f_s = min(1.0, sum(w * l for w, l in dev["pads_um"]) * 1e-6 / (a * b))
+    k_term = f_s * sol["k"] + (1 - f_s) * enc["k"]
+    kz = series([x for x in ((t_term, k_term), (t_body, body["k"]), (cap, enc["k"]))
+                 if x[0] > 1e-12])
+    k_in_term = 0.5 * ((f_s * sol["k"] + (1 - f_s) * enc["k"])
+                       + maxwell_garnett(sol["k"], enc["k"], f_s, dim=2))
+    k_in = (t_body * body["k"] + t_term * k_in_term + max(cap, 0.0) * enc["k"]) / H
+    area = a * b
+    vol = {dev.get("body_phase", "silicon"): area * t_body, "solder": area * f_s * t_term,
+           "encapsulant": area * ((1 - f_s) * t_term + max(cap, 0.0))}
+    return {"kind": "die", "part": part, "dims": (a, b), "area": area, "kz": kz,
+            "k_in": k_in, "vol_um_mm2": vol, "solder_fraction": f_s, "cap_um": max(cap, 0.0)}
+
+
+def _inductor_prism(fp_mm2, h_ind, H, k_core=None):
+    env = inductor_envelope(k_core)
+    enc = PHASES["encapsulant"]
+    cap = H - h_ind
+    if cap < -1e-9:
+        raise ValueError(f"inductor ({h_ind} um) is taller than its {H} um tier")
+    kz = series([x for x in ((h_ind, env["kz"]), (cap, enc["k"])) if x[0] > 1e-12])
+    k_in = (h_ind * env["k_in_orientation_avg"] + max(cap, 0.0) * enc["k"]) / H
+    s = math.sqrt(fp_mm2)
+    fr = env["fractions"]
+    vol = {"copper": fp_mm2 * h_ind * fr["copper"], "tym5": fp_mm2 * h_ind * fr["tym5_rod"],
+           "encapsulant": fp_mm2 * (h_ind * fr["fill"] + max(cap, 0.0))}
+    return {"kind": "inductor", "dims": (s, s), "area": fp_mm2, "kz": kz, "k_in": k_in,
+            "vol_um_mm2": vol, "envelope_kz": env["kz"], "cap_um": max(cap, 0.0),
+            "tym5": env["tym5"]}
+
+
+def _mlcc_prism(L, W, T_part, mount, H, t_term_um=None):
+    """One MLCC (body + Cu end terminations) on its solder mount, encapsulant cap above."""
+    t_term = (MLCC["termination_um"] if t_term_um is None else t_term_um) * 1e-3
+    body = mlcc_body()
+    enc, cu, sol = PHASES["encapsulant"], PHASES["termination"], PHASES["solder"]
+    cap = H - mount - T_part
+    if cap < -1e-9:
+        raise ValueError(f"MLCC ({mount + T_part} um) is taller than its {H} um tier")
+    a_term, a_body = 2 * W * t_term, (L - 2 * t_term) * W
+    lay = lambda k_part: [x for x in ((mount, sol["k"]), (T_part, k_part),        # noqa: E731
+                                      (cap, enc["k"])) if x[0] > 1e-12]
+    kz_b, kz_t = series(lay(body["k"])), series(lay(cu["k"]))
+    kz = (a_body * kz_b + a_term * kz_t) / (a_body + a_term)
+    k_part_in = (body["k_in"] * a_body + cu["k"] * a_term) / (a_body + a_term)
+    k_in = (T_part * k_part_in + mount * sol["k"] + max(cap, 0.0) * enc["k"]) / H
+    vol = {"mlcc_body": a_body * T_part, "termination": a_term * T_part,
+           "solder": (a_body + a_term) * mount, "encapsulant": (a_body + a_term) * max(cap, 0.0)}
+    return {"kind": "mlcc", "dims": (L, W), "area": L * W, "kz": kz, "k_in": k_in,
+            "vol_um_mm2": vol, "kz_without_terminations": kz_b, "cap_um": max(cap, 0.0),
+            "mlcc_body": body}
+
+
+def mixed_tier(mc: MixedContents, name, parts, H, j_post=None, k_core=None, t_term_um=None):
+    """The card of one MIXED converter tier from what it holds (TCPMT round 3).
+
+    Every part is a vertical prism spanning the tier (a series stack of its own layers and an
+    encapsulant cap up to the tier top: a part shorter than its tier conducts through the
+    cap); prisms and the encapsulant fill act in parallel through the thickness. A tier
+    holding inductors also carries their output-current posts (Cu prisms sized at the
+    intra-VR current density for the share of the cell output current those inductors
+    deliver; the legacy inductor-tier convention). In plane: each component in its area share
+    of the cell (series-parallel bracket, midpoint). Mechanics: Voigt/Reuss/Hill and
+    Turner/volume-mean over the volume fractions, as the single-class cards.
+    The via conductors of nets crossing the tier are NOT in the card (declared,
+    conservative for k_z)."""
+    enc, cu = PHASES["encapsulant"], PHASES["copper"]
+    A = mc.cell_area_mm2
+    comps = []                                    # (prism, count)
+    for cls, n in parts.items():
+        if not n:
+            continue
+        if cls in ("gan_hs", "gan_ls"):
+            p = _die_prism(mc.hs_part if cls == "gan_hs" else mc.ls_part, H)
+        elif cls == "inductor":
+            p = _inductor_prism(mc.ind_footprint_mm2, mc.ind_um, H, k_core)
+        elif cls == "cap_fly":
+            thin = mc.cf_um < CF_0603["T_nom_um"] + CF_0603["mount_um"] - 1e-9
+            p = (_mlcc_prism(CF_0603["L_mm"], CF_0603["W_mm"], mc.cf_um, 0.0, H, t_term_um)
+                 if thin else
+                 _mlcc_prism(CF_0603["L_mm"], CF_0603["W_mm"], CF_0603["T_nom_um"],
+                             CF_0603["mount_um"], H, t_term_um))
+        else:
+            raise ValueError(f"tier {name}: unknown class {cls}")
+        comps.append((cls, p, int(n)))
+    J = J_POST if j_post is None else j_post
+    n_ind = int(parts.get("inductor", 0))
+    a_post = (n_ind / mc.n_ind_total) * mc.i_out_rms_a / J * 1e6 if n_ind else 0.0
+    a_parts = sum(p["area"] * n for _c, p, n in comps)
+    a_enc = A - a_parts - a_post
+    if a_enc < -1e-9:
+        raise ValueError(f"tier {name} over-full: {a_parts + a_post:.3f} mm^2 of parts in a "
+                         f"{A:.3f} mm^2 cell")
+    kz = (sum(p["kz"] * p["area"] * n for _c, p, n in comps) + a_post * cu["k"]
+          + a_enc * enc["k"]) / A
+    lo = up = 0.0
+    a_comp = a_parts + a_post
+    shares = [(p["k_in"], p["dims"][0], p["dims"][1], p["area"] * n, n) for _c, p, n in comps]
+    if a_post > 0:
+        s = math.sqrt(a_post)
+        shares.append((cu["k"], s, s, a_post, 1))
+    for k_i, a_, b_, area, n in shares:
+        share = A * area / a_comp / n
+        l_, u_, _ = rect_cell_bounds(k_i, a_, b_, enc["k"], share)
+        lo += area / a_comp * l_
+        up += area / a_comp * u_
+    k_in = 0.5 * (lo + up)
+    vol = {}
+    for _c, p, n in comps:
+        for ph, v in p["vol_um_mm2"].items():
+            vol[ph] = vol.get(ph, 0.0) + n * v
+    vol["copper"] = vol.get("copper", 0.0) + a_post * H
+    vol["encapsulant"] = vol.get("encapsulant", 0.0) + a_enc * H
+    tot = A * H
+    ph_of = {"tym5": next((p["tym5"] for _c, p, _n in comps if p["kind"] == "inductor"), None),
+             "mlcc_body": next((p["mlcc_body"] for _c, p, _n in comps if p["kind"] == "mlcc"),
+                               None)}
+    fr = [(ph_of[ph] if ph in ph_of else ph, v / tot) for ph, v in vol.items() if v > 0]
+    s_ = sum(f for _, f in fr)
+    fr = [(p, f / s_) for p, f in fr]
+    mech = mix_bounds(fr)
+    bounds = {"kz_reuss": mech["k_reuss"], "kz_voigt": mech["k_voigt"], "kz_estimate": kz,
+              "kxy_series_parallel": [lo, up], "kxy_reuss": mech["k_reuss"],
+              "kxy_voigt": mech["k_voigt"]}
+    extra = {"tier": name, "tier_um": H, "parts": dict(parts),
+             "area_fractions": {**{f"{c}": p["area"] * n / A for c, p, n in comps},
+                                "posts": a_post / A, "encapsulant": a_enc / A},
+             "prisms": {c: {"kind": p["kind"], "part": p.get("part"), "count": n,
+                            "kz": p["kz"], "k_in": p["k_in"], "cap_um": p["cap_um"]}
+                        for c, p, n in comps},
+             "posts": {"I_rms_A": mc.i_out_rms_a * (n_ind / mc.n_ind_total if n_ind else 0),
+                       "J_A_m2": J, "area_mm2": a_post},
+             "volume_fractions": {("tym5" if isinstance(p, dict) and "bounds" in p else
+                                   "mlcc_body" if isinstance(p, dict) else p): f
+                                  for p, f in fr}}
+    return card(card_name(name), k_in, k_in, kz, mech, bounds,
+                f"mixed tier {name}: " + ", ".join(f"{n} x {c}" for c, n in parts.items() if n)
+                + f" in the encapsulant, {H:.0f} um, cell {mc.cell_side_mm:.4f} mm ({mc.label})",
+                extra)
+
+
+def card_name(tier_name: str) -> str:
+    """conv_tier<i> for a mixed tier tier<i>_<contents>."""
+    return "conv_" + tier_name.split("_")[0]
+
+
+def mixed_cards(key=None, heights=None):
+    """Every tier card of a record design (mixed tiers), keyed by card name."""
+    import design_record as DR
+    mc = MixedContents.from_record(key)
+    out = {}
+    for t in DR.tiers(key):
+        h = float((heights or {}).get(t["name"], t["height_um"]))
+        out[card_name(t["name"])] = mixed_tier(mc, t["name"], t["parts"], h)
+    return out
+
+
 #: tier-name PREFIX -> production card (any GaN part: gan_hs_<part>, gan_ls_<part>)
 TIER_CARD = (("gan_hs", "conv_gan_hs"), ("gan_ls", "conv_gan_ls"),
              ("flying_caps", "conv_cfly_a0"), ("inductor_plus_cout", "conv_ind_cout"))
@@ -637,12 +892,32 @@ _CACHE: dict = {}
 
 
 def tier_card(tier_name: str):
-    """The production card of a converter tier, or None if the tier has no derived card."""
+    """The production card of a converter tier, or None if the tier has no derived card. A
+    mixed tier (tier<i>_<contents>, TCPMT round 3) has its own card conv_tier<i>."""
+    if re.match(r"^tier\d+_", tier_name):
+        return card_name(tier_name)
     return next((c for p, c in TIER_CARD if tier_name.startswith(p)), None)
 
 
+def _is_mixed(tiers) -> bool:
+    return any(re.match(r"^tier\d+_", n) for n, _um in (tiers or ()))
+
+
 def production_cards(tiers=None):
-    """The cards of the design in force, for a tier list [(name, um)] (heights override)."""
+    """The cards of the design in force, for a tier list [(name, um)] (heights override).
+    A tier list of mixed tiers (the design record) gets the mixed cards of the design in
+    force (design_record), each from its own contents and height."""
+    if _is_mixed(tiers):
+        import design_record as DR
+        heights = {n: float(um) for n, um in tiers if re.match(r"^tier\d+_", n)}
+        known = {t["name"] for t in DR.tiers()}
+        if set(heights) - known:
+            raise ValueError(f"tiers {sorted(set(heights) - known)} are not tiers of design "
+                             f"{DR.name()} ({sorted(known)})")
+        key = ("mixed", DR.name(), tuple(sorted(heights.items()))) + _design_key()
+        if key not in _CACHE:
+            _CACHE[key] = mixed_cards(heights=heights)
+        return _CACHE[key]
     heights = {}
     for name, um in (tiers or ()):
         for key in ("gan_hs", "gan_ls", "flying_caps", "inductor"):
@@ -661,7 +936,8 @@ def _design_key() -> tuple:
     import replay_production  # noqa: F401  (puts scripts/phase0d on the path)
     import electrical as EL
     import z1_design as Z1D
-    return (tuple(sorted(EL.production_rules().items())), str(Z1D.config_path()))
+    import design_record as DR
+    return (tuple(sorted(EL.production_rules().items())), str(Z1D.config_path()), DR.name())
 
 
 def install(stack: dict, tiers=None) -> dict:
