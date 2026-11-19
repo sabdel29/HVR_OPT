@@ -1,0 +1,163 @@
+{
+ "arch": "Z1",
+ "refine": [
+  1,
+  1
+ ],
+ "encapsulant": "encap_uf_tg",
+ "n_elems_full": 36128,
+ "parts": {
+  "bga_package@bga_reflow": {
+   "part": "bga_package_bga_reflow",
+   "layers": [
+    "sub_lower",
+    "tile_band",
+    "z1conv_0_bottom_substrate_rdl",
+    "z1conv_1_gan_hs_EPC2014C",
+    "z1conv_2_interlayer_rdl",
+    "z1conv_3_flying_caps",
+    "z1conv_4_interlayer_rdl",
+    "z1conv_5_gan_ls_EPC2057",
+    "z1conv_6_interlayer_rdl",
+    "z1conv_7_inductor_plus_cout",
+    "z1conv_8_output_rdl",
+    "interface",
+    "die"
+   ],
+   "n_elems": 28705,
+   "T_C": 245.0,
+   "T_stress_free_C": 25.0,
+   "surface": [
+    "sub_lower",
+    "bot"
+   ],
+   "footprint": "bga",
+   "wall_s": 110.11657667160034,
+   "warpage": {
+    "pv_raw_um": 159.6182,
+    "pv_plane_removed_um": 159.6182,
+    "bow_corner_minus_centre_um": -158.9622,
+    "n_nodes": 1156
+   }
+  },
+  "bga_package@bga_solidus": {
+   "part": "bga_package_bga_solidus",
+   "layers": [
+    "sub_lower",
+    "tile_band",
+    "z1conv_0_bottom_substrate_rdl",
+    "z1conv_1_gan_hs_EPC2014C",
+    "z1conv_2_interlayer_rdl",
+    "z1conv_3_flying_caps",
+    "z1conv_4_interlayer_rdl",
+    "z1conv_5_gan_ls_EPC2057",
+    "z1conv_6_interlayer_rdl",
+    "z1conv_7_inductor_plus_cout",
+    "z1conv_8_output_rdl",
+    "interface",
+    "die"
+   ],
+   "n_elems": 28705,
+   "T_C": 217.0,
+   "T_stress_free_C": 25.0,
+   "surface": [
+    "sub_lower",
+    "bot"
+   ],
+   "footprint": "bga",
+   "wall_s": 110.76013135910034,
+   "warpage": {
+    "pv_raw_um": 128.9309,
+    "pv_plane_removed_um": 128.93090312815463,
+    "bow_corner_minus_centre_um": -128.347875,
+    "n_nodes": 1156
+   }
+  },
+  "tcb_receiving@tcb_bond": {
+   "part": "tcb_receiving_tcb_bond",
+   "layers": [
+    "sub_lower",
+    "tile_band",
+    "z1conv_0_bottom_substrate_rdl",
+    "z1conv_1_gan_hs_EPC2014C",
+    "z1conv_2_interlayer_rdl",
+    "z1conv_3_flying_caps",
+    "z1conv_4_interlayer_rdl",
+    "z1conv_5_gan_ls_EPC2057",
+    "z1conv_6_interlayer_rdl",
+    "z1conv_7_inductor_plus_cout",
+    "z1conv_8_output_rdl"
+   ],
+   "n_elems": 24500,
+   "T_C": 250.0,
+   "T_stress_free_C": 25.0,
+   "surface": [
+    "z1conv_8_output_rdl",
+    "top"
+   ],
+   "footprint": "die",
+   "wall_s": 79.42285203933716,
+   "warpage": {
+    "pv_raw_um": 481.2369999999999,
+    "pv_plane_removed_um": 481.2370160545898,
+    "bow_corner_minus_centre_um": -465.51699999999994,
+    "n_nodes": 900
+   }
+  }
+ },
+ "checks": {
+  "bga@bga_reflow": {
+   "T_C": 245.0,
+   "warpage": {
+    "pv_raw_um": 159.6182,
+    "pv_plane_removed_um": 159.6182,
+    "bow_corner_minus_centre_um": -158.9622,
+    "n_nodes": 1156
+   },
+   "cure_reference_150C": null,
+   "limit_reflow_um": [
+    -120.0,
+    170.0
+   ],
+   "limit_room_coplanarity_um": 80.0,
+   "within_reflow_limit_magnitude": false,
+   "pv_over_room_coplanarity": 1.9952275
+  },
+  "bga@bga_solidus": {
+   "T_C": 217.0,
+   "warpage": {
+    "pv_raw_um": 128.9309,
+    "pv_plane_removed_um": 128.93090312815463,
+    "bow_corner_minus_centre_um": -128.347875,
+    "n_nodes": 1156
+   },
+   "cure_reference_150C": null,
+   "limit_reflow_um": [
+    -120.0,
+    170.0
+   ],
+   "limit_room_coplanarity_um": 80.0,
+   "within_reflow_limit_magnitude": false,
+   "pv_over_room_coplanarity": 1.611636289101933
+  },
+  "tcb": {
+   "T_C": 250.0,
+   "gap_nonuniformity": {
+    "pv_raw_um": 481.2369999999999,
+    "pv_plane_removed_um": 481.2370160545898,
+    "bow_corner_minus_centre_um": -465.51699999999994,
+    "n_nodes": 900
+   },
+   "receiving": {
+    "pv_raw_um": 481.2369999999999,
+    "pv_plane_removed_um": 481.2370160545898,
+    "bow_corner_minus_centre_um": -465.51699999999994,
+    "n_nodes": 900
+   },
+   "attached": "flat silicon die at a uniform temperature",
+   "limit_um": 8.0,
+   "limit_status": "ASSUMPTION",
+   "within_limit": false
+  }
+ }
+}

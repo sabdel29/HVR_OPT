@@ -34,6 +34,8 @@ step "1c. collect the converged fields (production and variant cases) into \$HVR
 step "2. site kinematics of every stored case (all interconnect layers, candidates, split)"
 #    1 process, ~20 s per case                                         [DONE-ON-CURRENT-FIELDS]
 $PY scripts/tcpmt_mech_kinematics.py
+$PY scripts/tcpmt_mech_kinematics.py --summary          # per-layer drivers, du split (4, 9)
+$PY scripts/tcpmt_mech_kinematics.py --ladder Z1 Z2     # fine-pitch drivers on r11/r21/r31
 
 # ---------------------------------------------------------------------------- 3. local model
 step "3a. law band: self-consistent window per law at the six tier joints (finding 1)"
@@ -69,6 +71,8 @@ FC_POOL_MAX=3 $PY scripts/final_closure_sensitivity.py \
     conv_E160_a4@B:Z1 conv_E160_a4@B:Z2 conv_E160_a10@B:Z1 conv_E160_a10@B:Z2
 step "4d. local responses of every variant (v2 harness, stored kinematics)"
 LOCAL_THREADS=2 $PY scripts/final_closure_sensitivity.py --local
+step "4e. cooling-B rows of the robustness map (orderings under each @B variant, 2U rule)"
+$PY scripts/tcpmt_mech_variants.py judgeB
 
 # ---------------------------------------------------------------------------- 5. board
 step "5. larger board (3x), mounting and clamp, one coarse case per architecture (finding 6)"
