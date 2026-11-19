@@ -268,10 +268,12 @@ def test_unit_cell_periodicity():
 
 # --------------------------------------------------------------- Parts 23-26 cooling
 def test_derived_h_matches_the_nusselt_definition():
-    from cooling import Microchannel, K_F
+    from cooling import Microchannel
     mc = Microchannel(w_ch_um=50, h_ch_um=300, t_fin_um=50, m_dot_g_s=10.0)
     s = mc.solve()
-    assert s["h_channel_W_m2K"] == pytest.approx(s["Nu"] * K_F / mc.d_h_m, rel=1e-9)
+    # TCPMT revision: the fluid conductivity is evaluated at the bulk mean temperature
+    assert s["h_channel_W_m2K"] == pytest.approx(s["Nu"] * s["props"]["k"] / mc.d_h_m,
+                                                 rel=1e-9)
     assert s["Re"] < 2300 and s["regime"] == "laminar"
 
 

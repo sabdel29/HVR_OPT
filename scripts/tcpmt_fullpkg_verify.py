@@ -71,6 +71,11 @@ def case_file(arch):
 # ---------------------------------------------------------------------------
 
 def define(arch):
+    # the verification problem has UNIFORM sinks at the inlet temperature everywhere (top
+    # film and, for Z3, the converter plate): the uniform-sink coefficient (with R_cal) is the
+    # consistent one there, so the Z3 plate is written in that form (TCPMT revision: the
+    # production plates resolve their sink along the flow instead)
+    E.BOTTOM_PLATE_RULE = "fixed_flow_legacy"
     case = json.loads(case_file(arch).read_text())
     if not (E.current_lineage(case) and case.get("et_converged")):
         raise RuntimeError(f"{case_file(arch).name} is not a converged current-lineage case")

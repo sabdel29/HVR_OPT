@@ -113,7 +113,9 @@ GATES = {
     "therm.cooling_model_form": ("B1", GLOBAL, "ICEPAK_EQUIVALENT_COOLING_SENSITIVITY: top "
                                  "coefficient x dT_compact/dT_CFD of the matched Icepak case",
                                  "runs", ["icepak_equivalent"],
-                                 "the compact cooling model is 16.5 % conservative in dT"),
+                                 "with the short-wall-adiabatic H1 Nu the compact model "
+                                 "reproduces the CFD mean base rise to 0.3 % (the superseded "
+                                 "table was 16.5 % conservative)"),
     "therm.backside_interface": ("B1", GLOBAL, "Z2-COOLED through a 50 um TIM (k 3 W/mK)",
                                  "runs", ["z2_cooled_tim"],
                                  "a backside interface weakens the extra Z2 heat path"),

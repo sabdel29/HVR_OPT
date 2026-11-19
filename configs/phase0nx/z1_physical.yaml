@@ -88,11 +88,14 @@ converter:
     rdl_tiers:     {material: rdl_tier, status: DERIVED,
                     note: "Phase-0M-R results/phase0mr/rdl_effective_tensor.csv, RDL
                            ALONE -- NOT the old 40 um RDL + 10 um bump composite"}
-    gan_hs_and_ls: {material: silicon, status: BOUNDED,
-                    note: "GaN-on-Si carrier; the epi is not resolved"}
-    inductor_cout: {material: hvr_effective, status: PROVISIONAL}
-    flying_caps:   {material: hvr_effective, status: OPEN,
-                    note: "an MLCC ceramic/Ni stack is NOT this medium"}
+    # TCPMT revision: cards derived by unit-cell homogenization of the tier contents
+    # (scripts/tcpmt_converter_cards.py); statuses are those of the property (declared
+    # inputs remain). Legacy silicon / hvr_effective: variant conv_k_legacy.
+    gan_hs_and_ls: {material: conv_gan_hs / conv_gan_ls, status: BOUNDED,
+                    note: "dies + solder terminals + encapsulant; the epi is not resolved"}
+    inductor_cout: {material: conv_ind_cout, status: PROVISIONAL}
+    flying_caps:   {material: conv_cfly_a0, status: OPEN,
+                    note: "MLCC in encapsulant (case A1: conv_cfly_a1)"}
 
 out_of_cell:
   primary: F1_encapsulated

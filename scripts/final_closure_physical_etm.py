@@ -26,6 +26,16 @@ its own geometry builder, the board elements under the cells as the PCB via-fiel
 deposit/temperature region, and its production bottom boundary (a converter-underside
 cold plate plus the natural-convection film on the uncovered board underside). Z3 writes
 only its own case files; the Z1/Z2 results pipeline does not read them.
+
+TCPMT REVISION (thermal model). The cold plate's Nu is the three-wall H1 fit with the short
+wall adiabatic and the coolant properties are taken at the bulk mean temperature
+(phase0m/cooling.py); the top plate's film uses the streamwise-sink coefficient
+(TOP_PLATE_COEFF, no caloric double count); every second plate is sized by one declared rule
+(BOTTOM_PLATE_RULE: the top plate's coolant rise) and charged its own pumping
+(thermal.cooling); the converter tiers carry homogenized cards (tcpmt_converter_cards.py);
+every case records the processor-die temperature (die_T_max_C, die_T_mean_C). Each
+superseded setting is a variant (final_closure_sensitivity: nu_legacy_table,
+props_legacy_50C, plate_caloric_legacy, *_fullflow, conv_k_legacy).
 """
 from __future__ import annotations
 
@@ -114,6 +124,68 @@ EXTRA_DEPOSITS = None
 #:                (the mechanical-to-thermal TIM feedback of the TCPMT revision,
 #:                tcpmt_review_variants.py); None on the production path
 TOP_FILM_HOOK = None
+
+#: TOP-PLATE COEFFICIENT (TCPMT revision, caloric correction). The top boundary resolves the
+#: coolant warming along the flow, T_fluid(x) = T_in + Q(0 -> x)/(m_dot c_p), so its film
+#: coefficient must not also carry the caloric resistance R_cal = 1/(2 m_dot c_p) of the
+#: uniform-sink convention: that counted half the coolant rise twice (~5 K at 1.1 kW, 27 g/s).
+#: Production: "local" = 1/((R_conv + R_base) A) (CoolingDesign.h_local). "uniform_legacy"
+#: restores the historical h_uniform (variant plate_caloric_legacy_*).
+TOP_PLATE_COEFF = "local"
+#: BOTTOM-PLATE FLOW RULE (TCPMT revision). Every second plate of the top plate's geometry
+#: (cooling B under Z1/Z2/Z3, the Z2-cooled and Z3 interface-free plates) is sized by ONE
+#: declared rule. Production "equal_rise": its mass flow gives it the SAME coolant temperature
+#: rise as the top plate, m_b = m_top Q_b/Q_top (parallel branches of one loop balanced to a
+#: common outlet temperature); its sink follows its own coolant along the flow (same direction
+#: as the top plate), T_b(x) = T_in + dT_top Q_b(0 -> x)/Q_b from the SOLVED face fluxes, with
+#: the local coefficient (in series with the interface where one is declared). Its pumping is
+#: computed at its own flow. "fixed_flow_legacy": the full top-plate flow whatever the plate
+#: carries, a uniform sink at the inlet temperature with h_uniform, pumping of a full plate
+#: (the historical setting, variants *_fullflow).
+BOTTOM_PLATE_RULE = "equal_rise"
+#: the top TIM card (50 um at k = 3 W/mK) in series with a bottom plate's film
+TIM_R_M2K_W = 50e-6 / 3.0
+
+
+def top_plate_h(cooler, q_w):
+    """The top plate's film coefficient under the production convention."""
+    if TOP_PLATE_COEFF == "local":
+        return float(cooler.h_local(q_w))
+    if TOP_PLATE_COEFF == "uniform_legacy":
+        return float(cooler.h_uniform(q_w))
+    raise ValueError(f"unknown TOP_PLATE_COEFF {TOP_PLATE_COEFF!r}")
+
+
+def bottom_plate_film(elems, layer, label, q_w, tim=True):
+    """A second cold plate of the top plate's geometry on the faces `elems`, under the
+    declared BOTTOM_PLATE_RULE. The film dict carries what solve_thermal needs to resolve
+    its sink and to charge its pumping."""
+    from cooling_production import CANDIDATES
+    cooler = CANDIDATES[COOLER]
+    r_tim = TIM_R_M2K_W if tim else 0.0
+    if BOTTOM_PLATE_RULE == "equal_rise":
+        h = float(cooler.h_local(q_w))
+        streamwise = True
+    elif BOTTOM_PLATE_RULE == "fixed_flow_legacy":
+        h = float(cooler.h_uniform(q_w))
+        streamwise = False
+    else:
+        raise ValueError(f"unknown BOTTOM_PLATE_RULE {BOTTOM_PLATE_RULE!r}")
+    return {"elems": np.asarray(elems, int), "h_W_m2K": 1.0 / (1.0 / h + r_tim),
+            "h_plate_W_m2K": h, "R_tim_m2K_W": r_tim, "T_C": float(cooler.t_in_c),
+            "layer": layer, "label": label, "plate": True, "streamwise": streamwise,
+            "rule": BOTTOM_PLATE_RULE}
+
+
+def die_stats(m, Tn, arch=None):
+    """Processor-die temperature: maximum and node mean over the die layer (the node mean is
+    the definition of the E-T history's T_die_mean_C). Tn is the 0-based nodal array."""
+    import production_et as PE
+    die = FL.LAYERS[arch]["die"] if arch in FL.LAYERS else "die"
+    ids = PE._layer_elems(m, die)
+    nodes = np.unique(m.elems[ids - 1].ravel())
+    t = np.asarray(Tn)[nodes - 1]
+    return {"die_T_max_C": float(np.nanmax(t)), "die_T_mean_C": float(np.nanmean(t))}
 
 # --- material corrections -------------------------------------------------
 TSV_N_PER_CELL = 1444      # the adopted 'A_same_field' fabric (tsv_fields)
@@ -414,19 +486,31 @@ def board_bottom_faces(m, arch=None):
 def z3_converter_cold_plate(m, q_w):
     """Z3's converter-underside cold plate: the bottom faces of the DEEPEST tier, which the
     tier order makes the high-side GaN, over the whole cell-grid bbox (cells + encapsulant)."""
-    from cooling_production import CANDIDATES
-    cooler = CANDIDATES[COOLER]
     deepest = min(m.layers, key=lambda L: L.z0)
     if deepest.name != FL.LAYERS["Z3"]["hs"]:
         raise ValueError(f"the Z3 cold plate belongs on the high-side tier, but the deepest "
                          f"layer is {deepest.name}")
-    return {"elems": exposed_bottom_faces(m, deepest.name),
-            "h_W_m2K": float(cooler.h_uniform(q_w)), "T_C": float(cooler.t_in_c),
-            "layer": deepest.name,
-            "label": "Z3 production: second top-type cold plate on the converter underside"}
+    return bottom_plate_film(
+        exposed_bottom_faces(m, deepest.name), deepest.name,
+        "Z3 production: second top-type cold plate on the converter underside", q_w,
+        tim=False)
 
 
-def write_thermal(m, mats, st, deposits, h_face, t_face, path, tiles, arch=None):
+def _film_lines(film, PE):
+    """*FILM lines of a bottom-face film; a per-face sink (T_face) when the film has one."""
+    t = film.get("T_face")
+    t = np.full(len(film["elems"]), film["T_C"]) if t is None else np.asarray(t, float)
+    return [f"{int(e)},F1,{ti:.6f},{film['h_W_m2K'] * PE.W_M2K_TO_W_MM2K:.9g}"
+            for e, ti in zip(film["elems"], t)]
+
+
+_UNSET = object()
+
+
+def write_thermal(m, mats, st, deposits, h_face, t_face, path, tiles, arch=None,
+                  plate=_UNSET, extra=_UNSET):
+    """`plate` / `extra`: the Z3 converter plate and the sensitivity film, prebuilt by
+    solve_thermal (so a streamwise sink can be iterated); built here when not given."""
     import production_et as PE
     ccxio = PE.ccxio
     tb = st["thermal_bc"]
@@ -454,22 +538,20 @@ def write_thermal(m, mats, st, deposits, h_face, t_face, path, tiles, arch=None)
         L.append(f"{int(e)},F2,{t_i:.6f},{h_i * PE.W_M2K_TO_W_MM2K:.9g}")
     for e in bot:
         L.append(f"{int(e)},F1,{t_amb},{h_bot * PE.W_M2K_TO_W_MM2K:.9g}")
-    plate = z3_converter_cold_plate(m, sum(deposits.values())) if arch == "Z3" else None
+    if plate is _UNSET:
+        plate = z3_converter_cold_plate(m, sum(deposits.values())) if arch == "Z3" else None
     if plate is not None:
         if set(map(int, plate["elems"])) & set(map(int, bot)):
             raise ValueError("Z3 converter cold-plate faces overlap the board-bottom film")
-        for e in plate["elems"]:
-            L.append(f"{int(e)},F1,{plate['T_C']:.6f},"
-                     f"{plate['h_W_m2K'] * PE.W_M2K_TO_W_MM2K:.9g}")
-    extra = EXTRA_FILM(m, tiles, sum(deposits.values())) if EXTRA_FILM else None
+        L += _film_lines(plate, PE)
+    if extra is _UNSET:
+        extra = EXTRA_FILM(m, tiles, sum(deposits.values())) if EXTRA_FILM else None
     if extra is not None:
         if set(map(int, extra["elems"])) & set(map(int, bot)):
             raise ValueError("extra film faces overlap the board-bottom film")
         if plate is not None and set(map(int, extra["elems"])) & set(map(int, plate["elems"])):
             raise ValueError("extra film faces overlap the Z3 converter cold plate")
-        for e in extra["elems"]:
-            L.append(f"{int(e)},F1,{extra['T_C']:.6f},"
-                     f"{extra['h_W_m2K'] * PE.W_M2K_TO_W_MM2K:.9g}")
+        L += _film_lines(extra, PE)
     L += ["*NODE FILE", "NT", "*END STEP"]
     path.write_text("\n".join(L) + "\n")
     return {"top": top, "bot": bot, "deposited_w": deposited,
@@ -479,10 +561,18 @@ def write_thermal(m, mats, st, deposits, h_face, t_face, path, tiles, arch=None)
 def film_heat_w(m, Tn, film):
     """Heat leaving through one convective face set, COMPUTED from the solved field (the
     bottom-face node mean against the film's sink)."""
+    return float(np.sum(film_face_heat(m, Tn, film)))
+
+
+def film_face_heat(m, Tn, film):
+    """Per-face heat (W) leaving through a bottom-face film, from the solved field, against
+    the film's per-face sink when it has one."""
     import production_et as PE
     t = np.array([float(np.nanmean(Tn[m.elems[int(e) - 1][:4], 0])) for e in film["elems"]])
     a = np.array([PE.ccxio.face_area(m, e) for e in film["elems"]])
-    return float(np.sum(film["h_W_m2K"] * PE.W_M2K_TO_W_MM2K * a * (t - film["T_C"])))
+    sink = film.get("T_face")
+    sink = film["T_C"] if sink is None else np.asarray(sink, float)
+    return film["h_W_m2K"] * PE.W_M2K_TO_W_MM2K * a * (t - sink)
 
 
 def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02, arch=None):
@@ -495,7 +585,7 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
     top = ccxio.top_film_faces(m)
     cen = np.array([m.elem_centroids()[int(e) - 1] for e in top])
     areas = np.array([ccxio.face_area(m, e) for e in top])
-    h_face = np.full(len(top), cooler.h_uniform(Q))
+    h_face = np.full(len(top), top_plate_h(cooler, Q))
     if TOP_FILM_HOOK is not None:
         h_face = np.asarray(TOP_FILM_HOOK(m, top, h_face), float)
     m_dot = cooler.m_dot_g_s * 1e-3 * (2.0 if cooler.two_sided else 1.0)
@@ -503,10 +593,27 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
     frac = np.zeros(len(top))
     frac[order] = (np.cumsum(areas[order]) - 0.5 * areas[order]) / areas.sum()
     t_face = cooler.t_in_c + frac * Q / (m_dot * PE.CP_F)
+    # the bottom films, built ONCE so a sized plate's streamwise sink can be iterated
+    plate = z3_converter_cold_plate(m, Q) if arch == "Z3" else None
+    extra = EXTRA_FILM(m, tiles, Q) if EXTRA_FILM else None
+    swept = []
+    for f in (plate, extra):
+        if f is not None and f.get("streamwise"):
+            xb = np.array([m.nodes[m.elems[int(e) - 1][:4] - 1][:, 0].mean()
+                           for e in f["elems"]])
+            ab = np.array([ccxio.face_area(m, e) for e in f["elems"]])
+            ob = np.argsort(xb)
+            fb = np.zeros(len(ab))
+            fb[ob] = (np.cumsum(ab[ob]) - 0.5 * ab[ob]) / ab.sum()
+            # first guess: the top plate's full rise spread over the plate's own area
+            f["T_face"] = f["T_C"] + fb * Q / (m_dot * PE.CP_F)
+            f["_order"] = ob
+            swept.append(f)
     hist, t0 = [], time.time()
     for it in range(max_fluid_iter):
         ti = wd / f"th_{it}.inp"
-        info = write_thermal(m, mats, st, deposits, h_face, t_face, ti, tiles, arch=arch)
+        info = write_thermal(m, mats, st, deposits, h_face, t_face, ti, tiles, arch=arch,
+                             plate=plate, extra=extra)
         ccxio.run_ccx(ti, threads=THREADS)
         frd = wd / f"th_{it}.frd"
         if not frd.is_file():
@@ -519,10 +626,30 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
         q_up[order] = np.cumsum(q_face[order]) - 0.5 * q_face[order]
         t_new = cooler.t_in_c + q_up / (m_dot * PE.CP_F)
         dmax = float(np.max(np.abs(t_new - t_face)))
+        # equal-rise rule: every sized plate's coolant rises by the top plate's dT
+        dt_top = float(q_face.sum()) / (m_dot * PE.CP_F)
+        new_sw = []
+        for f in swept:
+            qb = film_face_heat(m, Tn, f)
+            ob = f["_order"]
+            if qb.sum() > 1e-9:
+                cum = np.zeros_like(qb)
+                cum[ob] = np.cumsum(qb[ob]) - 0.5 * qb[ob]
+                tb = f["T_C"] + dt_top * cum / qb.sum()
+            else:
+                tb = np.full(len(qb), f["T_C"])
+            dmax = max(dmax, float(np.max(np.abs(tb - f["T_face"]))))
+            new_sw.append(tb)
         hist.append({"iter": it, "max_dT_fluid_K": dmax, "T_max_C": float(np.nanmax(Tnode))})
-        t_face = 0.5 * t_face + 0.5 * t_new
-        if dmax < tol_k:
+        # stop BEFORE relaxing, so the recorded sinks are those of the last solved field
+        if dmax < tol_k or it == max_fluid_iter - 1:
             break
+        t_face = 0.5 * t_face + 0.5 * t_new
+        # a sized plate's sink depends only weakly on its own flux shape (the rise is set by
+        # the top plate): direct substitution, no under-relaxation (with 0.5 the area-weighted
+        # first guess, ~1.4 K off on Z1 cooling B, needed the full 8 coolant passes)
+        for f, tb in zip(swept, new_sw):
+            f["T_face"] = tb
     # the bottom heat flow, COMPUTED from the solved field
     bot = info["bot"]
     tb = np.array([float(np.nanmean(Tn[m.elems[int(e) - 1][:4], 0])) for e in bot])
@@ -535,28 +662,66 @@ def solve_thermal(m, mats, st, deposits, wd, tiles, max_fluid_iter=8, tol_k=0.02
            "deposit_residual_rel": (info["deposited_w"] - Q) / Q,
            "energy_residual_rel": (q_top + q_bot - Q) / Q,
            "fluid_iters": len(hist), "fluid_hist": hist,
-           "wall_s": time.time() - t0, "n_elems": m.n_elems, "n_nodes": m.n_nodes}
+           "wall_s": time.time() - t0, "n_elems": m.n_elems, "n_nodes": m.n_nodes,
+           **die_stats(m, Tnode, arch)}
     q_known = q_top + q_bot
+
+    def film_record(f):
+        r = {k: v for k, v in f.items() if k not in ("elems", "T_face", "_order")}
+        if f.get("T_face") is not None:
+            r["T_sink_min_C"] = float(np.min(f["T_face"]))
+            r["T_sink_max_C"] = float(np.max(f["T_face"]))
+        return r
     pl = info.get("plate")
     if pl is not None:                    # Z3 production: the converter cold plate's heat
         q_p = film_heat_w(m, Tn, pl)      # flow, computed from the solved field as well
         q_known = q_known + q_p
         out.update({"q_bottom_plate_W": q_p,
-                    "bottom_plate_film": {k: v for k, v in pl.items() if k != "elems"},
+                    "bottom_plate_film": film_record(pl),
                     "bottom_plate_faces": int(len(pl["elems"])),
                     "board_bottom_film_faces": int(len(bot)),
                     "energy_residual_rel": (q_known - Q) / Q})
     ex = info.get("extra")
+    q_x = None
     if ex is not None:                    # sensitivity only: the extra film's heat flow,
-        tx = np.array([float(np.nanmean(Tn[m.elems[int(e) - 1][:4], 0]))   # computed too
-                       for e in ex["elems"]])
-        ax = np.array([ccxio.face_area(m, e) for e in ex["elems"]])
-        q_x = float(np.sum(ex["h_W_m2K"] * PE.W_M2K_TO_W_MM2K * ax * (tx - ex["T_C"])))
-        out.update({"q_extra_W": q_x, "extra_film": {k: v for k, v in ex.items()
-                                                     if k != "elems"},
+        q_x = film_heat_w(m, Tn, ex)      # computed from the solved field too
+        out.update({"q_extra_W": q_x, "extra_film": film_record(ex),
                     "extra_film_faces": int(len(ex["elems"])),
                     "energy_residual_rel": (q_known + q_x - Q) / Q})
+    out["cooling"] = plate_records(cooler, q_top, [(pl, out.get("q_bottom_plate_W")),
+                                                   (ex, q_x)])
     return out
+
+
+def plate_records(cooler, q_top, films):
+    """Every cold plate of the solved case: flow, coolant rise, film coefficient, pressure
+    drop and pumping AT ITS OWN FLOW (the top plate at the production flow; a second plate
+    by the declared BOTTOM_PLATE_RULE). Natural-convection films are not plates."""
+    import cooling as C
+    from cooling_production import ETA_PUMP_BAND
+    m_top = cooler.m_dot_g_s * (2.0 if cooler.two_sided else 1.0)
+    top = cooler.plate_at_flow(m_top, q_top)
+    top.update(name="top", coefficient=TOP_PLATE_COEFF,
+               h_film_W_m2K=top_plate_h(cooler, q_top))
+    plates = [top]
+    for f, q in films:
+        if f is None or not f.get("plate") or q is None:
+            continue
+        if f.get("rule") == "equal_rise":
+            from cooling_production import equal_rise_flow_g_s
+            m_b = equal_rise_flow_g_s(q, q_top, m_top)
+        else:
+            m_b = cooler.m_dot_g_s
+        rec = cooler.plate_at_flow(m_b, q)
+        rec.update(name=f.get("layer"), rule=f.get("rule"), label=f.get("label"),
+                   h_film_W_m2K=f["h_W_m2K"], R_tim_m2K_W=f.get("R_tim_m2K_W"))
+        plates.append(rec)
+    tot = sum(p.get("P_pump_hydraulic_W", 0.0) for p in plates)
+    return {"top_plate_coefficient": TOP_PLATE_COEFF, "bottom_plate_rule": BOTTOM_PLATE_RULE,
+            "nu_model": C.NU_MODEL, "props_model": C.PROPS_MODEL,
+            "wall_viscosity": C.WALL_VISCOSITY, "plates": plates,
+            "P_pump_hydraulic_total_W": tot,
+            "P_pump_shaft_total_W": {f"{e:.2f}": tot / e for e in ETA_PUMP_BAND}}
 
 
 def temperature_regions(arch):
@@ -619,6 +784,7 @@ def run_et(arch, scen, h_xy=1.1, refine=(1, 1)):
         d_p = (abs(L["P_loss_w"] - hist[-1]["P_loss_w"]) / L["P_loss_w"]) if hist else 1.0
         hist.append({"iter": it, "P_loss_w": L["P_loss_w"], "T_max_C": th["T_max_C"],
                      "T_die_mean_C": layer_mean_T(m, Tn, [lay["die"]]),
+                     "die_T_max_C": th["die_T_max_C"],
                      **{f"T_{k}_C": v for k, v in new.items()},
                      "max_dT_K": d_t, "dP_rel": d_p,
                      "energy_residual_rel": th["energy_residual_rel"],
@@ -701,6 +867,7 @@ def run_case(arch, scen, h_xy=1.1, do_mech=True, refine=(1, 1), solver="", threa
            "ledger_rows": L["rows"], "P_loss_w": L["P_loss_w"],
            "i_hv_avg_a": L["i_hv_avg_a"], "energy_ledger": L["energy"],
            "thermal": {k: v for k, v in th.items() if k not in ("T_node",)},
+           "die_T_max_C": th["die_T_max_C"], "die_T_mean_C": th["die_T_mean_C"],
            "et_history": hist, "et_converged": (hist[-1]["max_dT_K"] < ET_TOL_K
                                                 and hist[-1]["dP_rel"] < ET_TOL_P_REL),
            "et_wall_s": t_et, "threads": THREADS}

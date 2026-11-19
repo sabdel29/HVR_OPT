@@ -31,7 +31,8 @@ for _p in ("scripts/phase0nw", "scripts/phase0mr", "scripts/phase0i", "scripts")
         sys.path.insert(0, str(R / _p))
 
 from z2_converter import (OUT_OF_CELL, TIER_MATERIAL,  # noqa: E402
-                          microbump_material, rdl_tier_material)
+                          install_converter_cards, microbump_material, rdl_tier_material,
+                          tier_material)
 
 Z1_CFG = R / "configs" / "phase0nx" / "z1_physical.yaml"
 
@@ -93,7 +94,7 @@ Z1_RAIL_V = float(_C["supply_return"]["rail_v"])
 def _material(tier_name: str) -> str:
     if tier_name.endswith("_rdl"):
         return "rdl_tier"
-    return TIER_MATERIAL[tier_name][0]
+    return tier_material(tier_name)
 
 
 def mid_layers(cfg=None, nz_thin: int = 1, nz_thick: int = 2) -> list:
@@ -121,6 +122,7 @@ def install(stack: dict, out_of_cell: str = "F1_encapsulated", cfg=None):
         raise ValueError(f"unknown out-of-cell case {out_of_cell!r}")
     stack["materials"]["rdl_tier"] = rdl_tier_material()
     stack["materials"]["microbump"] = microbump_material()
+    install_converter_cards(stack, cfg.tiers if cfg is not None else Z1_TIERS)
     mids = mid_layers(cfg)
     conv_names = tuple(m[0] for m in mids if m[0].startswith("z1conv_"))
     return mids, conv_names, OUT_OF_CELL[out_of_cell]

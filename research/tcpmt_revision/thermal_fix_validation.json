@@ -1,0 +1,669 @@
+{
+ "what": "coarse validation (h_xy 1.1 mm, r11, E-T only, HV-S0) of the TCPMT thermal-model corrections; 'base' = the tree before the corrections",
+ "driver": "scripts/tcpmt_thermal_fix_validate.py",
+ "runs": {
+  "base_Z1_A": {
+   "P_loss_w": 141.88252650679672,
+   "T_max_C": 111.328,
+   "die_T_max_C": 95.486,
+   "die_T_mean_C": 89.56951253333334,
+   "T_hs_C": 107.94019812925171,
+   "T_ls_C": 105.57613137755102,
+   "T_ind_C": 98.24363477891157,
+   "T_caps_C": 107.03028528911565,
+   "q_top_W": 1141.172479836445,
+   "q_extra_W": null,
+   "energy_residual_rel": -3.549159240290649e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 163.98017239570618,
+   "what": "before: Z1 cooling A",
+   "tree": "base",
+   "arch": "Z1",
+   "toggles": [],
+   "coolant_passes_last_et_iteration": 1
+  },
+  "legacy_Z1_A": {
+   "P_loss_w": 141.88252650679672,
+   "T_max_C": 111.328,
+   "die_T_max_C": 95.486,
+   "die_T_mean_C": 89.56951253333334,
+   "T_hs_C": 107.94019812925171,
+   "T_ls_C": 105.57613137755102,
+   "T_ind_C": 98.24363477891157,
+   "T_caps_C": 107.03028528911565,
+   "q_top_W": 1141.172479836445,
+   "q_extra_W": null,
+   "energy_residual_rel": -3.549159240290649e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 129.73457098007202,
+   "what": "corrected tree, every superseded setting back on (must equal before)",
+   "tree": "new",
+   "arch": "Z1",
+   "toggles": [
+    "conv_k_legacy",
+    "nu_legacy_table",
+    "props_legacy_50C",
+    "plate_caloric_legacy"
+   ],
+   "coolant_passes_last_et_iteration": 1,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 1141.172479836445,
+     "dT_coolant_K": 10.10898048346085,
+     "Re": 1264.8339846837978,
+     "dp_kPa": 615.2590738862937,
+     "P_pump_hydraulic_W": 16.81376011632584,
+     "h_film_W_m2K": 115553.49261554122
+    }
+   ],
+   "P_pump_hydraulic_total_W": 16.81376011632584
+  },
+  "iso_nu_Z1_A": {
+   "P_loss_w": 140.00834985484394,
+   "T_max_C": 108.17,
+   "die_T_max_C": 92.5404,
+   "die_T_mean_C": 86.62258933333334,
+   "T_hs_C": 104.77302338435375,
+   "T_ls_C": 102.42593584183673,
+   "T_ind_C": 95.19165480442177,
+   "T_caps_C": 103.86830739795919,
+   "q_top_W": 1139.3254396828308,
+   "q_extra_W": null,
+   "energy_residual_rel": 6.42447325161679e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 129.78186058998108,
+   "what": "Nu fit only",
+   "tree": "new",
+   "arch": "Z1",
+   "toggles": [
+    "conv_k_legacy",
+    "props_legacy_50C",
+    "plate_caloric_legacy"
+   ],
+   "coolant_passes_last_et_iteration": 1,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 1139.3254396828308,
+     "dT_coolant_K": 10.092618633525834,
+     "Re": 1264.8339846837978,
+     "dp_kPa": 613.4775329176298,
+     "P_pump_hydraulic_W": 16.765074280137657,
+     "h_film_W_m2K": 135018.71081921845
+    }
+   ],
+   "P_pump_hydraulic_total_W": 16.765074280137657
+  },
+  "iso_props_Z1_A": {
+   "P_loss_w": 142.20077210146593,
+   "T_max_C": 111.864,
+   "die_T_max_C": 95.987,
+   "die_T_mean_C": 90.0698886888889,
+   "T_hs_C": 108.47798086734694,
+   "T_ls_C": 106.11101828231293,
+   "T_ind_C": 98.76184719387756,
+   "T_caps_C": 107.56716071428572,
+   "q_top_W": 1141.4862549051957,
+   "q_extra_W": null,
+   "energy_residual_rel": 6.775999349051924e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 137.96257495880127,
+   "what": "bulk-mean water properties only",
+   "tree": "new",
+   "arch": "Z1",
+   "toggles": [
+    "conv_k_legacy",
+    "nu_legacy_table",
+    "plate_caloric_legacy"
+   ],
+   "coolant_passes_last_et_iteration": 1,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 1141.4862549051957,
+     "dT_coolant_K": 10.114696376186565,
+     "Re": 868.8440471624187,
+     "dp_kPa": 853.763986786722,
+     "P_pump_hydraulic_W": 23.152772396512084,
+     "h_film_W_m2K": 112797.07637632827
+    }
+   ],
+   "P_pump_hydraulic_total_W": 23.152772396512084
+  },
+  "iso_caloric_Z1_A": {
+   "P_loss_w": 138.56008136532947,
+   "T_max_C": 105.73,
+   "die_T_max_C": 90.266,
+   "die_T_mean_C": 84.34541213333333,
+   "T_hs_C": 102.32562168367348,
+   "T_ls_C": 99.99164077380952,
+   "T_ind_C": 92.8332676020408,
+   "T_caps_C": 101.42492746598639,
+   "q_top_W": 1137.898016022727,
+   "q_extra_W": null,
+   "energy_residual_rel": 3.213720399654362e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 135.4423418045044,
+   "what": "caloric correction only",
+   "tree": "new",
+   "arch": "Z1",
+   "toggles": [
+    "conv_k_legacy",
+    "nu_legacy_table",
+    "props_legacy_50C"
+   ],
+   "coolant_passes_last_et_iteration": 1,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 1137.898016022727,
+     "dT_coolant_K": 10.079973921024804,
+     "Re": 1264.8339846837978,
+     "dp_kPa": 615.2590738862937,
+     "P_pump_hydraulic_W": 16.81376011632584,
+     "h_film_W_m2K": 155290.8048126262
+    }
+   ],
+   "P_pump_hydraulic_total_W": 16.81376011632584
+  },
+  "iso_cards_Z1_A": {
+   "P_loss_w": 143.6135691184602,
+   "T_max_C": 116.046,
+   "die_T_max_C": 96.1112,
+   "die_T_mean_C": 89.72333615555554,
+   "T_hs_C": 112.38669260204081,
+   "T_ls_C": 108.46167517006803,
+   "T_ind_C": 99.46616279761903,
+   "T_caps_C": 110.9263456632653,
+   "q_top_W": 1142.865813370675,
+   "q_extra_W": null,
+   "energy_residual_rel": 1.386973103357884e-09,
+   "et_iters": 5,
+   "et_converged": true,
+   "wall_s": 167.335022687912,
+   "what": "derived converter cards only",
+   "tree": "new",
+   "arch": "Z1",
+   "toggles": [
+    "nu_legacy_table",
+    "props_legacy_50C",
+    "plate_caloric_legacy"
+   ],
+   "coolant_passes_last_et_iteration": 1,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 1142.865813370675,
+     "dT_coolant_K": 10.123980736228928,
+     "Re": 1264.8339846837978,
+     "dp_kPa": 615.2590738862937,
+     "P_pump_hydraulic_W": 16.81376011632584,
+     "h_film_W_m2K": 115553.49261554122
+    }
+   ],
+   "P_pump_hydraulic_total_W": 16.81376011632584
+  },
+  "new_Z1_A": {
+   "P_loss_w": 138.5796406012121,
+   "T_max_C": 107.529,
+   "die_T_max_C": 88.2759,
+   "die_T_mean_C": 81.9162088888889,
+   "T_hs_C": 103.86888350340136,
+   "T_ls_C": 100.02013214285715,
+   "T_ind_C": 91.34295629251702,
+   "T_caps_C": 102.42989477040815,
+   "q_top_W": 1137.9044837396061,
+   "q_extra_W": null,
+   "energy_residual_rel": -5.297188562978617e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 112.26792931556702,
+   "what": "after: Z1 cooling A, every correction",
+   "tree": "new",
+   "arch": "Z1",
+   "toggles": [],
+   "coolant_passes_last_et_iteration": 1,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 1137.9044837396061,
+     "dT_coolant_K": 10.082949153608094,
+     "Re": 868.5735988691233,
+     "dp_kPa": 851.4270542354419,
+     "P_pump_hydraulic_W": 23.089279092726485,
+     "h_film_W_m2K": 186990.37315812454
+    }
+   ],
+   "P_pump_hydraulic_total_W": 23.089279092726485
+  },
+  "hotmap_Z1_A": {
+   "P_loss_w": 138.7740698551766,
+   "T_max_C": 157.151,
+   "die_T_max_C": 157.151,
+   "die_T_mean_C": 81.25545935555556,
+   "T_hs_C": 104.20373358843537,
+   "T_ls_C": 100.35727164115647,
+   "T_ind_C": 91.68041509353742,
+   "T_caps_C": 102.76768273809523,
+   "q_top_W": 1138.1087891578727,
+   "q_extra_W": null,
+   "energy_residual_rel": 1.16498825898814e-07,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 393.87309741973877,
+   "what": "after, die hot-spot map",
+   "tree": "new",
+   "arch": "Z1",
+   "toggles": [
+    "rv:v_die_hotmap"
+   ],
+   "coolant_passes_last_et_iteration": 5,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 1138.1087891578727,
+     "dT_coolant_K": 10.084760024183478,
+     "Re": 868.5890207884216,
+     "dp_kPa": 851.4135530957741,
+     "P_pump_hydraulic_W": 23.08891976744941,
+     "h_film_W_m2K": 186990.65884167442
+    }
+   ],
+   "P_pump_hydraulic_total_W": 23.08891976744941,
+   "hotmap": {
+    "P_hot_W": 209.81171078385884,
+    "hot_power_fraction": 0.20981171078385885,
+    "hot_volume_fraction_realized": 0.032123946498456346,
+    "flux_hot_W_cm2": 1306.3430305588538,
+    "flux_bg_W_cm2": 163.29287881985672
+   }
+  },
+  "base_Z1_B": {
+   "P_loss_w": 140.52916561209557,
+   "T_max_C": 107.595,
+   "die_T_max_C": 94.5162,
+   "die_T_mean_C": 88.82740051111111,
+   "T_hs_C": 104.60163435374149,
+   "T_ls_C": 103.35369264455782,
+   "T_ind_C": 96.79397589285715,
+   "T_caps_C": 104.251143707483,
+   "q_top_W": 1128.1733636219606,
+   "q_extra_W": 12.326421407781552,
+   "energy_residual_rel": 1.6495883806217778e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 364.5543601512909,
+   "what": "before: Z1 cooling B",
+   "tree": "base",
+   "arch": "Z1",
+   "toggles": [
+    "z1_bottom_plate_tim"
+   ],
+   "coolant_passes_last_et_iteration": 4
+  },
+  "new_Z1_B": {
+   "P_loss_w": 137.26597906286895,
+   "T_max_C": 103.876,
+   "die_T_max_C": 87.4564,
+   "die_T_mean_C": 81.33033504444444,
+   "T_hs_C": 100.16200106292517,
+   "T_ls_C": 97.8957881377551,
+   "T_ind_C": 90.05873647959183,
+   "T_caps_C": 99.51170693027211,
+   "q_top_W": 1126.4450622006748,
+   "q_extra_W": 10.772084912858942,
+   "energy_residual_rel": -1.725989482306035e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 559.9452633857727,
+   "what": "after: Z1 cooling B (equal-rise plate)",
+   "tree": "new",
+   "arch": "Z1",
+   "toggles": [
+    "z1_bottom_plate_tim"
+   ],
+   "coolant_passes_last_et_iteration": 8,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 1126.4450622006748,
+     "dT_coolant_K": 9.981377004767536,
+     "Re": 867.6796609472995,
+     "dp_kPa": 852.2112967154382,
+     "P_pump_hydraulic_W": 23.110174010830892,
+     "h_film_W_m2K": 186974.19961434611
+    },
+    {
+     "name": "board",
+     "m_dot_g_s": 0.258198382155434,
+     "Q_W": 10.772084912858942,
+     "dT_coolant_K": 9.981377004767536,
+     "Re": 8.297536469843266,
+     "dp_kPa": 7.421361532298769,
+     "P_pump_hydraulic_W": 0.001924550316838754,
+     "h_film_W_m2K": 45424.48044640025
+    }
+   ],
+   "P_pump_hydraulic_total_W": 23.112098561147732
+  },
+  "new_Z1_B_fullflow": {
+   "P_loss_w": 137.16761277396455,
+   "T_max_C": 103.673,
+   "die_T_max_C": 87.4018,
+   "die_T_mean_C": 81.28979386666667,
+   "T_hs_C": 99.88127729591838,
+   "T_ls_C": 97.73697580782311,
+   "T_ind_C": 89.96447670068028,
+   "T_caps_C": 99.29175909863946,
+   "q_top_W": 1125.5647941437303,
+   "q_extra_W": 11.575387598485673,
+   "energy_residual_rel": -9.586180797707571e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 322.4423315525055,
+   "what": "after, bottom plate at the legacy full flow",
+   "tree": "new",
+   "arch": "Z1",
+   "toggles": [
+    "z1_bottom_plate_tim_fullflow"
+   ],
+   "coolant_passes_last_et_iteration": 4,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 1125.5647941437303,
+     "dT_coolant_K": 9.973574197909358,
+     "Re": 867.6008734669433,
+     "dp_kPa": 852.2807692015448,
+     "P_pump_hydraulic_W": 23.112032600563023,
+     "h_film_W_m2K": 186972.90620136194
+    },
+    {
+     "name": "board",
+     "m_dot_g_s": 27.0,
+     "Q_W": 11.575387598485673,
+     "dT_coolant_K": 0.102532618118298,
+     "Re": 778.2074757412859,
+     "dp_kPa": 940.0459480863644,
+     "P_pump_hydraulic_W": 25.456703291639272,
+     "h_film_W_m2K": 41271.7050672198
+    }
+   ],
+   "P_pump_hydraulic_total_W": 48.5687358922023
+  },
+  "new_Z1_B_final": {
+   "P_loss_w": 137.2687823962938,
+   "T_max_C": 103.885,
+   "die_T_max_C": 87.4654,
+   "die_T_mean_C": 81.33487057777778,
+   "T_hs_C": 100.16662521258503,
+   "T_ls_C": 97.90051220238097,
+   "T_ind_C": 90.06334345238096,
+   "T_caps_C": 99.51639417517008,
+   "q_top_W": 1126.4471880237465,
+   "q_extra_W": 10.77297235918898,
+   "energy_residual_rel": 1.7811405100966428e-07,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 303.5278115272522,
+   "what": "after, committed code: sized-plate sink by direct substitution (new_Z1_B used 0.5 under-relaxation)",
+   "tree": "new",
+   "arch": "Z1",
+   "toggles": [
+    "z1_bottom_plate_tim"
+   ],
+   "coolant_passes_last_et_iteration": 4,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 1126.4471880237465,
+     "dT_coolant_K": 9.981395848336117,
+     "Re": 867.6798512342646,
+     "dp_kPa": 852.2111289410694,
+     "P_pump_hydraulic_W": 23.110169522376772,
+     "h_film_W_m2K": 186974.20273789327
+    },
+    {
+     "name": "board",
+     "m_dot_g_s": 0.25821916623397945,
+     "Q_W": 10.77297235918898,
+     "dT_coolant_K": 9.981395848336117,
+     "Re": 8.29820621273093,
+     "dp_kPa": 7.421957885869963,
+     "P_pump_hydraulic_W": 0.0019248599038961427,
+     "h_film_W_m2K": 45424.48067772805
+    }
+   ],
+   "P_pump_hydraulic_total_W": 23.112094382280667
+  },
+  "base_Z2_B": {
+   "P_loss_w": 112.98441697099258,
+   "T_max_C": 80.43,
+   "die_T_max_C": 80.43,
+   "die_T_mean_C": 75.68002913333333,
+   "T_hs_C": 39.764830389030614,
+   "T_ls_C": 58.67379693877552,
+   "T_ind_C": 66.33312073979592,
+   "T_caps_C": 49.405789838435375,
+   "q_top_W": 896.8429955627311,
+   "q_extra_W": 215.97431130057677,
+   "energy_residual_rel": 3.1630208122903825e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 545.5127017498016,
+   "what": "before: Z2 cooling B",
+   "tree": "base",
+   "arch": "Z2",
+   "toggles": [
+    "z2_cooled_tim"
+   ],
+   "coolant_passes_last_et_iteration": 8
+  },
+  "new_Z2_B": {
+   "P_loss_w": 115.35316596451818,
+   "T_max_C": 77.4997,
+   "die_T_max_C": 77.4997,
+   "die_T_mean_C": 72.54457004444444,
+   "T_hs_C": 40.90561645408163,
+   "T_ls_C": 63.11984153911564,
+   "T_ind_C": 68.41267076530613,
+   "T_caps_C": 52.308135544217684,
+   "q_top_W": 952.6426985585034,
+   "q_extra_W": 162.5503172412296,
+   "energy_residual_rel": -8.459449655164385e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 526.5809352397919,
+   "what": "after: Z2 cooling B (equal-rise plate)",
+   "tree": "new",
+   "arch": "Z2",
+   "toggles": [
+    "z2_cooled_tim"
+   ],
+   "coolant_passes_last_et_iteration": 8,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 952.6426985585034,
+     "dT_coolant_K": 8.440855742339394,
+     "Re": 852.3971026786429,
+     "dp_kPa": 865.9244116788849,
+     "P_pump_hydraulic_W": 23.476959330588247,
+     "h_film_W_m2K": 186718.67330678547
+    },
+    {
+     "name": "conv_7_gan_hs_EPC2014C",
+     "m_dot_g_s": 4.607035326208058,
+     "Q_W": 162.5503172412296,
+     "dT_coolant_K": 8.440855742339394,
+     "Re": 145.44531718510757,
+     "dp_kPa": 136.8747981266411,
+     "P_pump_hydraulic_W": 0.6332032485704514,
+     "h_film_W_m2K": 45422.61664286513
+    }
+   ],
+   "P_pump_hydraulic_total_W": 24.1101625791587
+  },
+  "new_Z2_B_fullflow": {
+   "P_loss_w": 114.26870042519279,
+   "T_max_C": 76.8357,
+   "die_T_max_C": 76.8357,
+   "die_T_mean_C": 72.16127508888889,
+   "T_hs_C": 38.024273150510204,
+   "T_ls_C": 61.31534783163266,
+   "T_ind_C": 67.21669339285715,
+   "T_caps_C": 49.95670280612244,
+   "q_top_W": 944.8112829114762,
+   "q_extra_W": 169.29910885425562,
+   "energy_residual_rel": -3.427937151620915e-08,
+   "et_iters": 4,
+   "et_converged": true,
+   "wall_s": 561.5729835033417,
+   "what": "after, bottom plate at the legacy full flow",
+   "tree": "new",
+   "arch": "Z2",
+   "toggles": [
+    "z2_cooled_tim_fullflow"
+   ],
+   "coolant_passes_last_et_iteration": 8,
+   "plates": [
+    {
+     "name": "top",
+     "m_dot_g_s": 27.0,
+     "Q_W": 944.8112829114762,
+     "dT_coolant_K": 8.371444919226095,
+     "Re": 851.7211852973337,
+     "dp_kPa": 866.5421397491311,
+     "P_pump_hydraulic_W": 23.493477940583613,
+     "h_film_W_m2K": 186707.15228713403
+    },
+    {
+     "name": "conv_7_gan_hs_EPC2014C",
+     "m_dot_g_s": 27.0,
+     "Q_W": 169.29910885425562,
+     "dT_coolant_K": 1.4996950057967655,
+     "Re": 789.7246306229034,
+     "dp_kPa": 927.6383093777457,
+     "P_pump_hydraulic_W": 25.125630271999363,
+     "h_film_W_m2K": 41270.120923234244
+    }
+   ],
+   "P_pump_hydraulic_total_W": 48.61910821258297
+  }
+ },
+ "deltas": {
+  "legacy_Z1_A - base_Z1_A": {
+   "P_loss_w": 0.0,
+   "T_max_C": 0.0,
+   "die_T_max_C": 0.0,
+   "die_T_mean_C": 0.0,
+   "T_hs_C": 0.0,
+   "T_ls_C": 0.0
+  },
+  "iso_nu_Z1_A - base_Z1_A": {
+   "P_loss_w": -1.87417665195278,
+   "T_max_C": -3.1580000000000013,
+   "die_T_max_C": -2.945599999999999,
+   "die_T_mean_C": -2.9469232000000005,
+   "T_hs_C": -3.167174744897963,
+   "T_ls_C": -3.150195535714289
+  },
+  "iso_props_Z1_A - base_Z1_A": {
+   "P_loss_w": 0.3182455946692073,
+   "T_max_C": 0.5360000000000014,
+   "die_T_max_C": 0.5009999999999906,
+   "die_T_mean_C": 0.500376155555557,
+   "T_hs_C": 0.5377827380952311,
+   "T_ls_C": 0.5348869047619047
+  },
+  "iso_caloric_Z1_A - base_Z1_A": {
+   "P_loss_w": -3.322445141467256,
+   "T_max_C": -5.597999999999999,
+   "die_T_max_C": -5.219999999999999,
+   "die_T_mean_C": -5.224100400000012,
+   "T_hs_C": -5.614576445578237,
+   "T_ls_C": -5.5844906037415
+  },
+  "iso_cards_Z1_A - base_Z1_A": {
+   "P_loss_w": 1.7310426116634687,
+   "T_max_C": 4.7180000000000035,
+   "die_T_max_C": 0.6251999999999924,
+   "die_T_mean_C": 0.15382362222220536,
+   "T_hs_C": 4.446494472789098,
+   "T_ls_C": 2.885543792517012
+  },
+  "new_Z1_A - base_Z1_A": {
+   "P_loss_w": -3.302885905584617,
+   "T_max_C": -3.7990000000000066,
+   "die_T_max_C": -7.210100000000011,
+   "die_T_mean_C": -7.653303644444435,
+   "T_hs_C": -4.0713146258503485,
+   "T_ls_C": -5.555999234693871
+  },
+  "hotmap_Z1_A - new_Z1_A": {
+   "P_loss_w": 0.1944292539645005,
+   "T_max_C": 49.622000000000014,
+   "die_T_max_C": 68.87510000000002,
+   "die_T_mean_C": -0.6607495333333446,
+   "T_hs_C": 0.33485008503400593,
+   "T_ls_C": 0.3371394982993223
+  },
+  "new_Z1_B - base_Z1_B": {
+   "P_loss_w": -3.263186549226617,
+   "T_max_C": -3.718999999999994,
+   "die_T_max_C": -7.059799999999996,
+   "die_T_mean_C": -7.497065466666669,
+   "T_hs_C": -4.439633290816317,
+   "T_ls_C": -5.45790450680272
+  },
+  "new_Z1_B - new_Z1_B_fullflow": {
+   "P_loss_w": 0.09836628890440124,
+   "T_max_C": 0.20300000000000296,
+   "die_T_max_C": 0.05460000000000775,
+   "die_T_mean_C": 0.04054117777776867,
+   "T_hs_C": 0.2807237670067906,
+   "T_ls_C": 0.15881232993199035
+  },
+  "new_Z1_B_final - new_Z1_B": {
+   "P_loss_w": 0.002803333424850507,
+   "T_max_C": 0.009000000000000341,
+   "die_T_max_C": 0.009000000000000341,
+   "die_T_mean_C": 0.0045355333333390035,
+   "T_hs_C": 0.004624149659861132,
+   "T_ls_C": 0.0047240646258615016
+  },
+  "new_Z2_B - base_Z2_B": {
+   "P_loss_w": 2.3687489935255996,
+   "T_max_C": -2.9303000000000026,
+   "die_T_max_C": -2.9303000000000026,
+   "die_T_mean_C": -3.1354590888888936,
+   "T_hs_C": 1.1407860650510173,
+   "T_ls_C": 4.446044600340123
+  },
+  "new_Z2_B - new_Z2_B_fullflow": {
+   "P_loss_w": 1.084465539325393,
+   "T_max_C": 0.6640000000000015,
+   "die_T_max_C": 0.6640000000000015,
+   "die_T_mean_C": 0.3832949555555558,
+   "T_hs_C": 2.881343303571427,
+   "T_ls_C": 1.8044937074829832
+  }
+ }
+}

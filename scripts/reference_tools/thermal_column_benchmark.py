@@ -88,10 +88,13 @@ def column_spec(arch, scen):
     m_dot = cooler.m_dot_g_s * 1e-3
     t_f = cooler.t_in_c + 0.5 * Q / (m_dot * PE.CP_F)
     tb = st["thermal_bc"]
+    # TCPMT revision: the sink is the MEAN coolant temperature, so the coefficient is the
+    # production streamwise-sink one (no caloric resistance; h_uniform here counted half the
+    # coolant rise twice, as the production top plate did before the correction)
     return {"arch": arch, "scenario": scen, "pitch_mm": p, "tile_mm": s,
             "layers": spec, "sources": src, "omitted_sources": omitted,
             "Q_cell_W": sum(x["W"] for x in src),
-            "h_top": cooler.h_uniform(Q), "T_fluid_C": t_f,
+            "h_top": E.top_plate_h(cooler, Q), "T_fluid_C": t_f,
             "h_bot": tb["h_bottom"]["value"], "T_amb_C": tb["ambient_bottom"]["value"],
             "bottom_film": arch == "Z1",
             "materials": {k: {"k": v.k, "k_ortho": v.k_ortho} for k, v in mats.items()}}

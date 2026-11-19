@@ -43,19 +43,38 @@ for _p in ("scripts/phase0mr", "scripts/phase0i", "scripts/phase0b", "scripts"):
         sys.path.insert(0, str(R / _p))
 
 # Tier name -> (framework material, status, note)
+# TCPMT revision: the inductor/C_out, flying-capacitor and GaN tiers carry cards derived by
+# unit-cell homogenization of what each tier contains in the design in force
+# (scripts/tcpmt_converter_cards.py, research/tcpmt_revision/converter_cards.json): the
+# legacy hvr_effective / solid-silicon assignment is the variant conv_k_legacy.
+_CC_NOTE = "unit-cell homogenization of the tier contents (scripts/tcpmt_converter_cards.py)"
 TIER_MATERIAL = {
     "land_side_attach_rdl": ("rdl_tier", "DERIVED", "Phase-0M-R RDL effective tensor, RDL ALONE"),
     "interlayer_rdl":       ("rdl_tier", "DERIVED", "Phase-0M-R RDL effective tensor, RDL ALONE"),
-    "inductor_plus_cout":   ("hvr_effective", "PROVISIONAL", "existing converter medium"),
-    "gan_ls_EPC2057":       ("silicon", "BOUNDED", "GaN-on-Si carrier; epi not resolved"),
-    "gan_hs_EPC2014C":      ("silicon", "BOUNDED", "GaN-on-Si carrier; epi not resolved"),
-    "flying_caps":          ("hvr_effective", "OPEN", "no sourced MLCC card in framework"),
+    # status = that of the PROPERTY (declared inputs remain), as the configs carry it
+    "inductor_plus_cout":   ("conv_ind_cout", "PROVISIONAL", _CC_NOTE),
+    "gan_ls_EPC2057":       ("conv_gan_ls", "BOUNDED", _CC_NOTE + "; GaN epi not resolved"),
+    "gan_hs_EPC2014C":      ("conv_gan_hs", "BOUNDED", _CC_NOTE + "; GaN epi not resolved"),
+    "flying_caps":          ("conv_cfly_a0", "OPEN", _CC_NOTE + " (case A0, 100-um tier)"),
     # TCPMT revision (count-optimal candidate, configs/phase0nx/z1_physical_m64.yaml): a
     # cell too small for the output capacitor to share the inductor tier carries the two
     # in separate tiers, each mapped to the medium of the production tier it came from
     "inductor":             ("hvr_effective", "PROVISIONAL", "existing converter medium"),
     "output_caps":          ("hvr_effective", "OPEN", "no sourced MLCC card in framework"),
 }
+
+
+def tier_material(name: str) -> str:
+    """The material of a converter tier: its derived card by tier-name prefix (a GaN tier of
+    any part), else the TIER_MATERIAL entry."""
+    import tcpmt_converter_cards as CC
+    return CC.tier_card(name) or TIER_MATERIAL[name][0]
+
+
+def install_converter_cards(stack: dict, tiers) -> dict:
+    """The derived converter-tier cards of the design in force, for [(tier name, um)]."""
+    import tcpmt_converter_cards as CC
+    return CC.install(stack, list(tiers))
 
 # Out-of-cell region (brief section 15).
 OUT_OF_CELL = {
@@ -178,7 +197,7 @@ def converter_layers(cfg, nz_thin: int = 1, nz_thick: int = 2) -> list:
     """
     out = []
     for i, t in enumerate(reversed(cfg.tiers)):
-        mat, _st, _n = TIER_MATERIAL[t.name]
+        mat = tier_material(t.name)
         nz = nz_thin if t.um <= 20.0 else nz_thick
         # names must be unique per layer: four tiers share the name "interlayer_rdl"
         out.append((f"conv_{len(cfg.tiers)-1-i:d}_{t.name}", t.um / 1e3, mat, nz))
@@ -204,6 +223,7 @@ def install(cfg, stack: dict, extra_bottom: list, out_of_cell: str = "F1_encapsu
         raise ValueError("a backside converter needs a cutout to descend into")
     stack["materials"]["rdl_tier"] = rdl_tier_material()
     stack["materials"]["microbump"] = microbump_material()
+    install_converter_cards(stack, [(t.name, t.um) for t in cfg.tiers])
     att = dict(getattr(cfg, "attach", ()) or ())
     t_att = float(getattr(cfg, "attach_um", 0.0) or 0.0) / 1e3
     if t_att > 0:
