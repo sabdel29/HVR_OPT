@@ -218,3 +218,79 @@ def test_z3_cooling_b_is_not_ranked():
     assert "Z3" not in rk["ranked"]
     ex = {e["arch"]: e for e in rk["excluded"]}
     assert {"bga_sites", "ir_drop"} <= set(ex["Z3"]["fails"])
+
+
+# ------------------------------------------------------------------ review round 3: BGA policy
+def test_bga_policy_switch_applies_without_rerun():
+    """The 1.5-A per-ball target is a filter under BGA_POLICY 'hard' and a stated requirement
+    under 'requirement' (the default until the authors decide); every record carries its
+    verdict under both, so a stored document is re-read under either (apply_bga_policy), and
+    the site budget stays a filter under both."""
+    import tcpmt_feasibility as F
+    assert set(F.BGA_POLICIES) == {"hard", "requirement"}
+    if not os.environ.get("TCPMT_BGA_POLICY"):
+        assert F.BGA_POLICY == "requirement"
+    checks = {"die": {"ok": True}, "bga_sites": {"ok": True},
+              "bga_current": {"ok": False, "value": 2.2, "limit": 1.5}}
+    assert F.verdict_under(checks, "hard") == {"verdict": "infeasible",
+                                               "fails": ["bga_current"], "unresolved": []}
+    assert F.verdict_under(checks, "requirement")["verdict"] == "feasible"
+    req = F.bga_requirement("Z1", checks)
+    assert req["I_ball_A"] == 2.2 and req["meets_target"] is False and "2.20 A" in req["statement"]
+    checks["bga_sites"]["ok"] = False
+    assert F.verdict_under(checks, "requirement")["fails"] == ["bga_sites"]
+    p = FC / "sensitivity" / "etm_Z1_HV_S0__tim_warp_fb_A.json"
+    r = F.evaluate(p, json.loads(p.read_text()), use_fields=False)
+    assert set(r["by_bga_policy"]) == set(F.BGA_POLICIES)
+    assert r["checks"]["bga_current"]["policy_switched"]
+    assert r["verdict"] == r["by_bga_policy"][F.BGA_POLICY]["verdict"]
+    doc = {"records": [r], "cases": {"x": dict(r)}, "bga_policy": {"in_force": F.BGA_POLICY},
+           "rankings_by_bga_policy": {q: {"marker": q} for q in F.BGA_POLICIES}}
+    for q in F.BGA_POLICIES:
+        d = F.apply_bga_policy(doc, q)
+        assert d["records"][0]["verdict"] == r["by_bga_policy"][q]["verdict"]
+        assert d["cases"]["x"]["fails"] == r["by_bga_policy"][q]["fails"]
+        assert d["rankings"] == {"marker": q} and d["bga_policy"]["in_force"] == q
+
+
+def test_bga_check_takes_the_worse_of_the_two_currents(tmp_path, monkeypatch):
+    """Z1 in the production state: the per-ball check takes the worse of the DC peak x k rule
+    and the port model's worst-ball RMS (scaled to the case's 48-V current) and reports both;
+    a reference state, or another ball count, keeps the closure rule alone."""
+    import tcpmt_feasibility as F
+    (tmp_path / "input_decoupling.json").write_text(json.dumps({"summary": {
+        "ball_currents_recommended": {"n_per_rail": 220, "I_ball_rms_max_A": 2.0,
+                                      "I_total_dc_A": 20.0}}}))
+    monkeypatch.setattr(F, "TR", tmp_path)
+    monkeypatch.setattr(F, "peak_fraction", lambda a, n, net=None: (0.025, "test"))
+    case = {"scenario": F.TC.SCEN["SDEC"], "i_hv_avg_a": 22.0, "ledger_rows": [
+        {"term": "P_BGA_supply", "conductor": "BGA supply balls (N=220)", "I_a": 58.0}]}
+    _n, val, lim, ok, _basis, ex = {x[0]: x for x in F.bga_check("Z1", case)}["bga_current"]
+    assert ex["I_ball_closure_rule_A"] == pytest.approx(0.025 * 58.0)
+    assert ex["I_ball_rms_max_A"] == pytest.approx(2.0 * 22.0 / 20.0)
+    assert val == pytest.approx(2.2) and lim == 1.5 and ok is False
+    case["scenario"] = "HV_S0"
+    _n, val0, _l, _o, _b, ex0 = {x[0]: x for x in F.bga_check("Z1", case)}["bga_current"]
+    assert ex0["I_ball_rms_max_A"] is None and val0 == pytest.approx(0.025 * 58.0)
+    case["scenario"] = F.TC.SCEN["SDEC"]
+    case["ledger_rows"][0]["conductor"] = "BGA supply balls (N=218)"
+    assert {x[0]: x for x in F.bga_check("Z1", case)}["bga_current"][5]["I_ball_rms_max_A"] is None
+
+
+def test_bga_closure_caps_the_count_at_220_per_rail(tmp_path, monkeypatch):
+    """Review round 3: at most 220 balls per rail everywhere in the count closure (legal
+    counts and the re-scored screen), and the re-closure judges the worse of the DC peak x k
+    rule and Z1's worst-ball RMS of the port model."""
+    import inspect
+    import final_closure_pkg_network as PN
+    assert PN.N_MAX_PER_RAIL == 220
+    assert inspect.signature(PN.legal_counts).parameters["n_max"].default == 220
+    f = tmp_path / "screen.csv"
+    f.write_text("arch,n_per_rail,level,terminal_mode,peak_fraction\n"
+                 "Z1,218,1,VIN_PAD,0.03\nZ1,220,1,VIN_PAD,0.03\nZ1,222,1,VIN_PAD,0.02\n"
+                 "Z2,250,1,VIN_PAD,0.02\n")
+    monkeypatch.setattr(PN, "scenarios", lambda a: {"HV_SDEC": 60.0})
+    assert sorted(r["n_per_rail"] for r in PN.screen_from_csv(f)) == [218, 220]
+    assert "worst-ball RMS" in PN.CLOSURE_RULE and "220" in PN.CLOSURE_RULE
+    src = inspect.getsource(PN.reclose)
+    assert "port_model_ball_rms" in src and "ball_currents_at_count" in src

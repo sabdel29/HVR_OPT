@@ -3,8 +3,9 @@
 TCPMT ROUND 3: the cells, the tiers and the gaps are those of the design in force (the design
 record: 36 cells of 2.817 mm on a 6 x 6 grid at 3.709 mm pitch in production, four mixed tiers
 3011 um tall); the interleaving patterns are those of its n x n grid (tcpmt_decap_network.
-phase_names: rows, Latin squares, raster, spread), and the RECOMMENDED design is chosen by a
-declared rule: the interleaving + ring option of least nominal k_eq. The option list below
+phase_names: rows, Latin squares, two-group plans, raster, spread), and the RECOMMENDED design
+is chosen by a declared rule: the implementable interleaving + ring option of least nominal k_eq
+(RECOMMEND_RULE: one or two n-phase clock groups; m36: dual6, 12 phases). The option list below
 describes the round-2 49-cell build; the geometry numbers now follow the record.
 
 Placement options (configs/phase0nx/z1_physical.yaml; cell 2.3685 mm square at 3.165 mm pitch,
@@ -53,19 +54,31 @@ import design_record as DR                                          # noqa: E402
 CELL_MM, CELL_AREA = DR.cell_side_mm(), DR.cell_area_mm2()
 GAP_MM = (DR.grid_bbox_mm() - CELL_MM) / (DR.grid_n() - 1) - CELL_MM
 #: interleaving + ring options are compared by this rule (declared before the results). The
-#: candidates are the n-phase clock plans of the n x n grid (one phase per row, or a Latin
-#: square); a spread (one phase per cell, N = n^2 phases) is the interleaving limit, reported
-#: but not a clock plan. On the round-2 7 x 7 grid the rule returns i_latin7+c_ring (k_eq
+#: candidates are the IMPLEMENTABLE clock plans of the n x n grid: those one n-phase clock
+#: generates (one phase per row, or a Latin square) and those two interleaved n-phase clocks
+#: generate (dual<n>: the second group offset by half a phase step, 2n phases; review round 3,
+#: adopted by the authors for M = 36: i_dual6+c_ring, 12 phases). Plans of other group sizes
+#: (blk9, dual9) are reported alternatives; a spread (one phase per cell, N = n^2 phases) is
+#: the interleaving limit, reported but not a clock plan. On the round-2 7 x 7 grid (no dual
+#: plan: 49 cells do not split into 14 equal phases) the rule returns i_latin7+c_ring (k_eq
 #: 1.650; i_spread49+c_ring 1.617 is the limit), the round-2 recommendation.
-RECOMMEND_RULE = ("the n-phase interleaving + ring option (i_rows<n>+c_ring or "
-                  "i_latin<n>*+c_ring) of least nominal k_eq; i_spread<n^2> is the limit, "
-                  "not a candidate")
+RECOMMEND_RULE = ("the implementable interleaving + ring option of least nominal k_eq: clock "
+                  "plans of one n-phase group (i_rows<n>+c_ring, i_latin<n>*+c_ring) or of two "
+                  "interleaved n-phase groups (i_dual<n>+c_ring, 2n phases); other group sizes "
+                  "(blk9, dual9) are alternatives and i_spread<n^2> is the limit, not "
+                  "candidates")
+
+
+def candidate(name, n):
+    """True when RECOMMEND_RULE admits option `name` on the n x n grid."""
+    return name.endswith("+c_ring") and (name.startswith(f"i_rows{n}+")
+                                         or name.startswith(f"i_latin{n}")
+                                         or name == f"i_dual{n}+c_ring")
 
 
 def recommend(opts, n):
     """The option RECOMMEND_RULE selects among `opts` on the n x n grid."""
-    cand = {k: v for k, v in opts.items() if k.endswith("+c_ring")
-            and (k.startswith(f"i_rows{n}+") or k.startswith(f"i_latin{n}"))}
+    cand = {k: v for k, v in opts.items() if candidate(k, n)}
     return min(cand, key=lambda k: (cand[k]["k_eq_nominal"], k))
 L_CONN_NH = {"a1": 0.10, "b_level1": 0.45, "b_level2": 0.85, "c": 0.15}
 ESR_SILICON_OHM = 0.10      # ASSUMPTION (no published ESR in the cached data); immaterial at 20 nF
@@ -264,16 +277,64 @@ def ball_currents(i_crit_a=1.5):
             "k_eq": ev["k_eq"], "ball_rms": b,
             "I_ball_rms_max_A": b["I_rms_max_A"],
             "I_ball_closure_rule_A": dc_max * ev["k_eq"],
+            "I_ball_dc_max_A": dc_max, "I_total_dc_A": b["I_total_dc_A"],
+            "I_ball_A": max(b["I_rms_max_A"], dc_max * ev["k_eq"]),
             "passes_rms": b["I_rms_max_A"] <= i_crit_a,
             "passes_closure_rule": dc_max * ev["k_eq"] <= i_crit_a}
     out["note"] = ("I_ball_closure_rule_A = the DC peak ball current x k_eq, as the count "
                    "closure takes it; I_ball_rms_max_A = the largest ball RMS from the "
-                   "harmonic port solution (level-%d reduction, hot network scale)" % NW.LEVEL)
+                   "harmonic port solution (level-%d reduction, hot network scale); I_ball_A = "
+                   "the worse of the two (review round 3: the closure criterion); all at the "
+                   "S0 case's 48-V current I_total_dc_A (they scale with it)" % NW.LEVEL)
+    return out
+
+
+def ball_rms_at_counts(counts, i_crit_a=1.5):
+    """{n: worst-ball currents} of the RECOMMENDED plan + ring on Z1's package network with n
+    balls per rail (review round 3: the per-ball check the BGA closure uses beside the DC peak
+    x k_eq rule). The network's own count uses its balls; any other count the nearest-
+    symmetric selection of the lattice (as `limits`). Values at the S0 case's 48-V current
+    (I_total_dc_A); the caller scales to its own current."""
+    ph0 = recommended_phase()
+    f = CI.design()["f_sw_hz"]
+    _t, i = CI.phase_a_current("ramp_deff")
+    I = CI.harmonics(i)
+    l_nom = CI.loop_inductance_estimate()["nominal_pH"] * 1e-12
+    r_scale = CI.network_resistance()["loop_hot_ohm"] / NW.self_check()["R_loop_reduced_ohm"]
+    xy, _ = NW.ring_layout()
+    br, _ = part_branch_params("GRM31CC72A475KE11", 1, L_CONN_NH["c"])
+    pn = json.loads(NW.NETWORK.read_text())
+    out = {}
+    try:
+        for cnt in counts:
+            if int(cnt) == int(pn["matched_count"]):
+                NW.BALLS_OVERRIDE = None
+            else:
+                import physical_coords as PCO
+                import pkg_rdl_network as K
+                cand = PCO.bga_lattice_sites(K.architecture_cutout_mm("Z1"))
+                s = PCO.select_power_sites(cand, PCO.physical_cell_coordinates(), int(cnt),
+                                           int(cnt), "nearest_symmetric")
+                NW.BALLS_OVERRIDE = (s["supply"], s["return"])
+            ev = NW.evaluate(I, f, l_nom, ring_branch=br, phase=ph0, ring_xy=xy,
+                             r_scale=r_scale)
+            b = NW.ball_rms(I, f, l_nom, ring_branch=br, phase=ph0, ring_xy=xy,
+                            r_scale=r_scale)
+            dc_max = max(b[r]["I_dc_max_A"] for r in ("supply", "return"))
+            out[int(cnt)] = {"option": f"i_{ph0}+c_ring", "k_eq": ev["k_eq"],
+                             "I_ball_rms_max_A": b["I_rms_max_A"], "I_ball_dc_max_A": dc_max,
+                             "I_ball_closure_rule_A": dc_max * ev["k_eq"],
+                             "I_total_dc_A": b["I_total_dc_A"],
+                             "passes_rms": b["I_rms_max_A"] <= i_crit_a,
+                             "balls": "network" if NW.BALLS_OVERRIDE is None else
+                                      "nearest_symmetric selection"}
+    finally:
+        NW.BALLS_OVERRIDE = None
     return out
 
 
 def robustness(seed=1, trials=4):
-    """The recommended option (its Latin interleaving + ring) against (i) the X7S temperature
+    """The recommended option (its clock plan + ring) against (i) the X7S temperature
     factor at its class limit and (ii) random per-cell phase errors."""
     ph0 = recommended_phase()
     d = CI.design()
@@ -357,7 +418,7 @@ def robustness(seed=1, trials=4):
         I2 = CI.harmonics(i2)
         out["waveform"][mode] = {"k_open": CI.k_of(I2), "k_eq": NW.evaluate(
             I2, f, l_nom, ring_branch=br, phase=ph0, ring_xy=xy, r_scale=r_scale)["k_eq"]}
-    out["note"] = ("random phase errors decorrelate the cells that share a Latin phase, so they "
+    out["note"] = ("random phase errors decorrelate the cells that share a clock phase, so they "
                    "lower k_eq slightly; the ring's capacitance hardly matters once interleaved; "
                    "a few nF at each cell for the switching loop costs < 0.02 in k; a flat or "
                    "nominal-D pulse raises k_eq by 0.06-0.09")
@@ -520,12 +581,20 @@ def limits():
     return out
 
 
+#: the limits study's own record (review round 3: written apart from input_decoupling.json,
+#: which production jobs read while the study runs)
+LIMITS_OUT = CI.JSON_OUT.with_name("decoupling_limits.json")
+
+
 def main():
     if sys.argv[1:2] == ["limits"]:
         out = limits()
-        doc = json.loads(CI.JSON_OUT.read_text()) if CI.JSON_OUT.exists() else {}
-        doc["placement_limits"] = out
-        CI.JSON_OUT.write_text(json.dumps(doc, indent=1, default=float))
+        pl = json.loads(CI.JSON_OUT.read_text()).get("placement") or {}
+        LIMITS_OUT.write_text(json.dumps({
+            "what": "what any clock plan or ring can do for Z1's package k_eq on the network in "
+                    "force (tcpmt_decap_placement.limits)", "design": CI.design(),
+            "recommended": pl.get("recommended"), "recommend_rule": pl.get("recommend_rule"),
+            "placement_limits": out}, indent=1, default=float))
         print(json.dumps({k: out[k] for k in ("interleaving_limit", "ring_bounds",
                                               "would_close")}, indent=1, default=float))
         return

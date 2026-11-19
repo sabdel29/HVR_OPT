@@ -141,11 +141,13 @@ def commit_k():
     # the re-closure at this k (final_closure_pkg_network.py reclose), when it is of this
     # design and k: its closure supersedes the network's (which may be at an earlier k)
     bp = ROOT / "final_closure" / "bga_count_production.json"
+    bc = None
     if bp.is_file():
         b = json.loads(bp.read_text())
         if ((b.get("design") or {}).get("design") == DR.name()
                 and abs(float(b.get("k_eq") or 0.0) - float(rec["k_eq"])) < 1e-9):
             fb, k_closed, n_closed = b.get("match_fallback"), b["k_eq"], b["matched_count"]
+            bc = b.get("ball_currents_at_count")
     if n_closed != pn["matched_count"]:
         raise SystemExit(f"the re-closure at k = {k_closed:.3f} moves the count to {n_closed}: "
                          f"rebuild package_network.json (final_closure_pkg_network.py "
@@ -156,12 +158,24 @@ def commit_k():
         "k_open": ci["waveform"]["ramp_deff"]["k_open"], "P_ring_esr_W": rec["P_ring_esr_W"],
         "rule": pl.get("recommend_rule"),
         "bga": {"n_per_rail": n_closed,
-                "status": fb["status"] if fb else "CLOSED",
+                "status": (bc["status"] if bc else fb["status"] if fb else "CLOSED"),
                 "closed_at_k_eq": k_closed,
                 "verified_peak_A": (fb or {}).get("verified_peak_A"),
                 "criterion_A": pn["meta"].get("criterion_A_per_ball"),
                 "r_loop_mohm": {a: pn["loop"][a]["r_loop_ohm"] * 1e3 for a in pn["loop"]}},
         "ball_rms": s.get("ball_currents_recommended"),
+        # review round 3: both per-ball currents at the closed count and the worse of them
+        # (the closure criterion), from the re-closure at this k
+        **({"bga_closure": {
+            "rule": bc.get("rule"), "n_per_rail": bc["n_per_rail"], "status": bc["status"],
+            "criterion_A": bc["criterion_A"],
+            "I_ball_closure_rule_A": {a: v["I_ball_closure_rule_A"]
+                                      for a, v in bc["per_arch"].items()},
+            "I_ball_rms_max_A": {a: v["I_ball_rms_max_A"] for a, v in bc["per_arch"].items()
+                                 if v["I_ball_rms_max_A"] is not None},
+            "I_ball_A": {a: v["I_ball_A"] for a, v in bc["per_arch"].items()},
+            "passes": {a: v["passes"] for a, v in bc["per_arch"].items()},
+            "basis": {a: v["basis"] for a, v in bc["per_arch"].items()}}} if bc else {}),
         "source": (f"decoupling chain (tcpmt_decap_circuit/placement/framework) on the "
                    f"design's own package network and S0 case ({s0.name}, mesh rung "
                    f"r{''.join(str(x) for x in ref) if ref else '?'}), "

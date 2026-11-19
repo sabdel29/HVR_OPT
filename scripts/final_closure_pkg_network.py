@@ -49,6 +49,41 @@ MATCH_SCEN = os.environ.get("TCPMT_BGA_MATCH_SCEN", PRODUCTION_SCEN)
 SCEN = ("DC_AVERAGE", "HV_S0", "HV_SDEC", "HV_S1", "HV_S2")
 WORKERS = int(os.environ.get("FC_WORKERS", "32"))
 PRODUCTION_OUT = OUT / "bga_count_production.json"
+#: REVIEW ROUND 3 (declared): the 48-V BGA uses AT MOST this many balls per rail; the legal
+#: counts, the screen and every closure are restricted to it
+N_MAX_PER_RAIL = 220
+#: REVIEW ROUND 3 (declared): the per-ball current the closure checks is the WORSE of the DC
+#: peak x k_eq rule (the screen's peak fraction x the production RMS current) and Z1's
+#: worst-ball RMS from the harmonic port model (tcpmt_decap_placement.ball_rms_at_counts: DC +
+#: harmonics of every ball, the recommended decoupling); both are reported. The port model
+#: needs the decoupling chain, so the worse-of rule applies in the re-closure (reclose, after
+#: the chain); the network build (main) closes on the DC rule and records that.
+CLOSURE_RULE = ("per-ball current = max(DC peak x k_eq, worst-ball RMS of the port model "
+                "(Z1)) <= 1.5 A, at most 220 balls per rail")
+
+
+#: set by reclose(): the re-closure takes the k the results root's own decoupling chain
+#: derived (chain_k) before the record's committed k
+_K_FROM_CHAIN = False
+
+
+def chain_k():
+    """(k_eq, band) the decoupling chain of the results root derived (input_decoupling.json
+    summary.recommended), when that record is of the design in force; else None. In a campaign
+    this is the production-mesh k of the campaign's own Z1 S0 case."""
+    import design_record as DR
+    f = (Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
+         / "input_decoupling.json")
+    try:
+        d = json.loads(f.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    des = (d.get("circuit") or {}).get("design") or {}
+    rec = (d.get("summary") or {}).get("recommended") or {}
+    if (des.get("design_record") == DR.name() and des.get("n_cell") == DR.n_vr()
+            and rec.get("k_eq")):
+        return float(rec["k_eq"]), [float(x) for x in rec["k_eq_band"]]
+    return None
 
 
 def production_k():
@@ -56,8 +91,13 @@ def production_k():
     `decoupling` block (TCPMT round 3: the committed production k of the design in force; the
     campaign's decoupling chain re-derives it, tcpmt_design_comparison.py kcheck), else the
     summary of input_decoupling.json (the round-2 source). Nominal and the loop-inductance
-    band."""
+    band. Review round 3: in the re-closure (_K_FROM_CHAIN) the k the root's own decoupling
+    chain derived comes first, so the BGA verdict is at the k of the production cases."""
     import design_record as DR
+    if _K_FROM_CHAIN:
+        ck = chain_k()
+        if ck:
+            return ck
     dec = DR.get().get("decoupling") or {}
     if dec.get("k_eq"):
         return float(dec["k_eq"]), [float(x) for x in dec.get("k_eq_band") or
@@ -92,7 +132,7 @@ def scenarios(arch):
             "HV_S1": rb["hv_S1_a"], "HV_S2": rb["hv_S2_a"]}
 
 
-def legal_counts(arch, n_max=250):
+def legal_counts(arch, n_max=N_MAX_PER_RAIL):
     cells = PCO.physical_cell_coordinates()
     cand = PCO.bga_lattice_sites(K.architecture_cutout_mm(arch))
     ok = []
@@ -195,6 +235,32 @@ def fallback_count(screen, counts, kw, scen=None):
                                          / v[a][f"i_ball_max_A__{scen}"] for a in v}}
 
 
+def verified_peaks(n, kw):
+    """{arch: verified (level-2) production ball current at n per rail} (DC peak x k_eq)."""
+    vj = [(a, rail, n, VERIFY_LEVEL, kw) for a in ("Z1", "Z2") for rail in ("supply", "return")]
+    return {r["arch"]: r[f"i_ball_max_A__{PRODUCTION_SCEN}"] for r in peak_rows(run_pool(vj))}
+
+
+def port_model_ball_rms(n):
+    """Z1's worst-ball RMS at n balls per rail from the harmonic port model of the recommended
+    decoupling (tcpmt_decap_placement.ball_rms_at_counts, at the decoupling chain's S0
+    current), scaled to the production 48-V current of Z1 (production_i_avg; the S0 current
+    when no production case exists). Needs the decoupling chain of this root (placement in
+    input_decoupling.json); without it the RMS is not evaluated (recorded)."""
+    try:
+        import tcpmt_decap_placement as PL
+        if "placement" not in json.loads(PL.CI.JSON_OUT.read_text()):
+            raise FileNotFoundError("no placement in input_decoupling.json")
+        raw = PL.ball_rms_at_counts([n], I_CRIT_A)[int(n)]
+    except (FileNotFoundError, KeyError) as e:
+        return {"I_ball_rms_max_A": None, "note": f"not evaluated: {e}"}
+    i_prod = production_i_avg("Z1")
+    scale = (i_prod / raw["I_total_dc_A"]) if i_prod else 1.0
+    return {**raw, "I_ball_rms_max_A_at_S0_current": raw["I_ball_rms_max_A"],
+            "I_ball_rms_max_A": raw["I_ball_rms_max_A"] * scale,
+            "I_avg_production_A": i_prod, "scale_to_production": scale}
+
+
 def screen_from_csv(path=None):
     """The committed exhaustive screen (per-ball peak fraction per ampere at every legal count),
     re-scored at the CURRENT scenario currents: the fractions do not depend on the current."""
@@ -204,6 +270,8 @@ def screen_from_csv(path=None):
     with open(path) as fh:
         for r in csv.DictReader(fh):
             a, n, pk = r["arch"], int(r["n_per_rail"]), float(r["peak_fraction"])
+            if n > N_MAX_PER_RAIL:                    # declared cap (review round 3)
+                continue
             row = {"arch": a, "n_per_rail": n, "level": int(r["level"]),
                    "terminal_mode": r["terminal_mode"], "peak_fraction": pk}
             for s, i in cur[a].items():
@@ -217,14 +285,21 @@ def reclose():
     """Re-close the count at the production waveform WITHOUT regenerating the network: the
     committed level-1 screen re-scored at the HV_SDEC current, the candidate minima verified on
     the resolved level (n0 - 2, n0, n0 + 2, for both architectures), the matched count, and the
-    count at the upper end of the k_eq band. Writes bga_count_production.json; the campaign then
-    regenerates package_network.json at the matched count with main()."""
+    count at the upper end of the k_eq band. Review round 3: at most N_MAX_PER_RAIL balls per
+    rail, and the matched count must also pass Z1's worst-ball RMS of the port model
+    (CLOSURE_RULE: the worse of the two currents); both currents are recorded at the count
+    (ball_currents_at_count). Writes bga_count_production.json; the campaign then regenerates
+    package_network.json at the matched count with main()."""
+    global _K_FROM_CHAIN
     t0 = time.time()
+    _K_FROM_CHAIN = True
     screen = screen_from_csv()
     counts = {a: sorted(r["n_per_rail"] for r in screen if r["arch"] == a) for a in ("Z1", "Z2")}
     kw = {"mode": "VIN_PAD"}
     k, band = production_k()
     out = {"criterion_A_per_ball": I_CRIT_A, "k_eq": k, "k_eq_band": band,
+           "k_source": ("the results root's decoupling chain (input_decoupling.json)"
+                        if chain_k() else "the design record's committed k"),
            "currents_A": {a: scenarios(a) for a in ("Z1", "Z2")},
            "i_avg_production_A": {a: production_i_avg(a) for a in ("Z1", "Z2")},
            "screen": "bga_count_screen.csv (level %d), re-scored" % SCREEN_LEVEL,
@@ -260,11 +335,57 @@ def reclose():
               <= I_CRIT_A]
         out["closure"][f"{a}__{PRODUCTION_SCEN}__k_hi"] = {"k": band[1],
                                                          "n_min_screen": min(ok) if ok else None}
-    out["matched_count"] = matched_count(screen, counts, kw, PRODUCTION_SCEN)
+    # the matched count under CLOSURE_RULE: the DC peak x k_eq rule for both architectures
+    # (screen + level-2 verification), then Z1's worst-ball RMS of the port model at that count
+    n_dc = matched_count(screen, counts, kw, PRODUCTION_SCEN)
+    out["closure_rule"] = CLOSURE_RULE
+    out["n_max_per_rail"] = N_MAX_PER_RAIL
+    out["matched_count_dc_rule"] = n_dc
+    rms = {}
+
+    def rms_at(n):
+        if n not in rms:
+            rms[n] = port_model_ball_rms(n)
+        return rms[n]
+    matched = None
+    if n_dc is not None:
+        common = sorted(set(counts["Z1"]) & set(counts["Z2"]))
+        for n in (m for m in common if m >= n_dc):
+            if not all(next((r[f"pass__{PRODUCTION_SCEN}"] for r in screen
+                             if r["arch"] == a and r["n_per_rail"] == n), False)
+                       for a in ("Z1", "Z2")):
+                continue
+            v = verified_peaks(n, kw)
+            if not all(v[a] <= I_CRIT_A for a in v):
+                continue
+            r_ = rms_at(n)
+            if r_.get("I_ball_rms_max_A") is not None and r_["I_ball_rms_max_A"] <= I_CRIT_A:
+                matched = n
+                break
+    out["matched_count"] = matched
     out["match_fallback"] = None
-    if out["matched_count"] is None:
+    if matched is None:
         out["matched_count"], out["match_fallback"] = fallback_count(screen, counts, kw,
                                                                      PRODUCTION_SCEN)
+    n = out["matched_count"]
+    v = (out["match_fallback"] or {}).get("verified_peak_A") or verified_peaks(n, kw)
+    r_ = rms_at(n)
+    cur = {}
+    for a in ("Z1", "Z2"):
+        i_rms = r_.get("I_ball_rms_max_A") if a == "Z1" else None
+        worse = max(x for x in (v[a], i_rms) if x is not None)
+        cur[a] = {"I_ball_closure_rule_A": v[a], "I_ball_rms_max_A": i_rms, "I_ball_A": worse,
+                  "passes": worse <= I_CRIT_A,
+                  "basis": ("max(verified DC peak x k_eq, worst-ball RMS of the port model)"
+                            if a == "Z1" else "verified DC peak x k_eq (no port model of Z2's "
+                                              "feed: the closure rule alone)")}
+    out["ball_currents_at_count"] = {
+        "n_per_rail": n, "criterion_A": I_CRIT_A, "per_arch": cur, "port_model": r_,
+        "status": "CLOSED" if all(c["passes"] for c in cur.values()) else "NOT_CLOSED",
+        "rule": CLOSURE_RULE}
+    if out["match_fallback"]:
+        out["match_fallback"]["rms_port_model_A"] = {"Z1": cur["Z1"]["I_ball_rms_max_A"]}
+        out["match_fallback"]["worse_of_rules_A"] = {a: cur[a]["I_ball_A"] for a in cur}
     out["matched_count_S0"] = matched_count(screen, counts, kw, "HV_S0")
     out["wall_s"] = round(time.time() - t0, 1)
     import design_record as DR
@@ -454,6 +575,10 @@ def main():
            "convergence": conv, "loop": loop, "controlled": ctrl,
            "sensitivity": sens_rows}
     res["meta"]["screen_reused"] = "--reuse-screen" in sys.argv[1:]
+    res["meta"]["n_max_per_rail"] = N_MAX_PER_RAIL
+    res["meta"]["closure_rule"] = (CLOSURE_RULE + "; this build closes on the DC peak x k_eq "
+                                   "rule (the port model needs the decoupling chain): the "
+                                   "re-closure (reclose) applies the worse-of rule")
     import design_record as DR
     res["meta"]["design"] = DR.design_identity()          # the cell grid it was closed on
     (OUT / "package_network.json").write_text(json.dumps(res, indent=1))

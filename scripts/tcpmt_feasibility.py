@@ -26,11 +26,21 @@ LIMITS (declared, with sources; LIMITS below)
                       chain recorded it, else the die layer of the converged field
   solder law          the hottest joint of the all-site search <= 125 C (the calibrated range of
                       the SAC305 law; the critical joint is reported too); solidus 217 C
-  BGA provisioning    (a) every power ball at or below 1.5 A (the 1.5-A engineering rule) at the
-                      case's own waveform: the solved per-ball peak fraction of the package
-                      network at the case's ball count x the case's 48-V RMS current (Z1; Z2's
-                      BGA-ring feed); Z3's 1-V balls at DC with equal sharing; (b) at least 25 %
+  BGA provisioning    (a) the PEAK PER-BALL CURRENT against the 1.5-A target (the engineering
+                      rule) at the case's own waveform: the solved per-ball peak fraction of the
+                      package network at the case's ball count x the case's 48-V RMS current
+                      (the DC peak x k rule; Z1, Z2's BGA-ring feed) and, for Z1 in the
+                      production state, the worst-ball RMS of the harmonic port model
+                      (input_decoupling.json ball_currents_recommended, scaled to the case's
+                      48-V current); the check takes the WORSE of the two and reports both;
+                      Z3's 1-V balls at DC with equal sharing. BGA_POLICY decides how it enters
+                      (review round 3; the authors decide): "hard" = a filter (fails the
+                      candidate), "requirement" (default) = a stated requirement on the package,
+                      reported but not a filter. Every record carries its verdict under BOTH
+                      policies and the rankings are stored for both (apply_bga_policy applies
+                      either to a stored feasibility.json without rerunning). (b) at least 25 %
                       of the package's own ball sites left for signal and auxiliary nets
+                      (always a filter)
   static IR drop      per-rail MAXIMUM static drop of the 1-V path <= 30 mV (tcpmt_ir_drop)
   operating point     the E-T fixed point (and, for the interface feedback, the feedback
                       iteration) converged; a run-away has no operating point
@@ -75,6 +85,20 @@ LIMITS = {"gan_Tj_C": 150.0, "ron_fit_max_C": 125.0, "mlcc_C": 125.0, "inductor_
           "die_C": 105.0, "solder_cal_C": 125.0, "solder_solidus_C": 217.0,
           "bga_A_per_ball": 1.5, "bga_power_site_fraction_max": 0.75,
           "ir_drop_mV_per_rail": 30.0}
+#: REVIEW ROUND 3 -- how the 1.5-A per-ball target enters the stage (the authors decide later;
+#: both are evaluated on every record, so post-processing applies either without reruns):
+#:   hard          the per-ball check is a FILTER: a case above 1.5 A per ball is infeasible
+#:   requirement   the per-ball check is a STATED REQUIREMENT on the package (the current each
+#:                 ball must carry), reported beside the verdict, not a filter (DEFAULT)
+BGA_POLICIES = {"hard": "the per-ball check is a filter: above 1.5 A per ball the candidate is "
+                        "infeasible",
+                "requirement": "the per-ball check is a stated requirement on the package (the "
+                               "current each ball must carry), reported, not a filter"}
+BGA_POLICY = os.environ.get("TCPMT_BGA_POLICY", "requirement")
+if BGA_POLICY not in BGA_POLICIES:
+    raise SystemExit(f"TCPMT_BGA_POLICY={BGA_POLICY!r}: not one of {sorted(BGA_POLICIES)}")
+#: the checks the policy switches (everything else is always a filter)
+BGA_POLICY_CHECKS = ("bga_current",)
 LIMIT_SOURCES = {
     "gan_Tj_C": "per device: the T_J maximum of the part's EPC datasheet, Maximum Ratings "
                 "(DEVICES[part]['Tj_max_C']; 150 C for every part of the table); this value "
@@ -428,10 +452,39 @@ def scen_ratio(scen):
     return float(FL.SCEN_RATIO[scen])
 
 
+def port_model_ball_rms(case, n):
+    """(worst-ball RMS in A at the case's 48-V current, source) from the decoupling chain's
+    port model (input_decoupling.json summary.ball_currents_recommended: DC + harmonics of every
+    ball, the recommended clock plan + ring), when it describes this case: the production
+    state (the implemented decoupling) on the same ball count. The port model's value is at
+    the chain's S0 current (I_total_dc_A) and scales with the 48-V current."""
+    if case.get("scenario") != TC.SCEN["SDEC"]:
+        return None, "reference state: the scenario factor (closure rule) alone"
+    f = TR / "input_decoupling.json"
+    try:
+        b = json.loads(f.read_text())["summary"]["ball_currents_recommended"]
+    except (FileNotFoundError, KeyError, TypeError, json.JSONDecodeError):
+        return None, "no port-model ball currents in input_decoupling.json"
+    if int(b.get("n_per_rail") or -1) != int(n) or not b.get("I_total_dc_A"):
+        return None, (f"the port model's ball currents are for {b.get('n_per_rail')} balls per "
+                      f"rail, not {n}")
+    i_avg = case.get("i_hv_avg_a") or ((1000.0 + case["P_loss_w"]) / 48.0
+                                       if case.get("P_loss_w") else None)
+    if i_avg is None:
+        return None, "no 48-V current in the case"
+    scale = float(i_avg) / float(b["I_total_dc_A"])
+    return float(b["I_ball_rms_max_A"]) * scale, (
+        f"port model worst-ball RMS {b['I_ball_rms_max_A']:.3f} A at {b['I_total_dc_A']:.2f} A, "
+        f"x {scale:.4f} to the case's {float(i_avg):.2f} A")
+
+
 def bga_check(arch, case, feed=None):
-    """[(name, value, limit, ok, basis)] of the BGA provisioning of one case."""
+    """[(name, value, limit, ok, basis, extra)] of the BGA provisioning of one case. The
+    per-ball check (bga_current) takes the WORSE of the DC peak x k rule and, where the port
+    model describes the case, the worst-ball RMS (review round 3); both are in `extra`."""
     rows = {r["term"]: r for r in case.get("ledger_rows") or []}
     out = []
+    lim = LIMITS["bga_A_per_ball"]
     if "P_BGA_supply" in rows:                       # BGA-fed 48 V (Z1, the Z2BF control)
         import re
         n = int(re.search(r"N=(\d+)", rows["P_BGA_supply"]["conductor"]).group(1))
@@ -440,13 +493,20 @@ def bga_check(arch, case, feed=None):
         frac, src = peak_fraction("Z2" if arch == "Z2BF" else "Z1", n,
                                   R / net if net else None)
         sites = BGA_SITES.get(arch, 1369)
-        out.append(("bga_current", None if frac is None else frac * i_rms,
-                    LIMITS["bga_A_per_ball"],
-                    None if frac is None else frac * i_rms <= LIMITS["bga_A_per_ball"],
-                    f"48-V balls: {n}/rail, peak fraction {frac} ({src}) x I_rms {i_rms:.2f} A"))
+        dc = None if frac is None else frac * i_rms
+        rms, rsrc = port_model_ball_rms(case, n) if arch == "Z1" else (None, "no port model")
+        val = max((x for x in (dc, rms) if x is not None), default=None)
+        out.append(("bga_current", val, lim, None if val is None else val <= lim,
+                    f"48-V balls: {n}/rail; worse of the DC peak x k rule (peak fraction "
+                    f"{frac} ({src}) x I_rms {i_rms:.2f} A = "
+                    + (f"{dc:.3f} A" if dc is not None else "n/a")
+                    + ") and the worst-ball RMS (" + (f"{rms:.3f} A, " if rms is not None
+                                                      else "") + rsrc + ")",
+                    {"I_ball_closure_rule_A": dc, "I_ball_rms_max_A": rms,
+                     "n_per_rail": n, "I_rms_48V_A": i_rms}))
         out.append(("bga_sites", 2 * n / sites, LIMITS["bga_power_site_fraction_max"],
                     2 * n / sites <= LIMITS["bga_power_site_fraction_max"],
-                    f"{2 * n} of {sites} sites carry 48 V"))
+                    f"{2 * n} of {sites} sites carry 48 V", {}))
     elif arch == "Z3":
         z = case.get("z3_design") or {}
         b = z.get("bga_1v") or {}
@@ -460,10 +520,12 @@ def bga_check(arch, case, feed=None):
             i_dc = float(b["I_per_ball_A_dc_equal_sharing"])
             out.append(("bga_current", i_dc, LIMITS["bga_A_per_ball"],
                         i_dc <= LIMITS["bga_A_per_ball"] * (1 + 1e-9),
-                        f"1-V balls: {n}/rail at DC, equal sharing (the ledger's assumption)"))
+                        f"1-V balls: {n}/rail at DC, equal sharing (the ledger's assumption)",
+                        {"I_ball_dc_equal_sharing_A": i_dc, "n_per_rail": n}))
             out.append(("bga_sites", 2 * n / tot, LIMITS["bga_power_site_fraction_max"],
                         2 * n / tot <= LIMITS["bga_power_site_fraction_max"],
-                        f"{2 * n} of {tot} sites carry 1 V; {tot - 2 * n} left for signals"))
+                        f"{2 * n} of {tot} sites carry 1 V; {tot - 2 * n} left for signals",
+                        {}))
     elif arch == "Z2" and feed:
         # the package-internal boundary has no power ball; the BGA-RING FEED the platform
         # accounting uses carries the 48 V through the package's ring of balls
@@ -478,10 +540,13 @@ def bga_check(arch, case, feed=None):
         val = None if (frac is None or i_rms is None) else frac * i_rms
         out.append(("bga_current", val, LIMITS["bga_A_per_ball"],
                     None if val is None else val <= LIMITS["bga_A_per_ball"],
-                    f"BGA-ring feed: {n}/rail, peak fraction {frac} ({src}) x I_rms {i_rms}"))
+                    f"BGA-ring feed: {n}/rail, peak fraction {frac} ({src}) x I_rms {i_rms} "
+                    "(DC peak x k rule; no port model of the ring feed)",
+                    {"I_ball_closure_rule_A": val, "I_ball_rms_max_A": None,
+                     "n_per_rail": n}))
         out.append(("bga_sites", 2 * n / BGA_SITES["Z2"], LIMITS["bga_power_site_fraction_max"],
                     2 * n / BGA_SITES["Z2"] <= LIMITS["bga_power_site_fraction_max"],
-                    f"{2 * n} of {BGA_SITES['Z2']} sites carry the 48-V feed"))
+                    f"{2 * n} of {BGA_SITES['Z2']} sites carry the 48-V feed", {}))
     return out
 
 
@@ -592,8 +657,11 @@ def evaluate(path, case, use_fields=True, feed=None):
     put("solder_law", jt["T_hottest_C"], LIMITS["solder_cal_C"],
         f"hottest joint of the all-site search (critical joint {jt['T_critical_C']})")
     put("solder_solidus", jt["T_hottest_C"], LIMITS["solder_solidus_C"], "hottest joint")
-    for name, val, lim, ok, basis in bga_check(arch, case, feed if arch == "Z2" else None):
-        checks[name] = {"value": val, "limit": lim, "ok": ok, "basis": basis}
+    for name, val, lim, ok, basis, extra in bga_check(arch, case,
+                                                      feed if arch == "Z2" else None):
+        checks[name] = {"value": val, "limit": lim, "ok": ok, "basis": basis, **extra}
+        if name in BGA_POLICY_CHECKS:
+            checks[name]["policy_switched"] = True
     try:
         import tcpmt_ir_drop as IR
         d = IR.static_drop(case, n_vr=des["n_vr"])
@@ -607,15 +675,44 @@ def evaluate(path, case, use_fields=True, feed=None):
     except Exception as e:                                   # noqa: BLE001 -- recorded
         checks["ir_drop"] = {"value": None, "limit": LIMITS["ir_drop_mV_per_rail"], "ok": None,
                              "basis": f"not evaluated: {str(e)[-200:]}"}
-    fails = sorted(k for k, c in checks.items() if c["ok"] is False)
-    open_ = sorted(k for k, c in checks.items() if c["ok"] is None)
-    verdict = "infeasible" if fails else ("unresolved" if open_ else "feasible")
+    by_policy = {p: verdict_under(checks, p) for p in BGA_POLICIES}
+    verdict, fails, open_ = (by_policy[BGA_POLICY]["verdict"], by_policy[BGA_POLICY]["fails"],
+                             by_policy[BGA_POLICY]["unresolved"])
     return {"case": Path(path).name, "path": TC.rel(path), "arch": arch,
             "scenario": case.get("scenario"), "state": state, "tier": tier, "role": role,
             "variant": _variant_name(path), "P_loss_w": case.get("P_loss_w"), "T_max_C": t_max,
             "design": des, "regions": reg, "region_source": src, "die_T_max_C": dmax,
             "junction_C": tj, "joints": jt, "checks": checks, "fails": fails,
-            "unresolved": open_, "verdict": verdict}
+            "unresolved": open_, "verdict": verdict, "bga_policy": BGA_POLICY,
+            "by_bga_policy": by_policy, "bga_requirement": bga_requirement(arch, checks)}
+
+
+def verdict_under(checks, policy):
+    """{verdict, fails, unresolved} of a record's checks under a BGA policy: under 'hard'
+    every check filters; under 'requirement' the BGA_POLICY_CHECKS are reported only."""
+    if policy not in BGA_POLICIES:
+        raise ValueError(f"BGA policy {policy!r}: not one of {sorted(BGA_POLICIES)}")
+
+    def filters(name):
+        return policy == "hard" or name not in BGA_POLICY_CHECKS
+    fails = sorted(k for k, c in checks.items() if c["ok"] is False and filters(k))
+    open_ = sorted(k for k, c in checks.items() if c["ok"] is None and filters(k))
+    return {"verdict": "infeasible" if fails else ("unresolved" if open_ else "feasible"),
+            "fails": fails, "unresolved": open_}
+
+
+def bga_requirement(arch, checks):
+    """The per-ball current the case asks of its BGA, stated as a requirement (the
+    'requirement' policy's reading of bga_current), with both currents where they exist."""
+    c = checks.get("bga_current")
+    if not c or c.get("value") is None:
+        return None
+    return {"I_ball_A": c["value"], "target_A": c["limit"], "meets_target": c["ok"],
+            "I_ball_closure_rule_A": c.get("I_ball_closure_rule_A"),
+            "I_ball_rms_max_A": c.get("I_ball_rms_max_A"),
+            "statement": (f"{arch}: each power ball must carry {c['value']:.2f} A "
+                          + ("(within" if c["ok"] else "(above")
+                          + f" the {c['limit']:g}-A target)")}
 
 
 # ------------------------------------------------------------------ omitted-loss margins
@@ -730,10 +827,13 @@ def gap_shift_reconciliation(omit):
 
 
 # ------------------------------------------------------------------ ranking
-def rankings(records):
+def rankings(records, policy=None):
     """Per input state and cooling: feasible candidates ranked by package-internal loss; the
-    excluded ones with the limits they fail (or leave unresolved)."""
+    excluded ones with the limits they fail (or leave unresolved). `policy`: a BGA policy (the
+    records' by_bga_policy verdicts); None = the policy each record was evaluated under."""
     out = {}
+    if policy is not None:
+        records = [dict(r, **r["by_bga_policy"][policy]) for r in records]
     by_case = {r["path"]: r for r in records}
     for st in TC.STATES:
         for t in TC.TIERS:
@@ -757,6 +857,42 @@ def rankings(records):
                                 "missing": missing,
                                 "complete": not missing}
     return out
+
+
+def summary_of(records, policy=None):
+    """Case counts and the infeasible / unresolved lists (under `policy`, or the policy each
+    record was evaluated under), with both policies' lists beside them."""
+    def pick(r, p):
+        return r["by_bga_policy"][p]["verdict"] if p else r["verdict"]
+    out = {"n_cases": len(records),
+           "infeasible": sorted(r["case"] for r in records if pick(r, policy) == "infeasible"),
+           "unresolved": sorted(r["case"] for r in records if pick(r, policy) == "unresolved")}
+    out["by_bga_policy"] = {p: {"infeasible": sorted(r["case"] for r in records
+                                                      if pick(r, p) == "infeasible"),
+                                "unresolved": sorted(r["case"] for r in records
+                                                     if pick(r, p) == "unresolved")}
+                            for p in BGA_POLICIES}
+    return out
+
+
+def apply_bga_policy(doc, policy):
+    """A stored feasibility document under another BGA policy, without rerunning anything:
+    each record's verdict / fails / unresolved from its by_bga_policy entry, the compared
+    cells, the rankings and the summary. Returns a new document."""
+    import copy
+    if policy not in BGA_POLICIES:
+        raise ValueError(f"BGA policy {policy!r}: not one of {sorted(BGA_POLICIES)}")
+    d = copy.deepcopy(doc)
+    for r in d["records"]:
+        r.update(r["by_bga_policy"][policy])
+        r["bga_policy"] = policy
+    for key, r in d["cases"].items():
+        r.update(r["by_bga_policy"][policy])
+        r["bga_policy"] = policy
+    d["rankings"] = d["rankings_by_bga_policy"][policy]
+    d["summary"] = summary_of(d["records"])
+    d["bga_policy"] = dict(d["bga_policy"], in_force=policy)
+    return d
 
 
 # ------------------------------------------------------------------ main
@@ -788,6 +924,8 @@ def main(argv=None):
         r = evaluate(f, c, use_fields, feed)
         r["role"], r["verdict"] = "variant", "infeasible"
         r["fails"] = sorted(set(r["fails"]) | {"operating_point"})
+        for v in r["by_bga_policy"].values():
+            v["verdict"], v["fails"] = "infeasible", sorted(set(v["fails"]) | {"operating_point"})
         records.append(r)
         print(f"{r['verdict']:11s} runaway    {f.name}", flush=True)
     rk = rankings(records)
@@ -806,11 +944,16 @@ def main(argv=None):
            "cases": cases, "rankings": rk, "records": records,
            "z2_ring_feed": feed,
            "omitted_gap_shift": gap_shift_reconciliation(omit),
-           "summary": {"n_cases": len(records),
-                       "infeasible": sorted(r["case"] for r in records
-                                            if r["verdict"] == "infeasible"),
-                       "unresolved": sorted(r["case"] for r in records
-                                            if r["verdict"] == "unresolved")}}
+           "bga_policy": {"in_force": BGA_POLICY, "policies": BGA_POLICIES,
+                          "switched_checks": list(BGA_POLICY_CHECKS),
+                          "how": "every record carries by_bga_policy (verdict, fails, "
+                                 "unresolved under each policy) and bga_requirement; "
+                                 "rankings_by_bga_policy holds both rankings; "
+                                 "tcpmt_feasibility.apply_bga_policy(doc, policy) re-derives "
+                                 "the verdicts, rankings and summary of a stored document "
+                                 "(env TCPMT_BGA_POLICY selects the policy of a run)"},
+           "rankings_by_bga_policy": {p: rankings(records, p) for p in BGA_POLICIES},
+           "summary": summary_of(records)}
     OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
     print(f"wrote {OUT}: {len(records)} cases, "
           f"{len(out['summary']['infeasible'])} infeasible, "

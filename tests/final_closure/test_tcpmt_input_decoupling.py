@@ -129,7 +129,9 @@ def test_recommend_rule_reproduces_the_round2_choice():
 def test_clock_plans_use_every_phase_equally():
     """Every clock plan of the grid in force (review round 3: 9, 12 and 18 phases on the 6 x
     6 grid besides the 6-phase Latin squares) drives each of its phases from the same number
-    of cells, and the new plans are reported options, not candidates of the declared rule."""
+    of cells; of the new plans only the two-group 6-phase plan (dual6, 12 phases: adopted by
+    the authors) is a candidate of the declared rule, the 9- and 18-phase plans and the
+    spread are reported options."""
     import numpy as np
     import tcpmt_decap_network as NW
     import tcpmt_decap_placement as PL
@@ -144,7 +146,10 @@ def test_clock_plans_use_every_phase_equally():
         assert {"blk9", "dual6", "dual9"} <= set(NW.phase_names())
         fake = {f"i_{p}+c_ring": {"k_eq_nominal": 3.0 - 0.1 * j}
                 for j, p in enumerate(NW.phase_names())}
-        assert not PL.recommend(fake, n).startswith(("i_blk", "i_dual", "i_spread"))
+        assert PL.recommend(fake, n) == "i_dual6+c_ring"
+        assert not any(PL.candidate(f"i_{p}+c_ring", n) for p in ("blk9", "dual9", "spread36",
+                                                                  "raster36"))
+        assert NW.GROUP_PLANS["dual6"] == 2 * n
 
 
 def test_loss_matrices_reproduce_the_port_model(dec):

@@ -319,7 +319,16 @@ def summary():
     rec = opt[RECOMMENDED]
     n_cells = CI.N_CELL
     ph = pl.get("recommended_phase") or "latin7"
-    n_ph = int("".join(ch for ch in ph.split("_")[0] if ch.isdigit()) or 7)
+    # the plan's clock-phase count on the grid in force (dual6: 12, two 6-phase groups)
+    import tcpmt_decap_network as NW
+    n_ph = NW.phase_denominator(ph) if pl.get("recommended_phase") else 7
+    if ph.startswith("latin"):
+        how = f": a Latin square, every row and column holds all {n_ph}"
+    elif ph.startswith("dual"):
+        how = (f": two interleaved {n_ph // 2}-phase clock groups on the checkerboard, the "
+               f"second offset by half a phase step")
+    else:
+        how = ""
     lkey = f"L{pl['loop_inductance_pH_evaluated'][1]:.0f}pH"
     ring = rec["parts"]
     led = fw["ledger_at_S0_temperatures"]
@@ -343,9 +352,8 @@ def summary():
         "recommended": {
             "option": RECOMMENDED,
             "interleaving": (f"{n_ph} clock phases, pattern {ph} over the {pl.get('grid', '')} "
-                             f"cells ({360.0 / n_ph:.1f} deg apart)"
-                             + (": a Latin square, every row and column holds all "
-                                f"{n_ph}" if ph.startswith("latin") else "")),
+                             f"cells ({360.0 / n_ph:.1f} deg apart){how}"),
+            "n_clock_phases": n_ph, "phase_pattern": ph, "rule": pl.get("recommend_rule"),
             "part": "Murata GRM31CC72A475KE11", "url": ring["url"],
             "count": ring["n_ring"], "count_per_cell": ring["n_ring"] / n_cells,
             "C_each_48V_25C_uF": ring["C_part_48V_25C_uF"],
@@ -372,8 +380,10 @@ def summary():
     s["ball_currents_recommended"] = {
         "n_per_rail": bc["n_per_rail"], "criterion_A": bc["criterion_A"],
         **{k: bc["options"][f"i_{ph}+c_ring"][k] for k in (
-            "k_eq", "I_ball_rms_max_A", "I_ball_closure_rule_A", "passes_rms",
-            "passes_closure_rule")}}
+            "k_eq", "I_ball_rms_max_A", "I_ball_closure_rule_A", "I_ball_dc_max_A",
+            "I_total_dc_A", "I_ball_A", "passes_rms", "passes_closure_rule")},
+        "basis": "port model at the S0 case's 48-V current (I_total_dc_A); I_ball_A = the worse "
+                 "of the worst-ball RMS and the DC peak x k_eq (the closure criterion)"}
     data = PA.load()
     s["parts_table_input_48V"] = [
         {k: x[k] for k in x if k not in ("roles",)} | {"url": data["parts"][x["part"]]["url"]}
