@@ -137,14 +137,27 @@ def commit_k():
     s0 = ROOT / "final_closure" / ci["design"]["source"].split("I_in from ")[-1]
     ref = json.loads(s0.read_text()).get("refine") if s0.is_file() else None
     fb = pn.get("match_fallback")
+    k_closed, n_closed = pn["meta"].get("production_k_eq"), pn["matched_count"]
+    # the re-closure at this k (final_closure_pkg_network.py reclose), when it is of this
+    # design and k: its closure supersedes the network's (which may be at an earlier k)
+    bp = ROOT / "final_closure" / "bga_count_production.json"
+    if bp.is_file():
+        b = json.loads(bp.read_text())
+        if ((b.get("design") or {}).get("design") == DR.name()
+                and abs(float(b.get("k_eq") or 0.0) - float(rec["k_eq"])) < 1e-9):
+            fb, k_closed, n_closed = b.get("match_fallback"), b["k_eq"], b["matched_count"]
+    if n_closed != pn["matched_count"]:
+        raise SystemExit(f"the re-closure at k = {k_closed:.3f} moves the count to {n_closed}: "
+                         f"rebuild package_network.json (final_closure_pkg_network.py "
+                         f"--reuse-screen) and rerun the decoupling chain first")
     entry = {
         "k_eq": rec["k_eq"], "k_eq_band": rec["k_eq_band"], "option": rec["option"],
         "phase_pattern": pl.get("recommended_phase"), "n_ring": rec["count"],
         "k_open": ci["waveform"]["ramp_deff"]["k_open"], "P_ring_esr_W": rec["P_ring_esr_W"],
         "rule": pl.get("recommend_rule"),
-        "bga": {"n_per_rail": pn["matched_count"],
+        "bga": {"n_per_rail": n_closed,
                 "status": fb["status"] if fb else "CLOSED",
-                "closed_at_k_eq": pn["meta"].get("production_k_eq"),
+                "closed_at_k_eq": k_closed,
                 "verified_peak_A": (fb or {}).get("verified_peak_A"),
                 "criterion_A": pn["meta"].get("criterion_A_per_ball"),
                 "r_loop_mohm": {a: pn["loop"][a]["r_loop_ohm"] * 1e3 for a in pn["loop"]}},
