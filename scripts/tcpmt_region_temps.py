@@ -43,10 +43,15 @@ def region_maxima(m, Tn, arch, tiles):
         return float(np.nanmax(Tn[nodes - 1]))
 
     out = {}
+    as_list = lambda v: list(v) if isinstance(v, (list, tuple)) else [v]       # noqa: E731
     for k in DEVICE_KEYS:
         if k in lay:
-            out[f"{k}_in_cells"] = tmax(E._region_elems(m, [lay[k]], True, tiles))
-    conv = [lay[k] for k in DEVICE_KEYS if k in lay] + ([lay["cout"]] if "cout" in lay else [])
+            out[f"{k}_in_cells"] = tmax(E._region_elems(m, as_list(lay[k]), True, tiles))
+    # TCPMT round 3: every converter tier (mixed tiers hold several device classes)
+    conv = list(lay.get("converter") or dict.fromkeys(
+        x for k in DEVICE_KEYS + ("cout",) if k in lay for x in as_list(lay[k])))
+    for ln in lay.get("converter", []):
+        out[f"tier:{ln}_in_cells"] = tmax(E._region_elems(m, [ln], True, tiles))
     ids_c = np.concatenate([PE._layer_elems(m, x) for x in conv])
     ids_in = E._region_elems(m, conv, True, tiles)
     out["encapsulant"] = tmax(np.setdiff1d(ids_c, ids_in))

@@ -33,15 +33,33 @@ import tcpmt_decap_circuit as CI                                    # noqa: E402
 VARIANT = "z1_input_decoupling"
 SCEN_KEY = "HV_SDEC"
 SCEN_HOTLOOP = "HV_SDEC_HOTLOOP"
-RECOMMENDED = "i_latin7+c_ring"
+#: TCPMT round 3: the recommended option is the placement's (its declared rule: the
+#: interleaving + ring option of least nominal k_eq on the grid of the design in force);
+#: "i_latin7+c_ring" was the 49-cell (7 x 7) choice of review round 2
+RECOMMENDED_49 = "i_latin7+c_ring"
 
 
 def placement():
     return json.loads(CI.JSON_OUT.read_text())["placement"]
 
 
+def recommended_option():
+    return placement().get("recommended") or RECOMMENDED_49
+
+
+class _Rec(str):
+    """The recommended option name, resolved from input_decoupling.json when used."""
+
+
+def __getattr__(name):                     # module attribute RECOMMENDED (PEP 562)
+    if name == "RECOMMENDED":
+        return recommended_option()
+    raise AttributeError(name)
+
+
 def recommended_k():
     pl = placement()
+    RECOMMENDED = recommended_option()
     o = pl["options"][RECOMMENDED]
     return {"option": RECOMMENDED, "k_eq": o["k_eq_nominal"], "k_eq_band": o["k_eq_band"],
             "P_ring_esr_W": o[f"L{pl['loop_inductance_pH_evaluated'][1]:.0f}pH"].get(
@@ -73,12 +91,13 @@ def _register(k_eq, k_hot, p_esr, key=SCEN_KEY):
         L = o_ledger(arch, scen, temps, i_hv_avg_a, pad_case)
         p_esr = FL._decap_esr.get(scen, 0.0)
         if scen in FL._decap_esr and arch == "Z1" and p_esr > 0:
+            hs = FL.LAYERS["Z1"]["hs"]
             L["rows"].append({"arch": arch, "scenario": scen, "term": "P_Cin_ring_ESR",
                               "conductor": "input capacitors (ring, 1206 100 V X7S) ESR",
                               "rail": "48V", "P_w": float(p_esr), "R_ohm": None, "I_a": None,
                               "current_type": "harmonic currents of the port model",
                               "model": "datasheet R(f) at 48 V x port-model currents",
-                              "deposit_layer": FL.LAYERS["Z1"]["hs"],
+                              "deposit_layer": ",".join(hs) if isinstance(hs, list) else hs,
                               "evidence": "DATASHEET_PORT_MODEL", "maturity": "BOUNDED",
                               "note": "tcpmt_decap_placement; deposited in-cell (conservative)"})
             L["P_loss_w"] += float(p_esr)
@@ -100,9 +119,13 @@ def ledger_consequence():
            "S0_reproduction_rel": L0["P_loss_w"] / s0["P_loss_w"] - 1.0,
            "k_open_cell": kh, "recommended": rk, "cases": {}}
     pl = placement()
+    RECOMMENDED = recommended_option()
     lkey = f"L{pl['loop_inductance_pH_evaluated'][1]:.0f}pH"
-    for j, name in enumerate((RECOMMENDED, "c_ring_1206_X7S", "i_latin7", "i_spread49+c_ring",
-                              "b_gap_0402_X7R", "none_sync")):
+    ph = pl.get("recommended_phase") or "latin7"
+    spread = next((k for k in pl["options"] if k.startswith("i_spread") and
+                   k.endswith("+c_ring")), None)
+    names = [RECOMMENDED, "c_ring_1206_X7S", f"i_{ph}", spread, "b_gap_0402_X7R", "none_sync"]
+    for j, name in enumerate(n for n in names if n and n in pl["options"]):
         o = pl["options"][name]
         k = o["k_eq_nominal"]
         p_esr = o[lkey].get("P_ring_esr_W", 0.0) + o[lkey].get("P_local_esr_W", 0.0)
@@ -130,6 +153,7 @@ def ledger_consequence():
             "P_cap_esr_W": p_esr, "I_48_avg_A": Lk["i_hv_avg_a"]}
     # the recommended design across its loop-inductance band (k_eq and ring ESR at each end)
     o = pl["options"][RECOMMENDED]
+    out["recommended_option"] = RECOMMENDED
     band = {}
     for j, lp in enumerate(pl["loop_inductance_pH_evaluated"]):
         ev = o[f"L{lp:.0f}pH"]
@@ -198,8 +222,8 @@ def register():
     S.VARIANTS[VARIANT] = dict(
         kind="full", archs=("Z1",), apply=apply_variant, gates=[],
         nature="PHYSICAL_DESIGN (input decoupling made physical)",
-        what=(f"Z1 with the physically realisable input decoupling ({RECOMMENDED}): package "
-              f"48 V network at k_eq = {rk['k_eq']:.3f} (49-cell port model), cell-internal "
+        what=(f"Z1 with the physically realisable input decoupling ({recommended_option()}): package "
+              f"48 V network at k_eq = {rk['k_eq']:.3f} ({len(CI.NW_cells()) if hasattr(CI, 'NW_cells') else CI.N_CELL}-cell port model), cell-internal "
               f"VIN->HS runs at k_open = {k_open():.3f}, ring-capacitor ESR "
               f"{rk['P_ring_esr_W']:.3f} W as a ledger row"))
     return S
@@ -239,7 +263,7 @@ def collect():
     # the other options, ESTIMATED (not run) by this run's own thermal amplification
     # (coupled / fixed-temperature loss rise) and its joint-temperature slope
     led = doc["framework"]["ledger_at_S0_temperatures"]
-    rise_fix = led["cases"][RECOMMENDED]["delta_vs_S0_W"]
+    rise_fix = led["cases"][recommended_option()]["delta_vs_S0_W"]
     amp = (c["P_loss_w"] - s0["P_loss_w"]) / rise_fix
     slope = ((crit["T_C"] - out["S0"]["T_joint_C"]) / (c["P_loss_w"] - s0["P_loss_w"])
              if crit else None)
@@ -279,7 +303,11 @@ def summary():
     rip_at = {f"{c:g}uF": _row(rows, 100, c)["ripple_sw_pp_V"] for c in (0.1, 0.3, 0.56, 1.0,
                                                                          3.0, 10.0)}
     opt = pl["options"]
+    RECOMMENDED = recommended_option()
     rec = opt[RECOMMENDED]
+    n_cells = CI.N_CELL
+    ph = pl.get("recommended_phase") or "latin7"
+    n_ph = int("".join(ch for ch in ph.split("_")[0] if ch.isdigit()) or 7)
     lkey = f"L{pl['loop_inductance_pH_evaluated'][1]:.0f}pH"
     ring = rec["parts"]
     led = fw["ledger_at_S0_temperatures"]
@@ -302,10 +330,12 @@ def summary():
                            for n, o in opt.items()},
         "recommended": {
             "option": RECOMMENDED,
-            "interleaving": "7 clock phases, Latin-square assignment (phase = (row + 3 col) "
-                            "mod 7, 51.4 deg apart): every row and column holds all seven",
+            "interleaving": (f"{n_ph} clock phases, pattern {ph} over the {pl.get('grid', '')} "
+                             f"cells ({360.0 / n_ph:.1f} deg apart)"
+                             + (": a Latin square, every row and column holds all "
+                                f"{n_ph}" if ph.startswith("latin") else "")),
             "part": "Murata GRM31CC72A475KE11", "url": ring["url"],
-            "count": ring["n_ring"], "count_per_cell": ring["n_ring"] / 49,
+            "count": ring["n_ring"], "count_per_cell": ring["n_ring"] / n_cells,
             "C_each_48V_25C_uF": ring["C_part_48V_25C_uF"],
             "C_each_48V_105C_uF": ring["C_total_uF"],
             "C_total_48V_105C_uF": ring["C_ring_total_uF"],
@@ -354,9 +384,10 @@ def summary():
         f"needs about {k12['100']:.1f} uF per cell at 48 V, and the Z1 stack has no room for it "
         f"(the cell tiers and the 0.8-mm gaps hold only nanofarads of 100-V, 125-C capacitance, "
         f"which resonate with the package inductance and raise k). The decoupling is "
-        f"therefore made physical as seven interleaved clock phases over the 7 x 7 cells and a "
+        f"therefore made physical as {n_ph} interleaved clock phases over the "
+        f"{pl.get('grid', '')} cells and a "
         f"ring of {r['count']} 1206 100-V X7S capacitors ({r['C_total_48V_105C_uF']:.0f} uF at "
-        f"48 V and 105 C) outside the cell grid: a 49-cell model of the package sheets gives "
+        f"48 V and 105 C) outside the cell grid: a {n_cells}-cell model of the package sheets gives "
         f"k = {r['k_eq']:.2f} ({r['k_eq_band'][0]:.2f}-{r['k_eq_band'][1]:.2f} over the loop-"
         f"inductance band), and {tail}.")
     s["spec_table_row"] = {
@@ -367,16 +398,16 @@ def summary():
         "effective_uF_at_48V": f"{r['C_each_48V_25C_uF']:.2f} uF each at 25 C, "
                                f"{r['C_each_48V_105C_uF']:.2f} at 105 C; "
                                f"{r['C_total_48V_105C_uF']:.0f} uF total "
-                               f"({r['C_total_48V_105C_uF'] / 49:.2f} per cell)",
+                               f"({r['C_total_48V_105C_uF'] / n_cells:.2f} per cell)",
         "footprint": "3.2 x 1.6 mm",
-        "height": "1.6 mm (1.9 mm max) < 1.973 mm converter layer",
-        "placement": "two rows in the ring between the cell grid (21.36 mm) and the package "
-                     "edge (30 mm); cell clocks in 7 interleaved phases (Latin square)"}
+        "height": "1.6 mm (1.9 mm max) < the converter layer",
+        "placement": ("two rows in the ring between the cell grid (21.36 mm) and the package "
+                      f"edge (30 mm); cell clocks in {n_ph} interleaved phases ({ph})")}
     s["figure_caption"] = (
         f"C_in is the package input capacitance ({r['count']} x 1206 100-V X7S, "
         f"{r['C_total_48V_105C_uF']:.0f} uF at 48 V) in the ring outside the cell grid, since a "
         f"cell has room for only nanofarads of 100-V capacitance; the phase-A input pulse (S1) "
-        f"is smoothed in the package network by interleaving the cells' clocks in seven phases, "
+        f"is smoothed in the package network by interleaving the cells' clocks in {n_ph} phases, "
         f"which with C_in holds k = {r['k_eq']:.2f} (bare pulse: "
         f"{s['k_open_cell_waveform']:.1f}).")
     doc["summary"] = s

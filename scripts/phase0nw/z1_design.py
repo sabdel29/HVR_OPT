@@ -183,9 +183,17 @@ def _compiled(p: str):
         if str(R / _p) not in sys.path:
             sys.path.insert(0, str(R / _p))
     import kw1
+    import electrical as EL
     d = declared(p)
-    des, _g, why = kw1.design_1kw(m_vr=int(d["n_vr"]), j=float(d["j_target_A_mm2"]),
-                                  topology=topology(p))
+    # TCPMT round 3: a candidate states the converter rules it was synthesized under
+    # (design.rules: 'legacy' = the published rules, or {RULE: value} overrides of the
+    # production rules); without it the production rules of this process apply
+    r = d.get("rules")
+    rules = (dict(EL.LEGACY_RULES) if r == "legacy" else
+             {**EL.LEGACY_RULES, **EL.production_rules(), **(r or {})})
+    with EL.pinned_rules(rules):
+        des, _g, why = kw1.design_1kw(m_vr=int(d["n_vr"]), j=float(d["j_target_A_mm2"]),
+                                      topology=topology(p))
     if des is None:
         raise DesignError(f"kw1 compiles no {d['topology']} design at M = {d['n_vr']}: {why}")
     a = des.arch

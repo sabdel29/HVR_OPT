@@ -109,6 +109,7 @@ BSAT_TYM5, MUR_TYM5 = 1.25, 15.0          # source of the library inductor, Tabl
 def q_oss_nC(dev: str, v: float) -> float:
     """Output charge at V_DS = v: digitized curves where the datasheet plots them, otherwise
     the product-table value scaled as sqrt(v / V_test), V_test = VDSmax/2 (EPC convention)."""
+    dev = DIGITIZED_STAND_IN.get(dev, dev)            # round 3: declared stand-in curves
     if dev == "EPC2014C":
         d = DIG["EPC2014C_coss"]
         return float(np.interp(v, [0] + d["V_DS_V"], [0] + d["Q_OSS_nC"]))
@@ -129,9 +130,20 @@ VSD_SHIFT = {  # figure-to-table offset at low current: datasheet table V_SD(0.5
 }
 
 
+#: TCPMT round 3: a device without digitized curves takes the digitized device of the same
+#: role and family as a DECLARED STAND-IN (the decided low side EPC2055 and the M = 25
+#: neighbour's EPC2366: the EPC2057 curves; recorded in the output)
+DIGITIZED_STAND_IN = {"EPC2055": "EPC2057", "EPC2366": "EPC2057"}
+
+
+def _dig(dev: str) -> str:
+    return dev if f"{dev}_reverse" in DIG else DIGITIZED_STAND_IN.get(dev, dev)
+
+
 def v_sd(dev: str, i_a: float, t_j: float, variant: str = "figure") -> float:
     """Third-quadrant drop at V_GS = 0 (EPC recommends 0 V off): datasheet reverse
     characteristic, linear in T between the 25 and 125 C curves (extrapolated beyond)."""
+    dev = _dig(dev)
     d = DIG[f"{dev}_reverse"]
     I = np.array(d["I_A"], float)
     v25 = float(np.interp(i_a, I, d["V_SD_25C_V"]))
@@ -384,21 +396,29 @@ def caps_from_rerun():
 
 
 # --------------------------------------------------------------------------- analysis
+def n_cells() -> int:
+    """The regulator count of the design in force (THE design record; 36 in production)."""
+    import design_record as DR
+    return DR.n_vr()
+
+
 def production_design():
-    rows = {r["M"]: r for r in dse_rows(CASE_D)}
-    r = rows[49]
-    capmap = caps_from_rerun()
-    cap = capmap.get(49, ("Murata-GCM21-10uF-25V", IND_NAME))[0]
-    des = design(r["N"], r["K"], r["K_A"], r["f_sw_Hz"], I_SYS / 49, r["hs"], r["ls"], cap)
-    # check: the model's own 25 C loss for these parameters reproduces case D
-    lr = V2.compute_total_loss(
-        V2.VRArchitecture(N=des["N"], K=des["K"], K_A=des["K_A"], B_array=des["B"], D=des["D"],
-                          component_count=15),
-        V2.LossModelInputs(hs_device=_dev(r["hs"]), ls_device=_dev(r["ls"]),
-                           inductor=IND[IND_NAME], capacitor=CAP[cap], I_out=des["I_vr"],
-                           V_out=V_OUT, V_in=V_IN, f_sw=des["f"]))
-    des["model_loss_25C_per_vr_w"] = lr.total_loss
-    des["case_D_loss_per_vr_w"] = r["conv_loss_total_W"] / 49
+    """The production converter of the design record (TCPMT round 3: no longer the DSE row at
+    M = 49): topology, parts, f_sw and the capacitor, checked against the record's 25-C
+    conversion loss with the compiled design (design_record.compiled)."""
+    import design_record as DR
+    e = DR.get()
+    M = int(e["n_vr"])
+    t = e["topology"]
+    des = design(int(t["N"]), int(t["K"]), int(t["K_A"]), float(e["f_sw_hz"]), I_SYS / M,
+                 e["hs_part"], e["ls_part"], e["capacitor"])
+    comp = DR.compiled()
+    des["model_loss_25C_per_vr_w"] = float(comp.loss_25c_w)
+    des["record_loss_per_vr_w"] = float(e["conversion_25C_W"]) / M
+    des["M"] = M
+    des["design"] = DR.name()
+    des["digitized_stand_in"] = {d: DIGITIZED_STAND_IN[d] for d in (e["hs_part"], e["ls_part"])
+                                 if d in DIGITIZED_STAND_IN}
     return des
 
 
@@ -423,7 +443,7 @@ ALPHA_HS, ALPHA_LS = 6.0e-3, 8.0e-3     # 1/K, scripts/phase0d/electrical.py (da
 
 
 def modeled_conv_dPdT(des, t):
-    """d(modeled converter loss)/dT per tier [W/K] for the 49-cell system, from the model's
+    """d(modeled converter loss)/dT per tier [W/K] for the system of the design in force, from the model's
     own conduction decomposition (scripts/phase0mr/ledger.py converter_decomposition) and
     the TCs the ledger uses; switching and ESR terms carry no temperature dependence."""
     N, B = des["N"], des["B"]
@@ -434,8 +454,9 @@ def modeled_conv_dPdT(des, t):
     corr_coef = (4 * B[-1] - 1) / N if B[-1] > 1 else 3.0 / N
     c_ls = k * ((V_IN / (N ** 2 * V_OUT)) * sb2 + 2 * sb2 / N - corr_coef)
     c_ind = k * (V_IN / (N ** 2 * V_OUT)) * sb2
-    return {"hs": 49 * k * hs.R_DS_ON * ALPHA_HS, "ls": 49 * c_ls * ls.R_DS_ON * ALPHA_LS,
-            "ind": 49 * c_ind * RDC25 * ALPHA_CU, "caps": 0.0}
+    M = n_cells()
+    return {"hs": M * k * hs.R_DS_ON * ALPHA_HS, "ls": M * c_ls * ls.R_DS_ON * ALPHA_LS,
+            "ind": M * c_ind * RDC25 * ALPHA_CU, "caps": 0.0}
 
 
 def et_feedback(des, cases, arch_out, bundles=("low", "nominal", "high")):
@@ -466,14 +487,15 @@ def architecture_analysis(des, cases):
     out = {}
     for key, c in cases.items():
         rec = {}
+        M = n_cells()
         for bn in BUNDLES:
-            rec[bn] = omitted_terms(des, 49, c["T_ls_C"], c["T_ind_C"], c["T_caps_C"], bn)
-        rec["high_tc0"] = omitted_terms(des, 49, c["T_ls_C"], c["T_ind_C"], c["T_caps_C"], HIGH_TC0)
-        rec["nominal_core_ferrite_like"] = omitted_terms(des, 49, c["T_ls_C"], c["T_ind_C"],
+            rec[bn] = omitted_terms(des, M, c["T_ls_C"], c["T_ind_C"], c["T_caps_C"], bn)
+        rec["high_tc0"] = omitted_terms(des, M, c["T_ls_C"], c["T_ind_C"], c["T_caps_C"], HIGH_TC0)
+        rec["nominal_core_ferrite_like"] = omitted_terms(des, M, c["T_ls_C"], c["T_ind_C"],
                                                          c["T_caps_C"], "nominal", "ferrite_like")
-        rec["high_core_ferrite_like"] = omitted_terms(des, 49, c["T_ls_C"], c["T_ind_C"],
+        rec["high_core_ferrite_like"] = omitted_terms(des, M, c["T_ls_C"], c["T_ind_C"],
                                                       c["T_caps_C"], "high", "ferrite_like")
-        rec["dP_dT_nominal_w_per_K"] = term_tc(des, 49, c["T_ls_C"], c["T_ind_C"], c["T_caps_C"])
+        rec["dP_dT_nominal_w_per_K"] = term_tc(des, M, c["T_ls_C"], c["T_ind_C"], c["T_caps_C"])
         rec["notes"] = []
         if c["T_ls_C"] > 125:
             rec["notes"].append("T_ls above the 125 C datasheet curve: V_SD extrapolated "
@@ -660,6 +682,7 @@ def tie_analysis(rows, capmap, T):
 def e_oss_nJ(dev, v):
     """E_OSS(v) = int_0^v v' dQ_OSS from the digitized charge curves (EPC2014C from C_OSS);
     for the sqrt-scaled table devices Q = a sqrt(v) gives E = Q v / 3."""
+    dev = DIGITIZED_STAND_IN.get(dev, dev)            # round 3: declared stand-in curves
     if dev == "EPC2014C":
         d = DIG["EPC2014C_coss"]
         return float(np.interp(v, [0] + d["V_DS_V"], [0] + d["E_OSS_nJ"]))

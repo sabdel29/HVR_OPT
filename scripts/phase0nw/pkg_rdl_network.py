@@ -62,7 +62,7 @@ def sheet_resistance_ohm_sq(t_cu_mm: float, occupancy: float, T_c: float = T_REF
     return rho_cu(T_c) / (t_cu_mm * 1e-3 * occupancy)
 
 
-def cell_centres(cells: int = 49, pitch_mm: float | None = None):
+def cell_centres(cells: int | None = None, pitch_mm: float | None = None):
     """DELEGATES to the FE placement. The hard-coded 3.0 mm pitch was wrong: the actual
     placement is 3.165243 mm, so every earlier RDL result used the wrong grid."""
     import physical_coords as PCO
@@ -393,8 +393,14 @@ def architecture_cutout_mm(arch: str):
     return ARCHITECTURE_CUTOUT_MM[arch]
 
 
-#: the VR cell contact is the SQUARE tile footprint, not a disc of that width
-VR_TILE_SIDE_MM = 2.3685438564654024
+#: the VR cell contact is the SQUARE tile footprint, not a disc of that width. TCPMT round 3:
+#: the cell of the design in force (THE design record; 2.817 mm at M = 36), never a literal
+def _record_cell_side():
+    import design_record as DR
+    return DR.cell_side_mm()
+
+
+VR_TILE_SIDE_MM = _record_cell_side()
 
 RHO_C_CASES = {"CONTACT_L": 1.0e-6, "CONTACT_N": 1.0e-5, "CONTACT_H": 1.0e-4}
 RHO_C_STATUS = ("BOUNDED_ENGINEERING -- the DVPD source's own BGA and pad "

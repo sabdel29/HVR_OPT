@@ -208,7 +208,7 @@ def solve(q, r_s=1.0):
 
 def shape(problem, rail, h_mm):
     """kappa, kappa_V of one rail at R_s = 1 Ohm/sq, I = 1 A, and the loss share inside the
-    49 cell footprints."""
+    cell footprints of the design in force."""
     n, xc = grid(h_mm)
     extra = {}
     if problem == "land":
@@ -235,7 +235,7 @@ def network_check(t_land_um=(10.0, 20.0, 40.0, 100.0), t_land_c=79.0, t_board_c=
     import pad_interface as PAD
     import rms_currents as RMS
     from interconnect import rho_cu, rho_solder
-    i_a = RMS.cell_currents()["i_cell_out_rms_a"] * 49
+    i_a = RMS.cell_currents()["i_cell_out_rms_a"] * LS.N_CELL ** 2   # every cell of the grid
     n, xc = grid(h_mm)
     N = n * n
     r_ball = PAD.bga_ball_resistance_ohm(20.0) * rho_solder(t_bga_c) / rho_solder(20.0)

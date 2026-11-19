@@ -77,13 +77,25 @@ def lost_responses(cases):
 
 
 def critical(arch, scen):
-    """Critical joint of the PRODUCTION-mesh case (final_closure_physical_etm.case_path)."""
+    """Critical joint of the PRODUCTION-mesh case (final_closure_physical_etm.case_path; Z3:
+    the coupled land-side case, reference_case_path)."""
     sys.path.insert(0, str(R / "scripts"))
-    import final_closure_physical_etm as E
-    f = E.case_path(arch, scen)
+    f = reference_case_path(arch, scen)
     r = json.loads(f.read_text())
     c = dict(r["mechanics"]["joint_search"]["critical"], source=f.name)
     return c["du_um"], c["T_C"], c
+
+
+def reference_case_path(arch, scen):
+    """TCPMT round 3: the case a local study takes for (arch, scen). Z3 is ALWAYS the coupled
+    land-side case (cooling A base, tcpmt_cases.Z3_LAND), never the superseded uncoupled
+    production-boundary Z3 file; the other integrations keep their production-mesh case."""
+    import final_closure_physical_etm as E
+    if arch == "Z3":
+        import tcpmt_cases as TC
+        import final_closure_sensitivity as S
+        return S.OUT / f"etm_Z3_{scen}__{TC.Z3_LAND['A']}.json"
+    return E.case_path(arch, scen)
 
 
 def main():
@@ -102,8 +114,8 @@ def main():
            "norton_T_range_C": NORTON_T_RANGE_C, "cases": {}}
     sys.path.insert(0, str(R / "scripts"))
     import final_closure_physical_etm as E
-    # TCPMT revision: every integration with a production case (Z3 once it exists)
-    archs = [a for a in ("Z1", "Z2", "Z3") if E.case_path(a, scen).exists()]
+    # TCPMT revision: every integration with a production case (Z3: its coupled case)
+    archs = [a for a in ("Z1", "Z2", "Z3") if reference_case_path(a, scen).exists()]
     for arch in archs:
         du, tj, crit = critical(arch, scen)
         r = LR.run_case(f"{arch}_{scen}", du, tj)

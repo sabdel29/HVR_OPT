@@ -147,8 +147,10 @@ def _use_steps(inc0, split):
 
 
 def critical(arch, scen):
-    import final_closure_physical_etm as E
-    f = E.case_path(arch, scen)
+    """Critical joint of a case: the production-mesh case, Z3's coupled land-side case
+    (TCPMT round 3, final_closure_local_solder.reference_case_path)."""
+    import final_closure_local_solder as LS
+    f = LS.reference_case_path(arch, scen)
     c = json.loads(f.read_text())["mechanics"]["joint_search"]["critical"]
     return c["du_um"], c["T_C"], f.name
 

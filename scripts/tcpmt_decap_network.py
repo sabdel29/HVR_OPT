@@ -1,13 +1,16 @@
-"""TCPMT revision -- the 49 Z1 cells sharing the package 48 V network: port model.
+"""TCPMT revision -- the Z1 cells sharing the package 48 V network: port model.
 
-The one-cell circuit (tcpmt_decap_circuit) gives each cell 1/49 of the network, which is
+TCPMT round 3: the cells are those of the design in force (the design record: 36 on a 6 x 6
+grid in production) and the interleaving patterns are built for any n x n grid (phases()).
+
+The one-cell circuit (tcpmt_decap_circuit) gives each cell 1/N of the network, which is
 exact only when every cell sees the same path and all switch in phase. This module keeps the
 real network: the production supply and return sheets of package_network.json (refined FV
 grid, 5 um Cu at 30 %, the traced 0.2 mm VIN pads, the 54 + 54 BGA balls nearest the centre,
 rho_c contacts, ball resistance) are Kron-reduced onto their PORTS
 
     rail   the BGA balls' board side (one node per sheet)
-    cells  the 49 cell terminals (VIN pad on the supply sheet, mirrored pad on the return)
+    cells  the N cell terminals (VIN pad on the supply sheet, mirrored pad on the return)
     ring   one contact per ring capacitor (through-substrate vias to the land-side sheets)
 
 and every harmonic of the cells' input current is solved on the reduced network with:
@@ -151,16 +154,29 @@ def reduce_sheet(rail, ring_xy, level=LEVEL):
                                     "level": level}
 
 
+def _geometry_key():
+    """The cells and balls the reduction depends on (TCPMT round 3: a cached reduction of
+    another design's cells or another network's balls must never be reused)."""
+    import hashlib
+    h = hashlib.sha256()
+    for arr in (np.array(cells(), float).round(6), np.array(balls("supply"), float).round(6),
+                np.array(balls("return"), float).round(6)):
+        h.update(arr.tobytes())
+    return h.hexdigest()
+
+
 def port_matrices(ring_xy, refresh=False):
     key = np.array(ring_xy, float).round(6)
+    gk = _geometry_key()
     if CACHE.exists() and not refresh:
         z = np.load(CACHE)
-        if z["ring"].shape == key.shape and np.allclose(z["ring"], key):
+        if (z["ring"].shape == key.shape and np.allclose(z["ring"], key)
+                and "geometry" in z.files and str(z["geometry"]) == gk):
             return z["Gs"], z["Gr"]
     Gs, _ = reduce_sheet("supply", ring_xy)
     Gr, _ = reduce_sheet("return", ring_xy)
     CACHE.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(CACHE, Gs=Gs, Gr=Gr, ring=key)
+    np.savez_compressed(CACHE, Gs=Gs, Gr=Gr, ring=key, geometry=np.array(gk))
     return Gs, Gr
 
 
@@ -179,7 +195,7 @@ class Branch:
 def solve_harmonic(Gs, Gr, I_cells, f, l_loop_h, ring_branch=None, local_branch=None,
                    r_scale=1.0):
     """Node voltages and the two sheets' losses for one harmonic (f > 0) or DC (f = 0).
-    Ports per sheet: [rail, 49 cells, nr ring]; the return rail is the reference."""
+    Ports per sheet: [rail, N cells, nr ring]; the return rail is the reference."""
     Gs, Gr = Gs / r_scale, Gr / r_scale
     nc = len(I_cells)
     npt = Gs.shape[0]
@@ -233,26 +249,78 @@ def solve_harmonic(Gs, Gr, I_cells, f, l_loop_h, ring_branch=None, local_branch=
     return out
 
 
+#: Latin-square interleavings of an n x n grid: phase = (row + s col) mod n is a Latin square
+#: whenever gcd(s, n) = 1; the multipliers tried per grid (7 x 7: s = 3, the round-2 design)
+LATIN_S = {5: (1, 2), 6: (1, 5), 7: (3, 1, 2), 8: (1, 3)}
+
+
+def grid_n():
+    return int(round(math.sqrt(len(cells()))))
+
+
+def phase_names():
+    """The interleaving patterns defined for the grid of the design in force: rows<n>,
+    latin<n>[_s<k>] (one per Latin multiplier), latin<n>z (n = 6: the Z2 x Z3 product square
+    3 ((r + c) mod 2) + ((r + 2 c) mod 3)), raster<N>, spread<N> (N = n^2)."""
+    n = grid_n()
+    out = ["sync", f"rows{n}"]
+    for k, s_ in enumerate(LATIN_S.get(n, (1,))):
+        out.append(f"latin{n}" if k == 0 else f"latin{n}_s{s_}")
+    if n == 6:
+        out.append("latin6z")
+    out += [f"raster{n * n}", f"spread{n * n}"]
+    return out
+
+
+def _spread_step(n):
+    """Multiplier of the spread pattern: coprime with n^2, horizontal neighbours ~0.37 of a
+    period apart (18 for 7 x 7, the round-2 value)."""
+    N = n * n
+    return min((k for k in range(2, N) if math.gcd(k, N) == 1),
+               key=lambda k: (abs(k / N - 0.367), k))
+
+
 def phases(name):
-    """Per-cell switching phase (rad) on the 7 x 7 grid, cells in coordinate order."""
+    """Per-cell switching phase (rad) on the n x n grid of the design in force, cells in
+    coordinate order. Patterns: sync; rows<n> (one phase per row); latin<n>[_s<k>] ((row +
+    s col) mod n, a Latin square: every row and column holds all n phases); latin6z (the
+    Z2 x Z3 product Latin square, 6 x 6); raster<N> (row-major N phases); spread<N>."""
     cl = np.array(cells())
+    n = grid_n()
     xs = np.unique(np.round(cl[:, 0], 6))
     ys = np.unique(np.round(cl[:, 1], 6))
     col = np.searchsorted(xs, np.round(cl[:, 0], 6))
     row = np.searchsorted(ys, np.round(cl[:, 1], 6))
+    N = n * n
     if name == "sync":
         p, P = np.zeros(len(cl)), 1
-    elif name == "rows7":
-        p, P = row, 7
-    elif name == "latin7":
-        p, P = (row + 3 * col) % 7, 7
-    elif name == "raster49":
-        p, P = row * 7 + col, 49
-    elif name == "spread49":
-        p, P = ((row * 7 + col) * 18) % 49, 49
+    elif name == f"rows{n}":
+        p, P = row, n
+    elif name.startswith(f"latin{n}") and name != "latin6z":
+        s_ = int(name.split("_s")[1]) if "_s" in name else LATIN_S.get(n, (1,))[0]
+        if math.gcd(s_, n) != 1:
+            raise ValueError(f"{name}: (row + {s_} col) mod {n} is not a Latin square")
+        p, P = (row + s_ * col) % n, n
+    elif name == "latin6z" and n == 6:
+        p, P = 3 * ((row + col) % 2) + ((row + 2 * col) % 3), 6
+    elif name == f"raster{N}":
+        p, P = row * n + col, N
+    elif name == f"spread{N}":
+        p, P = ((row * n + col) * _spread_step(n)) % N, N
     else:
-        raise ValueError(name)
+        raise ValueError(f"{name}: not a pattern of the {n} x {n} grid ({phase_names()})")
     return 2 * np.pi * np.asarray(p, float) / P
+
+
+def phase_denominator(name):
+    """Number of distinct phase steps of a pattern (time-domain sample counts must be
+    divisible by it)."""
+    n = grid_n()
+    if name == "sync":
+        return 1
+    if name.startswith(("raster", "spread")):
+        return n * n
+    return n
 
 
 def evaluate(I_harm, f_sw, l_loop_h, ring_branch=None, local_branch=None, phase="sync",
@@ -305,14 +373,15 @@ def evaluate(I_harm, f_sw, l_loop_h, ring_branch=None, local_branch=None, phase=
     return res
 
 
-def td_verify(i_period, f_sw, l_loop_h, c_ring, esr_ring, l_ring, phase="latin7",
+def td_verify(i_period, f_sw, l_loop_h, c_ring, esr_ring, l_ring, phase=None,
               periods=20, r_scale=1.0, ring_xy=None):
-    """Time-domain check of the 49-cell port model: trapezoidal MNA on the reduced sheets with
-    the board inductor (rail -> board node) and every ring branch (series ESR-L-C, constant
-    ESR) as companion models, the 49 cells as phase-shifted current sources. Returns the
+    """Time-domain check of the port model: trapezoidal MNA on the reduced sheets with the
+    board inductor (rail -> board node) and every ring branch (series ESR-L-C, constant ESR)
+    as companion models, the cells as phase-shifted current sources. Returns the
     loss-equivalent k of the sheets over the last period. `i_period` must have a sample count
-    divisible by the phase denominator (7 or 49) so the shifts are exact."""
+    divisible by the phase denominator (phase_denominator) so the shifts are exact."""
     ring_xy = ring_xy if ring_xy is not None else ring_layout()[0]
+    phase = phase or f"latin{grid_n()}"
     Gs, Gr = port_matrices(ring_xy)
     Gs, Gr = Gs / r_scale, Gr / r_scale
     nc = len(cells())

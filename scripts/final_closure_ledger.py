@@ -125,6 +125,17 @@ def layers_for(arch):
 
 LAYERS = {a: layers_for(a) for a in ("Z1", "Z2", "Z2BF")}
 
+
+def input_end_layer(arch):
+    """The converter layer of the INPUT-end tier (the high side, 48 V): the record's first
+    tier (Z1: next to the bottom substrate; Z2/Z3: the deepest tier)."""
+    lay = LAYERS[arch]
+    first = DR.tiers()[0]["name"]
+    hits = [ln for ln in lay["converter"] if ln.endswith("_" + first)]
+    if hits:
+        return hits[0]
+    return lay["hs"][0] if isinstance(lay["hs"], list) else lay["hs"]
+
 #: architecture identity, carried into every artifact so the two Z2s can never be confused
 VARIANT = {"Z1": "Z1_EMBEDDED", "Z2": "Z2_DIRECT_FEED", "Z2BF": "Z2_BGA_FED_CONTROL"}
 HV_FEED = {"Z1": "BGA_FED", "Z2": "DIRECT_FEED", "Z2BF": "BGA_FED"}

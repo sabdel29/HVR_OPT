@@ -1,5 +1,12 @@
 """TCPMT revision -- where Z1's input capacitance can physically go, and the k it achieves.
 
+TCPMT ROUND 3: the cells, the tiers and the gaps are those of the design in force (the design
+record: 36 cells of 2.817 mm on a 6 x 6 grid at 3.709 mm pitch in production, four mixed tiers
+3011 um tall); the interleaving patterns are those of its n x n grid (tcpmt_decap_network.
+phase_names: rows, Latin squares, raster, spread), and the RECOMMENDED design is chosen by a
+declared rule: the interleaving + ring option of least nominal k_eq. The option list below
+describes the round-2 49-cell build; the geometry numbers now follow the record.
+
 Placement options (configs/phase0nx/z1_physical.yaml; cell 2.3685 mm square at 3.165 mm pitch,
 gaps 0.797 mm, converter layer 1973 um, substrate 30 mm, cell grid 21.36 mm):
 
@@ -39,8 +46,14 @@ T_PARTS_C = 105.0           # converter-tier temperature at S0 (T_conv 107.7 C; 
 #: X7S temperature factor at 105 C under bias where Murata has no curve for the part: the
 #: 0402 X7S (GRM155C71H104JE19) hot DC-bias curve gives 0.89; the X7S class limit is 0.78
 X7S_T_FACTOR = (0.89, 0.78)
-GAP_MM = 3.1652 - 2.3685
-CELL_MM, CELL_AREA = 2.3685, 5.61
+sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+import design_record as DR                                          # noqa: E402
+#: the cell and the inter-cell gap of the design in force (uniform placement: the grid spans
+#: the die minus the edge keep-out, design_record.grid_bbox_mm)
+CELL_MM, CELL_AREA = DR.cell_side_mm(), DR.cell_area_mm2()
+GAP_MM = (DR.grid_bbox_mm() - CELL_MM) / (DR.grid_n() - 1) - CELL_MM
+#: interleaving + ring options are compared by this rule (declared before the results)
+RECOMMEND_RULE = "the interleaving + ring option (i_<pattern>+c_ring) of least nominal k_eq"
 L_CONN_NH = {"a1": 0.10, "b_level1": 0.45, "b_level2": 0.85, "c": 0.15}
 ESR_SILICON_OHM = 0.10      # ASSUMPTION (no published ESR in the cached data); immaterial at 20 nF
 
@@ -109,34 +122,30 @@ def silicon_branch(n, l_conn_nh):
 
 
 def tier_budget():
-    """Area and height left in the converter tiers of one cell."""
-    import routing as RT
-    d = RT.DESIGN
-    a_hs, a_ls = 3 * 1.87, 3 * 1.80
-    a_cf = 2 * d["cap_footprint_mm2"]
-    a_ind = 3 * d["ind_footprint_mm2"]
-    a_cout = d["cap_footprint_mm2"]
-    return {"cell_area_mm2": CELL_AREA,
-            "gan_hs_685um": {"used_mm2": a_hs, "left_mm2": CELL_AREA - a_hs},
-            "flying_caps_100um": {"used_mm2": a_cf, "left_mm2": CELL_AREA - a_cf,
-                                  "max_part_height_um": 100.0},
-            "gan_ls_638um": {"used_mm2": a_ls, "left_mm2": CELL_AREA - a_ls},
-            "inductor_cout_500um": {"used_mm2": a_ind + a_cout,
-                                    "left_mm2": CELL_AREA - a_ind - a_cout,
-                                    "max_part_height_um": 480.0,
-                                    "note": "C_out footprint = routing.tile_layout COUT"}}
+    """Area and height left in the converter tiers of one cell (the design record's tiers:
+    each part at its body footprint)."""
+    d = DR.get()
+    fp = {c: float(d["part_dims_mm"][c][0]) * float(d["part_dims_mm"][c][1])
+          for c in DR.CLASSES}
+    out = {"cell_area_mm2": CELL_AREA, "tiers": {}}
+    for t in DR.tiers():
+        used = sum(fp[c] * n for c, n in t["parts"].items())
+        out["tiers"][t["name"]] = {"height_um": float(t["height_um"]), "used_mm2": used,
+                                   "left_mm2": CELL_AREA - used,
+                                   "parts": dict(t["parts"])}
+    return out
 
 
 def gap_count():
-    """0402 parts in the gaps: per level, two per cell side segment (2.3685 mm long: 2 x 1.0
-    mm + spacing), four segments per cell each shared by two cells -> 4 per cell per level."""
+    """0402 parts in the gaps: per level, two per cell side segment (2 x 1.0 mm + spacing per
+    cell side), four segments per cell each shared by two cells; one level per converter tier
+    at least 0.55 mm (the 0402 maximum height) tall."""
     per_seg = int(math.floor((CELL_MM + 0.2) / (1.0 + 0.2)))
+    levels = sum(1 for t in DR.tiers() if float(t["height_um"]) >= 550.0)
     return {"gap_width_mm": GAP_MM, "part_width_mm": 0.5, "side_clearance_mm":
             (GAP_MM - 0.5) / 2, "per_segment": per_seg, "per_cell_per_level": 2 * per_seg,
-            "levels": 2, "per_cell": 4 * per_seg,
-            "levels_note": "beside the HS tier (685 um) and the LS tier (638 um); the "
-                           "flying-cap (100 um) and inductor (500 um) tiers are thinner than "
-                           "a 0402's 0.55 mm maximum"}
+            "levels": levels, "per_cell": 2 * per_seg * levels,
+            "levels_note": "one level beside each converter tier at least 0.55 mm tall"}
 
 
 def run():
@@ -187,7 +196,7 @@ def run():
                   "C_ring_total_uF": ring_info["n_caps"] * inf_r["C_total_uF"]})
     add("c_ring_1206_X7S", f"{ring_info['n_caps']} x 1206 100 V X7S 4.7 uF in the ring",
         ring=br_r, info=inf_r)
-    for ph in ("rows7", "latin7", "spread49"):
+    for ph in [x for x in NW.phase_names() if x != "sync" and not x.startswith("raster")]:
         add(f"i_{ph}", f"interleaved cells ({ph}), no capacitors", phase=ph)
         add(f"i_{ph}+c_ring", f"interleaved cells ({ph}) + ring capacitors", ring=br_r,
             phase=ph, info=inf_r)
@@ -198,14 +207,27 @@ def run():
         br, inf = part_branch_params("GRM31CC72A475KE11", n_eq, 0.3)
         add(f"ref_local_{c_need:g}uF", f"reference: {c_need:g} uF per cell AT each cell "
             "(1206-class density; does not fit the Z1 stack)", local=br, info=inf)
+    ring_opts = {k: v for k, v in opts.items() if k.startswith("i_") and k.endswith("+c_ring")}
+    rec = min(ring_opts, key=lambda k: (ring_opts[k]["k_eq_nominal"], k))
     return {"tier_budget": tier_budget(), "gap_count": gc, "ring": ring_info,
             "loop_inductance_pH_evaluated": [x * 1e12 for x in l_band],
-            "r_scale_hot": r_scale, "temperature_C": T_PARTS_C, "options": opts}
+            "r_scale_hot": r_scale, "temperature_C": T_PARTS_C, "options": opts,
+            "grid": f"{NW.grid_n()} x {NW.grid_n()}", "n_cells": len(NW.cells()),
+            "recommended": rec, "recommended_phase": rec[2:-len("+c_ring")],
+            "recommend_rule": RECOMMEND_RULE}
+
+
+def recommended_phase():
+    """The interleaving pattern of the recommended option (input_decoupling.json placement)."""
+    import json as _json
+    pl = _json.loads(CI.JSON_OUT.read_text())["placement"]
+    return pl.get("recommended_phase") or "latin7"
 
 
 def robustness(seed=1, trials=4):
-    """The recommended option (7-phase Latin interleaving + ring) against (i) the X7S
-    temperature factor at its class limit and (ii) random per-cell phase errors."""
+    """The recommended option (its Latin interleaving + ring) against (i) the X7S temperature
+    factor at its class limit and (ii) random per-cell phase errors."""
+    ph0 = recommended_phase()
     d = CI.design()
     f = d["f_sw_hz"]
     _t, i = CI.phase_a_current("ramp_deff")
@@ -216,12 +238,12 @@ def robustness(seed=1, trials=4):
     out = {"temperature_factor": {}, "phase_error": {}}
     for tf in X7S_T_FACTOR:
         br, inf = part_branch_params("GRM31CC72A475KE11", 1, L_CONN_NH["c"], t_fac=tf)
-        ev = NW.evaluate(I, f, l_nom, ring_branch=br, phase="latin7", ring_xy=xy,
+        ev = NW.evaluate(I, f, l_nom, ring_branch=br, phase=ph0, ring_xy=xy,
                          r_scale=r_scale)
         out["temperature_factor"][f"{tf:g}"] = {"C_ring_uF": len(xy) * inf["C_total_uF"],
                                                 "k_eq": ev["k_eq"]}
     br, _ = part_branch_params("GRM31CC72A475KE11", 1, L_CONN_NH["c"])
-    base = NW.phases("latin7")
+    base = NW.phases(ph0)
     rng = np.random.default_rng(seed)
     orig = NW.phases
     try:
@@ -244,23 +266,23 @@ def robustness(seed=1, trials=4):
                             ("0402_X7R_8x4n7_gaps", part_branch_params(
                                 "GRM155R72A472KA01", 8,
                                 0.5 * (L_CONN_NH["b_level1"] + L_CONN_NH["b_level2"])))):
-        ev = NW.evaluate(I, f, l_nom, ring_branch=br, local_branch=loc, phase="latin7",
+        ev = NW.evaluate(I, f, l_nom, ring_branch=br, local_branch=loc, phase=ph0,
                          ring_xy=xy, r_scale=r_scale)
         out["optional_local_hf"][lab] = {"part": inf["part"], "C_per_cell_uF": inf["C_total_uF"],
                                          "k_eq": ev["k_eq"], "P_local_esr_W": ev["P_local_esr_W"],
                                          "I_local_rms_A_max": ev["I_local_rms_A_max"]}
-    # time-domain check of the 49-cell result (trapezoidal MNA, constant ESR, exact 7-phase
+    # time-domain check of the port-model result (trapezoidal MNA, constant ESR, exact phase
     # shifts) against the frequency-domain port model at the same ESR and full harmonics
-    _t7, i7 = CI.phase_a_current("ramp_deff", n=7 * 512)
+    _t7, i7 = CI.phase_a_current("ramp_deff", n=NW.phase_denominator(ph0) * 512)
     I7 = CI.harmonics(i7)
     rec_r = PA.load()["parts"]["GRM31CC72A475KE11"]
     esr_c = float(PA.esr_at(rec_r, 2 * f))
     brc = NW.Branch(br.c, lambda x: np.full_like(np.asarray(x, float), esr_c), br.l)
-    k_fd = NW.evaluate(I7, f, l_nom, ring_branch=brc, phase="latin7", ring_xy=xy,
+    k_fd = NW.evaluate(I7, f, l_nom, ring_branch=brc, phase=ph0, ring_xy=xy,
                        r_scale=r_scale, n_harm=len(I7) - 1)["k_eq"]
-    td = NW.td_verify(i7, f, l_nom, br.c, esr_c, br.l, phase="latin7", periods=20,
+    td = NW.td_verify(i7, f, l_nom, br.c, esr_c, br.l, phase=ph0, periods=20,
                       r_scale=r_scale, ring_xy=xy)
-    out["time_domain_49cell"] = {"ESR_const_mohm": esr_c * 1e3, "k_eq_frequency_domain": k_fd,
+    out["time_domain_port_model"] = {"ESR_const_mohm": esr_c * 1e3, "k_eq_frequency_domain": k_fd,
                                  "k_eq_time_domain": td["k_eq_td"],
                                  "rel_diff": td["k_eq_td"] / k_fd - 1.0, "dt_ns": td["dt_ns"],
                                  "periods": td["periods"]}
@@ -269,11 +291,12 @@ def robustness(seed=1, trials=4):
     pn = _json.loads(NW.NETWORK.read_text())["loop"]["Z1"]
     gs2, _ = NW.reduce_sheet("supply", xy, level=2)
     gr2, _ = NW.reduce_sheet("return", xy, level=2)
-    r2 = NW.solve_harmonic(gs2, gr2, np.full(49, 1.0 / 49), 0.0, 1e-10)["P_sheets_W"]
+    nc = len(NW.cells())
+    r2 = NW.solve_harmonic(gs2, gr2, np.full(nc, 1.0 / nc), 0.0, 1e-10)["P_sheets_W"]
     o_pm = NW.port_matrices
     try:
         NW.port_matrices = lambda ring_xy, refresh=False: (gs2, gr2)
-        k2 = NW.evaluate(I, f, l_nom, ring_branch=br, phase="latin7", ring_xy=xy,
+        k2 = NW.evaluate(I, f, l_nom, ring_branch=br, phase=ph0, ring_xy=xy,
                          r_scale=CI.network_resistance()["loop_hot_ohm"] / r2)["k_eq"]
     finally:
         NW.port_matrices = o_pm
@@ -285,7 +308,7 @@ def robustness(seed=1, trials=4):
         _t2, i2 = CI.phase_a_current(mode)
         I2 = CI.harmonics(i2)
         out["waveform"][mode] = {"k_open": CI.k_of(I2), "k_eq": NW.evaluate(
-            I2, f, l_nom, ring_branch=br, phase="latin7", ring_xy=xy, r_scale=r_scale)["k_eq"]}
+            I2, f, l_nom, ring_branch=br, phase=ph0, ring_xy=xy, r_scale=r_scale)["k_eq"]}
     out["note"] = ("random phase errors decorrelate the cells that share a Latin phase, so they "
                    "lower k_eq slightly; the ring's capacitance hardly matters once interleaved; "
                    "a few nF at each cell for the switching loop costs < 0.02 in k; a flat or "

@@ -7,13 +7,14 @@ WAVEFORM. The cell draws input current only in phase A (manuscript Fig. 2; HVR_F
 N3K3K_A2): S1 conducts L1's current, which ramps from I_L - dI/2 to I_L + dI/2 across the
 on-interval because L1 sees V_mid - V_out = 15 V; dI is the uncoupled branch ripple
 V_out (1 - D) T / L (coupling_k = 0 in the design). The pulse is scaled to the S0 ledger's
-input current (23.84 A / 49 = 0.4865 A per cell): with I_L = 20.41/3 A the on-interval is
-D_eff = I_avg / I_L = 0.0715 (losses lengthen the 0.0625 duty), edges 1 ns.
+input current (I_48 / N_cell per cell; the cell count of the design record, 36 in
+production since TCPMT round 3): the on-interval is D_eff = I_avg / I_L (losses lengthen the
+buck duty N V_out / V_in), edges 1 ns.
 
-CIRCUIT (one cell with its 1/49 share of the network; exact when the 49 cells switch in
+CIRCUIT (one cell with its 1/N_cell share of the network; exact when the cells switch in
 phase, which is what the scenario k describes):
 
-    board node (ideal 48 V) --[49 R_loop, 49 L_loop]-- B --[C_B]-- gnd
+    board node (ideal 48 V) --[N R_loop, N L_loop]-- B --[C_B]-- gnd
                                                        B -->-- i_cell(t)
                                                        B --[L_conn + ESL/N, ESR(f)/N, N C]-- gnd
 
@@ -56,7 +57,10 @@ OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revisi
 JSON_OUT = OUT / "input_decoupling.json"
 CASE_S0 = OUT.parent / "final_closure" / "etm_Z1_HV_S0_h1.1_r21.json"
 NETWORK = OUT.parent / "final_closure" / "package_network.json"
-N_CELL = 49
+sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+import design_record as _DR                                          # noqa: E402
+#: TCPMT round 3: the cell count of the design in force (the design record; 36 in production)
+N_CELL = _DR.n_vr()
 MU0 = 4e-7 * math.pi
 T_EDGE_S = 1.0e-9           # switching edge (sensitivity 0.5 - 5 ns)
 C_NODE_F = 2.0e-9           # switch-node-side capacitance, time-domain well-posedness only
@@ -462,7 +466,7 @@ def main():
     out["waveform"] = wf
     out["charge_balance"] = {m: charge_requirement(m) for m in ("ramp_deff", "rect_D")}
     rows = sweep("ramp_deff", hot=True)
-    out["sweep"] = {"basis": "per cell, 49 cells in phase; R_net = 49 x hot loop; "
+    out["sweep"] = {"basis": f"per cell, {N_CELL} cells in phase; R_net = {N_CELL} x hot loop; "
                              "C from N parts of GRM31CC72A475KE11 data at 48 V; "
                              "L_conn = 0.3 nH", "rows": rows}
     out["C_required_uF_per_cell"] = {f"k<={kt:g}": c_for_k(rows, kt)

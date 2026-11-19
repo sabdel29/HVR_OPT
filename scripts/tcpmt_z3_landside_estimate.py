@@ -2,8 +2,8 @@
 
 In Z3 the 1 V output (1 kA per rail) enters the package through the BGA. At the 1.5-A-per-
 ball criterion it needs 667 balls per rail, which fill 1334 of the 1369 sites of the 0.8-mm
-lattice, while the TSV fields that carry it to the die sit only under the 49 cell
-footprints. The current of every ball outside a footprint must therefore travel laterally
+lattice, while the TSV fields that carry it to the die sit only under the cell footprints
+(the design record's grid). The current of every ball outside a footprint must therefore travel laterally
 in a land-side copper plane of the substrate. This script bounds that loss with a 2-D
 finite-volume solution of one rail's plane:
 
@@ -29,7 +29,14 @@ OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revisi
 
 L_MM, H_MM = 30.0, 0.1                 # substrate side, grid spacing
 PITCH, N_SIDE = 0.8, 37                # centred BGA lattice (1369 sites)
-CELL_PITCH, CELL_SIDE, N_CELL = 3.165243, 2.3685, 7
+# TCPMT round 3: the cell grid of the design in force (THE design record; 6 x 6 cells of
+# 2.817 mm at 3.709 mm pitch in production), never the 7 x 7 literals of the 49-cell build
+import sys as _sys                                                   # noqa: E402
+_sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+import design_record as _DR                                          # noqa: E402
+N_CELL = _DR.grid_n()
+CELL_SIDE = _DR.cell_side_mm()
+CELL_PITCH = (_DR.grid_bbox_mm() - CELL_SIDE) / (N_CELL - 1)
 I_RAIL = 1000.0                        # A, P_load / V_out
 RHO20, ALPHA_CU = 1.72e-8, 3.93e-3     # ohm m, 1/K
 T_C = 90.0                             # land side ~ substrate temperature (Z2/Z3 die ~90 C)

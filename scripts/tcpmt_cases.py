@@ -6,9 +6,11 @@ supplement) takes its case files from here, so a superseded case cannot survive 
 after the others have moved on.
 
 INPUT STATES
-  SDEC  PRODUCTION. The implemented input decoupling (tcpmt_decap_framework): seven
-        interleaved clock phases and a ring of 56 x 1206 100-V capacitors outside the cell
-        grid; the package 48-V network at its loss-equivalent k_eq = 1.65 (49-cell port model),
+  SDEC  PRODUCTION. The implemented input decoupling (tcpmt_decap_framework): the cells'
+        clocks interleaved on the grid of the design in force (TCPMT round 3: a 6-phase
+        Latin square on the 6 x 6 grid of the production design record; seven phases on the
+        7 x 7 grid in round 2) and a ring of 1206 100-V capacitors outside the cell grid; the
+        package 48-V network at its loss-equivalent k_eq (port model of the design's cells),
         the cell-internal VIN -> HS runs at the bare pulse (the hot loop, common to every
         integration), the ring ESR as a ledger row (Z1). Every integration, both coolings.
   S0    REFERENCE: ideal input smoothing (k = 1).
@@ -37,8 +39,8 @@ TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revisio
 PRODUCTION_STATE = "SDEC"
 STATES = ("SDEC", "S0", "S1")
 SCEN = {"SDEC": "HV_SDEC", "S0": "HV_S0", "S1": "HV_S1"}
-STATE_LABEL = {"SDEC": "implemented decoupling (k_eq = 1.65)", "S0": "S0 (ideal smoothing)",
-               "S1": "S1 (no decoupling)"}
+STATE_LABEL = {"SDEC": "implemented decoupling (k_eq of the interleaving + ring design)",
+               "S0": "S0 (ideal smoothing)", "S1": "S1 (no decoupling)"}
 TIERS = ("A", "B")
 ARCHS = ("Z1", "Z2", "Z3")
 #: the coupled land-side base of Z3 under each cooling
@@ -89,6 +91,15 @@ def load(state, tier, arch):
 
 
 def guard(arch, case, path=None):
+    # TCPMT round 3: a case of another design (the design record entry it was computed with)
+    # never stands in for the design in force
+    import sys as _sys
+    _sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+    import design_record as DR
+    d = (case.get("design") or {}).get("design")
+    if d is not None and d != DR.name():
+        raise RuntimeError(f"{Path(path).name if path else 'a case'} was computed with design "
+                           f"{d}, not the design in force {DR.name()}")
     if arch == "Z3" and not is_coupled_z3(case):
         raise RuntimeError(f"{Path(path).name if path else 'a Z3 case'} carries no coupled "
                            f"land side (z3_land block / P_sub_land_1V_spreading row > 0): it is "

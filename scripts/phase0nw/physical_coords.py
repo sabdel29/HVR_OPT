@@ -1,6 +1,6 @@
 """PHASE 0N-AG --- ONE source of physical x-y coordinates for every electrical model.
 
-Three models were each deriving the 49 cell centres their own way. The RDL solver
+Three models were each deriving the cell centres their own way. The RDL solver
 hard-coded a 3.0 mm pitch; the actual FE placement puts them at 3.165243 mm with centres
 spanning +-9.495728 mm. Every RDL result computed against the wrong grid.
 
@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[2]
@@ -27,13 +28,24 @@ BGA_HALF_SPAN_MM = 14.4            # centred lattice: -14.4 + 0.8 n
 
 
 def physical_cell_coordinates(cfg=None) -> list:
-    """The 49 cell centres FROM THE FE PLACEMENT GENERATOR. Never hard-coded."""
+    """The cell centres FROM THE FE PLACEMENT GENERATOR. Never hard-coded. TCPMT round 3: the
+    cells of the design in force (THE design record), cached per design (the mesh build is
+    the expensive part and the package-network screen asks for them once per solve)."""
+    if cfg is not None:
+        from physical_package import build_physical_package
+        _m, _mats, _st, tiles = build_physical_package(cfg)
+        return [(float(t.cx), float(t.cy)) for t in tiles]
+    import design_record as DR
+    return list(_cells_of(DR.name()))
+
+
+@lru_cache(maxsize=8)
+def _cells_of(design: str) -> tuple:
     from physical_package import (build_physical_package,
                                   load_physical_package_config)
-    cfg = cfg or load_physical_package_config(
-        R / "configs/phase0nt/z2_2p4mm_cutout.yaml")
+    cfg = load_physical_package_config(R / "configs/phase0nt/z2_2p4mm_cutout.yaml")
     _m, _mats, _st, tiles = build_physical_package(cfg)
-    return [(float(t.cx), float(t.cy)) for t in tiles]
+    return tuple((float(t.cx), float(t.cy)) for t in tiles)
 
 
 def cell_pitch_mm(coords=None) -> float:
