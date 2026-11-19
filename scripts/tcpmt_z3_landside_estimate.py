@@ -17,6 +17,7 @@ substrate. Loss = sum over grid faces of dV^2 / R_s, for one rail; the total is 
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -24,7 +25,7 @@ import scipy.sparse as sp
 import scipy.sparse.linalg as spla
 
 R = Path(__file__).resolve().parents[1]
-OUT = R / "research" / "tcpmt_revision" / "z3_landside_spreading.json"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "z3_landside_spreading.json"
 
 L_MM, H_MM = 30.0, 0.1                 # substrate side, grid spacing
 PITCH, N_SIDE = 0.8, 37                # centred BGA lattice (1369 sites)

@@ -36,7 +36,7 @@ R = C.R
 for _p in ("scripts/phase0nw", "scripts/phase0m", "scripts/phase0mr", "scripts/phase0i",
            "scripts/phase0g", "scripts/phase0b", "scripts"):
     sys.path.insert(0, str(R / _p))
-OUT = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 CCX_THREADS = 8
 AEDT_CORES = 4            # >4 cores needs HPC licences: 8-core solves fail
 

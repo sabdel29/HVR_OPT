@@ -41,8 +41,8 @@ R = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(R / "scripts"))
 import tcpmt_mech_laws as LAW                                       # noqa: E402
 
-OUTD = R / "research" / "tcpmt_revision" / "reflow"
-SUMMARY = R / "research" / "tcpmt_revision" / "reflow_warpage.json"
+OUTD = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "reflow"   # campaign hook
+SUMMARY = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "reflow_warpage.json"
 
 
 def rcfg():

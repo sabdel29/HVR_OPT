@@ -16,14 +16,15 @@ is "not published" where no vendor curve was obtained. Manufacturers not covered
 from __future__ import annotations
 
 import json
+import os
 import math
 import re
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-TR = R / "research" / "tcpmt_revision"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
 OUT = TR / "capacitor_evidence.json"
-TAB = R / "manuscript_v2" / "supplement" / "tab_capacitor_evidence.tex"
+TAB = Path(os.environ.get("ETM_RESULTS_ROOT") or R) / "manuscript_v2" / "supplement" / "tab_capacitor_evidence.tex"
 REQ = {"C1": {"V": 32.0, "C_uF": 0.19}, "C2": {"V": 16.0, "C_uF": 0.38}}
 AREA, DERATE = 5.61, 0.8
 MURATA = "https://www.murata.com/en-us/products/productdetail?partno="

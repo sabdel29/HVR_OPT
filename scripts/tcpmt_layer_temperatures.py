@@ -10,6 +10,7 @@ checked against the case's T_max.
     python tcpmt_layer_temperatures.py   -> research/tcpmt_revision/layer_temperatures.json
 """
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -21,7 +22,7 @@ import final_closure_physical_etm as E                              # noqa: E402
 import tcpmt_cases as TC                                            # noqa: E402
 import tcpmt_region_temps as RT                                     # noqa: E402
 
-OUT = R / "research" / "tcpmt_revision" / "layer_temperatures.json"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "layer_temperatures.json"
 
 
 def layer_groups(m):

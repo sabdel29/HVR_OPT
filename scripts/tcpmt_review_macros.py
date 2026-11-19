@@ -16,11 +16,12 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-TR = R / "research" / "tcpmt_revision"
-SENS = R / "research" / "final_closure" / "sensitivity"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
+SENS = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "sensitivity"
 ATAG = {"Z1": "Zone", "Z2": "Ztwo", "Z3": "Zthree"}
 NA = "--"
 
@@ -184,7 +185,7 @@ def feasibility():
 def bga_count():
     """The 48-V ball count re-closed at the production waveform (final_closure_pkg_network
     reclose -> research/final_closure/bga_count_production.json)."""
-    d = J(R / "research/final_closure/bga_count_production.json")
+    d = J(SENS.parent / "bga_count_production.json")   # campaign hook (SENS: final_closure/sensitivity)
     if not d:
         return {}
     cl = d["closure"]
@@ -200,7 +201,7 @@ def bga_count():
         hi = cl.get(f"{a}__HV_SDEC__k_hi") or {}
         if hi.get("n_min_screen"):
             m[f"BgaNminKhi{tag}"] = str(hi["n_min_screen"])
-    pn = J(R / "research/final_closure/package_network.json") or {}
+    pn = J(SENS.parent / "package_network.json") or {}   # campaign hook
     if pn:
         conv = pn["convergence"]
         f1 = max(conv["Z1_supply"]["final"]["i_ball_max_a"],

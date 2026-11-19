@@ -460,7 +460,7 @@ def evaluate(path, case, use_fields=True, feed=None):
     fails = sorted(k for k, c in checks.items() if c["ok"] is False)
     open_ = sorted(k for k, c in checks.items() if c["ok"] is None)
     verdict = "infeasible" if fails else ("unresolved" if open_ else "feasible")
-    return {"case": Path(path).name, "path": str(Path(path).relative_to(R)), "arch": arch,
+    return {"case": Path(path).name, "path": TC.rel(path), "arch": arch,
             "scenario": case.get("scenario"), "state": state, "tier": tier, "role": role,
             "variant": _variant_name(path), "P_loss_w": case.get("P_loss_w"), "T_max_C": t_max,
             "design": des, "regions": reg, "region_source": src, "die_T_max_C": dmax,
@@ -593,7 +593,7 @@ def rankings(records):
                 if p is None:
                     missing.append(a)
                     continue
-                r = by_case.get(str(p.relative_to(R)))
+                r = by_case.get(TC.rel(p))
                 if r is None:
                     missing.append(a)
                 elif r["verdict"] == "feasible":

@@ -9,6 +9,7 @@ so the Z3 entries of the comparison rest on the coupled loss accounting.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -16,8 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import tcpmt_solder_common as C                                     # noqa: E402
 
 R = Path(__file__).resolve().parents[1]
-SENS = R / "research" / "final_closure" / "sensitivity"
-OUT = R / "research" / "tcpmt_revision" / "solder_z3land.json"
+SENS = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "sensitivity"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "solder_z3land.json"
 CASES = {"A": "z3_land_t40_A_fvmap", "B": "z3_land_t40_B_fvmap"}
 N = 48
 
@@ -33,7 +34,7 @@ def main():
                           meta={"tier": tier, "arch": "Z3", "case": v, "x_mm": c["x_mm"],
                                 "y_mm": c["y_mm"]}))
     rec = C.run_tasks(tasks, procs=2)
-    stab = json.loads((R / "research/tcpmt_revision/solder_studies.json").read_text())
+    stab = json.loads((OUT.parent / "solder_studies.json").read_text())
     st = stab["stabilization"]["cases"]
     out = {"rule": "48-cycle L0 last-cycle increment at the coupled Z3 land-side critical joint",
            "cases": {}}

@@ -32,6 +32,7 @@ from __future__ import annotations
 import csv
 import itertools
 import json
+import os
 import math
 import re
 from pathlib import Path
@@ -40,7 +41,8 @@ import yaml
 
 HERE = Path(__file__).resolve().parent
 R = HERE.parents[2]
-OUT = HERE / "physical_cell.json"
+RES = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research")      # campaign hook
+OUT = RES / "tcpmt_revision" / "countopt" / "physical_cell.json"
 D_VIA_UM, RDL_UM = 120.0, 10.0
 CLASSES = ("gan_hs", "cap_fly", "gan_ls", "inductor", "cap_out")
 #: vertical nets of one cell: the 48 V input enters from the bottom landing RDL, the 1 V
@@ -137,7 +139,7 @@ RATED_CF = {"part": "GRM188D71H105KE01", "L_mm": 1.6, "W_mm": 0.8, "T_nom_mm": 0
 
 def _rated_cf():
     """The decap study's numbers, re-read when its file is in the tree."""
-    f = R / "research" / "tcpmt_revision" / "flying_caps.json"
+    f = RES / "tcpmt_revision" / "flying_caps.json"
     if f.exists():
         j = json.loads(f.read_text())
         c1 = j["recommended"]["10pct"]["C1"]
@@ -218,7 +220,7 @@ def study(rec, label, cell_area=None, cf=None):
 
 
 def main():
-    d = json.loads((HERE / "candidate_dse.json").read_text())["counts"]
+    d = json.loads((OUT.parent / "candidate_dse.json").read_text())["counts"]
     res = {"rule": {"via_diameter_um": D_VIA_UM, "rdl_um": RDL_UM, "max_ar": 1.0,
                     "source": "manuscript_v2/fig_scripts/fig_realizability.py, "
                               "scripts/phase0mr3c/repartition_search.py"},

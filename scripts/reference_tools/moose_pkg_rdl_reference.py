@@ -43,8 +43,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from hvr_scratch import path as scratch                             # noqa: E402
 
 MOOSE = Path("/home/beams0/LPOPRYHO/projects/moose/modules/heat_transfer/heat_transfer-opt")
-OUT = R / "research" / "final_closure"
-EVID = R / "presentation" / "prelim_hvr" / "tool_evidence" / "pkg_rdl_moose"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
+EVID = Path(os.environ.get("ETM_RESULTS_ROOT") or R) / "presentation" / "prelim_hvr" / "tool_evidence" / "pkg_rdl_moose"
 WD = scratch("moose_rdl")
 REPEATS = 3
 

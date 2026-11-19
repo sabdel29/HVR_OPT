@@ -28,6 +28,7 @@ what the review asked for and the model did not report:
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -39,9 +40,9 @@ from cooling_production import CANDIDATES, ETA_PUMP_BAND                  # noqa
 from cooling import K_INF, K_CONTRACTION, K_EXPANSION                     # noqa: E402
 
 COOLER = "TOP_SI_MICROCHANNEL_27"
-OUT = R / "research" / "tcpmt_revision" / "cooling_spec.json"
-SENS = R / "research" / "final_closure" / "sensitivity"
-FC = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "cooling_spec.json"
+SENS = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "sensitivity"
+FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
 TIM_UM, TIM_K = 50.0, 3.0
 Q_REF_W = 1000.0
 #: review round 2: the production state of every integration and cooling (tcpmt_cases: the

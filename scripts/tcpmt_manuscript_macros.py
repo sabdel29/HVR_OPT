@@ -16,8 +16,9 @@ import sys
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-D = Path(os.environ.get("TCPMT_RESULTS_DIR", R / "research" / "final_closure"))
-MS = R / "manuscript_v2"
+D = Path(os.environ.get("TCPMT_RESULTS_DIR",
+                        Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"))
+MS = Path(os.environ.get("ETM_RESULTS_ROOT") or R) / "manuscript_v2"   # outputs; campaign hook
 #: TCPMT_MACROS_OUT_DIR writes the two generated files elsewhere (validation runs)
 _OUT_DIR = Path(os.environ["TCPMT_MACROS_OUT_DIR"]) if os.environ.get("TCPMT_MACROS_OUT_DIR") else MS
 OUT_MAC = _OUT_DIR / "results_macros.tex"
@@ -238,7 +239,7 @@ def main():
     for st, suf in (("S0", "Szero"), ("S1", "Sone")):     # the reference states
         mac.update(tier_macros(tier_cases(S, st), suf))
     mac.update(isothermal_macros())
-    lt = R / "research" / "tcpmt_revision" / "layer_temperatures.json"
+    lt = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "layer_temperatures.json"
     if lt.exists():                 # board / substrate means per cooling tier (mechanism)
         ltd = json.loads(lt.read_text())
         states = ltd.get("states") or {"S0": ltd["cases"]}
@@ -263,7 +264,7 @@ def main():
         for k in a:
             if a[k] and b[k]:
                 mac[f"MeshZthree{k}"] = fx(100 * abs(b[k] - a[k]) / abs(b[k]), 1)
-    tf = R / "research" / "tcpmt_revision" / "tier_feed_crossover.json"
+    tf = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "tier_feed_crossover.json"
     if tf.exists():
         tfd = json.loads(tf.read_text())
         states = tfd.get("states") or {"S0": tfd.get("tiers", {})}
@@ -454,7 +455,7 @@ def landside_macros():
     """Z3 land-side 1 V redistribution (NOT_MODELLED in the coupled ledger): the 2-D sheet
     bound of scripts/tcpmt_z3_landside_estimate.py, and the BGA pitch at which the 1 V balls
     would fit under the cell grid instead."""
-    f = R / "research" / "tcpmt_revision" / "z3_landside_spreading.json"
+    f = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "z3_landside_spreading.json"
     if not f.exists():
         return {}
     j = json.loads(f.read_text())

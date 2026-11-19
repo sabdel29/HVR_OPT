@@ -17,6 +17,7 @@ these numbers would not be admissible.
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -30,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from hvr_scratch import path as scratch                             # noqa: E402
 import final_closure_local_extract as X                             # noqa: E402
 
-OUT = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 LR.WD = scratch("fc_local")
 LR.WD.mkdir(parents=True, exist_ok=True)
 #: the Norton/EPC card's calibrated temperature span. A joint temperature above it

@@ -32,7 +32,7 @@ from pathlib import Path
 R = Path(__file__).resolve().parents[2]
 ENV = "HVR_Z1_CONFIG"
 DEFAULT_CFG = R / "configs" / "phase0nx" / "z1_physical.yaml"
-DEFAULT_PACKAGE_NETWORK = R / "research" / "final_closure" / "package_network.json"
+DEFAULT_PACKAGE_NETWORK = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "package_network.json"
 #: the production regulator count (final_closure_ledger.N_VR, production_et.N_VR)
 PRODUCTION_N_VR = 49
 P_LOAD_W, V_IN, V_OUT = 1000.0, 48.0, 1.0
@@ -126,13 +126,21 @@ def cell_side_mm(path=None) -> float:
 def results_dir(path=None):
     if is_default(path):
         return None
-    return R / raw(path)["results"]["dir"]
+    return _results_path(raw(path)["results"]["dir"])
 
 
 def package_network_file(path=None) -> Path:
     if is_default(path):
         return DEFAULT_PACKAGE_NETWORK
-    return R / raw(path)["package_network"]["file"]
+    return _results_path(raw(path)["package_network"]["file"])
+
+
+def _results_path(rel: str) -> Path:
+    """A config's research/... result path; under $ETM_RESULTS_ROOT for a campaign (hook)."""
+    root = os.environ.get("ETM_RESULTS_ROOT")
+    if root and Path(rel).parts[:1] == ("research",):
+        return Path(root).joinpath(*Path(rel).parts[1:])
+    return R / rel
 
 
 def require_z1(arch: str, what: str = "") -> None:

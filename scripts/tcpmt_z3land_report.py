@@ -27,6 +27,7 @@ compared with the load plus the ledger total of the case.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -40,8 +41,8 @@ import final_closure_sensitivity as S                               # noqa: E402
 import final_closure_physical_etm as E                              # noqa: E402
 import final_closure_ledger as FL                                   # noqa: E402
 
-OUT = R / "research" / "tcpmt_revision" / "z3_land_coupled.json"
-D = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "z3_land_coupled.json"
+D = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
 #: the three-tier reference cases (tcpmt_manuscript_macros.TIERS, S0)
 REF = {"A": {"Z1": D / "etm_Z1_HV_S0_h1.1_r21.json", "Z2": D / "etm_Z2_HV_S0_h1.1_r21.json",
              "Z3": S.OUT / "etm_Z3_HV_S0__z3_top_only.json"},
@@ -488,10 +489,10 @@ def documentation():
     import tcpmt_cases as TC
     d = json.loads(OUT.read_text())
     def unc_of(state):
-        f = R / "research/tcpmt_revision" / ("uncertainty.json" if state == TC.PRODUCTION_STATE
-                                             else f"uncertainty_{state}.json")
+        f = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / (
+            "uncertainty.json" if state == TC.PRODUCTION_STATE else f"uncertainty_{state}.json")
         return json.loads(f.read_text()) if f.is_file() else {}
-    tf_p = R / "research/tcpmt_revision/tier_feed_crossover.json"
+    tf_p = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "tier_feed_crossover.json"
     tf = json.loads(tf_p.read_text()) if tf_p.is_file() else {}
     sf = d["shape_factors"]
     al = d["board_allocation"]

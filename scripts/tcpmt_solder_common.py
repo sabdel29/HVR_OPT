@@ -59,8 +59,8 @@ import decompose as DEC          # noqa: E402  production material() lives here
 import solder_model as SM        # noqa: E402  production constitutive source
 from hvr_scratch import path as scratch                             # noqa: E402
 
-FC = R / "research" / "final_closure"
-OUT = R / "research" / "tcpmt_revision"
+FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
 ROOT = "tcpmt_solder"
 INC0 = json.loads(LM.TIME_STUDY.read_text())["production_dt0_s"]
 BAND_PROD = float(LM.A5["band_frac"])

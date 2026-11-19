@@ -11,6 +11,7 @@ solve, and the observables are compared. Usage:
     SOLVER: SPOOLES | "ITERATIVE CHOLESKY" | "ITERATIVE SCALING"
 """
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -57,7 +58,7 @@ def main():
     E._raise_stack_limit()
     m, mats, st, tiles, _ = E.build(arch, h)
     Tn = converged_field(m, arch, scen, h)
-    case = json.loads((R / "research" / "final_closure" /
+    case = json.loads((Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" /
                        f"etm_{arch}_{scen}_h{h}.json").read_text())
     assert abs(float(np.nanmax(Tn)) - case["thermal"]["T_max_C"]) < 1e-6
     tag = f"{solver.replace(' ', '_')}_t{threads}"
@@ -70,7 +71,7 @@ def main():
     except Exception as e:                                # a crash IS the finding
         out["ok"] = False
         out["error"] = str(e)[-400:]
-    f = R / "research" / "final_closure" / "solver_check" / f"{arch}_{scen}_h{h}_{tag}.json"
+    f = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "solver_check" / f"{arch}_{scen}_h{h}_{tag}.json"
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps(out, indent=1, default=float))
     print("SOLVERCHECK", json.dumps(out, default=float), flush=True)

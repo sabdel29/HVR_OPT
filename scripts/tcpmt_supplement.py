@@ -26,9 +26,12 @@ os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
 R = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(R / "scripts"))
-FC = R / "research" / "final_closure"
-TR = R / "research" / "tcpmt_revision"
-SUPP = R / "manuscript_v2" / "supplement"
+FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
+#: generated supplement files (this script's output, tcpmt_capacitor_evidence's table) go under
+#: $ETM_RESULTS_ROOT for a campaign (hook); hand-written inputs stay in the frozen tree
+SUPP = Path(os.environ.get("ETM_RESULTS_ROOT") or R) / "manuscript_v2" / "supplement"
+SUPP_SRC = R / "manuscript_v2" / "supplement"
 OUT = SUPP / "supp_tables.tex"
 ARCHS = ("Z1", "Z2", "Z3")
 NAMES = {"Z1": "embedded", "Z2": "package-backside", "Z3": "board-backside"}
@@ -229,7 +232,7 @@ def prior_section():
                 r"Table~\ref{tab:supp-prior} details the capability comparison of the paper's "
                 r"introduction. Every entry for another work rests on a passage of the cited "
                 r"source; an entry that the accessible sources do not settle is marked ``?''.")
-    if not (SUPP / "tab_prior_detailed.tex").is_file():
+    if not (SUPP_SRC / "tab_prior_detailed.tex").is_file():
         return L + placeholder("prior work", "tab_prior_detailed.tex")
     return L + [r"\input{tab_prior_detailed}", ""]
 

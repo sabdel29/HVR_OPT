@@ -187,7 +187,8 @@ def collect(out_json):
 if __name__ == "__main__":
     if sys.argv[1:2] == ["collect"]:
         collect(sys.argv[2] if len(sys.argv) > 2 else
-                Path(__file__).resolve().parents[1] / "research" / "tcpmt_revision"
+                Path(os.environ.get("ETM_RESULTS_ROOT")
+                     or Path(__file__).resolve().parents[1] / "research") / "tcpmt_revision"
                 / "thermal_fix_validation.json")
     else:
         main(sys.argv)

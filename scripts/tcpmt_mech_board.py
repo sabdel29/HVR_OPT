@@ -39,8 +39,8 @@ R = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(R / "scripts"))
 import tcpmt_mech_laws as LAW                                       # noqa: E402
 
-OUTD = R / "research" / "tcpmt_revision" / "board_study"
-SUMMARY = R / "research" / "tcpmt_revision" / "board_study.json"
+OUTD = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "board_study"   # campaign hook
+SUMMARY = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "board_study.json"
 SCEN = "HV_S0"
 
 
@@ -190,7 +190,7 @@ def summarize():
     out = {"what": "board size / mounting / clamp / board-bottom cooling (finding 6)",
            "config": bcfg(), "cases": {}}
     U = {}
-    uf = R / "research" / "tcpmt_revision" / "uncertainty.json"
+    uf = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "uncertainty.json"
     if uf.exists():
         rel = json.loads(uf.read_text())["relative"]
         U = {a: {y: rel[a][y]["total"] for y in ("T", "warp", "du")} for a in rel}

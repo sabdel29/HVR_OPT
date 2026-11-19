@@ -43,10 +43,10 @@ R = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(R / "scripts"))
 import tcpmt_mech_laws as LAW                                       # noqa: E402
 
-OUT = R / "research" / "tcpmt_revision" / "site_kinematics"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "site_kinematics"   # campaign hook
 FIELDS = Path(os.environ.get("HVR_FIELDS",
                              "/home/beams0/SABDELZAHER/ETM_project/scratch/fields"))
-FC = R / "research" / "final_closure"
+FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 #: the stored fields of the round-2 cases (production r21 mesh, HV-S0 unless named)
 CASES = {
     "Z1_S0": ("Z1", "HV_S0", None, FIELDS / "etm_Z1_HV_S0_r21"),
@@ -540,8 +540,8 @@ def load_kinematics(case):
     return json.loads(f.read_text()) if f.exists() else None
 
 
-SUMMARY = R / "research" / "tcpmt_revision" / "interconnect_drivers.json"
-LADDER = R / "research" / "tcpmt_revision" / "interconnect_mesh_ladder.json"
+SUMMARY = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "interconnect_drivers.json"
+LADDER = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "interconnect_mesh_ladder.json"
 FC_WORK = Path(os.environ.get("HVR_FC_WORK",
                               "/home/beams0/SABDELZAHER/ETM_project/scratch/fc_etm"))
 

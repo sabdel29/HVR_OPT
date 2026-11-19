@@ -18,10 +18,11 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-D = R / "research" / "final_closure"
+D = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 SCEN = ("HV_S0", "HV_S1", "HV_S2")
 NORTON_T_MAX_C = 125.0
 #: melting onset of the joint alloy (SAC305, near-eutectic Sn-Ag-Cu: about 217 C).

@@ -25,7 +25,7 @@ must then cross that tier itself. Capacitors keep wrap-around terminations (both
                                                  tier_order_bookkeeping.json
 """
 from __future__ import annotations
-import csv, itertools, sys
+import csv, itertools, os, sys
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[2]
@@ -134,7 +134,7 @@ def bookkeeping():
     cfg = yaml.safe_load((R / "configs" / "phase0nx" / "z1_physical.yaml").read_text())
     tiers = cfg["converter"]["tiers_from_substrate_upward"]
     um = lambda p: next(float(t["um"]) for t in tiers if t["name"].startswith(p))  # noqa: E731
-    fc = json.loads((R / "research" / "tcpmt_revision" / "flying_caps.json").read_text())["summary"]
+    fc = json.loads((Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "flying_caps.json").read_text())["summary"]
     d_via = float(fc["min_tier_um_10pct"][-1]) / float(fc["via_AR_10pct"][-1])
     base_h = {"gan_hs": um("gan_hs"), "gan_ls": um("gan_ls"), "cap_fly": um("flying_caps"),
               "cap_out": um("inductor_plus_cout"), "inductor": um("inductor_plus_cout")}
@@ -193,7 +193,7 @@ def bookkeeping():
                                 "single": "dies face-down, terminals on the bottom face only; "
                                           "a net leaving a die tier upward crosses it"},
            "worst_aspect_ratio": ar, "best_candidate_by_option": best}
-    f = R / "research" / "tcpmt_revision" / "tier_order_bookkeeping.json"
+    f = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "tier_order_bookkeeping.json"   # campaign hook
     f.write_text(json.dumps(out, indent=1) + "\n")
     return out
 

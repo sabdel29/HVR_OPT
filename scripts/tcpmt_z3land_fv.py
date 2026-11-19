@@ -31,6 +31,7 @@ of the framework's 18-layer schedule (pcb_h1: 14 x 1 oz + 4 x 2 oz). The loss sc
 from __future__ import annotations
 
 import json
+import os
 import sys
 from functools import lru_cache
 from pathlib import Path
@@ -45,8 +46,8 @@ for _p in ("scripts/phase0nw", "scripts"):
         sys.path.insert(0, str(R / _p))
 import tcpmt_z3_landside_estimate as LS                              # noqa: E402
 
-LAND_JSON = R / "research" / "tcpmt_revision" / "z3_landside_spreading.json"
-OUT = R / "research" / "tcpmt_revision" / "z3_board_plane_spreading.json"
+LAND_JSON = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "z3_landside_spreading.json"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "z3_board_plane_spreading.json"
 
 #: land-side plane occupancy -- the value the committed FV result was solved at
 LAND_OCC = LS.OCC

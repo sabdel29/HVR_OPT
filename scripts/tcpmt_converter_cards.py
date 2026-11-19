@@ -83,6 +83,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
@@ -94,7 +95,7 @@ for _p in ("scripts/phase0nw", "scripts/phase0mr", "scripts/phase0m", "scripts/p
     if str(R / _p) not in sys.path:
         sys.path.insert(0, str(R / _p))
 
-OUT = R / "research" / "tcpmt_revision" / "converter_cards.json"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "converter_cards.json"   # campaign hook
 INDUCTOR_PAPER = "/home/beams0/SABDELZAHER/Salma_Thesis/HVR/Inductor_Arrays__Rami__Salma__TCPMT_-2.pdf"
 
 # ------------------------------------------------------------------ phases

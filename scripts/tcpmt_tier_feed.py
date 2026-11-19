@@ -22,6 +22,7 @@ Review round 2:
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -30,7 +31,7 @@ sys.path.insert(0, str(R / "scripts"))
 import final_closure_direct_feed as DF                              # noqa: E402
 import tcpmt_cases as TC                                            # noqa: E402
 
-OUT = R / "research" / "tcpmt_revision" / "tier_feed_crossover.json"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "tier_feed_crossover.json"
 #: the zero-feed re-evaluation must reproduce the case's package-internal loss to this (W)
 REPRO_TOL_W = 0.05
 

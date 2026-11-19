@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -30,7 +31,7 @@ for _p in ("scripts/phase0mr", "scripts/phase0nw", "scripts/phase0d", "scripts")
     if str(R / _p) not in sys.path:
         sys.path.insert(0, str(R / _p))
 
-OUT = R / "research" / "tcpmt_revision" / "production_converter.json"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "production_converter.json"   # campaign hook
 T_EVAL_C = (25.0, 105.0, 125.0)
 
 

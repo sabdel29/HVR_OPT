@@ -19,12 +19,13 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import math
 import sys
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-D = R / "research" / "final_closure"
+D = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 SENS = D / "sensitivity"
 sys.path.insert(0, str(R / "scripts"))
 

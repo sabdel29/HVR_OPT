@@ -26,12 +26,13 @@ every other case etm_<arch>_<scen>__<variant>.json (research/final_closure/sensi
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-FC = R / "research" / "final_closure"
+FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 SENS = FC / "sensitivity"
-TR = R / "research" / "tcpmt_revision"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"   # campaign hook
 
 PRODUCTION_STATE = "SDEC"
 STATES = ("SDEC", "S0", "S1")
@@ -100,6 +101,16 @@ def is_coupled_z3(case) -> bool:
     rows = {r["term"]: r for r in case.get("ledger_rows") or []}
     land = rows.get("P_sub_land_1V_spreading")
     return bool(land and (land.get("P_w") or 0.0) > 0.0)
+
+
+def rel(path) -> str:
+    """A case path for a record: relative to the checkout when inside it (the frozen tree, or a
+    campaign root under it), else absolute ($ETM_RESULTS_ROOT outside the checkout)."""
+    p = Path(path)
+    try:
+        return p.relative_to(R).as_posix()
+    except ValueError:
+        return p.as_posix()
 
 
 def table(state=PRODUCTION_STATE):
@@ -244,7 +255,7 @@ def run_list():
                 else:
                     cmd = f"python scripts/tcpmt_review_variants.py state {a} {t} {SCEN[state]}"
                 out.append({"state": state, "tier": t, "arch": a,
-                            "file": p.relative_to(R).as_posix(), "exists": p.is_file(),
+                            "file": rel(p), "exists": p.is_file(),
                             "command": cmd})
     return out
 

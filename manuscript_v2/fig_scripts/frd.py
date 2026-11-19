@@ -3,10 +3,12 @@ nodal result blocks (NDTEMP, DISP). Parsed arrays are cached as .npz next to the
 figures (never written into the read-only project tree)."""
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import numpy as np
 
-CACHE = Path(__file__).resolve().parents[1] / "cache"
+CACHE = (Path(os.environ["ETM_RESULTS_ROOT"]) / "manuscript_v2" if os.environ.get("ETM_RESULTS_ROOT")
+         else Path(__file__).resolve().parents[1]) / "cache"   # campaign hook
 CACHE.mkdir(exist_ok=True)
 
 

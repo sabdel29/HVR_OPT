@@ -56,8 +56,8 @@ from cooling_production import CANDIDATES                           # noqa: E402
 from hvr_scratch import path as scratch                             # noqa: E402
 import tcpmt_fullpkg_moose as MX                                    # noqa: E402
 
-OUT = R / "research" / "tcpmt_revision" / "fullpkg_verification.json"
-EVID = R / "research" / "tcpmt_revision" / "fullpkg_verification"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "fullpkg_verification.json"
+EVID = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "fullpkg_verification"
 CORES = 8                     # the host is shared: at most 8 cores for either solver
 SCEN = "HV_S0"
 
@@ -685,7 +685,7 @@ def run_split(arch, triples, doc):
 # ---------------------------------------------------------------------------
 
 #: the converged Z2 production field collected by tcpmt_collect_variant_fields (outside git)
-Z2_FIELD = Path("/home/beams0/SABDELZAHER/ETM_project/scratch/fields/etm_Z2_HV_S0_r21/"
+Z2_FIELD = Path(os.environ.get("HVR_FIELDS") or "/home/beams0/SABDELZAHER/ETM_project/scratch/fields") / ("etm_Z2_HV_S0_r21/"
                 "thermal_converged.frd")
 
 

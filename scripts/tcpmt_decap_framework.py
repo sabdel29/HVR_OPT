@@ -155,7 +155,7 @@ def backside_note(p_z1_w):
     so the crossover loop resistance R* = (P_Z1 - P_int,Z2) / (k_feed^2 I^2) scales as
     1/k_feed^2. Uses the S0 crossover file's Z2 internal loss and current."""
     import final_closure_ledger as FL
-    cx = json.loads((R / "research/final_closure/direct_feed_crossover.json").read_text())
+    cx = json.loads((CI.CASE_S0.parent / "direct_feed_crossover.json").read_text())
     s = cx["scenarios"]["HV_S0"]
     # the same cell's VIN -> HS runs sit in the hot loop in Z2 too: same correction
     FL.SCEN_RATIO["HV_TMP_HOT"] = k_open()

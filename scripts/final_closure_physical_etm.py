@@ -70,7 +70,7 @@ _K.register_architecture("Z2BF", _K.architecture_cutout_mm("Z2"))
 # Z3 (regulator on the PCB backside) has NO opening: the full 1369-site lattice, as Z1
 _K.register_architecture("Z3", None)
 
-OUT = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 WD = Path(os.environ["FC_WORKDIR"]) if "FC_WORKDIR" in os.environ else scratch("fc_etm")
 #: TCPMT revision: a non-default Z1 design (HVR_Z1_CONFIG, scripts/phase0nw/z1_design.py)
 #: writes its case files to its config's results directory, named with its design tag, and
@@ -259,7 +259,7 @@ def rdl_tier_laminate(p=RDL_TIER):
     k_sub_z = o * p["k_cu"] + (1 - o) * p["k_d"]
     kz = 1.0 / (phi / k_sub_z + (1 - phi) / p["k_d"])
     src = "grid laminate (analytic)"
-    f = R / "research" / "final_closure" / "reference_rve.json"
+    f = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "reference_rve.json"
     if f.exists():
         rv = _json.loads(f.read_text())
         if rv.get("rdl_tier_kx", {}).get("reference_value") and \

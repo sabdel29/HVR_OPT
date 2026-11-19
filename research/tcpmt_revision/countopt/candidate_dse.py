@@ -30,7 +30,8 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-OUT = HERE / "candidate_dse.json"
+OUT = (Path(os.environ["ETM_RESULTS_ROOT"]) / "tcpmt_revision" / "countopt" if os.environ.get("ETM_RESULTS_ROOT")
+       else HERE) / "candidate_dse.json"   # campaign hook
 sys.path.insert(0, str(HERE.parent / "dse_j35"))
 import sweep_etm as SW                                        # noqa: E402  (chdir to engine)
 import numpy as np                                            # noqa: E402
@@ -176,7 +177,7 @@ def main():
             hs, ls = orig(df, arch, V_in, V_out, V_gs_drive, I_out, max_B)
             return [d for d in hs if d.VDSmax >= 2.0 * V_in / arch.N], ls
         EPC.filter_candidate_devices = strict
-        out_path = HERE / "candidate_dse_hs_2vin_over_n.json"
+        out_path = OUT.parent / "candidate_dse_hs_2vin_over_n.json"
     die = die_config()
     res = {"settings": {"J_target": SW.J_TARGET, "ripple_factor": SW.RIPPLE_FACTOR,
                         "v_ripple_frac": SW.V_RIPPLE_FRAC, "routing_arch": SW.ROUTING_ARCH,

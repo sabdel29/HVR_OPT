@@ -29,6 +29,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import sys
 from functools import lru_cache
 from pathlib import Path
@@ -43,7 +44,7 @@ for _p in ("scripts/phase0ir", "scripts/phase0i", "scripts"):
 import solder_model as SM                                           # noqa: E402
 
 CFG_PATH = R / "configs" / "tcpmt_mech" / "mechanics_revision.yaml"
-TR = R / "research" / "tcpmt_revision"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"   # campaign hook
 CARDS = TR / "solder_law_cards.json"
 RECORD = TR / "solder_law_record.json"
 R_GAS = 8.314462618

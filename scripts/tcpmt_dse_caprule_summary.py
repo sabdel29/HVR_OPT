@@ -16,11 +16,12 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sys
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-TR = R / "research" / "tcpmt_revision"
+TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
 D = TR / "dse_j35" / "data"
 TAGS = ["etm35", "etm35_legacycheck2", "etm35_caprule", "etm35_caprule_ripple",
         "etm35_caprule_full", "etm35_caprule_full125"]

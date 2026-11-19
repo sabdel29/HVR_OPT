@@ -32,9 +32,10 @@ os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 R = Path(__file__).resolve().parents[1]
 SCEN = "HV_S0"
 #: the 49-cell production case every candidate result is compared with
-PRODUCTION_CASE = R / "research" / "final_closure" / "etm_Z1_HV_S0_h1.1_r21.json"
-PRODUCTION_NETWORK = R / "research" / "final_closure" / "package_network.json"
-PRODUCTION_LOCAL = R / "research" / "final_closure" / "local_mesh_study.json"
+RES = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research")      # campaign hook
+PRODUCTION_CASE = RES / "final_closure" / "etm_Z1_HV_S0_h1.1_r21.json"
+PRODUCTION_NETWORK = RES / "final_closure" / "package_network.json"
+PRODUCTION_LOCAL = RES / "final_closure" / "local_mesh_study.json"
 #: the structural solve's wall-clock limit (ccxio.run_ccx default 7200 s). A limit changes
 #: nothing numerical; remech_long.py used 12 h for the r31 solves on the loaded host.
 CCX_TIMEOUT_S = 43200
@@ -215,7 +216,7 @@ def cmd_control(a):
     pub = json.loads(PRODUCTION_LOCAL.read_text())["cases"]["Z1_HV_S0"]["levels"]["L0"]
     r = _local("Z1_HV_S0_control49", pub["du_um"], pub["T_joint_C"], "control49")
     dev = abs(r["d_peeq_per_cycle"] - pub["d_peeq_per_cycle"]) / pub["d_peeq_per_cycle"]
-    out = R / "research" / "tcpmt_revision" / "countopt" / "local_control_49.json"
+    out = RES / "tcpmt_revision" / "countopt" / "local_control_49.json"
     out.write_text(json.dumps({"published": pub, "rerun": r, "dev_rel": dev,
                                "accept_if_below": 1e-3}, indent=1, default=float))
     print("control", r["d_peeq_per_cycle"], pub["d_peeq_per_cycle"], dev, flush=True)
@@ -230,7 +231,7 @@ def cmd_compare(a):
     pl = json.loads(PRODUCTION_LOCAL.read_text())["cases"]["Z1_HV_S0"]["levels"]["L0"]
     net_c = json.loads(Z1D.package_network_file().read_text())
     net_p = json.loads(PRODUCTION_NETWORK.read_text())
-    cell = json.loads((R / "research/tcpmt_revision/countopt/physical_cell.json").read_text())
+    cell = json.loads((RES / "tcpmt_revision/countopt/physical_cell.json").read_text())
     groups = {"conversion": ("P_conv_hs", "P_conv_ls", "P_conv_inductor_dcr",
                              "P_conv_cap_esr"),
               "intra_vr": ("P_intraVR_metal", "P_intraVR_vertical"),
@@ -326,7 +327,7 @@ def cmd_compare(a):
         d["local_L0_rel"] = (cc["local_L0"]["d_peeq_per_cycle"]
                              / pp["local_L0"]["d_peeq_per_cycle"] - 1.0)
     cmp_["delta_candidate_minus_49"] = d
-    dse = json.loads((R / "research/tcpmt_revision/countopt/candidate_dse.json").read_text())
+    dse = json.loads((RES / "tcpmt_revision/countopt/candidate_dse.json").read_text())
     cmp_["dse_electrical_only"] = {
         m: {k: dse["counts"][m][k] for k in ("conversion_total_W", "routing_W", "total_W")}
         for m in ("49", "64", "76")}
@@ -356,7 +357,7 @@ def cmd_compare(a):
     # mesh: the candidate's tile is 1.93 mm, so r21 puts 4 elements across it where the
     # 49-cell tile gets 6; the r31 E-T level (thermal only) brackets that
     f31 = E.case_path("Z1", SCEN, 1.1, (3, 1))
-    p31 = R / "research" / "final_closure" / "etm_Z1_HV_S0_h1.1_r31.json"
+    p31 = RES / "final_closure" / "etm_Z1_HV_S0_h1.1_r31.json"
     if f31.exists():
         c31 = json.loads(f31.read_text())
         q31 = json.loads(p31.read_text()) if p31.exists() else None
@@ -374,7 +375,7 @@ def cmd_compare(a):
                 "T_max_rel": rel(q31["thermal"]["T_max_C"], p["thermal"]["T_max_C"]),
                 "P_loss_rel": rel(q31["P_loss_w"], p["P_loss_w"])},
             "declared_tolerance_rel": E.MESH_TOL_REL}
-    out = R / "research" / "tcpmt_revision" / "countopt" / f"etm_compare_{Z1D.tag()}_vs_49.json"
+    out = RES / "tcpmt_revision" / "countopt" / f"etm_compare_{Z1D.tag()}_vs_49.json"
     out.write_text(json.dumps(cmp_, indent=1, default=float))
     print(json.dumps(d, indent=1))
     print("wrote", out)

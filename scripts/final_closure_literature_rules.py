@@ -12,10 +12,11 @@ against the held source rather than against memory.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-OUT = R / "research" / "final_closure"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"   # campaign hook
 
 SOURCES = [
     {"doi": "10.1109/TCPMT.2026.3724907",

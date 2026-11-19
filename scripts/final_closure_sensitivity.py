@@ -39,7 +39,7 @@ sys.path.insert(0, str(R / "scripts"))
 import final_closure_physical_etm as E                              # noqa: E402
 from hvr_scratch import path as scratch                             # noqa: E402
 
-OUT = R / "research" / "final_closure" / "sensitivity"
+OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure" / "sensitivity"   # campaign hook
 SCEN = "HV_S0"
 #: converged production temperature fields kept outside the repo (scratch), see README
 FIELDS = Path(os.environ.get("HVR_FIELDS", Path.home() / "claude_scratch" / "hvr_work"
@@ -257,7 +257,7 @@ def feed_bound_ohm():
     """The largest external loop resistance any requirement admits: the largest crossover
     R* over the scenarios that have a valid comparison (direct_feed_crossover.json). A
     scenario in which Z2 is not ahead even with a lossless feed (R* = 0) admits none."""
-    cx = json.loads((R / "research/final_closure/direct_feed_crossover.json").read_text())
+    cx = json.loads((OUT.parent / "direct_feed_crossover.json").read_text())   # campaign hook
     rs = [c["R_star_mohm"] for c in cx["scenarios"].values()
           if c.get("R_star_mohm") and not c.get("Z1_operating_point_inadmissible")]
     if not rs:
