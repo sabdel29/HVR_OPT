@@ -439,7 +439,13 @@ def term_tc(des, M, t_ls, t_ind, t_caps, bundle="nominal", dT=1.0):
     return {k: (b[k] - a[k]) / dT for k in a}
 
 
-ALPHA_HS, ALPHA_LS = 6.0e-3, 8.0e-3     # 1/K, scripts/phase0d/electrical.py (datasheet-sourced)
+ALPHA_HS, ALPHA_LS = 6.0e-3, 8.0e-3     # 1/K, the published class values (legacy rules)
+
+
+def _alpha(part, role):
+    """The device's own R_DS(on) coefficient (electrical.alpha_ron, TCPMT round 3)."""
+    import electrical as EL
+    return EL.alpha_ron(part, role)
 
 
 def modeled_conv_dPdT(des, t):
@@ -455,7 +461,8 @@ def modeled_conv_dPdT(des, t):
     c_ls = k * ((V_IN / (N ** 2 * V_OUT)) * sb2 + 2 * sb2 / N - corr_coef)
     c_ind = k * (V_IN / (N ** 2 * V_OUT)) * sb2
     M = n_cells()
-    return {"hs": M * k * hs.R_DS_ON * ALPHA_HS, "ls": M * c_ls * ls.R_DS_ON * ALPHA_LS,
+    return {"hs": M * k * hs.R_DS_ON * _alpha(des["hs"], "hs"),
+            "ls": M * c_ls * ls.R_DS_ON * _alpha(des["ls"], "ls"),
             "ind": M * c_ind * RDC25 * ALPHA_CU, "caps": 0.0}
 
 

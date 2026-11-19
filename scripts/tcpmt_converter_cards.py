@@ -281,19 +281,6 @@ class TierContents:
             source=f"replay_production.compiled_design() + {Z1D.config_path(path).name}")
 
 
-#: the 36-cell candidate the coordinator announced (N4K4K_A2): 4 x EPC2057 per device tier
-#: in a pinwheel, 7.94-mm^2 cell, 4 inductors of 1 mm^2, 3 flying capacitors
-DESIGN_36 = TierContents(
-    label="N4K4K_A2 (36 cells, announced candidate)", n_cells=36,
-    cell_side_mm=math.sqrt(7.94), i_out_rms_a=1000.0 / 36 * (20.573030604962867 / 20.408163265306122),
-    hs_part="EPC2057", n_hs=4, ls_part="EPC2057", n_ls=4, n_ind=4, ind_footprint_mm2=1.0,
-    n_cfly=3, cfly_footprint_mm2=2.0, n_cout=1, cout_footprint_mm2=2.0,
-    hs_um=638.0, ls_um=638.0, ind_um=500.0,
-    source="coordinator: N4K4K_A2, 4 x EPC2057 (1.5 x 1.2 mm) per tier in a pinwheel, "
-           "7.94 mm^2 cell, 4 x 1 mm^2 inductors, 3 flying capacitors; output RMS scaled "
-           "by the 49-cell RMS/DC ratio")
-
-
 # ------------------------------------------------------------------ homogenization helpers
 def voigt(fr: dict, prop: str) -> float:
     return sum(f * PHASES[p][prop] if isinstance(p, str) else f * p[prop] for p, f in fr)
@@ -1000,31 +987,69 @@ def summary_rows(cards):
     return rows
 
 
+def mixed_sensitivity(key):
+    """k_z of every mixed tier over its uncertain inputs (one at a time): TY-M5 core k, the
+    MLCC termination thickness, the BaTiO3 and termination conductivities, the post density."""
+    import design_record as DR
+    mc = MixedContents.from_record(key)
+    kz = lambda c: c["k_ortho"]["value"][2]                              # noqa: E731
+    out = {}
+    for t in DR.tiers(key):
+        n, parts, h = t["name"], t["parts"], float(t["height_um"])
+        rec = {"base": kz(mixed_tier(mc, n, parts, h))}
+        if parts.get("inductor"):
+            for k in TYM5["k_range"]:
+                rec[f"TYM5_k_{k:g}"] = kz(mixed_tier(mc, n, parts, h, k_core=k))
+            rec["posts_at_half_J"] = kz(mixed_tier(mc, n, parts, h, j_post=0.5 * J_POST))
+        if parts.get("cap_fly"):
+            for tt in MLCC["termination_um_range"]:
+                rec[f"termination_{tt:g}um"] = kz(mixed_tier(mc, n, parts, h, t_term_um=tt))
+            for phase, values in (("batio3", PHASES["batio3"]["range"]["k"]),
+                                  ("termination", [0.7, 400.0])):
+                old = PHASES[phase]["k"]
+                for kb in values:
+                    PHASES[phase]["k"] = kb
+                    try:
+                        rec[f"{phase}_k_{kb:g}"] = kz(mixed_tier(mc, n, parts, h))
+                    finally:
+                        PHASES[phase]["k"] = old
+        out[n] = rec
+    return out
+
+
 def main():
-    designs = {"N3K3K_A2_49": TierContents.from_design(), "N4K4K_A2_36": DESIGN_36}
-    rec = {"what": "converter-tier material cards by unit-cell homogenization (TCPMT "
-                   "revision); production uses the cards of the design in force",
-           "replaces": {"inductor_plus_cout": "hvr_effective (k 60 iso, E 120 GPa, CTE 6 ppm/K, "
-                                              "UNSPECIFIED surrogate)",
-                        "flying_caps": "hvr_effective", "gan_hs/gan_ls": "solid silicon"},
+    """Every design of THE design record (configs/design_points.yaml): one card per mixed
+    tier from its contents, with the bounds and the one-at-a-time sensitivity. The round-2
+    single-class cards of the frozen 49-cell lineage are no longer regenerated here (git
+    history); the stale 36-cell N4K4K_A2 / EPC2057 entry is gone."""
+    import design_record as DR
+    rec = {"what": "converter-tier material cards by unit-cell homogenization (TCPMT round "
+                   "3: one card per MIXED tier of every design of the design record); "
+                   "production uses the cards of the design in force",
+           "record": str(DR.RECORD.relative_to(R)), "production": DR.production_key(),
+           "replaces": {"mixed tiers": "the single-class tier cards (conv_gan_hs, conv_gan_ls, "
+                                       "conv_cfly_a0/a1, conv_ind_cout) of the 49-cell build"},
            "legacy_variant": "conv_k_legacy (final_closure_sensitivity)",
            "method": __doc__.split("METHOD (all tiers)")[1].split("PHASES (sources")[0].strip(),
+           "mixed_tier_method": mixed_tier.__doc__,
            "phases": PHASES, "tym5": TYM5, "devices": DEVICES, "inductor_segment": IND_SEGMENT,
-           "mlcc": MLCC, "a1_part": A1_PART, "keepout_um": KEEPOUT_UM,
+           "mlcc": MLCC, "cf_0603": CF_0603, "keepout_um": KEEPOUT_UM, "j_post_A_m2": J_POST,
            "inductor_paper": INDUCTOR_PAPER, "designs": {}}
-    for key, tc in designs.items():
-        cards = cards_for(tc)
-        rec["designs"][key] = {"tier_contents": asdict(tc), "cards": cards,
-                               "summary": summary_rows(cards), "sensitivity": sensitivity(tc)}
+    for key in DR.keys():
+        mc = MixedContents.from_record(key)
+        cards = mixed_cards(key)
+        rec["designs"][key] = {"tier_contents": asdict(mc),
+                               "tiers": [{k: t[k] for k in ("name", "height_um", "parts")}
+                                         for t in DR.tiers(key)],
+                               "cards": cards, "summary": summary_rows(cards),
+                               "sensitivity": mixed_sensitivity(key)}
     OUT.write_text(json.dumps(rec, indent=1, default=float))
     for key, d in rec["designs"].items():
         print(f"== {key}")
         for n, r in d["summary"].items():
-            print(f"  {n:14s} kx={r['kx']:7.2f} kz={r['kz']:7.2f} "
+            print(f"  {n:12s} kx={r['kx']:7.2f} kz={r['kz']:7.2f} "
                   f"[{r['kz_bounds'][0]:6.2f}, {r['kz_bounds'][1]:6.2f}]  "
-                  f"E={r['E_GPa']:6.1f} [{r['E_bounds_GPa'][0]:5.1f}, {r['E_bounds_GPa'][1]:5.1f}] GPa "
-                  f"nu={r['nu']:.3f} CTE={r['cte_ppm']:5.2f} "
-                  f"[{r['cte_bounds_ppm'][0]:5.2f}, {r['cte_bounds_ppm'][1]:5.2f}] ppm/K")
+                  f"E={r['E_GPa']:6.1f} GPa nu={r['nu']:.3f} CTE={r['cte_ppm']:5.2f} ppm/K")
     print(f"wrote {OUT}")
     return rec
 

@@ -47,6 +47,47 @@ ALPHA_GAN_RDSON = 7.5e-3    # 1/K     ASSUMPTION (legacy single value, kept for 
 #   EPC2057  (low side),  Fig. 9, rev. Apr. 2025: 1.80x at 125 C -> 8.0e-3 /K
 ALPHA_GAN_HS = 6.0e-3       # 1/K     SOURCE_BACKED (EPC2014C datasheet Fig. 8)
 ALPHA_GAN_LS = 8.0e-3       # 1/K     SOURCE_BACKED (EPC2057 datasheet Fig. 9)
+
+
+# TCPMT round 3: the R_DS(on) temperature coefficient is the SELECTED DEVICE's own, read from
+# the datasheet device table (scripts/tcpmt_feasibility.DEVICES: alpha_ron_per_K, the linear-
+# equivalent fit of the datasheet curve "normalized R_DS(on) vs T_J" over 25-125 C) -- the
+# decided low side EPC2055 is 6.0e-3/K, not the EPC2057's 8.0e-3/K the class value gave it.
+# RON_TC_RULE "device" (production) or "class" (the published per-class values above, the
+# lineage of every result before round 3; HVR_PRODUCTION_RULES=legacy selects it, as does
+# HVR_PRODUCTION_RON_TC_RULE=class). HVR_LEGACY_ALPHA=1 still forces the single 7.5e-3/K.
+def ron_tc_rule() -> str:
+    import os
+    raw = os.environ.get("HVR_PRODUCTION_RON_TC_RULE", "").strip().lower()
+    if raw:
+        if raw not in ("device", "class"):
+            raise ValueError(f"HVR_PRODUCTION_RON_TC_RULE={raw!r}: expected device or class")
+        return raw
+    legacy = os.environ.get("HVR_PRODUCTION_RULES", "").strip().lower() == "legacy"
+    return "class" if legacy else "device"
+
+
+def _device_table() -> dict:
+    sc = str(REPO / "scripts")
+    if sc not in sys.path:
+        sys.path.insert(0, sc)
+    import tcpmt_feasibility as TF
+    return TF.DEVICES
+
+
+def alpha_ron(part: str, role: str) -> float:
+    """R_DS(on) temperature coefficient (1/K) of `part` in its role ('hs' / 'ls') under the
+    rule in force (ron_tc_rule): the device table's datasheet fit, or the class value."""
+    import os
+    if os.environ.get("HVR_LEGACY_ALPHA", "0") == "1":
+        return ALPHA_GAN_RDSON
+    if ron_tc_rule() == "class":
+        return ALPHA_GAN_HS if role == "hs" else ALPHA_GAN_LS
+    dev = _device_table().get(part)
+    if not dev or dev.get("alpha_ron_per_K") is None:
+        raise KeyError(f"{part}: no datasheet R_DS(on) temperature coefficient in the device "
+                       f"table (scripts/tcpmt_feasibility.DEVICES)")
+    return float(dev["alpha_ron_per_K"])
 T_REF_DEVICE = 25.0         # degC    datasheet reference for R_DS(on) and inductor DCR
 
 # June-2026 Table III TSV geometry - SOURCE_BACKED
@@ -249,11 +290,19 @@ class HVRDesign:
     #: the engine rule switches this design was synthesized under (production_rules())
     rules: dict | None = None
 
-    def loss_at(self, T_c: float, alpha_gan: float = ALPHA_GAN_RDSON) -> dict:
+    def loss_at(self, T_c: float, alpha_gan: float | None = None) -> dict:
+        """The converter loss at temperature T_c. alpha_gan None (TCPMT round 3): each device
+        at its own R_DS(on) coefficient (alpha_ron: the datasheet device table under the
+        production rules, the class values under the legacy ones); a number applies that one
+        coefficient to both devices (the frozen phases and sensitivities)."""
         import HVR_FULL_OPT_EPC_V2 as H
         from HVR_FULL_OPT_EPC_V2 import LossModelInputs, compute_total_loss
-        hs_t = replace(self.hs, R_DS_ON=rdson_at(self.hs.R_DS_ON, T_c, alpha_gan))
-        ls_t = replace(self.ls, R_DS_ON=rdson_at(self.ls.R_DS_ON, T_c, alpha_gan))
+        if alpha_gan is None and ron_tc_rule() == "class":
+            alpha_gan = ALPHA_GAN_RDSON         # the published loss_at default (legacy rules)
+        a_hs = alpha_ron(self.hs.part_number, "hs") if alpha_gan is None else alpha_gan
+        a_ls = alpha_ron(self.ls.part_number, "ls") if alpha_gan is None else alpha_gan
+        hs_t = replace(self.hs, R_DS_ON=rdson_at(self.hs.R_DS_ON, T_c, a_hs))
+        ls_t = replace(self.ls, R_DS_ON=rdson_at(self.ls.R_DS_ON, T_c, a_ls))
         ind_t = replace(self.inductor,
                         r_dcr_mohm=dcr_at(self.inductor.r_dcr_mohm, T_c))
         prev_rules = pin_loss_rules(H, self)    # the loss terms of the design's own lineage

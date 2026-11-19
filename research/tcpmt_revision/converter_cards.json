@@ -1,12 +1,13 @@
 {
- "what": "converter-tier material cards by unit-cell homogenization (TCPMT revision); production uses the cards of the design in force",
+ "what": "converter-tier material cards by unit-cell homogenization (TCPMT round 3: one card per MIXED tier of every design of the design record); production uses the cards of the design in force",
+ "record": "configs/design_points.yaml",
+ "production": "m36",
  "replaces": {
-  "inductor_plus_cout": "hvr_effective (k 60 iso, E 120 GPa, CTE 6 ppm/K, UNSPECIFIED surrogate)",
-  "flying_caps": "hvr_effective",
-  "gan_hs/gan_ls": "solid silicon"
+  "mixed tiers": "the single-class tier cards (conv_gan_hs, conv_gan_ls, conv_cfly_a0/a1, conv_ind_cout) of the 49-cell build"
  },
  "legacy_variant": "conv_k_legacy (final_closure_sensitivity)",
  "method": "conductivity  through the thickness: parallel prisms that span the tier (exact for\n                prisms), each prism a SERIES stack of its own layers (die body + solder\n                terminal; capacitor mount + body + encapsulant cap); in plane: each component\n                in its share of the cell, the classical series-parallel (Kirchhoff/Rayleigh)\n                bounds of a rectangular inclusion in a periodic rectangular cell (adiabatic\n                planes -> lower, isothermal planes -> upper), averaged over the two in-plane\n                directions; the production in-plane value is the midpoint of that bracket.\n                Outer bounds: Reuss (series) and Voigt (parallel) over the phase fractions.\n  elasticity    Voigt and Reuss over the phase volume fractions; production iso E = Hill\n                (their mean), nu = volume mean.\n  expansion     iso-strain (Turner, modulus-weighted) and iso-stress (volume mean) bounds;\n                production iso CTE = Turner: the stiff phases (Si dies, MLCC ceramic, Cu)\n                span the tier and are bonded to continuous RDL above and below, which\n                enforces nearly common in-plane strain.\n  The FE takes iso E/nu/CTE and orthotropic k (etm.config.Material); the full set with its\n  bounds is in the JSON for the mechanical model.",
+ "mixed_tier_method": "The card of one MIXED converter tier from what it holds (TCPMT round 3).\n\n    Every part is a vertical prism spanning the tier (a series stack of its own layers and an\n    encapsulant cap up to the tier top: a part shorter than its tier conducts through the\n    cap); prisms and the encapsulant fill act in parallel through the thickness. A tier\n    holding inductors also carries their output-current posts (Cu prisms sized at the\n    intra-VR current density for the share of the cell output current those inductors\n    deliver; the legacy inductor-tier convention). In plane: each component in its area share\n    of the cell (series-parallel bracket, midpoint). Mechanics: Voigt/Reuss/Hill and\n    Turner/volume-mean over the volume fractions, as the single-class cards.\n    The via conductors of nets crossing the tier are NOT in the card (declared,\n    conservative for k_z).",
  "phases": {
   "silicon": {
    "k": 130.0,
@@ -105,6 +106,14 @@
    },
    "source": "Fe-based soft-magnetic alloy powder (Fe-Si/Fe-Si-Cr/amorphous class; pure Fe 80 W/mK, amorphous ~9 W/mK)",
    "status": "LITERATURE_TYPICAL"
+  },
+  "qfn_body": {
+   "k": 1.7970526185629767,
+   "E": 25000.0,
+   "nu": 0.3,
+   "cte": 9e-06,
+   "source": "DECLARED QFN construction: Cu pad 200 um + Si die 250 um + mould 200 um over 45 % of the package, mould compound (k 0.9 W/mK) elsewhere; E/CTE of a filled mould compound with the pad and die",
+   "status": "ASSUMPTION"
   }
  },
  "tym5": {
@@ -185,6 +194,97 @@
    ],
    "terminal": "solder bumps",
    "source": "EPC2057 datasheet, DIE OUTLINE: A 1500, B 1200; pad 1 250 x 300, pad 2 250 x 525, pads 3-4 250 x 1050 um; die 518 +/- 25, bump 120 +/- 12 um; overall 638 um"
+  },
+  "EPC2055": {
+   "die_mm": [
+    2.5,
+    1.5
+   ],
+   "body_um": 518.0,
+   "terminal_um": 120.0,
+   "overall_um": 638.0,
+   "pads_um": [
+    [
+     250.0,
+     1000.0
+    ],
+    [
+     250.0,
+     1000.0
+    ],
+    [
+     250.0,
+     1000.0
+    ],
+    [
+     250.0,
+     1000.0
+    ],
+    [
+     250.0,
+     1000.0
+    ],
+    [
+     250.0,
+     1000.0
+    ]
+   ],
+   "terminal": "solder lands (LGA)",
+   "status": "ASSUMPTION (land pattern)",
+   "source": "EPC-Product-Table: LGA 2.5 x 1.5 mm; HVR_epc_device_data.json: 518 +/- 25 die + 120 +/- 12 bump = 638 um; land pattern DECLARED as six 250 x 1000-um lands (40 % of the die)"
+  },
+  "EPC2090": {
+   "die_mm": [
+    2.3,
+    1.45
+   ],
+   "body_um": 518.0,
+   "terminal_um": 88.0,
+   "overall_um": 606.0,
+   "pads_um": [
+    [
+     250.0,
+     1000.0
+    ],
+    [
+     250.0,
+     1000.0
+    ],
+    [
+     250.0,
+     1000.0
+    ],
+    [
+     250.0,
+     1000.0
+    ],
+    [
+     250.0,
+     1000.0
+    ]
+   ],
+   "terminal": "Cu pillar + solder bumps",
+   "status": "ASSUMPTION (bump pattern)",
+   "source": "EPC-Product-Table: BGA 2.3 x 1.45 mm; HVR_epc_device_data.json: 518 die + 50 Cu + 3 Ni + solder = 606 um; bump fraction DECLARED (37 % of the die, solder card for the whole terminal)"
+  },
+  "EPC2366": {
+   "die_mm": [
+    3.3,
+    2.6
+   ],
+   "body_um": 650.0,
+   "terminal_um": 50.0,
+   "overall_um": 700.0,
+   "pads_um": [
+    [
+     3300.0,
+     1430.0000000000002
+    ]
+   ],
+   "body_phase": "qfn_body",
+   "terminal": "QFN exposed pad + leads (55 %)",
+   "status": "ASSUMPTION (package construction)",
+   "source": "EPC-Product-Table: QFN 3.3 x 2.6 mm; HVR_epc_device_data.json: A = 0.70 mm; construction DECLARED (qfn_body)"
   }
  },
  "inductor_segment": {
@@ -211,1274 +311,2898 @@
   "source": "BME-MLCC construction: ~1-um Ni electrodes between ~3-um BaTiO3 layers (Ni 0.25 of the active volume), cover/margins 0.35 of the body; Cu thick-film end terminations 15-40 um",
   "status": "ASSUMPTION"
  },
- "a1_part": {
-  "part": "GRM188D71H105KE01",
+ "cf_0603": {
   "L_mm": 1.6,
   "W_mm": 0.8,
-  "T_nom_mm": 0.8,
-  "T_max_mm": 1.0,
+  "T_nom_um": 800.0,
   "mount_um": 30.0
  },
  "keepout_um": 50.0,
+ "j_post_A_m2": 100000000.0,
  "inductor_paper": "/home/beams0/SABDELZAHER/Salma_Thesis/HVR/Inductor_Arrays__Rami__Salma__TCPMT_-2.pdf",
  "designs": {
-  "N3K3K_A2_49": {
+  "m36": {
    "tier_contents": {
-    "label": "N3K3KA2_J3.5 (49 cells)",
-    "n_cells": 49,
-    "cell_side_mm": 2.3685,
-    "i_out_rms_a": 20.573030604962867,
+    "label": "M36N3K3KA2 (36 cells, design m36)",
+    "n_cells": 36,
+    "cell_side_mm": 2.817180849095055,
+    "i_out_rms_a": 27.899128995023368,
     "hs_part": "EPC2014C",
-    "n_hs": 3,
-    "ls_part": "EPC2057",
-    "n_ls": 3,
-    "n_ind": 3,
+    "ls_part": "EPC2055",
     "ind_footprint_mm2": 1.0,
-    "n_cfly": 2,
-    "cfly_footprint_mm2": 2.0,
-    "n_cout": 1,
-    "cout_footprint_mm2": 2.0,
-    "hs_um": 685.0,
-    "ls_um": 638.0,
     "ind_um": 500.0,
-    "cfly_um": 100.0,
-    "keepout_um": 50.0,
-    "n_cfly_a1": null,
-    "source": "replay_production.compiled_design() + z1_physical.yaml"
+    "cf_um": 1000.0,
+    "n_ind_total": 3,
+    "keepout_um": 50.0
    },
+   "tiers": [
+    {
+     "name": "tier1_hs2cf2",
+     "height_um": 1000.0,
+     "parts": {
+      "gan_hs": 2,
+      "cap_fly": 2
+     }
+    },
+    {
+     "name": "tier2_hs1ls1",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 1,
+      "gan_ls": 1
+     }
+    },
+    {
+     "name": "tier3_ls1l1",
+     "height_um": 638.0,
+     "parts": {
+      "gan_ls": 1,
+      "inductor": 1
+     }
+    },
+    {
+     "name": "tier4_ls1l2",
+     "height_um": 638.0,
+     "parts": {
+      "gan_ls": 1,
+      "inductor": 2
+     }
+    }
+   ],
    "cards": {
-    "conv_gan_hs": {
+    "conv_tier1": {
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
-      "value": 80673.53276060379,
+      "value": 45536.63022972193,
       "status": "DERIVED"
      },
      "nu": {
-      "value": 0.28767019383678705,
+      "value": 0.3054224724368,
       "status": "DERIVED"
      },
      "cte": {
-      "value": 3.225141945121016e-06,
+      "value": 8.253036001238014e-06,
       "status": "DERIVED"
      },
      "k": {
-      "value": 70.92973978011585,
+      "value": 1.8250687749410075,
       "status": "DERIVED"
      },
      "k_ortho": {
       "value": [
-       16.15465924578846,
-       16.15465924578846,
-       70.92973978011585
+       5.378430544749289,
+       5.378430544749289,
+       1.8250687749410075
       ],
       "status": "DERIVED"
      },
-     "provenance": "3 x EPC2014C dies (EPC2014C datasheet, DIE OUTLINE: A 1702, B 1087; bars 3-5 200 x 834 um, pads 1-2 200 x 316 um; terminal 100 +/- 20 um; overall 685 um (815 max)) in the encapsulant, cell 2.3685 mm (N3K3KA2_J3.5 (49 cells))",
+     "provenance": "mixed tier tier1_hs2cf2: 2 x gan_hs, 2 x cap_fly in the encapsulant, 1000 um, cell 2.8172 mm (M36N3K3KA2 (36 cells, design m36))",
      "derivation": {
       "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_gan_hs",
+      "card": "conv_tier1",
       "bounds": {
-       "kz_reuss": 6.290971511943299,
-       "kz_voigt": 112.70649483983827,
-       "kz_estimate": 70.92973978011585,
+       "kz_reuss": 1.3937947892542735,
+       "kz_voigt": 40.00623772347609,
+       "kz_estimate": 1.8250687749410075,
        "kxy_series_parallel": [
-        15.92447217842599,
-        16.384846313150927
+        5.13461622723379,
+        5.622244862264789
        ],
-       "kxy_reuss": 6.290971511943299,
-       "kxy_voigt": 112.70649483983827
+       "kxy_reuss": 1.3937947892542735,
+       "kxy_voigt": 40.00623772347609
       },
       "mechanical": {
-       "E_voigt_MPa": 113138.63051825747,
-       "E_reuss_MPa": 48208.435002950115,
-       "E_hill_MPa": 80673.53276060379,
-       "nu_mean": 0.28767019383678705,
-       "cte_turner_per_K": 3.225141945121016e-06,
-       "cte_volume_per_K": 6.4570100806779655e-06,
+       "E_voigt_MPa": 74414.38362776002,
+       "E_reuss_MPa": 16658.87683168384,
+       "E_hill_MPa": 45536.63022972193,
+       "nu_mean": 0.3054224724368,
+       "cte_turner_per_K": 8.253036001238014e-06,
+       "cte_volume_per_K": 1.751809256699747e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
-      "tier": "gan_hs",
-      "part": "EPC2014C",
-      "dies_per_cell": 3,
-      "tier_um": 685.0,
-      "body_um": 585.0,
-      "terminal_um": 100.0,
-      "die_area_fraction": 0.9893810238694668,
-      "solder_fraction_under_die": 0.338797258920454,
-      "gap_um_in_plane": 50.00000000000004,
-      "packing": {
-       "n": 3,
-       "die_mm": [
-        1.702,
-        1.087
-       ],
-       "keepout_um": 50.0,
-       "layouts_side_mm": {
-        "row": 3.411,
-        "L_2_plus_1": 2.8890000000000002,
-        "grid_2x2": 3.504
-       },
-       "best_layout": "L_2_plus_1",
-       "min_side_mm": 2.8890000000000002,
-       "cell_side_mm": 2.3685,
-       "fits": false,
-       "die_area_fraction": 0.9893810238694668
+      "tier": "tier1_hs2cf2",
+      "tier_um": 1000.0,
+      "parts": {
+       "gan_hs": 2,
+       "cap_fly": 2
       },
-      "volume_fractions": {
-       "silicon": 0.8449458379031213,
-       "solder": 0.04893424509706388,
-       "encapsulant": 0.10611991699981482
-      },
-      "kz_layers": {
-       "body": 128.62696638632204,
-       "terminal": 19.571736292908174
-      },
-      "packing_note": "drawn cell below the packed minimum: vertical prisms keep the dies' total cross-section in the drawn cell; the in-plane gap is the declared keep-out"
-     }
-    },
-    "conv_gan_ls": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
-      "value": 72753.96416710991,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.29094464343014076,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 3.5687142603839104e-06,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 67.72067532703858,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       15.884244494292657,
-       15.884244494292657,
-       67.72067532703858
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "3 x EPC2057 dies (EPC2057 datasheet, DIE OUTLINE: A 1500, B 1200; pad 1 250 x 300, pad 2 250 x 525, pads 3-4 250 x 1050 um; die 518 +/- 25, bump 120 +/- 12 um; overall 638 um) in the encapsulant, cell 2.3685 mm (N3K3KA2_J3.5 (49 cells))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_gan_ls",
-      "bounds": {
-       "kz_reuss": 4.666361768139584,
-       "kz_voigt": 105.89528999857933,
-       "kz_estimate": 67.72067532703858,
-       "kxy_series_parallel": [
-        15.674970846671066,
-        16.09351814191425
-       ],
-       "kxy_reuss": 4.666361768139584,
-       "kxy_voigt": 105.89528999857933
-      },
-      "mechanical": {
-       "E_voigt_MPa": 106438.17506766779,
-       "E_reuss_MPa": 39069.75326655203,
-       "E_hill_MPa": 72753.96416710991,
-       "nu_mean": 0.29094464343014076,
-       "cte_turner_per_K": 3.5687142603839104e-06,
-       "cte_volume_per_K": 7.997140027024716e-06,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "gan_ls",
-      "part": "EPC2057",
-      "dies_per_cell": 3,
-      "tier_um": 638.0,
-      "body_um": 518.0,
-      "terminal_um": 120.0,
-      "die_area_fraction": 0.962602492097635,
-      "solder_fraction_under_die": 0.40625,
-      "gap_um_in_plane": 50.00000000000004,
-      "packing": {
-       "n": 3,
-       "die_mm": [
-        1.5,
-        1.2
-       ],
-       "keepout_um": 50.0,
-       "layouts_side_mm": {
-        "row": 3.75,
-        "L_2_plus_1": 2.8,
-        "grid_2x2": 3.1
-       },
-       "best_layout": "L_2_plus_1",
-       "min_side_mm": 2.8,
-       "cell_side_mm": 2.3685,
-       "fits": false,
-       "die_area_fraction": 0.962602492097635
-      },
-      "volume_fractions": {
-       "silicon": 0.7815487318284874,
-       "solder": 0.07355309010934123,
-       "encapsulant": 0.14489817806217142
-      },
-      "kz_layers": {
-       "body": 125.16450222822422,
-       "terminal": 22.716523873945594
-      },
-      "packing_note": "drawn cell below the packed minimum: vertical prisms keep the dies' total cross-section in the drawn cell; the in-plane gap is the declared keep-out"
-     }
-    },
-    "conv_cfly_a0": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
-      "value": 60453.22594526681,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.3076627259114324,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 1.1778516196450745e-05,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 7.323222441430351,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       3.6693347022570957,
-       3.6693347022570957,
-       7.323222441430351
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "A0: 2 thin embedded MLCC flying capacitors of the library footprint 2.0 mm^2 (N3K3KA2_J3.5 (49 cells))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_cfly_a0",
-      "bounds": {
-       "kz_reuss": 1.5759771114881145,
-       "kz_voigt": 7.323222441430351,
-       "kz_estimate": 7.323222441430351,
-       "kz_without_terminations": 2.354662805459004,
-       "kxy_series_parallel": [
-        3.46001659239635,
-        3.878652812117841
-       ],
-       "kxy_reuss": 1.5759771114881145,
-       "kxy_voigt": 7.323222441430351
-      },
-      "mechanical": {
-       "E_voigt_MPa": 96671.46939815377,
-       "E_reuss_MPa": 24234.982492379837,
-       "E_hill_MPa": 60453.22594526681,
-       "nu_mean": 0.3076627259114324,
-       "cte_turner_per_K": 1.1778516196450745e-05,
-       "cte_volume_per_K": 1.6709680078242607e-05,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "conv_cfly_a0",
-      "parts_per_cell": 2,
-      "part_mm": [
-       1.7888543819998317,
-       1.118033988749895,
-       0.1
-      ],
-      "tier_um": 100.0,
-      "mount_um": 0.0,
-      "termination_um": 25.0,
       "area_fractions": {
-       "body": 0.6931088403719425,
-       "terminations": 0.019930042663342747,
-       "encapsulant": 0.28696111696471477
+       "gan_hs": 0.466218648,
+       "cap_fly": 0.32256000000000007,
+       "posts": 0.0,
+       "encapsulant": 0.2112213519999998
       },
-      "mlcc_body": {
-       "k": 3.087305873304204,
-       "E": 133000.0,
-       "nu": 0.301625,
-       "cte": 1.1208646616541354e-05,
-       "k_in": 16.91625,
-       "ni_fraction": 0.1625
-      },
-      "gap_um_in_plane": 254.59449246589338,
-      "volume_fractions": {
-       "mlcc_body": 0.6931088403719425,
-       "termination": 0.019930042663342747,
-       "solder": 0.0,
-       "encapsulant": 0.2869611169647147
-      }
-     }
-    },
-    "conv_ind_cout": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
-      "value": 48615.22025343244,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.318399548559902,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 1.3887001183701692e-05,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 43.8565345488386,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       8.065536653298206,
-       8.065536653298206,
-       43.8565345488386
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "3 inductors (TY-M5 rod, Cu windings: inductor paper Fig. 7), 1 C_out MLCC, output-current posts, encapsulant (N3K3KA2_J3.5 (49 cells))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_ind_cout",
-      "bounds": {
-       "kz_reuss": 1.5436979410784861,
-       "kz_voigt": 95.05015654598832,
-       "kz_estimate": 43.8565345488386,
-       "kxy_series_parallel": [
-        8.001037328468758,
-        8.130035978127657
-       ],
-       "kxy_reuss": 1.5436979410784861,
-       "kxy_voigt": 95.05015654598832
-      },
-      "mechanical": {
-       "E_voigt_MPa": 77728.55885233349,
-       "E_reuss_MPa": 19501.881654531393,
-       "E_hill_MPa": 48615.22025343244,
-       "nu_mean": 0.318399548559902,
-       "cte_turner_per_K": 1.3887001183701692e-05,
-       "cte_volume_per_K": 1.956748326317396e-05,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "inductor_plus_cout",
-      "tier_um": 500.0,
-      "area_fractions": {
-       "inductors": 0.5347791622764639,
-       "posts": 0.03667342690803366,
-       "cout_body": 0.34655442018597127,
-       "cout_terminations": 0.009965021331671374,
-       "encapsulant": 0.07202796929785972
-      },
-      "posts": {
-       "rails": 1,
-       "I_rms_A": 20.573030604962867,
-       "J_A_m2": 100000000.0,
-       "area_mm2": 0.20573030604962866
-      },
-      "inductor_envelope": {
-       "kz": 48.30155199604136,
-       "kx": 48.30155199604136,
-       "ky": 1.390765354398847,
-       "k_in_orientation_avg": 8.196104262379096,
-       "fractions": {
-        "copper": 0.3540566697761194,
-        "copper_spanning_legs": 0.1169776119402985,
-        "tym5_rod": 0.09765625,
-        "fill": 0.5482870802238806
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 2,
+        "kz": 2.1760082902291527,
+        "k_in": 77.32878192929664,
+        "cap_um": 315.0
        },
-       "dcr_from_dimensions_mohm": 5.429687070340427
-      },
-      "tym5": {
-       "k": 3.0,
-       "E": 75280.91787439614,
-       "nu": 0.308,
-       "cte": 1.2306600425833925e-05,
-       "bounds": {
-        "k_HS_lower": 1.4715596330275231,
-        "E_voigt": 140900.0,
-        "E_reuss": 9661.835748792268,
-        "cte_volume": 2.6400000000000005e-05
+       "cap_fly": {
+        "kind": "mlcc",
+        "part": null,
+        "count": 2,
+        "kz": 2.0545578665475572,
+        "k_in": 21.18909375,
+        "cap_um": 170.0
        }
       },
-      "cout_part_mm": [
-       1.7888543819998317,
-       1.118033988749895,
-       0.48
-      ],
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
       "volume_fractions": {
-       "copper": 0.22601555616930144,
-       "termination": 0.009566420478404518,
-       "tym5": 0.052224527566060934,
-       "mlcc_body": 0.3326922433785324,
-       "solder": 0.014260777660705706,
-       "encapsulant": 0.36524047474699495
+       "silicon": 0.27273790908000006,
+       "solder": 0.025472160000000008,
+       "encapsulant": 0.44374193091999986,
+       "mlcc_body": 0.2499840000000001,
+       "termination": 0.008064000000000003
       }
      }
     },
-    "conv_cfly_a1": {
+    "conv_tier2": {
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
-      "value": 38796.34122142753,
+      "value": 47960.46146958096,
       "status": "DERIVED"
      },
      "nu": {
-      "value": 0.31278896162608055,
+      "value": 0.2990837550633577,
       "status": "DERIVED"
      },
      "cte": {
-      "value": 1.273646792610139e-05,
+      "value": 4.28165644369726e-06,
       "status": "DERIVED"
      },
      "k": {
-      "value": 5.029228374098214,
+      "value": 21.156333088853973,
       "status": "DERIVED"
      },
      "k_ortho": {
       "value": [
-       1.8686178957796895,
-       1.8686178957796895,
-       5.029228374098214
+       4.084056960828537,
+       4.084056960828537,
+       21.156333088853973
       ],
       "status": "DERIVED"
      },
-     "provenance": "A1: 2 x Murata GRM188D71H105KE01 (0603) per cell, 1030-um tier (N3K3KA2_J3.5 (49 cells))",
+     "provenance": "mixed tier tier2_hs1ls1: 1 x gan_hs, 1 x gan_ls in the encapsulant, 685 um, cell 2.8172 mm (M36N3K3KA2 (36 cells, design m36))",
      "derivation": {
       "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_cfly_a1",
+      "card": "conv_tier2",
       "bounds": {
-       "kz_reuss": 1.0917481474460742,
-       "kz_voigt": 5.924629483597754,
-       "kz_estimate": 5.029228374098214,
-       "kz_without_terminations": 1.794054885669886,
+       "kz_reuss": 1.7390447370202207,
+       "kz_voigt": 75.15379665112702,
+       "kz_estimate": 21.156333088853973,
        "kxy_series_parallel": [
-        1.6554156645527422,
-        2.0818201270066368
+        3.791441548650619,
+        4.376672373006454
        ],
-       "kxy_reuss": 1.0917481474460742,
-       "kxy_voigt": 5.924629483597754
+       "kxy_reuss": 1.7390447370202207,
+       "kxy_voigt": 75.15379665112702
       },
       "mechanical": {
-       "E_voigt_MPa": 63621.463409617725,
-       "E_reuss_MPa": 13971.219033237328,
-       "E_hill_MPa": 38796.34122142753,
-       "nu_mean": 0.31278896162608055,
-       "cte_turner_per_K": 1.273646792610139e-05,
-       "cte_volume_per_K": 2.1643572587057384e-05,
+       "E_voigt_MPa": 77753.84673559126,
+       "E_reuss_MPa": 18167.076203570665,
+       "E_hill_MPa": 47960.46146958096,
+       "nu_mean": 0.2990837550633577,
+       "cte_turner_per_K": 4.28165644369726e-06,
+       "cte_volume_per_K": 1.4397930227159124e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
-      "tier": "conv_cfly_a1",
-      "parts_per_cell": 2,
-      "part_mm": [
-       1.6,
-       0.8,
-       1.0
-      ],
-      "tier_um": 1030.0,
-      "mount_um": 30.0,
-      "termination_um": 25.0,
+      "tier": "tier2_hs1ls1",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 1,
+       "gan_ls": 1
+      },
       "area_fractions": {
-       "body": 0.442084107481877,
-       "terminations": 0.01426077766070571,
-       "encapsulant": 0.5436551148574174
+       "gan_hs": 0.233109324,
+       "gan_ls": 0.47250000000000003,
+       "posts": 0.0,
+       "encapsulant": 0.2943906759999999
       },
-      "mlcc_body": {
-       "k": 3.087305873304204,
-       "E": 133000.0,
-       "nu": 0.301625,
-       "cte": 1.1208646616541354e-05,
-       "k_in": 16.91625,
-       "ni_fraction": 0.1625
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 1,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0
+       },
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 8.978257142944337,
+        "k_in": 100.5282795051933,
+        "cap_um": 47.0
+       }
       },
-      "gap_um_in_plane": 521.8873729138033,
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
       "volume_fractions": {
-       "mlcc_body": 0.42920787134162813,
-       "termination": 0.01384541520456865,
-       "solder": 0.013291598596385904,
-       "encapsulant": 0.5436551148574174
+       "silicon": 0.5563853350948906,
+       "solder": 0.0446389489051095,
+       "encapsulant": 0.398975716
+      }
+     }
+    },
+    "conv_tier3": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 38018.59679160677,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.3065391854091349,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 6.3061881220302185e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 38.283959698801354,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       2.7733712605006433,
+       2.7733712605006433,
+       38.283959698801354
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier3_ls1l1: 1 x gan_ls, 1 x inductor in the encapsulant, 638 um, cell 2.8172 mm (M36N3K3KA2 (36 cells, design m36))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier3",
+      "bounds": {
+       "kz_reuss": 1.3224155085428755,
+       "kz_voigt": 70.96579501038373,
+       "kz_estimate": 38.283959698801354,
+       "kxy_series_parallel": [
+        2.5299413247526754,
+        3.0168011962486116
+       ],
+       "kxy_reuss": 1.3224155085428755,
+       "kxy_voigt": 70.96579501038373
+      },
+      "mechanical": {
+       "E_voigt_MPa": 61705.81544878027,
+       "E_reuss_MPa": 14331.378134433273,
+       "E_hill_MPa": 38018.59679160677,
+       "nu_mean": 0.3065391854091349,
+       "cte_turner_per_K": 6.3061881220302185e-06,
+       "cte_volume_per_K": 1.841086672448734e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier3_ls1l1",
+      "tier_um": 638.0,
+      "parts": {
+       "gan_ls": 1,
+       "inductor": 1
+      },
+      "area_fractions": {
+       "gan_ls": 0.47250000000000003,
+       "inductor": 0.126,
+       "posts": 0.011717634177909816,
+       "encapsulant": 0.38978236582209014
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 69.7071662185699,
+        "k_in": 107.8824004091809,
+        "cap_um": 0.0
+       },
+       "inductor": {
+        "kind": "inductor",
+        "part": null,
+        "count": 1,
+        "kz": 3.074780422918143,
+        "k_in": 6.5746898607986655,
+        "cap_um": 138.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 9.29970966500779,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0929970966500779
+      },
+      "volume_fractions": {
+       "silicon": 0.3836285266457681,
+       "solder": 0.0355485893416928,
+       "encapsulant": 0.5245003690416896,
+       "copper": 0.04667934294890594,
+       "tym5": 0.009643172021943576
+      }
+     }
+    },
+    "conv_tier4": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 41458.2095922532,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.3073570542038497,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 7.004145204630171e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 43.26203335932843,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       4.187333052926678,
+       4.187333052926678,
+       43.26203335932843
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier4_ls1l2: 1 x gan_ls, 2 x inductor in the encapsulant, 638 um, cell 2.8172 mm (M36N3K3KA2 (36 cells, design m36))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier4",
+      "bounds": {
+       "kz_reuss": 1.4726188640808549,
+       "kz_voigt": 89.62703594553234,
+       "kz_estimate": 43.26203335932843,
+       "kxy_series_parallel": [
+        3.9615982919485244,
+        4.413067813904831
+       ],
+       "kxy_reuss": 1.4726188640808549,
+       "kxy_voigt": 89.62703594553234
+      },
+      "mechanical": {
+       "E_voigt_MPa": 67115.90989442574,
+       "E_reuss_MPa": 15800.50929008066,
+       "E_hill_MPa": 41458.2095922532,
+       "nu_mean": 0.3073570542038497,
+       "cte_turner_per_K": 7.004145204630171e-06,
+       "cte_volume_per_K": 1.761754379380227e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier4_ls1l2",
+      "tier_um": 638.0,
+      "parts": {
+       "gan_ls": 1,
+       "inductor": 2
+      },
+      "area_fractions": {
+       "gan_ls": 0.47250000000000003,
+       "inductor": 0.252,
+       "posts": 0.023435268355819633,
+       "encapsulant": 0.2520647316441803
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 69.7071662185699,
+        "k_in": 107.8824004091809,
+        "cap_um": 0.0
+       },
+       "inductor": {
+        "kind": "inductor",
+        "part": null,
+        "count": 2,
+        "kz": 3.074780422918143,
+        "k_in": 6.5746898607986655,
+        "cap_um": 138.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 18.59941933001558,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.1859941933001558
+      },
+      "volume_fractions": {
+       "silicon": 0.3836285266457681,
+       "solder": 0.0355485893416928,
+       "encapsulant": 0.46817785407084017,
+       "copper": 0.09335868589781188,
+       "tym5": 0.01928634404388715
       }
      }
     }
    },
    "summary": {
-    "conv_gan_hs": {
-     "kx": 16.15465924578846,
-     "ky": 16.15465924578846,
-     "kz": 70.92973978011585,
+    "conv_tier1": {
+     "kx": 5.378430544749289,
+     "ky": 5.378430544749289,
+     "kz": 1.8250687749410075,
      "kz_bounds": [
-      6.290971511943299,
-      112.70649483983827
+      1.3937947892542735,
+      40.00623772347609
      ],
      "kxy_bracket": [
-      15.92447217842599,
-      16.384846313150927
+      5.13461622723379,
+      5.622244862264789
      ],
-     "E_GPa": 80.67353276060379,
+     "E_GPa": 45.53663022972193,
      "E_bounds_GPa": [
-      48.20843500295012,
-      113.13863051825747
+      16.65887683168384,
+      74.41438362776002
      ],
-     "nu": 0.28767019383678705,
-     "cte_ppm": 3.225141945121016,
+     "nu": 0.3054224724368,
+     "cte_ppm": 8.253036001238014,
      "cte_bounds_ppm": [
-      3.225141945121016,
-      6.457010080677965
+      8.253036001238014,
+      17.51809256699747
      ]
     },
-    "conv_gan_ls": {
-     "kx": 15.884244494292657,
-     "ky": 15.884244494292657,
-     "kz": 67.72067532703858,
+    "conv_tier2": {
+     "kx": 4.084056960828537,
+     "ky": 4.084056960828537,
+     "kz": 21.156333088853973,
      "kz_bounds": [
-      4.666361768139584,
-      105.89528999857933
+      1.7390447370202207,
+      75.15379665112702
      ],
      "kxy_bracket": [
-      15.674970846671066,
-      16.09351814191425
+      3.791441548650619,
+      4.376672373006454
      ],
-     "E_GPa": 72.75396416710991,
+     "E_GPa": 47.960461469580956,
      "E_bounds_GPa": [
-      39.06975326655203,
-      106.43817506766779
+      18.167076203570666,
+      77.75384673559125
      ],
-     "nu": 0.29094464343014076,
-     "cte_ppm": 3.5687142603839104,
+     "nu": 0.2990837550633577,
+     "cte_ppm": 4.28165644369726,
      "cte_bounds_ppm": [
-      3.5687142603839104,
-      7.997140027024716
+      4.28165644369726,
+      14.397930227159124
      ]
     },
-    "conv_cfly_a0": {
-     "kx": 3.6693347022570957,
-     "ky": 3.6693347022570957,
-     "kz": 7.323222441430351,
+    "conv_tier3": {
+     "kx": 2.7733712605006433,
+     "ky": 2.7733712605006433,
+     "kz": 38.283959698801354,
      "kz_bounds": [
-      1.5759771114881145,
-      7.323222441430351
+      1.3224155085428755,
+      70.96579501038373
      ],
      "kxy_bracket": [
-      3.46001659239635,
-      3.878652812117841
+      2.5299413247526754,
+      3.0168011962486116
      ],
-     "E_GPa": 60.45322594526681,
+     "E_GPa": 38.01859679160677,
      "E_bounds_GPa": [
-      24.234982492379835,
-      96.67146939815377
+      14.331378134433272,
+      61.70581544878027
      ],
-     "nu": 0.3076627259114324,
-     "cte_ppm": 11.778516196450745,
+     "nu": 0.3065391854091349,
+     "cte_ppm": 6.3061881220302185,
      "cte_bounds_ppm": [
-      11.778516196450745,
-      16.709680078242606
+      6.3061881220302185,
+      18.41086672448734
      ]
     },
-    "conv_ind_cout": {
-     "kx": 8.065536653298206,
-     "ky": 8.065536653298206,
-     "kz": 43.8565345488386,
+    "conv_tier4": {
+     "kx": 4.187333052926678,
+     "ky": 4.187333052926678,
+     "kz": 43.26203335932843,
      "kz_bounds": [
-      1.5436979410784861,
-      95.05015654598832
+      1.4726188640808549,
+      89.62703594553234
      ],
      "kxy_bracket": [
-      8.001037328468758,
-      8.130035978127657
+      3.9615982919485244,
+      4.413067813904831
      ],
-     "E_GPa": 48.61522025343244,
+     "E_GPa": 41.458209592253205,
      "E_bounds_GPa": [
-      19.50188165453139,
-      77.72855885233349
+      15.80050929008066,
+      67.11590989442574
      ],
-     "nu": 0.318399548559902,
-     "cte_ppm": 13.887001183701692,
+     "nu": 0.3073570542038497,
+     "cte_ppm": 7.004145204630171,
      "cte_bounds_ppm": [
-      13.887001183701692,
-      19.56748326317396
-     ]
-    },
-    "conv_cfly_a1": {
-     "kx": 1.8686178957796895,
-     "ky": 1.8686178957796895,
-     "kz": 5.029228374098214,
-     "kz_bounds": [
-      1.0917481474460742,
-      5.924629483597754
-     ],
-     "kxy_bracket": [
-      1.6554156645527422,
-      2.0818201270066368
-     ],
-     "E_GPa": 38.79634122142753,
-     "E_bounds_GPa": [
-      13.971219033237329,
-      63.621463409617725
-     ],
-     "nu": 0.31278896162608055,
-     "cte_ppm": 12.73646792610139,
-     "cte_bounds_ppm": [
-      12.73646792610139,
-      21.643572587057385
+      7.004145204630171,
+      17.61754379380227
      ]
     }
    },
    "sensitivity": {
-    "ind_cout_kz_at_TYM5_k_1.5": 43.79944072204247,
-    "ind_cout_kz_at_TYM5_k_6": 43.90461749612605,
-    "ind_cout_kz_two_post_rails": 58.500233913216434,
-    "ind_cout_kz_posts_at_half_J": 58.500233913216434,
-    "cfly_a1_kz_termination_15um": 3.749275815961332,
-    "cfly_a1_kz_termination_40um": 6.949157211303535,
-    "conv_cfly_a0_kz_batio3_k_2": 6.831517202397714,
-    "conv_cfly_a1_kz_batio3_k_2": 4.707123552738208,
-    "conv_ind_cout_kz_batio3_k_2": 43.601458107108414,
-    "conv_cfly_a0_kz_batio3_k_3.5": 8.058431159406704,
-    "conv_cfly_a1_kz_batio3_k_3.5": 5.510399009280199,
-    "conv_ind_cout_kz_batio3_k_3.5": 44.23743854820311,
-    "conv_cfly_a0_kz_termination_k_0.7": 2.354662805459004,
-    "conv_cfly_a1_kz_termination_k_0.7": 1.79435057528298,
-    "conv_ind_cout_kz_termination_k_0.7": 41.669706234230944,
-    "conv_cfly_a0_kz_termination_k_400": 10.312728840931763,
-    "conv_cfly_a1_kz_termination_k_400": 6.637697016438014,
-    "conv_ind_cout_kz_termination_k_400": 44.8751486300999,
-    "base": {
-     "conv_gan_hs": 70.92973978011585,
-     "conv_gan_ls": 67.72067532703858,
-     "conv_cfly_a0": 7.323222441430351,
-     "conv_ind_cout": 43.8565345488386,
-     "conv_cfly_a1": 5.029228374098214
+    "tier1_hs2cf2": {
+     "base": 1.8250687749410075,
+     "termination_15um": 1.816741049043161,
+     "termination_40um": 1.837560363787777,
+     "batio3_k_2": 1.7421581334456782,
+     "batio3_k_3.5": 1.9195234502379348,
+     "termination_k_0.7": 1.7914615854762421,
+     "termination_k_400": 1.8252686840368157
+    },
+    "tier2_hs1ls1": {
+     "base": 21.156333088853973
+    },
+    "tier3_ls1l1": {
+     "base": 38.283959698801354,
+     "TYM5_k_1.5": 38.28391688797738,
+     "TYM5_k_6": 38.283995613737815,
+     "posts_at_half_J": 42.96281102604075
+    },
+    "tier4_ls1l2": {
+     "base": 43.26203335932843,
+     "TYM5_k_1.5": 43.26194773768047,
+     "TYM5_k_6": 43.26210518920138,
+     "posts_at_half_J": 52.619736013807206
     }
    }
   },
-  "N4K4K_A2_36": {
+  "m36t5": {
    "tier_contents": {
-    "label": "N4K4K_A2 (36 cells, announced candidate)",
+    "label": "M36N4K4KA2T5 (36 cells, design m36t5)",
     "n_cells": 36,
-    "cell_side_mm": 2.817800560721074,
-    "i_out_rms_a": 28.002180545643903,
-    "hs_part": "EPC2057",
-    "n_hs": 4,
-    "ls_part": "EPC2057",
-    "n_ls": 4,
-    "n_ind": 4,
+    "cell_side_mm": 2.817180849095055,
+    "i_out_rms_a": 27.77777777777778,
+    "hs_part": "EPC2014C",
+    "ls_part": "EPC2055",
     "ind_footprint_mm2": 1.0,
-    "n_cfly": 3,
-    "cfly_footprint_mm2": 2.0,
-    "n_cout": 1,
-    "cout_footprint_mm2": 2.0,
-    "hs_um": 638.0,
-    "ls_um": 638.0,
     "ind_um": 500.0,
-    "cfly_um": 100.0,
-    "keepout_um": 50.0,
-    "n_cfly_a1": null,
-    "source": "coordinator: N4K4K_A2, 4 x EPC2057 (1.5 x 1.2 mm) per tier in a pinwheel, 7.94 mm^2 cell, 4 x 1 mm^2 inductors, 3 flying capacitors; output RMS scaled by the 49-cell RMS/DC ratio"
+    "cf_um": 1000.0,
+    "n_ind_total": 4,
+    "keepout_um": 50.0
    },
+   "tiers": [
+    {
+     "name": "tier1_hs1l1cf3",
+     "height_um": 1000.0,
+     "parts": {
+      "gan_hs": 1,
+      "inductor": 1,
+      "cap_fly": 3
+     }
+    },
+    {
+     "name": "tier2_hs1ls1",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 1,
+      "gan_ls": 1
+     }
+    },
+    {
+     "name": "tier3_hs1ls1",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 1,
+      "gan_ls": 1
+     }
+    },
+    {
+     "name": "tier4_hs1ls1l1",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 1,
+      "gan_ls": 1,
+      "inductor": 1
+     }
+    },
+    {
+     "name": "tier5_ls1l2",
+     "height_um": 638.0,
+     "parts": {
+      "gan_ls": 1,
+      "inductor": 2
+     }
+    }
+   ],
    "cards": {
-    "conv_gan_hs": {
+    "conv_tier1": {
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
-      "value": 66310.94353845825,
+      "value": 47418.99902406917,
       "status": "DERIVED"
      },
      "nu": {
-      "value": 0.2926289648855444,
+      "value": 0.30911664749731793,
       "status": "DERIVED"
      },
      "cte": {
-      "value": 3.6904002469551157e-06,
+      "value": 1.054266551869823e-05,
       "status": "DERIVED"
      },
      "k": {
-      "value": 63.87238466624785,
+      "value": 5.2790156527184955,
       "status": "DERIVED"
      },
      "k_ortho": {
       "value": [
-       12.736637194505084,
-       12.736637194505084,
-       63.87238466624785
+       6.441816741609912,
+       6.441816741609912,
+       5.2790156527184955
       ],
       "status": "DERIVED"
      },
-     "provenance": "4 x EPC2057 dies (EPC2057 datasheet, DIE OUTLINE: A 1500, B 1200; pad 1 250 x 300, pad 2 250 x 525, pads 3-4 250 x 1050 um; die 518 +/- 25, bump 120 +/- 12 um; overall 638 um) in the encapsulant, cell 2.8178 mm (N4K4K_A2 (36 cells, announced candidate))",
+     "provenance": "mixed tier tier1_hs1l1cf3: 1 x gan_hs, 1 x inductor, 3 x cap_fly in the encapsulant, 1000 um, cell 2.8172 mm (M36N4K4KA2T5 (36 cells, design m36t5))",
      "derivation": {
       "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_gan_hs",
+      "card": "conv_tier1",
       "bounds": {
-       "kz_reuss": 3.5125887855461206,
-       "kz_voigt": 99.79718263149167,
-       "kz_estimate": 63.87238466624785,
+       "kz_reuss": 1.3875352107289656,
+       "kz_voigt": 35.9197057430162,
+       "kz_estimate": 5.2790156527184955,
        "kxy_series_parallel": [
-        12.51583673239903,
-        12.957437656611136
+        6.271087537927066,
+        6.6125459452927595
        ],
-       "kxy_reuss": 3.5125887855461206,
-       "kxy_voigt": 99.79718263149167
+       "kxy_reuss": 1.3875352107289656,
+       "kxy_voigt": 35.9197057430162
       },
       "mechanical": {
-       "E_voigt_MPa": 100731.77356821933,
-       "E_reuss_MPa": 31890.11350869717,
-       "E_hill_MPa": 66310.94353845825,
-       "nu_mean": 0.2926289648855444,
-       "cte_turner_per_K": 3.6904002469551157e-06,
-       "cte_volume_per_K": 9.272632518181029e-06,
+       "E_voigt_MPa": 77265.74890844018,
+       "E_reuss_MPa": 17572.24913969816,
+       "E_hill_MPa": 47418.99902406917,
+       "nu_mean": 0.30911664749731793,
+       "cte_turner_per_K": 1.054266551869823e-05,
+       "cte_volume_per_K": 1.835338325658859e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
-      "tier": "gan_hs",
-      "part": "EPC2057",
-      "dies_per_cell": 4,
-      "tier_um": 638.0,
-      "body_um": 518.0,
-      "terminal_um": 120.0,
-      "die_area_fraction": 0.906801007556675,
-      "solder_fraction_under_die": 0.40625,
-      "gap_um_in_plane": 66.8627315304755,
-      "packing": {
-       "n": 4,
-       "die_mm": [
-        1.5,
-        1.2
-       ],
-       "keepout_um": 50.0,
-       "layouts_side_mm": {
-        "row": 5.0,
-        "grid_2x2": 3.1,
-        "pinwheel": 2.8
-       },
-       "best_layout": "pinwheel",
-       "min_side_mm": 2.8,
-       "cell_side_mm": 2.817800560721074,
-       "fits": true,
-       "die_area_fraction": 0.906801007556675
+      "tier": "tier1_hs1l1cf3",
+      "tier_um": 1000.0,
+      "parts": {
+       "gan_hs": 1,
+       "inductor": 1,
+       "cap_fly": 3
       },
-      "volume_fractions": {
-       "silicon": 0.736242824317175,
-       "solder": 0.06928926194104687,
-       "encapsulant": 0.19446791374177808
-      },
-      "kz_layers": {
-       "body": 117.94937027707807,
-       "terminal": 21.440239294710324
-      },
-      "packing_note": "packing feasible in the drawn cell"
-     }
-    },
-    "conv_gan_ls": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
-      "value": 66310.94353845825,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.2926289648855444,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 3.6904002469551157e-06,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 63.87238466624785,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       12.736637194505084,
-       12.736637194505084,
-       63.87238466624785
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "4 x EPC2057 dies (EPC2057 datasheet, DIE OUTLINE: A 1500, B 1200; pad 1 250 x 300, pad 2 250 x 525, pads 3-4 250 x 1050 um; die 518 +/- 25, bump 120 +/- 12 um; overall 638 um) in the encapsulant, cell 2.8178 mm (N4K4K_A2 (36 cells, announced candidate))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_gan_ls",
-      "bounds": {
-       "kz_reuss": 3.5125887855461206,
-       "kz_voigt": 99.79718263149167,
-       "kz_estimate": 63.87238466624785,
-       "kxy_series_parallel": [
-        12.51583673239903,
-        12.957437656611136
-       ],
-       "kxy_reuss": 3.5125887855461206,
-       "kxy_voigt": 99.79718263149167
-      },
-      "mechanical": {
-       "E_voigt_MPa": 100731.77356821933,
-       "E_reuss_MPa": 31890.11350869717,
-       "E_hill_MPa": 66310.94353845825,
-       "nu_mean": 0.2926289648855444,
-       "cte_turner_per_K": 3.6904002469551157e-06,
-       "cte_volume_per_K": 9.272632518181029e-06,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "gan_ls",
-      "part": "EPC2057",
-      "dies_per_cell": 4,
-      "tier_um": 638.0,
-      "body_um": 518.0,
-      "terminal_um": 120.0,
-      "die_area_fraction": 0.906801007556675,
-      "solder_fraction_under_die": 0.40625,
-      "gap_um_in_plane": 66.8627315304755,
-      "packing": {
-       "n": 4,
-       "die_mm": [
-        1.5,
-        1.2
-       ],
-       "keepout_um": 50.0,
-       "layouts_side_mm": {
-        "row": 5.0,
-        "grid_2x2": 3.1,
-        "pinwheel": 2.8
-       },
-       "best_layout": "pinwheel",
-       "min_side_mm": 2.8,
-       "cell_side_mm": 2.817800560721074,
-       "fits": true,
-       "die_area_fraction": 0.906801007556675
-      },
-      "volume_fractions": {
-       "silicon": 0.736242824317175,
-       "solder": 0.06928926194104687,
-       "encapsulant": 0.19446791374177808
-      },
-      "kz_layers": {
-       "body": 117.94937027707807,
-       "terminal": 21.440239294710324
-      },
-      "packing_note": "packing feasible in the drawn cell"
-     }
-    },
-    "conv_cfly_a0": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
-      "value": 64776.96044773697,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.30692514901105056,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 1.169305319411254e-05,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 7.719188020521801,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       4.275360847424287,
-       4.275360847424287,
-       7.719188020521801
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "A0: 3 thin embedded MLCC flying capacitors of the library footprint 2.0 mm^2 (N4K4K_A2 (36 cells, announced candidate))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_cfly_a0",
-      "bounds": {
-       "kz_reuss": 1.7034164946005383,
-       "kz_voigt": 7.7191880205218,
-       "kz_estimate": 7.719188020521801,
-       "kz_without_terminations": 2.4535858782922886,
-       "kxy_series_parallel": [
-        4.073350833323781,
-        4.477370861524793
-       ],
-       "kxy_reuss": 1.7034164946005383,
-       "kxy_voigt": 7.7191880205218
-      },
-      "mechanical": {
-       "E_voigt_MPa": 101972.642662319,
-       "E_reuss_MPa": 27581.278233154935,
-       "E_hill_MPa": 64776.96044773697,
-       "nu_mean": 0.30692514901105056,
-       "cte_turner_per_K": 1.169305319411254e-05,
-       "cte_volume_per_K": 1.591512587586362e-05,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "conv_cfly_a0",
-      "parts_per_cell": 3,
-      "part_mm": [
-       1.7888543819998317,
-       1.118033988749895,
-       0.1
-      ],
-      "tier_um": 100.0,
-      "mount_um": 0.0,
-      "termination_um": 25.0,
       "area_fractions": {
-       "body": 0.7345459573913748,
-       "terminations": 0.02112154890585444,
-       "encapsulant": 0.24433249370277074
+       "gan_hs": 0.233109324,
+       "inductor": 0.126,
+       "cap_fly": 0.48384000000000016,
+       "posts": 0.008749999999999999,
+       "encapsulant": 0.1483006759999998
       },
-      "mlcc_body": {
-       "k": 3.087305873304204,
-       "E": 133000.0,
-       "nu": 0.301625,
-       "cte": 1.1208646616541354e-05,
-       "k_in": 16.91625,
-       "ni_fraction": 0.1625
-      },
-      "gap_um_in_plane": 207.62976441384694,
-      "volume_fractions": {
-       "mlcc_body": 0.7345459573913748,
-       "termination": 0.02112154890585444,
-       "solder": 0.0,
-       "encapsulant": 0.24433249370277066
-      }
-     }
-    },
-    "conv_ind_cout": {
-     "status": "DERIVED",
-     "elastic_type": "iso",
-     "E": {
-      "value": 39456.134871874005,
-      "status": "DERIVED"
-     },
-     "nu": {
-      "value": 0.3198006156547224,
-      "status": "DERIVED"
-     },
-     "cte": {
-      "value": 1.458333382650129e-05,
-      "status": "DERIVED"
-     },
-     "k": {
-      "value": 40.922335108074655,
-      "status": "DERIVED"
-     },
-     "k_ortho": {
-      "value": [
-       4.060341633280276,
-       4.060341633280276,
-       40.922335108074655
-      ],
-      "status": "DERIVED"
-     },
-     "provenance": "4 inductors (TY-M5 rod, Cu windings: inductor paper Fig. 7), 1 C_out MLCC, output-current posts, encapsulant (N4K4K_A2 (36 cells, announced candidate))",
-     "derivation": {
-      "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_ind_cout",
-      "bounds": {
-       "kz_reuss": 1.2714064753197136,
-       "kz_voigt": 88.93032875412037,
-       "kz_estimate": 40.922335108074655,
-       "kxy_series_parallel": [
-        3.930467131335888,
-        4.190216135224665
-       ],
-       "kxy_reuss": 1.2714064753197136,
-       "kxy_voigt": 88.93032875412037
-      },
-      "mechanical": {
-       "E_voigt_MPa": 63595.043381148564,
-       "E_reuss_MPa": 15317.226362599442,
-       "E_hill_MPa": 39456.134871874005,
-       "nu_mean": 0.3198006156547224,
-       "cte_turner_per_K": 1.458333382650129e-05,
-       "cte_volume_per_K": 2.1691903379432376e-05,
-       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
-      },
-      "tier": "inductor_plus_cout",
-      "tier_um": 500.0,
-      "area_fractions": {
-       "inductors": 0.5037783375314862,
-       "posts": 0.035267229906352525,
-       "cout_body": 0.24484865246379162,
-       "cout_terminations": 0.0070405163019514804,
-       "encapsulant": 0.20906526379641824
-      },
-      "posts": {
-       "rails": 1,
-       "I_rms_A": 28.002180545643903,
-       "J_A_m2": 100000000.0,
-       "area_mm2": 0.280021805456439
-      },
-      "inductor_envelope": {
-       "kz": 48.30155199604136,
-       "kx": 48.30155199604136,
-       "ky": 1.390765354398847,
-       "k_in_orientation_avg": 8.196104262379096,
-       "fractions": {
-        "copper": 0.3540566697761194,
-        "copper_spanning_legs": 0.1169776119402985,
-        "tym5_rod": 0.09765625,
-        "fill": 0.5482870802238806
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 1,
+        "kz": 2.1760082902291527,
+        "k_in": 77.32878192929664,
+        "cap_um": 315.0
        },
-       "dcr_from_dimensions_mohm": 5.429687070340427
-      },
-      "tym5": {
-       "k": 3.0,
-       "E": 75280.91787439614,
-       "nu": 0.308,
-       "cte": 1.2306600425833925e-05,
-       "bounds": {
-        "k_HS_lower": 1.4715596330275231,
-        "E_voigt": 140900.0,
-        "E_reuss": 9661.835748792268,
-        "cte_volume": 2.6400000000000005e-05
+       "inductor": {
+        "kind": "inductor",
+        "part": null,
+        "count": 1,
+        "kz": 1.3800006334477084,
+        "k_in": 4.448052131189548,
+        "cap_um": 500.0
+       },
+       "cap_fly": {
+        "kind": "mlcc",
+        "part": null,
+        "count": 3,
+        "kz": 2.0545578665475572,
+        "k_in": 21.18909375,
+        "cap_um": 170.0
        }
       },
-      "cout_part_mm": [
-       1.7888543819998317,
-       1.118033988749895,
-       0.48
-      ],
+      "posts": {
+       "I_rms_A": 6.944444444444445,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.06944444444444443
+      },
       "volume_fractions": {
-       "copper": 0.21363331039810032,
-       "termination": 0.006758895649873421,
-       "tym5": 0.049197103274559194,
-       "mlcc_body": 0.23505470636523992,
-       "solder": 0.010075566750629724,
-       "encapsulant": 0.48528041756159745
+       "silicon": 0.13636895454000003,
+       "solder": 0.022412880000000007,
+       "encapsulant": 0.41693825151410435,
+       "copper": 0.031055570195895523,
+       "tym5": 0.006152343750000001,
+       "mlcc_body": 0.37497600000000014,
+       "termination": 0.012096000000000004
       }
      }
     },
-    "conv_cfly_a1": {
+    "conv_tier2": {
      "status": "DERIVED",
      "elastic_type": "iso",
      "E": {
-      "value": 40785.27018382436,
+      "value": 47960.46146958096,
       "status": "DERIVED"
      },
      "nu": {
-      "value": 0.3123578538064611,
+      "value": 0.2990837550633577,
       "status": "DERIVED"
      },
      "cte": {
-      "value": 1.2613135246500483e-05,
+      "value": 4.28165644369726e-06,
       "status": "DERIVED"
      },
      "k": {
-      "value": 5.288048825219697,
+      "value": 21.156333088853973,
       "status": "DERIVED"
      },
      "k_ortho": {
       "value": [
-       1.9920881064552423,
-       1.9920881064552423,
-       5.288048825219697
+       4.084056960828537,
+       4.084056960828537,
+       21.156333088853973
       ],
       "status": "DERIVED"
      },
-     "provenance": "A1: 3 x Murata GRM188D71H105KE01 (0603) per cell, 1030-um tier (N4K4K_A2 (36 cells, announced candidate))",
+     "provenance": "mixed tier tier2_hs1ls1: 1 x gan_hs, 1 x gan_ls in the encapsulant, 685 um, cell 2.8172 mm (M36N4K4KA2T5 (36 cells, design m36t5))",
      "derivation": {
       "script": "scripts/tcpmt_converter_cards.py",
-      "card": "conv_cfly_a1",
+      "card": "conv_tier2",
       "bounds": {
-       "kz_reuss": 1.129540039483922,
-       "kz_voigt": 6.236980979762253,
-       "kz_estimate": 5.288048825219697,
-       "kz_without_terminations": 1.8594623335086073,
+       "kz_reuss": 1.7390447370202207,
+       "kz_voigt": 75.15379665112702,
+       "kz_estimate": 21.156333088853973,
        "kxy_series_parallel": [
-        1.7745659785172005,
-        2.209610234393284
+        3.791441548650619,
+        4.376672373006454
        ],
-       "kxy_reuss": 1.129540039483922,
-       "kxy_voigt": 6.236980979762253
+       "kxy_reuss": 1.7390447370202207,
+       "kxy_voigt": 75.15379665112702
       },
       "mechanical": {
-       "E_voigt_MPa": 66946.76090093177,
-       "E_reuss_MPa": 14623.779466716955,
-       "E_hill_MPa": 40785.27018382436,
-       "nu_mean": 0.3123578538064611,
-       "cte_turner_per_K": 1.2613135246500483e-05,
-       "cte_volume_per_K": 2.1143988336496273e-05,
+       "E_voigt_MPa": 77753.84673559126,
+       "E_reuss_MPa": 18167.076203570665,
+       "E_hill_MPa": 47960.46146958096,
+       "nu_mean": 0.2990837550633577,
+       "cte_turner_per_K": 4.28165644369726e-06,
+       "cte_volume_per_K": 1.4397930227159124e-05,
        "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
       },
-      "tier": "conv_cfly_a1",
-      "parts_per_cell": 3,
-      "part_mm": [
-       1.6,
-       0.8,
-       1.0
-      ],
-      "tier_um": 1030.0,
-      "mount_um": 30.0,
-      "termination_um": 25.0,
+      "tier": "tier2_hs1ls1",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 1,
+       "gan_ls": 1
+      },
       "area_fractions": {
-       "body": 0.46851385390428224,
-       "terminations": 0.015113350125944587,
-       "encapsulant": 0.5163727959697731
+       "gan_hs": 0.233109324,
+       "gan_ls": 0.47250000000000003,
+       "posts": 0.0,
+       "encapsulant": 0.2943906759999999
       },
-      "mlcc_body": {
-       "k": 3.087305873304204,
-       "E": 133000.0,
-       "nu": 0.301625,
-       "cte": 1.1208646616541354e-05,
-       "k_in": 16.91625,
-       "ni_fraction": 0.1625
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 1,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0
+       },
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 8.978257142944337,
+        "k_in": 100.5282795051933,
+        "cap_um": 47.0
+       }
       },
-      "gap_um_in_plane": 475.31091641720826,
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
       "volume_fractions": {
-       "mlcc_body": 0.4548678193245459,
-       "termination": 0.014673155462082125,
-       "solder": 0.01408622924359884,
-       "encapsulant": 0.5163727959697731
+       "silicon": 0.5563853350948906,
+       "solder": 0.0446389489051095,
+       "encapsulant": 0.398975716
+      }
+     }
+    },
+    "conv_tier3": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 47960.46146958096,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.2990837550633577,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 4.28165644369726e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 21.156333088853973,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       4.084056960828537,
+       4.084056960828537,
+       21.156333088853973
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier3_hs1ls1: 1 x gan_hs, 1 x gan_ls in the encapsulant, 685 um, cell 2.8172 mm (M36N4K4KA2T5 (36 cells, design m36t5))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier3",
+      "bounds": {
+       "kz_reuss": 1.7390447370202207,
+       "kz_voigt": 75.15379665112702,
+       "kz_estimate": 21.156333088853973,
+       "kxy_series_parallel": [
+        3.791441548650619,
+        4.376672373006454
+       ],
+       "kxy_reuss": 1.7390447370202207,
+       "kxy_voigt": 75.15379665112702
+      },
+      "mechanical": {
+       "E_voigt_MPa": 77753.84673559126,
+       "E_reuss_MPa": 18167.076203570665,
+       "E_hill_MPa": 47960.46146958096,
+       "nu_mean": 0.2990837550633577,
+       "cte_turner_per_K": 4.28165644369726e-06,
+       "cte_volume_per_K": 1.4397930227159124e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier3_hs1ls1",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 1,
+       "gan_ls": 1
+      },
+      "area_fractions": {
+       "gan_hs": 0.233109324,
+       "gan_ls": 0.47250000000000003,
+       "posts": 0.0,
+       "encapsulant": 0.2943906759999999
+      },
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 1,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0
+       },
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 8.978257142944337,
+        "k_in": 100.5282795051933,
+        "cap_um": 47.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
+      "volume_fractions": {
+       "silicon": 0.5563853350948906,
+       "solder": 0.0446389489051095,
+       "encapsulant": 0.398975716
+      }
+     }
+    },
+    "conv_tier4": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 51437.7484889605,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.2998022343026539,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 4.903300272157339e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 24.876277071059004,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       7.1855620139745096,
+       7.1855620139745096,
+       24.876277071059004
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier4_hs1ls1l1: 1 x gan_hs, 1 x gan_ls, 1 x inductor in the encapsulant, 685 um, cell 2.8172 mm (M36N4K4KA2T5 (36 cells, design m36t5))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier4",
+      "bounds": {
+       "kz_reuss": 1.9752059667465411,
+       "kz_voigt": 91.67068562170525,
+       "kz_estimate": 24.876277071059004,
+       "kxy_series_parallel": [
+        6.926748742235569,
+        7.44437528571345
+       ],
+       "kxy_reuss": 1.9752059667465411,
+       "kxy_voigt": 91.67068562170525
+      },
+      "mechanical": {
+       "E_voigt_MPa": 82572.04526779585,
+       "E_reuss_MPa": 20303.451710125144,
+       "E_hill_MPa": 51437.7484889605,
+       "nu_mean": 0.2998022343026539,
+       "cte_turner_per_K": 4.903300272157339e-06,
+       "cte_volume_per_K": 1.3687902770663329e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier4_hs1ls1l1",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 1,
+       "gan_ls": 1,
+       "inductor": 1
+      },
+      "area_fractions": {
+       "gan_hs": 0.233109324,
+       "gan_ls": 0.47250000000000003,
+       "inductor": 0.126,
+       "posts": 0.008749999999999999,
+       "encapsulant": 0.1596406759999999
+      },
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 1,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0
+       },
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 8.978257142944337,
+        "k_in": 100.5282795051933,
+        "cap_um": 47.0
+       },
+       "inductor": {
+        "kind": "inductor",
+        "part": null,
+        "count": 1,
+        "kz": 2.494198271468499,
+        "k_in": 6.1716089506416765,
+        "cap_um": 185.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 6.944444444444445,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.06944444444444443
+      },
+      "volume_fractions": {
+       "silicon": 0.5563853350948906,
+       "solder": 0.0446389489051095,
+       "encapsulant": 0.3486813160789846,
+       "copper": 0.04131287619838763,
+       "tym5": 0.008981523722627739
+      }
+     }
+    },
+    "conv_tier5": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 41070.55868593221,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.3072383488367333,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 6.925778385855501e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 40.89208070484965,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       4.086768116050179,
+       4.086768116050179,
+       40.89208070484965
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier5_ls1l2: 1 x gan_ls, 2 x inductor in the encapsulant, 638 um, cell 2.8172 mm (M36N4K4KA2T5 (36 cells, design m36t5))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier5",
+      "bounds": {
+       "kz_reuss": 1.4544894992660875,
+       "kz_voigt": 87.25708329105356,
+       "kz_estimate": 40.89208070484965,
+       "kxy_series_parallel": [
+        3.861434475339712,
+        4.312101756760646
+       ],
+       "kxy_reuss": 1.4544894992660875,
+       "kxy_voigt": 87.25708329105356
+      },
+      "mechanical": {
+       "E_voigt_MPa": 66510.51252213214,
+       "E_reuss_MPa": 15630.604849732277,
+       "E_hill_MPa": 41070.55868593221,
+       "nu_mean": 0.3072383488367333,
+       "cte_turner_per_K": 6.925778385855501e-06,
+       "cte_volume_per_K": 1.7696720273668906e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier5_ls1l2",
+      "tier_um": 638.0,
+      "parts": {
+       "gan_ls": 1,
+       "inductor": 2
+      },
+      "area_fractions": {
+       "gan_ls": 0.47250000000000003,
+       "inductor": 0.252,
+       "posts": 0.017499999999999998,
+       "encapsulant": 0.25799999999999995
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 69.7071662185699,
+        "k_in": 107.8824004091809,
+        "cap_um": 0.0
+       },
+       "inductor": {
+        "kind": "inductor",
+        "part": null,
+        "count": 2,
+        "kz": 3.074780422918143,
+        "k_in": 6.5746898607986655,
+        "cap_um": 138.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 13.88888888888889,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.13888888888888887
+      },
+      "volume_fractions": {
+       "silicon": 0.3836285266457681,
+       "solder": 0.0355485893416928,
+       "encapsulant": 0.4741131224266598,
+       "copper": 0.08742341754199225,
+       "tym5": 0.01928634404388715
       }
      }
     }
    },
    "summary": {
-    "conv_gan_hs": {
-     "kx": 12.736637194505084,
-     "ky": 12.736637194505084,
-     "kz": 63.87238466624785,
+    "conv_tier1": {
+     "kx": 6.441816741609912,
+     "ky": 6.441816741609912,
+     "kz": 5.2790156527184955,
      "kz_bounds": [
-      3.5125887855461206,
-      99.79718263149167
+      1.3875352107289656,
+      35.9197057430162
      ],
      "kxy_bracket": [
-      12.51583673239903,
-      12.957437656611136
+      6.271087537927066,
+      6.6125459452927595
      ],
-     "E_GPa": 66.31094353845825,
+     "E_GPa": 47.41899902406917,
      "E_bounds_GPa": [
-      31.89011350869717,
-      100.73177356821932
+      17.57224913969816,
+      77.26574890844017
      ],
-     "nu": 0.2926289648855444,
-     "cte_ppm": 3.690400246955116,
+     "nu": 0.30911664749731793,
+     "cte_ppm": 10.54266551869823,
      "cte_bounds_ppm": [
-      3.690400246955116,
-      9.272632518181029
+      10.54266551869823,
+      18.35338325658859
      ]
     },
-    "conv_gan_ls": {
-     "kx": 12.736637194505084,
-     "ky": 12.736637194505084,
-     "kz": 63.87238466624785,
+    "conv_tier2": {
+     "kx": 4.084056960828537,
+     "ky": 4.084056960828537,
+     "kz": 21.156333088853973,
      "kz_bounds": [
-      3.5125887855461206,
-      99.79718263149167
+      1.7390447370202207,
+      75.15379665112702
      ],
      "kxy_bracket": [
-      12.51583673239903,
-      12.957437656611136
+      3.791441548650619,
+      4.376672373006454
      ],
-     "E_GPa": 66.31094353845825,
+     "E_GPa": 47.960461469580956,
      "E_bounds_GPa": [
-      31.89011350869717,
-      100.73177356821932
+      18.167076203570666,
+      77.75384673559125
      ],
-     "nu": 0.2926289648855444,
-     "cte_ppm": 3.690400246955116,
+     "nu": 0.2990837550633577,
+     "cte_ppm": 4.28165644369726,
      "cte_bounds_ppm": [
-      3.690400246955116,
-      9.272632518181029
+      4.28165644369726,
+      14.397930227159124
      ]
     },
-    "conv_cfly_a0": {
-     "kx": 4.275360847424287,
-     "ky": 4.275360847424287,
-     "kz": 7.719188020521801,
+    "conv_tier3": {
+     "kx": 4.084056960828537,
+     "ky": 4.084056960828537,
+     "kz": 21.156333088853973,
      "kz_bounds": [
-      1.7034164946005383,
-      7.7191880205218
+      1.7390447370202207,
+      75.15379665112702
      ],
      "kxy_bracket": [
-      4.073350833323781,
-      4.477370861524793
+      3.791441548650619,
+      4.376672373006454
      ],
-     "E_GPa": 64.77696044773697,
+     "E_GPa": 47.960461469580956,
      "E_bounds_GPa": [
-      27.581278233154936,
-      101.972642662319
+      18.167076203570666,
+      77.75384673559125
      ],
-     "nu": 0.30692514901105056,
-     "cte_ppm": 11.69305319411254,
+     "nu": 0.2990837550633577,
+     "cte_ppm": 4.28165644369726,
      "cte_bounds_ppm": [
-      11.69305319411254,
-      15.91512587586362
+      4.28165644369726,
+      14.397930227159124
      ]
     },
-    "conv_ind_cout": {
-     "kx": 4.060341633280276,
-     "ky": 4.060341633280276,
-     "kz": 40.922335108074655,
+    "conv_tier4": {
+     "kx": 7.1855620139745096,
+     "ky": 7.1855620139745096,
+     "kz": 24.876277071059004,
      "kz_bounds": [
-      1.2714064753197136,
-      88.93032875412037
+      1.9752059667465411,
+      91.67068562170525
      ],
      "kxy_bracket": [
-      3.930467131335888,
-      4.190216135224665
+      6.926748742235569,
+      7.44437528571345
      ],
-     "E_GPa": 39.456134871874006,
+     "E_GPa": 51.437748488960494,
      "E_bounds_GPa": [
-      15.317226362599442,
-      63.595043381148564
+      20.303451710125145,
+      82.57204526779586
      ],
-     "nu": 0.3198006156547224,
-     "cte_ppm": 14.58333382650129,
+     "nu": 0.2998022343026539,
+     "cte_ppm": 4.903300272157339,
      "cte_bounds_ppm": [
-      14.58333382650129,
-      21.691903379432375
+      4.903300272157339,
+      13.687902770663328
      ]
     },
-    "conv_cfly_a1": {
-     "kx": 1.9920881064552423,
-     "ky": 1.9920881064552423,
-     "kz": 5.288048825219697,
+    "conv_tier5": {
+     "kx": 4.086768116050179,
+     "ky": 4.086768116050179,
+     "kz": 40.89208070484965,
      "kz_bounds": [
-      1.129540039483922,
-      6.236980979762253
+      1.4544894992660875,
+      87.25708329105356
      ],
      "kxy_bracket": [
-      1.7745659785172005,
-      2.209610234393284
+      3.861434475339712,
+      4.312101756760646
      ],
-     "E_GPa": 40.78527018382436,
+     "E_GPa": 41.070558685932205,
      "E_bounds_GPa": [
-      14.623779466716954,
-      66.94676090093176
+      15.630604849732277,
+      66.51051252213213
      ],
-     "nu": 0.3123578538064611,
-     "cte_ppm": 12.613135246500482,
+     "nu": 0.3072383488367333,
+     "cte_ppm": 6.9257783858555015,
      "cte_bounds_ppm": [
-      12.613135246500482,
-      21.14398833649627
+      6.9257783858555015,
+      17.696720273668905
      ]
     }
    },
    "sensitivity": {
-    "ind_cout_kz_at_TYM5_k_1.5": 40.868550975902735,
-    "ind_cout_kz_at_TYM5_k_6": 40.96763071597563,
-    "ind_cout_kz_two_post_rails": 55.00454000968122,
-    "ind_cout_kz_posts_at_half_J": 55.00454000968122,
-    "cfly_a1_kz_termination_15um": 3.931575032838598,
-    "cfly_a1_kz_termination_40um": 7.322759513791345,
-    "conv_cfly_a0_kz_batio3_k_2": 7.1980864639960425,
-    "conv_cfly_a1_kz_batio3_k_2": 4.946687150681977,
-    "conv_ind_cout_kz_batio3_k_2": 40.74211774712055,
-    "conv_cfly_a0_kz_batio3_k_3.5": 8.498350772707479,
-    "conv_cfly_a1_kz_batio3_k_3.5": 5.797985972607256,
-    "conv_ind_cout_kz_batio3_k_3.5": 41.191452526667724,
-    "conv_cfly_a0_kz_termination_k_0.7": 2.4535858782922886,
-    "conv_cfly_a1_kz_termination_k_0.7": 1.8597757007567073,
-    "conv_ind_cout_kz_termination_k_0.7": 39.3772907086582,
-    "conv_cfly_a0_kz_termination_k_400": 10.887420356399968,
-    "conv_cfly_a1_kz_termination_k_400": 6.992678848676718,
-    "conv_ind_cout_kz_termination_k_400": 41.64200933714273,
-    "base": {
-     "conv_gan_hs": 63.87238466624785,
-     "conv_gan_ls": 63.87238466624785,
-     "conv_cfly_a0": 7.719188020521801,
-     "conv_ind_cout": 40.922335108074655,
-     "conv_cfly_a1": 5.288048825219697
+    "tier1_hs1l1cf3": {
+     "base": 5.2790156527184955,
+     "TYM5_k_1.5": 5.2790101504868225,
+     "TYM5_k_6": 5.279020267991623,
+     "posts_at_half_J": 8.772890652718495,
+     "termination_15um": 5.266524063871725,
+     "termination_40um": 5.2977530359886496,
+     "batio3_k_2": 5.154649690475501,
+     "batio3_k_3.5": 5.420697665663886,
+     "termination_k_0.7": 5.228604868521347,
+     "termination_k_400": 5.279315516362208
+    },
+    "tier2_hs1ls1": {
+     "base": 21.156333088853973
+    },
+    "tier3_hs1ls1": {
+     "base": 21.156333088853973
+    },
+    "tier4_hs1ls1l1": {
+     "base": 24.876277071059004,
+     "TYM5_k_1.5": 24.876250833153712,
+     "TYM5_k_6": 24.876299081518063,
+     "posts_at_half_J": 28.370152071059007
+    },
+    "tier5_ls1l2": {
+     "base": 40.89208070484965,
+     "TYM5_k_1.5": 40.89199508320169,
+     "TYM5_k_6": 40.89215253472259,
+     "posts_at_half_J": 47.879830704849645
+    }
+   }
+  },
+  "m36thin": {
+   "tier_contents": {
+    "label": "M36N3K3KA2THIN (36 cells, design m36thin)",
+    "n_cells": 36,
+    "cell_side_mm": 2.817180849095055,
+    "i_out_rms_a": 27.77777777777778,
+    "hs_part": "EPC2014C",
+    "ls_part": "EPC2055",
+    "ind_footprint_mm2": 1.0,
+    "ind_um": 500.0,
+    "cf_um": 100.0,
+    "n_ind_total": 3,
+    "keepout_um": 50.0
+   },
+   "tiers": [
+    {
+     "name": "tier1_hs2cf2",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 2,
+      "cap_fly": 2
+     }
+    },
+    {
+     "name": "tier2_hs1ls1",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 1,
+      "gan_ls": 1
+     }
+    },
+    {
+     "name": "tier3_ls1l1",
+     "height_um": 638.0,
+     "parts": {
+      "gan_ls": 1,
+      "inductor": 1
+     }
+    },
+    {
+     "name": "tier4_ls1l2",
+     "height_um": 638.0,
+     "parts": {
+      "gan_ls": 1,
+      "inductor": 2
+     }
+    }
+   ],
+   "cards": {
+    "conv_tier1": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 38806.10781686051,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.303956675090219,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 5.650985842362902e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 33.81874955569719,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       4.4828246673166525,
+       4.4828246673166525,
+       33.81874955569719
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier1_hs2cf2: 2 x gan_hs, 2 x cap_fly in the encapsulant, 685 um, cell 2.8172 mm (M36N3K3KA2THIN (36 cells, design m36thin))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier1",
+      "bounds": {
+       "kz_reuss": 1.285656756951806,
+       "kz_voigt": 53.95574211090952,
+       "kz_estimate": 33.81874955569719,
+       "kxy_series_parallel": [
+        4.293063006103894,
+        4.672586328529411
+       ],
+       "kxy_reuss": 1.285656756951806,
+       "kxy_voigt": 53.95574211090952
+      },
+      "mechanical": {
+       "E_voigt_MPa": 63395.97960256936,
+       "E_reuss_MPa": 14216.23603115166,
+       "E_hill_MPa": 38806.10781686051,
+       "nu_mean": 0.303956675090219,
+       "cte_turner_per_K": 5.650985842362902e-06,
+       "cte_volume_per_K": 1.8029167125082748e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier1_hs2cf2",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 2,
+       "cap_fly": 2
+      },
+      "area_fractions": {
+       "gan_hs": 0.466218648,
+       "cap_fly": 0.32256000000000007,
+       "posts": 0.0,
+       "encapsulant": 0.2112213519999998
+      },
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 2,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0
+       },
+       "cap_fly": {
+        "kind": "mlcc",
+        "part": null,
+        "count": 2,
+        "kz": 0.7900185332082102,
+        "k_in": 4.130674041970803,
+        "cap_um": 585.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
+      "volume_fractions": {
+       "silicon": 0.39815753150364974,
+       "solder": 0.023058919708029202,
+       "encapsulant": 0.5316944976934306,
+       "mlcc_body": 0.0456175182481752,
+       "termination": 0.0014715328467153291
+      }
+     }
+    },
+    "conv_tier2": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 47960.46146958096,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.2990837550633577,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 4.28165644369726e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 21.156333088853973,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       4.084056960828537,
+       4.084056960828537,
+       21.156333088853973
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier2_hs1ls1: 1 x gan_hs, 1 x gan_ls in the encapsulant, 685 um, cell 2.8172 mm (M36N3K3KA2THIN (36 cells, design m36thin))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier2",
+      "bounds": {
+       "kz_reuss": 1.7390447370202207,
+       "kz_voigt": 75.15379665112702,
+       "kz_estimate": 21.156333088853973,
+       "kxy_series_parallel": [
+        3.791441548650619,
+        4.376672373006454
+       ],
+       "kxy_reuss": 1.7390447370202207,
+       "kxy_voigt": 75.15379665112702
+      },
+      "mechanical": {
+       "E_voigt_MPa": 77753.84673559126,
+       "E_reuss_MPa": 18167.076203570665,
+       "E_hill_MPa": 47960.46146958096,
+       "nu_mean": 0.2990837550633577,
+       "cte_turner_per_K": 4.28165644369726e-06,
+       "cte_volume_per_K": 1.4397930227159124e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier2_hs1ls1",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 1,
+       "gan_ls": 1
+      },
+      "area_fractions": {
+       "gan_hs": 0.233109324,
+       "gan_ls": 0.47250000000000003,
+       "posts": 0.0,
+       "encapsulant": 0.2943906759999999
+      },
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 1,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0
+       },
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 8.978257142944337,
+        "k_in": 100.5282795051933,
+        "cap_um": 47.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
+      "volume_fractions": {
+       "silicon": 0.5563853350948906,
+       "solder": 0.0446389489051095,
+       "encapsulant": 0.398975716
+      }
+     }
+    },
+    "conv_tier3": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 38015.39082385527,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.30653816605891004,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 6.305403900281467e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 38.26360837156196,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       2.7729450697804294,
+       2.7729450697804294,
+       38.26360837156196
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier3_ls1l1: 1 x gan_ls, 1 x inductor in the encapsulant, 638 um, cell 2.8172 mm (M36N3K3KA2THIN (36 cells, design m36thin))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier3",
+      "bounds": {
+       "kz_reuss": 1.3222884134354793,
+       "kz_voigt": 70.94544368314435,
+       "kz_estimate": 38.26360837156196,
+       "kxy_series_parallel": [
+        2.5295239432792207,
+        3.0163661962816377
+       ],
+       "kxy_reuss": 1.3222884134354793,
+       "kxy_voigt": 70.94544368314435
+      },
+      "mechanical": {
+       "E_voigt_MPa": 61700.61676263347,
+       "E_reuss_MPa": 14330.164885077065,
+       "E_hill_MPa": 38015.39082385527,
+       "nu_mean": 0.30653816605891004,
+       "cte_turner_per_K": 6.305403900281467e-06,
+       "cte_volume_per_K": 1.841154663108733e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier3_ls1l1",
+      "tier_um": 638.0,
+      "parts": {
+       "gan_ls": 1,
+       "inductor": 1
+      },
+      "area_fractions": {
+       "gan_ls": 0.47250000000000003,
+       "inductor": 0.126,
+       "posts": 0.011666666666666667,
+       "encapsulant": 0.3898333333333333
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 69.7071662185699,
+        "k_in": 107.8824004091809,
+        "cap_um": 0.0
+       },
+       "inductor": {
+        "kind": "inductor",
+        "part": null,
+        "count": 1,
+        "kz": 3.074780422918143,
+        "k_in": 6.5746898607986655,
+        "cap_um": 138.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 9.25925925925926,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.09259259259259259
+      },
+      "volume_fractions": {
+       "silicon": 0.3836285266457681,
+       "solder": 0.0355485893416928,
+       "encapsulant": 0.5245513365529328,
+       "copper": 0.046628375437662795,
+       "tym5": 0.009643172021943576
+      }
+     }
+    },
+    "conv_tier4": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 41451.53631357821,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.30735501550339994,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 7.0028112305920315e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 43.221330704849656,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       4.185568932950889,
+       4.185568932950889,
+       43.221330704849656
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier4_ls1l2: 1 x gan_ls, 2 x inductor in the encapsulant, 638 um, cell 2.8172 mm (M36N3K3KA2THIN (36 cells, design m36thin))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier4",
+      "bounds": {
+       "kz_reuss": 1.4723036885728726,
+       "kz_voigt": 89.58633329105356,
+       "kz_estimate": 43.221330704849656,
+       "kxy_series_parallel": [
+        3.9598407799874153,
+        4.411297085914362
+       ],
+       "kxy_reuss": 1.4723036885728726,
+       "kxy_voigt": 89.58633329105356
+      },
+      "mechanical": {
+       "E_voigt_MPa": 67105.51252213214,
+       "E_reuss_MPa": 15797.56010502428,
+       "E_hill_MPa": 41451.53631357821,
+       "nu_mean": 0.30735501550339994,
+       "cte_turner_per_K": 7.0028112305920315e-06,
+       "cte_volume_per_K": 1.7618903607002238e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier4_ls1l2",
+      "tier_um": 638.0,
+      "parts": {
+       "gan_ls": 1,
+       "inductor": 2
+      },
+      "area_fractions": {
+       "gan_ls": 0.47250000000000003,
+       "inductor": 0.252,
+       "posts": 0.023333333333333334,
+       "encapsulant": 0.2521666666666666
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2055",
+        "count": 1,
+        "kz": 69.7071662185699,
+        "k_in": 107.8824004091809,
+        "cap_um": 0.0
+       },
+       "inductor": {
+        "kind": "inductor",
+        "part": null,
+        "count": 2,
+        "kz": 3.074780422918143,
+        "k_in": 6.5746898607986655,
+        "cap_um": 138.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 18.51851851851852,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.18518518518518517
+      },
+      "volume_fractions": {
+       "silicon": 0.3836285266457681,
+       "solder": 0.0355485893416928,
+       "encapsulant": 0.4682797890933264,
+       "copper": 0.09325675087532559,
+       "tym5": 0.01928634404388715
+      }
+     }
+    }
+   },
+   "summary": {
+    "conv_tier1": {
+     "kx": 4.4828246673166525,
+     "ky": 4.4828246673166525,
+     "kz": 33.81874955569719,
+     "kz_bounds": [
+      1.285656756951806,
+      53.95574211090952
+     ],
+     "kxy_bracket": [
+      4.293063006103894,
+      4.672586328529411
+     ],
+     "E_GPa": 38.80610781686051,
+     "E_bounds_GPa": [
+      14.216236031151661,
+      63.395979602569355
+     ],
+     "nu": 0.303956675090219,
+     "cte_ppm": 5.650985842362902,
+     "cte_bounds_ppm": [
+      5.650985842362902,
+      18.029167125082747
+     ]
+    },
+    "conv_tier2": {
+     "kx": 4.084056960828537,
+     "ky": 4.084056960828537,
+     "kz": 21.156333088853973,
+     "kz_bounds": [
+      1.7390447370202207,
+      75.15379665112702
+     ],
+     "kxy_bracket": [
+      3.791441548650619,
+      4.376672373006454
+     ],
+     "E_GPa": 47.960461469580956,
+     "E_bounds_GPa": [
+      18.167076203570666,
+      77.75384673559125
+     ],
+     "nu": 0.2990837550633577,
+     "cte_ppm": 4.28165644369726,
+     "cte_bounds_ppm": [
+      4.28165644369726,
+      14.397930227159124
+     ]
+    },
+    "conv_tier3": {
+     "kx": 2.7729450697804294,
+     "ky": 2.7729450697804294,
+     "kz": 38.26360837156196,
+     "kz_bounds": [
+      1.3222884134354793,
+      70.94544368314435
+     ],
+     "kxy_bracket": [
+      2.5295239432792207,
+      3.0163661962816377
+     ],
+     "E_GPa": 38.01539082385527,
+     "E_bounds_GPa": [
+      14.330164885077066,
+      61.70061676263347
+     ],
+     "nu": 0.30653816605891004,
+     "cte_ppm": 6.305403900281467,
+     "cte_bounds_ppm": [
+      6.305403900281467,
+      18.41154663108733
+     ]
+    },
+    "conv_tier4": {
+     "kx": 4.185568932950889,
+     "ky": 4.185568932950889,
+     "kz": 43.221330704849656,
+     "kz_bounds": [
+      1.4723036885728726,
+      89.58633329105356
+     ],
+     "kxy_bracket": [
+      3.9598407799874153,
+      4.411297085914362
+     ],
+     "E_GPa": 41.45153631357821,
+     "E_bounds_GPa": [
+      15.79756010502428,
+      67.10551252213213
+     ],
+     "nu": 0.30735501550339994,
+     "cte_ppm": 7.002811230592031,
+     "cte_bounds_ppm": [
+      7.002811230592031,
+      17.61890360700224
+     ]
+    }
+   },
+   "sensitivity": {
+    "tier1_hs2cf2": {
+     "base": 33.81874955569719,
+     "termination_15um": 33.81862782588532,
+     "termination_40um": 33.81893215041497,
+     "batio3_k_2": 33.8160350340865,
+     "batio3_k_3.5": 33.82112485267805,
+     "termination_k_0.7": 33.817547354494344,
+     "termination_k_400": 33.818751037495154
+    },
+    "tier2_hs1ls1": {
+     "base": 21.156333088853973
+    },
+    "tier3_ls1l1": {
+     "base": 38.26360837156196,
+     "TYM5_k_1.5": 38.26356556073797,
+     "TYM5_k_6": 38.26364428649843,
+     "posts_at_half_J": 42.92210837156197
+    },
+    "tier4_ls1l2": {
+     "base": 43.221330704849656,
+     "TYM5_k_1.5": 43.2212450832017,
+     "TYM5_k_6": 43.2214025347226,
+     "posts_at_half_J": 52.53833070484965
+    }
+   }
+  },
+  "m25": {
+   "tier_contents": {
+    "label": "M25N4K2KA1 (25 cells, design m25)",
+    "n_cells": 25,
+    "cell_side_mm": 3.3806170189140663,
+    "i_out_rms_a": 40.0,
+    "hs_part": "EPC2014C",
+    "ls_part": "EPC2366",
+    "ind_footprint_mm2": 1.0,
+    "ind_um": 500.0,
+    "cf_um": 1000.0,
+    "n_ind_total": 2,
+    "keepout_um": 50.0
+   },
+   "tiers": [
+    {
+     "name": "tier1_ls1",
+     "height_um": 700.0,
+     "parts": {
+      "gan_ls": 1
+     }
+    },
+    {
+     "name": "tier2_ls1",
+     "height_um": 700.0,
+     "parts": {
+      "gan_ls": 1
+     }
+    },
+    {
+     "name": "tier3_hs3",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 3
+     }
+    },
+    {
+     "name": "tier4_hs1l2cf3",
+     "height_um": 1000.0,
+     "parts": {
+      "gan_hs": 1,
+      "inductor": 2,
+      "cap_fly": 3
+     }
+    }
+   ],
+   "cards": {
+    "conv_tier1": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 18526.09172070889,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.30694231250000004,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 1.2086743097542717e-05,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 1.6210768442260488,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       1.8815924743482888,
+       1.8815924743482888,
+       1.6210768442260488
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier1_ls1: 1 x gan_ls in the encapsulant, 700 um, cell 3.3806 mm (M25N4K2KA1 (25 cells, design m25))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier1",
+      "bounds": {
+       "kz_reuss": 1.2837152593886738,
+       "kz_voigt": 3.1252809317157153,
+       "kz_estimate": 1.6210768442260488,
+       "kxy_series_parallel": [
+        1.858179887797828,
+        1.9050050608987497
+       ],
+       "kxy_reuss": 1.2837152593886738,
+       "kxy_voigt": 3.1252809317157153
+      },
+      "mechanical": {
+       "E_voigt_MPa": 21089.8625,
+       "E_reuss_MPa": 15962.320941417782,
+       "E_hill_MPa": 18526.09172070889,
+       "nu_mean": 0.30694231250000004,
+       "cte_turner_per_K": 1.2086743097542717e-05,
+       "cte_volume_per_K": 1.5124425e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier1_ls1",
+      "tier_um": 700.0,
+      "parts": {
+       "gan_ls": 1
+      },
+      "area_fractions": {
+       "gan_ls": 0.75075,
+       "posts": 0.0,
+       "encapsulant": 0.24925
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2366",
+        "count": 1,
+        "kz": 1.9268755833846802,
+        "k_in": 2.8824955524984786,
+        "cap_um": 0.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
+      "volume_fractions": {
+       "qfn_body": 0.697125,
+       "solder": 0.029493750000000003,
+       "encapsulant": 0.27338125
+      }
+     }
+    },
+    "conv_tier2": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 18526.09172070889,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.30694231250000004,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 1.2086743097542717e-05,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 1.6210768442260488,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       1.8815924743482888,
+       1.8815924743482888,
+       1.6210768442260488
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier2_ls1: 1 x gan_ls in the encapsulant, 700 um, cell 3.3806 mm (M25N4K2KA1 (25 cells, design m25))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier2",
+      "bounds": {
+       "kz_reuss": 1.2837152593886738,
+       "kz_voigt": 3.1252809317157153,
+       "kz_estimate": 1.6210768442260488,
+       "kxy_series_parallel": [
+        1.858179887797828,
+        1.9050050608987497
+       ],
+       "kxy_reuss": 1.2837152593886738,
+       "kxy_voigt": 3.1252809317157153
+      },
+      "mechanical": {
+       "E_voigt_MPa": 21089.8625,
+       "E_reuss_MPa": 15962.320941417782,
+       "E_hill_MPa": 18526.09172070889,
+       "nu_mean": 0.30694231250000004,
+       "cte_turner_per_K": 1.2086743097542717e-05,
+       "cte_volume_per_K": 1.5124425e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier2_ls1",
+      "tier_um": 700.0,
+      "parts": {
+       "gan_ls": 1
+      },
+      "area_fractions": {
+       "gan_ls": 0.75075,
+       "posts": 0.0,
+       "encapsulant": 0.24925
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2366",
+        "count": 1,
+        "kz": 1.9268755833846802,
+        "k_in": 2.8824955524984786,
+        "cap_um": 0.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
+      "volume_fractions": {
+       "qfn_body": 0.697125,
+       "solder": 0.029493750000000003,
+       "encapsulant": 0.27338125
+      }
+     }
+    },
+    "conv_tier3": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 36576.79267665278,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.30413069409489046,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 5.054726311609499e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 35.16845122669327,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       2.078573705827681,
+       2.078573705827681,
+       35.16845122669327
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier3_hs3: 3 x gan_hs in the encapsulant, 685 um, cell 3.3806 mm (M25N4K2KA1 (25 cells, design m25))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier3",
+      "bounds": {
+       "kz_reuss": 1.241660701685286,
+       "kz_voigt": 55.6791520864416,
+       "kz_estimate": 35.16845122669327,
+       "kxy_series_parallel": [
+        1.8307487627891583,
+        2.326398648866204
+       ],
+       "kxy_reuss": 1.241660701685286,
+       "kxy_voigt": 55.6791520864416
+      },
+      "mechanical": {
+       "E_voigt_MPa": 59608.01403248175,
+       "E_reuss_MPa": 13545.571320823818,
+       "E_hill_MPa": 36576.79267665278,
+       "nu_mean": 0.30413069409489046,
+       "cte_turner_per_K": 5.054726311609499e-06,
+       "cte_volume_per_K": 1.8443762790766423e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier3_hs3",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 3
+      },
+      "area_fractions": {
+       "gan_hs": 0.485644425,
+       "posts": 0.0,
+       "encapsulant": 0.5143555750000001
+      },
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 3,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
+      "volume_fractions": {
+       "silicon": 0.414747428649635,
+       "solder": 0.024019708029197073,
+       "encapsulant": 0.5612328633211678
+      }
+     }
+    },
+    "conv_tier4": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 37395.33882780994,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.3132791185946082,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 1.169891698519027e-05,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 15.488569953147852,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       3.3975901722184316,
+       3.3975901722184316,
+       15.488569953147852
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier4_hs1l2cf3: 1 x gan_hs, 2 x inductor, 3 x cap_fly in the encapsulant, 1000 um, cell 3.3806 mm (M25N4K2KA1 (25 cells, design m25))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier4",
+      "bounds": {
+       "kz_reuss": 1.1507752369592397,
+       "kz_voigt": 42.902302300598805,
+       "kz_estimate": 15.488569953147852,
+       "kxy_series_parallel": [
+        3.205491348319285,
+        3.589688996117578
+       ],
+       "kxy_reuss": 1.1507752369592397,
+       "kxy_voigt": 42.902302300598805
+      },
+      "mechanical": {
+       "E_voigt_MPa": 60918.855835416885,
+       "E_reuss_MPa": 13871.821820202991,
+       "E_hill_MPa": 37395.33882780994,
+       "nu_mean": 0.3132791185946082,
+       "cte_turner_per_K": 1.169891698519027e-05,
+       "cte_volume_per_K": 2.1244000051311787e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier4_hs1l2cf3",
+      "tier_um": 1000.0,
+      "parts": {
+       "gan_hs": 1,
+       "inductor": 2,
+       "cap_fly": 3
+      },
+      "area_fractions": {
+       "gan_hs": 0.161881475,
+       "inductor": 0.175,
+       "cap_fly": 0.3360000000000001,
+       "posts": 0.034999999999999996,
+       "encapsulant": 0.29211852499999996
+      },
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 1,
+        "kz": 2.1760082902291527,
+        "k_in": 77.32878192929664,
+        "cap_um": 315.0
+       },
+       "inductor": {
+        "kind": "inductor",
+        "part": null,
+        "count": 2,
+        "kz": 1.3800006334477084,
+        "k_in": 4.448052131189548,
+        "cap_um": 500.0
+       },
+       "cap_fly": {
+        "kind": "mlcc",
+        "part": null,
+        "count": 3,
+        "kz": 2.0545578665475572,
+        "k_in": 21.18909375,
+        "cap_um": 170.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 40.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.39999999999999997
+      },
+      "volume_fractions": {
+       "silicon": 0.094700662875,
+       "solder": 0.0155645,
+       "encapsulant": 0.5464099566445895,
+       "copper": 0.06597995860541045,
+       "tym5": 0.008544921875,
+       "mlcc_body": 0.2604000000000001,
+       "termination": 0.008400000000000001
+      }
+     }
+    }
+   },
+   "summary": {
+    "conv_tier1": {
+     "kx": 1.8815924743482888,
+     "ky": 1.8815924743482888,
+     "kz": 1.6210768442260488,
+     "kz_bounds": [
+      1.2837152593886738,
+      3.1252809317157153
+     ],
+     "kxy_bracket": [
+      1.858179887797828,
+      1.9050050608987497
+     ],
+     "E_GPa": 18.52609172070889,
+     "E_bounds_GPa": [
+      15.962320941417781,
+      21.0898625
+     ],
+     "nu": 0.30694231250000004,
+     "cte_ppm": 12.086743097542717,
+     "cte_bounds_ppm": [
+      12.086743097542717,
+      15.124425
+     ]
+    },
+    "conv_tier2": {
+     "kx": 1.8815924743482888,
+     "ky": 1.8815924743482888,
+     "kz": 1.6210768442260488,
+     "kz_bounds": [
+      1.2837152593886738,
+      3.1252809317157153
+     ],
+     "kxy_bracket": [
+      1.858179887797828,
+      1.9050050608987497
+     ],
+     "E_GPa": 18.52609172070889,
+     "E_bounds_GPa": [
+      15.962320941417781,
+      21.0898625
+     ],
+     "nu": 0.30694231250000004,
+     "cte_ppm": 12.086743097542717,
+     "cte_bounds_ppm": [
+      12.086743097542717,
+      15.124425
+     ]
+    },
+    "conv_tier3": {
+     "kx": 2.078573705827681,
+     "ky": 2.078573705827681,
+     "kz": 35.16845122669327,
+     "kz_bounds": [
+      1.241660701685286,
+      55.6791520864416
+     ],
+     "kxy_bracket": [
+      1.8307487627891583,
+      2.326398648866204
+     ],
+     "E_GPa": 36.57679267665278,
+     "E_bounds_GPa": [
+      13.545571320823818,
+      59.60801403248175
+     ],
+     "nu": 0.30413069409489046,
+     "cte_ppm": 5.054726311609499,
+     "cte_bounds_ppm": [
+      5.054726311609499,
+      18.443762790766424
+     ]
+    },
+    "conv_tier4": {
+     "kx": 3.3975901722184316,
+     "ky": 3.3975901722184316,
+     "kz": 15.488569953147852,
+     "kz_bounds": [
+      1.1507752369592397,
+      42.902302300598805
+     ],
+     "kxy_bracket": [
+      3.205491348319285,
+      3.589688996117578
+     ],
+     "E_GPa": 37.39533882780994,
+     "E_bounds_GPa": [
+      13.87182182020299,
+      60.918855835416885
+     ],
+     "nu": 0.3132791185946082,
+     "cte_ppm": 11.69891698519027,
+     "cte_bounds_ppm": [
+      11.69891698519027,
+      21.244000051311787
+     ]
+    }
+   },
+   "sensitivity": {
+    "tier1_ls1": {
+     "base": 1.6210768442260488
+    },
+    "tier2_ls1": {
+     "base": 1.6210768442260488
+    },
+    "tier3_hs3": {
+     "base": 35.16845122669327
+    },
+    "tier4_hs1l2cf3": {
+     "base": 15.488569953147852,
+     "TYM5_k_1.5": 15.488562311159416,
+     "TYM5_k_6": 15.488576363249418,
+     "posts_at_half_J": 29.464069953147852,
+     "termination_15um": 15.479895238670926,
+     "termination_40um": 15.501582024863236,
+     "batio3_k_2": 15.402204701590216,
+     "batio3_k_3.5": 15.586960239915483,
+     "termination_k_0.7": 15.453562464122054,
+     "termination_k_400": 15.488778191789317
+    }
+   }
+  },
+  "m49": {
+   "tier_contents": {
+    "label": "M49N3K2KA1 (49 cells, design m49)",
+    "n_cells": 49,
+    "cell_side_mm": 2.414726442081476,
+    "i_out_rms_a": 20.408163265306122,
+    "hs_part": "EPC2014C",
+    "ls_part": "EPC2090",
+    "ind_footprint_mm2": 1.0,
+    "ind_um": 500.0,
+    "cf_um": 1000.0,
+    "n_ind_total": 2,
+    "keepout_um": 50.0
+   },
+   "tiers": [
+    {
+     "name": "tier1_ls1cf1",
+     "height_um": 1000.0,
+     "parts": {
+      "gan_ls": 1,
+      "cap_fly": 1
+     }
+    },
+    {
+     "name": "tier2_ls1cf1",
+     "height_um": 1000.0,
+     "parts": {
+      "gan_ls": 1,
+      "cap_fly": 1
+     }
+    },
+    {
+     "name": "tier3_hs2",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 2
+     }
+    },
+    {
+     "name": "tier4_hs1l2",
+     "height_um": 685.0,
+     "parts": {
+      "gan_hs": 1,
+      "inductor": 2
+     }
+    }
+   ],
+   "cards": {
+    "conv_tier1": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 40988.18542856054,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.30589632019999996,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 7.643963890782064e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 1.5988678152939342,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       5.5227871100881565,
+       5.5227871100881565,
+       1.5988678152939342
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier1_ls1cf1: 1 x gan_ls, 1 x cap_fly in the encapsulant, 1000 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier1",
+      "bounds": {
+       "kz_reuss": 1.2887566265006358,
+       "kz_voigt": 42.2150661271135,
+       "kz_estimate": 1.5988678152939342,
+       "kxy_series_parallel": [
+        5.271142639157482,
+        5.774431581018832
+       ],
+       "kxy_reuss": 1.2887566265006358,
+       "kxy_voigt": 42.2150661271135
+      },
+      "mechanical": {
+       "E_voigt_MPa": 67039.81139,
+       "E_reuss_MPa": 14936.559467121066,
+       "E_hill_MPa": 40988.18542856054,
+       "nu_mean": 0.30589632019999996,
+       "cte_turner_per_K": 7.643963890782064e-06,
+       "cte_volume_per_K": 1.8408413688578945e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier1_ls1cf1",
+      "tier_um": 1000.0,
+      "parts": {
+       "gan_ls": 1,
+       "cap_fly": 1
+      },
+      "area_fractions": {
+       "gan_ls": 0.5719525,
+       "cap_fly": 0.21952000000000005,
+       "posts": 0.0,
+       "encapsulant": 0.20852749999999992
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2090",
+        "count": 1,
+        "kz": 1.7516874608108441,
+        "k_in": 68.64140349714742,
+        "cap_um": 394.0
+       },
+       "cap_fly": {
+        "kind": "mlcc",
+        "part": null,
+        "count": 1,
+        "kz": 2.0545578665475572,
+        "k_in": 21.18909375,
+        "cap_um": 170.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
+      "volume_fractions": {
+       "silicon": 0.296271395,
+       "solder": 0.025450600000000004,
+       "encapsulant": 0.5026620049999999,
+       "mlcc_body": 0.17012800000000006,
+       "termination": 0.0054880000000000016
+      }
+     }
+    },
+    "conv_tier2": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 40988.18542856054,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.30589632019999996,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 7.643963890782064e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 1.5988678152939342,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       5.5227871100881565,
+       5.5227871100881565,
+       1.5988678152939342
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier2_ls1cf1: 1 x gan_ls, 1 x cap_fly in the encapsulant, 1000 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier2",
+      "bounds": {
+       "kz_reuss": 1.2887566265006358,
+       "kz_voigt": 42.2150661271135,
+       "kz_estimate": 1.5988678152939342,
+       "kxy_series_parallel": [
+        5.271142639157482,
+        5.774431581018832
+       ],
+       "kxy_reuss": 1.2887566265006358,
+       "kxy_voigt": 42.2150661271135
+      },
+      "mechanical": {
+       "E_voigt_MPa": 67039.81139,
+       "E_reuss_MPa": 14936.559467121066,
+       "E_hill_MPa": 40988.18542856054,
+       "nu_mean": 0.30589632019999996,
+       "cte_turner_per_K": 7.643963890782064e-06,
+       "cte_volume_per_K": 1.8408413688578945e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier2_ls1cf1",
+      "tier_um": 1000.0,
+      "parts": {
+       "gan_ls": 1,
+       "cap_fly": 1
+      },
+      "area_fractions": {
+       "gan_ls": 0.5719525,
+       "cap_fly": 0.21952000000000005,
+       "posts": 0.0,
+       "encapsulant": 0.20852749999999992
+      },
+      "prisms": {
+       "gan_ls": {
+        "kind": "die",
+        "part": "EPC2090",
+        "count": 1,
+        "kz": 1.7516874608108441,
+        "k_in": 68.64140349714742,
+        "cap_um": 394.0
+       },
+       "cap_fly": {
+        "kind": "mlcc",
+        "part": null,
+        "count": 1,
+        "kz": 2.0545578665475572,
+        "k_in": 21.18909375,
+        "cap_um": 170.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
+      "volume_fractions": {
+       "silicon": 0.296271395,
+       "solder": 0.025450600000000004,
+       "encapsulant": 0.5026620049999999,
+       "mlcc_body": 0.17012800000000006,
+       "termination": 0.0054880000000000016
+      }
+     }
+    },
+    "conv_tier3": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 46318.47491001646,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.29926410695065697,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 4.243438446861153e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 45.73877626954588,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       3.171370845328374,
+       3.171370845328374,
+       45.73877626954588
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier3_hs2: 2 x gan_hs in the encapsulant, 685 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier3",
+      "bounds": {
+       "kz_reuss": 1.6279782765126753,
+       "kz_voigt": 72.53942539295039,
+       "kz_estimate": 45.73877626954588,
+       "kxy_series_parallel": [
+        2.8917239535262014,
+        3.451017737130547
+       ],
+       "kxy_reuss": 1.6279782765126753,
+       "kxy_voigt": 72.53942539295039
+      },
+      "mechanical": {
+       "E_voigt_MPa": 75434.47166910951,
+       "E_reuss_MPa": 17202.47815092342,
+       "E_hill_MPa": 46318.47491001646,
+       "nu_mean": 0.29926410695065697,
+       "cte_turner_per_K": 4.243438446861153e-06,
+       "cte_volume_per_K": 1.4899850046601458e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier3_hs2",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 2
+      },
+      "area_fractions": {
+       "gan_hs": 0.6345753820000001,
+       "posts": 0.0,
+       "encapsulant": 0.365424618
+      },
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 2,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 0.0,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.0
+      },
+      "volume_fractions": {
+       "silicon": 0.5419366401021899,
+       "solder": 0.031385751824817516,
+       "encapsulant": 0.42667760807299265
+      }
+     }
+    },
+    "conv_tier4": {
+     "status": "DERIVED",
+     "elastic_type": "iso",
+     "E": {
+      "value": 34698.09111951844,
+      "status": "DERIVED"
+     },
+     "nu": {
+      "value": 0.31181152473785706,
+      "status": "DERIVED"
+     },
+     "cte": {
+      "value": 8.821060035133524e-06,
+      "status": "DERIVED"
+     },
+     "k": {
+      "value": 37.81029814188663,
+      "status": "DERIVED"
+     },
+     "k_ortho": {
+      "value": [
+       3.185922962245199,
+       3.185922962245199,
+       37.81029814188663
+      ],
+      "status": "DERIVED"
+     },
+     "provenance": "mixed tier tier4_hs1l2: 1 x gan_hs, 2 x inductor in the encapsulant, 685 um, cell 2.4147 mm (M49N3K2KA1 (49 cells, design m49))",
+     "derivation": {
+      "script": "scripts/tcpmt_converter_cards.py",
+      "card": "conv_tier4",
+      "bounds": {
+       "kz_reuss": 1.2220269268203057,
+       "kz_voigt": 86.04675072749369,
+       "kz_estimate": 37.81029814188663,
+       "kxy_series_parallel": [
+        2.9972303587829843,
+        3.374615565707414
+       ],
+       "kxy_reuss": 1.2220269268203057,
+       "kxy_voigt": 86.04675072749369
+      },
+      "mechanical": {
+       "E_voigt_MPa": 55973.859616667265,
+       "E_reuss_MPa": 13422.322622369613,
+       "E_hill_MPa": 34698.09111951844,
+       "nu_mean": 0.31181152473785706,
+       "cte_turner_per_K": 8.821060035133524e-06,
+       "cte_volume_per_K": 2.036792389172884e-05,
+       "production": "iso E = Hill, nu = volume mean, CTE = Turner (iso-strain)"
+      },
+      "tier": "tier4_hs1l2",
+      "tier_um": 685.0,
+      "parts": {
+       "gan_hs": 1,
+       "inductor": 2
+      },
+      "area_fractions": {
+       "gan_hs": 0.31728769100000004,
+       "inductor": 0.343,
+       "posts": 0.034999999999999996,
+       "encapsulant": 0.3047123089999999
+      },
+      "prisms": {
+       "gan_hs": {
+        "kind": "die",
+        "part": "EPC2014C",
+        "count": 1,
+        "kz": 71.67466675684226,
+        "k_in": 112.56683493327978,
+        "cap_um": 0.0
+       },
+       "inductor": {
+        "kind": "inductor",
+        "part": null,
+        "count": 2,
+        "kz": 2.494198271468499,
+        "k_in": 6.1716089506416765,
+        "cap_um": 185.0
+       }
+      },
+      "posts": {
+       "I_rms_A": 20.408163265306122,
+       "J_A_m2": 100000000.0,
+       "area_mm2": 0.2040816326530612
+      },
+      "volume_fractions": {
+       "silicon": 0.27096832005109495,
+       "solder": 0.015692875912408758,
+       "encapsulant": 0.5652457153626211,
+       "copper": 0.12364338520672187,
+       "tym5": 0.024449703467153285
+      }
+     }
+    }
+   },
+   "summary": {
+    "conv_tier1": {
+     "kx": 5.5227871100881565,
+     "ky": 5.5227871100881565,
+     "kz": 1.5988678152939342,
+     "kz_bounds": [
+      1.2887566265006358,
+      42.2150661271135
+     ],
+     "kxy_bracket": [
+      5.271142639157482,
+      5.774431581018832
+     ],
+     "E_GPa": 40.988185428560534,
+     "E_bounds_GPa": [
+      14.936559467121066,
+      67.03981139
+     ],
+     "nu": 0.30589632019999996,
+     "cte_ppm": 7.6439638907820635,
+     "cte_bounds_ppm": [
+      7.6439638907820635,
+      18.408413688578946
+     ]
+    },
+    "conv_tier2": {
+     "kx": 5.5227871100881565,
+     "ky": 5.5227871100881565,
+     "kz": 1.5988678152939342,
+     "kz_bounds": [
+      1.2887566265006358,
+      42.2150661271135
+     ],
+     "kxy_bracket": [
+      5.271142639157482,
+      5.774431581018832
+     ],
+     "E_GPa": 40.988185428560534,
+     "E_bounds_GPa": [
+      14.936559467121066,
+      67.03981139
+     ],
+     "nu": 0.30589632019999996,
+     "cte_ppm": 7.6439638907820635,
+     "cte_bounds_ppm": [
+      7.6439638907820635,
+      18.408413688578946
+     ]
+    },
+    "conv_tier3": {
+     "kx": 3.171370845328374,
+     "ky": 3.171370845328374,
+     "kz": 45.73877626954588,
+     "kz_bounds": [
+      1.6279782765126753,
+      72.53942539295039
+     ],
+     "kxy_bracket": [
+      2.8917239535262014,
+      3.451017737130547
+     ],
+     "E_GPa": 46.31847491001646,
+     "E_bounds_GPa": [
+      17.20247815092342,
+      75.43447166910951
+     ],
+     "nu": 0.29926410695065697,
+     "cte_ppm": 4.243438446861153,
+     "cte_bounds_ppm": [
+      4.243438446861153,
+      14.899850046601458
+     ]
+    },
+    "conv_tier4": {
+     "kx": 3.185922962245199,
+     "ky": 3.185922962245199,
+     "kz": 37.81029814188663,
+     "kz_bounds": [
+      1.2220269268203057,
+      86.04675072749369
+     ],
+     "kxy_bracket": [
+      2.9972303587829843,
+      3.374615565707414
+     ],
+     "E_GPa": 34.69809111951844,
+     "E_bounds_GPa": [
+      13.422322622369613,
+      55.97385961666726
+     ],
+     "nu": 0.31181152473785706,
+     "cte_ppm": 8.821060035133524,
+     "cte_bounds_ppm": [
+      8.821060035133524,
+      20.36792389172884
+     ]
+    }
+   },
+   "sensitivity": {
+    "tier1_ls1cf1": {
+     "base": 1.5988678152939342,
+     "termination_15um": 1.593200335169011,
+     "termination_40um": 1.607369035481319,
+     "batio3_k_2": 1.5424425176096128,
+     "batio3_k_3.5": 1.6631494693154543,
+     "termination_k_0.7": 1.57599625579708,
+     "termination_k_400": 1.5990038645396927
+    },
+    "tier2_ls1cf1": {
+     "base": 1.5988678152939342,
+     "termination_15um": 1.593200335169011,
+     "termination_40um": 1.607369035481319,
+     "batio3_k_2": 1.5424425176096128,
+     "batio3_k_3.5": 1.6631494693154543,
+     "termination_k_0.7": 1.57599625579708,
+     "termination_k_400": 1.5990038645396927
+    },
+    "tier3_hs2": {
+     "base": 45.73877626954588
+    },
+    "tier4_hs1l2": {
+     "base": 37.81029814188663,
+     "TYM5_k_1.5": 37.8102267164778,
+     "TYM5_k_6": 37.810358059247406,
+     "posts_at_half_J": 51.78579814188664
     }
    }
   }
