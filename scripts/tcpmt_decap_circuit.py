@@ -94,7 +94,11 @@ def s0_temperatures():
     s0 = json.loads(CASE_S0.read_text())
     h = s0["et_history"][-2]
     keys = ("conv", "hs", "ls", "ind", "caps", "bga", "sub", "interface")
-    return {k: float(h[f"T_{k}_C"]) for k in keys if f"T_{k}_C" in h}
+    t = {k: float(h[f"T_{k}_C"]) for k in keys if f"T_{k}_C" in h}
+    # mixed tiers (TCPMT round 3): each part at its own tier's temperature, as the S0 ledger
+    t.update({k[2:-2]: float(v) for k, v in h.items()
+              if k.startswith("T_tier:") and k.endswith("_C")})
+    return t
 
 
 @lru_cache(maxsize=1)

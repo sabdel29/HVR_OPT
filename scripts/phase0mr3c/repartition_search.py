@@ -34,7 +34,10 @@ for p in ("scripts/phase0mr", "scripts/phase0m", "scripts"):
 import routing_production as RP                                          # noqa: E402
 
 OUT = R / "results" / "phase0mr3c"
-D = RP.DESIGN
+#: the round-2 49-cell cell this analysis (and its bookkeeping, finding 10) is about; the
+#: design record's mixed-tier stack has its own analysis (scripts/tcpmt_tier_order.py)
+import routing as _RT                                                     # noqa: E402
+D = _RT.DESIGN_49_LEGACY
 N, K = D["N"], D["K"]
 N_OF = {"gan_hs": N, "gan_ls": K, "cap_fly": N - 1, "cap_out": 1, "inductor": K}
 COMPS = ["gan_hs", "gan_ls", "cap_fly", "cap_out", "inductor"]
@@ -131,8 +134,11 @@ def bookkeeping():
              if max(geometry(t)[1]) <= CELL_MM2 + 1e-9}
         groupings[k] = sorted(sorted(",".join(sorted(x)) for x in G) for G in g)
         counts[k]["distinct_groupings"] = groupings[k]
-    cfg = yaml.safe_load((R / "configs" / "phase0nx" / "z1_physical.yaml").read_text())
-    tiers = cfg["converter"]["tiers_from_substrate_upward"]
+    # the round-2 49-cell production tier heights (the configs now restate the design
+    # record's mixed tiers, TCPMT round 3)
+    tiers = [{"name": n, "um": u} for n, u in (
+        ("gan_hs_EPC2014C", 685.0), ("flying_caps", 100.0), ("gan_ls_EPC2057", 638.0),
+        ("inductor_plus_cout", 500.0))]
     um = lambda p: next(float(t["um"]) for t in tiers if t["name"].startswith(p))  # noqa: E731
     fc = json.loads((Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision" / "flying_caps.json").read_text())["summary"]
     d_via = float(fc["min_tier_um_10pct"][-1]) / float(fc["via_AR_10pct"][-1])

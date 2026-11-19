@@ -248,10 +248,22 @@ def main():
     counts = {a: legal_counts(a) for a in ("Z1", "Z2")}
     kw = {"mode": "VIN_PAD"}
     # ---- 1. exhaustive screen ------------------------------------------
-    jobs = [(a, rail, n, SCREEN_LEVEL, kw) for a in counts for n in counts[a]
-            for rail in ("supply", "return")]
-    screen = peak_rows(run_pool(jobs))
-    print(f"screen: {len(screen)} rows in {time.time()-t0:.0f}s", flush=True)
+    # TCPMT round 3: --reuse-screen re-scores the committed level-1 screen of THIS cell grid
+    # (bga_count_screen.csv; the per-ball fractions do not depend on the current) at the
+    # scenario currents in force -- a new production k needs no new screen. The screen's
+    # counts must be the legal counts of the grid in force (checked).
+    if "--reuse-screen" in sys.argv[1:]:
+        screen = screen_from_csv()
+        have = {a: sorted(r["n_per_rail"] for r in screen if r["arch"] == a) for a in counts}
+        if have != {a: sorted(counts[a]) for a in counts}:
+            raise SystemExit("bga_count_screen.csv was screened on another cell grid: rerun "
+                             "the screen (no --reuse-screen)")
+        print(f"screen: {len(screen)} rows re-scored from bga_count_screen.csv", flush=True)
+    else:
+        jobs = [(a, rail, n, SCREEN_LEVEL, kw) for a in counts for n in counts[a]
+                for rail in ("supply", "return")]
+        screen = peak_rows(run_pool(jobs))
+        print(f"screen: {len(screen)} rows in {time.time()-t0:.0f}s", flush=True)
 
     # ---- 2. verify candidate minima on the resolved level ---------------
     closure, verify_jobs = {}, set()
@@ -400,10 +412,12 @@ def main():
            "closure": closure, "matched_count": n_match,
            "convergence": conv, "loop": loop, "controlled": ctrl,
            "sensitivity": sens_rows}
+    res["meta"]["screen_reused"] = "--reuse-screen" in sys.argv[1:]
     (OUT / "package_network.json").write_text(json.dumps(res, indent=1))
-    with (OUT / "bga_count_screen.csv").open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(screen[0]))
-        w.writeheader(); w.writerows(screen)
+    if not res["meta"]["screen_reused"]:     # a re-scored screen keeps the committed CSV
+        with (OUT / "bga_count_screen.csv").open("w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=list(screen[0]))
+            w.writeheader(); w.writerows(screen)
     print("done in %.0fs" % (time.time() - t0))
     for a, L in loop.items():
         print(a, "N=%d R_loop=%.4f mOhm conv=%s" % (L["n_per_rail"],
