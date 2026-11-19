@@ -80,3 +80,12 @@ Merges so far:
 - 95e1eda mechanical
 Electrical and campaign merges are being done by the merge agent. Next: generalize Z1/Z2/Z3 for M=36 with mixed tiers,
 add the manifold plate, redo the tier order for the new stack, update the manifest, then run the campaign.
+- Manifold / uncertainty / ladders / device table (merged ff, 4349327).
+  - Manifold plate: dp 65 kPa (was 862); pumping 1.77 W per plate.
+  - Unified rule: |D+beta| > U95(D) from a GCI on D's own ladder. 26 of 180 robustness verdicts change
+    (24 pending: mesh-differing variants; 2 reversals withdrawn).
+  - Ladder rungs are in the drivers; the campaign must run 18 + 12 + 64 rungs.
+  - Device table has 11 parts.
+  - OPEN: the electrical model uses EPC2057's R_on tempco (8e-3/K) for EPC2055 (datasheet 6e-3/K) -> fix per device.
+  - OPEN: verification.tex / compare.tex text and ordering.json still use the old rule.
+- Generalization to M=36 (agent running in a worktree based on 31a846c).
