@@ -364,7 +364,171 @@ def robustness(seed=1, trials=4):
     return out
 
 
+class IdealBranch:
+    """A branch of negligible impedance (1 mF, 1 fH, 1 uOhm): the bound of any capacitor at
+    its sites."""
+    c, l = 1e-3, 1e-15
+
+    def y(self, f):
+        return 1.0 / (1e-6 + 1j * 2 * np.pi * f * self.l + 1.0 / (1j * 2 * np.pi * f * self.c))
+
+
+def optimal_plan(Ms, Md, I, n_phase, seeds=3, sweeps=60):
+    """The least-loss assignment of n_phase equally used clock phases to the cells (pairwise
+    swaps from random starts, the best of `seeds`): the interleaving limit of that phase
+    count on this network."""
+    nc = Ms.shape[1]
+    amp = np.array([0.5 * abs(I[h]) ** 2 for h in range(1, len(Ms) + 1)])
+
+    def cost(lev):
+        ph = 2 * np.pi * lev / n_phase
+        return sum(a * float(np.real(np.conj(v) @ M @ v)) for h, (a, M) in
+                   enumerate(zip(amp, Ms), start=1) for v in (np.exp(-1j * h * ph),))
+    best = None
+    for sd in range(seeds):
+        rng = np.random.default_rng(sd)
+        lev = np.repeat(np.arange(n_phase), nc // n_phase)
+        rng.shuffle(lev)
+        c0, improved, it = cost(lev), True, 0
+        while improved and it < sweeps:
+            improved, it = False, it + 1
+            for i in range(nc):
+                for j in range(i + 1, nc):
+                    if lev[i] != lev[j]:
+                        lev[i], lev[j] = lev[j], lev[i]
+                        c = cost(lev)
+                        if c < c0 - 1e-12:
+                            c0, improved = c, True
+                        else:
+                            lev[i], lev[j] = lev[j], lev[i]
+        if best is None or c0 < best[0]:
+            best = (c0, lev.copy())
+    return best
+
+
+#: BGA counts of the count-dependence diagnostic (nearest-symmetric allocation)
+LIMIT_COUNTS = (54, 68, 128, 154, 176, 220)
+
+
+def limits():
+    """REVIEW ROUND 3 -- what any clock plan or ring can do for Z1's package k_eq, on the
+    network in force (the loss-matrix form of the port model, tcpmt_decap_network.
+    loss_matrices): (1) every clock plan of the grid with the ring, and the per-ball current
+    each implies at the closed BGA count (the closure rule: verified DC peak x k_eq); (2) the
+    interleaving limit (optimal assignments of 6, 9, 12 and n^2 phases); (3) ring bounds (5x
+    the capacitance, an ideal short at every ring site) and what would close (ideal
+    capacitors at the interior street intersections, 2.9 uF at every cell); (4) k_eq against
+    the BGA count, with the closure current pf(n) k_eq(n) I_avg of the level-1 screen."""
+    import csv
+    import time
+    t0 = time.time()
+    d = CI.design()
+    f = d["f_sw_hz"]
+    _t, i = CI.phase_a_current("ramp_deff")
+    I = CI.harmonics(i)
+    l_nom = CI.loop_inductance_estimate()["nominal_pH"] * 1e-12
+    r_scale = CI.network_resistance()["loop_hot_ohm"] / NW.self_check()["R_loop_reduced_ohm"]
+    xy, _ = NW.ring_layout()
+    br, _ = part_branch_params("GRM31CC72A475KE11", 1, L_CONN_NH["c"])
+    n = NW.grid_n()
+    plans = [p for p in NW.phase_names() if not p.startswith("raster")]
+    ph = {p: NW.phases(p) for p in plans}
+    Ms, Md = NW.loss_matrices(f, l_nom, br, xy, r_scale)
+    # the closure at the network's count (bga_count_production.json at this k, else the
+    # network's own fallback record): per-ball current = verified peak x k / k_closed
+    fc = NW.NETWORK.parent
+    pn = json.loads(NW.NETWORK.read_text())
+    bp = fc / "bga_count_production.json"
+    clo = json.loads(bp.read_text()) if bp.is_file() else {}
+    fb = clo.get("match_fallback") or pn.get("match_fallback") or {}
+    k_closed = float(clo.get("k_eq") or pn["meta"].get("production_k_eq") or 1.0)
+    peak = fb.get("verified_peak_A") or {}
+    out = {"network_count_per_rail": pn["matched_count"], "criterion_A": 1.5,
+           "k_closed": k_closed, "verified_peak_at_k_closed_A": peak, "plans": {}}
+    for p in plans:
+        k, pdc, pac, per = NW.k_eq_from(Ms, Md, I, ph[p])
+        out["plans"][p] = {
+            "n_phases": int(len(np.unique(np.round(ph[p], 9)))), "k_eq": k, "P_DC_W": pdc,
+            "P_AC_W": pac, "largest_harmonics_W": [[int(h + 1), float(per[h])]
+                                                   for h in np.argsort(per)[::-1][:4]],
+            "I_ball_closure_rule_A": {a: v * k / k_closed for a, v in peak.items()}}
+    # (2) interleaving limit
+    out["interleaving_limit"] = {}
+    for m in (6, 9, 12, n * n):
+        if (n * n) % m:
+            continue
+        c, lev = optimal_plan(Ms, Md, I, m)
+        pdc = out["plans"]["sync"]["P_DC_W"]
+        out["interleaving_limit"][f"{m}_phases"] = {"k_eq": math.sqrt(1 + c / pdc),
+                                                    "P_AC_W": c, "phase_index": lev.tolist()}
+    # (3) ring bounds and what would close
+    ref = [p for p in ("latin6z", f"latin{n}", "dual6", f"spread{n * n}") if p in ph]
+    bounds = {"ring_C_x5": NW.Branch(5 * br.c, lambda x: br.esr_fn(x) / 5, br.l / 5),
+              "ring_ideal_short": IdealBranch()}
+    out["ring_bounds"] = {}
+    for lab, b in bounds.items():
+        M2, Md2 = NW.loss_matrices(f, l_nom, b, xy, r_scale)
+        out["ring_bounds"][lab] = {p: NW.k_eq_from(M2, Md2, I, ph[p])[0] for p in ref}
+    cl = np.array(NW.cells())
+    mx = np.unique(np.round(cl[:, 0], 6))
+    my = np.unique(np.round(cl[:, 1], 6))
+    street = [(float(x), float(y)) for x in 0.5 * (mx[1:] + mx[:-1])
+              for y in 0.5 * (my[1:] + my[:-1])]
+    M2, Md2 = NW.loss_matrices(f, l_nom, IdealBranch(), street, r_scale)
+    out["would_close"] = {"ideal_caps_at_street_intersections": {
+        "sites": len(street), **{p: NW.k_eq_from(M2, Md2, I, ph[p])[0] for p in ref}}}
+    rec = PA.load()["parts"]["GRM31CC72A475KE11"]
+    n_loc = 2.9 / (PA.c_at_bias(rec, 48.0) * X7S_T_FACTOR[0])
+    loc, _ = part_branch_params("GRM31CC72A475KE11", n_loc, 0.3)
+    M2, Md2 = NW.loss_matrices(f, l_nom, br, xy, r_scale, local_branch=loc)
+    out["would_close"]["local_2.9uF_per_cell_plus_ring"] = {
+        p: NW.k_eq_from(M2, Md2, I, ph[p])[0] for p in ref}
+    NW.port_matrices(xy)                                # the production cache in place
+    # (4) k_eq against the BGA count
+    import physical_coords as PCO
+    import pkg_rdl_network as K
+    cand = PCO.bga_lattice_sites(K.architecture_cutout_mm("Z1"))
+    pf = {}
+    with open(fc / "bga_count_screen.csv") as fh:
+        for r in csv.DictReader(fh):
+            pf[(r["arch"], int(r["n_per_rail"]))] = float(r["peak_fraction"])
+    i_avg = {a: float(clo["currents_A"][a]["HV_SDEC"]) / k_closed
+             for a in ("Z1", "Z2")} if clo.get("currents_A") else {}
+    out["k_vs_count"] = {"allocation": "nearest_symmetric", "r_scale": r_scale,
+                         "I_avg_A": i_avg, "counts": {}}
+    try:
+        for cnt in LIMIT_COUNTS:
+            s = PCO.select_power_sites(cand, PCO.physical_cell_coordinates(), cnt, cnt,
+                                       "nearest_symmetric")
+            NW.BALLS_OVERRIDE = (s["supply"], s["return"])
+            M2, Md2 = NW.loss_matrices(f, l_nom, br, xy, r_scale)
+            row = {}
+            for p in ref:
+                k, pdc, pac, _per = NW.k_eq_from(M2, Md2, I, ph[p])
+                row[p] = {"k_eq": k, "P_DC_W": pdc, "P_AC_W": pac,
+                          "I_ball_closure_rule_A": {a: pf[(a, cnt)] * k * i_avg[a]
+                                                    for a in i_avg if (a, cnt) in pf}}
+            out["k_vs_count"]["counts"][str(cnt)] = row
+            print(f"count {cnt}: " + ", ".join(f"{p} {v['k_eq']:.3f}" for p, v in row.items()),
+                  flush=True)
+    finally:
+        NW.BALLS_OVERRIDE = None
+    out["wall_s"] = time.time() - t0
+    out["note"] = ("loss-matrix port model at the nominal loop inductance; k_vs_count keeps the "
+                   "network's hot/cold scale (r_scale) at every count; the closure currents use "
+                   "the level-1 screen peak fractions")
+    return out
+
+
 def main():
+    if sys.argv[1:2] == ["limits"]:
+        out = limits()
+        doc = json.loads(CI.JSON_OUT.read_text()) if CI.JSON_OUT.exists() else {}
+        doc["placement_limits"] = out
+        CI.JSON_OUT.write_text(json.dumps(doc, indent=1, default=float))
+        print(json.dumps({k: out[k] for k in ("interleaving_limit", "ring_bounds",
+                                              "would_close")}, indent=1, default=float))
+        return
     out = run()
     doc = json.loads(CI.JSON_OUT.read_text()) if CI.JSON_OUT.exists() else {}
     doc["placement"] = out

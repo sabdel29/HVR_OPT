@@ -65,7 +65,14 @@ def cells():
     return [tuple(c) for c in PCO.physical_cell_coordinates()]
 
 
+#: (supply, return) ball centres replacing the network's (a diagnostic at another BGA count,
+#: tcpmt_decap_placement limits); the port reduction of such a geometry is cached apart
+BALLS_OVERRIDE = None
+
+
 def balls(rail):
+    if BALLS_OVERRIDE is not None:
+        return [tuple(p) for p in BALLS_OVERRIDE[0 if rail == "supply" else 1]]
     pn = json.loads(NETWORK.read_text())
     return [tuple(p) for p in pn["convergence"][f"Z1_{rail}"]["ball_xy"]]
 
@@ -172,15 +179,16 @@ def _geometry_key():
 def port_matrices(ring_xy, refresh=False):
     key = np.array(ring_xy, float).round(6)
     gk = _geometry_key()
-    if CACHE.exists() and not refresh:
-        z = np.load(CACHE)
+    cache = CACHE if BALLS_OVERRIDE is None else CACHE.with_name(f"port_matrices_{gk[:16]}.npz")
+    if cache.exists() and not refresh:
+        z = np.load(cache)
         if (z["ring"].shape == key.shape and np.allclose(z["ring"], key)
                 and "geometry" in z.files and str(z["geometry"]) == gk):
             return z["Gs"], z["Gr"]
     Gs, _ = reduce_sheet("supply", ring_xy)
     Gr, _ = reduce_sheet("return", ring_xy)
-    CACHE.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(CACHE, Gs=Gs, Gr=Gr, ring=key, geometry=np.array(gk))
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(cache, Gs=Gs, Gr=Gr, ring=key, geometry=np.array(gk))
     return Gs, Gr
 
 
@@ -265,15 +273,26 @@ def grid_n():
 def phase_names():
     """The interleaving patterns defined for the grid of the design in force: rows<n>,
     latin<n>[_s<k>] (one per Latin multiplier), latin<n>z (n = 6: the Z2 x Z3 product square
-    3 ((r + c) mod 2) + ((r + 2 c) mod 3)), raster<N>, spread<N> (N = n^2)."""
+    3 ((r + c) mod 2) + ((r + 2 c) mod 3)), raster<N>, spread<N> (N = n^2); and (review round
+    3, more clock phases on a grid whose side is a multiple of 3 or 6) blk9 (9 phases, every
+    3 x 3 block holds all nine), dual6 (12 phases: two interleaved 6-phase groups on the
+    checkerboard, 30 deg apart) and dual9 (18 phases: two interleaved blk9 groups)."""
     n = grid_n()
     out = ["sync", f"rows{n}"]
     for k, s_ in enumerate(LATIN_S.get(n, (1,))):
         out.append(f"latin{n}" if k == 0 else f"latin{n}_s{s_}")
     if n == 6:
         out.append("latin6z")
+    if n % 3 == 0:
+        out.append("blk9")
+    if n % 6 == 0:
+        out += ["dual6", "dual9"]
     out += [f"raster{n * n}", f"spread{n * n}"]
     return out
+
+
+#: phase count of the multi-group clock plans (phase_names)
+GROUP_PLANS = {"blk9": 9, "dual6": 12, "dual9": 18}
 
 
 def _spread_step(n):
@@ -307,6 +326,14 @@ def phases(name):
         p, P = (row + s_ * col) % n, n
     elif name == "latin6z" and n == 6:
         p, P = 3 * ((row + col) % 2) + ((row + 2 * col) % 3), 6
+    elif name in GROUP_PLANS and name in phase_names():
+        b9 = 3 * ((row + col) % 3) + ((row + 2 * col) % 3)         # all 9 in every 3 x 3 block
+        chk = (row + col) % 2                                       # the two groups
+        p, P = {"blk9": (b9, 9), "dual6": (2 * ((row + 2 * col) % 6) + chk, 12),
+                "dual9": (2 * b9 + chk, 18)}[name]
+        cnt = np.bincount(np.asarray(p, int), minlength=P)
+        if cnt.min() != cnt.max():
+            raise ValueError(f"{name}: unequal phase use on the {n} x {n} grid {cnt.tolist()}")
     elif name == f"raster{N}":
         p, P = row * n + col, N
     elif name == f"spread{N}":
@@ -324,6 +351,8 @@ def phase_denominator(name):
         return 1
     if name.startswith(("raster", "spread")):
         return n * n
+    if name in GROUP_PLANS:
+        return GROUP_PLANS[name]
     return n
 
 
@@ -375,6 +404,62 @@ def evaluate(I_harm, f_sw, l_loop_h, ring_branch=None, local_branch=None, phase=
                     "I_local_rms_A_mean": float(np.sqrt(i2_loc.mean())),
                     "P_local_esr_W": p_loc})
     return res
+
+
+def loss_matrices(f_sw, l_loop_h, ring_branch=None, ring_xy=None, r_scale=1.0, n_harm=128,
+                  local_branch=None):
+    """The port model as quadratic forms (review round 3): M[n-1] (nc x nc, Hermitian) with
+    the sheets' loss at harmonic n P_n = 1/2 I^H M[n-1] I for the cells' current phasors I,
+    and Md with P_DC = I0^2 1^T Md 1 -- the same network, capacitors and loop inductance as
+    solve_harmonic, so any clock plan is evaluated by k_eq_from without new solves."""
+    ring_xy = ring_xy if ring_xy is not None else []
+    Gs, Gr = port_matrices(ring_xy)
+    Gs, Gr = Gs / r_scale, Gr / r_scale
+    nc = len(cells())
+    npt = Gs.shape[0]
+    nr = npt - 1 - nc
+    n = 2 * npt - 1
+    sc, rc = 1 + np.arange(nc), npt + np.arange(nc)
+    A = np.zeros((n, nc))
+    A[sc, np.arange(nc)] = -1.0
+    A[rc, np.arange(nc)] = 1.0
+    G = np.zeros((n, n))
+    G[:npt, :npt] += Gs
+    G[npt:, npt:] += Gr[1:, 1:]
+    Ms = []
+    for h in range(1, n_harm + 1):
+        f = h * f_sw
+        Y = G.astype(complex)
+        Y[0, 0] += 1.0 / (1j * 2 * np.pi * f * l_loop_h)
+        for br, (p, q) in ((ring_branch, (1 + nc + np.arange(nr), npt + nc + np.arange(nr))),
+                           (local_branch, (sc, rc))):
+            if br is None or (br is ring_branch and not nr):
+                continue
+            y = br.y(f)
+            Y[p, p] += y
+            Y[q, q] += y
+            Y[p, q] -= y
+            Y[q, p] -= y
+        X = np.linalg.solve(Y, A)
+        M = X.conj().T @ G @ X
+        Ms.append(0.5 * (M + M.conj().T))
+    Yd = G.copy()
+    Yd[0, :], Yd[:, 0], Yd[0, 0] = 0.0, 0.0, 1.0          # supply rail tied to the board node
+    Ad = A.copy()
+    Ad[0, :] = 0.0
+    Xd = np.linalg.solve(Yd, Ad)
+    return np.array(Ms), Xd.T @ G @ Xd
+
+
+def k_eq_from(Ms, Md, I_harm, ph):
+    """(k_eq, P_DC, P_AC, P_n) of the clock plan `ph` (rad per cell) on loss_matrices."""
+    I0 = float(np.real(I_harm[0]))
+    one = np.ones(len(ph))
+    p_dc = float(one @ Md @ one) * I0 ** 2
+    per = np.array([0.5 * float(np.real(np.conj(v) @ Ms[h - 1] @ v))
+                    for h in range(1, len(Ms) + 1)
+                    for v in (I_harm[h] * np.exp(-1j * h * np.asarray(ph)),)])
+    return math.sqrt((p_dc + per.sum()) / p_dc), p_dc, float(per.sum()), per
 
 
 def ball_rms(I_harm, f_sw, l_loop_h, ring_branch=None, phase="sync", ring_xy=None,

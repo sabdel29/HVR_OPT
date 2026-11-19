@@ -126,6 +126,48 @@ def test_recommend_rule_reproduces_the_round2_choice():
             == frozen["summary"]["recommended"]["option"] == "i_latin7+c_ring")
 
 
+def test_clock_plans_use_every_phase_equally():
+    """Every clock plan of the grid in force (review round 3: 9, 12 and 18 phases on the 6 x
+    6 grid besides the 6-phase Latin squares) drives each of its phases from the same number
+    of cells, and the new plans are reported options, not candidates of the declared rule."""
+    import numpy as np
+    import tcpmt_decap_network as NW
+    import tcpmt_decap_placement as PL
+    n = NW.grid_n()
+    for p in NW.phase_names():
+        if p == "sync":
+            continue
+        idx = np.round(NW.phases(p) / (2 * np.pi) * NW.phase_denominator(p)).astype(int)
+        cnt = np.bincount(idx % NW.phase_denominator(p), minlength=NW.phase_denominator(p))
+        assert cnt.min() == cnt.max() > 0, p
+    if n == 6:
+        assert {"blk9", "dual6", "dual9"} <= set(NW.phase_names())
+        fake = {f"i_{p}+c_ring": {"k_eq_nominal": 3.0 - 0.1 * j}
+                for j, p in enumerate(NW.phase_names())}
+        assert not PL.recommend(fake, n).startswith(("i_blk", "i_dual", "i_spread"))
+
+
+def test_loss_matrices_reproduce_the_port_model(dec):
+    """The quadratic-form port model (limits) gives the k_eq of evaluate() for a clock plan
+    with the ring on the network in force."""
+    _require_design_in_force(dec)
+    import tcpmt_decap_circuit as CI
+    import tcpmt_decap_network as NW
+    import tcpmt_decap_placement as PL
+    f = CI.design()["f_sw_hz"]
+    _t, i = CI.phase_a_current("ramp_deff")
+    I = CI.harmonics(i)
+    l_nom = CI.loop_inductance_estimate()["nominal_pH"] * 1e-12
+    r_scale = CI.network_resistance()["loop_hot_ohm"] / NW.self_check()["R_loop_reduced_ohm"]
+    xy, _ = NW.ring_layout()
+    br, _ = PL.part_branch_params("GRM31CC72A475KE11", 1, PL.L_CONN_NH["c"])
+    Ms, Md = NW.loss_matrices(f, l_nom, br, xy, r_scale)
+    ph = f"latin{NW.grid_n()}"
+    k = NW.k_eq_from(Ms, Md, I, NW.phases(ph))[0]
+    ev = NW.evaluate(I, f, l_nom, ring_branch=br, phase=ph, ring_xy=xy, r_scale=r_scale)
+    assert k == pytest.approx(ev["k_eq"], rel=1e-9)
+
+
 def test_no_thin_flying_capacitor_claimed(fly):
     assert fly["thin_options"]["any_thin_option_meets_C1_at_32V"] is False
     r = fly["recommended"]["10pct"]
