@@ -95,6 +95,11 @@ def _lib():
     import HVR_FULL_OPT_EPC_V2 as V2
     ind = {i.name: i for i in V2.INDUCTOR_LIBRARY}
     cap = {c.name: c for c in V2.CAPACITOR_LIBRARY}
+    # round 3: the corrected rule's library carries the rated parts the design record selects
+    for fn in ("_rated_capacitors", "default_capacitor_library"):
+        if hasattr(V2, fn):
+            for c in getattr(V2, fn)():
+                cap.setdefault(c.name, c)
     return V2, ind, cap
 
 
@@ -120,8 +125,25 @@ def q_oss_nC(dev: str, v: float) -> float:
         qq = [0.0] + [q for q in d["Q_OSS_nC"] if q is not None]
         return float(np.interp(v, vv, qq))
     table = {"EPC2212": (18.0, 50.0), "EPC2214": (8.0, 40.0)}
-    q, vt = table[dev]
+    q, vt = table[dev] if dev in table else _product_qoss(dev)
     return q * math.sqrt(v / vt)
+
+
+_QOSS_CACHE = {}
+
+
+def _product_qoss(dev: str):
+    """(Q_OSS nC, its test V_DS) of any library part: the product-table value at the datasheet
+    test voltage (HVR_epc_device_data.json; None -> V_DS,max/2, the EPC convention) -- the
+    synthesis engine's own Q_OSS rule (round 3), for parts without digitized curves."""
+    if not _QOSS_CACHE:
+        df = V2.load_epc_devices(str(REPO / "Scalable_Integrated_VR" / "EPC-Product-Table.csv"), 5.0)
+        dd = json.loads((REPO / "Scalable_Integrated_VR" / "src" /
+                         "HVR_epc_device_data.json").read_text())["parts"]
+        for _, r in df.iterrows():
+            vt = (dd.get(r["PartNumber"]) or {}).get("QOSS_V_test_V") or float(r["VDSmax"]) / 2.0
+            _QOSS_CACHE[r["PartNumber"]] = (float(r["QOSS_nC"]), float(vt))
+    return _QOSS_CACHE[dev]
 
 
 # ----------------------------------------------------------------------- dead time (GaN)
@@ -137,8 +159,17 @@ VSD_SHIFT = {  # figure-to-table offset at low current: datasheet table V_SD(0.5
 DIGITIZED_STAND_IN = {"EPC2055": "EPC2057", "EPC2366": "EPC2057"}
 
 
+#: round 3: the extended count sweep selects parts without digitized REVERSE curves; their
+#: third-quadrant drop takes a digitized part of the same voltage class (declared stand-in,
+#: used only by the omitted-term bound of the screen; Q_OSS uses each part's own product data)
+VSD_STAND_IN = {"EPC2214": "EPC2090", "EPC2212": "EPC2090", "EPC7003": "EPC2090",
+                "EPC7002": "EPC2090", "EPC2012C": "EPC2090", "EPC2035": "EPC2057"}
+
+
 def _dig(dev: str) -> str:
-    return dev if f"{dev}_reverse" in DIG else DIGITIZED_STAND_IN.get(dev, dev)
+    if f"{dev}_reverse" in DIG:
+        return dev
+    return DIGITIZED_STAND_IN.get(dev) or VSD_STAND_IN.get(dev, dev)
 
 
 def v_sd(dev: str, i_a: float, t_j: float, variant: str = "figure") -> float:
@@ -363,7 +394,12 @@ def load_cases():
         d = json.loads((FC / fn).read_text())
         e = d["et_history"][-1]
         conv = sum(r["P_w"] for r in d["ledger_rows"] if r["term"].startswith("P_conv_"))
-        res[key] = {"cooling": cool, "arch": arch, "file": f"research/final_closure/{fn}",
+        fp = FC / fn                      # campaign hook: the file actually read, not research/
+        try:
+            frel = fp.relative_to(REPO).as_posix()
+        except ValueError:
+            frel = fp.as_posix()
+        res[key] = {"cooling": cool, "arch": arch, "file": frel,
                     "P_package_w": float(e["P_loss_w"]), "P_converter_model_w": conv,
                     "T_hs_C": e["T_hs_C"], "T_ls_C": e["T_ls_C"], "T_ind_C": e["T_ind_C"],
                     "T_caps_C": e["T_caps_C"], "converged": bool(d.get("et_converged"))}
@@ -595,8 +631,9 @@ def dse_analysis(rows, capmap, temps=(25.0, 100.0)):
                      "optimum_M": order[0], "runner_up_M": order[1],
                      "margin_w": tot[order[1]] - tot[order[0]]}
             (combos_tc0 if cmb[0] == "high_tc0" else combos).append(rec_c)
-        moved = [c for c in combos if c["optimum_M"] != 76]
-        moved_tc0 = [c for c in combos_tc0 if c["optimum_M"] != 76]
+        m0 = base_order[0]                 # the screen's own optimum (76 before round 3)
+        moved = [c for c in combos if c["optimum_M"] != m0]
+        moved_tc0 = [c for c in combos_tc0 if c["optimum_M"] != m0]
         res[f"T_{T:g}C"] = {"per_count": per, "paper_order": base_order, "summary": summ,
                             "combinations_81": {"n_optimum_not_76": len(moved),
                                                 "n_moves_with_core_high": sum(
@@ -605,9 +642,10 @@ def dse_analysis(rows, capmap, temps=(25.0, 100.0)):
                                                     c["core"] != "high" for c in moved),
                                                 "cases_optimum_moves": moved,
                                                 "min_margin_w": min(c["margin_w"] for c in combos
-                                                                    if c["optimum_M"] == 76)
-                                                if any(c["optimum_M"] == 76 for c in combos)
-                                                else None},
+                                                                    if c["optimum_M"] == m0)
+                                                if any(c["optimum_M"] == m0 for c in combos)
+                                                else None,
+                                                "screen_optimum_M": m0},
                             "combinations_27_dead_time_tc0": {
                                 "n_optimum_not_76": len(moved_tc0),
                                 "cases_optimum_moves": moved_tc0}}
@@ -625,10 +663,10 @@ def _kendall(a, b):
 def flip_requirement_dse(per, bundle="nominal"):
     """Per competitor count: factor by which the nominal omitted-term DIFFERENCE vs M=76 would
     have to be scaled to close the paper's gap (None if the omitted terms favour M=76)."""
-    p76 = next(p for p in per if p["M"] == 76)
+    p76 = min(per, key=lambda p: p["paper_total_w"])     # the screen optimum (76 before round 3)
     out = []
     for p in per:
-        if p["M"] == 76:
+        if p["M"] == p76["M"]:
             continue
         gap = p["paper_total_w"] - p76["paper_total_w"]
         d = p[bundle]["total_w"] - p76[bundle]["total_w"]
@@ -658,11 +696,12 @@ def tie_analysis(rows, capmap, T):
         o = omitted_terms(d, M, T, T, T, bz)
         return r["total_loss_W"] + o["total_w"] + (core_scale - 1.0) * o["core_w"]
 
+    m0 = min(des, key=lambda M: des[M][0]["total_loss_W"])   # the screen optimum (was 76)
     out = []
     for M in sorted(des):
-        if M == 76:
+        if M == m0:
             continue
-        g = lambda t: total(M, t) - total(76, t)
+        g = lambda t: total(M, t) - total(m0, t)
         lo, hi = 0.0, 40e-9
         t_tie = None
         if g(lo) * g(hi) < 0:
@@ -674,11 +713,11 @@ def tie_analysis(rows, capmap, T):
                     lo = mid
             t_tie = 0.5 * (lo + hi)
         rec = {"M": M, "t_dt_tie_ns": None if t_tie is None else t_tie * 1e9,
-               "sign_below_tie": "M=76 better" if g(0.0) > 0 else "competitor better"}
+               "sign_below_tie": f"M={m0} better" if g(0.0) > 0 else "competitor better"}
         for tdt in (2e-9, 5e-9):
-            a76 = total(76, tdt)
+            a76 = total(m0, tdt)
             aM = total(M, tdt)
-            c76 = omitted_terms(des[76][1], 76, T, T, T, dict(BUNDLES["nominal"], t_dt=tdt))["core_w"]
+            c76 = omitted_terms(des[m0][1], m0, T, T, T, dict(BUNDLES["nominal"], t_dt=tdt))["core_w"]
             cM = omitted_terms(des[M][1], M, T, T, T, dict(BUNDLES["nominal"], t_dt=tdt))["core_w"]
             # aM + (s-1) cM = a76 + (s-1) c76  ->  s = 1 + (a76 - aM) / (cM - c76)
             s = 1.0 + (a76 - aM) / (cM - c76) if abs(cM - c76) > 1e-12 else None
@@ -1026,7 +1065,8 @@ def _summary(o):
             round(o["cases"]["A_Z1"]["omitted"][b]["total_w"], 2) for b in ("low", "nominal", "high")],
         "dse": dse,
         "dse_optimum_unchanged_all_bundles_grids_temperatures": all(
-            s["optimum_M"] == 76 for sec in [o["dse_case_D"]] + list(o["dse_refined_grid_with_omitted"].values())
+            s["optimum_M"] == sec[T]["paper_order"][0]
+            for sec in [o["dse_case_D"]] + list(o["dse_refined_grid_with_omitted"].values())
             for T in sec for s in sec[T]["summary"].values()),
         "fsw_grid_optimum": {k: v["optimum_M"] for k, v in o["fsw_grid_sensitivity"].get("optimum", {}).items()},
     }
