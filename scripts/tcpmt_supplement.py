@@ -10,6 +10,11 @@ are missing are emitted as a marked placeholder, so the supplement always compil
 Inputs are read, never written. Internal identifiers (run, layer, card and case keys) are mapped
 to readable labels here; an identifier without a mapping is printed as it is.
 
+TCPMT round 3: the regulator count, converter, parts and mixed tiers come from the design record
+(configs/design_points.yaml, HVR_DESIGN), the compared cases from tcpmt_cases (production state
+SDEC, Z3 always the coupled land-side case), every result from the root in force
+($ETM_RESULTS_ROOT for a campaign); nothing falls back on the frozen research/ tree.
+
     python tcpmt_supplement.py
 """
 from __future__ import annotations
@@ -20,14 +25,20 @@ import math
 import os
 import re
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
 R = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(R / "scripts"))
+sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+import design_record as DR                                          # noqa: E402
+import tcpmt_cases as TC                                            # noqa: E402
+
 FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
 TR = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "tcpmt_revision"
+DSE_DATA = TR / "dse_j35" / "data"
 #: generated supplement files (this script's output, tcpmt_capacitor_evidence's table) go under
 #: $ETM_RESULTS_ROOT for a campaign (hook); hand-written inputs stay in the frozen tree
 SUPP = Path(os.environ.get("ETM_RESULTS_ROOT") or R) / "manuscript_v2" / "supplement"
@@ -35,11 +46,74 @@ SUPP_SRC = R / "manuscript_v2" / "supplement"
 OUT = SUPP / "supp_tables.tex"
 ARCHS = ("Z1", "Z2", "Z3")
 NAMES = {"Z1": "embedded", "Z2": "package-backside", "Z3": "board-backside"}
+STATE_TEXT = {"SDEC": "implemented decoupling", "S0": "ideal input smoothing",
+              "S1": "no decoupling", "S2": "square pulse at the overall ratio"}
 
 
 def J(p):
     p = Path(p)
     return json.loads(p.read_text()) if p.is_file() else None
+
+
+_REC: dict = {}
+
+
+def case_record(case_file):
+    """The record of a case named in a result file (a bare name, a checkout-relative or an
+    absolute path), looked up BY NAME in the root in force (final_closure, its sensitivity/ and
+    ladder/ folders) -- never in the frozen tree; None when the root does not hold it."""
+    if not case_file:
+        return None
+    nm = Path(str(case_file)).name
+    if nm not in _REC:
+        _REC[nm] = next((J(d / nm) for d in (FC, FC / "sensitivity", FC / "sensitivity" / "ladder")
+                         if (d / nm).is_file()), None)
+    return _REC[nm]
+
+
+# ---------------------------------------------------------------- the design in force
+CLASS_NOUN = {"gan_hs": ("HS GaN", "HS GaN"), "gan_ls": ("LS GaN", "LS GaN"),
+              "inductor": ("inductor", "inductors"), "cap_fly": ("flying capacitor",
+                                                                 "flying capacitors")}
+
+
+def tier_contents(parts):
+    """'2 HS GaN, 2 flying capacitors' from a tier's {class: n} (design record)."""
+    out = []
+    for c in DR.CLASSES:
+        n = int((parts or {}).get(c) or 0)
+        if n:
+            out.append(f"{n} {CLASS_NOUN[c][n != 1]}")
+    return ", ".join(out)
+
+
+def tier_by_index(i):
+    """The design record's tier i (1 = the converter's input end), or None."""
+    t = DR.tiers()
+    return t[i - 1] if 1 <= i <= len(t) and t[i - 1]["name"].startswith(f"tier{i}_") else None
+
+
+def design_sentence(key=None, lib=None):
+    """'M = 36 (6 x 6 cells), N3K3K_A2, EPC2014C / EPC2055, 805 kHz, flying capacitor ...'."""
+    d = DR.get(key)
+    N, K, KA = DR.topology(key)
+    g = DR.grid_n(key)
+    cap = passive_label(d["capacitor"], lib if lib is not None else passive_library(), maker=True)
+    return (rf"$M = {DR.n_vr(key)}$ ({g}$\times${g} cells), $N{N}K{K}K_A{KA}$, "
+            rf"{tex(d['hs_part'])} / {tex(d['ls_part'])}, {float(d['f_sw_hz']) / 1e3:.0f}~kHz, "
+            rf"flying capacitor {cap}, {len(DR.tiers(key))} mixed tiers")
+
+
+def thin_design():
+    """(key, capacitor height um) of the thin-capacitor sensitivity design of the record: the
+    sensitivity entry whose flying-capacitor height is below the production one; else None."""
+    h0 = float(DR.get().get("cap_height_um") or 0.0)
+    for k in DR.keys():
+        e = DR.get(k)
+        h = e.get("cap_height_um")
+        if e.get("role") == "sensitivity" and h is not None and float(h) < h0:
+            return k, float(h)
+    return None
 
 
 def tex(s):
@@ -221,9 +295,20 @@ DAGGER_NOTE = (r" $^\dagger$Z3 without the land-side and board-plane redistribut
                r"coupled solution (the coupled cases are in Table~\ref{tab:supp-z3land}).")
 
 
-def z3_dag(arch, case_file):
-    """Marks a Z3 result that predates the coupled land-side redistribution (by its file)."""
-    return r"$^\dagger$" if arch == "Z3" and "z3_land" not in str(case_file or "") else ""
+_SUPERSEDED_NAMES = {Path(k).name for k in TC.SUPERSEDED}
+
+
+def z3_dag(arch, case_file, rec=None):
+    """Marks a Z3 result WITHOUT the coupled land-side redistribution. Decided by the case
+    record (tcpmt_cases.is_coupled_z3: the production-state Z3 cases carry it although their
+    file name does not say z3_land); a record the root does not hold is marked only when its
+    name is one of the superseded uncoupled cases."""
+    if arch != "Z3":
+        return ""
+    rec = rec if rec is not None else case_record(case_file)
+    if rec is not None:
+        return "" if TC.is_coupled_z3(rec) else r"$^\dagger$"
+    return r"$^\dagger$" if Path(str(case_file or "")).name in _SUPERSEDED_NAMES else ""
 
 
 # ---------------------------------------------------------------- S-I prior work
@@ -238,6 +323,7 @@ def prior_section():
 
 
 # ---------------------------------------------------------------- S-II converter screen
+@lru_cache(maxsize=1)
 def passive_library():
     """Library entries of the synthesis engine by name (inductors, capacitors); {} if absent."""
     try:
@@ -261,31 +347,81 @@ def passive_label(name, lib, maker=False):
         return f"{p.l_nh:.0f}~nH, {p.r_dcr_mohm:.1f}~m$\\Omega$"
     if k == "C":
         part = getattr(p, "vendor_part", None) or \
-            re.sub(r"-[\d.]+u?F-[\d.]+V$", "", name).split("-", 1)[-1]
+            re.sub(r"-[\d.]+[un]?F-(?:BV)?[\d.]+V?\d*$", "", name).split("-", 1)[-1]
         pre = name.split("-")[0] + " " if maker and "-" in name else ""
         return f"{tex(pre + part)} ({p.c_uf:g}~\\textmu F, {p.v_max:.0f}~V)"
     return prose(name.replace("_", " "))
 
 
-def dse_selection_table():
-    d = TR / "dse_j35" / "data"
-    f = d / "case_D_etm35_caprule_full.csv"
+def screen_run():
+    """The screen run the design record's entry was picked from: its 'screen.source' names
+    dse_phase2_summary.json runs.<run>.per_count.<M> (TCPMT round 3: etm35_p2_t4, the
+    production converter rules -- corrected capacitor rule, mixed tiers, at most 4 tiers)."""
+    src = str((DR.get().get("screen") or {}).get("source") or "")
+    m = re.search(r"runs\.([A-Za-z0-9_]+)\.per_count", src)
+    return m.group(1) if m else None
+
+
+def p2_runs():
+    """runs{} of the phase-2 screen summary in the root in force ({} when absent)."""
+    return (J(TR / "dse_phase2_summary.json") or {}).get("runs") or {}
+
+
+def max_tiers(tag):
+    """Tier limit of a screen run: its phase-2 summary entry, else its tag (_t4 -> 4,
+    _tinf -> None); 'unknown' when neither says."""
+    run = p2_runs().get(tag) or {}
+    if "max_tiers" in run:
+        return run["max_tiers"]
+    m = re.search(r"_t(\d+|inf)$", tag or "")
+    return (None if m.group(1) == "inf" else int(m.group(1))) if m else "unknown"
+
+
+def dse_rows(tag):
+    """{M: row} of the case-D screen CSV of a run in the root in force; None when absent."""
+    f = DSE_DATA / f"case_D_{tag}.csv"
     if not f.is_file():
-        return placeholder("per-count selection", "case_D_etm35_caprule_full.csv")
-    rows = list(csv.DictReader(f.open()))
-    meta = J(d / "meta_etm35_caprule_full.json") or {}
+        return None
+    return {int(float(r["M"])): r for r in csv.DictReader(f.open())}
+
+
+def dse_feasible(r):
+    return r is not None and str(r.get("feasible")) in ("True", "true", "1")
+
+
+def dse_passive(r, key):
+    """The selected passive of a screen row ('capacitor' / 'inductor'; the private reruns of
+    round 2 wrote 'cap' / 'ind')."""
+    return r.get(key) or r.get({"capacitor": "cap", "inductor": "ind"}[key])
+
+
+def tier_rule(n):
+    return ("no tier limit" if n is None else "tier limit unknown" if n == "unknown"
+            else f"at most {n} converter tiers")
+
+
+def dse_selection_table():
+    """The converter selected at every count of the screen the design record was picked from
+    (the production converter rules), the design's own count marked."""
+    tag = next((t for t in (screen_run(), "etm35_caprule_full")
+                if t and (DSE_DATA / f"case_D_{t}.csv").is_file()), None)
+    if tag is None:
+        return placeholder("per-count selection", f"case_D_{screen_run() or 'etm35_p2_t4'}.csv")
+    rows = dse_rows(tag)
+    meta = J(DSE_DATA / f"meta_{tag}.json") or {}
     lib = passive_library()
+    m0 = DR.n_vr()
     body = []
-    for r in rows:
-        m = int(float(r["M"]))
-        if r.get("feasible") != "True":
+    for m, r in sorted(rows.items()):
+        mk = r"$^\ast$" if m == m0 else ""
+        if not dse_feasible(r):
             why = prose((r.get("reason") or "no feasible member").replace("architecture", "member"))
-            body.append(rf"{m} & \multicolumn{{8}}{{l}}{{{why}}} \\")
+            body.append(rf"{m}{mk} & \multicolumn{{8}}{{l}}{{{why}}} \\")
             continue
         top = f"$N{int(float(r['N']))}K{int(float(r['K']))}K_A{int(float(r['K_A']))}$"
-        body.append(f"{m} & {top} & {tex(r['hs'])} / {tex(r['ls'])} & "
-                    f"{passive_label(r.get('inductor'), lib)} & "
-                    f"{passive_label(r.get('capacitor'), lib)} & "
+        body.append(f"{m}{mk} & {top} & {tex(r['hs'])} / {tex(r['ls'])} & "
+                    f"{passive_label(dse_passive(r, 'inductor'), lib)} & "
+                    f"{passive_label(dse_passive(r, 'capacitor'), lib)} & "
                     f"{float(r['f_sw_Hz']) / 1e3:.1f} & {float(r['conv_loss_total_W']):.2f} & "
                     f"{float(r['routing_loss_W']):.2f} & {float(r['total_loss_W']):.2f} \\\\")
     head = [r"$M$ & Topology & HS / LS device & Inductor & Flying capacitor & "
@@ -293,16 +429,22 @@ def dse_selection_table():
             r"\cmidrule(l){7-9}",
             r" & & & & & (kHz) & Conversion & Routing & Total \\"]
     spec = r"@{}rllllrrrr@{}"
+    feas = [(float(r["total_loss_W"]), m) for m, r in rows.items() if dse_feasible(r)]
+    best = min(feas)[1] if feas else None
     note = (f"Specification: {meta.get('P_load', 1000) / 1e3:g}~kW at {meta.get('V_out', 1):g}~V "
             f"from {meta.get('V_in', 48):g}~V on a {meta.get('die_area_mm2', 500):g}-mm$^2$ die, "
             f"$J_{{\\mathrm{{t}}}} = {meta.get('J_target', 3.5):g}$~A\\,mm$^{{-2}}$; topology "
             r"re-synthesized at every count with the discrete device library (case~D) under the "
-            r"corrected capacitor rule (Table~\ref{tab:supp-caprule}). HS/LS: high- and low-side "
-            r"GaN devices; inductor: inductance and DC resistance. Losses are for the package of "
-            r"$M$ regulators: conversion from the synthesis loss model, routing from the model "
-            r"of~\cite{Krishnakumar2026DVPD} (electrical only).")
+            r"production converter rules: the corrected capacitor rule "
+            r"(Table~\ref{tab:supp-caprule}), tiers that may mix part classes, "
+            + tier_rule(max_tiers(tag)) + ". "
+            + (rf"Least total loss at $M = {best}$. " if best is not None else "")
+            + rf"$^\ast$: the production design ({design_sentence(lib=lib)}). "
+            r"HS/LS: high- and low-side GaN devices; inductor: inductance and DC resistance. "
+            r"Losses are for the package of $M$ regulators: conversion from the synthesis loss "
+            r"model, routing from the model of~\cite{Krishnakumar2026DVPD} (electrical only).")
     return ltab(spec, 9, head, body,
-                r"Converter selected at each regulator count (corrected capacitor rule)",
+                r"Converter selected at each regulator count (production converter rules)",
                 "tab:supp-dse", note)
 
 
@@ -319,8 +461,18 @@ STATUS = {"SOURCE_BACKED": "source", "DERIVED": "derived", "PROVISIONAL": "provi
           "ASSUMPTION": "assumption"}
 
 
-def mat_label(n):
-    return MAT_LABEL.get(n, tex(n))
+def mat_label(n, short=False):
+    """Readable name of a material card; the derived card of a mixed converter tier
+    (conv_tier<i>) by the record tier it homogenizes."""
+    if n in MAT_LABEL:
+        return MAT_LABEL[n]
+    m = re.match(r"^conv_tier(\d+)$", n)
+    if m:
+        t = tier_by_index(int(m.group(1)))
+        if short or t is None:
+            return f"Converter tier {m.group(1)} card"
+        return f"Converter tier {m.group(1)} ({tier_contents(t['parts'])})"
+    return tex(n)
 
 
 def build_all():
@@ -377,30 +529,36 @@ LAYER_LABEL = {"board": "Board", "bga": "BGA", "sub_lower": "Si substrate (TSV f
                "die": "Die", "tim": "TIM", "z2_top_rdl": "Top RDL",
                "conv_attach_vr_substrate": "VR attach to the substrate",
                "z3_attach_vr_pcb": "VR attach to the board"}
-LAYER_PART = {"bottom_substrate_rdl": "RDL to the substrate", "interlayer_rdl": "interlayer RDL",
-              "output_rdl": "output RDL", "land_side_attach_rdl": "land-side attach RDL",
-              "flying_caps": "flying capacitors",
-              "inductor_plus_cout": "inductors and output capacitors"}
+#: the RDL layers of a converter stack (design_record.converter_tiers)
+LAYER_PART = {"bottom_substrate_rdl": "Converter landing RDL (on the substrate)",
+              "interlayer_rdl": "Interlayer RDL", "output_rdl": "Converter output RDL",
+              "land_side_attach_rdl": "Land-side attach RDL"}
 
 
 def layer_label(n):
+    """Readable name of a mesh layer; a converter layer (<z>conv_<i>_<name>) is an RDL of the
+    stack or a tier of the design record, numbered from the converter's input end."""
     if n in LAYER_LABEL:
         return LAYER_LABEL[n]
     m = re.match(r"^(?:z\d)?conv_(\d+)_(.+)$", n)
     if not m:
         return tex(n)
-    i, part = m.groups()
-    g = re.match(r"^gan_(hs|ls)_(.+)$", part)
-    if g:
-        lab = f"GaN {'high' if g.group(1) == 'hs' else 'low'} side ({tex(g.group(2))})"
-    else:
-        lab = LAYER_PART.get(part, tex(part.replace("_", " ")))
-    return f"Converter tier {i}: {lab}"
+    part = m.group(2)
+    if part in LAYER_PART:
+        return LAYER_PART[part]
+    tp = DR.tier_parts()
+    t = re.match(r"^tier(\d+)_", part)
+    if t and part in tp:
+        i = int(t.group(1))
+        end = " (input end)" if i == 1 else " (output end)" if i == len(tp) else ""
+        return f"Converter tier {i}{end}: {tier_contents(tp[part])}"
+    return "Converter layer " + tex(part.replace("_", " "))
 
 
 def stack_tables(B):
     import numpy as np
     body = []
+    tops = {}
     for a, (m, st, tiles, info) in B.items():
         lay = np.array(m.elem_layer, dtype=object)
         mat = np.array(m.elem_material, dtype=object)
@@ -408,16 +566,29 @@ def stack_tables(B):
             body.append(r"\midrule")
         body.append(rf"\multicolumn{{4}}{{@{{}}l}}{{\emph{{{a} ({NAMES[a]})}}}} \\")
         for ly in m.layers:
+            if ly.name == "board":
+                tops[a] = round(float(ly.z1), 4)
             mats_ = sorted(set(mat[lay == ly.name]))
-            labs = [mat_label(x) for x in mats_]
+            labs = [mat_label(x, short=True) for x in mats_]
             labs = labs[:1] + [lb[0].lower() + lb[1:] if lb[1:2].islower() else lb
                                for lb in labs[1:]]
             body.append(f"{layer_label(ly.name)} & {tm(ly.z0, '.4f')} & {1e3 * (ly.z1 - ly.z0):.0f} & "
                         f"{', '.join(labs)} \\\\")
     head = [r"Layer & $z_0$ (mm) & $t$ (\textmu m) & Materials present \\"]
+    if tops and len(set(tops.values())) == 1:
+        board = (rf"the board top is at $z={next(iter(tops.values())):g}$~mm in every "
+                 r"integration")
+    else:
+        board = "the board top is at " + ", ".join(rf"$z={z:g}$~mm in {a}"
+                                                    for a, z in tops.items())
     note = (r"Every layer of the production mesh, in the order of the mesh ($z_0$: bottom face; "
-            r"the board top is at $z=-0.3$~mm in Z1 and Z2). Materials: the cards of "
-            r"Table~\ref{tab:supp-materials} assigned to elements of the layer.")
+            + board + "). Converter tiers: the mixed tiers of the design record ("
+            + design_sentence() + "), numbered from the converter's input (48-V) end and "
+            r"named by the parts they hold; tiers and interlayer RDLs together "
+            + f"{DR.converter_stack_um():.0f}" + r"~\textmu m. Z1 stacks them upward from the "
+            r"substrate; Z2 and Z3 hang them below the substrate and the board, the output end "
+            r"against the attach. Materials: the cards of Table~\ref{tab:supp-materials} "
+            r"assigned to elements of the layer.")
     return ltab(r"@{}L{6.4cm}rrL{6.6cm}@{}", 4, head, body, "Layer stacks as meshed",
                 "tab:supp-stacks", note)
 
@@ -474,53 +645,128 @@ def cooling_tables():
                         f"{x['q_bottom_plate_W']:.1f} & "
                         f"{x['q_board_natural_W'] + x['q_converter_underside_natural_W']:.2f} \\\\")
     head = [r"Cooling & Integration & Total & Top plate & Bottom plate & Natural convection \\"]
-    land = [grab(r"z3_land_t(\d+)", v["cases"].get("Z3", {}).get("file"))
-            for v in c["tiers"].values()]
+    land = []
+    for v in c["tiers"].values():
+        z3 = v["cases"].get("Z3") or {}
+        t = ((case_record(z3.get("file")) or {}).get("z3_land") or {}).get("t_land_um")
+        land.append(t if t is not None else grab(r"z3_land_t(\d+)", z3.get("file"), float))
+    states = {case_state({"file": x.get("file")}) for v in c["tiers"].values()
+              for x in v["cases"].values() if x.get("file")}
     note = (r"Total: dissipated heat, the die's 1000~W plus the package loss. Cooling~A: top "
             r"plate; cooling~B: top plate and a bottom plate under the cell grid.")
-    if land and all(land) and len(set(land)) == 1:
-        note += (rf" Z3: land-side ({land[0]}~\textmu m) and board-plane redistribution in the "
-                 r"coupled solution.")
+    if states == {TC.PRODUCTION_STATE}:
+        note += (rf" Every case in the production state ({STATE_TEXT[TC.PRODUCTION_STATE]}).")
+    if land and all(x is not None for x in land) and len(set(land)) == 1:
+        note += (rf" Z3: land-side ({land[0]:g}~\textmu m) and board-plane redistribution in "
+                 r"the coupled solution.")
     L += ltab(r"@{}llrrrr@{}", 6, head, body, "Heat balance per cooling and integration (W)",
               "tab:supp-heat", note)
     return L
 
 
 # ---------------------------------------------------------------- S-IV flying capacitors
+CAP_TEMPS_C = (25.0, 105.0, 125.0)
+
+
+def flying_cap_rows():
+    """The flying capacitors at the operating point of the design in force, evaluated with the
+    synthesis engine's own models (HVR_FULL_OPT_EPC_V2: vendor DC-bias and temperature data
+    less tolerance, vendor ESR(f), the ripple of the worst position): the design's part, the
+    other rated parts of the corrected rule, the part the legacy (published) capacitor rule
+    selects at the design's count (case_D_etm35.csv of the root in force) and the thin silicon
+    candidates. No campaign job writes the round-2 cap49_comparison.json, so the table is
+    computed here. (rows, context) or (None, None) when the engine is unavailable."""
+    try:
+        sys.path.insert(0, str(R / "Scalable_Integrated_VR" / "src"))
+        import HVR_FULL_OPT_EPC_V2 as H
+        d = DR.get()
+        N, K, KA = DR.topology()
+        arch = H.VRArchitecture(N=N, K=K, K_A=KA, B_array=list(d.get("B_array") or [1] * N),
+                                D=DR.buck_duty(), component_count=sum(DR.part_counts().values()))
+        lib = {c.name: c for c in list(H.default_capacitor_library("stress"))}
+        rated = list(getattr(H, "RATED_CAPACITORS", []))
+        thin = list(getattr(H, "research_capacitor_library", lambda: [])())
+        lib.update({c.name: c for c in thin})
+    except Exception:                                               # noqa: BLE001
+        return None, None
+    f = float(d["f_sw_hz"])
+    i_out = DR.P_LOAD_W / DR.V_OUT / DR.n_vr()
+    v_c1 = (N - 1) * DR.V_IN / N
+    legacy = dse_rows("etm35") or {}
+    leg = legacy.get(DR.n_vr())
+    leg_part = dse_passive(leg, "capacitor") if dse_feasible(leg) else None
+    order = [(d["capacitor"], "production")]
+    order += [(c.name, "rated") for c in rated if c.name != d["capacitor"]]
+    if leg_part and leg_part not in {n for n, _ in order}:
+        order.append((leg_part, "legacy rule"))
+    order += [(c.name, "thin") for c in thin if c.name not in {n for n, _ in order}]
+    rows = []
+    for name, role in order:
+        c = lib.get(name)
+        if c is None:
+            continue
+        rows.append({"name": name, "role": role, "v_max": float(c.v_max),
+                     "rating_ok": float(c.v_max) * H.CAP_V_DERATING >= v_c1,
+                     "esr_mohm": float(H.cap_esr_mohm(c, f, v_c1)),
+                     "height_um": getattr(c, "height_um", None),
+                     "ripple": [H.flying_cap_ripple(arch, c, i_out, DR.V_IN, DR.V_OUT, f, t)
+                                for t in CAP_TEMPS_C]})
+    return rows, {"v_c1": v_c1, "derating": H.CAP_V_DERATING, "legacy_part": leg_part}
+
+
 def capacitor_tables():
+    lib = passive_library()
+    d = DR.get()
+    thin = thin_design()
     L = section("Flying-Capacitor Technology",
-                r"Table~\ref{tab:supp-capev} is the evidence behind the technology condition of "
-                r"capacitor case~A0 and Table~\ref{tab:supp-cap49} compares the published "
-                r"flying capacitor of the 49-cell design with the rated parts of case~A1.")
+                r"Table~\ref{tab:supp-capev} is the evidence behind the flying capacitor of the "
+                r"production design, the rated part "
+                + passive_label(d["capacitor"], lib, maker=True)
+                + (rf" in a {float(d['cap_height_um']):.0f}-\textmu m tier"
+                   if d.get("cap_height_um") else "")
+                + (rf", and behind the thin-capacitor technology of the sensitivity design "
+                   rf"(a {thin[1]:.0f}-\textmu m capacitor tier)" if thin else "")
+                + r"; Table~\ref{tab:supp-cap49} gives the flying capacitors at the operating "
+                  r"point of the production design.")
     if (SUPP / "tab_capacitor_evidence.tex").is_file():
         L += [r"\input{tab_capacitor_evidence}", ""]
     else:
         L += placeholder("flying-capacitor evidence matrix", "tab_capacitor_evidence.tex")
-    d = J(TR / "cap49_comparison.json")
-    if not d:
-        return L + placeholder("49-cell flying capacitors", "cap49_comparison.json")
+    rows, ctx = flying_cap_rows()
+    if not rows:
+        return L + placeholder("flying capacitors of the production design",
+                               "Scalable_Integrated_VR/src/HVR_FULL_OPT_EPC_V2.py")
+    role = {"production": "production", "rated": "rated", "legacy rule": "legacy rule",
+            "thin": "thin"}
+
+    def rip(x):
+        if x is None or not math.isfinite(x):
+            return "--"
+        return r"$>$100\,\%" if x > 1.0 else f"{100 * x:.1f}\\,\\%"
     body = []
-    lib = passive_library()
-    for name, c in d["parts"].items():
-        rp = [c["by_temperature"][k]["ripple_worst"] for k in ("25C", "105C", "125C")]
-        rs = " & ".join("--" if (x is None or x == float("inf") or x > 9) else
-                        f"{100 * x:.1f}\\,\\%" for x in rp)
-        body.append(f"{passive_label(name, lib, maker=True)} & {c['v_max']:.0f} & "
-                    f"{'pass' if c['rating_ok_C1'] else 'fail'} & {c['esr_mohm_at_fsw']:.2f} & "
-                    f"{rs} \\\\")
-    head = [r"Part & Rated & $C_1$ & ESR at $f_{\mathrm{sw}}$ & \multicolumn{3}{c}{Worst "
-            r"ripple $\Delta V_{C_i,\mathrm{pp}}/V_{C_i}$} \\", r"\cmidrule(l){5-7}",
-            r" & V & rating & (m$\Omega$) & 25\,$^\circ$C & 105\,$^\circ$C & 125\,$^\circ$C \\"]
-    dz = str(d.get("design", "")).split()
-    if len(dz) > 1 and dz[-1] in ("kHz", "MHz"):
-        dz = dz[:-2] + [dz[-2] + " " + dz[-1]]
-    note = (f"Design: {prose(', '.join(dz))}. Ripple at the worst capacitor position, "
-            r"limit 10\,\%, with the effective capacitance at bias and temperature from vendor "
-            r"data less 10\,\% tolerance; --: no vendor bias data, so the effective capacitance "
-            r"is unknown. $C_1$ rating: rated voltage times 0.8 against the 32~V that $C_1$ "
-            r"holds.")
-    return L + ltab(r"@{}lrlrrrr@{}", 7, head, body,
-                    "Flying capacitors of the 49-cell design", "tab:supp-cap49", note)
+    for r in rows:
+        h = r["height_um"]
+        body.append(f"{passive_label(r['name'], lib, maker=True)} & {role[r['role']]} & "
+                    f"{r['v_max']:.0f} & {'pass' if r['rating_ok'] else 'fail'} & "
+                    f"{r['esr_mohm']:.2f} & {'--' if h is None else f'{float(h):.0f}'} & "
+                    + " & ".join(rip(x) for x in r["ripple"]) + r" \\")
+    head = [r"Part & Role & Rated & $C_1$ & ESR at $f_{\mathrm{sw}}$ & Height & "
+            r"\multicolumn{3}{c}{Worst ripple $\Delta V_{C_i,\mathrm{pp}}/V_{C_i}$} \\",
+            r"\cmidrule(l){7-9}",
+            r" & & V & rating & (m$\Omega$) & (\textmu m) & 25\,$^\circ$C & 105\,$^\circ$C & "
+            r"125\,$^\circ$C \\"]
+    note = (f"Design: {design_sentence(lib=lib)}. Role: production, the part of the design "
+            r"record; rated, the other rated part admitted by the corrected rule; legacy rule, "
+            r"the part the published capacitor rule selects at this count; thin, the "
+            r"silicon-capacitor candidate of the thin-tier technology. Ripple at the worst "
+            r"capacitor position, limit 10\,\%, with the effective capacitance at bias and "
+            r"temperature from vendor data less 10\,\% tolerance; --: no vendor bias data, so "
+            r"the effective capacitance is unknown. $C_1$ rating: rated voltage times "
+            + f"{ctx['derating']:g} against the {ctx['v_c1']:g}" + r"~V that $C_1$ holds. "
+            r"Height: the part's maximum mounted height.")
+    return L + ltab(r"@{}llrlrrrrr@{}", 9, head, body,
+                    "Flying capacitors at the operating point of the production design",
+                    "tab:supp-cap49", note)
 
 
 # ---------------------------------------------------------------- S-V local solder model
@@ -528,14 +774,274 @@ JOINT_CASE = {"A_Z1": "Z1, A", "A_Z2": "Z2, A", "A_Z3": "Z3, A", "B_Z1": "Z1, B"
               "B_Z2": "Z2, B", "B_Z3": "Z3, B"}
 
 
+#: the solder laws of the v2 local model (configs/tcpmt_mech/mechanics_revision.yaml)
+LAW_LABEL = {"schubert2003": ("Schubert et al.", r"\cite{Schubert2003ECTC}"),
+             "xiao_armstrong2005": ("Xiao and Armstrong",
+                                    r"\cite{Xiao2005SAC}, constants as tabulated "
+                                    r"in~\cite[Table~6]{Yuan2023SAC305}"),
+             "xa_measured_norton": ("measured Norton fits",
+                                    r"per-temperature Norton fits of the measured points "
+                                    r"of~\cite{Xiao2005SAC} (\cite[Table~5]{Yuan2023SAC305})")}
+LAW_FORM = {"garofalo": "Garofalo (hyperbolic sine)", "measured_norton": "Norton, per temperature",
+            "norton": "Norton"}
+
+
+def _law(k):
+    return LAW_LABEL.get(k, (tex(k), ""))
+
+
+def _win_txt(w):
+    out = [f"{x[0]:g}--{x[1]:g}~MPa {h}" for h in ("hot", "cold")
+           for x in [(w or {}).get(h)] if x]
+    return ", ".join(out) or "--"
+
+
+def _cal_txt(cal):
+    cal = cal or {}
+    T, s = cal.get("T_C"), cal.get("stress_MPa")
+    out = ([rng(f"{T[0]:g}", f"{T[1]:g}", r"\,$^\circ$C")] if T else []) + \
+          ([f"{s[0]:g}--{s[1]:g}~MPa"] if s else [])
+    return ", ".join(out) or "not stated"
+
+
+def _extrap_txt(cal, win):
+    """What the visited stress window and the cycle's temperatures extrapolate beyond a law's
+    calibration window."""
+    cal = cal or {}
+    T, s = cal.get("T_C"), cal.get("stress_MPa")
+    if not T and not s:
+        return "unknown (no calibration window)"
+    out = []
+    ws = [x for x in (win or {}).values() if x]
+    if s and ws:
+        lo, hi = min(x[0] for x in ws), max(x[1] for x in ws)
+        if lo < s[0] or hi > s[1]:
+            out.append(f"stress {lo:g}--{hi:g}~MPa visited against {s[0]:g}--{s[1]:g}~MPa")
+    if T and T[0] > 25.0:
+        out.append(rf"the 25-$^\circ$C cold dwell (rows below {T[0]:g}\,$^\circ$C)")
+    return "; ".join(out) or "none"
+
+
+def _e_law(expr):
+    """(E0, slope, T0, floor) in MPa of the v2 record's 'E0 + (slope)(T - T0), floor Ef';
+    None if unparsed."""
+    m = re.match(r"\s*([-\d.eE+]+)\s*\+\s*\(([-\d.eE+]+)\)\s*\(T\s*-\s*([-\d.eE+]+)\)"
+                 r"(?:,\s*floor\s*([-\d.eE+]+))?", str(expr or ""))
+    if not m:
+        return None
+    return (float(m.group(1)), float(m.group(2)), float(m.group(3)),
+            float(m.group(4)) if m.group(4) else 0.0)
+
+
+def _e_of_t(expr):
+    """E(T) in MPa from the v2 record's elastic law; None if unparsed."""
+    e = _e_law(expr)
+    return (lambda T: max(e[3], e[0] + e[1] * (T - e[2]))) if e else None
+
+
+def _e_txt(expr):
+    """The elastic law as typeset text, in GPa."""
+    e = _e_law(expr)
+    if not e:
+        return prose(expr or "--") + "~MPa"
+    return (rf"$E(T) = {e[0] / 1e3:g} {'-' if e[1] < 0 else '+'} {abs(e[1]) / 1e3:g}\,"
+            rf"(T-{e[2]:g})$~GPa" + (f" (floor {e[3] / 1e3:g}~GPa)" if e[3] else ""))
+
+
+def solder_tables_v2(p):
+    """The v2 local model (TCPMT round 3, tcpmt_solder_parameters.v2_parameters): zero-yield
+    creep laws of a law band, each carried as a temperature-dependent Norton surrogate fitted
+    over the stress window the joints visit, and the global-kinematics boundary conditions."""
+    L = section("Local Solder-Joint Model",
+                r"Tables~\ref{tab:supp-card}--\ref{tab:supp-localsetup} list every parameter of "
+                r"the local solder-joint model behind the local responses, with its source, "
+                r"calibration window and what is extrapolated, and the limitations of the laws.")
+    s = p.get("solder") or {}
+    el, cr, ex = s.get("elastic") or {}, s.get("creep") or {}, s.get("expansion") or {}
+    prod = cr.get("production_law")
+    name, cite = _law(prod)
+    eot = _e_of_t(el.get("E_MPa"))
+    nu = el.get("nu")
+    body = [f"{tm(float(r['T_C']), '.0f')} & "
+            f"{num(eot(float(r['T_C'])) / 1e3) if eot else '--'} & {num(nu)} & "
+            f"{sci(r.get('A'), 3)} & {num(r.get('n'), 4)} \\\\" for r in cr.get("rows") or []]
+    err = cr.get("surrogate_max_rate_err_rel") or {}
+    yz = grab(r"flat at ([0-9.eE+-]+) MPa", s.get("yield_and_hardening"), float)
+    alpha = ex.get("alpha_per_K")
+    head = [r"$T$ & $E$ & $\nu$ & $A$ & $n$ \\",
+            r"($^\circ$C) & (GPa) & & (s$^{-1}$MPa$^{-n}$) & \\"]
+    note = (rf"Production law: {name} ({LAW_FORM.get(cr.get('form'), tex(cr.get('form') or '--'))}"
+            + (f"~{cite}" if cite else "") + f"), for {prose(cr.get('alloy_of_the_law') or '--')}; "
+            f"the joint is {prose(s.get('alloy_of_the_joint') or '--')}. "
+            r"The solver integrates $\dot\varepsilon_{\mathrm{in}} = A(T)\,(\sigma_{\mathrm{vm}}-"
+            r"\sigma_y)^{n(T)}$ with a zero yield surface"
+            + (f" ($\\sigma_y = {p10(yz)[1:-1] if p10(yz).startswith('$') else p10(yz)}$~MPa)"
+               if yz else "")
+            + r", i.e., the applied von~Mises stress the laws were fitted in, with no "
+            r"rate-independent hardening; the law enters as a temperature-dependent Norton "
+            r"surrogate fitted at every 2.5-$^\circ$C row of the card (listed at 25-$^\circ$C "
+            r"steps) over the stress window the joints visit"
+            + (f", {_win_txt(cr.get('visited_window_MPa'))}" if cr.get("visited_window_MPa")
+               else "")
+            + (f" ({prose(cr['window_status'])})" if cr.get("window_status") else "")
+            + (rf"; surrogate rate error at most {100 * err['hot']:.0f}\,\% (hot dwell) and "
+               rf"{100 * err['cold']:.0f}\,\% (cold dwell)" if err.get("hot") is not None
+               and err.get("cold") is not None else "")
+            + ". Elasticity: " + _e_txt(el.get("E_MPa")) + r", $\nu$ = " + num(nu)
+            + " (" + prose(re.sub(r"^ASSUMPTION", "assumption",
+                                  str(el.get("kind") or "assumption"))) + ")"
+            + (rf"; thermal expansion {alpha * 1e6:.3g}~ppm/K, stress-free at "
+               rf"{float(ex.get('T_ref_C', 25)):.0f}\,$^\circ$C" if alpha else "") + ".")
+    L += ltab(r"@{}rrrrr@{}", 5, head, body, "Solder card as passed to the solver (production "
+              "law)", "tab:supp-card", note)
+
+    # -- ingredients: every law of the band, with its calibration and what is extrapolated
+    cu = p.get("copper_pads") or {}
+    rows = [("Elasticity", r"Linear in $T$ (Table~\ref{tab:supp-card})",
+             r"Room-temperature $E$: midpoint of the 40--50-GPa band of~\cite{Paska2024SAC305}; "
+             r"slope and $\nu$ assumed",
+             "Room temperature only; no temperature dependence in the source"),
+            ("Yield and hardening", "None (zero yield)",
+             r"The zero-yield laws carry no rate-independent hardening; the round-2 card's "
+             r"isotropic hardening of a Chaboche fit is retired", "--")]
+    laws = [(prod, {"form": cr.get("form"), "alloy": cr.get("alloy_of_the_law"),
+                    "calibration_window": cr.get("calibration_window"),
+                    "visited_window_MPa": cr.get("visited_window_MPa"),
+                    "window_status": cr.get("window_status")}, True)]
+    laws += [(k, v, False) for k, v in (s.get("band_laws") or {}).items()]
+    for k, v, is_prod in laws:
+        nm, ct = _law(k)
+        cal = v.get("calibration_window") or {}
+        rows.append((f"Creep: {nm}" + (" (production)" if is_prod else " (band)"),
+                     LAW_FORM.get(v.get("form"), tex(v.get("form") or "--"))
+                     if v.get("form") else "--",
+                     (ct + "; " if ct else "") + prose(v.get("alloy") or "--"),
+                     "Calibrated: " + _cal_txt(cal) + "; visited: "
+                     + _win_txt(v.get("visited_window_MPa")) + "; extrapolated: "
+                     + _extrap_txt(cal, v.get("visited_window_MPa"))))
+    rows.append(("Thermal expansion", "Constant",
+                 (rf"{alpha * 1e6:.3g}~ppm/K, assumed (21--24~ppm/K commonly quoted)"
+                  if alpha else "--"), "No temperature dependence"))
+    rows.append(("Copper pads", "Linear elastic",
+                 rf"$E = {float(cu.get('E_MPa', 0)) / 1e3:.0f}$~GPa, $\nu = {num(cu.get('nu'))}$, "
+                 rf"{float(cu.get('cte_per_K', 0)) * 1e6:.3g}~ppm/K; handbook-type constants",
+                 "No temperature dependence"))
+    L += ltab(r"@{}L{2.4cm}L{2.4cm}L{6.4cm}L{5.8cm}@{}", 4,
+              [r"Ingredient & Model form & Source & Calibration window and extrapolation \\"],
+              [" & ".join(r) + r" \\" for r in rows],
+              "Sources and calibration windows of the solder laws", "tab:supp-cardsrc",
+              r"Visited: the stress window of the last cycle over the joints (5--95\,\% "
+              r"quantiles, strain-weighted) on which each law's surrogate is fitted; "
+              r"extrapolated: what that window and the cycle's temperatures leave outside the "
+              r"law's calibration.")
+
+    # -- geometry, boundary conditions, loading and integration
+    g, bc, lc = p.get("geometry") or {}, p.get("boundary_conditions") or {}, \
+        p.get("loading_cycle") or {}
+    ti, rsp, me = p.get("time_integration") or {}, p.get("response") or {}, p.get("mesh") or {}
+    rs, ds = ti.get("ramp_step") or {}, ti.get("dwell_step") or {}
+    src = r"~\cite[Table~III]{Krishnakumar2026DVPD}" if "Krishnakumar" in str(g.get("source")) \
+        else ""
+    unc = J(TR / "uncertainty.json") or {}
+    prow = [
+        ("Ball, as homogenized globally",
+         rf"diameter {float(g.get('ball_diameter_um', 0)):.0f}~\textmu m, stand-off "
+         rf"{float(g.get('standoff_um', 0)):.0f}~\textmu m" + src),
+        ("Solder volume", prose(g.get("solder_shape") or "--") +
+         r" (the convention of the global ball-array homogenization)"),
+        ("Copper pads", rf"{float(g.get('pad_um', 0)):.0f}~\textmu m square, "
+         rf"{float(g.get('pad_thickness_um', 0)):.0f}~\textmu m thick"),
+        ("Averaging core", r"solder less a fixed-width band"
+         + (f" ({float(g['averaging_band_frac']):.3f} of the side)"
+            if g.get("averaging_band_frac") is not None else "")
+         + " at the pads and the free surface"),
+        ("Elements", f"{tex(me.get('element', '--'))}, level {tex(me.get('level', '--'))}: "
+         f"{me.get('n_elements', '--')} elements, {me.get('n_core_elements', '--')} in the "
+         "averaging core"),
+        ("Pad faces", prose(bc.get("pad_faces") or "--")),
+        ("Global-to-local transfer", prose(bc.get("transfer_from_global") or "--")),
+        ("Temperature", prose(bc.get("temperature") or "--")
+         + (rf"; stress-free at {float(bc['stress_free_temperature_C']):.0f}\,$^\circ$C"
+            if bc.get("stress_free_temperature_C") is not None else "")),
+        ("Cycle",
+         rf"{lc.get('n_cycles', '--')} cycles of {float(lc.get('period_s', 0)):g}~s: "
+         rf"{float(lc.get('dwell_hot_s', 0)):g}~s hot dwell at $T_{{\mathrm{{j}}}}$ with $\du$ and "
+         rf"{float(lc.get('dwell_cold_s', 0)):g}~s cold dwell at "
+         rf"{float(lc.get('T_cold_C', 25)):g}\,$^\circ$C, " + prose(lc.get("ramp") or "")
+         + ("; sensitivity: dwell " + "/".join(f"{float(x):g}" for x in
+                                               lc.get("dwell_sensitivity_s") or []) + "~s, ramp "
+            + "/".join(f"{float(x):g}" for x in lc.get("ramp_sensitivity_s") or []) + "~s"
+            if lc.get("dwell_sensitivity_s") else "")),
+        ("Time integration",
+         rf"implicit viscoplastic update ({tex(ti.get('procedure', '--'))}); creep tolerance "
+         rf"{ti.get('CETOL', '--')} on the change of inelastic strain rate per increment"),
+        ("Increments, ramp step",
+         rf"initial {float(rs.get('dt0_s', 0)):g}~s, minimum {p10(rs.get('dt_min_s'))}~s, "
+         rf"maximum {float(rs.get('dt_max_s', 0)):g}~s"),
+        ("Increments, dwell step",
+         rf"initial {float(ds.get('dt0_s', 0)):g}~s, minimum {p10(ds.get('dt_min_s'))}~s, "
+         rf"maximum {float(ds.get('dt_max_s', 0)):g}~s"),
+        ("Response $\\deps$", prose(rsp.get("definition") or "--")),
+    ]
+    if unc.get("eps_basis"):
+        prow.append(("Compared responses", prose(unc["eps_basis"])
+                     + r" (Table~\ref{tab:supp-unc})"))
+    L += ltab(r"@{}L{3.6cm}L{13.2cm}@{}", 2, [r"Item & Setting \\"],
+              [f"{a} & {b} \\\\" for a, b in prow],
+              "Local model geometry, boundary conditions, loading and integration",
+              "tab:supp-localsetup")
+
+    # -- limitations of the laws, in prose
+    items = [rf"The production law ({name}) was fitted to "
+             rf"{prose(cr.get('alloy_of_the_law') or 'another alloy')}, not to the joint's "
+             rf"{prose(s.get('alloy_of_the_joint') or 'SAC305')}."]
+    rvm = cr.get("rate_vs_measured_Sn3.9Ag0.6Cu") or {}
+    if _cal_txt(cr.get("calibration_window")) == "not stated":
+        items.append(r"Its constants are reprinted without their data window, so its "
+                     r"calibration window is not stated"
+                     + (rf"; inside the measured window of the band laws its creep rate is "
+                        rf"{rvm['ratio_min']:.0f}--{rvm['ratio_max']:.0f} times the measured "
+                        rf"Sn3.9Ag0.6Cu rates (geometric mean {rvm['ratio_geomean']:.0f})"
+                        if rvm.get("ratio_min") is not None else "") + ".")
+    for k, v in (s.get("band_laws") or {}).items():
+        cal = v.get("calibration_window") or {}
+        items.append(rf"The band law {_law(k)[0]} ({prose(v.get('alloy') or '--')}) is "
+                     rf"calibrated on {_cal_txt(cal)}; the joints visit "
+                     rf"{_win_txt(v.get('visited_window_MPa'))}, which extrapolates "
+                     + _extrap_txt(cal, v.get("visited_window_MPa")) + ".")
+    if err.get("hot") is not None and err.get("cold") is not None:
+        items.append(rf"The Norton surrogate reproduces the production law within "
+                     rf"{100 * err['hot']:.0f}\,\% (hot dwell) and {100 * err['cold']:.0f}\,\% "
+                     r"(cold dwell) in rate over the visited window; the error travels with "
+                     r"the card.")
+    if str(cr.get("window_status") or "").startswith("initial"):
+        items.append(r"The visited window is the configured initial one: the iteration of the "
+                     r"window to self-consistency has not been run.")
+    band = p.get("law_band") or {}
+    if band:
+        hold = band.get("rankings_hold_across_laws")
+        items.append(r"Every compared local response is recomputed under each law of the band"
+                     + ("" if hold is None else
+                        "; the rankings " + ("hold" if hold is True else "do not all hold")
+                        + " across the laws") + ".")
+    L += [r"\noindent\emph{Limitations of the solder laws.}", r"\begin{itemize}"]
+    L += [rf"\item {x}" for x in items] + [r"\end{itemize}", ""]
+    return L
+
+
 def solder_tables():
     p = J(TR / "solder_parameters.json")
+    if p and "solder_SAC305" not in p and "solder" in p:
+        return solder_tables_v2(p)                  # the v2 harness (TCPMT round 3)
+    if not p or "solder_SAC305" not in p:
+        return section("Local Solder-Joint Model",
+                       r"The parameters of the local solder-joint model behind the local "
+                       r"responses, with their sources and calibration windows.") + \
+            placeholder("local solder model", "solder_parameters.json")
     L = section("Local Solder-Joint Model",
                 r"Tables~\ref{tab:supp-card}--\ref{tab:supp-stress} list every parameter of the "
                 r"local solder-joint model behind the published local responses, with its source "
                 r"and calibrated range, and the limitations of the creep card.")
-    if not p:
-        return L + placeholder("local solder model", "solder_parameters.json")
     s = p["solder_SAC305"]
     el, yh, cr, ex = s["elastic"], s["yield_and_hardening"], s["creep"], s["expansion"]
     # -- card rows
@@ -887,19 +1393,28 @@ def solder_tables():
 
 # ---------------------------------------------------------------- S-VI verification
 def mesh_runtime_table():
-    body = []
+    """Mesh and runtime of the compared cases of the production state under cooling A
+    (tcpmt_cases; Z3 the coupled land-side case); a case not run yet is a row of dashes."""
+    st = TC.PRODUCTION_STATE
+    body, threads = [], set()
     for a in ARCHS:
-        c = J(FC / f"etm_{a}_HV_S0_h1.1_r21.json")
+        pth = TC.case_path(st, "A", a)
+        c = J(pth) if pth else None
         if not c:
+            body.append(f"{a} & -- & -- & -- & -- & -- & -- & -- \\\\")
             continue
-        th, me = c["thermal"], c.get("mechanics", {})
+        threads.add(c.get("threads"))
+        th, me = c["thermal"], c.get("mechanics") or {}
         tot = (c["et_wall_s"] + me.get("wall_s", 0)) / 3600
-        body.append(f"{a} & {th['n_nodes']:,} & {th['n_elems']:,} & {3 * th['n_nodes']:,} & "
-                    f"{len(c['et_history'])} & {c['et_wall_s']:.0f} & {me.get('wall_s', 0):.0f} & "
-                    f"{tot:.1f} \\\\".replace(",", "{,}"))
+        body.append(f"{a}{z3_dag(a, pth.name, c)} & {th['n_nodes']:,} & {th['n_elems']:,} & "
+                    f"{3 * th['n_nodes']:,} & {len(c['et_history'])} & {c['et_wall_s']:.0f} & "
+                    f"{me.get('wall_s', 0):.0f} & {tot:.1f} \\\\".replace(",", "{,}"))
+    n_thr = next(iter(threads)) if len(threads) == 1 and None not in threads else 2
     head = [r"Integration & Nodes & Elements & Structural & E--T & E--T & Structural & Total \\",
             r" & & & DOF & iterations & (s) & (s) & (h) \\"]
-    note = (r"Production mesh: graded $h_{xy}=1.1$~mm grid with every in-plane interval split in "
+    note = (rf"Cases: the production state ({STATE_TEXT[st]}) under cooling~A, Z3 with the "
+            r"coupled land-side and board-plane redistribution; --: not run yet. "
+            r"Production mesh: graded $h_{xy}=1.1$~mm grid with every in-plane interval split in "
             r"two (r21); 8-node hexahedra (thermal C3D8, structural C3D8I incompatible modes); "
             r"CalculiX~2.23. Thermal: steady conduction, direct solver; E--T stop: every coupled "
             r"region temperature changes by less than 0.25~K and the loss by less than 0.1\,\%; "
@@ -907,12 +1422,15 @@ def mesh_runtime_table():
             r"$T_{\mathrm{ref}}=25\,^\circ$C, rigid-body motion restrained only, iterative "
             r"Cholesky solver (verified against the direct SPOOLES solver, "
             r"Table~\ref{tab:supp-verif}). Machine: two-socket Intel Xeon Gold 6342 (2.8~GHz, "
-            r"48 cores), shared; thermal solves on 2 threads, structural on 1. Times include every "
+            rf"48 cores), shared; thermal solves on {n_thr} threads, structural on 1. Times "
+            r"include every "
             r"E--T iteration (each a thermal solve with its coolant balance) and the structural "
             r"solve with the all-site joint search; they exclude geometry construction and meshing "
             r"(under 2~min per integration), the local solder model and postprocessing. "
-            r"Sensitivity runs repeat the same chain.")
-    return ltab(r"@{}lrrrrrrr@{}", 8, head, body, "Meshes, solvers and runtimes (S0)",
+            r"Sensitivity runs repeat the same chain."
+            + (DAGGER_NOTE if any(r"$^\dagger$" in b for b in body) else ""))
+    return ltab(r"@{}lrrrrrrr@{}", 8, head, body,
+                "Meshes, solvers and runtimes (production state, cooling A)",
                 "tab:supp-mesh", note)
 
 
@@ -1020,6 +1538,11 @@ def uncertainty_table():
     # uncertainty.json); a file without the field predates it -- S0 when it holds local responses
     st = u.get("state") or ("S0" if any(k.endswith(".eps") for k in U) else "SDEC")
     st_lab = {"SDEC": "implemented decoupling", "S0": "S0"}.get(st, st)
+    # the state of the laddered reference cases (tcpmt_uncertainty: the S0 cooling-A production
+    # cases of the integrations that have one; Z3 has none in round 3)
+    ref_st = sorted({case_state({"file": (v or {}).get("file")}) or "S0"
+                     for v in (u.get("reference_cases") or {}).values()}) or ["S0"]
+    ref_lab = "/".join(ref_st)
     body = []
     cases = u.get("cases") or {}
     for y in ("P", "T", "warp", "du", "eps"):
@@ -1030,7 +1553,8 @@ def uncertainty_table():
             comp = (" & ".join(f"{100 * c[k]:.2f}" for k in ("mesh", "tt", "et", "ref", "total"))
                     + (f" & {100 * c['bias_rel']:+.2f}" if "bias_rel" in c else " & --")
                     if c else r"\multicolumn{6}{c}{local mesh and cycle count; law band in the "
-                              r"resolution}")
+                              r"resolution}" if y == "eps" else
+                    rf"\multicolumn{{6}}{{c}}{{no {ref_lab} reference ladder}}")
             cells = []
             for t in ("A", "B"):
                 x = U.get(f"{t}.{a}.{y}")
@@ -1052,8 +1576,8 @@ def uncertainty_table():
                        + (r"$^\dagger$" if r.get("provisional") else "") for r in rows)
              for (t, a, b), rows in seen.items()]
     n_need = len(u.get("ladder_runs_needed") or [])
-    head = [r"Output & Int. & \multicolumn{6}{c}{Relative to the value, S0 reference ladder (\%)} & "
-            r"\multicolumn{2}{c}{$U_{95}$} \\",
+    head = [r"Output & Int. & \multicolumn{6}{c}{Relative to the value, " + ref_lab +
+            r" reference ladder (\%)} & \multicolumn{2}{c}{$U_{95}$} \\",
             r"\cmidrule(lr){3-8}\cmidrule(l){9-10}",
             r" & & mesh & through-thickness & E--T stop & reference & total & bias $\beta$ & "
             r"cooling A & cooling B \\"]
@@ -1066,7 +1590,8 @@ def uncertainty_table():
             r"errors shared on one mesh family cancel only where they move together; the "
             r"through-thickness split r11$\to$r12 ($F_s = 3$), the E--T stop of each case and "
             r"the matched-reference agreement of the solver, in quadrature. Columns: the "
-            r"components of each integration's S0 reference ladder, relative to the value "
+            r"components of each integration's " + ref_lab + r" reference ladder (cooling~A "
+            r"production case), relative to the value "
             r"(temperatures: to the rise above the inlet); $U_{95}$ of each compared case; "
             r"$\dagger$: the case has no ladder of its own and carries its reference's estimate "
             rf"provisionally (identical mesh; {n_need} ladder rungs listed for the campaign). "
@@ -1107,12 +1632,12 @@ def case_state(c):
 
 def case_label(c):
     """Readable label of a compared case from its feasibility record: integration, cooling and
-    the input state when it is not S0 (SDEC: the implemented decoupling, the production state)."""
+    the input state when it is not the production state (SDEC, the implemented decoupling)."""
     case_file = c.get("case") or ""
     t = {"A": "A", "B": "B", "I": "I"}.get(c.get("tier"), "A")
     s = f"{c.get('arch', '?')}, {t}"
     st = case_state(c)
-    if st and st != "S0":
+    if st and st != TC.PRODUCTION_STATE:
         s += ", " + tex(st)
     var = re.search(r"__(\w+)\.json$", case_file)
     if var and var.group(1) in VARIANT_SHORT and t == "A":
@@ -1139,13 +1664,27 @@ def joint_label(key, t_joint, fl):
     return JOINT_CASE.get(key, tex(key)), False
 
 
+def variant_text(name):
+    """Readable name of a case variant: a robustness variant, a cooling base, a review-round
+    variant or a land-side run, with its cooling when the name carries one."""
+    if name in VARIANT_LABEL or re.match(r"conv_E(\d+)_a(\d+)$", name):
+        return variant_label(name)
+    it = re.search(r"_it(\d+)$", name)
+    lab, tier = review_label(name[:it.start()] if it else name)
+    if it:
+        lab += f", iteration {it.group(1)}"
+    return lab + (f", cooling~{tier}" if tier else "")
+
+
 def record_label(r):
     """Readable label of any case or variant of the feasibility stage."""
     st = case_state(r)
-    var = r.get("variant") or ("production case" if "__" not in (r.get("case") or "") else
-                               (r.get("case") or "").split("__", 1)[1].rsplit(".", 1)[0])
+    case = r.get("case") or ""
+    var = r.get("variant") or (None if "__" not in case else
+                               case.split("__", 1)[1].rsplit(".", 1)[0])
+    txt = (f"base case, cooling~{r.get('tier') or 'A'}" if var is None else variant_text(var))
     tag = r", superseded (uncoupled Z3)" if r.get("role") == "superseded" else ""
-    return f"{tex(r.get('arch', '?'))}, {tex(st or '--')}: {tex(var)}{tag}"
+    return f"{tex(r.get('arch', '?'))}, {tex(st or '--')}: {txt}{tag}"
 
 
 def feasibility_table():
@@ -1156,6 +1695,17 @@ def feasibility_table():
         return placeholder("feasibility stage", "feasibility.json")
     lim = f["limits"]
     labels = feas_labels(f)
+    # the per-ball current under the policy in force (tcpmt_feasibility: a filter, or a stated
+    # requirement on the package that is reported, not filtered on)
+    if (f.get("bga_policy") or {}).get("in_force") == "requirement":
+        sens = lim.get("bga_A_per_ball_sensitivity")
+        bga = (r"the current of every power ball at the case's waveform a stated requirement on "
+               r"the package (target " + f"{lim['bga_A_per_ball']:.1f}" + "~A"
+               + (f", {sens:.1f}~A as sensitivity" if sens is not None else "")
+               + "), reported, not a filter")
+    else:
+        bga = (r"every power ball $\le" + f"{lim['bga_A_per_ball']:.1f}" + r"$~A at the case's "
+               r"waveform")
 
     def v(x, d=1):
         return "--" if x is None else f"{x:.{d}f}"
@@ -1195,20 +1745,21 @@ def feasibility_table():
             r"dissipation; joint: the hottest joint of the all-site search; drop: per-rail maximum "
             r"static drop of the 1-V path. Limits: GaN $T_J\le" + f"{lim['gan_Tj_C']:.0f}" +
             r"$; $R_{DS(on)}$ temperature fit $\le" + f"{lim['ron_fit_max_C']:.0f}" +
-            r"$; X7R/X7S capacitors $\le" + f"{lim['mlcc_C']:.0f}" + r"$; inductor $\le" +
+            r"$; X7R/X7S/X7T capacitors $\le" + f"{lim['mlcc_C']:.0f}" + r"$; inductor $\le" +
             f"{lim['inductor_C']:.0f}" + r"$; build-up dielectric and encapsulant $T_g\approx" +
             f"{lim['buildup_Tg_C']:.0f}" + r"$; board $T_g\approx" + f"{lim['board_Tg_C']:.0f}" +
             r"$; processor die $\le" + f"{lim['die_C']:.0f}" +
             r"$; solder law calibrated $\le" + f"{lim['solder_cal_C']:.0f}" +
-            r"$, solidus " + f"{lim.get('solder_solidus_C', 217):.0f}" +
-            r"; every power ball $\le" + f"{lim['bga_A_per_ball']:.1f}" + r"$~A at the case's "
-            r"waveform, with at least " + f"{100 * (1 - lim['bga_power_site_fraction_max']):.0f}" +
+            r"$, solidus " + f"{lim.get('solder_solidus_C', 217):.0f}" + "; " + bga +
+            r", with at least " + f"{100 * (1 - lim['bga_power_site_fraction_max']):.0f}" +
             r"\,\% of the ball sites left for signals; static drop $\le" +
             f"{lim['ir_drop_mV_per_rail']:.0f}" + r"$~mV per rail. Cases: integration, cooling "
             r"(A: top plate; B: top plate and bottom plate, the bottom one behind a 50-\textmu m "
-            r"TIM) and input state when not S0 (SDEC: the implemented decoupling, the production "
-            r"state; S1: no decoupling). A check that fails only on the whole-field bound is "
-            r"unresolved; such a candidate is not ranked either." +
+            r"TIM) and input state when not the production state " + tex(TC.PRODUCTION_STATE) +
+            " (" + STATE_TEXT[TC.PRODUCTION_STATE] + "): " +
+            "; ".join(f"{s}, {STATE_TEXT[s]}" for s in TC.STATES if s != TC.PRODUCTION_STATE) +
+            r"; Z3 always with the coupled land-side redistribution. A check that fails only on "
+            r"the whole-field bound is unresolved; such a candidate is not ranked either." +
             (DAGGER_NOTE if any(v_[2] for v_ in labels.values()) else ""))
     return ltab(r"@{}L{3.0cm}rrrrrrrrrL{3.4cm}@{}", 11, head, body,
                 "Feasibility stage: every limit on every case", "tab:supp-feas", note)
@@ -1217,42 +1768,61 @@ def feasibility_table():
 def scenario_table():
     """The selected regulator under every input state, cooling A: the production state
     (implemented decoupling) and the S0/S1 references from tcpmt_cases (Z3 on its coupled land
-    side), S2 for the Z1/Z2 production-boundary cases; a case not run yet is a row of dashes."""
-    import tcpmt_cases as TC
+    side), S2 on the Z1/Z2 production-boundary cases and the Z3 land-side base; a case not run
+    yet is a row of dashes."""
+    try:                                        # the ledger's scenario ratios (design record)
+        import final_closure_ledger as FL
+        ratio = {k[3:]: float(v) for k, v in FL.SCEN_RATIO.items()}
+    except Exception:                                               # noqa: BLE001
+        ratio = {"S0": 1.0, "S1": 1.0 / math.sqrt(DR.buck_duty()),
+                 "S2": math.sqrt(DR.V_IN / DR.V_OUT)}
     dec = J(TR / "input_decoupling.json") or {}
-    k_eq = ((dec.get("summary") or {}).get("recommended") or {}).get("k_eq")
-    kmap = {"SDEC": "--" if k_eq is None else f"{k_eq:.2f}", "S0": "1", "S1": "4",
-            "S2": f"{math.sqrt(48):.2f}"}
+    k_dec = ((dec.get("summary") or {}).get("recommended") or {}).get("k_eq")
+    if k_dec is None:
+        k_dec = (DR.get().get("decoupling") or {}).get("k_eq")
+
+    def kfmt(x):
+        return "--" if x is None else (f"{x:.0f}" if abs(x - round(x)) < 1e-9 else f"{x:.2f}")
+
+    def s2_path(a):
+        """The S2 case of an integration under cooling A: the chain's production-boundary case
+        (Z1, Z2) or the coupled land-side base (Z3), as the campaign writes them."""
+        base = TC.COOLING_BASE[(a, "A")]
+        p = (FC / f"etm_{a}_HV_S2_h1.1_r21.json" if base is None else
+             FC / "sensitivity" / f"etm_{a}_HV_S2__{base}.json")
+        return p if p.is_file() else None
     body, marked = [], False
     for a in ARCHS:
-        for s in ("SDEC", "S0", "S1", "S2"):
-            if s == "S2":
-                pth = FC / f"etm_{a}_HV_S2_h1.1_r21.json"
-                pth = None if (a == "Z3" or not pth.is_file()) else pth
-            else:
-                pth = TC.case_path(s, "A", a)
+        for s in (*TC.STATES, "S2"):
+            pth = s2_path(a) if s == "S2" else TC.case_path(s, "A", a)
             c = J(pth) if pth else None
+            k = (grab(r"k_eq = ([\d.]+)", ((c or {}).get("variant") or {}).get("what"), float)
+                 or k_dec) if s == TC.PRODUCTION_STATE else ratio.get(s)
             if not c:
-                body.append(f"{a} & {s} & -- & -- & -- & -- & -- & {kmap[s]} \\\\")
+                body.append(f"{a} & {s} & -- & -- & -- & -- & -- & {kfmt(k)} \\\\")
                 continue
             me = c.get("mechanics") or {}
             cr = (me.get("joint_search") or {}).get("critical") or {}
             h = c["et_history"][-1]
             du = f"{cr['du_um']:.2f} at {cr['T_C']:.0f}" if cr else "--"
-            warp = f"{me['die_warpage_pv_um']:.1f}" if me else "--"
-            marked |= bool(z3_dag(a, pth.name))
-            body.append(f"{a}{z3_dag(a, pth.name)} & {s} & "
+            warp = (f"{me['die_warpage_pv_um']:.1f}"
+                    if me.get("die_warpage_pv_um") is not None else "--")
+            dg = z3_dag(a, pth.name, c)
+            marked |= bool(dg)
+            body.append(f"{a}{dg} & {s} & "
                         f"{c['P_loss_w']:.1f} & {c['thermal']['T_max_C']:.1f} & "
-                        f"{h.get('T_ls_C', float('nan')):.1f} & {du} & {warp} & {kmap[s]} \\\\")
+                        f"{h.get('T_ls_C', float('nan')):.1f} & {du} & {warp} & {kfmt(k)} \\\\")
     head = [r"Integration & State & $P$ (W) & $T_{\max}$ & $T_{\mathrm{LS}}$ & "
             r"$\du$ (\textmu m) & Warpage & $k$ \\",
             r" & & & ($^\circ$C) & ($^\circ$C) & at $T_{\mathrm{j}}$ ($^\circ$C) & (\textmu m) & \\"]
     note = (r"Package-internal loss, peak and low-side tier temperature, critical joint and die "
             r"warpage under cooling~A (Z3: the coupled land-side case) per input state: SDEC, the "
             r"implemented decoupling (the production state); S0, ideal input smoothing; S1, no "
-            r"decoupling; S2, the BGA/direct-fed scenario of the production-boundary cases. "
-            r"$k$: RMS-to-average ratio of the current the 48-V feed carries; --: not run yet."
-            + (DAGGER_NOTE if marked else ""))
+            r"decoupling (a square pulse at the buck duty $D = N V_{\mathrm{out}}/V_{\mathrm{in}}"
+            + f" = 1/{1.0 / DR.buck_duty():.0f}$); S2, a square pulse at the overall conversion "
+            r"ratio $V_{\mathrm{out}}/V_{\mathrm{in}}$. $k$: RMS-to-average ratio of the current "
+            r"the 48-V feed carries (SDEC: the loss-equivalent $k_{\mathrm{eq}}$ the case was run "
+            r"with); --: not run yet." + (DAGGER_NOTE if marked else ""))
     return ltab(r"@{}llrrrrrr@{}", 8, head, body,
                 "The selected regulator under the input states", "tab:supp-scen", note)
 
@@ -1282,50 +1852,95 @@ def z3land_table():
                     f"{num(r.get('dV_land_static_one_rail_mV'), 3)} & {num(r.get('T_max_C'), 4)} & "
                     f"{num(r.get('die_warpage_pv_um'), 3)} & {num(r.get('du_c_um'), 3)} & "
                     f"{num(r.get('R_star_mohm'), 3)} \\\\")
-    dv = d["derived"]
+    dv = d.get("derived") or {}
     head = [r"Land side, cooling & $P$ & Land & Planes & $\Delta V_{\mathrm{land}}$ & "
             r"$T_{\max}$ & Warpage & $\du$ & $R^*$ \\",
             r" & (W) & (W) & (W) & (mV) & ($^\circ$C) & (\textmu m) & (\textmu m) & (m$\Omega$) \\"]
+    states = {case_state({"file": r.get("file")}) for r in d["table"] if r.get("file")}
+
+    def tie(key):
+        """'at t = X um' of a tie with Z1 under cooling B; None when the record has none."""
+        x = dv.get(key) or {}
+        t = x.get("t_um")
+        if t is None:
+            return None
+        return (f"$t = {t:.0f}$~\\textmu m" + ("" if x.get("bracketed", True) else
+                                                " (extrapolated beyond the runs)"))
+    tb, tl = tie("tie_with_board_planes"), tie("tie_land_only")
+    drop = (dv.get("drop_30mV_one_rail") or {}).get("t_um")
     note = (r"Land-side copper thickness $t$ and cooling; board planes $2\times35$~\textmu m per "
-            r"rail at 80\,\% occupancy, equal ball sharing, S0. $\Delta V_{\mathrm{land}}$: static "
-            r"land-side drop of one rail; $R^*$: feed limit. Tie with Z1 under cooling~B at "
-            f"$t = {dv['tie_with_board_planes']['t_um']:.0f}$~\\textmu m (land side alone: "
-            f"{dv['tie_land_only']['t_um']:.0f}~\\textmu m); a land-side drop of at most 30~mV "
-            f"per rail needs $t \\ge {dv['drop_30mV_one_rail']['t_um']:.0f}$~\\textmu m.")
+            r"rail at 80\,\% occupancy, equal ball sharing"
+            + (", " + "/".join(sorted(s for s in states if s)) if states - {None} else "")
+            + r". $\Delta V_{\mathrm{land}}$: static land-side drop of one rail; $R^*$: feed "
+            r"limit. "
+            + (f"Tie with Z1 under cooling~B at {tb}" + (f" (land side alone: {tl})" if tl
+                                                         else "") + "; "
+               if tb else "No tie with Z1 under cooling~B within the runs; ")
+            + (r"a land-side drop of at most 30~mV per rail needs "
+               rf"$t \ge {drop:.0f}$~\textmu m." if drop is not None else
+               r"the 30-mV land-side drop thickness is not available."))
     return ltab(r"@{}lrrrrrrrr@{}", 9, head, body,
                 "Board-backside integration with the land-side and board-plane redistribution "
                 "coupled", "tab:supp-z3land", note)
 
 
 # ---------------------------------------------------------------- S-IX exploration
+#: the screen runs of the campaign (scripts/campaign/build_manifest.py dse_sweeps), case D:
+#: (tag, column head); the phase-2 runs carry the production converter rules at a tier limit
+SCREEN_RUNS = (("etm35", "Legacy rule"), ("etm35_caprule_full", "Corrected rule"),
+               ("etm35_p2_t4", r"$\le$4 tiers"), ("etm35_p2_t5", r"$\le$5 tiers"),
+               ("etm35_p2_tinf", "No tier limit"))
+
+
 def caprule_screen_table():
-    d = J(TR / "dse_caprule.json")
-    if not d:
-        return placeholder("capacitor-rule screen", "dse_caprule.json")
+    """Total loss and selected member at every count under each screen run in the root in
+    force: the legacy (published) capacitor rule rerun on the current engine, the corrected
+    capacitor rule, and the phase-2 screens with the production converter rules at the tier
+    limits (the round-2 dse_caprule.json is not regenerated; the CSVs are)."""
+    runs = [(t, h, dse_rows(t)) for t, h in SCREEN_RUNS]
+    runs = [(t, h, rows) for t, h, rows in runs if rows]
+    if not runs:
+        return placeholder("regulator-count screen", "case_D_etm35_p2_t4.csv")
+    prod_tag = screen_run()
+    m0 = DR.n_vr()
+    best = {}
+    for t, _h, rows in runs:
+        f = [(float(r["total_loss_W"]), m) for m, r in rows.items() if dse_feasible(r)]
+        best[t] = min(f) if f else None
+    counts = sorted({m for _t, _h, rows in runs for m in rows})
     body = []
-    for r in d["per_count"]:
-        def c(t):
-            x = r.get(t)
-            if not x:
-                return "--"
-            nk = x["arch"].replace("N=", "").replace(",K=", "/").split(",")[0]
-            return f"{x['P_total_W']:.1f} ({nk})"
-        body.append(f"{r['M']} & {c('etm35')} & {c('etm35_caprule')} & "
-                    f"{c('etm35_caprule_ripple')} & {c('etm35_caprule_full')} \\\\")
-    concl = prose(d["conclusion"])
-    concl = concl[0].upper() + concl[1:]
-    note = (r"Total loss (W) and the selected member $N/K$ at each count $M$; --: no feasible "
-            r"member. Steps: the published rule; with the voltage rule (every flying capacitor "
-            r"rated with 0.8 derating for the $(N-1)V_{\mathrm{in}}/N$ that $C_1$ holds, rated "
-            r"parts admitted); with the effective-capacitance ripple check (parts without vendor "
-            r"bias data excluded); with the ESR at the switching frequency. The legacy "
-            r"configuration of the corrected engine reproduces the published screen: "
-            + ("yes" if d.get("legacy_reproduces_published") else "no") + ". " +
-            re.sub(r"M = (\d+)", r"$M = \1$", concl) + ".")
-    return ltab(r"@{}rllll@{}", 5,
-                [r"$M$ & Published & + voltage rule & + effective $C$ & + ESR($f$) \\"],
-                body, "Regulator-count screen before and after the capacitor-rule correction",
-                "tab:supp-caprule", note)
+    for m in counts:
+        cells = []
+        for t, _h, rows in runs:
+            r = rows.get(m)
+            if r is None:
+                cells.append("")                                    # count not screened
+            elif not dse_feasible(r):
+                cells.append("--")
+            else:
+                c = f"{float(r['total_loss_W']):.1f} ({int(float(r['N']))}/{int(float(r['K']))})"
+                cells.append(rf"\textbf{{{c}}}" if best[t] and best[t][1] == m else c)
+        body.append(f"{m}{r'$^\ast$' if m == m0 else ''} & " + " & ".join(cells) + r" \\")
+    opt = "; ".join(
+        f"{h.replace(chr(36), '').replace(r'\le', 'at most ')}: $M = {best[t][1]}$ "
+        f"({best[t][0]:.1f}~W)" if best[t] else f"{h}: none" for t, h, _r in runs)
+    note = (r"Total loss (W) and the selected member $N/K$ of case~D at each count $M$; --: no "
+            r"feasible member; blank: count not screened by that run; bold: least loss of the "
+            r"run. Legacy rule: the published flying-capacitor rule, rerun on the current "
+            r"engine. Corrected rule: every flying capacitor rated with "
+            r"0.8 derating for the $(N-1)V_{\mathrm{in}}/N$ that $C_1$ holds (rated parts "
+            r"admitted), the effective-capacitance ripple check (parts without vendor bias data "
+            r"excluded) and the ESR at the switching frequency. Tier columns: the production "
+            r"converter rules (corrected capacitor rule, datasheet gate resistance, capacitor "
+            r"body footprints, tiers that may mix part classes) at a limit on the converter "
+            r"tiers"
+            + (rf"; the production rule is the run of the design record's screen "
+               rf"({tier_rule(max_tiers(prod_tag))})" if prod_tag else "")
+            + rf". $^\ast$: the production design, $M = {m0}$. Least loss: {opt}.")
+    return ltab(r"@{}r" + "l" * len(runs) + "@{}", 1 + len(runs),
+                [r"$M$ & " + " & ".join(h for _t, h, _r in runs) + r" \\"],
+                body, "Regulator-count screen before and after the capacitor-rule correction and "
+                "under the tier limit", "tab:supp-caprule", note)
 
 
 VARIANT_LABEL = {
