@@ -589,8 +589,20 @@ def run_state(arch, tier, scen, name=None):
         rk = DF.recommended_k()
         what = (f"implemented decoupling: k_eq = {rk['k_eq']:.3f}, cell-internal VIN runs at "
                 f"k_open = {DF.k_open():.3f}; " + what)
+    # capture the base variant's own setup BEFORE registering: for the reference states the
+    # wrapper takes the base's name, and apply_tier() would otherwise call itself forever
+    if base is not None and base.startswith("z3_land"):
+        _z3land()                                   # registers the z3_land_* variants
+    orig = S.VARIANTS[base]["apply"] if base is not None else None
+
+    def _apply():
+        if base is not None and base.startswith("z3_land"):
+            _z3land()
+        if orig is not None:
+            orig()
+
     S.VARIANTS[name] = dict(
-        kind="full", archs=(arch,), apply=lambda: apply_tier(arch, tier),
+        kind="full", archs=(arch,), apply=_apply,
         gates=["decap.implemented"] if scen == TC.SCEN["SDEC"] else [],
         nature=("PRODUCTION STATE (implemented input decoupling, hot loop)"
                 if scen == TC.SCEN["SDEC"] else f"REFERENCE STATE ({scen})"),
