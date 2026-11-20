@@ -676,7 +676,7 @@ def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s,
                                  {"file": f"{d}/meta_{tag}.json", "kind": "json"}],
                        notes="single process, single thread; imports paper_routing.py from "
                              "outside the repository (Salma_Thesis/analysis/...)")
-    post("derived.dse_phase2_summary", "derived", "tcpmt_dse_phase2_summary.py",
+    p2sum = post("derived.dse_phase2_summary", "derived", "tcpmt_dse_phase2_summary.py",
          [tr("dse_phase2_summary.json")],
          deps=[dse["etm35_p2_t4"], dse["etm35_p2_t5"], dse["etm35_p2_tinf"]],
          env={"HVR_DSE_ENGINE": "{scratch}/dse_engine"},
@@ -750,9 +750,21 @@ def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s,
          deps=tier_cases)
     cool = post("derived.cooling_spec", "derived", "tcpmt_cooling_spec.py",
                 [tr("cooling_spec.json")], deps=tier_cases)
+    # the omitted converter terms on the compared cases and on the round-3 screens (the case-D
+    # screen under the corrected capacitor rule, the phase-2 sweeps at each tier limit, the
+    # enumeration the screen was picked from); the feasibility stage reads its high bundle
+    omit = post("derived.omitted_losses", "derived", "tcpmt_omitted_losses.py",
+                [tr("omitted_losses.json")],
+                deps=[dse["etm35_caprule_full"], dse["etm35_p2_t4"], dse["etm35_p2_t5"],
+                      dse["etm35_p2_tinf"], p2sum] + tier_cases,
+                env={"HVR_DSE_ENGINE": "{scratch}/dse_engine"},
+                est_h=0.1, notes="the f_sw-grid section needs tcpmt_omitted_losses_fsw_grid.py, "
+                "which cannot run at HEAD (engine md5 check, stale patch patterns): written "
+                "available:false; the DSE routing score of the re-selection check imports "
+                "paper_routing.py from outside the repository (the engine snapshot's record)")
     post("derived.feasibility", "derived", "tcpmt_feasibility.py", [tr("feasibility.json")],
          deps=flds + [fields[("Z1", "HV_S1")], fields[("Z2", "HV_S1")]] + tier_cases +
-         [prod[(a, "S1", t)] for a in ARCHS for t in TIERS], est_h=0.15, mem_gb=8,
+         [prod[(a, "S1", t)] for a in ARCHS for t in TIERS] + [omit], est_h=0.15, mem_gb=8,
          evidence="mesh builds + frd reads (minutes)")
     post("derived.platform", "derived", "tcpmt_platform.py", [tr("platform_inclusive.json")],
          deps=[cool, land_rep] + tier_cases)
@@ -760,10 +772,6 @@ def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s,
     post("derived.uncertainty", "derived", "tcpmt_uncertainty.py",
          [tr("uncertainty.json"), "manuscript_v2/tab_uncertainty.tex"],
          deps=[lad[k] for k in lad] + tier_cases + [loc_m, solder["studies"], solder["z3land"]])
-    post("derived.omitted_losses", "derived", "tcpmt_omitted_losses.py", [tr("omitted_losses.json")],
-         deps=[dse["etm35"]] + tier_cases,
-         est_h=0.1, notes="the f_sw-grid section needs tcpmt_omitted_losses_fsw_grid.py, which "
-         "cannot run at HEAD (engine md5 check, stale patch patterns): written available:false")
 
     # ------------------------------------------------------------ manuscript
     manuscript()
