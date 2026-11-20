@@ -799,6 +799,15 @@ def gap_shift_reconciliation(omit):
     if not omit:
         return None
     pairs = (omit.get("summary") or {}).get("pairs") or {}
+    ocases = omit.get("cases") or {}
+
+    def superseded(case_key):
+        # a pair member evaluated on a superseded (uncoupled Z3) case file; the round-3 study
+        # runs on the registry's coupled cases, the committed round-2 study on the uncoupled ones
+        src = (ocases.get(case_key) or {}).get("file")
+        if not src:
+            return "Z3" in case_key
+        return TC.is_superseded(Path(src) if Path(src).is_absolute() else R / src)
     rows = []
     for key, v in pairs.items():
         lo, nom, hi = v["delta_omitted_w_low_nom_high"]
@@ -808,7 +817,7 @@ def gap_shift_reconciliation(omit):
                      "direct_w": {"low": lo, "nominal": nom, "high": hi},
                      "feedback_w": {"nominal": fnom, "high": fhi},
                      "total_w": {"nominal": nom + fnom, "high": hi + fhi},
-                     "superseded_z3": "Z3" in key})
+                     "superseded_z3": any(superseded(k) for k in key.split("_vs_"))})
     out = {"rows": rows, "by_tier": {}, "by_tier_with_z3": {}}
     for t in ("A", "B"):
         # the I configuration ('secondplate') is not a cooling tier of the comparison
@@ -826,15 +835,18 @@ def gap_shift_reconciliation(omit):
                                 for b in ("nominal", "high")},
                 "smallest_gap_w": min(r["gap_w"] for r in rr),
                 "pairs": [r["pair"] for r in rr]}
+    head = ", ".join(f"{t}: direct <= {v['direct_max_w']['high']:.2f} W (high bundle), with "
+                     f"feedback <= {v['total_max_w']['high']:.2f} W, smallest gap "
+                     f"{v['smallest_gap_w']:.2f} W"
+                     for t, v in out["by_tier"].items())
+    n_sup = sum(r["superseded_z3"] for r in rows)
     out["statement"] = (
-        "the 'at most 0.2 W' of the text is the DIRECT shift of the cooling-A Z1-Z2 gap (0.10 W "
-        "nominal, 0.17 W high); the '+0.8 W' is the ELECTROTHERMAL FEEDBACK of the nominal "
-        "bundle on that gap; '1.0-1.15 W' is the DIRECT shift of the cooling-B gaps against Z1 "
-        "with the high bundle (Z2-Z1 1.0 W; Z3-Z1 1.15 W on the superseded uncoupled Z3). One "
-        "statement covers all three, per tier: direct shift <= direct_max, with its feedback <= "
-        "total_max (by_tier: the ranked Z1-Z2 pairs; by_tier_with_z3 adds the Z3 pairs, whose "
-        "omitted-loss inputs are the superseded uncoupled Z3 cases until omitted_losses.json is "
-        "regenerated on the coupled cases)")
+        "per cooling tier, how far the omitted terms move a gap between two integrations: the "
+        "DIRECT shift (difference of the omitted terms at each case's own temperatures) and the "
+        "ELECTROTHERMAL FEEDBACK of that heat; " + (head or "no pair") + ". by_tier excludes the "
+        "pairs whose omitted-loss input is a superseded uncoupled Z3 case "
+        + (f"({n_sup} such pairs: the omitted study predates the coupled Z3 cases)" if n_sup
+           else "(none: the study ran on the coupled cases)") + "; by_tier_with_z3 keeps them")
     return out
 
 
