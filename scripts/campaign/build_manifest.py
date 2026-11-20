@@ -30,11 +30,13 @@ committed one (the design record's `decoupling` block, configs/design_points.yam
 research/tcpmt_revision/decoupling_by_design.json); the campaign's own decoupling chain
 re-derives it and derived.k_check records the difference. If no legal BGA count closes the
 production state, the network is built at the declared fallback count and flagged NOT_CLOSED
-(final_closure_pkg_network.FALLBACK_RULE). Review round 3: at most 220 balls per rail;
-derived.bga_reclose re-closes at the k the campaign's chain derived and judges the worse of the
-DC peak x k_eq rule and Z1's worst-ball RMS of the port model (both recorded); the feasibility
-stage reads the 1.5-A per-ball target per TCPMT_BGA_POLICY ('requirement' by default, 'hard' a
-filter; both policies' verdicts are stored).
+(final_closure_pkg_network.FALLBACK_RULE). Review round 3: at most 220 balls per rail, and
+the count stays at the network's (the modelled arrangement; no reallocation);
+derived.bga_reclose judges the per-ball current at the k the campaign's chain derived with ONE
+rule for every integration, the DC peak x k_eq, against the feasibility target (2 A per ball,
+Kuan et al. 2015; 1.5 A as a sensitivity), and records Z1's worst-ball RMS of the port model as
+an idealized bound; the feasibility stage applies the same target per TCPMT_BGA_POLICY
+('requirement' by default, 'hard' a filter; both policies' verdicts are stored).
 Paths in `outputs` are relative to the campaign results root (= the stand-in for research/);
 `@fields/` is $HVR_FIELDS of the campaign.
 """
@@ -143,16 +145,29 @@ def feedback_wall_s(arch, tier):
     return (tot, f"review_variants {arch} {tier}: {n} passes, {tot:.0f} s") if n else (None, None)
 
 
-def mem_for(n_elems_k):
-    """Requested memory (GB) of an ETM job from its element count (thousands): the measured
-    max RSS per element of the smoke tests x 2.5 (structural fill-in grows faster than the
-    element count), at least 6 GB: r11 6 GB, r21 9 GB, r31 19 GB."""
-    return max(6, int(math.ceil(MEM_GB_PER_KEL * n_elems_k * 2.5)))
+def mem_for(n_elems_k, rung="r21", design=None):
+    """Requested memory (GB) of an ETM job: its peak estimate -- the element count (thousands)
+    x the measured peak per element of its mesh rung, or a measured peak of the same mesh when
+    that is larger -- x MEM_MARGIN, at least 6 GB (m36: r11/r12 6 GB, r21 11 GB at 120 kel,
+    r31 52 GB at 270 kel; m49 r21 17 GB)."""
+    peak = max(MEM_GB_PER_KEL[rung] * n_elems_k, MEM_PEAK_GB.get((design, rung), 0.0))
+    return max(6, int(math.ceil(peak * MEM_MARGIN)))
 
 
-#: max RSS per 1000 elements of an ETM job (python + ccx): the 2026-11-18 smoke tests,
-#: 833 MB (Z1 r11, 36,128 el, local) and 832 MB (Z2 r11, 36,280 el, califone)
-MEM_GB_PER_KEL = 0.023
+#: peak RSS per 1000 mesh elements of an ETM job (python + CalculiX, E-T + mechanics), by mesh
+#: rung, measured in campaign_v3 (status maxrss over the case's thermal.n_elems, m36,
+#: 2026-11-19/20): r11 0.019-0.022 GB (24-28 kel), r12 0.017 (56-57 kel), r21 0.057-0.058
+#: (79-126 kel, every r21 mesh of m36 / m36t5 / m36thin / m25), r31 0.127 (Z1 / Z2 / Z3,
+#: 215-255 kel: 27.3-32.3 GB). The coefficient grows with refinement (structural fill-in): the
+#: earlier flat 0.023 GB/kel x 2.5 asked 16 GB for r31, and PBS killed every r31 rung at 16 GB.
+MEM_GB_PER_KEL = {"r11": 0.022, "r12": 0.022, "r21": 0.058, "r31": 0.127}
+#: measured peaks (GB) of meshes above their rung's coefficient: the 49-cell production mesh
+#: (144.5 kel at r21, 0.078 GB/kel: 11.3 GB, m49.prod.Z1.S0.A local; 7 GB asked, so its SDEC
+#: jobs were killed at 7.2 GB on califone)
+MEM_PEAK_GB = {("m49", "r21"): 11.3}
+#: request = estimated peak x this margin (the spread within a rung is under 3 %; the element
+#: counts of the jobs are estimates)
+MEM_MARGIN = 1.5
 
 
 def walltime(est_h, factor=2.5, floor=1.0):
@@ -195,7 +210,7 @@ def job(id, stage, argv, outputs, *, deps=(), env=None, validate=None, ncpus=1, 
 
 def etm_job(id, stage, argv, out, *, deps=(), analog=None, n_el_k=145, ncpus=2, env=None,
             mechanics=True, local=False, kind="etm", blocked=None, extra_outputs=(),
-            speed=1.0, notes=None, est_fallback_h=1.8, design=None):
+            speed=1.0, notes=None, est_fallback_h=1.8, design=None, rung="r21"):
     s, ev = etm_wall_s(out)
     if s is None and analog:
         s, ev = etm_wall_s(analog)
@@ -206,7 +221,8 @@ def etm_job(id, stage, argv, out, *, deps=(), analog=None, n_el_k=145, ncpus=2, 
         v[0].update({"mechanics": mechanics, **({"local": True} if local else {})})
     return job(id, stage, argv, [out, *extra_outputs], deps=deps,
                env={"FC_THREADS": ncpus, "FC_POOL_MAX": 1, **(env or {})}, validate=v,
-               ncpus=ncpus, mem_gb=mem_for(n_el_k), est_h=est, evidence=ev or "no evidence",
+               ncpus=ncpus, mem_gb=mem_for(n_el_k, rung, design), est_h=est,
+               evidence=ev or "no evidence",
                blocked=blocked, notes=notes, design=design)
 
 
@@ -288,7 +304,8 @@ def prep_jobs(d=None, land=True):
         notes="the count is closed and matched at the PRODUCTION state, at the committed "
               "production k of the design record (`decoupling`), at most 220 balls per rail; "
               "no closing count -> the declared fallback count, flagged NOT_CLOSED "
-              "(match_fallback); the worst-ball RMS check follows in derived.bga_reclose")
+              "(match_fallback): the modelled arrangement; the per-ball verdict (DC peak x k_eq against "
+              "the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose")
     if not land:
         return out
     out["land_est"] = post(f"{pre}prep.z3land_estimate", "prep", "tcpmt_z3_landside_estimate.py",
@@ -426,7 +443,10 @@ def build(design):
                 env={"FC_POOL_MAX": 16, "LOCAL_THREADS": 1}, est_h=2.0,
                 evidence="local_time_study.json: 72 ccx solves, sum 85,058 s, max 1,643 s "
                          "(followup_local.log 3 h 12 min on 8 x 6 threads)",
-                validate=[{"file": fc("local_time_study.json"), "kind": "json"}])
+                # a study in which no policy case converged fixes no first increment: every
+                # later local solve needs one (campaign_v3: 72 failed solves once passed)
+                validate=[{"file": fc("local_time_study.json"), "kind": "json",
+                           "nonempty": ["production_dt0_s"]}])
     loc_c = job("local.cycles", "production", ["scripts/final_closure_local_mesh.py", "--cycles"],
                 [fc("local_cycle_study.json")], deps=[loc_t], ncpus=9, workers=9, mem_gb=12,
                 env={"FC_POOL_MAX": 9, "LOCAL_THREADS": 1}, est_h=1.6,
@@ -517,11 +537,13 @@ def build(design):
          deps=[prep["network"], dsum] + [prod[(a, "SDEC", t)] for a in ("Z1", "Z2")
                                         for t in TIERS],
          ncpus=4, env={"FC_WORKERS": 4}, est_h=0.3,
-         notes="re-closes the count at the production state with the production cases' "
+         notes="the per-ball check at the production state with the production cases' "
                "48-V currents (level-2 verification), at the k this campaign's decoupling "
-               "chain derives, at most 220 balls per rail; the closure current is the worse "
-               "of the DC peak x k_eq rule and Z1's worst-ball RMS of the port model (both "
-               "recorded)")
+               "chain derives, at the network's count (the modelled arrangement, 220 balls per "
+               "rail; no reallocation): one rule for every integration, the DC peak x k_eq, "
+               "against the feasibility target (2 A per ball, Kuan et al. 2015; 1.5 A as a "
+               "sensitivity); Z1's worst-ball RMS of the port model is recorded as an "
+               "idealized bound")
     post("derived.decap_limits", "derived", "tcpmt_decap_placement.py",
          [tr("decoupling_limits.json")], args=["limits"], deps=["derived.bga_reclose"],
          est_h=0.15, evidence="input_decoupling limits of the m36 development run: wall 321 s",
@@ -536,7 +558,8 @@ def build(design):
             argv, out, env = state_spec(a, "S0", "A", refine=r)
             lad[(a, r)] = etm_job(f"ladder.{a}.{r}", "refinement_ladders", argv, out,
                                   deps=[prep["network"]], analog=case("Z1", "HV_S0", r),
-                                  n_el_k=n_k, ncpus=thr, speed=(0.8 if r == "r31" else 1.0))
+                                  n_el_k=n_k, ncpus=thr, speed=(0.8 if r == "r31" else 1.0),
+                                  rung=r)
     # the production state at the coarse and fine rungs (rung token): r11 is also the smoke test
     for a in D["archs"]:
         for t in TIERS:
@@ -546,7 +569,7 @@ def build(design):
                     f"ladder.{a}.sdec_{t}.{r}", "refinement_ladders", argv, out,
                     deps=[prep["network"], dplace] + (land_deps if a == "Z3" else []),
                     analog=case("Z1", "HV_S0", r), n_el_k=n_k, ncpus=thr, env=env,
-                    speed=(0.8 if r == "r31" else 1.0),
+                    speed=(0.8 if r == "r31" else 1.0), rung=r,
                     notes="production state on the nested mesh rung" +
                           ("; the coarse smoke test of the campaign" if r == "r11" else ""))
 

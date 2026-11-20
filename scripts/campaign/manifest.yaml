@@ -125,9 +125,10 @@ jobs:
   workers: 8
   evidence: 'final_closure_pkg_network.py (FC_WORKERS pool): exhaustive level-1 screen of every legal
     count, level-2 verification, levels 1-3 at the matched count'
-  notes: the count is closed and matched at the PRODUCTION state, at the committed production k of the
+  notes: 'the count is closed and matched at the PRODUCTION state, at the committed production k of the
     design record (`decoupling`), at most 220 balls per rail; no closing count -> the declared fallback
-    count, flagged NOT_CLOSED (match_fallback); the worst-ball RMS check follows in derived.bga_reclose
+    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement; the per-ball verdict (DC peak
+    x k_eq against the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose'
 - id: m36t5.prep.package_network
   stage: prep
   argv:
@@ -152,9 +153,10 @@ jobs:
   workers: 8
   evidence: 'final_closure_pkg_network.py (FC_WORKERS pool): exhaustive level-1 screen of every legal
     count, level-2 verification, levels 1-3 at the matched count'
-  notes: the count is closed and matched at the PRODUCTION state, at the committed production k of the
+  notes: 'the count is closed and matched at the PRODUCTION state, at the committed production k of the
     design record (`decoupling`), at most 220 balls per rail; no closing count -> the declared fallback
-    count, flagged NOT_CLOSED (match_fallback); the worst-ball RMS check follows in derived.bga_reclose
+    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement; the per-ball verdict (DC peak
+    x k_eq against the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose'
   design: m36t5
 - id: m36thin.prep.package_network
   stage: prep
@@ -180,9 +182,10 @@ jobs:
   workers: 8
   evidence: 'final_closure_pkg_network.py (FC_WORKERS pool): exhaustive level-1 screen of every legal
     count, level-2 verification, levels 1-3 at the matched count'
-  notes: the count is closed and matched at the PRODUCTION state, at the committed production k of the
+  notes: 'the count is closed and matched at the PRODUCTION state, at the committed production k of the
     design record (`decoupling`), at most 220 balls per rail; no closing count -> the declared fallback
-    count, flagged NOT_CLOSED (match_fallback); the worst-ball RMS check follows in derived.bga_reclose
+    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement; the per-ball verdict (DC peak
+    x k_eq against the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose'
   design: m36thin
 - id: m25.prep.package_network
   stage: prep
@@ -208,9 +211,10 @@ jobs:
   workers: 8
   evidence: 'final_closure_pkg_network.py (FC_WORKERS pool): exhaustive level-1 screen of every legal
     count, level-2 verification, levels 1-3 at the matched count'
-  notes: the count is closed and matched at the PRODUCTION state, at the committed production k of the
+  notes: 'the count is closed and matched at the PRODUCTION state, at the committed production k of the
     design record (`decoupling`), at most 220 balls per rail; no closing count -> the declared fallback
-    count, flagged NOT_CLOSED (match_fallback); the worst-ball RMS check follows in derived.bga_reclose
+    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement; the per-ball verdict (DC peak
+    x k_eq against the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose'
   design: m25
 - id: m49.prep.package_network
   stage: prep
@@ -236,9 +240,10 @@ jobs:
   workers: 8
   evidence: 'final_closure_pkg_network.py (FC_WORKERS pool): exhaustive level-1 screen of every legal
     count, level-2 verification, levels 1-3 at the matched count'
-  notes: the count is closed and matched at the PRODUCTION state, at the committed production k of the
+  notes: 'the count is closed and matched at the PRODUCTION state, at the committed production k of the
     design record (`decoupling`), at most 220 balls per rail; no closing count -> the declared fallback
-    count, flagged NOT_CLOSED (match_fallback); the worst-ball RMS check follows in derived.bga_reclose
+    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement; the per-ball verdict (DC peak
+    x k_eq against the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose'
   design: m49
 - id: prep.z3land_fv
   stage: prep
@@ -476,7 +481,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 2.374
   walltime_h: 6.5
   backends:
@@ -502,7 +507,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 2.339
   walltime_h: 6.5
   backends:
@@ -532,7 +537,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 2.339
   walltime_h: 6.5
   backends:
@@ -560,7 +565,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 2.155
   walltime_h: 6.0
   backends:
@@ -607,6 +612,8 @@ jobs:
   validate:
   - file: final_closure/local_time_study.json
     kind: json
+    nonempty:
+    - production_dt0_s
   workers: 16
   evidence: 'local_time_study.json: 72 ccx solves, sum 85,058 s, max 1,643 s (followup_local.log 3 h 12
     min on 8 x 6 threads)'
@@ -620,7 +627,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.845
   walltime_h: 5.5
   backends:
@@ -645,7 +652,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.815
   walltime_h: 5.5
   backends:
@@ -670,7 +677,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.727
   walltime_h: 5.0
   backends:
@@ -723,7 +730,7 @@ jobs:
   - prep.package_network
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -754,7 +761,7 @@ jobs:
   - prep.package_network
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -787,7 +794,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -820,7 +827,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -873,7 +880,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.383
   walltime_h: 4.0
   backends:
@@ -901,7 +908,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.383
   walltime_h: 4.0
   backends:
@@ -929,7 +936,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.383
   walltime_h: 4.0
   backends:
@@ -959,7 +966,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.383
   walltime_h: 4.0
   backends:
@@ -989,7 +996,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.383
   walltime_h: 4.0
   backends:
@@ -1014,7 +1021,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.341
   walltime_h: 4.0
   backends:
@@ -1044,7 +1051,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.22
   walltime_h: 4.0
   backends:
@@ -1073,7 +1080,7 @@ jobs:
   - prep.package_network
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.035
   walltime_h: 3.5
   backends:
@@ -1130,7 +1137,7 @@ jobs:
   - prep.package_network
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 0.974
   walltime_h: 3.0
   backends:
@@ -1163,7 +1170,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 0.896
   walltime_h: 3.0
   backends:
@@ -1426,7 +1433,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.403
   walltime_h: 4.5
   backends:
@@ -1455,7 +1462,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.397
   walltime_h: 4.0
   backends:
@@ -1484,7 +1491,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.395
   walltime_h: 4.0
   backends:
@@ -1513,7 +1520,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.381
   walltime_h: 4.0
   backends:
@@ -1542,7 +1549,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.348
   walltime_h: 4.0
   backends:
@@ -1571,7 +1578,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.34
   walltime_h: 4.0
   backends:
@@ -1600,7 +1607,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.279
   walltime_h: 4.0
   backends:
@@ -1629,7 +1636,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.22
   walltime_h: 4.0
   backends:
@@ -1658,7 +1665,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 10.0
   est_wall_h: 1.031
   walltime_h: 3.5
   backends:
@@ -1718,7 +1725,7 @@ jobs:
   - prod.Z3.SDEC.A
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 4.195
   walltime_h: 11.0
   backends:
@@ -1747,7 +1754,7 @@ jobs:
   - prod.Z2.SDEC.B
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 3.508
   walltime_h: 9.5
   backends:
@@ -1776,7 +1783,7 @@ jobs:
   - prod.Z2.SDEC.A
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 2.764
   walltime_h: 7.5
   backends:
@@ -1805,7 +1812,7 @@ jobs:
   - prod.Z3.SDEC.B
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 2.636
   walltime_h: 7.5
   backends:
@@ -1834,7 +1841,7 @@ jobs:
   - prod.Z1.SDEC.A
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 2.503
   walltime_h: 7.0
   backends:
@@ -1863,7 +1870,7 @@ jobs:
   - prod.Z1.SDEC.B
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.832
   walltime_h: 5.5
   backends:
@@ -1892,7 +1899,7 @@ jobs:
   - prod.Z2.SDEC.B
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.784
   walltime_h: 5.0
   backends:
@@ -1922,7 +1929,7 @@ jobs:
   - prod.Z3.SDEC.B
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.784
   walltime_h: 5.0
   backends:
@@ -1952,7 +1959,7 @@ jobs:
   - prod.Z2.SDEC.A
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.707
   walltime_h: 5.0
   backends:
@@ -1982,7 +1989,7 @@ jobs:
   - prod.Z3.SDEC.A
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.707
   walltime_h: 5.0
   backends:
@@ -2012,7 +2019,7 @@ jobs:
   - prod.Z1.SDEC.A
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.622
   walltime_h: 5.0
   backends:
@@ -2042,7 +2049,7 @@ jobs:
   - prod.Z1.SDEC.B
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.237
   walltime_h: 4.0
   backends:
@@ -2071,7 +2078,7 @@ jobs:
   - m25.prep.package_network
   - m25.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2102,7 +2109,7 @@ jobs:
   - m25.prep.package_network
   - m25.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2133,7 +2140,7 @@ jobs:
   - m49.prep.package_network
   - m49.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 17.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2164,7 +2171,7 @@ jobs:
   - m49.prep.package_network
   - m49.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 17.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2192,7 +2199,7 @@ jobs:
   deps:
   - m25.prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.341
   walltime_h: 4.0
   backends:
@@ -2218,7 +2225,7 @@ jobs:
   deps:
   - m49.prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 17.0
   est_wall_h: 1.341
   walltime_h: 4.0
   backends:
@@ -2247,7 +2254,7 @@ jobs:
   - m36thin.prep.package_network
   - m36thin.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2279,7 +2286,7 @@ jobs:
   - m36thin.prep.package_network
   - m36thin.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2311,7 +2318,7 @@ jobs:
   - m36thin.prep.package_network
   - m36thin.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2343,7 +2350,7 @@ jobs:
   - m36thin.prep.package_network
   - m36thin.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2377,7 +2384,7 @@ jobs:
   - m36thin.prep.z3land_estimate
   - m36thin.prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2411,7 +2418,7 @@ jobs:
   - m36thin.prep.z3land_estimate
   - m36thin.prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2440,7 +2447,7 @@ jobs:
   deps:
   - m36thin.prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.341
   walltime_h: 4.0
   backends:
@@ -2469,7 +2476,7 @@ jobs:
   - m36t5.prep.package_network
   - m36t5.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2500,7 +2507,7 @@ jobs:
   - m36t5.prep.package_network
   - m36t5.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2531,7 +2538,7 @@ jobs:
   - m36t5.prep.package_network
   - m36t5.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2562,7 +2569,7 @@ jobs:
   - m36t5.prep.package_network
   - m36t5.derived.decap_placement
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2595,7 +2602,7 @@ jobs:
   - m36t5.prep.z3land_estimate
   - m36t5.prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2628,7 +2635,7 @@ jobs:
   - m36t5.prep.z3land_estimate
   - m36t5.prep.z3land_fv
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.569
   walltime_h: 4.5
   backends:
@@ -2656,7 +2663,7 @@ jobs:
   deps:
   - m36t5.prep.package_network
   ncpus: 2
-  mem_gb: 7.0
+  mem_gb: 11.0
   est_wall_h: 1.341
   walltime_h: 4.0
   backends:
@@ -2682,7 +2689,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 4
-  mem_gb: 16.0
+  mem_gb: 52.0
   est_wall_h: 5.086
   walltime_h: 13.5
   backends:
@@ -2707,7 +2714,7 @@ jobs:
   deps:
   - prep.package_network
   ncpus: 4
-  mem_gb: 16.0
+  mem_gb: 52.0
   est_wall_h: 4.626
   walltime_h: 12.5
   backends:
@@ -2736,7 +2743,7 @@ jobs:
   - prep.package_network
   - derived.decap_placement
   ncpus: 4
-  mem_gb: 16.0
+  mem_gb: 52.0
   est_wall_h: 4.626
   walltime_h: 12.5
   backends:
@@ -2767,7 +2774,7 @@ jobs:
   - prep.package_network
   - derived.decap_placement
   ncpus: 4
-  mem_gb: 16.0
+  mem_gb: 52.0
   est_wall_h: 4.626
   walltime_h: 12.5
   backends:
@@ -2798,7 +2805,7 @@ jobs:
   - prep.package_network
   - derived.decap_placement
   ncpus: 4
-  mem_gb: 16.0
+  mem_gb: 52.0
   est_wall_h: 4.626
   walltime_h: 12.5
   backends:
@@ -2829,7 +2836,7 @@ jobs:
   - prep.package_network
   - derived.decap_placement
   ncpus: 4
-  mem_gb: 16.0
+  mem_gb: 52.0
   est_wall_h: 4.626
   walltime_h: 12.5
   backends:
@@ -2862,7 +2869,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 4
-  mem_gb: 16.0
+  mem_gb: 52.0
   est_wall_h: 4.626
   walltime_h: 12.5
   backends:
@@ -2895,7 +2902,7 @@ jobs:
   - prep.z3land_estimate
   - prep.z3land_fv
   ncpus: 4
-  mem_gb: 16.0
+  mem_gb: 52.0
   est_wall_h: 4.626
   walltime_h: 12.5
   backends:
@@ -3258,7 +3265,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 3.303
   walltime_h: 9.0
   backends:
@@ -3284,7 +3291,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 2.423
   walltime_h: 7.0
   backends:
@@ -3310,7 +3317,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 2.419
   walltime_h: 7.0
   backends:
@@ -3336,7 +3343,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 2.211
   walltime_h: 6.5
   backends:
@@ -3362,7 +3369,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 2.207
   walltime_h: 6.5
   backends:
@@ -3388,7 +3395,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 2.06
   walltime_h: 6.0
   backends:
@@ -3414,7 +3421,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 2.046
   walltime_h: 6.0
   backends:
@@ -3440,7 +3447,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.917
   walltime_h: 5.5
   backends:
@@ -3466,7 +3473,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.879
   walltime_h: 5.5
   backends:
@@ -3492,7 +3499,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3517,7 +3524,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3542,7 +3549,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3567,7 +3574,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3592,7 +3599,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3617,7 +3624,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3646,7 +3653,7 @@ jobs:
   - prod.Z1.SDEC.A
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3675,7 +3682,7 @@ jobs:
   - prod.Z2.SDEC.A
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3704,7 +3711,7 @@ jobs:
   - prod.Z3.SDEC.A
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3733,7 +3740,7 @@ jobs:
   - prod.Z1.SDEC.B
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3762,7 +3769,7 @@ jobs:
   - prod.Z2.SDEC.B
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3791,7 +3798,7 @@ jobs:
   - prod.Z3.SDEC.B
   - derived.decap_placement
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.8
   walltime_h: 5.0
   backends:
@@ -3816,7 +3823,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.762
   walltime_h: 5.0
   backends:
@@ -3842,7 +3849,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.725
   walltime_h: 5.0
   backends:
@@ -3868,7 +3875,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.653
   walltime_h: 5.0
   backends:
@@ -3894,7 +3901,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.611
   walltime_h: 5.0
   backends:
@@ -3920,7 +3927,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.61
   walltime_h: 5.0
   backends:
@@ -3946,7 +3953,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.607
   walltime_h: 5.0
   backends:
@@ -3972,7 +3979,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.543
   walltime_h: 4.5
   backends:
@@ -3998,7 +4005,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.493
   walltime_h: 4.5
   backends:
@@ -4024,7 +4031,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.491
   walltime_h: 4.5
   backends:
@@ -4050,7 +4057,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.483
   walltime_h: 4.5
   backends:
@@ -4076,7 +4083,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.481
   walltime_h: 4.5
   backends:
@@ -4102,7 +4109,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.458
   walltime_h: 4.5
   backends:
@@ -4128,7 +4135,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.457
   walltime_h: 4.5
   backends:
@@ -4155,7 +4162,7 @@ jobs:
   - prod.Z2.S0.A
   - derived.direct_feed
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.456
   walltime_h: 4.5
   backends:
@@ -4181,7 +4188,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.432
   walltime_h: 4.5
   backends:
@@ -4207,7 +4214,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.427
   walltime_h: 4.5
   backends:
@@ -4233,7 +4240,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.421
   walltime_h: 4.5
   backends:
@@ -4259,7 +4266,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.418
   walltime_h: 4.5
   backends:
@@ -4285,7 +4292,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.412
   walltime_h: 4.5
   backends:
@@ -4311,7 +4318,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.393
   walltime_h: 4.0
   backends:
@@ -4337,7 +4344,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.377
   walltime_h: 4.0
   backends:
@@ -4363,7 +4370,7 @@ jobs:
   deps:
   - prod.Z2.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.252
   walltime_h: 4.0
   backends:
@@ -4389,7 +4396,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.241
   walltime_h: 4.0
   backends:
@@ -4415,7 +4422,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.238
   walltime_h: 4.0
   backends:
@@ -4441,7 +4448,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.215
   walltime_h: 4.0
   backends:
@@ -4467,7 +4474,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.207
   walltime_h: 4.0
   backends:
@@ -4493,7 +4500,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.16
   walltime_h: 3.5
   backends:
@@ -4519,7 +4526,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.033
   walltime_h: 3.5
   backends:
@@ -4545,7 +4552,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.032
   walltime_h: 3.5
   backends:
@@ -4571,7 +4578,7 @@ jobs:
   deps:
   - prod.Z1.S0.A
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 1.007
   walltime_h: 3.5
   backends:
@@ -4598,7 +4605,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.963
   walltime_h: 3.0
   backends:
@@ -4625,7 +4632,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.825
   walltime_h: 3.0
   backends:
@@ -4652,7 +4659,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.819
   walltime_h: 3.0
   backends:
@@ -4679,7 +4686,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.725
   walltime_h: 2.5
   backends:
@@ -4706,7 +4713,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.725
   walltime_h: 2.5
   backends:
@@ -4733,7 +4740,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.725
   walltime_h: 2.5
   backends:
@@ -4760,7 +4767,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.725
   walltime_h: 2.5
   backends:
@@ -4787,7 +4794,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.725
   walltime_h: 2.5
   backends:
@@ -4814,7 +4821,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.708
   walltime_h: 2.5
   backends:
@@ -4841,7 +4848,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.694
   walltime_h: 2.5
   backends:
@@ -4868,7 +4875,7 @@ jobs:
   - prod.Z2.S0.A
   - fields.Z2.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.685
   walltime_h: 2.5
   backends:
@@ -4895,7 +4902,7 @@ jobs:
   - prod.Z1.S0.A
   - fields.Z1.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.441
   walltime_h: 2.0
   backends:
@@ -4922,7 +4929,7 @@ jobs:
   - prod.Z1.S0.A
   - fields.Z1.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.406
   walltime_h: 2.0
   backends:
@@ -4949,7 +4956,7 @@ jobs:
   - prod.Z1.S0.A
   - fields.Z1.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.406
   walltime_h: 2.0
   backends:
@@ -4976,7 +4983,7 @@ jobs:
   - prod.Z1.S0.A
   - fields.Z1.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.406
   walltime_h: 2.0
   backends:
@@ -5003,7 +5010,7 @@ jobs:
   - prod.Z1.S0.A
   - fields.Z1.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.406
   walltime_h: 2.0
   backends:
@@ -5030,7 +5037,7 @@ jobs:
   - prod.Z1.S0.A
   - fields.Z1.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.406
   walltime_h: 2.0
   backends:
@@ -5057,7 +5064,7 @@ jobs:
   - prod.Z1.S0.A
   - fields.Z1.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.342
   walltime_h: 1.5
   backends:
@@ -5084,7 +5091,7 @@ jobs:
   - prod.Z1.S0.A
   - fields.Z1.HV_S0
   ncpus: 2
-  mem_gb: 9.0
+  mem_gb: 13.0
   est_wall_h: 0.326
   walltime_h: 1.5
   backends:
@@ -7001,10 +7008,11 @@ jobs:
   - file: final_closure/bga_count_production.json
     kind: json
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-  notes: re-closes the count at the production state with the production cases' 48-V currents (level-2
-    verification), at the k this campaign's decoupling chain derives, at most 220 balls per rail; the
-    closure current is the worse of the DC peak x k_eq rule and Z1's worst-ball RMS of the port model
-    (both recorded)
+  notes: 'the per-ball check at the production state with the production cases'' 48-V currents (level-2
+    verification), at the k this campaign''s decoupling chain derives, at the network''s count (the modelled
+    arrangement, 220 balls per rail; no reallocation): one rule for every integration, the DC peak x k_eq,
+    against the feasibility target (2 A per ball, Kuan et al. 2015; 1.5 A as a sensitivity); Z1''s worst-ball
+    RMS of the port model is recorded as an idealized bound'
 - id: derived.results
   stage: derived
   argv:
