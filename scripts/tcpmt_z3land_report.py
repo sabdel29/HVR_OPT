@@ -2,7 +2,11 @@
 
 Reads the coupled cases of tcpmt_z3land_variants (research/final_closure/sensitivity/
 etm_Z3_HV_S0__z3_land_*.json) and the three-tier reference cases, and writes
-research/tcpmt_revision/z3_land_coupled.json:
+research/tcpmt_revision/z3_land_coupled.json. The Z3 references (z3_top_only, z3_plate_tim)
+are the superseded UNCOUPLED lower bound; TCPMT round 3 does not produce them, so the
+lower-bound comparison is optional: when they are absent it is skipped and recorded as
+skipped (`lower_bound`), and the sharing context takes its temperatures from the coupled
+Z3-B case instead:
 
   per run     total loss, conversion / routing, land-side and board-plane rows, per-rail
               static spread, T_max, die warpage, critical joint (du, T), R* against Z1 of
@@ -49,7 +53,40 @@ REF = {"A": {"Z1": D / "etm_Z1_HV_S0_h1.1_r21.json", "Z2": D / "etm_Z2_HV_S0_h1.
        "B": {"Z1": S.OUT / "etm_Z1_HV_S0__z1_bottom_plate_tim.json",
              "Z2": S.OUT / "etm_Z2_HV_S0__z2_cooled_tim.json",
              "Z3": S.OUT / "etm_Z3_HV_S0__z3_plate_tim.json"}}
+#: the optional entries of REF: Z3's superseded uncoupled lower bound (the land side and the
+#: board planes NOT_MODELLED), which the round-3 campaign does not produce
+LOWER_BOUND_ARCH = "Z3"
+LOWER_BOUND_SKIP = ("the superseded uncoupled Z3 lower bound is not produced in TCPMT round 3 "
+                    "(Z3 is compared only on its coupled land side, tcpmt_cases): the "
+                    "lower-bound comparison is skipped")
+#: the coupled case whose temperatures stand in for the lower bound's in the sharing context
+SHARING_FALLBACK_RUN = "z3_land_t40_B"
 DROP_LIMIT_MV = 30.0
+
+
+def _rel(p) -> str:
+    """A results path for the record: relative to the checkout when inside it (the frozen tree,
+    or a campaign root under it), else absolute (a results root outside the checkout)."""
+    try:
+        return Path(p).relative_to(R).as_posix()
+    except ValueError:
+        return Path(p).as_posix()
+
+
+def load_references():
+    """({tier: {arch: case}}, {tier: skipped file name}) of REF. Z1/Z2 are required; the Z3
+    lower bound is optional (skipped, and recorded, when its file is absent)."""
+    refs, skipped = {}, {}
+    for t, row in REF.items():
+        refs[t] = {}
+        for a, f in row.items():
+            if f.is_file():
+                refs[t][a] = json.loads(f.read_text())
+            elif a == LOWER_BOUND_ARCH:
+                skipped[t] = f.name
+            else:
+                raise SystemExit(f"reference case missing: {f}")
+    return refs, skipped
 
 
 def conv_of(rows):
@@ -259,17 +296,28 @@ def drop_thickness(t_land_of_t, limit_mv=DROP_LIMIT_MV, n_rails=1):
 def main():
     V.patch_ledger()                      # the spreading rows (switched by V.STATE per run)
     V.patch_regions()                     # converged temperatures carry T_land / T_board
-    refs = {t: {a: json.loads(f.read_text()) for a, f in row.items()} for t, row in REF.items()}
+    refs, lb_skipped = load_references()
     out = {"model": __doc__.split("\n\n")[1].strip(),
            "shape_factors": json.loads(FV.OUT.read_text())["used_in_coupled_ledger"],
            "land_fv_source": FV.land_shape()["source"],
-           "board_plane_fv_source": FV.OUT.relative_to(R).as_posix(),
+           "board_plane_fv_source": _rel(FV.OUT),
            "board_allocation": json.loads(FV.OUT.read_text())["board_planes"]["allocation"],
            "references": {t: {a: {"file": REF[t][a].name, **summary(c)}
                               for a, c in row.items()} for t, row in refs.items()},
+           "lower_bound": {"what": "Z3 with the land side and board planes NOT_MODELLED (the "
+                                   "uncoupled reference of the earlier ledger)",
+                           "status": "skipped" if lb_skipped else "compared",
+                           **({"skipped": {t: {"file": f, "reason": LOWER_BOUND_SKIP}
+                                           for t, f in lb_skipped.items()}}
+                              if lb_skipped else {})},
            "runs": {}}
     for t in ("A", "B"):                  # the reference Z3 (spreading NOT_MODELLED) R*
-        out["references"][t]["Z3"]["R_star"] = r_star(refs[t]["Z3"], refs[t]["Z1"]["P_loss_w"])
+        if LOWER_BOUND_ARCH in refs[t]:
+            out["references"][t]["Z3"]["R_star"] = r_star(refs[t]["Z3"],
+                                                           refs[t]["Z1"]["P_loss_w"])
+        else:
+            out["references"][t]["Z3"] = {"file": REF[t]["Z3"].name, "skipped": True,
+                                          "reason": LOWER_BOUND_SKIP}
     mesh = E.build("Z3", E.PRODUCTION_H_XY, E.PRODUCTION_REFINE)[0]
     for name, (t_um, tier, plane) in V.RUNS.items():
         f = S.case_file("Z3", name)
@@ -278,7 +326,7 @@ def main():
         c = json.loads(f.read_text())
         rows = {r["term"]: r for r in c["ledger_rows"]}
         z = c.get("z3_land") or {}
-        rec = {"file": f.relative_to(R).as_posix(), "t_land_um": t_um, "cooling_tier": tier,
+        rec = {"file": _rel(f), "t_land_um": t_um, "cooling_tier": tier,
                "board_planes_in_ledger": plane, **summary(c),
                "P_land_w": rows[V.LAND_TERM]["P_w"],
                "P_board_plane_w": rows[V.PLANE_TERM]["P_w"],
@@ -300,7 +348,8 @@ def main():
         rec["vs_Z2_same_tier_w"] = c["P_loss_w"] - ref["Z2"]["P_loss_w"]
         rec["vs_Z1B_w"] = c["P_loss_w"] - refs["B"]["Z1"]["P_loss_w"]
         rec["vs_Z2B_w"] = c["P_loss_w"] - refs["B"]["Z2"]["P_loss_w"]
-        rec["delta_vs_reference_Z3_w"] = c["P_loss_w"] - ref["Z3"]["P_loss_w"]
+        rec["delta_vs_reference_Z3_w"] = (c["P_loss_w"] - ref["Z3"]["P_loss_w"]
+                                          if LOWER_BOUND_ARCH in ref else None)
         rec["deposit_check"] = deposit_check(name, c)
         rec["deposit"] = (c.get("z3_land") or {}).get("deposit", "uniform")
         rec["T_max_location"] = tmax_location(name, mesh)
@@ -393,21 +442,35 @@ def sharing_context(refs):
     (Kirchhoff) division of the same board-plane + BGA + land-side network dissipates less
     (Thomson's principle) but loads the balls unevenly (tcpmt_z3land_fv.network_check, at
     the reference Z3-B temperatures). Uncoupled estimate of Z3-B under the free division:
-    reference Z3-B + (free board + BGA + land) - (equal BGA, already in the reference)."""
-    h = refs["B"]["Z3"]["et_history"][-1]
+    reference Z3-B + (free board + BGA + land) - (equal BGA, already in the reference). That
+    estimate needs the uncoupled reference: without it (TCPMT round 3) it is skipped, and the
+    network check takes the temperatures of the coupled Z3-B case (SHARING_FALLBACK_RUN)."""
+    base = refs["B"].get(LOWER_BOUND_ARCH)
+    src = REF["B"]["Z3"].name
+    if base is None:
+        f = S.case_file("Z3", SHARING_FALLBACK_RUN)
+        if not f.exists():
+            return {"skipped": f"neither the lower bound ({src}) nor the coupled {f.name} "
+                               "is in the results root"}
+        base, src = json.loads(f.read_text()), f.name
+    h = base["et_history"][-1]
     t_c = {"t_land_c": h["T_sub_C"], "t_board_c": h["T_pcb_via_C"], "t_bga_c": h["T_bga_C"]}
     nc = FV.network_check(**t_c)
     g = FV.network_check(t_land_um=(40.0,), h_mm=FV.GRID_CHECK_MM, **t_c)["cases"][0]
-    p_ref, p_z1 = refs["B"]["Z3"]["P_loss_w"], refs["B"]["Z1"]["P_loss_w"]
-    est = {}
-    for c in nc["cases"]:
-        tr = c["two_rails"]
-        p = p_ref + tr["free_network"]["sum_w"] - tr["equal_sharing"]["bga_w"]
-        est[str(c["t_land_um"])] = {"P_Z3B_free_sharing_est_w": p, "ahead_of_Z1B_w": p_z1 - p}
+    if LOWER_BOUND_ARCH in refs["B"]:
+        p_ref, p_z1 = refs["B"]["Z3"]["P_loss_w"], refs["B"]["Z1"]["P_loss_w"]
+        est = {}
+        for c in nc["cases"]:
+            tr = c["two_rails"]
+            p = p_ref + tr["free_network"]["sum_w"] - tr["equal_sharing"]["bga_w"]
+            est[str(c["t_land_um"])] = {"P_Z3B_free_sharing_est_w": p,
+                                        "ahead_of_Z1B_w": p_z1 - p}
+    else:
+        est = {"skipped": LOWER_BOUND_SKIP + " (the estimate is built on it)"}
     return {"network_check": nc,
             "grid_check_t40_0p05mm": {"free_over_equal": g["two_rails"]["free_over_equal"],
                                       "two_rails": g["two_rails"]},
-            "temperatures_from": REF["B"]["Z3"].name,
+            "temperatures_from": src,
             "Z3B_free_sharing_estimate": est,
             "note": "free sharing puts ~365 of ~685 balls per rail above the 1.5 A criterion "
                     "that set the 667-ball count (max ~3.3-3.4 A); equal sharing is what that "
