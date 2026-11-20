@@ -112,7 +112,13 @@ def critical(case):
 
 
 def rel(x):
-    return Path(x).resolve().relative_to(R).as_posix()
+    """A path for a record: relative to the checkout when inside it (the frozen tree, or a
+    campaign root under it), else absolute (a results root outside the checkout)."""
+    p = Path(x).resolve()
+    try:
+        return p.relative_to(R).as_posix()
+    except ValueError:
+        return p.as_posix()
 
 
 # ----------------------------------------------------------------------- concurrency

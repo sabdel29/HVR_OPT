@@ -412,8 +412,10 @@ def solve(task):
     study, tag = task["study"], task["tag"]
     f = record_path(study, tag)
     wd = scratch(ROOT, study, tag)
-    if len(str(wd / tag)) > 128:
-        raise ValueError(f"CalculiX job name too long: {wd / tag}")
+    # run_ccx passes the bare stem (cwd = the deck's directory): CalculiX's 127-character limit
+    # applies to the tag, not to the scratch path (which exceeds it under the campaign tree)
+    if len(tag) > 127:
+        raise ValueError(f"CalculiX job name too long ({len(tag)} > 127 characters): {tag}")
     p, m, info = deck_for(task, wd)
     if f.exists():
         old = json.loads(f.read_text())
