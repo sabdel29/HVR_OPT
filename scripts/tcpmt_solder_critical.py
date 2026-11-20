@@ -12,7 +12,8 @@ time study's first increment, block-order extraction) -- at the candidate's own 
 
 The Pareto argument needs the response to be non-decreasing in du and in T. That is
 tested, not assumed:
-  (a) a regular (du, T) grid spanning every candidate (du 0.2-4.5 um, T 75-120 C);
+  (a) a regular (du, T) grid, du 0.2-4.5 um, T in 15-C rows from 75-120 C extended to
+      bracket every candidate's T_joint (grid_t; m36: 60-120 C);
   (b) every pair of computed points (all cases + grid) that is ordered in both du and T
       must be ordered in the response the same way; violations are counted.
 
@@ -30,9 +31,26 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import tcpmt_solder_common as C                                     # noqa: E402
 
 STUDY = "critical"
-CASE_ORDER = ["Z1_S0", "Z2_S0", "Z3_S0", "Z1_S1", "Z2_S1", "A_Z3", "B_Z1", "B_Z2", "B_Z3"]
+#: TCPMT round 3: the superseded uncoupled Z3 case (Z3_S0) is not produced; Z3 enters through
+#: its coupled land-side cases (A_Z3, B_Z3)
+CASE_ORDER = ["Z1_S0", "Z2_S0", "Z1_S1", "Z2_S1", "A_Z3", "B_Z1", "B_Z2", "B_Z3"]
 GRID_DU = (0.2, 0.5, 1.0, 1.5, 2.0, 3.0, 4.5)
-GRID_T = (75.0, 90.0, 105.0, 120.0)
+#: the round-2 temperature rows of the monotonicity grid; grid_t() extends them in 15-C steps
+#: until they span every candidate joint (m36: the coolest, B_Z2, at 73.05 C -> a 60-C row)
+GRID_T_BASE = (75.0, 90.0, 105.0, 120.0)
+GRID_T_STEP = 15.0
+
+
+def grid_t():
+    """Temperature rows of the monotonicity grid: the round-2 rows, extended downward and
+    upward in GRID_T_STEP steps until they bracket every candidate's T_joint."""
+    ts = [c["T_C"] for case in CASE_ORDER for c in candidates(case)[0]]
+    rows = list(GRID_T_BASE)
+    while ts and rows[0] > min(ts):
+        rows.insert(0, rows[0] - GRID_T_STEP)
+    while ts and rows[-1] < max(ts):
+        rows.append(rows[-1] + GRID_T_STEP)
+    return tuple(rows)
 #: the published Phase-0I control joint (harness acceptance, policy amendments 3-6)
 CONTROL = dict(du_um=C.LR.CONTROL["du_um"], T_C=C.LR.CONTROL["T_hot_C"])
 CONTROL_PASS5 = 0.00651488542578123          # local_mesh_study.json acceptance, same settings
@@ -80,7 +98,7 @@ def tasks():
                           meta={"case": case, "x_mm": c["x_mm"], "y_mm": c["y_mm"],
                                 "roles": c["roles"]}))
     for du in GRID_DU:
-        for T in GRID_T:
+        for T in grid_t():
             t.append(dict(study=STUDY, tag=f"GRID_du{du:.2f}_T{T:.0f}", du_um=du, T_C=T,
                           meta={"role": "monotonicity grid"}))
     # critical sites of every case first, then the grid, then the rest of the fronts
@@ -144,17 +162,18 @@ def summarize():
                                          if (best_inner and crit["d_eps"]) else None),
             "candidates": rows}
         pts += [dict(r, case=case) for r in done]
+    gt = grid_t()
     grid = []
     for du in GRID_DU:
-        for T in GRID_T:
+        for T in gt:
             r = recs.get(f"GRID_du{du:.2f}_T{T:.0f}") or {}
             grid.append({"du_um": du, "T_C": T, "d_eps": r.get("d_peeq_per_cycle"),
                          "error": r.get("error")})
-    out["grid"] = {"du_um": list(GRID_DU), "T_C": list(GRID_T), "points": grid}
+    out["grid"] = {"du_um": list(GRID_DU), "T_C": list(gt), "points": grid}
     gv = {(g["du_um"], g["T_C"]): g["d_eps"] for g in grid}
-    d_du = [gv[(b, T)] / gv[(a, T)] for T in GRID_T for a, b in zip(GRID_DU, GRID_DU[1:])
+    d_du = [gv[(b, T)] / gv[(a, T)] for T in gt for a, b in zip(GRID_DU, GRID_DU[1:])
             if gv.get((a, T)) and gv.get((b, T))]
-    d_T = [gv[(du, b)] / gv[(du, a)] for du in GRID_DU for a, b in zip(GRID_T, GRID_T[1:])
+    d_T = [gv[(du, b)] / gv[(du, a)] for du in GRID_DU for a, b in zip(gt, gt[1:])
            if gv.get((du, a)) and gv.get((du, b))]
     # local log-sensitivities on the grid (central where possible)
     out["grid"]["min_ratio_along_du"] = min(d_du) if d_du else None
@@ -162,12 +181,12 @@ def summarize():
     out["grid"]["monotone_in_du"] = bool(d_du) and min(d_du) > 1.0
     out["grid"]["monotone_in_T"] = bool(d_T) and min(d_T) > 1.0
     el_du, el_T = [], []
-    for T in GRID_T:
+    for T in gt:
         for a, b in zip(GRID_DU, GRID_DU[1:]):
             if gv.get((a, T)) and gv.get((b, T)):
                 el_du.append(math.log(gv[(b, T)] / gv[(a, T)]) / math.log(b / a))
     for du in GRID_DU:
-        for a, b in zip(GRID_T, GRID_T[1:]):
+        for a, b in zip(gt, gt[1:]):
             if gv.get((du, a)) and gv.get((du, b)):
                 el_T.append(math.log(gv[(du, b)] / gv[(du, a)]) / (b - a))
     out["grid"]["dlnf_dlndu_range"] = [min(el_du), max(el_du)] if el_du else None

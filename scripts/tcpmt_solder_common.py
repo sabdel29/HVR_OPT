@@ -70,11 +70,12 @@ T_COLD = LR.T_OFF
 assert JOINT.BAND_FRAC == BAND_PROD, "JOINT_BAND_FRAC must equal the amendment-5 band"
 
 #: case files. A Z1/Z2 are the production S0 cases; A Z3 is Z3 under the top plate alone;
-#: B adds the identical bottom plate through the 50-um TIM (manuscript_v2 Table II).
+#: B adds the identical bottom plate through the 50-um TIM (manuscript_v2 Table II). TCPMT
+#: round 3: the uncoupled production-boundary Z3 case (Z3_S0) is superseded and never
+#: produced; Z3 enters only through its coupled land-side cases (A_Z3, B_Z3).
 CASES = {
     "Z1_S0": FC / "etm_Z1_HV_S0_h1.1_r21.json",
     "Z2_S0": FC / "etm_Z2_HV_S0_h1.1_r21.json",
-    "Z3_S0": FC / "etm_Z3_HV_S0_h1.1_r21.json",
     "Z1_S1": FC / "etm_Z1_HV_S1_h1.1_r21.json",
     "Z2_S1": FC / "etm_Z2_HV_S1_h1.1_r21.json",
     # review round 2: Z3 is the coupled land-side case (the uncoupled z3_top_only /
@@ -86,9 +87,8 @@ CASES = {
 }
 TIERS = {"A": {"Z1": "Z1_S0", "Z2": "Z2_S0", "Z3": "A_Z3"},
          "B": {"Z1": "B_Z1", "Z2": "B_Z2", "Z3": "B_Z3"}}
-#: the L0 responses the manuscript currently prints (results_macros.tex, x1e-3 / cycle)
-PAPER_L0 = {"A": {"Z1": 5.80, "Z2": 8.03, "Z3": 13.47},
-            "B": {"Z1": 2.08, "Z2": 4.15, "Z3": 2.52}}
+#: (the round-2 manuscript's printed L0 responses, PAPER_L0, are no longer carried: they are
+#: the 49-cell design's and would sit beside this design's responses in the outputs)
 #: production pass-5 uncertainties (local_mesh_study.json), relative
 MESH_STUDY = FC / "local_mesh_study.json"
 CYCLE_STUDY = FC / "local_cycle_study.json"
@@ -425,9 +425,16 @@ def load_records(study):
 
 
 def production_uncertainty():
-    """Pass-5 U parts per production case (local_mesh_study.json)."""
+    """Pass-5 U parts per production case (local_mesh_study.json), with the case file each
+    was solved on (`source`; Z3: the coupled land-side case). A part or level the study left
+    unresolved is None."""
     ms = json.loads(MESH_STUDY.read_text())["cases"]
-    return {k: {"U": c["U"], "U_mesh": c["U_mesh"], "U_time": c["U_time"],
-                "U_cyc": c["U_cyc"], "status": c["status"],
-                "L0": c["levels"]["L0"]["d_peeq_per_cycle"],
-                "L3": c["levels"]["L3"]["d_peeq_per_cycle"]} for k, c in ms.items()}
+
+    def lv(c, k):
+        return ((c.get("levels") or {}).get(k) or {}).get("d_peeq_per_cycle")
+    return {k: {"U": c.get("U"), "U_mesh": c.get("U_mesh"), "U_time": c.get("U_time"),
+                "U_cyc": c.get("U_cyc"), "status": c.get("status"),
+                "L0": lv(c, "L0"), "L3": lv(c, "L3"),
+                "source": next((x.get("source") for x in (c.get("levels") or {}).values()
+                                if (x or {}).get("source")), None)}
+            for k, c in ms.items()}

@@ -71,19 +71,31 @@ def tail_fit(seq, n_last=20):
 
 
 def u_parts(case, prod):
-    """U_mesh, U_time for a tier case: its own pass-5 values if it is a production case,
-    otherwise the largest over the pass-5 production cases (no own mesh study exists)."""
-    own = {"Z1_S0": "Z1_HV_S0", "Z2_S0": "Z2_HV_S0", "Z3_S0": "Z3_HV_S0"}.get(case)
-    if own:
+    """U_mesh, U_time for a tier case: the pass-5 values of the mesh-study case solved on the
+    same case file (TCPMT round 3: the study's Z3 case is the coupled land-side case, i.e. the
+    tier-A Z3 joint), otherwise the largest over the pass-5 production cases (no own mesh
+    study). Matched by file, never by name, so a case the study does not hold cannot raise;
+    parts the study left unresolved are skipped (None when none is resolved)."""
+    name = C.CASES[case].name
+    own = next((k for k, p in prod.items() if p.get("source") == name), None)
+    if own and prod[own].get("U_mesh") is not None and prod[own].get("U_time") is not None:
         return prod[own]["U_mesh"], prod[own]["U_time"], f"own pass-5 ({own})"
-    return (max(p["U_mesh"] for p in prod.values()), max(p["U_time"] for p in prod.values()),
+    um = [p["U_mesh"] for p in prod.values() if p.get("U_mesh") is not None]
+    ut = [p["U_time"] for p in prod.values() if p.get("U_time") is not None]
+    return (max(um) if um else None, max(ut) if ut else None,
             "largest pass-5 production value (no own mesh study)")
+
+
+def _usum(*parts):
+    """Sum of uncertainty parts; None when any part is unknown."""
+    return None if any(p is None for p in parts) else sum(parts)
 
 
 def summarize():
     recs = C.load_records(STUDY)
     prod = C.production_uncertainty()
-    l0_offset = max(abs(p["L0"] - p["L3"]) / p["L3"] for p in prod.values())
+    offs = [abs(p["L0"] - p["L3"]) / p["L3"] for p in prod.values() if p["L0"] and p["L3"]]
+    l0_offset = max(offs) if offs else None
     import tcpmt_solder_units_check as UC
     unum = UC.summarize()["cases"]
     out = {"what": "cycle stabilisation of the six tier responses (task 2)",
@@ -103,7 +115,9 @@ def summarize():
                                "linear-in-A interpolation between the 25 C-spaced rows, which "
                                "the policy U does not contain",
            "u_conservative_rule": "U_stab_num plus the largest L0 -> L3 offset of the "
-                                  f"production cases ({l0_offset:.4f}), since the tier values "
+                                  "production cases ("
+                                  + ("not available" if l0_offset is None
+                                     else f"{l0_offset:.4f}") + "), since the tier values "
                                   "are L0",
            "cases": {}}
     vals = {}
@@ -119,7 +133,6 @@ def summarize():
         row = {"case_file": C.rel(C.CASES[case]), "du_um": r16.get("du_um"),
                "T_C": r16.get("T_joint_C"), "per_cycle_16": pc16, "per_cycle_48": pcl,
                "errors": [r16.get("error"), rl.get("error")],
-               "paper_L0_x1e3": C.PAPER_L0[tier][arch],
                "v4": v4, "v16": v16, "v48": vl,
                "mean_last3_16": (sum(pc16[-3:]) / 3 if v16 else None),
                "drift_per_cycle_at_16": ((pc16[-1] - pc16[-2]) / pc16[-1] if v16 else None),
@@ -141,15 +154,13 @@ def summarize():
                 row["U_cyc_16"] = abs(v16 - vl) / vl + ucs
         if v4 and v16:
             row["U_cyc_4cycle"] = abs(v16 - v4) / v16
-        row["U_4cycle"] = (um + ut + row["U_cyc_4cycle"]) if "U_cyc_4cycle" in row else None
-        row["U_16"] = (um + ut + row["U_cyc_16"]) if "U_cyc_16" in row else None
-        row["U_stab"] = (um + ut + row["U_cyc_stab"]) if "U_cyc_stab" in row else None
+        row["U_4cycle"] = _usum(um, ut, row.get("U_cyc_4cycle"))
+        row["U_16"] = _usum(um, ut, row.get("U_cyc_16"))
+        row["U_stab"] = _usum(um, ut, row.get("U_cyc_stab"))
         un = (unum.get(f"{tier}_{arch}") or {}).get("card_grid_sensitivity_rel")
         row["U_card_grid"] = un
-        row["U_stab_num"] = (row["U_stab"] + un) if (row["U_stab"] and un is not None) \
-            else None
-        row["U_stab_conservative"] = (row["U_stab_num"] + l0_offset) if row["U_stab_num"] \
-            else None
+        row["U_stab_num"] = _usum(row["U_stab"], un)
+        row["U_stab_conservative"] = _usum(row["U_stab_num"], l0_offset)
         out["cases"][f"{tier}_{arch}"] = row
         vals[(tier, arch)] = row
     comps = []

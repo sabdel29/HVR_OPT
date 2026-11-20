@@ -95,9 +95,23 @@ SIGMA_Y_ZERO = 1.0e-6
 WINDOW_Q = ("q05", "q95")
 MAX_IT, TOL_WIN, TOL_RESP = 8, 0.10, 0.01
 INC0_ALT, INC0_ALT_CHECK = 1.0e-9, 1.0e-8
-#: rows at and above this temperature carry the hot-dwell window; it lies below the coolest
-#: tier joint (78.67 C), so every T_joint sits between two pure hot-window rows
-T_HOT_ASSIGN = 75.0
+#: rows at and above the hot-assignment temperature carry the hot-dwell window. It lies at
+#: least 2.5 C below the coolest tier joint of the design in force, on the 2.5-C card rows,
+#: and at most at the round-2 75 C: min(75, floor((Tj_min - 2.5) / 2.5) * 2.5) (round 2: 75 C
+#: below 78.67 C; m36: 70 C below B_Z2's 73.05 C), so every T_joint sits between two pure
+#: hot-window rows
+T_HOT_ASSIGN_MAX = 75.0
+
+
+def tier_tj_min():
+    """(T_joint, case) of the coolest tier joint (the critical joints of C.tier_cases())."""
+    return min((C.critical(case)["T_C"], case) for _, _, case in C.tier_cases())
+
+
+def t_hot_assign():
+    """The hot-assignment temperature of the design in force (see T_HOT_ASSIGN_MAX)."""
+    tj, _case = tier_tj_min()
+    return min(T_HOT_ASSIGN_MAX, math.floor((tj - 2.5) / 2.5 + 1e-9) * 2.5)
 
 
 def garofalo(s, T_c, p=SCHUBERT):
@@ -138,13 +152,14 @@ def fit(T_c, lo, hi, npt=400, constrained=True):
 
 
 def t_hot_lo():
-    tj = min(C.critical(case)["T_C"] for _, _, case in C.tier_cases())
-    assert tj >= T_HOT_ASSIGN + 2.5, tj
-    return T_HOT_ASSIGN
+    tj, case = tier_tj_min()
+    th = t_hot_assign()
+    assert tj >= th + 2.5, (case, tj, th)
+    return th
 
 
 def window_at(T_c, win):
-    """Hot window at and above T_HOT_ASSIGN, cold window at and below 25 C, geometric blend
+    """Hot window at and above t_hot_assign(), cold window at and below 25 C, geometric blend
     in between (temperatures the step loading never visits)."""
     th = t_hot_lo()
     if T_c <= C.T_COLD:
@@ -398,9 +413,10 @@ def summarize():
                                          "production solves (iteration 0 of a strain-weighted "
                                          "scheme that cannot continue, see strain_it1_attempt)",
                        "temperature_assignment": f"cold window at T <= 25 C, hot window at T "
-                                                 f">= {T_HOT_ASSIGN:.0f} C (below the coolest "
-                                                 "tier joint, 78.7 C), geometric blend "
-                                                 "between (never visited)",
+                                                 f">= {t_hot_lo():g} C (at least 2.5 C below "
+                                                 f"the coolest tier joint, {tier_tj_min()[1]} "
+                                                 f"at {tier_tj_min()[0]:.2f} C), geometric "
+                                                 "blend between (never visited)",
                        "iteration": f"until endpoints change < {100 * TOL_WIN:.0f} % and "
                                     f"responses < {100 * TOL_RESP:.0f} % (max {MAX_IT})",
                        "brackets": "the converged window split at its geometric midpoint; "
@@ -417,7 +433,6 @@ def summarize():
     prod = log["production"]
     out["production_card"] = {
         f"{t}_{a}": {"d_eps": (prod.get(f"{t}_{a}_production") or {}).get("d_peeq_per_cycle"),
-                     "paper_L0_x1e3": C.PAPER_L0[t][a],
                      "per_cycle": (prod.get(f"{t}_{a}_production") or {}).get("per_cycle"),
                      "stress": (prod.get(f"{t}_{a}_production") or {}).get("stress")}
         for t, a, _ in C.tier_cases()}
