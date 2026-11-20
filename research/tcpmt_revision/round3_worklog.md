@@ -117,3 +117,14 @@ add the manifold plate, redo the tier order for the new stack, update the manife
 - Resume after a crash or kill: rerun `$PY scripts/campaign/run.py run --backend both` (idempotent).
 - Next: when the campaign is done, run the macros with ETM_RESULTS_ROOT=research/campaign_v3, then rewrite the
   manuscript and letter.
+
+## 2026-11-19 evening
+- BGA decision (user): 2 A per ball nominal (Kuan et al. ASQED 2015, refs.bib Kuan2015Imax); 1.5 A as a
+  conservative sensitivity.
+  - Ball counts stay fixed at the modelled arrangement (220/rail Z1 and Z2; Z3 685/rail): no reallocation.
+  - One rule for all integrations: DC peak x k. The Z1 port-model worst-ball RMS (about 2.2 A) is reported as
+    an idealized bound.
+  - Paper text: the Z2 ring balls are the 48-V feed balls (same 0.4-mm SAC); Z2 has no 1-V balls; the Cu
+    pillars are not counted.
+- Campaign runner: 35 local cores at nice 0; local-first; no califone buffer (PBS limits only). Commit f762af1.
+- Do not git-stash while the campaign runs: jobs read scripts from this tree.
