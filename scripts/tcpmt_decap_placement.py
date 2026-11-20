@@ -495,24 +495,63 @@ def limits():
     plans = [p for p in NW.phase_names() if not p.startswith("raster")]
     ph = {p: NW.phases(p) for p in plans}
     Ms, Md = NW.loss_matrices(f, l_nom, br, xy, r_scale)
-    # the closure at the network's count (bga_count_production.json at this k, else the
-    # network's own fallback record): per-ball current = verified peak x k / k_closed
+    # the per-ball check at the network's count (review round 3: ONE rule, the verified DC peak
+    # x k_eq, against the feasibility stage's target with its conservative sensitivity; the
+    # count fixed at the modelled arrangement). Source: the re-closure's verdict at that count
+    # at ITS k (bga_count_production.json ball_currents_at_count), else the network build's
+    # fallback record at the network's production k, else the network's converged peak
+    # fractions; per plan: per-ball current = verified peak x k_plan / k_closed
+    import tcpmt_feasibility as FEAS
+    target = float(FEAS.LIMITS["bga_A_per_ball"])
+    sens = float(FEAS.LIMITS["bga_A_per_ball_sensitivity"])
     fc = NW.NETWORK.parent
     pn = json.loads(NW.NETWORK.read_text())
     bp = fc / "bga_count_production.json"
     clo = json.loads(bp.read_text()) if bp.is_file() else {}
-    fb = clo.get("match_fallback") or pn.get("match_fallback") or {}
-    k_closed = float(clo.get("k_eq") or pn["meta"].get("production_k_eq") or 1.0)
-    peak = fb.get("verified_peak_A") or {}
-    out = {"network_count_per_rail": pn["matched_count"], "criterion_A": 1.5,
-           "k_closed": k_closed, "verified_peak_at_k_closed_A": peak, "plans": {}}
+    if clo and (clo.get("design") or {}).get("design") != DR.name():
+        clo = {}                           # another design's re-closure never stands in
+    bc = clo.get("ball_currents_at_count") or {}
+    n_net = int(pn["matched_count"])
+    if bc.get("per_arch") and clo.get("k_eq") and int(bc.get("n_per_rail") or -1) == n_net:
+        peak = {a: float(v["I_ball_closure_rule_A"]) for a, v in bc["per_arch"].items()
+                if v.get("I_ball_closure_rule_A") is not None}
+        k_closed = float(clo["k_eq"])
+        i_sdec = {a: float(clo["currents_A"][a]["HV_SDEC"]) for a in peak
+                  if (clo.get("currents_A") or {}).get(a)}
+        peak_src = ("bga_count_production.json ball_currents_at_count (the re-closure's "
+                    "verified level-2 DC peak x k_eq at the network's count)")
+    elif (pn.get("match_fallback") or {}).get("verified_peak_A"):
+        peak = {a: float(v) for a, v in pn["match_fallback"]["verified_peak_A"].items()}
+        k_closed = float(pn["meta"].get("production_k_eq") or 1.0)
+        i_sdec = {a: float(pn["loop"][a]["i_scenario_a"]["HV_SDEC"]) for a in peak}
+        peak_src = ("package_network.json match_fallback (the network build's verified level-2 "
+                    "DC peak x k_eq at its own production k)")
+    else:
+        conv = pn["convergence"]
+        k_closed = float(pn["meta"].get("production_k_eq") or 1.0)
+        i_sdec = {a: float(pn["loop"][a]["i_scenario_a"]["HV_SDEC"]) for a in ("Z1", "Z2")}
+        peak = {a: max(conv[f"{a}_{r}"]["final"]["i_ball_max_a"] for r in ("supply", "return"))
+                * i_sdec[a] for a in ("Z1", "Z2")}
+        peak_src = "package_network.json converged peak fractions x its HV_SDEC current"
+    out = {"network_count_per_rail": n_net, "criterion_A": target,
+           "criterion_sensitivity_A": sens,
+           "criterion_source": "tcpmt_feasibility.LIMITS bga_A_per_ball / "
+                               "bga_A_per_ball_sensitivity: "
+                               + FEAS.LIMIT_SOURCES["bga_A_per_ball"],
+           "rule": "per-ball current = verified DC peak x k_eq (one rule for every integration) "
+                   "at the network's count (the modelled arrangement, no reallocation)",
+           "k_closed": k_closed, "verified_peak_at_k_closed_A": peak,
+           "verified_peak_source": peak_src, "plans": {}}
     for p in plans:
         k, pdc, pac, per = NW.k_eq_from(Ms, Md, I, ph[p])
+        cur = {a: v * k / k_closed for a, v in peak.items()}
         out["plans"][p] = {
             "n_phases": int(len(np.unique(np.round(ph[p], 9)))), "k_eq": k, "P_DC_W": pdc,
             "P_AC_W": pac, "largest_harmonics_W": [[int(h + 1), float(per[h])]
                                                    for h in np.argsort(per)[::-1][:4]],
-            "I_ball_closure_rule_A": {a: v * k / k_closed for a, v in peak.items()}}
+            "I_ball_closure_rule_A": cur,
+            "passes_target": {a: bool(x <= target) for a, x in cur.items()},
+            "passes_sensitivity": {a: bool(x <= sens) for a, x in cur.items()}}
     # (2) interleaving limit
     out["interleaving_limit"] = {}
     for m in (6, 9, 12, n * n):
@@ -553,8 +592,8 @@ def limits():
     with open(fc / "bga_count_screen.csv") as fh:
         for r in csv.DictReader(fh):
             pf[(r["arch"], int(r["n_per_rail"]))] = float(r["peak_fraction"])
-    i_avg = {a: float(clo["currents_A"][a]["HV_SDEC"]) / k_closed
-             for a in ("Z1", "Z2")} if clo.get("currents_A") else {}
+    # the 48-V average current behind the verified peaks (their source's HV_SDEC current / k)
+    i_avg = {a: i / k_closed for a, i in i_sdec.items()}
     out["k_vs_count"] = {"allocation": "nearest_symmetric", "r_scale": r_scale,
                          "I_avg_A": i_avg, "counts": {}}
     try:

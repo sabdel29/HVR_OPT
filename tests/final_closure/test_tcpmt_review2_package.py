@@ -253,25 +253,31 @@ def test_bga_policy_switch_applies_without_rerun():
         assert d["rankings"] == {"marker": q} and d["bga_policy"]["in_force"] == q
 
 
-def test_bga_check_takes_the_worse_of_the_two_currents(tmp_path, monkeypatch):
-    """Z1 in the production state: the per-ball check takes the worse of the DC peak x k rule
-    and the port model's worst-ball RMS (scaled to the case's 48-V current) and reports both;
-    a reference state, or another ball count, keeps the closure rule alone."""
+def test_bga_check_applies_one_rule_and_reports_the_rms_bound(tmp_path, monkeypatch):
+    """Review round 3 (the authors' decision of 2026-11-19): the per-ball check applies ONE rule
+    to every integration, the DC peak x k against the 2-A target (Kuan et al. 2015), with 1.5 A
+    as a conservative sensitivity. Z1's worst-ball RMS of the port model (scaled to the case's
+    48-V current) is reported as an idealized bound and never decides the verdict; a reference
+    state, or another ball count, has no bound."""
     import tcpmt_feasibility as F
+    assert F.LIMITS["bga_A_per_ball"] == 2.0 and F.LIMITS["bga_A_per_ball_sensitivity"] == 1.5
     (tmp_path / "input_decoupling.json").write_text(json.dumps({"summary": {
         "ball_currents_recommended": {"n_per_rail": 220, "I_ball_rms_max_A": 2.0,
                                       "I_total_dc_A": 20.0}}}))
     monkeypatch.setattr(F, "TR", tmp_path)
-    monkeypatch.setattr(F, "peak_fraction", lambda a, n, net=None: (0.025, "test"))
+    monkeypatch.setattr(F, "peak_fraction", lambda a, n, net=None: (0.03, "test"))
     case = {"scenario": F.TC.SCEN["SDEC"], "i_hv_avg_a": 22.0, "ledger_rows": [
         {"term": "P_BGA_supply", "conductor": "BGA supply balls (N=220)", "I_a": 58.0}]}
     _n, val, lim, ok, _basis, ex = {x[0]: x for x in F.bga_check("Z1", case)}["bga_current"]
-    assert ex["I_ball_closure_rule_A"] == pytest.approx(0.025 * 58.0)
+    assert ex["I_ball_closure_rule_A"] == pytest.approx(0.03 * 58.0)
+    assert val == pytest.approx(0.03 * 58.0) and lim == 2.0 and ok is True
+    assert ex["ok_at_sensitivity_1p5A"] is False
+    # the bound (2.2 A) exceeds the target, is reported, and does not decide the verdict
     assert ex["I_ball_rms_max_A"] == pytest.approx(2.0 * 22.0 / 20.0)
-    assert val == pytest.approx(2.2) and lim == 1.5 and ok is False
+    assert ex["I_ball_rms_bound_ok_2A"] is False
     case["scenario"] = "HV_S0"
     _n, val0, _l, _o, _b, ex0 = {x[0]: x for x in F.bga_check("Z1", case)}["bga_current"]
-    assert ex0["I_ball_rms_max_A"] is None and val0 == pytest.approx(0.025 * 58.0)
+    assert ex0["I_ball_rms_max_A"] is None and val0 == pytest.approx(0.03 * 58.0)
     case["scenario"] = F.TC.SCEN["SDEC"]
     case["ledger_rows"][0]["conductor"] = "BGA supply balls (N=218)"
     assert {x[0]: x for x in F.bga_check("Z1", case)}["bga_current"][5]["I_ball_rms_max_A"] is None
@@ -279,8 +285,7 @@ def test_bga_check_takes_the_worse_of_the_two_currents(tmp_path, monkeypatch):
 
 def test_bga_closure_caps_the_count_at_220_per_rail(tmp_path, monkeypatch):
     """Review round 3: at most 220 balls per rail everywhere in the count closure (legal
-    counts and the re-scored screen), and the re-closure judges the worse of the DC peak x k
-    rule and Z1's worst-ball RMS of the port model."""
+    counts and the re-scored screen)."""
     import inspect
     import final_closure_pkg_network as PN
     assert PN.N_MAX_PER_RAIL == 220
@@ -291,6 +296,59 @@ def test_bga_closure_caps_the_count_at_220_per_rail(tmp_path, monkeypatch):
                  "Z2,250,1,VIN_PAD,0.02\n")
     monkeypatch.setattr(PN, "scenarios", lambda a: {"HV_SDEC": 60.0})
     assert sorted(r["n_per_rail"] for r in PN.screen_from_csv(f)) == [218, 220]
-    assert "worst-ball RMS" in PN.CLOSURE_RULE and "220" in PN.CLOSURE_RULE
-    src = inspect.getsource(PN.reclose)
-    assert "port_model_ball_rms" in src and "ball_currents_at_count" in src
+    assert "220" in PN.CLOSURE_RULE and "220" in PN.RECLOSE_RULE
+
+
+def test_bga_reclose_one_rule_at_the_modelled_count(tmp_path, monkeypatch):
+    """Review round 3, the re-closure (final_closure_pkg_network.reclose) with the solver
+    stubbed: the verdict is the verified DC peak x k_eq against the feasibility stage's target
+    (2 A, 1.5 A reported as the sensitivity) at the package network's count (220 per rail, no
+    reallocation, although 192 would close at 2 A); Z1's port-model RMS is recorded as an
+    idealized bound only; a network of another design is refused."""
+    import design_record as DR
+    import final_closure_pkg_network as PN
+    k, i_avg = 2.64, 23.6
+    i_sdec = k * i_avg
+    c = {"Z1": 1.73 * 220 / i_sdec, "Z2": 1.63 * 220 / i_sdec}    # peak fraction = c / n
+    counts = range(160, 221, 2)
+    (tmp_path / "bga_count_screen.csv").write_text(
+        "arch,n_per_rail,level,terminal_mode,peak_fraction\n" + "".join(
+            f"{a},{n},1,VIN_PAD,{c[a] / n!r}\n" for a in ("Z1", "Z2") for n in counts))
+    pn = {"matched_count": 220, "meta": {"design": {"design": DR.name()}}}
+    (tmp_path / "package_network.json").write_text(json.dumps(pn))
+
+    def fake_pool(jobs):        # the FV solves: the screen's peak fractions, any level
+        return [{"arch": a, "rail": rail, "n_per_rail": n, "level": lv,
+                 "terminal_mode": kw["mode"], "i_ball_max_a": c[a] / n, "r_eff_ohm": 1e-3,
+                 "ball_imax_over_imean": 2.0, "max_cell_drop_v": 1e-3}
+                for a, rail, n, lv, kw in jobs]
+    monkeypatch.setattr(PN, "OUT", tmp_path)
+    monkeypatch.setattr(PN, "PRODUCTION_OUT", tmp_path / "bga_count_production.json")
+    monkeypatch.setattr(PN, "run_pool", fake_pool)
+    monkeypatch.setattr(PN, "production_k", lambda: (k, [2.60, 2.70]))
+    monkeypatch.setattr(PN, "chain_k", lambda: (k, [2.60, 2.70]))
+    monkeypatch.setattr(PN, "production_i_avg", lambda a: i_avg)
+    monkeypatch.setattr(PN, "scenarios", lambda a: {"HV_S0": i_avg, "HV_SDEC": i_sdec})
+    monkeypatch.setattr(PN, "port_model_ball_rms",
+                        lambda n, crit=None: {"I_ball_rms_max_A": 2.2, "option": "test"})
+    monkeypatch.setattr(PN, "_CRIT_A", None)            # restored after the test
+    monkeypatch.setattr(PN, "_K_FROM_CHAIN", False)
+    PN.reclose()
+    out = json.loads((tmp_path / "bga_count_production.json").read_text())
+    assert out["criterion_A_per_ball"] == 2.0 and out["criterion_sensitivity_A_per_ball"] == 1.5
+    assert out["matched_count"] == 220 and out["matched_count_dc_rule"] == 192
+    bc = out["ball_currents_at_count"]
+    assert bc["n_per_rail"] == 220 and bc["rule"] == PN.RECLOSE_RULE
+    assert bc["status"] == "CLOSED" and bc["status_at_sensitivity"] == "NOT_CLOSED"
+    z1, z2 = bc["per_arch"]["Z1"], bc["per_arch"]["Z2"]
+    assert z1["I_ball_A"] == pytest.approx(1.73) and z2["I_ball_A"] == pytest.approx(1.63)
+    assert z1["passes"] and z2["passes"] and not z1["passes_sensitivity"]
+    assert z1["I_ball_rms_max_A"] == pytest.approx(2.2) and z1["rms_bound_within_target"] is False
+    assert z2["I_ball_rms_max_A"] is None and out["match_fallback"] is None
+    assert out["closure_sensitivity"]["Z1__HV_SDEC"]["status"] == \
+        "NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT"
+    # another design's network never stands in
+    pn["meta"]["design"]["design"] = "not_" + DR.name()
+    (tmp_path / "package_network.json").write_text(json.dumps(pn))
+    with pytest.raises(SystemExit):
+        PN.reclose()

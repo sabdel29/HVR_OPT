@@ -52,14 +52,49 @@ PRODUCTION_OUT = OUT / "bga_count_production.json"
 #: REVIEW ROUND 3 (declared): the 48-V BGA uses AT MOST this many balls per rail; the legal
 #: counts, the screen and every closure are restricted to it
 N_MAX_PER_RAIL = 220
-#: REVIEW ROUND 3 (declared): the per-ball current the closure checks is the WORSE of the DC
-#: peak x k_eq rule (the screen's peak fraction x the production RMS current) and Z1's
-#: worst-ball RMS from the harmonic port model (tcpmt_decap_placement.ball_rms_at_counts: DC +
-#: harmonics of every ball, the recommended decoupling); both are reported. The port model
-#: needs the decoupling chain, so the worse-of rule applies in the re-closure (reclose, after
-#: the chain); the network build (main) closes on the DC rule and records that.
-CLOSURE_RULE = ("per-ball current = max(DC peak x k_eq, worst-ball RMS of the port model "
-                "(Z1)) <= 1.5 A, at most 220 balls per rail")
+#: The NETWORK BUILD's count rule (main): the DC peak x k_eq rule (the screen's peak fraction x
+#: the production RMS current, verified on the resolved level) at I_CRIT_A, at most 220 balls
+#: per rail; when no legal count closes, the FALLBACK_RULE count (220 per rail at m36). That
+#: count is the MODELLED ARRANGEMENT every production case carries. Review round 3 (the authors'
+#: decision of 2026-11-19) keeps it, with no reallocation, and takes the per-ball verdict in the
+#: re-closure (reclose, RECLOSE_RULE below: one rule for every integration, the verified DC peak
+#: x k_eq against the feasibility stage's 2-A target, 1.5 A as a sensitivity; Z1's worst-ball
+#: RMS of the harmonic port model an idealized bound, reported).
+CLOSURE_RULE = ("network count: DC peak x k_eq <= 1.5 A per ball, at most 220 balls per rail, "
+                "else the fallback count (the modelled arrangement); the per-ball verdict is "
+                "the re-closure's (one rule, DC peak x k_eq, against the 2-A target)")
+#: REVIEW ROUND 3, the authors' decision of 2026-11-19 (round3_worklog): the re-closure
+#: (reclose) checks the per-ball current against the FEASIBILITY STAGE'S target
+#: (tcpmt_feasibility.LIMITS bga_A_per_ball: 2 A, Kuan et al. ASQED 2015; bga_A_per_ball_
+#: sensitivity: 1.5 A, a conservative sensitivity), with ONE rule for every integration (the
+#: verified DC peak x k_eq), at the ball count of the MODELLED arrangement (the package
+#: network's count): no reallocation. Z1's worst-ball RMS of the port model is reported as an
+#: idealized bound. The network build (main) keeps I_CRIT_A, the criterion it chose its count
+#: with (CLOSURE_RULE, recorded in package_network.json).
+RECLOSE_RULE = ("per-ball current = verified DC peak x k_eq (one rule for every integration) "
+                "against the feasibility stage's per-ball target (tcpmt_feasibility.LIMITS "
+                "bga_A_per_ball; the conservative sensitivity bga_A_per_ball_sensitivity is "
+                "reported), at the ball count of the modelled arrangement (package_network.json, "
+                "at most 220 per rail; no reallocation); Z1's worst-ball RMS of the port model "
+                "is an idealized bound, reported")
+#: set by reclose(): the per-ball criterion of the screen / verification pass flags (None: the
+#: network build's I_CRIT_A)
+_CRIT_A = None
+
+
+def crit_a():
+    """The per-ball criterion (A) of the pass flags in force: the re-closure's target while
+    reclose() runs, else I_CRIT_A (the network build)."""
+    return I_CRIT_A if _CRIT_A is None else float(_CRIT_A)
+
+
+def bga_target():
+    """(target A, sensitivity A, source, BGA policy in force) of the per-ball check, from the
+    feasibility stage (tcpmt_feasibility.LIMITS / LIMIT_SOURCES / BGA_POLICY)."""
+    import tcpmt_feasibility as FEAS
+    return (float(FEAS.LIMITS["bga_A_per_ball"]),
+            float(FEAS.LIMITS["bga_A_per_ball_sensitivity"]),
+            FEAS.LIMIT_SOURCES["bga_A_per_ball"], FEAS.BGA_POLICY)
 
 
 #: set by reclose(): the re-closure takes the k the results root's own decoupling chain
@@ -182,7 +217,7 @@ def peak_rows(results):
         row["peak_fraction"] = pk
         for s, i in sc.items():
             row[f"i_ball_max_A__{s}"] = pk * i
-            row[f"pass__{s}"] = bool(pk * i <= I_CRIT_A)
+            row[f"pass__{s}"] = bool(pk * i <= crit_a())
         rows.append(row)
     return rows
 
@@ -227,11 +262,11 @@ def fallback_count(screen, counts, kw, scen=None):
     vj = [(a, rail, n, VERIFY_LEVEL, kw) for a in ("Z1", "Z2") for rail in ("supply", "return")]
     v = {r["arch"]: r for r in peak_rows(run_pool(vj))}
     return n, {"status": "NOT_CLOSED", "rule": FALLBACK_RULE, "scenario": scen,
-               "n_per_rail": n, "criterion_A": I_CRIT_A,
+               "n_per_rail": n, "criterion_A": crit_a(),
                "screen_peak_A": {a: by[(a, n)][f"i_ball_max_A__{scen}"] for a in ("Z1", "Z2")},
                "verified_peak_A": {a: v[a][f"i_ball_max_A__{scen}"] for a in v},
                "verified_level": VERIFY_LEVEL,
-               "k_eq_that_closes_at_n": {a: production_k()[0] * I_CRIT_A
+               "k_eq_that_closes_at_n": {a: production_k()[0] * crit_a()
                                          / v[a][f"i_ball_max_A__{scen}"] for a in v}}
 
 
@@ -241,17 +276,18 @@ def verified_peaks(n, kw):
     return {r["arch"]: r[f"i_ball_max_A__{PRODUCTION_SCEN}"] for r in peak_rows(run_pool(vj))}
 
 
-def port_model_ball_rms(n):
+def port_model_ball_rms(n, crit=None):
     """Z1's worst-ball RMS at n balls per rail from the harmonic port model of the recommended
     decoupling (tcpmt_decap_placement.ball_rms_at_counts, at the decoupling chain's S0
     current), scaled to the production 48-V current of Z1 (production_i_avg; the S0 current
     when no production case exists). Needs the decoupling chain of this root (placement in
-    input_decoupling.json); without it the RMS is not evaluated (recorded)."""
+    input_decoupling.json); without it the RMS is not evaluated (recorded). `crit`: the
+    per-ball criterion of its passes_rms flag (default: crit_a())."""
     try:
         import tcpmt_decap_placement as PL
         if "placement" not in json.loads(PL.CI.JSON_OUT.read_text()):
             raise FileNotFoundError("no placement in input_decoupling.json")
-        raw = PL.ball_rms_at_counts([n], I_CRIT_A)[int(n)]
+        raw = PL.ball_rms_at_counts([n], crit_a() if crit is None else crit)[int(n)]
     except (FileNotFoundError, KeyError) as e:
         return {"I_ball_rms_max_A": None, "note": f"not evaluated: {e}"}
     i_prod = production_i_avg("Z1")
@@ -276,34 +312,55 @@ def screen_from_csv(path=None):
                    "terminal_mode": r["terminal_mode"], "peak_fraction": pk}
             for s, i in cur[a].items():
                 row[f"i_ball_max_A__{s}"] = pk * i
-                row[f"pass__{s}"] = bool(pk * i <= I_CRIT_A)
+                row[f"pass__{s}"] = bool(pk * i <= crit_a())
             rows.append(row)
     return rows
 
 
 def reclose():
-    """Re-close the count at the production waveform WITHOUT regenerating the network: the
+    """Re-close the 48-V BGA at the production waveform WITHOUT regenerating the network: the
     committed level-1 screen re-scored at the HV_SDEC current, the candidate minima verified on
-    the resolved level (n0 - 2, n0, n0 + 2, for both architectures), the matched count, and the
-    count at the upper end of the k_eq band. Review round 3: at most N_MAX_PER_RAIL balls per
-    rail, and the matched count must also pass Z1's worst-ball RMS of the port model
-    (CLOSURE_RULE: the worse of the two currents); both currents are recorded at the count
-    (ball_currents_at_count). Writes bga_count_production.json; the campaign then regenerates
-    package_network.json at the matched count with main()."""
-    global _K_FROM_CHAIN
+    the resolved level (n0 - 2, n0, n0 + 2, for both architectures), the count at the upper end
+    of the k_eq band, and the verdict at the network's count.
+
+    REVIEW ROUND 3 (the authors' decision of 2026-11-19; RECLOSE_RULE): the per-ball target is
+    the feasibility stage's (tcpmt_feasibility.LIMITS: bga_A_per_ball, with the conservative
+    bga_A_per_ball_sensitivity reported), ONE rule applies to every integration (the verified
+    level-2 DC peak x k_eq), and the ball count stays at the MODELLED arrangement -- the
+    package network's count (at most N_MAX_PER_RAIL per rail), no reallocation: the verdict
+    (ball_currents_at_count, matched_count = that count) is taken there, under the target and
+    under the sensitivity. Z1's worst-ball RMS of the harmonic port model is reported as an
+    idealized bound (all balls tied to an ideal board node), not used for the verdict. The
+    count minima at the target (closure, matched_count_dc_rule, matched_count_S0) are a
+    provisioning sensitivity, not adopted. Writes bga_count_production.json."""
+    global _K_FROM_CHAIN, _CRIT_A
+    import design_record as DR
     t0 = time.time()
     _K_FROM_CHAIN = True
+    target, sens, target_src, policy = bga_target()
+    _CRIT_A = target                        # the pass flags of the screen and verification
+    pn = json.loads((OUT / "package_network.json").read_text())
+    if ((pn.get("meta") or {}).get("design") or {}).get("design") != DR.name():
+        raise SystemExit(f"package_network.json is not of the design in force ({DR.name()}): "
+                         f"rebuild it (final_closure_pkg_network.py) before the re-closure")
+    n_model = int(pn["matched_count"])      # the modelled arrangement (no reallocation)
     screen = screen_from_csv()
     counts = {a: sorted(r["n_per_rail"] for r in screen if r["arch"] == a) for a in ("Z1", "Z2")}
+    if not all(n_model in counts[a] for a in counts):
+        raise SystemExit(f"the network's count ({n_model} per rail) is not a legal count of "
+                         f"bga_count_screen.csv: rebuild the network and its screen")
     kw = {"mode": "VIN_PAD"}
     k, band = production_k()
-    out = {"criterion_A_per_ball": I_CRIT_A, "k_eq": k, "k_eq_band": band,
+    out = {"criterion_A_per_ball": target, "criterion_sensitivity_A_per_ball": sens,
+           "criterion_source": f"tcpmt_feasibility.LIMITS bga_A_per_ball: {target_src}",
+           "bga_policy_in_force": policy,
+           "k_eq": k, "k_eq_band": band,
            "k_source": ("the results root's decoupling chain (input_decoupling.json)"
                         if chain_k() else "the design record's committed k"),
            "currents_A": {a: scenarios(a) for a in ("Z1", "Z2")},
            "i_avg_production_A": {a: production_i_avg(a) for a in ("Z1", "Z2")},
            "screen": "bga_count_screen.csv (level %d), re-scored" % SCREEN_LEVEL,
-           "verify_level": VERIFY_LEVEL, "closure": {}}
+           "verify_level": VERIFY_LEVEL, "closure": {}, "closure_sensitivity": {}}
     for a in ("Z1", "Z2"):
         for s in ("HV_S0", PRODUCTION_SCEN):
             ok = [r["n_per_rail"] for r in screen if r["arch"] == a and r[f"pass__{s}"]]
@@ -330,65 +387,65 @@ def reclose():
                                       "pass": r[f"pass__{s}"]} for n, r in ver.items()},
                 "larger_counts_that_FAIL_on_screen": fail_above}
         # the upper end of the loop-inductance band
-        i_hi = band[1] / k * scenarios(a)[PRODUCTION_SCEN]
+        i_prod = out["currents_A"][a][PRODUCTION_SCEN]
+        i_hi = band[1] / k * i_prod
         ok = [r["n_per_rail"] for r in screen if r["arch"] == a and r["peak_fraction"] * i_hi
-              <= I_CRIT_A]
+              <= target]
         out["closure"][f"{a}__{PRODUCTION_SCEN}__k_hi"] = {"k": band[1],
                                                          "n_min_screen": min(ok) if ok else None}
-    # the matched count under CLOSURE_RULE: the DC peak x k_eq rule for both architectures
-    # (screen + level-2 verification), then Z1's worst-ball RMS of the port model at that count
+        # the conservative sensitivity of the target, on the screen (no verification solves)
+        ok = [r["n_per_rail"] for r in screen if r["arch"] == a and r["peak_fraction"] * i_prod
+              <= sens]
+        out["closure_sensitivity"][f"{a}__{PRODUCTION_SCEN}"] = {
+            "criterion_A": sens, "n_min_screen": min(ok) if ok else None,
+            "status": "SCREEN_ONLY_NOT_VERIFIED" if ok else "NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT"}
+    # provisioning sensitivity (not adopted): the smallest common count passing the DC peak x
+    # k_eq rule at the target for both architectures (screen + level-2 verification)
     n_dc = matched_count(screen, counts, kw, PRODUCTION_SCEN)
-    out["closure_rule"] = CLOSURE_RULE
+    out["closure_rule"] = RECLOSE_RULE
     out["n_max_per_rail"] = N_MAX_PER_RAIL
+    out["count_rule"] = ("fixed at the modelled arrangement: the package network's count "
+                         "(package_network.json matched_count), no reallocation (review round 3)")
     out["matched_count_dc_rule"] = n_dc
-    rms = {}
-
-    def rms_at(n):
-        if n not in rms:
-            rms[n] = port_model_ball_rms(n)
-        return rms[n]
-    matched = None
-    if n_dc is not None:
-        common = sorted(set(counts["Z1"]) & set(counts["Z2"]))
-        for n in (m for m in common if m >= n_dc):
-            if not all(next((r[f"pass__{PRODUCTION_SCEN}"] for r in screen
-                             if r["arch"] == a and r["n_per_rail"] == n), False)
-                       for a in ("Z1", "Z2")):
-                continue
-            v = verified_peaks(n, kw)
-            if not all(v[a] <= I_CRIT_A for a in v):
-                continue
-            r_ = rms_at(n)
-            if r_.get("I_ball_rms_max_A") is not None and r_["I_ball_rms_max_A"] <= I_CRIT_A:
-                matched = n
-                break
-    out["matched_count"] = matched
-    out["match_fallback"] = None
-    if matched is None:
-        out["matched_count"], out["match_fallback"] = fallback_count(screen, counts, kw,
-                                                                     PRODUCTION_SCEN)
-    n = out["matched_count"]
-    v = (out["match_fallback"] or {}).get("verified_peak_A") or verified_peaks(n, kw)
-    r_ = rms_at(n)
+    # THE VERDICT at the modelled arrangement: verified DC peak x k_eq, one rule for all
+    n = n_model
+    out["matched_count"] = n
+    v = verified_peaks(n, kw)
+    r_ = port_model_ball_rms(n, target)
+    by = {(r["arch"], r["n_per_rail"]): r for r in screen}
     cur = {}
     for a in ("Z1", "Z2"):
         i_rms = r_.get("I_ball_rms_max_A") if a == "Z1" else None
-        worse = max(x for x in (v[a], i_rms) if x is not None)
-        cur[a] = {"I_ball_closure_rule_A": v[a], "I_ball_rms_max_A": i_rms, "I_ball_A": worse,
-                  "passes": worse <= I_CRIT_A,
-                  "basis": ("max(verified DC peak x k_eq, worst-ball RMS of the port model)"
-                            if a == "Z1" else "verified DC peak x k_eq (no port model of Z2's "
-                                              "feed: the closure rule alone)")}
+        cur[a] = {"I_ball_closure_rule_A": v[a], "I_ball_rms_max_A": i_rms, "I_ball_A": v[a],
+                  "passes": bool(v[a] <= target), "passes_sensitivity": bool(v[a] <= sens),
+                  "rms_bound_within_target": None if i_rms is None else bool(i_rms <= target),
+                  "screen_peak_A": (by.get((a, n)) or {}).get(f"i_ball_max_A__{PRODUCTION_SCEN}"),
+                  "k_eq_max_at_target": k * target / v[a],
+                  "k_eq_max_at_sensitivity": k * sens / v[a],
+                  "basis": ("verified DC peak x k_eq (one rule for every integration); the port "
+                            "model's worst-ball RMS is an idealized bound (all balls tied to an "
+                            "ideal board node), reported, not the verdict"
+                            if a == "Z1" else "verified DC peak x k_eq (one rule for every "
+                                              "integration; no port model of Z2's feed)")}
+    closed = all(c["passes"] for c in cur.values())
     out["ball_currents_at_count"] = {
-        "n_per_rail": n, "criterion_A": I_CRIT_A, "per_arch": cur, "port_model": r_,
-        "status": "CLOSED" if all(c["passes"] for c in cur.values()) else "NOT_CLOSED",
-        "rule": CLOSURE_RULE}
-    if out["match_fallback"]:
-        out["match_fallback"]["rms_port_model_A"] = {"Z1": cur["Z1"]["I_ball_rms_max_A"]}
-        out["match_fallback"]["worse_of_rules_A"] = {a: cur[a]["I_ball_A"] for a in cur}
+        "n_per_rail": n, "criterion_A": target, "criterion_sensitivity_A": sens,
+        "per_arch": cur, "port_model": r_,
+        "status": "CLOSED" if closed else "NOT_CLOSED",
+        "status_at_sensitivity": ("CLOSED" if all(c["passes_sensitivity"] for c in cur.values())
+                                  else "NOT_CLOSED"),
+        "rule": RECLOSE_RULE}
+    out["match_fallback"] = None if closed else {
+        "status": "NOT_CLOSED",
+        "rule": ("the count is fixed at the modelled arrangement (no reallocation): the "
+                 "per-ball target is VIOLATED there"),
+        "scenario": PRODUCTION_SCEN, "n_per_rail": n, "criterion_A": target,
+        "screen_peak_A": {a: cur[a]["screen_peak_A"] for a in cur},
+        "verified_peak_A": dict(v), "verified_level": VERIFY_LEVEL,
+        "k_eq_that_closes_at_n": {a: cur[a]["k_eq_max_at_target"] for a in cur},
+        "rms_port_model_A": {"Z1": cur["Z1"]["I_ball_rms_max_A"]}}
     out["matched_count_S0"] = matched_count(screen, counts, kw, "HV_S0")
     out["wall_s"] = round(time.time() - t0, 1)
-    import design_record as DR
     out["design"] = DR.design_identity()
     PRODUCTION_OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
     print(json.dumps({k_: v for k_, v in out.items() if k_ != "closure"}, indent=1, default=float))
@@ -576,9 +633,8 @@ def main():
            "sensitivity": sens_rows}
     res["meta"]["screen_reused"] = "--reuse-screen" in sys.argv[1:]
     res["meta"]["n_max_per_rail"] = N_MAX_PER_RAIL
-    res["meta"]["closure_rule"] = (CLOSURE_RULE + "; this build closes on the DC peak x k_eq "
-                                   "rule (the port model needs the decoupling chain): the "
-                                   "re-closure (reclose) applies the worse-of rule")
+    res["meta"]["closure_rule"] = CLOSURE_RULE
+    res["meta"]["reclose_rule"] = RECLOSE_RULE              # the per-ball verdict (reclose)
     import design_record as DR
     res["meta"]["design"] = DR.design_identity()          # the cell grid it was closed on
     (OUT / "package_network.json").write_text(json.dumps(res, indent=1))

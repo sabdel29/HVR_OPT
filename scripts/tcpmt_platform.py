@@ -5,11 +5,17 @@ Feeds (loop resistance from the common board 48-V node to the converter input te
 including the distribution to the cells):
   Z1   inside the package-internal boundary (package 48-V network solved in the ledger)
   Z2   THE FEED OF TABLE V: the BGA-RING feed -- 48 V through n balls per rail of the ring of
-       ball sites that survives around the 2.4-mm board opening (528 of the 1369 lattice
-       sites), and a substrate 48-V RDL sheet to the cells' input pads, SOLVED by the production
-       voltage-fed network (package_network.json; the BGA-fed control Z2BF). Those 2n balls DO
+       ball sites that survives around the board opening (the package cutout of the design
+       record, design_record.pkg_cutout_mm; 528 of the 1369 lattice sites at 23.36 mm), and a
+       substrate 48-V RDL sheet to the cells' input pads, SOLVED by the production voltage-fed
+       network (package_network.json, its solved per-ball split), the copper and solder at the
+       BGA temperature of the Z2 production case (cooling A) as the ledger's BGA-fed rows take
+       them (TCPMT round 3: the campaign runs no BGA-fed control case Z2BF; one of the design in
+       force in the results root is used when present). Those 2n balls DO
        carry power: they are outside the package-internal boundary of Z2 but they are BGA power
-       sites of the platform (Table V counts them).
+       sites of the platform (Table V counts them). Per-ball check: ONE rule (the DC peak x k)
+       against the feasibility stage's target (tcpmt_feasibility.LIMITS bga_A_per_ball, with
+       the conservative sensitivity bga_A_per_ball_sensitivity), the count fixed at the network's.
        ALTERNATIVE (declared estimate, not in Table V): a flex bridge across the board-opening
        clearance onto a distribution plane pair under the converter, 0 balls (feed_design).
   Z3   the board's own 48-V plane pair under the package, reached through the board (declared
@@ -35,8 +41,11 @@ import sys
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(R / "scripts"))
+for _p in ("scripts/phase0nw", "scripts/phase0m", "scripts"):
+    if str(R / _p) not in sys.path:
+        sys.path.insert(0, str(R / _p))
 import tcpmt_cases as TC                                            # noqa: E402
+import design_record as DR                                          # noqa: E402
 
 FC = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
 SENS = FC / "sensitivity"
@@ -45,15 +54,30 @@ OUT = TR / "platform_inclusive.json"
 RHO_CU_20, ALPHA_CU = 1.72e-8, 3.93e-3
 T_FEED_C = 60.0                 # declared copper temperature of the feed conductors
 V_IN, P_LOAD = 48.0, 1000.0
-I_BALL_RULE_A = 1.5
-GRID_SIDE_MM = 21.36            # the cell grid's bounding box (the region a plane pair feeds)
+#: the cell grid's bounding box (the region a plane pair feeds): the uniform placement's grid
+#: of the design record (die minus the edge keep-out; 21.36 mm for every count)
+GRID_SIDE_MM = round(DR.grid_bbox_mm(), 6)
 FLEX = {"t_um": 70.0, "w_mm": 20.0, "l_mm": 15.0}
 PLANE_T_UM = 70.0
 
 
+def bga_rule():
+    """(target A, sensitivity A, source, BGA policy in force) of the per-ball check: the
+    feasibility stage's (review round 3: 2 A per ball nominal, Kuan et al. ASQED 2015; 1.5 A
+    a conservative sensitivity; one rule, the DC peak x k, for every integration)."""
+    import tcpmt_feasibility as FEAS
+    return (float(FEAS.LIMITS["bga_A_per_ball"]),
+            float(FEAS.LIMITS["bga_A_per_ball_sensitivity"]),
+            FEAS.LIMIT_SOURCES["bga_A_per_ball"], FEAS.BGA_POLICY)
+
+
 def k_scen():
+    """48-V RMS / average of each input state: SDEC the k_eq of the results root's decoupling
+    chain, S0 1, S1 the square pulse at the buck duty of the design in force (1/sqrt(D), D = N
+    V_out / V_in; the ledger's SCEN_RATIO, 4 at N = 3)."""
     d = json.loads((TR / "input_decoupling.json").read_text())
-    return {"SDEC": float(d["summary"]["recommended"]["k_eq"]), "S0": 1.0, "S1": 4.0}
+    return {"SDEC": float(d["summary"]["recommended"]["k_eq"]), "S0": 1.0,
+            "S1": 1.0 / math.sqrt(DR.buck_duty())}
 
 
 def rho(t_c):
@@ -65,10 +89,23 @@ def sheet_square(t_cu_m, t_c=T_FEED_C):
     return rho(t_c) / t_cu_m / 3.0
 
 
-def ring_feed():
-    """The Z2 BGA-ring feed at the count of the package network in force, and the count the
-    production waveform needs (bga_count_production.json, when the re-closure has run)."""
+def network():
+    """The package 48-V network of the results root; refused when it was closed on another
+    design (its meta.design), so another design's network never stands in."""
     pn = json.loads((FC / "package_network.json").read_text())
+    d = ((pn.get("meta") or {}).get("design") or {}).get("design")
+    if d is not None and d != DR.name():
+        raise RuntimeError(f"package_network.json was closed on design {d}, not the design in "
+                           f"force {DR.name()}")
+    return pn
+
+
+def ring_feed():
+    """The Z2 BGA-ring feed at the count of the package network in force (the modelled
+    arrangement; review round 3: no reallocation), and the re-closure's record at the production
+    waveform (bga_count_production.json, when it has run for the design in force)."""
+    import physical_coords as PCO
+    pn = network()
     n = int(pn["matched_count"])
     conv = pn["convergence"]
     frac = max(conv["Z2_supply"]["final"]["i_ball_max_a"],
@@ -76,10 +113,12 @@ def ring_feed():
     drop = max(conv["Z2_supply"]["final"]["max_cell_drop_v"],
                conv["Z2_return"]["final"]["max_cell_drop_v"])
     lp = pn["loop"]["Z2"]
-    out = {"n_per_rail": n, "sites": 2 * n, "lattice_sites": 528,
+    cut = DR.pkg_cutout_mm()
+    out = {"n_per_rail": n, "sites": 2 * n, "lattice_sites": len(PCO.bga_lattice_sites(cut)),
+           "lattice_sites_total": len(PCO.bga_lattice_sites()), "cutout_mm": cut,
            "ball": "0.4-mm SAC305 at 0.8-mm pitch, 300 um (Krishnakumar 2026 Table III)",
-           "placement": "nearest-symmetric selection on the ring of sites around the 23.36-mm "
-                        "board opening (pkg_rdl_network, cutout 23.36 mm)",
+           "placement": f"nearest-symmetric selection on the ring of sites around the "
+                        f"{cut:.2f}-mm board opening (design_record.pkg_cutout_mm)",
            "sheet": "substrate 48-V RDL (production voltage-fed FV network, traced 0.2-mm VIN "
                     "pads)",
            "R_supply_20C_ohm": lp["r_supply_ohm"], "R_return_20C_ohm": lp["r_return_ohm"],
@@ -87,27 +126,84 @@ def ring_feed():
            "peak_fraction_source": "package_network.json (converged)",
            "max_cell_drop_V_per_A": drop, "match_scenario": pn["meta"].get("match_scenario",
                                                                           "HV_S0")}
-    prod = TR.parent / "final_closure" / "bga_count_production.json"
-    if prod.is_file():
-        pc = json.loads(prod.read_text())
+    prod = FC / "bga_count_production.json"
+    pc = json.loads(prod.read_text()) if prod.is_file() else None
+    if pc and ((pc.get("design") or {}).get("design") or DR.name()) != DR.name():
+        pc = None                       # another design's re-closure never stands in
+    if pc:
         cl = pc["closure"].get("Z2__HV_SDEC") or {}
+        bc = pc.get("ball_currents_at_count") or {}
+        z2 = (bc.get("per_arch") or {}).get("Z2") or {}
         out["production_requirement"] = {
             "n_min_per_rail": cl.get("n_min"), "status": cl.get("status"),
             "matched_count": pc.get("matched_count"),
-            "peak_at_n_min_A": cl.get("peak_at_n_min_A")}
+            "peak_at_n_min_A": cl.get("peak_at_n_min_A"),
+            "criterion_A": pc.get("criterion_A_per_ball"),
+            # review round 3: the verdict at the modelled count (the re-closure's)
+            "count_rule": pc.get("count_rule"),
+            "at_count": {"n_per_rail": bc.get("n_per_rail"),
+                         "I_ball_A": z2.get("I_ball_closure_rule_A"),
+                         "passes": z2.get("passes"),
+                         "passes_sensitivity": z2.get("passes_sensitivity"),
+                         "status": bc.get("status"),
+                         "status_at_sensitivity": bc.get("status_at_sensitivity"),
+                         "k_eq": pc.get("k_eq")}}
     return out
 
 
+def z2_bga_temperature():
+    """(T_C, basis) of the Z2 BGA: the last E-T iteration's BGA temperature of the Z2 case of
+    the production state under cooling A (else the S0 reference), the temperature at which the
+    ledger's BGA-fed rows take the package network; T_FEED_C when neither exists."""
+    for st in (TC.PRODUCTION_STATE, "S0"):
+        p, c = TC.load(st, "A", "Z2")
+        t = ((c or {}).get("et_history") or [{}])[-1].get("T_bga_C")
+        if t is not None:
+            return float(t), f"T_bga of {p.name} (last E-T iteration)"
+    return T_FEED_C, "declared feed temperature (no Z2 case of the design in the results root)"
+
+
+def ring_feed_resistance():
+    """R_loop (ohm) of the Z2 BGA-ring feed and its record. A BGA-fed control case of the
+    design in force in the results root (etm_Z2BF_HV_S0_h1.1_r21.json) gives it from its own
+    ledger rows; otherwise (the campaign: no Z2BF job) the ledger's BGA-fed rows are evaluated
+    on the package network directly (final_closure_ledger: package HV RDL sheet x rho_Cu(T) /
+    rho_Cu(20 C) per rail, balls rho_solder(T) h / A x sum f^2 of the solved per-ball split),
+    at the BGA temperature of the Z2 production case."""
+    import numpy as np
+    f = FC / "etm_Z2BF_HV_S0_h1.1_r21.json"
+    z2bf = json.loads(f.read_text()) if f.is_file() else None
+    if z2bf and (z2bf.get("design") or {}).get("design") == DR.name():
+        hv = {r["term"]: r for r in z2bf["ledger_rows"]}
+        r_bf = sum(hv[k]["R_ohm"] for k in ("P_pkg_RDL_HV_supply", "P_BGA_supply",
+                                            "P_pkg_RDL_HV_return", "P_BGA_return"))
+        return r_bf, {"kind": "solved (voltage-fed package network; BGA-fed control case)",
+                      "case": f.name, "P_coupled_A_W": z2bf["P_loss_w"]}
+    import pad_interface as PAD
+    from interconnect import rho_cu, rho_solder
+    pn = network()
+    loop = pn["loop"]["Z2"]
+    t, basis = z2_bga_temperature()
+    kt_cu = rho_cu(t) / rho_cu(20.0)
+    r_ball = PAD.bga_ball_resistance_ohm(20.0) * rho_solder(t) / rho_solder(20.0)
+    parts = {}
+    for rail in ("supply", "return"):
+        fr = np.asarray(pn["convergence"][f"Z2_{rail}"]["i_ball_frac"], dtype=float)
+        parts[f"R_sheet_{rail}_ohm"] = float(loop[f"r_{rail}_ohm"]) * kt_cu
+        parts[f"R_balls_{rail}_ohm"] = r_ball * float(np.sum(fr ** 2))
+    return sum(parts.values()), {
+        "kind": "solved (voltage-fed package network, package_network.json loop Z2 and its "
+                "per-ball split; the ledger's BGA-fed rows at the Z2 BGA temperature)",
+        "T_C": t, "T_basis": basis, "n_per_rail": int(loop["n_per_rail"]), **parts,
+        "P_coupled_A_W": None}
+
+
 def feeds():
-    z2bf = json.loads((FC / "etm_Z2BF_HV_S0_h1.1_r21.json").read_text())
-    hv = {r["term"]: r for r in z2bf["ledger_rows"]}
-    r_bf = sum(hv[k]["R_ohm"] for k in ("P_pkg_RDL_HV_supply", "P_BGA_supply",
-                                        "P_pkg_RDL_HV_return", "P_BGA_return"))
+    r_bf, bf = ring_feed_resistance()
     t, w, l = FLEX["t_um"] * 1e-6, FLEX["w_mm"] * 1e-3, FLEX["l_mm"] * 1e-3
     r_flex = 2 * rho(T_FEED_C) * l / (w * t) + 2 * sheet_square(t)
     r_z3 = 2 * sheet_square(PLANE_T_UM * 1e-6)
-    return {"Z2_bga_fed": {"R_ohm": r_bf, "kind": "solved (voltage-fed package network)",
-                           "P_coupled_A_W": z2bf["P_loss_w"],
+    return {"Z2_bga_fed": {"R_ohm": r_bf, **bf,
                            "geometry": "BGA ring + substrate 48-V RDL (production network)"},
             "Z2_flex": {"R_ohm": r_flex, "kind": "estimate (declared geometry; not in Table V)",
                         "geometry": f"2 x {FLEX['t_um']:.0f} um Cu, {FLEX['w_mm']:.0f} mm x "
@@ -123,13 +219,20 @@ def feed_design(F, i_avg):
     ks = k_scen()
     rf = ring_feed()
     cur = {s: k * i_avg for s, k in ks.items()}
+    target, sens, src, policy = bga_rule()
     ring = dict(rf)
     ring.update({"R_loop_feed_ohm": F["Z2_bga_fed"]["R_ohm"],
                  "I_rms_A": cur,
                  "I_ball_peak_A": {s: rf["peak_fraction"] * i for s, i in cur.items()},
-                 "rule_A": I_BALL_RULE_A,
-                 "passes_rule": {s: rf["peak_fraction"] * i <= I_BALL_RULE_A
+                 "rule": "DC peak x k (one rule for every integration), the count fixed at "
+                         "the network's (the modelled arrangement)",
+                 "rule_A": target, "rule_sensitivity_A": sens,
+                 "rule_source": f"tcpmt_feasibility.LIMITS bga_A_per_ball: {src}",
+                 "bga_policy": policy,
+                 "passes_rule": {s: bool(rf["peak_fraction"] * i <= target)
                                  for s, i in cur.items()},
+                 "passes_rule_sensitivity": {s: bool(rf["peak_fraction"] * i <= sens)
+                                             for s, i in cur.items()},
                  "max_sheet_drop_mV": {s: 1e3 * rf["max_cell_drop_V_per_A"] * i
                                        for s, i in cur.items()},
                  "in_table_V": True,
@@ -227,8 +330,12 @@ def main():
                 tiers[t][a] = rec
         out["states"][st] = tiers
     out["tiers"] = out["states"][TC.PRODUCTION_STATE]       # the production table
-    if i_ref is None:
-        z = json.loads((FC / "etm_Z2_HV_S0_h1.1_r21.json").read_text())
+    if i_ref is None:                       # the S0 reference of Z2 (cooling A), design-guarded
+        zp, z = TC.load("S0", "A", "Z2")
+        if z is None:
+            raise SystemExit(f"no Z2 case of the design in force: neither "
+                             f"{TC.expected_path(TC.PRODUCTION_STATE, 'A', 'Z2').name} nor "
+                             f"{TC.expected_path('S0', 'A', 'Z2').name} in {FC}")
         i_ref = (P_LOAD + z["P_loss_w"]) / V_IN
     out["feed_design"] = feed_design(F, i_ref)
     m = out["macros"]
@@ -243,6 +350,9 @@ def main():
     m["FeedRingPeakSzero"] = f"{ring['I_ball_peak_A']['S0']:.2f}"
     m["FeedRingPeakSone"] = f"{ring['I_ball_peak_A']['S1']:.1f}"
     m["FeedRingPasses"] = "yes" if ring["passes_rule"]["SDEC"] else "no"
+    m["FeedRingPassesSens"] = "yes" if ring["passes_rule_sensitivity"]["SDEC"] else "no"
+    m["FeedRingTarget"] = f"{ring['rule_A']:g}"
+    m["FeedRingTargetSens"] = f"{ring['rule_sensitivity_A']:g}"
     req = ring.get("production_requirement") or {}
     if req.get("n_min_per_rail"):
         m["FeedRingNprod"] = str(req["n_min_per_rail"])
