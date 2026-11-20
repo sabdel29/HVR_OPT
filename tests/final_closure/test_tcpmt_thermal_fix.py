@@ -255,10 +255,13 @@ def test_pqfn_is_modelled_as_published(cards):
 
 
 def test_tier_orders_follow_the_declared_rule():
-    """Review round 3: every design's tier order is the declared rule's choice on the post
-    cards (a sensitivity keeps its base design's order), with the runner-up and the
-    single-face sensitivity recorded; tier names follow the order."""
+    """Review round 3: every design's tier order is the declared rule's choice -- among the
+    orders tied on the via criterion, the least intra-VR routing loss (each order with its
+    least-loss part assignment), the heat path only between orders within 0.1 W (a
+    sensitivity keeps its base design's order) -- with the runner-up and the single-face
+    sensitivity recorded; tier names follow the order."""
     import design_record as DR
+    import tcpmt_tier_order as TO
     to = json.loads((R / "research" / "tcpmt_revision" / "tier_order.json").read_text())
     for k in DR.keys():
         e = DR.get(k)
@@ -267,20 +270,46 @@ def test_tier_orders_follow_the_declared_rule():
         rank = rec["rule_ranking"]
         assert [r["rank"] for r in rank] == list(range(1, len(rank) + 1))
         assert t["n_orders"] == len(rank) == rec["n_decided_orders"]
+        lo, hi = t["routing_loss_range_over_assignments_W"]
+        assert lo - 1e-12 <= t["routing_loss_W"] <= hi + 1e-12
         if e["role"] != "sensitivity":
             assert t["rank_by_rule"] == 1 and t["order_input_to_output"] == rank[0]["order"]
+            best_ar = min(round(r["worst_ar_both"], 9) for r in rank)
+            pool = [r for r in rank if round(r["worst_ar_both"], 9) == best_ar]
+            lmin = min(r["routing_loss_W"] for r in pool)
+            near = [r for r in pool if r["routing_loss_W"] <= lmin + TO.LOSS_TIE_W + 1e-12]
+            assert t["routing_loss_W"] <= lmin + TO.LOSS_TIE_W + 1e-12
+            assert t["heat_path_K"] == min(r["heat_path_K"] for r in near)
         ru = t["runner_up"]
         assert ru["order_input_to_output"] != t["order_input_to_output"]
-        assert ru["heat_path_above_chosen_K"] == pytest.approx(
-            ru["heat_path_K"] - t["heat_path_K"])
+        assert ru["routing_loss_above_chosen_W"] == pytest.approx(
+            ru["routing_loss_W"] - t["routing_loss_W"])
         sf = t["single_face_sensitivity"]
         assert sf["chosen_order_worst_via_ar"] == t["worst_via_ar_single_face"]
         assert sf["rule_choice_worst_via_ar"] <= sf["chosen_order_worst_via_ar"] + 1e-12
         assert [x["name"] for x in e["tiers"]] == [DR.tier_name(i, x["parts"]) for i, x
                                                    in enumerate(e["tiers"], start=1)]
-    # the production design: the post cards swap the record's earlier T2 / T3
+    # the production design: routing loss puts back the order of the earlier record (the
+    # heat-path tie-break had swapped T2 / T3 at +0.9 W of routing loss)
     assert DR.get("m36")["tier_order"]["order_input_to_output"] == (
-        "2gan_hs+2cap_fly | 1gan_ls+1inductor | 1gan_hs+1gan_ls | 1gan_ls+2inductor")
+        "2gan_hs+2cap_fly | 1gan_hs+1gan_ls | 1gan_ls+1inductor | 1gan_ls+2inductor")
+
+
+def test_tier_order_routing_loss_is_the_ledgers_model():
+    """The routing loss the tier-order rule minimises IS final_closure_ledger.intra_vr (25 C,
+    the 48-V nets at the hot-loop factor of the decoupling record) on the production design's
+    recorded order and part assignment."""
+    import design_record as DR
+    import final_closure_ledger as FL
+    t = DR.get()["tier_order"]
+    FL.SCEN_RATIO["HV_ROUTING_TEST"] = t["routing_basis"]["k_hot_48V_nets"]
+    try:
+        r = FL.intra_vr(t["routing_basis"]["T_C"], "HV_ROUTING_TEST", "Z1")
+    finally:
+        FL.SCEN_RATIO.pop("HV_ROUTING_TEST")
+    assert r["P_intraVR_metal"] + r["P_intraVR_vertical"] == pytest.approx(
+        t["routing_loss_W"], rel=1e-9)
+    assert t["routing_basis"]["k_hot_48V_nets"] == DR.get()["decoupling"]["k_open"]
 
 
 # ------------------------------------------------------------------ mesh-level checks

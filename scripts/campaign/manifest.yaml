@@ -278,8 +278,10 @@ jobs:
   validate:
   - file: tcpmt_revision/tier_order.json
     kind: json
-  evidence: repartition search with packing, every design (minutes)
-  notes: reproduces the production order the design record states
+  evidence: 'least-routing-loss assignment of every order of the decided tiers + repartition search, every
+    design: ~4 min on one core (record generation, 2026-11-19)'
+  notes: 'reproduces the production order and part assignment the design record states: via criterion,
+    then least intra-VR routing loss (ledger model, 25 C), heat path within 0.1 W'
 - id: m36t5.prep.z3land_fv
   stage: prep
   argv:

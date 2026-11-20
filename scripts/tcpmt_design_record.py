@@ -169,13 +169,14 @@ def entry_for(key, spec, dse):
     return e, sp
 
 
-def order_entry(key, e, sp, chosen_order=None):
-    """Put the tiers in the production order (input end first) and name them."""
+def order_entry(key, e, sp, chosen_order=None, des=None, k_hot=None):
+    """Put the tiers in the production order (input end first) and name them; each order
+    carries its part assignment of least intra-VR routing loss (tcpmt_tier_order.RULE)."""
     import tcpmt_tier_order as TO
     import design_record as DR
-    decided = [t["parts"] for t in e["tiers"]]
+    decided = list(e["tiers"])
     rec = TO.analyse(e, decided, int(e["rules"].get("MAX_TIERS", 4)) if e["rules"] else 4,
-                     full_search=len(decided) <= 4)
+                     full_search=len(decided) <= 4, des=des, k_hot=k_hot)
     order = chosen_order or rec["chosen"]["tiers"]
     pool = list(e["tiers"])
     out = []
@@ -202,6 +203,9 @@ def order_entry(key, e, sp, chosen_order=None):
                        "worst_via_ar_both_faces": c["worst_ar_both"],
                        "worst_net_both_faces": c["worst_net_both"],
                        "worst_via_ar_single_face": c["worst_ar_single"],
+                       "routing_loss_W": c["routing_loss_W"],
+                       "routing_loss_range_over_assignments_W": c["routing_loss_range_W"],
+                       "routing_basis": rec["routing"],
                        "heat_path_K": c["heat_path_K"],
                        "heat_path_two_sided_K": c["heat_path_two_sided_K"],
                        "assignment": c["assignment"],
@@ -209,22 +213,30 @@ def order_entry(key, e, sp, chosen_order=None):
                        "n_orders": rec["n_decided_orders"],
                        "runner_up": None if ru is None else {
                            "order_input_to_output": ru["order"],
+                           "routing_loss_W": ru["routing_loss_W"],
+                           "routing_loss_above_chosen_W": ru["routing_loss_W"]
+                           - c["routing_loss_W"],
                            "heat_path_K": ru["heat_path_K"],
                            "heat_path_above_chosen_K": ru["heat_path_K"] - c["heat_path_K"],
                            "worst_via_ar_both_faces": ru["worst_ar_both"],
-                           "worst_via_ar_single_face": ru["worst_ar_single"]},
+                           "worst_via_ar_single_face": ru["worst_ar_single"],
+                           "assignment": ru["assignment"]},
                        "single_face_sensitivity": {
                            "chosen_order_worst_via_ar": c["worst_ar_single"],
                            "chosen_order_worst_net": c["worst_net_single"],
                            "rule_choice_single_face": sf["order"],
                            "rule_choice_worst_via_ar": sf["worst_ar_single"],
+                           "rule_choice_routing_loss_W": sf["routing_loss_W"],
                            "rule_choice_heat_path_K": sf["heat_path_K"],
                            "same_order": sf["order"] == c["order"]},
+                       "least_routing_loss_order": rec["least_routing_loss_order"]["order"],
+                       "least_routing_loss_W": rec["least_routing_loss_order"]["routing_loss_W"],
                        "best_heat_path_order": rec["best_heat_path_order"]["order"],
                        "best_heat_path_K": rec["best_heat_path_order"]["heat_path_K"],
                        "best_heat_path_worst_via_ar": rec["best_heat_path_order"]["worst_ar_both"],
                        "source": "research/tcpmt_revision/tier_order.json (rule_ranking: every "
-                                 "order with its heat path and worst via aspect ratios)"}
+                                 "order with its routing loss, heat path and worst via aspect "
+                                 "ratios)"}
     e["converter_stack_um"] = sum(t["height_um"] for t in out) + (len(out) - 1) * 10.0
     return e, rec
 
@@ -372,21 +384,26 @@ def main():
         if DESIGNS[key].get("base"):          # a sensitivity keeps its base design's order
             b = out[DESIGNS[key]["base"]]
             chosen = [[t["parts"].get(c, 0) for c in CLASSES] for t in b["tiers"]]
-        e, rec = order_entry(key, e, sp, chosen)
+        des = compile_design(dict(DESIGNS.get(DESIGNS[key].get("base", ""), {}),
+                                  **{k: v for k, v in DESIGNS[key].items() if k != "base"}))[0]
+        dec = _decoupling(key)
+        # the 48-V nets of the routing loss at the hot-loop factor of the design's decoupling
+        # (the production design's when it has none of its own), else the flat-pulse 1/sqrt(D)
+        k_hot = (dec or {}).get("k_open") or 1.0 / math.sqrt(float(des.arch.D))
+        e, rec = order_entry(key, e, sp, chosen, des=des, k_hot=k_hot)
         if DESIGNS[key].get("base"):
             e["tier_order"]["basis"] = (f"the order of {DESIGNS[key]['base']} (a sensitivity "
-                                        "changes the capacitor height only)")
-        e["routing"] = routing_block(e, compile_design(
-            dict(DESIGNS.get(DESIGNS[key].get("base", ""), {}),
-                 **{k: v for k, v in DESIGNS[key].items() if k != "base"}))[0])
-        dec = _decoupling(key)
+                                        "changes the capacitor height only), with its own "
+                                        "least-loss part assignment")
+        e["routing"] = routing_block(e, des)
         if dec:
             e["decoupling"] = dec
         out[key] = e
         recs[key] = rec
         c = e["tier_order"]
-        print(f"{key}: {c['order_input_to_output']}  AR {c['worst_via_ar_both_faces']:.2f} / "
-              f"{c['worst_via_ar_single_face']:.2f}  H {c['heat_path_K']:.3f} K", flush=True)
+        print(f"{key}: {c['order_input_to_output']}  routing {c['routing_loss_W']:.3f} W  AR "
+              f"{c['worst_via_ar_both_faces']:.2f} / {c['worst_via_ar_single_face']:.2f}  H "
+              f"{c['heat_path_K']:.3f} K", flush=True)
     doc = {"schema": 1, "production": PRODUCTION, "selector": "HVR_DESIGN",
            "what": "THE design record of the TCPMT chain (round 3): regulator count, converter, "
                    "cell and mixed tiers (input end first, production order) of every design "

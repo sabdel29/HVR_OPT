@@ -346,8 +346,12 @@ def build(design):
                             evidence="meshes the three packages once (minutes)")
     prep["tier_order"] = post("prep.tier_order", "prep", "tcpmt_tier_order.py",
                               [tr("tier_order.json")], est_h=0.2,
-                              evidence="repartition search with packing, every design (minutes)",
-                              notes="reproduces the production order the design record states")
+                              evidence="least-routing-loss assignment of every order of the "
+                                       "decided tiers + repartition search, every design: "
+                                       "~4 min on one core (record generation, 2026-11-19)",
+                              notes="reproduces the production order and part assignment the "
+                                    "design record states: via criterion, then least intra-VR "
+                                    "routing loss (ledger model, 25 C), heat path within 0.1 W")
     prep["cards"] = post("prep.converter_cards", "prep", "tcpmt_converter_cards.py",
                          [tr("converter_cards.json")], est_h=0.05,
                          notes="mixed-tier cards of every design of the record")

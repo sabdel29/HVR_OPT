@@ -53,18 +53,18 @@ designs:
       - [1.15, 0.0, 1.65, 0.85, cap_fly]
       - [1.65, 0.85, 1.15, 1.75, gan_hs]
       - [0.0, 1.75, 1.65, 0.85, cap_fly]
-    - name: tier2_ls1l1
-      parts: {gan_ls: 1, inductor: 1}
-      height_um: 638.0
-      placement_mm:
-      - [0.0, 0.0, 1.05, 1.05, inductor]
-      - [0.0, 1.05, 2.55, 1.55, gan_ls]
-    - name: tier3_hs1ls1
+    - name: tier2_hs1ls1
       parts: {gan_hs: 1, gan_ls: 1}
       height_um: 685.0
       placement_mm:
       - [0.0, 0.0, 2.55, 1.55, gan_ls]
       - [0.0, 1.55, 1.75, 1.15, gan_hs]
+    - name: tier3_ls1l1
+      parts: {gan_ls: 1, inductor: 1}
+      height_um: 638.0
+      placement_mm:
+      - [0.0, 0.0, 1.05, 1.05, inductor]
+      - [0.0, 1.05, 2.55, 1.55, gan_ls]
     - name: tier4_ls1l2
       parts: {gan_ls: 1, inductor: 2}
       height_um: 638.0
@@ -73,32 +73,49 @@ designs:
       - [1.05, 0.0, 1.05, 1.05, inductor]
       - [0.0, 1.05, 2.55, 1.55, gan_ls]
     tier_order:
-      rule: production order = the order of the decided tiers with the best heat path among the orders
-        meeting the via rule (AR <= 1 on every via level, die terminals on both faces); if none meets
-        it, the order with the best worst-via aspect ratio, ties broken by the heat path
-      basis: 'no order of the decided tiers meets the via rule: best worst-via aspect ratio, ties broken
-        by the heat path'
-      order_input_to_output: 2gan_hs+2cap_fly | 1gan_ls+1inductor | 1gan_hs+1gan_ls | 1gan_ls+2inductor
+      rule: production order = among the orders of the decided tiers meeting the via rule (AR <= 1 on
+        every via level, die terminals on both faces) -- or, if none meets it, among those of the best
+        worst-via aspect ratio -- the order of least intra-VR routing loss (the ledger's model at 25 C,
+        the 48-V nets at the hot-loop factor; each order with its part assignment of least routing loss
+        among those of its best worst-via aspect ratio); orders within 0.1 W of the least loss are separated
+        by the heat path
+      basis: 'no order of the decided tiers meets the via rule: least routing loss among the orders of
+        the best worst-via aspect ratio (heat path between orders within 0.1 W)'
+      order_input_to_output: 2gan_hs+2cap_fly | 1gan_hs+1gan_ls | 1gan_ls+1inductor | 1gan_ls+2inductor
       worst_via_ar_both_faces: 8.333333333333334
-      worst_net_both_faces: vin_to_hs2
+      worst_net_both_faces: vin_to_hs0
       worst_via_ar_single_face: 8.333333333333334
-      heat_path_K: 21.401238472100022
-      heat_path_two_sided_K: 9.265776634657117
-      assignment: {gan_hs0: 1, gan_hs1: 1, gan_hs2: 3, gan_ls0: 2, gan_ls1: 3, gan_ls2: 4, inductor0: 2,
-        inductor1: 4, inductor2: 4, cap_fly0: 1, cap_fly1: 1}
+      routing_loss_W: 5.3466278620507435
+      routing_loss_range_over_assignments_W: [5.3466278620507435, 13.218558352722798]
+      routing_basis: {model: 'final_closure_ledger.intra_vr (R0 lateral, R0 via stacks, output-plane R2),
+          all cells', T_C: 25.0, k_hot_48V_nets: 3.776469928963073, tie_W: 0.1}
+      heat_path_K: 21.709836384114645
+      heat_path_two_sided_K: 9.292177809887606
+      assignment: {gan_hs0: 2, gan_hs1: 1, gan_hs2: 1, gan_ls0: 3, gan_ls1: 2, gan_ls2: 4, inductor0: 4,
+        inductor1: 4, inductor2: 3, cap_fly0: 1, cap_fly1: 1}
       rank_by_rule: 1
       n_orders: 24
-      runner_up: {order_input_to_output: 2gan_hs+2cap_fly | 1gan_hs+1gan_ls | 1gan_ls+1inductor | 1gan_ls+2inductor,
-        heat_path_K: 21.709836384114645, heat_path_above_chosen_K: 0.3085979120146227, worst_via_ar_both_faces: 8.333333333333334,
-        worst_via_ar_single_face: 8.333333333333334}
-      single_face_sensitivity: {chosen_order_worst_via_ar: 8.333333333333334, chosen_order_worst_net: vin_to_hs2,
-        rule_choice_single_face: 2gan_hs+2cap_fly | 1gan_ls+1inductor | 1gan_hs+1gan_ls | 1gan_ls+2inductor,
-        rule_choice_worst_via_ar: 8.333333333333334, rule_choice_heat_path_K: 21.401238472100022, same_order: true}
+      runner_up:
+        order_input_to_output: 2gan_hs+2cap_fly | 1gan_hs+1gan_ls | 1gan_ls+2inductor | 1gan_ls+1inductor
+        routing_loss_W: 5.340758511197393
+        routing_loss_above_chosen_W: -0.005869350853350497
+        heat_path_K: 22.46737901078913
+        heat_path_above_chosen_K: 0.7575426266744856
+        worst_via_ar_both_faces: 8.333333333333334
+        worst_via_ar_single_face: 8.333333333333334
+        assignment: {gan_hs0: 2, gan_hs1: 1, gan_hs2: 1, gan_ls0: 3, gan_ls1: 2, gan_ls2: 4, inductor0: 4,
+          inductor1: 3, inductor2: 3, cap_fly0: 1, cap_fly1: 1}
+      single_face_sensitivity: {chosen_order_worst_via_ar: 8.333333333333334, chosen_order_worst_net: vin_to_hs0,
+        rule_choice_single_face: 2gan_hs+2cap_fly | 1gan_hs+1gan_ls | 1gan_ls+1inductor | 1gan_ls+2inductor,
+        rule_choice_worst_via_ar: 8.333333333333334, rule_choice_routing_loss_W: 5.3466278620507435, rule_choice_heat_path_K: 21.709836384114645,
+        same_order: true}
+      least_routing_loss_order: 1gan_hs+1gan_ls | 2gan_hs+2cap_fly | 1gan_ls+2inductor | 1gan_ls+1inductor
+      least_routing_loss_W: 5.2994997874037555
       best_heat_path_order: 2gan_hs+2cap_fly | 1gan_ls+1inductor | 1gan_hs+1gan_ls | 1gan_ls+2inductor
       best_heat_path_K: 21.401238472100022
       best_heat_path_worst_via_ar: 8.333333333333334
-      source: 'research/tcpmt_revision/tier_order.json (rule_ranking: every order with its heat path and
-        worst via aspect ratios)'
+      source: 'research/tcpmt_revision/tier_order.json (rule_ranking: every order with its routing loss,
+        heat path and worst via aspect ratios)'
     converter_stack_um: 2991.0
     routing:
       label: N3K3KA2_J3.5
@@ -125,27 +142,27 @@ designs:
       cap_footprint_mm2: 1.28
       B_array: [1, 1, 1]
       layout:
-      - {name: HS0, kind: gan_hs, index: 0, tier: 1, tier_name: tier1_hs2cf2, x_mm: 0.0, y_mm: 0.0, w_mm: 1.15,
+      - {name: HS1, kind: gan_hs, index: 1, tier: 1, tier_name: tier1_hs2cf2, x_mm: 0.0, y_mm: 0.0, w_mm: 1.15,
         h_mm: 1.75, part_w_mm: 1.0999999999999999, part_h_mm: 1.7}
-      - {name: HS1, kind: gan_hs, index: 1, tier: 1, tier_name: tier1_hs2cf2, x_mm: 1.65, y_mm: 0.85,
+      - {name: HS2, kind: gan_hs, index: 2, tier: 1, tier_name: tier1_hs2cf2, x_mm: 1.65, y_mm: 0.85,
         w_mm: 1.15, h_mm: 1.75, part_w_mm: 1.0999999999999999, part_h_mm: 1.7}
       - {name: CF0, kind: cap_fly, index: 0, tier: 1, tier_name: tier1_hs2cf2, x_mm: 1.15, y_mm: 0.0,
         w_mm: 1.65, h_mm: 0.85, part_w_mm: 1.5999999999999999, part_h_mm: 0.7999999999999999}
       - {name: CF1, kind: cap_fly, index: 1, tier: 1, tier_name: tier1_hs2cf2, x_mm: 0.0, y_mm: 1.75,
         w_mm: 1.65, h_mm: 0.8500000000000001, part_w_mm: 1.5999999999999999, part_h_mm: 0.7999999999999999}
-      - {name: LS0, kind: gan_ls, index: 0, tier: 2, tier_name: tier2_ls1l1, x_mm: 0.0, y_mm: 1.05, w_mm: 2.55,
-        h_mm: 1.55, part_w_mm: 2.5, part_h_mm: 1.5}
-      - {name: L0, kind: inductor, index: 0, tier: 2, tier_name: tier2_ls1l1, x_mm: 0.0, y_mm: 0.0, w_mm: 1.05,
-        h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
-      - {name: HS2, kind: gan_hs, index: 2, tier: 3, tier_name: tier3_hs1ls1, x_mm: 0.0, y_mm: 1.55, w_mm: 1.75,
+      - {name: HS0, kind: gan_hs, index: 0, tier: 2, tier_name: tier2_hs1ls1, x_mm: 0.0, y_mm: 1.55, w_mm: 1.75,
         h_mm: 1.15, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
-      - {name: LS1, kind: gan_ls, index: 1, tier: 3, tier_name: tier3_hs1ls1, x_mm: 0.0, y_mm: 0.0, w_mm: 2.55,
+      - {name: LS1, kind: gan_ls, index: 1, tier: 2, tier_name: tier2_hs1ls1, x_mm: 0.0, y_mm: 0.0, w_mm: 2.55,
         h_mm: 1.55, part_w_mm: 2.5, part_h_mm: 1.5}
+      - {name: LS0, kind: gan_ls, index: 0, tier: 3, tier_name: tier3_ls1l1, x_mm: 0.0, y_mm: 1.05, w_mm: 2.55,
+        h_mm: 1.55, part_w_mm: 2.5, part_h_mm: 1.5}
+      - {name: L2, kind: inductor, index: 2, tier: 3, tier_name: tier3_ls1l1, x_mm: 0.0, y_mm: 0.0, w_mm: 1.05,
+        h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
       - {name: LS2, kind: gan_ls, index: 2, tier: 4, tier_name: tier4_ls1l2, x_mm: 0.26718084909505535,
         y_mm: 0.21718084909505508, w_mm: 2.55, h_mm: 1.55, part_w_mm: 2.5, part_h_mm: 1.5}
-      - {name: L1, kind: inductor, index: 1, tier: 4, tier_name: tier4_ls1l2, x_mm: 1.7671808490950551,
+      - {name: L0, kind: inductor, index: 0, tier: 4, tier_name: tier4_ls1l2, x_mm: 1.7671808490950551,
         y_mm: 1.7671808490950551, w_mm: 1.05, h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
-      - {name: L2, kind: inductor, index: 2, tier: 4, tier_name: tier4_ls1l2, x_mm: 0.7171808490950551,
+      - {name: L1, kind: inductor, index: 1, tier: 4, tier_name: tier4_ls1l2, x_mm: 0.7171808490950551,
         y_mm: 1.7671808490950551, w_mm: 1.05, h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
       layout_cell_side_mm: 2.817180849095055
       layout_rule: 'DSE packing per tier up to the 8 square symmetries: the inductor tiers minimise the
@@ -228,7 +245,13 @@ designs:
     screen: {source: research/tcpmt_revision/dse_phase2_summary.json runs.etm35_p2_t5.per_count.36, P_total_W: 91.483,
       conv_total_W: 86.141, routing_W: 5.342, tiers: 5, stack_height_um: 3733.0}
     tiers:
-    - name: tier1_hs1l1cf3
+    - name: tier1_hs1ls1
+      parts: {gan_hs: 1, gan_ls: 1}
+      height_um: 685.0
+      placement_mm:
+      - [0.0, 0.0, 2.55, 1.55, gan_ls]
+      - [0.0, 1.55, 1.75, 1.15, gan_hs]
+    - name: tier2_hs1l1cf3
       parts: {gan_hs: 1, inductor: 1, cap_fly: 3}
       height_um: 1000.0
       placement_mm:
@@ -237,12 +260,6 @@ designs:
       - [1.7, 0.0, 0.85, 1.65, cap_fly]
       - [0.0, 1.65, 1.05, 1.05, inductor]
       - [1.05, 1.65, 1.75, 1.15, gan_hs]
-    - name: tier2_hs1ls1
-      parts: {gan_hs: 1, gan_ls: 1}
-      height_um: 685.0
-      placement_mm:
-      - [0.0, 0.0, 2.55, 1.55, gan_ls]
-      - [0.0, 1.55, 1.75, 1.15, gan_hs]
     - name: tier3_hs1ls1
       parts: {gan_hs: 1, gan_ls: 1}
       height_um: 685.0
@@ -264,36 +281,55 @@ designs:
       - [1.55, 0.0, 1.05, 1.05, inductor]
       - [1.55, 1.05, 1.15, 1.75, gan_hs]
     tier_order:
-      rule: production order = the order of the decided tiers with the best heat path among the orders
-        meeting the via rule (AR <= 1 on every via level, die terminals on both faces); if none meets
-        it, the order with the best worst-via aspect ratio, ties broken by the heat path
-      basis: 'no order of the decided tiers meets the via rule: best worst-via aspect ratio, ties broken
-        by the heat path'
-      order_input_to_output: 1gan_hs+1inductor+3cap_fly | 1gan_hs+1gan_ls | 1gan_hs+1gan_ls | 1gan_ls+2inductor
+      rule: production order = among the orders of the decided tiers meeting the via rule (AR <= 1 on
+        every via level, die terminals on both faces) -- or, if none meets it, among those of the best
+        worst-via aspect ratio -- the order of least intra-VR routing loss (the ledger's model at 25 C,
+        the 48-V nets at the hot-loop factor; each order with its part assignment of least routing loss
+        among those of its best worst-via aspect ratio); orders within 0.1 W of the least loss are separated
+        by the heat path
+      basis: 'no order of the decided tiers meets the via rule: least routing loss among the orders of
+        the best worst-via aspect ratio (heat path between orders within 0.1 W)'
+      order_input_to_output: 1gan_hs+1gan_ls | 1gan_hs+1inductor+3cap_fly | 1gan_hs+1gan_ls | 1gan_ls+2inductor
         | 1gan_hs+1gan_ls+1inductor
       worst_via_ar_both_faces: 8.333333333333334
       worst_net_both_faces: vin_to_hs1
       worst_via_ar_single_face: 8.333333333333334
-      heat_path_K: 23.182703627550225
-      heat_path_two_sided_K: 10.035789263230264
-      assignment: {gan_hs0: 1, gan_hs1: 2, gan_hs2: 3, gan_hs3: 5, gan_ls0: 2, gan_ls1: 3, gan_ls2: 4,
-        gan_ls3: 5, inductor0: 1, inductor1: 4, inductor2: 4, inductor3: 5, cap_fly0: 1, cap_fly1: 1,
-        cap_fly2: 1}
+      routing_loss_W: 2.8000702062659317
+      routing_loss_range_over_assignments_W: [2.8000702062659317, 8.10041698357576]
+      routing_basis: {model: 'final_closure_ledger.intra_vr (R0 lateral, R0 via stacks, output-plane R2),
+          all cells', T_C: 25.0, k_hot_48V_nets: 3.776469928963073, tie_W: 0.1}
+      heat_path_K: 24.52897721922707
+      heat_path_two_sided_K: 9.390082501622175
+      assignment: {gan_hs0: 1, gan_hs1: 3, gan_hs2: 2, gan_hs3: 5, gan_ls0: 3, gan_ls1: 5, gan_ls2: 1,
+        gan_ls3: 4, inductor0: 4, inductor1: 4, inductor2: 2, inductor3: 5, cap_fly0: 2, cap_fly1: 2,
+        cap_fly2: 2}
       rank_by_rule: 1
       n_orders: 60
-      runner_up: {order_input_to_output: 1gan_hs+1inductor+3cap_fly | 1gan_hs+1gan_ls | 1gan_ls+2inductor
-          | 1gan_hs+1gan_ls | 1gan_hs+1gan_ls+1inductor, heat_path_K: 23.28034057277704, heat_path_above_chosen_K: 0.09763694522681376,
-        worst_via_ar_both_faces: 8.333333333333334, worst_via_ar_single_face: 8.333333333333334}
+      runner_up:
+        order_input_to_output: 1gan_hs+1gan_ls | 1gan_hs+1inductor+3cap_fly | 1gan_hs+1gan_ls | 1gan_hs+1gan_ls+1inductor
+          | 1gan_ls+2inductor
+        routing_loss_W: 2.7310705555194614
+        routing_loss_above_chosen_W: -0.0689996507464703
+        heat_path_K: 24.826505634320412
+        heat_path_above_chosen_K: 0.2975284150933426
+        worst_via_ar_both_faces: 8.333333333333334
+        worst_via_ar_single_face: 8.333333333333334
+        assignment: {gan_hs0: 1, gan_hs1: 3, gan_hs2: 2, gan_hs3: 4, gan_ls0: 3, gan_ls1: 4, gan_ls2: 1,
+          gan_ls3: 5, inductor0: 5, inductor1: 5, inductor2: 2, inductor3: 4, cap_fly0: 2, cap_fly1: 2,
+          cap_fly2: 2}
       single_face_sensitivity: {chosen_order_worst_via_ar: 8.333333333333334, chosen_order_worst_net: vin_to_hs1,
-        rule_choice_single_face: 1gan_hs+1inductor+3cap_fly | 1gan_hs+1gan_ls | 1gan_hs+1gan_ls | 1gan_ls+2inductor
-          | 1gan_hs+1gan_ls+1inductor, rule_choice_worst_via_ar: 8.333333333333334, rule_choice_heat_path_K: 23.182703627550225,
-        same_order: true}
+        rule_choice_single_face: 1gan_hs+1gan_ls | 1gan_hs+1inductor+3cap_fly | 1gan_hs+1gan_ls | 1gan_ls+2inductor
+          | 1gan_hs+1gan_ls+1inductor, rule_choice_worst_via_ar: 8.333333333333334, rule_choice_routing_loss_W: 2.8000702062659317,
+        rule_choice_heat_path_K: 24.52897721922707, same_order: true}
+      least_routing_loss_order: 1gan_hs+1gan_ls | 1gan_hs+1inductor+3cap_fly | 1gan_hs+1gan_ls | 1gan_hs+1gan_ls+1inductor
+        | 1gan_ls+2inductor
+      least_routing_loss_W: 2.7310705555194614
       best_heat_path_order: 1gan_hs+1inductor+3cap_fly | 1gan_hs+1gan_ls | 1gan_hs+1gan_ls | 1gan_ls+2inductor
         | 1gan_hs+1gan_ls+1inductor
       best_heat_path_K: 23.182703627550225
       best_heat_path_worst_via_ar: 8.333333333333334
-      source: 'research/tcpmt_revision/tier_order.json (rule_ranking: every order with its heat path and
-        worst via aspect ratios)'
+      source: 'research/tcpmt_revision/tier_order.json (rule_ranking: every order with its routing loss,
+        heat path and worst via aspect ratios)'
     converter_stack_um: 3733.0
     routing:
       label: N4K4KA2_J3.5
@@ -320,41 +356,41 @@ designs:
       cap_footprint_mm2: 1.28
       B_array: [1, 1, 1, 1]
       layout:
-      - {name: HS0, kind: gan_hs, index: 0, tier: 1, tier_name: tier1_hs1l1cf3, x_mm: 1.05, y_mm: 1.65,
+      - {name: HS0, kind: gan_hs, index: 0, tier: 1, tier_name: tier1_hs1ls1, x_mm: 0.117180849095055,
+        y_mm: 0.0, w_mm: 1.1500000000000001, h_mm: 1.75, part_w_mm: 1.0999999999999999, part_h_mm: 1.7}
+      - {name: LS2, kind: gan_ls, index: 2, tier: 1, tier_name: tier1_hs1ls1, x_mm: 1.2671808490950551,
+        y_mm: 0.0, w_mm: 1.55, h_mm: 2.55, part_w_mm: 1.5, part_h_mm: 2.5}
+      - {name: HS2, kind: gan_hs, index: 2, tier: 2, tier_name: tier2_hs1l1cf3, x_mm: 1.05, y_mm: 1.65,
         w_mm: 1.7499999999999998, h_mm: 1.15, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
-      - {name: L0, kind: inductor, index: 0, tier: 1, tier_name: tier1_hs1l1cf3, x_mm: 0.0, y_mm: 1.65,
+      - {name: L2, kind: inductor, index: 2, tier: 2, tier_name: tier2_hs1l1cf3, x_mm: 0.0, y_mm: 1.65,
         w_mm: 1.05, h_mm: 1.0500000000000003, part_w_mm: 1.0, part_h_mm: 1.0}
-      - {name: CF0, kind: cap_fly, index: 0, tier: 1, tier_name: tier1_hs1l1cf3, x_mm: 0.0, y_mm: 0.0,
+      - {name: CF0, kind: cap_fly, index: 0, tier: 2, tier_name: tier2_hs1l1cf3, x_mm: 0.0, y_mm: 0.0,
         w_mm: 0.85, h_mm: 1.65, part_w_mm: 0.7999999999999999, part_h_mm: 1.5999999999999999}
-      - {name: CF1, kind: cap_fly, index: 1, tier: 1, tier_name: tier1_hs1l1cf3, x_mm: 0.85, y_mm: 0.0,
+      - {name: CF1, kind: cap_fly, index: 1, tier: 2, tier_name: tier2_hs1l1cf3, x_mm: 0.85, y_mm: 0.0,
         w_mm: 0.85, h_mm: 1.65, part_w_mm: 0.7999999999999999, part_h_mm: 1.5999999999999999}
-      - {name: CF2, kind: cap_fly, index: 2, tier: 1, tier_name: tier1_hs1l1cf3, x_mm: 1.7, y_mm: 0.0,
+      - {name: CF2, kind: cap_fly, index: 2, tier: 2, tier_name: tier2_hs1l1cf3, x_mm: 1.7, y_mm: 0.0,
         w_mm: 0.8499999999999999, h_mm: 1.65, part_w_mm: 0.7999999999999999, part_h_mm: 1.5999999999999999}
-      - {name: HS1, kind: gan_hs, index: 1, tier: 2, tier_name: tier2_hs1ls1, x_mm: 0.0, y_mm: 1.55, w_mm: 1.75,
+      - {name: HS1, kind: gan_hs, index: 1, tier: 3, tier_name: tier3_hs1ls1, x_mm: 0.0, y_mm: 1.55, w_mm: 1.75,
         h_mm: 1.15, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
-      - {name: LS0, kind: gan_ls, index: 0, tier: 2, tier_name: tier2_hs1ls1, x_mm: 0.0, y_mm: 0.0, w_mm: 2.55,
+      - {name: LS0, kind: gan_ls, index: 0, tier: 3, tier_name: tier3_hs1ls1, x_mm: 0.0, y_mm: 0.0, w_mm: 2.55,
         h_mm: 1.55, part_w_mm: 2.5, part_h_mm: 1.5}
-      - {name: HS2, kind: gan_hs, index: 2, tier: 3, tier_name: tier3_hs1ls1, x_mm: 0.0, y_mm: 1.55, w_mm: 1.75,
-        h_mm: 1.15, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
-      - {name: LS1, kind: gan_ls, index: 1, tier: 3, tier_name: tier3_hs1ls1, x_mm: 0.0, y_mm: 0.0, w_mm: 2.55,
-        h_mm: 1.55, part_w_mm: 2.5, part_h_mm: 1.5}
-      - {name: LS2, kind: gan_ls, index: 2, tier: 4, tier_name: tier4_ls1l2, x_mm: 0.21718084909505508,
+      - {name: LS3, kind: gan_ls, index: 3, tier: 4, tier_name: tier4_ls1l2, x_mm: 0.21718084909505508,
         y_mm: 0.26718084909505535, w_mm: 1.55, h_mm: 2.55, part_w_mm: 1.5, part_h_mm: 2.5}
-      - {name: L1, kind: inductor, index: 1, tier: 4, tier_name: tier4_ls1l2, x_mm: 1.7671808490950551,
+      - {name: L0, kind: inductor, index: 0, tier: 4, tier_name: tier4_ls1l2, x_mm: 1.7671808490950551,
         y_mm: 1.7671808490950551, w_mm: 1.05, h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
-      - {name: L2, kind: inductor, index: 2, tier: 4, tier_name: tier4_ls1l2, x_mm: 1.7671808490950551,
+      - {name: L1, kind: inductor, index: 1, tier: 4, tier_name: tier4_ls1l2, x_mm: 1.7671808490950551,
         y_mm: 0.7171808490950551, w_mm: 1.05, h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
       - {name: HS3, kind: gan_hs, index: 3, tier: 5, tier_name: tier5_hs1ls1l1, x_mm: 0.117180849095055,
         y_mm: 1.05, w_mm: 1.1500000000000001, h_mm: 1.7499999999999998, part_w_mm: 1.0999999999999999,
         part_h_mm: 1.7}
-      - {name: LS3, kind: gan_ls, index: 3, tier: 5, tier_name: tier5_hs1ls1l1, x_mm: 1.2671808490950551,
+      - {name: LS1, kind: gan_ls, index: 1, tier: 5, tier_name: tier5_hs1ls1l1, x_mm: 1.2671808490950551,
         y_mm: 0.0, w_mm: 1.55, h_mm: 2.55, part_w_mm: 1.5, part_h_mm: 2.5}
       - {name: L3, kind: inductor, index: 3, tier: 5, tier_name: tier5_hs1ls1l1, x_mm: 0.21718084909505508,
         y_mm: 0.0, w_mm: 1.05, h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
       layout_cell_side_mm: 2.817180849095055
       layout_rule: 'DSE packing per tier up to the 8 square symmetries: the inductor tiers minimise the
         output-plane R2 resistance, the input-end tier the current-weighted VIN run'
-      layout_symmetry: {'1': id, '2': id, '3': id, '4': atr, '5': mx}
+      layout_symmetry: {'1': r90, '2': id, '3': id, '4': atr, '5': mx}
       output_plane_r2_mohm: {dse_placement: 0.11819860878978239, adopted: 0.031184817443288288}
     decoupling:
       k_eq: 2.629436399011537
@@ -442,18 +478,18 @@ designs:
       - [1.15, 0.0, 1.65, 0.85, cap_fly]
       - [1.65, 0.85, 1.15, 1.75, gan_hs]
       - [0.0, 1.75, 1.65, 0.85, cap_fly]
-    - name: tier2_ls1l1
-      parts: {gan_ls: 1, inductor: 1}
-      height_um: 638.0
-      placement_mm:
-      - [0.0, 0.0, 1.05, 1.05, inductor]
-      - [0.0, 1.05, 2.55, 1.55, gan_ls]
-    - name: tier3_hs1ls1
+    - name: tier2_hs1ls1
       parts: {gan_hs: 1, gan_ls: 1}
       height_um: 685.0
       placement_mm:
       - [0.0, 0.0, 2.55, 1.55, gan_ls]
       - [0.0, 1.55, 1.75, 1.15, gan_hs]
+    - name: tier3_ls1l1
+      parts: {gan_ls: 1, inductor: 1}
+      height_um: 638.0
+      placement_mm:
+      - [0.0, 0.0, 1.05, 1.05, inductor]
+      - [0.0, 1.05, 2.55, 1.55, gan_ls]
     - name: tier4_ls1l2
       parts: {gan_ls: 1, inductor: 2}
       height_um: 638.0
@@ -462,31 +498,49 @@ designs:
       - [1.05, 0.0, 1.05, 1.05, inductor]
       - [0.0, 1.05, 2.55, 1.55, gan_ls]
     tier_order:
-      rule: production order = the order of the decided tiers with the best heat path among the orders
-        meeting the via rule (AR <= 1 on every via level, die terminals on both faces); if none meets
-        it, the order with the best worst-via aspect ratio, ties broken by the heat path
-      basis: the order of m36 (a sensitivity changes the capacitor height only)
-      order_input_to_output: 2gan_hs+2cap_fly | 1gan_ls+1inductor | 1gan_hs+1gan_ls | 1gan_ls+2inductor
+      rule: production order = among the orders of the decided tiers meeting the via rule (AR <= 1 on
+        every via level, die terminals on both faces) -- or, if none meets it, among those of the best
+        worst-via aspect ratio -- the order of least intra-VR routing loss (the ledger's model at 25 C,
+        the 48-V nets at the hot-loop factor; each order with its part assignment of least routing loss
+        among those of its best worst-via aspect ratio); orders within 0.1 W of the least loss are separated
+        by the heat path
+      basis: the order of m36 (a sensitivity changes the capacitor height only), with its own least-loss
+        part assignment
+      order_input_to_output: 2gan_hs+2cap_fly | 1gan_hs+1gan_ls | 1gan_ls+1inductor | 1gan_ls+2inductor
       worst_via_ar_both_faces: 5.708333333333334
-      worst_net_both_faces: vin_to_hs2
+      worst_net_both_faces: vin_to_hs0
       worst_via_ar_single_face: 5.708333333333334
-      heat_path_K: 21.158521214120178
-      heat_path_two_sided_K: 8.81353189678212
-      assignment: {gan_hs0: 1, gan_hs1: 1, gan_hs2: 3, gan_ls0: 2, gan_ls1: 3, gan_ls2: 4, inductor0: 2,
-        inductor1: 4, inductor2: 4, cap_fly0: 1, cap_fly1: 1}
-      rank_by_rule: 1
+      routing_loss_W: 5.307067005303752
+      routing_loss_range_over_assignments_W: [5.307067005303752, 13.178997495975807]
+      routing_basis: {model: 'final_closure_ledger.intra_vr (R0 lateral, R0 via stacks, output-plane R2),
+          all cells', T_C: 25.0, k_hot_48V_nets: 3.776469928963073, tie_W: 0.1}
+      heat_path_K: 21.4671191261348
+      heat_path_two_sided_K: 8.82566049524831
+      assignment: {gan_hs0: 2, gan_hs1: 1, gan_hs2: 1, gan_ls0: 3, gan_ls1: 2, gan_ls2: 4, inductor0: 4,
+        inductor1: 4, inductor2: 3, cap_fly0: 1, cap_fly1: 1}
+      rank_by_rule: 3
       n_orders: 24
-      runner_up: {order_input_to_output: 2gan_hs+2cap_fly | 1gan_hs+1gan_ls | 1gan_ls+1inductor | 1gan_ls+2inductor,
-        heat_path_K: 21.4671191261348, heat_path_above_chosen_K: 0.3085979120146227, worst_via_ar_both_faces: 5.708333333333334,
-        worst_via_ar_single_face: 5.708333333333334}
-      single_face_sensitivity: {chosen_order_worst_via_ar: 5.708333333333334, chosen_order_worst_net: vin_to_hs2,
-        rule_choice_single_face: 2gan_hs+2cap_fly | 1gan_ls+1inductor | 1gan_hs+1gan_ls | 1gan_ls+2inductor,
-        rule_choice_worst_via_ar: 5.708333333333334, rule_choice_heat_path_K: 21.158521214120178, same_order: true}
+      runner_up:
+        order_input_to_output: 1gan_hs+1gan_ls | 2gan_hs+2cap_fly | 1gan_ls+1inductor | 1gan_ls+2inductor
+        routing_loss_W: 5.120002631510879
+        routing_loss_above_chosen_W: -0.18706437379287344
+        heat_path_K: 22.36363971812849
+        heat_path_above_chosen_K: 0.8965205919936885
+        worst_via_ar_both_faces: 5.708333333333334
+        worst_via_ar_single_face: 5.708333333333334
+        assignment: {gan_hs0: 1, gan_hs1: 2, gan_hs2: 2, gan_ls0: 3, gan_ls1: 1, gan_ls2: 4, inductor0: 4,
+          inductor1: 4, inductor2: 3, cap_fly0: 2, cap_fly1: 2}
+      single_face_sensitivity: {chosen_order_worst_via_ar: 5.708333333333334, chosen_order_worst_net: vin_to_hs0,
+        rule_choice_single_face: 1gan_hs+1gan_ls | 2gan_hs+2cap_fly | 1gan_ls+1inductor | 1gan_ls+2inductor,
+        rule_choice_worst_via_ar: 5.708333333333334, rule_choice_routing_loss_W: 5.120002631510879, rule_choice_heat_path_K: 22.36363971812849,
+        same_order: false}
+      least_routing_loss_order: 1gan_hs+1gan_ls | 2gan_hs+2cap_fly | 1gan_ls+2inductor | 1gan_ls+1inductor
+      least_routing_loss_W: 5.114133280657528
       best_heat_path_order: 2gan_hs+2cap_fly | 1gan_ls+1inductor | 1gan_hs+1gan_ls | 1gan_ls+2inductor
       best_heat_path_K: 21.158521214120178
       best_heat_path_worst_via_ar: 5.708333333333334
-      source: 'research/tcpmt_revision/tier_order.json (rule_ranking: every order with its heat path and
-        worst via aspect ratios)'
+      source: 'research/tcpmt_revision/tier_order.json (rule_ranking: every order with its routing loss,
+        heat path and worst via aspect ratios)'
     converter_stack_um: 2676.0
     routing:
       label: N3K3KA2_J3.5
@@ -513,27 +567,27 @@ designs:
       cap_footprint_mm2: 1.28
       B_array: [1, 1, 1]
       layout:
-      - {name: HS0, kind: gan_hs, index: 0, tier: 1, tier_name: tier1_hs2cf2, x_mm: 0.0, y_mm: 0.0, w_mm: 1.15,
+      - {name: HS1, kind: gan_hs, index: 1, tier: 1, tier_name: tier1_hs2cf2, x_mm: 0.0, y_mm: 0.0, w_mm: 1.15,
         h_mm: 1.75, part_w_mm: 1.0999999999999999, part_h_mm: 1.7}
-      - {name: HS1, kind: gan_hs, index: 1, tier: 1, tier_name: tier1_hs2cf2, x_mm: 1.65, y_mm: 0.85,
+      - {name: HS2, kind: gan_hs, index: 2, tier: 1, tier_name: tier1_hs2cf2, x_mm: 1.65, y_mm: 0.85,
         w_mm: 1.15, h_mm: 1.75, part_w_mm: 1.0999999999999999, part_h_mm: 1.7}
       - {name: CF0, kind: cap_fly, index: 0, tier: 1, tier_name: tier1_hs2cf2, x_mm: 1.15, y_mm: 0.0,
         w_mm: 1.65, h_mm: 0.85, part_w_mm: 1.5999999999999999, part_h_mm: 0.7999999999999999}
       - {name: CF1, kind: cap_fly, index: 1, tier: 1, tier_name: tier1_hs2cf2, x_mm: 0.0, y_mm: 1.75,
         w_mm: 1.65, h_mm: 0.8500000000000001, part_w_mm: 1.5999999999999999, part_h_mm: 0.7999999999999999}
-      - {name: LS0, kind: gan_ls, index: 0, tier: 2, tier_name: tier2_ls1l1, x_mm: 0.0, y_mm: 1.05, w_mm: 2.55,
-        h_mm: 1.55, part_w_mm: 2.5, part_h_mm: 1.5}
-      - {name: L0, kind: inductor, index: 0, tier: 2, tier_name: tier2_ls1l1, x_mm: 0.0, y_mm: 0.0, w_mm: 1.05,
-        h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
-      - {name: HS2, kind: gan_hs, index: 2, tier: 3, tier_name: tier3_hs1ls1, x_mm: 0.0, y_mm: 1.55, w_mm: 1.75,
+      - {name: HS0, kind: gan_hs, index: 0, tier: 2, tier_name: tier2_hs1ls1, x_mm: 0.0, y_mm: 1.55, w_mm: 1.75,
         h_mm: 1.15, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
-      - {name: LS1, kind: gan_ls, index: 1, tier: 3, tier_name: tier3_hs1ls1, x_mm: 0.0, y_mm: 0.0, w_mm: 2.55,
+      - {name: LS1, kind: gan_ls, index: 1, tier: 2, tier_name: tier2_hs1ls1, x_mm: 0.0, y_mm: 0.0, w_mm: 2.55,
         h_mm: 1.55, part_w_mm: 2.5, part_h_mm: 1.5}
+      - {name: LS0, kind: gan_ls, index: 0, tier: 3, tier_name: tier3_ls1l1, x_mm: 0.0, y_mm: 1.05, w_mm: 2.55,
+        h_mm: 1.55, part_w_mm: 2.5, part_h_mm: 1.5}
+      - {name: L2, kind: inductor, index: 2, tier: 3, tier_name: tier3_ls1l1, x_mm: 0.0, y_mm: 0.0, w_mm: 1.05,
+        h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
       - {name: LS2, kind: gan_ls, index: 2, tier: 4, tier_name: tier4_ls1l2, x_mm: 0.26718084909505535,
         y_mm: 0.21718084909505508, w_mm: 2.55, h_mm: 1.55, part_w_mm: 2.5, part_h_mm: 1.5}
-      - {name: L1, kind: inductor, index: 1, tier: 4, tier_name: tier4_ls1l2, x_mm: 1.7671808490950551,
+      - {name: L0, kind: inductor, index: 0, tier: 4, tier_name: tier4_ls1l2, x_mm: 1.7671808490950551,
         y_mm: 1.7671808490950551, w_mm: 1.05, h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
-      - {name: L2, kind: inductor, index: 2, tier: 4, tier_name: tier4_ls1l2, x_mm: 0.7171808490950551,
+      - {name: L1, kind: inductor, index: 1, tier: 4, tier_name: tier4_ls1l2, x_mm: 0.7171808490950551,
         y_mm: 1.7671808490950551, w_mm: 1.05, h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
       layout_cell_side_mm: 2.817180849095055
       layout_rule: 'DSE packing per tier up to the 8 square symmetries: the inductor tiers minimise the
@@ -617,23 +671,23 @@ designs:
     screen: {source: research/tcpmt_revision/dse_phase2_summary.json runs.etm35_p2_t4.per_count.25, P_total_W: 110.553,
       conv_total_W: 103.74, routing_W: 6.813, tiers: 4, stack_height_um: 3115.0}
     tiers:
-    - name: tier1_ls1
-      parts: {gan_ls: 1}
-      height_um: 700.0
-      placement_mm:
-      - [0.0, 0.0, 2.65, 3.35, gan_ls]
-    - name: tier2_ls1
-      parts: {gan_ls: 1}
-      height_um: 700.0
-      placement_mm:
-      - [0.0, 0.0, 2.65, 3.35, gan_ls]
-    - name: tier3_hs3
+    - name: tier1_hs3
       parts: {gan_hs: 3}
       height_um: 685.0
       placement_mm:
       - [0.0, 0.0, 1.75, 1.15, gan_hs]
       - [0.0, 1.15, 1.15, 1.75, gan_hs]
       - [1.15, 1.15, 1.15, 1.75, gan_hs]
+    - name: tier2_ls1
+      parts: {gan_ls: 1}
+      height_um: 700.0
+      placement_mm:
+      - [0.0, 0.0, 2.65, 3.35, gan_ls]
+    - name: tier3_ls1
+      parts: {gan_ls: 1}
+      height_um: 700.0
+      placement_mm:
+      - [0.0, 0.0, 2.65, 3.35, gan_ls]
     - name: tier4_hs1l2cf3
       parts: {gan_hs: 1, inductor: 2, cap_fly: 3}
       height_um: 1000.0
@@ -645,31 +699,48 @@ designs:
       - [1.7, 1.05, 1.05, 1.05, inductor]
       - [0.85, 2.1, 1.75, 1.15, gan_hs]
     tier_order:
-      rule: production order = the order of the decided tiers with the best heat path among the orders
-        meeting the via rule (AR <= 1 on every via level, die terminals on both faces); if none meets
-        it, the order with the best worst-via aspect ratio, ties broken by the heat path
-      basis: 'no order of the decided tiers meets the via rule: best worst-via aspect ratio, ties broken
-        by the heat path'
-      order_input_to_output: 1gan_ls | 1gan_ls | 3gan_hs | 1gan_hs+2inductor+3cap_fly
+      rule: production order = among the orders of the decided tiers meeting the via rule (AR <= 1 on
+        every via level, die terminals on both faces) -- or, if none meets it, among those of the best
+        worst-via aspect ratio -- the order of least intra-VR routing loss (the ledger's model at 25 C,
+        the 48-V nets at the hot-loop factor; each order with its part assignment of least routing loss
+        among those of its best worst-via aspect ratio); orders within 0.1 W of the least loss are separated
+        by the heat path
+      basis: 'no order of the decided tiers meets the via rule: least routing loss among the orders of
+        the best worst-via aspect ratio (heat path between orders within 0.1 W)'
+      order_input_to_output: 3gan_hs | 1gan_ls | 1gan_ls | 1gan_hs+2inductor+3cap_fly
       worst_via_ar_both_faces: 5.833333333333334
-      worst_net_both_faces: vin_to_hs0
+      worst_net_both_faces: vin_to_hs1
       worst_via_ar_single_face: 5.833333333333334
-      heat_path_K: 25.175422554026508
-      heat_path_two_sided_K: 10.973608738299003
-      assignment: {gan_hs0: 3, gan_hs1: 3, gan_hs2: 3, gan_hs3: 4, gan_ls0: 1, gan_ls1: 2, inductor0: 4,
+      routing_loss_W: 14.685230879427458
+      routing_loss_range_over_assignments_W: [14.685230879427458, 14.877653142456218]
+      routing_basis: {model: 'final_closure_ledger.intra_vr (R0 lateral, R0 via stacks, output-plane R2),
+          all cells', T_C: 25.0, k_hot_48V_nets: 3.776469928963073, tie_W: 0.1}
+      heat_path_K: 26.542795253609942
+      heat_path_two_sided_K: 10.656942424132128
+      assignment: {gan_hs0: 1, gan_hs1: 4, gan_hs2: 1, gan_hs3: 1, gan_ls0: 3, gan_ls1: 2, inductor0: 4,
         inductor1: 4, cap_fly0: 4, cap_fly1: 4, cap_fly2: 4}
       rank_by_rule: 1
       n_orders: 12
-      runner_up: {order_input_to_output: 1gan_ls | 3gan_hs | 1gan_ls | 1gan_hs+2inductor+3cap_fly, heat_path_K: 25.859108903818225,
-        heat_path_above_chosen_K: 0.6836863497917172, worst_via_ar_both_faces: 5.833333333333334, worst_via_ar_single_face: 5.833333333333334}
-      single_face_sensitivity: {chosen_order_worst_via_ar: 5.833333333333334, chosen_order_worst_net: vin_to_hs0,
-        rule_choice_single_face: 1gan_ls | 1gan_ls | 3gan_hs | 1gan_hs+2inductor+3cap_fly, rule_choice_worst_via_ar: 5.833333333333334,
-        rule_choice_heat_path_K: 25.175422554026508, same_order: true}
+      runner_up:
+        order_input_to_output: 1gan_ls | 3gan_hs | 1gan_ls | 1gan_hs+2inductor+3cap_fly
+        routing_loss_W: 15.186962772469345
+        routing_loss_above_chosen_W: 0.501731893041887
+        heat_path_K: 25.859108903818225
+        heat_path_above_chosen_K: -0.6836863497917172
+        worst_via_ar_both_faces: 5.833333333333334
+        worst_via_ar_single_face: 5.833333333333334
+        assignment: {gan_hs0: 2, gan_hs1: 4, gan_hs2: 2, gan_hs3: 2, gan_ls0: 3, gan_ls1: 1, inductor0: 4,
+          inductor1: 4, cap_fly0: 4, cap_fly1: 4, cap_fly2: 4}
+      single_face_sensitivity: {chosen_order_worst_via_ar: 5.833333333333334, chosen_order_worst_net: vin_to_hs1,
+        rule_choice_single_face: 3gan_hs | 1gan_ls | 1gan_ls | 1gan_hs+2inductor+3cap_fly, rule_choice_worst_via_ar: 5.833333333333334,
+        rule_choice_routing_loss_W: 14.685230879427458, rule_choice_heat_path_K: 26.542795253609942, same_order: true}
+      least_routing_loss_order: 3gan_hs | 1gan_ls | 1gan_ls | 1gan_hs+2inductor+3cap_fly
+      least_routing_loss_W: 14.685230879427458
       best_heat_path_order: 1gan_ls | 1gan_ls | 3gan_hs | 1gan_hs+2inductor+3cap_fly
       best_heat_path_K: 25.175422554026508
       best_heat_path_worst_via_ar: 5.833333333333334
-      source: 'research/tcpmt_revision/tier_order.json (rule_ranking: every order with its heat path and
-        worst via aspect ratios)'
+      source: 'research/tcpmt_revision/tier_order.json (rule_ranking: every order with its routing loss,
+        heat path and worst via aspect ratios)'
     converter_stack_um: 3115.0
     routing:
       label: N4K2KA1_J3.5
@@ -696,17 +767,17 @@ designs:
       cap_footprint_mm2: 1.28
       B_array: [2, 2]
       layout:
-      - {name: LS0, kind: gan_ls, index: 0, tier: 1, tier_name: tier1_ls1, x_mm: 0.0, y_mm: 0.0, w_mm: 2.65,
-        h_mm: 3.35, part_w_mm: 2.6, part_h_mm: 3.3000000000000003}
+      - {name: HS0, kind: gan_hs, index: 0, tier: 1, tier_name: tier1_hs3, x_mm: 0.0, y_mm: 0.0, w_mm: 1.75,
+        h_mm: 1.15, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
+      - {name: HS2, kind: gan_hs, index: 2, tier: 1, tier_name: tier1_hs3, x_mm: 0.0, y_mm: 1.15, w_mm: 1.15,
+        h_mm: 1.75, part_w_mm: 1.0999999999999999, part_h_mm: 1.7}
+      - {name: HS3, kind: gan_hs, index: 3, tier: 1, tier_name: tier1_hs3, x_mm: 1.15, y_mm: 1.15, w_mm: 1.15,
+        h_mm: 1.75, part_w_mm: 1.0999999999999999, part_h_mm: 1.7}
       - {name: LS1, kind: gan_ls, index: 1, tier: 2, tier_name: tier2_ls1, x_mm: 0.0, y_mm: 0.0, w_mm: 2.65,
         h_mm: 3.35, part_w_mm: 2.6, part_h_mm: 3.3000000000000003}
-      - {name: HS0, kind: gan_hs, index: 0, tier: 3, tier_name: tier3_hs3, x_mm: 0.0, y_mm: 0.0, w_mm: 1.75,
-        h_mm: 1.15, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
-      - {name: HS1, kind: gan_hs, index: 1, tier: 3, tier_name: tier3_hs3, x_mm: 0.0, y_mm: 1.15, w_mm: 1.15,
-        h_mm: 1.75, part_w_mm: 1.0999999999999999, part_h_mm: 1.7}
-      - {name: HS2, kind: gan_hs, index: 2, tier: 3, tier_name: tier3_hs3, x_mm: 1.15, y_mm: 1.15, w_mm: 1.15,
-        h_mm: 1.75, part_w_mm: 1.0999999999999999, part_h_mm: 1.7}
-      - {name: HS3, kind: gan_hs, index: 3, tier: 4, tier_name: tier4_hs1l2cf3, x_mm: 0.85, y_mm: 2.1,
+      - {name: LS0, kind: gan_ls, index: 0, tier: 3, tier_name: tier3_ls1, x_mm: 0.0, y_mm: 0.0, w_mm: 2.65,
+        h_mm: 3.35, part_w_mm: 2.6, part_h_mm: 3.3000000000000003}
+      - {name: HS1, kind: gan_hs, index: 1, tier: 4, tier_name: tier4_hs1l2cf3, x_mm: 0.85, y_mm: 2.1,
         w_mm: 1.75, h_mm: 1.15, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
       - {name: L0, kind: inductor, index: 0, tier: 4, tier_name: tier4_hs1l2cf3, x_mm: 1.7, y_mm: 0.0,
         w_mm: 1.05, h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
@@ -806,52 +877,68 @@ designs:
       placement_mm:
       - [0.0, 0.0, 1.75, 1.15, gan_hs]
       - [0.0, 1.15, 1.75, 1.15, gan_hs]
-    - name: tier2_hs1l2
-      parts: {gan_hs: 1, inductor: 2}
-      height_um: 685.0
+    - name: tier2_ls1cf1
+      parts: {gan_ls: 1, cap_fly: 1}
+      height_um: 1000.0
       placement_mm:
-      - [0.0, 0.0, 1.05, 1.05, inductor]
-      - [1.05, 0.0, 1.05, 1.05, inductor]
-      - [0.0, 1.05, 1.75, 1.15, gan_hs]
+      - [0.0, 0.0, 1.65, 0.85, cap_fly]
+      - [0.0, 0.85, 2.35, 1.5, gan_ls]
     - name: tier3_ls1cf1
       parts: {gan_ls: 1, cap_fly: 1}
       height_um: 1000.0
       placement_mm:
       - [0.0, 0.0, 1.65, 0.85, cap_fly]
       - [0.0, 0.85, 2.35, 1.5, gan_ls]
-    - name: tier4_ls1cf1
-      parts: {gan_ls: 1, cap_fly: 1}
-      height_um: 1000.0
+    - name: tier4_hs1l2
+      parts: {gan_hs: 1, inductor: 2}
+      height_um: 685.0
       placement_mm:
-      - [0.0, 0.0, 1.65, 0.85, cap_fly]
-      - [0.0, 0.85, 2.35, 1.5, gan_ls]
+      - [0.0, 0.0, 1.05, 1.05, inductor]
+      - [1.05, 0.0, 1.05, 1.05, inductor]
+      - [0.0, 1.05, 1.75, 1.15, gan_hs]
     tier_order:
-      rule: production order = the order of the decided tiers with the best heat path among the orders
-        meeting the via rule (AR <= 1 on every via level, die terminals on both faces); if none meets
-        it, the order with the best worst-via aspect ratio, ties broken by the heat path
-      basis: 'no order of the decided tiers meets the via rule: best worst-via aspect ratio, ties broken
-        by the heat path'
-      order_input_to_output: 2gan_hs | 1gan_hs+2inductor | 1gan_ls+1cap_fly | 1gan_ls+1cap_fly
+      rule: production order = among the orders of the decided tiers meeting the via rule (AR <= 1 on
+        every via level, die terminals on both faces) -- or, if none meets it, among those of the best
+        worst-via aspect ratio -- the order of least intra-VR routing loss (the ledger's model at 25 C,
+        the 48-V nets at the hot-loop factor; each order with its part assignment of least routing loss
+        among those of its best worst-via aspect ratio); orders within 0.1 W of the least loss are separated
+        by the heat path
+      basis: 'no order of the decided tiers meets the via rule: least routing loss among the orders of
+        the best worst-via aspect ratio (heat path between orders within 0.1 W)'
+      order_input_to_output: 2gan_hs | 1gan_ls+1cap_fly | 1gan_ls+1cap_fly | 1gan_hs+2inductor
       worst_via_ar_both_faces: 8.333333333333334
-      worst_net_both_faces: hs0_to_cf0
+      worst_net_both_faces: vin_to_hs0
       worst_via_ar_single_face: 8.333333333333334
-      heat_path_K: 27.543744983921517
-      heat_path_two_sided_K: 12.375033862421297
-      assignment: {gan_hs0: 1, gan_hs1: 1, gan_hs2: 2, gan_ls0: 4, gan_ls1: 3, inductor0: 2, inductor1: 2,
-        cap_fly0: 4, cap_fly1: 3}
+      routing_loss_W: 7.239973484745349
+      routing_loss_range_over_assignments_W: [7.239973484745349, 7.26693073154613]
+      routing_basis: {model: 'final_closure_ledger.intra_vr (R0 lateral, R0 via stacks, output-plane R2),
+          all cells', T_C: 25.0, k_hot_48V_nets: 3.776469928963073, tie_W: 0.1}
+      heat_path_K: 28.883192246828035
+      heat_path_two_sided_K: 12.641073080141158
+      assignment: {gan_hs0: 4, gan_hs1: 1, gan_hs2: 1, gan_ls0: 3, gan_ls1: 2, inductor0: 4, inductor1: 4,
+        cap_fly0: 3, cap_fly1: 2}
       rank_by_rule: 1
       n_orders: 12
-      runner_up: {order_input_to_output: 2gan_hs | 1gan_ls+1cap_fly | 1gan_hs+2inductor | 1gan_ls+1cap_fly,
-        heat_path_K: 28.213468615374776, heat_path_above_chosen_K: 0.6697236314532589, worst_via_ar_both_faces: 8.333333333333334,
-        worst_via_ar_single_face: 8.333333333333334}
-      single_face_sensitivity: {chosen_order_worst_via_ar: 8.333333333333334, chosen_order_worst_net: hs0_to_cf0,
-        rule_choice_single_face: 2gan_hs | 1gan_hs+2inductor | 1gan_ls+1cap_fly | 1gan_ls+1cap_fly, rule_choice_worst_via_ar: 8.333333333333334,
-        rule_choice_heat_path_K: 27.543744983921517, same_order: true}
+      runner_up:
+        order_input_to_output: 1gan_ls+1cap_fly | 2gan_hs | 1gan_ls+1cap_fly | 1gan_hs+2inductor
+        routing_loss_W: 7.408702831045568
+        routing_loss_above_chosen_W: 0.16872934630021952
+        heat_path_K: 31.57471884015067
+        heat_path_above_chosen_K: 2.691526593322635
+        worst_via_ar_both_faces: 8.333333333333334
+        worst_via_ar_single_face: 8.333333333333334
+        assignment: {gan_hs0: 2, gan_hs1: 2, gan_hs2: 4, gan_ls0: 1, gan_ls1: 3, inductor0: 4, inductor1: 4,
+          cap_fly0: 1, cap_fly1: 3}
+      single_face_sensitivity: {chosen_order_worst_via_ar: 8.333333333333334, chosen_order_worst_net: vin_to_hs0,
+        rule_choice_single_face: 2gan_hs | 1gan_ls+1cap_fly | 1gan_ls+1cap_fly | 1gan_hs+2inductor, rule_choice_worst_via_ar: 8.333333333333334,
+        rule_choice_routing_loss_W: 7.239973484745349, rule_choice_heat_path_K: 28.883192246828035, same_order: true}
+      least_routing_loss_order: 2gan_hs | 1gan_ls+1cap_fly | 1gan_ls+1cap_fly | 1gan_hs+2inductor
+      least_routing_loss_W: 7.239973484745349
       best_heat_path_order: 2gan_hs | 1gan_hs+2inductor | 1gan_ls+1cap_fly | 1gan_ls+1cap_fly
       best_heat_path_K: 27.543744983921517
       best_heat_path_worst_via_ar: 8.333333333333334
-      source: 'research/tcpmt_revision/tier_order.json (rule_ranking: every order with its heat path and
-        worst via aspect ratios)'
+      source: 'research/tcpmt_revision/tier_order.json (rule_ranking: every order with its routing loss,
+        heat path and worst via aspect ratios)'
     converter_stack_um: 3400.0
     routing:
       label: N3K2KA1_J3.5
@@ -878,24 +965,24 @@ designs:
       cap_footprint_mm2: 1.28
       B_array: [1, 2]
       layout:
-      - {name: HS0, kind: gan_hs, index: 0, tier: 1, tier_name: tier1_hs2, x_mm: 0.0, y_mm: 0.0, w_mm: 1.75,
+      - {name: HS1, kind: gan_hs, index: 1, tier: 1, tier_name: tier1_hs2, x_mm: 0.0, y_mm: 0.0, w_mm: 1.75,
         h_mm: 1.15, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
-      - {name: HS1, kind: gan_hs, index: 1, tier: 1, tier_name: tier1_hs2, x_mm: 0.0, y_mm: 1.15, w_mm: 1.75,
+      - {name: HS2, kind: gan_hs, index: 2, tier: 1, tier_name: tier1_hs2, x_mm: 0.0, y_mm: 1.15, w_mm: 1.75,
         h_mm: 1.15, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
-      - {name: HS2, kind: gan_hs, index: 2, tier: 2, tier_name: tier2_hs1l2, x_mm: 0.0, y_mm: 1.05, w_mm: 1.75,
+      - {name: LS1, kind: gan_ls, index: 1, tier: 2, tier_name: tier2_ls1cf1, x_mm: 0.0, y_mm: 0.85, w_mm: 2.35,
+        h_mm: 1.5, part_w_mm: 2.3000000000000003, part_h_mm: 1.45}
+      - {name: CF1, kind: cap_fly, index: 1, tier: 2, tier_name: tier2_ls1cf1, x_mm: 0.0, y_mm: 0.0, w_mm: 1.65,
+        h_mm: 0.85, part_w_mm: 1.5999999999999999, part_h_mm: 0.7999999999999999}
+      - {name: LS0, kind: gan_ls, index: 0, tier: 3, tier_name: tier3_ls1cf1, x_mm: 0.0, y_mm: 0.85, w_mm: 2.35,
+        h_mm: 1.5, part_w_mm: 2.3000000000000003, part_h_mm: 1.45}
+      - {name: CF0, kind: cap_fly, index: 0, tier: 3, tier_name: tier3_ls1cf1, x_mm: 0.0, y_mm: 0.0, w_mm: 1.65,
+        h_mm: 0.85, part_w_mm: 1.5999999999999999, part_h_mm: 0.7999999999999999}
+      - {name: HS0, kind: gan_hs, index: 0, tier: 4, tier_name: tier4_hs1l2, x_mm: 0.0, y_mm: 1.05, w_mm: 1.75,
         h_mm: 1.1500000000000001, part_w_mm: 1.7, part_h_mm: 1.0999999999999999}
-      - {name: L0, kind: inductor, index: 0, tier: 2, tier_name: tier2_hs1l2, x_mm: 0.0, y_mm: 0.0, w_mm: 1.05,
+      - {name: L0, kind: inductor, index: 0, tier: 4, tier_name: tier4_hs1l2, x_mm: 0.0, y_mm: 0.0, w_mm: 1.05,
         h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
-      - {name: L1, kind: inductor, index: 1, tier: 2, tier_name: tier2_hs1l2, x_mm: 1.05, y_mm: 0.0, w_mm: 1.05,
+      - {name: L1, kind: inductor, index: 1, tier: 4, tier_name: tier4_hs1l2, x_mm: 1.05, y_mm: 0.0, w_mm: 1.05,
         h_mm: 1.05, part_w_mm: 1.0, part_h_mm: 1.0}
-      - {name: LS1, kind: gan_ls, index: 1, tier: 3, tier_name: tier3_ls1cf1, x_mm: 0.0, y_mm: 0.85, w_mm: 2.35,
-        h_mm: 1.5, part_w_mm: 2.3000000000000003, part_h_mm: 1.45}
-      - {name: CF1, kind: cap_fly, index: 1, tier: 3, tier_name: tier3_ls1cf1, x_mm: 0.0, y_mm: 0.0, w_mm: 1.65,
-        h_mm: 0.85, part_w_mm: 1.5999999999999999, part_h_mm: 0.7999999999999999}
-      - {name: LS0, kind: gan_ls, index: 0, tier: 4, tier_name: tier4_ls1cf1, x_mm: 0.0, y_mm: 0.85, w_mm: 2.35,
-        h_mm: 1.5, part_w_mm: 2.3000000000000003, part_h_mm: 1.45}
-      - {name: CF0, kind: cap_fly, index: 0, tier: 4, tier_name: tier4_ls1cf1, x_mm: 0.0, y_mm: 0.0, w_mm: 1.65,
-        h_mm: 0.85, part_w_mm: 1.5999999999999999, part_h_mm: 0.7999999999999999}
       layout_cell_side_mm: 2.414726442081476
       layout_rule: 'DSE packing per tier up to the 8 square symmetries: the inductor tiers minimise the
         output-plane R2 resistance, the input-end tier the current-weighted VIN run'

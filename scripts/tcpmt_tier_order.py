@@ -37,12 +37,20 @@ tcpmt_converter_cards.mixed_tier; P_t the 25-C per-part loss split of the conver
 The two-sided value (each tier also cooled through the input-end face, parallel paths) is
 recorded beside it.
 
-RULE (declared before the result): the production order is the order of the decided tiers
-with the best heat path among those meeting the via rule (both-face terminals); when none
-meets it, the order with the best worst-via aspect ratio, ties broken by the heat path. Both
-the chosen order and the best heat-path order are recorded for the paper, with every decided
-order ranked by the rule (rule_ranking: heat path, worst via aspect ratio with both- and
-single-face terminals), the runner-up, and the rule applied to the single-face aspect ratios
+ROUTING LOSS (review round 3: the framework's objective is loss). The intra-VR routing loss
+of an order with a part assignment is final_closure_ledger.intra_vr's model on the oriented
+cell layout (RoutingModel: R0 lateral runs within a tier, R0 via stacks across the span between
+tiers, the output-plane R2 sheet), copper at 25 C, the 48-V nets at the hot-loop factor of the
+design's decoupling record; every order takes its part assignment of least routing loss among
+the assignments of its best worst-via aspect ratio.
+
+RULE (the coordinator's decision, superseding the heat-path tie-break): among the orders of
+the decided tiers meeting the via rule (both-face terminals) -- or, when none meets it, among
+those of the best worst-via aspect ratio -- the order of least routing loss; orders within
+0.1 W of it are separated by the heat path. Recorded for the paper: every decided order ranked
+by the rule (rule_ranking: routing loss with its range over assignments, heat path, worst via
+aspect ratio with both- and single-face terminals, the assignment), the runner-up, the least
+routing-loss and best heat-path orders, and the rule applied to the single-face aspect ratios
 (single_face: the order it picks and the chosen order's single-face worst via).
 
     python tcpmt_tier_order.py [design ...]   -> research/tcpmt_revision/tier_order.json
@@ -70,10 +78,23 @@ CLASSES = ("gan_hs", "gan_ls", "inductor", "cap_fly")
 DIES = ("gan_hs", "gan_ls")
 RDL_UM = 10.0
 AR_MAX = 1.0
-RULE = ("production order = the order of the decided tiers with the best heat path among the "
-        "orders meeting the via rule (AR <= 1 on every via level, die terminals on both faces); "
-        "if none meets it, the order with the best worst-via aspect ratio, ties broken by the "
-        "heat path")
+#: REVIEW ROUND 3 (the coordinator's decision: the framework's objective is loss). Each order
+#: takes the part assignment of least intra-VR ROUTING LOSS among the assignments of its best
+#: worst-via aspect ratio; among the orders meeting the via rule -- or, when none does, among
+#: those tied on the best worst-via aspect ratio -- the production order is the one of least
+#: routing loss, the heat path deciding only between orders within LOSS_TIE_W of it.
+RULE = ("production order = among the orders of the decided tiers meeting the via rule (AR <= 1 "
+        "on every via level, die terminals on both faces) -- or, if none meets it, among those "
+        "of the best worst-via aspect ratio -- the order of least intra-VR routing loss (the "
+        "ledger's model at 25 C, the 48-V nets at the hot-loop factor; each order with its "
+        "part assignment of least routing loss among those of its best worst-via aspect "
+        "ratio); orders within 0.1 W of the least loss are separated by the heat path")
+#: the routing-loss criterion: final_closure_ledger.intra_vr's model (R0 lateral runs on the
+#: oriented cell layout, R0 via stacks across the face-to-face span between tiers, the
+#: output-plane R2 sheet), copper at this temperature
+ROUTING_T_C = 25.0
+#: orders whose routing losses differ by at most this are separated by the heat path
+LOSS_TIE_W = 0.1
 
 
 def via_diameter_um():
@@ -189,49 +210,196 @@ def _assignments(order, cls):
     return per
 
 
-def worst_ar(order, cls, nets, d_via, terminals="both"):
-    """(worst AR, worst net, per-net AR, assignment) minimised over the part indices: the
-    smallest worst aspect ratio, then the smallest total crossed depth over all nets (so the
-    assignment also keeps the via stacks the ledger charges short)."""
+def assignment_ar(order, cls, nets, d_via, combo, terminals="both"):
+    """(worst AR, worst net, per-net AR, total crossed depth) of ONE part assignment `combo`
+    (per class, the tier position of each part index)."""
     hts = tier_heights(order, cls)
     T = len(order)
-    per = _assignments(order, cls)
     step = RDL_UM / d_via
 
     def levels(ta, tb, lower_is_die):
         lo, hi = min(ta, tb), max(ta, tb)
         first = lo if (terminals == "single" and lower_is_die) else lo + 1
         return list(range(first, hi))
+    tier_of = {(cls[i][0], k): combo[i][k] for i in range(len(cls))
+               for k in range(len(combo[i]))}
+    w, wn, pern, depth = 0.0, None, {}, 0.0
+    for name_, a, b in nets:
+        if a == "vin":
+            crossed = list(range(0, tier_of[b]))
+        elif b == "out":
+            ta = tier_of[a]
+            crossed = list(range(ta if (terminals == "single" and a[0] in DIES)
+                                 else ta + 1, T))
+        else:
+            ta, tb = tier_of[a], tier_of[b]
+            if ta == tb:
+                pern[name_] = 0.0
+                continue
+            lower = a if ta <= tb else b
+            crossed = levels(ta, tb, lower[0] in DIES)
+        ar = max(hts[t] for t in crossed) / d_via if crossed else step
+        depth += sum(hts[t] for t in crossed)
+        pern[name_] = ar
+        if ar > w:
+            w, wn = ar, name_
+    return w, wn, pern, depth
 
+
+def asg_dict(combo, cls):
+    """{class<index>: tier (1-based)} of a part assignment."""
+    return {f"{cls[i][0]}{k}": combo[i][k] + 1 for i in range(len(cls))
+            for k in range(len(combo[i]))}
+
+
+def worst_ar(order, cls, nets, d_via, terminals="both"):
+    """(worst AR, worst net, per-net AR, assignment) minimised over the part indices: the
+    smallest worst aspect ratio, then the smallest total crossed depth over all nets. Kept
+    for the repartition search (context); the production assignment of an order is chosen by
+    routing loss (RoutingModel, analyse)."""
     best = None
-    for combo in itertools.product(*per):
-        tier_of = {(cls[i][0], k): combo[i][k] for i in range(len(cls))
-                   for k in range(len(combo[i]))}
-        w, wn, pern, depth = 0.0, None, {}, 0.0
-        for name_, a, b in nets:
-            if a == "vin":
-                crossed = list(range(0, tier_of[b]))
-            elif b == "out":
-                ta = tier_of[a]
-                crossed = list(range(ta if (terminals == "single" and a[0] in DIES)
-                                     else ta + 1, T))
-            else:
-                ta, tb = tier_of[a], tier_of[b]
-                if ta == tb:
-                    pern[name_] = 0.0
-                    continue
-                lower = a if ta <= tb else b
-                crossed = levels(ta, tb, lower[0] in DIES)
-            ar = max(hts[t] for t in crossed) / d_via if crossed else step
-            depth += sum(hts[t] for t in crossed)
-            pern[name_] = ar
-            if ar > w:
-                w, wn = ar, name_
+    for combo in itertools.product(*_assignments(order, cls)):
+        w, wn, pern, depth = assignment_ar(order, cls, nets, d_via, combo, terminals)
         key = (round(w, 9), depth)
         if best is None or key < best[0]:
-            best = (key, (w, wn, dict(pern),
-                          {f"{c}{k}": t + 1 for (c, k), t in tier_of.items()}))
+            best = (key, (w, wn, dict(pern), asg_dict(combo, cls)))
     return best[1]
+
+
+class RoutingModel:
+    """The intra-VR routing loss of one design for any (tier order, part assignment), with
+    final_closure_ledger.intra_vr's model (review round 3): every part on the oriented cell
+    layout of the design record's rule (tcpmt_design_record.routing_block: the DSE packing of
+    each tier, placed by the output-plane R2 / VIN-run symmetries), a link within one tier --
+    or between a part and the plane its tier lands on -- an R0 lateral run, a link between
+    tiers an R0 via stack across the face-to-face span, plus the output-plane R2 sheet; copper
+    at ROUTING_T_C; the 48-V nets at the hot-loop factor k_hot (the production state). The
+    layout orientation does not depend on the part indices (equal currents per class), so it
+    is built once per order; the R2 sheet depends only on the inductor footprints, so its
+    solves are shared by every order."""
+
+    def __init__(self, entry, des, k_hot):
+        import routing as RT
+        import z1_design as Z1D
+        import final_closure_ledger as FL
+        import tcpmt_design_record as G
+        self.RT, self.FL, self.G = RT, FL, G
+        self.entry, self.des, self.k_hot = entry, des, float(k_hot)
+        self.side = float(entry["cell_side_mm"])
+        d0 = Z1D.design_dict(des, int(entry["n_vr"]), RT.DESIGN_49_LEGACY,
+                             tile_side_mm=self.side)
+        d0["B_array"] = list(entry["B_array"])
+        self.nets = [n for n in RT.nets(d0) if n.name != "vout_plane"]
+        self.n_vr = int(entry["n_vr"])
+        self.i_out_rms = float(entry["i_cell_out_rms_A"])
+        self.k_t = FL.rho_ratio_cu(ROUTING_T_C, RT.T_C)
+        self._order = {}
+        self._r2 = {}
+
+    def _r2_cached(self, d, *a, **kw):
+        key = (round(float(d["tile_side_mm"]), 9), a, tuple(sorted(kw.items())),
+               tuple(sorted((round(p["x_mm"], 9), round(p["y_mm"], 9), round(p["w_mm"], 9),
+                             round(p["h_mm"], 9)) for p in d["layout"]
+                            if p["kind"] == "inductor")))
+        if key not in self._r2:
+            self._r2[key] = self._r2_raw(d, *a, **kw)
+        return self._r2[key]
+
+    def oriented(self, tiers):
+        """(slots, P_plane per cell, layout dict) of an order: slots[(tier, class)] = the
+        oriented layout entries of that tier and class, in placement (= index) order."""
+        key = tuple(tuple(sorted(t["parts"].items())) for t in tiers)
+        if key in self._order:
+            return self._order[key]
+        import design_record as DR
+        asg, cnt = {}, {c: 0 for c in CLASSES}
+        for ti, t in enumerate(tiers, start=1):
+            for c in CLASSES:
+                for _ in range(int(t["parts"].get(c, 0))):
+                    asg[f"{c}{cnt[c]}"] = ti
+                    cnt[c] += 1
+        e2 = dict(self.entry, tiers=[dict(t, name=DR.tier_name(i, t["parts"]))
+                                     for i, t in enumerate(tiers, start=1)],
+                  tier_order={"assignment": asg})
+        RT = self.RT
+        self._r2_raw, RT.output_plane_r2 = RT.output_plane_r2, self._r2_cached
+        try:
+            d = self.G.routing_block(e2, self.des)
+            r2 = RT.output_plane_r2(d, self.FL.VOUT_PLANE_OCCUPANCY, 2,
+                                    self.FL.INTRA_T_CU_M)[0]
+        finally:
+            RT.output_plane_r2 = self._r2_raw
+        slots = {}
+        for p in d["layout"]:
+            slots.setdefault((int(p["tier"]), p["kind"]), []).append(p)
+        for v in slots.values():
+            v.sort(key=lambda p: int(p["index"]))
+        p_plane = self.i_out_rms ** 2 * r2 * self.FL.rho_ratio_cu(ROUTING_T_C)
+        self._order[key] = (slots, p_plane, d)
+        return self._order[key]
+
+    def loss(self, tiers, combo, cls, detail=False):
+        """Routing loss (W, all cells) of the order `tiers` with the part assignment `combo`
+        (per class of `cls`, the 0-based tier of each part index)."""
+        RT, FL = self.RT, self.FL
+        slots, p_plane, d = self.oriented(tiers)
+        s = self.side
+        sc = s / float(d["layout_cell_side_mm"])
+        T = len(tiers)
+        hts = [10.0]                                # Z1 cell: landing RDL, tiers, RDLs, output
+        for i, t in enumerate(tiers):
+            if i:
+                hts.append(RDL_UM)
+            hts.append(float(t["height_um"]))
+        hts.append(10.0)
+        name = {"gan_hs": "HS", "gan_ls": "LS", "inductor": "L", "cap_fly": "CF"}
+        comp, idx = {}, {}
+        for i, (c, _n, _ab, _h) in enumerate(cls):
+            labels = combo[i]
+            for k, t0 in enumerate(labels):
+                rank = sum(1 for kk in range(k) if labels[kk] == t0)
+                p = slots[(t0 + 1, c)][rank]
+                nm = f"{name[c]}{k}"
+                comp[nm] = ((p["x_mm"] + p["w_mm"] / 2) * sc - s / 2,
+                            (p["y_mm"] + p["h_mm"] / 2) * sc - s / 2,
+                            p["part_w_mm"], p["part_h_mm"])
+                idx[nm] = 2 * t0 + 1
+        comp["VIN"], idx["VIN"] = (-0.45 * s, -0.45 * s, 0.2, 0.2), 0
+        comp["VOUT"], idx["VOUT"] = (0.0, 0.0, s, s), 2 * T
+        s_m = s * 1e-3
+        p_lat = p_vert = 0.0
+        rows = []
+        for n in self.nets:
+            a, b = comp[n.src], comp[n.dst]
+            ia, ib = idx[n.src], idx[n.dst]
+            hgt = 0.0
+            if ia != ib:
+                lo, hi = sorted((ia, ib))
+                hgt = sum(hts[max(lo + 1, 0):hi])
+                if hgt <= 0.0 and n.dst == "VOUT":
+                    hgt = hts[ib]
+            if hgt > 0.0:
+                seg = RT.vertical_segment(max(n.i_rms_a, 1e-9), hgt, FL.INTRA_J_MAX,
+                                          min(a[2] * a[3], b[2] * b[3]), "D_area_optimal")
+            else:
+                seg = RT.lateral_segment(max(n.i_rms_a, 1e-9),
+                                         abs(a[0] - b[0]) + abs(a[1] - b[1]),
+                                         FL.INTRA_T_CU_M, FL.INTRA_J_MAX, s_m, FL.INTRA_N_LAYERS)
+            scale = self.k_hot ** 2 if n.rail == "HV" else 1.0
+            p = n.i_rms_a ** 2 * seg["R_ohm"] * self.k_t * scale
+            if hgt > 0.0:
+                p_vert += p
+            else:
+                p_lat += p
+            if detail:
+                rows.append({"net": n.name, "geom": "vertical" if hgt > 0 else "lateral",
+                             "P_W": p * self.n_vr})
+        tot = (p_lat + p_vert + p_plane) * self.n_vr
+        if detail:
+            return {"P_routing_W": tot, "P_lateral_W": p_lat * self.n_vr,
+                    "P_vertical_W": p_vert * self.n_vr, "P_plane_W": p_plane * self.n_vr,
+                    "nets": rows}
+        return tot
 
 
 def heat_path(order, cls, kz_of, p_part, a_cell_mm2, k_rdl):
@@ -256,28 +424,49 @@ def label(order, cls):
                       for v in order)
 
 
-def rule_key(r, terminals="both"):
-    """Sort key of RULE over evaluated orders: the orders meeting the via rule first, by heat
-    path; then the rest by worst-via aspect ratio, ties broken by the heat path. `terminals`
-    'single' applies the same rule to the single-face aspect ratios (the sensitivity)."""
-    ar = r[f"worst_ar_{terminals}"]
-    if ar <= AR_MAX + 1e-12:
-        return (0, r["heat_path_K"], ar)
-    return (1, round(ar, 9), r["heat_path_K"])
+def pick(rows, terminals="both"):
+    """The order RULE picks among evaluated orders: those meeting the via rule, else those of
+    the best worst-via aspect ratio; among them the least routing loss, the heat path deciding
+    between orders within LOSS_TIE_W of it. `terminals` 'single' applies the rule with the
+    single-face aspect ratios (each order's assignment chosen on them)."""
+    ar = f"worst_ar_{terminals}"
+    loss = "routing_loss_W" if terminals == "both" else "routing_loss_single_W"
+    pool = [r for r in rows if r[ar] <= AR_MAX + 1e-12]
+    if not pool:
+        best = min(round(r[ar], 9) for r in rows)
+        pool = [r for r in rows if round(r[ar], 9) == best]
+    lmin = min(r[loss] for r in pool)
+    near = [r for r in pool if r[loss] <= lmin + LOSS_TIE_W + 1e-12]
+    return min(near, key=lambda r: (r["heat_path_K"], r[loss], r["order"]))
+
+
+def rank(rows, terminals="both"):
+    """Every order in RULE's order of preference (pick, repeatedly)."""
+    rest, out = list(rows), []
+    while rest:
+        r = pick(rest, terminals)
+        out.append(r)
+        rest.remove(r)
+    return out
 
 
 def order_row(r):
     """The paper's row of one evaluated order."""
-    return {"order": r["order"], "heat_path_K": r["heat_path_K"],
+    return {"order": r["order"], "routing_loss_W": r["routing_loss_W"],
+            "heat_path_K": r["heat_path_K"],
             "heat_path_two_sided_K": r["heat_path_two_sided_K"],
             "worst_ar_both": r["worst_ar_both"], "worst_net_both": r["worst_net_both"],
             "worst_ar_single": r["worst_ar_single"], "worst_net_single": r["worst_net_single"],
-            "via_rule_met": r["via_rule_met"]}
+            "via_rule_met": r["via_rule_met"], "assignment": r["assignment"],
+            "routing_loss_range_W": r["routing_loss_range_W"]}
 
 
-def analyse(entry, decided, max_tiers, full_search=True):
-    """The tier-order record of one design entry. `decided`: the decided tiers as
-    [{class: n}] (any order). Returns the record with 'chosen' (production order)."""
+def analyse(entry, decided, max_tiers, full_search=True, des=None, k_hot=None):
+    """The tier-order record of one design entry. `decided`: the decided tiers (record tier
+    dicts with parts, height_um and placement_mm; any order). `des`: the compiled design
+    (default: design_record.compiled of the entry's design), `k_hot`: the hot-loop factor of
+    the 48-V nets (default: the entry's decoupling k_open, else 1/sqrt(D)). Returns the record
+    with 'chosen' (production order) and its part assignment."""
     import tcpmt_converter_cards as CC
     N, K = entry["topology"]["N"], entry["topology"]["K"]
     B = list(entry["B_array"])
@@ -294,6 +483,13 @@ def analyse(entry, decided, max_tiers, full_search=True):
                           ind_um=float(entry["part_heights_um"]["inductor"]),
                           cf_um=float(entry["part_heights_um"]["cap_fly"]), n_ind_total=K)
     k_rdl = rdl_kz()
+    if k_hot is None:
+        k_hot = ((entry.get("decoupling") or {}).get("k_open")
+                 or 1.0 / math.sqrt(N * 1.0 / 48.0))
+    if des is None:
+        import design_record as DR
+        des = DR.compiled(next(k for k in DR.keys() if DR.get(k)["tag"] == entry["tag"]))
+    RM = RoutingModel(entry, des, k_hot)
 
     @lru_cache(maxsize=None)
     def kz_vec(v, h):
@@ -303,18 +499,37 @@ def analyse(entry, decided, max_tiers, full_search=True):
     def kz_of(v, h):
         return kz_vec(tuple(v), float(h))
 
-    vecs_dec = [tuple(int(t.get(c, 0)) for c in CLASSES) for t in decided]
+    tier_of_vec = {}
+    for t in decided:
+        tier_of_vec.setdefault(tuple(int(t["parts"].get(c, 0)) for c in CLASSES), t)
+    vecs_dec = [tuple(int(t["parts"].get(c, 0)) for c in CLASSES) for t in decided]
     cls = None
 
     def evaluate(order):
         r = {"order": label(order, cls), "tiers": [list(v) for v in order],
              "tier_um": tier_heights(order, cls)}
         r["stack_um"] = sum(r["tier_um"]) + (len(order) - 1) * RDL_UM
-        for term in ("both", "single"):
-            w, wn, pern, asg = worst_ar(order, cls, nets, d_via, term)
-            r[f"worst_ar_{term}"], r[f"worst_net_{term}"] = w, wn
-            if term == "both":
-                r["net_ar_both"], r["assignment"] = pern, asg
+        tiers = [tier_of_vec[tuple(v)] for v in order]
+        rows = []
+        for combo in itertools.product(*_assignments(order, cls)):
+            wb, nb, pb, _db = assignment_ar(order, cls, nets, d_via, combo, "both")
+            ws, ns, _ps, _ds = assignment_ar(order, cls, nets, d_via, combo, "single")
+            rows.append((round(wb, 9), round(ws, 9), RM.loss(tiers, combo, cls), combo, wb, nb,
+                         pb, ws, ns))
+        losses = [x[2] for x in rows]
+        # the order's assignment: least routing loss among those of its best worst-via AR
+        bb = min(x[0] for x in rows)
+        c = min((x for x in rows if x[0] == bb), key=lambda x: (x[2], x[3]))
+        r["worst_ar_both"], r["worst_net_both"], r["net_ar_both"] = c[4], c[5], c[6]
+        r["worst_ar_single"], r["worst_net_single"] = c[7], c[8]
+        r["routing_loss_W"], r["assignment"] = c[2], asg_dict(c[3], cls)
+        r["routing_loss_range_W"] = [min(losses), max(losses)]
+        r["n_assignments"] = len(rows)
+        bs = min(x[1] for x in rows)                   # the single-face sensitivity
+        cs = min((x for x in rows if x[1] == bs), key=lambda x: (x[2], x[3]))
+        r["worst_ar_single_best"], r["routing_loss_single_W"] = cs[7], cs[2]
+        r["assignment_single"] = asg_dict(cs[3], cls)
+        r["worst_ar_single_rule"] = cs[7]
         r["via_rule_met"] = r["worst_ar_both"] <= AR_MAX + 1e-12
         r["heat_path_K"], r["heat_path_two_sided_K"] = heat_path(
             order, cls, kz_of, p_part, float(entry["cell_side_mm"]) ** 2, k_rdl)
@@ -322,26 +537,27 @@ def analyse(entry, decided, max_tiers, full_search=True):
 
     import HVR_FULL_OPT_EPC_V2 as H
     cls = classes_of(entry, H)
-    # 1. the decided tiers, every order
+    # 1. the decided tiers, every order, each with its least-loss assignment
     dec_orders = sorted(set(itertools.permutations(vecs_dec)))
     dec = [evaluate(o) for o in dec_orders]
     meets = [r for r in dec if r["via_rule_met"]]
-    if meets:
-        chosen = min(meets, key=lambda r: (r["heat_path_K"], r["worst_ar_both"]))
-        basis = "best heat path among the orders meeting the via rule"
-    else:
-        chosen = min(dec, key=lambda r: (round(r["worst_ar_both"], 9), r["heat_path_K"]))
-        basis = ("no order of the decided tiers meets the via rule: best worst-via aspect "
-                 "ratio, ties broken by the heat path")
+    ranking = rank(dec)
+    chosen = ranking[0]
+    basis = (("least routing loss among the orders meeting the via rule" if meets else
+              "no order of the decided tiers meets the via rule: least routing loss among the "
+              "orders of the best worst-via aspect ratio")
+             + f" (heat path between orders within {LOSS_TIE_W:g} W)")
     best_heat = min(dec, key=lambda r: (r["heat_path_K"], r["worst_ar_both"]))
-    # every decided order ranked by the rule (rank 1 = the production order), and the rule
-    # applied to the single-face aspect ratios (the terminal sensitivity of the paper)
-    ranking = sorted(dec, key=rule_key)
-    if ranking[0] is not chosen:
-        raise RuntimeError("the rule ranking disagrees with the chosen order")
-    single = sorted(dec, key=lambda r: rule_key(r, "single"))[0]
+    best_loss = min(dec, key=lambda r: (r["routing_loss_W"], r["heat_path_K"]))
+    sf = {r["order"]: dict(r, worst_ar_single=r["worst_ar_single_best"],
+                           routing_loss_W=r["routing_loss_single_W"],
+                           assignment=r["assignment_single"]) for r in dec}
+    single = pick(list(sf.values()), "single")
     rec = {"design": entry["tag"], "rule": RULE, "via_diameter_um": d_via,
            "ar_limit": AR_MAX, "rdl_um": RDL_UM, "k_z_rdl_W_mK": k_rdl,
+           "routing": {"model": "final_closure_ledger.intra_vr (R0 lateral, R0 via stacks, "
+                                "output-plane R2), all cells", "T_C": ROUTING_T_C,
+                       "k_hot_48V_nets": float(k_hot), "tie_W": LOSS_TIE_W},
            "per_part_25C_W": p_part, "nets": [n for n, _a, _b in nets],
            "terminal_assumption": {"both": "production (authors' stated assumption): a die "
                                            "connects through the capture planes on both "
@@ -349,17 +565,21 @@ def analyse(entry, decided, max_tiers, full_search=True):
                                    "single": "sensitivity: dies face the input end, terminals "
                                              "on that face only"},
            "decided_tiers": [list(v) for v in vecs_dec],
-           "decided_orders": sorted(dec, key=lambda r: (r["worst_ar_both"], r["heat_path_K"])),
+           "decided_orders": ranking,
            "n_decided_orders": len(dec), "n_meeting_via_rule": len(meets),
            "chosen": chosen, "chosen_basis": basis, "best_heat_path_order": best_heat,
+           "least_routing_loss_order": order_row(best_loss),
            "rule_ranking": [dict(order_row(r), rank=i + 1) for i, r in enumerate(ranking)],
            "runner_up": order_row(ranking[1]) if len(ranking) > 1 else None,
            "single_face": {
-               "rule_choice": order_row(single),
+               "rule_choice": dict(order_row(single), worst_ar_single=single["worst_ar_single"],
+                                   routing_loss_W=single["routing_loss_W"],
+                                   assignment=single["assignment"]),
                "same_as_chosen": single["order"] == chosen["order"],
                "chosen_order_worst_ar_single": chosen["worst_ar_single"],
-               "what": "RULE applied with single-face terminals (dies face the input end): "
-                       "the order it picks, and the chosen order's single-face worst via"}}
+               "what": "RULE applied with single-face terminals (dies face the input end; "
+                       "each order's assignment chosen on its single-face aspect ratio): the "
+                       "order it picks, and the chosen order's single-face worst via"}}
     # 2. the full repartition search with packing (context)
     if full_search:
         gs, _ = groupings(entry, max_tiers)
@@ -398,12 +618,14 @@ def main():
     out["rule"] = RULE
     for k in keys:
         e = DR.get(k)
-        rec = analyse(e, [t["parts"] for t in e["tiers"]], int(DR.rules(k)["MAX_TIERS"]),
-                      full_search=len(e["tiers"]) <= 4)
+        rec = analyse(e, e["tiers"], int(DR.rules(k)["MAX_TIERS"]),
+                      full_search=len(e["tiers"]) <= 4, des=DR.compiled(k),
+                      k_hot=(e.get("decoupling") or {}).get("k_open"))
         out["designs"][k] = rec
         c = rec["chosen"]
-        print(f"{k}: chosen {c['order']}  AR both {c['worst_ar_both']:.2f} single "
-              f"{c['worst_ar_single']:.2f}  H {c['heat_path_K']:.3f} K  ({rec['chosen_basis']})")
+        print(f"{k}: chosen {c['order']}  routing {c['routing_loss_W']:.3f} W  AR both "
+              f"{c['worst_ar_both']:.2f} single {c['worst_ar_single']:.2f}  H "
+              f"{c['heat_path_K']:.3f} K  ({rec['chosen_basis']})")
     OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
     print("wrote", OUT)
 
