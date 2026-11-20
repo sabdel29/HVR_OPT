@@ -102,3 +102,18 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     The peaks sit in T1 (card kz 1.83: encapsulant gap over the dies).
   - Manifest m36: 263 jobs, 693 core-h, about 13 h.
 - Fix agent running: copper posts across the die-to-tier gap; decoupling change to close the Z1 BGA (k_eq <= 2.29).
+
+## Campaign launched 2026-11-19 18:32 (HEAD 53e9390, design m36)
+- Fixes before launch:
+  - copper-post tier cards (T1 kz 1.83 -> 41.6);
+  - dual6 12-phase decoupling, k_eq 2.629;
+  - BGA not closed at 1.5 A: Z1 worst-ball 2.20 A (RMS), Z2 1.63 A. TCPMT_BGA_POLICY defaults to "requirement",
+    and apply_bga_policy switches policy in post-processing (the user's decision is still pending);
+  - routing-aware tier order: m36 = 2HS+2Cf / HS+LS / LS+L / LS+2L, intra-VR routing 5.35 W.
+- Smoke r11: Z1-A 134.4 W / 109.2 C; Z2-B 117.7 W / 77.0 C.
+- Manifest: 282 jobs, 717 core-h, ETA about 13.8 h on 8 califone jobs + 30 local cores.
+- Results root: research/campaign_v3. Log: research/campaign_v3/_campaign/runner.log.
+- Status: PY=/home/beams0/MGHARIB/envs/etm/bin/python; $PY scripts/campaign/run.py status -v
+- Resume after a crash or kill: rerun `$PY scripts/campaign/run.py run --backend both` (idempotent).
+- Next: when the campaign is done, run the macros with ETM_RESULTS_ROOT=research/campaign_v3, then rewrite the
+  manuscript and letter.
