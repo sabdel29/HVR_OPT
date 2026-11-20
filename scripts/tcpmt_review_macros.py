@@ -557,6 +557,31 @@ def decap():
     return m
 
 
+def pair_gap(adj, a, b):
+    """Relative gap (hi - lo) / hi between integrations a and b from the adjacent gaps of one
+    ordering ({"X<Y": g, ...} in ascending order, tcpmt_solder_constitutive adjacent_gaps_rel).
+    The ratios lo / hi = 1 - g multiply along the chain between them, so the result is exact
+    whichever of a and b is lower and whether or not they are adjacent; None when the ordering
+    does not hold both."""
+    keys = [k.split("<") for k in (adj or {})]
+    if not keys or any(len(k) != 2 for k in keys):
+        return None
+    chain = [keys[0][0]] + [hi for _lo, hi in keys]
+    if any(keys[i][0] != chain[i] for i in range(len(keys))) or a not in chain or b not in chain:
+        return None
+    i, j = sorted((chain.index(a), chain.index(b)))
+    ratio = 1.0
+    for lo, hi in keys[i:j]:
+        ratio *= 1.0 - float(adj[f"{lo}<{hi}"])
+    return 1.0 - ratio
+
+
+def _scaled(v, key, f):
+    """f x v[key], None when the study left it unresolved."""
+    x = (v or {}).get(key)
+    return None if x is None else f * x
+
+
 def solder():
     """Local solder studies (agent solder): stabilized tier responses (these REPLACE the 4-cycle
     tier values everywhere), critical-joint verification, band, alternative law, card grid."""
@@ -570,12 +595,14 @@ def solder():
         t, a = lab.split("_")
         # the solder study solved the S0 tier cases: the S0 REFERENCE names (review round 2:
         # the production state is the implemented decoupling, solved by the campaign)
-        m[f"Eps{t}{ATAG[a]}Szero"] = fx(1e3 * v["stabilised"], 2)
-        m[f"EpsU{t}{ATAG[a]}Szero"] = fx(100 * v["U_stab_num"], 1)
-        m[f"EpsFour{t}{ATAG[a]}Szero"] = fx(1e3 * v["v4"], 2)
-        (ch_a if t == "A" else ch_b).append(abs(v["change_4_to_48_rel"]))
-    m["SolderStabA"] = fx(100 * max(ch_a), 1)
-    m["SolderStabBLo"], m["SolderStabBHi"] = fx(100 * min(ch_b), 1), fx(100 * max(ch_b), 1)
+        m[f"Eps{t}{ATAG[a]}Szero"] = fx(_scaled(v, "stabilised", 1e3), 2)
+        m[f"EpsU{t}{ATAG[a]}Szero"] = fx(_scaled(v, "U_stab_num", 100), 1)
+        m[f"EpsFour{t}{ATAG[a]}Szero"] = fx(_scaled(v, "v4", 1e3), 2)
+        if v.get("change_4_to_48_rel") is not None:
+            (ch_a if t == "A" else ch_b).append(abs(v["change_4_to_48_rel"]))
+    m["SolderStabA"] = fx(100 * max(ch_a), 1) if ch_a else NA
+    m["SolderStabBLo"], m["SolderStabBHi"] = ((fx(100 * min(ch_b), 1), fx(100 * max(ch_b), 1))
+                                              if ch_b else (NA, NA))
     cj = d["critical_joint"]
     m["SolderCases"] = str(len(cj["cases"]))
     m["SolderSites"] = str(sum(c.get("n_solved", 0) for c in cj["cases"].values()))
@@ -586,7 +613,11 @@ def solder():
     co = d["constitutive"]
     r = co["ratio_to_production"]["schubert_time_final"]
     m["SchubertRatioLo"], m["SchubertRatioHi"] = fx(min(r.values()), 1), fx(max(r.values()), 1)
-    m["SchubertGapB"] = fx(100 * co["adjacent_gaps_rel"]["schubert_time_final"]["B"]["Z1<Z3"], 1)
+    # the cooling-B gap between Z1 and Z3 under the alternative law, whichever is lower and
+    # whether or not Z2 sits between them (round 2: Z1 < Z3, adjacent)
+    g = pair_gap(((co.get("adjacent_gaps_rel") or {}).get("schubert_time_final") or {}).get("B"),
+                 "Z1", "Z3")
+    m["SchubertGapB"] = fx(None if g is None else 100 * g, 1)
     m["SchubertHold"] = "yes" if co.get("rankings_hold_all_variants") else "no"
     m["CardGridMax"] = fx(100 * d["numerical_tolerance"]["card_grid_sensitivity_max_rel"], 1)
     zl = J(TR / "solder_z3land.json")              # Z3 with the coupled land side
@@ -632,7 +663,9 @@ def vdrop():
 
 def z3land():
     """Z3 with the land-side and board-plane 1-V redistribution in the coupled ledger (agent
-    z3land): thickness sweep, ties, drops, and the lower-bound values of the earlier ledger."""
+    z3land): thickness sweep, ties, drops, and the lower-bound values of the earlier ledger.
+    TCPMT round 3: the uncoupled lower bound is not produced (z3_land_coupled.json records
+    `lower_bound.status` = skipped) and a tie may be absent: their macros print NA."""
     d = J(TR / "z3_land_coupled.json")
     if not d:
         return {}
@@ -652,9 +685,9 @@ def z3land():
     r = tab.get("z3_land_t40_A")
     if r:
         m["ZthreeLandAFortyPloss"] = fx(r["P_loss_w"], 1)
-    dv = d["derived"]
-    m["ZthreeLandTie"] = fx(dv["tie_with_board_planes"]["t_um"], 0)
-    m["ZthreeLandTieLandOnly"] = fx(dv["tie_land_only"]["t_um"], 0)
+    dv = d.get("derived") or {}
+    m["ZthreeLandTie"] = fx((dv.get("tie_with_board_planes") or {}).get("t_um"), 0)
+    m["ZthreeLandTieLandOnly"] = fx((dv.get("tie_land_only") or {}).get("t_um"), 0)
     for key, mac in (("drop_30mV_one_rail", "ZthreeLandThirtyMv"),
                      ("drop_30mV_VDD_plus_GND", "ZthreeLandThirtyMvLoop")):
         v = dv.get(key)
@@ -675,20 +708,26 @@ def z3land():
           "B": SENS / "etm_Z3_HV_S0__z3_plate_tim.json"}
     for t, f in lb.items():
         c = _case(f)
-        if c:
-            m[f"PlossLb{t}Zthree"] = fx(c["P"], 1)
+        # the superseded lower bound, when the root holds it; else NA (the text still compiles)
+        m[f"PlossLb{t}Zthree"] = fx(c["P"], 1) if c else NA
     return m
 
 
 def feedback_passes():
-    """Interface feedback: per-pass values where a case does not converge (Z2 and Z3 under
-    cooling A run away; their passes are reported instead of a converged value)."""
+    """Interface feedback: per-pass values of the cooling-A Z2 and Z3 loops, which the paper
+    reports where a case does not converge (round 2: both ran away; a runaway is recorded in
+    the case's `non_convergence`)."""
+    import tcpmt_cases as TC
     m = {}
     rv = TR / "review_variants"
+    # TCPMT round 3: the campaign runs the feedback in the production state (HV_SDEC); the
+    # round-2 S0 files are the fallback
+    scens = (TC.SCEN[TC.PRODUCTION_STATE], "HV_S0")
     for a in ("Z2", "Z3"):
         for it in (1, 2, 3, 4, 5):
-            d = J(rv / f"etm_{a}_HV_S0__tim_warp_fb_A_it{it}.json")
-            if not d or "mechanics" not in d:
+            d = next((x for x in (J(rv / f"etm_{a}_{s}__tim_warp_fb_A_it{it}.json")
+                                  for s in scens) if x and "mechanics" in x), None)
+            if not d:
                 continue
             k = f"FbPass{['', 'One', 'Two', 'Three', 'Four', 'Five'][it]}A{ATAG[a]}"
             m[f"{k}Ploss"] = fx(d["P_loss_w"], 1)
