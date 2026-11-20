@@ -115,7 +115,10 @@ def ladder_values(path):
 
 
 def reference_path(arch):
-    return FC / f"etm_{arch}_{REF_SCEN}_h1.1_{PRODUCTION_RUNG}.json"
+    """The laddered reference case of an integration: its S0 case under cooling A
+    (tcpmt_cases: the production-boundary file etm_<arch>_HV_S0_h1.1_r21.json for Z1/Z2; Z3
+    ALWAYS the coupled land-side case, never the superseded uncoupled Z3 file)."""
+    return _TC.expected_path("S0", "A", arch)
 
 
 def _base(y, v):
@@ -275,8 +278,10 @@ _EXPECTED = {p.name: _TC.expected_path(UNC_STATE, t, a)
 #: the local solder responses were solved on the S0 tier cases: they enter the comparisons of the
 #: S0 state only, until the study is rerun on the production cases
 EPS_STATE = "S0"
-#: tier L0 local responses (x1e-3 / cycle), replaced by the solder study when present
-EPS_L0 = {"A": {"Z1": 5.80, "Z2": 8.03, "Z3": 13.47}, "B": {"Z1": 2.08, "Z2": 4.15, "Z3": 2.52}}
+#: TCPMT round 3: the local responses are ONLY those of the design in force, from the results
+#: root (the v2 law band, else the campaign's solder studies); the round-2 (49-cell) tier L0
+#: values once used as a fallback here (EPS_L0) never stand in -- a joint without a response
+#: of its own is pending
 
 
 def local_u_v2():
@@ -309,20 +314,46 @@ def local_u_v2():
     return eps, u_t, law, basis, band, own
 
 
+def local_u_solder_studies():
+    """The campaign's local solder studies (tcpmt_solder_*: the critical joints of the S0 tier
+    cases, 48-cycle stabilized L0 responses, solder_studies.json; Z3 at the coupled land side,
+    solder_z3land.json): value = the stabilized response, U = mesh + time + cycle + card grid
+    (U_stab_num); own = the joint's own pass-5 mesh study. None when the studies have not run."""
+    ss = J(TR / "solder_studies.json")
+    st = ((ss or {}).get("stabilization") or {}).get("cases") or {}
+    if not st:
+        return None
+    eps, u_t, own = {"A": {}, "B": {}}, {}, {}
+    for lab, v in st.items():
+        t, a = lab.split("_")
+        if v.get("stabilised") is None:
+            continue
+        eps.setdefault(t, {})[a] = 1e3 * v["stabilised"]
+        u_t[(t, a)] = v.get("U_stab_num")
+        own[(t, a)] = str(v.get("U_basis") or "").startswith("own")
+    zl = J(TR / "solder_z3land.json")              # Z3 with the coupled land side
+    for t, v in ((zl or {}).get("cases") or {}).items():
+        if v.get("stabilised") is not None:
+            eps.setdefault(t, {})["Z3"] = 1e3 * v["stabilised"]
+            if v.get("U_stab_num") is not None:
+                u_t[(t, "Z3")] = v["U_stab_num"]
+    return eps, u_t, own, "stabilized L0 (48 cycles; U = mesh + time + cycle + card grid)"
+
+
 def local_u():
-    """(eps, U_rel per (tier, arch), own-mesh flags, basis, band or None)."""
+    """(eps, U_rel per (tier, arch), own-mesh flags, basis, band or None): the v2 law band of
+    the results root, else the campaign's solder studies, else none (every joint pending)."""
     v2 = local_u_v2()
-    if v2 is not None:
+    if v2 is not None:                        # a joint the band has not solved stays pending
         eps, u_t, law, basis, band, own = v2
-        for t, d in EPS_L0.items():           # a joint the band has not solved keeps round 2
-            for a, x in d.items():
-                eps[t].setdefault(a, x)
         return eps, u_t, own, basis, band
-    lm = (J(FC / "local_mesh_study.json") or {}).get("cases", {})
-    u = {a: (lm.get(f"{a}_HV_S0") or {}).get("U") for a in ARCHS}
-    eps = {t: dict(v) for t, v in EPS_L0.items()}
-    u_t = {(t, a): u.get(a) for t in eps for a in eps[t]}
-    return eps, u_t, {k: False for k in u_t}, "4-cycle L0 (round-2 local mesh study)", None
+    ss = local_u_solder_studies()
+    if ss is not None:
+        eps, u_t, own, basis = ss
+        return eps, u_t, own, basis, None
+    return ({"A": {}, "B": {}}, {}, {},
+            "none: no local responses of the design in force in the results root (neither "
+            "solder_law_band.json nor solder_studies.json)", None)
 
 
 def compare_eps(t, a, b, eps, u_t, own, band):
