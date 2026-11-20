@@ -53,7 +53,8 @@ SCEN = "HV_S0"
 FIELDS = Path(os.environ.get("HVR_FIELDS", Path.home() / "claude_scratch" / "hvr_work"
                              / "fields"))
 HOMOG = R / "research" / "phase0nv" / "pcb_homogenization.json"
-CONV_TIERS = ("flying_caps", "inductor_plus_cout")
+# legacy single-class tiers, and the mixed tiers of the round-3 design record (<pre>_tierK_...)
+CONV_TIERS = ("flying_caps", "inductor_plus_cout", "_tier")
 
 
 #: cap on concurrent solver processes (shared host); unset = the previous behaviour
@@ -538,7 +539,9 @@ def v_gan_k_half():
     685 um tiers at 130 W/mK) -- more than any epi stack with t_epi/k_epi below that can add,
     e.g. 10 um at k > 2.1 W/mK. A stress bound, not a GaN property."""
     def hook(m, st, tiles):
-        n, bases = _retag(m, st, "k_half", lambda c: _scale_k(c, 0.5), ("gan_",))
+        # legacy GaN tiers ("gan_*"); in the mixed tiers of the design record every tier holds
+        # dies, so the bound halves every converter tier ("_tier")
+        n, bases = _retag(m, st, "k_half", lambda c: _scale_k(c, 0.5), ("gan_", "_tier"))
         return {"variant_elements_retagged": n, "variant_base_cards": bases}
     E.BUILD_HOOKS.append(hook)
 
