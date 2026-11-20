@@ -307,7 +307,8 @@ def decap_chain(z1_s0, network, d=None):
     pre = f"{d}." if d else ""
     f = sub + tr("input_decoupling.json")
     c = post(f"{pre}derived.decap_circuit", "derived", "tcpmt_decap_circuit.py", [f],
-             deps=[z1_s0, network], design=d, prefer="local", est_h=0.1)
+             deps=[z1_s0, network], design=d, prefer="local", est_h=0.1,
+             validate=[{"file": f, "kind": "json", "keys": ["circuit"]}])
     p = post(f"{pre}derived.decap_placement", "derived", "tcpmt_decap_placement.py", [f],
              deps=[c], est_h=0.3, design=d,
              validate=[{"file": f, "kind": "json", "keys": ["placement"]}],
@@ -321,8 +322,11 @@ def summary_chain(place, z1_s0, z1_s1, d=None):
     sub = f"designs/{d}/" if d else ""
     pre = f"{d}." if d else ""
     f = sub + tr("input_decoupling.json")
+    # several jobs write sections of the same file: each validates ITS OWN section, so an
+    # existing file never marks a job 'valid' that has not run
     led = post(f"{pre}derived.decap_ledger", "derived", "tcpmt_decap_framework.py", [f],
-               args=["ledger"], deps=[place, z1_s0] + ([z1_s1] if z1_s1 else []), design=d)
+               args=["ledger"], deps=[place, z1_s0] + ([z1_s1] if z1_s1 else []), design=d,
+               validate=[{"file": f, "kind": "json", "keys": ["framework"]}])
     return job(f"{pre}derived.decap_framework", "derived",
                ["scripts/tcpmt_decap_framework.py", "summary"], [f], deps=[led], est_h=0.1,
                prefer="local", evidence="cheap", design=d,
