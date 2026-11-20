@@ -169,6 +169,13 @@ MEM_PEAK_GB = {("m49", "r21"): 11.3}
 #: counts of the jobs are estimates)
 MEM_MARGIN = 1.5
 
+#: the local solder-harness chain (time / cycle / mesh studies, local responses, the solder
+#: studies) runs on the local host only: it is the critical path to the solder stage and the
+#: robustness map's local responses, its solves are short (the m36 time and cycle studies took
+#: 9 min each), and califone's cpu_only memory can be fully assigned for hours (2026-11-20: 1800
+#: of 1800 GB), which left local.mesh_study queued there ahead of every job it gates
+LOCAL_SOLVE_BACKENDS = ("local",)
+
 
 def walltime(est_h, factor=2.5, floor=1.0):
     return float(min(96.0, max(floor, math.ceil((est_h * factor + 0.5) * 2) / 2)))
@@ -228,13 +235,14 @@ def etm_job(id, stage, argv, out, *, deps=(), analog=None, n_el_k=145, ncpus=2, 
 
 def post(id, stage, script, outputs, *, args=(), deps=(), est_h=0.05, evidence="cheap "
          "post-processing (reads JSON / fields; seconds to minutes)", validate=None, mem_gb=4,
-         ncpus=1, prefer="local", env=None, blocked=None, notes=None, design=None):
+         ncpus=1, prefer="local", env=None, blocked=None, notes=None, design=None,
+         backends=("local", "pbs")):
     return job(id, stage, [f"scripts/{script}", *args], outputs, deps=deps, est_h=est_h,
                evidence=evidence, validate=validate or [
                    {"file": o, "kind": "json" if o.endswith(".json") else
                     ("csv" if o.endswith(".csv") else "exists")} for o in outputs],
                mem_gb=mem_gb, ncpus=ncpus, prefer=prefer, env=env, blocked=blocked,
-               notes=notes, design=design)
+               notes=notes, design=design, backends=backends)
 
 
 def mech_revision_variants():
@@ -439,7 +447,7 @@ def build(design):
     loc_deps = [prod[(a, s, "A")] for a in ARCHS for s in ("S0", "S1", "S2")]
     loc_t = job("local.temporal", "production",
                 ["scripts/final_closure_local_mesh.py", "--temporal"], [fc("local_time_study.json")],
-                deps=loc_deps, ncpus=16, workers=16, mem_gb=16,
+                deps=loc_deps, ncpus=16, workers=16, mem_gb=16, backends=LOCAL_SOLVE_BACKENDS,
                 env={"FC_POOL_MAX": 16, "LOCAL_THREADS": 1}, est_h=2.0,
                 evidence="local_time_study.json: 72 ccx solves, sum 85,058 s, max 1,643 s "
                          "(followup_local.log 3 h 12 min on 8 x 6 threads)",
@@ -449,11 +457,13 @@ def build(design):
                            "nonempty": ["production_dt0_s"]}])
     loc_c = job("local.cycles", "production", ["scripts/final_closure_local_mesh.py", "--cycles"],
                 [fc("local_cycle_study.json")], deps=[loc_t], ncpus=9, workers=9, mem_gb=12,
+                backends=LOCAL_SOLVE_BACKENDS,
                 env={"FC_POOL_MAX": 9, "LOCAL_THREADS": 1}, est_h=1.6,
                 evidence="9 solves x 16 cycles, 5,160-5,370 s each (followup_local.log 1 h 55 min)",
                 validate=[{"file": fc("local_cycle_study.json"), "kind": "json"}])
     loc_m = job("local.mesh_study", "production", ["scripts/final_closure_local_mesh.py"],
                 [fc("local_mesh_study.json")], deps=[loc_c], ncpus=16, workers=16, mem_gb=24,
+                backends=LOCAL_SOLVE_BACKENDS,
                 env={"FC_POOL_MAX": 16, "LOCAL_THREADS": 1}, est_h=1.0,
                 evidence="33 solves L0-L3, sum 23,330 s, max 2,623 s (followup_local.log 1 h 21 min)",
                 validate=[{"file": fc("local_mesh_study.json"), "kind": "json",
@@ -463,7 +473,7 @@ def build(design):
         loc_s[s] = job(f"local.solder.{s}", "production",
                        ["scripts/final_closure_local_solder.py", s], [fc(f"local_solder_{s}.json")],
                        deps=[loc_m] + [prod[(a, st, "A")] for a in ARCHS], ncpus=6,
-                       mem_gb=12, est_h=est,
+                       mem_gb=12, est_h=est, backends=LOCAL_SOLVE_BACKENDS,
                        evidence="local_solder_*.json wall_s 5,252 / 993 / 688 s (7 sequential "
                                 "solves, 6 threads hard-coded in run_final_local_response.py)",
                        validate=[{"file": fc(f"local_solder_{s}.json"), "kind": "json"}])
@@ -618,6 +628,7 @@ def build(design):
             ncpus=2 * len(archs.split()), workers=len(archs.split()),
             env={"LOCAL_THREADS": 2, "FC_POOL_MAX": len(archs.split())},
             evidence="local.wall_s of the frozen variant cases: 77-134 s per architecture",
+            backends=LOCAL_SOLVE_BACKENDS,
             validate=[{"file": sens(a, v), "kind": "etm", "local": True} for a in archs.split()],
             notes="adds the L0 local solder response at the variant's own critical joint")
     for (a, t) in TIER_BASE:
@@ -808,6 +819,7 @@ def solder_jobs(prod, land, loc_t, loc_m):
     st = job("solder.studies", "solder_submodels",
              ["bash", "-c", "set -e; cd {repo}; " + runs + "; {python} scripts/tcpmt_solder_collect.py"],
              [tr("solder_studies.json")], deps=deps, ncpus=12, workers=6, mem_gb=24, est_h=2.5,
+             backends=LOCAL_SOLVE_BACKENDS,
              env={"LOCAL_THREADS": 2, "TCPMT_SOLDER_SLOTS": 6},
              evidence="scratch_solder records: critical 219 solves 16.5 ks, cycles 12 solves "
                       "7.5 ks, band 12 solves 3.6 ks, units/constitutive 94 records 8.3 ks; "
@@ -817,11 +829,12 @@ def solder_jobs(prod, land, loc_t, loc_m):
                    "job runs them in sequence; ~35 GB of solver scratch")
     par = post("solder.parameters", "solder_submodels", "tcpmt_solder_parameters.py",
                [tr("solder_parameters.json")], deps=[st, prod[("Z1", "S0", "A")]],
-               env={"LOCAL_THREADS": 2})
+               env={"LOCAL_THREADS": 2}, backends=LOCAL_SOLVE_BACKENDS)
     z3 = job("solder.z3land", "solder_submodels", ["scripts/tcpmt_solder_z3land.py"],
              [tr("solder_z3land.json")], deps=[st, land["z3_land_t40_A_fvmap"],
                                                land["z3_land_t40_B_fvmap"]],
              ncpus=4, workers=2, mem_gb=8, est_h=0.35, env={"LOCAL_THREADS": 2},
+             backends=LOCAL_SOLVE_BACKENDS,
              evidence="logs_review/solder_z3land.log: 2 x 48-cycle L0 solves, 1056/1011 s, parallel",
              validate=[{"file": tr("solder_z3land.json"), "kind": "json"}])
     return {"studies": st, "parameters": par, "z3land": z3}
