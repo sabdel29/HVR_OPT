@@ -203,8 +203,11 @@ def v_tsv(n_side):
 
     def system_report(cells, cell_side_mm, h_tsv_mm, i_total_a, n_per_cell=None, **kw):
         pitch, _nv, _ng = TF.lattice_for_n(cell_side_mm, n_side)
+        kw = {k: v for k, v in kw.items() if k not in ("pitch_mm", "n_side")}
+        # the design record sizes the production lattice (round 3): the variant overrides BOTH
+        # its pitch and its count, so the FE field and the ledger get the same n_side x n_side
         r = orig(cells, cell_side_mm, h_tsv_mm, i_total_a,
-                 pitch_mm=pitch * (1.0 - 1e-12), **kw)
+                 pitch_mm=pitch * (1.0 - 1e-12), n_side=n_side, **kw)
         if r["per_cell"]["n_total"] != n_side * n_side:
             raise RuntimeError(f"lattice gave {r['per_cell']['n_total']} vias, "
                                f"not {n_side * n_side}")
