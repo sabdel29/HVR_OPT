@@ -174,10 +174,11 @@ def v_board_h1(h0_material=False):
 
     def bottom_layers(case="fr4_1p6mm", nz_board=2, nz_bga=2):
         base = lo(case, nz_board, nz_bga)
-        if case != "it968g_2p4mm" or base[0][0] != "board":
+        if base[0][0] != "board":
             raise RuntimeError(f"H1 variant applied to an unexpected board stack {base}")
-        blocks = [("board", b[1], "board_fr4" if h0_material else b[2], b[3])
-                  for b in H1.bottom_layers(t, 0.50, nz=1)]
+        tb = float(base[0][1])           # the board in force (2.4-mm IT968G or the 3.2-mm board):
+        blocks = [("board", b[1], "board_fr4" if h0_material else b[2], b[3])  # same schedule,
+                  for b in H1.bottom_layers(tb, 0.50, nz=1)]                   # scaled to it
         if abs(sum(b[1] for b in blocks) - base[0][1]) > 1e-12:
             raise RuntimeError("H1 blocks do not add up to the board thickness")
         return blocks + base[1:]
@@ -185,7 +186,8 @@ def v_board_h1(h0_material=False):
     def stack_with_board(stack, t_tile_mm, case="fr4_1p6mm"):
         st = so(stack, t_tile_mm, case)
         if not h0_material:
-            st["materials"].update(H1.board_materials(t, 0.50))
+            tb = BRD.BOARD_CASES.get(case, {}).get("t_mm", t)
+            st["materials"].update(H1.board_materials(tb, 0.50))
         return st
     BRD.bottom_layers, BRD.stack_with_board = bottom_layers, stack_with_board
 
