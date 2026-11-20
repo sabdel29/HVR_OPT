@@ -83,14 +83,18 @@ OUT = TR / "feasibility.json"
 LIMITS = {"gan_Tj_C": 150.0, "ron_fit_max_C": 125.0, "mlcc_C": 125.0, "inductor_C": 125.0,
           "buildup_Tg_C": 150.0, "encapsulant_Tg_C": 150.0, "board_Tg_C": 170.0,
           "die_C": 105.0, "solder_cal_C": 125.0, "solder_solidus_C": 217.0,
-          "bga_A_per_ball": 1.5, "bga_power_site_fraction_max": 0.75,
+          "bga_A_per_ball": 2.0, "bga_A_per_ball_sensitivity": 1.5,
+          "bga_power_site_fraction_max": 0.75,
           "ir_drop_mV_per_rail": 30.0}
-#: REVIEW ROUND 3 -- how the 1.5-A per-ball target enters the stage (the authors decide later;
+#: REVIEW ROUND 3 -- the per-ball target is 2 A (published design assumption: Kuan et al., IEEE
+#: ASQED 2015, doi:10.1109/ACQED.2015.7274009), with 1.5 A as a conservative sensitivity. The
+#: ball counts are fixed at the modelled arrangement (no reallocation). How the target enters the
+#: stage (both evaluated on every record, so post-processing applies either without reruns):
 #: both are evaluated on every record, so post-processing applies either without reruns):
-#:   hard          the per-ball check is a FILTER: a case above 1.5 A per ball is infeasible
+#:   hard          the per-ball check is a FILTER: a case above 2 A per ball is infeasible
 #:   requirement   the per-ball check is a STATED REQUIREMENT on the package (the current each
 #:                 ball must carry), reported beside the verdict, not a filter (DEFAULT)
-BGA_POLICIES = {"hard": "the per-ball check is a filter: above 1.5 A per ball the candidate is "
+BGA_POLICIES = {"hard": "the per-ball check is a filter: above 2 A per ball the candidate is "
                         "infeasible",
                 "requirement": "the per-ball check is a stated requirement on the package (the "
                                "current each ball must carry), reported, not a filter"}
@@ -116,7 +120,8 @@ LIMIT_SOURCES = {
     "die_C": "processor die junction limit (DECLARED, review round 2)",
     "solder_cal_C": "calibrated range of the SAC305 constitutive law",
     "solder_solidus_C": "SAC305 solidus",
-    "bga_A_per_ball": "1.5-A per-ball engineering rule (the count closure's criterion)",
+    "bga_A_per_ball": "2-A per-ball design assumption (Kuan et al., IEEE ASQED 2015); 1.5 A as a "
+                      "conservative sensitivity; counts fixed at the modelled arrangement",
     "bga_power_site_fraction_max": "DECLARED: at least 25 % of the package's own ball sites "
                                    "left for signal and auxiliary nets",
     "ir_drop_mV_per_rail": "DECLARED: 30 mV per rail (3 % of the 1-V rail), maximum static "
@@ -480,8 +485,11 @@ def port_model_ball_rms(case, n):
 
 def bga_check(arch, case, feed=None):
     """[(name, value, limit, ok, basis, extra)] of the BGA provisioning of one case. The
-    per-ball check (bga_current) takes the WORSE of the DC peak x k rule and, where the port
-    model describes the case, the worst-ball RMS (review round 3); both are in `extra`."""
+    per-ball check (bga_current) applies ONE rule to every integration: the DC peak x k
+    provisioning rule against the 2-A target, with 1.5 A as a sensitivity. Where the port model
+    describes the case (Z1), its idealized worst-ball RMS (all balls tied to an ideal board
+    node) is reported as a bound in `extra`, not used for the verdict, because Z2 and Z3 have no
+    such model and the rule must be the same for all."""
     rows = {r["term"]: r for r in case.get("ledger_rows") or []}
     out = []
     lim = LIMITS["bga_A_per_ball"]
@@ -495,14 +503,16 @@ def bga_check(arch, case, feed=None):
         sites = BGA_SITES.get(arch, 1369)
         dc = None if frac is None else frac * i_rms
         rms, rsrc = port_model_ball_rms(case, n) if arch == "Z1" else (None, "no port model")
-        val = max((x for x in (dc, rms) if x is not None), default=None)
+        val = dc
+        sens = LIMITS["bga_A_per_ball_sensitivity"]
         out.append(("bga_current", val, lim, None if val is None else val <= lim,
-                    f"48-V balls: {n}/rail; worse of the DC peak x k rule (peak fraction "
-                    f"{frac} ({src}) x I_rms {i_rms:.2f} A = "
-                    + (f"{dc:.3f} A" if dc is not None else "n/a")
-                    + ") and the worst-ball RMS (" + (f"{rms:.3f} A, " if rms is not None
-                                                      else "") + rsrc + ")",
+                    f"48-V balls: {n}/rail; DC peak x k rule (peak fraction {frac} ({src}) x "
+                    f"I_rms {i_rms:.2f} A = " + (f"{dc:.3f} A" if dc is not None else "n/a")
+                    + "); idealized worst-ball RMS bound " + (f"{rms:.3f} A ({rsrc})"
+                                                              if rms is not None else rsrc),
                     {"I_ball_closure_rule_A": dc, "I_ball_rms_max_A": rms,
+                     "I_ball_rms_bound_ok_2A": None if rms is None else rms <= lim,
+                     "ok_at_sensitivity_1p5A": None if val is None else val <= sens,
                      "n_per_rail": n, "I_rms_48V_A": i_rms}))
         out.append(("bga_sites", 2 * n / sites, LIMITS["bga_power_site_fraction_max"],
                     2 * n / sites <= LIMITS["bga_power_site_fraction_max"],
@@ -521,7 +531,8 @@ def bga_check(arch, case, feed=None):
             out.append(("bga_current", i_dc, LIMITS["bga_A_per_ball"],
                         i_dc <= LIMITS["bga_A_per_ball"] * (1 + 1e-9),
                         f"1-V balls: {n}/rail at DC, equal sharing (the ledger's assumption)",
-                        {"I_ball_dc_equal_sharing_A": i_dc, "n_per_rail": n}))
+                        {"I_ball_dc_equal_sharing_A": i_dc, "n_per_rail": n,
+                         "ok_at_sensitivity_1p5A": i_dc <= LIMITS["bga_A_per_ball_sensitivity"]}))
             out.append(("bga_sites", 2 * n / tot, LIMITS["bga_power_site_fraction_max"],
                         2 * n / tot <= LIMITS["bga_power_site_fraction_max"],
                         f"{2 * n} of {tot} sites carry 1 V; {tot - 2 * n} left for signals",
@@ -543,7 +554,8 @@ def bga_check(arch, case, feed=None):
                     f"BGA-ring feed: {n}/rail, peak fraction {frac} ({src}) x I_rms {i_rms} "
                     "(DC peak x k rule; no port model of the ring feed)",
                     {"I_ball_closure_rule_A": val, "I_ball_rms_max_A": None,
-                     "n_per_rail": n}))
+                     "ok_at_sensitivity_1p5A": None if val is None
+                     else val <= LIMITS["bga_A_per_ball_sensitivity"], "n_per_rail": n}))
         out.append(("bga_sites", 2 * n / BGA_SITES["Z2"], LIMITS["bga_power_site_fraction_max"],
                     2 * n / BGA_SITES["Z2"] <= LIMITS["bga_power_site_fraction_max"],
                     f"{2 * n} of {BGA_SITES['Z2']} sites carry the 48-V feed", {}))

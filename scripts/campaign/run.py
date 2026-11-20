@@ -18,8 +18,8 @@ Common options: --manifest PATH, --campaign NAME, --results-root DIR (default fr
 manifest; a scratch root for tests). The runner never writes outside the campaign root, the
 campaign scratch tree and the PBS job directory.
 
-Local backend: at most --max-cores (default 30) cores of ALL our local campaign jobs at once
-(summed from the ledger across runner processes), every job under `nice -n 10`.
+Local backend: at most --max-cores (default 35) cores of ALL our local campaign jobs at once
+(summed from the ledger across runner processes), jobs at normal priority (nice 0) unless the manifest sets one.
 PBS backend: qsub/qstat over `ssh -o BatchMode=yes pioneer`, queue cpu_only on califone,
 <= 8 running and <= 50 queued per user (both counted from qstat), walltime <= 96 h, ncpus
 <= 112, mem <= 512 GB; job scripts and logs in /home/beams/SABDELZAHER/pbs_jobs/etm/<campaign>/;
@@ -598,8 +598,8 @@ def cmd_run(a):
                                          int(camp.local.get("nice", 10)))
     if a.backend in ("pbs", "both"):
         backends["pbs"] = PBSBackend(camp, led)
-        backends["pbs"].buffer = (int(camp.pbs.get("hybrid_buffer", 4)) if a.backend == "both"
-                                  else None)
+        hb = camp.pbs.get("hybrid_buffer")          # None: no campaign-side cap (PBS limits only)
+        backends["pbs"].buffer = int(hb) if (a.backend == "both" and hb is not None) else None
     resub = int(camp.pbs.get("resubmit_failed", 1)) if a.retries is None else a.retries
     reported = set()
     print(f"[{now()}] campaign {camp.name}: root {camp.root}, {len(want)} job(s) selected, "
@@ -688,7 +688,8 @@ def choose_backend(job, backends, st, mode):
     allowed = job.get("backends", ["local", "pbs"])
     pref = job.get("prefer", "any")
     if mode == "both":
-        order = ["local", "pbs"] if pref == "local" else ["pbs", "local"]
+        # local cores first (fill them), the overflow to califone's queue; a job may prefer pbs
+        order = ["pbs", "local"] if pref == "pbs" else ["local", "pbs"]
     else:
         order = [mode]
     for b in order:

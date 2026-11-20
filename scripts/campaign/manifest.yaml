@@ -27,8 +27,8 @@ campaign:
       m25: count neighbour M = 25 (screen ranking check)
       m49: count neighbour M = 49 (screen ranking check)
 local:
-  max_cores: 30
-  nice: 10
+  max_cores: 35
+  nice: 0
 pbs:
   host: pioneer
   qsub: /opt/pbs/bin/qsub
@@ -42,7 +42,7 @@ pbs:
   max_ncpus: 112
   max_mem_gb: 512
   resubmit_failed: 1
-  hybrid_buffer: 4
+  hybrid_buffer: null
   jobs_dir: /home/beams/SABDELZAHER/pbs_jobs/etm/{campaign}
 stages:
 - name: prep
@@ -420,28 +420,6 @@ jobs:
   validate:
   - file: final_closure/literature_rules.json
     kind: json
-  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-- id: prep.vr_attach
-  stage: prep
-  argv:
-  - scripts/final_closure_vr_attach.py
-  outputs:
-  - final_closure/vr_attach_density_study.json
-  - final_closure/vr_attach_density_study.csv
-  deps: []
-  ncpus: 1
-  mem_gb: 4.0
-  est_wall_h: 0.05
-  walltime_h: 1.0
-  backends:
-  - local
-  - pbs
-  prefer: local
-  validate:
-  - file: final_closure/vr_attach_density_study.json
-    kind: json
-  - file: final_closure/vr_attach_density_study.csv
-    kind: csv
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
 - id: prep.converter_cards
   stage: prep
@@ -7896,7 +7874,6 @@ jobs:
   - prep.package_network
   - prep.z3land_estimate
   - prep.z3land_fv
-  - prep.vr_attach
   - prep.architecture_spec
   - prep.tier_order
   - prep.converter_cards

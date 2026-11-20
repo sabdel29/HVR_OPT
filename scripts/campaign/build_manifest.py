@@ -339,8 +339,7 @@ def build(design):
     prep["literature"] = post("prep.literature_rules", "prep", "final_closure_literature_rules.py",
                               [fc("literature_rules.json")])
     prep.update(prep_jobs())
-    prep["attach"] = post("prep.vr_attach", "prep", "final_closure_vr_attach.py",
-                          [fc("vr_attach_density_study.json"), fc("vr_attach_density_study.csv")])
+    # vr_attach reads the production Z2 case: it runs as derived.vr_attach (below), not in prep
     prep["geometry"] = post("prep.architecture_spec", "prep", "final_closure_architecture_spec.py",
                             [fc("architecture_geometry.json")], est_h=0.1,
                             evidence="meshes the three packages once (minutes)")
@@ -886,11 +885,11 @@ def main():
                              "record": "configs/design_points.yaml",
                              "alternates": {k: v["role"] for k, v in ALTERNATES.items()}},
         },
-        "local": {"max_cores": 30, "nice": 10},
+        "local": {"max_cores": 35, "nice": 0},
         "pbs": {"host": "pioneer", "qsub": "/opt/pbs/bin/qsub", "qstat": "/opt/pbs/bin/qstat",
                 "qdel": "/opt/pbs/bin/qdel", "queue": "cpu_only", "select_extra": "host=califone",
                 "max_running": 8, "max_queued": 50, "max_walltime_h": 96, "max_ncpus": 112,
-                "max_mem_gb": 512, "resubmit_failed": 1, "hybrid_buffer": 4,
+                "max_mem_gb": 512, "resubmit_failed": 1, "hybrid_buffer": None,
                 "jobs_dir": "/home/beams/SABDELZAHER/pbs_jobs/etm/{campaign}"},
         "stages": [{"name": s, "what": w} for s, w in STAGES],
         "static_inputs": res["static"],

@@ -87,6 +87,8 @@ def spec_for(arch):
     cut = K.architecture_cutout_mm(arch)
     roles = {}
     for k, name in FL.LAYERS[arch].items():
+        if isinstance(name, dict):                 # 'parts': tier name -> contents
+            name = list(name)
         for n in (name if isinstance(name, list) else [name]):
             roles.setdefault(n, []).append(k)
     layers = _layers(m, m.elem_material, cut)
