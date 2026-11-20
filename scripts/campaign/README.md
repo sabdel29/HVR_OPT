@@ -7,7 +7,7 @@ without touching the frozen results in `research/`.
 | file | role |
 |---|---|
 | `build_manifest.py` | generates `manifest.yaml` (edit the generator, never the YAML) |
-| `manifest.yaml` | 269 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
+| `manifest.yaml` | 282 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
 | `run.py` | runner: `plan`, `seed`, `run`, `status`, `validate`, `reset`, `audit-hooks`, `exec-job` |
 | `validators.py` | output checks (`etm`, `feedback`, `json`, `csv`, `frd`, `exists`) |
 | `guard/sitecustomize.py` | write guard + frozen-read log, injected into every job via PYTHONPATH |
@@ -86,6 +86,20 @@ root in force (`ETM_RESULTS_ROOT`) and skips when the artifact is of another des
     $PY scripts/campaign/run.py run --backend local --stage dse_sweeps --only 'dse.*'
     $PY scripts/campaign/run.py --results-root /path/scratch_root ...             # a test root
 
+**LAUNCH (TCPMT round 3, design m36; ready, not launched).** From the checkout that holds this
+branch (the committed manifest is current; regenerate it only if the generator changes), with
+`TCPMT_BGA_POLICY` unset (the feasibility stage then reads the 1.5-A per-ball target as a stated
+requirement; both policies' verdicts are stored either way, section 4c):
+
+    cd /home/beams0/SABDELZAHER/ETM_project/HVR_OPT_work
+    PY=/home/beams0/MGHARIB/envs/etm/bin/python
+    $PY scripts/campaign/run.py audit-hooks        # 63 job scripts, 0 unhooked path(s)
+    $PY scripts/campaign/run.py plan               # 282 jobs, 0 blocked, 717 core-h, ~13.8 h
+    $PY scripts/campaign/run.py seed               # static inputs -> research/campaign_v3
+    mkdir -p research/campaign_v3/_campaign
+    nohup $PY scripts/campaign/run.py run --backend both > research/campaign_v3/_campaign/runner.log 2>&1 &
+    $PY scripts/campaign/run.py status -v          # progress, ETA
+
 * **Dependency-ordered, idempotent, resumable.** A job starts only when its dependencies are `done`,
   `valid` or `seeded`. Before launching, its declared outputs are validated; valid outputs are recorded
   as `valid` and never recomputed unless `--force`. A dependency outside the selection is accepted when
@@ -132,16 +146,16 @@ Design m36 (TCPMT round 3; `plan` on the generated manifest, 0 blocked):
 | 7 | thin_cap | 7 | 22 | 1.6 h | m36thin (100-um capacitor), Z1/Z2/Z3 x A/B |
 | 8 | co_design | 7 | 22 | 1.6 h | m36t5 (5 tiers, N4K4 at 957 kHz), Z1/Z2/Z3 x A/B |
 | 9 | refinement_ladders | 20 | 158 | 5.1 h | production-state rungs r11 (smoke tests) and r31, S0 rungs, solver checks |
-| 10 | robustness_map | 98 | 188 | 3.3 h | class-B runs (incl. the gap-post range conv_posts_lower/upper), local responses, caloric (HV_SDEC) |
+| 10 | robustness_map | 110 | 198 | 3.3 h | class-B runs (incl. the gap-post range conv_posts_lower/upper and the mechanics-revision variants encap_* / bga_card_local), local responses, caloric (HV_SDEC) |
 | 11 | solder_submodels | 3 | 31 | 2.5 h | constitutive/critical/cycles/band/units, parameters, Z3 land |
 | 12 | moose_checks | 5 | 17 | 1.5 h | **local only**: MOOSE does not load on califone |
 | 13 | dse_sweeps | 5 | 1 | 0.4 h | p2_t4 / t5 / tinf sweeps + phase-2 summary |
-| 14 | derived | 30 | 5 | 0.3 h | results, class B, decoupling chain, design comparison, k check, BGA re-closure, ... |
+| 14 | derived | 31 | 5 | 0.3 h | results, class B, decoupling chain (+ limits study), design comparison, k check, BGA re-closure, ... |
 | 15 | manuscript | 14 | 1 | 0.1 h | macros, supplement, figures under the root |
-|  | **total** | **269** | **707** | | |
+|  | **total** | **282** | **717** | | |
 
-Makespan (dependency-aware list schedule): **~13.6 h** with 8 califone jobs + 30 local cores
-(califone alone 32.3 h, local alone 28.4 h).
+Makespan (dependency-aware list schedule): **~13.8 h** with 8 califone jobs + 30 local cores
+(califone alone 32.9 h, local alone 28.7 h).
 
 Round-2 (m49) table, for reference: 262 jobs (22 blocked), 548 core-h (+161), ~11.7 h; critical
 path package network -> Z3 production -> local temporal -> cycles -> mesh study -> solder studies
@@ -201,14 +215,107 @@ the peak stays in the input-end tier T1 but drops 24-27 K; under cooling B the c
 their heat to the second plate (T1 becomes the coolest tier, 52 C) and the peak moves to the die (Z2)
 or the 1 V BGA (Z3), which also lowers the loss of Z2-B and Z3-B by 10 and 24 W (the R_on tempco).
 
-Two consequences for the campaign. (i) The tier-order rule breaks its ties (every order has the
+Two consequences for the campaign (both resolved in section 4c). (i) The tier-order rule breaks its ties (every order has the
 worst via AR 8.33) by the heat path, which uses these cards: with the posts it prefers T2 and T3
 swapped for m36 (21.40 vs 21.71 K for the recorded order, 1.4 %), and reorders m36t5 and m49; the
-design record keeps its order until the authors decide, so `prep.tier_order` will report a chosen
+design record kept its order then, so `prep.tier_order` would have reported a chosen
 order different from the record. (ii) The Z1 BGA stays NOT_CLOSED: `tcpmt_decap_placement.py limits`
 (on the 220-ball network) gives 2.635 for 12 clock phases (dual6, Z1 1.73 A per ball), 2.61 at the
 interleaving limit and < 0.03 from any ring, against the 2.29 Z1 needs; only about 2.9 uF at every
 cell (which the stack cannot hold) reaches 1.9.
+
+## 4c. Final preparation before launch (2026-11-19, development root `/home/beams0/SABDELZAHER/ETM_project/scratch_campaign/m36rev/dev`)
+
+**Decoupling (production state).** Adopted the best implementable clock plan of the study: 12
+clock phases in two interleaved 6-phase groups (`dual6`, the second group offset by half a phase
+step) with the existing ring of 56 x 1206 100-V X7S capacitors. The declared rule
+(`tcpmt_decap_placement.RECOMMEND_RULE`) is now: the implementable plan + ring of least nominal
+k_eq, implementable = one n-phase clock (rows, Latin squares) or two interleaved n-phase clocks
+(`dual<n>`); the 9- and 18-phase plans are alternatives and the spread is the limit (on the
+round-2 7 x 7 grid it still returns `i_latin7+c_ring`). k is recomputed on the production rung:
+the Z1 S0 case at r21 (112,256 elements, 140.51 W, T_max 112.67 C, 4 E-T iterations, no mechanics) gives **k_eq = 2.629** (2.612-2.651 over the loop-inductance band;
+the r11-based study gave 2.635), k_open 3.78, ring ESR 0.046 W. Committed by `commit-k` to
+`research/tcpmt_revision/decoupling_by_design.json` -> the record's `decoupling` block. In the
+campaign the chain re-derives k on the campaign's own r21 S0 case, `derived.k_check` compares it
+with the committed value, and `derived.bga_reclose` re-closes at the derived k (`k_source`).
+
+**48-V BGA.** At most 220 balls per rail (`final_closure_pkg_network.N_MAX_PER_RAIL`, legal counts
+and screen alike). The closure current is the WORSE of the DC peak x k_eq rule and Z1's
+worst-ball RMS of the harmonic port model (`tcpmt_decap_placement.ball_rms_at_counts`, DC +
+harmonics of every ball with the adopted plan and ring); both are recorded
+(`bga_count_production.json` `ball_currents_at_count`, the record's `decoupling.bga_closure`).
+Re-closure at k_eq = 2.629, 220 per rail (no count <= 220 closes; the fallback count stays 220):
+
+| | DC peak x k_eq (verified, level 2) | worst-ball RMS (port model) | closure current (worse) | vs 1.5 A |
+|---|---:|---:|---:|---|
+| Z1 | 1.72 A | 2.20 A | **2.20 A** | above |
+| Z2 | 1.63 A | n/a (no port model of the Z2 feed) | **1.63 A** | above |
+
+Status NOT_CLOSED at 220 per rail (k_source: the results root's decoupling chain (input_decoupling.json)); the port model's RMS is at the chain's S0 current x 1.0000 (no production case in the development root: x 1; the campaign scales to its production cases).
+
+**Feasibility: BGA policy.** `tcpmt_feasibility.BGA_POLICY` (env `TCPMT_BGA_POLICY`): `hard` = the
+per-ball check (peak per-ball current vs the 1.5-A target) is a filter; `requirement` (DEFAULT
+until the authors decide) = a stated requirement on the package (`bga_requirement` of each
+record: the current each ball must carry), reported, not a filter. Z1's production state takes
+the worse of the two currents above (scaled to the case's 48-V current); Z2's ring feed and Z3's
+1-V balls keep their closure rule. Every record carries `by_bga_policy` (verdict, fails,
+unresolved under both), `rankings_by_bga_policy` holds both rankings, and
+`apply_bga_policy(doc, policy)` re-derives verdicts, rankings and summary of a stored
+`feasibility.json` without rerunning. The site budget (`bga_sites`) stays a filter under both.
+
+**Tier orders** (design record regenerated by the declared rule on the post cards; every order is
+tied on vias, so the heat path decides; the single-face rule picks the same order everywhere):
+
+| design | chosen order (input end first) | H (K) | runner-up | H (K) | worst via AR both / single |
+|---|---|---:|---|---:|---|
+| m36 | 2HS+2Cf / LS+L / HS+LS / LS+2L | 21.40 | 2HS+2Cf / HS+LS / LS+L / LS+2L (old) | 21.71 | 8.33 / 8.33 |
+| m36t5 | HS+L+3Cf / HS+LS / HS+LS / LS+2L / HS+LS+L | 23.18 | HS+L+3Cf / HS+LS / LS+2L / HS+LS / HS+LS+L | 23.28 | 8.33 / 8.33 |
+| m36thin | m36's (also the rule's own choice) | 21.16 | old m36 order | 21.47 | 5.71 / 5.71 |
+| m25 | LS / LS / 3HS / HS+2L+3Cf (unchanged) | 25.18 | LS / 3HS / LS / HS+2L+3Cf | 25.86 | 5.83 / 5.83 |
+| m49 | 2HS / HS+2L / LS+Cf / LS+Cf | 27.54 | 2HS / LS+Cf / HS+2L / LS+Cf | 28.21 | 8.33 / 8.33 |
+
+The m36 configs (Z1/Z2/Z3) restate the swapped T2/T3 (`tier2_ls1l1`, `tier3_hs1ls1`); every
+order with its heat path and worst via AR is in `tier_order.json` (`rule_ranking`).
+
+**m25 card.** The EPC2366 is modelled as published (PQFN, die exposed on top, 200-um leadframe at
+the published land pattern, silicon path at R_thJC 0.6 K/W, bottom path 1.62 vs R_thJB 1.8 K/W):
+its tiers go from k_z 1.62 (the declared mould cap) to 28.25 W/m K (k_xy 1.88 -> 4.41).
+
+**Class-B gates.** `mat.encapsulant_card` and `mat.bga_card_consistency` (named by the
+`tcpmt_mech_variants` variants) are registered in `final_closure_classB.GATES` (B1, mechanical
+observables, cases from `configs/tcpmt_mech`), and the robustness map runs their cases
+(`encap_uf_tg`, `encap_emc_lowcte`, `encap_emc_lowcte_const`, `bga_card_local` x Z1/Z2 + local
+responses: +12 jobs). **audit-hooks** passes: `tcpmt_dse_phase2_summary.py` now writes under the
+root (it would have written `research/` during the campaign), and the committed
+`decoupling_by_design.json` (read and written only by the development step `commit-k`) is listed
+as static. New job `derived.decap_limits` (the alternatives of the adopted plan, its own file).
+
+**Smoke** (`ladder.Z1.sdec_A.r11`, `ladder.Z2.sdec_B.r11`; root
+`/home/beams0/SABDELZAHER/ETM_project/scratch_campaign/m36rev/smoke/root`, local, 6 cores, nice 10;
+upstream: the development network (220/rail) and the dual6 decoupling record above):
+
+    run.py --campaign m36rev_smoke --results-root $ROOT seed --upstream-of 'ladder.Z1.sdec_A.r11' --upstream-of 'ladder.Z2.sdec_B.r11'
+    run.py --campaign m36rev_smoke --results-root $ROOT run --backend local --max-cores 6 --only 'ladder.Z1.sdec_A.r11' --only 'ladder.Z2.sdec_B.r11'
+
+| job | wall | P_loss (W) | T_max (C) | peak at | die max (C) | energy residual | E-T it | vs 4b (W / K) |
+|---|---:|---:|---:|---|---:|---:|---:|---|
+| `ladder.Z1.sdec_A.r11` | 224 s | 144.18 | 111.33 | caps_in_cells, hs_in_cells | 88.28 | 5.5e-08 | 4 | +5.46 / +0.95 |
+| `ladder.Z2.sdec_B.r11` | 328 s | 126.04 | 77.28 | die | 77.28 | 2.4e-07 | 4 | +5.20 / +0.20 |
+
+E-T walls (+ mechanics: 367 s and 589 s in all); both converged with mechanics and validated.
+The 48-V package terms of Z1 fall 0.40 W and the ring ESR 0.07 W with dual6, as expected.
+
+**DECIDE BEFORE LAUNCH: the new tier order raises the intra-VR routing loss.** The loss rises
+5.5 W (Z1-A) and 5.2 W (Z2-B) against section 4b, and T_max 0.95 K in Z1-A, although the 1-D heat
+path favours the new order by 0.31 K. The ledger's intra-VR loss (SDEC weighting, 36 cells,
+100 C) goes 10.35 -> 15.99 W: the tier-order analysis assigns the part indices by worst via AR,
+then crossed depth, which cannot see lateral runs, and in the new order it puts LS0 and L0 in
+the same tier, 2.05 mm apart (`ls0_to_L0` 5.0 W at the switch-node current, a 10-um via before).
+Over all 54 assignments the new order spans 8.09-17.19 W (the record's 15.99 W is near the
+worst); the old order spans 6.89-17.04 W (its record's 10.35 W). So the declared tie-break
+(heat path only) and the assignment criterion (depth only) both ignore the routing loss the
+ledger charges; the record follows the declared rules as instructed. Options: assign the part
+indices by least intra-VR loss, and/or break the via-AR tie by heat path AND routing loss.
 
 ## 4a. Smoke tests, round 2 (2026-11-18, scratch root `/home/beams0/SABDELZAHER/ETM_project/scratch_campaign/smoke`)
 
@@ -251,6 +358,10 @@ write into `research/final_closure/`), and a PBS probe showed MOOSE cannot load 
   `E.PRODUCTION_REFINE`), A1 for Z2/Z3 (`run_ratedcf` is Z1-only), count study under B and for Z2/Z3
   (see design point).
 * Benign: concurrent sensitivity jobs append to `sensitivity/run_log.json` without a lock (no reader).
+* **Class-B gate `geom.tier_order`** (pre-existing): its case `z1_tier_reference` swaps the
+  single-class tiers of the 49-cell stack and refuses mixed tiers, so for m36 the gate stays
+  PENDING in `classB_resolution.json` (`all_b1_resolved` false); the alternative orders are
+  evaluated by `tcpmt_tier_order.py` instead (runner-up and heat path in the design record).
 
 ## 6. Design point (M and the synthesized design)
 

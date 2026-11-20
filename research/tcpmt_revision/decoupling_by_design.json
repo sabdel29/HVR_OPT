@@ -2,24 +2,24 @@
  "what": "committed production k of each design's implemented input decoupling (the package network is closed at it); written by tcpmt_design_comparison.py commit-k from a decoupling chain run, read by tcpmt_design_record.py",
  "designs": {
   "m36": {
-   "k_eq": 2.787255733902418,
+   "k_eq": 2.629436399011537,
    "k_eq_band": [
-    2.6834691639865125,
-    2.9523977437688242
+    2.612343694000949,
+    2.6511529727256122
    ],
-   "option": "i_latin6z+c_ring",
-   "phase_pattern": "latin6z",
+   "option": "i_dual6+c_ring",
+   "phase_pattern": "dual6",
    "n_ring": 56,
-   "k_open": 3.7860328186353644,
-   "P_ring_esr_W": 0.11131920445615377,
-   "rule": "the n-phase interleaving + ring option (i_rows<n>+c_ring or i_latin<n>*+c_ring) of least nominal k_eq; i_spread<n^2> is the limit, not a candidate",
+   "k_open": 3.776469928963073,
+   "P_ring_esr_W": 0.045866699920026094,
+   "rule": "the implementable interleaving + ring option of least nominal k_eq: clock plans of one n-phase group (i_rows<n>+c_ring, i_latin<n>*+c_ring) or of two interleaved n-phase groups (i_dual<n>+c_ring, 2n phases); other group sizes (blk9, dual9) are alternatives and i_spread<n^2> is the limit, not candidates",
    "bga": {
     "n_per_rail": 220,
     "status": "NOT_CLOSED",
-    "closed_at_k_eq": 2.787255733902418,
+    "closed_at_k_eq": 2.629436399011537,
     "verified_peak_A": {
-     "Z1": 1.828102875305896,
-     "Z2": 1.7262372750080792
+     "Z1": 1.7245924667044783,
+     "Z2": 1.628494676332288
     },
     "criterion_A": 1.5,
     "r_loop_mohm": {
@@ -30,13 +30,42 @@
    "ball_rms": {
     "n_per_rail": 220,
     "criterion_A": 1.5,
-    "k_eq": 2.787255733902418,
-    "I_ball_rms_max_A": 2.1874083866675393,
-    "I_ball_closure_rule_A": 1.8233529548738774,
+    "k_eq": 2.629436399011537,
+    "I_ball_rms_max_A": 2.1975588437843303,
+    "I_ball_closure_rule_A": 1.72884983763157,
+    "I_ball_dc_max_A": 0.6574982525842735,
+    "I_total_dc_A": 23.7606866412723,
+    "I_ball_A": 2.1975588437843303,
     "passes_rms": false,
-    "passes_closure_rule": false
+    "passes_closure_rule": false,
+    "basis": "port model at the S0 case's 48-V current (I_total_dc_A); I_ball_A = the worse of the worst-ball RMS and the DC peak x k_eq (the closure criterion)"
    },
-   "source": "decoupling chain (tcpmt_decap_circuit/placement/framework) on the design's own package network and S0 case (etm_Z1_HV_S0_h1.1_r21.json, mesh rung r11), 2026-11-19"
+   "bga_closure": {
+    "rule": "per-ball current = max(DC peak x k_eq, worst-ball RMS of the port model (Z1)) <= 1.5 A, at most 220 balls per rail",
+    "n_per_rail": 220,
+    "status": "NOT_CLOSED",
+    "criterion_A": 1.5,
+    "I_ball_closure_rule_A": {
+     "Z1": 1.7245924667044783,
+     "Z2": 1.628494676332288
+    },
+    "I_ball_rms_max_A": {
+     "Z1": 2.1975588437843303
+    },
+    "I_ball_A": {
+     "Z1": 2.1975588437843303,
+     "Z2": 1.628494676332288
+    },
+    "passes": {
+     "Z1": false,
+     "Z2": false
+    },
+    "basis": {
+     "Z1": "max(verified DC peak x k_eq, worst-ball RMS of the port model)",
+     "Z2": "verified DC peak x k_eq (no port model of Z2's feed: the closure rule alone)"
+    }
+   },
+   "source": "decoupling chain (tcpmt_decap_circuit/placement/framework) on the design's own package network and S0 case (etm_Z1_HV_S0_h1.1_r21.json, mesh rung r21), 2026-11-19"
   }
  }
 }
