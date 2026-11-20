@@ -1,153 +1,256 @@
 """Fig. 4 (paper Fig. 5): tier order is a realizability constraint, for both capacitor cases.
 
-(a) The same four component tiers in the reference order (HS, LS, C_f, L) and the
-    repartitioned order (HS, C_f, LS, L), to scale in z, for
-    A0 -- the technology-conditional 100-um flying-capacitor tier of the production stack, and
-    A1 -- the rated 0603 MLCC tier (maximum part height + mounting allowance).
-    A bar marks each net that must cross a whole tier with a build-up via.
-(b) Worst via aspect ratio per net at the assumed build-up via diameter
-    (AR = crossed depth / diameter), against the 1:1 build-up (stacked-microvia) limit.
+TCPMT round 3: the converter cell is built of MIXED tiers (a tier holds parts of several
+classes, the design record's decided tiers), so the order question is asked of those tiers.
+(a) The decided tiers in the PRODUCTION order of the tier-order analysis, to scale in z (input
+    end at the bottom, 10-um RDLs between the tiers), for
+    A0 -- the thin-capacitor sensitivity (the design record's entry of the design in force with
+          the 100-um flying capacitor), and
+    A1 -- the design in force, with the rated 0603 MLCC.
+    A bar marks the worst net of each net class that must cross a whole tier with a build-up
+    via (with the crossed depth of its worst via level).
+(b) Worst via aspect ratio per net class (AR = deepest crossed level / via diameter, die
+    terminals on both faces), production order (bar) and the range over every order of the
+    decided tiers (line), against the 1:1 build-up (stacked-microvia) limit.
 
-Data: tier heights from configs/phase0nx/z1_physical.yaml (production stack, A0); the A1 tier
-height and the via diameter from research/tcpmt_revision/flying_caps.json
-(summary.min_tier_um_10pct, summary.via_AR_10pct; diameter = tier / AR).
+Data: tcpmt_revision/tier_order.json (designs.<key>: chosen order, its part assignment and per-net
+aspect ratios, every decided order, via diameter, RDL thickness, the repartition search) of the
+design in force and its thin-capacitor sensitivity (configs/design_points.yaml).
 """
-import yaml
+import re
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import style as S
 
 S.setup()
-cfg = yaml.safe_load(open(S.SRC / "configs" / "phase0nx" / "z1_physical.yaml"))
-tiers = cfg["converter"]["tiers_from_substrate_upward"]
+TO = (S.JP(S.TR / "tier_order.json") or {}).get("designs") or {}
+KEY = S.DR.name()
+if KEY not in TO:
+    raise SystemExit(f"tier_order.json has no entry for design {KEY}: tier order unknown")
 
 
-def tier_um(prefix):
-    return next(float(t["um"]) for t in tiers if t["name"].startswith(prefix))
+def thin_key():
+    """The record's thin-capacitor sensitivity of the design in force: same count, topology
+    and parts, a lower flying-capacitor height."""
+    me = S.DR.get(KEY)
+    for k in S.DR.keys():
+        e = S.DR.get(k)
+        if k != KEY and e.get("n_vr") == me["n_vr"] and e.get("topology") == me["topology"] \
+                and e.get("capacitor") == me["capacitor"] \
+                and float(e.get("cap_height_um") or 1e9) < float(me.get("cap_height_um") or 0):
+            return k
+    return None
 
 
-T0 = {"HS": tier_um("gan_hs"), "LS": tier_um("gan_ls"), "Cf": tier_um("flying_caps"),
-      "L": tier_um("inductor_plus_cout")}
-RDL = tier_um("interlayer_rdl")
-fc = (S.JP(S.TR / "flying_caps.json") or {}).get("summary") or {}
-CASES = {"A0": dict(T0)}
-if fc.get("min_tier_um_10pct") and fc.get("via_AR_10pct"):
-    tA1 = float(fc["min_tier_um_10pct"][-1])
-    D_VIA = tA1 / float(fc["via_AR_10pct"][-1])
-    CASES["A1"] = dict(T0, Cf=tA1)
-else:
-    D_VIA = None
-if D_VIA is None:
-    raise SystemExit("flying_caps.json summary missing: via diameter unknown")
-D_VIA = round(D_VIA, 6)
-
-FILL = {"HS": S.MAT["gan"], "LS": S.MAT["gan"], "Cf": S.MAT["caps"], "L": S.MAT["inductor"]}
-SHORT = {"HS": "HS", "LS": "LS", "Cf": "", "L": "L"}
-ORD = {"ref.": ["HS", "LS", "Cf", "L"], "repart.": ["HS", "Cf", "LS", "L"]}
-NETS = [("HS", "Cf", "HS→$C_\\mathrm{f}$"), ("HS", "LS", "HS→LS"), ("LS", "L", "SW→$L$")]
-CASE_LAB = {"A0": f"A0: {T0['Cf']:.0f}-µm $C_\\mathrm{{f}}$ tier",
-            "A1": f"A1: rated 0603 MLCC, {CASES.get('A1', T0)['Cf']:.0f}-µm tier"}
-
-fig = plt.figure(figsize=(S.COL_W, 3.55))
-ax = fig.add_axes([0.0, 0.39, 1.0, 0.55])
-bxs = [fig.add_axes([0.12, 0.075, 0.36, 0.20]), fig.add_axes([0.61, 0.075, 0.36, 0.20])]
-W = 0.55
+EIA = {"GRM155": "0402", "GRM188": "0603", "GRM21": "0805", "GRM31": "1206", "GCM21": "0805"}
 
 
-def stack(x0, T, order):
-    z, ext = 0.0, {}
-    for k, t in enumerate(order):
-        ax.add_patch(Rectangle((x0, z), W, T[t], fc=FILL[t], ec="none"))
-        if SHORT[t]:
-            ax.text(x0 + W / 2, z + T[t] / 2, SHORT[t], ha="center", va="center",
-                    fontsize=6.5, color="white")
-        ext[t] = (z, z + T[t])
-        z += T[t]
-        if k < 3:
-            ax.plot([x0, x0 + W], [z + RDL / 2] * 2, color=S.MAT["rdl"], lw=1.0)
-            z += RDL
+def cap_size(name):
+    m = re.search(r"(G[RC]M\d+)", str(name))
+    return next((v for k, v in EIA.items() if m and m.group(1).startswith(k)), "")
+
+
+K0 = thin_key()
+CASES = [("A0", K0), ("A1", KEY)]
+CLS = S.DR.CLASSES                                     # tier vectors are in this class order
+TOK = {"hs": "gan_hs", "ls": "gan_ls", "cf": "cap_fly", "L": "inductor"}
+NETCLASS = [(("vin", "gan_hs"), "VIN→HS"), (("gan_hs", "cap_fly"), "HS→$C_\\mathrm{f}$"),
+            (("gan_hs", "gan_ls"), "HS→LS"), (("gan_ls", "inductor"), "SW→$L$"),
+            (("inductor", "out"), "$L$→$V_\\mathrm{o}$")]
+#: two-line tick labels of panel (b)
+TICK = {"VIN→HS": "VIN\n→HS", "HS→$C_\\mathrm{f}$": "HS\n→$C_\\mathrm{f}$", "HS→LS": "HS\n→LS",
+        "SW→$L$": "SW\n→$L$", "$L$→$V_\\mathrm{o}$": "$L$\n→$V_\\mathrm{o}$"}
+
+
+def endpoint(tok):
+    if tok == "vin":
+        return ("vin", None)
+    if tok == "vout":
+        return ("out", None)
+    m = re.match(r"([a-zA-Z]+)(\d+)$", tok)
+    return (TOK[m.group(1)], int(m.group(2)))
+
+
+def net_class(name):
+    a, b = name.split("_to_")
+    return endpoint(a)[0], endpoint(b)[0]
+
+
+def crossed(name, asg, n_tiers):
+    """tier positions (0 = input end) a net crosses whole, die terminals on both faces"""
+    a, b = (endpoint(t) for t in name.split("_to_"))
+    tier = {e: asg.get(f"{e[0]}{e[1]}", 0) - 1 for e in (a, b) if e[1] is not None}
+    if a[0] == "vin":
+        return list(range(0, tier[b]))
+    if b[0] == "out":
+        return list(range(tier[a] + 1, n_tiers))
+    lo, hi = sorted((tier[a], tier[b]))
+    return list(range(lo + 1, hi))
+
+
+def class_worst(net_ar):
+    """{net class: (worst AR, net)}"""
+    out = {}
+    for n, ar in net_ar.items():
+        k = net_class(n)
+        if k not in out or ar > out[k][0]:
+            out[k] = (ar, n)
+    return out
+
+
+DATA = {}
+for case, key in CASES:
+    t = TO.get(key) if key else None
+    if not t:
+        continue
+    ch = t["chosen"]
+    rng = {}
+    for o in t.get("decided_orders") or [ch]:
+        for k, (ar, _n) in class_worst(o["net_ar_both"]).items():
+            lo, hi = rng.get(k, (ar, ar))
+            rng[k] = (min(lo, ar), max(hi, ar))
+    DATA[case] = dict(key=key, t=t, ch=ch, worst=class_worst(ch["net_ar_both"]), rng=rng,
+                      d=float(t["via_diameter_um"]), rdl=float(t.get("rdl_um", S.DR.RDL_UM)),
+                      lim=float(t.get("ar_limit", 1.0)), entry=S.DR.get(key))
+
+fig = plt.figure(figsize=(S.COL_W, 3.9))
+ax = fig.add_axes([0.0, 0.43, 1.0, 0.525])
+bxs = [fig.add_axes([0.11, 0.10, 0.38, 0.165]), fig.add_axes([0.60, 0.10, 0.38, 0.165])]
+W = 0.5
+X0 = {"A0": 0.86, "A1": 3.26}
+ztop = 0.0
+
+
+def stack(case):
+    """draw the production order of one case; returns (z extents per tier, stack top)"""
+    dd = DATA[case]
+    x0, rdl = X0[case], dd["rdl"]
+    z, ext = rdl, []
+    ax.plot([x0, x0 + W], [rdl / 2] * 2, color=S.MAT["rdl"], lw=1.0)
+    for vec, um in zip(dd["ch"]["tiers"], dd["ch"]["tier_um"]):
+        parts = {c: int(n) for c, n in zip(CLS, vec) if n}
+        xs = x0
+        for c, f in S.tier_fill(parts, dd["key"]):
+            ax.add_patch(Rectangle((xs, z), W * f, um, fc=S.CLASS_COLOR[c], ec="white",
+                                   lw=0.3))
+            xs += W * f
+        ax.text(x0 - 0.05, z + um / 2, S.tier_label(parts), ha="right", va="center",
+                fontsize=6, color=S.INK2)
+        ext.append((z, z + um))
+        z += um
+        ax.plot([x0, x0 + W], [z + rdl / 2] * 2, color=S.MAT["rdl"], lw=1.0)
+        z += rdl
     return ext, z
 
 
-res = {}
-xs = {("A0", "ref."): 0.0, ("A0", "repart."): 1.0, ("A1", "ref."): 2.4, ("A1", "repart."): 3.4}
-ztop = 0.0
-for (case, name), x0 in xs.items():
-    if case not in CASES:
+for case in ("A0", "A1"):
+    if case not in DATA:
         continue
-    T = CASES[case]
-    ext, z = stack(x0, T, ORD[name])
+    dd = DATA[case]
+    ext, z = stack(case)
     ztop = max(ztop, z)
-    ax.text(x0 + W / 2, -60, name, ha="center", va="top", fontsize=6.5, color=S.INK)
-    res[(case, name)] = {}
-    for a, b, nl in NETS:
-        za, zb = ext[a], ext[b]
-        lo, hi = (za, zb) if za[0] < zb[0] else (zb, za)
-        depth = max(hi[0] - lo[1] - 2 * RDL, 0.0)        # dielectric between capture planes
-        ar = (depth if depth > 0 else RDL) / D_VIA
-        res[(case, name)][nl] = ar
-        if depth > 0:
-            xv = x0 + W + 0.07
-            ax.plot([xv, xv], [lo[1], hi[0]], color=S.INK, lw=1.6 if ar > 1 else 0.9,
-                    solid_capstyle="butt")
-            for zz in (lo[1], hi[0]):
-                ax.plot([xv - 0.04, xv + 0.04], [zz] * 2, color=S.INK, lw=0.6)
-            ax.text(xv + 0.05, (lo[1] + hi[0]) / 2, f"{nl}\n{depth:.0f} µm", ha="left",
-                    va="center", fontsize=6.5, color=S.INK, linespacing=1.0)
-for case, x0 in (("A0", 0.0), ("A1", 2.4)):
-    if case in CASES:
-        ax.text(x0 - 0.05, ztop + 120, CASE_LAB[case], ha="left", va="bottom", fontsize=6.5,
-                color=S.INK)
-        # thin C_f tier label for A0
-zc = None
-if "A0" in CASES:
-    ax.annotate("$C_\\mathrm{f}$", (0.0, T0["HS"] + T0["LS"] + 2 * RDL + T0["Cf"] / 2),
-                xytext=(-0.05, T0["HS"] + T0["LS"] + 2 * RDL + T0["Cf"] / 2), ha="right",
-                va="center", fontsize=6.5, color=S.INK2)
-if "A1" in CASES:
-    zA1 = T0["HS"] + RDL + CASES["A1"]["Cf"] / 2
-    ax.text(3.4 + W / 2, zA1, "$C_\\mathrm{f}$", ha="center", va="center", fontsize=6.5,
-            color=S.INK)
-    zA1r = T0["HS"] + T0["LS"] + 2 * RDL + CASES["A1"]["Cf"] / 2
-    ax.text(2.4 + W / 2, zA1r, "$C_\\mathrm{f}$", ha="center", va="center", fontsize=6.5,
-            color=S.INK)
-ax.set_xlim(-0.40, 4.98)
+    dd["ext"] = ext
+    # whole-tier crossings: the worst net of each class, a bar over the tiers it crosses
+    bars = []
+    for k, lab in NETCLASS:
+        if k not in dd["worst"]:
+            continue
+        ar, n = dd["worst"][k]
+        cr = crossed(n, dd["ch"]["assignment"], len(ext))
+        if not cr or ar <= dd["rdl"] / dd["d"] + 1e-9:
+            continue
+        bars.append((ext[min(cr)][0], ext[max(cr)][1], lab, ar * dd["d"], ar))
+    xb0 = X0[case] + W + 0.07
+    labs = []
+    for j, (lo, hi, lab, dep, ar) in enumerate(bars):
+        xv = xb0 + 0.085 * j
+        ax.plot([xv, xv], [lo, hi], color=S.INK, lw=1.6 if ar > dd["lim"] else 0.9,
+                solid_capstyle="butt")
+        for zz in (lo, hi):
+            ax.plot([xv - 0.03, xv + 0.03], [zz] * 2, color=S.INK, lw=0.6)
+        labs.append([(lo + hi) / 2, f"{lab} {dep:.0f} µm"])
+    # label rows to the right of the bars, spread to a minimum gap
+    labs.sort(key=lambda r: -r[0])
+    gap = 0.075 * (ztop + 400)
+    for _ in range(200):
+        moved = False
+        for i in range(len(labs) - 1):
+            g = labs[i][0] - labs[i + 1][0]
+            if g < gap:
+                labs[i][0] += (gap - g) / 2 + 1e-6
+                labs[i + 1][0] -= (gap - g) / 2 + 1e-6
+                moved = True
+        if not moved:
+            break
+    xl = xb0 + 0.085 * max(len(bars) - 1, 0) + 0.06
+    for zl, txt in labs:
+        ax.text(xl, zl, txt, ha="left", va="center", fontsize=6, color=S.INK)
+
+CASE_LAB = {}
+for case, dd in DATA.items():
+    e = dd["entry"]
+    t1 = max(dd["ch"]["tier_um"])
+    if case == "A0":
+        CASE_LAB[case] = f"A0: {float(e['cap_height_um']):.0f}-µm $C_\\mathrm{{f}}$"
+    else:
+        CASE_LAB[case] = (f"A1: rated {cap_size(e['capacitor'])} MLCC "
+                          f"({float(e['cap_height_um']):.0f} µm)")
+for case in ("A0", "A1"):
+    if case in DATA:
+        ax.text(X0[case] - 0.85, ztop + 140, CASE_LAB[case], ha="left", va="bottom",
+                fontsize=6.5, color=S.INK)
+    else:
+        S.pending(ax, X0[case] - 0.8, 0.5, f"{case} tier order", "tier_order.json",
+                  transform=ax.get_yaxis_transform())
+ax.set_xlim(-0.05, 4.98)
 ax.set_ylim(-260, ztop + 560)
 ax.axis("off")
-ax.plot([-0.32, -0.32], [0, 500], color=S.INK, lw=0.8)
-ax.text(-0.27, 250, "500 µm", rotation=90, ha="left", va="center", fontsize=6.5)
-S.panel(ax, "a", "Same tiers, two orders, two capacitor cases", x=0.0, y=0.985)
+ax.plot([0.0, 0.0], [0, 500], color=S.INK, lw=0.8)
+ax.text(0.05, 250, "500 µm", rotation=90, ha="left", va="center", fontsize=6.5)
+ax.text(2.45, -60, "input end (48 V) at the bottom", ha="center", va="top", fontsize=6,
+        color=S.INK2)
+S.panel(ax, "a", "Decided mixed tiers in the production order, two capacitor cases", x=0.0,
+        y=0.985)
 
-# (b) worst AR per net, one small axis per case
-nets = [n for _, _, n in NETS]
-w = 0.36
+# (b) worst AR per net class: production order (bar), range over every decided order (line)
+labels = [lab for _, lab in NETCLASS]
 for bx, case in zip(bxs, ("A0", "A1")):
     bx.set_yscale("log")
     bx.set_ylim(0.05, 60)
-    bx.axhline(1.0, color=S.MUTED, lw=0.7, ls=(0, (2, 2)))
-    if case not in CASES:
-        S.pending(bx, 0.1, 0.5, f"{case} tier", "flying_caps.json")
+    if case not in DATA:
+        S.pending(bx, 0.1, 0.5, f"{case} tier order", "tier_order.json")
         continue
-    for k, name in enumerate(ORD):
-        worst = max(res[(case, name)].values())
-        for i, n in enumerate(nets):
-            v = res[(case, name)][n]
-            x = i + (k - 0.5) * (w + 0.04)
-            bx.bar(x, v, w, color=S.INK if k == 0 else "white", edgecolor=S.INK, lw=0.7,
-                   zorder=2)
-            bx.text(x, v * 1.15, f"{v:.2f}" if v < 1 else f"{v:.1f}", ha="center",
-                    va="bottom", fontsize=6.5, color=S.INK, rotation=90 if v >= 1 else 0)
-    bx.set_xticks(range(len(nets)), nets, fontsize=6.5)
+    dd = DATA[case]
+    bx.axhline(dd["lim"], color=S.MUTED, lw=0.7, ls=(0, (2, 2)))
+    for i, (k, lab) in enumerate(NETCLASS):
+        if k not in dd["worst"]:
+            continue
+        v = dd["worst"][k][0]
+        lo, hi = dd["rng"].get(k, (v, v))
+        vp = max(v, 0.06)
+        bx.bar(i, vp, 0.55, color=S.INK, edgecolor=S.INK, lw=0.7, zorder=2)
+        bx.plot([i + 0.36] * 2, [max(lo, 0.06), max(hi, 0.06)], color=S.INK2, lw=0.9,
+                zorder=3, solid_capstyle="butt")
+        for yy in (lo, hi):
+            bx.plot([i + 0.30, i + 0.42], [max(yy, 0.06)] * 2, color=S.INK2, lw=0.6, zorder=3)
+        txt = "0" if v == 0 else (f"{v:.2f}" if v < 1 else f"{v:.1f}")
+        bx.text(i - 0.02, vp * 1.18, txt, ha="center", va="bottom", fontsize=6, color=S.INK)
+    bx.set_xticks(range(len(labels)), [TICK.get(l, l) for l in labels], fontsize=6,
+                  linespacing=0.95)
     bx.tick_params(axis="x", length=0, pad=1)
     bx.grid(False)
-    bx.set_title(case, fontsize=7, pad=1, loc="left")
+    n_ord = len(dd["t"].get("decided_orders") or [])
+    ok = dd["t"].get("n_meeting_via_rule")
+    bx.set_title(f"{case}: {ok if ok is not None else '?'} of {n_ord} orders meet 1:1",
+                 fontsize=6.5, pad=1, loc="left")
 bxs[0].set_ylabel("Worst via AR", labelpad=1)
-if "A1" in CASES and min(max(res[("A1", n)].values()) for n in ORD) > 1.0:
-    bxs[1].set_title("A1: both > 1, copper posts", fontsize=6.5, pad=1,
-                     loc="left")
-fig.text(0.0, 0.34, f"(b) Worst via aspect ratio per net at {D_VIA:.0f}-µm vias", ha="left",
-         va="bottom", fontsize=8, color=S.INK)
-# order key
-fig.text(0.0, 0.30, "■ reference order   □ repartitioned order   - - 1:1 build-up limit",
-         ha="left", va="bottom", fontsize=6.5, color=S.INK2)
+d_via = next(iter(DATA.values()))["d"]
+fig.text(0.0, 0.375, f"(b) Worst via aspect ratio per net class at {d_via:.0f}-µm vias",
+         ha="left", va="bottom", fontsize=8, color=S.INK)
+rs = (DATA.get("A1") or {}).get("t", {}).get("repartition_search") or {}
+key_txt = "■ production order   | range over the decided orders   - - 1:1 build-up limit"
+if rs.get("best_worst_ar") and rs.get("n_ordered"):
+    key_txt += (f"\nbest over every regrouping into ≤ {rs.get('max_tiers', '?')} tiers "
+                f"(A1, {rs['n_ordered']} orders): AR {rs['best_worst_ar']['worst_ar_both']:.1f}")
+fig.text(0.0, 0.368, key_txt, ha="left", va="top", fontsize=6, color=S.INK2, linespacing=1.15)
 S.save(fig, "fig4_realizability")

@@ -9,16 +9,17 @@ import numpy as np
 
 CACHE = (Path(os.environ["ETM_RESULTS_ROOT"]) / "manuscript_v2" if os.environ.get("ETM_RESULTS_ROOT")
          else Path(__file__).resolve().parents[1]) / "cache"   # campaign hook
-CACHE.mkdir(exist_ok=True)
+CACHE.mkdir(parents=True, exist_ok=True)
 
 
 def read(path, blocks=("NDTEMP", "DISP")):
     path = Path(path)
-    key = CACHE / (path.parent.name + "_" + path.stem + ".npz")
-    if path.parent.parent.name != "fields":          # solver scratch: names repeat across runs
-        import hashlib
-        h = hashlib.md5(str(path.resolve()).encode()).hexdigest()[:10]
-        key = CACHE / (path.parent.name + "_" + path.stem + "_" + h + ".npz")
+    # the key carries the file's path, size and mtime: field and work-tree names repeat across
+    # runs and designs (a re-solved or re-collected field is never served from a stale cache)
+    import hashlib
+    st = path.stat()
+    h = hashlib.md5(f"{path.resolve()}|{st.st_size}|{st.st_mtime_ns}".encode()).hexdigest()[:10]
+    key = CACHE / (path.parent.name + "_" + path.stem + "_" + h + ".npz")
     if key.exists():
         d = np.load(key, allow_pickle=True)
         return {k: d[k] for k in d.files}

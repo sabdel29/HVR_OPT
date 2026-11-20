@@ -5,7 +5,12 @@ schematic) and its two switching phases.
     S1, S3 conduct in phase A (L1, L3 driven at 16 V), S2 in phase B (L2 driven at 16 V);
     S4-S6 freewheel the undriven inductors. C1 holds 32 V, C2 16 V.
 (b) Gate timing over one period T = 1/f_sw with D = D_DUTY, and the input current drawn
-    from the 48-V rail (only in phase A) - the origin of the pulsed-input scenarios.
+    from the 48-V rail (only in phase A) - the origin of the pulsed-input scenarios; the sum
+    over the decoupling plan's interleaved clock phases.
+D, f_sw, the branch current, the clock phases and the C_in ring are read from the decoupling
+chain's artifact (tcpmt_revision/input_decoupling.json), else from the design record (D, f_sw,
+I_cell / K and its committed decoupling plan); k bare -> with C_in from the macros, else from
+the artifact. The schematic is the N3K3K_A2 cell: another topology is refused.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,17 +19,34 @@ import re
 import style as S
 
 S.setup()
+if S.DR.topology() != (3, 3, 2):
+    raise SystemExit(f"fig_converter draws the N3K3K_A2 cell; design {S.DR.name()} is "
+                     f"N{S.DR.topology()[0]}K{S.DR.topology()[1]}K_A{S.DR.topology()[2]}")
 dec = S.JP(S.TR / "input_decoupling.json") or {}
 des = (dec.get("circuit") or {}).get("design") or {}
-rec = (dec.get("summary") or {}).get("recommended") or {}
-D_DUTY = des["D"]
-FSW_K = des["f_sw_hz"] / 1e3
-I_L = des["I_L_a"]
+if des.get("n_cell") not in (None, S.DR.n_vr()):
+    raise SystemExit(f"input_decoupling.json is of {des.get('n_cell')} cells, the design in "
+                     f"force has {S.DR.n_vr()}")
+summ = dec.get("summary") or {}
+rec = summ.get("recommended") or {}
+_drd = S.DR.get().get("decoupling") or {}
+D_DUTY = des.get("D") or S.DR.buck_duty()
+FSW_K = (des.get("f_sw_hz") or S.DR.get()["f_sw_hz"]) / 1e3
+I_L = des.get("I_L_a") or S.DR.i_cell_a() / S.DR.topology()[1]
 m_ph = re.search(r"(\d+) clock phases", rec.get("interleaving", ""))
-N_PH = int(m_ph.group(1)) if m_ph else None
+N_PH = (rec.get("n_clock_phases") or (int(m_ph.group(1)) if m_ph else None))
 m_cin = re.search(r"\((\d+) x (\d{4}) ([\d.]+-V \w+), ([\d.]+) uF",
-                  (dec.get("summary") or {}).get("figure_caption", ""))
-K_OPEN, K_EQ = S.macro("DecapKopen"), S.macro("DecapKeq")
+                  summ.get("figure_caption", ""))
+_kled = (summ.get("ledger_at_S0_temperatures") or {}).get("k_eq") or rec.get("k_eq")
+K_OPEN = S.macro("DecapKopen") or (f"{summ['k_open_cell_waveform']:.1f}"
+                                   if summ.get("k_open_cell_waveform") else None)
+K_EQ = S.macro("DecapKeq") or (f"{_kled:.2f}" if _kled else None)
+if not dec:                                     # the committed plan of the design record
+    K_OPEN = K_OPEN or (f"{_drd['k_open']:.1f}" if _drd.get("k_open") else None)
+    K_EQ = K_EQ or (f"{_drd['k_eq']:.2f}" if _drd.get("k_eq") else None)
+    _mp = re.match(r"(dual|latin|rows)(\d+)", str(_drd.get("phase_pattern") or ""))
+    if N_PH is None and _mp:
+        N_PH = int(_mp.group(2)) * (2 if _mp.group(1) == "dual" else 1)
 LW = 0.9
 fig = plt.figure(figsize=(S.COL_W, 4.25))
 ax = fig.add_axes([0.0, 0.385, 1.0, 0.60])
@@ -165,7 +187,7 @@ S.panel(ax, "a", "Hybrid cell: 3:1 SC stage + $K$ = 3 inductor branches", x=0.0,
 # ---------------------------------------------------------------- (b) timing
 bx = fig.add_axes([0.13, 0.135, 0.83, 0.20])
 T = 1.0
-D = 0.0625
+D = float(D_DUTY)                       # the buck duty N V_out / V_in of the design in force
 t = np.linspace(0, 2 * T, 4001)
 sig = {"A (S$_1$, S$_3$)": ((t % T) < D),
        "B (S$_2$)": (((t - T / 2) % T) < D),

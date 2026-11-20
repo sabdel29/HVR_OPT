@@ -41,6 +41,24 @@ OUT = Path(os.environ.get("ETM_RESULTS_ROOT") or REPO) / "manuscript_v2" / "figs
 OUT.mkdir(parents=True, exist_ok=True)
 MACROS = Path(os.environ.get("ETM_RESULTS_ROOT") or REPO) / "manuscript_v2" / "results_macros.tex"
 
+# ------------------------------------------------------------------ design record, compared cases
+# TCPMT round 3: every count- or design-dependent number (cells, grid, parts, tiers, decoupling)
+# comes from THE design record (configs/design_points.yaml, selector HVR_DESIGN) and every
+# compared case from the case registry (production state = implemented decoupling, SDEC); no
+# figure restates them. Appended (not prepended) so no module shadows this directory's own.
+import sys as _sys                                                     # noqa: E402
+for _p in ("scripts/phase0nw", "scripts"):
+    if str(REPO / _p) not in _sys.path:
+        _sys.path.append(str(REPO / _p))
+import design_record as DR                                             # noqa: E402
+import tcpmt_cases as TC                                               # noqa: E402
+
+#: the production input state of the compared cases and its plot labels
+PROD = TC.PRODUCTION_STATE
+STATE_TXT = {"SDEC": "implemented decoupling", "S0": "S0, ideal smoothing",
+             "S1": "S1, no decoupling"}
+STATE_SHORT = {"SDEC": "impl. decoupling", "S0": "S0", "S1": "S1"}
+
 # ------------------------------------------------------------------ geometry
 COL_W = 3.5      # in, single column
 DBL_W = 7.16     # in, double column
@@ -60,8 +78,14 @@ MAT = {
     "pcb": "#5f8a68", "solder": "#c3c7ce", "silicon": "#a3aec0", "tsv": "#c4783c",
     "rdl": "#d9893f", "gan": "#7a68b3", "caps": "#d9b85a", "inductor": "#9a7a56",
     "fill": "#efe7d6", "die": "#55667a", "tim": "#e9cf7d", "coldplate": "#bcd8ee",
-    "attach": "#b98a5a", "air": "#ffffff",
+    "attach": "#b98a5a", "air": "#ffffff", "gan_ls": "#a597d1",
 }
+#: component classes of a converter cell (design_record.CLASSES): fill and short label. HS and LS
+#: are both GaN; the low-side die is a lighter shade so a mixed HS + LS tier reads as two parts.
+CLASS_COLOR = {"gan_hs": MAT["gan"], "gan_ls": MAT["gan_ls"], "cap_fly": MAT["caps"],
+               "inductor": MAT["inductor"]}
+CLASS_SHORT = {"gan_hs": "HS", "gan_ls": "LS", "cap_fly": "$C_\\mathrm{f}$", "inductor": "$L$"}
+_ROLE_CLASS = {"hs": "gan_hs", "ls": "gan_ls", "caps": "cap_fly", "ind": "inductor"}
 
 
 def setup():
@@ -164,6 +188,40 @@ def macro(name):
     if not m or m.group(1).strip() in ("--", ""):
         return None
     return m.group(1).strip()
+
+
+def layer_parts(layer, key=None):
+    """{class: n} of one converter layer of architecture_geometry.json. The builders name a
+    converter layer <prefix>_<i>_<record tier name> (z1conv_1_tier1_hs2cf2), so its contents
+    are the design record's tier; a layer of another naming falls back to one part per role."""
+    import re
+    m = re.search(r"(tier\d+_[a-z0-9]+)$", layer["name"])
+    tp = DR.tier_parts(key)
+    if m and m.group(1) in tp:
+        return {c: int(n) for c, n in tp[m.group(1)].items() if n}
+    return {_ROLE_CLASS[r]: 1 for r in layer.get("roles", ()) if r in _ROLE_CLASS}
+
+
+def tier_label(parts):
+    """'2 HS + 2 C_f' of a {class: n} tier content, in design_record.CLASSES order."""
+    return " + ".join(f"{parts[c]} {CLASS_SHORT[c]}" if parts[c] > 1 else CLASS_SHORT[c]
+                      for c in DR.CLASSES if parts.get(c))
+
+
+def tier_fill(parts, key=None):
+    """[(class, fraction)] of a tier's plan area by part footprint (the design record's part
+    dimensions), in design_record.CLASSES order: how a mixed tier is drawn."""
+    dims = DR.get(key).get("part_dims_mm") or {}
+    area = {c: n * (dims[c][0] * dims[c][1] if c in dims else 1.0)
+            for c, n in parts.items() if n}
+    tot = sum(area.values()) or 1.0
+    return [(c, area[c] / tot) for c in DR.CLASSES if c in area]
+
+
+def load_case(state, tier, arch):
+    """(path, record) of a compared case from the case registry (guarded: a case of another
+    design or an uncoupled Z3 case is refused there), or (None, None) when not run yet."""
+    return TC.load(state, tier, arch)
 
 
 #: elements skipped because their artifact does not exist yet (printed by save())

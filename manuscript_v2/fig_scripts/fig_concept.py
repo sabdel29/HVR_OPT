@@ -1,19 +1,26 @@
 """Fig. 1: the question and the method.
 
-(a)-(c) Three integrations of the same 49 regulator cells: embedded between substrate and
-        die (Z1), on the substrate backside inside a board opening (Z2), and on the
-        underside of an uncut board (Z3). The integration decides which rail crosses the
-        substrate and the board (48 V at ~24 A or 1 V at ~1 kA) and which joints carry the
-        deformation.
+(a)-(c) Three integrations of the same regulator cells (the design record's count): embedded
+        between substrate and die (Z1), on the substrate backside inside a board opening
+        (Z2), and on the underside of an uncut board (Z3). The integration decides which rail
+        crosses the substrate and the board (48 V at the production Z1 case's input current,
+        or 1 V at the load current) and which joints carry the deformation.
 (d)     The framework: what each stage hands to the next, the electrothermal fixed point,
         and the three modes of use (evaluate, compare, explore).
-Schematic, not to scale (the to-scale sections are Fig. 3). Rail colours only.
+Schematic, not to scale (the to-scale sections are Fig. 3); the converter cells show the design
+record's tiers (input end at the bottom in every integration). Rail colours only.
 """
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, FancyBboxPatch, FancyArrowPatch, Ellipse
 import style as S
 
 S.setup()
+#: rail currents: the 48-V input of the production Z1 case (cooling A), the 1-V load current
+_p48, _c48 = S.load_case(S.PROD, "A", "Z1")
+I48_TXT = f" (≈{_c48['i_hv_avg_a']:.0f} A)" if _c48 and _c48.get("i_hv_avg_a") else ""
+_i1 = S.DR.P_LOAD_W / S.DR.V_OUT
+I1_TXT = f" (≈{_i1 / 1e3:.0f} kA)" if _i1 >= 1e3 else f" (≈{_i1:.0f} A)"
+TIERS = S.DR.tiers()                       # input end first: drawn bottom-up
 fig = plt.figure(figsize=(S.DBL_W, 3.05))
 W_ARCH = 0.158
 axs = [fig.add_axes([k * W_ARCH, 0.05, W_ARCH, 0.89]) for k in range(3)]
@@ -37,17 +44,26 @@ def arrow(ax, pts, col, lw=1.4):
 
 
 def cells(ax, x0, x1, y, h, n=4, flip=False):
-    """Encapsulated converter tier: n cells of device (violet) + inductor (brown) tiers."""
+    """Encapsulated converter: n cells, each the design record's tiers (input end at the
+    bottom in every integration: Z1 stacks them up from the substrate, Z2/Z3 hang them down
+    with the output end against the attach), heights in proportion, a mixed tier split by part
+    footprint (GaN violet, flying capacitors ochre, inductors brown). `flip` is kept for the
+    callers; the tier order is the same in all three drawings."""
     w = (x1 - x0) / (1.5 * n + 0.1)
     blk(ax, x0, y, x1 - x0, h, S.MAT["fill"])
+    tot = sum(float(t["height_um"]) for t in TIERS)
+    gap = 0.04 * h / max(len(TIERS) - 1, 1)
+    hh = (h - gap * (len(TIERS) - 1)) / tot
     for k in range(n):
         xc = x0 + 0.3 * w + k * 1.5 * w
-        if not flip:
-            blk(ax, xc, y + 0.62 * h, w, 0.38 * h, S.MAT["inductor"])
-            blk(ax, xc, y, w, 0.62 * h, S.MAT["gan"])
-        else:
-            blk(ax, xc, y, w, 0.38 * h, S.MAT["inductor"])
-            blk(ax, xc, y + 0.38 * h, w, 0.62 * h, S.MAT["gan"])
+        z = y
+        for t in TIERS:
+            th = float(t["height_um"]) * hh
+            xs = xc
+            for c, f in S.tier_fill(t["parts"]):
+                blk(ax, xs, z, w * f, th, S.CLASS_COLOR[c])
+                xs += w * f
+            z += th + gap
 
 
 def balls(ax, xs, y, h, wd=0.36):
@@ -103,7 +119,7 @@ blk(ax, 0.3, 3.4, 9.4, 2.7, S.MAT["pcb"], "board")
 arrow(ax, [(7.3, 2.35), (7.3, 6.45), (6.2, 6.45), (6.2, 7.9)], S.V48)
 arrow(ax, [(3.6, 9.3), (3.6, 10.2)], S.V1)
 ax.text(7.5, 2.6, "48 V", ha="left", va="center", fontsize=FS)
-note(ax, "48 V (≈24 A) crosses\nboard, BGA, substrate")
+note(ax, f"48 V{I48_TXT} crosses\nboard, BGA, substrate")
 ring(ax, (9.0, 6.45))
 boundary(ax, 0.35, 6.0, 9.65, 10.8)
 S.panel(ax, "a", "Z1 embedded", x=0.04, y=0.975)
@@ -125,7 +141,7 @@ ax.text(6.35, 5.3, "board\nopening", ha="center", va="center", fontsize=FS, colo
 arrow(ax, [(3.3, 2.35), (3.3, 7.4)], S.V48)
 arrow(ax, [(6.4, 8.6), (6.4, 10.2)], S.V1)
 ax.text(3.5, 2.6, "48 V direct", ha="left", va="center", fontsize=FS)
-note(ax, "1 V (≈1 kA) crosses\nattach, substrate")
+note(ax, f"1 V{I1_TXT} crosses\nattach, substrate")
 ring(ax, (9.15, 8.95))
 boundary_poly(ax, [(0.35, 8.5), (1.5, 8.5), (1.5, 6.35), (8.5, 6.35), (8.5, 8.5), (9.65, 8.5),
                    (9.65, 10.8), (0.35, 10.8)])
@@ -149,7 +165,7 @@ arrow(ax, [(0.05, 4.1), (2.3, 4.1)], S.V48)
 arrow(ax, [(6.4, 5.4), (6.4, 10.2)], S.V1)
 ax.text(0.05, 4.65, "48 V", ha="left", va="center", fontsize=FS, zorder=7,
         bbox=dict(fc="white", ec="none", pad=0.3))
-note(ax, "1 V (≈1 kA) crosses\nboard, BGA, substrate")
+note(ax, f"1 V{I1_TXT} crosses\nboard, BGA, substrate")
 ring(ax, (9.0, 8.95))
 boundary(ax, 1.05, 2.85, 9.85, 10.8)
 S.panel(ax, "c", "Z3 board backside", x=0.04, y=0.975)

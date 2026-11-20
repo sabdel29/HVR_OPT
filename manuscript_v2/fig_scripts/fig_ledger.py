@@ -2,27 +2,35 @@
 
 (a)   Current carried by each class of connection inside one regulator cell, coloured by
       rail (48 V red, 16 V neutral, 1 V violet).
-(b,c) Package-internal loss of Z2 and of Z3 minus that of Z1 at S0, decomposed term by
-      term (waterfall): the routing terms each integration removes or adds, and the
-      electrothermal term -- the same converter dissipating more or less because it runs
-      at a different temperature. The converter row is annotated with that temperature
-      difference.
-Z3 is the coupled land-side case (z3_land_t40_A_fvmap): its 1-V land-side and board-plane
-spreading rows (P_sub_land_1V_spreading, P_PCB_plane_1V_spreading) are a separate row.
-Data: the converged case files' ledger_rows; segment currents from
-research/tcpmt_revision/input_decoupling.json (circuit.design) where available. Rail colours
-only; no architecture colours in this figure (the two pairs fail together under CVD).
+(b,c) Package-internal loss of Z2 and of Z3 minus that of Z1 in the production state
+      (implemented input decoupling), decomposed term by term (waterfall): the routing terms
+      each integration removes or adds, and the electrothermal term -- the same converter
+      dissipating more or less because it runs at a different temperature. The converter row
+      is annotated with that temperature difference.
+Cases: the case registry (scripts/tcpmt_cases.py), production state, cooling A; Z3 is the
+coupled land-side case: its 1-V land-side and board-plane spreading rows
+(P_sub_land_1V_spreading, P_PCB_plane_1V_spreading) are a separate row; the package input
+capacitor ring's ESR row (P_Cin_ring_ESR) belongs to the 48-V package path.
+Data: the converged case files' ledger_rows; segment currents from the routing model of the
+design in force (routing.nets: the 48-V bus, the 16-V flying-capacitor loop and intermediate
+rail, the switch node) and tcpmt_revision/input_decoupling.json (circuit.design) where
+available. Rail colours only; no architecture colours in this figure (the two pairs fail
+together under CVD).
 """
 import matplotlib.pyplot as plt
 import style as S
 
 S.setup()
-import json
-SCEN = "HV_S0"
-#: cooling A (the same top plate): production cases for Z1/Z2, the top-only case for Z3
-CASE = {"Z1": "etm_Z1_HV_S0_h1.1_r21.json", "Z2": "etm_Z2_HV_S0_h1.1_r21.json",
-        "Z3": "sensitivity/etm_Z3_HV_S0__z3_land_t40_A_fvmap.json"}
-CJ = {a: json.loads((S.FC / f).read_text()) for a, f in CASE.items() if (S.FC / f).exists()}
+SCEN = S.TC.SCEN[S.PROD]
+#: cooling A (the same top plate), production state, every integration from the registry
+CJ = {}
+for _a in ("Z1", "Z2", "Z3"):
+    _p, _c = S.load_case(S.PROD, "A", _a)
+    if _c is not None:
+        CJ[_a] = _c
+if "Z1" not in CJ:
+    raise SystemExit(f"no Z1 case in the production state ({SCEN}, cooling A): "
+                     f"{S.TC.expected_path(S.PROD, 'A', 'Z1')}")
 L = [dict(r, arch=a, scenario=SCEN) for a, c in CJ.items() for r in c["ledger_rows"]]
 FIN = {(a, SCEN): {"I_48_avg_a": c["i_hv_avg_a"]} for a, c in CJ.items()}
 
@@ -38,7 +46,7 @@ def pre(*p):
 
 LAND = pre("P_sub_land", "P_PCB_plane")          # coupled 1-V spreading (Z3)
 GROUPS = [
-    ("48-V package path", pre("P_pkg_RDL_HV", "P_BGA_supply", "P_BGA_return"), S.V48),
+    ("48-V package path", pre("P_pkg_RDL_HV", "P_BGA_supply", "P_BGA_return", "P_Cin"), S.V48),
     ("TSV field", pre("P_TSV"), S.V1),
     ("VR attach", pre("P_VR_attach", "P_VR_PCB_attach", "P_board_attach"), S.V1),
     ("Board vias, 1-V BGA", lambda t: pre("P_board", "P_PCB", "P_pcb", "P_BGA_LV", "P_BGA_1V",
@@ -55,11 +63,40 @@ wpan = 0.56 / len(archs) - (0.05 if len(archs) > 1 else 0)
 axes = [fig.add_axes([0.40 + k * (wpan + 0.05), 0.10, wpan, 0.47]) for k in range(len(archs))]
 
 # ---------------------------------------------------------------- (a) segment currents
+N_VR = S.DR.n_vr()
 _des = ((S.JP(S.TR / "input_decoupling.json") or {}).get("circuit") or {}).get("design") or {}
-I_IN_CELL = _des.get("I_in_avg_a", 0.478)
-I_SW = 3 * _des["I_L_a"] if _des.get("I_L_a") else 20.408
-seg = [("48-V input bus", I_IN_CELL, S.V48), ("16-V high side to $C_\\mathrm{f}$", 1.015, S.NEUTRAL),
-       ("16-V intermediate rail", 1.435, S.NEUTRAL),
+
+
+def _routing_currents():
+    """per-cell currents the ledger's intra-VR model charges (routing.nets of the design in
+    force): 48-V bus (sum over the N high-side feeds), flying-capacitor loop (RMS of one
+    HS -> C_f link, AC only), 16-V intermediate rail (sum over the N HS -> LS links), switch
+    node (sum over the K phases)"""
+    import sys
+    p = str(S.REPO / "scripts" / "phase0m")
+    if p not in sys.path:
+        sys.path.append(p)
+    import routing as RT
+    nets = RT.nets(RT.design_in_force())
+    tot = (lambda f: sum(n.i_dc_a for n in nets if f(n.name)))
+    return {"in": tot(lambda s: s.startswith("vin_to_hs")),
+            "cf": max(n.i_rms_a for n in nets if "_to_cf" in n.name),
+            "mid": tot(lambda s: s.startswith("hs") and "_to_ls" in s),
+            "sw": tot(lambda s: s.startswith("ls") and "_to_L" in s)}
+
+
+try:
+    _rc = _routing_currents()
+except Exception as e:                                          # noqa: BLE001
+    print(f"NOTE: routing model unavailable ({e}); 16-V currents pending")
+    _rc = {}
+#: the 48-V bus at the production Z1 case's input current (the number the annotation gives)
+I_IN_CELL = (FIN[("Z1", SCEN)]["I_48_avg_a"] / N_VR if FIN.get(("Z1", SCEN), {}).get("I_48_avg_a")
+             else _des.get("I_in_avg_a") or _rc.get("in"))
+I_SW = _rc.get("sw") or (S.DR.topology()[1] * _des["I_L_a"] if _des.get("I_L_a") else None)
+seg = [("48-V input bus", I_IN_CELL, S.V48),
+       ("16-V high side to $C_\\mathrm{f}$", _rc.get("cf"), S.NEUTRAL),
+       ("16-V intermediate rail", _rc.get("mid"), S.NEUTRAL),
        ("1-V switch node to $L$", I_SW, S.V1)]
 axA.set_xscale("log")
 axA.set_xlim(0.2, 60)
@@ -67,6 +104,10 @@ axA.set_ylim(len(seg) - 0.45, -0.55)
 axA.grid(axis="x", which="major", color=S.GRID, lw=0.5)
 axA.grid(axis="y", visible=False)
 for i, (lab, v, col) in enumerate(seg):
+    if v is None:
+        S.pending(axA, 0.25, i, lab, "routing model / input_decoupling.json",
+                  transform=axA.transData)
+        continue
     axA.barh(i, v - 0.2, left=0.2, height=0.62, color=col, lw=0, zorder=2)
     axA.text(v * 1.28, i, f"{v:.2f} A" if v < 10 else f"{v:.1f} A", va="center", ha="left",
              fontsize=6.6, color=S.INK)
@@ -76,7 +117,9 @@ axA.set_xlabel("DC-average current per regulator cell (A)", labelpad=1.5)
 axA.spines["left"].set_visible(False)
 S.panel(axA, "a", "Rail currents in one cell", x=-0.70, y=1.06)
 i48 = FIN[("Z1", SCEN)]["I_48_avg_a"]
-axA.text(60, -0.5, f"DC averages (ledger: RMS)\n×49 cells: {i48:.1f} A at 48 V,\n1.0 kA at 1 V",
+i1 = S.DR.P_LOAD_W / S.DR.V_OUT
+axA.text(60, -0.5, f"DC averages (ledger: RMS)\n×{N_VR} cells: {i48:.1f} A at 48 V,\n"
+         + (f"{i1 / 1e3:.1f} kA" if i1 >= 1e3 else f"{i1:.0f} A") + " at 1 V",
          transform=axA.transData, ha="right", va="top", fontsize=6.5, color=S.INK2,
          linespacing=1.0)
 
