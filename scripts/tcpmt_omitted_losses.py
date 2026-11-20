@@ -54,6 +54,7 @@ SCR = Path(os.environ.get("HVR_SCRATCH", "/home/beams0/SABDELZAHER/ETM_project/s
 GRID = SCR / "dse_grid" / "data"
 
 sys.path.insert(0, str(REPO / "Scalable_Integrated_VR" / "src"))
+sys.path.insert(0, str(REPO / "scripts" / "phase0nw"))   # design_record (round 3)
 
 V_IN, V_OUT, P_LOAD, I_SYS = 48.0, 1.0, 1000.0, 1000.0
 ALPHA_CU = 3.93e-3                       # 1/K, scripts/phase0d/electrical.py
