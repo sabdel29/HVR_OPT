@@ -39,6 +39,7 @@ def hottest_joint_C(mech):
 import sys as _sys                                                    # noqa: E402
 _sys.path.insert(0, str(R / "scripts"))
 import final_closure_physical_etm as E                              # noqa: E402
+import tcpmt_cases as TC                                            # noqa: E402
 
 
 def J(name):
@@ -55,6 +56,13 @@ def main():
             r = json.loads(pf.read_text()) if pf.exists() else None
             if r is None or "mechanics" not in r:
                 continue
+            # review round 2: Z3 is compared only on its COUPLED land side, so its uncoupled
+            # production-boundary files are superseded and never aggregated (TCPMT round 3:
+            # the campaign writes none; Z3 has no production-boundary reference case)
+            if arch == "Z3" and TC.is_superseded(pf):
+                print(f"skipped {pf.name}: superseded uncoupled Z3 case (tcpmt_cases)")
+                continue
+            TC.guard(arch, r, pf)          # a case of another design never stands in
             if not E.current_lineage(r):
                 raise RuntimeError(f"{pf.name} is not of the corrected lineage (variant "
                                    f"{r.get('architecture_variant')}, no in-cell E-T "

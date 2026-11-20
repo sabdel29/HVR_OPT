@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 import subprocess
 import sys
@@ -15,12 +16,16 @@ import pytest
 
 R = Path(__file__).resolve().parents[2]
 D = R / "research" / "final_closure"
+#: the results root in force (a campaign root through ETM_RESULTS_ROOT), as the attach study's
+#: producer reads and writes it; D stays the frozen tree the round-2 texts were made from
+RD = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "final_closure"
 sys.path.insert(0, str(R / "scripts"))
+sys.path.insert(0, str(R / "scripts" / "phase0nw"))
 import final_closure_guards as G                                    # noqa: E402
 
 TEX = R / "manuscript" / "ETM_DVPD_JOURNAL_MANUSCRIPT.tex"
 DECK = R / "presentation" / "prelim_hvr"
-STUDY = D / "vr_attach_density_study.json"
+STUDY = RD / "vr_attach_density_study.json"
 
 #: the active-scope sentence the pre-direct-feed scope used for Z2 (4cf83c7), and the
 #: wording the final brief names
@@ -47,6 +52,22 @@ def J(name):
 def study():
     assert STUDY.exists(), "vr_attach_density_study.json not generated"
     return json.loads(STUDY.read_text())
+
+
+def _study_design(st):
+    """The design an attach study was drawn on (TCPMT round 3: the study records it); None for
+    the frozen round-2 study, the 49-cell lineage's (5.61-mm^2 cell)."""
+    return (st.get("design") or {}).get("design")
+
+
+def _require_design_in_force(st):
+    """Model-vs-artifact checks need the study of the design in force (the code draws the
+    lattice on the design record's cell; the frozen research/ study is the 49-cell lineage's)."""
+    import design_record as DR
+    if _study_design(st) != DR.name():
+        pytest.skip("the attach study in the results root is of another design than the record "
+                    "in force (frozen round-2 artifact): run with ETM_RESULTS_ROOT at a root "
+                    "regenerated for the design")
 
 
 def _tracked_text_files():
@@ -95,7 +116,8 @@ def test_attach_lattice_count_matches_pitch_diameter_and_cell():
     import final_closure_vr_attach as VA
     for name, c in st["cases"].items():
         side = c["cell_side_um"]
-        assert side == pytest.approx(math.sqrt(5.61) * 1e3)
+        if _study_design(st) is None:           # the round-2 lineage: the 5.61-mm^2 cell
+            assert side == pytest.approx(math.sqrt(5.61) * 1e3)
         n = _brute_force_axis(side, c["pitch_um"], c["d_um"])
         assert c["n_per_axis"] == n, name
         assert c["n_total"] == n * n, name
@@ -103,13 +125,20 @@ def test_attach_lattice_count_matches_pitch_diameter_and_cell():
         assert c["metal_area_um2"] == pytest.approx(metal, rel=1e-12)
         assert c["area_fraction"] == pytest.approx(metal / side ** 2, rel=1e-12)
         assert c["edge_clearance_um"] >= c["edge_rule_um"] - 1e-9
-        # the stored study is the code's current output, and every mesh cell agrees
-        L = VA.lattice(VA.CASES[name])
+        # the stored study is the code's output on the study's own cell, every mesh cell agrees
+        L = VA.lattice(VA.CASES[name], side_um=side)
         assert (L["n_vdd"], L["n_gnd"]) == (c["n_vdd"], c["n_gnd"]), name
-        assert c["all_cells"]["n_cells"] == 49
+        assert c["all_cells"]["n_cells"] == st.get("n_vr", 49)
         assert c["all_cells"]["per_cell"] == [c["n_total"], c["n_vdd"], c["n_gnd"]]
     # the sparse published geometry really is sparser: a different lattice, not a rescale
     assert st["cases"]["sparse"]["n_per_axis"] < st["cases"]["dense"]["n_per_axis"]
+    # model vs artifact: the study of the design in force is drawn on that design's cell
+    _require_design_in_force(st)
+    assert st["n_vr"] == VA.N_VR
+    for name, c in st["cases"].items():
+        assert c["cell_side_um"] == pytest.approx(VA.CELL_SIDE_UM), name
+        L = VA.lattice(VA.CASES[name])
+        assert (L["n_vdd"], L["n_gnd"]) == (c["n_vdd"], c["n_gnd"]), name
 
 
 # ------------------------------------------------------------------ 3
@@ -121,16 +150,19 @@ def test_vdd_and_gnd_counts_follow_the_checkerboard_rule():
         n = c["n_per_axis"]
         vdd = sum(1 for i in range(n) for j in range(n) if (i + j) % 2 == 0)
         assert (c["n_vdd"], c["n_gnd"]) == (vdd, n * n - vdd), name
-        assert c["all_cells"]["total_vdd"] == 49 * vdd
-        sp = VA.ledger_spec(VA.CASES[name])
-        assert (sp["n_vdd"], sp["n_gnd"]) == (vdd, n * n - vdd)
-    # the counts the ETM variants actually carried in their ledgers
+        assert c["all_cells"]["total_vdd"] == st.get("n_vr", 49) * vdd
+    # the counts the ETM variants actually carried in their ledgers (same results root)
     for v in ("attach_dense", "attach_sparse"):
-        c = json.loads((D / "sensitivity" / f"etm_Z2_HV_S0__{v}.json").read_text())
+        c = json.loads((RD / "sensitivity" / f"etm_Z2_HV_S0__{v}.json").read_text())
         rows = {r["term"]: r for r in c["ledger_rows"]}
         n_case = st["cases"][v.removeprefix("attach_")]
         assert f"{n_case['n_vdd']} " in rows["P_VR_attach_VDD"]["conductor"]
         assert f"{n_case['n_gnd']} " in rows["P_VR_attach_GND"]["conductor"]
+    # model vs artifact: the ledger spec of the design in force installs the study's counts
+    _require_design_in_force(st)
+    for name, c in st["cases"].items():
+        sp = VA.ledger_spec(VA.CASES[name])
+        assert (sp["n_vdd"], sp["n_gnd"]) == (c["n_vdd"], c["n_gnd"]), name
 
 
 # ------------------------------------------------------------------ 4
@@ -143,7 +175,7 @@ def test_attach_effective_properties_change_with_density():
     assert sp["electrical"]["P_attach_total_w"] > dn["electrical"]["P_attach_total_w"]
     # ... and the variants were really solved with those cards and ledgers (a degree of
     # freedom pinned to its baseline would leave the solved cases identical)
-    cases = {v: json.loads((D / "sensitivity" / f"etm_Z2_HV_S0__{v}.json").read_text())
+    cases = {v: json.loads((RD / "sensitivity" / f"etm_Z2_HV_S0__{v}.json").read_text())
              for v in ("attach_dense", "attach_sparse")}
     att = {v: sum(r["P_w"] for r in c["ledger_rows"] if r["term"].startswith("P_VR_attach"))
            for v, c in cases.items()}
@@ -153,7 +185,7 @@ def test_attach_effective_properties_change_with_density():
         assert c["et_converged"], v
         assert c["variant"]["gates"] == ["geom.vr_attach_density"]
     # the column-stiffened bound records the card its mesh carried: the sparse lattice's
-    stiff = json.loads((D / "sensitivity" / "etm_Z2_HV_S0__attach_sparse_stiff.json").read_text())
+    stiff = json.loads((RD / "sensitivity" / "etm_Z2_HV_S0__attach_sparse_stiff.json").read_text())
     card = stiff["materials"]["vr_attach_card"]
     assert card["k"] == pytest.approx(sp["k_z_W_mK"], rel=1e-9)
     assert card["E"] == pytest.approx(sp["mech_bound_B"]["E_MPa"], rel=1e-9)
@@ -176,13 +208,16 @@ def test_no_hard_coded_3042_attach_count():
     # NEGATIVE: the scanner sees a literal count
     assert _hardcoded_count('n = 3042  # bumps per rail')
     assert not _hardcoded_count("T = 0.8709251940483042")
-    # every user-facing count is the real lattice's, derived afresh
+    # every user-facing count is the real lattice's, derived afresh -- on the cell the texts
+    # describe: these are the frozen round-2 manuscript and deck, so the frozen study's cell
+    # (TCPMT round 3 draws the code's lattice on the design record's cell)
     import final_closure_vr_attach as VA
-    n = VA.lattice(VA.CASES["dense"])["n_vdd"]
+    side = json.loads((D / "vr_attach_density_study.json").read_text())["cases"]
+    n = VA.lattice(VA.CASES["dense"], side_um=side["dense"]["cell_side_um"])["n_vdd"]
     mac = (R / "manuscript" / "final_lineage_macros.tex").read_text()
     assert re.search(r"\\newcommand\{\\AttachNbump\}\{(\d+)\}", mac).group(1) == str(n)
     assert re.search(r"\\newcommand\{\\AttSparseNvdd\}\{(\d+)\}", mac).group(1) == str(
-        VA.lattice(VA.CASES["sparse"])["n_vdd"])
+        VA.lattice(VA.CASES["sparse"], side_um=side["sparse"]["cell_side_um"])["n_vdd"])
     html = (DECK / "index.html").read_text()
     assert re.search(r"pillars per cell, VDD \+ GND</td><td class='num'>(?:<[^>]+>)*(\d+)",
                      html).group(1) == str(n)

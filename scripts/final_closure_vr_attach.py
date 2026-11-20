@@ -61,8 +61,15 @@ OUT_JSON = D / "vr_attach_density_study.json"
 OUT_CSV = D / "vr_attach_density_study.csv"
 RVE = D / "reference_attach_rve.json"
 
-#: the cell footprint the attach covers (sqrt of the 5.61 mm^2 regulator cell, as the mesh)
-CELL_SIDE_UM = math.sqrt(5.61) * 1e3
+import z1_design as Z1D                                             # noqa: E402
+
+#: the cell footprint the attach covers: the regulator cell of the design in force (THE design
+#: record via z1_design, the FE tile and final_closure_ledger.attach_spec alike; 2.817 mm at
+#: M = 36). TCPMT round 3: it was sqrt(5.61 mm^2) = 2.3685 mm, the 49-cell lineage's cell, so
+#: the attach-density variants' ledgers (ledger_spec) carried the 49-cell lattice.
+CELL_SIDE_UM = Z1D.cell_side_mm() * 1e3
+#: regulator cells of the design in force (49 in the frozen lineage)
+N_VR = Z1D.n_vr()
 #: production heights (30 um framework allowance): Au et al. print the cap height as "16mm"
 #: in the publisher's own abstract (IEEE Xplore metadata, arnumber 7545539), an evident unit
 #: error for 16 um at 15 um diameter / 30 um pitch; the full text is closed and was not
@@ -125,14 +132,17 @@ def lattice(case: dict, side_um: float = CELL_SIDE_UM, cx_um: float = 0.0,
 
 @lru_cache(maxsize=1)
 def cell_centres_mm():
-    """The 49 regulator-cell centres of the production Z2 mesh (and their side)."""
+    """The regulator-cell centres of the production Z2 mesh (and their side): N_VR cells of
+    the design in force."""
     import final_closure_physical_etm as E
     _m, _mats, _st, tiles, _info = E.build("Z2", 1.1, (1, 1))
     return tuple((float(t.cx), float(t.cy)) for t in tiles), float(tiles[0].ax)
 
 
 def all_cells(case: dict) -> dict:
-    """The lattice of EVERY cell from the mesh tiles; refuses a cell that differs."""
+    """The lattice of EVERY cell from the mesh tiles; refuses a cell that differs, a mesh with
+    another cell count than the design in force, and a mesh cell whose lattice is not the one
+    the ledger and the density study use (CELL_SIDE_UM)."""
     centres, side_mm = cell_centres_mm()
     per = []
     for cx, cy in centres:
@@ -140,6 +150,13 @@ def all_cells(case: dict) -> dict:
         per.append((L["n_total"], L["n_vdd"], L["n_gnd"]))
     if len(set(per)) != 1:
         raise RuntimeError(f"cells differ in their attach lattice: {sorted(set(per))}")
+    if len(per) != N_VR:
+        raise RuntimeError(f"the Z2 mesh has {len(per)} cells, the design in force {N_VR}")
+    L0 = lattice(case)
+    if per[0] != (L0["n_total"], L0["n_vdd"], L0["n_gnd"]):
+        raise RuntimeError(f"the mesh cell ({side_mm:.4f} mm) carries the lattice {per[0]}, the "
+                           f"design's cell ({CELL_SIDE_UM / 1e3:.4f} mm) "
+                           f"{(L0['n_total'], L0['n_vdd'], L0['n_gnd'])}")
     return {"n_cells": len(per), "cell_side_mm": side_mm, "per_cell": per[0],
             "total_vdd": sum(p[1] for p in per), "total_gnd": sum(p[2] for p in per)}
 
@@ -220,7 +237,7 @@ def redistribution_length_mm(case: dict, r_bump_ohm: float, t_c: float = 20.0) -
     return math.sqrt(r_bump_ohm * area_per_rail_bump / sheet_resistance(t_c)) * 1e3
 
 
-def electrical(case: dict, t_c: float, i_cell_a: float, n_vr: int = 49) -> dict:
+def electrical(case: dict, t_c: float, i_cell_a: float, n_vr: int = N_VR) -> dict:
     L = lattice(case)
     rb = bump_resistance(case, t_c)
     out = {"T_attach_C": t_c, "I_cell_rms_A": i_cell_a, **rb}
@@ -245,22 +262,27 @@ def electrical(case: dict, t_c: float, i_cell_a: float, n_vr: int = 49) -> dict:
 def two_sheet_network(case: dict, occ_top: float = PLANE_OCC, level: int = 2,
                       t_c: float = 20.0) -> dict:
     """Is equal bump sharing safe? One rail of one cell as a coupled network: the regulator
-    output plane (inductor footprints inject I/3 each, as vout_plane_r2) and the substrate's
-    top 1 V RDL (the die draws uniformly from it) joined by the distributed vertical stack
-    attach + TSV field in series. The block model the ledger uses (output plane to a uniform
-    sink, then uniform vertical currents, no lateral flow above) is ONE admissible current
-    pattern of this network, so by Thomson's principle its loss bounds the network's from
-    above. Returns both losses for 1 A at t_c, and the vertical-current non-uniformity."""
+    output plane (the K inductor footprints inject I/K each where the design in force places
+    them, as vout_plane_r2) and the substrate's top 1 V RDL (the die draws uniformly from it)
+    joined by the distributed vertical stack attach + TSV field in series. The block model the
+    ledger uses (output plane to a uniform sink, then uniform vertical currents, no lateral
+    flow above) is ONE admissible current pattern of this network, so by Thomson's principle
+    its loss bounds the network's from above. Returns both losses for 1 A at t_c, and the
+    vertical-current non-uniformity."""
     import routing as RT
     import pkg_rdl_refined as RF
     import scipy.sparse as sp
     import scipy.sparse.linalg as spl
     import tsv_fields as TF
     import physical_package as PP
+    import final_closure_ledger as FL
     from interconnect import rho_cu
-    s = RT.DESIGN["tile_side_mm"]
-    comps = {c.name: c for c in RT.tile_layout(s)}
-    legs = [comps[f"L{k}"] for k in range(3)]
+    # TCPMT round 3: the routing dict of the design in force (the ledger's, which its
+    # vout_plane_r2 block model below uses), K inductors -- never three by construction
+    d = FL.routing_design()
+    s = d["tile_side_mm"]
+    comps = {c.name: c for c in RT.tile_layout(s, d)}
+    legs = [comps[f"L{k}"] for k in range(int(d["K"]))]
     h_fine, h_coarse = RF.LEVELS[level]
     tx = sorted({round(c.x_mm + k * c.w_mm / 2, 9) for c in legs for k in (-1, 1)})
     ty = sorted({round(c.y_mm + k * c.h_mm / 2, 9) for c in legs for k in (-1, 1)})
@@ -273,7 +295,12 @@ def two_sheet_network(case: dict, occ_top: float = PLANE_OCC, level: int = 2,
     L = lattice(case)
     rb = bump_resistance(case, t_c)["R_bump_ohm"]
     cfg = PP.load_physical_package_config(R / "configs/phase0nt/z2_2p4mm_cutout.yaml")
-    pc = TF.system_report(cfg.cells, cfg.cell_side_mm, 0.300, 1.0 * cfg.cells, T_C=t_c)["per_cell"]
+    # the production TSV lattice of the design in force (the ledger's: the current-scaled
+    # field of z1_design.tsv_n_per_cell, 45 x 45 at M = 36), not the cell's geometric maximum
+    # (which the 49-cell field happened to equal)
+    n_side = int(round(math.sqrt(Z1D.tsv_n_per_cell())))
+    pc = TF.system_report(cfg.cells, cfg.cell_side_mm, 0.300, 1.0 * cfg.cells, T_C=t_c,
+                          n_side=n_side)["per_cell"]
     r_tsv = pc["r_vdd_ohm"] + pc["r_spread_vdd_ohm"]
     r_att = rb / L["n_vdd"]
     r_v = (r_att + r_tsv) * a_cell                                  # Ohm m^2, in series
@@ -290,7 +317,7 @@ def two_sheet_network(case: dict, occ_top: float = PLANE_OCC, level: int = 2,
                       - max(shA.fy[j], c.y_mm - c.h_mm / 2))
                 if oy > 0:
                     ar[shA.node(i, j)] = ox * oy
-        qa += ar / ar.sum() / 3.0
+        qa += ar / ar.sum() / len(legs)
     qb = area / a_cell                                              # uniform draw, 1 A
     LA, LB, Gc = shA.laplacian(), shB.laplacian(), sp.diags(g)
     M = sp.bmat([[LA + Gc, -Gc], [-Gc, LB + Gc]]).tolil()
@@ -310,7 +337,6 @@ def two_sheet_network(case: dict, occ_top: float = PLANE_OCC, level: int = 2,
     p_net = {"plane": p_sheet(LA, va), "vertical": float(np.sum(g * (va - vb) ** 2)),
              "top_rdl": p_sheet(LB, vb)}
     # block model: output plane to a uniform sink + uniform vertical current
-    import final_closure_ledger as FL
     r2, _ = FL.vout_plane_r2()
     p_blk = {"plane": r2 * rho_cu(t_c) / rho_cu(20.0), "vertical": r_v / a_cell, "top_rdl": 0.0}
     jv = i_v / area
@@ -384,7 +410,7 @@ def production_card() -> dict:
     return {"k_z_W_mK": kz, "k_xy_W_mK": kxy, "f": c["geometry"]["f"]}
 
 
-def sharing(t_c: float, i_cell_a: float, n_vr: int = 49) -> dict:
+def sharing(t_c: float, i_cell_a: float, n_vr: int = N_VR) -> dict:
     """Equal sharing, checked rather than assumed. The redistribution length of the output
     plane over its bump sink is far below the cell, so the bumps do NOT share equally; the
     coupled two-sheet network (two_sheet_network) gives the real pattern. The ledger's block
@@ -414,16 +440,54 @@ def sharing(t_c: float, i_cell_a: float, n_vr: int = 49) -> dict:
             "per_case": per, "density_penalty_vs_dense": pen}
 
 
+def _rel(p) -> str:
+    """A path for a record: relative to the checkout when inside it (the frozen tree, or a
+    campaign root under it), else absolute ($ETM_RESULTS_ROOT outside the checkout)."""
+    try:
+        return Path(p).relative_to(R).as_posix()
+    except ValueError:
+        return Path(p).as_posix()
+
+
+def _design_name() -> str:
+    import design_record as DR
+    return DR.name()
+
+
+def _ledger_bumps(rows: dict, rail: str):
+    """The attach bumps per cell a case's ledger row carried (its conductor label)."""
+    import re
+    m = re.search(r":\s*(\d+)\s", (rows.get(f"P_VR_attach_{rail}") or {}).get("conductor") or "")
+    return int(m.group(1)) if m else None
+
+
 def etm_result(name: str) -> dict | None:
-    """The S0 ETM of the variant attach_<name> (final_closure_sensitivity), if it ran."""
+    """The S0 ETM of the variant attach_<name> (final_closure_sensitivity), if it ran. A case of
+    another design, or one whose ledger carried another lattice than this study's (a variant
+    solved while ledger_spec still used the 49-cell cell), is refused: it would pair one
+    lattice's loss with another's metal fraction."""
     f = D / "sensitivity" / f"etm_Z2_HV_S0__attach_{name}.json"
     if not f.exists():
         return None
     r = json.loads(f.read_text())
+    d = (r.get("design") or {}).get("design")
+    if d is not None and d != _design_name():
+        raise RuntimeError(f"{f.name} was computed with design {d}, not the design in force "
+                           f"{_design_name()}")
+    rows_ = {x["term"]: x for x in r["ledger_rows"]}
+    L = lattice(CASES[name])
+    got = (_ledger_bumps(rows_, "VDD"), _ledger_bumps(rows_, "GND"))
+    if got != (L["n_vdd"], L["n_gnd"]):
+        raise RuntimeError(f"{f.name}: its ledger carried {got[0]} VDD + {got[1]} GND attach "
+                           f"bumps per cell, the real lattice on the cell of the design in force "
+                           f"({CELL_SIDE_UM / 1e3:.4f} mm) has {L['n_vdd']} + {L['n_gnd']}: the "
+                           f"variant was solved with another cell (before ledger_spec followed "
+                           f"the design record); re-run it (attach_{name}:Z2 and its local "
+                           f"response)")
     att = {x["term"]: x["P_w"] for x in r["ledger_rows"] if x["term"].startswith("P_VR_attach")}
     crit = ((r.get("mechanics") or {}).get("joint_search") or {}).get("critical") or {}
     p_att = sum(att.values())
-    return {"file": f.relative_to(R).as_posix(), "et_converged": r.get("et_converged"),
+    return {"file": _rel(f), "et_converged": r.get("et_converged"),
             "P_Z2_internal_w": r["P_loss_w"], "P_attach_VDD_w": att.get("P_VR_attach_VDD"),
             "P_attach_GND_w": att.get("P_VR_attach_GND"), "P_attach_total_w": p_att,
             "attach_fraction_of_Z2_internal": p_att / r["P_loss_w"],
@@ -530,7 +594,11 @@ def study() -> dict:
             "model": "legacy: n = floor(L/p)^2 // 2 per rail, series column, no constriction, "
                      "infinite-lattice f"}
     pc = production_card()
+    import design_record as DR
     out = {"gate": "geom.vr_attach_density", "subtype": "B1",
+           # TCPMT round 3: the design the lattices are drawn on (cell side, count)
+           "design": DR.design_identity() if Z1D.is_default() else Z1D.summary(),
+           "n_vr": N_VR, "cell_side_mm": CELL_SIDE_UM / 1e3,
            "statement": ("The attach density is taken at two published constructions, one dense "
                          "and one sparse; the geometry-only comparison holds the production "
                          "Cu-pillar + solder-cap material and the 30 um height. The engineering "
@@ -612,4 +680,4 @@ if __name__ == "__main__":
               f"(constriction {100 * e['constriction_fraction']:.1f} %), P_attach="
               f"{e['P_attach_total_w']:.4f} W, kz={r['k_z_W_mK']:.2f}, kxy={r['k_xy_W_mK']:.3f}, "
               f"lambda={e['redistribution_length_mm']:.2f} mm")
-    print("wrote", OUT_JSON.relative_to(R))
+    print("wrote", _rel(OUT_JSON))

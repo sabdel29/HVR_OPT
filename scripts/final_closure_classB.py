@@ -74,6 +74,33 @@ def mech_revision_cases():
 #: TCPMT round 3 (findings 7, 11a): mechanics-only variants on the production field
 ENCAP_CASES, BGA_CARD_CASES = mech_revision_cases()
 
+#: the board cases final_closure_sensitivity runs as the PCB-thickness variant
+BOARD_T_VARIANT = {"it968g_2p4mm": ("board_t2p4", 2.4), "it968g_3p2mm": ("board_t3p2", 3.2)}
+
+
+def board_thickness_case():
+    """(variant, production board mm, alternative board mm) of the PCB-thickness gates: the
+    board in force (the Z1 config, which Z2 and Z3 share) against its declared
+    thickness_sensitivity_case. TCPMT round 3: the 3.2-mm board is production, so the variant
+    is board_t2p4 (board_t3p2 was the 49-cell lineage's, on the 2.4-mm board)."""
+    if str(R / "scripts" / "phase0nw") not in sys.path:
+        sys.path.insert(0, str(R / "scripts" / "phase0nw"))
+    import z1_design as Z1D
+    b = Z1D.raw()["board"]
+    prod = b["case"]
+    alt = b.get("thickness_sensitivity_case") or ""
+    if alt == prod or alt not in BOARD_T_VARIANT:          # a config restating its own board
+        alt = next((c for c in BOARD_T_VARIANT if c != prod), "")
+    if prod not in BOARD_T_VARIANT or alt not in BOARD_T_VARIANT:
+        raise RuntimeError(f"no PCB-thickness variant for the board {prod} (sensitivity "
+                           f"{alt or 'none'}): final_closure_sensitivity runs "
+                           f"{sorted(v for v, _ in BOARD_T_VARIANT.values())}")
+    return BOARD_T_VARIANT[alt][0], BOARD_T_VARIANT[prod][1], BOARD_T_VARIANT[alt][1]
+
+
+BOARD_T_CASE, BOARD_T_PROD_MM, BOARD_T_ALT_MM = board_thickness_case()
+BOARD_T_RANGE = f"PCB {BOARD_T_PROD_MM:g} vs {BOARD_T_ALT_MM:g} mm, one material dict"
+
 #: gate -> (subtype, observables, range / source, method, cases, rationale)
 GATES = {
     "board.h1_meshed": ("B1", GLOBAL, "PCB-H1: the 18-layer schedule as five depth blocks "
@@ -87,14 +114,15 @@ GATES = {
                                   "(config eta_sensitivity)", "runs",
                                   ["board_eta025", "board_eta075"],
                                   "board k_xy spans 34-98 W/mK and E 23-38 GPa over eta"),
-    "board.t_only_comparison_run": ("B1", THERMAL, "PCB 2.4 vs 3.2 mm, one material dict",
-                                    "runs", ["board_t3p2"], "board thickness, thermal"),
-    "mech.t_only_mechanical": ("B1", MECH, "PCB 2.4 vs 3.2 mm, one material dict", "runs",
-                               ["board_t3p2"], "board thickness, mechanical"),
-    "tsv.density_sensitivity_run": ("B1", GLOBAL, "TSV sizing study: 64 / 729 / 1444 vias "
-                                    "per cell, in the FE substrate AND the ledger", "runs",
-                                    ["tsv_min", "tsv_mid"],
-                                    "the adopted field is the maximum-density end"),
+    "board.t_only_comparison_run": ("B1", THERMAL, BOARD_T_RANGE,
+                                    "runs", [BOARD_T_CASE], "board thickness, thermal"),
+    "mech.t_only_mechanical": ("B1", MECH, BOARD_T_RANGE, "runs",
+                               [BOARD_T_CASE], "board thickness, mechanical"),
+    # the production count and the rationale are the design's (design_ranges, in main)
+    "tsv.density_sensitivity_run": ("B1", GLOBAL, "TSV sizing study: 64 / 729 vias per cell "
+                                    "against the production field, in the FE substrate AND "
+                                    "the ledger", "runs", ["tsv_min", "tsv_mid"],
+                                    "the adopted field is the dense end"),
     "mech.f1_f2_bracket_run": ("B1", GLOBAL, "out-of-cell converter volume encapsulated "
                                "between the cells (F1, production, 1.0 mm clearance void) vs "
                                "void (F2), and F1 filled to the PCB sidewall (DEFECT #66 "
@@ -205,17 +233,82 @@ GATES = {
                                          "RMS: identical converter model in both "
                                          "architectures", "common_mode", [],
                                          "the converter terms depend on T_conv only"),
-    "elec.pad_count_criterion": ("B2", GLOBAL, "pad sweep end: the voltage-drop floor, 4 "
-                                 "pads per rail per cell (vs 2040)", "runs", ["pad_drop"],
+    # the two pad counts are the design's (design_ranges, in main)
+    "elec.pad_count_criterion": ("B2", GLOBAL, "pad sweep end: the voltage-drop floor of the "
+                                 "pads per rail per cell (vs the production count)", "runs",
+                                 ["pad_drop"],
                                  "same pad field and current in both architectures"),
-    "elec.pad_loss_closed": ("B2", GLOBAL, "pad sweep end: the voltage-drop floor, 4 pads "
-                             "per rail per cell (vs 2040)", "runs", ["pad_drop"],
+    "elec.pad_loss_closed": ("B2", GLOBAL, "pad sweep end: the voltage-drop floor of the pads "
+                             "per rail per cell (vs the production count)", "runs",
+                             ["pad_drop"],
                              "same pad field and current in both architectures"),
 }
 
 
 def J(p):
-    return json.loads(Path(p).read_text()) if Path(p).exists() else None
+    return json.loads(Path(p).read_text()) if p is not None and Path(p).exists() else None
+
+
+def rel(p) -> str:
+    """A results path for a record: relative to the checkout when inside it (the frozen tree,
+    or a campaign root under it), else absolute ($ETM_RESULTS_ROOT outside the checkout)."""
+    try:
+        return Path(p).relative_to(R).as_posix()
+    except ValueError:
+        return Path(p).as_posix()
+
+
+def design_ranges():
+    """Range statements and rationales that name a count or a tier of the design in force,
+    derived (TCPMT round 3) from the design record and the chain's own rules -- never the
+    49-cell literals (1444 TSVs, 2040 pads per rail, the single-class tier names)."""
+    import final_closure_physical_etm as E          # puts the phase directories on the path
+    import final_closure_ledger as FL
+    import design_record as DR
+    import pad_interface as PAD
+    import rms_currents as RMS
+    out = {}
+    n_tsv = int(E.TSV_N_PER_CELL)
+    s = int(round(math.sqrt(n_tsv)))
+    out["tsv.density_sensitivity_run"] = {
+        "range": (f"TSV sizing study: 64 / 729 / {n_tsv} vias per cell, in the FE substrate "
+                  "AND the ledger"),
+        "rationale": (f"the adopted field ({s} x {s} per cell: the 30/60-um lattice scaled "
+                      "with the cell current of the design in force) is the dense end")}
+    n_prod = FL.pad_count(FL.PAD_PRODUCTION)
+    # the floor exactly as final_closure_sensitivity.v_pad_drop sizes it (the record's cell)
+    n_drop = PAD.size_for_cell(RMS.cell_currents()["i_cell_out_rms_a"])["PAD_DROP"]["n_per_rail"]
+    for g in ("elec.pad_count_criterion", "elec.pad_loss_closed"):
+        out[g] = {"range": (f"pad sweep end: the voltage-drop floor, {n_drop} pads per rail per "
+                            f"cell (vs {n_prod}, {FL.PAD_PRODUCTION})")}
+    pn = J(D / "package_network.json") or {}
+    n_bf = ((pn.get("loop") or {}).get(FL.NETWORK_KEY["Z2BF"]) or {}).get("n_per_rail")
+    out["mech.bga_population"] = {"range": (
+        "Z2 BGA field populated at 420/528, smeared (final_closure_sensitivity bga_depop: the "
+        "54 + 54 48-V balls of the 49-cell BGA-fed allocation removed"
+        + (f"; the BGA-fed control of the design in force carries {n_bf} balls per rail"
+           if n_bf else "") + ")")}
+    tiers = DR.tiers()
+    if all(str(t["name"]).startswith("tier") for t in tiers):      # mixed tiers (round 3)
+        names = " / ".join(t["name"] for t in tiers)
+        out["geom.tier_order"] = {
+            "range": ("Z1 converter tiers in another order: the case z1_tier_reference swaps "
+                      "the single-class tiers of the 49-cell stack (HS-LS-Cf-L vs HS-Cf-LS-L) "
+                      f"and refuses the mixed tiers of the design in force ({names}, input end "
+                      "first); their orders are ranked by tcpmt_tier_order.py instead"),
+            "note": ("PENDING by design for mixed tiers: every order of the design's tiers, "
+                     "with its worst via aspect ratio, routing loss and heat path, is in "
+                     "tcpmt_revision/tier_order.json (scripts/tcpmt_tier_order.py); the design "
+                     "record carries the chosen order and its runner-up")}
+        cf = [t["name"] for t in tiers if (t.get("parts") or {}).get("cap_fly")]
+        ind = [t["name"] for t in tiers if (t.get("parts") or {}).get("inductor")]
+        out["mat.mlcc_bounded"] = {"rationale": (
+            f"the flying capacitors sit in the mixed tier {', '.join(cf)} on its homogenised "
+            "converter card")}
+        out["mat.inductor_tier_bounded"] = {"rationale": (
+            f"the inductors sit in the mixed tiers {', '.join(ind)} on their homogenised "
+            "converter cards")}
+    return out
 
 
 def _vals(case):
@@ -285,10 +378,24 @@ def rule_verdict(k, va, vb, mesh_a=None, mesh_b=None):
     return rec["verdict"], rec
 
 
-def production_rule_verdicts(base):
+def _state_paths(state):
+    """(Z1, Z2) case files the production verdict of `state` is formed on: the laddered S0
+    production-boundary pair (the reference of every transfer); for the production state
+    (TCPMT round 3: variants the campaign runs at HV_SDEC) that state's cooling-A pair of
+    tcpmt_cases, on its own ladders where they exist (Table IV's basis)."""
+    TU, _RULE, _pairs = _rule()
+    if state in (None, "S0"):
+        return TU.reference_path("Z1"), TU.reference_path("Z2")
+    import tcpmt_cases as TC
+    return TC.case_path(state, "A", "Z1"), TC.case_path(state, "A", "Z2")
+
+
+def production_rule_verdicts(base, state=None):
     """The production Z1/Z2 verdict of every observable under the unified rule: the pair's
-    own nested ladders (tcpmt_uncertainty.compare on the S0 production cases)."""
+    own nested ladders (tcpmt_uncertainty.compare on the S0 production cases, or on the
+    production-state pair for a variant solved in that state)."""
     TU, RULE, _pairs = _rule()
+    pa, pb = _state_paths(state)
     out = {}
     for k in GLOBAL:
         va, vb = (base.get("Z1") or {}).get(k), (base.get("Z2") or {}).get(k)
@@ -297,8 +404,7 @@ def production_rule_verdicts(base):
         if k == "d_eps_in_per_cycle":
             out[k] = rule_verdict(k, va, vb)
             continue
-        r = TU.compare("A", "Z1", "Z2", UKEY[k], TU.reference_path("Z1"),
-                       TU.reference_path("Z2"), va, vb)
+        r = TU.compare("A", "Z1", "Z2", UKEY[k], pa, pb, va, vb)
         out[k] = (RULE.verdict_label(r["resolved"], r["D_corrected"], "Z1", "Z2"), r)
     return out
 
@@ -307,27 +413,43 @@ def _uncertainty(od):
     return {k: (o.get("uncertainty_rel") or {}).get(SCEN) for k, o in od.items()}
 
 
-def base_case(arch):
+def state_scen(state=None):
+    """The scenario tag of a state's case files (HV_S0 for the S0 variants)."""
+    if state in (None, "S0"):
+        return SCEN
+    import tcpmt_cases as TC
+    return TC.SCEN[state]
+
+
+def base_case(arch, state=None):
+    """The production case a variant is judged against: the S0 production-boundary case (the
+    laddered reference pair) for an S0 variant; for a variant solved in the production state
+    (TCPMT round 3: the campaign runs the newer decisions at HV_SDEC), that state's cooling-A
+    case (tcpmt_cases)."""
+    if state not in (None, "S0"):
+        return J(_state_paths(state)[("Z1", "Z2").index(arch)])
     import final_closure_physical_etm as E
     return J(E.case_path(arch, SCEN))
 
 
-def judge_runs(cases, observables, od, unc):
-    """Variant verdicts against the production verdicts, per observable."""
+def judge_runs(cases, observables, od, unc, state=None):
+    """Variant verdicts against the production verdicts, per observable. `state`: the input
+    state the variant cases were solved in (None = S0, the robustness map's; 'SDEC' = the
+    production state, judged against the production-state pair)."""
     import final_closure_physical_etm as E                         # noqa: F401
-    base = {a: _vals(base_case(a)) for a in ("Z1", "Z2")}
+    scen = state_scen(state)
+    base = {a: _vals(base_case(a, state)) for a in ("Z1", "Z2")}
     lm = (J(D / "local_mesh_study.json") or {}).get("cases", {})
     for a in base:      # production local response at the variants' level and settings
         if base[a] is not None:
-            base[a]["d_eps_in_per_cycle"] = (((lm.get(f"{a}_{SCEN}") or {}).get("levels")
+            base[a]["d_eps_in_per_cycle"] = (((lm.get(f"{a}_{scen}") or {}).get("levels")
                                               or {}).get("L0") or {}).get("d_peeq_per_cycle")
-    prod_rule = production_rule_verdicts(base)
-    base_mesh = {a: _mesh(base_case(a)) for a in ("Z1", "Z2")}
+    prod_rule = production_rule_verdicts(base, state)
     rows, missing = [], []
     for v in cases:
         var, mesh = {}, {}
         for a in ("Z1", "Z2"):
-            f = SENS / f"etm_{a}_{SCEN}__{v}.json"
+            f = SENS / f"etm_{a}_{scen}__{v}.json"
             c = J(f)
             if c is None and v in Z2_ONLY and a == "Z1":
                 var[a], mesh[a] = base[a], "reference"   # Z1 is unchanged by definition
@@ -346,12 +468,14 @@ def judge_runs(cases, observables, od, unc):
                 continue
             u = unc.get(k)
             legacy, gap = _verdict(va, vb, u)
+            if scen != SCEN:          # the superseded rule was never applied in another state
+                legacy = None
             verdict, rec = rule_verdict(k, va, vb, mesh["Z1"], mesh["Z2"])
             prod = (prod_rule.get(k) or (None,))[0]
-            legacy_prod = (od.get(k) or {}).get("per_scenario", {}).get(SCEN)
+            legacy_prod = (od.get(k) or {}).get("per_scenario", {}).get(scen)
             ch = {a: ((var[a][k] - base[a][k]) / base[a][k]
                       if base[a] and base[a].get(k) else None) for a in ("Z1", "Z2")}
-            rows.append({"case": v, "observable": k, "Z1": va, "Z2": vb,
+            rows.append({"case": v, "scenario": scen, "observable": k, "Z1": va, "Z2": vb,
                          "change_rel": ch, "gap_rel": gap,
                          "D": vb - va, "bias": rec.get("bias"),
                          "D_corrected": rec.get("D_corrected"), "U95": rec.get("U95"),
@@ -644,18 +768,61 @@ LEGACY_NEWER_UPAIR = {"P_loss_package_internal_w": 0.5087008910215145,
                       "die_warpage_pv_um": 0.969029215012697, "du_c_um": 0.07492434332368746}
 
 
+#: TCPMT round 3: the campaign solves the newer decisions in the PRODUCTION state (HV_SDEC,
+#: tcpmt_review_variants: "the campaign runs the variants at HV_SDEC"), so each is judged in the
+#: state its files were solved in, against that state's production pair; a decision with no
+#: production-state run is superseded there, not missing
+NEWER_SUPERSEDED = {
+    "plate_local_h_A": ("the local top-plate coefficient IS production "
+                        "(final_closure_physical_etm.TOP_PLATE_COEFF = 'local'); the superseded "
+                        "coefficient runs as plate_caloric_legacy_A instead")}
+
+
+def newer_state(v):
+    """The state a newer decision was solved in: the production state when both of its files
+    exist there, else S0 when the committed S0 pair exists, else None."""
+    import tcpmt_cases as TC
+    for st in (TC.PRODUCTION_STATE, "S0"):
+        if all((SENS / f"etm_{a}_{state_scen(st)}__{v}.json").is_file() for a in ("Z1", "Z2")):
+            return st
+    return None
+
+
 def judge_newer(od, unc):
-    """The newer decisions with the unified rule; their legacy verdict is Fig. 11's old one
-    (|D| > 2 U_D_paired), against the ordering.json production verdict."""
+    """The newer decisions with the unified rule, each in the state it was solved in (above).
+    The legacy verdict of an S0 row is Fig. 11's old one (|D| > 2 U_D_paired), against the
+    ordering.json production verdict; a production-state row has none (that rule was never
+    applied there, and its U_D_paired is the 49-cell S0 pair's). Returns (rows, missing,
+    superseded)."""
+    import tcpmt_cases as TC
     obs = ("P_loss_package_internal_w", "T_max_C", "die_warpage_pv_um", "du_c_um")
-    rows, missing = judge_runs(list(NEWER), obs, od, unc)
-    for r in rows:
-        up = LEGACY_NEWER_UPAIR.get(r["observable"])
-        d = r["Z2"] - r["Z1"]
-        r["legacy_verdict"] = (("Z1 lower" if d > 0 else "Z2 lower") if abs(d) > 2 * up
-                               else "unresolved")
-        r["legacy_rule"] = "|D| > 2 U_D_paired (Fig. 11, newer rows)"
-    return rows, missing
+    rows, missing, superseded = [], [], {}
+    for v in NEWER:
+        st = newer_state(v)
+        if st is None:
+            if v in NEWER_SUPERSEDED:
+                superseded[v] = NEWER_SUPERSEDED[v]
+            else:                       # the campaign's files: the production state's names
+                missing += [f"etm_{a}_{state_scen(TC.PRODUCTION_STATE)}__{v}.json"
+                            for a in ("Z1", "Z2")
+                            if not (SENS / f"etm_{a}_{state_scen(TC.PRODUCTION_STATE)}__{v}"
+                                           ".json").is_file()]
+            continue
+        r_, m_ = judge_runs([v], obs, od, unc, state=None if st == "S0" else st)
+        for r in r_:
+            r["state"] = st
+            if st != "S0":
+                r["legacy_verdict"] = None
+                r["legacy_rule"] = "none in the production state"
+                continue
+            up = LEGACY_NEWER_UPAIR.get(r["observable"])
+            d = r["Z2"] - r["Z1"]
+            r["legacy_verdict"] = (("Z1 lower" if d > 0 else "Z2 lower") if abs(d) > 2 * up
+                                   else "unresolved")
+            r["legacy_rule"] = "|D| > 2 U_D_paired (Fig. 11, newer rows)"
+        rows += r_
+        missing += m_
+    return rows, missing, superseded
 
 
 def rule_change(out, newer):
@@ -705,19 +872,18 @@ def robustness_ladder_runs(out, newer):
             else:
                 continue
             for rg in rungs:
-                need[(r["case"], a, rg)] = st
+                need[(r["case"], r.get("scenario", SCEN), a, rg)] = st
     cmds = []
-    for (v, a, rg), st in sorted(need.items()):
+    for (v, scen, a, rg), st in sorted(need.items()):
         if v.startswith("die_hotspot_"):
             cmd = (f"python scripts/tcpmt_review_variants.py hotspot {a} {v.rsplit('_', 1)[1]} "
-                   f"{SCEN} {rg}")
+                   f"{scen} {rg}")
         elif v.startswith(("tim_warp_fb_", "plate_local_h_")):
             cmd = None                       # production-mesh-only / superseded variants
         else:
             cmd = f"python scripts/final_closure_sensitivity.py --refine {rg} {v}:{a}"
         cmds.append({"case": v, "arch": a, "rung": rg, "reason": st,
-                     "file": f"research/final_closure/sensitivity/ladder/etm_{a}_{SCEN}__{v}_"
-                             f"{rg}.json",
+                     "file": rel(SENS / "ladder" / f"etm_{a}_{scen}__{v}_{rg}.json"),
                      "command": cmd or "no rung: the variant runs on the production mesh only "
                                        "(its verdict stays provisional)"})
     return cmds
@@ -727,8 +893,11 @@ def main():
     oj = J(D / "ordering.json") or {}
     od, sc = oj.get("orderings", {}), oj.get("scenario_classes", {})
     unc = _uncertainty(od)
+    over = design_ranges()                  # statements naming the design in force's counts
     out = []
     for gid, (sub, obs, rng, method, cases, why) in GATES.items():
+        ov = over.get(gid) or {}
+        rng, why = ov.get("range", rng), ov.get("rationale", why)
         missing = []
         if method == "runs":
             rows, missing = judge_runs(cases, obs, od, unc)
@@ -777,17 +946,17 @@ def main():
                     "ordering_robust": complete and not moved and not pend,
                     "final_status": status,
                     "resolved": complete,
-                    "evidence_path": ("research/final_closure/sensitivity/" if method == "runs"
-                                      else "research/final_closure/package_network.json"
-                                      if method == "network" else
-                                      "research/final_closure/direct_feed_crossover.json"
-                                      if method == "direct_feed" else
-                                      "research/final_closure/electrical_ledger.json"
-                                      if method == "common_mode" else
-                                      "research/final_closure/ordering.json"),
+                    # the results root in force (the campaign's, not the frozen tree)
+                    "evidence_path": rel(SENS) + "/" if method == "runs" else rel(
+                        D / ("package_network.json" if method == "network" else
+                             "direct_feed_crossover.json" if method == "direct_feed" else
+                             "electrical_ledger.json" if method == "common_mode" else
+                             "ordering.json")),
                     "rows": rows})
+        if ov.get("note"):
+            out[-1]["note"] = ov["note"]
     b1 = [g for g in out if g["new_subtype"] == "B1"]
-    newer, newer_missing = judge_newer(od, unc)
+    newer, newer_missing, newer_superseded = judge_newer(od, unc)
     summary = {"n_gates": len(out),
                "subtypes": {s: sum(g["new_subtype"] == s for g in out) for s in ("B1", "B2", "B3")},
                "b1_resolved": sum(g["resolved"] for g in b1), "b1_total": len(b1),
@@ -803,8 +972,12 @@ def main():
                  "revision (" + RULE.RULE + "); PAPER_READY requires every B1 gate resolved",
          "summary": summary, "gates": out,
          "newer_decisions": {"what": "the newer cooling-A decisions of the robustness map "
-                                     "(Fig. 11), judged with the same rule; not gates",
-                             "rows": newer, "missing": newer_missing},
+                                     "(Fig. 11), judged with the same rule; not gates. Each is "
+                                     "judged in the state it was solved in (the campaign: the "
+                                     "production state HV_SDEC, against the production-state "
+                                     "pair; the committed rows: S0) -- row key 'state'",
+                             "rows": newer, "missing": newer_missing,
+                             "superseded": newer_superseded},
          "ladder_runs_needed": robustness_ladder_runs(out, newer),
          "attach_density_crossover": attach_density_crossover(od, unc)},
         indent=1, default=float))
