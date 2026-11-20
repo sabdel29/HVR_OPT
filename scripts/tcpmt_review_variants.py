@@ -75,7 +75,19 @@ import tcpmt_cases as TC                                           # noqa: E402
 #: Review round 2: Z3 is the coupled land-side case (the uncoupled bases are superseded).
 TIER_BASE = dict(TC.COOLING_BASE)
 HOT_AREA, HOT_POWER = 0.5, 0.75
-FB_TOL_WARP, FB_TOL_P_W, FB_MAX_ITER = 0.01, 0.05, 5
+#: TCPMT round 3: at most 8 passes (was 5). The m36 Z2-A loop contracts by ~0.31 per pass (loss
+#: changes 3.81, 1.20, 0.39, 0.11 W; warpage 6.44, 2.04, 0.65, 0.21 um) and met the warpage test
+#: at pass 5 but not the 0.05-W loss test, which a contraction of 0.3-0.4 meets at pass 6. A
+#: loop whose changes grow over two consecutive passes is stopped as a runaway and recorded
+#: (`non_convergence`), not iterated to the limit.
+FB_TOL_WARP, FB_TOL_P_W, FB_MAX_ITER = 0.01, 0.05, 8
+
+
+def fb_runaway(dps, dws):
+    """True when the loss change and the relative warpage change have both grown over the last
+    two passes (the feedback is not contracting: a runaway)."""
+    return (len(dps) >= 3 and dps[-1] >= dps[-2] >= dps[-3]
+            and dws[-1] >= dws[-2] >= dws[-3])
 
 
 def set_scenario(scen):
@@ -279,6 +291,7 @@ def run_feedback(arch, tier):
     temps0 = {k[2:-2]: v for k, v in base["et_history"][-1].items()
               if k.startswith("T_") and k.endswith("_C") and k not in ("T_max_C",
                                                                        "T_die_mean_C")}
+    dps, dws, stop = [], [], "pass limit"
     for it in range(1, FB_MAX_ITER + 1):
         st_gap = gap.load(m0, prev_frd, holder["k"])
         E.WD = scratch("fc_fb", f"{arch}_{tier}", f"it{it}")
@@ -310,7 +323,13 @@ def run_feedback(arch, tier):
               flush=True)
         prev = {"P_loss_w": L["P_loss_w"], "die_warpage_pv_um": mech["die_warpage_pv_um"]}
         prev_frd = wd / "structural.frd"
+        dps.append(dp)
+        dws.append(dw)
         if dw < FB_TOL_WARP and dp < FB_TOL_P_W:
+            stop = "converged"
+            break
+        if fb_runaway(dps, dws):
+            stop = "runaway"
             break
     last = iters[-1]
     seq_w = [base["mechanics"]["die_warpage_pv_um"]] + [x["summary"]["die_warpage_pv_um"]
@@ -338,12 +357,30 @@ def run_feedback(arch, tier):
            "iterations": [{"iter": x["iter"], "gap": x["gap"], **x["summary"]}
                           for x in iters],
            "converged": bool(dw < FB_TOL_WARP and dp < FB_TOL_P_W),
+           "stop_reason": stop, "pass_limit": FB_MAX_ITER,
+           "tolerances": {"die_warpage_rel": FB_TOL_WARP, "P_loss_w": FB_TOL_P_W},
+           "changes_per_pass": {"P_loss_w": dps, "die_warpage_rel": dws},
+           "contraction_per_pass": {
+               "P_loss_w": [b / a if a else None for a, b in zip(dps, dps[1:])],
+               "die_warpage_rel": [b / a if a else None for a, b in zip(dws, dws[1:])]},
            "aitken": {"die_warpage_pv_um": aitken(seq_w), "P_loss_w": aitken(seq_p)},
            "ledger_rows": last["ledger_rows"], "P_loss_w": last["P_loss_w"],
            "thermal": last["thermal"], "et_history": last["et_history"],
            "die_T_max_C": last["thermal"]["die_T_max_C"],
            "die_T_mean_C": last["thermal"]["die_T_mean_C"],
            "mechanics": last["mechanics"]}
+    if not res["converged"]:          # recorded and explained (the paper reports a runaway)
+        res["non_convergence"] = {
+            "kind": stop,
+            "reason": (f"the loss change and the relative warpage change grew over the last two "
+                       f"passes ({', '.join(f'{x:.3g}' for x in dps[-3:])} W; "
+                       f"{', '.join(f'{x:.3g}' for x in dws[-3:])}): the feedback does not "
+                       "contract" if stop == "runaway" else
+                       f"not converged within {FB_MAX_ITER} passes (last changes {dps[-1]:.3g} W, "
+                       f"{dws[-1]:.3g} against {FB_TOL_P_W} W, {FB_TOL_WARP})"),
+            "last_iterates": [{k: x["summary"].get(k) for k in
+                               ("P_loss_w", "T_max_C", "die_warpage_pv_um", "du_c_um")}
+                              | {"iter": x["iter"]} for x in iters[-3:]]}
     S.case_file(arch, tag).write_text(json.dumps(res, indent=1, default=float))
     _augment_z3(arch, tag, tier)
     return res

@@ -14,7 +14,9 @@ kinds
              present, mechanics present without mechanics_error (unless `mechanics: false`),
              and with `local: true` a local solder response without error
   feedback   an interface-feedback case (tcpmt_review_variants feedback): converged is True,
-             the energy residual as above, mechanics present
+             or a recorded, explained runaway (non_convergence.kind 'runaway' with its reason
+             and last iterates; a pass-limit stop is not accepted), the energy residual as
+             above, mechanics present
   frd        a CalculiX result file at least `min_kb` (default 4) kB long that ends with the
              9999 end record
 """
@@ -121,18 +123,31 @@ def check_etm(f, spec):
     return True, f"converged, {why}, {why2}"
 
 
+def recorded_runaway(c):
+    """The case records an explained runaway (tcpmt_review_variants feedback: the changes grew
+    over two consecutive passes): non_convergence.kind == 'runaway' with its reason and at
+    least three last iterates. A loop stopped by the pass limit is NOT accepted (it needs more
+    passes, not a record)."""
+    nc = c.get("non_convergence") or {}
+    return (nc.get("kind") == "runaway" and bool(nc.get("reason"))
+            and len(nc.get("last_iterates") or []) >= 3)
+
+
 def check_feedback(f, spec):
     c, err = _load(f)
     if err:
         return False, err
-    if c.get("converged") is not True:
-        return False, f"feedback converged={c.get('converged')}"
+    runaway = c.get("converged") is not True and recorded_runaway(c)
+    if c.get("converged") is not True and not runaway:
+        return False, (f"feedback converged={c.get('converged')}"
+                       + (f" ({c['stop_reason']})" if c.get("stop_reason") else ""))
     ok, why = _residuals(c, spec)
     if not ok:
         return False, why
     ok2, why2 = _mech(c, spec)
-    return (ok2, f"feedback converged in {len(c.get('iterations', []))} pass(es), {why}, {why2}"
-            if ok2 else why2)
+    state = (f"recorded runaway after {len(c.get('iterations', []))} pass(es)" if runaway else
+             f"feedback converged in {len(c.get('iterations', []))} pass(es)")
+    return (ok2, f"{state}, {why}, {why2}" if ok2 else why2)
 
 
 def check_frd(f, spec):
