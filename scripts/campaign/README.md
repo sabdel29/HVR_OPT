@@ -88,8 +88,9 @@ root in force (`ETM_RESULTS_ROOT`) and skips when the artifact is of another des
 
 **LAUNCH (TCPMT round 3, design m36; ready, not launched).** From the checkout that holds this
 branch (the committed manifest is current; regenerate it only if the generator changes), with
-`TCPMT_BGA_POLICY` unset (the feasibility stage then reads the 1.5-A per-ball target as a stated
-requirement; both policies' verdicts are stored either way, section 4c):
+`TCPMT_BGA_POLICY` unset (the feasibility stage then reads the per-ball target -- 2 A, with 1.5 A
+as a sensitivity -- as a stated requirement; both policies' verdicts are stored either way,
+section 4c):
 
     cd /home/beams0/SABDELZAHER/ETM_project/HVR_OPT_work
     PY=/home/beams0/MGHARIB/envs/etm/bin/python
@@ -109,7 +110,14 @@ requirement; both policies' verdicts are stored either way, section 4c):
   loses nothing: local jobs are detached and re-polled by pid, PBS jobs by qstat.
 * **Validation** (`validators.py`): ETM cases need `et_converged`, |thermal.energy_residual_rel| <= 1e-4,
   |deposit_residual_rel| <= 1e-6, mechanics without `mechanics_error` (optionally a local response
-  without error); feedback cases need `converged`; fields must end with the frd 9999 record.
+  without error); feedback cases need `converged` or a recorded, explained runaway
+  (`non_convergence.kind` = runaway, with its reason and last iterates; a loop stopped by the pass
+  limit still fails: it needs more passes); fields must end with the frd 9999 record; the local
+  time study must fix a production first increment (`nonempty: production_dt0_s`).
+* **CalculiX job names**: CalculiX refuses an input-deck name over 127 characters (rc 201,
+  nothing written). Every solver call runs `ccx` on the deck's bare stem in the deck's directory;
+  an absolute name under the campaign scratch tree is longer than that (campaign_v3's first local
+  time study failed all 72 solves so, silently, until the local harness was fixed).
 * **Local backend**: at most 30 cores summed over all local campaign jobs (from the ledger, so it holds
   across runner processes), every job under `nice -n 10`.
 * **PBS backend** (`califone`): `ssh -o BatchMode=yes pioneer /opt/pbs/bin/qsub|qstat|qdel`, queue
@@ -122,8 +130,13 @@ requirement; both policies' verdicts are stored either way, section 4c):
 * **Threads**: `OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `NUMEXPR_NUM_THREADS` =
   ncpus / workers of the job (pool jobs get 1 per worker); CalculiX gets `FC_THREADS` / its argv;
   pooled local-solder studies get `LOCAL_THREADS` and `FC_POOL_MAX` so the total equals ncpus.
-* **Memory**: requested from the measured max RSS of the smoke tests (x2, floor 8 GB for ETM jobs);
-  the local-study, solder, MOOSE and DSE requests come from the logged model sizes.
+* **Memory** (`build_manifest.mem_for`): an ETM job requests its element count x the measured peak
+  RSS per 1000 elements of its mesh rung (campaign_v3, E-T + mechanics: r11/r12 0.022 GB, r21
+  0.058 GB, r31 0.127 GB; a measured mesh peak where larger: the 49-cell r21 mesh, 11.3 GB) x 1.5,
+  at least 6 GB: r31 52 GB, m36 r21 11 GB, m49 r21 17 GB. The earlier flat 0.023 GB per 1000
+  elements x 2.5 asked 16 GB for the r31 rungs (peaks 27-32 GB) and 7 GB for the m49 cases, and
+  califone killed them at the limit (rc -9). The local-study, solder, MOOSE and DSE requests come
+  from the logged model sizes.
 
 ## 3. Stages, cost and order
 
@@ -239,26 +252,35 @@ the r11-based study gave 2.635), k_open 3.78, ring ESR 0.046 W. Committed by `co
 campaign the chain re-derives k on the campaign's own r21 S0 case, `derived.k_check` compares it
 with the committed value, and `derived.bga_reclose` re-closes at the derived k (`k_source`).
 
-**48-V BGA.** At most 220 balls per rail (`final_closure_pkg_network.N_MAX_PER_RAIL`, legal counts
-and screen alike). The closure current is the WORSE of the DC peak x k_eq rule and Z1's
-worst-ball RMS of the harmonic port model (`tcpmt_decap_placement.ball_rms_at_counts`, DC +
-harmonics of every ball with the adopted plan and ring); both are recorded
-(`bga_count_production.json` `ball_currents_at_count`, the record's `decoupling.bga_closure`).
-Re-closure at k_eq = 2.629, 220 per rail (no count <= 220 closes; the fallback count stays 220):
+**48-V BGA** (the authors' decision of 2026-11-19, round3_worklog). At most 220 balls per rail
+(`final_closure_pkg_network.N_MAX_PER_RAIL`, legal counts and screen alike), and the count stays
+at the network's, the MODELLED ARRANGEMENT (220 per rail for Z1 and Z2; no reallocation). ONE
+rule for every integration: the per-ball current is the verified DC peak x k_eq, checked against
+the feasibility stage's target (`tcpmt_feasibility.LIMITS`: 2 A per ball, Kuan et al. ASQED 2015;
+1.5 A as a conservative sensitivity, also recorded). Z1's worst-ball RMS of the harmonic port
+model (`tcpmt_decap_placement.ball_rms_at_counts`, DC + harmonics of every ball with the adopted
+plan and ring, all balls tied to an ideal board node) is reported as an idealized bound, not
+used for the verdict (Z2 and Z3 have no such model). `derived.bga_reclose` records the verdict
+(`bga_count_production.json` `ball_currents_at_count`, rule `RECLOSE_RULE`); the count minima at
+the target (`matched_count_dc_rule`, `closure`) are a provisioning sensitivity, not adopted.
+campaign_v3 (k_eq 2.641 from the campaign's own decoupling chain, 220 per rail):
 
-| | DC peak x k_eq (verified, level 2) | worst-ball RMS (port model) | closure current (worse) | vs 1.5 A |
-|---|---:|---:|---:|---|
-| Z1 | 1.72 A | 2.20 A | **2.20 A** | above |
-| Z2 | 1.63 A | n/a (no port model of the Z2 feed) | **1.63 A** | above |
+| | DC peak x k_eq (verified, level 2) | worst-ball RMS (port model, idealized bound) | vs 2 A | vs 1.5 A (sensitivity) |
+|---|---:|---:|---|---|
+| Z1 | 1.73 A | 2.20 A | **passes** | above |
+| Z2 | 1.63 A | n/a (no port model of the Z2 feed) | **passes** | above |
 
-Status NOT_CLOSED at 220 per rail (k_source: the results root's decoupling chain (input_decoupling.json)); the port model's RMS is at the chain's S0 current x 1.0000 (no production case in the development root: x 1; the campaign scales to its production cases).
+Status CLOSED at the 2-A target and NOT_CLOSED at the 1.5-A sensitivity (`status_at_sensitivity`);
+the smallest common count passing 2 A on the screen and the verification level would be 168 per
+rail (recorded, not adopted).
 
 **Feasibility: BGA policy.** `tcpmt_feasibility.BGA_POLICY` (env `TCPMT_BGA_POLICY`): `hard` = the
-per-ball check (peak per-ball current vs the 1.5-A target) is a filter; `requirement` (DEFAULT
-until the authors decide) = a stated requirement on the package (`bga_requirement` of each
-record: the current each ball must carry), reported, not a filter. Z1's production state takes
-the worse of the two currents above (scaled to the case's 48-V current); Z2's ring feed and Z3's
-1-V balls keep their closure rule. Every record carries `by_bga_policy` (verdict, fails,
+per-ball check (peak per-ball current vs the 2-A target; 1.5 A recorded as the sensitivity,
+`ok_at_sensitivity_1p5A`) is a filter; `requirement` (DEFAULT) = a stated requirement on the
+package (`bga_requirement` of each record: the current each ball must carry), reported, not a
+filter. Every integration takes the same DC peak x k rule (Z1 at its BGA-fed 48-V balls, Z2 at
+its ring feed, Z3 at its 1-V balls at DC with equal sharing); Z1's port-model RMS, scaled to the
+case's 48-V current, is reported as the bound `I_ball_rms_max_A`. Every record carries `by_bga_policy` (verdict, fails,
 unresolved under both), `rankings_by_bga_policy` holds both rankings, and
 `apply_bga_policy(doc, policy)` re-derives verdicts, rankings and summary of a stored
 `feasibility.json` without rerunning. The site budget (`bga_sites`) stays a filter under both.
