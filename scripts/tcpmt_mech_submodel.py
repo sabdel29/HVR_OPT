@@ -288,8 +288,11 @@ def write_deck(m: JointMesh, path: Path, card_text: str, segs, bcv: dict, etype=
 
 
 def run_ccx(path: Path, threads: int = THREADS, timeout: int = 7200):
+    """CalculiX on the deck `path` in its own directory, by its bare stem: CalculiX refuses an
+    input-deck name over 127 characters, which an absolute name under the campaign's scratch
+    tree exceeds (rc 201, nothing written)."""
     env = {**os.environ, "OMP_NUM_THREADS": str(threads), "OPENBLAS_NUM_THREADS": "1"}
-    return subprocess.run([CCX, "-i", str(path.with_suffix(""))], cwd=path.parent, env=env,
+    return subprocess.run([CCX, "-i", path.stem], cwd=path.parent, env=env,
                           capture_output=True, text=True, timeout=timeout)
 
 

@@ -184,9 +184,18 @@ def write_inp(m: JointMesh, path: Path, material_block: str, cycles: list,
 
 
 def run(path: Path, threads: int = 4) -> None:
-    subprocess.run(["ccx", "-i", str(path.with_suffix(""))], check=False,
-                   capture_output=True, text=True, cwd=path.parent,
-                   env={**__import__("os").environ, "OMP_NUM_THREADS": str(threads)})
+    """CalculiX on the deck `path` in its own directory. The job name is the bare stem (cwd =
+    the deck's directory): CalculiX refuses an input-deck name over 127 characters, and the
+    absolute name under a deep scratch tree exceeds it (TCPMT round 3: every local solve of
+    the campaign failed so, silently -- rc 201, nothing written). A solve that cannot start
+    (non-zero exit and no .sta written) raises with CalculiX's message; a solve that ran and
+    stopped early is left to the caller, which records it."""
+    r = subprocess.run(["ccx", "-i", path.stem], check=False, capture_output=True, text=True,
+                       cwd=path.parent,
+                       env={**__import__("os").environ, "OMP_NUM_THREADS": str(threads)})
+    if r.returncode != 0 and not path.with_suffix(".sta").exists():
+        tail = " | ".join((r.stdout + r.stderr).strip().splitlines()[-4:])
+        raise RuntimeError(f"CalculiX did not start on {path.name} (rc {r.returncode}): {tail}")
 
 
 def read_dat(path: Path) -> dict:

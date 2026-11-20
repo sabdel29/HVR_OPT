@@ -72,7 +72,8 @@ def make_transient(steady_inp: Path, out_inp: Path, t_end: float, dt0: float,
 
 def run(inp: Path, threads: int = 8):
     import os
-    subprocess.run(["ccx", "-i", str(inp.with_suffix(""))], cwd=inp.parent,
+    # the bare stem in the deck's directory: CalculiX refuses a deck name over 127 characters
+    subprocess.run(["ccx", "-i", inp.stem], cwd=inp.parent,
                    capture_output=True, text=True,
                    env={**os.environ, "OMP_NUM_THREADS": str(threads)})
 
