@@ -371,10 +371,10 @@ def solve(task):
         _use_controls(inc0, task["controls"])
     LR.material = _card_fn(card)                 # read by run_case at call time
     wd = scratch(ROOT, study, tag)
-    # joint.run passes the full path as the CalculiX job name; ccx 2.23 holds it in a
-    # 132-character buffer and silently writes nothing when it is longer
-    if len(str(wd / tag)) > 132:
-        raise ValueError(f"CalculiX job name longer than 132 characters: {wd / tag}")
+    # joint.run calls CalculiX by the deck's BARE name with cwd = its directory (7743c4a), so
+    # only the job name itself must fit CalculiX's 127-character input-name limit
+    if len(str(tag)) > 127:
+        raise ValueError(f"CalculiX job name longer than 127 characters: {tag}")
     t0 = time.time()
     with solver_slot() as slot:
         r = LM._solve(tag, float(task["du_um"]), float(task["T_C"]), wd, level, inc0, True,
