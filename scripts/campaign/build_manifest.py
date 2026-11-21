@@ -897,7 +897,7 @@ def manuscript():
         ["manuscript_v2/supplement/supp_tables.tex"], deps=[mac], est_h=0.05, prefer="local",
         evidence="trace run: ~1 min")
     for f, pdf in FIGS.items():
-        job(f"manuscript.{f}", "manuscript", [f"manuscript_v2/fig_scripts/{f}.py"],
+        job(f"manuscript.{f}", "manuscript", [f"{f}.py"],          # cwd is fig_scripts (below)
             [f"manuscript_v2/figs/{pdf}"], deps=[mac], est_h=0.05 if f != "fig_fields" else 0.15,
             prefer="local", cwd="manuscript_v2/fig_scripts", evidence="trace run: seconds",
             notes="writes the PDF (and PNG) under <root>/manuscript_v2/figs")
