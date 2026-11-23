@@ -249,6 +249,7 @@ def bga_count():
         m["BgaRmsBoundZone"] = fx(z1["I_ball_rms_max_A"], 2)
     if bc.get("k_eq_port_model_at_count") is not None:
         m["BgaKeqAtCountZone"] = fx(bc["k_eq_port_model_at_count"], 2)
+    m.update(_z3_1v_balls(d))
     ce = d.get("coupled_effect") or {}
     for key, r in (ce.get("per_case") or {}).items():
         t, a = key.split("_")
@@ -282,6 +283,31 @@ def bga_count():
         m["BgaPeakCurrentCountProd"] = fx(f1 * d["currents_A"]["Z1"]["HV_SDEC"], 2)
     m.update(bga_sites())
     return m
+
+
+def _z3_1v_balls(d):
+    """Z3's 1-V balls (review round 3: the same per-ball rule at DC with equal sharing, the Z3
+    design record's count): the count the production case carries, its site fraction of the
+    full lattice, the per-ball current, and the count the 1.5-A sensitivity would need."""
+    import math
+    import re
+    import tcpmt_cases as TC
+    p = TC.case_path(TC.PRODUCTION_STATE, "A", "Z3")
+    c = J(p) if p else None
+    rows = {r["term"]: r for r in (c or {}).get("ledger_rows") or []}
+    if "P_BGA_1V_VDD" not in rows:
+        return {}
+    n = int(re.search(r"N=(\d+)", rows["P_BGA_1V_VDD"]["conductor"]).group(1))
+    sites = int(((d.get("site_budget") or {}).get("Z1") or {}).get("sites") or 1369)
+    fmax = float(((d.get("site_budget") or {}).get("Z1") or {}).get("fraction_max") or 0.75)
+    i_rail = 1000.0                                  # the 1-V DC rail current, P_load / V_out
+    sens = float(d.get("criterion_sensitivity_A_per_ball") or 1.5)
+    n_s = math.ceil(i_rail / sens - 1e-12)
+    return {"BgaNadoptZthree": str(n), "BgaSitesAdoptZthree": str(2 * n),
+            "BgaSiteFracZthree": fx(100.0 * 2 * n / sites, 1),
+            "BgaIballZthree": fx(i_rail / n, 2),
+            "BgaNsensZthree": str(n_s),
+            "BgaSensInBudgetZthree": "yes" if 2 * n_s / sites <= fmax else "no"}
 
 
 def bga_sites():
