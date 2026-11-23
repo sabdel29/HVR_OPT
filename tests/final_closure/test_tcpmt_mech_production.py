@@ -111,3 +111,14 @@ def test_strict_deps_never_marks_a_dependency_valid(tmp_path):
     assert st == {}
     st = {"dep": {"status": "done"}}
     assert RUN.dep_state(Camp(), Led(), st, set(), "dep", strict=True) == "ok"
+
+
+def test_a_stale_status_file_is_not_this_launchs_outcome():
+    import run as RUN
+    r = {"backend": "pbs", "pbs_id": "16188.pioneer.xray.aps.anl.gov"}
+    assert RUN.status_of_launch(r, {"pbs_jobid": "16188.pioneer.xray.aps.anl.gov",
+                                    "status": "done"})
+    assert not RUN.status_of_launch(r, {"pbs_jobid": "15710.pioneer", "status": "done"})
+    assert not RUN.status_of_launch(r, {"status": "done"})        # a previous local run's
+    assert RUN.status_of_launch({"backend": "local", "pid": 42}, {"pid": 42})
+    assert not RUN.status_of_launch({"backend": "local", "pid": 42}, {"pid": 7})

@@ -7,7 +7,7 @@ without touching the frozen results in `research/`.
 | file | role |
 |---|---|
 | `build_manifest.py` | generates `manifest.yaml` (edit the generator, never the YAML) |
-| `manifest.yaml` | 282 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
+| `manifest.yaml` | 335 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
 | `run.py` | runner: `plan`, `seed`, `run`, `status`, `validate`, `reset`, `audit-hooks`, `exec-job` |
 | `validators.py` | output checks (`etm`, `feedback`, `json`, `csv`, `frd`, `exists`) |
 | `guard/sitecustomize.py` | write guard + frozen-read log, injected into every job via PYTHONPATH |
@@ -161,6 +161,7 @@ Design m36 (TCPMT round 3; `plan` on the generated manifest, 0 blocked):
 | 9 | refinement_ladders | 20 | 158 | 5.1 h | production-state rungs r11 (smoke tests) and r31, S0 rungs, solver checks |
 | 10 | robustness_map | 110 | 198 | 3.3 h | class-B runs (incl. the gap-post range conv_posts_lower/upper and the mechanics-revision variants encap_* / bga_card_local), local responses, caloric (HV_SDEC) |
 | 11 | solder_submodels | 3 | 31 | 2.5 h | constitutive/critical/cycles/band/units, parameters, Z3 land |
+| 11b | mech_revision | 52 | 191 | 1.2 h | the mechanics revision in the production state (section 4d): kinematics, law band, critical joints, checks, reflow, board / clamp, material and cooling-B mechanics-only variants |
 | 12 | moose_checks | 5 | 17 | 1.5 h | **local only**: MOOSE does not load on califone |
 | 13 | dse_sweeps | 5 | 1 | 0.4 h | p2_t4 / t5 / tinf sweeps + phase-2 summary |
 | 14 | derived | 31 | 5 | 0.3 h | results, class B, decoupling chain (+ limits study), design comparison, k check, BGA re-closure, ... |
@@ -383,6 +384,50 @@ the least-loss assignment, Z1's 48-V package terms 0.40 W and the ring ESR 0.07 
 The first smoke of this preparation (root `m36rev/smoke`, the heat-path order T2/T3 swapped with
 its depth-based assignment) gave 144.18 W / 111.33 C and 126.04 W / 77.28 C (intra-VR 16.03 and
 14.16 W): it is what led to the routing-loss rule.
+
+## 4d. Mechanics revision in the production state (2026-11-23, stage `mech_revision`)
+
+The mechanics branch merged in cb8fd33..e3b2fcb (configs/tcpmt_mech, scripts/tcpmt_mech_*) ran on
+the round-2 fields only, and the campaign had run the legacy local model on the ideal-decoupling
+cases. The **production local model is now v2** (`local.harness: v2`; `TCPMT_LOCAL_HARNESS=legacy`
+selects the round-1/2 harness wherever a consumer offers both): zero-yield production law
+(Schubert et al., Garofalo) carried as a Norton surrogate refitted over the visited stress window
+to self-consistency, both pad faces driven by the full cut-boundary displacement of the global
+solution (u_x, u_y, u_z, stretch, rotation), 3-s ramps, 300-s dwells, 4 cycles, L0; the joint
+response is reported with the solder-law band (`solder.band_laws`) as its uncertainty, and a joint
+comparison is resolved only under every law (tcpmt_resolution.law_band, Table IV).
+
+Every job reads the **compared cases** of the production state (HV_SDEC, Z1/Z2/Z3 x A/B,
+tcpmt_cases) and depends on their production jobs:
+
+| jobs | script | output (tcpmt_revision/) |
+|---|---|---|
+| `mech.kin.<arch>.<tier>` | tcpmt_mech_production kin | `site_kinematics/SDEC_<tier>_<arch>.json`: the case file's stored interconnect search (every layer; BGA candidates with full kinematics), its site coverage (1369 lattice sites, Z2 ring 528) and sha1; refuses a case whose BGA counts are not in force |
+| `mech.interconnects`, `mech.interconnect_ladder` | tcpmt_mech_production drivers / ladder | `interconnect_drivers.json` (gamma, layer shear strain, governing layer, du split), `interconnect_mesh_ladder.json` (r11/r21/r31) |
+| `mech.lawband.window` -> `mech.critical` -> `mech.lawband` | tcpmt_mech_law_band, tcpmt_mech_critical | `solder_law_cards.json`, `solder_law_band.json` (pass 2 at the confirmed joints: key `critical_check`), `solder_critical_v2.json` (every candidate, monotonicity over dominance pairs) |
+| `mech.local_checks`, `mech.law_record` | tcpmt_mech_local_checks, tcpmt_mech_laws | `solder_local_checks.json` (mesh L1-L3 and 8 cycles at every joint: the numerical U; dwell, ramp, element, attribution chain, fine-pitch joints A/B), `solder_law_record.json` |
+| `mech.reflow.<arch>[.<encap>]`, `mech.reflow_summary` | tcpmt_mech_reflow (r21) | `reflow/<arch>_r21[_<encap>].json`, `reflow_warpage.json` |
+| `mech.board.<arch>.<tier>`, `mech.board_summary` | tcpmt_mech_board state | `board_study/SDEC_<tier>_<arch>.json`, `board_study_SDEC.json`: mounting, clamp, a 3x board (ring at the coupon edge temperature / at 25 C), mechanics only on the case's field; the clamp in the local response |
+| `mech.state.<arch>.<v>`, `mech.state_local.<v>` | final_closure_sensitivity --state SDEC | `final_closure/sensitivity/etm_<arch>_HV_SDEC__<v>[__B].json`: encapsulant Tg classes and the local-card BGA layer on the production fields, A and B |
+| `robust.coolB.<arch>`, `robust.coolB_local.<arch>` | final_closure_sensitivity NAME@B | `etm_<arch>_HV_S0__<v>__B.json`: the cooling-B mechanics-only rows (run list 4c) |
+| `mech.judge_state`, `mech.judgeB` (stage derived) | tcpmt_mech_variants | `robustness_mech_SDEC.json`, `robustness_B.json` (need the campaign's uncertainty record) |
+
+`derived.uncertainty` and `solder.parameters` depend on the band; the macros are
+`tcpmt_mech_macros.py` (prefix `Mv`), Table V's joint row prints the production value with the
+law band, the supplement adds S12-S15 (band, critical check, local checks, interconnect layers)
+and, after S25, reflow and mounting/material tables; Fig. 9 adds the mechanics-only groups.
+
+**Sharing the ledger with another runner.** `run.py run --strict-deps`: a dependency outside the
+selection counts only when the ledger has it done/valid/seeded, otherwise it is waited for and
+never marked valid from its (possibly stale) outputs -- the mode for a runner working beside
+another that has reset a dependency to re-run it. A runner also ingests the other runners'
+jobs: the status file it reads must now belong to the same launch (the PBS job id or the pid the
+exec-job wrote; `status_of_launch`), and `reset` moves an earlier incarnation's status files to
+`status/superseded/`. Before this, a runner whose qstat snapshot predated another runner's
+submission read the stale attempt-1 status of the 2026-11-19/20 run as the new launch's and
+recorded it done (2026-11-23 01:12-01:13, repaired by `state-fix` events). Validators `fresh`
+(json, etm): every input named in the record's `inputs_sha1` must still hash the same, so
+`run.py validate` flags a record built on a case that has since been re-run.
 
 ## 4a. Smoke tests, round 2 (2026-11-18, scratch root `/home/beams0/SABDELZAHER/ETM_project/scratch_campaign/smoke`)
 

@@ -1026,7 +1026,209 @@ def solder_tables_v2(p):
                         + " across the laws") + ".")
     L += [r"\noindent\emph{Limitations of the solder laws.}", r"\begin{itemize}"]
     L += [rf"\item {x}" for x in items] + [r"\end{itemize}", ""]
+    # S12-S15: the production-state responses, the critical-joint check, the local-model
+    # checks and the interconnect layers (the block keeps its seven tables, S9-S15)
+    L += joint_band_table() + critical_v2_table() + local_checks_table() + \
+        interconnect_table()
     return L
+
+
+V2_CASE = {"A_Z1": "Z1, A", "A_Z2": "Z2, A", "A_Z3": "Z3, A", "B_Z1": "Z1, B",
+           "B_Z2": "Z2, B", "B_Z3": "Z3, B"}
+
+
+def _lab(st_lab):
+    """'SDEC_A_Z1' or 'A_Z1' -> 'Z1, A'."""
+    k = "_".join(st_lab.split("_")[-2:])
+    return V2_CASE.get(k, tex(st_lab))
+
+
+def _sx(x, d=2):
+    """x 1e3 at d decimals, or --"""
+    return "--" if x is None else f"{1e3 * float(x):.{d}f}"
+
+
+def joint_band_table():
+    b = J(TR / "solder_law_band.json")
+    if not b or not b.get("band"):
+        return placeholder("joint response under the law band", "solder_law_band.json")
+    prod = b["production_law"]
+    laws = [prod] + [k for k in b.get("band_laws") or [] if k != prod]
+    u = J(TR / "uncertainty.json") or {}
+    urel = u.get("eps_U_rel") or {}
+    body = []
+    for lab in ("A_Z1", "A_Z2", "A_Z3", "B_Z1", "B_Z2", "B_Z3"):
+        v, jt = b["band"].get(lab), (b.get("joints") or {}).get(lab)
+        if not v or not jt:
+            continue
+        ur = urel.get(lab.replace("_", "."))
+        body.append(f"{V2_CASE[lab]} & ({jt['x_mm']:g}, {jt['y_mm']:g}) & {fx(jt['T_C'])} & "
+                    f"{fx(jt['du_xy_um'], 2)} & {fx(jt['du_z_um'], 2)} & "
+                    + " & ".join(_sx(v["values"].get(k)) for k in laws)
+                    + f" & {_sx(v.get('min'))}--{_sx(v.get('max'))} & "
+                    f"{'--' if ur is None else fx(100 * ur, 1)} \\\\")
+    cards = J(TR / "solder_law_cards.json") or {}
+    cw = (cards.get("laws") or {}).get(prod) or {}
+    rk = (b.get("rankings") or {})
+    head = [r"Case & Site & $T_{\mathrm{sj}}$ & $|\Delta u_{xy}|$ & $\Delta u_z$ & "
+            + " & ".join(_law(k)[0] for k in laws) + r" & Band & $U_{95}$ \\",
+            r" & (mm) & ($^\circ$C) & (\textmu m) & (\textmu m) & "
+            + " & ".join(r"\multicolumn{1}{c}{($10^{-3}$)}" for _ in laws)
+            + r" & ($10^{-3}$) & (\%) \\"]
+    st = {"SDEC": "the production state (implemented decoupling)",
+          "S0": "the ideal-decoupling reference"}.get(b.get("state") or "S0", b.get("state"))
+    cc = b.get("critical_check")
+    note = (r"Joint response $\deps$ (per cycle) at each case's critical joint in " + st +
+            r", local model driven by the full cut-boundary displacement of the global solution "
+            r"(both pad faces: translation, in-plane stretch and rotation), linear 3-s ramps and "
+            r"300-s dwells, 4 cycles, L0 mesh; one column per law of the solder-law band, the "
+            r"production law first. Band: lowest--highest law, the reported uncertainty of the "
+            r"joint response; $U_{95}$: numerical (own L0$\to$L3 and 4$\to$8-cycle changes, "
+            r"Table~\ref{tab:supp-localchecks}). "
+            + (rf"The production law's surrogate window converged after {cw.get('n_iterations')}"
+               r" fits" + ("" if cw.get("converged") else r" (not converged)") + ": "
+               + _win_txt(cw.get("window_MPa")) + ". " if cw else "")
+            + ("Joints: the maximum-response sites of the critical-joint check (Table~"
+               r"\ref{tab:supp-critv2}). " if cc else r"Joints: the maximum-$|\Delta u_{xy}|$ "
+               "sites. ")
+            + "Ranking per law: " + "; ".join(
+                f"{_law(k)[0]}: A {tex(rk.get(k, {}).get('A') or '--')}, B "
+                f"{tex(rk.get(k, {}).get('B') or '--')}" for k in laws if rk.get(k)) + ".")
+    return ltab(r"@{}lrrrr" + "r" * len(laws) + "rr@{}", 7 + len(laws), head, body,
+                "Joint response of the compared cases under the solder-law band",
+                "tab:supp-jointband", note, sep="2.5pt")
+
+
+def critical_v2_table():
+    c = J(TR / "solder_critical_v2.json")
+    if not c or not c.get("cases"):
+        return placeholder("critical-joint check", "solder_critical_v2.json")
+    body = []
+    for lab, v in c["cases"].items():
+        sc, mo = v.get("site_coverage") or {}, v.get("monotonicity") or {}
+        mr, md = v.get("max_response_site") or {}, v.get("max_du_site") or {}
+        w = (mo.get("worst_violation") or {}).get("excess_rel")
+        body.append(f"{_lab(lab)} & {sc.get('lattice_sites', '--')} & "
+                    f"{v.get('n_candidates', '--')} & {v.get('n_solved', '--')} & "
+                    f"{mo.get('n_pareto_solved', '--')} & {mo.get('n_ordered_pairs', '--')} & "
+                    f"{mo.get('n_violations', '--')}"
+                    + ("" if not w else rf" ({100 * w:.1f}\,\%)") + " & "
+                    f"({md.get('x_mm', 0):g}, {md.get('y_mm', 0):g}) & "
+                    f"({mr.get('x_mm', 0):g}, {mr.get('y_mm', 0):g}) & "
+                    f"{fx(v.get('max_response_over_max_du'), 3)} \\\\")
+    head = [r"Case & Lattice & Cand. & Solved & Pareto & Pairs & Viol. & Max-$\Delta u$ site & "
+            r"Max-response site & Ratio \\"]
+    note = (r"Critical-joint check under the full cut-boundary displacement, production law at "
+            r"its converged window. Lattice: legal sites of the 0.8-mm lattice the all-site "
+            r"search covers (Z2: the ring around the board opening); candidates: the top 30 by "
+            r"$|\Delta u_{xy}|$, by relative face tilt, by $|\varepsilon_z|$ and by the deforming "
+            r"$\Delta u$, the strict Pareto front in ($|\Delta u_{xy}|$, $T$) and the corners, "
+            r"drawn over every lattice site; pairs: ordered pairs of solved sites where one is at "
+            r"least as large in both $|\Delta u_{xy}|$ and $T$; violations: pairs whose responses "
+            r"are ordered the other way (largest excess); ratio: response at the maximum-response "
+            r"site over that at the maximum-$|\Delta u_{xy}|$ site.")
+    return ltab(r"@{}lrrrrrrccr@{}", 10, head, body,
+                "Critical-joint check with the full boundary transfer", "tab:supp-critv2", note,
+                sep="2.5pt")
+
+
+def local_checks_table():
+    c = J(TR / "solder_local_checks.json")
+    if not c or not c.get("groups"):
+        return placeholder("local-model checks", "solder_local_checks.json")
+    g = c["groups"]
+    labs = [x for x in ("A_Z1", "A_Z2", "A_Z3", "B_Z1", "B_Z2", "B_Z3")
+            if x in (c.get("v2_baseline") or {})]
+
+    def cell(group, var, lab):
+        r = ((g.get(group) or {}).get(lab) or {}).get(var) or {}
+        x = r.get("rel_to_v2")
+        return "--" if x is None else f"{100 * x:+.1f}".replace("-", r"$-$")
+    rows = [("v2 response ($10^{-3}$)", None, None)]
+    rows += [("Mesh L1", "mesh", "L1"), ("Mesh L2", "mesh", "L2"), ("Mesh L3", "mesh", "L3"),
+             ("8 cycles", "cycles", "N8"), ("Dwell 60 s", "dwell", "dwell60"),
+             ("Dwell 900 s", "dwell", "dwell900"), ("Ramp 30 s", "dwell", "ramp30"),
+             ("C3D8I elements", "element", "C3D8I"), ("C3D8R elements", "element", "C3D8R"),
+             ("Round-2 model (R2)", "chain", "R2"), ("R2 + ramps", "chain", "ramp"),
+             ("+ zero-yield law", "chain", "law"), ("+ $u_z$ released", "chain", "uz"),
+             ("v2 with STEP loads", "chain", "v2_step")]
+    body = []
+    for name, group, var in rows:
+        if group is None:
+            body.append(f"{name} & " + " & ".join(_sx(c['v2_baseline'].get(l)) for l in labs)
+                        + r" \\")
+            continue
+        body.append(f"{name} & " + " & ".join(cell(group, var, l) for l in labs) + r" \\")
+    fp = c.get("fine_pitch_joints") or {}
+    fp_txt = []
+    for key, v in fp.items():
+        if not v.get("d_eps"):
+            continue
+        t, a = ("B", key[2:]) if key.startswith("B_") else ("A", key)
+        fp_txt.append(rf"{a}, {t}: {prose(v.get('label') or v.get('layer'))} "
+                      rf"$\gamma = {1e3 * (v.get('gamma') or 0):.1f}\times10^{{-3}}$, "
+                      rf"$\deps = {1e3 * v['d_eps']:.2f}\times10^{{-3}}$"
+                      + (rf" ({1e3 * v['d_eps_uz']:.2f} under the in-plane transfer with "
+                         r"$u_z$ released)" if v.get("d_eps_uz") else ""))
+    head = [r"Check & " + " & ".join(V2_CASE[l] for l in labs) + r" \\"]
+    note = (r"Change of $\deps$ against the production local model (first row), in \%. Mesh: "
+            r"the nested joint meshes L1--L3 against L0; 8 cycles against 4; dwell and ramp "
+            r"against 300 and 3~s; element types against C3D8. Attribution chain: the round-2 "
+            r"model (overstress card with hardening, in-plane $\Delta u$ only, STEP loading) and "
+            r"each change toward the production model in turn. "
+            + ("Critical fine-pitch joints, own geometry: " + "; ".join(fp_txt) + "."
+               if fp_txt else ""))
+    return ltab(r"@{}l" + "r" * len(labs) + "@{}", 1 + len(labs), head, body,
+                "Checks of the local model at the compared joints", "tab:supp-localchecks",
+                note)
+
+
+LAYER_LABEL = {"bga": "BGA", "interface": "Die microbumps",
+               "conv_attach_vr_substrate": "Cu-pillar attach", "z3_attach_vr_pcb": "SAC attach"}
+
+
+def interconnect_table():
+    d = J(TR / "interconnect_drivers.json")
+    if not d or not d.get("cases"):
+        return placeholder("interconnect layers", "interconnect_drivers.json")
+    lad = (J(TR / "interconnect_mesh_ladder.json") or {}).get("cases") or {}
+    body = []
+    for lab, c in d["cases"].items():
+        first = True
+        for name, r in (c.get("layers") or {}).items():
+            cr = r["critical"]
+            lr = ((lad.get(lab) or {}).get("layers") or {}).get(name) or {}
+            body.append(f"{_lab(lab) if first else ''} & {LAYER_LABEL.get(name, tex(name))} & "
+                        f"{fx(r.get('h_um'), 0)} & ({cr['x_mm']:.2f}, {cr['y_mm']:.2f}) & "
+                        f"{fx(cr.get('T_C'))} & {fx(1e3 * r['gamma_max'], 2)} & "
+                        f"{fx(1e3 * (r.get('gamma_def_max') or 0), 2)} & "
+                        f"{fx(cr.get('du_z_um'), 3)} & {fx(lr.get('r31_over_r21'), 2)} \\\\")
+            first = False
+        sp = c.get("bga_split") or {}
+        sh = sp.get("share_along_du") or {}
+        if sh:
+            sg = lambda x: tm(round(100 * (x or 0)), "g")             # noqa: E731
+            body.append(rf" & \multicolumn{{8}}{{l}}{{\emph{{BGA driver: membrane "
+                        rf"{sg(sh.get('membrane'))}\,\%, bending "
+                        rf"{sg(sh.get('bending'))}\,\%, residual "
+                        rf"{sg(sh.get('residual'))}\,\% of $\Delta u$; rigid "
+                        rf"rotation {fx(sp.get('rigid_rotation_um'), 3)}~\textmu m}}}} \\")
+    head = [r"Case & Layer & $h$ & Critical site & $T$ & $\gamma$ & $\gamma_{\mathrm{def}}$ & "
+            r"$\Delta u_z$ & r31/r21 \\",
+            r" & & (\textmu m) & (mm) & ($^\circ$C) & ($10^{-3}$) & ($10^{-3}$) & (\textmu m) & "
+            r" \\"]
+    note = (r"Every interconnect layer of each compared case, searched at every site (BGA: the "
+            r"legal lattice; the thinner layers: every mesh node). $\gamma = |\Delta u_{xy}|/h$ at "
+            r"the layer's critical site; $\gamma_{\mathrm{def}}$: the largest layer shear strain "
+            r"$\partial u_x/\partial z + \partial u_z/\partial x$ (the joint's rigid rotation "
+            r"removed); r31/r21: $\gamma$ on the fine rung over the production rung of the case's "
+            r"own ladder (the die-edge corner over the microbumps is singular, so its driver does "
+            r"not converge). Membrane / bending: the in-plane displacement of each plate at its "
+            r"stiffness-weighted neutral plane and its rotation times the lever arm, along "
+            r"$\Delta u$ at the BGA critical site.")
+    return ltab(r"@{}llrcrrrrr@{}", 9, head, body,
+                "Interconnect layers of the compared cases", "tab:supp-interconnect", note,
+                sep="2.5pt")
 
 
 def solder_tables():
@@ -2117,6 +2319,108 @@ def review_variants_table():
                 "tab:supp-review", note)
 
 
+def assembly_mounting_table():
+    """TCPMT round 3 (findings 5-8, 11a), after the review-round variants: reflow / bonding
+    warpage against the coplanarity limits, board size / mounting / clamp and the encapsulant
+    and BGA-card variants, mechanics only on the production fields under cooling A and B."""
+    rf = J(TR / "reflow_warpage.json") or {}
+    bd = J(TR / "board_study_SDEC.json") or {}
+    vr = J(TR / "robustness_mech_SDEC.json") or {}
+    if not (rf.get("cases") or bd.get("cases") or vr.get("variants")):
+        return placeholder("assembly warpage, mounting and material variants",
+                           "reflow_warpage.json / board_study_SDEC.json")
+    L = []
+    rows = []
+    for key, c in sorted((rf.get("cases") or {}).items()):
+        if "_r21" not in key:
+            continue
+        a, sfx = key.split("_r21")
+        enc = {"": "production", "_encap_uf_tg": "underfill class (Tg 130)",
+               "_encap_emc_lowcte": "low-CTE mold compound (Tg 165)"}.get(sfx, tex(sfx))
+        ch = c.get("checks") or {}
+        b, sol, tc = ch.get("bga@bga_reflow") or {}, ch.get("bga@bga_solidus") or {}, \
+            ch.get("tcb") or {}
+        w, ws, g = b.get("warpage") or {}, sol.get("warpage") or {}, \
+            tc.get("gap_nonuniformity") or {}
+        rows.append(f"{a} & {enc} & {fx(w.get('pv_plane_removed_um'), 0)} & "
+                    f"{tm(round(w.get('bow_corner_minus_centre_um', 0)), 'g')} & "
+                    f"{fx(ws.get('pv_plane_removed_um'), 0)} & "
+                    f"{fx(b.get('pv_over_room_coplanarity'), 2)} & "
+                    f"{fx(tc.get('T_C'), 0)} & {fx(g.get('pv_plane_removed_um'), 1)} & "
+                    f"{fx(tc.get('limit_um'), 0)} \\\\")
+    if rows:
+        lim = rf.get("limits") or {}
+        cv = (lim.get("bga_coplanarity_room_um") or {}).get("value")
+        rl = (lim.get("bga_reflow_warpage_um") or {}).get("value") or [None, None]
+        head = [r"Int. & Encapsulant & PV 245 & Bow 245 & PV 217 & PV/cop. & $T_{\mathrm{bond}}$ "
+                r"& Gap & Limit \\",
+                r" & & (\textmu m) & (\textmu m) & (\textmu m) & & ($^\circ$C) & (\textmu m) & "
+                r"(\textmu m) \\"]
+        note = (r"Isothermal warpage of the unmounted package (no board, BGA or TIM; Z3 without "
+                r"its converter) at the SAC305 reflow peak (245\,$^\circ$C) and solidus "
+                r"(217\,$^\circ$C) against a 25-$^\circ$C stress-free state, production mesh: "
+                r"plane-removed peak-to-valley over the ball footprint and the signed bow (corners "
+                r"minus centre, positive away from the board); PV/cop.: over the "
+                + (f"{cv:g}" if cv else "80") + r"-\textmu m room-temperature coplanarity "
+                r"(JEP95); the SPP-024 reflow window is "
+                + (f"{rl[0]:g} to +{rl[1]:g}" if rl[0] is not None else "--")
+                + r"~\textmu m. Gap: plane-removed non-uniformity of the fine-pitch joint's gap "
+                r"at its bonding temperature (Z1: converter top under the flat die; Z2: substrate "
+                r"underside against the converter top; Z3: board underside against the converter "
+                r"top), against a declared limit (half the solder cap or bump stand-off).")
+        L += ltab(r"@{}llrrrrrrr@{}", 9, head, rows, "Warpage at reflow and bonding",
+                  "tab:supp-reflow", note, sep="2.5pt")
+    rows = []
+    var_lab = {"screws": "Screws at the board corners", "screws_pinned": "Screws, pinned",
+               "edge": "Edge simply supported", "clamp_screws": "Clamp 200 N at the screws",
+               "clamp_only": "Clamp only (25 C)", "clamp_backplate": "Clamp on a backplate",
+               "free_ring_hot": "3x board, ring at the edge temperature",
+               "free_ring_cold": "3x board, ring at 25 C",
+               "screws_ring_hot": "3x board on screws",
+               "clamp_screws_ring_hot": "3x board, clamp at the screws"}
+    cases = bd.get("cases") or {}
+    order = [f"SDEC_{t}_{a}" for t in ("A", "B") for a in ("Z1", "Z2", "Z3")]
+    cols = [k for k in order if k in cases]
+    for var, lab in var_lab.items():
+        cells = []
+        for k in cols:
+            r = (cases[k].get("mechanics") or {}).get(var) or {}
+            if "warp_rel_vs_case" in r:
+                cells.append(f"{100 * r['warp_rel_vs_case']:+.0f} / {100 * r['du_rel_vs_case']:+.0f}"
+                             .replace("-", r"$-$"))
+            else:
+                cells.append("--")
+        rows.append(prose(lab) + " & " + " & ".join(cells) + r" \\")
+    for name, tag in (("encap_uf_tg", "Underfill-class encapsulant (Tg 130)"),
+                      ("encap_emc_lowcte", "Low-CTE mold compound (Tg 165)"),
+                      ("encap_emc_lowcte_const", "Mold compound without Tg"),
+                      ("bga_card_local", "BGA layer from the local solder card")):
+        per = (vr.get("variants") or {}).get(name) or {}
+        cells = []
+        for k in cols:
+            _s, t, a = k.split("_")
+            ch = ((per.get(t) or {}).get("change_rel") or {}).get(a) or {}
+            cells.append("--" if ch.get("warp") is None else
+                         f"{100 * ch['warp']:+.0f} / {100 * ch['du']:+.0f}".replace("-", r"$-$"))
+        rows.append(f"{tag} & " + " & ".join(cells) + r" \\")
+    if cols:
+        head = [r"Variant & " + " & ".join(f"{k.split('_')[2]}, {k.split('_')[1]}" for k in cols)
+                + r" \\"]
+        note = (r"Change of die warpage / critical-joint $\du$ (\%) against each compared case "
+                r"(production state), mechanics only on the case's converged field, production "
+                r"mesh. Mounting: $u_z = 0$ on 2-mm patches 3~mm inside the board corners (pinned: "
+                r"also in plane), or along the underside perimeter; clamp: the cold-plate preload "
+                r"as a uniform pressure on the TIM, reacted at the screws or by a backplate under "
+                r"the package; 3x board: the board extended to three package sides with its ring "
+                r"at the coupon's edge temperature or at 25\,$^\circ$C (bounds of the ring's "
+                r"temperature); encapsulant classes with their glass transition on the "
+                r"out-of-cell fill.")
+        L += ltab(r"@{}L{5.0cm}" + "r" * len(cols) + "@{}", 1 + len(cols), head, rows,
+                  "Board, mounting, clamp and material variants on the production fields",
+                  "tab:supp-mounting", note, sep="2.5pt")
+    return L
+
+
 # ---------------------------------------------------------------- assembly
 def main():
     B = build_all()
@@ -2154,6 +2458,7 @@ def main():
                  r"review round.")
     L += caprule_screen_table() + variants_table() + omitted_losses_table()
     L += review_variants_table()
+    L += assembly_mounting_table()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(L) + "\n")
     print(f"wrote {OUT} ({len(L)} lines)")

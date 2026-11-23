@@ -89,6 +89,90 @@ _have = {r["case"] for r in rows if r["gate"] == NEWER_GATE}
 if _have:
     LAYOUT.append((NEWER_GROUP, [(lab, [v]) for lab, v in NEW_A if v in _have]))
 
+# TCPMT round 3 (finding 8 and the production-state mechanics): mechanics-only decisions run
+# on converged fields, judged with the same rule against their own baseline (the cooling-B
+# reference case, or each production-state case), from tcpmt_mech_variants (judgeB /
+# judge-state). Each becomes a group with its own baseline row; loss and peak temperature are
+# not evaluated (mechanics only).
+import json                                                          # noqa: E402
+MECH_LABEL = {"encap_uf_tg": "Underfill-class encapsulant",
+              "encap_emc_lowcte": "Low-CTE mold compound",
+              "encap_emc_lowcte_const": "Mold compound without Tg",
+              "bga_card_local": "BGA layer from the local solder card",
+              "attach_stiff": "Attach card column-stiffened", "attach_uf_soft": "Attach underfill soft",
+              "attach_uf_stiff": "Attach underfill stiff"}
+OBS_KEY = {"warp": "die_warpage_pv_um", "du": "du_c_um"}
+GROUP_GATE = {NEWER_GROUP: NEWER_GATE}       # group -> gate of its own baseline row
+
+
+def _mech_label(name):
+    if name in MECH_LABEL:
+        return MECH_LABEL[name]
+    if name.startswith("conv_E"):
+        return "Converter-tier $E$, CTE"
+    return name
+
+
+def _mech_rows(gate, case, orderings, values, base):
+    """classB-style rows (the Z1/Z2 ordering of warpage and du) of one mechanics-only
+    decision, for state() / gap() / prod_gap()."""
+    out = []
+    for y, obs in OBS_KEY.items():
+        o = orderings.get(f"{y}:Z1/Z2")
+        if not o:
+            continue
+        bl = o.get("base_verdict") or f"{o['base_lower']} lower"
+        out.append({"gate": gate, "case": case, "observable": obs,
+                    "alternate_verdict": o.get("verdict") or "pending",
+                    "production_verdict": bl, "outcome": "judged",
+                    "alternate_Z1": str((values.get("Z1") or {}).get(y)),
+                    "alternate_Z2": str((values.get("Z2") or {}).get(y)),
+                    "nominal_Z1": str((base.get("Z1") or {}).get(y)),
+                    "nominal_Z2": str((base.get("Z2") or {}).get(y))})
+    return out
+
+
+def _mech_groups():
+    groups = []
+    d = S.TR / "robustness_B.json"
+    if d.is_file():
+        rb = json.loads(d.read_text())
+        gate, items, merged_ = "robustness.cooling_B_mech", [], {}
+        for name, r in (rb.get("variants") or {}).items():
+            base = {a: v for a, v in (rb.get("base") or {}).items()}
+            new = _mech_rows(gate, f"B::{name}", r.get("orderings") or {}, r.get("values") or {},
+                             base)
+            if new:
+                rows.extend(new)
+                merged_.setdefault(_mech_label(name), []).append(f"B::{name}")
+        items = [(f"{lab} ({len(c)})" if len(c) > 1 else lab, c) for lab, c in merged_.items()]
+        if items:
+            g = "Cooling B, mechanics only (ideal decoupling)"
+            groups.append((g, items))
+            GROUP_GATE[g] = gate
+    d = S.TR / "robustness_mech_SDEC.json"
+    if d.is_file():
+        rs = json.loads(d.read_text())
+        for t in ("A", "B"):
+            gate, items = f"robustness.production_mech_{t}", []
+            for name, per in (rs.get("variants") or {}).items():
+                r = per.get(t)
+                if not r:
+                    continue
+                new = _mech_rows(gate, f"SDEC_{t}::{name}", r.get("orderings") or {},
+                                 r.get("values") or {}, (rs.get("base") or {}).get(t) or {})
+                if new:
+                    rows.extend(new)
+                    items.append((_mech_label(name), [f"SDEC_{t}::{name}"]))
+            if items:
+                g = f"Implemented decoupling, cooling {t}, mechanics only"
+                groups.append((g, items))
+                GROUP_GATE[g] = gate
+    return groups
+
+
+LAYOUT += _mech_groups()
+
 RANK = {"n/a": 0, "preserved": 1, "pending": 2, "withdrawn": 3, "reversed": 4}
 
 
@@ -104,12 +188,19 @@ def gap(case, obs):
 
 
 def _base_rows(newer):
-    """the rows of the reference baseline (classical gates) or of the production-state gate"""
-    return [r for r in rows if (r["gate"] == NEWER_GATE) == newer]
+    """the rows of the reference baseline (classical gates; newer False), or of the group gate
+    `newer` (True: the production-state cooling-A gate)"""
+    if newer is True:
+        newer = NEWER_GATE
+    own = set(GROUP_GATE.values())
+    if not newer:
+        return [r for r in rows if r["gate"] not in own]
+    return [r for r in rows if r["gate"] == newer]
 
 
 def prod_gap(obs, newer=False):
-    r = next((r for r in _base_rows(newer) if r["observable"] == obs and r["nominal_Z1"]), None)
+    r = next((r for r in _base_rows(newer) if r["observable"] == obs and r["nominal_Z1"]
+              and r["nominal_Z1"] != "None"), None)
     return float(r["nominal_Z2"]) - float(r["nominal_Z1"]) if r else None
 
 
@@ -169,11 +260,12 @@ def _prod(key, newer=False):
 
 PROD = [_prod(k) for k, _ in OBS]
 PROD_NEW = [_prod(k, True) for k, _ in OBS]
+PROD_GROUP = {g: [_prod(k, gate) for k, _ in OBS] for g, gate in GROUP_GATE.items()}
 HEAD = ["Int. loss\n(W)", "Peak\ntemp. (K)", "Die warp.\n(µm)", "Joint\n$\\Delta u_\\mathrm{c}$ (µm)"]
 
 COLW_IN, ROWH_IN, LAB_IN = 0.45, 0.145, 1.64
 n_body = (sum(len(g[1]) for g in LAYOUT) + len(LAYOUT)
-          + sum(1 for g in LAYOUT if g[0] == NEWER_GROUP))
+          + sum(1 for g in LAYOUT if g[0] in GROUP_GATE))
 HEAD_R, LEG_R = 2.4, 5.0                       # header and legend heights, in rows
 W = S.COL_W
 H = (n_body + 1 + HEAD_R + LEG_R) * ROWH_IN + 0.05
@@ -247,11 +339,17 @@ for gname, items in LAYOUT:
     ax.text(xl + 0.1, iy + 0.62, gname, ha="left", va="center", fontsize=6.7,
             color=S.INK, fontstyle="italic")
     iy += 1
-    if gname == NEWER_GROUP:            # this group's own baseline: the production state
-        ax.text(x0c - 0.12, iy + 0.5, "Production verdict", ha="right", va="center",
-                fontsize=6.6, color=S.INK, fontweight="bold")
-        for j, v in enumerate(PROD_NEW):
-            cell(j, iy, "prod", v, val=gtxt([prod_gap(OBS[j][0], True)], OBS[j][0]))
+    if gname in GROUP_GATE:             # this group's own baseline (its verdicts and gaps)
+        gate = GROUP_GATE[gname]
+        ax.text(x0c - 0.12, iy + 0.5, "Production verdict" if gname == NEWER_GROUP else
+                "Baseline verdict", ha="right", va="center", fontsize=6.6, color=S.INK,
+                fontweight="bold")
+        for j, v in enumerate(PROD_GROUP[gname]):
+            val = gtxt([prod_gap(OBS[j][0], gate)], OBS[j][0])
+            if v == "–" and val is None:
+                cell(j, iy, "n/a")
+            else:
+                cell(j, iy, "prod", v, val=val)
         iy += 1
     for lab, cases in items:
         ax.text(x0c - 0.12, iy + 0.5, lab, ha="right", va="center", fontsize=6.5,

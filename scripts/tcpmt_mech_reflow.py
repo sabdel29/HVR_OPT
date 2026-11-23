@@ -143,12 +143,17 @@ def solve_part(E, m, mats, st, arch, tiles, name, keep, surf, fp, T_C, T_sf, wd)
     wd.mkdir(parents=True, exist_ok=True)
     inp = wd / f"{name}.inp"
     t0 = time.time()
-    PE.ccxio.write_structural(sm, mats, T, st2, "BC_BOARD", inp, solver="")
+    # the production structural solver on the production mesh (SPOOLES segfaults, rc -11, on
+    # the r21 parts with temperature-dependent cards); the coarse r11 checks keep SPOOLES
+    solver = E.PRODUCTION_SOLVER if sm.n_elems > 40000 else ""
+    E._raise_stack_limit()
+    PE.ccxio.write_structural(sm, mats, T, st2, "BC_BOARD", inp, solver=solver)
     PE.ccxio.run_ccx(inp, threads=int(os.environ.get("FC_THREADS", "2")))
     U = PE.ccxio.read_frd(inp.with_suffix(".frd"))["DISP"]
     ids = surface_nodes(sm, *surf, fp, arch, tiles)
     xy = sm.nodes[ids - 1][:, :2]
     return {"part": name, "layers": list(keep), "n_elems": sm.n_elems, "T_C": T_C,
+            "solver": solver or "SPOOLES",
             "T_stress_free_C": T_sf, "surface": list(surf), "footprint": fp,
             "wall_s": time.time() - t0, "warpage": warp_measures(xy, U[ids, 2]),
             "_xy": xy, "_w": U[ids, 2], "_gid": used[ids - 1]}

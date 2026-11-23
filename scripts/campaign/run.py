@@ -516,6 +516,12 @@ def ingest(camp, led, st, backends):
             d = json.loads(sf.read_text())
         except (FileNotFoundError, json.JSONDecodeError):
             d = {}
+        if d and not status_of_launch(r, d):
+            # the status file of an EARLIER incarnation of this job and attempt (a reset job's
+            # attempt numbers restart at 1): never this launch's outcome. Seen when one runner
+            # ingests a job another runner has just queued, before its own qstat snapshot
+            # shows it: the stale 'done' of the previous campaign run would be recorded.
+            d = {}
         if "status" not in d and r.get("backend") == "pbs":
             # the job left the queue but its final status is not visible yet: NFS attribute
             # caching between califone and this host; wait before calling it a failure
@@ -534,6 +540,19 @@ def ingest(camp, led, st, backends):
             led.event(jid, "failed", reason=why[:500], attempt=r.get("attempt"))
         changed.append(jid)
     return changed
+
+
+def status_of_launch(r, d):
+    """Does status record `d` belong to the launch the ledger record `r` describes? exec-job
+    writes its own PBS job id (PBS) or pid (local: `nice` execs the runner, so the pid is the
+    launcher's) into its status file at start."""
+    if r.get("backend") == "pbs":
+        a = str(r.get("pbs_id") or "").split(".")[0]
+        b = str(d.get("pbs_jobid") or "").split(".")[0]
+        return bool(a) and a == b
+    if r.get("backend") == "local" and r.get("pid") and d.get("pid"):
+        return int(d["pid"]) == int(r["pid"])
+    return True
 
 
 def dep_state(camp, led, st, want_set, d, resub=1, _memo=None, strict=False):
@@ -974,6 +993,15 @@ def cmd_reset(a):
                 with contextlib.suppress(Exception):
                     os.killpg(int(r["pid"]), 15)
             st.pop(jid, None)
+            # a relaunch restarts at attempt 1: move the earlier incarnation's status files
+            # aside so no runner can read them as the new launch's outcome
+            old = sorted(led.dir.joinpath("status").glob(f"{safe(jid)}.a*.json"))
+            if old:
+                dst = led.dir / "status" / "superseded" / time.strftime("%Y%m%d-%H%M%S")
+                dst.mkdir(parents=True, exist_ok=True)
+                for f in old:
+                    with contextlib.suppress(OSError):
+                        f.rename(dst / f.name)
             led.event(jid, "reset")
             print(f"  reset {jid}")
 
