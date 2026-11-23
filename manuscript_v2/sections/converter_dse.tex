@@ -1,7 +1,7 @@
 % ============================================================================ CONVERTER + DSE
 \section{Converter Synthesis and Design-Space Exploration}\label{sec:dse}
 
-\subsection{Generalized hybrid regulator family}\label{sec:dse-family}
+\subsection{Generalized Hybrid Regulator Family}\label{sec:dse-family}
 The regulator is synthesized from a family rather than fixed in advance. Each member is a
 two-phase hybrid SC--buck converter with $N$ SC branches and $K$ inductor branches
 (Fig.~\ref{fig:converter}a). It has $N$ high-side (HS) switches, $N-1$ flying capacitors, $K$
@@ -20,13 +20,14 @@ switching loss~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}. Against circuit si
 other members---$N/K = 2/2$, $3/2$, $4/4$ and $6/2$ at 48-to-1~V, 30~A and 500~kHz---the model
 reproduces the total loss with $94.4\pm1.5$\,\% accuracy (worst case
 92.9\,\%)~\cite{Abdelzaher2025ECTC}, and its extension with $95.3\pm1$\,\%~\cite{Abdelzaher2026EPEPS}.
-The design point is not among the validated members: its topology, devices and frequency have
-not been simulated at the circuit level, and the $C_{\mathrm{oss}}$ and gate-resistance rules
-below are not separately validated. Inductor core loss, alternating-current winding resistance,
-dielectric loss and dead-time loss are omitted; Section~\ref{sec:explore} bounds them
-(Table~S24).
+These members do not include the design point, whose topology, devices and frequency have not
+been simulated at the circuit level; nor were the $C_{\mathrm{oss}}$ and gate-resistance rules
+below part of that validation (Section~\ref{sec:limits}). Inductor core loss, alternating-current
+winding resistance, dielectric loss and dead-time loss are not in the model.
+Section~\ref{sec:explore-omit} bounds them (Table~S24) and compares the $C_{\mathrm{oss}}$ term with
+the datasheet charge curves.
 
-\subsection{Synthesis rules}\label{sec:dse-rules}
+\subsection{Synthesis Rules}\label{sec:dse-rules}
 For a specification---cell output current $I_{\mathrm{cell}}$, output and input voltages, a target
 current density $J_{\mathrm{t}}$ and ripple limits---the synthesis enumerates every member whose
 component count, $2N+2K-1$, fits a budget. The budget is 15 components, rising to at most 30 where
@@ -101,7 +102,7 @@ at $k_{\mathrm{rms}} = \FrKrms$ (Section~\ref{sec:evaluate}).}
 \label{fig:converter}
 \end{figure}
 
-\subsection{Regulator count as an output}\label{sec:dse-count}
+\subsection{Regulator Count as an Output}\label{sec:dse-count}
 The explore mode repeats the synthesis over the regulator count $M$ and scores every candidate at
 25\,$^\circ$C. The score is its conversion loss plus the system-level routing loss of the
 vertical interconnect chain and the lateral redistribution, from the routing model
@@ -127,14 +128,12 @@ optimum is such a grid ($\FrDseOptGrid\times\FrDseOptGrid$), and it is the best 
 and 49 cells dissipate \FrDseSqSixteen, \FrDseSqTwentyfive{} and \FrDseSqFortynine~W, and
 \FrDseSqInfeasList{} cells admit no member.
 
-The count is confirmed by the chain, not assumed. The neighbouring square grids were synthesized
-under the same rules---25 cells as \FrDseTwentyfiveTopo{} at \FrDseTwentyfiveFsw~kHz and 49 cells as
-\FrDseFortynineTopo{} at \FrDseFortynineFsw~kHz---and carried through the full chain in Z1. Under
-cooling~A they dissipate \FrChainTwentyfiveA{} and \FrChainFortynineA~W, against
-\FrChainThirtysixA~W for 36 cells; under cooling~B, \FrChainTwentyfiveB{} and
-\FrChainFortynineB~W against \FrChainThirtysixB~W. The chain keeps the screen's order and widens
-its margins from \FrDseTwentyfiveMargin--\FrDseFortynineMargin~W to
-\FrChainMarginLo--\FrChainMarginHi~W.
+The count is confirmed by the chain, not assumed. The neighbouring square grids, 25 cells
+(\FrDseTwentyfiveTopo{} at \FrDseTwentyfiveFsw~kHz) and 49 cells (\FrDseFortynineTopo{} at
+\FrDseFortynineFsw~kHz), were synthesized under the same rules and carried through the full chain
+in Z1 (Fig.~\ref{fig:dse}c). The screen puts them \FrDseTwentyfiveMargin{} and
+\FrDseFortynineMargin~W behind the 36-cell design, and the coupled chain
+\FrChainMarginLo--\FrChainMarginHi~W behind under both coolings (Section~\ref{sec:explore-count}).
 
 \begin{figure}[!t]
 \centering
@@ -158,15 +157,15 @@ square grid stays at 36 cells, now \FrDseTfiveSqTopo{} at \FrDseTfiveSqFsw~kHz w
 a square grid. Without a tier limit the best square grid moves to \FrDseTinfSqM{} cells at
 \FrDseTinfSqLoss~W, in \FrDseTinfSqTiers{} tiers \FrDseTinfSqStack~mm tall.
 
-The five-tier, 36-cell design was carried through the chain as the co-design comparison. It
-dissipates \FrTfiveSaveLo--\FrTfiveSaveHi~W less than the four-tier design in Z1 and Z2
+The five-tier, 36-cell design is the co-design comparison of this paper. Through the coupled
+chain it dissipates \FrTfiveSaveLo--\FrTfiveSaveHi~W less than the four-tier design in Z1 and Z2
 (Fig.~\ref{fig:dse}c). Its \FrDseTfiveSqStack-mm stack, however, protrudes \FrProtrudeTfive~\textmu m
 below the \FrBoardMm-mm board of Z2, whose opening the four-tier stack clears by
-\FrFitThirtysix~\textmu m. The integration thus constrains the converter. The four-tier design is
-therefore the design point of this paper, and Section~\ref{sec:explore} returns to the five-tier
-design.
+\FrFitThirtysix~\textmu m (Fig.~\ref{fig:dse}b). The integration thus constrains the converter. The
+four-tier design, which fits every integration compared here, is therefore the design point;
+Section~\ref{sec:explore-codesign} evaluates the five-tier design in full.
 
-\subsection{The design point}\label{sec:dse-point}
+\subsection{The Design Point}\label{sec:dse-point}
 At 36 cells the synthesis returns the regulator of Table~\ref{tab:spec} and
 Fig.~\ref{fig:converter}. It is \FrConvTopo{} with $K_A = \FrConvKA$ and $\mathbf{B} =
 [\FrConvB]$, so each inductor serves one SC branch, and $D = \FrConvDuty$ at \FrConvFsw~kHz. The
@@ -179,7 +178,7 @@ summed cell ripple is \FrConvOutRipple~A against the \FrConvOutRippleLim-A limit
 ripple is \FrConvVripple~mV.
 
 The rated 0603 flying capacitors~\cite{FrMurataGRM188} hold \FrConvCapVone{} and \FrConvCapVtwo~V,
-against \FrConvCapVallow~V derated. At 105\,$^\circ$C and less their tolerance they retain
+against \FrConvCapVallow~V derated. Corrected for bias, 105\,$^\circ$C and tolerance, they retain
 \FrConvCapCeffHotOne{} and \FrConvCapCeffHotTwo~\textmu F, so the worst switching ripple is
 \FrConvCapRipple\,\% of the capacitor voltage. Their ESR at \FrConvFsw~kHz is \FrConvCapEsr~m$\Omega$.
 The cell dissipates \FrConvLossCell~W at 25\,$^\circ$C: \FrConvCondCell~W of conduction, of which
@@ -187,12 +186,9 @@ The cell dissipates \FrConvLossCell~W at 25\,$^\circ$C: \FrConvCondCell~W of con
 \FrConvCossCell~W is $C_{\mathrm{oss}}$ loss. The 36 cells together lose \FrConvLossSys~W at
 25\,$^\circ$C.
 
-The parts fill four mixed tiers, \FrDseOptStack~mm tall, listed from the input end. The first holds
-two HS switches and both flying capacitors (\FrTierOneH~\textmu m, set by the capacitor's maximum
-height), the second an HS and an LS switch (\FrTierTwoH~\textmu m), the third an LS switch and an
-inductor (\FrTierThreeH~\textmu m), and the fourth an LS switch and two inductors
-(\FrTierFourH~\textmu m). Parts shorter than their tier reach the next RDL through copper posts.
-Section~\ref{sec:realizability} orders the tiers and checks the vias between them.
+The parts fill four mixed tiers, \FrDseOptStack~mm tall (Table~\ref{tab:spec}).
+Section~\ref{sec:realizability} describes this stack, its copper posts and the order of its
+tiers.
 
 \begin{table}[!t]
 \caption{System Specification, Synthesized Design Point and Package Parameters (Material and

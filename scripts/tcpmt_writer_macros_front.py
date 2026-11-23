@@ -381,7 +381,7 @@ def die_and_mech():
     except Exception:                                              # noqa: BLE001
         TC = None
     uni, hot = {}, {}
-    mech = {}
+    mech, wall_h = {}, []
     for a in ("Z1", "Z2", "Z3"):
         for t in ("A", "B"):
             pc = TC.case_path("SDEC", t, a) if TC else SENS / f"etm_{a}_HV_SDEC__sdec_{t}.json"
@@ -389,6 +389,8 @@ def die_and_mech():
             if c:
                 uni[(a, t)] = c.get("die_T_max_C")
                 mm = c.get("mechanics") or {}
+                if t == "A":        # one coupled evaluation: E-T fixed point + mechanics
+                    wall_h.append(((c.get("et_wall_s") or 0) + (mm.get("wall_s") or 0)) / 3600.0)
                 cr = (mm.get("joint_search") or {}).get("critical") or {}
                 mech[(a, t)] = (mm.get("die_warpage_pv_um"), cr.get("du_um"))
             h = J(SENS / f"etm_{a}_HV_SDEC__die_hotspot_{t}.json")
@@ -397,6 +399,8 @@ def die_and_mech():
                 m[f"FrDieHot{ARCH[a]}{t}"] = fx(h.get("die_T_max_C"), 1)
     if uni:
         m["FrDieUniMax"] = fx(max(v for v in uni.values() if v is not None), 1)
+    if wall_h:
+        m["FrEvalHLo"], m["FrEvalHHi"] = fx(min(wall_h), 1), fx(max(wall_h), 1)
     if hot:
         m["FrDieHotMax"] = fx(max(hot.values()), 1)
         over = [f"{a}-{t}" for (a, t), v in sorted(hot.items()) if v > 105.0]
