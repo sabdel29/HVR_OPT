@@ -277,6 +277,9 @@ def decoupling():
          "WrKrmsHi": fx(pk["i_dual6+c_ring"]["band"][1], 2),
          "WrKopen": fx(s["k_open_cell_waveform"], 2),
          "WrKsync": fx(pk["none_sync"]["nominal"], 2),
+         # the bare-decoupling reference case: a rectangular pulse at the buck duty, 1/sqrt(D)
+         "WrKbare": fx(((d.get("circuit") or {}).get("waveform") or {}).get("rect_D", {}).get(
+             "k_open"), 1),
          "WrKgap": fx(pk["b_gap_0402_X7R"]["nominal"], 1),
          "WrKgapHi": fx(pk["b_gap_0402_X7R"]["band"][1], 0),
          "WrKring": fx(pk["c_ring_1206_X7S"]["nominal"], 2),
@@ -453,6 +456,16 @@ def compare():
         m[f"WrDuRatio{t}Ztwo"] = fx(z2["du"] / z1["du"], 2)
         m[f"WrdTjoint{t}Ztwo"] = fx(abs(z1["Tj"] - z2["Tj"]), 0)
         m[f"WrdTmax{t}Ztwo"] = fx(abs(z2["T"] - z1["T"]), 1)
+    # the routing terms Z2 and Z3 add (production state, cooling A; Fig. 9)
+    for a in ("Z2", "Z3"):
+        z = C[("A", a)]
+        if z:
+            g = {r["term"]: r["P_w"] for r in z["raw"]["ledger_rows"]}
+            m[f"WrPtsvA{ATAG[a]}"] = fx(sum(v for k, v in g.items() if k.startswith("P_TSV")), 2)
+            m[f"WrPattA{ATAG[a]}"] = fx(sum(v for k, v in g.items() if k.startswith(
+                ("P_VR_attach", "P_VR_PCB_attach"))), 2)
+            m[f"WrPbgaOneVA{ATAG[a]}"] = fx(sum(v for k, v in g.items()
+                                                 if k.startswith("P_BGA_1V")), 2)
     # Z3: land side and board planes in the coupled ledger
     for t in ("A", "B"):
         z3 = C[(t, "Z3")]
@@ -490,6 +503,8 @@ def uncertainty_rule():
         m[k + "Ratio"] = fx(c.get("ratio"), 1)
         m[k + "Uni"] = fx(c.get("U95"), 2 if c["output"] in ("P", "du") else 1)
         m[k + "Lower"] = c.get("lower") or NA
+        m[k + "Dc"] = fx(abs(c["D_corrected"]) if c.get("D_corrected") is not None else None,
+                         2 if c["output"] in ("P", "du") else 1)
     return m
 
 
