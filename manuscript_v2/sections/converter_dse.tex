@@ -13,15 +13,16 @@ inductor serves, and the buck duty is $D = NV_{\mathrm{out}}/V_{\mathrm{in}}$~\c
 Abdelzaher2026EPEPS}. The double series-capacitor buck and the dual-phase multi-inductor hybrid
 are members~\cite{DSCH,DPMIH44}.
 
-A closed-form loss model in continuous conduction evaluates conduction in the switches with the
-inductor ripple, in the flying-capacitor equivalent series resistance (ESR) and in the inductor
-DC resistance (DCR). It adds HS overlap, gate-drive and output-capacitance ($C_{\mathrm{oss}}$)
-switching loss~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}. Against circuit simulation of four
-other members---$N/K = 2/2$, $3/2$, $4/4$ and $6/2$ at 48-to-1~V, 30~A and 500~kHz---the model
-reproduces the total loss with $94.4\pm1.5$\,\% accuracy (worst case
-92.9\,\%)~\cite{Abdelzaher2025ECTC}, and its extension with $95.3\pm1$\,\%~\cite{Abdelzaher2026EPEPS}.
+A closed-form loss model in continuous conduction evaluates the conduction loss of the switches,
+including the inductor ripple. It adds the losses in the flying-capacitor equivalent series
+resistance (ESR) and the inductor DC resistance (DCR), and the HS overlap, gate-drive and
+output-capacitance ($C_{\mathrm{oss}}$) switching losses~\cite{Abdelzaher2025ECTC,
+Abdelzaher2026EPEPS}. The model was checked against circuit simulation of four other members:
+$N/K = 2/2$, $3/2$, $4/4$ and $6/2$, at 48-to-1~V, 30~A and 500~kHz. It reproduces their total loss
+with $94.4\pm1.5$\,\% accuracy (worst case 92.9\,\%)~\cite{Abdelzaher2025ECTC}, and its
+extension does so with $95.3\pm1$\,\%~\cite{Abdelzaher2026EPEPS}.
 These members do not include the design point, whose topology, devices and frequency have not
-been simulated at the circuit level; nor were the $C_{\mathrm{oss}}$ and gate-resistance rules
+been simulated at the circuit level. Nor were the $C_{\mathrm{oss}}$ and gate-resistance rules
 below part of that validation (Section~\ref{sec:limits}). Inductor core loss, alternating-current
 winding resistance, dielectric loss and dead-time loss are not in the model.
 Section~\ref{sec:explore-omit} bounds them (Table~S24) and compares the $C_{\mathrm{oss}}$ term with
@@ -34,7 +35,7 @@ component count, $2N+2K-1$, fits a budget. The budget is 15 components, rising t
 the cell area admits more parts at 0.48~mm$^2$ each. $K_A = \lceil K/2\rceil$, and $\mathbf{B}$ is
 the balanced allocation~\cite{Abdelzaher2026EPEPS}. For each member, the search covers every
 combination of HS device, LS device, inductor, capacitor and switching frequency $f_{\mathrm{sw}}$
-that passes the rules below, and it returns the combination of least loss at 25\,$^\circ$C. The
+that passes the rules below. It returns the combination of least loss at 25\,$^\circ$C. The
 library holds 90 enhancement-mode gallium-nitride (GaN) transistors, 11 integrated inductors and 10
 capacitors. The frequency takes 50 logarithmically spaced values from 43~kHz to 200~MHz, up to each
 inductor's rated frequency.
@@ -42,7 +43,7 @@ inductor's rated frequency.
 \emph{Voltage stress and derating.} The flying capacitor $C_i$ holds $(N-i)V_{\mathrm{in}}/N$,
 which is 32 and 16~V for $C_1$ and $C_2$ of an N3K3 cell. Every flying capacitor's rating, derated
 to 80\,\%, must cover its own stress. The top HS switch $S_1$ blocks $V_{\mathrm{in}}/N$, each
-stacked HS switch $\max(N-1,2)\,V_{\mathrm{in}}/N$ and each LS switch $V_{\mathrm{in}}/N$; a switch
+stacked HS switch $\max(N-1,2)\,V_{\mathrm{in}}/N$ and each LS switch $V_{\mathrm{in}}/N$. A switch
 may operate at no more than 90\,\% of its rated drain--source voltage. Node analysis of the SC
 ladder gives $2V_{\mathrm{in}}/N$ for every stacked switch, so the rule is exact for $N\le3$ and
 conservative above. The continuous current ratings of the switches and the saturation current of
@@ -50,7 +51,7 @@ the inductors must cover their branch currents.
 
 \emph{Effective capacitance and ESR.} The effective capacitance of each flying capacitor must keep
 its switching ripple below 10\,\% of its voltage. It is the vendor capacitance at the capacitor's
-own bias, corrected to 105\,$^\circ$C and reduced by the tolerance; a ceramic part without vendor
+own bias, corrected to 105\,$^\circ$C and reduced by the tolerance. A ceramic part without vendor
 bias data is not admitted. The ESR is taken at $f_{\mathrm{sw}}$ from the vendor's frequency data
 at the bias of $C_1$. Because the flying capacitors are soft-charged through the inductors, only
 this resistance enters the loss.
@@ -68,8 +69,8 @@ part; the nine parts without one take the median of the others, 0.4~$\Omega$. Ea
 its die outline and each capacitor its body area, 1.28~mm$^2$ for an 0603 part.
 
 \emph{Placement and tiers.} Every tier must be placeable. Its parts, rotation allowed, are packed
-without overlap in the square cell of side $(I_{\mathrm{cell}}/J_{\mathrm{t}})^{1/2}$, with a
-50-\textmu m keep-out between parts and half of it to the cell edge. A tier may hold parts of
+without overlap in the square cell of side $(I_{\mathrm{cell}}/J_{\mathrm{t}})^{1/2}$. A
+50-\textmu m keep-out separates the parts, and half of it separates them from the cell edge. A tier may hold parts of
 different classes, and the stack may use at most four tiers. A tier is as tall as its tallest part,
 and a 10-\textmu m RDL separates adjacent tiers. Among the placeable plans, the synthesis keeps the
 one with the fewest tiers and then the least height. Placement is exact for guillotine layouts of
@@ -119,14 +120,14 @@ cells without a tier limit. The minimum lies at $M = \FrDseOptM$: \FrDseOptTopo{
 \FrConvHsPart{} HS and \FrConvLsPart{} LS devices at \FrDseOptFsw~kHz, with \FrDseOptLoss~W
 (\FrDseOptConv~W conversion, \FrDseOptRoute~W routing) in \FrDseOptTiers{} tiers
 \FrDseOptStack~mm tall. At 25\,$^\circ$C with ideal input decoupling, the package ledger of Z1
-returns \PIsoZone~W for this design: the same \PconvIso-W conversion loss, and \ProuteIsoZone~W
-of routing in the explicit package conductors.
+returns \PIsoZone~W for this design. It has the same \PconvIso-W conversion loss and
+\ProuteIsoZone~W of routing in the explicit package conductors.
 
 The package builder realizes square grids of square cells under the square die, the shape that
 keeps the routing from every cell to its loads short~\cite{Krishnakumar2026DVPD}. The screen's
-optimum is such a grid ($\FrDseOptGrid\times\FrDseOptGrid$), and it is the best of them: 16, 25
-and 49 cells dissipate \FrDseSqSixteen, \FrDseSqTwentyfive{} and \FrDseSqFortynine~W, and
-\FrDseSqInfeasList{} cells admit no member.
+optimum is such a grid ($\FrDseOptGrid\times\FrDseOptGrid$) and the best of them. The 16-, 25- and
+49-cell grids dissipate \FrDseSqSixteen, \FrDseSqTwentyfive{} and \FrDseSqFortynine~W, and the
+grids of \FrDseSqInfeasList{} cells admit no member.
 
 The count is confirmed by the chain, not assumed. The neighbouring square grids, 25 cells
 (\FrDseTwentyfiveTopo{} at \FrDseTwentyfiveFsw~kHz) and 49 cells (\FrDseFortynineTopo{} at
@@ -181,8 +182,8 @@ The rated 0603 flying capacitors~\cite{FrMurataGRM188} hold \FrConvCapVone{} and
 against \FrConvCapVallow~V derated. Corrected for bias, 105\,$^\circ$C and tolerance, they retain
 \FrConvCapCeffHotOne{} and \FrConvCapCeffHotTwo~\textmu F, so the worst switching ripple is
 \FrConvCapRipple\,\% of the capacitor voltage. Their ESR at \FrConvFsw~kHz is \FrConvCapEsr~m$\Omega$.
-The cell dissipates \FrConvLossCell~W at 25\,$^\circ$C: \FrConvCondCell~W of conduction, of which
-\FrConvLsCondCell~W is in the LS switches, and \FrConvSwCell~W of switching, of which
+The cell dissipates \FrConvLossCell~W at 25\,$^\circ$C. Conduction accounts for \FrConvCondCell~W,
+of which \FrConvLsCondCell~W is in the LS switches, and switching for \FrConvSwCell~W, of which
 \FrConvCossCell~W is $C_{\mathrm{oss}}$ loss. The 36 cells together lose \FrConvLossSys~W at
 25\,$^\circ$C.
 

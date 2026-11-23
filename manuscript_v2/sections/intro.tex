@@ -20,16 +20,16 @@ modules~\cite{Vicor_VPD_AI,Baek2022LEGOPoL,Radhakrishnan2021PowerDelivery}. Each
 decides which rail crosses each vertical interconnect and at what current. It also decides where
 the converter's heat flows, which materials expand against each other and which solder joints
 carry the deformation. The converter decisions are coupled to the same package. The cell count
-fixes each cell's footprint, the selected parts fix the component heights and ratings, and the
-assignment of parts to tiers fixes which connections cross which dielectric depth. An
+fixes each cell's footprint. The selected parts fix the component heights and ratings, and their
+assignment to tiers fixes which connections cross which dielectric depth. An
 electrically optimal design can therefore violate a via rule, overload the ball field, exceed its
 cooling, run a device beyond its rating or load a solder joint harder than an alternative.
 
 This paper asks one question: where should the cells of a synthesized regulator be integrated
 once its loss, temperature and deformation are solved together under identical cooling?
-Answering it requires a model chain that carries the converter from its parts to the solder
-joints of the mounted package, on one geometry, and checks every part and package rule on the
-way.
+Answering it requires one model chain on one geometry. The chain must carry the converter from
+its parts to the solder joints of the mounted package and check every part and package rule on
+the way.
 
 Commercial multiphysics tools couple electrical, thermal and structural analysis of a given
 layout, including warpage and solder-life
@@ -59,9 +59,9 @@ and merged-stage 48-V converters~\cite{Wang2023MSCPoL,Yan2026VPD48V1V}, monolith
 switched-capacitor stages~\cite{Liu2025MonolithicSCVR,Gong2026SCCurrentMultiplier} and
 through-silicon-via inductors~\cite{Ding2026TSVCoupledInductor}. Each targets a given
 integration. To our knowledge, no study carries a converter synthesized over its topology from
-discrete parts into a mounted, explicitly resolved package, compares its integrations under
-identical cooling, and evaluates their thermomechanical and solder-joint consequences together
-with part ratings and interconnect realizability (Table~\ref{tab:prior}).
+discrete parts into a mounted, explicitly resolved package. Nor does any compare its integrations
+under identical cooling while evaluating thermomechanics, solder joints, part ratings and
+interconnect realizability together (Table~\ref{tab:prior}).
 
 \input{tab_prior}
 
@@ -76,13 +76,13 @@ topology is re-synthesized from discrete parts at every count, under part-level 
 derating, effective capacitance, output-capacitance loss, two-dimensional placement and the number
 of tiers. It also extends the self-consistent electrothermal treatment
 of~\cite{Choi2025SelfConsistent}, applied there to one embedded architecture, to a mounted
-package with a declared cooling boundary in three integrations. Four elements are new: (i) the
-comparison of three integrations of one synthesized regulator at a common temperature and under
-two identical coolings, after the candidates that violate a rating are filtered out; (ii) a
+package with a declared cooling boundary in three integrations. Four elements are new. The first
+is the comparison of three integrations of one synthesized regulator at a common temperature and
+under two identical coolings, after infeasible candidates are filtered out. The second is a
 thermoelastic solution of the mounted assembly with a search over every interconnect site, a
-viscoplastic joint submodel and an optional feedback through the plate interface; (iii) a
-realizability check of the tier order; and (iv) a comparison rule that resolves each difference
-against its own numerical uncertainty. Unlike~\cite{Krishnakumar2026DVPD}, the framework does not
+viscoplastic joint submodel and an optional feedback through the plate interface. The third is a
+realizability check of the tier order, and the fourth a comparison rule that resolves each
+difference against its own numerical uncertainty. Unlike~\cite{Krishnakumar2026DVPD}, the framework does not
 resolve transient droop, and the designer, not the framework, feeds the package result back to
 the synthesis.
 
