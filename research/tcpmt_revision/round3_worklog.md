@@ -128,3 +128,20 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     pillars are not counted.
 - Campaign runner: 35 local cores at nice 0; local-first; no califone buffer (PBS limits only). Commit f762af1.
 - Do not git-stash while the campaign runs: jobs read scripts from this tree.
+
+## 2026-11-22: campaign complete (281/281), rewrite started
+- Production (SDEC):
+  - Z1 A 135.7 W / 112.1 C (feasible); Z1 B 134.8 W / 108.9 C (feasible)
+  - Z2 A 134.8 / 118.5; Z2 B 118.1 / 77.0 (failed bga_sites at 220/rail: artifact, being re-closed at 2 A)
+  - Z3 A 200.9 / 184.9 infeasible; Z3 B 154.8 / 80.0 infeasible (sites, IR drop)
+  - Die 77-91 C.
+- User approved: re-close the 48-V BGA at 2 A (smallest legal count, site fraction <= 0.75). Electrical only; ball layout unchanged.
+- Regenerated artifacts copied into manuscript_v2 (6c13a1e). Per-writer macro files (macros_front/methods/results.tex)
+  and refs_*.bib (ecdf2cd).
+- Running:
+  - BGA re-close agent;
+  - writer FRONT: abstract, intro, framework, converter_dse, Table I, fig1, fig2, fig_dse;
+  - writer METHODS: architectures_models, verification, Table IV gen, fig3, fig4, fig10;
+  - writer RESULTS: evaluate, compare, explore, discussion (owns IX-B caveats), conclusion, Table V gen, fig5-9.
+- Next: final consistency and number audit; supplement pointers and wrapper; response letter and revision notes;
+  then page reduction.
