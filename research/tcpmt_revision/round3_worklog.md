@@ -203,3 +203,15 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     - B: Z1 5.60, Z2 1.55, Z3 2.13 (x1e-3/cycle);
     - the worst site is the same under all laws; orderings hold and are resolved.
   - Macros: \MvEps*, \MvEpsSite*, \MvCrit*. The sections must replace the legacy \WrEps*.
+- 2026-11-23: BGA re-close DONE (f4457a1..20bf679).
+  - Counts: Z1 168/rail (2.00 A, 24.5 %); Z2 ring 166 (1.94 A, 62.9 %); Z3 1-V 500 (2.00 A DC, 73 %; placed on the
+    sites nearest the cells: rule TO CONFIRM with the user). At 1.5 A no legal arrangement.
+  - Losses A/B: Z1 136.97/136.08 W (+1.3); Z2 unchanged; Z3 180.09/136.85 W (-20).
+  - Cooling A: Z2 -2.21 W inside the package (resolved), Z1 -5.2 W platform-inclusive.
+  - Cooling B: Z2 lowest; Z3 vs Z1 unresolved in loss, but Z3 infeasible (IR drop 46 mV).
+  - Feasibility: Z1 and Z2 pass under A and B; Z3 fails both.
+  - k_rms 2.64 from the 220-ball network (2.41 at 168), so the feed results are conservative.
+- Campaign idle: 343 done + 1 valid.
+- Running: the FINAL INTEGRATION agent (regenerate everything; text consistent with the final results; cleanup;
+  number audit; clean build) and the LETTER agent (response letter and revision notes against the final paper, xr
+  references).
