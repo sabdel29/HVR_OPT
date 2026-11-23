@@ -6524,7 +6524,7 @@ jobs:
   - tcpmt_revision/solder_critical_v2.json
   deps:
   - mech.lawband.window
-  ncpus: 32
+  ncpus: 24
   mem_gb: 24.0
   est_wall_h: 1.2
   walltime_h: 3.5
@@ -6534,16 +6534,16 @@ jobs:
   prefer: pbs
   env:
     LOCAL_THREADS: '2'
-    TCPMT_SOLDER_SLOTS: '16'
+    TCPMT_SOLDER_SLOTS: '12'
   validate:
   - file: tcpmt_revision/solder_critical_v2.json
     kind: json
     nonempty:
     - cases
     fresh: true
-  workers: 16
-  evidence: ~650 candidates over the six compared cases (66-147 each, campaign_v3 case files) x 45-110
-    s on 2 threads, 16 slots
+  workers: 12
+  evidence: '~650 candidates over the six compared cases (66-147 each, campaign_v3 case files) x 45-110
+    s on 2 threads, 12 slots (califone: <= 56 cpus per user)'
   notes: 'finding 2: every candidate of the full-lattice search (top 30 by |du_xy|, tilt, eps_z and deforming
     du, the strict Pareto front in (|du_xy|, T), the corners) solved with the production law at its converged
     window; monotonicity over the dominance pairs, the maximum-response joint'
@@ -6637,7 +6637,7 @@ jobs:
   - tcpmt_revision/solder_local_checks.json
   deps:
   - mech.lawband
-  ncpus: 24
+  ncpus: 20
   mem_gb: 24.0
   est_wall_h: 1.0
   walltime_h: 3.0
@@ -6647,14 +6647,14 @@ jobs:
   prefer: pbs
   env:
     LOCAL_THREADS: '2'
-    TCPMT_SOLDER_SLOTS: '12'
+    TCPMT_SOLDER_SLOTS: '10'
   validate:
   - file: tcpmt_revision/solder_local_checks.json
     kind: json
     nonempty:
     - groups
     fresh: true
-  workers: 12
+  workers: 10
   evidence: ~90 solves (chain 6 x 6, dwell/ramp 3 x 6, element 2, mesh L1-L3 x 6, 8 cycles x 6, fine-pitch
     joints 12-18); L3 and 8-cycle solves 3-10x an L0 one
   notes: the numerical U of every joint (own L0 -> L3 and 4 -> 8 cycle changes), the dwell / ramp / element
