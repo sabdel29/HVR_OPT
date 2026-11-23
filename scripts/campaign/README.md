@@ -280,21 +280,40 @@ change of every production case's BGA feed terms between the two networks (`coup
 below 0.1 W it is recorded and the coupled cases are not re-run; above it the production cases
 on another count are re-run, and the re-closure is run again to confirm the count at their
 current (the per-ball check reads the production cases' 48-V current: a fixed point).
-campaign_v3 (k_eq 2.641 from the campaign's own decoupling chain), first pass:
+campaign_v3 (k_eq 2.641 from the campaign's own decoupling chain), confirmed by the second pass at
+the re-run production currents:
 
-| | adopted count / rail (sites) | DC peak x k_eq (verified) | 2-A margin | worst-ball RMS (port model, bound) | R_loop 20 C (vs 220/rail) | 1.5 A would need |
-|---|---:|---:|---:|---:|---:|---|
-| Z1 | 168 (336 of 1369, 24.5 %) | 2.00 A | 0.003 A | 2.17 A | 0.894 mOhm (+32 %) | no legal count <= 220 closes it |
-| Z2 | 166 (332 of 528, 62.9 %) | 1.94 A | 0.059 A | n/a | 1.475 mOhm (-2 %) | 202 / rail (76.5 % of the ring): beyond the site budget |
+| | adopted count / rail (sites) | DC peak x k_eq (verified) | worst-ball RMS (port model, bound) | R_loop 20 C (vs 220/rail) | 1.5 A would need |
+|---|---:|---:|---:|---:|---|
+| Z1 (48 V) | 168 (336 of 1369, 24.5 %) | 2.00 A (1.9996; margin 0.0004 A) | 2.17 A | 0.894 mOhm (+32 %) | no legal count <= 220 closes it (1.73 A at 220) |
+| Z2 (48-V ring feed) | 166 (332 of 528, 62.9 %) | 1.94 A | n/a | 1.475 mOhm (-2 %) | 202 / rail (76.5 % of the ring): beyond the site budget |
+| Z3 (1 V, DC, equal sharing) | 500 (1000 of 1369, 73.0 %) | 2.00 A | n/a | -- | 667 / rail (97.4 %): beyond the site budget |
 
-Coupled effect of the first pass: Z1's package 48-V ledger terms +1.17 W (A) and +1.15 W (B), above
-the threshold, so `prod.Z1.SDEC.A/B` are re-run together with the production-state rungs
-(`ladder.Z1.sdec_*`, the uncertainty ladder of those cases) and the production-state variants
-compared with them (`feedback.Z1.*`, `hotspot.Z1.*`, `robust.caloric.Z1.*`); Z2's coupled ledger
-has no 48-V term (direct feed), so its cases are not re-run; its ring feed (platform accounting,
-outside the package-internal boundary) changes by -0.15 W (A) and -0.13 W (B). The superseded
-outputs at 220 per rail are in `_campaign/superseded/2026-11-23_bga_220_per_rail/`. The S0/S1/S2
-reference cases and their variants are not re-run: they keep the modelled 220 per rail.
+At 168 the level-1 screen gives 2.001 A and the verification level 1.9996 A (the upper end of
+the k_eq band needs 170); the port model's own k_eq at 168 balls is 2.42 (2.64 at 220), so the
+rule's design k is conservative there (the change of Z1's 48-V package terms would be +0.39 W at
+that k instead of +1.17 W).
+
+Coupled effect and re-runs (2026-11-23). Z1's package 48-V ledger terms change by +1.17 W (A) and
++1.15 W (B) at the cases' current, above the 0.1-W threshold. Re-run through the runner: the
+production cases of Z1 and Z2 (`prod.Z{1,2}.SDEC.*`; Z2's coupled ledger carries no 48-V term:
+its re-run is bit-identical), Z1's reference states (`prod.Z1.S0/S1/S2.*`, the S0 ladder
+`ladder.Z1.r11/r12/r31`, their fields and the local solder responses), the production-state rungs
+and variants of Z1 (`ladder.Z1.sdec_*`, `feedback/hotspot/robust.caloric.Z1.*`), Z1's class-B
+robustness variants on the S0 reference (`robust.Z1.*`, their local responses and
+`derived.classB`, so each variant and its base carry the same count), and with Z3's
+1-V balls at 2 A the Z3 chain (land-side sheets, every Z3 case, `z3land.*`, the production-state
+rungs and variants) and the solder studies. Package-internal loss, cooling A / B (W): Z1
+135.67 / 134.80 -> 136.97 / 136.08; Z2 134.76 / 118.14 (unchanged); Z3 200.91 / 154.83 ->
+180.09 / 136.85 (the 1-V balls nearest the footprints shorten the land-side and board-plane
+spreading: -12.1 / -7.5 W at A). Not re-run (they keep their own modelled arrangements): the
+alternate designs (m36t5, m36thin, m25, m49) and the decoupling chain (k_eq is derived on the
+220-per-rail network, as the rule states). Superseded outputs
+are in `_campaign/superseded/2026-11-23_bga_220_per_rail/`. Re-running in the existing work trees
+exposed readers that took the last iteration or thermal file and found the earlier run's
+(fixed: `tcpmt_cases.converged_field`, the field collectors, `tcpmt_z3land_variants.
+last_thermal_frd`; stale files were moved to `_stale_2026-11-20/` in each tree) and a solder
+harness cache keyed without the joint loading (fixed: `tcpmt_solder_common.same_load`).
 
 **Z3's 1-V balls** (the coordinator's decision of 2026-11-23, for consistency): the same per-ball
 rule -- the smallest count per rail meeting the 2-A target at DC with equal sharing, ceil(1000 A /
