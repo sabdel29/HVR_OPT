@@ -425,6 +425,15 @@ def scratch_dir(variant):
 
 
 def last_thermal_frd(variant):
+    """The variant's converged thermal field: tcpmt_cases.converged_field of its case file (the
+    newest-numbered file whose T_max is the case's: a re-run in a re-used work tree can leave
+    the earlier run's iterations and files), else the last file of the last iteration."""
+    import tcpmt_cases as TC
+    cf = S.case_file("Z3", variant)
+    if cf.is_file():
+        f = TC.converged_field(cf)
+        if f:
+            return Path(f["thermal"])
     wd = scratch_dir(variant)
     last_it = sorted(wd.glob("et*"), key=lambda p: int(p.name[2:]))[-1]
     frd = sorted(last_it.glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))[-1]
