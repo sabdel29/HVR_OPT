@@ -94,8 +94,8 @@ def joint():
                 m[f"MvEps{LTAG[law]}{k}"] = fx(1e3 * x, 2)
                 ratios.setdefault(law, []).append(x / v["production"])
         spread.append(v["spread_rel_to_production"])
-        for law, xy in (v.get("sites_mm") or {}).items():
-            if law in LTAG and xy:
+        for law, p in (v.get("sites_mm") or {}).items():
+            if law in LTAG and p:
                 m[f"MvEpsSite{LTAG[law]}{k}"] = xy(*p)
         jt = (b.get("joints") or {}).get(lab) or {}
         m[f"MvTsj{k}"] = fx(jt.get("T_C"), 1)
@@ -127,8 +127,8 @@ def joint():
         for lab, v in b["band"].items():
             sites = v.get("sites_mm") or {}
             ps = sites.get(prod)
-            for law, xy in sites.items():
-                if law != prod and ps and xy and tuple(xy) != tuple(ps):
+            for law, q in sites.items():
+                if law != prod and ps and q and tuple(q) != tuple(ps):
                     t, a = lab.split("_")
                     diff.setdefault((a, t), []).append(law)
         names = {"schubert2003": "Schubert et al.", "xiao_armstrong2005": "Xiao and Armstrong",

@@ -169,3 +169,24 @@ def test_margin_is_twice_the_largest_reversal_but_at_least_the_floor(monkeypatch
     assert abs(w - 0.08) < 1e-12 and abs(m - 0.16) < 1e-12
     rows[1]["d_eps"] = 4.0
     assert CR.margin_of(rows) == (0.10, 0.0)
+
+
+def test_joint_macros_build_with_per_law_sites(tmp_path, monkeypatch):
+    import tcpmt_mech_macros as M
+    band = {"production_law": "schubert2003", "band_laws": ["schubert2003", "xa_measured_norton"],
+            "state": "SDEC", "same_site_all_laws": False, "all_verified": True,
+            "joints": {"A_Z1": {"x_mm": -14.4, "y_mm": 14.4, "T_C": 90.0, "du_xy_um": 1.0,
+                                "du_z_um": 0.5, "du_def_xy_um": 0.8}},
+            "band": {"A_Z1": {"complete": True, "values": {"schubert2003": 6.8e-3,
+                                                           "xa_measured_norton": 6.0e-3},
+                              "production": 6.8e-3, "min": 6.0e-3, "max": 6.8e-3,
+                              "spread_rel_to_production": 0.12,
+                              "sites_mm": {"schubert2003": [-14.4, 14.4],
+                                           "xa_measured_norton": [14.4, 14.4]}}},
+            "rankings": {}, "rankings_hold_across_laws": True}
+    (tmp_path / "solder_law_band.json").write_text(json.dumps(band))
+    monkeypatch.setattr(M, "TR", tmp_path)
+    m = M.joint()
+    assert m["MvEpsAZone"] == "6.80" and m["MvEpsLoAZone"] == "6.00"
+    assert m["MvEpsSiteSchubAZone"] == r"(\textminus{}14.4, 14.4)"
+    assert m["MvEpsSameSite"] == "no" and "Z1 under cooling~A" in m["MvEpsSiteDiff"]
