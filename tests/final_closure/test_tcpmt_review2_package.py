@@ -494,3 +494,22 @@ def test_feasibility_peak_fraction_at_the_adopted_count(tmp_path, monkeypatch):
     monkeypatch.setattr(F, "_NET", {})
     assert F.peak_fraction("Z1", 168) == (0.0320, "adopted-count network (level 3)")
     assert F.peak_fraction("Z1", 220) == (0.0277, "package network (level 3)")
+
+
+def test_converged_field_skips_stale_files_of_an_earlier_run(tmp_path, monkeypatch):
+    """A re-run in a re-used work tree can leave higher-numbered thermal files of the earlier
+    run beside its own: the converged field is the newest-numbered file whose T_max matches the
+    case's, not simply the last one."""
+    import tcpmt_cases as TC
+    wd = tmp_path / "wd"
+    (wd / "et1").mkdir(parents=True)
+    for name, t in (("th_0.frd", 90.0), ("th_1.frd", 100.0), ("th_2.frd", 184.9)):  # th_2 stale
+        (wd / "et1" / name).write_text(str(t))
+    (wd / "structural.frd").write_text("s")
+    monkeypatch.setattr(TC, "_frd_tmax", lambda p: float(Path(p).read_text()))
+    monkeypatch.setattr(TC, "_work_dirs", lambda path, case: [wd])
+    case = {"thermal": {"T_max_C": 100.0}, "et_history": [{}, {}]}
+    f = TC.converged_field(tmp_path / "case.json", case)
+    assert Path(f["thermal"]).name == "th_1.frd" and f["structural"] == wd / "structural.frd"
+    case["thermal"]["T_max_C"] = 120.0
+    assert TC.converged_field(tmp_path / "case.json", case) is None

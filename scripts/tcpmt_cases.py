@@ -224,13 +224,16 @@ def converged_field(path, case=None, check_tol_K=1e-3):
         cand = [want] if want in ets else [ets[-1]]
         for et in cand:
             th = sorted(et.glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))
-            if not th:
+            # a work tree re-used by a re-run can keep higher-numbered thermal files of the
+            # earlier run (fewer inner solves this time): the converged file is the newest-
+            # numbered one whose T_max matches the case's, not simply the last
+            hit = next((f for f in reversed(th) if abs(_frd_tmax(f) - t_max) <= check_tol_K),
+                       None)
+            if hit is None:
                 continue
-            if abs(_frd_tmax(th[-1]) - t_max) > check_tol_K:
-                continue
-            inp = th[-1].with_suffix(".inp")
+            inp = hit.with_suffix(".inp")
             st = wd / "structural.frd"
-            return {"thermal": th[-1], "inp": inp if inp.is_file() else None,
+            return {"thermal": hit, "inp": inp if inp.is_file() else None,
                     "structural": st if st.is_file() else None, "source": str(wd)}
     return None
 
