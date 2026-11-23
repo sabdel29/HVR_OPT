@@ -194,3 +194,12 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     86/99 orderings kept, 1 resolved reversal.
   - Writers' \WrEps* and \SchubertRatio are legacy; replace them with \MvEps*. compare.tex:140 "independent" Schubert
     is wrong; classB eps base is legacy.
+- Mechanics worst-site check (commits ed21f38..ceb98dc).
+  - The production-law values were already at the worst of the 669 sites. Fixed: the other laws now use their own
+    worst site; mirror corners; a dominance bound covering all 6532 lattice sites (Pareto front plus margin; about
+    1050 sites per law).
+  - Values moved <= 0.7 %:
+    - A: Z1 6.81, Z2 3.35, Z3 3.11;
+    - B: Z1 5.60, Z2 1.55, Z3 2.13 (x1e-3/cycle);
+    - the worst site is the same under all laws; orderings hold and are resolved.
+  - Macros: \MvEps*, \MvEpsSite*, \MvCrit*. The sections must replace the legacy \WrEps*.
