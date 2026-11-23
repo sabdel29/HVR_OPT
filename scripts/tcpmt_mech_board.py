@@ -325,6 +325,8 @@ def state_run(arch, tier, state="SDEC", factor=None, only=None):
             print(f"{tg} {name}: " + json.dumps({k: sm.get(k) for k in (
                 "die_warpage_pv_um", "du_c_um", "site_mm", "wall_s", "error")}, default=float),
                 flush=True)
+    res["all_solves_ok"] = bool(res["mechanics"]) and all(
+        "error" not in me for me in res["mechanics"].values())
     fr = res["mechanics"].get("free") or {}
     if "die_warpage_pv_um" in fr:
         cm = res["case_mechanics"]
@@ -395,6 +397,9 @@ def state_et(arch, tier, state="SDEC", factor=None, refine=(1, 1)):
         print(f"{tg} {name}: " + json.dumps({k: sm.get(k) for k in (
             "die_warpage_pv_um", "du_c_um", "site_mm", "wall_s", "error")}, default=float),
             flush=True)
+    res["all_solves_ok"] = bool(res["mechanics"]) and all(
+        "error" not in me for me in res["mechanics"].values())
+    f.write_text(json.dumps(res, indent=1, default=float))
     os.environ.pop("HVR_BOARD_EXTENT_FACTOR", None)
     os.environ.pop("HVR_BOARD_FAR_H_MM", None)
     return f

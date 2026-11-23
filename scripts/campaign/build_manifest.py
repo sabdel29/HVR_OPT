@@ -821,8 +821,8 @@ def mech_jobs(prod, vfields, lad, prep, class_b):
                           evidence="11 structural solves on the production mesh (coupon 112 kel, "
                                    "larger board ~1.4x): campaign_v3 mechanics-only 340-2000 s "
                                    "on 1 thread; 4 at a time on 2 threads",
-                          validate=[{"file": f, "kind": "json", "nonempty": ["mechanics"],
-                                     "fresh": True}],
+                          validate=[{"file": f, "kind": "json",
+                                     "nonempty": ["mechanics", "all_solves_ok"], "fresh": True}],
                           notes="coupon: free (reproduces the case), screws, pinned screws, edge, "
                                 "the 200-N clamp at the screws (hot / clamp only) and on a "
                                 "backplate; a 3x board with its ring at the coupon edge "
@@ -838,8 +838,8 @@ def mech_jobs(prod, vfields, lad, prep, class_b):
                           ncpus=2, mem_gb=8, est_h=0.4, prefer="pbs", env={"FC_THREADS": 2},
                           evidence="the case's r11 rung: E-T 250-500 s + mechanics ~120 s; the "
                                    "3x board adds a coarse ring (+7 % elements at r21)",
-                          validate=[{"file": f, "kind": "json", "nonempty": ["mechanics"],
-                                     "fresh": True}],
+                          validate=[{"file": f, "kind": "json",
+                                     "nonempty": ["mechanics", "all_solves_ok"], "fresh": True}],
                           notes="the case's state hooks and cooling base, the 3x board, E-T "
                                 "then free / screws / clamp mechanics (finding 6)"))
     out["board"] = job("mech.board_summary", "mech_revision",
