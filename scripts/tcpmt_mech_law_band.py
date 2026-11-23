@@ -33,13 +33,27 @@ import tcpmt_mech_laws as LAW                                       # noqa: E402
 import tcpmt_mech_submodel as SUB                                   # noqa: E402
 import tcpmt_mech_kinematics as KIN                                 # noqa: E402
 
-STUDY = "lawband"
+import tcpmt_mech_production as MP                                 # noqa: E402
+
+#: TCPMT round 3 (campaign): the joints are the critical joints of the COMPARED cases of the
+#: local model's state -- the production state (implemented decoupling, HV_SDEC) of the design
+#: in force, Z1/Z2/Z3 x cooling A/B (tcpmt_cases; site kinematics from the case files,
+#: tcpmt_mech_production). TCPMT_LOCAL_STATE=S0|S1 solves a reference state's cases instead
+#: (own study, own output names), =round2 the round-2 field cases of the merged branch.
+STATE = MP.LOCAL_STATE
+_SFX = "" if STATE == "SDEC" else f"_{STATE}"
+STUDY = "lawband" + _SFX
 TR = LAW.TR
-BAND = TR / "solder_law_band.json"
-CRIT = TR / "solder_critical_v2.json"
+BAND = TR / f"solder_law_band{_SFX}.json"
+CRIT = TR / f"solder_critical_v2{_SFX}.json"
+#: the converged windows: the production card's file for the production state only (the
+#: production harness reads it); another state records its own and never moves the card
+CARDS_OUT = LAW.CARDS if STATE == "SDEC" else TR / f"solder_law_cards{_SFX}.json"
 #: tier -> arch -> kinematics case; the coupled land-side Z3 cases when their kinematics exist
-TIERS = {"A": {"Z1": "Z1_S0", "Z2": "Z2_S0", "Z3": ("A_Z3land", "A_Z3")},
-         "B": {"Z1": "B_Z1", "Z2": "B_Z2", "Z3": ("B_Z3land", "B_Z3")}}
+ROUND2_TIERS = {"A": {"Z1": "Z1_S0", "Z2": "Z2_S0", "Z3": ("A_Z3land", "A_Z3")},
+                "B": {"Z1": "B_Z1", "Z2": "B_Z2", "Z3": ("B_Z3land", "B_Z3")}}
+TIERS = ROUND2_TIERS if STATE == "round2" else {
+    t: {a: MP.label(STATE, t, a) for a in ("Z1", "Z2", "Z3")} for t in ("A", "B")}
 
 
 def joint_case(tier, arch):
@@ -121,7 +135,7 @@ def iterate(law, js, execute=True):
 
 
 def store_cards(logs, js):
-    d = json.loads(LAW.CARDS.read_text()) if LAW.CARDS.is_file() else {}
+    d = json.loads(CARDS_OUT.read_text()) if CARDS_OUT.is_file() else {}
     d["what"] = ("converged Norton-surrogate windows of the local solder laws (v2 model: "
                  "global cut-boundary kinematics, ramped loading); written by "
                  "scripts/tcpmt_mech_law_band.py")
@@ -139,8 +153,10 @@ def store_cards(logs, js):
                           "visited_T_C": sorted(round(SUB.site_temperature(k), 2)
                                                 for _, _, k, _ in js),
                           "weighting": w["weighting"], "quantiles": w["quantiles"],
-                          "joints": [lab for lab, *_ in js]}
-    LAW.CARDS.write_text(json.dumps(d, indent=1, default=float) + "\n")
+                          "joints": [lab for lab, *_ in js],
+                          "joint_cases": {lab: case for lab, case, *_ in js},
+                          "state": STATE}
+    CARDS_OUT.write_text(json.dumps(d, indent=1, default=float) + "\n")
 
 
 def ranking(v):
@@ -149,19 +165,47 @@ def ranking(v):
     return " < ".join(sorted(v, key=v.get))
 
 
+def _kin_meta(case):
+    k = KIN.load_kinematics(case) or {}
+    return {"case_file": k.get("case_file"), "case_sha1": k.get("case_sha1"),
+            "inputs_sha1": k.get("inputs_sha1") or {}}
+
+
+def critical_check(js):
+    """The v2 critical-joint check behind the joints, when it covers every joint's case:
+    {file, per joint: moved off the maximum-du site?}; None otherwise."""
+    if not CRIT.is_file():
+        return None
+    cases = json.loads(CRIT.read_text()).get("cases", {})
+    if not all((cases.get(case) or {}).get("max_response_site") for _l, case, *_ in js):
+        return None
+    return {"file": MP.rel(CRIT), "moved_off_max_du": {
+        lab: basis == "v2 critical-joint check" and not cases[case].get("critical_is_max_du")
+        for lab, case, _k, basis in js}}
+
+
 def summarize(logs, js):
     prod = LAW.solder_cfg()["production_law"]
     final = {law: its[-1]["responses"] for law, its in logs.items()}
+    meta = {case: _kin_meta(case) for _l, case, *_ in js}
     out = {"what": "local joint response as a band over the configured solder laws "
                    "(finding 1); v2 local model",
+           "state": STATE,
            "production_law": prod, "band_laws": list(logs),
            "model": {k: SUB.lcfg()[k] for k in ("bc_mode", "ramp_s", "dwell_s", "n_cycles",
                                                  "element", "level")},
            "joints": {lab: {"case": case, "x_mm": k["x_mm"], "y_mm": k["y_mm"],
                             "T_C": SUB.site_temperature(k), "du_xy_um": k["du_xy_um"],
-                            "du_z_um": k["du_z_um"], "site_basis": basis}
+                            "du_z_um": k["du_z_um"], "du_def_xy_um": k.get("du_def_xy_um"),
+                            "site_basis": basis, "case_file": meta[case]["case_file"],
+                            "case_sha1": meta[case]["case_sha1"]}
                       for lab, case, k, basis in js},
+           "inputs_sha1": {p: h for m in meta.values() for p, h in m["inputs_sha1"].items()},
            "iterations": logs, "responses": final, "band": {}, "rankings": {}}
+    cc = critical_check(js)
+    if cc is not None:                 # pass 2: the joints the critical-joint check confirmed
+        out["critical_check"] = cc
+        out["inputs_sha1"][str(CRIT.resolve())] = MP.sha1(CRIT)
     for lab, *_ in js:
         v = {law: final[law].get(lab) for law in final}
         if None in v.values() or not v.get(prod):
@@ -171,6 +215,8 @@ def summarize(logs, js):
         out["band"][lab] = {"values": v, "min": lo, "max": hi, "production": v[prod],
                             "spread_rel_to_production": (hi - lo) / v[prod],
                             "U_law_rel": max(hi - v[prod], v[prod] - lo) / v[prod],
+                            "ratio_to_production": {k: x / v[prod] for k, x in v.items()},
+                            "law_of_min": min(v, key=v.get), "law_of_max": max(v, key=v.get),
                             "complete": True}
     for law, v in final.items():
         out["rankings"][law] = {t: ranking({a: v.get(f"{t}_{a}") for a in ("Z1", "Z2", "Z3")

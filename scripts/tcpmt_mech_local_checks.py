@@ -29,8 +29,14 @@ import tcpmt_mech_submodel as SUB                                   # noqa: E402
 import tcpmt_mech_kinematics as KIN                                 # noqa: E402
 import tcpmt_mech_laws as LAW                                       # noqa: E402
 
-STUDY = "checks"
-OUT = LAW.TR / "solder_local_checks.json"
+import tcpmt_mech_production as MP                                 # noqa: E402
+
+#: TCPMT round 3 (campaign): the joints of the local model's state (tcpmt_mech_law_band.joints:
+#: the production state's compared cases by default)
+STATE = MP.LOCAL_STATE
+_SFX = "" if STATE == "SDEC" else f"_{STATE}"
+STUDY = "checks" + _SFX
+OUT = LAW.TR / f"solder_local_checks{_SFX}.json"
 CHAIN = {"R2": dict(law="legacy", bc="legacy", ramp_s=0.0),
          "ramp": dict(law="legacy", bc="legacy"),
          "law": dict(bc="legacy"),
@@ -46,12 +52,22 @@ DWELL.update({f"ramp{r:g}": dict(ramp_s=r) for r in LAW.cfg()["local"]["ramp_sen
 ELEMENT = {"C3D8I": dict(element="C3D8I"), "C3D8R": dict(element="C3D8R")}
 MESH = {"L1": dict(level="L1"), "L2": dict(level="L2"), "L3": dict(level="L3")}
 CYCLES = {"N8": dict(n_cyc=8)}
+#: the mesh check at every compared joint (each joint's own L0 -> L3 change is its numerical U,
+#: tcpmt_uncertainty.local_u_v2); round 2 checked the cooling-A Z1 and Z3 joints only
 GROUPS = {"chain": (CHAIN, None), "dwell": (DWELL, None), "element": (ELEMENT, ("A_Z1",)),
-          "mesh": (MESH, ("A_Z1", "A_Z3")), "cycles": (CYCLES, None)}
+          "mesh": (MESH, ("A_Z1", "A_Z3") if STATE == "round2" else None),
+          "cycles": (CYCLES, None)}
 #: finding 4: the fine-pitch layer and its geometry per architecture, at the cooling-A case
-LAYERS = {"Z1": ("Z1_S0", "interface", "microbump"),
-          "Z2": ("Z2_S0", "conv_attach_vr_substrate", "z2_pillar"),
-          "Z3": (("A_Z3land", "A_Z3"), "z3_attach_vr_pcb", "z3_bump")}
+#: (and, for a campaign state, at the cooling-B case: key 'B_<arch>')
+_FINE = {"Z1": ("interface", "microbump"), "Z2": ("conv_attach_vr_substrate", "z2_pillar"),
+         "Z3": ("z3_attach_vr_pcb", "z3_bump")}
+if STATE == "round2":
+    LAYERS = {"Z1": ("Z1_S0", "interface", "microbump"),
+              "Z2": ("Z2_S0", "conv_attach_vr_substrate", "z2_pillar"),
+              "Z3": (("A_Z3land", "A_Z3"), "z3_attach_vr_pcb", "z3_bump")}
+else:
+    LAYERS = {(a if t == "A" else f"B_{a}"): (MP.label(STATE, t, a), *_FINE[a])
+              for t in ("A", "B") for a in ("Z1", "Z2", "Z3")}
 
 
 def tasks(groups):
@@ -90,6 +106,13 @@ def layer_tasks():
         out.append(dict(study=STUDY, tag=f"{arch}_{layer}_crit_uz", kin=crit, geometry=geom,
                         bc="uz", meta={"group": "layers", "arch": arch, "case": case,
                                        "layer": layer, "variant": "uz"}))
+        # the joint at the layer's maximum shear-strain site when that is another site
+        cs = ic.get("critical_by_shear_strain")
+        if cs and (abs(cs["x_mm"] - crit["x_mm"]) > 1e-9 or abs(cs["y_mm"] - crit["y_mm"]) > 1e-9):
+            out.append(dict(study=STUDY, tag=f"{arch}_{layer}_critdef", kin=cs, geometry=geom,
+                            meta={"group": "layers", "arch": arch, "case": case,
+                                  "layer": layer, "variant": "max shear strain",
+                                  "gamma_def": cs.get("gamma_def")}))
     return out
 
 
@@ -131,12 +154,28 @@ def summarize():
     for arch, (cases, layer, geom) in LAYERS.items():
         r = recs.get(f"{arch}_{layer}_crit") or {}
         ru = recs.get(f"{arch}_{layer}_crit_uz") or {}
-        lay[arch] = {"layer": layer, "geometry": geom, "d_eps": r.get("d_peeq_per_cycle"),
-                     "d_eps_uz": ru.get("d_peeq_per_cycle"), "kin": r.get("kin"),
+        rd = recs.get(f"{arch}_{layer}_critdef") or {}
+        case = cases if isinstance(cases, str) else next(
+            (c for c in cases if KIN.load_kinematics(c)), None)
+        kin = KIN.load_kinematics(case) if case else None
+        ic = ((kin or {}).get("interconnects") or {}).get(layer) or {}
+        lay[arch] = {"layer": layer, "geometry": geom, "case": case,
+                     "label": ic.get("label"), "h_um": ic.get("h_um"),
+                     "gamma": (ic.get("critical") or {}).get("gamma"),
+                     "gamma_def": (ic.get("critical") or {}).get("gamma_def"),
+                     "d_eps": r.get("d_peeq_per_cycle"),
+                     "d_eps_uz": ru.get("d_peeq_per_cycle"),
+                     "d_eps_max_shear_strain_site": rd.get("d_peeq_per_cycle"),
+                     "kin": r.get("kin"),
                      "T_C": r.get("T_hot_C"), "error": r.get("error"),
                      "n_elem": r.get("n_elem"), "unit": r.get("unit"),
                      "per_cycle": r.get("per_cycle")}
     out["fine_pitch_joints"] = lay
+    out["inputs_sha1"] = {}
+    for lab, case, *_ in LB.joints():
+        out["inputs_sha1"].update((KIN.load_kinematics(case) or {}).get("inputs_sha1") or {})
+    if LAW.CARDS.is_file():
+        out["inputs_sha1"][str(LAW.CARDS.resolve())] = MP.sha1(LAW.CARDS)
     OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
     return out
 

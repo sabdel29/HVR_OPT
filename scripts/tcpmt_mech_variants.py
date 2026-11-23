@@ -223,6 +223,110 @@ def judge_B():
     return out
 
 
+def _mech_values(c):
+    """warp, du (all-site search), du_def (deforming BGA du) and the local response of a
+    case or a mechanics-only variant."""
+    me = (c or {}).get("mechanics") or {}
+    k = ((me.get("interconnects") or {}).get("bga") or {}).get("critical") or {}
+    return {"warp": me.get("die_warpage_pv_um"),
+            "du": (me.get("joint_search") or {}).get("critical", {}).get("du_um"),
+            "du_def": k.get("du_def_xy_um"),
+            "eps": ((c or {}).get("local") or {}).get("d_peeq_per_cycle")}
+
+
+def judge_state(state="SDEC"):
+    """TCPMT round 3: the mechanics-only variants run on the compared cases of a state
+    (final_closure_sensitivity --state: NAME on the cooling-A case, NAME@B on the cooling-B
+    case), each against ITS OWN base case: the change of every mechanical output, and whether
+    every pairwise ordering of that cooling keeps its direction and stays resolved under THE
+    rule (|D + beta| > U95), with the beta and U95 of the state's own laddered comparison
+    (uncertainty.json, the production state's ladders) transferred provisionally when the
+    variant's mesh is the base case's. -> tcpmt_revision/robustness_mech_<state>.json"""
+    import itertools
+    import json
+    import final_closure_sensitivity as S
+    import tcpmt_cases as TC
+    import tcpmt_uncertainty as TU
+    import tcpmt_mech_production as MP
+    scen = TC.SCEN[state]
+    unc = json.loads((LAW.TR / "uncertainty.json").read_text()) \
+        if (LAW.TR / "uncertainty.json").is_file() else {}
+    cmp_ = {(r["tier"], r["a"], r["b"], r["output"]): r for r in unc.get("comparisons") or []}
+    base, bmesh, ins = {}, {}, {}
+    for t in TC.TIERS:
+        for a in TC.ARCHS:
+            p = TC.case_path(state, t, a)
+            if p is None:
+                continue
+            c = json.loads(p.read_text())
+            base.setdefault(t, {})[a] = dict(_mech_values(c), case=p.name)
+            bmesh[(t, a)] = TU.mesh_signature(c)
+            ins.update(MP.inputs_sha1([p]))
+    rows = {}
+    for f in sorted(S.OUT.glob(f"etm_*_{scen}__*.json")):
+        c = json.loads(f.read_text())
+        v = c.get("variant") or {}
+        if v.get("kind") != "mech" or not c.get("state"):
+            continue
+        name, t = S.split_tier(v["name"])
+        rows.setdefault(name, {}).setdefault(t, {})[c["arch"]] = dict(
+            _mech_values(c), mesh=TU.mesh_signature(c), file=f.name)
+        ins.update(MP.inputs_sha1([f]))
+    out = {"what": "mechanics-only variants on the compared cases of the state, against their "
+                   "own base cases (findings 6-8, 11a)", "state": state, "base": base,
+           "variants": {}, "rule": TU.RULE.RULE, "inputs_sha1": ins,
+           "u_source": "uncertainty.json comparisons of the state (own ladders), transferred "
+                       "provisionally on the identical mesh"}
+
+    def ref(t, a, b, y):
+        r = cmp_.get((t, a, b, y))
+        if r:
+            return r.get("bias") or 0.0, r.get("U95"), r.get("verdict"), r.get("lower")
+        r = cmp_.get((t, b, a, y))
+        if r:
+            return -(r.get("bias") or 0.0), r.get("U95"), r.get("verdict"), r.get("lower")
+        return None
+    for name, per_t in rows.items():
+        res = {}
+        for t, per in per_t.items():
+            bt = base.get(t) or {}
+            r = {"values": per, "change_rel": {}, "orderings": {}}
+            for a, vv in per.items():
+                r["change_rel"][a] = {y: (vv[y] / bt[a][y] - 1) if (vv.get(y) is not None and
+                                                                    (bt.get(a) or {}).get(y))
+                                      else None for y in ("warp", "du", "du_def", "eps")}
+            for y in ("warp", "du", "du_def", "eps"):
+                for a, b in itertools.combinations(TC.ARCHS, 2):
+                    va, vb = (per.get(a) or {}).get(y), (per.get(b) or {}).get(y)
+                    ba, bb = (bt.get(a) or {}).get(y), (bt.get(b) or {}).get(y)
+                    if None in (va, vb, ba, bb):
+                        continue
+                    rec = {"base_lower": a if ba < bb else b, "variant_lower": a if va < vb else b,
+                           "same_direction": (ba < bb) == (va < vb),
+                           "gap_rel": abs(va - vb) / max(abs(va), abs(vb)),
+                           "base": [ba, bb], "variant": [va, vb]}
+                    rf = ref(t, a, b, y) if y in ("warp", "du") else None
+                    same_mesh = (per[a].get("mesh") == bmesh.get((t, a))
+                                 and per[b].get("mesh") == bmesh.get((t, b)))
+                    if rf and rf[1] is not None and same_mesh:
+                        j = TU.RULE.judge(vb - va, rf[0], rf[1])
+                        rec.update({"verdict": TU.RULE.verdict_label(j["resolved"],
+                                                                     j["D_corrected"], a, b),
+                                    "resolved": j["resolved"], "U95": rf[1], "bias": rf[0],
+                                    "base_verdict": (f"{rf[3]} lower" if rf[2] == "resolved"
+                                                     and rf[3] else "unresolved"),
+                                    "provisional": True})
+                    elif rf:
+                        rec.update({"verdict": "pending", "resolved": None,
+                                    "note": "variant mesh differs from the base case's"})
+                    r["orderings"][f"{y}:{a}/{b}"] = rec
+            res[t] = r
+        out["variants"][name] = res
+    f = LAW.TR / f"robustness_mech_{state}.json"
+    f.write_text(json.dumps(out, indent=1, default=float) + "\n")
+    return out
+
+
 def register(VARIANTS: dict, apply_hook):
     """Add the round-3 variants to final_closure_sensitivity.VARIANTS. apply_hook(fn)
     appends a BUILD_HOOK in the variant's process."""
@@ -247,3 +351,10 @@ if __name__ == "__main__":
         import json
         print(json.dumps({k: v["orderings"] for k, v in judge_B()["variants"].items()},
                          indent=1, default=float)[:3000])
+    elif sys.argv[1:2] == ["judge-state"]:       # python tcpmt_mech_variants.py judge-state [SDEC]
+        import json
+        d = judge_state(sys.argv[2] if len(sys.argv) > 2 else "SDEC")
+        print(json.dumps({k: {t: {o: (x.get("verdict"), x.get("base_verdict"))
+                                  for o, x in r["orderings"].items()}
+                              for t, r in v.items()} for k, v in d["variants"].items()},
+                         indent=1, default=float)[:4000])

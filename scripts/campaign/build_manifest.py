@@ -92,6 +92,9 @@ STAGES = [
     ("refinement_ladders", "nested mesh ladders r11/r12/r31 around production r21"),
     ("robustness_map", "class-B sensitivity set behind the robustness map + local responses"),
     ("solder_submodels", "local viscoplastic solder studies (constitutive, band, cycles, ...)"),
+    ("mech_revision", "the mechanics revision in the production state: v2 local model (law band, "
+                      "critical joints, checks), interconnect layers, reflow, board / mounting / "
+                      "clamp, encapsulant and cooling-B mechanics-only variants"),
     ("moose_checks", "matched MOOSE references: thermal columns, package RDL, full package"),
     ("dse_sweeps", "regulator-count design-space sweeps and their summaries"),
     ("derived", "post-processing of solver results into the paper's artifacts"),
@@ -653,10 +656,239 @@ def build(design):
                 sens(a, f"plate_caloric_legacy_{t}", "HV_SDEC"),
                 deps=[prod[(a, "SDEC", t)], dplace])
 
+    # ------------------------------------------------------------------ mechanics revision
+    mech = mech_jobs(prod, vfields, lad, prep, class_b)
+    for v in {k[1] for k in rb}:                 # a variant's local response: the production card
+        jl = next(j for j in JOBS if j["id"] == f"robust.local.{v}")
+        jl["deps"].append(mech["band"])
+
     # ------------------------------------------------------------------ the rest
     rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s, lad, prep,
-         dsum)
+         dsum, mech)
     return {"jobs": JOBS, "static": sorted(STATIC)}
+
+
+#: the v2 local model's solver jobs: SLOTS concurrent CalculiX solves x THREADS each
+#: (tcpmt_mech_submodel: TCPMT_SOLDER_SLOTS, LOCAL_THREADS); a ~500-element joint, 4 cycles,
+#: takes 60-110 s on 2 threads (campaign_v3 robustness-map local responses: 77-134 s)
+MECH_LOCAL_THREADS = 2
+#: the cooling-B mechanics-only rows the merged code supports (scripts/tcpmt_mech_runlist.sh 4c):
+#: every mechanics-revision variant on all three integrations, the attach-card variants on Z2,
+#: the converter-medium E / CTE range on Z1 and Z2
+COOLB_ROWS = {"Z1": ("conv_E80_a4", "conv_E80_a10", "conv_E160_a4", "conv_E160_a10"),
+              "Z2": ("attach_stiff", "attach_uf_soft", "attach_uf_stiff", "conv_E80_a4",
+                     "conv_E80_a10", "conv_E160_a4", "conv_E160_a10"),
+              "Z3": ()}
+
+
+def mech_jobs(prod, vfields, lad, prep, class_b):
+    """TCPMT round 3, the mechanics revision (configs/tcpmt_mech, scripts/tcpmt_mech_*) in the
+    PRODUCTION state of the design in force: every job reads the compared cases (implemented
+    decoupling, HV_SDEC; Z1/Z2/Z3 x cooling A/B) or their converged fields, so each depends on
+    the production job of its case -- a re-run of a production case re-runs what it feeds
+    (the records carry the sha1 of their inputs; validators `fresh`).
+
+      (c) site kinematics + interconnect-layer search of each compared case (from its case file),
+          the per-layer drivers and their mesh ladder;
+      (a) the v2 local model: the self-consistent production law and the law band at each case's
+          critical joint (full cut-boundary displacement, ramped loads), in two passes around
+      (b) the critical-joint check under the new boundary conditions (every candidate of the
+          full-lattice search, monotonicity over the Pareto sites), then the local-model checks
+          (mesh, cycles, dwell, ramp, element, attribution chain, fine-pitch joints) and the law
+          record;
+      (d) reflow / bonding warpage of each integration (production cards and the two Tg-class
+          encapsulants), production mesh;
+      (e) board size, mounting and clamp, and the encapsulant / BGA-card variants, mechanics only
+          on the production fields under cooling A and B, with their local responses;
+      (f) the cooling-B mechanics-only robustness rows of the reference (NAME@B on the cooling-B
+          fields) and their local responses;
+      (g) the robustness judgements of (e) and (f) (they need the production pairs' U95 of the
+          campaign's uncertainty record)."""
+    out, kin = {}, {}
+    T = MECH_LOCAL_THREADS
+    for a in ARCHS:
+        for t in TIERS:
+            lab = f"SDEC_{t}_{a}"
+            kin[(a, t)] = post(
+                f"mech.kin.{a}.{t}", "mech_revision", "tcpmt_mech_production.py",
+                [tr(f"site_kinematics/{lab}.json")], args=["kin", lab],
+                deps=[prod[(a, "SDEC", t)]], est_h=0.02,
+                evidence="reads one case file (seconds)",
+                validate=[{"file": tr(f"site_kinematics/{lab}.json"), "kind": "json",
+                           "keys": ["interconnects", "site_coverage"], "fresh": True}],
+                notes="the case's stored interconnect search (every layer; BGA candidates with "
+                      "their full cut-boundary kinematics) and its site coverage; refuses a case "
+                      "whose BGA counts are not in force (tcpmt_mech_production.input_issue)")
+    kins = [kin[k] for k in sorted(kin)]
+    out["drivers"] = post("mech.interconnects", "mech_revision", "tcpmt_mech_production.py",
+                          [tr("interconnect_drivers.json")], args=["drivers"], deps=kins,
+                          validate=[{"file": tr("interconnect_drivers.json"), "kind": "json",
+                                     "nonempty": ["cases"], "fresh": True}],
+                          notes="finding 4: driver and layer shear strain of every interconnect "
+                                "layer (Z1 microbumps, Z2 Cu-pillar attach, Z3 SAC attach, BGA); "
+                                "finding 9: the du split of the BGA driver")
+    out["ladder"] = post("mech.interconnect_ladder", "mech_revision", "tcpmt_mech_production.py",
+                         [tr("interconnect_mesh_ladder.json")], args=["ladder"],
+                         deps=kins + [lad[(a, f"sdec_{t}", r)] for a in ARCHS for t in TIERS
+                                      for r in ("r11", "r31")],
+                         validate=[{"file": tr("interconnect_mesh_ladder.json"), "kind": "json",
+                                    "nonempty": ["cases"], "fresh": True}],
+                         notes="per-layer drivers on the production-state rungs r11 / r21 / r31")
+    sv = {"LOCAL_THREADS": T}
+    band_v = [{"file": tr("solder_law_cards.json"), "kind": "json", "keys": ["laws"]}]
+    w1 = job("mech.lawband.window", "mech_revision", ["scripts/tcpmt_mech_law_band.py", "--run"],
+             [tr("solder_law_cards.json"), tr("solder_law_band.json")], deps=kins,
+             ncpus=6 * T, workers=6, mem_gb=12, est_h=0.8, prefer="pbs", env={**sv, "TCPMT_SOLDER_SLOTS": 6},
+             evidence="v2 law band of the merged branch: 6 joints x 2 Garofalo laws x <= 6 "
+                      "window iterations + 1 measured-Norton pass, 3 slots x 2 threads, ~20 min",
+             validate=band_v + [{"file": tr("solder_law_band.json"), "kind": "json",
+                                 "nonempty": ["band"], "fresh": True}],
+             notes="pass 1: every law's Norton-surrogate window iterated to self-consistency at "
+                   "the maximum-du joints of the six compared cases (production law: "
+                   "configs/tcpmt_mech solder.production_law; the band over solder.band_laws)")
+    crit = job("mech.critical", "mech_revision",
+               ["bash", "-c", "set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run "
+                "--top 30; {python} scripts/tcpmt_mech_critical.py --summarize --top 30"],
+               [tr("solder_critical_v2.json")], deps=[w1], ncpus=16 * T, workers=16,
+               mem_gb=24, est_h=1.2, prefer="pbs", env={**sv, "TCPMT_SOLDER_SLOTS": 16},
+               evidence="~650 candidates over the six compared cases (66-147 each, campaign_v3 "
+                         "case files) x 45-110 s on 2 threads, 16 slots",
+               validate=[{"file": tr("solder_critical_v2.json"), "kind": "json",
+                          "nonempty": ["cases"], "fresh": True}],
+               notes="finding 2: every candidate of the full-lattice search (top 30 by |du_xy|, "
+                     "tilt, eps_z and deforming du, the strict Pareto front in (|du_xy|, T), the "
+                     "corners) solved with the production law at its converged window; "
+                     "monotonicity over the dominance pairs, the maximum-response joint")
+    band = job("mech.lawband", "mech_revision", ["scripts/tcpmt_mech_law_band.py", "--run"],
+               [tr("solder_law_cards.json"), tr("solder_law_band.json")], deps=[crit],
+               ncpus=6 * T, workers=6, mem_gb=12, est_h=0.5,
+               prefer="pbs", env={**sv, "TCPMT_SOLDER_SLOTS": 6},
+               evidence="as pass 1, starting from its converged windows",
+               validate=band_v + [{"file": tr("solder_law_band.json"), "kind": "json",
+                                   "keys": ["critical_check"], "nonempty": ["band"],
+                                   "fresh": True}],
+               notes="pass 2: the band at the joints the critical-joint check confirmed (the "
+                     "production joint response and its law band: the reported uncertainty of "
+                     "the joint response)")
+    out["band"] = band
+    out["critical"] = crit
+    out["checks"] = job(
+        "mech.local_checks", "mech_revision",
+        ["bash", "-c", "set -e; cd {repo}; {python} scripts/tcpmt_mech_local_checks.py --run; "
+         "{python} scripts/tcpmt_mech_local_checks.py --summarize"],
+        [tr("solder_local_checks.json")], deps=[band], ncpus=12 * T, workers=12, mem_gb=24,
+        est_h=1.0, prefer="pbs", env={**sv, "TCPMT_SOLDER_SLOTS": 12},
+        evidence="~90 solves (chain 6 x 6, dwell/ramp 3 x 6, element 2, mesh L1-L3 x 6, 8 cycles "
+                 "x 6, fine-pitch joints 12-18); L3 and 8-cycle solves 3-10x an L0 one",
+        validate=[{"file": tr("solder_local_checks.json"), "kind": "json",
+                   "nonempty": ["groups"], "fresh": True}],
+        notes="the numerical U of every joint (own L0 -> L3 and 4 -> 8 cycle changes), the "
+              "dwell / ramp / element sensitivities, the round-2 -> v2 attribution chain and the "
+              "critical fine-pitch joints (finding 4) with their own geometry")
+    out["record"] = post("mech.law_record", "mech_revision", "tcpmt_mech_laws.py",
+                         [tr("solder_law_record.json")], args=["--record"], deps=[band],
+                         notes="per law: alloy, calibration window, visited window, extrapolation, "
+                               "surrogate error (Table S10)")
+    # (d) reflow / bonding warpage, production mesh
+    rf = []
+    for a in ARCHS:
+        for v in (None,) + tuple(mech_revision_variants()[:2]):
+            sfx = f"_{v}" if v else ""
+            rf.append(job(f"mech.reflow.{a}" + (f".{v}" if v else ""), "mech_revision",
+                          ["scripts/tcpmt_mech_reflow.py", "run", a, "--refine", "21"]
+                          + (["--encap", v] if v else []),
+                          [tr(f"reflow/{a}_r21{sfx}.json")],
+                          deps=[prep["cards"], prep["tier_order"]], ncpus=2, mem_gb=8,
+                          est_h=0.3 if v else 0.2, prefer="pbs", env={"FC_THREADS": 2},
+                          evidence="merged branch, coarse r11: 30-150 s per part; r21 ~3x",
+                          validate=[{"file": tr(f"reflow/{a}_r21{sfx}.json"), "kind": "json",
+                                     "keys": ["checks"]}],
+                          notes="finding 5: isothermal warpage of the unmounted package at the "
+                                "SAC305 reflow peak / solidus against JEP95 / SPP-024, and the "
+                                "fine-pitch joint's gap at its bonding temperature"
+                                + (f"; encapsulant {v} (Tg class)" if v else "")))
+    out["reflow"] = post("mech.reflow_summary", "mech_revision", "tcpmt_mech_reflow.py",
+                         [tr("reflow_warpage.json")], args=["summarize"], deps=rf)
+    # (e) board size / mounting / clamp, mechanics only on the production fields
+    bd = []
+    for a in ARCHS:
+        for t in TIERS:
+            f = tr(f"board_study/SDEC_{t}_{a}.json")
+            bd.append(job(f"mech.board.{a}.{t}", "mech_revision",
+                          ["scripts/tcpmt_mech_board.py", "state", a, t, "--state", "SDEC"],
+                          [f], deps=[prod[(a, "SDEC", t)]], ncpus=8, workers=4,
+                          mem_gb=40, est_h=1.0, prefer="pbs", env={"FC_POOL_MAX": 4, "FC_THREADS": 2},
+                          evidence="11 structural solves on the production mesh (coupon 112 kel, "
+                                   "larger board ~1.4x): campaign_v3 mechanics-only 340-2000 s "
+                                   "on 1 thread; 4 at a time on 2 threads",
+                          validate=[{"file": f, "kind": "json", "nonempty": ["mechanics"],
+                                     "fresh": True}],
+                          notes="coupon: free (reproduces the case), screws, pinned screws, edge, "
+                                "the 200-N clamp at the screws (hot / clamp only) and on a "
+                                "backplate; a 3x board with its ring at the coupon edge "
+                                "temperature or at 25 C (bounds), free, screws, clamp"))
+    out["board"] = job("mech.board_summary", "mech_revision",
+                       ["scripts/tcpmt_mech_board.py", "state-summarize", "--state", "SDEC",
+                        "--local"], [tr("board_study_SDEC.json")], deps=bd + [band],
+                       ncpus=6 * T, workers=6, mem_gb=8, est_h=0.2,
+                       env={**sv, "TCPMT_SOLDER_SLOTS": 6},
+                       validate=[{"file": tr("board_study_SDEC.json"), "kind": "json",
+                                  "nonempty": ["cases"], "fresh": True}],
+                       notes="every board / mounting / clamp solve against its case, and the "
+                             "clamp in the local response (v2, production card)")
+    # (e) encapsulant Tg classes and the local-card BGA layer, production fields A and B
+    st_jobs, st_loc = [], []
+    for v in mech_revision_variants():
+        vj = []
+        for a in ARCHS:
+            outs = [f"final_closure/sensitivity/etm_{a}_HV_SDEC__{v}.json",
+                    f"final_closure/sensitivity/etm_{a}_HV_SDEC__{v}__B.json"]
+            vj.append(job(f"mech.state.{a}.{v}", "mech_revision",
+                          ["scripts/final_closure_sensitivity.py", "--state", "SDEC", f"{v}:{a}",
+                           f"{v}@B:{a}"], outs,
+                          deps=[prod[(a, "SDEC", "A")], prod[(a, "SDEC", "B")]], ncpus=4,
+                          workers=2, mem_gb=16, est_h=0.6, prefer="pbs",
+                          env={"FC_POOL_MAX": 2, "FC_THREADS": 2},
+                          evidence="2 mechanics-only solves (campaign_v3: 340-2000 s on 1 "
+                                   "thread)",
+                          validate=[{"file": o, "kind": "etm", "fresh": True} for o in outs],
+                          notes="mechanics only on the production fields (cooling A and B)"))
+        st_jobs += vj
+        outs = [f"final_closure/sensitivity/etm_{a}_HV_SDEC__{v}{x}.json" for a in ARCHS
+                for x in ("", "__B")]
+        st_loc.append(job(f"mech.state_local.{v}", "mech_revision",
+                          ["scripts/final_closure_sensitivity.py", "--state", "SDEC", "--local",
+                           v, f"{v}@B"], outs, deps=vj + [band], ncpus=6 * T, workers=6,
+                          mem_gb=8, est_h=0.1, env={"LOCAL_THREADS": T, "FC_POOL_MAX": 6},
+                          backends=LOCAL_SOLVE_BACKENDS + ("pbs",),
+                          validate=[{"file": o, "kind": "etm", "local": True} for o in outs],
+                          notes="the v2 local response at each variant's own critical joint"))
+    out["state"] = st_jobs + st_loc
+    # (f) the cooling-B mechanics-only rows of the robustness map (reference, cooling-B fields)
+    cb, cbl = [], []
+    revs = tuple(mech_revision_variants())
+    for a in ARCHS:
+        vs = revs + COOLB_ROWS[a]
+        outs = [sens(a, f"{v}__B") for v in vs]
+        j = job(f"robust.coolB.{a}", "mech_revision",
+                ["scripts/final_closure_sensitivity.py"] + [f"{v}@B:{a}" for v in vs], outs,
+                deps=[prod[(a, "S0", "B")], vfields[(a, "B")]], ncpus=8, workers=4,
+                mem_gb=32, est_h=0.3 * len(vs) / 4 + 0.3, prefer="pbs",
+                env={"FC_POOL_MAX": 4, "FC_THREADS": 2},
+                evidence=f"{len(vs)} mechanics-only solves on the cooling-B field, 4 at a time",
+                validate=[{"file": o, "kind": "etm", "fresh": True} for o in outs],
+                notes="finding 8: NAME@B, mechanics only on the cooling-B field of the reference "
+                      "(configs/tcpmt_mech cooling_B_base)")
+        cb.append(j)
+        cbl.append(job(f"robust.coolB_local.{a}", "mech_revision",
+                       ["scripts/final_closure_sensitivity.py", "--local"]
+                       + [f"{v}@B" for v in vs], outs, deps=[j, band], ncpus=4 * T, workers=4,
+                       mem_gb=8, est_h=0.1, env={"LOCAL_THREADS": T, "FC_POOL_MAX": 4},
+                       backends=LOCAL_SOLVE_BACKENDS + ("pbs",),
+                       validate=[{"file": o, "kind": "etm", "local": True} for o in outs]))
+    out["coolB"] = cb + cbl
+    return out
+
 
 
 #: artifacts the pipeline reads that NO job produces (hand-written, ANSYS-only, web or PDF
@@ -684,7 +916,7 @@ STATIC = [
 
 
 def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s, lad, prep,
-         dsum):
+         dsum, mech=None):
     P = lambda a, s="S0", t="A": prod[(a, s, t)]                            # noqa: E731
     ref_A = [prod[(a, s, "A")] for a in ARCHS for s in ("S0", "S1", "S2")]
     sdec = [prod[(a, "SDEC", t)] for a in ARCHS for t in TIERS]
@@ -823,16 +1055,35 @@ def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s,
          [prod[(a, "S1", t)] for a in ARCHS for t in TIERS] + [omit, plat,
                                                                 "derived.bga_reclose"],
          est_h=0.15, mem_gb=8, evidence="mesh builds + frd reads (minutes)")
-    solder = solder_jobs(prod, land, loc_t, loc_m)
-    post("derived.uncertainty", "derived", "tcpmt_uncertainty.py",
-         [tr("uncertainty.json"), "manuscript_v2/tab_uncertainty.tex"],
-         deps=[lad[k] for k in lad] + tier_cases + [loc_m, solder["studies"], solder["z3land"]])
+    solder = solder_jobs(prod, land, loc_t, loc_m, mech)
+    # the joint term: the v2 law band and its checks (the production local model; the legacy
+    # solder studies stay a dependency for TCPMT_LOCAL_HARNESS=legacy)
+    unc = post("derived.uncertainty", "derived", "tcpmt_uncertainty.py",
+               [tr("uncertainty.json"), "manuscript_v2/tab_uncertainty.tex"],
+               deps=[lad[k] for k in lad] + tier_cases + [loc_m, solder["studies"],
+                                                          solder["z3land"]]
+               + ([mech["band"], mech["checks"]] if mech else []))
+    if mech:
+        # (g) the robustness judgements need the production pairs' U95 of the uncertainty record
+        post("mech.judge_state", "derived", "tcpmt_mech_variants.py",
+             [tr("robustness_mech_SDEC.json")], args=["judge-state", "SDEC"],
+             deps=mech["state"] + [unc],
+             validate=[{"file": tr("robustness_mech_SDEC.json"), "kind": "json",
+                        "nonempty": ["variants"], "fresh": True}],
+             notes="the encapsulant / BGA-card variants on the production fields against their "
+                   "own cases; orderings under the rule with the production pairs' U95")
+        post("mech.judgeB", "derived", "tcpmt_mech_variants.py", [tr("robustness_B.json")],
+             args=["judgeB"], deps=mech["coolB"] + [unc],
+             validate=[{"file": tr("robustness_B.json"), "kind": "json",
+                        "nonempty": ["variants"]}],
+             notes="finding 8: the cooling-B rows of the robustness map (NAME@B against the "
+                   "cooling-B base)")
 
     # ------------------------------------------------------------ manuscript
     manuscript()
 
 
-def solder_jobs(prod, land, loc_t, loc_m):
+def solder_jobs(prod, land, loc_t, loc_m, mech=None):
     deps = [prod[(a, s, t)] for a in ARCHS for s in ("S0", "SDEC") for t in TIERS] + \
         [prod[("Z1", "S1", "A")], prod[("Z2", "S1", "A")], loc_t, loc_m]
     runs = "; ".join("{python} scripts/tcpmt_solder_%s.py --run" % x
@@ -848,8 +1099,10 @@ def solder_jobs(prod, land, loc_t, loc_m):
              validate=[{"file": tr("solder_studies.json"), "kind": "json"}],
              notes="the five drivers share 6 global solve slots (tcpmt_solder_common), so one "
                    "job runs them in sequence; ~35 GB of solver scratch")
+    # the v2 production local model's parameter table (Table S6 source: law, window, band)
     par = post("solder.parameters", "solder_submodels", "tcpmt_solder_parameters.py",
-               [tr("solder_parameters.json")], deps=[st, prod[("Z1", "S0", "A")]],
+               [tr("solder_parameters.json")], deps=[st, prod[("Z1", "S0", "A")]] +
+               ([mech["band"], mech["record"]] if mech else []),
                env={"LOCAL_THREADS": 2}, backends=LOCAL_SOLVE_BACKENDS)
     z3 = job("solder.z3land", "solder_submodels", ["scripts/tcpmt_solder_z3land.py"],
              [tr("solder_z3land.json")], deps=[st, land["z3_land_t40_A_fvmap"],

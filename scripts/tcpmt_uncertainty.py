@@ -275,9 +275,17 @@ TIERS = {t: {a: p for a, p in row.items() if p is not None}
 _EXPECTED = {p.name: _TC.expected_path(UNC_STATE, t, a)
              for t, row in TIERS.items() for a, p in row.items()
              if p.name != _TC.expected_path(UNC_STATE, t, a).name}
-#: the local solder responses were solved on the S0 tier cases: they enter the comparisons of the
-#: S0 state only, until the study is rerun on the production cases
-EPS_STATE = "S0"
+def _eps_state():
+    """The state the local responses were solved in: the v2 law band's own (TCPMT round 3: the
+    production state's compared cases; a band without a state is the round-2 S0 one), the
+    legacy solder studies' S0 tier cases otherwise (TCPMT_LOCAL_HARNESS=legacy, or no band)."""
+    import tcpmt_mech_laws as LAW
+    band = J(TR / "solder_law_band.json") if LAW.harness() == "v2" else None
+    return (band.get("state") or "S0") if band and band.get("band") else "S0"
+
+
+#: the local responses enter the comparisons of the state they were solved in only
+EPS_STATE = _eps_state()
 #: TCPMT round 3: the local responses are ONLY those of the design in force, from the results
 #: root (the v2 law band, else the campaign's solder studies); the round-2 (49-cell) tier L0
 #: values once used as a fallback here (EPS_L0) never stand in -- a joint without a response
@@ -308,9 +316,12 @@ def local_u_v2():
         own[(t, a)] = lab in mesh_own
         law[(t, a)] = {"U_law_rel": b["U_law_rel"], "values_x1e3": {
             k: (1e3 * v if v is not None else None) for k, v in b["values"].items()}}
-    basis = ("v2 local model, production law " + band["production_law"] + " (4-cycle L0; U = "
-             "own L0->L3 mesh change, else the largest checked joint's, and the 4->8 cycle "
-             "change, in quadrature; law band in the resolution)")
+    st = {"SDEC": "production-state", "S0": "ideal-decoupling", "S1": "no-decoupling"}.get(
+        band.get("state") or "S0", band.get("state"))
+    basis = ("v2 local model on the " + st + " critical joints, production law "
+             + band["production_law"] + " (4-cycle L0; U = own L0->L3 mesh change, else the "
+             "largest checked joint's, and the 4->8 cycle change, in quadrature; law band in "
+             "the resolution)")
     return eps, u_t, law, basis, band, own
 
 
@@ -342,8 +353,10 @@ def local_u_solder_studies():
 
 def local_u():
     """(eps, U_rel per (tier, arch), own-mesh flags, basis, band or None): the v2 law band of
-    the results root, else the campaign's solder studies, else none (every joint pending)."""
-    v2 = local_u_v2()
+    the results root (the PRODUCTION local model), else the campaign's solder studies, else
+    none (every joint pending). TCPMT_LOCAL_HARNESS=legacy reads the legacy studies only."""
+    import tcpmt_mech_laws as LAW
+    v2 = local_u_v2() if LAW.harness() == "v2" else None
     if v2 is not None:                        # a joint the band has not solved stays pending
         eps, u_t, law, basis, band, own = v2
         return eps, u_t, own, basis, band
@@ -576,11 +589,36 @@ def _dcell(r, sign):
     return f"{_num(d, n)}/{r['U95']:.{n}f}{star}"
 
 
-def _eps_rows(eps, u_t):
-    """The joint response under the rule: D of two joints' stabilized responses (no ladder bias),
-    U95(D) the quadrature of the two joints' own numerical U; checked again under the second law
-    of the band (the production responses scaled by their ratios under that law): 'both' when
-    the sign holds and is resolved under both laws."""
+def _eps_rows(eps, u_t, band=None):
+    """The joint response under the rule: D of two joints' responses (no ladder bias), U95(D)
+    the quadrature of the two joints' own numerical U; checked under every law of the v2 law
+    band ('both': the sign holds and is resolved under every law), or, for the legacy studies,
+    under the second law (the production responses scaled by their ratios under that law)."""
+    if band:
+        out = {}
+        prod = band["production_law"]
+        for t, x, y in SHOW:
+            ex, ey = eps.get(t, {}).get(x), eps.get(t, {}).get(y)
+            ux, uy = u_t.get((t, x)), u_t.get((t, y))
+            if None in (ex, ey, ux, uy):
+                out[(t, x, y)] = None
+                continue
+            per = {}
+            for law, v in band["responses"].items():
+                lx, ly = v.get(f"{t}_{x}"), v.get(f"{t}_{y}")
+                if lx is None or ly is None:
+                    continue
+                lx, ly = 1e3 * lx, 1e3 * ly
+                per[law] = (lx - ly, RULE.quad(ux * lx, uy * ly))
+            lb = RULE.law_band(per, prod)
+            d, u95 = ex - ey, RULE.quad(ux * ex, uy * ey)
+            out[(t, x, y)] = {"D": d, "U95": u95, "resolved": abs(d) > u95,
+                              "both": lb["verdict"] == RULE.RESOLVED,
+                              "verdict": lb["verdict"],
+                              "per_law": {k: {"D": r["D"], "U95": r["U95"],
+                                              "resolved": r["resolved"]}
+                                          for k, r in lb["per_law"].items()}}
+        return out
     ss = J(TR / "solder_studies.json") or {}
     ratio = ((ss.get("constitutive") or {}).get("ratio_to_production") or {}).get(
         EPS_SECOND_LAW) or {}
@@ -603,12 +641,12 @@ def _eps_rows(eps, u_t):
     return out
 
 
-def latex(cases, res, eps, u_t):
+def latex(cases, res, eps, u_t, band=None):
     """Table IV: every compared difference with the bias and the uncertainty of its own ladder
-    (the quantities the rule tests), and the joint response of the ideal-decoupling cases."""
+    (the quantities the rule tests), and the joint response of the state's critical joints."""
     state = {"S0": "the ideal-decoupling reference state",
              "SDEC": "the production state (implemented decoupling)"}.get(UNC_STATE, UNC_STATE)
-    er = _eps_rows(eps, u_t)
+    er = _eps_rows(eps, u_t, band if UNC_STATE == EPS_STATE else None)
     show_eps = any(v is not None for v in er.values())
     ncol = 5 + (1 if show_eps else 0)
     head = (r"Difference & Loss & Peak $T$ & Warpage & $\du$"
@@ -645,7 +683,13 @@ def latex(cases, res, eps, u_t):
             r"ladder is asymptotic, 3 otherwise), the fixed-point stop and the matched-reference "
             r"agreement in quadrature ($\approx$95\,\% coverage). Negative: the first-named "
             r"integration is lower. $^{\ast}$Not resolved.")
-    if show_eps:
+    if show_eps and band and UNC_STATE == EPS_STATE:
+        note += (r" $\deps$: joint response of the local model (full cut-boundary "
+                 r"displacement, ramped loads) at each case's critical joint, production solder "
+                 r"law; $U_{95}(D)$ from the two joints' own numerical uncertainty. Every "
+                 r"resolved $\deps$ sign holds under every law of the solder-law band unless "
+                 r"marked $^{\mathrm{L}}$.")
+    elif show_eps:
         note += (r" $\deps$: stabilized joint response of the ideal-decoupling cases, on which "
                  r"the local model was solved; $U_{95}(D)$ from the two joints' own numerical "
                  r"uncertainty. Every resolved $\deps$ sign also holds under the second solder "
@@ -660,7 +704,7 @@ def table_only(dst):
     """write Table IV only (read-only on every result file: uncertainty.json is not rewritten)"""
     cases, _refs = assemble()
     res, eps, u_t, _basis, _band = comparisons(cases)
-    Path(dst).write_text("\n".join(latex(cases, res, eps, u_t)) + "\n")
+    Path(dst).write_text("\n".join(latex(cases, res, eps, u_t, _band)) + "\n")
     print("wrote", dst)
 
 
@@ -724,14 +768,25 @@ def main():
            "relative": rel, "U": U, "eps_basis": eps_basis, "eps": eps,
            "eps_U_rel": {f"{t}.{a}": u for (t, a), u in u_t.items()},
            "comparisons": res, "ladder_runs_needed": ladder_runs_needed(),
-           "macros": mac, "latex_supplement": latex(cases, res, eps, u_t)}
+           "macros": mac, "latex_supplement": latex(cases, res, eps, u_t, band),
+           "eps_state": EPS_STATE}
     if band is not None and UNC_STATE == EPS_STATE:
         out["eps_law_band"] = {k: v for k, v in band.get("band", {}).items()}
         out["eps_law_rankings"] = band.get("rankings")
         out["eps_law_rankings_hold"] = band.get("rankings_hold_across_laws")
+        out["eps_rows"] = {f"{t}:{x}-{y}": v for (t, x, y), v in
+                           _eps_rows(eps, u_t, band).items()}
+        # the joint response is reported with the law band as its uncertainty (model form):
+        # value under the production law, numerical U95, and the band [min, max] over the laws
+        out["eps_reported"] = {
+            lab: {"value_x1e3": 1e3 * b["production"], "U95_num_x1e3":
+                  (u_t.get(tuple(lab.split("_"))) or 0.0) * 1e3 * b["production"],
+                  "band_x1e3": [1e3 * b["min"], 1e3 * b["max"]],
+                  "law_of_min": b.get("law_of_min"), "law_of_max": b.get("law_of_max")}
+            for lab, b in band.get("band", {}).items() if b.get("complete")}
     dst = OUT if UNC_STATE == _TC.PRODUCTION_STATE else OUT.with_name(f"uncertainty_{UNC_STATE}.json")
     dst.write_text(json.dumps(out, indent=1, default=float))
-    TAB.write_text("\n".join(latex(cases, res, eps, u_t)) + "\n")
+    TAB.write_text("\n".join(latex(cases, res, eps, u_t, band)) + "\n")
     for r in res:
         print(f"{r['tier']} {r['a']}/{r['b']} {r['output']:5s} D={r['D']:+8.3f} "
               f"bias={(r.get('bias') or 0):+7.3f} U95={(r.get('U95') or float('nan')):7.3f} "

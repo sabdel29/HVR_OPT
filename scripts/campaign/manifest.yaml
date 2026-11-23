@@ -69,6 +69,9 @@ stages:
   what: class-B sensitivity set behind the robustness map + local responses
 - name: solder_submodels
   what: local viscoplastic solder studies (constitutive, band, cycles, ...)
+- name: mech_revision
+  what: 'the mechanics revision in the production state: v2 local model (law band, critical joints, checks),
+    interconnect layers, reflow, board / mounting / clamp, encapsulant and cooling-B mechanics-only variants'
 - name: moose_checks
   what: 'matched MOOSE references: thermal columns, package RDL, full package'
 - name: dse_sweeps
@@ -5126,6 +5129,7 @@ jobs:
   - robust.Z2.board_t2p4
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5160,6 +5164,7 @@ jobs:
   - robust.Z2.board_eta025
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5194,6 +5199,7 @@ jobs:
   - robust.Z2.board_eta075
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5228,6 +5234,7 @@ jobs:
   - robust.Z2.board_h1
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5262,6 +5269,7 @@ jobs:
   - robust.Z2.board_h0_h1grid
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5296,6 +5304,7 @@ jobs:
   - robust.Z2.tsv_min
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5330,6 +5339,7 @@ jobs:
   - robust.Z2.tsv_mid
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5364,6 +5374,7 @@ jobs:
   - robust.Z2.f2_void
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5396,6 +5407,7 @@ jobs:
   - robust.Z2.f1_sidewall_filled
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5424,6 +5436,7 @@ jobs:
   - robust.Z2.attach_h20
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5452,6 +5465,7 @@ jobs:
   - robust.Z2.attach_h40
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5480,6 +5494,7 @@ jobs:
   - robust.Z2.attach_sn
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5508,6 +5523,7 @@ jobs:
   - robust.Z2.attach_dense
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5536,6 +5552,7 @@ jobs:
   - robust.Z2.attach_sparse
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5564,6 +5581,7 @@ jobs:
   - robust.Z2.attach_sparse_stiff
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5592,6 +5610,7 @@ jobs:
   - robust.Z2.attach_eng_p34
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5620,6 +5639,7 @@ jobs:
   - robust.Z2.attach_eng_p37
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5648,6 +5668,7 @@ jobs:
   - robust.Z2.attach_eng_p41
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5676,6 +5697,7 @@ jobs:
   - robust.Z2.attach_stiff
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5704,6 +5726,7 @@ jobs:
   - robust.Z2.attach_uf_soft
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5732,6 +5755,7 @@ jobs:
   - robust.Z2.attach_uf_stiff
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5760,6 +5784,7 @@ jobs:
   - robust.Z2.feed_heat_at_crossover
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5790,6 +5815,7 @@ jobs:
   - robust.Z2.icepak_equivalent
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5822,6 +5848,7 @@ jobs:
   - robust.Z2.bga_depop
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5852,6 +5879,7 @@ jobs:
   - robust.Z2.board_hbot100
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5886,6 +5914,7 @@ jobs:
   - robust.Z2.board_hbot500
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5918,6 +5947,7 @@ jobs:
   - robust.Z2.z2_cooled
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 2
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5948,6 +5978,7 @@ jobs:
   - robust.Z2.pad_drop
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -5982,6 +6013,7 @@ jobs:
   - robust.Z2.gan_k_half
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6016,6 +6048,7 @@ jobs:
   - robust.Z2.conv_k_tenth
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6050,6 +6083,7 @@ jobs:
   - robust.Z2.conv_E80_a4
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6084,6 +6118,7 @@ jobs:
   - robust.Z2.conv_E80_a10
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6118,6 +6153,7 @@ jobs:
   - robust.Z2.conv_E160_a4
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6152,6 +6188,7 @@ jobs:
   - robust.Z2.conv_E160_a10
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6186,6 +6223,7 @@ jobs:
   - robust.Z2.conv_posts_lower
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6220,6 +6258,7 @@ jobs:
   - robust.Z2.conv_posts_upper
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6254,6 +6293,7 @@ jobs:
   - robust.Z2.encap_uf_tg
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6288,6 +6328,7 @@ jobs:
   - robust.Z2.encap_emc_lowcte
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6322,6 +6363,7 @@ jobs:
   - robust.Z2.encap_emc_lowcte_const
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6356,6 +6398,7 @@ jobs:
   - robust.Z2.bga_card_local
   - local.temporal
   - local.mesh_study
+  - mech.lawband
   ncpus: 4
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6455,6 +6498,8 @@ jobs:
   deps:
   - solder.studies
   - prod.Z1.S0.A
+  - mech.lawband
+  - mech.law_record
   ncpus: 1
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -6468,6 +6513,1994 @@ jobs:
   - file: tcpmt_revision/solder_parameters.json
     kind: json
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+- id: mech.critical
+  stage: mech_revision
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run --top 30; {python} scripts/tcpmt_mech_critical.py
+    --summarize --top 30
+  outputs:
+  - tcpmt_revision/solder_critical_v2.json
+  deps:
+  - mech.lawband.window
+  ncpus: 32
+  mem_gb: 24.0
+  est_wall_h: 1.2
+  walltime_h: 3.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '2'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: tcpmt_revision/solder_critical_v2.json
+    kind: json
+    nonempty:
+    - cases
+    fresh: true
+  workers: 16
+  evidence: ~650 candidates over the six compared cases (66-147 each, campaign_v3 case files) x 45-110
+    s on 2 threads, 16 slots
+  notes: 'finding 2: every candidate of the full-lattice search (top 30 by |du_xy|, tilt, eps_z and deforming
+    du, the strict Pareto front in (|du_xy|, T), the corners) solved with the production law at its converged
+    window; monotonicity over the dominance pairs, the maximum-response joint'
+- id: robust.coolB.Z2
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - encap_uf_tg@B:Z2
+  - encap_emc_lowcte@B:Z2
+  - encap_emc_lowcte_const@B:Z2
+  - bga_card_local@B:Z2
+  - attach_stiff@B:Z2
+  - attach_uf_soft@B:Z2
+  - attach_uf_stiff@B:Z2
+  - conv_E80_a4@B:Z2
+  - conv_E80_a10@B:Z2
+  - conv_E160_a4@B:Z2
+  - conv_E160_a10@B:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_uf_tg__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte_const__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__bga_card_local__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__attach_stiff__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__attach_uf_soft__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__attach_uf_stiff__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a4__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a10__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_E160_a4__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_E160_a10__B.json
+  deps:
+  - prod.Z2.S0.B
+  - fields.Z2.z2_cooled_tim
+  ncpus: 8
+  mem_gb: 32.0
+  est_wall_h: 1.125
+  walltime_h: 3.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '4'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_uf_tg__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte_const__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__bga_card_local__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__attach_stiff__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__attach_uf_soft__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__attach_uf_stiff__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a4__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a10__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_E160_a4__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_E160_a10__B.json
+    kind: etm
+    fresh: true
+  workers: 4
+  evidence: 11 mechanics-only solves on the cooling-B field, 4 at a time
+  notes: 'finding 8: NAME@B, mechanics only on the cooling-B field of the reference (configs/tcpmt_mech
+    cooling_B_base)'
+- id: mech.local_checks
+  stage: mech_revision
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_local_checks.py --run; {python} scripts/tcpmt_mech_local_checks.py
+    --summarize
+  outputs:
+  - tcpmt_revision/solder_local_checks.json
+  deps:
+  - mech.lawband
+  ncpus: 24
+  mem_gb: 24.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '2'
+    TCPMT_SOLDER_SLOTS: '12'
+  validate:
+  - file: tcpmt_revision/solder_local_checks.json
+    kind: json
+    nonempty:
+    - groups
+    fresh: true
+  workers: 12
+  evidence: ~90 solves (chain 6 x 6, dwell/ramp 3 x 6, element 2, mesh L1-L3 x 6, 8 cycles x 6, fine-pitch
+    joints 12-18); L3 and 8-cycle solves 3-10x an L0 one
+  notes: the numerical U of every joint (own L0 -> L3 and 4 -> 8 cycle changes), the dwell / ramp / element
+    sensitivities, the round-2 -> v2 attribution chain and the critical fine-pitch joints (finding 4)
+    with their own geometry
+- id: mech.board.Z1.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z1
+  - A
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_A_Z1.json
+  deps:
+  - prod.Z1.SDEC.A
+  ncpus: 8
+  mem_gb: 40.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '4'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_A_Z1.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  workers: 4
+  evidence: '11 structural solves on the production mesh (coupon 112 kel, larger board ~1.4x): campaign_v3
+    mechanics-only 340-2000 s on 1 thread; 4 at a time on 2 threads'
+  notes: 'coupon: free (reproduces the case), screws, pinned screws, edge, the 200-N clamp at the screws
+    (hot / clamp only) and on a backplate; a 3x board with its ring at the coupon edge temperature or
+    at 25 C (bounds), free, screws, clamp'
+- id: mech.board.Z1.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z1
+  - B
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_B_Z1.json
+  deps:
+  - prod.Z1.SDEC.B
+  ncpus: 8
+  mem_gb: 40.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '4'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_B_Z1.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  workers: 4
+  evidence: '11 structural solves on the production mesh (coupon 112 kel, larger board ~1.4x): campaign_v3
+    mechanics-only 340-2000 s on 1 thread; 4 at a time on 2 threads'
+  notes: 'coupon: free (reproduces the case), screws, pinned screws, edge, the 200-N clamp at the screws
+    (hot / clamp only) and on a backplate; a 3x board with its ring at the coupon edge temperature or
+    at 25 C (bounds), free, screws, clamp'
+- id: mech.board.Z2.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z2
+  - A
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_A_Z2.json
+  deps:
+  - prod.Z2.SDEC.A
+  ncpus: 8
+  mem_gb: 40.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '4'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_A_Z2.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  workers: 4
+  evidence: '11 structural solves on the production mesh (coupon 112 kel, larger board ~1.4x): campaign_v3
+    mechanics-only 340-2000 s on 1 thread; 4 at a time on 2 threads'
+  notes: 'coupon: free (reproduces the case), screws, pinned screws, edge, the 200-N clamp at the screws
+    (hot / clamp only) and on a backplate; a 3x board with its ring at the coupon edge temperature or
+    at 25 C (bounds), free, screws, clamp'
+- id: mech.board.Z2.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z2
+  - B
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_B_Z2.json
+  deps:
+  - prod.Z2.SDEC.B
+  ncpus: 8
+  mem_gb: 40.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '4'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_B_Z2.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  workers: 4
+  evidence: '11 structural solves on the production mesh (coupon 112 kel, larger board ~1.4x): campaign_v3
+    mechanics-only 340-2000 s on 1 thread; 4 at a time on 2 threads'
+  notes: 'coupon: free (reproduces the case), screws, pinned screws, edge, the 200-N clamp at the screws
+    (hot / clamp only) and on a backplate; a 3x board with its ring at the coupon edge temperature or
+    at 25 C (bounds), free, screws, clamp'
+- id: mech.board.Z3.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z3
+  - A
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_A_Z3.json
+  deps:
+  - prod.Z3.SDEC.A
+  ncpus: 8
+  mem_gb: 40.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '4'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_A_Z3.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  workers: 4
+  evidence: '11 structural solves on the production mesh (coupon 112 kel, larger board ~1.4x): campaign_v3
+    mechanics-only 340-2000 s on 1 thread; 4 at a time on 2 threads'
+  notes: 'coupon: free (reproduces the case), screws, pinned screws, edge, the 200-N clamp at the screws
+    (hot / clamp only) and on a backplate; a 3x board with its ring at the coupon edge temperature or
+    at 25 C (bounds), free, screws, clamp'
+- id: mech.board.Z3.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z3
+  - B
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_B_Z3.json
+  deps:
+  - prod.Z3.SDEC.B
+  ncpus: 8
+  mem_gb: 40.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '4'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_B_Z3.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  workers: 4
+  evidence: '11 structural solves on the production mesh (coupon 112 kel, larger board ~1.4x): campaign_v3
+    mechanics-only 340-2000 s on 1 thread; 4 at a time on 2 threads'
+  notes: 'coupon: free (reproduces the case), screws, pinned screws, edge, the 200-N clamp at the screws
+    (hot / clamp only) and on a backplate; a 3x board with its ring at the coupon edge temperature or
+    at 25 C (bounds), free, screws, clamp'
+- id: robust.coolB.Z1
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - encap_uf_tg@B:Z1
+  - encap_emc_lowcte@B:Z1
+  - encap_emc_lowcte_const@B:Z1
+  - bga_card_local@B:Z1
+  - conv_E80_a4@B:Z1
+  - conv_E80_a10@B:Z1
+  - conv_E160_a4@B:Z1
+  - conv_E160_a10@B:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_uf_tg__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte_const__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__bga_card_local__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a4__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a10__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_E160_a4__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_E160_a10__B.json
+  deps:
+  - prod.Z1.S0.B
+  - fields.Z1.z1_bottom_plate_tim
+  ncpus: 8
+  mem_gb: 32.0
+  est_wall_h: 0.9
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '4'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_uf_tg__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte_const__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__bga_card_local__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a4__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a10__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_E160_a4__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_E160_a10__B.json
+    kind: etm
+    fresh: true
+  workers: 4
+  evidence: 8 mechanics-only solves on the cooling-B field, 4 at a time
+  notes: 'finding 8: NAME@B, mechanics only on the cooling-B field of the reference (configs/tcpmt_mech
+    cooling_B_base)'
+- id: mech.lawband.window
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_law_band.py
+  - --run
+  outputs:
+  - tcpmt_revision/solder_law_cards.json
+  - tcpmt_revision/solder_law_band.json
+  deps:
+  - mech.kin.Z1.A
+  - mech.kin.Z1.B
+  - mech.kin.Z2.A
+  - mech.kin.Z2.B
+  - mech.kin.Z3.A
+  - mech.kin.Z3.B
+  ncpus: 12
+  mem_gb: 12.0
+  est_wall_h: 0.8
+  walltime_h: 2.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '2'
+    TCPMT_SOLDER_SLOTS: '6'
+  validate:
+  - &id001
+    file: tcpmt_revision/solder_law_cards.json
+    kind: json
+    keys:
+    - laws
+  - file: tcpmt_revision/solder_law_band.json
+    kind: json
+    nonempty:
+    - band
+    fresh: true
+  workers: 6
+  evidence: 'v2 law band of the merged branch: 6 joints x 2 Garofalo laws x <= 6 window iterations + 1
+    measured-Norton pass, 3 slots x 2 threads, ~20 min'
+  notes: 'pass 1: every law''s Norton-surrogate window iterated to self-consistency at the maximum-du
+    joints of the six compared cases (production law: configs/tcpmt_mech solder.production_law; the band
+    over solder.band_laws)'
+- id: mech.state.Z1.encap_uf_tg
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - encap_uf_tg:Z1
+  - encap_uf_tg@B:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_uf_tg.json
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_uf_tg__B.json
+  deps:
+  - prod.Z1.SDEC.A
+  - prod.Z1.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_uf_tg.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_uf_tg__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z2.encap_uf_tg
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - encap_uf_tg:Z2
+  - encap_uf_tg@B:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_uf_tg.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_uf_tg__B.json
+  deps:
+  - prod.Z2.SDEC.A
+  - prod.Z2.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_uf_tg.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_uf_tg__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z3.encap_uf_tg
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - encap_uf_tg:Z3
+  - encap_uf_tg@B:Z3
+  outputs:
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_uf_tg.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_uf_tg__B.json
+  deps:
+  - prod.Z3.SDEC.A
+  - prod.Z3.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_uf_tg.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_uf_tg__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z1.encap_emc_lowcte
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - encap_emc_lowcte:Z1
+  - encap_emc_lowcte@B:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte.json
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte__B.json
+  deps:
+  - prod.Z1.SDEC.A
+  - prod.Z1.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z2.encap_emc_lowcte
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - encap_emc_lowcte:Z2
+  - encap_emc_lowcte@B:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte__B.json
+  deps:
+  - prod.Z2.SDEC.A
+  - prod.Z2.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z3.encap_emc_lowcte
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - encap_emc_lowcte:Z3
+  - encap_emc_lowcte@B:Z3
+  outputs:
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte__B.json
+  deps:
+  - prod.Z3.SDEC.A
+  - prod.Z3.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z1.encap_emc_lowcte_const
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - encap_emc_lowcte_const:Z1
+  - encap_emc_lowcte_const@B:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte_const.json
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte_const__B.json
+  deps:
+  - prod.Z1.SDEC.A
+  - prod.Z1.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte_const.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte_const__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z2.encap_emc_lowcte_const
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - encap_emc_lowcte_const:Z2
+  - encap_emc_lowcte_const@B:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte_const.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte_const__B.json
+  deps:
+  - prod.Z2.SDEC.A
+  - prod.Z2.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte_const.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte_const__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z3.encap_emc_lowcte_const
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - encap_emc_lowcte_const:Z3
+  - encap_emc_lowcte_const@B:Z3
+  outputs:
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte_const.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte_const__B.json
+  deps:
+  - prod.Z3.SDEC.A
+  - prod.Z3.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte_const.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte_const__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z1.bga_card_local
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - bga_card_local:Z1
+  - bga_card_local@B:Z1
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__bga_card_local.json
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__bga_card_local__B.json
+  deps:
+  - prod.Z1.SDEC.A
+  - prod.Z1.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__bga_card_local.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__bga_card_local__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z2.bga_card_local
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - bga_card_local:Z2
+  - bga_card_local@B:Z2
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__bga_card_local.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__bga_card_local__B.json
+  deps:
+  - prod.Z2.SDEC.A
+  - prod.Z2.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__bga_card_local.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__bga_card_local__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: mech.state.Z3.bga_card_local
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - bga_card_local:Z3
+  - bga_card_local@B:Z3
+  outputs:
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__bga_card_local.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__bga_card_local__B.json
+  deps:
+  - prod.Z3.SDEC.A
+  - prod.Z3.SDEC.B
+  ncpus: 4
+  mem_gb: 16.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__bga_card_local.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__bga_card_local__B.json
+    kind: etm
+    fresh: true
+  workers: 2
+  evidence: '2 mechanics-only solves (campaign_v3: 340-2000 s on 1 thread)'
+  notes: mechanics only on the production fields (cooling A and B)
+- id: robust.coolB.Z3
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - encap_uf_tg@B:Z3
+  - encap_emc_lowcte@B:Z3
+  - encap_emc_lowcte_const@B:Z3
+  - bga_card_local@B:Z3
+  outputs:
+  - final_closure/sensitivity/etm_Z3_HV_S0__encap_uf_tg__B.json
+  - final_closure/sensitivity/etm_Z3_HV_S0__encap_emc_lowcte__B.json
+  - final_closure/sensitivity/etm_Z3_HV_S0__encap_emc_lowcte_const__B.json
+  - final_closure/sensitivity/etm_Z3_HV_S0__bga_card_local__B.json
+  deps:
+  - prod.Z3.S0.B
+  - fields.Z3.z3_land_t40_B_fvmap
+  ncpus: 8
+  mem_gb: 32.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '4'
+    FC_THREADS: '2'
+  validate:
+  - file: final_closure/sensitivity/etm_Z3_HV_S0__encap_uf_tg__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z3_HV_S0__encap_emc_lowcte__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z3_HV_S0__encap_emc_lowcte_const__B.json
+    kind: etm
+    fresh: true
+  - file: final_closure/sensitivity/etm_Z3_HV_S0__bga_card_local__B.json
+    kind: etm
+    fresh: true
+  workers: 4
+  evidence: 4 mechanics-only solves on the cooling-B field, 4 at a time
+  notes: 'finding 8: NAME@B, mechanics only on the cooling-B field of the reference (configs/tcpmt_mech
+    cooling_B_base)'
+- id: mech.lawband
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_law_band.py
+  - --run
+  outputs:
+  - tcpmt_revision/solder_law_cards.json
+  - tcpmt_revision/solder_law_band.json
+  deps:
+  - mech.critical
+  ncpus: 12
+  mem_gb: 12.0
+  est_wall_h: 0.5
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '2'
+    TCPMT_SOLDER_SLOTS: '6'
+  validate:
+  - *id001
+  - file: tcpmt_revision/solder_law_band.json
+    kind: json
+    keys:
+    - critical_check
+    nonempty:
+    - band
+    fresh: true
+  workers: 6
+  evidence: as pass 1, starting from its converged windows
+  notes: 'pass 2: the band at the joints the critical-joint check confirmed (the production joint response
+    and its law band: the reported uncertainty of the joint response)'
+- id: mech.reflow.Z1.encap_uf_tg
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_reflow.py
+  - run
+  - Z1
+  - --refine
+  - '21'
+  - --encap
+  - encap_uf_tg
+  outputs:
+  - tcpmt_revision/reflow/Z1_r21_encap_uf_tg.json
+  deps:
+  - prep.converter_cards
+  - prep.tier_order
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.3
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/reflow/Z1_r21_encap_uf_tg.json
+    kind: json
+    keys:
+    - checks
+  evidence: 'merged branch, coarse r11: 30-150 s per part; r21 ~3x'
+  notes: 'finding 5: isothermal warpage of the unmounted package at the SAC305 reflow peak / solidus against
+    JEP95 / SPP-024, and the fine-pitch joint''s gap at its bonding temperature; encapsulant encap_uf_tg
+    (Tg class)'
+- id: mech.reflow.Z1.encap_emc_lowcte
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_reflow.py
+  - run
+  - Z1
+  - --refine
+  - '21'
+  - --encap
+  - encap_emc_lowcte
+  outputs:
+  - tcpmt_revision/reflow/Z1_r21_encap_emc_lowcte.json
+  deps:
+  - prep.converter_cards
+  - prep.tier_order
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.3
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/reflow/Z1_r21_encap_emc_lowcte.json
+    kind: json
+    keys:
+    - checks
+  evidence: 'merged branch, coarse r11: 30-150 s per part; r21 ~3x'
+  notes: 'finding 5: isothermal warpage of the unmounted package at the SAC305 reflow peak / solidus against
+    JEP95 / SPP-024, and the fine-pitch joint''s gap at its bonding temperature; encapsulant encap_emc_lowcte
+    (Tg class)'
+- id: mech.reflow.Z2.encap_uf_tg
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_reflow.py
+  - run
+  - Z2
+  - --refine
+  - '21'
+  - --encap
+  - encap_uf_tg
+  outputs:
+  - tcpmt_revision/reflow/Z2_r21_encap_uf_tg.json
+  deps:
+  - prep.converter_cards
+  - prep.tier_order
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.3
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/reflow/Z2_r21_encap_uf_tg.json
+    kind: json
+    keys:
+    - checks
+  evidence: 'merged branch, coarse r11: 30-150 s per part; r21 ~3x'
+  notes: 'finding 5: isothermal warpage of the unmounted package at the SAC305 reflow peak / solidus against
+    JEP95 / SPP-024, and the fine-pitch joint''s gap at its bonding temperature; encapsulant encap_uf_tg
+    (Tg class)'
+- id: mech.reflow.Z2.encap_emc_lowcte
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_reflow.py
+  - run
+  - Z2
+  - --refine
+  - '21'
+  - --encap
+  - encap_emc_lowcte
+  outputs:
+  - tcpmt_revision/reflow/Z2_r21_encap_emc_lowcte.json
+  deps:
+  - prep.converter_cards
+  - prep.tier_order
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.3
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/reflow/Z2_r21_encap_emc_lowcte.json
+    kind: json
+    keys:
+    - checks
+  evidence: 'merged branch, coarse r11: 30-150 s per part; r21 ~3x'
+  notes: 'finding 5: isothermal warpage of the unmounted package at the SAC305 reflow peak / solidus against
+    JEP95 / SPP-024, and the fine-pitch joint''s gap at its bonding temperature; encapsulant encap_emc_lowcte
+    (Tg class)'
+- id: mech.reflow.Z3.encap_uf_tg
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_reflow.py
+  - run
+  - Z3
+  - --refine
+  - '21'
+  - --encap
+  - encap_uf_tg
+  outputs:
+  - tcpmt_revision/reflow/Z3_r21_encap_uf_tg.json
+  deps:
+  - prep.converter_cards
+  - prep.tier_order
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.3
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/reflow/Z3_r21_encap_uf_tg.json
+    kind: json
+    keys:
+    - checks
+  evidence: 'merged branch, coarse r11: 30-150 s per part; r21 ~3x'
+  notes: 'finding 5: isothermal warpage of the unmounted package at the SAC305 reflow peak / solidus against
+    JEP95 / SPP-024, and the fine-pitch joint''s gap at its bonding temperature; encapsulant encap_uf_tg
+    (Tg class)'
+- id: mech.reflow.Z3.encap_emc_lowcte
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_reflow.py
+  - run
+  - Z3
+  - --refine
+  - '21'
+  - --encap
+  - encap_emc_lowcte
+  outputs:
+  - tcpmt_revision/reflow/Z3_r21_encap_emc_lowcte.json
+  deps:
+  - prep.converter_cards
+  - prep.tier_order
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.3
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/reflow/Z3_r21_encap_emc_lowcte.json
+    kind: json
+    keys:
+    - checks
+  evidence: 'merged branch, coarse r11: 30-150 s per part; r21 ~3x'
+  notes: 'finding 5: isothermal warpage of the unmounted package at the SAC305 reflow peak / solidus against
+    JEP95 / SPP-024, and the fine-pitch joint''s gap at its bonding temperature; encapsulant encap_emc_lowcte
+    (Tg class)'
+- id: mech.reflow.Z1
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_reflow.py
+  - run
+  - Z1
+  - --refine
+  - '21'
+  outputs:
+  - tcpmt_revision/reflow/Z1_r21.json
+  deps:
+  - prep.converter_cards
+  - prep.tier_order
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.2
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/reflow/Z1_r21.json
+    kind: json
+    keys:
+    - checks
+  evidence: 'merged branch, coarse r11: 30-150 s per part; r21 ~3x'
+  notes: 'finding 5: isothermal warpage of the unmounted package at the SAC305 reflow peak / solidus against
+    JEP95 / SPP-024, and the fine-pitch joint''s gap at its bonding temperature'
+- id: mech.reflow.Z2
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_reflow.py
+  - run
+  - Z2
+  - --refine
+  - '21'
+  outputs:
+  - tcpmt_revision/reflow/Z2_r21.json
+  deps:
+  - prep.converter_cards
+  - prep.tier_order
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.2
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/reflow/Z2_r21.json
+    kind: json
+    keys:
+    - checks
+  evidence: 'merged branch, coarse r11: 30-150 s per part; r21 ~3x'
+  notes: 'finding 5: isothermal warpage of the unmounted package at the SAC305 reflow peak / solidus against
+    JEP95 / SPP-024, and the fine-pitch joint''s gap at its bonding temperature'
+- id: mech.reflow.Z3
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_reflow.py
+  - run
+  - Z3
+  - --refine
+  - '21'
+  outputs:
+  - tcpmt_revision/reflow/Z3_r21.json
+  deps:
+  - prep.converter_cards
+  - prep.tier_order
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.2
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/reflow/Z3_r21.json
+    kind: json
+    keys:
+    - checks
+  evidence: 'merged branch, coarse r11: 30-150 s per part; r21 ~3x'
+  notes: 'finding 5: isothermal warpage of the unmounted package at the SAC305 reflow peak / solidus against
+    JEP95 / SPP-024, and the fine-pitch joint''s gap at its bonding temperature'
+- id: mech.board_summary
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state-summarize
+  - --state
+  - SDEC
+  - --local
+  outputs:
+  - tcpmt_revision/board_study_SDEC.json
+  deps:
+  - mech.board.Z1.A
+  - mech.board.Z1.B
+  - mech.board.Z2.A
+  - mech.board.Z2.B
+  - mech.board.Z3.A
+  - mech.board.Z3.B
+  - mech.lawband
+  ncpus: 12
+  mem_gb: 8.0
+  est_wall_h: 0.2
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    TCPMT_SOLDER_SLOTS: '6'
+  validate:
+  - file: tcpmt_revision/board_study_SDEC.json
+    kind: json
+    nonempty:
+    - cases
+    fresh: true
+  workers: 6
+  notes: every board / mounting / clamp solve against its case, and the clamp in the local response (v2,
+    production card)
+- id: mech.state_local.encap_uf_tg
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - --local
+  - encap_uf_tg
+  - encap_uf_tg@B
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_uf_tg.json
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_uf_tg__B.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_uf_tg.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_uf_tg__B.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_uf_tg.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_uf_tg__B.json
+  deps:
+  - mech.state.Z1.encap_uf_tg
+  - mech.state.Z2.encap_uf_tg
+  - mech.state.Z3.encap_uf_tg
+  - mech.lawband
+  ncpus: 12
+  mem_gb: 8.0
+  est_wall_h: 0.1
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '6'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_uf_tg.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_uf_tg__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_uf_tg.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_uf_tg__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_uf_tg.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_uf_tg__B.json
+    kind: etm
+    local: true
+  workers: 6
+  notes: the v2 local response at each variant's own critical joint
+- id: mech.state_local.encap_emc_lowcte
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - --local
+  - encap_emc_lowcte
+  - encap_emc_lowcte@B
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte.json
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte__B.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte__B.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte__B.json
+  deps:
+  - mech.state.Z1.encap_emc_lowcte
+  - mech.state.Z2.encap_emc_lowcte
+  - mech.state.Z3.encap_emc_lowcte
+  - mech.lawband
+  ncpus: 12
+  mem_gb: 8.0
+  est_wall_h: 0.1
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '6'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte__B.json
+    kind: etm
+    local: true
+  workers: 6
+  notes: the v2 local response at each variant's own critical joint
+- id: mech.state_local.encap_emc_lowcte_const
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - --local
+  - encap_emc_lowcte_const
+  - encap_emc_lowcte_const@B
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte_const.json
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte_const__B.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte_const.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte_const__B.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte_const.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte_const__B.json
+  deps:
+  - mech.state.Z1.encap_emc_lowcte_const
+  - mech.state.Z2.encap_emc_lowcte_const
+  - mech.state.Z3.encap_emc_lowcte_const
+  - mech.lawband
+  ncpus: 12
+  mem_gb: 8.0
+  est_wall_h: 0.1
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '6'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte_const.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__encap_emc_lowcte_const__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte_const.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__encap_emc_lowcte_const__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte_const.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__encap_emc_lowcte_const__B.json
+    kind: etm
+    local: true
+  workers: 6
+  notes: the v2 local response at each variant's own critical joint
+- id: mech.state_local.bga_card_local
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --state
+  - SDEC
+  - --local
+  - bga_card_local
+  - bga_card_local@B
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__bga_card_local.json
+  - final_closure/sensitivity/etm_Z1_HV_SDEC__bga_card_local__B.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__bga_card_local.json
+  - final_closure/sensitivity/etm_Z2_HV_SDEC__bga_card_local__B.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__bga_card_local.json
+  - final_closure/sensitivity/etm_Z3_HV_SDEC__bga_card_local__B.json
+  deps:
+  - mech.state.Z1.bga_card_local
+  - mech.state.Z2.bga_card_local
+  - mech.state.Z3.bga_card_local
+  - mech.lawband
+  ncpus: 12
+  mem_gb: 8.0
+  est_wall_h: 0.1
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '6'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__bga_card_local.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_SDEC__bga_card_local__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__bga_card_local.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_SDEC__bga_card_local__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__bga_card_local.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_SDEC__bga_card_local__B.json
+    kind: etm
+    local: true
+  workers: 6
+  notes: the v2 local response at each variant's own critical joint
+- id: robust.coolB_local.Z1
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --local
+  - encap_uf_tg@B
+  - encap_emc_lowcte@B
+  - encap_emc_lowcte_const@B
+  - bga_card_local@B
+  - conv_E80_a4@B
+  - conv_E80_a10@B
+  - conv_E160_a4@B
+  - conv_E160_a10@B
+  outputs:
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_uf_tg__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte_const__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__bga_card_local__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a4__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a10__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_E160_a4__B.json
+  - final_closure/sensitivity/etm_Z1_HV_S0__conv_E160_a10__B.json
+  deps:
+  - robust.coolB.Z1
+  - mech.lawband
+  ncpus: 8
+  mem_gb: 8.0
+  est_wall_h: 0.1
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '4'
+  validate:
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_uf_tg__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__encap_emc_lowcte_const__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__bga_card_local__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a4__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_E80_a10__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_E160_a4__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z1_HV_S0__conv_E160_a10__B.json
+    kind: etm
+    local: true
+  workers: 4
+- id: robust.coolB_local.Z2
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --local
+  - encap_uf_tg@B
+  - encap_emc_lowcte@B
+  - encap_emc_lowcte_const@B
+  - bga_card_local@B
+  - attach_stiff@B
+  - attach_uf_soft@B
+  - attach_uf_stiff@B
+  - conv_E80_a4@B
+  - conv_E80_a10@B
+  - conv_E160_a4@B
+  - conv_E160_a10@B
+  outputs:
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_uf_tg__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte_const__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__bga_card_local__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__attach_stiff__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__attach_uf_soft__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__attach_uf_stiff__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a4__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a10__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_E160_a4__B.json
+  - final_closure/sensitivity/etm_Z2_HV_S0__conv_E160_a10__B.json
+  deps:
+  - robust.coolB.Z2
+  - mech.lawband
+  ncpus: 8
+  mem_gb: 8.0
+  est_wall_h: 0.1
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '4'
+  validate:
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_uf_tg__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__encap_emc_lowcte_const__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__bga_card_local__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__attach_stiff__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__attach_uf_soft__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__attach_uf_stiff__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a4__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_E80_a10__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_E160_a4__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z2_HV_S0__conv_E160_a10__B.json
+    kind: etm
+    local: true
+  workers: 4
+- id: robust.coolB_local.Z3
+  stage: mech_revision
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --local
+  - encap_uf_tg@B
+  - encap_emc_lowcte@B
+  - encap_emc_lowcte_const@B
+  - bga_card_local@B
+  outputs:
+  - final_closure/sensitivity/etm_Z3_HV_S0__encap_uf_tg__B.json
+  - final_closure/sensitivity/etm_Z3_HV_S0__encap_emc_lowcte__B.json
+  - final_closure/sensitivity/etm_Z3_HV_S0__encap_emc_lowcte_const__B.json
+  - final_closure/sensitivity/etm_Z3_HV_S0__bga_card_local__B.json
+  deps:
+  - robust.coolB.Z3
+  - mech.lawband
+  ncpus: 8
+  mem_gb: 8.0
+  est_wall_h: 0.1
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    LOCAL_THREADS: '2'
+    FC_POOL_MAX: '4'
+  validate:
+  - file: final_closure/sensitivity/etm_Z3_HV_S0__encap_uf_tg__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_S0__encap_emc_lowcte__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_S0__encap_emc_lowcte_const__B.json
+    kind: etm
+    local: true
+  - file: final_closure/sensitivity/etm_Z3_HV_S0__bga_card_local__B.json
+    kind: etm
+    local: true
+  workers: 4
+- id: mech.interconnects
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - drivers
+  outputs:
+  - tcpmt_revision/interconnect_drivers.json
+  deps:
+  - mech.kin.Z1.A
+  - mech.kin.Z1.B
+  - mech.kin.Z2.A
+  - mech.kin.Z2.B
+  - mech.kin.Z3.A
+  - mech.kin.Z3.B
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/interconnect_drivers.json
+    kind: json
+    nonempty:
+    - cases
+    fresh: true
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+  notes: 'finding 4: driver and layer shear strain of every interconnect layer (Z1 microbumps, Z2 Cu-pillar
+    attach, Z3 SAC attach, BGA); finding 9: the du split of the BGA driver'
+- id: mech.interconnect_ladder
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - ladder
+  outputs:
+  - tcpmt_revision/interconnect_mesh_ladder.json
+  deps:
+  - mech.kin.Z1.A
+  - mech.kin.Z1.B
+  - mech.kin.Z2.A
+  - mech.kin.Z2.B
+  - mech.kin.Z3.A
+  - mech.kin.Z3.B
+  - ladder.Z1.sdec_A.r11
+  - ladder.Z1.sdec_A.r31
+  - ladder.Z1.sdec_B.r11
+  - ladder.Z1.sdec_B.r31
+  - ladder.Z2.sdec_A.r11
+  - ladder.Z2.sdec_A.r31
+  - ladder.Z2.sdec_B.r11
+  - ladder.Z2.sdec_B.r31
+  - ladder.Z3.sdec_A.r11
+  - ladder.Z3.sdec_A.r31
+  - ladder.Z3.sdec_B.r11
+  - ladder.Z3.sdec_B.r31
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/interconnect_mesh_ladder.json
+    kind: json
+    nonempty:
+    - cases
+    fresh: true
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+  notes: per-layer drivers on the production-state rungs r11 / r21 / r31
+- id: mech.law_record
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_laws.py
+  - --record
+  outputs:
+  - tcpmt_revision/solder_law_record.json
+  deps:
+  - mech.lawband
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/solder_law_record.json
+    kind: json
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+  notes: 'per law: alloy, calibration window, visited window, extrapolation, surrogate error (Table S10)'
+- id: mech.reflow_summary
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_reflow.py
+  - summarize
+  outputs:
+  - tcpmt_revision/reflow_warpage.json
+  deps:
+  - mech.reflow.Z1
+  - mech.reflow.Z1.encap_uf_tg
+  - mech.reflow.Z1.encap_emc_lowcte
+  - mech.reflow.Z2
+  - mech.reflow.Z2.encap_uf_tg
+  - mech.reflow.Z2.encap_emc_lowcte
+  - mech.reflow.Z3
+  - mech.reflow.Z3.encap_uf_tg
+  - mech.reflow.Z3.encap_emc_lowcte
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/reflow_warpage.json
+    kind: json
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+- id: mech.kin.Z1.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - SDEC_A_Z1
+  outputs:
+  - tcpmt_revision/site_kinematics/SDEC_A_Z1.json
+  deps:
+  - prod.Z1.SDEC.A
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/site_kinematics/SDEC_A_Z1.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  evidence: reads one case file (seconds)
+  notes: the case's stored interconnect search (every layer; BGA candidates with their full cut-boundary
+    kinematics) and its site coverage; refuses a case whose BGA counts are not in force (tcpmt_mech_production.input_issue)
+- id: mech.kin.Z1.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - SDEC_B_Z1
+  outputs:
+  - tcpmt_revision/site_kinematics/SDEC_B_Z1.json
+  deps:
+  - prod.Z1.SDEC.B
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/site_kinematics/SDEC_B_Z1.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  evidence: reads one case file (seconds)
+  notes: the case's stored interconnect search (every layer; BGA candidates with their full cut-boundary
+    kinematics) and its site coverage; refuses a case whose BGA counts are not in force (tcpmt_mech_production.input_issue)
+- id: mech.kin.Z2.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - SDEC_A_Z2
+  outputs:
+  - tcpmt_revision/site_kinematics/SDEC_A_Z2.json
+  deps:
+  - prod.Z2.SDEC.A
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/site_kinematics/SDEC_A_Z2.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  evidence: reads one case file (seconds)
+  notes: the case's stored interconnect search (every layer; BGA candidates with their full cut-boundary
+    kinematics) and its site coverage; refuses a case whose BGA counts are not in force (tcpmt_mech_production.input_issue)
+- id: mech.kin.Z2.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - SDEC_B_Z2
+  outputs:
+  - tcpmt_revision/site_kinematics/SDEC_B_Z2.json
+  deps:
+  - prod.Z2.SDEC.B
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/site_kinematics/SDEC_B_Z2.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  evidence: reads one case file (seconds)
+  notes: the case's stored interconnect search (every layer; BGA candidates with their full cut-boundary
+    kinematics) and its site coverage; refuses a case whose BGA counts are not in force (tcpmt_mech_production.input_issue)
+- id: mech.kin.Z3.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - SDEC_A_Z3
+  outputs:
+  - tcpmt_revision/site_kinematics/SDEC_A_Z3.json
+  deps:
+  - prod.Z3.SDEC.A
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/site_kinematics/SDEC_A_Z3.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  evidence: reads one case file (seconds)
+  notes: the case's stored interconnect search (every layer; BGA candidates with their full cut-boundary
+    kinematics) and its site coverage; refuses a case whose BGA counts are not in force (tcpmt_mech_production.input_issue)
+- id: mech.kin.Z3.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - SDEC_B_Z3
+  outputs:
+  - tcpmt_revision/site_kinematics/SDEC_B_Z3.json
+  deps:
+  - prod.Z3.SDEC.B
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/site_kinematics/SDEC_B_Z3.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  evidence: reads one case file (seconds)
+  notes: the case's stored interconnect search (every layer; BGA candidates with their full cut-boundary
+    kinematics) and its site coverage; refuses a case whose BGA counts are not in force (tcpmt_mech_production.input_issue)
 - id: moose.fullpkg
   stage: moose_checks
   argv:
@@ -7828,6 +9861,8 @@ jobs:
   - local.mesh_study
   - solder.studies
   - solder.z3land
+  - mech.lawband
+  - mech.local_checks
   ncpus: 1
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -7842,6 +9877,79 @@ jobs:
   - file: manuscript_v2/tab_uncertainty.tex
     kind: exists
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+- id: mech.judge_state
+  stage: derived
+  argv:
+  - scripts/tcpmt_mech_variants.py
+  - judge-state
+  - SDEC
+  outputs:
+  - tcpmt_revision/robustness_mech_SDEC.json
+  deps:
+  - mech.state.Z1.encap_uf_tg
+  - mech.state.Z2.encap_uf_tg
+  - mech.state.Z3.encap_uf_tg
+  - mech.state.Z1.encap_emc_lowcte
+  - mech.state.Z2.encap_emc_lowcte
+  - mech.state.Z3.encap_emc_lowcte
+  - mech.state.Z1.encap_emc_lowcte_const
+  - mech.state.Z2.encap_emc_lowcte_const
+  - mech.state.Z3.encap_emc_lowcte_const
+  - mech.state.Z1.bga_card_local
+  - mech.state.Z2.bga_card_local
+  - mech.state.Z3.bga_card_local
+  - mech.state_local.encap_uf_tg
+  - mech.state_local.encap_emc_lowcte
+  - mech.state_local.encap_emc_lowcte_const
+  - mech.state_local.bga_card_local
+  - derived.uncertainty
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/robustness_mech_SDEC.json
+    kind: json
+    nonempty:
+    - variants
+    fresh: true
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+  notes: the encapsulant / BGA-card variants on the production fields against their own cases; orderings
+    under the rule with the production pairs' U95
+- id: mech.judgeB
+  stage: derived
+  argv:
+  - scripts/tcpmt_mech_variants.py
+  - judgeB
+  outputs:
+  - tcpmt_revision/robustness_B.json
+  deps:
+  - robust.coolB.Z1
+  - robust.coolB.Z2
+  - robust.coolB.Z3
+  - robust.coolB_local.Z1
+  - robust.coolB_local.Z2
+  - robust.coolB_local.Z3
+  - derived.uncertainty
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/robustness_B.json
+    kind: json
+    nonempty:
+    - variants
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+  notes: 'finding 8: the cooling-B rows of the robustness map (NAME@B against the cooling-B base)'
 - id: manuscript.fig_fields
   stage: manuscript
   argv:
@@ -8105,6 +10213,58 @@ jobs:
   - robust.caloric.Z1.B
   - robust.caloric.Z2.B
   - robust.caloric.Z3.B
+  - mech.kin.Z1.A
+  - mech.kin.Z1.B
+  - mech.kin.Z2.A
+  - mech.kin.Z2.B
+  - mech.kin.Z3.A
+  - mech.kin.Z3.B
+  - mech.interconnects
+  - mech.interconnect_ladder
+  - mech.lawband.window
+  - mech.critical
+  - mech.lawband
+  - mech.local_checks
+  - mech.law_record
+  - mech.reflow.Z1
+  - mech.reflow.Z1.encap_uf_tg
+  - mech.reflow.Z1.encap_emc_lowcte
+  - mech.reflow.Z2
+  - mech.reflow.Z2.encap_uf_tg
+  - mech.reflow.Z2.encap_emc_lowcte
+  - mech.reflow.Z3
+  - mech.reflow.Z3.encap_uf_tg
+  - mech.reflow.Z3.encap_emc_lowcte
+  - mech.reflow_summary
+  - mech.board.Z1.A
+  - mech.board.Z1.B
+  - mech.board.Z2.A
+  - mech.board.Z2.B
+  - mech.board.Z3.A
+  - mech.board.Z3.B
+  - mech.board_summary
+  - mech.state.Z1.encap_uf_tg
+  - mech.state.Z2.encap_uf_tg
+  - mech.state.Z3.encap_uf_tg
+  - mech.state_local.encap_uf_tg
+  - mech.state.Z1.encap_emc_lowcte
+  - mech.state.Z2.encap_emc_lowcte
+  - mech.state.Z3.encap_emc_lowcte
+  - mech.state_local.encap_emc_lowcte
+  - mech.state.Z1.encap_emc_lowcte_const
+  - mech.state.Z2.encap_emc_lowcte_const
+  - mech.state.Z3.encap_emc_lowcte_const
+  - mech.state_local.encap_emc_lowcte_const
+  - mech.state.Z1.bga_card_local
+  - mech.state.Z2.bga_card_local
+  - mech.state.Z3.bga_card_local
+  - mech.state_local.bga_card_local
+  - robust.coolB.Z1
+  - robust.coolB_local.Z1
+  - robust.coolB.Z2
+  - robust.coolB_local.Z2
+  - robust.coolB.Z3
+  - robust.coolB_local.Z3
   - prep.dse_engine
   - dse.etm35
   - dse.etm35_caprule_full
@@ -8136,6 +10296,8 @@ jobs:
   - solder.parameters
   - solder.z3land
   - derived.uncertainty
+  - mech.judge_state
+  - mech.judgeB
   ncpus: 1
   mem_gb: 4.0
   est_wall_h: 0.05

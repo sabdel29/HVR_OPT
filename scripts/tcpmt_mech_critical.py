@@ -25,10 +25,54 @@ import tcpmt_mech_kinematics as KIN                                 # noqa: E402
 import tcpmt_mech_submodel as SUB                                   # noqa: E402
 import tcpmt_mech_laws as LAW                                       # noqa: E402
 
-STUDY = "critical_v2"
-OUT = LAW.TR / "solder_critical_v2.json"
-CASE_ORDER = ["Z1_S0", "Z2_S0", "Z3_S0", "Z1_S1", "Z2_S1", "A_Z3", "B_Z1", "B_Z2", "B_Z3",
-              "A_Z3land", "B_Z3land"]
+import tcpmt_mech_production as MP                                 # noqa: E402
+
+#: TCPMT round 3 (campaign): the compared cases of the local model's state -- the production
+#: state of the design in force by default (tcpmt_mech_production.LOCAL_STATE)
+STATE = MP.LOCAL_STATE
+_SFX = "" if STATE == "SDEC" else f"_{STATE}"
+STUDY = "critical_v2" + _SFX
+OUT = LAW.TR / f"solder_critical_v2{_SFX}.json"
+ROUND2_ORDER = ["Z1_S0", "Z2_S0", "Z3_S0", "Z1_S1", "Z2_S1", "A_Z3", "B_Z1", "B_Z2", "B_Z3",
+                "A_Z3land", "B_Z3land"]
+CASE_ORDER = ROUND2_ORDER if STATE == "round2" else MP.labels(STATE)
+
+
+def pareto_front(rows):
+    """Strict Pareto front in (|du_xy|, T): no other site is larger in both."""
+    return [r for r in rows if not any(o["du_xy_um"] > r["du_xy_um"] and o["T_C"] > r["T_C"]
+                                       for o in rows)]
+
+
+def monotonicity(rows):
+    """Finding 2, the round-2 argument tested under the new boundary conditions: if the
+    response were monotone in (|du_xy|, T), the critical joint would lie on the Pareto front
+    and a site dominated in both would never respond more. Over every ordered pair of solved
+    sites where one dominates the other in both (>=, one strictly), count the pairs whose
+    responses are ordered the other way, and the largest such excess."""
+    done = [r for r in rows if r.get("d_eps") is not None]
+    n = nv = 0
+    worst = None
+    for a in done:
+        for b in done:
+            if a is b:
+                continue
+            if a["du_xy_um"] >= b["du_xy_um"] and a["T_C"] >= b["T_C"] and (
+                    a["du_xy_um"] > b["du_xy_um"] or a["T_C"] > b["T_C"]):
+                n += 1
+                if b["d_eps"] > a["d_eps"]:
+                    nv += 1
+                    x = b["d_eps"] / a["d_eps"] - 1.0
+                    if worst is None or x > worst["excess_rel"]:
+                        worst = {"excess_rel": x, "dominating": [a["x_mm"], a["y_mm"]],
+                                 "dominated": [b["x_mm"], b["y_mm"]]}
+    front = pareto_front(done)
+    best = max(done, key=lambda r: r["d_eps"]) if done else None
+    return {"n_ordered_pairs": n, "n_violations": nv, "worst_violation": worst,
+            "n_pareto_solved": len(front),
+            "max_response_on_pareto_front": (best in front) if best else None,
+            "rule": "a site at least as large in both |du_xy| and T must respond at least as "
+                    "much (pairs over every solved candidate)"}
 
 
 def candidates(case, n_top):
@@ -62,14 +106,21 @@ def tasks(cases, n_top):
 
 def summarize(n_top):
     recs = SUB.load_records(STUDY)
+    prod = LAW.solder_cfg()["production_law"]
     out = {"what": "critical-joint check, v2 local model (finding 2)",
+           "state": STATE,
            "model": {k: SUB.lcfg()[k] for k in ("bc_mode", "ramp_s", "dwell_s", "n_cycles",
                                                  "element", "level")},
-           "law": LAW.solder_cfg()["production_law"],
-           "window_status": LAW.stored_window(LAW.solder_cfg()["production_law"])[1],
-           "candidate_rule": f"top {n_top} by |du_xy|, by |relative tilt| and by |eps_z|, the "
-                             "strict Pareto front in (|du_xy|, T) and the four corners",
-           "cases": {}}
+           "law": prod,
+           "window_status": LAW.stored_window(prod)[1],
+           "window_MPa": LAW.stored_window(prod)[0],
+           "card_sha": LAW.card_sha(LAW.card(prod, LAW.stored_window(prod)[0])[0]),
+           "candidate_rule": f"top {n_top} by |du_xy|, by |relative tilt|, by |eps_z| and by "
+                             "the deforming du, the strict Pareto front in (|du_xy|, T) and "
+                             "the four corners, over every evaluated lattice site",
+           "inputs_sha1": {}, "cases": {}}
+    if LAW.CARDS.is_file():
+        out["inputs_sha1"][str(LAW.CARDS.resolve())] = MP.sha1(LAW.CARDS)
     n_tot = n_ok = 0
     for case in CASE_ORDER:
         cand = candidates(case, n_top)
@@ -78,10 +129,17 @@ def summarize(n_top):
         rows = []
         for k in cand:
             r = recs.get(tag(case, k)) or {}
+            # a record solved with another card or other kinematics is not this check's
+            fresh = bool(r) and r.get("card_sha") == out["card_sha"] and abs(
+                ((r.get("kin") or {}).get("du_xy_um") or -1.0) - k["du_xy_um"]) < 1e-9
             rows.append({"x_mm": k["x_mm"], "y_mm": k["y_mm"], "du_xy_um": k["du_xy_um"],
                          "du_z_um": k["du_z_um"], "T_C": SUB.site_temperature(k),
-                         "tilt_rel": k["tilt_rel"], "d_eps": r.get("d_peeq_per_cycle"),
-                         "error": r.get("error")})
+                         "du_def_xy_um": k.get("du_def_xy_um"),
+                         "tilt_rel": k["tilt_rel"],
+                         "d_eps": r.get("d_peeq_per_cycle") if fresh else None,
+                         "error": (r.get("error") if fresh else
+                                   ("stale record (other card or kinematics)" if r else
+                                    "not solved"))})
         done = [r for r in rows if r["d_eps"] is not None]
         if not done:
             continue
@@ -92,8 +150,14 @@ def summarize(n_top):
         n_tot += 1
         is_max = top["d_eps"] is not None and best is top
         n_ok += bool(is_max)
+        kin = KIN.load_kinematics(case) or {}
+        out["inputs_sha1"].update(kin.get("inputs_sha1") or {})
+        stale = [r["error"] for r in rows if r.get("error")]
         out["cases"][case] = {
-            "n_candidates": len(rows), "n_solved": len(done),
+            "case_file": kin.get("case_file"), "case_sha1": kin.get("case_sha1"),
+            "site_coverage": kin.get("site_coverage"),
+            "n_candidates": len(rows), "n_solved": len(done), "n_failed": len(stale),
+            "monotonicity": monotonicity(rows),
             "max_du_site": top, "max_response_site": best,
             "critical_is_max_du": is_max if top["d_eps"] is not None else None,
             "margin_rel": ((top["d_eps"] - second["d_eps"]) / top["d_eps"]

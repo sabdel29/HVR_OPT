@@ -65,10 +65,28 @@ Z3LAND = Path(os.environ.get("HVR_Z3LAND",
 for _t in ("A", "B"):
     CASES[f"{_t}_Z3land"] = ("Z3", "HV_S0", f"z3_land_t40_{_t}_fvmap",
                              Z3LAND / f"z3_land_t40_{_t}_fvmap" / "Z3_HV_S0_h1.1_r21")
+#: TCPMT round 3, the campaign's compared cases (tcpmt_cases): <STATE>_<TIER>_<ARCH>, e.g.
+#: SDEC_A_Z1 = the production state (implemented decoupling), cooling A, Z1. Their records are
+#: built from the case files themselves (tcpmt_mech_production.kin: mechanics() stores every
+#: interconnect layer's search with the case), so they carry no field directory here.
+for _s, _scen in (("SDEC", "HV_SDEC"), ("S0", "HV_S0"), ("S1", "HV_S1")):
+    for _t in ("A", "B"):
+        for _a in ("Z1", "Z2", "Z3"):
+            CASES[f"{_s}_{_t}_{_a}"] = (_a, _scen, f"{_s}:{_t}", None)
+
+
+def is_state_case(case):
+    """A campaign compared case (record from its case file), not a round-2 field case."""
+    v = CASES[case][2]
+    return isinstance(v, str) and ":" in v
 
 
 def case_file(case):
     arch, scen, var, _ = CASES[case]
+    if is_state_case(case):
+        import tcpmt_cases as TC
+        st, t = var.split(":")
+        return TC.case_path(st, t, arch) or TC.expected_path(st, t, arch)
     if var is None:
         return FC / f"etm_{arch}_{scen}_h1.1_r21.json"
     return FC / "sensitivity" / f"etm_{arch}_{scen}__{var}.json"
@@ -581,7 +599,11 @@ def ladder(arch, scen="HV_S0", levels=((1, 1), (2, 1), (3, 1))):
 def summary():
     """Findings 4 and 9 across the stored cases: the critical site of every interconnect
     layer, and the split of the BGA corner du (membrane / bending / residual; rigid joint
-    rotation / deforming part)."""
+    rotation / deforming part). TCPMT round 3: the campaign's compared cases of the local
+    model's state (tcpmt_mech_production.drivers); TCPMT_LOCAL_STATE=round2 the round-2 cases."""
+    import tcpmt_mech_production as MP
+    if MP.LOCAL_STATE != "round2":
+        return MP.drivers()
     out = {"what": "interconnect drivers per layer (finding 4) and the composition of the "
                    "BGA joint driver (finding 9), from the stored global fields",
            "generator": "scripts/tcpmt_mech_kinematics.py --summary", "cases": {}}
@@ -640,10 +662,18 @@ def main():
         print(json.dumps(s["claim_test"], indent=1))
         return
     if "--ladder" in sys.argv:
+        import tcpmt_mech_production as MP
+        if MP.LOCAL_STATE != "round2":          # the compared cases' own rungs
+            print(json.dumps(MP.ladder(), indent=1, default=float)[:4000])
+            return
         for a in [x for x in sys.argv[1:] if x in ("Z1", "Z2", "Z3")] or ["Z1", "Z2"]:
             print(a, json.dumps(ladder(a), indent=1, default=float))
         return
-    for case in (sys.argv[1:] or list(CASES)):
+    for case in (sys.argv[1:] or [c for c in CASES if not is_state_case(c)]):
+        if is_state_case(case):                 # built from its case file, not a field
+            import tcpmt_mech_production as MP
+            MP.write_kin([case])
+            continue
         if not (CASES[case][3] / "structural.frd").exists():
             print(case, "no stored structural field, skipped", flush=True)
             continue

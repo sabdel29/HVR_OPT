@@ -8,7 +8,7 @@ Every computed result of the TCPMT paper is a job in scripts/campaign/manifest.y
     run.py plan    [--stage S ...] [--only GLOB ...]          stage table, core-h, makespan
     run.py seed    [--upstream-of GLOB ...]                    copy static inputs into the root
     run.py run     --backend local|pbs|both [--stage S] [--only GLOB] [--force] [--dry-run]
-                   [--max-cores 30] [--once]                   launch/poll until nothing is left
+                   [--max-cores 30] [--once] [--strict-deps]   launch/poll until nothing is left
     run.py status  [--stage S ...] [-v]                        done/running/queued/failed + ETA
     run.py validate [--only GLOB]                              re-check outputs, no launches
     run.py reset   --only GLOB                                 forget ledger state of jobs
@@ -536,14 +536,21 @@ def ingest(camp, led, st, backends):
     return changed
 
 
-def dep_state(camp, led, st, want_set, d, resub=1, _memo=None):
+def dep_state(camp, led, st, want_set, d, resub=1, _memo=None, strict=False):
     """'ok' | 'wait' | 'dead' for one dependency. A dependency outside the selection that
     was never run through this ledger is accepted when its outputs validate (recorded as
-    'valid'), so a subset can run on top of earlier or seeded results."""
+    'valid'), so a subset can run on top of earlier or seeded results. strict (--strict-deps):
+    a dependency outside the selection counts only when the ledger has it done / valid /
+    seeded; otherwise it is waited for and NEVER marked valid from its outputs -- the mode for
+    a runner that shares the ledger with another runner which has reset that dependency to
+    re-run it (its old outputs still validate, and marking them valid would make the other
+    runner skip the re-run)."""
     r = st.get(d, {})
     s = r.get("status")
     if s in TERMINAL_OK:
         return "ok"
+    if d not in want_set and strict:
+        return "wait"
     if d not in want_set:
         if s in ("running", "queued"):
             return "wait"
@@ -558,7 +565,7 @@ def dep_state(camp, led, st, want_set, d, resub=1, _memo=None):
     memo = {} if _memo is None else _memo     # a dependency that can itself never run
     if d not in memo:
         memo[d] = "wait"
-        sub = [dep_state(camp, led, st, want_set, x, resub, memo)
+        sub = [dep_state(camp, led, st, want_set, x, resub, memo, strict)
                for x in camp.jobs[d].get("deps", [])]
         memo[d] = "dead" if "dead" in sub else "wait"
     return memo[d]
@@ -633,7 +640,7 @@ def cmd_run(a):
                         reported.add(jid)
                     continue
                 memo = {}
-                ds = [dep_state(camp, led, st, want_set, d, resub, memo)
+                ds = [dep_state(camp, led, st, want_set, d, resub, memo, a.strict_deps)
                       for d in job.get("deps", [])]
                 if "dead" in ds:
                     if jid not in reported:
@@ -1040,6 +1047,9 @@ def main():
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--once", action="store_true", help="one scheduling pass, then exit")
     p.add_argument("--with-deps", action="store_true", help="also run missing dependencies")
+    p.add_argument("--strict-deps", action="store_true",
+                   help="a dependency outside the selection must be done/valid/seeded in the "
+                        "ledger (waited for otherwise; never marked valid from its outputs)")
     p.add_argument("--max-cores", type=int)
     p.add_argument("--retries", type=int)
     p.add_argument("--poll", type=float, default=60.0)

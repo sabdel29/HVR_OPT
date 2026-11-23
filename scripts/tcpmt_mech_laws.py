@@ -56,7 +56,22 @@ def _val(x):
 
 @lru_cache(maxsize=1)
 def cfg() -> dict:
-    return yaml.safe_load(CFG_PATH.read_text())
+    """configs/tcpmt_mech/mechanics_revision.yaml. The PRODUCTION local model is the v2
+    harness (local.harness = v2: zero-yield law refitted to self-consistency, full cut-boundary
+    kinematics, ramped loads); TCPMT_LOCAL_HARNESS=legacy selects the round-1/2 Phase-0I harness
+    (overstress card with hardening, in-plane du only) wherever a consumer offers both."""
+    c = yaml.safe_load(CFG_PATH.read_text())
+    h = os.environ.get("TCPMT_LOCAL_HARNESS")
+    if h:
+        if h not in ("v2", "legacy"):
+            raise ValueError(f"TCPMT_LOCAL_HARNESS={h!r}: v2 or legacy")
+        c["local"]["harness"] = h
+    return c
+
+
+def harness() -> str:
+    """'v2' (production) or 'legacy' (TCPMT_LOCAL_HARNESS=legacy)."""
+    return cfg()["local"]["harness"]
 
 
 def solder_cfg() -> dict:

@@ -7,12 +7,16 @@ every declared output validates, and an output that validates is never recompute
 kinds
   exists     the file (or a non-empty directory) is present and non-empty
   json       parses; optional `keys: [...]` must all be top-level keys; optional
-             `nonempty: [...]` keys must hold a non-empty value
+             `nonempty: [...]` keys must hold a non-empty value; with `fresh: true` every
+             file the record names in its top-level `inputs_sha1` ({absolute path: sha1})
+             must still hash the same (a record built on an input that has since been
+             re-run is stale, not valid)
   csv        parses with at least `min_rows` (default 1) data rows
   etm        an ETM case file: et_converged is True, |thermal.energy_residual_rel| <=
              `tol_energy` (1e-4), |thermal.deposit_residual_rel| <= `tol_deposit` (1e-6) when
              present, mechanics present without mechanics_error (unless `mechanics: false`),
-             and with `local: true` a local solder response without error
+             and with `local: true` a local solder response without error; `fresh: true` as
+             for json (a mechanics-only run's base case and converged field unchanged)
   feedback   an interface-feedback case (tcpmt_review_variants feedback): converged is True,
              or a recorded, explained runaway (non_convergence.kind 'runaway' with its reason
              and last iterates; a pass-limit stop is not accepted), the energy residual as
@@ -60,7 +64,32 @@ def check_json(f, spec):
     empty = [k for k in spec.get("nonempty", []) if not (isinstance(c, dict) and c.get(k))]
     if empty:
         return False, f"empty {empty}"
+    if spec.get("fresh"):
+        ok, why = _fresh(c)
+        return (ok, f"json ok, {why}" if ok else why)
     return True, "json ok"
+
+
+def _fresh(c):
+    """Every file the record names in `inputs_sha1` still hashes the same."""
+    ins = (c.get("inputs_sha1") if isinstance(c, dict) else None) or {}
+    if not ins:
+        return False, "no inputs_sha1 to check freshness against"
+    for p, h in ins.items():
+        if not Path(p).is_file():
+            return False, f"input gone: {p}"
+        if _sha1(p) != h:
+            return False, f"stale: input re-written since ({Path(p).name})"
+    return True, f"{len(ins)} input(s) unchanged"
+
+
+def _sha1(p):
+    import hashlib
+    h = hashlib.sha1()
+    with open(p, "rb") as fh:
+        for b in iter(lambda: fh.read(1 << 20), b""):
+            h.update(b)
+    return h.hexdigest()
 
 
 def check_csv(f, spec):
@@ -120,6 +149,10 @@ def check_etm(f, spec):
         tag = (c.get("design") or {}).get("tag", "")
         if tag != spec["design_tag"]:
             return False, f"design tag {tag!r} != {spec['design_tag']!r}"
+    if spec.get("fresh"):                       # a mechanics-only run on a converged field
+        ok3, why3 = _fresh(c)
+        if not ok3:
+            return False, why3
     return True, f"converged, {why}, {why2}"
 
 

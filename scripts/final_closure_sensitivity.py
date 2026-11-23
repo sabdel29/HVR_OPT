@@ -1038,10 +1038,31 @@ for _E in (80e3, 160e3):
             what=f"converter medium E = {_E / 1e3:.0f} GPa, CTE = {_a * 1e6:.0f} ppm/K")
 
 
-def case_file(arch, variant, scen=SCEN):
+def case_file(arch, variant, scen=None):
     """A variant NAME@B (mechanics only on the cooling-B field, finding 8) is stored as
-    etm_<arch>_<scen>__NAME__B.json (a non-production mesh level adds its suffix)."""
-    return OUT / f"etm_{arch}_{scen}__{variant.replace('@', '__')}.json"
+    etm_<arch>_<scen>__NAME__B.json (a non-production mesh level adds its suffix); <scen> is
+    the process scenario (SCEN: HV_S0, or the state set by set_state)."""
+    return OUT / f"etm_{arch}_{scen or SCEN}__{variant.replace('@', '__')}.json"
+
+
+#: TCPMT round 3: the compared state whose converged fields the mechanics-only variants of
+#: this process run on (set_state). None = the robustness map's reference (S0: the production-
+#: boundary case under cooling A, configs/tcpmt_mech cooling_B_base under B).
+STATE = None
+
+
+def set_state(state):
+    """Mechanics-only variants on the converged fields of a compared state's cases
+    (tcpmt_cases), e.g. the PRODUCTION state 'SDEC': NAME on its cooling-A case, NAME@B on its
+    cooling-B case (Z3: the coupled land side), files etm_<arch>_<scen>__NAME[__B].json. The
+    base case is guarded (design in force, BGA counts in force: tcpmt_mech_production.
+    input_issue) and its field is the case's own converged solution on disk, checked against its
+    T_max (tcpmt_cases.converged_field)."""
+    global STATE, SCEN
+    import tcpmt_cases as TC
+    STATE = state or None
+    SCEN = TC.SCEN[state] if state else "HV_S0"
+    return SCEN
 
 
 def split_tier(variant):
@@ -1054,6 +1075,23 @@ def thermal_base(arch, tier):
     """(base case dict, converged-field .frd, base label) of a mechanics-only variant: the
     production (cooling-A) case, or the architecture's cooling-B case
     (configs/tcpmt_mech: cooling_B_base)."""
+    if STATE is not None:                         # a compared state's own case and field
+        import tcpmt_cases as TC
+        import tcpmt_mech_production as MP
+        p = TC.case_path(STATE, tier, arch)
+        if p is None:
+            raise FileNotFoundError(f"no {STATE} cooling-{tier} case of {arch} "
+                                    f"({TC.rel(TC.expected_path(STATE, tier, arch))})")
+        base = json.loads(p.read_text())
+        TC.guard(arch, base, p)
+        why = MP.input_issue(arch, base)
+        if why:
+            raise RuntimeError(f"{p.name}: {why}")
+        fld = TC.converged_field(p, base)
+        if not fld:
+            raise FileNotFoundError(f"no converged field of {p.name} on disk "
+                                    "(tcpmt_cases.converged_field)")
+        return base, Path(fld["thermal"]), p.name
     if tier == "A":
         return (json.loads(E.case_path(arch, SCEN).read_text()),
                 FIELDS / f"etm_{arch}_{SCEN}_r21" / "thermal_converged.frd",
@@ -1072,6 +1110,10 @@ def thermal_base(arch, tier):
                                     "(set HVR_FIELDS or cooling_B_field_fallback)")
         frd = sorted(its[-1].glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))[-1]
     base = json.loads(case_file(arch, bv).read_text())
+    import tcpmt_mech_production as MP
+    why = MP.input_issue(arch, base)
+    if why:
+        raise RuntimeError(f"{case_file(arch, bv).name}: {why}")
     return base, frd, case_file(arch, bv).name
 
 
@@ -1085,6 +1127,10 @@ def _spec(variant):
 def run_full(arch, variant):
     """E-T fixed point + mechanics of one full variant, on this process's mesh rung (the
     production mesh unless set_refine chose a ladder rung)."""
+    if STATE is not None:
+        raise ValueError(f"{variant} is a full variant: a compared state runs only mechanics-"
+                         "only variants on its fields (set_state); a full variant of a state "
+                         "is a state run of tcpmt_review_variants")
     E.WD = scratch("fc_sens", work_name(variant))
     VARIANTS[variant]["apply"]()
     E._raise_stack_limit()
@@ -1138,15 +1184,20 @@ def run_mech(arch, variant):
                                 "et_history", "et_converged", "et_wall_s")}
     die = E.die_stats(m, tn, arch)
     res["thermal"] = {**res["thermal"], **die}
+    import tcpmt_mech_production as MP
     res.update({"variant": _spec(variant), "materials": minfo, **die,
                 "thermal_from": (f"converged field of {base_name} (mechanics-only variant, "
                                  f"cooling {tier})"),
-                "production_case": E.case_path(arch, SCEN).name, "thermal_case": base_name,
+                "production_case": base_name if STATE else E.case_path(arch, SCEN).name,
+                "thermal_case": base_name, "state": STATE or "S0",
+                "thermal_frd": str(frd),
+                "inputs_sha1": MP.inputs_sha1([frd, (OUT / base_name) if (OUT / base_name)
+                                               .is_file() else E.case_path(arch, SCEN)]),
                 "design": base.get("design") or E.Z1D.summary()})
+    wd = scratch("fc_sens", (f"{SCEN}_" if STATE else "") + variant.replace("@", "_"), arch)
     try:
-        res["mechanics"] = E.mechanics(m, mats, st, tn,
-                                       scratch("fc_sens", variant.replace("@", "_"), arch),
-                                       arch, tiles, E.PRODUCTION_SOLVER, 1)
+        res["mechanics"] = E.mechanics(m, mats, st, tn, wd, arch, tiles, E.PRODUCTION_SOLVER,
+                                       int(os.environ.get("FC_THREADS", "1")) if STATE else 1)
     except Exception as e:
         res["mechanics_error"] = str(e)[-600:]
     f = case_file(arch, variant)
@@ -1181,10 +1232,12 @@ def _local_task(t):
     c = json.loads(case_file(arch, variant).read_text())
     kin = _bga_kin(c)
     import tcpmt_mech_laws as LAW
-    if kin and LAW.cfg()["local"]["harness"] == "v2":
+    if kin and LAW.harness() == "v2":
         import tcpmt_mech_submodel as SUB
-        r = SUB.solve(dict(study="sens_local", tag=f"{arch}_{variant.replace('@', '_')}",
-                           kin=kin, meta={"arch": arch, "variant": variant}))
+        pre = f"{SCEN}_" if STATE else ""
+        r = SUB.solve(dict(study="sens_local", tag=f"{pre}{arch}_{variant.replace('@', '_')}",
+                           kin=kin, meta={"arch": arch, "variant": variant,
+                                          "state": STATE or "S0"}))
         r["du_um"], r["T_joint_C"] = kin["du_xy_um"], SUB.site_temperature(kin)
         r["harness"] = "v2"
         return arch, variant, r
@@ -1206,8 +1259,11 @@ def _needs_local(a, v):
     crit, loc = c["mechanics"]["joint_search"]["critical"], c.get("local") or {}
     kin = _bga_kin(c)
     if kin and loc.get("harness") == "v2":
+        # also stale when the production card has moved since (the law band re-iterated)
+        import tcpmt_mech_laws as LAW
         return not (loc.get("d_peeq_per_cycle")
-                    and abs(loc.get("du_um", -1.0) - kin["du_xy_um"]) < 1e-12)
+                    and abs(loc.get("du_um", -1.0) - kin["du_xy_um"]) < 1e-12
+                    and loc.get("card_sha") == LAW.card_sha(LAW.production_card()[0]))
     return not (loc.get("d_peeq_per_cycle") and loc.get("du_um") == crit["du_um"]
                 and loc.get("T_joint_C") == crit["T_C"])
 
@@ -1230,9 +1286,12 @@ def local_main(names):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    if sys.argv[1:2] == ["--local"]:
-        return local_main(sys.argv[2:])
     args = sys.argv[1:]
+    if args[:1] == ["--state"]:                   # TCPMT round 3: a compared state's fields
+        set_state(args[1])
+        args = args[2:]
+    if args[:1] == ["--local"]:
+        return local_main(args[1:])
     if args[:1] == ["--refine"]:                  # a ladder rung for every task of this call
         set_refine(args[1])
         args = args[2:]
