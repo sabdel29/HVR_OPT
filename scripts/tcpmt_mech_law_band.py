@@ -230,10 +230,11 @@ def store_cards(logs, jsd):
     for law, its in logs.items():
         js = jsd[law]
         last = its[-1]
+        dv = last["response_change_max_rel"]
         conv = (LAW.law_cfg(law)["form"] != "garofalo") or (
             last["window_change_max_log"] is not None
             and last["window_change_max_log"] < math.log(1 + float(w["tol_window_rel"]))
-            and (last["response_change_max_rel"] or 1.0) < float(w["tol_response_rel"]))
+            and dv is not None and dv < float(w["tol_response_rel"]))
         d["laws"][law] = {"window_MPa": last["window_fit_MPa"], "converged": bool(conv),
                           "n_iterations": len(its), "card_sha": last["card_sha"],
                           "visited_window_last_MPa": last["window_observed_MPa"],
@@ -336,9 +337,10 @@ def critical_check(jsd):
                 return None
             continue
         out["files"][law] = MP.rel(f)
+        # moved: the check's finding (a mirror image of the maximum-du site within the local
+        # model's noise is that joint position), not merely another site
         mv = {lab: basis.startswith("v2 critical-joint check")
-              and not (abs(k["x_mm"] - cases[case]["max_du_site"]["x_mm"]) < 1e-6
-                       and abs(k["y_mm"] - cases[case]["max_du_site"]["y_mm"]) < 1e-6)
+              and cases[case].get("critical_is_max_du") is False
               for lab, case, k, basis in js}
         out["moved_off_max_du_by_law"][law] = mv
         if law == prod:
