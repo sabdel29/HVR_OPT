@@ -193,6 +193,13 @@ def judge_B():
             "warp": me.get("die_warpage_pv_um"),
             "du": (me.get("joint_search") or {}).get("critical", {}).get("du_um"),
             "du_def": k.get("du_def_xy_um"), "eps": (c.get("local") or {}).get("d_peeq_per_cycle")}
+    # an architecture the variant does not touch (registered for others only, e.g. the attach
+    # cards of Z2) keeps its cooling-B base: unchanged by definition, as the reference map does
+    for name, per in rows.items():
+        for a in archs:
+            if a not in per and a not in S.VARIANTS[name]["archs"] and "error" not in base.get(a, {}):
+                per[a] = {y: base[a].get(y) for y in ("warp", "du", "du_def", "eps")}
+                mesh[(name, a)] = mesh.get(("__base__", a))
     out = {"what": "cooling-B robustness of the mechanical orderings (finding 8)",
            "base": base, "variants": {}}
     for name, per in rows.items():
