@@ -153,3 +153,18 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     (667 -> about 500/rail), rerunning the Z3 coupled cases.
   - The results writer must add \label{sec:limits} and the IX-B items (13 % solver warpage difference, no
     through-thickness rung, no manifold CFD, no transient).
+- 2026-11-23: results writer DONE (Sec. VI-X, Table V generator, Figs. 5-9; commits 38c8c6b..c1940ec). Comparative
+  words are data-driven (\Wr* macros).
+  - Research question: "which integration should a kilowatt processor use once converter, package, cooling and
+    joints are solved together?"
+  - Key statements (before the reruns):
+    - neighbours M=25/49: +25.6/+36.6 W, and they fail under cooling A;
+    - cooling A: Z1 and Z2 0.9 W apart, Z2's feed +7.6 W, so "neither leads"; rigid plate: only Z1 feasible
+      (1.1 K R_on margin);
+    - cooling B: Z2 -16.7 W and -31.8 K, Z1 smaller warpage and joint driver;
+    - Z3 infeasible in both coolings;
+    - the 5-tier design saves 20.9 W but protrudes 273 um under Z2;
+    - hot-spot map: the die exceeds 105 C except Z2 under B;
+    - 1.5 A per ball never closes.
+  - Regeneration order after the reruns: writer macros script, then Table V, then figures.
+- The macro generator was verified intact after the results writer's accidental truncation and restore.
