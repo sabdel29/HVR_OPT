@@ -3,21 +3,21 @@
 \caption{Compared differences $D$ in the production state (implemented decoupling), printed as $D+\beta_D$/$U_{95}(D)$. The signed bias $\beta_D$ and the uncertainty $U_{95}(D)$ come from $D$'s own mesh ladder; $D$ is resolved when $|D+\beta_D|>U_{95}(D)$.}
 \label{tab:uncertainty}
 \centering
-\footnotesize
-\setlength{\tabcolsep}{2.2pt}
-\begin{tabular}{@{}llrrrrr@{}}
+\scriptsize
+\setlength{\tabcolsep}{2.4pt}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-Cooling & Difference & Loss & Peak temp. & Warpage & $\du$ & $\deps$ \\
- & & (W) & (K) & (\textmu m) & (\textmu m) & ($10^{-3}$) \\
+Difference & Loss & Peak $T$ & Warpage & $\du$ & $\deps$ \\
+ & (W) & (K) & (\textmu m) & (\textmu m) & ($10^{-3}$) \\
 \midrule
-A & Z2$-$Z1 & $-0.99/0.32$ & $+6.07/0.85$ & $+41/13$ & $+0.48/0.18$ & $+0.83/0.21$ \\
-A & Z3$-$Z1 & $+65.35/0.27$ & $+72.57/0.76$ & $+35/12$ & $+1.987/0.055$ & $+6.62/0.23$ \\
+A: Z2\textminus{}Z1 & \textminus{}0.99/0.32 & +6.07/0.85 & +41/13 & +0.48/0.18 & +0.83/0.21 \\
+A: Z3\textminus{}Z1 & +65.35/0.27 & +72.57/0.76 & +35/12 & +1.987/0.055 & +6.62/0.23 \\
 \midrule
-B & Z2$-$Z1 & $-16.88/0.32$ & $-32.4/1.7$ & $+11.9/5.5$ & $+1.066/0.031$ & $+1.381/0.076$ \\
-B & Z3$-$Z1 & $+19.74/0.88$ & $-29.4/1.6$ & $+3.5/3.6^{\ast}$ & $+1.03/0.35$ & $+1.20/0.14$ \\
-B & Z3$-$Z2 & $+36.81/0.40$ & $+3.03/0.37$ & $-9.6/5.5$ & $-0.143/0.084$ & $-0.18/0.13$ \\
+B: Z2\textminus{}Z1 & \textminus{}16.88/0.32 & \textminus{}32.4/1.7 & +11.9/5.5 & +1.066/0.031 & +1.381/0.076 \\
+B: Z3\textminus{}Z1 & +19.74/0.88 & \textminus{}29.4/1.6 & +3.5/3.6$^{\ast}$ & +1.03/0.35 & +1.20/0.14 \\
+B: Z3\textminus{}Z2 & +36.81/0.40 & +3.03/0.37 & \textminus{}9.6/5.5 & \textminus{}0.143/0.084 & \textminus{}0.18/0.13 \\
 \midrule
-\multicolumn{7}{@{}p{0.97\columnwidth}@{}}{\scriptsize $U_{95}$: GCI-type discretization band with $F_s=1.25$ where $D$'s ladder is asymptotic and 3 otherwise, the fixed-point stop and the matched-reference agreement in quadrature ($\approx$95\,\% coverage). Negative: the first-named integration is lower. $^{\ast}$Not resolved. $\deps$: stabilized joint response of the ideal-decoupling cases (the local model was solved on them), $U_{95}(D)$ from the two joints' own numerical uncertainty; every resolved sign also holds under the second solder law unless marked $^{\mathrm{L}}$.}\\
+\multicolumn{6}{@{}p{0.98\columnwidth}@{}}{A, B: cooling. $U_{95}$: GCI-type discretization band ($F_s=1.25$ where $D$'s ladder is asymptotic, 3 otherwise), the fixed-point stop and the matched-reference agreement in quadrature ($\approx$95\,\% coverage). Negative: the first-named integration is lower. $^{\ast}$Not resolved. $\deps$: stabilized joint response of the ideal-decoupling cases, on which the local model was solved; $U_{95}(D)$ from the two joints' own numerical uncertainty. Every resolved $\deps$ sign also holds under the second solder law unless marked $^{\mathrm{L}}$.}\\
 \bottomrule
 \end{tabular}
 \end{table}

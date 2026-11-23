@@ -5,10 +5,15 @@ aligned at the PCB backside, vertical exaggeration VEX. Every z-extent, the tier
 plan geometry (package, die and opening half-widths, cell side and the cell centres of the row
 nearest the center line) are read from architecture_geometry.json, so a re-run with a different
 stack or cell grid redraws the figure. A converter tier holds the parts of the design record's
-tier (mixed tiers: split by part footprint, labelled with their contents). 10-um RDL tiers are
-drawn as lines (true thickness < line width). Rails: 48 V (red) and 1 V (violet) paths,
-schematic in x, from the input-end tier (high side) and the output-end tier (inductors).
-Critical joint ringed.
+tier (mixed tiers: split by part footprint, labelled with their contents); every part is drawn
+at its own height (design record part_heights_um) and the copper posts that bridge a shorter part
+to the RDLs fill the rest of the tier (hatched; the authors' both-face terminals, the gap drawn on
+one face). 10-um RDL tiers are drawn as lines (true thickness < line width). Rails, schematic in
+x: 48 V (red) into the input-end tier of Z1 through its BGA and substrate; the 48-V feed of Z2
+through its BGA ring and the substrate's land side to the cells (dashed: outside the package-
+internal boundary); the 48-V plane pair of the Z3 board (dashed); 1 V (violet) out of the
+output-end tier. The outermost ball row is ringed: the critical joint of every compared case
+is the array corner.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,6 +34,9 @@ CELL_X = [x for x in _CX if x >= -1e-9]                       # the row nearest 
 #: the cell the rails are drawn through: the one nearest 60 % of the grid half width
 XC_RAIL = min(CELL_X, key=lambda x: abs(x - 0.6 * GRID_HALF))
 ROLES = ("hs", "ls", "caps", "ind")
+#: part heights of the design in force (um): a part shorter than its tier is bridged by posts
+PART_H = {c: float(h) for c, h in (S.DR.get().get("part_heights_um") or {}).items()}
+POST = S.MAT["tsv"]                                              # copper
 
 
 def Z(z_um):
@@ -46,18 +54,29 @@ def cells_and_fill(ax, z0, z1, col, fill_to, fill=S.MAT["fill"]):
 
 
 def tier_cells(ax, layer, fill_to, fill=S.MAT["fill"]):
-    """a converter tier: every cell split by the part footprints of the record's tier"""
+    """a converter tier: every cell split by the part footprints of the record's tier, each part
+    at its own height on the face nearer the input end (the lower face in every integration:
+    Z1 stacks the tiers upward from the substrate, Z2 and Z3 hang them with the output end
+    against the attach) and the copper posts (hatched) over the rest of the tier"""
     z0, z1 = layer["z0_um"], layer["z1_um"]
     ax.add_patch(Rectangle((0, Z(z0)), fill_to, Z(z1) - Z(z0), fc=fill, ec="none", zorder=1))
     segs = S.tier_fill(S.layer_parts(layer))
+    t = z1 - z0
     for xc in CELL_X:
         xa = xc - CELL / 2
         for c, f in segs:
             xb = xa + f * CELL
             x0 = max(0.0, xa)
             if xb > x0:
-                ax.add_patch(Rectangle((x0, Z(z0)), xb - x0, Z(z1) - Z(z0),
+                h = min(PART_H.get(c, t), t)
+                pz0 = z0                                          # part on the input face
+                ax.add_patch(Rectangle((x0, Z(pz0)), xb - x0, Z(pz0 + h) - Z(pz0),
                                        fc=S.CLASS_COLOR[c], ec="white", lw=0.3, zorder=2))
+                if t - h > 1.0:
+                    gz0 = z0 + h
+                    ax.add_patch(Rectangle((x0, Z(gz0)), xb - x0, Z(gz0 + t - h) - Z(gz0),
+                                           fc=fill, ec=POST, lw=0.0, hatch="||||||",
+                                           zorder=2))
             xa = xb
 
 
@@ -72,12 +91,13 @@ def balls(ax, x_from, x_to, z0, z1, pitch=0.8, ring_last=True):
         return xs[-1]
 
 
-def rail(ax, pts, col, lw=1.6):
+def rail(ax, pts, col, lw=1.6, ls="-"):
     pts = [(x, Z(z)) for x, z in pts]
     for (xa, ya), (xb, yb) in zip(pts[:-2], pts[1:-1]):
-        ax.plot([xa, xb], [ya, yb], color=col, lw=lw, solid_capstyle="butt", zorder=7)
+        ax.plot([xa, xb], [ya, yb], color=col, lw=lw, ls=ls, solid_capstyle="butt",
+                dash_capstyle="butt", zorder=7)
     ax.add_patch(FancyArrowPatch(pts[-2], pts[-1], arrowstyle="-|>", mutation_scale=7,
-                                 color=col, lw=lw, zorder=7, shrinkA=0, shrinkB=0))
+                                 color=col, lw=lw, ls=ls, zorder=7, shrinkA=0, shrinkB=0))
 
 
 def label(ax, z_um, text, x_edge, y_text=None):
@@ -169,10 +189,19 @@ def draw(ax, a):
              S.V48)
         rail(ax, [(xc - 0.5, ind["z1_um"] - 120), (xc - 0.5, zdie + 200)], S.V1)
     elif z3:
-        rail(ax, [(xc + 0.5, hs["z0_um"] - 500), (xc + 0.5, hs["z1_um"] - 180)], S.V48)
+        # the board's 48-V plane pair under the cell grid, down to the converter (dashed: the
+        # external feed, outside the package-internal boundary)
+        zp = brd["z0_um"] + 0.12 * thick(brd)
+        rail(ax, [(HALF - 0.4, zp), (xc + 0.5, zp), (xc + 0.5, brd["z0_um"] - 140)], S.V48,
+             ls=(0, (2.2, 1.4)))
         rail(ax, [(xc - 0.5, ind["z0_um"] + 150), (xc - 0.5, zdie + 200)], S.V1)
     else:
-        rail(ax, [(xc + 0.5, brd["z0_um"]), (xc + 0.5, hs["z0_um"] + 180)], S.V48)
+        # the BGA-ring feed: board -> a ring ball -> the substrate's land side -> the cell
+        # (dashed: the external feed, outside the package-internal boundary)
+        xr = CUT_HALF + 0.8 * 1.5
+        zl = bga["z1_um"] - 60.0
+        rail(ax, [(xr, brd["z0_um"] + 0.55 * thick(brd)), (xr, zl), (xc + 0.5, zl),
+                  (xc + 0.5, zl - 200)], S.V48, ls=(0, (2.2, 1.4)))
         rail(ax, [(xc - 0.5, ind["z0_um"] + 250), (xc - 0.5, zdie + 200)], S.V1)
     # conversion bracket
     zc0, zc1 = min(l["z0_um"] for l in conv), max(l["z1_um"] for l in conv)

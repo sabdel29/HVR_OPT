@@ -2,8 +2,12 @@
 self-consistency checks -- solver and mesh -- are reported in the uncertainty table).
 The series-rule RDL card is drawn open ('replaced': the reference tensor is adopted).
 The complete-package row is CalculiX against MOOSE on the identical Z1 mesh
-(research/tcpmt_revision/fullpkg_verification.json, summary.Z1.identical_mesh.T_max_err_pct_of_rise,
-runtime_s_median).
+(tcpmt_revision/fullpkg_verification.json, summary.Z1.identical_mesh.T_max_err_pct_of_rise,
+runtime_s_median). The cold-plate row is the production plate model (three-wall H1 Nusselt
+number) against the conjugate CFD solution (tcpmt_revision/cooling_spec.json,
+plate.cfd_comparison: mean base temperature rise). The structural-solver row is the iterative
+solver of the production meshes against the direct solver on the same base mesh (die warpage;
+final_closure/mesh_convergence.json structural_solver_checks).
 
 Dot plot, one row per benchmark (grouped by stage), |relative error| on a log axis;
 marker shape = kind of reference (never colour alone). Runtimes as text columns
@@ -26,6 +30,22 @@ if isinstance((z1.get("identical_mesh") or {}).get("T_max_err_pct_of_rise"), (in
                        "production_runtime_s": rt.get("calculix"),
                        "reference_runtime_s": rt.get("moose_hypre")}
 
+# the plate model in force against the conjugate CFD solution (the matrix row predates it)
+cf = ((S.JP(S.TR / "cooling_spec.json") or {}).get("plate") or {}).get("cfd_comparison") or {}
+if isinstance(cf.get("dT_base_mean_rel_diff"), (int, float)) and "cooling_icepak" in M:
+    M["cooling_icepak"] = dict(M["cooling_icepak"], error=cf["dT_base_mean_rel_diff"])
+elif "cooling_icepak" in M:
+    del M["cooling_icepak"]                 # never the superseded correlation
+# iterative (production) against direct structural solver, same base mesh and field
+sc = (S.JP(S.FC / "mesh_convergence.json") or {}).get("structural_solver_checks") or {}
+_it = next((v for k, v in sc.items() if "ITERATIVE" in k and v.get("ok")), None)
+_dr = next((v for k, v in sc.items() if "SPOOLES" in k and v.get("ok")), None)
+if _it and _dr:
+    M["solver_iter_direct"] = {"stage": "solver_iter_direct",
+                               "error": _it["die_warpage_pv_um"] / _dr["die_warpage_pv_um"] - 1,
+                               "production_runtime_s": _it.get("wall_s"),
+                               "reference_runtime_s": _dr.get("wall_s")}
+
 GROUPS = [
     ("Vertical interconnect", [("tsv_bulk", "Single-TSV resistance", "C"),
                                ("tsv_tile_kz", "TSV field $k_z$", "C"),
@@ -39,14 +59,15 @@ GROUPS = [
                           ("vr_attach_dense_electrical", "Bump resistance, 15/30 µm", "F"),
                           ("vr_attach_sparse_electrical", "Bump resistance, 30/80 µm", "F")]),
     ("Package 48-V network", [("pkg_rdl_Z1", "Z1 network, $R_\\mathrm{eff}$", "O"),
-                              ("pkg_rdl_Z2", "BGA-fed control network", "O")]),
+                              ("pkg_rdl_Z2", "Z2 ring-feed network", "O")]),
     ("Package thermal", [("thermal_column_aedt_Z1", "Z1 unit cell vs AEDT", "C"),
                          ("thermal_column_moose_Z1", "Z1 unit cell vs MOOSE", "O"),
                          ("thermal_column_aedt_Z2", "Z2 unit cell vs AEDT", "C"),
                          ("thermal_column_moose_Z2", "Z2 unit cell vs MOOSE", "O")]),
     ("Complete package", [("fullpkg_Z1", "Z1 package, $T_\\max$ vs MOOSE", "O")]),
     ("Thermoelastic", [("mech_bilayer_closed_form", "Bilayer vs closed form", "F"),
-                       ("mech_bilayer_aedt", "Bilayer vs AEDT", "C")]),
+                       ("mech_bilayer_aedt", "Bilayer vs AEDT", "C"),
+                       ("solver_iter_direct", "Iterative vs direct solver, warpage", "S")]),
     ("Cooling boundary", [("cooling_icepak", "Cold plate vs CFD", "C")]),
 ]
 REPLACED = {"rdl_tier_kz"}          # drawn open: the card was replaced by the reference
@@ -54,8 +75,8 @@ MK = {"C": dict(marker="o", mfc=S.INK, mec=S.INK),          # commercial FEM / C
       "O": dict(marker="s", mfc="white", mec=S.INK),        # open-source FEM
       "F": dict(marker="D", mfc="white", mec=S.INK),        # closed form
       "S": dict(marker="x", mfc=S.INK, mec=S.INK)}          # self-consistency check
-NOTE = {"rdl_tier_kz": "replaced", "cooling_icepak": "conservative",
-        "fullpkg_Z1": "identical mesh, % of rise"}
+NOTE = {"rdl_tier_kz": "replaced", "fullpkg_Z1": "identical mesh, % of rise",
+        "solver_iter_direct": "not in $U_{95}$"}
 
 
 def fmt_t(t):
@@ -69,12 +90,44 @@ def fmt_t(t):
 
 
 # a benchmark missing from the matrix (or without a numeric error) is dropped, never invented
+# the plate model in force against the conjugate CFD solution (the matrix row predates it)
+cf = ((S.JP(S.TR / "cooling_spec.json") or {}).get("plate") or {}).get("cfd_comparison") or {}
+if isinstance(cf.get("dT_base_mean_rel_diff"), (int, float)) and "cooling_icepak" in M:
+    M["cooling_icepak"] = dict(M["cooling_icepak"], error=cf["dT_base_mean_rel_diff"])
+elif "cooling_icepak" in M:
+    del M["cooling_icepak"]                 # never the superseded correlation
+# iterative (production) against direct structural solver, same base mesh and field
+sc = (S.JP(S.FC / "mesh_convergence.json") or {}).get("structural_solver_checks") or {}
+_it = next((v for k, v in sc.items() if "ITERATIVE" in k and v.get("ok")), None)
+_dr = next((v for k, v in sc.items() if "SPOOLES" in k and v.get("ok")), None)
+if _it and _dr:
+    M["solver_iter_direct"] = {"stage": "solver_iter_direct",
+                               "error": _it["die_warpage_pv_um"] / _dr["die_warpage_pv_um"] - 1,
+                               "production_runtime_s": _it.get("wall_s"),
+                               "reference_runtime_s": _dr.get("wall_s")}
+
 GROUPS = [(g, [it for it in items if it[0] in M and isinstance(M[it[0]].get("error"), (int, float))])
           for g, items in GROUPS]
+# the plate model in force against the conjugate CFD solution (the matrix row predates it)
+cf = ((S.JP(S.TR / "cooling_spec.json") or {}).get("plate") or {}).get("cfd_comparison") or {}
+if isinstance(cf.get("dT_base_mean_rel_diff"), (int, float)) and "cooling_icepak" in M:
+    M["cooling_icepak"] = dict(M["cooling_icepak"], error=cf["dT_base_mean_rel_diff"])
+elif "cooling_icepak" in M:
+    del M["cooling_icepak"]                 # never the superseded correlation
+# iterative (production) against direct structural solver, same base mesh and field
+sc = (S.JP(S.FC / "mesh_convergence.json") or {}).get("structural_solver_checks") or {}
+_it = next((v for k, v in sc.items() if "ITERATIVE" in k and v.get("ok")), None)
+_dr = next((v for k, v in sc.items() if "SPOOLES" in k and v.get("ok")), None)
+if _it and _dr:
+    M["solver_iter_direct"] = {"stage": "solver_iter_direct",
+                               "error": _it["die_warpage_pv_um"] / _dr["die_warpage_pv_um"] - 1,
+                               "production_runtime_s": _it.get("wall_s"),
+                               "reference_runtime_s": _dr.get("wall_s")}
+
 GROUPS = [(g, items) for g, items in GROUPS if items]
 n = sum(len(g[1]) for g in GROUPS) + len(GROUPS)
-fig = plt.figure(figsize=(S.COL_W, 0.135 * n + 0.8))
-ax = fig.add_axes([0.43, 0.08, 0.33, 0.865])
+fig = plt.figure(figsize=(S.COL_W, 0.135 * n + 0.95))
+ax = fig.add_axes([0.43, 0.07, 0.33, 0.84])
 ax.set_xscale("log")
 ax.set_xlim(1e-5, 60)
 ax.set_ylim(n - 0.3, -0.7)
@@ -120,9 +173,10 @@ for gname, items in GROUPS:
                 color=S.INK2)
         y += 1
 h = [Line2D([], [], ls="none", ms=3.6, mew=0.8, label=l, **MK[k]) for k, l in
-     (("C", "commercial FEM / CFD"), ("O", "open-source FEM"), ("F", "closed form"))]
+     (("C", "commercial FE / CFD"), ("O", "open-source FE"), ("F", "closed form"),
+      ("S", "direct solver"))]
 h.append(Line2D([], [], ls="none", ms=3.6, mew=0.8, marker="o", mfc="white", mec=S.INK,
                 label="replaced card"))
-fig.legend(handles=h, loc="lower center", ncol=4, bbox_to_anchor=(0.5, 0.955),
+fig.legend(handles=h, loc="lower center", ncol=3, bbox_to_anchor=(0.5, 0.94),
            columnspacing=0.8, handletextpad=0.3, fontsize=6.5)
 S.save(fig, "fig10_verification")

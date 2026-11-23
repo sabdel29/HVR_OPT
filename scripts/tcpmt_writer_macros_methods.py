@@ -46,6 +46,14 @@ def fx(v, n=1):
         return NA
 
 
+def sfx(v, n=0):
+    """a signed number with a typographic minus (textcomp) and an explicit plus"""
+    if v is None:
+        return NA
+    t = f"{float(v):+.{n}f}"
+    return t.replace("-", r"\textminus{}")
+
+
 def thou(v):
     """an integer with a LaTeX thousands separator"""
     if v is None:
@@ -229,7 +237,7 @@ def production_cases():
         rc = [dP[k] / dP[k - 1] for k in range(1, len(dP)) if dP[k - 1] > 1e-9]
         ratios += rc
         if rc:
-            per_case.append(statistics.median(rc))
+            per_case.append((statistics.median(rc), t, a))
         resid.append(abs(get(c, "thermal", "energy_residual_rel") or 0))
         tag = ATAG[a]
         if t == "A":
@@ -254,7 +262,9 @@ def production_cases():
     if per_case:
         # the fixed point contracts geometrically: the ratio of successive loss changes,
         # per case (median over its iterations), and its range over the compared cases
-        M["MthEtContractLo"], M["MthEtContractHi"] = fx(min(per_case), 2), fx(max(per_case), 2)
+        lo, hi = min(per_case), max(per_case)
+        M["MthEtContractLo"], M["MthEtContractHi"] = fx(lo[0], 2), fx(hi[0], 2)
+        M["MthEtContractCase"] = f"{hi[2]} under cooling~{hi[1]}"
     if resid:
         M["MthEnergyResid"] = f"{max(resid):.0e}".replace("e-0", r"\times10^{-").replace(
             "e-", r"\times10^{-") + "}"
@@ -525,7 +535,7 @@ def solder():
                 if x is not None:
                     ch.append(x)
     if ch:
-        M["MthBandLo"], M["MthBandHi"] = fx(100 * min(ch), 0), fx(100 * max(ch), 0)
+        M["MthBandLo"], M["MthBandHi"] = sfx(100 * min(ch), 0), sfx(100 * max(ch), 0)
     bu = sorted(b.get("band_um") for b in ab.values() if b.get("band_um"))
     if bu:
         M["MthBandUm"] = ", ".join(fx(x, 0) for x in bu[:-1]) + " and " + fx(bu[-1], 0)
@@ -592,6 +602,17 @@ def extras(e):
     M["MthTtHold"] = ("all" if hold and all(hold) else
                       f"{sum(hold)} of {len(hold)}" if hold else NA)
     M["MthTtFlips"] = "; ".join(flips) or "none"
+    # RMS factors of the input states: bare (the pulse at the buck duty) and implemented
+    pl = J(TR / "platform_inclusive.json") or {}
+    M["MthKbare"] = fx(get(pl, "k_feed", "S1"), 1)
+    idc = J(TR / "input_decoupling.json") or {}
+    M["MthKeq"] = fx(get(idc, "summary", "recommended", "k_eq"), 2)
+    M["MthNphases"] = str(get(idc, "summary", "recommended", "n_clock_phases") or NA)
+    M["MthKcell"] = fx(get(idc, "summary", "k_open_cell_waveform"), 2)
+    sc = (J(FC / "mesh_convergence.json") or {}).get("structural_solver_checks") or {}
+    bad = [v.get("n_elems") for v in sc.values() if not v.get("ok") and v.get("n_elems")]
+    if bad:
+        M["MthSolverFailElems"] = thou(min(bad))
     # campaign wall times of the analytical stages (job ledger)
     led = ROOT / "_campaign" / "ledger.jsonl"
     walls = {}
