@@ -177,7 +177,34 @@ def summarize():
     if LAW.CARDS.is_file():
         out["inputs_sha1"][str(LAW.CARDS.resolve())] = MP.sha1(LAW.CARDS)
     OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
+    if STATE == "SDEC":
+        out["joint_resolution"] = joint_resolution()
+        OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
     return out
+
+
+def joint_resolution():
+    """Every within-cooling pair of the compared joints under THE rule and the law band, with
+    each joint's own numerical U (its L0 -> L3 and 4 -> 8 cycle changes, just written):
+    tcpmt_uncertainty.compare_eps, the comparison the uncertainty record makes, available here
+    without waiting for the global ladders."""
+    try:
+        import tcpmt_uncertainty as TU
+        eps, u_t, own, basis, band = TU.local_u()
+        if band is None:
+            return {"error": "no v2 law band"}
+        pairs = {}
+        for t in ("A", "B"):
+            for a, b in (("Z1", "Z2"), ("Z1", "Z3"), ("Z2", "Z3")):
+                r = TU.compare_eps(t, a, b, eps, u_t, own, band)
+                if r:
+                    pairs[f"{t}:{a}/{b}"] = {k: r.get(k) for k in (
+                        "y_a", "y_b", "D", "U95", "verdict", "resolved", "lower",
+                        "conditional_on_law", "law_band", "provisional")}
+        return {"basis": basis, "U_rel": {f"{t}_{a}": u for (t, a), u in u_t.items()},
+                "pairs": pairs, "rule": TU.RULE.RULE}
+    except Exception as e:                        # recorded, never silent
+        return {"error": str(e)[-300:]}
 
 
 def main():

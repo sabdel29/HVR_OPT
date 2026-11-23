@@ -124,13 +124,30 @@ def joint():
         val = v.get("value_x1e3")
         if val:
             m[f"MvEpsUrel{t}{ATAG[a]}"] = fx(100 * (v.get("U95_num_x1e3") or 0) / val, 1)
-    for r in u.get("comparisons") or []:
-        if r.get("output") != "eps":
-            continue
+    rows = [r for r in u.get("comparisons") or [] if r.get("output") == "eps"] \
+        if u.get("eps_state") == b.get("state") else []
+    if not rows:                    # the local checks' own resolution (same rule, same U)
+        jr = (J("solder_local_checks.json") or {}).get("joint_resolution") or {}
+        for key, r in (jr.get("pairs") or {}).items():
+            t, ab = key.split(":")
+            a, bb = ab.split("/")
+            rows.append(dict(r, tier=t, a=a, b=bb))
+        for lab, ur in (jr.get("U_rel") or {}).items():
+            t, a = lab.split("_")
+            v = (b["band"].get(lab) or {}).get("production")
+            if v and ur is not None:
+                m.setdefault(f"MvEpsU{t}{ATAG[a]}", fx(1e3 * v * ur, 2))
+                m.setdefault(f"MvEpsUrel{t}{ATAG[a]}", fx(100 * ur, 1))
+    for r in rows:
         k = f"MvEpsRes{r['tier']}{ATAG[r['a']]}{ATAG[r['b']]}"
         m[k] = r.get("verdict") or NA
         k2 = f"MvEpsRes{r['tier']}{ATAG[r['b']]}{ATAG[r['a']]}"
         m.setdefault(k2, m[k])
+    res = [r.get("verdict") for r in rows]
+    if res:
+        m["MvEpsResN"] = str(len(res))
+        m["MvEpsResResolved"] = str(sum(1 for v in res if v == "resolved"))
+        m["MvEpsResLaw"] = str(sum(1 for v in res if v == "law-conditional"))
     return m
 
 
