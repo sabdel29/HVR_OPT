@@ -231,7 +231,7 @@ box(COLX[2], Y2, BW, H, "Thermoelastic", "mounted package,\nall interconnect sit
 box(COLX[2], Y3, BW, H, "Local solder joint",
     "viscoplastic,\n$\\Delta\\varepsilon_\\mathrm{in}$ per cycle")
 box(COLX[0], Y3, COLX[1] + BW - COLX[0], H, "Feasibility filter",
-    "part, material and die limits, solder-law range,\nstatic drop, ball current and sites, vias", fc="white")
+    "part, material and die limits, solder-law range,\nstatic drop, ball current and sites", fc="white")
 # one-way transfers (single arrows)
 link((COLX[0] + BW, Y1 + H / 2), (COLX[1], Y1 + H / 2), "design\nrecord",
      (6.97, Y1 + H / 2 + 0.75))
