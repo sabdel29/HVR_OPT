@@ -6524,7 +6524,7 @@ jobs:
   - tcpmt_revision/solder_critical_v2.json
   deps:
   - mech.lawband.window
-  ncpus: 24
+  ncpus: 32
   mem_gb: 24.0
   est_wall_h: 1.2
   walltime_h: 3.5
@@ -6534,16 +6534,16 @@ jobs:
   prefer: pbs
   env:
     LOCAL_THREADS: '2'
-    TCPMT_SOLDER_SLOTS: '12'
+    TCPMT_SOLDER_SLOTS: '16'
   validate:
   - file: tcpmt_revision/solder_critical_v2.json
     kind: json
     nonempty:
     - cases
     fresh: true
-  workers: 12
-  evidence: '~650 candidates over the six compared cases (66-147 each, campaign_v3 case files) x 45-110
-    s on 2 threads, 12 slots (califone: <= 56 cpus per user)'
+  workers: 16
+  evidence: ~650 candidates over the six compared cases (66-147 each, campaign_v3 case files) x 45-60
+    s on 2 threads (ccx + the record's extraction), 16 slots
   notes: 'finding 2: every candidate of the full-lattice search (top 30 by |du_xy|, tilt, eps_z and deforming
     du, the strict Pareto front in (|du_xy|, T), the corners) solved with the production law at its converged
     window; monotonicity over the dominance pairs, the maximum-response joint'

@@ -749,10 +749,10 @@ def mech_jobs(prod, vfields, lad, prep, class_b):
     crit = job("mech.critical", "mech_revision",
                ["bash", "-c", "set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run "
                 "--top 30; {python} scripts/tcpmt_mech_critical.py --summarize --top 30"],
-               [tr("solder_critical_v2.json")], deps=[w1], ncpus=12 * T, workers=12,
-               mem_gb=24, est_h=1.2, prefer="pbs", env={**sv, "TCPMT_SOLDER_SLOTS": 12},
+               [tr("solder_critical_v2.json")], deps=[w1], ncpus=16 * T, workers=16,
+               mem_gb=24, est_h=1.2, prefer="pbs", env={**sv, "TCPMT_SOLDER_SLOTS": 16},
                evidence="~650 candidates over the six compared cases (66-147 each, campaign_v3 "
-                         "case files) x 45-110 s on 2 threads, 12 slots (califone: <= 56 cpus per user)",
+                         "case files) x 45-60 s on 2 threads (ccx + the record's extraction), 16 slots",
                validate=[{"file": tr("solder_critical_v2.json"), "kind": "json",
                           "nonempty": ["cases"], "fresh": True}],
                notes="finding 2: every candidate of the full-lattice search (top 30 by |du_xy|, "
