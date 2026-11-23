@@ -318,6 +318,18 @@ def record_path(study, tag):
     return scratch(ROOT, "results", study) / f"{tag}.json"
 
 
+def same_load(rec, task):
+    """A solved record answers a task only at the task's own joint loading (du, T): the tag
+    names the case and the site, and a re-run of the case (e.g. a changed ball field) changes
+    the loading of a site whose tag is unchanged."""
+    try:
+        du, t = float(task["du_um"]), float(task["T_C"])
+        return (abs(float(rec["du_um"]) - du) <= 1e-9 * max(1.0, abs(du))
+                and abs(float(rec["T_joint_C"]) - t) <= 1e-9 * max(1.0, abs(t)))
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
 def restat(study, tag, force=False):
     """Recompute a solved record's stress statistics (both weightings) from its kept
     .dat.gz, e.g. after stress_stats gained the time weighting. Updates the record."""
@@ -355,7 +367,8 @@ def solve(task):
     f = record_path(study, tag)
     if f.exists():
         old = json.loads(f.read_text())
-        if old.get("d_peeq_per_cycle") is not None and old.get("sig") == task.get("sig"):
+        if (old.get("d_peeq_per_cycle") is not None and old.get("sig") == task.get("sig")
+                and same_load(old, task)):
             return old
     level, n_cyc = task.get("level", "L0"), int(task.get("n_cyc", 4))
     band = float(task.get("band_frac") or BAND_PROD)
@@ -411,7 +424,8 @@ def run_tasks(tasks, procs=None):
         if not f.exists():
             return False
         r = json.loads(f.read_text())
-        return r.get("d_peeq_per_cycle") is not None and r.get("sig") == t.get("sig")
+        return (r.get("d_peeq_per_cycle") is not None and r.get("sig") == t.get("sig")
+                and same_load(r, t))
 
     todo = [t for t in tasks if not done(t)]
     print(f"{len(tasks)} tasks, {len(todo)} to solve, {SLOTS} global slots", flush=True)
