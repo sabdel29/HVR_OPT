@@ -35,9 +35,14 @@ def collect(arch, scen):
     th = sorted((wd / f"et{it}").glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))
     if not th:
         raise SystemExit(f"no thermal result in {wd / f'et{it}'}")
-    tn = PE.ccxio.read_frd(th[-1])["NDTEMP"][1:, 0]
-    if abs(float(np.nanmax(tn)) - case["thermal"]["T_max_C"]) > 1e-6:
+    # a re-run in a re-used work tree can leave higher-numbered files of the earlier run:
+    # the converged field is the newest-numbered file whose T_max is the case's
+    hit = next((t for t in reversed(th)
+                if abs(float(np.nanmax(PE.ccxio.read_frd(t)["NDTEMP"][1:, 0]))
+                       - case["thermal"]["T_max_C"]) <= 1e-6), None)
+    if hit is None:
         raise SystemExit(f"{th[-1]} is not the converged field of {arch} {scen}")
+    th = [hit]
     st = wd / "structural.frd"
     dst = FIELDS / f"etm_{arch}_{scen}_r21"
     dst.mkdir(parents=True, exist_ok=True)
