@@ -331,18 +331,19 @@ def summarize(n_top, law=None):
         if not done:
             continue
         top = max(rows, key=lambda r: r["du_xy_um"])
+        # the critical joint is the maximum-response site, whatever the margin (TCPMT round 3:
+        # the reported response is the maximum over the lattice under every law)
         best = max(done, key=lambda r: r["d_eps"])
-        # a mirror image of the maximum-du site responding more by less than the local model's
-        # own noise (NOISE_REL: CETOL-controlled creep increments) is that site; a larger excess
+        # for the finding "is the critical joint the maximum-du joint?" only: a mirror image of
+        # the maximum-du site responding more by less than the local model's own noise
+        # (NOISE_REL: CETOL-controlled creep increments) is that joint position; a larger excess
         # is physical (the streamwise coolant breaks the mirror symmetry) and moves the joint
         twin = (best is not top and mirror_of(best, top) and top["d_eps"] is not None
                 and best["d_eps"] / top["d_eps"] - 1.0 < NOISE_REL)
-        if twin:
-            best = top
         others = [r for r in done if r is not top]
         second = max(others, key=lambda r: r["d_eps"]) if others else None
         n_tot += 1
-        is_max = top["d_eps"] is not None and best is top
+        is_max = top["d_eps"] is not None and (best is top or twin)
         n_ok += bool(is_max)
         kin = KIN.load_kinematics(case) or {}
         out["inputs_sha1"].update(kin.get("inputs_sha1") or {})
@@ -370,6 +371,8 @@ def summarize(n_top, law=None):
             "screen": scr,
             "max_du_site": top, "max_response_site": best,
             "mirror_twin_of_max_du_responded_more": bool(twin),
+            "max_over_max_du_site_rel": ((best["d_eps"] / top["d_eps"] - 1.0)
+                                         if top["d_eps"] else None),
             "critical_is_max_du": is_max if top["d_eps"] is not None else None,
             "margin_rel": ((top["d_eps"] - second["d_eps"]) / top["d_eps"]
                            if (second and top["d_eps"]) else None),

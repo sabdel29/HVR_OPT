@@ -142,6 +142,27 @@ def previous_final(law, js):
     return its[-1]
 
 
+def critical_responses(law, js, sha):
+    """{joint: response} of the law's critical-joint check at these sites when it was solved
+    with card `sha`; None otherwise."""
+    f = crit_file(law)
+    if not f.is_file():
+        return None
+    c = json.loads(f.read_text())
+    if c.get("card_sha") != sha:
+        return None
+    out = {}
+    for lab, case, k, _b in js:
+        rows = ((c.get("cases") or {}).get(case) or {}).get("candidates") or []
+        hit = next((r for r in rows if r.get("d_eps") is not None
+                    and abs(r["x_mm"] - k["x_mm"]) < 1e-6 and abs(r["y_mm"] - k["y_mm"]) < 1e-6
+                    and abs(r["du_xy_um"] - k["du_xy_um"]) < 1e-6), None)
+        if hit is None:
+            return None
+        out[lab] = hit["d_eps"]
+    return out
+
+
 def tasks_for(law, win, label, js, **kw):
     return [dict(study=STUDY, tag=f"{lab}_{label}", kin=k, law=law, window=win,
                  meta={"joint": lab, "case": case, "site_basis": basis, "law": law,
@@ -154,9 +175,14 @@ def iterate(law, js, execute=True):
     w = LAW.solder_cfg()["window"]
     win, status = LAW.stored_window(law)
     its, prev = [], None
-    # an unchanged law at an unchanged card: the previous pass's responses are this card's
+    # an unchanged card: the responses already solved at it at these very sites -- the law's
+    # critical-joint check (same card, same kinematics: the same deck) or the previous pass --
+    # are this iteration's comparison, so a law whose fitted window reproduces the window its
+    # joints visit (within tol_window_rel) converges at once instead of moving its card again
+    sha0 = LAW.card_sha(LAW.card(law, win)[0])
+    prev = critical_responses(law, js, sha0)
     last = previous_final(law, js)
-    if last and last.get("card_sha") == LAW.card_sha(LAW.card(law, win)[0]):
+    if prev is None and last and last.get("card_sha") == sha0:
         prev = last.get("responses")
     n_it = int(w["max_iterations"]) if lc["form"] == "garofalo" else 1
     for k in range(n_it):
