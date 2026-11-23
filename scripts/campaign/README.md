@@ -7,7 +7,7 @@ without touching the frozen results in `research/`.
 | file | role |
 |---|---|
 | `build_manifest.py` | generates `manifest.yaml` (edit the generator, never the YAML) |
-| `manifest.yaml` | 335 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
+| `manifest.yaml` | 341 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
 | `run.py` | runner: `plan`, `seed`, `run`, `status`, `validate`, `reset`, `audit-hooks`, `exec-job` |
 | `validators.py` | output checks (`etm`, `feedback`, `json`, `csv`, `frd`, `exists`) |
 | `guard/sitecustomize.py` | write guard + frozen-read log, injected into every job via PYTHONPATH |
@@ -161,7 +161,7 @@ Design m36 (TCPMT round 3; `plan` on the generated manifest, 0 blocked):
 | 9 | refinement_ladders | 20 | 158 | 5.1 h | production-state rungs r11 (smoke tests) and r31, S0 rungs, solver checks |
 | 10 | robustness_map | 110 | 198 | 3.3 h | class-B runs (incl. the gap-post range conv_posts_lower/upper and the mechanics-revision variants encap_* / bga_card_local), local responses, caloric (HV_SDEC) |
 | 11 | solder_submodels | 3 | 31 | 2.5 h | constitutive/critical/cycles/band/units, parameters, Z3 land |
-| 11b | mech_revision | 52 | 191 | 1.2 h | the mechanics revision in the production state (section 4d): kinematics, law band, critical joints, checks, reflow, board / clamp, material and cooling-B mechanics-only variants |
+| 11b | mech_revision | 58 | 195 | 1.2 h | the mechanics revision in the production state (section 4d): kinematics, law band, critical joints, checks, reflow, board / clamp, material and cooling-B mechanics-only variants |
 | 12 | moose_checks | 5 | 17 | 1.5 h | **local only**: MOOSE does not load on califone |
 | 13 | dse_sweeps | 5 | 1 | 0.4 h | p2_t4 / t5 / tinf sweeps + phase-2 summary |
 | 14 | derived | 31 | 5 | 0.3 h | results, class B, decoupling chain (+ limits study), design comparison, k check, BGA re-closure, ... |
@@ -408,6 +408,7 @@ tcpmt_cases) and depends on their production jobs:
 | `mech.local_checks`, `mech.law_record` | tcpmt_mech_local_checks, tcpmt_mech_laws | `solder_local_checks.json` (mesh L1-L3 and 8 cycles at every joint: the numerical U; dwell, ramp, element, attribution chain, fine-pitch joints A/B), `solder_law_record.json` |
 | `mech.reflow.<arch>[.<encap>]`, `mech.reflow_summary` | tcpmt_mech_reflow (r21) | `reflow/<arch>_r21[_<encap>].json`, `reflow_warpage.json` |
 | `mech.board.<arch>.<tier>`, `mech.board_summary` | tcpmt_mech_board state | `board_study/SDEC_<tier>_<arch>.json`, `board_study_SDEC.json`: mounting, clamp, a 3x board (ring at the coupon edge temperature / at 25 C), mechanics only on the case's field; the clamp in the local response |
+| `mech.board_et.<arch>.<tier>` | tcpmt_mech_board state-et (r11) | `board_study/SDEC_<tier>_<arch>_x3_r11.json`: one E-T of the case on the 3x board (its own ring temperature), free / screws / clamp, against the case's r11 coupon rung: where the ring sits between the two bounds |
 | `mech.state.<arch>.<v>`, `mech.state_local.<v>` | final_closure_sensitivity --state SDEC | `final_closure/sensitivity/etm_<arch>_HV_SDEC__<v>[__B].json`: encapsulant Tg classes and the local-card BGA layer on the production fields, A and B |
 | `robust.coolB.<arch>`, `robust.coolB_local.<arch>` | final_closure_sensitivity NAME@B | `etm_<arch>_HV_S0__<v>__B.json`: the cooling-B mechanics-only rows (run list 4c) |
 | `mech.judge_state`, `mech.judgeB` (stage derived) | tcpmt_mech_variants | `robustness_mech_SDEC.json`, `robustness_B.json` (need the campaign's uncertainty record) |
