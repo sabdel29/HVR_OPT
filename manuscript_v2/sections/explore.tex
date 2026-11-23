@@ -65,9 +65,9 @@ nominal estimate is \WrOmitNom~W, of which \WrOmitDead~W is dead-time conduction
 \WrOmitDeadLo--\WrOmitDeadHi-ns dead time.
 
 Because the integrations share one converter, these terms differ between them only through
-temperature. They narrow the Z1--Z2 gap under cooling~A by \WrOmitGapA~W nominally and by up to
-\WrOmitGapAHi~W, enough to close it. They widen Z2's lead under cooling~B by \WrOmitGapB~W nominally
-and by up to \WrOmitGapBHi~W.
+temperature. They shift the cooling-A comparison of Z1 and Z2 toward \WrOmitFavorA{} by
+\WrOmitGapA~W nominally and by up to \WrOmitGapAHi~W\WrOmitCloseA. They shift the cooling-B
+comparison toward \WrOmitFavorB{} by \WrOmitGapB~W nominally and by up to \WrOmitGapBHi~W.
 
 They also consume Z1's margins. With the nominal estimate Z1 keeps every limit: its hotter junction
 reaches \WrOmitNomRonAZone\,$^\circ$C and its hottest joint \WrOmitNomSolderAZone\,$^\circ$C. With the
@@ -106,10 +106,10 @@ margin under cooling~A shrinks to \WrCalAZtwoRonMargin~K.
 \subsection{Robustness of the Rankings}\label{sec:explore-robust}
 Fig.~\ref{fig:robust} maps \WrRobN{} verdicts for \WrRobCases{} package decisions, each rerun through
 the whole chain on the production mesh (Table~S23). These variants run on the ideal-decoupling
-reference, and every verdict uses the rule of Section~\ref{sec:verification}. At that reference Z1
-has the lower loss, by \LossGapZtwoSzero~W; in the production state Z2 is \GapAZtwo~W lower. The loss
-ranking between Z1 and Z2 is thus set by the input decoupling itself. The map is most informative for
-the other three rankings, which hold in both states.
+reference, and every verdict uses the rule of Section~\ref{sec:verification}. At that reference
+\WrLowRefA{} has the lower loss, by \LossGapZtwoSzero~W; in the production state \WrLowA{} has, by
+\GapAZtwo~W. \WrDecapRankSent{} The map is most informative for the other three rankings, which
+hold in both states.
 
 Of the verdicts, \WrRobPreserved{} are preserved, \WrRobWithdrawn{} withdrawn and \WrRobReversed{}
 reversed. The remaining \WrRobPending{} are pending: their \WrRobPendingCases{} variants change the

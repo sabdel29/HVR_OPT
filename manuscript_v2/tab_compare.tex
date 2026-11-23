@@ -24,7 +24,7 @@ Heat to top / bottom plate (W) & 1135 / 0 & 1135 / 0 & 1200 / 0 & 1126 / 9 & 979
 Die warpage (\textmu m) & 17.2$\pm$1.7 & 58.1$\pm$11.4 & 48.4$\pm$1.7 & 5.2$\pm$0.5 & 17.1$\pm$6.4 & 7.5$\pm$5.0 \\
 Critical-joint driver $\du$ (\textmu m) & 1.91$\pm$0.09 & 2.40$\pm$0.09 & 3.90$\pm$0.14 & 0.76$\pm$0.02 & 1.82$\pm$0.01 & 1.68$\pm$0.03 \\
 Critical-joint temperature $T_{\mathrm{sj}}$ ($^\circ$C) & 111.8 & 84.4 & 101.0 & 103.9 & 73.1 & 79.7 \\
-$\deps$ ($10^{-3}$/cycle)\textsuperscript{a} & 4.42$\pm$0.17 & 5.25$\pm$0.12 & 11.04$\pm$0.15 & 1.45$\pm$0.07 & 2.83$\pm$0.03 & 2.65$\pm$0.12 \\
+$\deps$ ($10^{-3}$/cycle)\textsuperscript{a} & \WrEpsAZone$\pm$\WrEpsUAZone & \WrEpsAZtwo$\pm$\WrEpsUAZtwo & \WrEpsAZthree$\pm$\WrEpsUAZthree & \WrEpsBZone$\pm$\WrEpsUBZone & \WrEpsBZtwo$\pm$\WrEpsUBZtwo & \WrEpsBZthree$\pm$\WrEpsUBZthree \\
 \midrule
 \multicolumn{7}{@{}l}{\emph{Interconnect and platform}}\\
 Ball sites carrying power & 336 & 332\textsuperscript{c} & 1334\textsuperscript{d} & 336 & 332\textsuperscript{c} & 1334\textsuperscript{d} \\
@@ -44,5 +44,5 @@ Static drop ($\le30$~mV per rail) & pass & pass & \textbf{fail} & pass & pass & 
 \textbf{Ranked} (every limit met) & yes & \textbf{no} & \textbf{no} & yes & \textbf{no} & \textbf{no} \\
 \bottomrule
 \end{tabular}
-\par\smallskip\raggedright\footnotesize \textsuperscript{a}Stabilized cycle, L0 mesh, solved for the ideal-decoupling reference, whose $\du$ and $T_{\mathrm{sj}}$ lie within \WrDuShiftPct\,\% and \WrTsjShiftK~K of the production state. \textsuperscript{b}Sum of the series maxima of one rail at 1000~A: vertical conductors, the cell output plane and, for Z3, the land side and board planes. \textsuperscript{c}48-V balls of the ring feed, of the \WrBgaSitesZtwo{} sites around the board opening (outside the package-internal boundary). \textsuperscript{d}1-V balls, of \WrBgaSitesZone{}; \WrBgaLeftZthree{} sites remain for every signal and auxiliary rail. \textsuperscript{e}Per plate at a pump efficiency of 0.55 (\WrPumpLo--\WrPumpHi~W for 0.75--0.35). Z3: land-side (40~\textmu m) and board-plane redistribution in the coupled solution.
+\par\smallskip\raggedright\footnotesize \textsuperscript{a}Stabilized cycle, L0 mesh, solved \WrEpsState. \WrEpsStateNote{} \textsuperscript{b}Sum of the series maxima of one rail at 1000~A: vertical conductors, the cell output plane and, for Z3, the land side and board planes. \textsuperscript{c}48-V balls of the ring feed, of the \WrBgaSitesZtwo{} sites around the board opening (outside the package-internal boundary). \textsuperscript{d}1-V balls, of \WrBgaSitesZone{}; \WrBgaLeftZthree{} sites remain for every signal and auxiliary rail. \textsuperscript{e}Per \CoolZones-zone manifold plate (\CoolDp~kPa, \CoolPhyd~W hydraulic) at a pump efficiency of 0.55 (\WrPumpLo--\WrPumpHi~W for 0.75--0.35). Z3: land-side (40~\textmu m) and board-plane redistribution in the coupled solution.
 \end{table*}

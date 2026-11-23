@@ -623,12 +623,10 @@ def compare_table(S, mac):
         return NA if du == NA else pm(du, m(f"U{t}{ATAG[a]}Du"))
 
     def eps(t, a):
-        """stabilized local response of the ideal-decoupling reference, with its own U (%)"""
-        v = m(f"Eps{t}{ATAG[a]}Szero")
-        u = num(m(f"EpsU{t}{ATAG[a]}Szero"))
-        if v == NA or u is None or num(v) is None:
-            return v
-        return v + r"$\pm$" + f"{num(v) * u / 100:.{ndec(v)}f}"
+        """stabilized local response with its own U, through the results writer's state-aware
+        macros (production state when the local study ran on the production cases, else the
+        ideal-decoupling reference; scripts/tcpmt_writer_macros_results.py)"""
+        return f"\\WrEps{t}{ATAG[a]}$\\pm$\\WrEpsU{t}{ATAG[a]}"
 
     def rstar(t, a):
         return "n/a" if a == "Z1" else m(f"RstarTier{t}{ATAG[a]}")
@@ -697,17 +695,15 @@ def compare_table(S, mac):
                  m(f"Feasible{t}{ATAG[a]}"), NA)),
          r"\bottomrule", r"\end{tabular}",
          r"\par\smallskip\raggedright\footnotesize "
-         r"\textsuperscript{a}Stabilized cycle, L0 mesh, solved for the ideal-decoupling "
-         r"reference, whose $\du$ and $T_{\mathrm{sj}}$ lie within \WrDuShiftPct\,\% and "
-         r"\WrTsjShiftK~K of the production state. "
+         r"\textsuperscript{a}Stabilized cycle, L0 mesh, solved \WrEpsState. \WrEpsStateNote{} "
          r"\textsuperscript{b}Sum of the series maxima of one rail at 1000~A: vertical "
          r"conductors, the cell output plane and, for Z3, the land side and board planes. "
          r"\textsuperscript{c}48-V balls of the ring feed, of the \WrBgaSitesZtwo{} sites around "
          r"the board opening (outside the package-internal boundary). "
          r"\textsuperscript{d}1-V balls, of \WrBgaSitesZone{}; \WrBgaLeftZthree{} sites remain for "
          r"every signal and auxiliary rail. "
-         r"\textsuperscript{e}Per plate at a pump efficiency of 0.55 "
-         r"(\WrPumpLo--\WrPumpHi~W for 0.75--0.35). "
+         r"\textsuperscript{e}Per \CoolZones-zone manifold plate (\CoolDp~kPa, \CoolPhyd~W "
+         r"hydraulic) at a pump efficiency of 0.55 (\WrPumpLo--\WrPumpHi~W for 0.75--0.35). "
          + mac.get("ZthreeLandNote", ""),
          r"\end{table*}", ""]
     return "\n".join(L)

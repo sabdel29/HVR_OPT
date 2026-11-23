@@ -27,11 +27,10 @@ analysis decoupled from the thermal solution would therefore understate the pack
 parts that run \WrTlsRiseAZone{} to \WrThsRiseAZone~K above room temperature.
 
 \subsection{Input Decoupling}\label{sec:evaluate-decap}
-Each cell draws its input current in pulses at the buck duty. The RMS factor $k_{\mathrm{rms}}$, the
-ratio of a current's RMS to its mean, is \WrKopen{} for one cell's input current. With the cells in
-phase and no input capacitance, a port model of the package network gives $k_{\mathrm{rms}} =
-\WrKsync$ for the 48-V network. The bare-decoupling reference case uses the rectangular-pulse value,
-\WrKbare.
+The input states and their RMS factors $k_{\mathrm{rms}}$ are defined in
+Section~\ref{sec:scenarios}. This subsection shows why the implemented decoupling takes the form it
+does. With the cells in phase and no input capacitance, a port model of the package network gives
+$k_{\mathrm{rms}} = \WrKsync$.
 
 Charge balance asks for only \WrCchargeOneV~\textmu F per cell for 1~V of input ripple. A circuit
 model of the package loop says otherwise. It includes the loop's inductance, \WrLloop~pH nominal
@@ -46,9 +45,9 @@ inductance of the band. A ring of \WrNring{} capacitors outside the cell grid, 1
 \WrRingCtot~\textmu F at 48~V. On its own it gives $k_{\mathrm{rms}} = \WrKring$, because the package
 inductance separates it from the cells. Interleaving the cells' clocks on its own gives \WrKinter.
 
-The production decoupling combines the two. Two interleaved \WrNphaseGroup-phase clock groups on a
-checkerboard, offset by half a phase step, give \WrNphases{} phases in all. With the ring they
-reach $k_{\mathrm{rms}} = \WrKrms$, and \WrKrmsLo--\WrKrmsHi{} over the inductance band. An ideal
+The implemented decoupling combines the two. Its two interleaved \WrNphaseGroup-phase clock groups
+sit on a checkerboard, the second offset by half a phase step. With the ring they reach
+$k_{\mathrm{rms}} = \WrKrms$, and \WrKrmsLo--\WrKrmsHi{} over the inductance band. An ideal
 \WrProdM-phase spread with the ring would reach only \WrKspread: the sheet next to each cell still
 carries that cell's own pulse.
 
@@ -60,17 +59,11 @@ decoupling. It would also put \WrBgaBareAtNmaxZone~A on each 48-V ball even at t
 converter's control, not an option.
 
 \subsection{Package Interface}\label{sec:evaluate-bga}
-Each 48-V ball carries the DC peak of the solved ball currents times $k_{\mathrm{rms}}$. The same
-rule applies to every integration. The balls are sized by the smallest legal count that keeps this
-current at or below \WrBgaRule~A, a per-ball design assumption for these joints~\cite{Kuan2015Imax}.
-A legal count stays within \WrBgaNmax{} balls per rail and leaves at least a quarter of the sites
-free. For Z1 the count is \WrBgaNZone{} balls per rail at \WrBgaIZone~A per ball, \WrBgaFracZone\,\%
-of the \WrBgaSitesZone{} sites.
-
-A harmonic port model of the network, with every ball tied to an ideal board node, gives a
-worst-ball RMS current of \WrBgaRmsZone~A. That idealized bound exceeds the design assumption, and
-Section~\ref{sec:limits} states it as a limitation. The static 1-V drop from the converter output to
-the die is \VdropAZone~mV per rail, within the 30-mV limit.
+The 48-V balls follow the provisioning rule of Section~\ref{sec:ledger}. At the implemented
+waveform it gives Z1 \WrBgaNZone{} balls per rail, each carrying \WrBgaIZone~A, on \WrBgaFracZone\,\%
+of the \WrBgaSitesZone{} sites. The per-ball assumption and its harmonic bound are discussed in
+Section~\ref{sec:limits}. The static 1-V drop from the converter output to the die is
+\VdropAZone~mV per rail, within the 30-mV limit.
 
 \subsection{Mechanical State}\label{sec:evaluate-mech}
 The die warps by \WarpAZone~\textmu m peak to valley. The search over all \WrBgaSitesZone{} ball
@@ -85,11 +78,9 @@ largest driver sits in the \WrHIfUm-\textmu m die-to-converter microbumps: $\gam
 critical ball ($\WrGamBgaAZone\times10^{-3}$). The microbumps are screened by this driver only
 (Section~\ref{sec:limits}).
 
-The local joint response is solved for the ideal-decoupling reference. Across the six compared
-cases, its drivers differ from the production state's by at most \WrDuShiftPct\,\% in $\du$ and
-\WrTsjShiftK~K in $T_{\mathrm{sj}}$. On the stabilized cycle the critical Z1 joint accumulates
-$\deps = \EpsAZoneSzero\times10^{-3}$ per cycle, with a numerical uncertainty of
-\EpsUAZoneSzero\,\%. This increment ranks joints; it is not a life.
+The local joint response is solved \WrEpsState. \WrEpsStateNote{} On the stabilized cycle the
+critical Z1 joint accumulates $\deps = \WrEpsAZone\times10^{-3}$ per cycle, with a numerical
+uncertainty of \WrEpsUrelAZone\,\%. This increment ranks joints; it is not a life.
 
 \subsection{Feasibility}\label{sec:evaluate-feas}
 The evaluated design passes every check of the feasibility stage (Table~S19). The GaN junctions

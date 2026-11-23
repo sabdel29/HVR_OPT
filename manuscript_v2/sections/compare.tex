@@ -54,17 +54,16 @@ integrations does not serve the board-backside one.
 
 Between Z1 and Z2 the converter's thermal path decides. The converter of Z2 is cooled only through
 the attach and the substrate. Its low-side tier runs \WrdTlsAZtwo~K hotter than in Z1, and its
-conversion loss rises by \WrdPconvAZtwo~W. That gives back most of the \WrdProuteAZtwo~W it saves in
-routing, and Z2 ends \GapAZtwo~W below Z1 inside the package. The rule resolves this gap, with
-$|D+\beta_D| = \WrResAZoneZtwoPlossDc$~W against $U_{95}(D) = \WrResAZoneZtwoPlossUni$~W. The omitted
-converter terms could narrow it by up to \WrOmitGapAHi~W (Section~\ref{sec:explore-omit}).
+conversion loss rises by \WrdPconvAZtwo~W, against a routing saving of \WrdProuteAZtwo~W. Inside the
+package \WrLowA{} has the lower loss, by \GapAZtwo~W. The rule finds this gap \WrResAZoneZtwoPloss,
+with $|D+\beta_D| = \WrResAZoneZtwoPlossDc$~W against $U_{95}(D) = \WrResAZoneZtwoPlossUni$~W. The
+omitted converter terms could shift it toward \WrOmitFavorA{} by up to \WrOmitGapAHi~W
+(Section~\ref{sec:explore-omit}).
 
-The lead does not survive the platform boundary. Z2's direct 48-V feed carries the cells' residual
-pulse outside the package, and Z2 leads only while that feed loop stays below
-$R^* = \RstarTierAZtwo$~m$\Omega$. The physical feeds evaluated here measure
-\FeedRflexZtwo--\FeedRbgaZtwo~m$\Omega$. With the ball-ring feed and the pumping charged, Z1 has the
-lower platform-inclusive loss, by \WrPlatGapA~W. Electrically, neither integration leads under one
-top plate: the boundary of the comparison decides.
+The platform boundary adds Z2's direct 48-V feed, which carries the cells' residual pulse outside
+the package. \WrRstarSentA{} The physical feeds evaluated here measure
+\FeedRflexZtwo--\FeedRbgaZtwo~m$\Omega$. With the ball-ring feed and the pumping charged, the
+platform-inclusive loss is \PlatAZone~W for Z1 and \PlatAZtwo~W for Z2. \WrElecVerdictA
 
 Thermally and mechanically the two are not tied. Z1 peaks \WrdTmaxAZtwo~K lower, a resolved gap. Z2
 is a thin silicon plate that carries the encapsulated converter on one side and rests on a ring of
@@ -132,16 +131,15 @@ bound Z1 rises by \FbBZonedP~W and Z2 by \FbBZtwodP~W, and both stay feasible. W
 by \WrPlatGapB~W. Its feed limit, $R^* = \RstarTierBZtwo$~m$\Omega$, lies above the physical feeds.
 
 \subsection{Joints and Interconnect Layers}\label{sec:compare-joints}
-The local joint response follows the joint driver (Table~\ref{tab:compare}). Solved for the
-ideal-decoupling reference, Z1's critical joint accumulates the smallest increment under both
-coolings. Under cooling~A the increments are \EpsAZoneSzero, \EpsAZtwoSzero{} and
-\EpsAZthreeSzero$\times10^{-3}$ per cycle for Z1, Z2 and Z3. Under cooling~B they are
-\EpsBZoneSzero, \EpsBZtwoSzero{} and \EpsBZthreeSzero$\times10^{-3}$.
+The local joint response (Table~\ref{tab:compare}) is solved \WrEpsState. On the stabilized cycle
+the critical joints accumulate \WrEpsAZone, \WrEpsAZtwo{} and \WrEpsAZthree$\times10^{-3}$ per cycle
+in Z1, Z2 and Z3 under cooling~A, and \WrEpsBZone, \WrEpsBZtwo{} and \WrEpsBZthree$\times10^{-3}$
+under cooling~B. \WrEpsLowSent
 
 The production solder law is a zero-yield Norton fit over the stress window the joints visit. An
 independent law~\cite{Schubert2003ECTC}, refitted over the same window, gives increments
-\SchubertRatioLo--\SchubertRatioHi{} times larger. Every ranking of the joint response holds under
-both laws.
+\SchubertRatioLo--\SchubertRatioHi{} times larger. Under both laws, \WrLawHold{} ranking of the joint
+response holds.
 
 The other interconnect layers rank differently from the balls. In Z2 the 30-\textmu m Cu pillars
 carry a larger driver than its balls under cooling~A, $\gamma = \WrGamAttAZtwo\times10^{-3}$
@@ -151,12 +149,12 @@ against $\WrGamBgaAZtwo\times10^{-3}$. In Z3 under cooling~A the converter-to-bo
 \subsection{Which Physics Changes Which Ranking}\label{sec:compare-ablation}
 Read as an ablation, Table~\ref{tab:compare} shows each domain changing the answer. With electrical
 models alone, at a common temperature, Z2 is \WrIsoGapHiZtwo~W ahead of Z1 and Z3 is far behind. The
-electrothermal fixed point under one top plate shrinks Z2's lead to \GapAZtwo~W, less than its feed
-loss outside the package. It also removes Z3 by its device ratings. The mechanics separate Z1 from Z2 under that plate by a
+electrothermal fixed point under one top plate brings Z1 and Z2 within \GapAZtwo~W, less than Z2's
+feed loss outside the package. It also removes Z3 by its device ratings. The mechanics separate Z1 from Z2 under that plate by a
 factor of \WrWarpRatioAZtwo{} in warpage. Through the plate interface they also remove Z2 when the
 plate does not conform.
 
 A second plate makes Z2 the electrical and thermal leader, by \GapBZtwo~W and \dTmaxTierBZtwo~K,
-while Z1 stays the mechanical one. The platform boundary, with feed and pumping, favors Z1 under
-cooling~A and Z2 under cooling~B. The static-drop and ball-site checks remove Z3 even where its
+while Z1 stays the mechanical one. The platform boundary, with feed and pumping, favors
+\WrLowPlatA{} under cooling~A and \WrLowPlatB{} under cooling~B. The static-drop and ball-site checks remove Z3 even where its
 ratings pass. No single domain, and no single cooling, returns this ranking.

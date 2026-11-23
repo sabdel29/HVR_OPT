@@ -6,8 +6,9 @@ Each rule follows from a result of Sections~\ref{sec:evaluate}--\ref{sec:explore
 the condition stated with it.
 
 \emph{Filter by limits, then rank on the converged state under one cooling solution.} At a common
-temperature the package-backside regulator leads by routing alone. Under one top plate that lead
-shrinks below its feed loss, and the board-backside regulator exceeds its device ratings. A placement study that
+temperature the package-backside regulator leads by routing alone. Under one top plate the two
+come within \GapAZtwo~W, less than the backside regulator's feed loss, and the board-backside
+regulator exceeds its device ratings. A placement study that
 holds the converter loss fixed, cools the integrations differently or ranks a candidate that violates
 a limit can therefore reach the wrong answer. The rule holds for any converter whose loss rises with
 temperature, as an on-resistance-dominated loss does.
@@ -75,14 +76,21 @@ core loss is bracketed by three flux models (Table~S24).
 terminals the tier-order result is a sensitivity (Section~\ref{sec:realizability}).
 
 \emph{Converter loss model.} The loss model is validated on other members of the hybrid family, not
-on this converter. Its omitted terms add \WrOmitLo--\WrOmitHi~W. At the upper end they close the
-cooling-A gap between Z1 and Z2 and exceed Z1's on-resistance-fit, capacitor and solder-law limits
-(Section~\ref{sec:explore-omit}).
+on this converter. Its omitted terms add \WrOmitLo--\WrOmitHi~W. At the upper end they shift the
+cooling-A comparison of Z1 and Z2 by \WrOmitGapAHi~W and exceed Z1's on-resistance-fit, capacitor and
+solder-law limits (Section~\ref{sec:explore-omit}).
 
 \emph{Solder law.} The solder law is calibrated to 125\,$^\circ$C and refitted over the stress window
 the joints visit; its band spans two laws. The local response is an inelastic strain increment for
-ranking, not a life, and it is solved for the ideal-decoupling reference. The microbump and pillar
-layers are screened by their shear driver only, without a local model.
+ranking, not a life, and it is solved \WrEpsState. The microbump and pillar layers are screened by
+their shear driver only, without a local model.
+
+\emph{Numerical scope.} The production-state mesh ladders have no through-thickness rung. On the
+ideal-decoupling ladders that term reaches \MthTtWarpZone\,\% of Z1's warpage, and adding it changes
+\MthTtFlips{} of the verdicts. The iterative and direct structural solvers differ by about
+\MthSolverWarp\,\% in die warpage and \MthSolverDu\,\% in $\du$; this term is not part of
+$U_{95}$, and with it added \MthSolverHold{} resolved warpage comparisons stay resolved
+(Section~\ref{sec:verification}).
 
 \emph{Ball rating.} The \WrBgaRule-A per-ball current is a design assumption~\cite{Kuan2015Imax}; at
 1.5~A no evaluated arrangement closes. The harmonic port model gives the worst Z1 ball
@@ -93,10 +101,12 @@ not decide feasibility.
 convection beneath under cooling~A. A larger or clamped board enters only through the bounding films
 of Fig.~\ref{fig:robust}. The board-backside redistribution assumes equal ball sharing and
 two-dimensional sheets. The die load is uniform unless stated, and the coolant has bulk properties.
+The cold-plate coefficient agrees with conjugate CFD, but the four-zone manifold, with its flow split
+and pressure drop, has no CFD check of its own.
 
-\emph{Steady state.} Every result is a steady state of an intact package. Load transients, droop,
-switching ripple beyond the RMS treatment, high-frequency return paths, damage and delamination are
-outside the scope.
+\emph{Steady state.} Every result is a steady state of an intact package. No thermal transient is
+solved: the joint cycle ramps between steady states. Load transients, droop, switching ripple beyond
+the RMS treatment, high-frequency return paths, damage and delamination are outside the scope.
 
 Every number belongs to one specification. What generalizes are the mechanisms and the rules, with
 the conditions stated above.

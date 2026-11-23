@@ -579,13 +579,26 @@ def omitted():
     m["WrOmitAc"] = fx(a1["ac_winding_w"], 1)
     m["WrOmitDiel"] = fx(a1["dielectric_w"], 1)
     pr = s["pairs"]
+    plist = {(p["better"], p["worse"]): p for p in d.get("pairs") or []}
     for key, tag in (("A_Z2_vs_A_Z1", "A"), ("B_Z2_vs_B_Z1", "B")):
-        p = pr[key]
+        p = pr.get(key)
+        if p is None:                    # the pair's name follows the lower-loss integration
+            alt = key.split("_vs_")
+            p = pr.get(f"{alt[1]}_vs_{alt[0]}")
+            key = f"{alt[1]}_vs_{alt[0]}"
+        if p is None:
+            continue
         nomt = p["delta_omitted_w_low_nom_high"][1] + p["delta_feedback_w_nom_high"][0]
         hit = p["delta_omitted_w_low_nom_high"][2] + p["delta_feedback_w_nom_high"][1]
         m[f"WrOmitGap{tag}"] = fx(abs(nomt), 1)
         m[f"WrOmitGap{tag}Hi"] = fx(abs(hit), 1)
-        m[f"WrOmitGap{tag}Sign"] = "narrows" if nomt < 0 else "widens"
+        better, worse = (x.split("_")[1] for x in key.split("_vs_"))
+        # a negative shift shrinks the better integration's advantage: it favors the worse one
+        m[f"WrOmitFavor{tag}"] = worse if nomt < 0 else better
+        gap = p.get("gap_paper_w")
+        if gap is not None:
+            m[f"WrOmitClose{tag}"] = (", enough to close it" if (nomt < 0 and abs(hit) >= gap)
+                                      else "")
     dse = s["dse"]["T_25C"]
     m["WrOmitDseOptNom"] = str(dse["nominal"]["optimum_M"])
     m["WrOmitDseMarginNom"] = fx(dse["nominal"]["margin_w"], 1)
@@ -639,11 +652,112 @@ def sensitivities():
     return m
 
 
+
+# ------------------------------------------------------------------ sign-safe wording
+def verdicts():
+    """Comparative words derived from the data, so a rerun that flips a sign rewrites the
+    sentence instead of leaving a stale claim: the lower-loss integration of Z1/Z2 inside the
+    package and at the platform boundary, per cooling and for the ideal-decoupling reference."""
+    import tcpmt_cases as TC
+    m = {}
+    pl = (J(TR / "platform_inclusive.json") or {}).get("tiers") or {}
+    low = {}
+    for t in ("A", "B"):
+        c1, c2 = (J(TC.case_path("SDEC", t, a)) for a in ("Z1", "Z2"))
+        if not (c1 and c2):
+            continue
+        li = "Z1" if c1["P_loss_w"] < c2["P_loss_w"] else "Z2"
+        low[t] = li
+        m[f"WrLow{t}"] = li
+        m[f"WrHigh{t}"] = "Z2" if li == "Z1" else "Z1"
+        try:
+            lp = "Z1" if pl[t]["Z1"]["P_platform_W"] < pl[t]["Z2"]["P_platform_W"] else "Z2"
+        except (KeyError, TypeError):
+            continue
+        m[f"WrLowPlat{t}"] = lp
+        if lp != li:
+            m[f"WrElecVerdict{t}"] = (r"Electrically, neither integration leads under this cooling: "
+                                     r"the boundary of the comparison decides.")
+            m[f"WrElecShort{t}"] = "neither leads electrically"
+        else:
+            m[f"WrElecVerdict{t}"] = (f"Electrically, {li} leads under this cooling at both "
+                                     f"boundaries.")
+            m[f"WrElecShort{t}"] = f"{li} leads electrically at both boundaries"
+        # the feed limit of Z2 as a sentence (R* = 0: behind even with a lossless feed)
+        tf = ((J(TR / "tier_feed_crossover.json") or {}).get("states") or {}).get("SDEC", {})
+        r = ((tf.get(t) or {}).get("Z2") or {}).get("R_star_mohm")
+        if r is None:
+            pass
+        elif r > 0:
+            m[f"WrRstarSent{t}"] = (r"Z2 keeps the lower loss only while that feed loop stays "
+                                   f"below $R^* = {r:.1f}$~m$\\Omega$.")
+        else:
+            m[f"WrRstarSent{t}"] = "Z2 has the higher loss even with a lossless feed."
+    r0 = (J(FC / "etm_Z1_HV_S0_h1.1_r21.json") or {}).get("P_loss_w")
+    r2 = (J(FC / "etm_Z2_HV_S0_h1.1_r21.json") or {}).get("P_loss_w")
+    if r0 and r2:
+        lr = "Z1" if r0 < r2 else "Z2"
+        m["WrLowRefA"] = lr
+        if "A" in low:
+            m["WrDecapRankSent"] = (
+                "The loss ranking between Z1 and Z2 thus depends on the input decoupling itself."
+                if lr != low["A"] else
+                "The loss ranking between Z1 and Z2 is the same in both states.")
+    return m
+
+
+# ------------------------------------------------------------------ joint response, state-aware
+def joint_response():
+    """\\WrEps<t><A> (10^-3 per cycle), \\WrEpsU<t><A> (absolute) and the state they were solved
+    in: the production state when the local study ran on the production cases, else the
+    ideal-decoupling reference -- the text and Table V switch with the data."""
+    d = J(TR / "solder_studies.json") or {}
+    st = (d.get("stabilization") or {}).get("cases") or {}
+    zl = (J(TR / "solder_z3land.json") or {}).get("cases") or {}
+    m, files = {}, []
+    for lab, v in st.items():
+        t, a = lab.split("_")
+        val, u = v.get("stabilised"), v.get("U_stab_num")
+        if a == "Z3" and (zl.get(t) or {}).get("stabilised") is not None:
+            val, u = zl[t]["stabilised"], zl[t].get("U_stab_num")
+        if val is None:
+            continue
+        files.append(v.get("case_file") or "")
+        m[f"WrEps{t}{ATAG[a]}"] = fx(1e3 * val, 2)
+        if u is not None:
+            m[f"WrEpsU{t}{ATAG[a]}"] = fx(1e3 * val * u, 2)
+            m[f"WrEpsUrel{t}{ATAG[a]}"] = fx(100 * u, 1)
+    for t in ("A", "B"):
+        vals = {a: float(m[f"WrEps{t}{ATAG[a]}"]) for a in ("Z1", "Z2", "Z3")
+                if m.get(f"WrEps{t}{ATAG[a]}", NA) != NA}
+        if vals:
+            m[f"WrEpsLow{t}"] = min(vals, key=vals.get)
+    la, lb = m.get("WrEpsLowA"), m.get("WrEpsLowB")
+    if la and lb:
+        m["WrEpsLowSent"] = (f"The smallest increment belongs to {la} under both coolings."
+                             if la == lb else
+                             f"The smallest increment belongs to {la} under cooling~A and to "
+                             f"{lb} under cooling~B.")
+    prod = bool(files) and all("HV_SDEC" in f for f in files)
+    m["WrEpsState"] = "in the production state" if prod else "for the ideal-decoupling reference"
+    m["WrEpsStateShort"] = "production state" if prod else "ideal-decoupling reference"
+    if prod:
+        m["WrEpsStateNote"] = ""
+    else:
+        cm = compare()
+        m["WrEpsStateNote"] = (
+            f"Across the six compared cases its drivers differ from the production state's by at "
+            f"most {cm.get('WrDuShiftPct', NA)}\\,\\% in $\\du$ and {cm.get('WrTsjShiftK', NA)}~K "
+            f"in $T_{{\\mathrm{{sj}}}}$.")
+    co = d.get("constitutive") or {}
+    m["WrLawHold"] = "every" if co.get("rankings_hold_all_variants") else "not every"
+    return m
+
 def main():
     mac = {}
     for f in (designs, common_temperature, evaluate_z1, interconnects, decoupling, bga,
               feasibility_variants, design_feasibility, compare, uncertainty_rule, robustness,
-              platform, omitted, sensitivities):
+              platform, omitted, sensitivities, verdicts, joint_response):
         try:
             mac.update(f())
         except Exception as e:                               # noqa: BLE001 -- keep building
