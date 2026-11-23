@@ -111,6 +111,25 @@ local:
   ramp_sensitivity_s: [3.0, 30.0]
   copper: {E_MPa: 117000.0, nu: 0.34, cte_per_K: 16.6e-6,
            note: "the pad card of joint.write_inp, kept"}
+  #: the critical joint (finding 2 under the v2 BCs; scripts/tcpmt_mech_critical.py): the
+  #: reported joint response is the MAXIMUM over the BGA lattice, per case and per law of the
+  #: band. The response is not monotone in (|du_xy|, T) (campaign_v3: 7801 of 16107 dominance
+  #: pairs reversed, up to 6x), so the maximum-du proxy and the (|du_xy|, T) Pareto front do
+  #: not bound it. It is monotone, within a few %, in the deforming (rotation-free) in-plane
+  #: du, |du_z| and T (largest reversal 5.6 % over the same solved sites); a lattice site
+  #: dominated in these three by a solved site c responds at most (1 + margin) R(c). Every
+  #: lattice site is therefore either solved or bounded: solve the base candidates and the
+  #: lattice's Pareto front in the three features, then every site whose bound exceeds the
+  #: maximum found, until none does (the bound is re-validated on every round's pairs).
+  critical:
+    n_top: 30                           # base candidates: tcpmt_mech_kinematics.candidate_sites
+    screen_features: [du_def_xy_um, abs_du_z_um, T_C]
+    margin_min_rel: 0.10                # the bound's margin: max(this, factor x the largest
+    margin_factor: 2.0                  #   reversal over the law's solved dominance pairs)
+    max_rounds: 8
+    #: the law band re-solves, at each law's final card, every candidate within this fraction
+    #: of that law's maximum when the card moved after the check (a window re-iteration)
+    verify_near_rel: 0.10
 
 # ------------------------------------------------------------------------------------
 # 4. INTERCONNECT LAYERS SEARCHED (finding 4)

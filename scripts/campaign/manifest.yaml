@@ -6513,40 +6513,6 @@ jobs:
   - file: tcpmt_revision/solder_parameters.json
     kind: json
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-- id: mech.critical
-  stage: mech_revision
-  argv:
-  - bash
-  - -c
-  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run --top 30; {python} scripts/tcpmt_mech_critical.py
-    --summarize --top 30
-  outputs:
-  - tcpmt_revision/solder_critical_v2.json
-  deps:
-  - mech.lawband.window
-  ncpus: 32
-  mem_gb: 24.0
-  est_wall_h: 1.2
-  walltime_h: 3.5
-  backends:
-  - local
-  - pbs
-  prefer: pbs
-  env:
-    LOCAL_THREADS: '2'
-    TCPMT_SOLDER_SLOTS: '16'
-  validate:
-  - file: tcpmt_revision/solder_critical_v2.json
-    kind: json
-    nonempty:
-    - cases
-    fresh: true
-  workers: 16
-  evidence: ~650 candidates over the six compared cases (66-147 each, campaign_v3 case files) x 45-60
-    s on 2 threads (ccx + the record's extraction), 16 slots
-  notes: 'finding 2: every candidate of the full-lattice search (top 30 by |du_xy|, tilt, eps_z and deforming
-    du, the strict Pareto front in (|du_xy|, T), the corners) solved with the production law at its converged
-    window; monotonicity over the dominance pairs, the maximum-response joint'
 - id: robust.coolB.Z2
   stage: mech_revision
   argv:
@@ -6626,6 +6592,120 @@ jobs:
   evidence: 11 mechanics-only solves on the cooling-B field, 4 at a time
   notes: 'finding 8: NAME@B, mechanics only on the cooling-B field of the reference (configs/tcpmt_mech
     cooling_B_base)'
+- id: mech.critical
+  stage: mech_revision
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run; {python} scripts/tcpmt_mech_critical.py
+    --summarize
+  outputs:
+  - tcpmt_revision/solder_critical_v2.json
+  deps:
+  - mech.lawband.window
+  - mech.lattice
+  ncpus: 32
+  mem_gb: 32.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  prefer: local
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '32'
+  validate:
+  - file: tcpmt_revision/solder_critical_v2.json
+    kind: json
+    nonempty:
+    - cases
+    - all_closed
+    fresh: true
+  workers: 32
+  evidence: '~1000 sites over the six compared cases (the 669 base candidates + the lattice front in the
+    screening features + the bound''s additions) x ~65 s per site on ONE thread (ccx 49 s at 1 thread
+    vs 46 s at 2, identical result: one thread per slot)'
+  notes: 'finding 2 under law schubert2003: the maximum response over the BGA lattice of every compared
+    case -- the base candidates (top 30 by |du_xy|, tilt, eps_z and deforming du, the (|du_xy|, T) Pareto
+    front, the corners), the lattice''s Pareto front in (deforming du, |du_z|, T) and every site whose
+    dominance bound (1 + margin) R exceeds the maximum, until none does (configs/tcpmt_mech local.critical);
+    the law at its stored window'
+- id: mech.critical.xiao_armstrong2005
+  stage: mech_revision
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run --law xiao_armstrong2005; {python}
+    scripts/tcpmt_mech_critical.py --summarize --law xiao_armstrong2005
+  outputs:
+  - tcpmt_revision/solder_critical_v2_xiao_armstrong2005.json
+  deps:
+  - mech.lawband.window
+  - mech.lattice
+  ncpus: 20
+  mem_gb: 32.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - pbs
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '20'
+  validate:
+  - file: tcpmt_revision/solder_critical_v2_xiao_armstrong2005.json
+    kind: json
+    nonempty:
+    - cases
+    - all_closed
+    fresh: true
+  workers: 20
+  evidence: '~1000 sites over the six compared cases (the 669 base candidates + the lattice front in the
+    screening features + the bound''s additions) x ~65 s per site on ONE thread (ccx 49 s at 1 thread
+    vs 46 s at 2, identical result: one thread per slot)'
+  notes: 'finding 2 under law xiao_armstrong2005: the maximum response over the BGA lattice of every compared
+    case -- the base candidates (top 30 by |du_xy|, tilt, eps_z and deforming du, the (|du_xy|, T) Pareto
+    front, the corners), the lattice''s Pareto front in (deforming du, |du_z|, T) and every site whose
+    dominance bound (1 + margin) R exceeds the maximum, until none does (configs/tcpmt_mech local.critical);
+    the law at its stored window'
+- id: mech.critical.xa_measured_norton
+  stage: mech_revision
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run --law xa_measured_norton; {python}
+    scripts/tcpmt_mech_critical.py --summarize --law xa_measured_norton
+  outputs:
+  - tcpmt_revision/solder_critical_v2_xa_measured_norton.json
+  deps:
+  - mech.lawband.window
+  - mech.lattice
+  ncpus: 32
+  mem_gb: 32.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  prefer: local
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '32'
+  validate:
+  - file: tcpmt_revision/solder_critical_v2_xa_measured_norton.json
+    kind: json
+    nonempty:
+    - cases
+    - all_closed
+    fresh: true
+  workers: 32
+  evidence: '~1000 sites over the six compared cases (the 669 base candidates + the lattice front in the
+    screening features + the bound''s additions) x ~65 s per site on ONE thread (ccx 49 s at 1 thread
+    vs 46 s at 2, identical result: one thread per slot)'
+  notes: 'finding 2 under law xa_measured_norton: the maximum response over the BGA lattice of every compared
+    case -- the base candidates (top 30 by |du_xy|, tilt, eps_z and deforming du, the (|du_xy|, T) Pareto
+    front, the corners), the lattice''s Pareto front in (deforming du, |du_z|, T) and every site whose
+    dominance bound (1 + margin) R exceeds the maximum, until none does (configs/tcpmt_mech local.critical);
+    the law at its stored window'
 - id: mech.local_checks
   stage: mech_revision
   argv:
@@ -7463,6 +7543,8 @@ jobs:
   - tcpmt_revision/solder_law_band.json
   deps:
   - mech.critical
+  - mech.critical.xa_measured_norton
+  - mech.critical.xiao_armstrong2005
   ncpus: 12
   mem_gb: 12.0
   est_wall_h: 0.5
@@ -7482,10 +7564,13 @@ jobs:
     - critical_check
     nonempty:
     - band
+    - all_verified
     fresh: true
   workers: 6
-  evidence: as pass 1, starting from its converged windows
-  notes: 'pass 2: the band at the joints the critical-joint check confirmed (the production joint response
+  evidence: as pass 1, starting from its converged windows; an unchanged law converges at once (its previous
+    responses at the same card and sites)
+  notes: 'pass 2: under every law its own maximum-response joint (that law''s critical-joint check), the
+    window re-iterated there and the maximum re-verified at the final card (the production joint response
     and its law band: the reported uncertainty of the joint response)'
 - id: mech.board_et.Z1.A
   stage: mech_revision
@@ -8504,6 +8589,69 @@ jobs:
     fresh: true
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
   notes: per-layer drivers on the production-state rungs r11 / r21 / r31
+- id: mech.lattice
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - lattice
+  outputs:
+  - tcpmt_revision/site_kinematics/lattice/SDEC_A_Z1.json
+  - tcpmt_revision/site_kinematics/lattice/SDEC_A_Z2.json
+  - tcpmt_revision/site_kinematics/lattice/SDEC_A_Z3.json
+  - tcpmt_revision/site_kinematics/lattice/SDEC_B_Z1.json
+  - tcpmt_revision/site_kinematics/lattice/SDEC_B_Z2.json
+  - tcpmt_revision/site_kinematics/lattice/SDEC_B_Z3.json
+  deps:
+  - mech.kin.Z1.A
+  - mech.kin.Z1.B
+  - mech.kin.Z2.A
+  - mech.kin.Z2.B
+  - mech.kin.Z3.A
+  - mech.kin.Z3.B
+  ncpus: 1
+  mem_gb: 6.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/site_kinematics/lattice/SDEC_A_Z1.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/lattice/SDEC_A_Z2.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/lattice/SDEC_A_Z3.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/lattice/SDEC_B_Z1.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/lattice/SDEC_B_Z2.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/lattice/SDEC_B_Z3.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  evidence: 'campaign_v3: 11 s per case (production mesh build + two .frd reads + the site fits at 528-1369
+    lattice sites)'
+  notes: 'finding 2: the full cut-boundary kinematics of EVERY BGA lattice site of the compared cases
+    from their converged structural / thermal fields (the case files keep only the search''s candidates);
+    the recomputed candidates must reproduce the stored ones'
 - id: mech.law_record
   stage: mech_revision
   argv:
@@ -10444,8 +10592,11 @@ jobs:
   - mech.kin.Z3.B
   - mech.interconnects
   - mech.interconnect_ladder
+  - mech.lattice
   - mech.lawband.window
   - mech.critical
+  - mech.critical.xiao_armstrong2005
+  - mech.critical.xa_measured_norton
   - mech.lawband
   - mech.local_checks
   - mech.law_record

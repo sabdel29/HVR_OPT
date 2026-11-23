@@ -7,7 +7,7 @@ without touching the frozen results in `research/`.
 | file | role |
 |---|---|
 | `build_manifest.py` | generates `manifest.yaml` (edit the generator, never the YAML) |
-| `manifest.yaml` | 341 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
+| `manifest.yaml` | 344 jobs (design m36): command, env, deps, outputs, validation, ncpus/mem/walltime, cost evidence |
 | `run.py` | runner: `plan`, `seed`, `run`, `status`, `validate`, `reset`, `audit-hooks`, `exec-job` |
 | `validators.py` | output checks (`etm`, `feedback`, `json`, `csv`, `frd`, `exists`) |
 | `guard/sitecustomize.py` | write guard + frozen-read log, injected into every job via PYTHONPATH |
@@ -161,7 +161,7 @@ Design m36 (TCPMT round 3; `plan` on the generated manifest, 0 blocked):
 | 9 | refinement_ladders | 20 | 158 | 5.1 h | production-state rungs r11 (smoke tests) and r31, S0 rungs, solver checks |
 | 10 | robustness_map | 110 | 198 | 3.3 h | class-B runs (incl. the gap-post range conv_posts_lower/upper and the mechanics-revision variants encap_* / bga_card_local), local responses, caloric (HV_SDEC) |
 | 11 | solder_submodels | 3 | 31 | 2.5 h | constitutive/critical/cycles/band/units, parameters, Z3 land |
-| 11b | mech_revision | 58 | 195 | 1.2 h | the mechanics revision in the production state (section 4d): kinematics, law band, critical joints, checks, reflow, board / clamp, material and cooling-B mechanics-only variants |
+| 11b | mech_revision | 61 | 290 | 2.0 h | the mechanics revision in the production state (section 4d): kinematics, full-lattice kinematics, law band, critical joints (maximum over the lattice per law), checks, reflow, board / clamp, material and cooling-B mechanics-only variants |
 | 12 | moose_checks | 5 | 17 | 1.5 h | **local only**: MOOSE does not load on califone |
 | 13 | dse_sweeps | 5 | 1 | 0.4 h | p2_t4 / t5 / tinf sweeps + phase-2 summary |
 | 14 | derived | 31 | 5 | 0.3 h | results, class B, decoupling chain (+ limits study), design comparison, k check, BGA re-closure, ... |
@@ -404,7 +404,8 @@ tcpmt_cases) and depends on their production jobs:
 |---|---|---|
 | `mech.kin.<arch>.<tier>` | tcpmt_mech_production kin | `site_kinematics/SDEC_<tier>_<arch>.json`: the case file's stored interconnect search (every layer; BGA candidates with full kinematics), its site coverage (1369 lattice sites, Z2 ring 528) and sha1; refuses a case whose BGA counts are not in force |
 | `mech.interconnects`, `mech.interconnect_ladder` | tcpmt_mech_production drivers / ladder | `interconnect_drivers.json` (gamma, layer shear strain, governing layer, du split), `interconnect_mesh_ladder.json` (r11/r21/r31) |
-| `mech.lawband.window` -> `mech.critical` -> `mech.lawband` | tcpmt_mech_law_band, tcpmt_mech_critical | `solder_law_cards.json`, `solder_law_band.json` (pass 2 at the confirmed joints: key `critical_check`), `solder_critical_v2.json` (every candidate, monotonicity over dominance pairs) |
+| `mech.lattice` | tcpmt_mech_production lattice | `site_kinematics/lattice/SDEC_<tier>_<arch>.json`: the full kinematics of EVERY BGA lattice site, recomputed with the search's own code from the case's converged structural / thermal fields (the case files keep only the candidates); the recomputed candidates must reproduce the stored ones (5e-10 mm) |
+| `mech.lawband.window` -> `mech.critical[.<law>]` -> `mech.lawband` | tcpmt_mech_law_band, tcpmt_mech_critical | `solder_critical_v2[_<law>].json`: per law of the band, the MAXIMUM response over the BGA lattice (screening rule below); `solder_law_cards.json`, `solder_law_band.json` (pass 2: under every law its own maximum-response joint, window re-iterated there, the maximum re-verified at the final card; keys `critical_check`, `joints_by_law`, `verification`) |
 | `mech.local_checks`, `mech.law_record` | tcpmt_mech_local_checks, tcpmt_mech_laws | `solder_local_checks.json` (mesh L1-L3 and 8 cycles at every joint: the numerical U; dwell, ramp, element, attribution chain, fine-pitch joints A/B), `solder_law_record.json` |
 | `mech.reflow.<arch>[.<encap>]`, `mech.reflow_summary` | tcpmt_mech_reflow (r21) | `reflow/<arch>_r21[_<encap>].json`, `reflow_warpage.json` |
 | `mech.board.<arch>.<tier>`, `mech.board_summary` | tcpmt_mech_board state | `board_study/SDEC_<tier>_<arch>.json`, `board_study_SDEC.json`: mounting, clamp, a 3x board (ring at the coupon edge temperature / at 25 C), mechanics only on the case's field; the clamp in the local response |
@@ -412,6 +413,22 @@ tcpmt_cases) and depends on their production jobs:
 | `mech.state.<arch>.<v>`, `mech.state_local.<v>` | final_closure_sensitivity --state SDEC | `final_closure/sensitivity/etm_<arch>_HV_SDEC__<v>[__B].json`: encapsulant Tg classes and the local-card BGA layer on the production fields, A and B |
 | `robust.coolB.<arch>`, `robust.coolB_local.<arch>` | final_closure_sensitivity NAME@B | `etm_<arch>_HV_S0__<v>__B.json`: the cooling-B mechanics-only rows (run list 4c) |
 | `mech.judge_state`, `mech.judgeB` (stage derived) | tcpmt_mech_variants | `robustness_mech_SDEC.json`, `robustness_B.json` (need the campaign's uncertainty record) |
+
+**Critical joint = the maximum over the lattice (2026-11-23, after the first pass).** The first
+pass took the production law's maximum over the 669 candidates of the global search and solved
+the other laws at that site. The candidates are drawn with proxies (top 30 by |du_xy|, tilt,
+eps_z, deforming du; the (|du_xy|, T) Pareto front; corners), and the response is not monotone in
+(|du_xy|, T) (7801 of 16107 dominance pairs reversed, up to 6x), so neither the maximum-du site
+nor that front bounds it. Over the same solved sites it IS monotone, within 5.6 %, in the
+screening features (deforming in-plane du, |du_z|, T). `mech.critical[.<law>]` therefore solves,
+per case and per law at the law's stored window: the base candidates, the lattice's Pareto front
+in the screening features, then every lattice site whose dominance bound
+min_c (1 + margin) R(c) over the solved sites c dominating it exceeds the maximum found
+(margin = max(10 %, 2 x the largest reversal over the law's solved pairs)), until none does
+(`all_closed`, validated). The reported response under each law is that maximum; the band's
+window iteration then runs at each law's own site and re-solves every candidate within 10 % of
+the maximum when the card has moved (`verification`, `all_verified`, validated). One thread per
+slot (ccx 49 s at 1 thread vs 46 s at 2 on these 488-element joints, identical results).
 
 `derived.uncertainty` and `solder.parameters` depend on the band; the macros are
 `tcpmt_mech_macros.py` (prefix `Mv`), Table V's joint row prints the production value with the

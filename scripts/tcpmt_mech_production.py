@@ -29,6 +29,8 @@ split of du with the case. This module
 Labels: <STATE>_<TIER>_<ARCH>, e.g. SDEC_A_Z1 (production state, cooling A, Z1).
 
     python tcpmt_mech_production.py kin [LABEL ...] [--state SDEC]
+    python tcpmt_mech_production.py lattice [LABEL ...]   (every BGA lattice site, from the
+                                                           case's converged fields)
     python tcpmt_mech_production.py drivers [--state SDEC]
     python tcpmt_mech_production.py ladder [--state SDEC]
     python tcpmt_mech_production.py check
@@ -231,6 +233,98 @@ def kin_record(lab):
             "die_warpage_pv_um": me.get("die_warpage_pv_um")}
 
 
+LATTICE_DIR = KIN_DIR / "lattice"
+#: the recomputed stored candidates must reproduce the case file's (rounded to 1e-9 mm there)
+LATTICE_TOL_MM = 1e-8
+
+
+def lattice_path(lab):
+    return LATTICE_DIR / f"{lab}.json"
+
+
+def lattice_record(lab):
+    """Finding 2 under the v2 BCs: the full cut-boundary kinematics of EVERY legal BGA lattice
+    site of a compared case. The global interconnect search evaluates them all but the case
+    file keeps only its candidates; the critical-joint check's screening rule
+    (tcpmt_mech_critical: dominance in the deforming du, |du_z| and T) needs the rest. They are
+    recomputed with the search's own code (tcpmt_mech_kinematics.site_kinematics, same layer,
+    pad and fit) from the case's converged structural and thermal fields, after checking that
+    the field's mesh is the production mesh and its T_max the case's, and the recomputed
+    candidates must reproduce the case file's (LATTICE_TOL_MM): the record is the case's."""
+    import numpy as np
+    import final_closure_physical_etm as E
+    import production_et as PE
+    import pkg_rdl_network as K
+    import tcpmt_cases as TC
+    import tcpmt_mech_kinematics as KIN
+    import tcpmt_mech_laws as LAW
+    p, c = load_case(lab)
+    _st, _t, a = parse(lab)
+    cf = TC.converged_field(p, c)
+    if not cf or not cf.get("structural"):
+        raise RuntimeError(f"{lab}: no converged structural field on disk for {rel(p)}")
+    E._raise_stack_limit()
+    m, _mats, _stc, _tiles, _ = E.build(a, E.PRODUCTION_H_XY, E.PRODUCTION_REFINE)
+    xyz = KIN.read_frd_nodes(cf["structural"])
+    if len(xyz) - 1 != m.n_nodes or np.nanmax(np.abs(xyz[1:] - m.nodes)) > 1e-5:
+        raise RuntimeError(f"{lab}: {cf['structural']} is not on the production mesh")
+    U = PE.ccxio.read_frd(cf["structural"])["DISP"][:, :3]
+    Tn = PE.ccxio.read_frd(cf["thermal"])["NDTEMP"][1:m.n_nodes + 1, 0]
+    if abs(float(np.nanmax(Tn)) - c["thermal"]["T_max_C"]) > 1e-3:
+        raise RuntimeError(f"{lab}: {cf['thermal']} is not the case's converged field")
+    cfg = LAW.cfg()
+    ent = next(e for e in cfg["interconnects"][a] if e["sites"] == "bga_lattice")
+    half = 0.5 * float(cfg["geometries"][ent["geometry"]]["pad"]) / 1e3
+    cut = K.architecture_cutout_mm(a) if a != "Z3" else None
+    sites = KIN.layer_sites(m, ent["layer"], "bga_lattice", cut)
+    kin = KIN.site_kinematics(m, U, Tn, ent["layer"], sites, half,
+                              int(cfg["local"].get("pad_fit_samples", 5)))
+    ic = c["mechanics"]["interconnects"]["bga"]
+    stored = KIN.expand_sites(ic["candidates"])
+    idx = {(round(k["x_mm"], 6), round(k["y_mm"], 6)): k for k in kin}
+    dev, missing = 0.0, []
+    for s in stored:
+        k = idx.get((round(s["x_mm"], 6), round(s["y_mm"], 6)))
+        if k is None:
+            missing.append([s["x_mm"], s["y_mm"]])
+            continue
+        dev = max([dev] + [abs(x - y) for f in ("u_bot_mm", "u_top_mm")
+                           for x, y in zip(k[f], s[f])]
+                  + [abs(x - y) for f in ("G_bot", "G_top")
+                     for rk, rs in zip(k[f], s[f]) for x, y in zip(rk, rs)])
+    if missing or dev > LATTICE_TOL_MM or len(kin) != ic.get("n_evaluated"):
+        raise RuntimeError(f"{lab}: the recomputed lattice does not reproduce the case's search "
+                           f"(missing {missing[:3]}, max deviation {dev:.2e} mm, "
+                           f"{len(kin)} vs {ic.get('n_evaluated')} sites)")
+    return {"case": lab, "arch": a, "case_file": rel(p), "case_sha1": sha1(p),
+            "fields": {"structural": str(cf["structural"]), "thermal": str(cf["thermal"])},
+            "inputs_sha1": inputs_sha1([p, cf["structural"], cf["thermal"]]),
+            "n_sites": len(sites), "n_evaluated": len(kin), "layer": ent["layer"],
+            "verification": {"n_stored_candidates": len(stored), "max_deviation_mm": dev,
+                             "tolerance_mm": LATTICE_TOL_MM},
+            "source": "tcpmt_mech_kinematics.site_kinematics on the case's converged structural "
+                      "and thermal fields (tcpmt_cases.converged_field), production mesh",
+            "sites": KIN.compact_sites(kin)}
+
+
+def write_lattice(labs):
+    LATTICE_DIR.mkdir(parents=True, exist_ok=True)
+    for lab in labs:
+        r = lattice_record(lab)
+        lattice_path(lab).write_text(json.dumps(r, default=float) + "\n")
+        print(f"{lab}: {r['n_evaluated']}/{r['n_sites']} lattice sites, stored candidates "
+              f"reproduced to {r['verification']['max_deviation_mm']:.1e} mm", flush=True)
+
+
+def load_lattice(lab):
+    """The full-lattice kinematics of a compared case (expanded), or None."""
+    import tcpmt_mech_kinematics as KIN
+    f = lattice_path(lab)
+    if not f.is_file():
+        return None
+    return KIN.expand_sites(json.loads(f.read_text())["sites"])
+
+
 def write_kin(labs):
     KIN_DIR.mkdir(parents=True, exist_ok=True)
     out = {}
@@ -423,6 +517,8 @@ def main():
     cmd = rest[0] if rest else "kin"
     if cmd == "kin":
         write_kin([x for x in rest[1:] if parse(x)] or labels(state))
+    elif cmd == "lattice":
+        write_lattice([x for x in rest[1:] if parse(x)] or labels(state))
     elif cmd == "drivers":
         d = drivers(state)
         for lab, c in d["cases"].items():

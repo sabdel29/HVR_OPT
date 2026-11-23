@@ -654,14 +654,15 @@ def compare_table(S, mac):
         v = m(f"BgaIball{ATAG[a]}") if a in ("Z1", "Z2") else NA
         return m(f"BgaPeak{t}{ATAG[a]}") if v == NA else v
 
-    foot_a = (r"\textsuperscript{a}At each case's critical joint, production state: local "
+    foot_a = (r"\textsuperscript{a}At each case's critical joint -- the maximum response over "
+              r"the BGA lattice -- production state: local "
               r"model driven by the full cut-boundary displacement of the global solution, with "
               r"ramped loads and the self-consistent production solder law (L0 mesh, 4 cycles); "
               r"in brackets the lowest and highest response over the solder-law band "
-              r"(\MvLawN{} laws), the reported uncertainty of the joint response (numerical "
+              r"(\MvLawN{} laws, each at its own maximum-response site), the reported "
+              r"uncertainty of the joint response (numerical "
               r"$U_{95}$: Table~\ref{tab:uncertainty}). "
-              + (r"The critical joint is the maximum-response site of the critical-joint "
-                 r"check, not the maximum-$\du$ joint of the rows above, for "
+              + (r"The critical joint is not the maximum-$\du$ joint of the rows above for "
                  r"\MvCritMovedCases. " if mac.get("MvCritMovedCases") else "")
               if mac.get("MvEpsAZone", NA) != NA else
               r"\textsuperscript{a}Stabilized cycle, L0 mesh, solved \WrEpsState. "

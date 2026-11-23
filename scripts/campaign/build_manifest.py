@@ -735,6 +735,18 @@ def mech_jobs(prod, vfields, lad, prep, class_b):
                                     "nonempty": ["cases"], "fresh": True}],
                          notes="per-layer drivers on the production-state rungs r11 / r21 / r31")
     sv = {"LOCAL_THREADS": T}
+    labs = [f"SDEC_{t}_{a}" for t in TIERS for a in ARCHS]
+    lat = post("mech.lattice", "mech_revision", "tcpmt_mech_production.py",
+               [tr(f"site_kinematics/lattice/{x}.json") for x in labs], args=["lattice"],
+               deps=kins, est_h=0.05, mem_gb=6,
+               evidence="campaign_v3: 11 s per case (production mesh build + two .frd reads + "
+                        "the site fits at 528-1369 lattice sites)",
+               validate=[{"file": tr(f"site_kinematics/lattice/{x}.json"), "kind": "json",
+                          "nonempty": ["sites"], "fresh": True} for x in labs],
+               notes="finding 2: the full cut-boundary kinematics of EVERY BGA lattice site of "
+                     "the compared cases from their converged structural / thermal fields (the "
+                     "case files keep only the search's candidates); the recomputed candidates "
+                     "must reproduce the stored ones")
     band_v = [{"file": tr("solder_law_cards.json"), "kind": "json", "keys": ["laws"]}]
     w1 = job("mech.lawband.window", "mech_revision", ["scripts/tcpmt_mech_law_band.py", "--run"],
              [tr("solder_law_cards.json"), tr("solder_law_band.json")], deps=kins,
@@ -746,30 +758,53 @@ def mech_jobs(prod, vfields, lad, prep, class_b):
              notes="pass 1: every law's Norton-surrogate window iterated to self-consistency at "
                    "the maximum-du joints of the six compared cases (production law: "
                    "configs/tcpmt_mech solder.production_law; the band over solder.band_laws)")
-    crit = job("mech.critical", "mech_revision",
-               ["bash", "-c", "set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run "
-                "--top 30; {python} scripts/tcpmt_mech_critical.py --summarize --top 30"],
-               [tr("solder_critical_v2.json")], deps=[w1], ncpus=16 * T, workers=16,
-               mem_gb=24, est_h=1.2, prefer="pbs", env={**sv, "TCPMT_SOLDER_SLOTS": 16},
-               evidence="~650 candidates over the six compared cases (66-147 each, campaign_v3 "
-                         "case files) x 45-60 s on 2 threads (ccx + the record's extraction), 16 slots",
-               validate=[{"file": tr("solder_critical_v2.json"), "kind": "json",
-                          "nonempty": ["cases"], "fresh": True}],
-               notes="finding 2: every candidate of the full-lattice search (top 30 by |du_xy|, "
-                     "tilt, eps_z and deforming du, the strict Pareto front in (|du_xy|, T), the "
-                     "corners) solved with the production law at its converged window; "
-                     "monotonicity over the dominance pairs, the maximum-response joint")
+    import yaml
+    _sc = yaml.safe_load((REPO / "configs" / "tcpmt_mech" / "mechanics_revision.yaml")
+                         .read_text())["solder"]
+    crits = {}
+    for law in [_sc["production_law"]] + [x for x in _sc["band_laws"]
+                                          if x != _sc["production_law"]]:
+        is_prod = law == _sc["production_law"]
+        f = tr("solder_critical_v2.json" if is_prod else f"solder_critical_v2_{law}.json")
+        la = "" if is_prod else f" --law {law}"
+        # placement: the production law and one band law on the local host's 35-core cap one
+        # after the other (32 one-thread slots), the other band law on califone (20 slots)
+        where, slots = ("local", 32) if is_prod else {
+            "xa_measured_norton": ("local", 32)}.get(law, ("pbs", 20))
+        crits[law] = job(
+            "mech.critical" + ("" if is_prod else f".{law}"), "mech_revision",
+            ["bash", "-c", "set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run"
+             + la + "; {python} scripts/tcpmt_mech_critical.py --summarize" + la],
+            [f], deps=[w1, lat], ncpus=slots, workers=slots, mem_gb=32, est_h=1.0,
+            prefer=where, backends=(where,),
+            env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": slots},
+            evidence="~1000 sites over the six compared cases (the 669 base candidates + the "
+                     "lattice front in the screening features + the bound's additions) x ~65 s "
+                     "per site on ONE thread (ccx 49 s at 1 thread vs 46 s at 2, identical "
+                     "result: one thread per slot)",
+            validate=[{"file": f, "kind": "json", "nonempty": ["cases", "all_closed"],
+                       "fresh": True}],
+            notes=f"finding 2 under law {law}: the maximum response over the BGA lattice of every "
+                  "compared case -- the base candidates (top 30 by |du_xy|, tilt, eps_z and "
+                  "deforming du, the (|du_xy|, T) Pareto front, the corners), the lattice's "
+                  "Pareto front in (deforming du, |du_z|, T) and every site whose dominance bound "
+                  "(1 + margin) R exceeds the maximum, until none does (configs/tcpmt_mech "
+                  "local.critical); the law at its stored window")
+    crit = crits[_sc["production_law"]]
     band = job("mech.lawband", "mech_revision", ["scripts/tcpmt_mech_law_band.py", "--run"],
-               [tr("solder_law_cards.json"), tr("solder_law_band.json")], deps=[crit],
+               [tr("solder_law_cards.json"), tr("solder_law_band.json")],
+               deps=sorted(crits.values()),
                ncpus=6 * T, workers=6, mem_gb=12, est_h=0.5,
                prefer="pbs", env={**sv, "TCPMT_SOLDER_SLOTS": 6},
-               evidence="as pass 1, starting from its converged windows",
+               evidence="as pass 1, starting from its converged windows; an unchanged law "
+                        "converges at once (its previous responses at the same card and sites)",
                validate=band_v + [{"file": tr("solder_law_band.json"), "kind": "json",
-                                   "keys": ["critical_check"], "nonempty": ["band"],
-                                   "fresh": True}],
-               notes="pass 2: the band at the joints the critical-joint check confirmed (the "
-                     "production joint response and its law band: the reported uncertainty of "
-                     "the joint response)")
+                                   "keys": ["critical_check"],
+                                   "nonempty": ["band", "all_verified"], "fresh": True}],
+               notes="pass 2: under every law its own maximum-response joint (that law's "
+                     "critical-joint check), the window re-iterated there and the maximum "
+                     "re-verified at the final card (the production joint response and its law "
+                     "band: the reported uncertainty of the joint response)")
     out["band"] = band
     out["critical"] = crit
     out["checks"] = job(

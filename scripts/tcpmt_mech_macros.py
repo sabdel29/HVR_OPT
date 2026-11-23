@@ -89,6 +89,9 @@ def joint():
                 m[f"MvEps{LTAG[law]}{k}"] = fx(1e3 * x, 2)
                 ratios.setdefault(law, []).append(x / v["production"])
         spread.append(v["spread_rel_to_production"])
+        for law, xy in (v.get("sites_mm") or {}).items():
+            if law in LTAG and xy:
+                m[f"MvEpsSite{LTAG[law]}{k}"] = f"({xy[0]:g}, {xy[1]:g})"
         jt = (b.get("joints") or {}).get(lab) or {}
         m[f"MvTsj{k}"] = fx(jt.get("T_C"), 1)
         m[f"MvDuxy{k}"] = fx(jt.get("du_xy_um"), 2)
@@ -112,6 +115,25 @@ def joint():
         for t in TIERS:
             if law in LTAG and rr.get(t):
                 m[f"MvEpsOrder{t}{LTAG[law]}"] = rr[t].replace("<", "$<$")
+    # TCPMT round 3: under every law its own maximum over the lattice -- is it the same site?
+    if b.get("same_site_all_laws") is not None:
+        m["MvEpsSameSite"] = yn(b["same_site_all_laws"])
+        diff = {}
+        for lab, v in b["band"].items():
+            sites = v.get("sites_mm") or {}
+            ps = sites.get(prod)
+            for law, xy in sites.items():
+                if law != prod and ps and xy and tuple(xy) != tuple(ps):
+                    t, a = lab.split("_")
+                    diff.setdefault((a, t), []).append(law)
+        names = {"schubert2003": "Schubert et al.", "xiao_armstrong2005": "Xiao and Armstrong",
+                 "xa_measured_norton": "measured Norton"}
+        m["MvEpsSiteDiffN"] = str(len(diff))
+        m["MvEpsSiteDiff"] = "; ".join(
+            f"{a} under cooling~{t} ({', '.join(names.get(x, x) for x in laws)})"
+            for (a, t), laws in sorted(diff.items())) or "none"
+    if b.get("all_verified") is not None:
+        m["MvBandVerified"] = yn(b["all_verified"])
     cc = b.get("critical_check") or {}
     m["MvBandAtCritical"] = yn(bool(cc))
     m["MvBandMoved"] = str(sum(1 for x in (cc.get("moved_off_max_du") or {}).values() if x)) \
@@ -213,6 +235,46 @@ def critical():
     m["MvCritRatioMax"] = pct(max(rat) - 1.0, 1) if rat else NA
     cov = [((v.get("site_coverage") or {}).get("full")) for v in cs.values()]
     m["MvCritCoverage"] = yn(all(cov)) if cov else NA
+    # the screening rule that makes the maximum a bound over the whole lattice (TCPMT round 3)
+    scr = [v.get("screen") for v in cs.values() if v.get("screen")]
+    if scr:
+        m["MvCritLattice"] = f"{sum(x['n_lattice'] for x in scr):,}".replace(",", "{,}")
+        m["MvCritBase"] = str(sum(x["n_base"] for x in scr))
+        m["MvCritFront"] = str(sum(x["n_lattice_front"] for x in scr))
+        m["MvCritMargin"] = pct(max(x["margin_rel"] for x in scr), 0)
+        m["MvCritMarginMin"] = pct(min(x["margin_rel"] for x in scr), 0)
+        m["MvCritRevF"] = pct(max(x["largest_reversal_rel"] for x in scr), 1)
+        m["MvCritClosed"] = yn(c.get("all_closed"))
+        m["MvCritMaxInBase"] = str(sum(1 for x in scr if x.get("max_is_base_candidate")))
+        mf = [v.get("monotonicity_screen") or {} for v in cs.values()]
+        m["MvCritPairsF"] = f"{sum(x.get('n_ordered_pairs', 0) for x in mf):,}".replace(",",
+                                                                                       "{,}")
+        m["MvCritViolF"] = str(sum(x.get("n_violations_over_1pct", 0) for x in mf))
+        sp = (c.get("screen") or {})
+        m["MvCritMarginFactor"] = fx(sp.get("margin_factor"), 0)
+    # every law of the band: its own check (sites solved, closed, moved joints)
+    for law, tag in LTAG.items():
+        cl = c if law == c.get("law") else J(f"solder_critical_v2_{law}.json")
+        if not cl or not cl.get("cases"):
+            continue
+        cl_cs = cl["cases"]
+        m[f"MvCrit{tag}Solved"] = f"{sum(v.get('n_solved', 0) for v in cl_cs.values()):,}" \
+            .replace(",", "{,}")
+        m[f"MvCrit{tag}Closed"] = yn(cl.get("all_closed"))
+        m[f"MvCrit{tag}Moved"] = str(sum(1 for v in cl_cs.values()
+                                         if v.get("critical_is_max_du") is False))
+        for lab, v in cl_cs.items():
+            _s, t, a = lab.split("_")
+            mr = v.get("max_response_site") or {}
+            if mr:
+                m[f"MvCritSite{tag}{t}{ATAG[a]}"] = f"({mr['x_mm']:g}, {mr['y_mm']:g})"
+    allc = [J("solder_critical_v2_" + law + ".json") if law != c.get("law") else c
+            for law in LTAG]
+    allc = [x for x in allc if x and x.get("cases")]
+    if allc:
+        m["MvCritSolvedAll"] = f"{sum(v.get('n_solved', 0) for x in allc for v in x['cases'].values()):,}" \
+            .replace(",", "{,}")
+        m["MvCritClosedAll"] = yn(all(x.get("all_closed") for x in allc))
     for lab, v in cs.items():
         st, t, a = lab.split("_")
         k = f"{t}{ATAG[a]}"

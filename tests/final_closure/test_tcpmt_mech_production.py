@@ -122,3 +122,50 @@ def test_a_stale_status_file_is_not_this_launchs_outcome():
     assert not RUN.status_of_launch(r, {"status": "done"})        # a previous local run's
     assert RUN.status_of_launch({"backend": "local", "pid": 42}, {"pid": 42})
     assert not RUN.status_of_launch({"backend": "local", "pid": 42}, {"pid": 7})
+
+
+def _site(x, dudef, duz, T):
+    """A lattice site with the three screening features (T on both faces)."""
+    return {"x_mm": float(x), "y_mm": 0.0, "du_def_xy_um": dudef, "du_z_um": duz,
+            "T_bot_C": T, "T_top_C": T, "du_xy_um": dudef}
+
+
+def test_lattice_front_keeps_only_undominated_sites():
+    import tcpmt_mech_critical as CR
+    lat = [_site(0, 3.0, 1.0, 90.0), _site(1, 2.0, 0.5, 80.0),     # 1 dominated by 0
+           _site(2, 1.0, -2.0, 85.0), _site(3, 1.0, 0.1, 100.0)]  # |du_z| counts
+    fr = {k["x_mm"] for k in CR.lattice_front(lat)}
+    assert fr == {0.0, 2.0, 3.0}
+
+
+def test_screen_bounds_dominated_sites_and_asks_for_the_rest():
+    import tcpmt_mech_critical as CR
+    lat = [_site(0, 3.0, 1.0, 90.0), _site(1, 2.0, 0.5, 80.0), _site(2, 1.0, 0.2, 70.0),
+           _site(3, 0.5, 2.0, 95.0)]
+    f = {CR.key(k): CR.feat(k) for k in lat}
+    # site 0 (the maximum) and site 1 solved; site 2 is dominated by site 1 (bound 1.1 x 4 =
+    # 4.4 < 5: excluded); site 3 is dominated by no solved site: it must be solved
+    solved = {CR.key(lat[0]): (f[CR.key(lat[0])], 5.0), CR.key(lat[1]): (f[CR.key(lat[1])], 4.0)}
+    sc = CR.screen(lat, solved, 0.10)
+    assert [k["x_mm"] for k in sc["need"]] == [3.0] and sc["n_unbounded"] == 1
+    # with site 3 solved low, nothing is left; a margin that lifts site 1's bound over the
+    # maximum (1.3 x 4 = 5.2 > 5) asks for site 2
+    solved[CR.key(lat[3])] = (f[CR.key(lat[3])], 1.0)
+    assert CR.screen(lat, solved, 0.10)["need"] == []
+    assert [k["x_mm"] for k in CR.screen(lat, solved, 0.30)["need"]] == [2.0]
+    del solved[CR.key(lat[1])]
+    sc = CR.screen(lat, solved, 0.30)          # site 1 and 2: dominated by site 0 only
+    assert sorted(k["x_mm"] for k in sc["need"]) == [1.0, 2.0]
+
+
+def test_margin_is_twice_the_largest_reversal_but_at_least_the_floor(monkeypatch):
+    import tcpmt_mech_critical as CR
+    monkeypatch.setattr(CR, "ccfg", lambda: {"margin_min_rel": 0.10, "margin_factor": 2.0})
+    rows = [{"x_mm": 0, "y_mm": 0, "du_def_xy_um": 2.0, "du_z_um": 1.0, "T_C": 90.0,
+             "d_eps": 5.0},
+            {"x_mm": 1, "y_mm": 0, "du_def_xy_um": 1.0, "du_z_um": 0.5, "T_C": 80.0,
+             "d_eps": 5.4}]                                        # an 8 % reversal
+    m, w = CR.margin_of(rows)
+    assert abs(w - 0.08) < 1e-12 and abs(m - 0.16) < 1e-12
+    rows[1]["d_eps"] = 4.0
+    assert CR.margin_of(rows) == (0.10, 0.0)

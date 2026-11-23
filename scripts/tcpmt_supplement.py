@@ -1090,9 +1090,17 @@ def joint_band_table():
             + (rf"The production law's surrogate window converged after {cw.get('n_iterations')}"
                r" fits" + ("" if cw.get("converged") else r" (not converged)") + ": "
                + _win_txt(cw.get("window_MPa")) + ". " if cw else "")
-            + ("Joints: the maximum-response sites of the critical-joint check (Table~"
-               r"\ref{tab:supp-critv2}). " if cc else r"Joints: the maximum-$|\Delta u_{xy}|$ "
-               "sites. ")
+            + (("Joints: under every law its own maximum-response site over the BGA lattice "
+                r"(Table~\ref{tab:supp-critv2}); the site columns give the production law's" +
+                ("" if b.get("same_site_all_laws") else
+                 ", and " + "; ".join(
+                     f"{V2_CASE[lab]}: " + ", ".join(
+                         f"{_law(k)[0]} ({xy[0]:g}, {xy[1]:g})"
+                         for k, xy in (v.get("sites_mm") or {}).items()
+                         if k != prod and xy != (v.get("sites_mm") or {}).get(prod))
+                     for lab, v in b["band"].items()
+                     if not v.get("same_site_all_laws")) + " under the other laws")
+                + ". ") if cc else r"Joints: the maximum-$|\Delta u_{xy}|$ sites. ")
             + "Ranking per law: " + "; ".join(
                 f"{_law(k)[0]}: A {tex(rk.get(k, {}).get('A') or '--')}, B "
                 f"{tex(rk.get(k, {}).get('B') or '--')}" for k in laws if rk.get(k)) + ".")
@@ -1105,34 +1113,68 @@ def critical_v2_table():
     c = J(TR / "solder_critical_v2.json")
     if not c or not c.get("cases"):
         return placeholder("critical-joint check", "solder_critical_v2.json")
-    body = []
+    others = {law: J(TR / f"solder_critical_v2_{law}.json")
+              for law in ("xiao_armstrong2005", "xa_measured_norton")}
+    others = {k: v for k, v in others.items() if v and v.get("cases")}
+    body, diffs = [], {}
     for lab, v in c["cases"].items():
         sc, mo = v.get("site_coverage") or {}, v.get("monotonicity") or {}
+        mf, scr = v.get("monotonicity_screen") or {}, v.get("screen") or {}
         mr, md = v.get("max_response_site") or {}, v.get("max_du_site") or {}
         w = (mo.get("worst_violation") or {}).get("excess_rel")
+        wf = scr.get("largest_reversal_rel")
+        oth = []
+        for law, cl in others.items():
+            r = ((cl["cases"].get(lab) or {}).get("max_response_site") or {})
+            if r and (abs(r["x_mm"] - mr.get("x_mm", 1e9)) > 1e-6
+                      or abs(r["y_mm"] - mr.get("y_mm", 1e9)) > 1e-6):
+                oth.append(f"{_law(law)[0]} ({r['x_mm']:g}, {r['y_mm']:g})")
+        if oth:
+            diffs[lab] = oth
         body.append(f"{_lab(lab)} & {sc.get('lattice_sites', '--')} & "
-                    f"{v.get('n_candidates', '--')} & {v.get('n_solved', '--')} & "
-                    f"{mo.get('n_pareto_solved', '--')} & {mo.get('n_ordered_pairs', '--')} & "
-                    f"{mo.get('n_violations', '--')}/{mo.get('n_violations_over_1pct', '--')}"
-                    + ("" if not w else rf" ({100 * w:.1f}\,\%)") + " & "
+                    f"{scr.get('n_base', '--')}/{scr.get('n_lattice_front', '--')} & "
+                    f"{v.get('n_solved', '--')} & "
+                    f"{mo.get('n_violations', '--')}/{mo.get('n_ordered_pairs', '--')}"
+                    + ("" if not w else rf" ({100 * w:.0f}\,\%)") + " & "
+                    f"{mf.get('n_violations_over_1pct', '--')}/{mf.get('n_ordered_pairs', '--')}"
+                    + ("" if wf is None else rf" ({100 * wf:.1f}\,\%)") + " & "
+                    f"{fx(100 * scr['margin_rel'], 0) if scr.get('margin_rel') else '--'} & "
                     f"({md.get('x_mm', 0):g}, {md.get('y_mm', 0):g}) & "
-                    f"({mr.get('x_mm', 0):g}, {mr.get('y_mm', 0):g}) & "
+                    f"({mr.get('x_mm', 0):g}, {mr.get('y_mm', 0):g})"
+                    + (r"$^\dagger$" if oth else "") + " & "
                     f"{fx(v.get('max_response_over_max_du'), 3)} \\\\")
-    head = [r"Case & Lattice & Cand. & Solved & Pareto & Pairs & Viol. & Max-$\Delta u$ site & "
-            r"Max-response site & Ratio \\"]
-    note = (r"Critical-joint check under the full cut-boundary displacement, production law at "
-            r"its converged window. Lattice: legal sites of the 0.8-mm lattice the all-site "
-            r"search covers (Z2: the ring around the board opening); candidates: the top 30 by "
+    head = [r"Case & Lattice & Base/front & Solved & Viol. $(|\Delta u_{xy}|, T)$ & "
+            r"Viol. screen & Margin & Max-$\Delta u$ site & Max-response site & Ratio \\",
+            r" & & & & & & (\%) & (mm) & (mm) & \\"]
+    dag = "; ".join(f"{_lab(lab)}: " + ", ".join(o) for lab, o in diffs.items())
+    n_other = {law: sum(x.get("n_solved", 0) for x in cl["cases"].values())
+               for law, cl in others.items()}
+    note = (r"Critical joint under the full cut-boundary displacement: the maximum response "
+            r"over the BGA lattice, production law at its converged window. Lattice: legal "
+            r"sites of the 0.8-mm lattice (Z2: the ring around the board opening), every one "
+            r"with its own kinematics from the case's converged fields. Base: the top 30 by "
             r"$|\Delta u_{xy}|$, by relative face tilt, by $|\varepsilon_z|$ and by the deforming "
-            r"$\Delta u$, the strict Pareto front in ($|\Delta u_{xy}|$, $T$) and the corners, "
-            r"drawn over every lattice site; pairs: ordered pairs of solved sites where one is at "
-            r"least as large in both $|\Delta u_{xy}|$ and $T$ (mirror images of a site are that "
-            r"site); violations: pairs whose responses are ordered the other way, all / by more "
-            r"than 1\,\% (largest excess); ratio: response at the maximum-response site over that "
-            r"at the maximum-$|\Delta u_{xy}|$ site.")
+            r"$\Delta u$, the strict Pareto front in ($|\Delta u_{xy}|$, $T$) and the corners; "
+            r"front: the lattice's Pareto front in the screening features (deforming "
+            r"$\Delta u$, $|\Delta u_z|$, $T$). The response is not monotone in "
+            r"($|\Delta u_{xy}|$, $T$) (violations: reversed / all dominance pairs of the solved "
+            r"sites, largest excess), but is in the screening features within the margin "
+            r"(reversals beyond 1\,\% / pairs, largest): a site dominated in them by a solved "
+            r"site $c$ responds at most (1 + margin)$\,\deps(c)$, margin = max(10\,\%, twice the "
+            r"largest reversal). Every lattice site whose bound exceeded the maximum found was "
+            r"solved, until none did"
+            + (" (closed for every case)" if c.get("all_closed") else
+               r" (\textbf{not closed})")
+            + r": the maximum-response site bounds the whole lattice. Ratio: its response over "
+            r"that at the maximum-$|\Delta u_{xy}|$ site. "
+            + ("The other laws of the band are screened the same way at their own windows ("
+               + ", ".join(f"{_law(k)[0]}: {n} sites solved" for k, n in n_other.items())
+               + ")" + (rf"; $^\dagger$their maximum-response site differs: {dag}."
+                        if dag else "; their maximum-response sites are the production law's.")
+               if others else ""))
     return ltab(r"@{}lrrrrrrccr@{}", 10, head, body,
-                "Critical-joint check with the full boundary transfer", "tab:supp-critv2", note,
-                sep="2.5pt")
+                "Critical joint over the BGA lattice with the full boundary transfer",
+                "tab:supp-critv2", note, sep="2.2pt")
 
 
 def local_checks_table():
