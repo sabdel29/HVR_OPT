@@ -661,6 +661,9 @@ def compare_table(S, mac):
               r"in brackets the lowest and highest response over the solder-law band "
               r"(\MvLawN{} laws), the reported uncertainty of the joint response (numerical "
               r"$U_{95}$: Table~\ref{tab:uncertainty}). "
+              + (r"The critical joint is the maximum-response site of the critical-joint "
+                 r"check, not the maximum-$\du$ joint of the rows above, for "
+                 r"\MvCritMovedCases. " if mac.get("MvCritMovedCases") else "")
               if mac.get("MvEpsAZone", NA) != NA else
               r"\textsuperscript{a}Stabilized cycle, L0 mesh, solved \WrEpsState. "
               r"\WrEpsStateNote{} ")
