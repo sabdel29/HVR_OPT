@@ -252,27 +252,48 @@ the r11-based study gave 2.635), k_open 3.78, ring ESR 0.046 W. Committed by `co
 campaign the chain re-derives k on the campaign's own r21 S0 case, `derived.k_check` compares it
 with the committed value, and `derived.bga_reclose` re-closes at the derived k (`k_source`).
 
-**48-V BGA** (the authors' decision of 2026-11-19, round3_worklog). At most 220 balls per rail
-(`final_closure_pkg_network.N_MAX_PER_RAIL`, legal counts and screen alike), and the count stays
-at the network's, the MODELLED ARRANGEMENT (220 per rail for Z1 and Z2; no reallocation). ONE
-rule for every integration: the per-ball current is the verified DC peak x k_eq, checked against
-the feasibility stage's target (`tcpmt_feasibility.LIMITS`: 2 A per ball, Kuan et al. ASQED 2015;
-1.5 A as a conservative sensitivity, also recorded). Z1's worst-ball RMS of the harmonic port
-model (`tcpmt_decap_placement.ball_rms_at_counts`, DC + harmonics of every ball with the adopted
-plan and ring, all balls tied to an ideal board node) is reported as an idealized bound, not
-used for the verdict (Z2 and Z3 have no such model). `derived.bga_reclose` records the verdict
-(`bga_count_production.json` `ball_currents_at_count`, rule `RECLOSE_RULE`); the count minima at
-the target (`matched_count_dc_rule`, `closure`) are a provisioning sensitivity, not adopted.
-campaign_v3 (k_eq 2.641 from the campaign's own decoupling chain, 220 per rail):
+**48-V BGA** (the authors' decision of 2026-11-22, round3_worklog; it replaces the fixed
+modelled arrangement of 2026-11-19, whose 220 per rail put Z2's ring feed on 440 of its 528 ring
+sites, above the site budget, so Z2 failed `bga_sites` in every case). The 48-V BGA is
+PROVISIONED by the paper's rule: per architecture the ADOPTED count is the smallest legal
+(mirror-symmetric, nearest-symmetric selection) count per rail whose per-ball current meets the
+feasibility stage's target (`tcpmt_feasibility.LIMITS`: 2 A per ball, Kuan et al. ASQED 2015) by
+ONE rule for every integration, the verified (level-2) DC peak x k_eq, within the site budget
+(`bga_power_site_fraction_max`: at most 75 % of the package's own sites carry power; Z1 1369
+sites, Z2's ring 528, i.e. at most 198 per rail) and at most 220 per rail
+(`final_closure_pkg_network.ADOPT_RULE`, `site_budget`, `adopt_count`). 1.5 A is the
+conservative sensitivity: the re-closure records the count it would need (verified), or that it
+cannot close. Z1's worst-ball RMS of the harmonic port model at its adopted count
+(`tcpmt_decap_placement.ball_rms_at_counts`, all balls tied to an ideal board node) stays an
+idealized bound, reported, not the verdict (Z2 and Z3 have no such model). Only WHICH lattice
+sites carry 48 V changes: the BGA layer is homogenized in the FE model and the all-site joint
+search covers every site, so the ball layout, the thermal paths and the mechanics are unchanged;
+the 48-V feed network and its losses change. `derived.bga_reclose` solves the network at the
+adopted counts (converged levels 1-3, `final_closure/package_network_adopted.json`, the schema of
+`package_network.json` with one count per architecture); the BGA-fed ledgers
+(`final_closure_ledger.package_network`), the Z2 BGA-ring feed (`tcpmt_platform`) and the
+feasibility stage take it. `package_network.json` (the network build's count, 220 per rail at
+m36) stays the network the decoupling chain derives k_eq on. The re-closure also records the
+change of every production case's BGA feed terms between the two networks (`coupled_effect`,
+`final_closure_ledger.package_hv_terms` at each case's own 48-V current and BGA temperature):
+below 0.1 W it is recorded and the coupled cases are not re-run; above it the production cases
+on another count are re-run, and the re-closure is run again to confirm the count at their
+current (the per-ball check reads the production cases' 48-V current: a fixed point).
+campaign_v3 (k_eq 2.641 from the campaign's own decoupling chain), first pass:
 
-| | DC peak x k_eq (verified, level 2) | worst-ball RMS (port model, idealized bound) | vs 2 A | vs 1.5 A (sensitivity) |
-|---|---:|---:|---|---|
-| Z1 | 1.73 A | 2.20 A | **passes** | above |
-| Z2 | 1.63 A | n/a (no port model of the Z2 feed) | **passes** | above |
+| | adopted count / rail (sites) | DC peak x k_eq (verified) | 2-A margin | worst-ball RMS (port model, bound) | R_loop 20 C (vs 220/rail) | 1.5 A would need |
+|---|---:|---:|---:|---:|---:|---|
+| Z1 | 168 (336 of 1369, 24.5 %) | 2.00 A | 0.003 A | 2.17 A | 0.894 mOhm (+32 %) | no legal count <= 220 closes it |
+| Z2 | 166 (332 of 528, 62.9 %) | 1.94 A | 0.059 A | n/a | 1.475 mOhm (-2 %) | 202 / rail (76.5 % of the ring): beyond the site budget |
 
-Status CLOSED at the 2-A target and NOT_CLOSED at the 1.5-A sensitivity (`status_at_sensitivity`);
-the smallest common count passing 2 A on the screen and the verification level would be 168 per
-rail (recorded, not adopted).
+Coupled effect of the first pass: Z1's package 48-V ledger terms +1.17 W (A) and +1.15 W (B), above
+the threshold, so `prod.Z1.SDEC.A/B` are re-run together with the production-state rungs
+(`ladder.Z1.sdec_*`, the uncertainty ladder of those cases) and the production-state variants
+compared with them (`feedback.Z1.*`, `hotspot.Z1.*`, `robust.caloric.Z1.*`); Z2's coupled ledger
+has no 48-V term (direct feed), so its cases are not re-run; its ring feed (platform accounting,
+outside the package-internal boundary) changes by -0.15 W (A) and -0.13 W (B). The superseded
+outputs at 220 per rail are in `_campaign/superseded/2026-11-23_bga_220_per_rail/`. The S0/S1/S2
+reference cases and their variants are not re-run: they keep the modelled 220 per rail.
 
 **Feasibility: BGA policy.** `tcpmt_feasibility.BGA_POLICY` (env `TCPMT_BGA_POLICY`): `hard` = the
 per-ball check (peak per-ball current vs the 2-A target; 1.5 A recorded as the sensitivity,

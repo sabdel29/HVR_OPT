@@ -89,24 +89,33 @@ def sheet_square(t_cu_m, t_c=T_FEED_C):
     return rho(t_c) / t_cu_m / 3.0
 
 
-def network():
+def network(modelled=False):
     """The package 48-V network of the results root; refused when it was closed on another
-    design (its meta.design), so another design's network never stands in."""
+    design (its meta.design), so another design's network never stands in. Review round 3
+    (the authors' decision of 2026-11-22): at the re-closure's ADOPTED count of each
+    architecture (package_network_adopted.json, final_closure_pkg_network.ADOPT_RULE) when it
+    exists for the design in force; `modelled` = the network build's count (the modelled
+    arrangement, the network the decoupling chain derives k_eq on)."""
+    import final_closure_ledger as FL
     pn = json.loads((FC / "package_network.json").read_text())
     d = ((pn.get("meta") or {}).get("design") or {}).get("design")
     if d is not None and d != DR.name():
         raise RuntimeError(f"package_network.json was closed on design {d}, not the design in "
                            f"force {DR.name()}")
-    return pn
+    fa = FC / FL.ADOPTED_NETWORK_NAME
+    if modelled or not fa.is_file():
+        return pn
+    return FL.merge_adopted(pn, json.loads(fa.read_text()))
 
 
 def ring_feed():
-    """The Z2 BGA-ring feed at the count of the package network in force (the modelled
-    arrangement; review round 3: no reallocation), and the re-closure's record at the production
-    waveform (bga_count_production.json, when it has run for the design in force)."""
+    """The Z2 BGA-ring feed at the count of the package network in force -- review round 3:
+    the re-closure's ADOPTED count (the smallest legal count meeting the per-ball target within
+    the ring's site budget), else the network build's -- and the re-closure's record at the
+    production waveform (bga_count_production.json, when it has run for the design in force)."""
     import physical_coords as PCO
     pn = network()
-    n = int(pn["matched_count"])
+    n = int(pn["loop"]["Z2"]["n_per_rail"])
     conv = pn["convergence"]
     frac = max(conv["Z2_supply"]["final"]["i_ball_max_a"],
                conv["Z2_return"]["final"]["i_ball_max_a"])
@@ -123,9 +132,25 @@ def ring_feed():
                     "pads)",
            "R_supply_20C_ohm": lp["r_supply_ohm"], "R_return_20C_ohm": lp["r_return_ohm"],
            "R_loop_20C_ohm": lp["r_loop_ohm"], "peak_fraction": frac,
-           "peak_fraction_source": "package_network.json (converged)",
+           "peak_fraction_source": ("package_network_adopted.json (the re-closure's adopted "
+                                    "count, converged)" if "Z2" in (pn.get("adopted_count") or {})
+                                    else "package_network.json (converged)"),
            "max_cell_drop_V_per_A": drop, "match_scenario": pn["meta"].get("match_scenario",
                                                                           "HV_S0")}
+    if "Z2" in (pn.get("adopted_count") or {}):
+        # review round 3: the count the ring feed carried before (the modelled arrangement)
+        pm = network(modelled=True)
+        cm = pm["convergence"]
+        nm = int(pm["loop"]["Z2"]["n_per_rail"])
+        out["count_rule"] = ("the re-closure's adopted count (final_closure_pkg_network."
+                             "ADOPT_RULE: the smallest legal count meeting the per-ball target "
+                             "within the ring's site budget)")
+        out["site_fraction"] = 2 * n / out["lattice_sites"]
+        out["modelled_arrangement"] = {
+            "n_per_rail": nm, "sites": 2 * nm, "site_fraction": 2 * nm / out["lattice_sites"],
+            "R_loop_20C_ohm": pm["loop"]["Z2"]["r_loop_ohm"],
+            "peak_fraction": max(cm["Z2_supply"]["final"]["i_ball_max_a"],
+                                 cm["Z2_return"]["final"]["i_ball_max_a"])}
     prod = FC / "bga_count_production.json"
     pc = json.loads(prod.read_text()) if prod.is_file() else None
     if pc and ((pc.get("design") or {}).get("design") or DR.name()) != DR.name():
@@ -134,14 +159,16 @@ def ring_feed():
         cl = pc["closure"].get("Z2__HV_SDEC") or {}
         bc = pc.get("ball_currents_at_count") or {}
         z2 = (bc.get("per_arch") or {}).get("Z2") or {}
+        nb = bc.get("n_per_rail")
         out["production_requirement"] = {
             "n_min_per_rail": cl.get("n_min"), "status": cl.get("status"),
-            "matched_count": pc.get("matched_count"),
+            "adopted_count": (pc.get("adopted_count") or {}).get("Z2"),
+            "modelled_count": pc.get("modelled_count", pc.get("matched_count")),
             "peak_at_n_min_A": cl.get("peak_at_n_min_A"),
             "criterion_A": pc.get("criterion_A_per_ball"),
-            # review round 3: the verdict at the modelled count (the re-closure's)
+            # review round 3: the verdict at the adopted count (the re-closure's)
             "count_rule": pc.get("count_rule"),
-            "at_count": {"n_per_rail": bc.get("n_per_rail"),
+            "at_count": {"n_per_rail": nb.get("Z2") if isinstance(nb, dict) else nb,
                          "I_ball_A": z2.get("I_ball_closure_rule_A"),
                          "passes": z2.get("passes"),
                          "passes_sensitivity": z2.get("passes_sensitivity"),
@@ -163,26 +190,30 @@ def z2_bga_temperature():
     return T_FEED_C, "declared feed temperature (no Z2 case of the design in the results root)"
 
 
-def ring_feed_resistance():
+def ring_feed_resistance(pn=None):
     """R_loop (ohm) of the Z2 BGA-ring feed and its record. A BGA-fed control case of the
-    design in force in the results root (etm_Z2BF_HV_S0_h1.1_r21.json) gives it from its own
-    ledger rows; otherwise (the campaign: no Z2BF job) the ledger's BGA-fed rows are evaluated
-    on the package network directly (final_closure_ledger: package HV RDL sheet x rho_Cu(T) /
-    rho_Cu(20 C) per rail, balls rho_solder(T) h / A x sum f^2 of the solved per-ball split),
-    at the BGA temperature of the Z2 production case."""
+    design in force in the results root (etm_Z2BF_HV_S0_h1.1_r21.json) on the same ball count
+    gives it from its own ledger rows; otherwise (the campaign: no Z2BF job) the ledger's
+    BGA-fed rows are evaluated on the package network directly (final_closure_ledger: package
+    HV RDL sheet x rho_Cu(T) / rho_Cu(20 C) per rail, balls rho_solder(T) h / A x sum f^2 of
+    the solved per-ball split), at the BGA temperature of the Z2 production case. `pn`: the
+    network record (default: network(), at the re-closure's adopted count when it exists)."""
+    import re
     import numpy as np
+    pn = network() if pn is None else pn
+    loop = pn["loop"]["Z2"]
     f = FC / "etm_Z2BF_HV_S0_h1.1_r21.json"
     z2bf = json.loads(f.read_text()) if f.is_file() else None
     if z2bf and (z2bf.get("design") or {}).get("design") == DR.name():
         hv = {r["term"]: r for r in z2bf["ledger_rows"]}
-        r_bf = sum(hv[k]["R_ohm"] for k in ("P_pkg_RDL_HV_supply", "P_BGA_supply",
-                                            "P_pkg_RDL_HV_return", "P_BGA_return"))
-        return r_bf, {"kind": "solved (voltage-fed package network; BGA-fed control case)",
-                      "case": f.name, "P_coupled_A_W": z2bf["P_loss_w"]}
+        n_bf = int(re.search(r"N=(\d+)", hv["P_BGA_supply"]["conductor"]).group(1))
+        if n_bf == int(loop["n_per_rail"]):
+            r_bf = sum(hv[k]["R_ohm"] for k in ("P_pkg_RDL_HV_supply", "P_BGA_supply",
+                                                "P_pkg_RDL_HV_return", "P_BGA_return"))
+            return r_bf, {"kind": "solved (voltage-fed package network; BGA-fed control case)",
+                          "case": f.name, "P_coupled_A_W": z2bf["P_loss_w"]}
     import pad_interface as PAD
     from interconnect import rho_cu, rho_solder
-    pn = network()
-    loop = pn["loop"]["Z2"]
     t, basis = z2_bga_temperature()
     kt_cu = rho_cu(t) / rho_cu(20.0)
     r_ball = PAD.bga_ball_resistance_ohm(20.0) * rho_solder(t) / rho_solder(20.0)
@@ -191,15 +222,24 @@ def ring_feed_resistance():
         fr = np.asarray(pn["convergence"][f"Z2_{rail}"]["i_ball_frac"], dtype=float)
         parts[f"R_sheet_{rail}_ohm"] = float(loop[f"r_{rail}_ohm"]) * kt_cu
         parts[f"R_balls_{rail}_ohm"] = r_ball * float(np.sum(fr ** 2))
+    adopted = "Z2" in (pn.get("adopted_count") or {})
     return sum(parts.values()), {
-        "kind": "solved (voltage-fed package network, package_network.json loop Z2 and its "
-                "per-ball split; the ledger's BGA-fed rows at the Z2 BGA temperature)",
+        "kind": ("solved (voltage-fed package network at the re-closure's adopted count, "
+                 "package_network_adopted.json loop Z2 and its per-ball split; the ledger's "
+                 "BGA-fed rows at the Z2 BGA temperature)" if adopted else
+                 "solved (voltage-fed package network, package_network.json loop Z2 and its "
+                 "per-ball split; the ledger's BGA-fed rows at the Z2 BGA temperature)"),
         "T_C": t, "T_basis": basis, "n_per_rail": int(loop["n_per_rail"]), **parts,
         "P_coupled_A_W": None}
 
 
 def feeds():
     r_bf, bf = ring_feed_resistance()
+    pn = network()
+    if "Z2" in (pn.get("adopted_count") or {}):
+        # review round 3: the ring feed at the modelled arrangement, for the record
+        r_m, bm = ring_feed_resistance(network(modelled=True))
+        bf = dict(bf, R_ohm_modelled_count=r_m, n_per_rail_modelled=bm.get("n_per_rail"))
     t, w, l = FLEX["t_um"] * 1e-6, FLEX["w_mm"] * 1e-3, FLEX["l_mm"] * 1e-3
     r_flex = 2 * rho(T_FEED_C) * l / (w * t) + 2 * sheet_square(t)
     r_z3 = 2 * sheet_square(PLANE_T_UM * 1e-6)
@@ -224,8 +264,10 @@ def feed_design(F, i_avg):
     ring.update({"R_loop_feed_ohm": F["Z2_bga_fed"]["R_ohm"],
                  "I_rms_A": cur,
                  "I_ball_peak_A": {s: rf["peak_fraction"] * i for s, i in cur.items()},
-                 "rule": "DC peak x k (one rule for every integration), the count fixed at "
-                         "the network's (the modelled arrangement)",
+                 "rule": "DC peak x k (one rule for every integration), at the count of the "
+                         "network in force (review round 3: the re-closure's adopted count, "
+                         "the smallest legal count meeting the per-ball target within the "
+                         "ring's site budget)",
                  "rule_A": target, "rule_sensitivity_A": sens,
                  "rule_source": f"tcpmt_feasibility.LIMITS bga_A_per_ball: {src}",
                  "bga_policy": policy,
@@ -307,6 +349,13 @@ def main():
                        "P_pump_band_W": [n * pump["0.75"], n * pump["0.35"]],
                        "P_pump_hydraulic_W": n * pump["hyd"],
                        "pump_basis": f"{n} full plate(s)"}
+                r_m = F[feed_of[a]].get("R_ohm_modelled_count") if feed_of[a] else None
+                if r_m is not None:
+                    # review round 3: the same feed at the modelled arrangement, for the record
+                    pf_m, _ = solve_feed(p_int, r_m, ks[st])
+                    rec.update({"R_feed_modelled_count_mohm": 1e3 * r_m,
+                                "P_feed_modelled_count_W": pf_m,
+                                "dP_feed_vs_modelled_W": pf - pf_m})
                 # TCPMT revision: every plate at its OWN flow (cooling B's bottom plate sized to
                 # the top plate's coolant rise), from the case's own plate record, else from the
                 # cooling specification's record of the same case file
@@ -346,6 +395,7 @@ def main():
     ring, plane, flex = fd["Z2_bga_ring"], fd["Z3_plane_pair"], fd["Z2_flex_alternative"]
     m["FeedRingN"] = str(ring["n_per_rail"])
     m["FeedRingSites"] = str(ring["sites"])
+    m["FeedRingSiteFrac"] = f"{100.0 * ring['sites'] / ring['lattice_sites']:.1f}"
     m["FeedRingPeak"] = f"{ring['I_ball_peak_A']['SDEC']:.2f}"
     m["FeedRingPeakSzero"] = f"{ring['I_ball_peak_A']['S0']:.2f}"
     m["FeedRingPeakSone"] = f"{ring['I_ball_peak_A']['S1']:.1f}"
@@ -375,6 +425,8 @@ def main():
                 if a == "Z2" and t == "A":
                     m[f"FeedPbgaZtwo{tag}"] = f"{rec['P_feed_W']:.2f}"
                     m[f"FeedPbgaZtwoSone{tag}"] = f"{rec['P_feed_S1_W']:.1f}"
+                    if rec.get("dP_feed_vs_modelled_W") is not None:
+                        m[f"FeedPbgaZtwoDelta{tag}"] = f"{rec['dP_feed_vs_modelled_W']:+.2f}"
                 if a == "Z3" and t == "B":
                     m[f"FeedPZthree{tag}"] = f"{rec['P_feed_W']:.2f}"
                     m[f"FeedPZthreeSone{tag}"] = f"{rec['P_feed_S1_W']:.1f}"

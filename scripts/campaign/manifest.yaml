@@ -127,8 +127,9 @@ jobs:
     count, level-2 verification, levels 1-3 at the matched count'
   notes: 'the count is closed and matched at the PRODUCTION state, at the committed production k of the
     design record (`decoupling`), at most 220 balls per rail; no closing count -> the declared fallback
-    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement; the per-ball verdict (DC peak
-    x k_eq against the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose'
+    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement, on which the decoupling chain
+    derives k_eq; the provisioned count (the smallest legal count meeting the 2-A target by the DC peak
+    x k_eq rule within the site budget) and the per-ball verdict follow in derived.bga_reclose (package_network_adopted.json)'
 - id: m36t5.prep.package_network
   stage: prep
   argv:
@@ -155,8 +156,9 @@ jobs:
     count, level-2 verification, levels 1-3 at the matched count'
   notes: 'the count is closed and matched at the PRODUCTION state, at the committed production k of the
     design record (`decoupling`), at most 220 balls per rail; no closing count -> the declared fallback
-    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement; the per-ball verdict (DC peak
-    x k_eq against the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose'
+    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement, on which the decoupling chain
+    derives k_eq; the provisioned count (the smallest legal count meeting the 2-A target by the DC peak
+    x k_eq rule within the site budget) and the per-ball verdict follow in derived.bga_reclose (package_network_adopted.json)'
   design: m36t5
 - id: m36thin.prep.package_network
   stage: prep
@@ -184,8 +186,9 @@ jobs:
     count, level-2 verification, levels 1-3 at the matched count'
   notes: 'the count is closed and matched at the PRODUCTION state, at the committed production k of the
     design record (`decoupling`), at most 220 balls per rail; no closing count -> the declared fallback
-    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement; the per-ball verdict (DC peak
-    x k_eq against the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose'
+    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement, on which the decoupling chain
+    derives k_eq; the provisioned count (the smallest legal count meeting the 2-A target by the DC peak
+    x k_eq rule within the site budget) and the per-ball verdict follow in derived.bga_reclose (package_network_adopted.json)'
   design: m36thin
 - id: m25.prep.package_network
   stage: prep
@@ -213,8 +216,9 @@ jobs:
     count, level-2 verification, levels 1-3 at the matched count'
   notes: 'the count is closed and matched at the PRODUCTION state, at the committed production k of the
     design record (`decoupling`), at most 220 balls per rail; no closing count -> the declared fallback
-    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement; the per-ball verdict (DC peak
-    x k_eq against the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose'
+    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement, on which the decoupling chain
+    derives k_eq; the provisioned count (the smallest legal count meeting the 2-A target by the DC peak
+    x k_eq rule within the site budget) and the per-ball verdict follow in derived.bga_reclose (package_network_adopted.json)'
   design: m25
 - id: m49.prep.package_network
   stage: prep
@@ -242,8 +246,9 @@ jobs:
     count, level-2 verification, levels 1-3 at the matched count'
   notes: 'the count is closed and matched at the PRODUCTION state, at the committed production k of the
     design record (`decoupling`), at most 220 balls per rail; no closing count -> the declared fallback
-    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement; the per-ball verdict (DC peak
-    x k_eq against the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose'
+    count, flagged NOT_CLOSED (match_fallback): the modelled arrangement, on which the decoupling chain
+    derives k_eq; the provisioned count (the smallest legal count meeting the 2-A target by the DC peak
+    x k_eq rule within the site budget) and the per-ball verdict follow in derived.bga_reclose (package_network_adopted.json)'
   design: m49
 - id: prep.z3land_fv
   stage: prep
@@ -745,7 +750,8 @@ jobs:
   evidence: 'analog final_closure/sensitivity/etm_Z2_HV_SDEC__sdec_B.json: et 3186 s + mech 2464 s (2
     thr, 145120 el)'
   notes: 'PRODUCTION STATE: implemented decoupling at the k_eq this campaign''s decoupling chain derives
-    (derived.decap_placement)'
+    (derived.decap_placement); a BGA-fed ledger (Z1) takes the 48-V balls at the re-closure''s adopted
+    count when package_network_adopted.json exists (second pass after derived.bga_reclose)'
 - id: prod.Z2.SDEC.B
   stage: production
   argv:
@@ -776,7 +782,8 @@ jobs:
   evidence: 'final_closure/sensitivity/etm_Z2_HV_SDEC__sdec_B.json: et 3186 s + mech 2464 s (2 thr, 145120
     el)'
   notes: 'PRODUCTION STATE: implemented decoupling at the k_eq this campaign''s decoupling chain derives
-    (derived.decap_placement)'
+    (derived.decap_placement); a BGA-fed ledger (Z1) takes the 48-V balls at the re-closure''s adopted
+    count when package_network_adopted.json exists (second pass after derived.bga_reclose)'
 - id: prod.Z3.SDEC.A
   stage: production
   argv:
@@ -809,7 +816,8 @@ jobs:
   evidence: 'analog final_closure/sensitivity/etm_Z2_HV_SDEC__sdec_B.json: et 3186 s + mech 2464 s (2
     thr, 145120 el)'
   notes: 'PRODUCTION STATE: implemented decoupling at the k_eq this campaign''s decoupling chain derives
-    (derived.decap_placement)'
+    (derived.decap_placement); a BGA-fed ledger (Z1) takes the 48-V balls at the re-closure''s adopted
+    count when package_network_adopted.json exists (second pass after derived.bga_reclose)'
 - id: prod.Z3.SDEC.B
   stage: production
   argv:
@@ -842,7 +850,8 @@ jobs:
   evidence: 'analog final_closure/sensitivity/etm_Z2_HV_SDEC__sdec_B.json: et 3186 s + mech 2464 s (2
     thr, 145120 el)'
   notes: 'PRODUCTION STATE: implemented decoupling at the k_eq this campaign''s decoupling chain derives
-    (derived.decap_placement)'
+    (derived.decap_placement); a BGA-fed ledger (Z1) takes the 48-V balls at the re-closure''s adopted
+    count when package_network_adopted.json exists (second pass after derived.bga_reclose)'
 - id: local.solder.HV_S0
   stage: production
   argv:
@@ -1094,7 +1103,8 @@ jobs:
   evidence: 'final_closure/sensitivity/etm_Z2_HV_SDEC__sdec_A.json: et 1490 s + mech 2236 s (2 thr, 145120
     el)'
   notes: 'PRODUCTION STATE: implemented decoupling at the k_eq this campaign''s decoupling chain derives
-    (derived.decap_placement)'
+    (derived.decap_placement); a BGA-fed ledger (Z1) takes the 48-V balls at the re-closure''s adopted
+    count when package_network_adopted.json exists (second pass after derived.bga_reclose)'
 - id: local.mesh_study
   stage: production
   argv:
@@ -1150,7 +1160,8 @@ jobs:
   evidence: 'final_closure/sensitivity/etm_Z1_HV_SDEC__sdec_B.json: et 2747 s + mech 760 s (2 thr, 144512
     el)'
   notes: 'PRODUCTION STATE: implemented decoupling at the k_eq this campaign''s decoupling chain derives
-    (derived.decap_placement)'
+    (derived.decap_placement); a BGA-fed ledger (Z1) takes the 48-V balls at the re-closure''s adopted
+    count when package_network_adopted.json exists (second pass after derived.bga_reclose)'
 - id: prod.Z3.S0.A
   stage: production
   argv:
@@ -6938,6 +6949,7 @@ jobs:
   - reclose
   outputs:
   - final_closure/bga_count_production.json
+  - final_closure/package_network_adopted.json
   deps:
   - prep.package_network
   - derived.decap_framework
@@ -6958,12 +6970,17 @@ jobs:
   validate:
   - file: final_closure/bga_count_production.json
     kind: json
+  - file: final_closure/package_network_adopted.json
+    kind: json
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-  notes: 'the per-ball check at the production state with the production cases'' 48-V currents (level-2
-    verification), at the k this campaign''s decoupling chain derives, at the network''s count (the modelled
-    arrangement, 220 balls per rail; no reallocation): one rule for every integration, the DC peak x k_eq,
-    against the feasibility target (2 A per ball, Kuan et al. 2015; 1.5 A as a sensitivity); Z1''s worst-ball
-    RMS of the port model is recorded as an idealized bound'
+  notes: 'the 48-V count ADOPTED per architecture (review round 3, the authors'' decision of 2026-11-22):
+    the smallest legal count meeting the feasibility target (2 A per ball, Kuan et al. 2015) by one rule
+    for every integration, the verified DC peak x k_eq at the production cases'' 48-V currents and the
+    k this campaign''s decoupling chain derives, within the site budget (Z2''s ring: at most 198 per rail)
+    and at most 220 per rail; the network solved there (package_network_adopted.json), the 1.5-A sensitivity
+    (the count it needs), Z1''s worst-ball RMS of the port model as an idealized bound, and the change
+    of each production case''s BGA feed terms (above 0.1 W: the production cases on another count are
+    re-run and this job confirms the count)'
 - id: derived.results
   stage: derived
   argv:

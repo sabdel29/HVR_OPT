@@ -556,14 +556,28 @@ def accuracy_macros():
 
 
 def network_macros():
+    """The production package 48-V network: review round 3 (the authors' decision of
+    2026-11-22), at the re-closure's ADOPTED count of each architecture
+    (package_network_adopted.json; NballMatched = the smallest common count meeting the
+    per-ball target, bga_count_production.json matched_count_dc_rule); else the network
+    build's (package_network.json, its matched count)."""
     pn = J("package_network.json") or {}
-    if not pn:
+    pa = J("package_network_adopted.json") or {}
+    bc = J("bga_count_production.json") or {}
+    if not pn and not pa:
         return {}
-    out = {"NballMatched": str(pn.get("matched_count", NA))}
+    if pa.get("loop"):
+        out = {"NballMatched": str(bc.get("matched_count_dc_rule")
+                                   or max(int(v) for v in pa["adopted_count"].values()))}
+        src = pa
+    else:
+        out = {"NballMatched": str(pn.get("matched_count", NA))}
+        src = pn
     for a in ("Z1", "Z2"):
-        lp = (pn.get("loop") or {}).get(a) or {}
+        lp = (src.get("loop") or {}).get(a) or {}
         if lp.get("r_loop_ohm"):
             out[f"Rloop{ATAG[a]}"] = fx(1e3 * lp["r_loop_ohm"], 2)
+            out[f"Nball{ATAG[a]}"] = str(lp["n_per_rail"])
     return out
 
 

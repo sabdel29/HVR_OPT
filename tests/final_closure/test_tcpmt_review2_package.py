@@ -299,56 +299,198 @@ def test_bga_closure_caps_the_count_at_220_per_rail(tmp_path, monkeypatch):
     assert "220" in PN.CLOSURE_RULE and "220" in PN.RECLOSE_RULE
 
 
-def test_bga_reclose_one_rule_at_the_modelled_count(tmp_path, monkeypatch):
-    """Review round 3, the re-closure (final_closure_pkg_network.reclose) with the solver
-    stubbed: the verdict is the verified DC peak x k_eq against the feasibility stage's target
-    (2 A, 1.5 A reported as the sensitivity) at the package network's count (220 per rail, no
-    reallocation, although 192 would close at 2 A); Z1's port-model RMS is recorded as an
-    idealized bound only; a network of another design is refused."""
+def _fake_network_pool(c):
+    """A stand-in for the FV solves: the per-ball peak fraction c[arch] / n at every level, a
+    uniform split, the loop resistance falling with the count."""
+    def pool(jobs):
+        return [{"arch": a, "rail": rail, "n_per_rail": n, "level": lv,
+                 "terminal_mode": kw["mode"], "i_ball_max_a": c[a] / n,
+                 "r_eff_ohm": 0.2 / n, "p_loss_w": 0.2 / n, "ball_imax_over_imean": 2.0,
+                 "max_cell_drop_v": 1e-3, "n_cv": 1000 * lv, "energy_residual_rel": 0.0,
+                 "i_ball_a": [1.0 / n] * n, "ball_xy": [[0.8 * j, 0.0] for j in range(n)]}
+                for a, rail, n, lv, kw in jobs]
+    return pool
+
+
+def _stub_reclose(tmp_path, monkeypatch, c, k, i_avg, counts):
     import design_record as DR
     import final_closure_pkg_network as PN
-    k, i_avg = 2.64, 23.6
     i_sdec = k * i_avg
-    c = {"Z1": 1.73 * 220 / i_sdec, "Z2": 1.63 * 220 / i_sdec}    # peak fraction = c / n
-    counts = range(160, 221, 2)
     (tmp_path / "bga_count_screen.csv").write_text(
         "arch,n_per_rail,level,terminal_mode,peak_fraction\n" + "".join(
             f"{a},{n},1,VIN_PAD,{c[a] / n!r}\n" for a in ("Z1", "Z2") for n in counts))
-    pn = {"matched_count": 220, "meta": {"design": {"design": DR.name()}}}
+    pn = {"matched_count": 220, "meta": {"design": DR.design_identity()},
+          "loop": {a: {"n_per_rail": 220, "r_supply_ohm": 0.2 / 220, "r_return_ohm": 0.2 / 220,
+                       "r_loop_ohm": 0.4 / 220} for a in ("Z1", "Z2")}}
     (tmp_path / "package_network.json").write_text(json.dumps(pn))
-
-    def fake_pool(jobs):        # the FV solves: the screen's peak fractions, any level
-        return [{"arch": a, "rail": rail, "n_per_rail": n, "level": lv,
-                 "terminal_mode": kw["mode"], "i_ball_max_a": c[a] / n, "r_eff_ohm": 1e-3,
-                 "ball_imax_over_imean": 2.0, "max_cell_drop_v": 1e-3}
-                for a, rail, n, lv, kw in jobs]
     monkeypatch.setattr(PN, "OUT", tmp_path)
     monkeypatch.setattr(PN, "PRODUCTION_OUT", tmp_path / "bga_count_production.json")
-    monkeypatch.setattr(PN, "run_pool", fake_pool)
+    monkeypatch.setattr(PN, "ADOPTED_OUT", tmp_path / "package_network_adopted.json")
+    monkeypatch.setattr(PN, "run_pool", _fake_network_pool(c))
     monkeypatch.setattr(PN, "production_k", lambda: (k, [2.60, 2.70]))
     monkeypatch.setattr(PN, "chain_k", lambda: (k, [2.60, 2.70]))
     monkeypatch.setattr(PN, "production_i_avg", lambda a: i_avg)
     monkeypatch.setattr(PN, "scenarios", lambda a: {"HV_S0": i_avg, "HV_SDEC": i_sdec})
     monkeypatch.setattr(PN, "port_model_ball_rms",
-                        lambda n, crit=None: {"I_ball_rms_max_A": 2.2, "option": "test"})
+                        lambda n, crit=None: {"I_ball_rms_max_A": 2.2, "option": "test",
+                                              "k_eq": 2.5})
+    monkeypatch.setattr(PN, "production_cases", lambda: {})
     monkeypatch.setattr(PN, "_CRIT_A", None)            # restored after the test
     monkeypatch.setattr(PN, "_K_FROM_CHAIN", False)
+    return PN, pn
+
+
+def test_bga_reclose_adopts_the_smallest_passing_count(tmp_path, monkeypatch):
+    """Review round 3 (the authors' decision of 2026-11-22), the re-closure with the solver
+    stubbed: each architecture ADOPTS the smallest legal count whose verified DC peak x k_eq
+    meets the feasibility stage's 2-A target within the site budget (Z2's ring of 528 sites: at
+    most 198 per rail), the network is solved there (package_network_adopted.json), 1.5 A is
+    reported as the sensitivity (here: no legal count closes it), Z1's port-model RMS is an
+    idealized bound only, the modelled arrangement is recorded beside it, and a network of
+    another design is refused."""
+    import design_record as DR
+    k, i_avg = 2.64, 23.6
+    i_sdec = k * i_avg
+    c = {"Z1": 1.73 * 220 / i_sdec, "Z2": 1.63 * 220 / i_sdec}    # peak fraction = c / n
+    PN, pn = _stub_reclose(tmp_path, monkeypatch, c, k, i_avg, range(160, 221, 2))
+    assert PN.site_budget("Z2")["cap_per_rail"] == 198            # 0.75 x 528 / 2
+    assert PN.site_budget("Z1")["cap_per_rail"] == 220            # the 220-per-rail cap binds
     PN.reclose()
     out = json.loads((tmp_path / "bga_count_production.json").read_text())
     assert out["criterion_A_per_ball"] == 2.0 and out["criterion_sensitivity_A_per_ball"] == 1.5
-    assert out["matched_count"] == 220 and out["matched_count_dc_rule"] == 192
+    # 1.73 A x 220 / n <= 2 A -> n >= 190.3; 1.63 A x 220 / n <= 2 A -> n >= 179.3
+    assert out["adopted_count"] == {"Z1": 192, "Z2": 180}
+    assert out["modelled_count"] == 220 and out["matched_count_dc_rule"] == 192
+    assert out["count_rule"] == PN.ADOPT_RULE
     bc = out["ball_currents_at_count"]
-    assert bc["n_per_rail"] == 220 and bc["rule"] == PN.RECLOSE_RULE
+    assert bc["n_per_rail"] == {"Z1": 192, "Z2": 180} and bc["rule"] == PN.RECLOSE_RULE
     assert bc["status"] == "CLOSED" and bc["status_at_sensitivity"] == "NOT_CLOSED"
     z1, z2 = bc["per_arch"]["Z1"], bc["per_arch"]["Z2"]
-    assert z1["I_ball_A"] == pytest.approx(1.73) and z2["I_ball_A"] == pytest.approx(1.63)
+    assert z1["I_ball_A"] == pytest.approx(1.73 * 220 / 192)
+    assert z2["I_ball_A"] == pytest.approx(1.63 * 220 / 180)
+    assert z2["site_fraction"] == pytest.approx(360 / 528) and z2["site_budget_ok"]
     assert z1["passes"] and z2["passes"] and not z1["passes_sensitivity"]
     assert z1["I_ball_rms_max_A"] == pytest.approx(2.2) and z1["rms_bound_within_target"] is False
     assert z2["I_ball_rms_max_A"] is None and out["match_fallback"] is None
-    assert out["closure_sensitivity"]["Z1__HV_SDEC"]["status"] == \
-        "NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT"
+    assert out["adoption"]["Z1"]["peak_at_lower_A"] > 2.0 and out["adoption"]["Z1"]["lower_count"] == 190
+    for a in ("Z1", "Z2"):                                   # 1.5 A: needs n >= 254 / 239
+        assert out["sensitivity_count"][a]["n_per_rail"] is None
+        assert "cannot close" in out["sensitivity_count"][a]["statement"]
+    mo = out["modelled_arrangement"]["per_arch"]
+    assert mo["Z2"]["site_fraction"] == pytest.approx(440 / 528) and not mo["Z2"]["site_budget_ok"]
+    assert mo["Z1"]["I_ball_closure_rule_A"] == pytest.approx(1.73)
+    ad = json.loads((tmp_path / "package_network_adopted.json").read_text())
+    assert ad["adopted_count"] == {"Z1": 192, "Z2": 180}
+    assert ad["loop"]["Z1"]["n_per_rail"] == 192 and len(ad["convergence"]["Z2_supply"]["i_ball_frac"]) == 180
+    assert ad["meta"]["design"]["design"] == DR.name()
     # another design's network never stands in
     pn["meta"]["design"]["design"] = "not_" + DR.name()
     (tmp_path / "package_network.json").write_text(json.dumps(pn))
     with pytest.raises(SystemExit):
         PN.reclose()
+
+
+def test_bga_reclose_site_budget_binds(tmp_path, monkeypatch):
+    """When no legal count within the site budget meets the target, the count of least peak
+    within it is adopted and flagged NOT_CLOSED; the sensitivity reports a count beyond the
+    budget as such."""
+    k, i_avg = 2.64, 23.6
+    i_sdec = k * i_avg
+    c = {"Z1": 1.73 * 220 / i_sdec, "Z2": 1.0 * 200 / i_sdec * 2.0}   # Z2 needs 200 at 2 A
+    PN, _pn = _stub_reclose(tmp_path, monkeypatch, c, k, i_avg, range(160, 221, 2))
+    PN.reclose()
+    out = json.loads((tmp_path / "bga_count_production.json").read_text())
+    assert out["adoption"]["Z2"]["status"] == "NOT_CLOSED"
+    assert out["adopted_count"]["Z2"] == 198                       # least peak within the budget
+    assert out["ball_currents_at_count"]["status"] == "NOT_CLOSED"
+    assert out["match_fallback"]["status"] == "NOT_CLOSED"
+    assert out["adopted_count"]["Z1"] == 192
+
+
+def test_bga_coupled_effect_of_the_adopted_count():
+    """The change of a production case's BGA feed terms between the modelled and the adopted
+    network, at the case's own 48-V current and BGA temperature (final_closure_ledger.
+    package_hv_terms); Z2 has no coupled term (direct feed), its ring feed is reported."""
+    import final_closure_ledger as FL
+    import final_closure_pkg_network as PN
+
+    def net(n, r):
+        return {"loop": {a: {"n_per_rail": n, "r_supply_ohm": r, "r_return_ohm": r / 2}
+                         for a in ("Z1", "Z2")},
+                "convergence": {f"{a}_{rail}": {"i_ball_frac": [1.0 / n] * n}
+                                for a in ("Z1", "Z2") for rail in ("supply", "return")}}
+    mod, ado = net(220, 4.5e-4), net(168, 6.0e-4)
+    row = {"term": "P_BGA_supply", "conductor": "BGA supply balls (N=220)", "I_a": 62.5,
+           "P_w": 0.0}
+    cases = {("Z1", "A"): (Path("etm_Z1.json"), {
+        "ledger_rows": [row] + [{"term": t, "P_w": 0.0} for t in
+                                ("P_BGA_return", "P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return")],
+        "et_history": [{"T_bga_C": 110.0}], "i_hv_avg_a": 23.7, "P_loss_w": 135.0}),
+        ("Z2", "A"): (Path("etm_Z2.json"), {"ledger_rows": [], "et_history": [{"T_bga_C": 89.0}],
+                                            "i_hv_avg_a": 23.6, "P_loss_w": 134.0})}
+    orig = PN.production_cases
+    PN.production_cases = lambda: cases
+    try:
+        ce = PN.coupled_effect(ado, mod, 2.64)
+    finally:
+        PN.production_cases = orig
+    z1, z2 = ce["per_case"]["A_Z1"], ce["per_case"]["A_Z2"]
+    p_a = sum(v["P_w"] for v in FL.package_hv_terms(ado, "Z1", 62.5, 110.0).values())
+    p_m = sum(v["P_w"] for v in FL.package_hv_terms(mod, "Z1", 62.5, 110.0).values())
+    assert z1["dP_W"] == pytest.approx(p_a - p_m) and z1["dP_W"] > 0.1
+    assert z1["n_case"] == 220 and z1["case_carries_adopted_count"] is False
+    assert z2["coupled"] is False and z2["dP_W"] == 0.0 and z2["ring_feed_dP_W"] is not None
+    assert ce["exceeds_threshold"] and ce["cases_on_another_count"] == ["A_Z1"]
+
+
+def test_ledger_takes_the_adopted_network(tmp_path, monkeypatch):
+    """The BGA-fed ledger's package network is the re-closure's adopted one when it exists
+    beside package_network.json for the same design (per architecture key, its own count);
+    another design's adopted network never stands in."""
+    import design_record as DR
+    import final_closure_ledger as FL
+    import z1_design as Z1D
+    ident = DR.design_identity()
+    pn = {"matched_count": 220, "meta": {"design": ident},
+          "loop": {"Z1": {"n_per_rail": 220}, "Z2": {"n_per_rail": 220}},
+          "convergence": {"Z1_supply": {"i_ball_frac": [1 / 220] * 220}}}
+    pa = {"meta": {"design": ident}, "adopted_count": {"Z1": 168, "Z2": 166},
+          "loop": {"Z1": {"n_per_rail": 168}, "Z2": {"n_per_rail": 166}},
+          "convergence": {"Z1_supply": {"i_ball_frac": [1 / 168] * 168}}}
+    (tmp_path / "package_network.json").write_text(json.dumps(pn))
+    monkeypatch.setattr(Z1D, "package_network_file", lambda path=None: tmp_path / "package_network.json")
+    FL.package_network.cache_clear()
+    try:
+        assert FL.package_network()["loop"]["Z1"]["n_per_rail"] == 220
+        (tmp_path / FL.ADOPTED_NETWORK_NAME).write_text(json.dumps(pa))
+        FL.package_network.cache_clear()
+        got = FL.package_network()
+        assert got["loop"]["Z1"]["n_per_rail"] == 168 and got["adopted_count"]["Z2"] == 166
+        assert len(got["convergence"]["Z1_supply"]["i_ball_frac"]) == 168
+        assert got["modelled_count"] == 220
+        pa["meta"]["design"] = dict(ident, design="not_" + ident["design"])
+        (tmp_path / FL.ADOPTED_NETWORK_NAME).write_text(json.dumps(pa))
+        FL.package_network.cache_clear()
+        assert FL.package_network()["loop"]["Z1"]["n_per_rail"] == 220
+    finally:
+        FL.package_network.cache_clear()
+
+
+def test_feasibility_peak_fraction_at_the_adopted_count(tmp_path, monkeypatch):
+    """The feasibility stage takes a case's per-ball peak fraction from the adopted-count
+    network when the case carries that count (else the network build's, else the screen)."""
+    import design_record as DR
+    import tcpmt_feasibility as F
+    ident = DR.design_identity()
+    conv = lambda f: {f"{a}_{r}": {"final": {"i_ball_max_a": f}} for a in ("Z1", "Z2")
+                      for r in ("supply", "return")}
+    (tmp_path / "package_network.json").write_text(json.dumps(
+        {"matched_count": 220, "meta": {"design": ident, "final_levels": [1, 2, 3]},
+         "convergence": conv(0.0277)}))
+    (tmp_path / "package_network_adopted.json").write_text(json.dumps(
+        {"meta": {"design": ident, "final_levels": [1, 2, 3]}, "adopted_count": {"Z1": 168},
+         "loop": {"Z1": {"n_per_rail": 168}}, "convergence": conv(0.0320)}))
+    monkeypatch.setattr(F, "FC", tmp_path)
+    monkeypatch.setattr(F, "_NET", {})
+    assert F.peak_fraction("Z1", 168) == (0.0320, "adopted-count network (level 3)")
+    assert F.peak_fraction("Z1", 220) == (0.0277, "package network (level 3)")

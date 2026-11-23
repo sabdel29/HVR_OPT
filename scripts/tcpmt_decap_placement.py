@@ -495,12 +495,13 @@ def limits():
     plans = [p for p in NW.phase_names() if not p.startswith("raster")]
     ph = {p: NW.phases(p) for p in plans}
     Ms, Md = NW.loss_matrices(f, l_nom, br, xy, r_scale)
-    # the per-ball check at the network's count (review round 3: ONE rule, the verified DC peak
-    # x k_eq, against the feasibility stage's target with its conservative sensitivity; the
-    # count fixed at the modelled arrangement). Source: the re-closure's verdict at that count
-    # at ITS k (bga_count_production.json ball_currents_at_count), else the network build's
-    # fallback record at the network's production k, else the network's converged peak
-    # fractions; per plan: per-ball current = verified peak x k_plan / k_closed
+    # the per-ball check (review round 3: ONE rule, the verified DC peak x k_eq, against the
+    # feasibility stage's target with its conservative sensitivity). Source: the re-closure's
+    # verdict at each architecture's ADOPTED count at ITS k (bga_count_production.json
+    # ball_currents_at_count; the authors' decision of 2026-11-22), else its verdict at the
+    # network's count (an earlier re-closure), else the network build's fallback record at the
+    # network's production k, else the network's converged peak fractions; per plan: per-ball
+    # current = verified peak x k_plan / k_closed (k of every plan on the network in force)
     import tcpmt_feasibility as FEAS
     target = float(FEAS.LIMITS["bga_A_per_ball"])
     sens = float(FEAS.LIMITS["bga_A_per_ball_sensitivity"])
@@ -512,7 +513,18 @@ def limits():
         clo = {}                           # another design's re-closure never stands in
     bc = clo.get("ball_currents_at_count") or {}
     n_net = int(pn["matched_count"])
-    if bc.get("per_arch") and clo.get("k_eq") and int(bc.get("n_per_rail") or -1) == n_net:
+    nb = bc.get("n_per_rail")
+    n_at = {a: n_net for a in ("Z1", "Z2")}
+    if bc.get("per_arch") and clo.get("k_eq") and isinstance(nb, dict):
+        peak = {a: float(v["I_ball_closure_rule_A"]) for a, v in bc["per_arch"].items()
+                if v.get("I_ball_closure_rule_A") is not None}
+        k_closed = float(clo["k_eq"])
+        n_at = {a: int(nb[a]) for a in peak if a in nb}
+        i_sdec = {a: float(clo["currents_A"][a]["HV_SDEC"]) for a in peak
+                  if (clo.get("currents_A") or {}).get(a)}
+        peak_src = ("bga_count_production.json ball_currents_at_count (the re-closure's "
+                    "verified level-2 DC peak x k_eq at each architecture's adopted count)")
+    elif bc.get("per_arch") and clo.get("k_eq") and int(nb or -1) == n_net:
         peak = {a: float(v["I_ball_closure_rule_A"]) for a, v in bc["per_arch"].items()
                 if v.get("I_ball_closure_rule_A") is not None}
         k_closed = float(clo["k_eq"])
@@ -533,13 +545,15 @@ def limits():
         peak = {a: max(conv[f"{a}_{r}"]["final"]["i_ball_max_a"] for r in ("supply", "return"))
                 * i_sdec[a] for a in ("Z1", "Z2")}
         peak_src = "package_network.json converged peak fractions x its HV_SDEC current"
-    out = {"network_count_per_rail": n_net, "criterion_A": target,
+    out = {"network_count_per_rail": n_net, "count_per_rail_of_peaks": n_at,
+           "criterion_A": target,
            "criterion_sensitivity_A": sens,
            "criterion_source": "tcpmt_feasibility.LIMITS bga_A_per_ball / "
                                "bga_A_per_ball_sensitivity: "
                                + FEAS.LIMIT_SOURCES["bga_A_per_ball"],
            "rule": "per-ball current = verified DC peak x k_eq (one rule for every integration) "
-                   "at the network's count (the modelled arrangement, no reallocation)",
+                   "at each architecture's adopted count (the re-closure's; k of every plan "
+                   "on the network in force)",
            "k_closed": k_closed, "verified_peak_at_k_closed_A": peak,
            "verified_peak_source": peak_src, "plans": {}}
     for p in plans:
@@ -597,7 +611,7 @@ def limits():
     out["k_vs_count"] = {"allocation": "nearest_symmetric", "r_scale": r_scale,
                          "I_avg_A": i_avg, "counts": {}}
     try:
-        for cnt in LIMIT_COUNTS:
+        for cnt in sorted(set(LIMIT_COUNTS) | set(n_at.values())):   # + the adopted counts
             s = PCO.select_power_sites(cand, PCO.physical_cell_coordinates(), cnt, cnt,
                                        "nearest_symmetric")
             NW.BALLS_OVERRIDE = (s["supply"], s["return"])

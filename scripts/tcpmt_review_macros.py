@@ -101,7 +101,7 @@ CHECK_LABEL = {"operating_point": "no operating point", "gan_Tj_hs": "GaN T_J (H
                "mlcc": "MLCC 125 C", "inductor": "inductor 125 C", "buildup": "dielectric Tg",
                "encapsulant": "encapsulant Tg", "board": "board Tg", "die": "die 105 C",
                "solder_law": "solder law 125 C", "solder_solidus": "solder solidus",
-               "bga_current": "BGA 1.5 A/ball", "bga_sites": "BGA sites",
+               "bga_current": "BGA 2 A/ball", "bga_sites": "BGA sites",
                "ir_drop": "IR drop 30 mV"}
 THERMAL_CHECKS = ("gan_Tj_hs", "gan_Tj_ls", "ron_fit", "mlcc", "inductor", "buildup",
                   "encapsulant", "board", "die")
@@ -198,14 +198,65 @@ def feasibility():
 
 def bga_count():
     """The 48-V ball count re-closed at the production waveform (final_closure_pkg_network
-    reclose -> research/final_closure/bga_count_production.json)."""
+    reclose -> research/final_closure/bga_count_production.json). Review round 3 (the authors'
+    decision of 2026-11-22): the ADOPTED count of each architecture (the smallest legal count
+    meeting the per-ball target by the DC peak x k rule, within the site budget), its per-ball
+    current, site fraction, 48-V loop, the 1.5-A sensitivity, Z1's port-model RMS bound, the
+    modelled arrangement it replaces and the change of each production case's BGA feed terms.
+    BgaNmatch: the smallest common count meeting the target for both architectures."""
     d = J(SENS.parent / "bga_count_production.json")   # campaign hook (SENS: final_closure/sensitivity)
     if not d:
         return {}
     cl = d["closure"]
-    m = {"BgaKeq": fx(d["k_eq"], 2), "BgaNmatch": str(d.get("matched_count") or NA),
+    m = {"BgaKeq": fx(d["k_eq"], 2),
+         "BgaNmatch": str(d.get("matched_count_dc_rule") or d.get("matched_count") or NA),
          "BgaNmatchSzero": str(d.get("matched_count_S0") or NA),
-         "BgaIrmsZone": fx(d["currents_A"]["Z1"]["HV_SDEC"], 1)}
+         "BgaIrmsZone": fx(d["currents_A"]["Z1"]["HV_SDEC"], 1),
+         "BgaTarget": fx(d.get("criterion_A_per_ball"), 0),
+         "BgaTargetSens": fx(d.get("criterion_sensitivity_A_per_ball"), 1)}
+    ad = d.get("adopted_count") or {}
+    bc = d.get("ball_currents_at_count") or {}
+    if d.get("modelled_count"):
+        m["BgaNmodel"] = str(d["modelled_count"])
+    for a, tag in (("Z1", "Zone"), ("Z2", "Ztwo")):
+        sb = (d.get("site_budget") or {}).get(a) or {}
+        if sb:
+            m[f"BgaSitesTotal{tag}"] = str(sb["sites"])
+            m[f"BgaSiteCap{tag}"] = str(sb["cap_per_rail"])
+        pa = (bc.get("per_arch") or {}).get(a) or {}
+        if a in ad and pa:
+            m[f"BgaNadopt{tag}"] = str(ad[a])
+            m[f"BgaSitesAdopt{tag}"] = str(2 * int(ad[a]))
+            m[f"BgaSiteFrac{tag}"] = fx(100.0 * pa["site_fraction"], 1)
+            m[f"BgaIball{tag}"] = fx(pa["I_ball_closure_rule_A"], 2)
+            m[f"BgaMargin{tag}"] = fx(pa.get("margin_A"), 3)
+            m[f"BgaPasses{tag}"] = "yes" if pa.get("passes") else "no"
+            fe = pa.get("feed") or {}
+            if fe.get("R_loop_20C_ohm"):
+                m[f"BgaRloop{tag}"] = fx(1e3 * fe["R_loop_20C_ohm"], 2)
+                m[f"BgaRloopModel{tag}"] = fx(1e3 * fe["R_loop_20C_modelled_ohm"], 2)
+        mo = ((d.get("modelled_arrangement") or {}).get("per_arch") or {}).get(a) or {}
+        if mo:
+            m[f"BgaIballModel{tag}"] = fx(mo["I_ball_closure_rule_A"], 2)
+            m[f"BgaSiteFracModel{tag}"] = fx(100.0 * mo["site_fraction"], 1)
+        sc = (d.get("sensitivity_count") or {}).get(a) or {}
+        if sc:
+            m[f"BgaNsens{tag}"] = str(sc["n_per_rail"]) if sc.get("n_per_rail") else "none"
+            if sc.get("n_per_rail"):
+                m[f"BgaSensInBudget{tag}"] = "yes" if sc.get("within_site_budget") else "no"
+    z1 = (bc.get("per_arch") or {}).get("Z1") or {}
+    if z1.get("I_ball_rms_max_A") is not None:
+        m["BgaRmsBoundZone"] = fx(z1["I_ball_rms_max_A"], 2)
+    if bc.get("k_eq_port_model_at_count") is not None:
+        m["BgaKeqAtCountZone"] = fx(bc["k_eq_port_model_at_count"], 2)
+    ce = d.get("coupled_effect") or {}
+    for key, r in (ce.get("per_case") or {}).items():
+        t, a = key.split("_")
+        if r.get("coupled"):
+            m[f"BgaFeedDp{t}{ATAG[a]}"] = f"{r['dP_W']:+.2f}"
+    if ce:
+        m["BgaFeedDpMax"] = fx(ce.get("max_abs_dP_W"), 2)
+        m["BgaFeedDpThreshold"] = fx(ce.get("threshold_W"), 1)
     for a, tag in (("Z1", "Zone"), ("Z2", "Ztwo")):
         for s, st in (("HV_S0", "Szero"), ("HV_SDEC", "")):
             v = cl.get(f"{a}__{s}") or {}
@@ -216,7 +267,14 @@ def bga_count():
         if hi.get("n_min_screen"):
             m[f"BgaNminKhi{tag}"] = str(hi["n_min_screen"])
     pn = J(SENS.parent / "package_network.json") or {}   # campaign hook
-    if pn:
+    pa = J(SENS.parent / "package_network_adopted.json") or {}   # review round 3: adopted
+    if pa.get("loop", {}).get("Z1"):
+        conv = pa["convergence"]
+        f1 = max(conv["Z1_supply"]["final"]["i_ball_max_a"],
+                 conv["Z1_return"]["final"]["i_ball_max_a"])
+        m["BgaNcurrent"] = str(pa["loop"]["Z1"]["n_per_rail"])
+        m["BgaPeakCurrentCountProd"] = fx(f1 * d["currents_A"]["Z1"]["HV_SDEC"], 2)
+    elif pn:
         conv = pn["convergence"]
         f1 = max(conv["Z1_supply"]["final"]["i_ball_max_a"],
                  conv["Z1_return"]["final"]["i_ball_max_a"])

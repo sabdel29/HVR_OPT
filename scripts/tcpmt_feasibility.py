@@ -26,14 +26,15 @@ LIMITS (declared, with sources; LIMITS below)
                       chain recorded it, else the die layer of the converged field
   solder law          the hottest joint of the all-site search <= 125 C (the calibrated range of
                       the SAC305 law; the critical joint is reported too); solidus 217 C
-  BGA provisioning    (a) the PEAK PER-BALL CURRENT against the 1.5-A target (the engineering
-                      rule) at the case's own waveform: the solved per-ball peak fraction of the
-                      package network at the case's ball count x the case's 48-V RMS current
-                      (the DC peak x k rule; Z1, Z2's BGA-ring feed) and, for Z1 in the
-                      production state, the worst-ball RMS of the harmonic port model
-                      (input_decoupling.json ball_currents_recommended, scaled to the case's
-                      48-V current); the check takes the WORSE of the two and reports both;
-                      Z3's 1-V balls at DC with equal sharing. BGA_POLICY decides how it enters
+  BGA provisioning    (a) the PEAK PER-BALL CURRENT against the 2-A target (1.5 A a
+                      sensitivity) at the case's own waveform: the solved per-ball peak fraction
+                      of the package network at the case's ball count x the case's 48-V RMS
+                      current (the DC peak x k rule, ONE rule for every integration; Z1, Z2's
+                      BGA-ring feed; review round 3: the counts are the re-closure's ADOPTED
+                      ones, final_closure_pkg_network.ADOPT_RULE) and, for Z1 in the
+                      production state, the worst-ball RMS of the harmonic port model (scaled
+                      to the case's 48-V current) reported as an idealized bound, not the
+                      verdict; Z3's 1-V balls at DC with equal sharing. BGA_POLICY decides how it enters
                       (review round 3; the authors decide): "hard" = a filter (fails the
                       candidate), "requirement" (default) = a stated requirement on the package,
                       reported but not a filter. Every record carries its verdict under BOTH
@@ -88,9 +89,10 @@ LIMITS = {"gan_Tj_C": 150.0, "ron_fit_max_C": 125.0, "mlcc_C": 125.0, "inductor_
           "ir_drop_mV_per_rail": 30.0}
 #: REVIEW ROUND 3 -- the per-ball target is 2 A (published design assumption: Kuan et al., IEEE
 #: ASQED 2015, doi:10.1109/ACQED.2015.7274009), with 1.5 A as a conservative sensitivity. The
-#: ball counts are fixed at the modelled arrangement (no reallocation). How the target enters the
-#: stage (both evaluated on every record, so post-processing applies either without reruns):
-#: both are evaluated on every record, so post-processing applies either without reruns):
+#: 48-V ball counts are the re-closure's ADOPTED ones (the authors' decision of 2026-11-22: per
+#: architecture the smallest legal count meeting the target within the site budget,
+#: final_closure_pkg_network.ADOPT_RULE). How the target enters the stage (both evaluated on
+#: every record, so post-processing applies either without reruns):
 #:   hard          the per-ball check is a FILTER: a case above 2 A per ball is infeasible
 #:   requirement   the per-ball check is a STATED REQUIREMENT on the package (the current each
 #:                 ball must carry), reported beside the verdict, not a filter (DEFAULT)
@@ -121,7 +123,8 @@ LIMIT_SOURCES = {
     "solder_cal_C": "calibrated range of the SAC305 constitutive law",
     "solder_solidus_C": "SAC305 solidus",
     "bga_A_per_ball": "2-A per-ball design assumption (Kuan et al., IEEE ASQED 2015); 1.5 A as a "
-                      "conservative sensitivity; counts fixed at the modelled arrangement",
+                      "conservative sensitivity; 48-V counts: the smallest legal count meeting "
+                      "the target within the site budget (the re-closure's adopted count)",
     "bga_power_site_fraction_max": "DECLARED: at least 25 % of the package's own ball sites "
                                    "left for signal and auxiliary nets",
     "ir_drop_mV_per_rail": "DECLARED: 30 mV per rail (3 % of the 1-V rail), maximum static "
@@ -428,10 +431,32 @@ def _screen():
     return _NET["screen"]
 
 
+def _adopted():
+    """The re-closure's network at the ADOPTED count of each architecture (review round 3,
+    final_closure_pkg_network.ADOPT_RULE: package_network_adopted.json beside the production
+    network), when it is of the production network's design; else {}."""
+    if "adopted" not in _NET:
+        import final_closure_ledger as FL
+        pn, f = _network(), FC / FL.ADOPTED_NETWORK_NAME
+        pa = json.loads(f.read_text()) if f.is_file() else {}
+        _NET["adopted"] = pa if (pa and pn and FL._same_design(pn, pa)) else {}
+    return _NET["adopted"]
+
+
 def peak_fraction(net_arch, n, network=None):
     """Largest per-ball current per ampere of the 48-V rail current at n balls per rail:
-    the converged network when n is its matched count, else the exhaustive screen (level 1) of
-    the production network (never for another design's network)."""
+    the re-closure's converged network when n is its adopted count for the architecture (review
+    round 3), the network build's converged network when n is its matched count, else the
+    exhaustive screen (level 1) of the production network (never for another design's
+    network)."""
+    if network is None:
+        pa = _adopted()
+        lp = (pa.get("loop") or {}).get(net_arch) or {}
+        if lp and int(lp.get("n_per_rail") or -1) == int(n):
+            conv = pa["convergence"]
+            v = [conv[f"{net_arch}_{r}"]["final"]["i_ball_max_a"] for r in ("supply", "return")]
+            lv = max((pa.get("meta") or {}).get("final_levels") or [0])
+            return max(v), f"adopted-count network (level {lv})"
     pn = _network(network)
     if pn and pn.get("matched_count") == n:
         conv = pn.get("convergence") or {}
@@ -465,9 +490,22 @@ def port_model_ball_rms(case, n):
     the chain's S0 current (I_total_dc_A) and scales with the 48-V current."""
     if case.get("scenario") != TC.SCEN["SDEC"]:
         return None, "reference state: the scenario factor (closure rule) alone"
+    # review round 3: at the re-closure's adopted count, its port-model record there
+    # (bga_count_production.json ball_currents_at_count.port_model, at the S0 current)
+    try:
+        pc = json.loads((FC / "bga_count_production.json").read_text())
+        pm = (pc.get("ball_currents_at_count") or {}).get("port_model") or {}
+        if (int((pc.get("adopted_count") or {}).get("Z1") or -1) == int(n)
+                and pm.get("I_ball_rms_max_A_at_S0_current") and pm.get("I_total_dc_A")):
+            b = {"n_per_rail": int(n), "I_total_dc_A": pm["I_total_dc_A"],
+                 "I_ball_rms_max_A": pm["I_ball_rms_max_A_at_S0_current"]}
+        else:
+            b = None
+    except (FileNotFoundError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        b = None
     f = TR / "input_decoupling.json"
     try:
-        b = json.loads(f.read_text())["summary"]["ball_currents_recommended"]
+        b = b or json.loads(f.read_text())["summary"]["ball_currents_recommended"]
     except (FileNotFoundError, KeyError, TypeError, json.JSONDecodeError):
         return None, "no port-model ball currents in input_decoupling.json"
     if int(b.get("n_per_rail") or -1) != int(n) or not b.get("I_total_dc_A"):
@@ -571,7 +609,8 @@ def z2_ring_feed():
         return {"n_per_rail": fd["n_per_rail"], "peak_fraction": fd.get("peak_fraction"),
                 "source": fd.get("peak_fraction_source")}
     pn = _network()
-    n = pn.get("matched_count")
+    lp = ((_adopted().get("loop") or {}).get("Z2") or {})      # review round 3: adopted count
+    n = lp.get("n_per_rail") or pn.get("matched_count")
     if not n:
         return None
     frac, src = peak_fraction("Z2", n)

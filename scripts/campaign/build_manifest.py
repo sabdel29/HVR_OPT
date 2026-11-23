@@ -30,13 +30,20 @@ committed one (the design record's `decoupling` block, configs/design_points.yam
 research/tcpmt_revision/decoupling_by_design.json); the campaign's own decoupling chain
 re-derives it and derived.k_check records the difference. If no legal BGA count closes the
 production state, the network is built at the declared fallback count and flagged NOT_CLOSED
-(final_closure_pkg_network.FALLBACK_RULE). Review round 3: at most 220 balls per rail, and
-the count stays at the network's (the modelled arrangement; no reallocation);
-derived.bga_reclose judges the per-ball current at the k the campaign's chain derived with ONE
-rule for every integration, the DC peak x k_eq, against the feasibility target (2 A per ball,
-Kuan et al. 2015; 1.5 A as a sensitivity), and records Z1's worst-ball RMS of the port model as
-an idealized bound; the feasibility stage applies the same target per TCPMT_BGA_POLICY
-('requirement' by default, 'hard' a filter; both policies' verdicts are stored).
+(final_closure_pkg_network.FALLBACK_RULE): the modelled arrangement, the network the
+decoupling chain derives k_eq on. Review round 3 (the authors' decision of 2026-11-22):
+derived.bga_reclose ADOPTS the provisioned 48-V count of each architecture -- the smallest
+legal count per rail meeting the feasibility target (2 A per ball, Kuan et al. 2015; 1.5 A
+reported as a sensitivity) by ONE rule for every integration, the DC peak x k_eq at the k the
+campaign's chain derived, within the site budget (75 % of the package's own sites; Z2's ring:
+at most 198 per rail) and at most 220 per rail -- solves the network there
+(package_network_adopted.json, which the BGA-fed ledgers, the Z2 ring feed and the feasibility
+stage take) and records Z1's worst-ball RMS of the port model as an idealized bound and the
+change of each production case's BGA feed terms (coupled_effect). The per-ball check reads the
+production cases' own 48-V current, so the production cases on another count are re-run after
+the re-closure and the re-closure confirms the count (a second pass; README 4c). The
+feasibility stage applies the same target per TCPMT_BGA_POLICY ('requirement' by default,
+'hard' a filter; both policies' verdicts are stored).
 Paths in `outputs` are relative to the campaign results root (= the stand-in for research/);
 `@fields/` is $HVR_FIELDS of the campaign.
 """
@@ -312,8 +319,10 @@ def prep_jobs(d=None, land=True):
         notes="the count is closed and matched at the PRODUCTION state, at the committed "
               "production k of the design record (`decoupling`), at most 220 balls per rail; "
               "no closing count -> the declared fallback count, flagged NOT_CLOSED "
-              "(match_fallback): the modelled arrangement; the per-ball verdict (DC peak x k_eq against "
-              "the 2-A target, 1.5 A a sensitivity) follows in derived.bga_reclose")
+              "(match_fallback): the modelled arrangement, on which the decoupling chain "
+              "derives k_eq; the provisioned count (the smallest legal count meeting the 2-A "
+              "target by the DC peak x k_eq rule within the site budget) and the per-ball "
+              "verdict follow in derived.bga_reclose (package_network_adopted.json)")
     if not land:
         return out
     out["land_est"] = post(f"{pre}prep.z3land_estimate", "prep", "tcpmt_z3_landside_estimate.py",
@@ -418,7 +427,10 @@ def build(design):
                 deps=[prep["network"], dplace] + (land_deps if a == "Z3" else []),
                 n_el_k=120 if a != "Z3" else 110, analog=sens("Z2", "sdec_B", "HV_SDEC"),
                 notes="PRODUCTION STATE: implemented decoupling at the k_eq this campaign's "
-                      "decoupling chain derives (derived.decap_placement)")
+                      "decoupling chain derives (derived.decap_placement); a BGA-fed ledger "
+                      "(Z1) takes the 48-V balls at the re-closure's adopted count when "
+                      "package_network_adopted.json exists (second pass after "
+                      "derived.bga_reclose)")
     dsum = summary_chain(dplace, prod[("Z1", "S0", "A")], prod[("Z1", "S1", "A")])
     # converged fields (copied out of the work tree; read by mech variants, figures, feedback)
     fields = {}
@@ -543,17 +555,21 @@ def build(design):
          notes="the k_eq the campaign's decoupling chain derives against the committed "
                "production k the package network was closed at")
     post("derived.bga_reclose", "derived", "final_closure_pkg_network.py",
-         [fc("bga_count_production.json")], args=["reclose"],
+         [fc("bga_count_production.json"), fc("package_network_adopted.json")],
+         args=["reclose"],
          deps=[prep["network"], dsum] + [prod[(a, "SDEC", t)] for a in ("Z1", "Z2")
                                         for t in TIERS],
          ncpus=4, env={"FC_WORKERS": 4}, est_h=0.3,
-         notes="the per-ball check at the production state with the production cases' "
-               "48-V currents (level-2 verification), at the k this campaign's decoupling "
-               "chain derives, at the network's count (the modelled arrangement, 220 balls per "
-               "rail; no reallocation): one rule for every integration, the DC peak x k_eq, "
-               "against the feasibility target (2 A per ball, Kuan et al. 2015; 1.5 A as a "
-               "sensitivity); Z1's worst-ball RMS of the port model is recorded as an "
-               "idealized bound")
+         notes="the 48-V count ADOPTED per architecture (review round 3, the authors' decision "
+               "of 2026-11-22): the smallest legal count meeting the feasibility target (2 A "
+               "per ball, Kuan et al. 2015) by one rule for every integration, the verified "
+               "DC peak x k_eq at the production cases' 48-V currents and the k this "
+               "campaign's decoupling chain derives, within the site budget (Z2's ring: at "
+               "most 198 per rail) and at most 220 per rail; the network solved there "
+               "(package_network_adopted.json), the 1.5-A sensitivity (the count it needs), "
+               "Z1's worst-ball RMS of the port model as an idealized bound, and the change of "
+               "each production case's BGA feed terms (above 0.1 W: the production cases on "
+               "another count are re-run and this job confirms the count)")
     post("derived.decap_limits", "derived", "tcpmt_decap_placement.py",
          [tr("decoupling_limits.json")], args=["limits"], deps=["derived.bga_reclose"],
          est_h=0.15, evidence="input_decoupling limits of the m36 development run: wall 321 s",

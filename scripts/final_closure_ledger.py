@@ -393,11 +393,70 @@ def intra_vr(t_conv_c, scen, arch="Z1"):
 # ---------------------------------------------------------------------------
 # package HV network, BGA, TSV, pads
 # ---------------------------------------------------------------------------
+#: REVIEW ROUND 3 (the authors' decision of 2026-11-22): the 48-V BGA carries the re-closure's
+#: ADOPTED count (final_closure_pkg_network.ADOPT_RULE: per architecture the smallest legal
+#: count meeting the per-ball target, within the site budget), solved by the re-closure into
+#: this file beside the network build's package_network.json (whose count, the modelled
+#: arrangement, is the network the decoupling chain derives k_eq on). Only which lattice sites
+#: carry 48 V changes; the ball layer and the joint search do not.
+ADOPTED_NETWORK_NAME = "package_network_adopted.json"
+
+
+def _same_design(a, b):
+    ka = ((a.get("meta") or {}).get("design") or {})
+    kb = ((b.get("meta") or {}).get("design") or {})
+    return all(ka.get(k) == kb.get(k) for k in ("design", "tag", "n_vr"))
+
+
+def merge_adopted(pn, adopted):
+    """The network build's record with the adopted network's loop and per-ball split (per
+    architecture key, at its own count) in place of the modelled arrangement's, when the
+    adopted network is of the same design; otherwise the network build's record unchanged."""
+    if not adopted or not _same_design(pn, adopted):
+        return pn
+    out = dict(pn)
+    out["loop"] = {**pn.get("loop", {}), **adopted.get("loop", {})}
+    out["convergence"] = {**pn.get("convergence", {}), **adopted.get("convergence", {})}
+    out["adopted_count"] = dict(adopted.get("adopted_count") or {})
+    out["modelled_count"] = pn.get("matched_count")
+    return out
+
+
 @lru_cache(maxsize=1)
 def package_network():
     """The package 48 V network (research/final_closure/package_network.json; a non-default
-    Z1 design names its own, solved on its own cell grid)."""
-    return json.loads(Z1D.package_network_file().read_text())
+    Z1 design names its own, solved on its own cell grid), at the re-closure's adopted count
+    when the re-closure has written one for the same design beside it (ADOPTED_NETWORK_NAME)."""
+    f = Z1D.package_network_file()
+    pn = json.loads(f.read_text())
+    fa = f.with_name(ADOPTED_NETWORK_NAME)
+    return merge_adopted(pn, json.loads(fa.read_text())) if fa.is_file() else pn
+
+
+def package_hv_terms(pn, nk, i_hv_rms, t_bga):
+    """The package-level 48-V terms of a BGA-fed architecture as the ledger rows carry them:
+    the package HV RDL sheet of each rail (the network's 20-C loop resistance x rho_Cu(T) /
+    rho_Cu(20 C)) and the BGA balls of each rail (Table III rho_solder h / A x sum f^2 of the
+    solved per-ball split), at the BGA temperature t_bga and the 48-V RMS current i_hv_rms, on
+    network record `pn` (key nk). {term: {P_w, R_ohm, n_per_rail}}; the re-closure evaluates
+    the same terms on the adopted and the modelled networks (its coupled-effect check)."""
+    import pad_interface as PAD
+    from interconnect import rho_solder
+    loop = pn["loop"][nk]
+    kt_bga = rho_ratio_cu(t_bga)
+    kt_sol = rho_solder(t_bga) / rho_solder(20.0)
+    out = {}
+    for rail in ("supply", "return"):
+        r20 = loop[f"r_{rail}_ohm"]
+        out[f"P_pkg_RDL_HV_{rail}"] = {"P_w": i_hv_rms ** 2 * r20 * kt_bga,
+                                       "R_ohm": r20 * kt_bga,
+                                       "n_per_rail": int(loop["n_per_rail"])}
+        f = np.asarray(pn["convergence"][f"{nk}_{rail}"]["i_ball_frac"])
+        r_ball = PAD.bga_ball_resistance_ohm(20.0) * kt_sol
+        out[f"P_BGA_{rail}"] = {"P_w": r_ball * i_hv_rms ** 2 * float(np.sum(f ** 2)),
+                                "R_ohm": r_ball / max(1e-30, 1.0 / float(np.sum(f ** 2))),
+                                "n_per_rail": len(f)}
+    return out
 
 
 def pad_count(case):
@@ -654,27 +713,25 @@ def ledger(arch, scen, temps, i_hv_avg_a, pad_case=PAD_PRODUCTION):
     if HV_FEED[arch] == "BGA_FED":
         # the package-level 48 V network: BGA balls + package 48 V RDL sheet (Z1, and the
         # Z2_BGA_FED_CONTROL). A direct-fed architecture has no such network.
+        # Review round 3: at the re-closure's adopted count when it exists (package_network).
         pn = package_network()
         nk = NETWORK_KEY[arch]
-        loop = pn["loop"][nk]
-        kt_bga = rho_ratio_cu(t_bga)
-        from interconnect import rho_solder
-        kt_sol = rho_solder(t_bga) / rho_solder(20.0)
+        terms = package_hv_terms(pn, nk, i_hv_rms, t_bga)
+        src = ("48-V balls at the re-closure's adopted count (%s)" % ADOPTED_NETWORK_NAME
+               if nk in (pn.get("adopted_count") or {}) else "")
         for rail in ("supply", "return"):
-            r20 = loop[f"r_{rail}_ohm"]
+            t = terms[f"P_pkg_RDL_HV_{rail}"]
             add(f"P_pkg_RDL_HV_{rail}", f"package HV RDL {rail} sheet", "48V",
-                i_hv_rms ** 2 * r20 * kt_bga, r20 * kt_bga, i_hv_rms, f"HV RMS, {scen}",
-                "voltage-fed refined FV sheet, N=%d/rail" % loop["n_per_rail"],
+                t["P_w"], t["R_ohm"], i_hv_rms, f"HV RMS, {scen}",
+                "voltage-fed refined FV sheet, N=%d/rail" % t["n_per_rail"],
                 lay["pkg_hv"], "MESH_CONVERGENCE",
-                "SCENARIO" if scen != "HV_S0" else "CLOSED")
-            f = np.asarray(pn["convergence"][f"{nk}_{rail}"]["i_ball_frac"])
-            r_ball = PAD.bga_ball_resistance_ohm(20.0) * kt_sol
-            add(f"P_BGA_{rail}", f"BGA {rail} balls (N=%d)" % len(f), "48V",
-                r_ball * i_hv_rms ** 2 * float(np.sum(f ** 2)),
-                r_ball / max(1e-30, 1.0 / float(np.sum(f ** 2))), i_hv_rms,
+                "SCENARIO" if scen != "HV_S0" else "CLOSED", src)
+            b = terms[f"P_BGA_{rail}"]
+            add(f"P_BGA_{rail}", f"BGA {rail} balls (N=%d)" % b["n_per_rail"], "48V",
+                b["P_w"], b["R_ohm"], i_hv_rms,
                 f"HV RMS, {scen}, solved per-ball split", "Table III rho_solder h / A",
                 lay["bga"], "SOURCE_REPRODUCTION",
-                "SCENARIO" if scen != "HV_S0" else "CLOSED")
+                "SCENARIO" if scen != "HV_S0" else "CLOSED", src)
 
     if arch == "Z3":
         # Z3: VR-to-PCB attach, PCB plated through-holes, 1 V BGA (z3_rows); the TSV field,
