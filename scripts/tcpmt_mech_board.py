@@ -335,6 +335,67 @@ def state_run(arch, tier, state="SDEC", factor=None, only=None):
     return f
 
 
+def state_et(arch, tier, state="SDEC", factor=None, refine=(1, 1)):
+    """Where the larger board's ring really sits between the two bounds of state_run: ONE
+    electrothermal fixed point of the compared case (its state's ledger hooks and its cooling
+    base, as tcpmt_review_variants runs it) on the board `factor` x the package side, on the
+    coarse rung, then free / screws / clamp mechanics on that field; compared with the case's
+    own coupon rung (sensitivity/ladder/<case>_r11.json). The Z3 board-plane deposit keeps its
+    FV map over the package footprint (the ring takes none of it) and its ledger temperature is
+    the whole board's mean, as in the coupon."""
+    import final_closure_physical_etm as E
+    import tcpmt_cases as TC
+    import tcpmt_review_variants as RV
+    import tcpmt_uncertainty as TU
+    import tcpmt_mech_production as MP
+    from hvr_scratch import path as scratch
+    factor = float(factor or max(bcfg()["extent_factor_options"]))
+    scen = TC.SCEN[state]
+    RV.set_scenario(scen)
+    RV.apply_tier(arch, tier)
+    RV._long_ccx()
+    os.environ["HVR_BOARD_EXTENT_FACTOR"] = f"{factor:g}"
+    os.environ["HVR_BOARD_FAR_H_MM"] = f"{float(bcfg()['far_field_h_max_mm']):g}"
+    rt = f"r{refine[0]}{refine[1]}"
+    tg = f"{state}_{tier}_{arch}_x{factor:g}_{rt}"
+    E.WD = scratch("mech_board_et", tg)
+    E._raise_stack_limit()
+    m, mats, st, tiles, minfo, L, th, hist, t_et, wd = E.run_et(arch, scen, E.PRODUCTION_H_XY,
+                                                                refine)
+    cp = TC.case_path(state, tier, arch)
+    coupon_f = TU.ladder_files(cp)[rt] if rt != "r21" else cp
+    res = {"arch": arch, "tier": tier, "state": state, "board_extent_factor": factor,
+           "board_side_mm": factor * st["geometry"]["power_substrate"]["size_x"]["value"],
+           "refine": list(refine), "n_elems": m.n_elems, "materials": minfo,
+           "P_loss_w": L["P_loss_w"], "thermal": {k: v for k, v in th.items() if k != "T_node"},
+           "et_history": hist, "et_wall_s": t_et,
+           "et_converged": (hist[-1]["max_dT_K"] < E.ET_TOL_K
+                            and hist[-1]["dP_rel"] < E.ET_TOL_P_REL),
+           "coupon_case": MP.rel(coupon_f) if Path(coupon_f).is_file() else None,
+           "inputs_sha1": MP.inputs_sha1([coupon_f]), "mechanics": {}}
+    OUTD.mkdir(parents=True, exist_ok=True)
+    f = OUTD / f"{tg}.json"
+    f.write_text(json.dumps(res, indent=1, default=float))
+    mt = bcfg()["mounting"]
+    zb = next(Lr for Lr in m.layers if Lr.name == "board").z0
+    scr = {"inset_mm": float(mt["screw_inset_mm"]), "patch_mm": float(mt["screw_patch_mm"]),
+           "z_mm": zb}
+    lines, _p, _a = clamp_lines(m, float(LAW._val(bcfg()["clamp"]["force_N"])))
+    for name, bc, prm, ld in (("free", "BC_BOARD", None, None),
+                              ("screws", "BC_BOARD_SCREWS", scr, None),
+                              ("clamp_screws", "BC_BOARD_SCREWS", scr, lines)):
+        me = mech_case(E, m, mats, st, th["T_node"], wd, arch, tiles, name, bc, prm, ld, True)
+        res["mechanics"][name] = me
+        f.write_text(json.dumps(res, indent=1, default=float))
+        sm = summary_of(me)
+        print(f"{tg} {name}: " + json.dumps({k: sm.get(k) for k in (
+            "die_warpage_pv_um", "du_c_um", "site_mm", "wall_s", "error")}, default=float),
+            flush=True)
+    os.environ.pop("HVR_BOARD_EXTENT_FACTOR", None)
+    os.environ.pop("HVR_BOARD_FAR_H_MM", None)
+    return f
+
+
 def state_local(state="SDEC"):
     """The clamp in the local response of each compared case (v2 model, production law at its
     converged window): the critical joint of the screw-mounted coupon cycled between the
@@ -386,7 +447,7 @@ def state_summarize(state="SDEC", with_local=False):
     out = {"what": "board size, mounting and clamp on the compared cases, mechanics only on "
                    "their converged fields (finding 6)", "state": state, "config": bcfg(),
            "cases": {}, "inputs_sha1": {}}
-    for f in sorted(OUTD.glob(f"{state}_*_*.json")):
+    for f in sorted(OUTD.glob(f"{state}_?_Z?.json")):
         r = json.loads(f.read_text())
         out["inputs_sha1"].update(r.get("inputs_sha1") or {})
         out["inputs_sha1"][str(f.resolve())] = MP.sha1(f)
@@ -408,6 +469,36 @@ def state_summarize(state="SDEC", with_local=False):
                                 "U_case": {"warp": U.get(f"{ukey}.warp"),
                                            "du": U.get(f"{ukey}.du")},
                                 "mechanics": rows}
+    # the larger board's own field (state_et, coarse rung) against the coupon rung: where the
+    # ring sits between the hot-ring and cold-ring bounds of the production-mesh solves
+    for f in sorted(OUTD.glob(f"{state}_?_Z?_x*_r*.json")):
+        r = json.loads(f.read_text())
+        key = f"{state}_{r['tier']}_{r['arch']}"
+        c = out["cases"].get(key)
+        cf = r.get("coupon_case")
+        cp = json.loads((R / cf).read_text()) if cf and (R / cf).is_file() else None
+        fr = summary_of((r.get("mechanics") or {}).get("free") or {"error": "missing"})
+        if c is None or not cp or "du_c_um" not in fr:
+            continue
+        out["inputs_sha1"][str(f.resolve())] = MP.sha1(f)
+        cm = cp["mechanics"]
+        et = {"file": f.name, "refine": r["refine"], "et_converged": r.get("et_converged"),
+              "T_max_K": r["thermal"]["T_max_C"] - cp["thermal"]["T_max_C"],
+              "P_loss_rel": r["P_loss_w"] / cp["P_loss_w"] - 1,
+              "warp_rel": fr["die_warpage_pv_um"] / cm["die_warpage_pv_um"] - 1,
+              "du_rel": fr["du_c_um"] / cm["joint_search"]["critical"]["du_um"] - 1}
+        for k in ("screws", "clamp_screws"):
+            sk = summary_of((r.get("mechanics") or {}).get(k) or {"error": "missing"})
+            if "du_c_um" in sk:
+                et[f"{k}_warp_rel_vs_free"] = sk["die_warpage_pv_um"] / fr["die_warpage_pv_um"] - 1
+                et[f"{k}_du_rel_vs_free"] = sk["du_c_um"] / fr["du_c_um"] - 1
+        hot = (c["mechanics"].get("free_ring_hot") or {})
+        cold = (c["mechanics"].get("free_ring_cold") or {})
+        for y in ("warp", "du"):
+            h, cl = hot.get(f"{y}_rel_vs_case"), cold.get(f"{y}_rel_vs_case")
+            if h is not None and cl is not None and abs(h - cl) > 1e-12:
+                et[f"{y}_position_in_bracket"] = (et[f"{y}_rel"] - cl) / (h - cl)
+        c["larger_board_own_field"] = et
     if with_local:
         loc = state_local(state)
         for t, v in loc.items():
@@ -530,6 +621,13 @@ def main():
         only = sys.argv[sys.argv.index("--only") + 1].split(",") if "--only" in sys.argv \
             else None
         print(state_run(sys.argv[2], sys.argv[3], st, fac, only))
+    elif sys.argv[1:2] == ["state-et"]:
+        # python tcpmt_mech_board.py state-et ARCH TIER [--state SDEC] [--factor 3] [--refine 11]
+        st = sys.argv[sys.argv.index("--state") + 1] if "--state" in sys.argv else "SDEC"
+        fac = float(sys.argv[sys.argv.index("--factor") + 1]) if "--factor" in sys.argv \
+            else None
+        r = sys.argv[sys.argv.index("--refine") + 1] if "--refine" in sys.argv else "11"
+        print(state_et(sys.argv[2], sys.argv[3], st, fac, (int(r[0]), int(r[1]))))
     elif sys.argv[1:2] == ["state-summarize"]:
         # python tcpmt_mech_board.py state-summarize [--state SDEC] [--local]
         st = sys.argv[sys.argv.index("--state") + 1] if "--state" in sys.argv else "SDEC"

@@ -7481,6 +7481,210 @@ jobs:
   evidence: as pass 1, starting from its converged windows
   notes: 'pass 2: the band at the joints the critical-joint check confirmed (the production joint response
     and its law band: the reported uncertainty of the joint response)'
+- id: mech.board_et.Z1.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state-et
+  - Z1
+  - A
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_A_Z1_x3_r11.json
+  deps:
+  - prod.Z1.SDEC.A
+  - ladder.Z1.sdec_A.r11
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.4
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_A_Z1_x3_r11.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  evidence: 'the case''s r11 rung: E-T 250-500 s + mechanics ~120 s; the 3x board adds a coarse ring (+7
+    % elements at r21)'
+  notes: the case's state hooks and cooling base, the 3x board, E-T then free / screws / clamp mechanics
+    (finding 6)
+- id: mech.board_et.Z1.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state-et
+  - Z1
+  - B
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_B_Z1_x3_r11.json
+  deps:
+  - prod.Z1.SDEC.B
+  - ladder.Z1.sdec_B.r11
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.4
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_B_Z1_x3_r11.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  evidence: 'the case''s r11 rung: E-T 250-500 s + mechanics ~120 s; the 3x board adds a coarse ring (+7
+    % elements at r21)'
+  notes: the case's state hooks and cooling base, the 3x board, E-T then free / screws / clamp mechanics
+    (finding 6)
+- id: mech.board_et.Z2.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state-et
+  - Z2
+  - A
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_A_Z2_x3_r11.json
+  deps:
+  - prod.Z2.SDEC.A
+  - ladder.Z2.sdec_A.r11
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.4
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_A_Z2_x3_r11.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  evidence: 'the case''s r11 rung: E-T 250-500 s + mechanics ~120 s; the 3x board adds a coarse ring (+7
+    % elements at r21)'
+  notes: the case's state hooks and cooling base, the 3x board, E-T then free / screws / clamp mechanics
+    (finding 6)
+- id: mech.board_et.Z2.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state-et
+  - Z2
+  - B
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_B_Z2_x3_r11.json
+  deps:
+  - prod.Z2.SDEC.B
+  - ladder.Z2.sdec_B.r11
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.4
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_B_Z2_x3_r11.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  evidence: 'the case''s r11 rung: E-T 250-500 s + mechanics ~120 s; the 3x board adds a coarse ring (+7
+    % elements at r21)'
+  notes: the case's state hooks and cooling base, the 3x board, E-T then free / screws / clamp mechanics
+    (finding 6)
+- id: mech.board_et.Z3.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state-et
+  - Z3
+  - A
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_A_Z3_x3_r11.json
+  deps:
+  - prod.Z3.SDEC.A
+  - ladder.Z3.sdec_A.r11
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.4
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_A_Z3_x3_r11.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  evidence: 'the case''s r11 rung: E-T 250-500 s + mechanics ~120 s; the 3x board adds a coarse ring (+7
+    % elements at r21)'
+  notes: the case's state hooks and cooling base, the 3x board, E-T then free / screws / clamp mechanics
+    (finding 6)
+- id: mech.board_et.Z3.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state-et
+  - Z3
+  - B
+  - --state
+  - SDEC
+  outputs:
+  - tcpmt_revision/board_study/SDEC_B_Z3_x3_r11.json
+  deps:
+  - prod.Z3.SDEC.B
+  - ladder.Z3.sdec_B.r11
+  ncpus: 2
+  mem_gb: 8.0
+  est_wall_h: 0.4
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_B_Z3_x3_r11.json
+    kind: json
+    nonempty:
+    - mechanics
+    fresh: true
+  evidence: 'the case''s r11 rung: E-T 250-500 s + mechanics ~120 s; the 3x board adds a coarse ring (+7
+    % elements at r21)'
+  notes: the case's state hooks and cooling base, the 3x board, E-T then free / screws / clamp mechanics
+    (finding 6)
 - id: mech.reflow.Z1.encap_uf_tg
   stage: mech_revision
   argv:
@@ -7795,6 +7999,12 @@ jobs:
   - mech.board.Z2.B
   - mech.board.Z3.A
   - mech.board.Z3.B
+  - mech.board_et.Z1.A
+  - mech.board_et.Z1.B
+  - mech.board_et.Z2.A
+  - mech.board_et.Z2.B
+  - mech.board_et.Z3.A
+  - mech.board_et.Z3.B
   - mech.lawband
   ncpus: 12
   mem_gb: 8.0
@@ -10242,6 +10452,12 @@ jobs:
   - mech.board.Z2.B
   - mech.board.Z3.A
   - mech.board.Z3.B
+  - mech.board_et.Z1.A
+  - mech.board_et.Z1.B
+  - mech.board_et.Z2.A
+  - mech.board_et.Z2.B
+  - mech.board_et.Z3.A
+  - mech.board_et.Z3.B
   - mech.board_summary
   - mech.state.Z1.encap_uf_tg
   - mech.state.Z2.encap_uf_tg

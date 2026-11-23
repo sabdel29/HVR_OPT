@@ -827,6 +827,21 @@ def mech_jobs(prod, vfields, lad, prep, class_b):
                                 "the 200-N clamp at the screws (hot / clamp only) and on a "
                                 "backplate; a 3x board with its ring at the coupon edge "
                                 "temperature or at 25 C (bounds), free, screws, clamp"))
+    # the larger board's own temperature field (one E-T of the case on the 3x board, coarse
+    # rung) against the case's coupon rung: where the ring sits between the two bounds
+    for a in ARCHS:
+        for t in TIERS:
+            f = tr(f"board_study/SDEC_{t}_{a}_x3_r11.json")
+            bd.append(job(f"mech.board_et.{a}.{t}", "mech_revision",
+                          ["scripts/tcpmt_mech_board.py", "state-et", a, t, "--state", "SDEC"],
+                          [f], deps=[prod[(a, "SDEC", t)], lad[(a, f"sdec_{t}", "r11")]],
+                          ncpus=2, mem_gb=8, est_h=0.4, prefer="pbs", env={"FC_THREADS": 2},
+                          evidence="the case's r11 rung: E-T 250-500 s + mechanics ~120 s; the "
+                                   "3x board adds a coarse ring (+7 % elements at r21)",
+                          validate=[{"file": f, "kind": "json", "nonempty": ["mechanics"],
+                                     "fresh": True}],
+                          notes="the case's state hooks and cooling base, the 3x board, E-T "
+                                "then free / screws / clamp mechanics (finding 6)"))
     out["board"] = job("mech.board_summary", "mech_revision",
                        ["scripts/tcpmt_mech_board.py", "state-summarize", "--state", "SDEC",
                         "--local"], [tr("board_study_SDEC.json")], deps=bd + [band],
