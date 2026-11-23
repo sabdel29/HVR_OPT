@@ -525,8 +525,9 @@ def z3_spec():
               vr_attach_rails reads
       via     one plated through-hole under every bump (via-in-pad), so the via field's
               VDD/GND counts ARE the attach lattice's; R = rho_Cu(T) L / A_annulus
-      bga     the 1 V ball count of the 1.5 A/ball ENGINEERING criterion on the DC rail
-              current, equal sharing (a lower bound on the BGA loss)
+      bga     the 1 V ball count of the per-ball target on the DC rail current (review round
+              3: 2 A, the feasibility stage's target, as for the 48-V balls; 500 per rail),
+              equal sharing (a lower bound on the BGA loss)
     """
     import final_closure_vr_attach as VA
     import physical_package as PPK

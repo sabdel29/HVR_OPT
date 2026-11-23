@@ -20,8 +20,9 @@ BOARD PLANES (P_PCB_plane_1V_spreading). The same FV approach on the board's 1 V
 the current enters each plane at the plated through-holes of the via-in-pad field under
 every cell (the 5 x 5 legal attach lattice of configs/phase0nz, VDD/GND checkerboard: 13 VDD
 and 12 GND vias per cell, each a disk of the drilled diameter) and leaves at the rail's BGA
-balls -- the same 0.8 mm checkerboard lattice and EQUAL sharing as the land-side estimate and
-the ledger's BGA rows. DECLARED board allocation (not in the Z3 design record, stated here):
+balls -- the same balls (the design record's count per rail on the 0.8 mm checkerboard,
+nearest the cell footprints) and EQUAL sharing as the land-side estimate and the ledger's BGA
+rows. DECLARED board allocation (not in the Z3 design record, stated here):
 2 planes x 35 um (1 oz) Cu per rail at 80 % occupancy, i.e. four of the fourteen 1-oz layers
 of the framework's 18-layer schedule (pcb_h1: 14 x 1 oz + 4 x 2 oz). The loss scales as
 1 / (copper per rail): giving the 1 V rails the four 2-oz central planes instead halves it.
@@ -99,12 +100,10 @@ def grid(h_mm):
 
 
 def ball_sites(rail):
-    """The rail's BGA sites: the 37 x 37 centred 0.8 mm lattice as a checkerboard, exactly
-    the set tcpmt_z3_landside_estimate.sources uses (685 VDD, 684 GND)."""
-    idx = np.arange(LS.N_SIDE) - (LS.N_SIDE - 1) / 2
-    par = 0 if rail == "VDD" else 1
-    return [(i * LS.PITCH, j * LS.PITCH) for a, i in enumerate(idx) for b, j in enumerate(idx)
-            if (a + b) % 2 == par]
+    """The rail's 1 V balls: exactly the set tcpmt_z3_landside_estimate.sources uses
+    (power_ball_sites: the design record's n_per_rail of the rail's checkerboard sites,
+    nearest the cell footprints; review round 3: 500 per rail at the 2-A target)."""
+    return LS.power_ball_sites(rail)
 
 
 def cell_centres():

@@ -558,7 +558,7 @@ def load_z3_package_config(path=None) -> Z3Package:
     if pv.get("card_fraction_basis") not in Z3_FRACTION_BASES:
         bad(f"pcb_via_field.card_fraction_basis must be one of {Z3_FRACTION_BASES}")
 
-    # --- BGA: the FULL lattice, with the 1 V field provisioned by the 1.5 A/ball rule ---------
+    # --- BGA: the FULL lattice, with the 1 V field provisioned by the per-ball target (2 A) ----
     bg = need(c, "bga", "root")
     pf = need(bg, "power_field_1v", "bga")
     sites = int(need(bg, "sites_total", "bga"))

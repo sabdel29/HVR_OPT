@@ -812,12 +812,17 @@ def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s,
                 "which cannot run at HEAD (engine md5 check, stale patch patterns): written "
                 "available:false; the DSE routing score of the re-selection check imports "
                 "paper_routing.py from outside the repository (the engine snapshot's record)")
+    # the platform's Z2 BGA-ring feed is at the re-closure's adopted count
+    plat = post("derived.platform", "derived", "tcpmt_platform.py",
+                [tr("platform_inclusive.json")],
+                deps=[cool, land_rep, "derived.bga_reclose"] + tier_cases)
+    # the feasibility stage reads the Z2 BGA-ring feed of the platform accounting and the
+    # re-closure's adopted counts (package_network_adopted.json, bga_count_production.json)
     post("derived.feasibility", "derived", "tcpmt_feasibility.py", [tr("feasibility.json")],
          deps=flds + [fields[("Z1", "HV_S1")], fields[("Z2", "HV_S1")]] + tier_cases +
-         [prod[(a, "S1", t)] for a in ARCHS for t in TIERS] + [omit], est_h=0.15, mem_gb=8,
-         evidence="mesh builds + frd reads (minutes)")
-    post("derived.platform", "derived", "tcpmt_platform.py", [tr("platform_inclusive.json")],
-         deps=[cool, land_rep] + tier_cases)
+         [prod[(a, "S1", t)] for a in ARCHS for t in TIERS] + [omit, plat,
+                                                                "derived.bga_reclose"],
+         est_h=0.15, mem_gb=8, evidence="mesh builds + frd reads (minutes)")
     solder = solder_jobs(prod, land, loc_t, loc_m)
     post("derived.uncertainty", "derived", "tcpmt_uncertainty.py",
          [tr("uncertainty.json"), "manuscript_v2/tab_uncertainty.tex"],

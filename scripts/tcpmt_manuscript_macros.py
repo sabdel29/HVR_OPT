@@ -460,7 +460,9 @@ def landside_macros():
         return {}
     j = json.loads(f.read_text())
     cs = sorted(j["cases"], key=lambda c: c["t_cu_um"])
-    n_need = 2 * 667                                   # 1.5 A per ball, both rails
+    # both rails at the design record's count (review round 3: 2 A per ball, 500 per rail;
+    # files written before it record the full checkerboard and the 1.5-A count, 667)
+    n_need = 2 * int(j.get("n_per_rail") or 667)
     bbox = 21.36                                       # cell-grid bounding box (mm)
     # the sheet loss scales as 1/t: the copper at which the Z3 lower-bound advantage is used up
     pt = sum(c["P_two_rails_w"] * c["t_cu_um"] for c in cs) / len(cs)

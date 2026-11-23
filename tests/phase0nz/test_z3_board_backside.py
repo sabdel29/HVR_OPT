@@ -230,15 +230,16 @@ def test_attach_pcb_via_and_bga_1v_rows_are_present_in_their_own_regions(led):
         r_via = rho_cu(TEMPS["pcb_via"]) * t_board_m / a_ann
         assert v["P_w"] == pytest.approx(n_cells * i_cell ** 2 * r_via / n_att[rail],
                                          rel=1e-12)
-        # BGA: 667 balls per rail (1 kA, whatever the count), equal sharing, Table III ball
+        # BGA: 500 balls per rail (review round 3: the 2-A per-ball target; 1 kA, whatever the
+        # count), equal sharing, Table III ball
         assert b["P_w"] == pytest.approx((n_cells * i_cell) ** 2 * PAD.bga_ball_resistance_ohm(
-            TEMPS["bga"]) / 667, rel=1e-12)
+            TEMPS["bga"]) / 500, rel=1e-12)
     d = led["z3_design"]
     assert d["vr_attach"]["bumps_per_rail_per_cell"] == n_att
     assert (d["pcb_via_field"]["n_vdd"], d["pcb_via_field"]["n_gnd"]) == (n_att["VDD"],
                                                                           n_att["GND"])
     assert d["pcb_via_field"]["cu_fraction_unit_cell"] == pytest.approx(0.1104, abs=1e-4)
-    assert (d["bga_1v"]["n_per_rail"], d["bga_1v"]["n_total"]) == (667, 1334)
+    assert (d["bga_1v"]["n_per_rail"], d["bga_1v"]["n_total"]) == (500, 1000)
     # the spreading the model does not carry is RECORDED, never silently absent
     for t in ("P_PCB_plane_1V_spreading", "P_sub_land_1V_spreading"):
         assert rows[t]["P_w"] == 0.0 and rows[t]["maturity"] == "NOT_MODELLED"
@@ -290,3 +291,30 @@ def test_every_ledger_watt_is_deposited(z3, led, tmp_path):
     assert dep[(("bga",), False)] == pytest.approx(p["P_BGA_1V_VDD"] + p["P_BGA_1V_GND"])
     assert dep[(("z3_attach_vr_pcb",), True)] == pytest.approx(
         p["P_VR_PCB_attach_VDD"] + p["P_VR_PCB_attach_GND"])
+
+
+def test_z3_1v_balls_follow_the_2a_rule_within_the_site_budget():
+    """Review round 3: Z3's 1 V balls take the same per-ball rule as the 48-V balls -- the
+    smallest count per rail meeting the feasibility stage's 2-A target at DC with equal sharing
+    (ceil(1000 / 2) = 500), within the 75 % site budget; the land-side and board-plane problems
+    put each rail's balls on its checkerboard sites nearest the cell footprints."""
+    import math
+    import final_closure_ledger as FL
+    import tcpmt_feasibility as FEAS
+    import tcpmt_z3_landside_estimate as LS
+    import tcpmt_z3land_fv as FV
+    b = FL.z3_spec()["bga"]
+    target = FEAS.LIMITS["bga_A_per_ball"]
+    assert b["criterion_a"] == target
+    assert b["n_per_rail"] == math.ceil(b["criterion_current_a"] / target) == 500
+    assert 2 * b["n_per_rail"] / b["sites_total"] <= FEAS.LIMITS["bga_power_site_fraction_max"]
+    assert math.ceil(b["criterion_current_a"] / (target - 0.01)) * 2 > 1000   # 500 is minimal
+    for rail in ("VDD", "GND"):
+        sel = LS.power_ball_sites(rail)
+        assert len(sel) == len(set(sel)) == 500 and FV.ball_sites(rail) == sel
+        lat = LS.lattice_sites(rail)
+        assert set(sel) <= set(lat)
+        d_in = max(LS.footprint_distance(*p) for p in sel)
+        d_out = min(LS.footprint_distance(*p) for p in set(lat) - set(sel))
+        assert d_in <= d_out                       # the nearest sites carry 1 V
+        assert all(p in sel for p in lat if LS.footprint_distance(*p) == 0.0)

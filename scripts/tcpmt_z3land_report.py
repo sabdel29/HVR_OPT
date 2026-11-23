@@ -472,9 +472,9 @@ def sharing_context(refs):
                                       "two_rails": g["two_rails"]},
             "temperatures_from": src,
             "Z3B_free_sharing_estimate": est,
-            "note": "free sharing puts ~365 of ~685 balls per rail above the 1.5 A criterion "
-                    "that set the 667-ball count (max ~3.3-3.4 A); equal sharing is what that "
-                    "criterion presumes"}
+            "note": "free sharing loads the 1 V balls unevenly (network_check: the per-ball "
+                    "spread); equal sharing is what the per-ball rule that set the count "
+                    "presumes (review round 3: 2 A, the design record's n_per_rail)"}
 
 
 def compact_table(out):

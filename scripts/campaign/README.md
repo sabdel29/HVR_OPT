@@ -295,6 +295,20 @@ outside the package-internal boundary) changes by -0.15 W (A) and -0.13 W (B). T
 outputs at 220 per rail are in `_campaign/superseded/2026-11-23_bga_220_per_rail/`. The S0/S1/S2
 reference cases and their variants are not re-run: they keep the modelled 220 per rail.
 
+**Z3's 1-V balls** (the coordinator's decision of 2026-11-23, for consistency): the same per-ball
+rule -- the smallest count per rail meeting the 2-A target at DC with equal sharing, ceil(1000 A /
+2 A) = 500 per rail (1000 of the 1369 sites, 73 % <= 75 %; it was 667 per rail at 1.5 A, 97 %, so
+Z3 failed `bga_sites`). The count is the Z3 design record's (`configs/phase0nz/
+z3_board_backside.yaml` `bga.power_field_1v`, validated by its loader). The ledger's 1-V BGA rows
+use it with equal sharing; the land-side and board-plane spreading problems
+(`tcpmt_z3_landside_estimate.power_ball_sites`, `tcpmt_z3land_fv.ball_sites`) put each rail's 500
+balls on its checkerboard sites nearest the cell footprints (distance to the nearest footprint,
+then to the package centre; before: the full checkerboard, 685 / 684 sites). This changes Z3's
+land-side redistribution, so the Z3 chain is re-run: the land-side sheets (`prep.z3land_*`), every
+Z3 case (S0/S1/S2 references and the production state), the land-side sensitivity cases and their
+report (`z3land.*`), the production-state rungs and variants (`ladder.Z3.sdec_*`, `feedback.Z3.*`,
+`hotspot.Z3.*`, `robust.caloric.Z3.*`) and the solder studies on the Z3 cases.
+
 **Feasibility: BGA policy.** `tcpmt_feasibility.BGA_POLICY` (env `TCPMT_BGA_POLICY`): `hard` = the
 per-ball check (peak per-ball current vs the 2-A target; 1.5 A recorded as the sensitivity,
 `ok_at_sensitivity_1p5A`) is a filter; `requirement` (DEFAULT) = a stated requirement on the

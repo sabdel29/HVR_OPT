@@ -78,16 +78,23 @@ bga:
   mechanical_field_sites: 1369 # the critical-joint search runs over all of them
   power_field_1v:
     carries: "1 V VDD + GND output of the cells (~1 kA per rail, whatever the count)"
-    i_ball_criterion_a: 1.5    # the framework's 1.5 A/ball ENGINEERING criterion (no source)
-    criterion_status: BOUNDED
+    # review round 3 (2026-11-23): the same per-ball rule as the 48-V balls -- the smallest
+    # count per rail meeting the feasibility stage's 2-A target (tcpmt_feasibility.LIMITS
+    # bga_A_per_ball; Kuan et al., IEEE ASQED 2015) at DC with equal sharing, within the site
+    # budget (2 x 500 = 1000 of 1369 sites, 73 % <= 75 %); was 667 per rail at 1.5 A (97 %)
+    i_ball_criterion_a: 2.0    # the per-ball target (1.5 A is the feasibility stage's sensitivity)
+    criterion_status: DESIGN_ASSUMPTION
     criterion_current_a: 1000.0  # DC 1 V rail current = P_load / V_out (the ledger checks it)
-    n_per_rail: 667            # ceil(1000 / 1.5); the loader re-derives it
+    n_per_rail: 500            # ceil(1000 / 2.0); the loader re-derives it
     sharing: EQUAL             # every 1 V ball of a rail carries I / n
     sharing_status: ASSUMPTION # the real sharing is uneven: the BGA loss is a LOWER BOUND
     resistance: "rho_solder(T) h / A per ball, Krishnakumar 2026 Table III (pad_interface.bga_ball_resistance_ohm)"
     site_assignment: >-
-      not resolved: under equal sharing the ledger does not depend on which 1334 sites
-      carry 1 V, and the homogenised BGA layer carries all 1369 sites mechanically.
+      under equal sharing the ledger does not depend on which 1000 sites carry 1 V, and the
+      homogenised BGA layer carries all 1369 sites mechanically; the land-side and board-plane
+      spreading problems (tcpmt_z3_landside_estimate.power_ball_sites) put each rail's 500
+      balls on its checkerboard sites nearest the cell footprints (distance to the nearest
+      footprint, then to the package centre), the outer sites left for signals.
 
 pcb_via_field:
   technology: "plated through-holes through the full board, via-in-pad"

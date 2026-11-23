@@ -7093,6 +7093,8 @@ jobs:
   - prod.Z3.S1.A
   - prod.Z3.S1.B
   - derived.omitted_losses
+  - derived.platform
+  - derived.bga_reclose
   ncpus: 1
   mem_gb: 8.0
   est_wall_h: 0.15
@@ -7760,6 +7762,7 @@ jobs:
   deps:
   - derived.cooling_spec
   - z3land.report
+  - derived.bga_reclose
   - prod.Z1.S0.A
   - prod.Z1.SDEC.A
   - prod.Z1.S0.B
@@ -8127,8 +8130,8 @@ jobs:
   - derived.tier_feed
   - derived.cooling_spec
   - derived.omitted_losses
-  - derived.feasibility
   - derived.platform
+  - derived.feasibility
   - solder.studies
   - solder.parameters
   - solder.z3land

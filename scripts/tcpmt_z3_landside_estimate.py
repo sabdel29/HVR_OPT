@@ -1,10 +1,13 @@
 """Z3: the package land-side 1 V redistribution that the Z3 ledger records as NOT_MODELLED.
 
-In Z3 the 1 V output (1 kA per rail) enters the package through the BGA. At the 1.5-A-per-
-ball criterion it needs 667 balls per rail, which fill 1334 of the 1369 sites of the 0.8-mm
-lattice, while the TSV fields that carry it to the die sit only under the cell footprints
-(the design record's grid). The current of every ball outside a footprint must therefore travel laterally
-in a land-side copper plane of the substrate. This script bounds that loss with a 2-D
+In Z3 the 1 V output (1 kA per rail) enters the package through the BGA. At the per-ball
+target (review round 3: 2 A, the feasibility stage's, as for the 48-V balls; the Z3 design
+record's count) it needs 500 balls per rail, 1000 of the 1369 sites of the 0.8-mm lattice
+(73 %; at the former 1.5-A criterion 667 per rail, 97 %), while the TSV fields that carry it
+to the die sit only under the cell footprints (the design record's grid). Each rail's balls
+take its checkerboard sites nearest the cell footprints (power_ball_sites); the current of
+every ball outside a footprint must still travel laterally in a land-side copper plane of the
+substrate. This script bounds that loss with a 2-D
 finite-volume solution of one rail's plane:
 
     div( (1/R_s) grad V ) = -(injection - sink),   R_s = rho_Cu(T) / (t_Cu * occupancy)
@@ -17,6 +20,7 @@ substrate. Loss = sum over grid faces of dV^2 / R_s, for one rail; the total is 
 from __future__ import annotations
 
 import json
+import math
 import os
 from pathlib import Path
 
@@ -49,12 +53,54 @@ def grid():
     return n, xc
 
 
+#: the Z3 design record (its 1 V ball count, bga.power_field_1v.n_per_rail)
+Z3_CFG = R / "configs" / "phase0nz" / "z3_board_backside.yaml"
+#: WHICH sites carry 1 V (declared, review round 3): each rail's checkerboard sites ranked by
+#: their distance to the nearest cell footprint (0 inside one), then to the package centre;
+#: the first n_per_rail of each rail carry it, the rest (the outer sites) are signals
+BALL_SELECTION = ("each rail's checkerboard sites nearest the cell footprints: ranked by the "
+                  "distance to the nearest footprint (0 inside), then to the package centre; "
+                  "the first n_per_rail carry 1 V")
+
+
+def n_per_rail():
+    """The 1 V balls per rail of the Z3 design record (validated by its loader: ceil(the DC
+    rail current / the per-ball target))."""
+    import physical_package as PPK
+    return int(PPK.load_z3_package_config(Z3_CFG).bga_1v_n_per_rail)
+
+
+def lattice_sites(rail):
+    """The rail's sites of the 37 x 37 centred 0.8-mm lattice as a VDD/GND checkerboard
+    (685 VDD, 684 GND)."""
+    idx = np.arange(N_SIDE) - (N_SIDE - 1) / 2
+    return [(i * PITCH, j * PITCH) for a, i in enumerate(idx) for b, j in enumerate(idx)
+            if (a + b) % 2 == (0 if rail == "VDD" else 1)]
+
+
+def footprint_distance(x, y):
+    """Distance (mm) from a site to the nearest cell footprint, 0 inside one."""
+    cidx = (np.arange(N_CELL) - (N_CELL - 1) / 2) * CELL_PITCH
+    h = CELL_SIDE / 2
+    return min(math.hypot(max(abs(x - cx) - h, 0.0), max(abs(y - cy) - h, 0.0))
+               for cx in cidx for cy in cidx)
+
+
+def power_ball_sites(rail, n=None):
+    """The rail's 1 V balls (BALL_SELECTION): n (default: the design record's n_per_rail) of
+    its checkerboard sites."""
+    n = n_per_rail() if n is None else int(n)
+    s = lattice_sites(rail)
+    if n >= len(s):
+        return s
+    return sorted(s, key=lambda p: (round(footprint_distance(*p), 9),
+                                    round(math.hypot(*p), 9), p[0], p[1]))[:n]
+
+
 def sources(n, xc, rail):
     """Net current into each grid cell (A): + ball injection, - footprint sink."""
     q = np.zeros((n, n))
-    idx = np.arange(N_SIDE) - (N_SIDE - 1) / 2
-    balls = [(i * PITCH, j * PITCH) for a, i in enumerate(idx) for b, j in enumerate(idx)
-             if (a + b) % 2 == (0 if rail == "VDD" else 1)]
+    balls = power_ball_sites(rail)
     ib = I_RAIL / len(balls)
     for x, y in balls:
         q[np.searchsorted(xc, x - 1e-9), np.searchsorted(xc, y - 1e-9)] += ib
@@ -103,6 +149,10 @@ def main():
            "occupancy": OCC, "I_rail_A": I_RAIL, "cases": []}
     q, nb, inside = sources(n, xc, "VDD")
     out["balls_per_rail"], out["balls_inside_footprints"] = nb, inside
+    out["n_per_rail"], out["ball_selection"] = n_per_rail(), BALL_SELECTION
+    out["lattice_sites_per_rail"] = len(lattice_sites("VDD"))
+    out["farthest_ball_from_a_footprint_mm"] = max(footprint_distance(*p)
+                                                   for p in power_ball_sites("VDD"))
     for t_um in (10.0, 20.0, 40.0, 60.0):
         r_s = rho / (t_um * 1e-6 * OCC)
         p, dv = solve(q, r_s)
