@@ -180,3 +180,17 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     - notation (N4K4 italic vs upright; heading case);
     - hot-spot = core-heavy map 108.5 C (the 157 C coarse run is not in campaign_v3).
 - Waiting on: the BGA reruns (agent in background) and the mechanics v2 runs.
+- 2026-11-23: mechanics v2 DONE (commits c8236cf..bb36d7c; campaign 341/341 valid; paper 22 pp, supplement 21 pp).
+  - Joint response (x1e-3/cycle; Schubert production law, band Xiao/measured Norton):
+    - cooling A: Z1 6.80, Z2 3.35, Z3 3.10;
+    - cooling B: Z1 5.59, Z2 1.55, Z3 2.13;
+    - orderings the same under all laws: A Z3<Z2<Z1, B Z2<Z3<Z1. Z1 now WORST in joint response.
+  - Warpage: A Z1 17.5 < Z3 46.9 < Z2 58.1 um; B 5.2 < 7.2 < 17.1. Z1 still best in warpage.
+  - The critical-site monotonicity FAILS (7801 of 16107 pairs); Z2's worst joint is an inner site (1.80x under A).
+    Asked the agent to make the reported response the max over the candidate sites.
+  - Reflow at 245 C: PV 80/127/81 um vs the 80-um coplanarity limit (Z2 1.58x). TCB bonding gap: Z1 148 and Z2 62 um
+    vs 8 um (FAIL); Z3 12 vs 50 (pass). Low-CTE EMC brings Z1 to 46 um.
+  - Board/clamp and encapsulant: moderate effects; low-CTE EMC gives 4 resolved reversals. Cooling-B robustness:
+    86/99 orderings kept, 1 resolved reversal.
+  - Writers' \WrEps* and \SchubertRatio are legacy; replace them with \MvEps*. compare.tex:140 "independent" Schubert
+    is wrong; classB eps base is legacy.
