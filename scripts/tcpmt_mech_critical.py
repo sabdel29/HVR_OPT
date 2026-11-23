@@ -38,6 +38,11 @@ ROUND2_ORDER = ["Z1_S0", "Z2_S0", "Z3_S0", "Z1_S1", "Z2_S1", "A_Z3", "B_Z1", "B_
 CASE_ORDER = ROUND2_ORDER if STATE == "round2" else MP.labels(STATE)
 
 
+#: relative response difference below which two solves of one site (or of its mirror image)
+#: are the same within the local model's own noise (CETOL 0.05 increment control)
+NOISE_REL = 0.01
+
+
 def mirror_of(a, b, tol=1e-6):
     """Site a is a mirror image of site b (|x| and |y| swapped or reflected)."""
     sa = sorted((abs(a["x_mm"]), abs(a["y_mm"])))
@@ -62,7 +67,7 @@ def monotonicity(rows):
     worst = None
     for a in done:
         for b in done:
-            if a is b or mirror_of(a, b):         # mirror twins: one site
+            if a is b:
                 continue
             if a["du_xy_um"] >= b["du_xy_um"] and a["T_C"] >= b["T_C"] and (
                     a["du_xy_um"] > b["du_xy_um"] or a["T_C"] > b["T_C"]):
@@ -81,7 +86,8 @@ def monotonicity(rows):
             "n_pareto_solved": len(front),
             "max_response_on_pareto_front": (best in front) if best else None,
             "rule": "a site at least as large in both |du_xy| and T must respond at least as "
-                    "much (pairs over every solved candidate; mirror twins are one site)"}
+                    "much (pairs over every solved candidate); excesses below 1 % are within the "
+                    "local model's noise"}
 
 
 def candidates(case, n_top):
@@ -154,12 +160,14 @@ def summarize(n_top):
             continue
         top = max(rows, key=lambda r: r["du_xy_um"])
         best = max(done, key=lambda r: r["d_eps"])
-        # a mirror image of the maximum-du site (the package is mirror-symmetric: the same
-        # site up to the solution's own asymmetry) is that site, not another critical joint
-        twin = best is not top and mirror_of(best, top)
+        # a mirror image of the maximum-du site responding more by less than the local model's
+        # own noise (NOISE_REL: CETOL-controlled creep increments) is that site; a larger excess
+        # is physical (the streamwise coolant breaks the mirror symmetry) and moves the joint
+        twin = (best is not top and mirror_of(best, top) and top["d_eps"] is not None
+                and best["d_eps"] / top["d_eps"] - 1.0 < NOISE_REL)
         if twin:
-            best = top if top["d_eps"] is not None else best
-        others = [r for r in done if r is not top and not mirror_of(r, top)]
+            best = top
+        others = [r for r in done if r is not top]
         second = max(others, key=lambda r: r["d_eps"]) if others else None
         n_tot += 1
         is_max = top["d_eps"] is not None and best is top
