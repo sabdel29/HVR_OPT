@@ -121,10 +121,10 @@ Layer & $z_0$ (mm) & $t$ (\textmu m) & Materials present \\
 \bottomrule
 \endlastfoot
 \multicolumn{4}{@{}l}{\emph{Z1 (embedded)}} \\
-Board & $-3.5000$ & 3200 & Board (homogenized) \\
+board & $-3.5000$ & 3200 & Board (homogenized) \\
 BGA & $-0.3000$ & 300 & BGA layer (homogenized) \\
-Si substrate (TSV field) & 0.0000 & 280 & Silicon, TSV tile (homogenized) \\
-Si substrate, top band & 0.2800 & 20 & Silicon, TSV tile (homogenized) \\
+sub\_lower & 0.0000 & 280 & Silicon, TSV tile (homogenized) \\
+tile\_band & 0.2800 & 20 & Silicon, TSV tile (homogenized) \\
 Converter landing RDL (on the substrate) & 0.3000 & 10 & RDL tier (laminate), underfill and encapsulant \\
 Converter tier 1 (input end): 2 HS GaN, 2 flying capacitors & 0.3100 & 1000 & Converter tier 1 card, underfill and encapsulant \\
 Interlayer RDL & 1.3100 & 10 & RDL tier (laminate), underfill and encapsulant \\
@@ -134,14 +134,14 @@ Converter tier 3: 1 LS GaN, 1 inductor & 2.0150 & 638 & Converter tier 3 card, u
 Interlayer RDL & 2.6530 & 10 & RDL tier (laminate), underfill and encapsulant \\
 Converter tier 4 (output end): 1 LS GaN, 2 inductors & 2.6630 & 638 & Converter tier 4 card, underfill and encapsulant \\
 Converter output RDL & 3.3010 & 10 & RDL tier (laminate), underfill and encapsulant \\
-Microbump interface & 3.3110 & 10 & Microbump layer (homogenized) \\
-Die & 3.3210 & 300 & Silicon \\
-TIM & 3.6210 & 50 & TIM \\
+Die microbumps & 3.3110 & 10 & Microbump layer (homogenized) \\
+die & 3.3210 & 300 & Silicon \\
+tim & 3.6210 & 50 & TIM \\
 \midrule
 \multicolumn{4}{@{}l}{\emph{Z2 (package-backside)}} \\
-Board & $-3.5000$ & 3200 & Board (homogenized) \\
+board & $-3.5000$ & 3200 & Board (homogenized) \\
 BGA & $-0.3000$ & 300 & BGA layer (homogenized) \\
-VR attach to the substrate & $-0.0300$ & 30 & Underfill and encapsulant, VR attach to the substrate \\
+Cu-pillar attach & $-0.0300$ & 30 & Underfill and encapsulant, VR attach to the substrate \\
 Land-side attach RDL & $-0.0400$ & 10 & RDL tier (laminate), underfill and encapsulant \\
 Converter tier 4 (output end): 1 LS GaN, 2 inductors & $-0.6780$ & 638 & Converter tier 4 card, underfill and encapsulant \\
 Interlayer RDL & $-0.6880$ & 10 & RDL tier (laminate), underfill and encapsulant \\
@@ -150,12 +150,12 @@ Interlayer RDL & $-1.3360$ & 10 & RDL tier (laminate), underfill and encapsulant
 Converter tier 2: 1 HS GaN, 1 LS GaN & $-2.0210$ & 685 & Converter tier 2 card, underfill and encapsulant \\
 Interlayer RDL & $-2.0310$ & 10 & RDL tier (laminate), underfill and encapsulant \\
 Converter tier 1 (input end): 2 HS GaN, 2 flying capacitors & $-3.0310$ & 1000 & Converter tier 1 card, underfill and encapsulant \\
-Si substrate (TSV field) & 0.0000 & 280 & Silicon, TSV tile (homogenized) \\
-Si substrate, top band & 0.2800 & 20 & Silicon, TSV tile (homogenized) \\
-Top RDL & 0.3000 & 10 & RDL tier (laminate) \\
-Microbump interface & 0.3100 & 10 & Microbump layer (homogenized) \\
-Die & 0.3200 & 300 & Silicon \\
-TIM & 0.6200 & 50 & TIM \\
+sub\_lower & 0.0000 & 280 & Silicon, TSV tile (homogenized) \\
+tile\_band & 0.2800 & 20 & Silicon, TSV tile (homogenized) \\
+z2\_top\_rdl & 0.3000 & 10 & RDL tier (laminate) \\
+Die microbumps & 0.3100 & 10 & Microbump layer (homogenized) \\
+die & 0.3200 & 300 & Silicon \\
+tim & 0.6200 & 50 & TIM \\
 \midrule
 \multicolumn{4}{@{}l}{\emph{Z3 (board-backside)}} \\
 Converter tier 1 (input end): 2 HS GaN, 2 flying capacitors & $-6.6010$ & 1000 & Converter tier 1 card, underfill and encapsulant \\
@@ -166,15 +166,15 @@ Converter tier 3: 1 LS GaN, 1 inductor & $-4.8960$ & 638 & Converter tier 3 card
 Interlayer RDL & $-4.2580$ & 10 & RDL tier (laminate), underfill and encapsulant \\
 Converter tier 4 (output end): 1 LS GaN, 2 inductors & $-4.2480$ & 638 & Converter tier 4 card, underfill and encapsulant \\
 Land-side attach RDL & $-3.6100$ & 10 & RDL tier (laminate), underfill and encapsulant \\
-VR attach to the board & $-3.6000$ & 100 & Underfill and encapsulant, VR attach to the board \\
-Board & $-3.5000$ & 3200 & Board (homogenized), board via field (homogenized) \\
+SAC attach & $-3.6000$ & 100 & Underfill and encapsulant, VR attach to the board \\
+board & $-3.5000$ & 3200 & Board (homogenized), board via field (homogenized) \\
 BGA & $-0.3000$ & 300 & BGA layer (homogenized) \\
-Si substrate (TSV field) & 0.0000 & 280 & Silicon, TSV tile (homogenized) \\
-Si substrate, top band & 0.2800 & 20 & Silicon, TSV tile (homogenized) \\
-Top RDL & 0.3000 & 10 & RDL tier (laminate) \\
-Microbump interface & 0.3100 & 10 & Microbump layer (homogenized) \\
-Die & 0.3200 & 300 & Silicon \\
-TIM & 0.6200 & 50 & TIM \\
+sub\_lower & 0.0000 & 280 & Silicon, TSV tile (homogenized) \\
+tile\_band & 0.2800 & 20 & Silicon, TSV tile (homogenized) \\
+z2\_top\_rdl & 0.3000 & 10 & RDL tier (laminate) \\
+Die microbumps & 0.3100 & 10 & Microbump layer (homogenized) \\
+die & 0.3200 & 300 & Silicon \\
+tim & 0.6200 & 50 & TIM \\
 \end{longtable}
 \nopagebreak\noindent Every layer of the production mesh, in the order of the mesh ($z_0$: bottom face; the board top is at $z=-0.3$~mm in every integration). Converter tiers: the mixed tiers of the design record ($M = 36$ (6$\times$6 cells), $N3K3K_A2$, EPC2014C / EPC2055, 805~kHz, flying capacitor Murata GRM188D72A105KE01 (1~\textmu F, 100~V), 4 mixed tiers), numbered from the converter's input (48-V) end and named by the parts they hold; tiers and interlayer RDLs together 2991~\textmu m. Z1 stacks them upward from the substrate; Z2 and Z3 hang them below the substrate and the board, the output end against the attach. Materials: the cards of Table~\ref{tab:supp-materials} assigned to elements of the layer.\par
 \endgroup
@@ -240,12 +240,12 @@ Cooling & Integration & Total & Top plate & Bottom plate & Natural convection \\
 \endfoot
 \bottomrule
 \endlastfoot
-A & Z1 & 1135.7 & 1134.9 & 0.0 & 0.73 \\
+A & Z1 & 1137.0 & 1136.2 & 0.0 & 0.73 \\
 A & Z2 & 1134.8 & 1134.6 & 0.0 & 0.20 \\
-A & Z3 & 1200.9 & 1199.7 & 0.0 & 1.25 \\
-B & Z1 & 1134.8 & 1126.0 & 8.8 & 0.05 \\
+A & Z3 & 1180.1 & 1178.9 & 0.0 & 1.21 \\
+B & Z1 & 1136.1 & 1127.1 & 8.9 & 0.05 \\
 B & Z2 & 1118.1 & 978.6 & 139.4 & 0.16 \\
-B & Z3 & 1154.8 & 1015.6 & 139.0 & 0.22 \\
+B & Z3 & 1136.9 & 1000.9 & 135.8 & 0.21 \\
 \end{longtable}
 \nopagebreak\noindent Total: dissipated heat, the die's 1000~W plus the package loss. Cooling~A: top plate; cooling~B: top plate and a bottom plate under the cell grid. Every case in the production state (implemented decoupling). Z3: land-side (40~\textmu m) and board-plane redistribution in the coupled solution.\par
 \endgroup
@@ -310,14 +310,14 @@ $T$ & $E$ & $\nu$ & $A$ & $n$ \\
 \endfoot
 \bottomrule
 \endlastfoot
-25 & 45 & 0.36 & $3.373\times10^{-16}$ & 7.405 \\
-50 & 42 & 0.36 & $5.829\times10^{-15}$ & 7.024 \\
-75 & 39 & 0.36 & $4.747\times10^{-14}$ & 6.787 \\
-100 & 36 & 0.36 & $1.658\times10^{-13}$ & 6.787 \\
-125 & 33 & 0.36 & $4.950\times10^{-13}$ & 6.787 \\
-150 & 30 & 0.36 & $1.299\times10^{-12}$ & 6.787 \\
+25 & 45 & 0.36 & $1.486\times10^{-16}$ & 7.606 \\
+50 & 42 & 0.36 & $2.868\times10^{-15}$ & 7.219 \\
+75 & 39 & 0.36 & $2.731\times10^{-14}$ & 6.955 \\
+100 & 36 & 0.36 & $9.541\times10^{-14}$ & 6.955 \\
+125 & 33 & 0.36 & $2.848\times10^{-13}$ & 6.955 \\
+150 & 30 & 0.36 & $7.473\times10^{-13}$ & 6.955 \\
 \end{longtable}
-\nopagebreak\noindent Production law: Schubert et al. (Garofalo (hyperbolic sine)~\cite{Schubert2003ECTC}), for SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature; the joint is SAC305 (BGA). The solver integrates $\dot\varepsilon_{\mathrm{in}} = A(T)\,(\sigma_{\mathrm{vm}}-\sigma_y)^{n(T)}$ with a zero yield surface ($\sigma_y = 10^{-6}$~MPa), i.e., the applied von~Mises stress the laws were fitted in, with no rate-independent hardening; the law enters as a temperature-dependent Norton surrogate fitted at every 2.5-$^\circ$C row of the card (listed at 25-$^\circ$C steps) over the stress window the joints visit, 5--40~MPa hot, 10--60~MPa cold (initial (not iterated)); surrogate rate error at most 30\,\% (hot dwell) and 48\,\% (cold dwell). Elasticity: $E(T) = 45 - 0.12\,(T-25)$~GPa (floor 5~GPa), $\nu$ = 0.36 (assumption (room-temperature band, Paska 2024; slope assumed)); thermal expansion 21.5~ppm/K, stress-free at 25\,$^\circ$C.\par
+\nopagebreak\noindent Production law: Schubert et al. (Garofalo (hyperbolic sine)~\cite{Schubert2003ECTC}), for SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature; the joint is SAC305 (BGA). The solver integrates $\dot\varepsilon_{\mathrm{in}} = A(T)\,(\sigma_{\mathrm{vm}}-\sigma_y)^{n(T)}$ with a zero yield surface ($\sigma_y = 10^{-6}$~MPa), i.e., the applied von~Mises stress the laws were fitted in, with no rate-independent hardening; the law enters as a temperature-dependent Norton surrogate fitted at every 2.5-$^\circ$C row of the card (listed at 25-$^\circ$C steps) over the stress window the joints visit, 10.4286--35.936~MPa hot, 17.3484--50.3917~MPa cold (converged); surrogate rate error at most 15\,\% (hot dwell) and 23\,\% (cold dwell). Elasticity: $E(T) = 45 - 0.12\,(T-25)$~GPa (floor 5~GPa), $\nu$ = 0.36 (assumption (room-temperature band, Paska 2024; slope assumed)); thermal expansion 21.5~ppm/K, stress-free at 25\,$^\circ$C.\par
 \endgroup
 \medskip
 
@@ -341,9 +341,9 @@ Ingredient & Model form & Source & Calibration window and extrapolation \\
 \endlastfoot
 Elasticity & Linear in $T$ (Table~\ref{tab:supp-card}) & Room-temperature $E$: midpoint of the 40--50-GPa band of~\cite{Paska2024SAC305}; slope and $\nu$ assumed & Room temperature only; no temperature dependence in the source \\
 Yield and hardening & None (zero yield) & The zero-yield laws carry no rate-independent hardening; the round-2 card's isotropic hardening of a Chaboche fit is retired & -- \\
-Creep: Schubert et al. (production) & Garofalo (hyperbolic sine) & \cite{Schubert2003ECTC}; SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature & Calibrated: not stated; visited: 5--40~MPa hot, 10--60~MPa cold; extrapolated: unknown (no calibration window) \\
-Creep: Xiao and Armstrong (band) & -- & \cite{Xiao2005SAC}, constants as tabulated in~\cite[Table~6]{Yuan2023SAC305}; Sn3.9Ag0.6Cu (NOT SAC305; DEFECT \#41) & Calibrated: 45--150\,$^\circ$C, 7.51--15.92~MPa; visited: 5--40~MPa hot, 10--60~MPa cold; extrapolated: stress 5--60~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C) \\
-Creep: measured Norton fits (band) & -- & per-temperature Norton fits of the measured points of~\cite{Xiao2005SAC} (\cite[Table~5]{Yuan2023SAC305}); Sn3.9Ag0.6Cu (NOT SAC305) & Calibrated: 45--150\,$^\circ$C, 7.51--15.92~MPa; visited: 5--40~MPa hot, 10--60~MPa cold; extrapolated: stress 5--60~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C) \\
+Creep: Schubert et al. (production) & Garofalo (hyperbolic sine) & \cite{Schubert2003ECTC}; SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature & Calibrated: not stated; visited: 10.4286--35.936~MPa hot, 17.3484--50.3917~MPa cold; extrapolated: unknown (no calibration window) \\
+Creep: Xiao and Armstrong (band) & -- & \cite{Xiao2005SAC}, constants as tabulated in~\cite[Table~6]{Yuan2023SAC305}; Sn3.9Ag0.6Cu (NOT SAC305; DEFECT \#41) & Calibrated: 45--150\,$^\circ$C, 7.51--15.92~MPa; visited: 14.9542--32.6268~MPa hot, 18.2598--40.2355~MPa cold; extrapolated: stress 14.9542--40.2355~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C) \\
+Creep: measured Norton fits (band) & -- & per-temperature Norton fits of the measured points of~\cite{Xiao2005SAC} (\cite[Table~5]{Yuan2023SAC305}); Sn3.9Ag0.6Cu (NOT SAC305) & Calibrated: 45--150\,$^\circ$C, 7.51--15.92~MPa; visited: 15.7192--46.6758~MPa hot, 26.1452--70.4796~MPa cold; extrapolated: stress 15.7192--70.4796~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C) \\
 Thermal expansion & Constant & 21.5~ppm/K, assumed (21--24~ppm/K commonly quoted) & No temperature dependence \\
 Copper pads & Linear elastic & $E = 117$~GPa, $\nu = 0.34$, 16.6~ppm/K; handbook-type constants & No temperature dependence \\
 \end{longtable}
@@ -382,7 +382,7 @@ Time integration & implicit viscoplastic update (*VISCO); creep tolerance 0.05 o
 Increments, ramp step & initial 0.01~s, minimum $10^{-9}$~s, maximum 0.5~s \\
 Increments, dwell step & initial 0.05~s, minimum $10^{-9}$~s, maximum 15~s \\
 Response $\deps$ & last-cycle increment of the volume-averaged PEEQ of the solder core (fixed-width band) \\
-Compared responses & stabilized L0 (48 cycles; U = mesh + time + cycle + card grid) (Table~\ref{tab:supp-unc}) \\
+Compared responses & v2 local model on the production-state critical joints, production law schubert2003 (4-cycle L0; U = own L0$\to$L3 mesh change, else the largest checked joint's, and the 4$\to$8 cycle change, in quadrature; law band in the resolution) (Table~\ref{tab:supp-unc}) \\
 \end{longtable}
 \endgroup
 \medskip
@@ -391,11 +391,156 @@ Compared responses & stabilized L0 (48 cycles; U = mesh + time + cycle + card gr
 \begin{itemize}
 \item The production law (Schubert et al.) was fitted to SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature, not to the joint's SAC305 (BGA).
 \item Its constants are reprinted without their data window, so its calibration window is not stated; inside the measured window of the band laws its creep rate is 13--73 times the measured Sn3.9Ag0.6Cu rates (geometric mean 40).
-\item The band law Xiao and Armstrong (Sn3.9Ag0.6Cu (NOT SAC305; DEFECT \#41)) is calibrated on 45--150\,$^\circ$C, 7.51--15.92~MPa; the joints visit 5--40~MPa hot, 10--60~MPa cold, which extrapolates stress 5--60~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C).
-\item The band law measured Norton fits (Sn3.9Ag0.6Cu (NOT SAC305)) is calibrated on 45--150\,$^\circ$C, 7.51--15.92~MPa; the joints visit 5--40~MPa hot, 10--60~MPa cold, which extrapolates stress 5--60~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C).
-\item The Norton surrogate reproduces the production law within 30\,\% (hot dwell) and 48\,\% (cold dwell) in rate over the visited window; the error travels with the card.
-\item The visited window is the configured initial one: the iteration of the window to self-consistency has not been run.
+\item The band law Xiao and Armstrong (Sn3.9Ag0.6Cu (NOT SAC305; DEFECT \#41)) is calibrated on 45--150\,$^\circ$C, 7.51--15.92~MPa; the joints visit 14.9542--32.6268~MPa hot, 18.2598--40.2355~MPa cold, which extrapolates stress 14.9542--40.2355~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C).
+\item The band law measured Norton fits (Sn3.9Ag0.6Cu (NOT SAC305)) is calibrated on 45--150\,$^\circ$C, 7.51--15.92~MPa; the joints visit 15.7192--46.6758~MPa hot, 26.1452--70.4796~MPa cold, which extrapolates stress 15.7192--70.4796~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C).
+\item The Norton surrogate reproduces the production law within 15\,\% (hot dwell) and 23\,\% (cold dwell) in rate over the visited window; the error travels with the card.
+\item Every compared local response is recomputed under each law of the band; the rankings hold across the laws.
 \end{itemize}
+
+\needspace{16.0\baselineskip}
+\begingroup\footnotesize\setlength{\tabcolsep}{2.5pt}
+\begin{longtable}{@{}lrrrrrrrrr@{}}
+\caption{Joint response of the compared cases under the solder-law band}\label{tab:supp-jointband}\\
+\toprule
+Case & Site & $T_{\mathrm{sj}}$ & $|\Delta u_{xy}|$ & $\Delta u_z$ & Schubert et al. & Xiao and Armstrong & measured Norton fits & Band & $U_{95}$ \\
+ & (mm) & ($^\circ$C) & (\textmu m) & (\textmu m) & \multicolumn{1}{c}{($10^{-3}$)} & \multicolumn{1}{c}{($10^{-3}$)} & \multicolumn{1}{c}{($10^{-3}$)} & ($10^{-3}$) & (\%) \\
+\midrule
+\endfirsthead
+\multicolumn{10}{@{}l}{\emph{Table~\ref{tab:supp-jointband} (continued)}}\\
+\toprule
+Case & Site & $T_{\mathrm{sj}}$ & $|\Delta u_{xy}|$ & $\Delta u_z$ & Schubert et al. & Xiao and Armstrong & measured Norton fits & Band & $U_{95}$ \\
+ & (mm) & ($^\circ$C) & (\textmu m) & (\textmu m) & \multicolumn{1}{c}{($10^{-3}$)} & \multicolumn{1}{c}{($10^{-3}$)} & \multicolumn{1}{c}{($10^{-3}$)} & ($10^{-3}$) & (\%) \\
+\midrule
+\endhead
+\midrule
+\multicolumn{10}{r@{}}{\emph{continued on next page}}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Z1, A & (14.4, 14.4) & 112.9 & 1.95 & 0.32 & 6.80 & 6.43 & 5.96 & 5.96--6.80 & 1.9 \\
+Z2, A & (1.6, 12) & 85.4 & 0.27 & 0.42 & 3.35 & 3.02 & 2.55 & 2.55--3.35 & 2.7 \\
+Z3, A & (14.4, -14.4) & 96.1 & 3.75 & 0.77 & 3.10 & 2.77 & 2.32 & 2.32--3.10 & 2.6 \\
+Z1, B & (14.4, 14.4) & 105.0 & 0.79 & 0.46 & 5.59 & 5.24 & 4.77 & 4.77--5.59 & 2.4 \\
+Z2, B & (14.4, -14.4) & 73.1 & 1.73 & 0.53 & 1.55 & 1.26 & 0.81 & 0.81--1.55 & 2.9 \\
+Z3, B & (14.4, 14.4) & 75.8 & 1.59 & 0.56 & 2.13 & 1.83 & 1.36 & 1.36--2.13 & 2.9 \\
+\end{longtable}
+\nopagebreak\noindent Joint response $\deps$ (per cycle) at each case's critical joint in the production state (implemented decoupling), local model driven by the full cut-boundary displacement of the global solution (both pad faces: translation, in-plane stretch and rotation), linear 3-s ramps and 300-s dwells, 4 cycles, L0 mesh; one column per law of the solder-law band, the production law first. Band: lowest--highest law, the reported uncertainty of the joint response; $U_{95}$: numerical (own L0$\to$L3 and 4$\to$8-cycle changes, Table~\ref{tab:supp-localchecks}). The production law's surrogate window converged after 2 fits: 10.4286--35.936~MPa hot, 17.3484--50.3917~MPa cold. Joints: the maximum-response sites of the critical-joint check (Table~\ref{tab:supp-critv2}). Ranking per law: Schubert et al.: A Z3 \textless{} Z2 \textless{} Z1, B Z2 \textless{} Z3 \textless{} Z1; Xiao and Armstrong: A Z3 \textless{} Z2 \textless{} Z1, B Z2 \textless{} Z3 \textless{} Z1; measured Norton fits: A Z3 \textless{} Z2 \textless{} Z1, B Z2 \textless{} Z3 \textless{} Z1.\par
+\endgroup
+\medskip
+
+\needspace{13.6\baselineskip}
+\begingroup\footnotesize\setlength{\tabcolsep}{2.5pt}
+\begin{longtable}{@{}lrrrrrrccr@{}}
+\caption{Critical-joint check with the full boundary transfer}\label{tab:supp-critv2}\\
+\toprule
+Case & Lattice & Cand. & Solved & Pareto & Pairs & Viol. & Max-$\Delta u$ site & Max-response site & Ratio \\
+\midrule
+\endfirsthead
+\multicolumn{10}{@{}l}{\emph{Table~\ref{tab:supp-critv2} (continued)}}\\
+\toprule
+Case & Lattice & Cand. & Solved & Pareto & Pairs & Viol. & Max-$\Delta u$ site & Max-response site & Ratio \\
+\midrule
+\endhead
+\midrule
+\multicolumn{10}{r@{}}{\emph{continued on next page}}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Z1, A & 1369 & 66 & 66 & 4 & 2008 & 60/0 (0.1\,\%) & (14.4, 14.4) & (14.4, 14.4) & 1.000 \\
+Z2, A & 528 & 118 & 118 & 34 & 3202 & 2782/2737 (599.9\,\%) & (14.4, 14.4) & (1.6, 12) & 1.797 \\
+Z3, A & 1369 & 129 & 129 & 34 & 3315 & 1138/1018 (175.8\,\%) & (14.4, -14.4) & (14.4, -14.4) & 1.000 \\
+Z1, B & 1369 & 145 & 145 & 64 & 2743 & 2551/2266 (538.7\,\%) & (14.4, 14.4) & (14.4, 14.4) & 1.000 \\
+Z2, B & 528 & 92 & 92 & 32 & 1755 & 821/767 (379.5\,\%) & (14.4, 14.4) & (14.4, -14.4) & 1.068 \\
+Z3, B & 1369 & 119 & 119 & 25 & 3084 & 449/350 (89.9\,\%) & (14.4, 14.4) & (14.4, 14.4) & 1.000 \\
+\end{longtable}
+\nopagebreak\noindent Critical-joint check under the full cut-boundary displacement, production law at its converged window. Lattice: legal sites of the 0.8-mm lattice the all-site search covers (Z2: the ring around the board opening); candidates: the top 30 by $|\Delta u_{xy}|$, by relative face tilt, by $|\varepsilon_z|$ and by the deforming $\Delta u$, the strict Pareto front in ($|\Delta u_{xy}|$, $T$) and the corners, drawn over every lattice site; pairs: ordered pairs of solved sites where one is at least as large in both $|\Delta u_{xy}|$ and $T$ (mirror images of a site are that site); violations: pairs whose responses are ordered the other way, all / by more than 1\,\% (largest excess); ratio: response at the maximum-response site over that at the maximum-$|\Delta u_{xy}|$ site.\par
+\endgroup
+\medskip
+
+\needspace{24.0\baselineskip}
+\begingroup\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}lrrrrrr@{}}
+\caption{Checks of the local model at the compared joints}\label{tab:supp-localchecks}\\
+\toprule
+Check & Z1, A & Z2, A & Z3, A & Z1, B & Z2, B & Z3, B \\
+\midrule
+\endfirsthead
+\multicolumn{7}{@{}l}{\emph{Table~\ref{tab:supp-localchecks} (continued)}}\\
+\toprule
+Check & Z1, A & Z2, A & Z3, A & Z1, B & Z2, B & Z3, B \\
+\midrule
+\endhead
+\midrule
+\multicolumn{7}{r@{}}{\emph{continued on next page}}\\
+\endfoot
+\bottomrule
+\endlastfoot
+v2 response ($10^{-3}$) & 6.80 & 3.35 & 3.10 & 5.59 & 1.55 & 2.13 \\
+Mesh L1 & $-$0.4 & $-$0.9 & $-$1.0 & $-$0.6 & $-$1.3 & $-$1.2 \\
+Mesh L2 & $-$1.2 & $-$1.8 & $-$1.9 & $-$1.6 & $-$2.1 & $-$2.1 \\
+Mesh L3 & $-$1.9 & $-$2.7 & $-$2.6 & $-$2.4 & $-$2.9 & $-$2.9 \\
+8 cycles & $-$0.0 & $-$0.0 & +0.0 & $-$0.0 & +0.0 & +0.0 \\
+Dwell 60 s & $-$5.5 & $-$11.1 & $-$11.4 & $-$6.6 & $-$22.8 & $-$17.1 \\
+Dwell 900 s & +3.0 & +5.9 & +6.0 & +3.5 & +12.4 & +9.2 \\
+Ramp 30 s & +0.1 & +0.1 & +0.1 & +0.1 & +0.2 & +0.2 \\
+C3D8I elements & +0.4 & -- & -- & -- & -- & -- \\
+C3D8R elements & +1.6 & -- & -- & -- & -- & -- \\
+Round-2 model (R2) & $-$26.9 & $-$89.3 & +236.6 & $-$63.7 & +76.2 & +14.0 \\
+R2 + ramps & $-$27.0 & $-$89.3 & +237.0 & $-$63.8 & +76.2 & +14.0 \\
++ zero-yield law & +20.7 & $-$4.6 & +339.6 & $-$6.6 & +280.8 & +159.5 \\
++ $u_z$ released & +5.8 & $-$72.7 & +322.2 & $-$48.1 & +252.1 & +133.5 \\
+v2 with STEP loads & $-$0.1 & $-$0.1 & $-$0.0 & $-$0.2 & +0.0 & $-$0.0 \\
+\end{longtable}
+\nopagebreak\noindent Change of $\deps$ against the production local model (first row), in \%. Mesh: the nested joint meshes L1--L3 against L0; 8 cycles against 4; dwell and ramp against 300 and 3~s; element types against C3D8. Attribution chain: the round-2 model (overstress card with hardening, in-plane $\Delta u$ only, STEP loading) and each change toward the production model in turn. Critical fine-pitch joints, own geometry: Z1, A: die-converter microbumps 10~\textmu m $\gamma = 32.5\times10^{-3}$, $\deps = 26.19\times10^{-3}$ (33.31 under the in-plane transfer with $u_z$ released); Z2, A: VR-substrate Cu pillar 30~\textmu m $\gamma = 13.9\times10^{-3}$, $\deps = 12.01\times10^{-3}$ (23.20 under the in-plane transfer with $u_z$ released); Z3, A: VR-board SAC attach 100~\textmu m $\gamma = 10.6\times10^{-3}$, $\deps = 6.51\times10^{-3}$ (11.98 under the in-plane transfer with $u_z$ released); Z1, B: die-converter microbumps 10~\textmu m $\gamma = 36.5\times10^{-3}$, $\deps = 33.61\times10^{-3}$ (37.82 under the in-plane transfer with $u_z$ released); Z2, B: VR-substrate Cu pillar 30~\textmu m $\gamma = 4.9\times10^{-3}$, $\deps = 3.58\times10^{-3}$ (6.09 under the in-plane transfer with $u_z$ released); Z3, B: VR-board SAC attach 100~\textmu m $\gamma = 6.2\times10^{-3}$, $\deps = 10.22\times10^{-3}$ (9.34 under the in-plane transfer with $u_z$ released).\par
+\endgroup
+\medskip
+
+\needspace{27.2\baselineskip}
+\begingroup\footnotesize\setlength{\tabcolsep}{2.5pt}
+\begin{longtable}{@{}llrcrrrrr@{}}
+\caption{Interconnect layers of the compared cases}\label{tab:supp-interconnect}\\
+\toprule
+Case & Layer & $h$ & Critical site & $T$ & $\gamma$ & $\gamma_{\mathrm{def}}$ & $\Delta u_z$ & r31/r21 \\
+ & & (\textmu m) & (mm) & ($^\circ$C) & ($10^{-3}$) & ($10^{-3}$) & (\textmu m) &  \\
+\midrule
+\endfirsthead
+\multicolumn{9}{@{}l}{\emph{Table~\ref{tab:supp-interconnect} (continued)}}\\
+\toprule
+Case & Layer & $h$ & Critical site & $T$ & $\gamma$ & $\gamma_{\mathrm{def}}$ & $\Delta u_z$ & r31/r21 \\
+ & & (\textmu m) & (mm) & ($^\circ$C) & ($10^{-3}$) & ($10^{-3}$) & (\textmu m) &  \\
+\midrule
+\endhead
+\midrule
+\multicolumn{9}{r@{}}{\emph{continued on next page}}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Z1, A & BGA & 300 & (14.40, 14.40) & 112.9 & 6.50 & 6.58 & 0.321 & 1.00 \\
+ & Die microbumps & 10 & (-11.05, 11.05) & 78.4 & 32.53 & 27.16 & 0.045 & 1.23 \\
+ & \multicolumn{8}{l}{\emph{BGA driver: membrane 79\,\%, bending 23\,\%, residual $-2$\,\% of $\Delta u$; rigid rotation 0.023~\textmu m}} \\
+Z2, A & BGA & 300 & (14.40, 14.40) & 84.4 & 8.04 & 3.37 & 0.651 & 0.99 \\
+ & Cu-pillar attach & 30 & (10.41, 10.41) & 86.1 & 13.89 & 8.92 & 0.001 & 1.12 \\
+ & Die microbumps & 10 & (-11.05, 11.05) & 80.4 & 19.71 & 16.81 & 0.077 & 1.08 \\
+ & \multicolumn{8}{l}{\emph{BGA driver: membrane 447\,\%, bending $-339$\,\%, residual $-8$\,\% of $\Delta u$; rigid rotation 1.503~\textmu m}} \\
+Z3, A & BGA & 300 & (14.40, -14.40) & 96.1 & 12.51 & 4.53 & 0.771 & 1.01 \\
+ & SAC attach & 100 & (8.14, -8.14) & 145.5 & 10.58 & 8.37 & 0.573 & 1.06 \\
+ & Die microbumps & 10 & (11.05, -11.05) & 86.0 & 12.65 & 6.62 & 0.042 & 1.05 \\
+ & \multicolumn{8}{l}{\emph{BGA driver: membrane 458\,\%, bending $-355$\,\%, residual $-3$\,\% of $\Delta u$; rigid rotation 2.397~\textmu m}} \\
+Z1, B & BGA & 300 & (14.40, 14.40) & 105.0 & 2.62 & 5.38 & 0.460 & 0.99 \\
+ & Die microbumps & 10 & (11.05, 11.05) & 77.9 & 36.53 & 33.27 & 0.054 & 1.24 \\
+ & \multicolumn{8}{l}{\emph{BGA driver: membrane $-780$\,\%, bending 870\,\%, residual 9\,\% of $\Delta u$; rigid rotation 0.829~\textmu m}} \\
+Z2, B & BGA & 300 & (14.40, 14.40) & 73.1 & 6.10 & 2.60 & 0.532 & 1.00 \\
+ & Cu-pillar attach & 30 & (7.64, 10.41) & 74.6 & 4.89 & 3.66 & 0.062 & 1.11 \\
+ & Die microbumps & 10 & (9.86, 9.86) & 73.3 & 3.53 & 3.72 & 0.025 & 1.03 \\
+ & \multicolumn{8}{l}{\emph{BGA driver: membrane 420\,\%, bending $-311$\,\%, residual $-9$\,\% of $\Delta u$; rigid rotation 1.063~\textmu m}} \\
+Z3, B & BGA & 300 & (14.40, 14.40) & 75.8 & 5.31 & 3.04 & 0.556 & 1.01 \\
+ & SAC attach & 100 & (-10.41, 10.41) & 72.7 & 6.17 & 6.81 & 0.560 & 1.11 \\
+ & Die microbumps & 10 & (11.05, 11.05) & 74.4 & 6.64 & 5.19 & 0.035 & 1.07 \\
+ & \multicolumn{8}{l}{\emph{BGA driver: membrane 323\,\%, bending $-219$\,\%, residual $-5$\,\% of $\Delta u$; rigid rotation 0.681~\textmu m}} \\
+\end{longtable}
+\nopagebreak\noindent Every interconnect layer of each compared case, searched at every site (BGA: the legal lattice; the thinner layers: every mesh node). $\gamma = |\Delta u_{xy}|/h$ at the layer's critical site; $\gamma_{\mathrm{def}}$: the largest layer shear strain $\partial u_x/\partial z + \partial u_z/\partial x$ (the joint's rigid rotation removed); r31/r21: $\gamma$ on the fine rung over the production rung of the case's own ladder (the die-edge corner over the microbumps is singular, so its driver does not converge). Membrane / bending: the in-plane displacement of each plate at its stiffness-weighted neutral plane and its rotation times the lever arm, along $\Delta u$ at the BGA critical site.\par
+\endgroup
+\medskip
 
 \section{Verification, Uncertainty and Cost}
 Tables~\ref{tab:supp-mesh}--\ref{tab:supp-unc} give the production meshes, solver settings and runtimes, every verification check with what it does and does not establish, and the numerical uncertainty of each compared output.
@@ -420,9 +565,9 @@ Integration & Nodes & Elements & Structural & E--T & E--T & Structural & Total \
 \endfoot
 \bottomrule
 \endlastfoot
-Z1 & 120{,}033 & 112{,}256 & 360{,}099 & 4 & 1678 & 636 & 0.6 \\
-Z2 & 125{,}113 & 113{,}184 & 375{,}339 & 4 & 1731 & 1873 & 1.0 \\
-Z3 & 103{,}331 & 95{,}752 & 309{,}993 & 6 & 3080 & 678 & 1.0 \\
+Z1 & 120{,}033 & 112{,}256 & 360{,}099 & 4 & 1434 & 563 & 0.6 \\
+Z2 & 125{,}113 & 113{,}184 & 375{,}339 & 4 & 706 & 692 & 0.4 \\
+Z3 & 103{,}331 & 95{,}752 & 309{,}993 & 6 & 1012 & 314 & 0.4 \\
 \end{longtable}
 \nopagebreak\noindent Cases: the production state (implemented decoupling) under cooling~A, Z3 with the coupled land-side and board-plane redistribution; --: not run yet. Production mesh: graded $h_{xy}=1.1$~mm grid with every in-plane interval split in two (r21); 8-node hexahedra (thermal C3D8, structural C3D8I incompatible modes); CalculiX~2.23. Thermal: steady conduction, direct solver; E--T stop: every coupled region temperature changes by less than 0.25~K and the loss by less than 0.1\,\%; coolant energy balance iterated to 0.02~K. Structural: linear thermoelastic, $T_{\mathrm{ref}}=25\,^\circ$C, rigid-body motion restrained only, iterative Cholesky solver (verified against the direct SPOOLES solver, Table~\ref{tab:supp-verif}). Machine: two-socket Intel Xeon Gold 6342 (2.8~GHz, 48 cores), shared; thermal solves on 2 threads, structural on 1. Times include every E--T iteration (each a thermal solve with its coolant balance) and the structural solve with the all-site joint search; they exclude geometry construction and meshing (under 2~min per integration), the local solder model and postprocessing. Sensitivity runs repeat the same chain.\par
 \endgroup
@@ -503,27 +648,27 @@ Output & Int. & \multicolumn{6}{c}{Relative to the value, S0 reference ladder (\
 \endfoot
 \bottomrule
 \endlastfoot
-Loss (W) & Z1 & 0.30 & 0.05 & 0.10 & 0.00 & 0.32 & +0.26 & 0.45 & 0.41 \\
+Loss (W) & Z1 & 0.30 & 0.05 & 0.10 & 0.00 & 0.32 & +0.26 & 0.46 & 0.42 \\
  & Z2 & 0.66 & 0.00 & 0.10 & 0.00 & 0.67 & +0.22 & 0.91 & 0.36 \\
- & Z3 & \multicolumn{6}{c}{no S0 reference ladder} & 0.59 & 0.70 \\
+ & Z3 & \multicolumn{6}{c}{no S0 reference ladder} & 0.55 & 0.64 \\
 \midrule
-Peak temp.\ (K) & Z1 & 1.39 & 0.30 & 0.29 & 0.13 & 1.46 & +1.21 & 1.39 & 1.18 \\
+Peak temp.\ (K) & Z1 & 1.39 & 0.31 & 0.29 & 0.13 & 1.46 & +1.21 & 1.46 & 1.19 \\
  & Z2 & 2.86 & 0.05 & 0.27 & 0.13 & 2.87 & +0.97 & 2.68 & 2.84 \\
- & Z3 & \multicolumn{6}{c}{no S0 reference ladder} & 2.81 & 2.69 \\
+ & Z3 & \multicolumn{6}{c}{no S0 reference ladder} & 2.32 & 0.33 \\
 \midrule
-Die warpage (\textmu m) & Z1 & 9.93 & 37.05 & 0.00 & 0.43 & 38.36 & -12.35 & 1.66 & 0.45 \\
+Die warpage (\textmu m) & Z1 & 9.88 & 36.99 & 0.00 & 0.43 & 38.29 & -12.33 & 1.66 & 0.47 \\
  & Z2 & 19.59 & 0.15 & 0.00 & 0.43 & 19.59 & +0.05 & 11.4 & 6.42 \\
- & Z3 & \multicolumn{6}{c}{no S0 reference ladder} & 1.67 & 4.98 \\
+ & Z3 & \multicolumn{6}{c}{no S0 reference ladder} & 1.60 & 4.67 \\
 \midrule
-$\du$ (\textmu m) & Z1 & 5.01 & 5.67 & 0.00 & 0.43 & 7.57 & -1.89 & 0.09 & 0.02 \\
+$\du$ (\textmu m) & Z1 & 4.96 & 5.79 & 0.00 & 0.43 & 7.63 & -1.93 & 0.09 & 0.02 \\
  & Z2 & 3.50 & 0.32 & 0.00 & 0.43 & 3.54 & -0.11 & 0.09 & 0.01 \\
- & Z3 & \multicolumn{6}{c}{no S0 reference ladder} & 0.14 & 0.03 \\
+ & Z3 & \multicolumn{6}{c}{no S0 reference ladder} & 0.13 & 0.03 \\
 \midrule
-$\deps$ ($10^{-3}$/cycle) & Z1 & \multicolumn{6}{c}{local mesh and cycle count; law band in the resolution} & -- & -- \\
- & Z2 & \multicolumn{6}{c}{local mesh and cycle count; law band in the resolution} & -- & -- \\
- & Z3 & \multicolumn{6}{c}{local mesh and cycle count; law band in the resolution} & -- & -- \\
+$\deps$ ($10^{-3}$/cycle) & Z1 & \multicolumn{6}{c}{local mesh and cycle count; law band in the resolution} & 0.13 & 0.13 \\
+ & Z2 & \multicolumn{6}{c}{local mesh and cycle count; law band in the resolution} & 0.09 & 0.04 \\
+ & Z3 & \multicolumn{6}{c}{local mesh and cycle count; law band in the resolution} & 0.08 & 0.06 \\
 \end{longtable}
-\nopagebreak\noindent One rule for every comparison: $D = y_b - y_a$ is resolved when $|D+\beta_D| > U_{95}(D)$, with $\beta_D$ the signed production-mesh bias and $U_{95}(D)$ the uncertainty of the difference at about 95\,\% coverage. Discretization: a GCI-type estimate on the nested ladder r11/r21/r31 of $D$ itself (the observed order with $F_s = 1.25$ where the ladder is asymptotic, $|p - 2| \leq 0.2$; otherwise $F_s = 3$ with the order limited to [0.5, 2]), so errors shared on one mesh family cancel only where they move together; the through-thickness split r11$\to$r12 ($F_s = 3$), the E--T stop of each case and the matched-reference agreement of the solver, in quadrature. Columns: the components of each integration's S0 reference ladder (cooling~A production case), relative to the value (temperatures: to the rise above the inlet); $U_{95}$ of each compared case; $\dagger$: the case has no ladder of its own and carries its reference's estimate provisionally (identical mesh; 6 ladder rungs listed for the campaign). $\deps$: own local numerical $U$ (L0$\to$L3, cycle count), resolved only when resolved under every law of the solder-law band (L: production law only) (solved on the S0 cases; not compared in this state). Model-form uncertainty is not part of $U$: it is covered by rerunning both integrations under each declared alternative (Table~\ref{tab:supp-variants}). Comparisons, lower integration first (R: resolved; --: not resolved; P: pending): Cooling~A, Z1/Z2: Loss Z2 R; Peak temp.\ Z1 R; Die warpage Z1 R; $\du$ Z1 R. Cooling~A, Z1/Z3: Loss Z1 R; Peak temp.\ Z1 R; Die warpage Z1 R; $\du$ Z1 R. Cooling~B, Z2/Z1: Loss Z2 R; Peak temp.\ Z2 R; Die warpage Z1 R; $\du$ Z1 R. Cooling~B, Z3/Z1: Loss Z1 R; Peak temp.\ Z3 R; Die warpage Z1 --; $\du$ Z1 R. Cooling~B, Z2/Z3: Loss Z2 R; Peak temp.\ Z2 R; Die warpage Z3 R; $\du$ Z3 R.\par
+\nopagebreak\noindent One rule for every comparison: $D = y_b - y_a$ is resolved when $|D+\beta_D| > U_{95}(D)$, with $\beta_D$ the signed production-mesh bias and $U_{95}(D)$ the uncertainty of the difference at about 95\,\% coverage. Discretization: a GCI-type estimate on the nested ladder r11/r21/r31 of $D$ itself (the observed order with $F_s = 1.25$ where the ladder is asymptotic, $|p - 2| \leq 0.2$; otherwise $F_s = 3$ with the order limited to [0.5, 2]), so errors shared on one mesh family cancel only where they move together; the through-thickness split r11$\to$r12 ($F_s = 3$), the E--T stop of each case and the matched-reference agreement of the solver, in quadrature. Columns: the components of each integration's S0 reference ladder (cooling~A production case), relative to the value (temperatures: to the rise above the inlet); $U_{95}$ of each compared case; $\dagger$: the case has no ladder of its own and carries its reference's estimate provisionally (identical mesh; 6 ladder rungs listed for the campaign). $\deps$: own local numerical $U$ (L0$\to$L3, cycle count), resolved only when resolved under every law of the solder-law band (L: production law only) (solved on the S0 cases; not compared in this state). Model-form uncertainty is not part of $U$: it is covered by rerunning both integrations under each declared alternative (Table~\ref{tab:supp-variants}). Comparisons, lower integration first (R: resolved; --: not resolved; P: pending): Cooling~A, Z1/Z2: Loss Z2 R; Peak temp.\ Z1 R; Die warpage Z1 R; $\du$ Z1 R; $\deps$ Z2 R. Cooling~A, Z1/Z3: Loss Z1 R; Peak temp.\ Z1 R; Die warpage Z1 R; $\du$ Z1 R; $\deps$ Z3 R. Cooling~B, Z2/Z1: Loss Z2 R; Peak temp.\ Z2 R; Die warpage Z1 R; $\du$ Z1 R; $\deps$ Z2 R. Cooling~B, Z3/Z1: Loss Z1 --; Peak temp.\ Z3 R; Die warpage Z1 R; $\du$ Z1 R; $\deps$ Z3 R. Cooling~B, Z2/Z3: Loss Z2 R; Peak temp.\ Z2 R; Die warpage Z3 R; $\du$ Z3 R; $\deps$ Z2 R.\par
 \endgroup
 \medskip
 
@@ -552,33 +697,34 @@ Case & \multicolumn{2}{c}{GaN $T_J$} & Capacitors & Inductor & RDL & Encapsulant
 \endfoot
 \bottomrule
 \endlastfoot
-Z1, A & 113.0 & 111.4 & 112.1 & 106.3 & 112.1 & 111.8 & 87.6 & 111.8 & 17.4 & none \\
-Z2, A & 119.3 & 117.1 & 118.5 & 111.6 & 117.6 & 117.4 & 86.1 & 86.4 & 17.9 & ball sites \\
-Z3, A & 185.9 & 183.3 & 184.9 & 176.3 & 183.9 & 183.4 & 90.8 & 107.7 & 94.2 & ball sites, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range \\
-Z1, B & 109.7 & 108.8 & 108.9 & 104.4 & 108.7 & 108.2 & 87.1 & 107.5 & 17.2 & none \\
-Z2, B & 63.7 & 75.3 & 52.8 & 74.7 & 76.0 & 76.0 & 77.0 & 74.7 & 15.7 & ball sites \\
-Z3, B & 63.7 & 75.1 & 52.8 & 74.5 & 75.3 & 75.1 & 79.3 & 79.9 & 81.9 & ball sites, static drop \\
-Z1, A, S0 & 111.3 & 110.0 & 110.4 & 105.2 & 110.3 & 109.9 & 87.3 & 109.6 & 17.3 & none \\
-Z2, A, S0 & 118.9 & 116.7 & 118.1 & 111.2 & 117.2 & 117.0 & 86.0 & 86.3 & 17.9 & ball sites \\
-Z3, A, S0 & 184.7 & 182.1 & 183.7 & 175.2 & 182.7 & 182.2 & 90.6 & 107.4 & 94.0 & ball sites, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range \\
-Z1, B, S0 & 108.3 & 107.5 & 107.4 & 103.4 & 107.3 & 106.8 & 86.8 & 105.7 & 17.2 & none \\
-Z2, B, S0 & 63.6 & 75.2 & 52.8 & 74.6 & 75.9 & 75.9 & 77.0 & 74.7 & 15.6 & ball sites \\
-Z3, B, S0 & 63.5 & 74.9 & 52.7 & 74.3 & 75.1 & 74.9 & 79.3 & 79.9 & 81.8 & ball sites, static drop \\
-Z1, A, S1 & 115.6 & 113.3 & 114.7 & 107.7 & 116.5 & 116.5 & 88.0 & 116.5 & 17.4 & none \\
-Z2, A, S1 & 119.4 & 117.2 & 118.5 & 111.6 & 117.6 & 117.4 & 86.1 & 86.4 & 17.9 & ball sites \\
-Z3, A, S1 & 186.1 & 183.4 & 185.1 & 176.5 & 184.0 & 183.5 & 90.8 & 107.7 & 94.2 & ball sites, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range \\
-Z1, B, S1 & 111.5 & 110.2 & 110.6 & 105.4 & 110.5 & 110.1 & 87.4 & 109.7 & 17.3 & none \\
-Z2, B, S1 & 63.7 & 75.3 & 52.9 & 74.7 & 76.0 & 76.0 & 77.1 & 74.7 & 15.7 & ball sites \\
-Z3, B, S1 & 63.7 & 75.1 & 52.8 & 74.5 & 75.3 & 75.1 & 79.3 & 79.9 & 81.9 & ball sites, static drop \\
+Z1, A & 113.6 & 111.8 & 112.8 & 106.6 & 112.9 & 112.9 & 87.7 & 112.9 & 17.4 & none \\
+Z2, A & 119.3 & 117.1 & 118.5 & 111.6 & 117.6 & 117.4 & 86.1 & 86.4 & 17.9 & none \\
+Z3, A & 180.8 & 178.2 & 179.8 & 171.7 & 178.8 & 178.7 & 88.9 & 105.1 & 55.0 & build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range \\
+Z1, B & 110.1 & 109.1 & 109.3 & 104.6 & 109.1 & 108.7 & 87.1 & 108.0 & 17.3 & none \\
+Z2, B & 63.7 & 75.3 & 52.8 & 74.7 & 76.0 & 76.0 & 77.0 & 74.7 & 15.7 & none \\
+Z3, B & 62.6 & 73.2 & 52.1 & 72.6 & 73.2 & 72.8 & 78.0 & 76.6 & 46.2 & static drop \\
+Z1, A, S0 & 111.3 & 110.0 & 110.5 & 105.3 & 110.4 & 110.0 & 87.3 & 109.7 & 17.3 & none \\
+Z2, A, S0 & 118.9 & 116.7 & 118.1 & 111.2 & 117.2 & 117.0 & 86.0 & 86.3 & 17.9 & none \\
+Z3, A, S0 & 179.6 & 177.1 & 178.7 & 170.6 & 177.6 & 177.6 & 88.7 & 104.8 & 54.9 & build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range \\
+Z1, B, S0 & 108.3 & 107.6 & 107.5 & 103.5 & 107.4 & 106.8 & 86.8 & 105.8 & 17.2 & none \\
+Z2, B, S0 & 63.6 & 75.2 & 52.8 & 74.6 & 75.9 & 75.9 & 77.0 & 74.7 & 15.6 & none \\
+Z3, B, S0 & 62.4 & 73.0 & 52.0 & 72.4 & 73.0 & 72.6 & 78.0 & 76.6 & 46.2 & static drop \\
+Z1, A, S1 & 117.5 & 114.4 & 116.6 & 108.6 & 119.2 & 119.2 & 88.2 & 119.2 & 17.5 & none \\
+Z2, A, S1 & 119.4 & 117.2 & 118.5 & 111.6 & 117.6 & 117.4 & 86.1 & 86.4 & 17.9 & none \\
+Z3, A, S1 & 181.0 & 178.4 & 180.0 & 171.9 & 178.9 & 178.9 & 88.9 & 105.2 & 55.0 & build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range \\
+Z1, B, S1 & 112.5 & 111.0 & 111.6 & 106.0 & 111.6 & 111.2 & 87.5 & 110.9 & 17.4 & none \\
+Z2, B, S1 & 63.7 & 75.3 & 52.9 & 74.7 & 76.0 & 76.0 & 77.1 & 74.7 & 15.7 & none \\
+Z3, B, S1 & 62.6 & 73.2 & 52.1 & 72.6 & 73.2 & 72.8 & 78.0 & 76.7 & 46.2 & static drop \\
 \midrule
 \multicolumn{11}{@{}l}{\emph{Every case and variant of the study (a candidate that fails any limit is not ranked)}} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: base case, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S1: base case, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S2: base case, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{capacitors, $R_{DS(on)}$ fit range, solder law} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: base case, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S1: base case, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S2: base case, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: base case, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S1: base case, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S2: base case, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: bga\_card\_local} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: bga\_card\_local\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: PCB copper coverage 25\,\%} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: PCB copper coverage 75\,\%} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: PCB single block, five-block grid} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
@@ -586,13 +732,23 @@ Z3, B, S1 & 63.7 & 75.1 & 52.8 & 74.5 & 75.3 & 75.1 & 79.3 & 79.9 & 81.9 & ball 
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: Board-bottom film 100} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: Board-bottom film 500} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: board\_t2p4} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: Converter $E$ 160~GPa, CTE 10} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: conv\_E160\_a10\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: Converter $E$ 160~GPa, CTE 4} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: conv\_E160\_a4\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: Converter $E$ 80~GPa, CTE 10} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: conv\_E80\_a10\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: Converter $E$ 80~GPa, CTE 4} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: conv\_E80\_a4\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: Converter-tier $k\times0.1$} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{board $T_g$, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, capacitors, $R_{DS(on)}$ fit range, solder law} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: conv\_posts\_lower} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: conv\_posts\_upper} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: encap\_emc\_lowcte} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: encap\_emc\_lowcte\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: encap\_emc\_lowcte\_const} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: encap\_emc\_lowcte\_const\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: encap\_uf\_tg} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, S0: encap\_uf\_tg\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: Out-of-cell volume void} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: GaN-tier $k\times0.5$} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: Cold-plate $h$ from CFD} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
@@ -601,70 +757,125 @@ Z3, B, S1 & 63.7 & 75.1 & 52.8 & 74.5 & 75.3 & 75.1 & 79.3 & 79.9 & 81.9 & ball 
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: TSV field minimal} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S0: Z1 bottom plate via TIM} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, S1: Z1 bottom plate via TIM} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: bga\_card\_local} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: bga\_card\_local\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: Die hot-spot power map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{processor die} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: Die hot-spot power map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{processor die} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: encap\_emc\_lowcte} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: encap\_emc\_lowcte\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: encap\_emc\_lowcte\_const} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: encap\_emc\_lowcte\_const\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: encap\_uf\_tg} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: encap\_uf\_tg\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: plate\_caloric\_legacy, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: plate\_caloric\_legacy, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: Implemented input decoupling, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: Implemented input decoupling, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach dense, real lattice} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach at 34-\textmu m pitch} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach at 37-\textmu m pitch} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach at 41-\textmu m pitch} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach 20~\textmu m tall} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach 40~\textmu m tall} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach all-solder} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach sparse} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach sparse, column-stiffened} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach card column-stiffened} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach underfill soft} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach underfill stiff} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: BGA depopulated} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: PCB copper coverage 25\,\%} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: PCB copper coverage 75\,\%} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: PCB single block, five-block grid} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: PCB as five-block laminate} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Board-bottom film 100} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Board-bottom film 500} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: board\_t2p4} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Converter $E$ 80~GPa, CTE 4} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Converter-tier $k\times0.1$} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, board $T_g$, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, capacitors, $R_{DS(on)}$ fit range} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: conv\_posts\_lower} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: conv\_posts\_upper} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: encap\_emc\_lowcte} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: encap\_uf\_tg} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Opening filled to the sidewall} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Out-of-cell volume void} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Feed loss in the package} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Cold-plate $h$ from CFD} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: 1-V pads at the drop floor} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: TSV field half density} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: TSV field minimal} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Z2 bottom plate, no TIM} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Z2 bottom plate via TIM} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, S1: Z2 bottom plate via TIM} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: Implemented input decoupling, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: Implemented input decoupling, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 100~\textmu m, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 100~\textmu m, FV map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 10~\textmu m, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 10~\textmu m, FV map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 20~\textmu m, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 20~\textmu m, FV map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 40~\textmu m, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 40~\textmu m, FV map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 40~\textmu m, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 40~\textmu m, FV map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 40~\textmu m, no board planes, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S1: Land side 40~\textmu m, FV map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S1: Land side 40~\textmu m, FV map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, S2: Land side 40~\textmu m, FV map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: Implemented input decoupling, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: Implemented input decoupling, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: Interface warpage feedback, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, static drop} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: Interface warpage feedback, iteration 3, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{operating point, solder law (unresolved), solder solidus (unresolved)} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: Interface warpage feedback, iteration 1, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{operating point} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: Interface warpage feedback, iteration 2, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, board $T_g$, build-up $T_g$, processor die, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, capacitors, operating point, $R_{DS(on)}$ fit range, solder law (unresolved), solder solidus (unresolved)} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: Interface warpage feedback, iteration 1, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, operating point} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: Interface warpage feedback, iteration 1, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball sites, board $T_g$, build-up $T_g$, processor die, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, capacitors, operating point, $R_{DS(on)}$ fit range, solder law, static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: Interface warpage feedback, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, SDEC: Interface warpage feedback, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach dense, real lattice} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach at 34-\textmu m pitch} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach at 37-\textmu m pitch} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach at 41-\textmu m pitch} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach 20~\textmu m tall} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach 40~\textmu m tall} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach all-solder} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach sparse} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach sparse, column-stiffened} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach card column-stiffened} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: attach\_stiff\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach underfill soft} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: attach\_uf\_soft\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Attach underfill stiff} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: attach\_uf\_stiff\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: bga\_card\_local} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: bga\_card\_local\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: BGA depopulated} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: PCB copper coverage 25\,\%} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: PCB copper coverage 75\,\%} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: PCB single block, five-block grid} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: PCB as five-block laminate} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Board-bottom film 100} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Board-bottom film 500} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: board\_t2p4} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Converter $E$ 160~GPa, CTE 10} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: conv\_E160\_a10\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Converter $E$ 160~GPa, CTE 4} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: conv\_E160\_a4\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Converter $E$ 80~GPa, CTE 10} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: conv\_E80\_a10\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Converter $E$ 80~GPa, CTE 4} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: conv\_E80\_a4\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Converter-tier $k\times0.1$} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{board $T_g$, build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: conv\_posts\_lower} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: conv\_posts\_upper} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: encap\_emc\_lowcte} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: encap\_emc\_lowcte\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: encap\_emc\_lowcte\_const} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: encap\_emc\_lowcte\_const\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: encap\_uf\_tg} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: encap\_uf\_tg\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Opening filled to the sidewall} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Out-of-cell volume void} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Feed loss in the package} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: GaN-tier $k\times0.5$} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Cold-plate $h$ from CFD} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: 1-V pads at the drop floor} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: TSV field half density} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: TSV field minimal} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Z2 bottom plate, no TIM} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S0: Z2 bottom plate via TIM} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, S1: Z2 bottom plate via TIM} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: bga\_card\_local} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: bga\_card\_local\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: Die hot-spot power map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{processor die, inductor, capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: Die hot-spot power map, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: encap\_emc\_lowcte} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: encap\_emc\_lowcte\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: encap\_emc\_lowcte\_const} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: encap\_emc\_lowcte\_const\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: encap\_uf\_tg} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: encap\_uf\_tg\_, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: plate\_caloric\_legacy, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: plate\_caloric\_legacy, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: Implemented input decoupling, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: Implemented input decoupling, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: Interface warpage feedback, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{board $T_g$, build-up $T_g$, processor die, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, SDEC: Interface warpage feedback, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: bga\_card\_local\_, cooling~B} & \multicolumn{2}{l}{unresolved} & \multicolumn{3}{L{4.8cm}}{static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: encap\_emc\_lowcte\_, cooling~B} & \multicolumn{2}{l}{unresolved} & \multicolumn{3}{L{4.8cm}}{static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: encap\_emc\_lowcte\_const\_, cooling~B} & \multicolumn{2}{l}{unresolved} & \multicolumn{3}{L{4.8cm}}{static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: encap\_uf\_tg\_, cooling~B} & \multicolumn{2}{l}{unresolved} & \multicolumn{3}{L{4.8cm}}{static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 100~\textmu m, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 100~\textmu m, FV map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 10~\textmu m, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 10~\textmu m, FV map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 20~\textmu m, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 20~\textmu m, FV map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 40~\textmu m, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 40~\textmu m, FV map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 40~\textmu m, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 40~\textmu m, FV map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S0: Land side 40~\textmu m, no board planes, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S1: Land side 40~\textmu m, FV map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S1: Land side 40~\textmu m, FV map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, S2: Land side 40~\textmu m, FV map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: bga\_card\_local} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, capacitors, $R_{DS(on)}$ fit range, static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: bga\_card\_local\_, cooling~B} & \multicolumn{2}{l}{unresolved} & \multicolumn{3}{L{4.8cm}}{static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: Die hot-spot power map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, processor die, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: Die hot-spot power map, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: encap\_emc\_lowcte} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, capacitors, $R_{DS(on)}$ fit range, static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: encap\_emc\_lowcte\_, cooling~B} & \multicolumn{2}{l}{unresolved} & \multicolumn{3}{L{4.8cm}}{static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: encap\_emc\_lowcte\_const} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, capacitors, $R_{DS(on)}$ fit range, static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: encap\_emc\_lowcte\_const\_, cooling~B} & \multicolumn{2}{l}{unresolved} & \multicolumn{3}{L{4.8cm}}{static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: encap\_uf\_tg} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, capacitors, $R_{DS(on)}$ fit range, static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: encap\_uf\_tg\_, cooling~B} & \multicolumn{2}{l}{unresolved} & \multicolumn{3}{L{4.8cm}}{static drop (unresolved)} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: plate\_caloric\_legacy, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: plate\_caloric\_legacy, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: Implemented input decoupling, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{build-up $T_g$, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: Implemented input decoupling, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: Interface warpage feedback, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{board $T_g$, build-up $T_g$, processor die, encapsulant $T_g$, GaN $T_J$ (HS), GaN $T_J$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range, solder law} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z3, SDEC: Interface warpage feedback, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
 \end{longtable}
 \nopagebreak\noindent Maximum temperatures ($^\circ$C) of the converged fields; GaN junction per device tier: the tier maximum in the cells plus $R_{\theta\mathrm{JC}}$ at the device's own dissipation; joint: the hottest joint of the all-site search; drop: per-rail maximum static drop of the 1-V path. Limits: GaN $T_J\le150$; $R_{DS(on)}$ temperature fit $\le125$; X7R/X7S/X7T capacitors $\le125$; inductor $\le125$; build-up dielectric and encapsulant $T_g\approx150$; board $T_g\approx170$; processor die $\le105$; solder law calibrated $\le125$, solidus 217; the current of every power ball at the case's waveform a stated requirement on the package (target 2.0~A, 1.5~A as sensitivity), reported, not a filter, with at least 25\,\% of the ball sites left for signals; static drop $\le30$~mV per rail. Cases: integration, cooling (A: top plate; B: top plate and bottom plate, the bottom one behind a 50-\textmu m TIM) and input state when not the production state SDEC (implemented decoupling): S0, ideal input smoothing; S1, no decoupling; Z3 always with the coupled land-side redistribution. A check that fails only on the whole-field bound is unresolved; such a candidate is not ranked either.\par
 \endgroup
@@ -690,18 +901,18 @@ Integration & State & $P$ (W) & $T_{\max}$ & $T_{\mathrm{LS}}$ & $\du$ (\textmu 
 \endfoot
 \bottomrule
 \endlastfoot
-Z1 & SDEC & 135.7 & 112.1 & 100.5 & 1.91 at 112 & 17.2 & 2.64 \\
-Z1 & S0 & 130.8 & 110.4 & 99.5 & 1.85 at 108 & 16.5 & 1 \\
-Z1 & S1 & 141.1 & 116.5 & 101.7 & 2.00 at 116 & 18.2 & 4 \\
-Z1 & S2 & 165.5 & 135.8 & 106.8 & 2.37 at 136 & 22.4 & 6.93 \\
+Z1 & SDEC & 137.0 & 113.0 & 100.8 & 1.94 at 113 & 17.5 & 2.64 \\
+Z1 & S0 & 131.0 & 110.5 & 99.5 & 1.85 at 109 & 16.5 & 1 \\
+Z1 & S1 & 144.2 & 119.3 & 102.3 & 2.05 at 119 & 18.8 & 4 \\
+Z1 & S2 & 176.8 & 145.8 & 109.2 & 2.55 at 146 & 24.6 & 6.93 \\
 Z2 & SDEC & 134.8 & 118.5 & 105.1 & 2.40 at 84 & 58.1 & 2.64 \\
 Z2 & S0 & 133.3 & 118.1 & 104.8 & 2.39 at 84 & 57.9 & 1 \\
 Z2 & S1 & 134.9 & 118.5 & 105.2 & 2.40 at 84 & 58.1 & 4 \\
 Z2 & S2 & 138.3 & 119.4 & 105.9 & 2.41 at 85 & 58.7 & 6.93 \\
-Z3 & SDEC & 200.9 & 184.9 & 171.3 & 3.90 at 101 & 48.4 & 2.64 \\
-Z3 & S0 & 198.9 & 183.7 & 170.2 & 3.88 at 101 & 48.0 & 1 \\
-Z3 & S1 & 201.2 & 185.1 & 171.4 & 3.90 at 101 & 48.4 & 4 \\
-Z3 & S2 & 206.0 & 187.9 & 174.0 & 3.96 at 102 & 49.3 & 6.93 \\
+Z3 & SDEC & 180.1 & 179.8 & 167.3 & 3.74 at 96 & 46.9 & 2.64 \\
+Z3 & S0 & 178.1 & 178.7 & 166.3 & 3.72 at 96 & 46.6 & 1 \\
+Z3 & S1 & 180.3 & 180.0 & 167.5 & 3.74 at 96 & 47.0 & 4 \\
+Z3 & S2 & 185.1 & 182.8 & 170.0 & 3.79 at 97 & 47.9 & 6.93 \\
 \end{longtable}
 \nopagebreak\noindent Package-internal loss, peak and low-side tier temperature, critical joint and die warpage under cooling~A (Z3: the coupled land-side case) per input state: SDEC, the implemented decoupling (the production state); S0, ideal input smoothing; S1, no decoupling (a square pulse at the buck duty $D = N V_{\mathrm{out}}/V_{\mathrm{in}} = 1/16$); S2, a square pulse at the overall conversion ratio $V_{\mathrm{out}}/V_{\mathrm{in}}$. $k$: RMS-to-average ratio of the current the 48-V feed carries (SDEC: the loss-equivalent $k_{\mathrm{eq}}$ the case was run with); --: not run yet.\par
 \endgroup
@@ -730,19 +941,19 @@ Land side, cooling & $P$ & Land & Planes & $\Delta V_{\mathrm{land}}$ & $T_{\max
 \endfoot
 \bottomrule
 \endlastfoot
-10~\textmu m, B & 204.9 & 66.5 & 9.4 & 159 & 102.1 & 8 & 1.92 & 0 \\
-20~\textmu m, B & 170.5 & 32.7 & 9.3 & 78.5 & 88.92 & 7.64 & 1.77 & 0 \\
-40~\textmu m, B & 153.7 & 16.2 & 9.26 & 38.9 & 82.48 & 7.47 & 1.69 & 0 \\
-40~\textmu m, A & 199 & 17.1 & 10.7 & 41.1 & 183.6 & 48 & 3.9 & 0 \\
-40~\textmu m, B, no board planes & 144 & 16.2 & 0 & 38.8 & 81.06 & 7.16 & 1.62 & 0 \\
-100~\textmu m, B & 143.7 & 6.46 & 9.23 & 15.5 & 78.67 & 7.37 & 1.65 & 0 \\
+10~\textmu m, B & 150.4 & 19.3 & 2.81 & 65 & 82.83 & 7.29 & 1.66 & 0 \\
+20~\textmu m, B & 140.6 & 9.58 & 2.8 & 32.4 & 79.06 & 7.19 & 1.61 & 0 \\
+40~\textmu m, B & 135.7 & 4.78 & 2.8 & 16.1 & 77.98 & 7.14 & 1.59 & 0 \\
+40~\textmu m, A & 178.1 & 5.04 & 3.22 & 17 & 178.8 & 46.6 & 3.73 & 0 \\
+40~\textmu m, B, no board planes & 132.7 & 4.78 & 0 & 16.1 & 77.85 & 7.05 & 1.57 & 0 \\
+100~\textmu m, B & 132.7 & 1.91 & 2.8 & 6.45 & 77.82 & 7.11 & 1.58 & 0 \\
 \end{longtable}
-\nopagebreak\noindent Land-side copper thickness $t$ and cooling; board planes $2\times35$~\textmu m per rail at 80\,\% occupancy, equal ball sharing, S0. $\Delta V_{\mathrm{land}}$: static land-side drop of one rail; $R^*$: feed limit. No tie with Z1 under cooling~B within the runs; a land-side drop of at most 30~mV per rail needs $t \ge 52$~\textmu m.\par
+\nopagebreak\noindent Land-side copper thickness $t$ and cooling; board planes $2\times35$~\textmu m per rail at 80\,\% occupancy, equal ball sharing, S0. $\Delta V_{\mathrm{land}}$: static land-side drop of one rail; $R^*$: feed limit. No tie with Z1 under cooling~B within the runs; a land-side drop of at most 30~mV per rail needs $t \ge 22$~\textmu m.\par
 \endgroup
 \medskip
 
 \section{Exploring the Design Space}
-Table~\ref{tab:supp-caprule} gives the regulator-count screen before and after the capacitor-rule correction, Table~\ref{tab:supp-variants} the package decisions of the robustness study, Table~\ref{tab:supp-omit} the omitted converter losses and Table~\ref{tab:supp-review} the variants added in the review round.
+Table~\ref{tab:supp-caprule} gives the regulator-count screen before and after the capacitor-rule correction, Table~\ref{tab:supp-variants} the package decisions of the robustness study, Table~\ref{tab:supp-omit} the omitted converter losses and Table~\ref{tab:supp-review} the variants added in the review round; the warpage at reflow and bonding and the board, mounting, clamp and material variants on the production fields follow it.
 
 \needspace{32.0\baselineskip}
 \begingroup\footnotesize\setlength{\tabcolsep}{3pt}
@@ -897,12 +1108,12 @@ Case & $T_{\mathrm{LS}}$ & $P$ & Dead time & Core & AC winding & Dielectric & To
 \endfoot
 \bottomrule
 \endlastfoot
-Z1, A & 100.5 & 135.7 & 21.2 (4.6--44.9) & 1.4 (0.3--7.6) & 1.4 (0.6--1.7) & 1.0 (1.0--1.0) & 25.0 (6.5--55.2) \\
+Z1, A & 100.8 & 137.0 & 21.2 (4.6--44.9) & 1.4 (0.3--7.6) & 1.4 (0.6--1.7) & 1.0 (1.0--1.0) & 25.0 (6.5--55.2) \\
 Z2, A & 105.1 & 134.8 & 21.3 (4.6--45.0) & 1.4 (0.3--7.6) & 1.4 (0.6--1.7) & 1.0 (1.0--1.0) & 25.1 (6.6--55.4) \\
-A\_Z3 & 171.3 & 200.9 & 22.6 (5.0--47.7) & 1.4 (0.3--7.6) & 1.5 (0.6--1.8) & 1.0 (1.0--1.0) & 26.5 (7.0--58.2) \\
-Z1, B & 98.6 & 134.8 & 21.2 (4.6--44.8) & 1.4 (0.3--7.6) & 1.4 (0.6--1.7) & 1.0 (1.0--1.0) & 25.0 (6.5--55.1) \\
+A\_Z3 & 167.3 & 180.1 & 22.5 (5.0--47.6) & 1.4 (0.3--7.6) & 1.5 (0.6--1.8) & 1.0 (1.0--1.0) & 26.4 (7.0--58.0) \\
+Z1, B & 98.8 & 136.1 & 21.2 (4.6--44.8) & 1.4 (0.3--7.6) & 1.4 (0.6--1.7) & 1.0 (1.0--1.0) & 25.0 (6.5--55.1) \\
 Z2, B & 65.7 & 118.1 & 20.6 (4.4--43.5) & 1.4 (0.3--7.6) & 1.3 (0.6--1.6) & 1.0 (1.0--1.0) & 24.3 (6.3--53.7) \\
-Z3, B & 65.4 & 154.8 & 20.6 (4.4--43.4) & 1.4 (0.3--7.6) & 1.3 (0.6--1.6) & 1.0 (1.0--1.0) & 24.3 (6.3--53.7) \\
+Z3, B & 64.3 & 136.9 & 20.5 (4.4--43.4) & 1.4 (0.3--7.6) & 1.3 (0.6--1.6) & 1.0 (1.0--1.0) & 24.3 (6.3--53.7) \\
 \end{longtable}
 \nopagebreak\noindent Converter loss terms the synthesis loss model omits, in W for the package, at each case's own tier temperatures: nominal (low--high bundle). Dead time: EPC2057 reverse conduction from its datasheet over a dead time of 5~ns (2--10~ns); core: the loss line of the inductor's metal-composite material~\cite{Rasheedi2026CoupledInductor}; AC winding: the winding's AC-resistance ratio applied to its DC resistance; dielectric: an X7R dissipation factor over the harmonics of the flying-capacitor current. $T_{\mathrm{LS}}$: low-side tier temperature; $P$: package loss of the case. Cases as in Table~\ref{tab:supp-feas}.\par
 \endgroup
@@ -926,40 +1137,111 @@ Int. & Variant & Cooling & $P$ (W) & $T_{\max}$ ($^\circ$C) & Warpage (\textmu m
 \endfoot
 \bottomrule
 \endlastfoot
-Z1 & Die hot-spot power map & A & 135.5 & 123.8 & 13.5 & 1.84 & 104 \\
-Z1 & Die hot-spot power map & B & 134.6 & 121.5 & 5.95 & 0.752 & 96.44 \\
-Z1 & Implemented input decoupling & A & 135.7 & 112.1 & 17.2 & 1.91 & 111.8 \\
-Z1 & Implemented input decoupling & B & 134.8 & 108.9 & 5.19 & 0.764 & 103.9 \\
-Z1 & Interface warpage feedback & A & 139.6 & 123 & 18.5 & 2.12 & 121 \\
-Z1 & Interface warpage feedback & B & 135.6 & 111 & 5.28 & 0.778 & 105.9 \\
+Z1 & Die hot-spot power map & A & 136.7 & 124.1 & 13.8 & 1.87 & 105.1 \\
+Z1 & Die hot-spot power map & B & 135.9 & 121.8 & 5.92 & 0.761 & 97.47 \\
+Z1 & Implemented input decoupling & A & 137 & 113 & 17.5 & 1.94 & 112.9 \\
+Z1 & Implemented input decoupling & B & 136.1 & 109.3 & 5.21 & 0.773 & 105 \\
+Z1 & Interface warpage feedback & A & 141.1 & 123.7 & 18.8 & 2.15 & 122.4 \\
+Z1 & Interface warpage feedback & B & 136.9 & 111.4 & 5.29 & 0.788 & 106.9 \\
 Z2 & Die hot-spot power map & A & 134.7 & 138.2 & 56.7 & 1.56 & 64.21 \\
 Z2 & Die hot-spot power map & B & 118.1 & 97.37 & 13 & 1.04 & 54.55 \\
 Z2 & Implemented input decoupling & A & 134.8 & 118.5 & 58.1 & 2.4 & 84.44 \\
 Z2 & Implemented input decoupling & B & 118.1 & 77.05 & 17.1 & 1.82 & 73.09 \\
 Z2 & Interface warpage feedback & A & 152.3 & 178.7 & 87.7 & 3.49 & 107.4 \\
 Z2 & Interface warpage feedback & B & 119.9 & 86.27 & 18.5 & 2.02 & 77.25 \\
-Z3 & Land side 100~\textmu m & B & 143.7 & 78.67 & 7.37 & 1.65 & 78.56 \\
-Z3 & Land side 100~\textmu m, FV map & B & 143.7 & 78.46 & 7.37 & 1.64 & 77.44 \\
-Z3 & Land side 10~\textmu m & B & 204.9 & 102.1 & 8 & 1.92 & 100.8 \\
-Z3 & Land side 10~\textmu m, FV map & B & 204.5 & 91.31 & 8 & 1.85 & 91.01 \\
-Z3 & Land side 20~\textmu m & B & 170.5 & 88.92 & 7.64 & 1.77 & 88.29 \\
-Z3 & Land side 20~\textmu m, FV map & B & 170.4 & 83.64 & 7.65 & 1.73 & 83.4 \\
-Z3 & Land side 40~\textmu m & A & 199 & 183.6 & 48 & 3.9 & 103.5 \\
-Z3 & Land side 40~\textmu m, FV map & A & 198.9 & 183.7 & 48 & 3.88 & 100.8 \\
-Z3 & Land side 40~\textmu m & B & 153.7 & 82.48 & 7.47 & 1.69 & 82.18 \\
-Z3 & Land side 40~\textmu m, FV map & B & 153.6 & 79.99 & 7.47 & 1.67 & 79.66 \\
-Z3 & Land side 40~\textmu m, no board planes & B & 144 & 81.06 & 7.16 & 1.62 & 80.73 \\
-Z3 & Land side 40~\textmu m, FV map & A & 201.2 & 185.1 & 48.4 & 3.9 & 101 \\
-Z3 & Land side 40~\textmu m, FV map & B & 155 & 80.05 & 7.53 & 1.68 & 79.72 \\
-Z3 & Land side 40~\textmu m, FV map & A & 206 & 187.9 & 49.3 & 3.96 & 101.6 \\
-Z3 & Die hot-spot power map & A & 200.1 & 187.4 & 46.8 & 3.66 & 86.69 \\
-Z3 & Die hot-spot power map & B & 154.3 & 97.19 & 6.05 & 1.45 & 65.61 \\
-Z3 & Implemented input decoupling & A & 200.9 & 184.9 & 48.4 & 3.9 & 101 \\
-Z3 & Implemented input decoupling & B & 154.8 & 80.04 & 7.52 & 1.68 & 79.71 \\
-Z3 & Interface warpage feedback & A & 219.9 & 224.9 & 59.2 & 5.03 & 125.5 \\
-Z3 & Interface warpage feedback & B & 155.6 & 82.52 & 7.55 & 1.74 & 81.97 \\
+Z3 & Land side 100~\textmu m & B & 132.7 & 77.82 & 7.11 & 1.58 & 76.03 \\
+Z3 & Land side 100~\textmu m, FV map & B & 132.7 & 77.83 & 7.1 & 1.57 & 75.41 \\
+Z3 & Land side 10~\textmu m & B & 150.4 & 82.83 & 7.29 & 1.66 & 82.45 \\
+Z3 & Land side 10~\textmu m, FV map & B & 150.3 & 79.02 & 7.22 & 1.62 & 77.56 \\
+Z3 & Land side 20~\textmu m & B & 140.6 & 79.06 & 7.19 & 1.61 & 78.87 \\
+Z3 & Land side 20~\textmu m, FV map & B & 140.5 & 78.31 & 7.15 & 1.59 & 76.36 \\
+Z3 & Land side 40~\textmu m & A & 178.1 & 178.8 & 46.6 & 3.73 & 97.41 \\
+Z3 & Land side 40~\textmu m, FV map & A & 178.1 & 178.7 & 46.6 & 3.72 & 95.96 \\
+Z3 & Land side 40~\textmu m & B & 135.7 & 77.98 & 7.14 & 1.59 & 77.09 \\
+Z3 & Land side 40~\textmu m, FV map & B & 135.7 & 77.99 & 7.12 & 1.58 & 75.77 \\
+Z3 & Land side 40~\textmu m, no board planes & B & 132.7 & 77.85 & 7.05 & 1.57 & 76.65 \\
+Z3 & Land side 40~\textmu m, FV map & A & 180.3 & 180 & 47 & 3.74 & 96.21 \\
+Z3 & Land side 40~\textmu m, FV map & B & 137 & 78.02 & 7.18 & 1.58 & 75.82 \\
+Z3 & Land side 40~\textmu m, FV map & A & 185.1 & 182.8 & 47.9 & 3.79 & 96.75 \\
+Z3 & Die hot-spot power map & A & 179.6 & 184.3 & 45.4 & 3.5 & 81.95 \\
+Z3 & Die hot-spot power map & B & 136.6 & 96.81 & 5.7 & 1.36 & 61.78 \\
+Z3 & Implemented input decoupling & A & 180.1 & 179.8 & 46.9 & 3.74 & 96.18 \\
+Z3 & Implemented input decoupling & B & 136.9 & 78.02 & 7.17 & 1.58 & 75.82 \\
+Z3 & Interface warpage feedback & A & 196.2 & 219.2 & 57.1 & 4.79 & 118.9 \\
+Z3 & Interface warpage feedback & B & 137.4 & 81.5 & 7.19 & 1.64 & 77.89 \\
 \end{longtable}
 \nopagebreak\noindent Production mesh, S0 unless the input decoupling is implemented. Interface feedback: TIM thickness following the die warpage; die hot-spot map: three quarters of the die power in its central half; local cold-plate coefficient: caloric resistance removed from the top-plate coefficient; rated $C_f$: rated MLCC flying capacitors (capacitor tier 830 or 1030~\textmu m) in the reference or repartitioned tier order; implemented input decoupling (scenario SDEC): the package 48-V network and the cell-internal input runs carry the RMS-to-average current ratios of the implemented decoupling (2.641 and 3.793, respectively), for Z1 under cooling~A also with the ring capacitors' ESR loss in the ledger; land side: Z3 with the land-side and board-plane redistribution coupled (Table~\ref{tab:supp-z3land}); FV map: redistribution heat deposited along its finite-volume loss map instead of uniformly. $^\dagger$Z3 without the land-side and board-plane redistribution in the coupled solution (the coupled cases are in Table~\ref{tab:supp-z3land}).\par
+\endgroup
+\medskip
+
+\needspace{16.8\baselineskip}
+\begingroup\footnotesize\setlength{\tabcolsep}{2.5pt}
+\begin{longtable}{@{}llrrrrrrr@{}}
+\caption{Warpage at reflow and bonding}\label{tab:supp-reflow}\\
+\toprule
+Int. & Encapsulant & PV 245 & Bow 245 & PV 217 & PV/cop. & $T_{\mathrm{bond}}$ & Gap & Limit \\
+ & & (\textmu m) & (\textmu m) & (\textmu m) & & ($^\circ$C) & (\textmu m) & (\textmu m) \\
+\midrule
+\endfirsthead
+\multicolumn{9}{@{}l}{\emph{Table~\ref{tab:supp-reflow} (continued)}}\\
+\toprule
+Int. & Encapsulant & PV 245 & Bow 245 & PV 217 & PV/cop. & $T_{\mathrm{bond}}$ & Gap & Limit \\
+ & & (\textmu m) & (\textmu m) & (\textmu m) & & ($^\circ$C) & (\textmu m) & (\textmu m) \\
+\midrule
+\endhead
+\midrule
+\multicolumn{9}{r@{}}{\emph{continued on next page}}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Z1 & production & 80 & $-70$ & 70 & 1.00 & 250 & 147.6 & 8 \\
+Z1 & low-CTE mold compound (Tg 165) & 46 & $-30$ & 32 & 0.57 & 250 & 98.1 & 8 \\
+Z1 & underfill class (Tg 130) & 177 & $-152$ & 143 & 2.21 & 250 & 367.0 & 8 \\
+Z2 & production & 127 & 114 & 111 & 1.58 & 250 & 61.5 & 8 \\
+Z2 & low-CTE mold compound (Tg 165) & 80 & 72 & 68 & 1.00 & 250 & 58.9 & 8 \\
+Z2 & underfill class (Tg 130) & 255 & 237 & 207 & 3.19 & 250 & 67.8 & 8 \\
+Z3 & production & 81 & 81 & 71 & 1.01 & 245 & 12.0 & 50 \\
+Z3 & low-CTE mold compound (Tg 165) & 81 & 81 & 71 & 1.01 & 245 & 10.2 & 50 \\
+Z3 & underfill class (Tg 130) & 81 & 81 & 71 & 1.01 & 245 & 17.1 & 50 \\
+\end{longtable}
+\nopagebreak\noindent Isothermal warpage of the unmounted package (no board, BGA or TIM; Z3 without its converter) at the SAC305 reflow peak (245\,$^\circ$C) and solidus (217\,$^\circ$C) against a 25-$^\circ$C stress-free state, production mesh: plane-removed peak-to-valley over the ball footprint and the signed bow (corners minus centre, positive away from the board); PV/cop.: over the 80-\textmu m room-temperature coplanarity (JEP95); the SPP-024 reflow window is -120 to +170~\textmu m. Gap: plane-removed non-uniformity of the fine-pitch joint's gap at its bonding temperature (Z1: converter top under the flat die; Z2: substrate underside against the converter top; Z3: board underside against the converter top), against a declared limit (half the solder cap or bump stand-off).\par
+\endgroup
+\medskip
+
+\needspace{19.2\baselineskip}
+\begingroup\footnotesize\setlength{\tabcolsep}{2.5pt}
+\begin{longtable}{@{}L{5.0cm}rrrrrr@{}}
+\caption{Board, mounting, clamp and material variants on the production fields}\label{tab:supp-mounting}\\
+\toprule
+Variant & Z1, A & Z2, A & Z3, A & Z1, B & Z2, B & Z3, B \\
+\midrule
+\endfirsthead
+\multicolumn{7}{@{}l}{\emph{Table~\ref{tab:supp-mounting} (continued)}}\\
+\toprule
+Variant & Z1, A & Z2, A & Z3, A & Z1, B & Z2, B & Z3, B \\
+\midrule
+\endhead
+\midrule
+\multicolumn{7}{r@{}}{\emph{continued on next page}}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Screws at the board corners & $-$1 / $-$0 & $-$13 / $-$12 & $-$3 / $-$2 & $-$12 / +0 & $-$29 / $-$10 & $-$5 / $-$1 \\
+Screws, pinned & $-$62 / $-$27 & $-$28 / $-$55 & $-$31 / $-$21 & +19 / +15 & $-$66 / $-$55 & $-$68 / $-$22 \\
+Edge simply supported & $-$9 / +2 & $-$22 / $-$15 & $-$21 / +5 & $-$12 / +5 & $-$48 / $-$12 & $-$29 / +4 \\
+Clamp 200 N at the screws & +13 / +3 & +8 / +3 & +3 / +1 & $-$9 / +8 & +40 / +10 & +36 / +5 \\
+Clamp only (25\,$^\circ$C) & $-$86 / $-$95 & $-$79 / $-$81 & $-$94 / $-$97 & $-$53 / $-$88 & $-$30 / $-$75 & $-$59 / $-$94 \\
+Clamp on a backplate & $-$54 / $-$8 & $-$22 / $-$33 & $-$98 / $-$20 & +33 / $-$17 & $-$31 / $-$25 & $-$92 / $-$5 \\
+3x board, ring at the edge temperature & +64 / +26 & $-$15 / +15 & $-$4 / +22 & $-$4 / +64 & $-$24 / +26 & +15 / +39 \\
+3x board, ring at 25\,$^\circ$C & $-$23 / $-$40 & $-$26 / $-$28 & $-$10 / $-$37 & +18 / +38 & $-$45 / $-$36 & $-$19 / $-$33 \\
+3x board on screws & +1 / +17 & $-$16 / +15 & $-$5 / +22 & $-$4 / +64 & $-$28 / +26 & $-$8 / +37 \\
+3x board, clamp at the screws & +41 / $-$45 & +20 / $-$8 & +14 / $-$8 & +56 / $-$38 & +92 / $-$5 & +114 / $-$33 \\
+Underfill-class encapsulant (Tg 130) & $-$2 / $-$2 & +2 / +0 & +23 / +7 & +4 / $-$6 & $-$4 / $-$1 & $-$4 / $-$0 \\
+Low-CTE mold compound (Tg 165) & +18 / +39 & $-$54 / $-$4 & $-$47 / $-$14 & +1 / +90 & $-$54 / $-$1 & $-$77 / $-$11 \\
+Mold compound without Tg & +18 / +39 & $-$54 / $-$4 & $-$60 / $-$18 & +1 / +90 & $-$54 / $-$1 & $-$77 / $-$11 \\
+BGA layer from the local solder card & $-$1 / $-$28 & $-$2 / $-$13 & +0 / $-$12 & +0 / $-$37 & $-$1 / $-$16 & +1 / $-$22 \\
+\end{longtable}
+\nopagebreak\noindent Change of die warpage / critical-joint $\du$ (\%) against each compared case (production state), mechanics only on the case's converged field, production mesh. Mounting: $u_z = 0$ on 2-mm patches 3~mm inside the board corners (pinned: also in plane), or along the underside perimeter; clamp: the cold-plate preload as a uniform pressure on the TIM, reacted at the screws or by a backplate under the package; 3x board: the board extended to three package sides with its ring at the coupon's edge temperature or at 25\,$^\circ$C (bounds of the ring's temperature); encapsulant classes with their glass transition on the out-of-cell fill.\par
 \endgroup
 \medskip
 
