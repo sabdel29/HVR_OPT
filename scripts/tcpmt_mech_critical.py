@@ -128,8 +128,8 @@ def summarize(n_top):
                              "the deforming du, the strict Pareto front in (|du_xy|, T) and "
                              "the four corners, over every evaluated lattice site",
            "inputs_sha1": {}, "cases": {}}
-    if LAW.CARDS.is_file():
-        out["inputs_sha1"][str(LAW.CARDS.resolve())] = MP.sha1(LAW.CARDS)
+    # the card it was solved with is recorded by its hash (card_sha): pass 2 of the law band
+    # re-stores the window afterwards by design, which must not make this check stale
     n_tot = n_ok = 0
     for case in CASE_ORDER:
         cand = candidates(case, n_top)
