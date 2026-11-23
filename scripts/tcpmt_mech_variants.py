@@ -230,6 +230,11 @@ def judge_B():
                     "provisional": j.get("provisional") if j else None}
         out["variants"][name] = res
     out["rule"] = TU.RULE.RULE
+    import tcpmt_mech_production as MP
+    out["inputs_sha1"] = MP.inputs_sha1(
+        sorted(sens.glob("etm_*_HV_S0__*__B.json"))
+        + [S.case_file(a, LAW.cfg()["cooling_B_base"][a]) for a in archs]
+        + [LAW.TR / "uncertainty.json"])
     f = LAW.TR / "robustness_B.json"
     f.write_text(json.dumps(out, indent=1, default=float) + "\n")
     return out
@@ -284,6 +289,7 @@ def judge_state(state="SDEC"):
         rows.setdefault(name, {}).setdefault(t, {})[c["arch"]] = dict(
             _mech_values(c), mesh=TU.mesh_signature(c), file=f.name)
         ins.update(MP.inputs_sha1([f]))
+    ins.update(MP.inputs_sha1([LAW.TR / "uncertainty.json"]))   # the pairs' beta and U95
     out = {"what": "mechanics-only variants on the compared cases of the state, against their "
                    "own base cases (findings 6-8, 11a)", "state": state, "base": base,
            "variants": {}, "rule": TU.RULE.RULE, "inputs_sha1": ins,

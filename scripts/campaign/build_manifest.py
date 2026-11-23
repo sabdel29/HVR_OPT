@@ -1091,7 +1091,7 @@ def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s,
         post("mech.judgeB", "derived", "tcpmt_mech_variants.py", [tr("robustness_B.json")],
              args=["judgeB"], deps=mech["coolB"] + [unc],
              validate=[{"file": tr("robustness_B.json"), "kind": "json",
-                        "nonempty": ["variants"]}],
+                        "nonempty": ["variants"], "fresh": True}],
              notes="finding 8: the cooling-B rows of the robustness map (NAME@B against the "
                    "cooling-B base)")
 
