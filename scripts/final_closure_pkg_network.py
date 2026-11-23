@@ -547,6 +547,13 @@ def screen_from_csv(path=None):
     return rows
 
 
+def _write_atomic(path, doc):
+    """JSON written beside and renamed into place: readers never see a partial file."""
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(doc, indent=1, default=float) + "\n")
+    os.replace(tmp, path)
+
+
 def reclose():
     """Re-close the 48-V BGA at the production waveform WITHOUT regenerating the screen: the
     committed level-1 screen re-scored at the HV_SDEC current, the candidate minima verified on
@@ -695,7 +702,7 @@ def reclose():
         "adopted_count": dict(adopted),
         "status": {a: adoption[a]["status"] for a in adoption},
         "convergence": conv, "loop": loop}
-    ADOPTED_OUT.write_text(json.dumps(adopted_doc, indent=1, default=float) + "\n")
+    _write_atomic(ADOPTED_OUT, adopted_doc)      # read concurrently by running ledgers
     # ---- THE VERDICT at the adopted counts: verified DC peak x k_eq, one rule for all -------
     for a, n in adopted.items():
         if (a, n) not in cache:
@@ -773,7 +780,7 @@ def reclose():
     out["matched_count_S0"] = matched_count(screen, counts, kw, "HV_S0")
     out["wall_s"] = round(time.time() - t0, 1)
     out["design"] = DR.design_identity()
-    PRODUCTION_OUT.write_text(json.dumps(out, indent=1, default=float) + "\n")
+    _write_atomic(PRODUCTION_OUT, out)
     print(json.dumps({k_: v for k_, v in out.items()
                       if k_ not in ("closure", "adoption", "coupled_effect")},
                      indent=1, default=float))

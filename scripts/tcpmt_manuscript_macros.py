@@ -565,17 +565,16 @@ def accuracy_macros():
 def network_macros():
     """The production package 48-V network: review round 3 (the authors' decision of
     2026-11-22), at the re-closure's ADOPTED count of each architecture
-    (package_network_adopted.json; NballMatched = the smallest common count meeting the
-    per-ball target, bga_count_production.json matched_count_dc_rule); else the network
-    build's (package_network.json, its matched count)."""
+    (package_network_adopted.json; NballMatched = the larger adopted count, the smallest count
+    both architectures meet); else the network build's (package_network.json, its matched
+    count)."""
     pn = J("package_network.json") or {}
     pa = J("package_network_adopted.json") or {}
-    bc = J("bga_count_production.json") or {}
     if not pn and not pa:
         return {}
     if pa.get("loop"):
-        out = {"NballMatched": str(bc.get("matched_count_dc_rule")
-                                   or max(int(v) for v in pa["adopted_count"].values()))}
+        # the smallest count both architectures meet: the larger adopted count
+        out = {"NballMatched": str(max(int(v) for v in pa["adopted_count"].values()))}
         src = pa
     else:
         out = {"NballMatched": str(pn.get("matched_count", NA))}

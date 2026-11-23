@@ -208,8 +208,12 @@ def bga_count():
     if not d:
         return {}
     cl = d["closure"]
+    ad0 = d.get("adopted_count") or {}
     m = {"BgaKeq": fx(d["k_eq"], 2),
-         "BgaNmatch": str(d.get("matched_count_dc_rule") or d.get("matched_count") or NA),
+         # the smallest count both architectures meet: the larger adopted count (the screen-
+         # first common count, matched_count_dc_rule, can sit one step above it)
+         "BgaNmatch": str(max(int(v) for v in ad0.values()) if ad0 else
+                          (d.get("matched_count_dc_rule") or d.get("matched_count") or NA)),
          "BgaNmatchSzero": str(d.get("matched_count_S0") or NA),
          "BgaIrmsZone": fx(d["currents_A"]["Z1"]["HV_SDEC"], 1),
          "BgaTarget": fx(d.get("criterion_A_per_ball"), 0),
@@ -264,6 +268,12 @@ def bga_count():
             if v.get("n_min"):
                 m[f"BgaNmin{tag}{st}"] = str(v["n_min"])
                 m[f"BgaPeakAtNmin{tag}{st}"] = fx(v.get("peak_at_n_min_A"), 2)
+        # the production state: the adoption's verified minimum (the screen-first closure can
+        # sit one step above it when the screen and the verification level straddle the target)
+        ado = (d.get("adoption") or {}).get(a) or {}
+        if ado.get("status") == "CLOSED" and ado.get("n_per_rail"):
+            m[f"BgaNmin{tag}"] = str(ado["n_per_rail"])
+            m[f"BgaPeakAtNmin{tag}"] = fx(ado.get("peak_A"), 2)
         hi = cl.get(f"{a}__HV_SDEC__k_hi") or {}
         if hi.get("n_min_screen"):
             m[f"BgaNminKhi{tag}"] = str(hi["n_min_screen"])
