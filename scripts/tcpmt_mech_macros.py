@@ -53,6 +53,11 @@ def spct(v, n=1):
     return s.replace("-", r"\textminus{}")
 
 
+def xy(x, y):
+    """a site '(x, y)' in mm with typographic minus signs"""
+    return f"({x:g}, {y:g})".replace("-", r"\textminus{}")
+
+
 def rng(vals, f=pct, n=1):
     v = [x for x in vals if x is not None]
     return (f(min(v), n), f(max(v), n)) if v else (NA, NA)
@@ -91,14 +96,14 @@ def joint():
         spread.append(v["spread_rel_to_production"])
         for law, xy in (v.get("sites_mm") or {}).items():
             if law in LTAG and xy:
-                m[f"MvEpsSite{LTAG[law]}{k}"] = f"({xy[0]:g}, {xy[1]:g})"
+                m[f"MvEpsSite{LTAG[law]}{k}"] = xy(*p)
         jt = (b.get("joints") or {}).get(lab) or {}
         m[f"MvTsj{k}"] = fx(jt.get("T_C"), 1)
         m[f"MvDuxy{k}"] = fx(jt.get("du_xy_um"), 2)
         m[f"MvDuz{k}"] = fx(jt.get("du_z_um"), 2)
         m[f"MvDudef{k}"] = fx(jt.get("du_def_xy_um"), 2)
         if jt.get("x_mm") is not None:
-            m[f"MvSite{k}"] = f"({jt['x_mm']:g}, {jt['y_mm']:g})"
+            m[f"MvSite{k}"] = xy(jt['x_mm'], jt['y_mm'])
     for law, r in ratios.items():
         if law != prod and r and law in LTAG:
             m[f"MvRatio{LTAG[law]}Lo"], m[f"MvRatio{LTAG[law]}Hi"] = fx(min(r), 2), fx(max(r), 2)
@@ -267,7 +272,7 @@ def critical():
             _s, t, a = lab.split("_")
             mr = v.get("max_response_site") or {}
             if mr:
-                m[f"MvCritSite{tag}{t}{ATAG[a]}"] = f"({mr['x_mm']:g}, {mr['y_mm']:g})"
+                m[f"MvCritSite{tag}{t}{ATAG[a]}"] = xy(mr['x_mm'], mr['y_mm'])
     allc = [J("solder_critical_v2_" + law + ".json") if law != c.get("law") else c
             for law in LTAG]
     allc = [x for x in allc if x and x.get("cases")]
@@ -285,7 +290,7 @@ def critical():
         m[f"MvCritRatio{k}"] = fx(v.get("max_response_over_max_du"), 3)
         mr = v.get("max_response_site") or {}
         if mr:
-            m[f"MvCritSite{k}"] = f"({mr['x_mm']:g}, {mr['y_mm']:g})"
+            m[f"MvCritSite{k}"] = xy(mr['x_mm'], mr['y_mm'])
     return m
 
 

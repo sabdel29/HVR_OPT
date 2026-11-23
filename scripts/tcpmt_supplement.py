@@ -791,7 +791,7 @@ def _law(k):
 
 
 def _win_txt(w):
-    out = [f"{x[0]:g}--{x[1]:g}~MPa {h}" for h in ("hot", "cold")
+    out = [f"{x[0]:.3g}--{x[1]:.3g}~MPa {h}" for h in ("hot", "cold")
            for x in [(w or {}).get(h)] if x]
     return ", ".join(out) or "--"
 
@@ -1048,6 +1048,11 @@ def _sx(x, d=2):
     return "--" if x is None else f"{1e3 * float(x):.{d}f}"
 
 
+def _xy(x, y):
+    """a site '(x, y)' in mm with typographic minus signs"""
+    return f"({x:g}, {y:g})".replace("-", r"$-$")
+
+
 def joint_band_table():
     b = J(TR / "solder_law_band.json")
     if not b or not b.get("band"):
@@ -1064,7 +1069,7 @@ def joint_band_table():
         if not v or not jt:
             continue
         ur = urel.get(lab)
-        body.append(f"{V2_CASE[lab]} & ({jt['x_mm']:g}, {jt['y_mm']:g}) & {fx(jt['T_C'])} & "
+        body.append(f"{V2_CASE[lab]} & {_xy(jt['x_mm'], jt['y_mm'])} & {fx(jt['T_C'])} & "
                     f"{fx(jt['du_xy_um'], 2)} & {fx(jt['du_z_um'], 2)} & "
                     + " & ".join(_sx(v["values"].get(k)) for k in laws)
                     + f" & {_sx(v.get('min'))}--{_sx(v.get('max'))} & "
@@ -1087,15 +1092,17 @@ def joint_band_table():
             r"production law first. Band: lowest--highest law, the reported uncertainty of the "
             r"joint response; $U_{95}$: numerical (own L0$\to$L3 and 4$\to$8-cycle changes, "
             r"Table~\ref{tab:supp-localchecks}). "
-            + (rf"The production law's surrogate window converged after {cw.get('n_iterations')}"
-               r" fits" + ("" if cw.get("converged") else r" (not converged)") + ": "
+            + ((r"The production law's surrogate window is self-consistent at these joints "
+                r"(the fitted window within 10\,\% of the one they visit, responses within "
+                r"1\,\%)" if cw.get("converged") else
+                r"The production law's surrogate window is \textbf{not converged}") + ": "
                + _win_txt(cw.get("window_MPa")) + ". " if cw else "")
             + (("Joints: under every law its own maximum-response site over the BGA lattice "
                 r"(Table~\ref{tab:supp-critv2}); the site columns give the production law's" +
                 ("" if b.get("same_site_all_laws") else
                  ", and " + "; ".join(
                      f"{V2_CASE[lab]}: " + ", ".join(
-                         f"{_law(k)[0]} ({xy[0]:g}, {xy[1]:g})"
+                         f"{_law(k)[0]} {_xy(*xy)}"
                          for k, xy in (v.get("sites_mm") or {}).items()
                          if k != prod and xy != (v.get("sites_mm") or {}).get(prod))
                      for lab, v in b["band"].items()
@@ -1128,7 +1135,7 @@ def critical_v2_table():
             r = ((cl["cases"].get(lab) or {}).get("max_response_site") or {})
             if r and (abs(r["x_mm"] - mr.get("x_mm", 1e9)) > 1e-6
                       or abs(r["y_mm"] - mr.get("y_mm", 1e9)) > 1e-6):
-                oth.append(f"{_law(law)[0]} ({r['x_mm']:g}, {r['y_mm']:g})")
+                oth.append(f"{_law(law)[0]} {_xy(r['x_mm'], r['y_mm'])}")
         if oth:
             diffs[lab] = oth
         body.append(f"{_lab(lab)} & {sc.get('lattice_sites', '--')} & "
@@ -1139,8 +1146,8 @@ def critical_v2_table():
                     f"{mf.get('n_violations_over_1pct', '--')}/{mf.get('n_ordered_pairs', '--')}"
                     + ("" if wf is None else rf" ({100 * wf:.1f}\,\%)") + " & "
                     f"{fx(100 * scr['margin_rel'], 0) if scr.get('margin_rel') else '--'} & "
-                    f"({md.get('x_mm', 0):g}, {md.get('y_mm', 0):g}) & "
-                    f"({mr.get('x_mm', 0):g}, {mr.get('y_mm', 0):g})"
+                    f"{_xy(md.get('x_mm', 0), md.get('y_mm', 0))} & "
+                    f"{_xy(mr.get('x_mm', 0), mr.get('y_mm', 0))}"
                     + (r"$^\dagger$" if oth else "") + " & "
                     f"{fx(v.get('max_response_over_max_du'), 3)} \\\\")
     head = [r"Case & Lattice & Base/front & Solved & Viol. $(|\Delta u_{xy}|, T)$ & "
