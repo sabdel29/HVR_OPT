@@ -2455,7 +2455,8 @@ def main():
                  r"after the capacitor-rule correction, Table~\ref{tab:supp-variants} the package "
                  r"decisions of the robustness study, Table~\ref{tab:supp-omit} the omitted "
                  r"converter losses and Table~\ref{tab:supp-review} the variants added in the "
-                 r"review round.")
+                 r"review round; the warpage at reflow and bonding and the board, mounting, "
+                 r"clamp and material variants on the production fields follow it.")
     L += caprule_screen_table() + variants_table() + omitted_losses_table()
     L += review_variants_table()
     L += assembly_mounting_table()
