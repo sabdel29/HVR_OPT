@@ -145,3 +145,11 @@ add the manifold plate, redo the tier order for the new stack, update the manife
   - writer RESULTS: evaluate, compare, explore, discussion (owns IX-B caveats), conclusion, Table V gen, fig5-9.
 - Next: final consistency and number audit; supplement pointers and wrapper; response letter and revision notes;
   then page reduction.
+- 2026-11-23: methods writer DONE (Sec. IV-V, Table IV, Figs. 3/4/10; commits f6653ee, 39de107, 9a15acb, 9d82fac).
+  - GAP found: the campaign ran only the OLD local solder model on the ideal-decoupling cases. A mechanics agent is now
+    running the v2 model (self-consistent law and band, full-displacement submodel, ramp) on the production-state
+    joints, plus reflow, board/clamp, encapsulant and interconnect-layer outputs.
+  - BGA agent told: rerun the Z1/Z2 production cases (Z1-A +1.17 W from the re-close) and apply 2 A to Z3's 1-V balls
+    (667 -> about 500/rail), rerunning the Z3 coupled cases.
+  - The results writer must add \label{sec:limits} and the IX-B items (13 % solver warpage difference, no
+    through-thickness rung, no manifold CFD, no transient).
