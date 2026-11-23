@@ -1,12 +1,13 @@
 """Fig. 2 (proposed): the synthesised hybrid regulator cell (vector redraw of the thesis
 schematic) and its two switching phases.
 
-(a) 3:1 switched-capacitor stage feeding K = 3 inductor branches (N = 3, K_A = 2):
-    S1, S3 conduct in phase A (L1, L3 driven at 16 V), S2 in phase B (L2 driven at 16 V);
+(a) 3:1 switched-capacitor stage feeding K = 3 inductor branches (N3K3, K_A = 2):
+    S1, S3 conduct in phi_1 (L1, L3 driven at 16 V), S2 in phi_2 (L2 driven at 16 V);
     S4-S6 freewheel the undriven inductors. C1 holds 32 V, C2 16 V.
 (b) Gate timing over one period T = 1/f_sw with D = D_DUTY, and the input current drawn
-    from the 48-V rail (only in phase A) - the origin of the pulsed-input scenarios; the sum
-    over the decoupling plan's interleaved clock phases.
+    from the 48-V rail (only in phi_1), the origin of the pulsed input; the sum over the
+    decoupling plan's interleaved clock phases. k_rms (bare pulse -> implemented decoupling)
+    from manuscript_v2/macros_front.tex (FrKopen, FrKrms), else from the artifact.
 D, f_sw, the branch current, the clock phases and the C_in ring are read from the decoupling
 chain's artifact (tcpmt_revision/input_decoupling.json), else from the design record (D, f_sw,
 I_cell / K and its committed decoupling plan); k bare -> with C_in from the macros, else from
@@ -19,6 +20,19 @@ import re
 import style as S
 
 S.setup()
+PH1, PH2 = "$\\phi_1$", "$\\phi_2$"
+PH1B, PH2B = "$\\overline{\\phi_1}$", "$\\overline{\\phi_2}$"
+FRONT = S.REPO / "manuscript_v2" / "macros_front.tex"
+
+
+def fmacro(name):
+    """One value of macros_front.tex (generated from the same campaign root), or None."""
+    if not FRONT.is_file():
+        return None
+    m = re.search(r"\\newcommand\{\\" + re.escape(name) + r"\}\{([^}]*)\}", FRONT.read_text())
+    return None if not m or m.group(1).strip() in ("", "--") else m.group(1).strip()
+
+
 if S.DR.topology() != (3, 3, 2):
     raise SystemExit(f"fig_converter draws the N3K3K_A2 cell; design {S.DR.name()} is "
                      f"N{S.DR.topology()[0]}K{S.DR.topology()[1]}K_A{S.DR.topology()[2]}")
@@ -38,9 +52,9 @@ N_PH = (rec.get("n_clock_phases") or (int(m_ph.group(1)) if m_ph else None))
 m_cin = re.search(r"\((\d+) x (\d{4}) ([\d.]+-V \w+), ([\d.]+) uF",
                   summ.get("figure_caption", ""))
 _kled = (summ.get("ledger_at_S0_temperatures") or {}).get("k_eq") or rec.get("k_eq")
-K_OPEN = S.macro("DecapKopen") or (f"{summ['k_open_cell_waveform']:.1f}"
+K_OPEN = fmacro("FrKopen") or (f"{summ['k_open_cell_waveform']:.2f}"
                                    if summ.get("k_open_cell_waveform") else None)
-K_EQ = S.macro("DecapKeq") or (f"{_kled:.2f}" if _kled else None)
+K_EQ = fmacro("FrKrms") or (f"{_kled:.2f}" if _kled else None)
 if not dec:                                     # the committed plan of the design record
     K_OPEN = K_OPEN or (f"{_drd['k_open']:.1f}" if _drd.get("k_open") else None)
     K_EQ = K_EQ or (f"{_drd['k_eq']:.2f}" if _drd.get("k_eq") else None)
@@ -147,26 +161,26 @@ ax.text(XC + 0.36, 6.85, "(ring)", ha="left", va="center", fontsize=6.5, color=S
 ax.text(0.5, 6.9, "48 V", ha="right", va="center", fontsize=7)
 # stack S1 - S2 - S3
 n1, n2, n3 = 6.35, 5.0, 3.35
-sw_v(X, YIN, n1 + 0.05, "S$_1$", "A")
+sw_v(X, YIN, n1 + 0.05, "S$_1$", PH1)
 dot(X, n1)
-sw_v(X, n1, n2 + 0.05, "S$_2$", "B")
+sw_v(X, n1, n2 + 0.05, "S$_2$", PH2)
 dot(X, n2)
-sw_v(X, n2, n3 + 0.05, "S$_3$", "A")
+sw_v(X, n2, n3 + 0.05, "S$_3$", PH1)
 dot(X, n3)
 # C1 to Vx1 (right), S5, L1
 XV1 = 8.3
 cap_h(X, XV1, n1, "C$_1$", "32 V")
 dot(XV1, n1)
-sw_h(XV1, XV1 + 1.25, n1, "S$_5$", r"$\overline{\mathrm{A}}$")
+sw_h(XV1, XV1 + 1.25, n1, "S$_5$", PH1B)
 ind_v(XV1, n1, YB, "L$_1$", IL_TXT)
 # C2 to Vx2 (left), S6, L2
 XV2 = 2.1
 cap_h(XV2, X, n2, "C$_2$", "16 V")
 dot(XV2, n2)
-sw_h(XV2 - 1.25, XV2, n2, "S$_6$", r"$\overline{\mathrm{B}}$", gnd_right=False)
+sw_h(XV2 - 1.25, XV2, n2, "S$_6$", PH2B, gnd_right=False)
 ind_v(XV2, n2, YB, "L$_2$", IL_TXT)
 # n3: S4, L3
-sw_h(X + 0.25, X + 1.5, n3, "S$_4$", r"$\overline{\mathrm{A}}$")
+sw_h(X + 0.25, X + 1.5, n3, "S$_4$", PH1B)
 w(X, n3, X + 0.25, n3)
 ind_v(X, n3, YB, "L$_3$", IL_TXT)
 # output bus
@@ -182,15 +196,15 @@ w(XV1 + 0.9, YB, XV1 + 0.9, 1.08)
 gnd(XV1 + 0.9, 0.52)
 ax.text(XV1 + 1.25, 0.8, f"{3 * I_L:.1f} A", ha="left", va="center", fontsize=6.6)
 ax.text(XV2 - 0.15, YB + 0.18, "1 V", ha="right", va="bottom", fontsize=7)
-S.panel(ax, "a", "Hybrid cell: 3:1 SC stage + $K$ = 3 inductor branches", x=0.0, y=0.985)
+S.panel(ax, "a", "N3K3 cell: 3:1 SC stage + $K$ = 3 inductor branches", x=0.0, y=0.985)
 
 # ---------------------------------------------------------------- (b) timing
 bx = fig.add_axes([0.13, 0.135, 0.83, 0.20])
 T = 1.0
 D = float(D_DUTY)                       # the buck duty N V_out / V_in of the design in force
 t = np.linspace(0, 2 * T, 4001)
-sig = {"A (S$_1$, S$_3$)": ((t % T) < D),
-       "B (S$_2$)": (((t - T / 2) % T) < D),
+sig = {PH1 + " (S$_1$, S$_3$)": ((t % T) < D),
+       PH2 + " (S$_2$)": (((t - T / 2) % T) < D),
        "$i_\\mathrm{in}$, cell": ((t % T) < D)}
 if N_PH:
     sig[f"$\\Sigma i_\\mathrm{{in}}$, {N_PH} ph."] = np.any(
@@ -213,7 +227,7 @@ bx.annotate("", (T + D, yb_ + 0.85), (T, yb_ + 0.85), arrowprops=dict(
     arrowstyle="<->", lw=0.6, color=S.INK2, shrinkA=0, shrinkB=0))
 bx.text(T + D + 0.03, yb_ + 0.85, f"$DT$ ($D$ = {D:.4g})", ha="left", va="center",
         fontsize=6.5, color=S.INK2)
-bx.text(0.14, len(sig) - 2.6, "input current only in phase A", ha="left", va="center",
+bx.text(0.14, len(sig) - 2.6, "input current only in " + PH1, ha="left", va="center",
         fontsize=6.5, color=S.INK2)
 S.panel(bx, "b", f"Two switching phases ($f_\\mathrm{{sw}}$ = {FSW_K:.0f} kHz)", x=-0.13,
         y=1.02)
@@ -225,8 +239,9 @@ if m_cin:
 else:
     S.pending(bx, 0.0, -0.75, "C_in parts", "input_decoupling.json")
 if N_PH and K_OPEN and K_EQ:
-    lines.append(f"{N_PH} interleaved clock phases + $C_\\mathrm{{in}}$: "
-                 f"$k$ = {K_OPEN} (bare) → {K_EQ}")
+    grp = f" (two {N_PH // 2}-phase groups)" if N_PH % 2 == 0 and N_PH > 2 else ""
+    lines.append(f"{N_PH} clock phases{grp} + $C_\\mathrm{{in}}$: "
+                 f"$k_\\mathrm{{rms}}$ = {K_OPEN} (bare pulse) → {K_EQ}")
 fig.text(0.02, 0.005, "\n".join(lines), ha="left", va="bottom", fontsize=6.5, color=S.INK,
          linespacing=1.2)
 S.save(fig, "fig2_converter")

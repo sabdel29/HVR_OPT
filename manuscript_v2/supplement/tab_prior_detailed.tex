@@ -1,17 +1,20 @@
 % Capability comparison with the closest prior work: the detailed version of the compact
 % comparison table of the paper (manuscript tab_prior.tex), set as Table S1 of the supplementary
 % material. Every cell for [Krishnakumar2026DVPD], [Choi2025SelfConsistent] and the commercial
-% tools rests on a quoted passage of the cited source. Pointers to [Krishnakumar2026DVPD] are to
-% its preprint (arXiv:2606.28837v1; check section and table numbers against the published
-% version, TCPMT 16(9), pp. 2089--2102). The full text of [Choi2025SelfConsistent] was not
-% accessible (closed access, no preprint); its column rests on its abstract and on what
-% [Krishnakumar2026DVPD] states about it. Packages: booktabs, array, longtable, amssymb; the
-% column type L{w} (ragged-right p column) is defined in the supplement's preamble.
+% tools rests on a passage of the cited source. Pointers to [Krishnakumar2026DVPD] are to its
+% preprint (arXiv:2606.28837v1; check section and table numbers against the published version,
+% TCPMT 16(9), pp. 2089--2102). The preprint describes the electrothermal model of
+% [Choi2025SelfConsistent] (its ref. [26]) in Fig. 4 and Secs. II and IV-D; that description and
+% the abstract of [Choi2025SelfConsistent] are the basis of its column. No cell is left
+% undecided: "not part of the work as described" is stated where neither source reports the
+% capability. The "This work" column carries no computed number (the supplement is compiled
+% without the paper's macros); it points to the sections and tables that do. Packages: booktabs,
+% array, longtable, amssymb; the column type L{w} is defined in the supplement's preamble.
 \begingroup
 \scriptsize
 \setlength{\tabcolsep}{2.4pt}
 \renewcommand{\arraystretch}{1.12}
-\begin{longtable}{@{}L{2.25cm}L{3.90cm}L{2.95cm}L{2.80cm}L{4.75cm}@{}}
+\begin{longtable}{@{}L{2.25cm}L{3.70cm}L{3.15cm}L{2.80cm}L{4.75cm}@{}}
 \caption{Capabilities of the closest DVPD frameworks and of commercial multiphysics sign-off
 tools, as stated in the cited sources, and of this work}\label{tab:supp-prior}\\
 \toprule
@@ -39,108 +42,126 @@ Capability
 Converter topology
  & Input; DSCH demonstrated, not searched\textsuperscript{a}
  & Supplied by the electrical framework\textsuperscript{b}
- & ?\textsuperscript{c}
- & $(N,K)$ members of the hybrid SC--buck family enumerated, $K_A=\lceil K/2\rceil$ and
-   balanced $\mathbf{B}$ per pair~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS} \\
+ & Not described; the design is imported\textsuperscript{c}
+ & $(N,K)$ members of the hybrid SC--buck family enumerated within a component budget,
+   $K_A=\lceil K/2\rceil$ and balanced $\mathbf{B}$~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS} \\
 Devices and passives
  & Switch width sized continuously ($\partial P/\partial w=0$); arrays of a target unit
    inductor\textsuperscript{d}
  & Supplied by the electrical framework\textsuperscript{b}
- & ?\textsuperscript{c}
- & Selected from 90 GaN FETs, 11 integrated inductors, 8 capacitors; lowest ripple-feasible
-   $f_{\mathrm{sw}}$ on a 50-point grid \\
+ & Not described\textsuperscript{c}
+ & Selected from a discrete library of GaN transistors, integrated inductors and capacitors under
+   rating, derating, effective-capacitance, output-capacitance and placement rules (paper,
+   Sec.~III-B) \\
 Regulator count
  & Loss minimized over integer $M$ ($M=70$), design re-optimized at each $M$
  & One design (48-to-1~V, 1~kW)
- & ?\textsuperscript{c}
- & 17 counts, topology re-synthesized at each, routing scored with the model
-   of~\cite{Krishnakumar2026DVPD} (electrical only); $M=49$ carried into the package \\
+ & Not described\textsuperscript{c}
+ & Electrical screen with the topology re-synthesized at every count and the routing scored with
+   the model of~\cite{Krishnakumar2026DVPD}; the optimum and its square-grid neighbours carried
+   through the coupled chain (paper, Sec.~III-C; Table~S2) \\
 Floorplan and interconnect allocation
  & $m\times n$ floorplan, VR placement, vertical stacking, per-connection VIC and RDL
    allocation
  & Supplied by the electrical framework\textsuperscript{b}
  & Analysis of imported designs~\cite{Cadence_Celsius}
- & Fixed $7\times7$ grid; per-rail via provisioning; BGA count solved \\
-IR drop and transient droop
+ & Square grid of square cells; mixed tiers placed in two dimensions; per-rail via
+   provisioning; BGA count solved \\
+Static IR drop and transient droop
  & Spatial IR drop and $L\,\mathrm{d}i/\mathrm{d}t$ droop over 100 POL segments
- & ?\textsuperscript{e}
+ & Supplied by the electrical framework\textsuperscript{b}
  & IR drop with Joule heating~\cite{Cadence_Celsius}
- & Steady-state conductor loss and package-network drop; no droop \\
+ & Static drop of the 1-V path per rail against a declared limit; no droop \\
 Package geometry
  & Representative cell stack; VIC dimensions (Table~III of~\cite{Krishnakumar2026DVPD})
- & Meshed model, geometry matched to the electrical model; extent ?\textsuperscript{e}
+ & Meshed model, geometry and power map consistent with the electrical model; channels next to
+   the GaN layer (\cite{Krishnakumar2026DVPD}, Sec.~IV-D)
  & Package, PCB and multi-die models~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius}
- & Mounted stack: die, RDL tiers, converter tiers, Si substrate with TSVs, attach, BGA,
-   board, cold plate(s) \\
+ & Mounted stack: die, RDL tiers, converter tiers with copper posts, Si substrate with TSVs,
+   attach, BGA, board, cold plate(s) \\
 Integration architectures compared
  & VPD vs.\ DVPD; three conversion schemes, all substrate-embedded
  & One
- & ?\textsuperscript{c}
- & Embedded, package-backside, board-backside; one regulator; common temperature and two
-   identical coolings\textsuperscript{f} \\
+ & Not described\textsuperscript{c}
+ & Embedded, package-backside and board-backside placements of one design record; common
+   temperature and two identical coolings\textsuperscript{e} \\
 Electrothermal coupling
- & Via~\cite{Choi2025SelfConsistent,Choi2025AutoET}: $T$-dependent parameters fed back; loop
-   returns to the electrical design until $T_j\le85\,^\circ$C
+ & Via~\cite{Choi2025SelfConsistent,Choi2025AutoET}: temperature-dependent parameters fed back;
+   loop returns to the electrical design until $T_j\le85\,^\circ$C
  & Self-consistent loop; loss $200\to231$~W
  & Coupled co-simulation~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius}
- & Fixed point on a fixed design: $R_{\mathrm{on}}(T)$ per tier, $\rho(T)$ per conductor;
-   no re-synthesis \\
+ & Fixed point on a fixed design: on-resistance per device tier, resistivity per conductor; no
+   re-synthesis inside the loop \\
 Cooling boundary
  & Substrate-embedded microchannels at the GaN layer (example implementation); flow set for
    $T_j\approx84\,^\circ$C
  & Substrate-embedded microchannels; flow solved (1.39~g\,s$^{-1}$)
  & General: FEA for solids, CFD for fluids~\cite{Cadence_Celsius}
  & Declared film boundary $(h_{\mathrm{eff}},T_{\mathrm{f}})$; shown with Si microchannel
-   plates, top and top + bottom; flow fixed \\
+   manifold plates, top and top + bottom; flow fixed \\
 Thermomechanics and joint search
  & Qualitative discussion only
- & ?\textsuperscript{e}
- & Stress and warpage~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius}; joint
-   search ?\textsuperscript{c}
- & Thermoelastic FE of the mounted assembly; $\Delta u$ at every legal ball site \\
+ & Not part of the work as described: \cite{Krishnakumar2026DVPD} names temperature
+   distributions, loss convergence and cooling optimization as its content (Sec.~IV-D)
+ & Stress and warpage~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius}; joint search not
+   described\textsuperscript{c}
+ & Thermoelastic FE of the mounted assembly; $\Delta u_{\mathrm{c}}$ at every site of every
+   interconnect layer \\
 Local solder response
  & Not addressed
- & ?\textsuperscript{e}
+ & Not part of the work as described
  & Solder failure and BGA life prediction~\cite{Ansys_Sherlock}
- & Viscoplastic submodel; $\Delta\varepsilon_{\mathrm{in}}$ per cycle, no life \\
+ & Viscoplastic submodel driven by the cut-boundary displacement;
+   $\Delta\varepsilon_{\mathrm{in}}$ per cycle, no life \\
 Interconnect realizability
  & VIC count and area against footprint; aspect ratio and pitch fixed by technology
- & ?\textsuperscript{e}
- & ?\textsuperscript{c}
+ & Not part of the work as described; VIC allocation by~\cite{Krishnakumar2026DVPD}
+ & Not described\textsuperscript{c}
  & Per-net via count, pitch, aspect ratio and landing area for the actual tier order \\
+Component-rating feasibility
+ & Junction threshold $T_j\le85\,^\circ$C in the electrothermal loop
+   (\cite{Krishnakumar2026DVPD}, Fig.~4)
+ & Self-consistent solution at the 85\,$^\circ$C junction threshold
+ & Not described\textsuperscript{c}
+ & Every device, part, material and die limit, the solder-law range, the static drop and the ball
+   current and sites; a failing candidate is not ranked (paper, Sec.~VI; Table~S19) \\
 Verification
  & Models stated to be cross-verified (SPICE/Spectre, vendor tools); no errors reported
- & ?\textsuperscript{e}
+ & Region-specific meshing stated to keep the prediction accuracy while cutting meshing and
+   per-iteration time by over 30\,\%
  & Foundry-certified thermal analysis~\cite{Synopsys_RedHawkSC_ET}
- & Per stage against FE, CFD or closed form (0.01--16.5\,\%); converter model as
-   in~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}\textsuperscript{g}; solder submodel:
+ & Per stage against FE, CFD or closed form (paper, Sec.~V; Table~S17); converter model as
+   in~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}\textsuperscript{f}; solder submodel:
    discretization only \\
+Uncertainty of compared outputs
+ & Not reported
+ & Not reported in the abstract
+ & Not described\textsuperscript{c}
+ & Numerical uncertainty of every compared output from a grid-convergence index on its own mesh
+   ladder; a difference is resolved only if it exceeds it (paper, Sec.~V; Table~S18) \\
 Runtime per evaluation
  & Not reported
- & ?\textsuperscript{e}; meshing and per-iteration time $-30$\,\%
- & ?\textsuperscript{c}
- & Synthesis 4.6~s; count sweep $\approx$4~min; coupled evaluation 1.3--2.8~h \\
+ & Relative only: meshing and per-iteration time $-30$\,\%
+ & Not described\textsuperscript{c}
+ & Reported per stage (paper, Sec.~V; Table~S16) \\
 \end{longtable}
 \nopagebreak\noindent
-Pointers to~\cite{Krishnakumar2026DVPD} refer to its preprint; the full text
-of~\cite{Choi2025SelfConsistent} was not accessible, so its column rests on its abstract and
-on~\cite[Fig.~4, Sec.~IV-D]{Krishnakumar2026DVPD}. VIC: vertical interconnect.
-\textsuperscript{a}\,The topology is an input~\cite[Sec.~IV]{Krishnakumar2026DVPD}, and the
-method is stated to apply to other hybrid and buck-derived
-topologies~\cite[Sec.~II]{Krishnakumar2026DVPD}.
-\textsuperscript{b}\,\cite[Fig.~4]{Krishnakumar2026DVPD} passes VR sizes and floorplan from
-its electrical framework to the electrothermal model of~\cite{Choi2025SelfConsistent}.
-\textsuperscript{c}\,?: not described on the cited product pages, which does not establish
-that the tool lacks the capability.
+Pointers to~\cite{Krishnakumar2026DVPD} refer to its preprint, which also describes the
+electrothermal model of~\cite{Choi2025SelfConsistent} (its ref.~[26]) in Fig.~4 and
+Secs.~II and~IV-D; the column of~\cite{Choi2025SelfConsistent} rests on that description and on
+its abstract. VIC: vertical interconnect. \textsuperscript{a}\,The topology is an
+input~\cite[Sec.~IV]{Krishnakumar2026DVPD}, and the method is stated to apply to other hybrid
+and buck-derived topologies~\cite[Sec.~II]{Krishnakumar2026DVPD}.
+\textsuperscript{b}\,\cite[Fig.~4]{Krishnakumar2026DVPD} passes VR sizes, loss maps and
+floorplan from its electrical framework to the electrothermal model
+of~\cite{Choi2025SelfConsistent}. \textsuperscript{c}\,Not described on the cited product
+pages, which does not establish that the tool lacks the capability.
 \textsuperscript{d}\,\cite{Krishnakumar2026DVPD} refers to ``component libraries''
 (Sec.~III); switches are sized from per-width technology parameters and inductors are
-parallel arrays of a target unit inductor.
-\textsuperscript{e}\,?: not reported in the abstract of~\cite{Choi2025SelfConsistent}; full
-text not accessible.
-\textsuperscript{f}\,Thermal-only comparisons of DVPD integration variants: on- and
-in-interposer converters~\cite{Choi2024ITherm}; three embedded-switch
-configurations~\cite{Choi2025EmbeddedCooling}.
-\textsuperscript{g}\,Circuit simulation of four other members at 30~A and
-500~kHz~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}, not of the synthesized design point.\par
+parallel arrays of a target unit inductor. \textsuperscript{e}\,Thermal-only comparisons of
+DVPD integration variants: on- and in-interposer converters~\cite{Choi2024ITherm}; three
+embedded-switch configurations~\cite{Choi2025EmbeddedCooling}. \textsuperscript{f}\,Circuit
+simulation of four other members at 30~A and 500~kHz~\cite{Abdelzaher2025ECTC,
+Abdelzaher2026EPEPS}, not of the synthesized design point.\par
 \endgroup
 \medskip

@@ -1,29 +1,26 @@
 % ============================================================================ ABSTRACT
 \begin{abstract}
-Kilowatt processors draw about a kiloampere at 1~V, so distributed vertical power delivery places
-many regulator cells beneath the load. Where the cells are integrated---embedded, on the
-substrate backside or on the board backside---decides which rail crosses each interconnect, where
-the converter's heat flows and which joints deform. This paper
-presents an electrothermal--mechanical framework that synthesizes a regulator over the topologies
-of a hybrid switched-capacitor--buck family from a discrete part library, places it in an explicit
-package, and evaluates on one geometry a rail-aware loss ledger, an electrothermal fixed point with
-a declared cooling boundary, thermoelastic mechanics with an all-site joint search, a viscoplastic
-solder submodel, part ratings and interconnect realizability. Each
-stage, and the complete package, is checked against matched references, and every compared output
-carries an uncertainty. On a 1-kW, 48-to-1-V system the ranking depends on the coupling. At a common
-temperature the package-backside regulator is marginally ahead. Under one top cold plate the
-board-backside regulator exceeds its device ratings, and the embedded and package-backside
-regulators tie electrically with implemented input decoupling, but only the
-embedded one stays feasible when the plate does not conform to the warped die. With an added bottom
-plate the package-backside regulator leads electrically and the embedded one mechanically, while
-the board-backside regulator falls behind once its 1-V redistribution is coupled. It also exposes
-requirements: interleaved input decoupling, a thin flying-capacitor
-technology for the via-optimal tier order, and the copper and ball pitch a board-backside regulator
-needs.
+Kilowatt processors draw about a kiloampere at 1~V, so distributed vertical power delivery
+places many regulator cells beneath the load. Where should these cells be integrated once
+conversion loss, temperature and deformation are solved together? Three integrations are
+compared: embedded between substrate and die (Z1), on the substrate backside (Z2) and on the
+board backside (Z3). An electrothermal--mechanical framework synthesizes the regulator from a
+discrete part library and returns the cell count as an output. On one package geometry it
+couples a rail-aware loss ledger to temperature, searches every solder joint for the largest
+displacement and checks every part rating. For a 1-kW, 48-to-1-V load it selects
+\FrDseOptM{} cells of a three-stage hybrid converter switching at \FrConvFsw~kHz. Under one
+top cold plate, Z1 and Z2 dissipate within \GapAZtwo~W of each other, while Z3 exceeds its
+device ratings. With an added bottom plate, Z2 dissipates \GapBZtwo~W less than Z1 and peaks
+\dTmaxTierBZtwo~K cooler, but its die warps \FrWarpRatioB{} times as much. Z3 then lacks ball
+sites and exceeds the static voltage-drop limit. The die stays below \DieTmax\,$^\circ$C under
+a uniform load but reaches \FrDieHotMax\,$^\circ$C when three quarters of its power
+concentrates in its central half. Three requirements follow: interleaved input decoupling,
+copper posts through the 1-mm capacitor tier, and a deeper board opening for a five-tier
+converter saving up to \FrTfiveSaveHi~W.
 \end{abstract}
 
 \begin{IEEEkeywords}
 Distributed vertical power delivery, electrothermal--mechanical co-design, hybrid
-switched-capacitor converter, integrated voltage regulator, package-embedded regulator, solder
+switched-capacitor converter, integrated voltage regulator, design-space exploration, solder
 joint, thermal management.
 \end{IEEEkeywords}

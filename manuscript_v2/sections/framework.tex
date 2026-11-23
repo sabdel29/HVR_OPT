@@ -8,99 +8,123 @@
 substrate and the die (Z1), attached to the substrate backside inside a board opening (Z2), and
 mounted on the board backside (Z3). The integration decides which rail crosses the substrate and
 the board, at what current, and which solder joints carry the deformation (ringed: critical
-joint). The 48-V feed of Z2 and Z3 starts outside the package-internal loss boundary (dashed
-box). Schematic; to-scale sections in Fig.~\ref{fig:sections}. (d) The framework: what each
-stage hands to the next on one geometry. Double arrow: the bidirectional electrothermal (E--T)
-fixed point; single arrows: one-way transfers; dotted: the optional mechanical-to-thermal
-feedback through the top thermal interface; dashed: the exploration loop over the design
-inputs.}
+joint). Every converter cell shows the four mixed tiers of the design point, input end at the
+bottom. The faded bottom plate exists only under cooling~B. The 48-V feed of Z2 and Z3
+starts outside the package-internal loss boundary (dashed box). Schematic; to-scale sections in
+Fig.~\ref{fig:sections}. (d) The framework: what each stage hands to the next on one geometry.
+Double arrow: the bidirectional electrothermal (E--T) fixed point; single arrows: one-way
+transfers; dotted: the optional feedback through the plate interface; dashed: the exploration
+loop over the design inputs.}
 \label{fig:concept}
 \end{figure*}
 
 The framework is a chain of models that share one geometry (Fig.~\ref{fig:concept}). Its inputs
-are a system specification---load power and voltage, input rail, die footprint, a target
-regulator current density and an allowable ripple---a component library of power devices,
-inductors and capacitors, an integration architecture and a cooling solution, given as the
-boundaries it imposes (a film coefficient and coolant inlet temperature on each cooled face, or
-a coolant model that computes them). Its outputs are a synthesized regulator, an explicit
-package stack, a conductor-level loss ledger, converged temperature, deformation and
-joint-response fields, a feasibility verdict, and the uncertainty of each output.
+are a system specification, a component library, an integration and a cooling solution. The
+specification gives the load power and voltage, the input rail, the die footprint, a target
+current density and ripple limits. The library holds power devices, inductors and capacitors with
+their datasheet ratings, dimensions and loss parameters. The cooling enters as the boundaries it
+imposes: a film coefficient and a coolant temperature on each cooled face, or a coolant model that
+computes them. The outputs are a synthesized regulator, an explicit package stack, a loss ledger
+by conductor and component, converged temperature, deformation and joint-response fields, a
+feasibility verdict and the numerical uncertainty of each output.
 
-\emph{Converter synthesis} enumerates hybrid switched-capacitor--buck topologies and selects
-devices, passives and switching frequency for the specified regulator count by exhaustive
-search over a discrete library (Section~\ref{sec:dse}). \emph{Stack construction} turns the
-selected components into tiers inside each cell footprint, adds the interlayer
-redistribution, places the cells in the chosen integration and builds the substrate,
-interconnect fields, board, ball field and cooling boundaries around them. The \emph{rail-aware
-ledger} assigns to every conductor the rail it carries and that rail's current, and evaluates
-its resistance from geometry and temperature. The \emph{package thermal model} receives the
-ledger as a heat map deposited where each loss is generated and returns temperatures, which
-update every temperature-dependent resistance. The converged field drives a
-\emph{thermoelastic package model} of the mounted assembly, which searches every legal
-solder-joint site for the largest relative displacement, and a \emph{local viscoplastic
-submodel} of the critical joint and its alternatives, which returns their inelastic response per
-thermal cycle. The \emph{feasibility} stage checks the result against the ratings of the
-selected components and the rules of the package: power-device junction temperature, capacitor,
-inductor and package-material limits, the validity range of the solder law, via aspect ratio,
-pitch and landing area, and ball and attach provisioning.
+\subsection{Stages and the design record}\label{sec:fw-stages}
+\emph{Converter synthesis} enumerates the topologies of a hybrid SC--buck family and selects
+devices, passives and switching frequency by exhaustive search over the library
+(Section~\ref{sec:dse}). In the explore mode it also returns the regulator count. \emph{Stack
+construction} places the selected parts in tiers inside each cell and adds the interlayer
+redistribution layers (RDLs). It then builds the substrate, the interconnect fields, the board,
+the BGA and the cooling boundaries of the chosen integration around the cells. The
+\emph{rail-aware ledger} assigns to every conductor the rail it carries and that rail's current,
+and it evaluates the conductor's resistance from geometry and temperature. The \emph{package
+thermal model} receives the ledger as a heat map, deposited where each loss arises, and returns
+temperatures that update every temperature-dependent resistance. The converged field drives a
+\emph{thermoelastic} finite-element (FE) model of the mounted assembly. It evaluates the relative
+displacement at every site of every interconnect layer and finds the critical joint. A
+\emph{local viscoplastic submodel} of that joint and its competitors returns their inelastic
+response per thermal cycle. The \emph{feasibility} stage, finally, checks the converged state
+against the ratings of the selected parts and the rules of the package
+(Fig.~\ref{fig:algorithm}). A candidate that fails any check is reported but not ranked.
+
+A \emph{design record} hands the regulator from the synthesis to the package. It holds the count
+and grid, the topology, the parts, the switching frequency, the tier plan with part placements and
+heights, the tier order and the input-decoupling plan. Every later stage reads the converter from
+this record and from no other source. The converter evaluated in the package is therefore the
+synthesized one, and each design compared in Sections~\ref{sec:evaluate}--\ref{sec:explore} is a
+complete record.
 
 \emph{One geometry} has a precise meaning here. Every stage derives its domain from one stack
-description: the ledger takes conductor lengths, cross sections and counts from it, and the two
-finite-element models discretize it into one mesh. Each ledger term names the layer and the
-cell footprints that produce it, and these map to element sets of that mesh; the heat deposited
-in them equals the ledger total to $10^{-6}$, and the temperature returned to a term is the mean
-over the nodes of the same set. The mechanics reads the converged nodal field on the same mesh,
-and the local submodel reads the displacement and temperature of a ball site of the same
-lattice the ledger provisions. Three different kinds of interaction follow, and the framework
-keeps them apart (Fig.~\ref{fig:concept}d). \emph{Coupled solution}: loss and temperature are
-solved together, by fixed-point iteration, because each changes the other at first order.
-\emph{One-way transfer}: the converged temperature field loads the mechanics, and the critical
-joint's displacement and temperature drive the local submodel; nothing is returned.
-\emph{Neglected feedback}: the mechanical state does not update the electrical or thermal model
-in production. The thermal strain of a copper conductor, $\alpha_{\mathrm{Cu}}\Delta T\approx
-0.15$\,\%, changes its resistance two orders of magnitude less than the 20--35\,\% change of
-resistivity inside the fixed point, so the electrical feedback is negligible. The thermal
-feedback is not always negligible: when a flat cold plate meets a warped die, the thermal
-interface thickens where the die falls away. The framework closes this loop as an option, and
-Section~\ref{sec:compare} quantifies it. Contact degradation, delamination, intermetallic
-growth and damage are outside the intact-package scope.
+description. The ledger takes conductor lengths, cross sections and counts from it, and the two FE
+models discretize it into one mesh. Each ledger term names the layer and the cell footprints that
+produce it, and these map to element sets of that mesh. The heat deposited in them equals the
+ledger total to a relative $10^{-6}$, and the temperature returned to a term is the mean over the
+nodes of the same set. The mechanics reads the converged nodal field on the same mesh. The local
+submodel reads the displacement and temperature of a site of the same ball lattice that the
+ledger provisions.
+
+\subsection{Coupling classes}\label{sec:fw-coupling}
+The framework keeps four kinds of interaction apart (Fig.~\ref{fig:concept}d).
+\emph{Bidirectional E--T coupling}: loss and temperature are solved together, by fixed-point
+iteration, because each changes the other at first order. \emph{One-way temperature-to-mechanics
+transfer}: the converged temperature field loads the thermoelastic model, and nothing is returned.
+\emph{One-way joint-to-local transfer}: the displacement and temperature at a joint site drive the
+local submodel, and nothing is returned. \emph{Optional plate-interface feedback}: a flat cold
+plate on a warped die leaves a thicker thermal interface where the die falls away. This loop is
+closed as an option, and Section~\ref{sec:compare} quantifies it.
+
+The remaining feedback is neglected. Thermal strain changes a copper conductor's resistance by
+about $\alpha_{\mathrm{Cu}}\Delta T$, with $\alpha_{\mathrm{Cu}} = 16.6$~ppm\,K$^{-1}$. The
+temperature coefficient of copper resistivity, $3.93\times10^{-3}$~K$^{-1}$, is more than two
+orders of magnitude larger, so the mechanical-to-electrical feedback is negligible. The intact
+package that this scope assumes is discussed with the other limitations in
+Section~\ref{sec:discussion}.
 
 \begin{figure}[!t]
 \centering
 \fbox{\begin{minipage}{0.95\columnwidth}\footnotesize
 \textbf{Input:} specification, library, integration, cooling boundaries.\\[2pt]
-\textbf{1} \;Synthesize the regulator: exhaustive search over topologies, devices, passives
-and $f_{\mathrm{sw}}$ under rating, ripple and area constraints (Section~\ref{sec:dse}).\\
-\textbf{2} \;Build the stack and the mesh; check via aspect ratio, pitch, landing and
-provisioning (Section~\ref{sec:realizability}).\\
+\textbf{1} \;Synthesize the regulator by exhaustive search over topologies, parts and
+$f_{\mathrm{sw}}$ under the rules of Section~\ref{sec:dse}; in the explore mode, also over the
+count $M$. Write the design record.\\
+\textbf{2} \;Build the stack and the mesh from the record; check via aspect ratio, pitch, landing
+and provisioning (Section~\ref{sec:realizability}).\\
 \textbf{3} \;Set the region temperatures $T^{0}$.\\
 \textbf{4} \;\textbf{repeat}: ledger $L(T^{k})$; deposit $L$ by region (deposit = ledger total);
 solve the thermal field with the cooling boundaries; $T^{k+1}$ = region means;\\
 \hspace*{1.2em}\textbf{until} $\max|T^{k+1}-T^{k}| < 0.25$~K and $|\Delta P|/P < 10^{-3}$.\\
-\textbf{5} \;Solve the thermoelastic package on the converged field; evaluate $\Delta u$ at
-every legal ball site.\\
-\textbf{6} \;\emph{Optional}: update the interface thickness from the solved warpage and
-return to 4, until the warpage changes by less than 1\,\%.\\
-\textbf{7} \;Solve the local submodel at the site of largest $\Delta u$ and at the competing
-sites (largest $T_{\mathrm{j}}$, corners, the Pareto set in $\Delta u$ and $T_{\mathrm{j}}$);
-report the largest response.\\
-\textbf{8} \;Check feasibility: junction, component and material temperatures against their
-ratings, joint temperature against the solder law, interconnect rules.\\[2pt]
-\textbf{Output:} loss by conductor and component, temperatures, warpage, $\du$,
-$\deps$, verdicts, and the uncertainty of each.
+\textbf{5} \;Solve the thermoelastic package on the converged field; evaluate $\du$ at every site
+of every interconnect layer.\\
+\textbf{6} \;\emph{Optional}: update the interface thickness from the solved warpage and return to
+step~4, until the warpage changes by less than 1\,\%.\\
+\textbf{7} \;Solve the local submodel at the critical site and at the competing sites; report the
+largest response.\\
+\textbf{8} \;Check feasibility: device junction $T_{\mathrm{jn}}$ per tier, capacitor, inductor,
+dielectric, encapsulant, board and die temperatures, the validity range of the solder law at the
+joint temperature $T_{\mathrm{sj}}$, the static drop per rail, the ball current and sites, and
+the interconnect rules.\\[2pt]
+\textbf{Output:} loss by conductor and component, temperatures, warpage, $\du$, $\deps$,
+verdicts, and the numerical uncertainty of each.
 \end{minipage}}
-\caption{One evaluation of the framework. Steps 1 and 2 are analytical (seconds); step 4 is
-the only coupled solution; steps 5 and 7 are one-way transfers.}
+\caption{One evaluation of the framework. Steps 1 and 2 are analytical; step 4 is the only
+coupled solution; steps 5 and 7 are one-way transfers; step 6 is the optional feedback. Limits of
+step 8: Table~S19.}
 \label{fig:algorithm}
 \end{figure}
 
-Because every stage reads and writes the same geometry, the framework can be used in three ways
-(Fig.~\ref{fig:algorithm}). To \emph{evaluate} a design, the chain is run once and every output
-is checked against the ratings and rules of the feasibility stage. To \emph{compare}
-integration architectures, the same synthesized regulator is placed in each candidate under the
-same cooling boundaries; every output is reported side by side, inside explicitly declared loss
-boundaries, and candidates that fail a rating are filtered out before any ranking. To
-\emph{explore} the design space, converter synthesis is repeated over regulator count and
-topology as an electrical screen, the strongest candidates are carried through the coupled
-chain, and every package input without a single defensible value is varied on the production
-mesh, so that each ranking is reported together with the decisions that can reverse it.
+\subsection{Three modes of use}\label{sec:fw-modes}
+Because every stage reads and writes the same geometry, the framework is used in three modes
+(Fig.~\ref{fig:algorithm}). To \emph{evaluate} a design, the chain is run once and every output is
+checked against the feasibility rules (Section~\ref{sec:evaluate}). To \emph{compare}
+integrations, the same design record is placed in each candidate under the same cooling
+boundaries. Every output is reported side by side, inside declared loss boundaries; candidates
+that fail a check are not ranked, and a difference is called resolved only if it exceeds its
+numerical uncertainty (Sections~\ref{sec:verification} and~\ref{sec:compare}). To \emph{explore}
+the design space, the synthesis is repeated over the regulator count, the topology and the tier
+limit as an electrical screen. The screen's optimum and its neighbours are carried through the
+coupled chain, and every package input without a single defensible value is varied on the
+production mesh (Section~\ref{sec:explore}).
+
+In the explore mode the regulator count is an output, not an input. The screen proposes it, and
+the coupled chain accepts it only if it also beats its neighbours after coupling
+(Section~\ref{sec:dse}). The design record makes this test cheap: a neighbouring count is a new
+record, and the rest of the chain runs unchanged.
