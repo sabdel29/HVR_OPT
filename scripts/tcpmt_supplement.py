@@ -1111,7 +1111,7 @@ def critical_v2_table():
         body.append(f"{_lab(lab)} & {sc.get('lattice_sites', '--')} & "
                     f"{v.get('n_candidates', '--')} & {v.get('n_solved', '--')} & "
                     f"{mo.get('n_pareto_solved', '--')} & {mo.get('n_ordered_pairs', '--')} & "
-                    f"{mo.get('n_violations', '--')}"
+                    f"{mo.get('n_violations', '--')}/{mo.get('n_violations_over_1pct', '--')}"
                     + ("" if not w else rf" ({100 * w:.1f}\,\%)") + " & "
                     f"({md.get('x_mm', 0):g}, {md.get('y_mm', 0):g}) & "
                     f"({mr.get('x_mm', 0):g}, {mr.get('y_mm', 0):g}) & "
@@ -1124,9 +1124,10 @@ def critical_v2_table():
             r"$|\Delta u_{xy}|$, by relative face tilt, by $|\varepsilon_z|$ and by the deforming "
             r"$\Delta u$, the strict Pareto front in ($|\Delta u_{xy}|$, $T$) and the corners, "
             r"drawn over every lattice site; pairs: ordered pairs of solved sites where one is at "
-            r"least as large in both $|\Delta u_{xy}|$ and $T$; violations: pairs whose responses "
-            r"are ordered the other way (largest excess); ratio: response at the maximum-response "
-            r"site over that at the maximum-$|\Delta u_{xy}|$ site.")
+            r"least as large in both $|\Delta u_{xy}|$ and $T$ (mirror images of a site are that "
+            r"site); violations: pairs whose responses are ordered the other way, all / by more "
+            r"than 1\,\% (largest excess); ratio: response at the maximum-response site over that "
+            r"at the maximum-$|\Delta u_{xy}|$ site.")
     return ltab(r"@{}lrrrrrrccr@{}", 10, head, body,
                 "Critical-joint check with the full boundary transfer", "tab:supp-critv2", note,
                 sep="2.5pt")
