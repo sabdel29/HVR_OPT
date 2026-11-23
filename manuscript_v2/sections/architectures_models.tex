@@ -10,8 +10,7 @@ $\MthGrid\times\MthGrid$ grid under the 22.36-mm die, each cell \MthCellSide~mm 
 
 In the \emph{embedded} integration (Z1), the \MthStackMm-mm converter sits between a
 300-\textmu m silicon power substrate and the die. Its 48-V input crosses the board, the 48-V
-balls of a ball-grid array (BGA), a 48-V redistribution layer (RDL) on the substrate and the
-through-silicon vias (TSVs). Its 1-V output reaches the die through a 10-\textmu m output RDL
+balls of the BGA, a 48-V RDL on the substrate and the TSVs. Its 1-V output reaches the die through a 10-\textmu m output RDL
 and the die pads.
 
 In the \emph{package-backside} integration (Z2), the converter hangs below the substrate inside
@@ -48,8 +47,8 @@ compared case.}
 The parts of a cell are packed into at most four tiers, and a tier may mix part classes
 (Section~\ref{sec:dse}). Each part keeps its body footprint and a \MthKeepout-\textmu m keep-out
 in a two-dimensional placement. Listed from the 48-V input end, the first tier holds two
-high-side (HS) dies and both flying capacitors (\MthTierOne~\textmu m). The second holds an HS
-and a low-side (LS) die (\MthTierTwo~\textmu m), the third an LS die and an inductor
+HS dies and both flying capacitors (\MthTierOne~\textmu m). The second holds an HS and an LS die
+(\MthTierTwo~\textmu m), the third an LS die and an inductor
 (\MthTierThree~\textmu m), and the fourth an LS die and two inductors (\MthTierFour~\textmu m).
 With its 10-\textmu m interlayer RDLs, the converter is \MthStackUm~\textmu m tall.
 
@@ -287,7 +286,7 @@ the datasheet curves over 25--125\,$^\circ$C; above that range they are extrapol
 feasibility stage reports.
 
 \subsection{Thermoelastic package and interconnect search}\label{sec:mechanics}
-The converged temperature field loads a finite-element (FE) model of the mounted assembly,
+The converged temperature field loads an FE model of the mounted assembly,
 $\boldsymbol{\sigma} = \mathbf{C}:(\boldsymbol{\varepsilon}-\boldsymbol{\alpha}(T-T_{\mathrm{ref}}))$
 with $T_{\mathrm{ref}} = 25\,^\circ$C. It uses incompatible-mode hexahedra and cubic silicon;
 the board and the ball field are meshed as real layers, and only rigid-body motion is
