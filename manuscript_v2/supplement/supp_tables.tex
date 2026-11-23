@@ -317,7 +317,7 @@ $T$ & $E$ & $\nu$ & $A$ & $n$ \\
 125 & 33 & 0.36 & $2.848\times10^{-13}$ & 6.955 \\
 150 & 30 & 0.36 & $7.473\times10^{-13}$ & 6.955 \\
 \end{longtable}
-\nopagebreak\noindent Production law: Schubert et al. (Garofalo (hyperbolic sine)~\cite{Schubert2003ECTC}), for SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature; the joint is SAC305 (BGA). The solver integrates $\dot\varepsilon_{\mathrm{in}} = A(T)\,(\sigma_{\mathrm{vm}}-\sigma_y)^{n(T)}$ with a zero yield surface ($\sigma_y = 10^{-6}$~MPa), i.e., the applied von~Mises stress the laws were fitted in, with no rate-independent hardening; the law enters as a temperature-dependent Norton surrogate fitted at every 2.5-$^\circ$C row of the card (listed at 25-$^\circ$C steps) over the stress window the joints visit, 10.4286--35.936~MPa hot, 17.3484--50.3917~MPa cold (converged); surrogate rate error at most 15\,\% (hot dwell) and 23\,\% (cold dwell). Elasticity: $E(T) = 45 - 0.12\,(T-25)$~GPa (floor 5~GPa), $\nu$ = 0.36 (assumption (room-temperature band, Paska 2024; slope assumed)); thermal expansion 21.5~ppm/K, stress-free at 25\,$^\circ$C.\par
+\nopagebreak\noindent Production law: Schubert et al. (Garofalo (hyperbolic sine)~\cite{Schubert2003ECTC}), for SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature; the joint is SAC305 (BGA). The solver integrates $\dot\varepsilon_{\mathrm{in}} = A(T)\,(\sigma_{\mathrm{vm}}-\sigma_y)^{n(T)}$ with a zero yield surface ($\sigma_y = 10^{-6}$~MPa), i.e., the applied von~Mises stress the laws were fitted in, with no rate-independent hardening; the law enters as a temperature-dependent Norton surrogate fitted at every 2.5-$^\circ$C row of the card (listed at 25-$^\circ$C steps) over the stress window the joints visit, 10.4--35.9~MPa hot, 17.3--50.4~MPa cold (converged); surrogate rate error at most 15\,\% (hot dwell) and 23\,\% (cold dwell). Elasticity: $E(T) = 45 - 0.12\,(T-25)$~GPa (floor 5~GPa), $\nu$ = 0.36 (assumption (room-temperature band, Paska 2024; slope assumed)); thermal expansion 21.5~ppm/K, stress-free at 25\,$^\circ$C.\par
 \endgroup
 \medskip
 
@@ -341,9 +341,9 @@ Ingredient & Model form & Source & Calibration window and extrapolation \\
 \endlastfoot
 Elasticity & Linear in $T$ (Table~\ref{tab:supp-card}) & Room-temperature $E$: midpoint of the 40--50-GPa band of~\cite{Paska2024SAC305}; slope and $\nu$ assumed & Room temperature only; no temperature dependence in the source \\
 Yield and hardening & None (zero yield) & The zero-yield laws carry no rate-independent hardening; the round-2 card's isotropic hardening of a Chaboche fit is retired & -- \\
-Creep: Schubert et al. (production) & Garofalo (hyperbolic sine) & \cite{Schubert2003ECTC}; SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature & Calibrated: not stated; visited: 10.4286--35.936~MPa hot, 17.3484--50.3917~MPa cold; extrapolated: unknown (no calibration window) \\
-Creep: Xiao and Armstrong (band) & -- & \cite{Xiao2005SAC}, constants as tabulated in~\cite[Table~6]{Yuan2023SAC305}; Sn3.9Ag0.6Cu (NOT SAC305; DEFECT \#41) & Calibrated: 45--150\,$^\circ$C, 7.51--15.92~MPa; visited: 14.9542--32.6268~MPa hot, 18.2598--40.2355~MPa cold; extrapolated: stress 14.9542--40.2355~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C) \\
-Creep: measured Norton fits (band) & -- & per-temperature Norton fits of the measured points of~\cite{Xiao2005SAC} (\cite[Table~5]{Yuan2023SAC305}); Sn3.9Ag0.6Cu (NOT SAC305) & Calibrated: 45--150\,$^\circ$C, 7.51--15.92~MPa; visited: 15.7192--46.6758~MPa hot, 26.1452--70.4796~MPa cold; extrapolated: stress 15.7192--70.4796~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C) \\
+Creep: Schubert et al. (production) & Garofalo (hyperbolic sine) & \cite{Schubert2003ECTC}; SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature & Calibrated: not stated; visited: 10.4--35.9~MPa hot, 17.3--50.4~MPa cold; extrapolated: unknown (no calibration window) \\
+Creep: Xiao and Armstrong (band) & -- & \cite{Xiao2005SAC}, constants as tabulated in~\cite[Table~6]{Yuan2023SAC305}; Sn3.9Ag0.6Cu (NOT SAC305; DEFECT \#41) & Calibrated: 45--150\,$^\circ$C, 7.51--15.92~MPa; visited: 15--32.6~MPa hot, 18.3--40.2~MPa cold; extrapolated: stress 14.9574--40.235~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C) \\
+Creep: measured Norton fits (band) & -- & per-temperature Norton fits of the measured points of~\cite{Xiao2005SAC} (\cite[Table~5]{Yuan2023SAC305}); Sn3.9Ag0.6Cu (NOT SAC305) & Calibrated: 45--150\,$^\circ$C, 7.51--15.92~MPa; visited: 15.7--46.7~MPa hot, 26.1--70.5~MPa cold; extrapolated: stress 15.7321--70.499~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C) \\
 Thermal expansion & Constant & 21.5~ppm/K, assumed (21--24~ppm/K commonly quoted) & No temperature dependence \\
 Copper pads & Linear elastic & $E = 117$~GPa, $\nu = 0.34$, 16.6~ppm/K; handbook-type constants & No temperature dependence \\
 \end{longtable}
@@ -391,13 +391,13 @@ Compared responses & v2 local model on the production-state critical joints, pro
 \begin{itemize}
 \item The production law (Schubert et al.) was fitted to SnAgCu (near-eutectic SAC); applied to SAC305 in the citing literature, not to the joint's SAC305 (BGA).
 \item Its constants are reprinted without their data window, so its calibration window is not stated; inside the measured window of the band laws its creep rate is 13--73 times the measured Sn3.9Ag0.6Cu rates (geometric mean 40).
-\item The band law Xiao and Armstrong (Sn3.9Ag0.6Cu (NOT SAC305; DEFECT \#41)) is calibrated on 45--150\,$^\circ$C, 7.51--15.92~MPa; the joints visit 14.9542--32.6268~MPa hot, 18.2598--40.2355~MPa cold, which extrapolates stress 14.9542--40.2355~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C).
-\item The band law measured Norton fits (Sn3.9Ag0.6Cu (NOT SAC305)) is calibrated on 45--150\,$^\circ$C, 7.51--15.92~MPa; the joints visit 15.7192--46.6758~MPa hot, 26.1452--70.4796~MPa cold, which extrapolates stress 15.7192--70.4796~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C).
+\item The band law Xiao and Armstrong (Sn3.9Ag0.6Cu (NOT SAC305; DEFECT \#41)) is calibrated on 45--150\,$^\circ$C, 7.51--15.92~MPa; the joints visit 15--32.6~MPa hot, 18.3--40.2~MPa cold, which extrapolates stress 14.9574--40.235~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C).
+\item The band law measured Norton fits (Sn3.9Ag0.6Cu (NOT SAC305)) is calibrated on 45--150\,$^\circ$C, 7.51--15.92~MPa; the joints visit 15.7--46.7~MPa hot, 26.1--70.5~MPa cold, which extrapolates stress 15.7321--70.499~MPa visited against 7.51--15.92~MPa; the 25-$^\circ$C cold dwell (rows below 45\,$^\circ$C).
 \item The Norton surrogate reproduces the production law within 15\,\% (hot dwell) and 23\,\% (cold dwell) in rate over the visited window; the error travels with the card.
 \item Every compared local response is recomputed under each law of the band; the rankings hold across the laws.
 \end{itemize}
 
-\needspace{16.0\baselineskip}
+\needspace{16.8\baselineskip}
 \begingroup\footnotesize\setlength{\tabcolsep}{2.5pt}
 \begin{longtable}{@{}lrrrrrrrrr@{}}
 \caption{Joint response of the compared cases under the solder-law band}\label{tab:supp-jointband}\\
@@ -417,28 +417,30 @@ Case & Site & $T_{\mathrm{sj}}$ & $|\Delta u_{xy}|$ & $\Delta u_z$ & Schubert et
 \endfoot
 \bottomrule
 \endlastfoot
-Z1, A & (14.4, 14.4) & 112.9 & 1.95 & 0.32 & 6.80 & 6.43 & 5.96 & 5.96--6.80 & 1.9 \\
+Z1, A & ($-$14.4, $-$14.4) & 112.9 & 1.95 & 0.32 & 6.81 & 6.44 & 5.97 & 5.97--6.81 & 1.9 \\
 Z2, A & (1.6, 12) & 85.4 & 0.27 & 0.42 & 3.35 & 3.02 & 2.55 & 2.55--3.35 & 2.7 \\
-Z3, A & (14.4, -14.4) & 96.1 & 3.75 & 0.77 & 3.10 & 2.77 & 2.32 & 2.32--3.10 & 2.6 \\
-Z1, B & (14.4, 14.4) & 105.0 & 0.79 & 0.46 & 5.59 & 5.24 & 4.77 & 4.77--5.59 & 2.4 \\
-Z2, B & (14.4, -14.4) & 73.1 & 1.73 & 0.53 & 1.55 & 1.26 & 0.81 & 0.81--1.55 & 2.9 \\
-Z3, B & (14.4, 14.4) & 75.8 & 1.59 & 0.56 & 2.13 & 1.83 & 1.36 & 1.36--2.13 & 2.9 \\
+Z3, A & ($-$14.4, 14.4) & 96.2 & 3.73 & 0.77 & 3.11 & 2.79 & 2.34 & 2.34--3.11 & 2.6 \\
+Z1, B & ($-$14.4, 14.4) & 105.0 & 0.78 & 0.46 & 5.60 & 5.25 & 4.77 & 4.77--5.60 & 2.4 \\
+Z2, B & (14.4, $-$14.4) & 73.1 & 1.73 & 0.53 & 1.55 & 1.26 & 0.81 & 0.81--1.55 & 2.9 \\
+Z3, B & ($-$14.4, 14.4) & 75.8 & 1.59 & 0.56 & 2.13 & 1.83 & 1.36 & 1.36--2.13 & 2.9 \\
 \end{longtable}
-\nopagebreak\noindent Joint response $\deps$ (per cycle) at each case's critical joint in the production state (implemented decoupling), local model driven by the full cut-boundary displacement of the global solution (both pad faces: translation, in-plane stretch and rotation), linear 3-s ramps and 300-s dwells, 4 cycles, L0 mesh; one column per law of the solder-law band, the production law first. Band: lowest--highest law, the reported uncertainty of the joint response; $U_{95}$: numerical (own L0$\to$L3 and 4$\to$8-cycle changes, Table~\ref{tab:supp-localchecks}). The production law's surrogate window converged after 2 fits: 10.4286--35.936~MPa hot, 17.3484--50.3917~MPa cold. Joints: the maximum-response sites of the critical-joint check (Table~\ref{tab:supp-critv2}). Ranking per law: Schubert et al.: A Z3 \textless{} Z2 \textless{} Z1, B Z2 \textless{} Z3 \textless{} Z1; Xiao and Armstrong: A Z3 \textless{} Z2 \textless{} Z1, B Z2 \textless{} Z3 \textless{} Z1; measured Norton fits: A Z3 \textless{} Z2 \textless{} Z1, B Z2 \textless{} Z3 \textless{} Z1.\par
+\nopagebreak\noindent Joint response $\deps$ (per cycle) at each case's critical joint in the production state (implemented decoupling), local model driven by the full cut-boundary displacement of the global solution (both pad faces: translation, in-plane stretch and rotation), linear 3-s ramps and 300-s dwells, 4 cycles, L0 mesh; one column per law of the solder-law band, the production law first. Band: lowest--highest law, the reported uncertainty of the joint response; $U_{95}$: numerical (own L0$\to$L3 and 4$\to$8-cycle changes, Table~\ref{tab:supp-localchecks}). The production law's surrogate window is self-consistent at these joints (the fitted window within 10\,\% of the one they visit, responses within 1\,\%): 10.4--35.9~MPa hot, 17.3--50.4~MPa cold. Joints: under every law its own maximum-response site over the BGA lattice (Table~\ref{tab:supp-critv2}); the site columns give the production law's. Ranking per law: Schubert et al.: A Z3 \textless{} Z2 \textless{} Z1, B Z2 \textless{} Z3 \textless{} Z1; Xiao and Armstrong: A Z3 \textless{} Z2 \textless{} Z1, B Z2 \textless{} Z3 \textless{} Z1; measured Norton fits: A Z3 \textless{} Z2 \textless{} Z1, B Z2 \textless{} Z3 \textless{} Z1.\par
 \endgroup
 \medskip
 
-\needspace{13.6\baselineskip}
-\begingroup\footnotesize\setlength{\tabcolsep}{2.5pt}
+\needspace{17.6\baselineskip}
+\begingroup\footnotesize\setlength{\tabcolsep}{2.2pt}
 \begin{longtable}{@{}lrrrrrrccr@{}}
-\caption{Critical-joint check with the full boundary transfer}\label{tab:supp-critv2}\\
+\caption{Critical joint over the BGA lattice with the full boundary transfer}\label{tab:supp-critv2}\\
 \toprule
-Case & Lattice & Cand. & Solved & Pareto & Pairs & Viol. & Max-$\Delta u$ site & Max-response site & Ratio \\
+Case & Lattice & Base/front & Solved & Viol. $(|\Delta u_{xy}|, T)$ & Viol. screen & Margin & Max-$\Delta u$ site & Max-response site & Ratio \\
+ & & & & & & (\%) & (mm) & (mm) & \\
 \midrule
 \endfirsthead
 \multicolumn{10}{@{}l}{\emph{Table~\ref{tab:supp-critv2} (continued)}}\\
 \toprule
-Case & Lattice & Cand. & Solved & Pareto & Pairs & Viol. & Max-$\Delta u$ site & Max-response site & Ratio \\
+Case & Lattice & Base/front & Solved & Viol. $(|\Delta u_{xy}|, T)$ & Viol. screen & Margin & Max-$\Delta u$ site & Max-response site & Ratio \\
+ & & & & & & (\%) & (mm) & (mm) & \\
 \midrule
 \endhead
 \midrule
@@ -446,14 +448,14 @@ Case & Lattice & Cand. & Solved & Pareto & Pairs & Viol. & Max-$\Delta u$ site &
 \endfoot
 \bottomrule
 \endlastfoot
-Z1, A & 1369 & 66 & 66 & 4 & 2008 & 60/0 (0.1\,\%) & (14.4, 14.4) & (14.4, 14.4) & 1.000 \\
-Z2, A & 528 & 118 & 118 & 34 & 3202 & 2782/2737 (599.9\,\%) & (14.4, 14.4) & (1.6, 12) & 1.797 \\
-Z3, A & 1369 & 129 & 129 & 34 & 3315 & 1138/1018 (175.8\,\%) & (14.4, -14.4) & (14.4, -14.4) & 1.000 \\
-Z1, B & 1369 & 145 & 145 & 64 & 2743 & 2551/2266 (538.7\,\%) & (14.4, 14.4) & (14.4, 14.4) & 1.000 \\
-Z2, B & 528 & 92 & 92 & 32 & 1755 & 821/767 (379.5\,\%) & (14.4, 14.4) & (14.4, -14.4) & 1.068 \\
-Z3, B & 1369 & 119 & 119 & 25 & 3084 & 449/350 (89.9\,\%) & (14.4, 14.4) & (14.4, 14.4) & 1.000 \\
+Z1, A & 1369 & 66/25 & 81 & 318/2884 (96\,\%) & 0/488 (0.0\,\%) & 10 & (14.4, 14.4) & ($-$14.4, $-$14.4) & 1.001 \\
+Z2, A & 528 & 118/22 & 147 & 4720/5410 (601\,\%) & 40/897 (5.6\,\%) & 11 & (14.4, 14.4) & (1.6, 12) & 1.797 \\
+Z3, A & 1369 & 129/168 & 298 & 6595/12230 (176\,\%) & 10/2634 (3.2\,\%) & 10 & (14.4, $-$14.4) & ($-$14.4, 14.4) & 1.005 \\
+Z1, B & 1369 & 145/186 & 285 & 9878/13936 (539\,\%) & 0/326 (0.7\,\%) & 10 & (14.4, 14.4) & ($-$14.4, 14.4) & 1.000 \\
+Z2, B & 528 & 92/30 & 106 & 1043/2201 (380\,\%) & 16/776 (3.3\,\%) & 10 & (14.4, 14.4) & (14.4, $-$14.4) & 1.068 \\
+Z3, B & 1369 & 119/33 & 134 & 657/3894 (96\,\%) & 0/3092 (0.2\,\%) & 10 & (14.4, 14.4) & ($-$14.4, 14.4) & 1.001 \\
 \end{longtable}
-\nopagebreak\noindent Critical-joint check under the full cut-boundary displacement, production law at its converged window. Lattice: legal sites of the 0.8-mm lattice the all-site search covers (Z2: the ring around the board opening); candidates: the top 30 by $|\Delta u_{xy}|$, by relative face tilt, by $|\varepsilon_z|$ and by the deforming $\Delta u$, the strict Pareto front in ($|\Delta u_{xy}|$, $T$) and the corners, drawn over every lattice site; pairs: ordered pairs of solved sites where one is at least as large in both $|\Delta u_{xy}|$ and $T$ (mirror images of a site are that site); violations: pairs whose responses are ordered the other way, all / by more than 1\,\% (largest excess); ratio: response at the maximum-response site over that at the maximum-$|\Delta u_{xy}|$ site.\par
+\nopagebreak\noindent Critical joint under the full cut-boundary displacement: the maximum response over the BGA lattice, production law at its converged window. Lattice: legal sites of the 0.8-mm lattice (Z2: the ring around the board opening), every one with its own kinematics from the case's converged fields. Base: the top 30 by $|\Delta u_{xy}|$, by relative face tilt, by $|\varepsilon_z|$ and by the deforming $\Delta u$, the strict Pareto front in ($|\Delta u_{xy}|$, $T$) and the corners; front: the lattice's Pareto front in the screening features (deforming $\Delta u$, $|\Delta u_z|$, $T$). The response is not monotone in ($|\Delta u_{xy}|$, $T$) (violations: reversed / all dominance pairs of the solved sites, largest excess), but is in the screening features within the margin (reversals beyond 1\,\% / pairs, largest): a site dominated in them by a solved site $c$ responds at most (1 + margin)$\,\deps(c)$, margin = max(10\,\%, twice the largest reversal). Every lattice site whose bound exceeded the maximum found was solved, until none did (closed for every case): the maximum-response site bounds the whole lattice. Ratio: its response over that at the maximum-$|\Delta u_{xy}|$ site. The other laws of the band are screened the same way at their own windows (Xiao and Armstrong: 1051 sites solved, measured Norton fits: 1049 sites solved); their maximum-response sites are the production law's.\par
 \endgroup
 \medskip
 
@@ -475,20 +477,20 @@ Check & Z1, A & Z2, A & Z3, A & Z1, B & Z2, B & Z3, B \\
 \endfoot
 \bottomrule
 \endlastfoot
-v2 response ($10^{-3}$) & 6.80 & 3.35 & 3.10 & 5.59 & 1.55 & 2.13 \\
+v2 response ($10^{-3}$) & 6.81 & 3.35 & 3.11 & 5.60 & 1.55 & 2.13 \\
 Mesh L1 & $-$0.4 & $-$0.9 & $-$1.0 & $-$0.6 & $-$1.3 & $-$1.2 \\
 Mesh L2 & $-$1.2 & $-$1.8 & $-$1.9 & $-$1.6 & $-$2.1 & $-$2.1 \\
 Mesh L3 & $-$1.9 & $-$2.7 & $-$2.6 & $-$2.4 & $-$2.9 & $-$2.9 \\
 8 cycles & $-$0.0 & $-$0.0 & +0.0 & $-$0.0 & +0.0 & +0.0 \\
-Dwell 60 s & $-$5.5 & $-$11.1 & $-$11.4 & $-$6.6 & $-$22.8 & $-$17.1 \\
-Dwell 900 s & +3.0 & +5.9 & +6.0 & +3.5 & +12.4 & +9.2 \\
+Dwell 60 s & $-$5.5 & $-$11.1 & $-$11.3 & $-$6.6 & $-$22.8 & $-$17.1 \\
+Dwell 900 s & +3.0 & +5.9 & +6.0 & +3.5 & +12.4 & +9.1 \\
 Ramp 30 s & +0.1 & +0.1 & +0.1 & +0.1 & +0.2 & +0.2 \\
 C3D8I elements & +0.4 & -- & -- & -- & -- & -- \\
 C3D8R elements & +1.6 & -- & -- & -- & -- & -- \\
-Round-2 model (R2) & $-$26.9 & $-$89.3 & +236.6 & $-$63.7 & +76.2 & +14.0 \\
-R2 + ramps & $-$27.0 & $-$89.3 & +237.0 & $-$63.8 & +76.2 & +14.0 \\
-+ zero-yield law & +20.7 & $-$4.6 & +339.6 & $-$6.6 & +280.8 & +159.5 \\
-+ $u_z$ released & +5.8 & $-$72.7 & +322.2 & $-$48.1 & +252.1 & +133.5 \\
+Round-2 model (R2) & $-$27.1 & $-$89.3 & +232.1 & $-$64.0 & +76.2 & +13.4 \\
+R2 + ramps & $-$27.1 & $-$89.3 & +232.5 & $-$64.0 & +76.2 & +13.3 \\
++ zero-yield law & +20.5 & $-$4.6 & +334.6 & $-$6.8 & +280.8 & +158.6 \\
++ $u_z$ released & +5.7 & $-$72.7 & +317.3 & $-$48.6 & +252.1 & +132.5 \\
 v2 with STEP loads & $-$0.1 & $-$0.1 & $-$0.0 & $-$0.2 & +0.0 & $-$0.0 \\
 \end{longtable}
 \nopagebreak\noindent Change of $\deps$ against the production local model (first row), in \%. Mesh: the nested joint meshes L1--L3 against L0; 8 cycles against 4; dwell and ramp against 300 and 3~s; element types against C3D8. Attribution chain: the round-2 model (overstress card with hardening, in-plane $\Delta u$ only, STEP loading) and each change toward the production model in turn. Critical fine-pitch joints, own geometry: Z1, A: die-converter microbumps 10~\textmu m $\gamma = 32.5\times10^{-3}$, $\deps = 26.19\times10^{-3}$ (33.31 under the in-plane transfer with $u_z$ released); Z2, A: VR-substrate Cu pillar 30~\textmu m $\gamma = 13.9\times10^{-3}$, $\deps = 12.01\times10^{-3}$ (23.20 under the in-plane transfer with $u_z$ released); Z3, A: VR-board SAC attach 100~\textmu m $\gamma = 10.6\times10^{-3}$, $\deps = 6.51\times10^{-3}$ (11.98 under the in-plane transfer with $u_z$ released); Z1, B: die-converter microbumps 10~\textmu m $\gamma = 36.5\times10^{-3}$, $\deps = 33.61\times10^{-3}$ (37.82 under the in-plane transfer with $u_z$ released); Z2, B: VR-substrate Cu pillar 30~\textmu m $\gamma = 4.9\times10^{-3}$, $\deps = 3.58\times10^{-3}$ (6.09 under the in-plane transfer with $u_z$ released); Z3, B: VR-board SAC attach 100~\textmu m $\gamma = 6.2\times10^{-3}$, $\deps = 10.22\times10^{-3}$ (9.34 under the in-plane transfer with $u_z$ released).\par
@@ -612,7 +614,7 @@ Thermal unit cell, Z2; CalculiX C3D8 structured hex & MOOSE (3-D FEM, own hex me
 Bilayer warpage; CalculiX C3D8I & Timoshenko bimaterial curvature & $-0.433$\,\% & Agreement with a closed form: peak-to-valley warpage, Si-on-organic bilayer, $\Delta T$ = 100 K, minimal supports & the closed form ignores free-edge effects, so a few-tenths percent difference is expected, not identity \\
 Bilayer warpage; CalculiX C3D8I & AEDT, Mechanical structural & $+0.0143$\,\% & Agreement with independent commercial FEM: peak-to-valley warpage, same bilayer, $\Delta T$ = 100 K & AEDT warpage per kelvin from two solved temperature levels (reference-temperature independent); read on the surface of the silicon; FE vs FE runtime ratio \\
 Structural solver; CalculiX ITERATIVE CHOLESKY & CalculiX SPOOLES (direct), same mesh and temperature field & $+13.3$\,\% & Agreement with the direct solver: Z1 S0 die warpage and critical-joint $\du$, 28064 C3D8I & $\du$ difference +1.9552\,\%; needed because SPOOLES solves 38.6k C3D8I elements but fails at 43k in this build, so refined meshes use the iterative solver \\
-Package mesh, Z1; production package model at $h_{xy}$ = 1.1 mm & -- & $+9.51$\,\% & Discretization change of $T_{\max}$, die warpage, $\du$, $P$: base vs nested refinements r12, r21, r31, r11 & declared tolerance 2\,\%; pass = False; self-refinement says nothing about physical accuracy \\
+Package mesh, Z1; production package model at $h_{xy}$ = 1.1 mm & -- & $+9.5$\,\% & Discretization change of $T_{\max}$, die warpage, $\du$, $P$: base vs nested refinements r12, r21, r31, r11 & declared tolerance 2\,\%; pass = False; self-refinement says nothing about physical accuracy \\
 Package mesh, Z2; production package model at $h_{xy}$ = 1.1 mm & -- & $+1.22$\,\% & Discretization change of $T_{\max}$, die warpage, $\du$, $P$: base vs nested refinements r12, r21, r31, r11 & declared tolerance 2\,\%; passed; self-refinement says nothing about physical accuracy \\
 TSV end spreading; compact end/spreading & MOOSE & 0.25--0.73\,\% & Agreement with the reference on an earlier package geometry & earlier geometry; carried as history, not re-run on the final package geometry \\
 RDL sheet; 2-D sheet (historical geometry) & MOOSE & power 0.45--1.10\,\%, IR 0.90--2.19\,\% & Agreement with the reference on an earlier package geometry & earlier geometry; carried as history, not re-run on the final package geometry \\
