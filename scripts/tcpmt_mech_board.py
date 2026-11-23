@@ -384,7 +384,11 @@ def state_et(arch, tier, state="SDEC", factor=None, refine=(1, 1)):
     for name, bc, prm, ld in (("free", "BC_BOARD", None, None),
                               ("screws", "BC_BOARD_SCREWS", scr, None),
                               ("clamp_screws", "BC_BOARD_SCREWS", scr, lines)):
-        me = mech_case(E, m, mats, st, th["T_node"], wd, arch, tiles, name, bc, prm, ld, True)
+        # the production structural solver: SPOOLES fails on the Z2 larger board (the
+        # merged branch's Z2_x3_hb10 lost every solve the same way)
+        me = mech_case(E, m, mats, st, th["T_node"], wd, arch, tiles, name, bc, prm, ld, True,
+                       solver=E.PRODUCTION_SOLVER,
+                       threads=int(os.environ.get("FC_THREADS", "2")))
         res["mechanics"][name] = me
         f.write_text(json.dumps(res, indent=1, default=float))
         sm = summary_of(me)
