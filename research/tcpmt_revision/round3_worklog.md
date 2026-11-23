@@ -168,3 +168,15 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     - 1.5 A per ball never closes.
   - Regeneration order after the reruns: writer macros script, then Table V, then figures.
 - The macro generator was verified intact after the results writer's accidental truncation and restore.
+- 2026-11-23: front writer DONE (abstract, intro, framework, converter, Tables I/II/S1, Figs. 1/3/4/dse; commits
+  55ecdcf..9ff8ed8; Fr* macros).
+  - NOTE: 2606.28837v1-3.pdf is [1] Krishnakumar, NOT [17] Choi; the [17] column was filled from [1]'s description
+    plus [17]'s abstract. Ask the user for the [17] full text.
+  - Final-pass items:
+    - k_rms 2.64 vs 2.629;
+    - IV-B repeats the 5-tier protrusion;
+    - the supp_tables "?" sentence (tcpmt_supplement.py);
+    - IV-F must describe the full-displacement drive once the mechanics reruns are in;
+    - notation (N4K4 italic vs upright; heading case);
+    - hot-spot = core-heavy map 108.5 C (the 157 C coarse run is not in campaign_v3).
+- Waiting on: the BGA reruns (agent in background) and the mechanics v2 runs.
