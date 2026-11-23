@@ -177,6 +177,7 @@ def judge_B():
             continue
         me = b.get("mechanics") or {}
         k = ((me.get("interconnects") or {}).get("bga") or {}).get("critical") or {}
+        mesh[("__base__", a)] = TU.mesh_signature(b)
         base[a] = {"case": name, "warp": me.get("die_warpage_pv_um"),
                    "du": (me.get("joint_search") or {}).get("critical", {}).get("du_um"),
                    "du_def": k.get("du_def_xy_um"),
@@ -209,10 +210,14 @@ def judge_B():
                 gap = abs(va - vb) / max(abs(va), abs(vb))
                 j = (TU.variant_judgement(a, b, uy, va, vb, mesh.get((name, a)),
                                           mesh.get((name, b)), pairs) if uy else None)
+                # the cooling-B base itself under the same transferred U: the row's baseline
+                jb = (TU.variant_judgement(a, b, uy, ba, bb, mesh.get(("__base__", a)),
+                                           mesh.get(("__base__", b)), pairs) if uy else None)
                 res["orderings"][f"{y}:{a}/{b}"] = {
                     "base_lower": a if ba < bb else b, "variant_lower": a if va < vb else b,
                     "same_direction": (ba < bb) == (va < vb), "gap_rel": gap,
                     "verdict": j["verdict"] if j else None,
+                    "base_verdict": jb["verdict"] if jb else None,
                     "resolved": j.get("resolved") if j else None,
                     "U95": j.get("U95") if j else None,
                     "provisional": j.get("provisional") if j else None}

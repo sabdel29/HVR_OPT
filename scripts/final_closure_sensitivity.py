@@ -1269,8 +1269,13 @@ def _needs_local(a, v):
 
 
 def local_main(names):
-    tasks = [(a, v) for v in (names or list(VARIANTS))
-             for a in VARIANTS[split_tier(v)[0]]["archs"] if _needs_local(a, v)]
+    """Local responses of NAME[@B][:ARCH ...] (every registered architecture of NAME when no
+    architecture is named)."""
+    sel = []
+    for tok in (names or list(VARIANTS)):
+        v, *archs = tok.split(":")
+        sel += [(a, v) for a in (archs or VARIANTS[split_tier(v)[0]]["archs"])]
+    tasks = [(a, v) for a, v in sel if _needs_local(a, v)]
     if not tasks:
         print("no variant needs a local solve", flush=True)
         return

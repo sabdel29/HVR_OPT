@@ -294,8 +294,10 @@ def interconnects():
         m[f"MvGovLayerGam{k}"] = LAYER_WORD.get(gg, gg or NA)
         sp = c.get("bga_split") or {}
         sh = sp.get("share_along_du") or {}
-        m[f"MvMemShare{k}"] = pct(sh.get("membrane"), 0)
-        m[f"MvBendShare{k}"] = pct(sh.get("bending"), 0)
+        m[f"MvMemShare{k}"] = spct(sh.get("membrane"), 0)
+        m[f"MvBendShare{k}"] = spct(sh.get("bending"), 0)
+        m[f"MvMemUm{k}"] = fx(sp.get("membrane_um"), 2)
+        m[f"MvBendUm{k}"] = fx(sp.get("bending_um"), 2)
         m[f"MvRigidRot{k}"] = fx(sp.get("rigid_rotation_um"), 3)
         m[f"MvDuDefBga{k}"] = fx(sp.get("deforming_xy_um"), 2)
     lad = J("interconnect_mesh_ladder.json") or {}

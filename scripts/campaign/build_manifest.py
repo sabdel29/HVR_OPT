@@ -882,7 +882,8 @@ def mech_jobs(prod, vfields, lad, prep, class_b):
         cb.append(j)
         cbl.append(job(f"robust.coolB_local.{a}", "mech_revision",
                        ["scripts/final_closure_sensitivity.py", "--local"]
-                       + [f"{v}@B" for v in vs], outs, deps=[j, band], ncpus=4 * T, workers=4,
+                       + [f"{v}@B:{a}" for v in vs], outs, deps=[j, band], ncpus=4 * T,
+                       workers=4,
                        mem_gb=8, est_h=0.1, env={"LOCAL_THREADS": T, "FC_POOL_MAX": 4},
                        backends=LOCAL_SOLVE_BACKENDS + ("pbs",),
                        validate=[{"file": o, "kind": "etm", "local": True} for o in outs]))
