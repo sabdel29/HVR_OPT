@@ -393,6 +393,16 @@ def board():
             m["MvClampMPa"] = fx(c["clamp"].get("pressure_MPa"), 2)
         if c.get("board_side_mm"):
             m["MvBoardSide"] = fx(c["board_side_mm"], 0)
+        own = c.get("larger_board_own_field") or {}
+        if own.get("warp_rel") is not None:
+            # the 3x board's own E-T field (coarse rung) against the case's coupon rung
+            m[f"MvBdOwnWarp{k}"] = spct(own["warp_rel"], 1)
+            m[f"MvBdOwnDu{k}"] = spct(own["du_rel"], 1)
+            m[f"MvBdOwnT{k}"] = fx(own.get("T_max_K"), 1)
+            m[f"MvBdOwnP{k}"] = spct(own.get("P_loss_rel"), 1)
+            acc.setdefault("Own", {"w": [], "d": []})
+            acc["Own"]["w"].append(own["warp_rel"])
+            acc["Own"]["d"].append(own["du_rel"])
     for tag, v in acc.items():
         m[f"MvBd{tag}WarpLo"], m[f"MvBd{tag}WarpHi"] = rng(v["w"], spct, 1)
         m[f"MvBd{tag}DuLo"], m[f"MvBd{tag}DuHi"] = rng(v["d"], spct, 1)
