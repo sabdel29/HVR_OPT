@@ -130,7 +130,14 @@ def iterate(law, js, execute=True):
         if dw < math.log(1 + float(w["tol_window_rel"])) and dv is not None \
                 and dv < float(w["tol_response_rel"]):
             break
-        prev, win = vals, {p: list(v) for p, v in obs.items()}
+        # the next fit window: the one the joints visited; from the third fit on under-relaxed
+        # (geometric mean with the window just fitted), which damps the two-cycle oscillation a
+        # Garofalo law with a strongly stress-dependent exponent shows (Xiao and Armstrong:
+        # the cold window alternated by ~10 % and the responses by ~3 % for six fits)
+        relax = float(w.get("relaxation", 0.5)) if k >= 1 else 1.0
+        prev = vals
+        win = {p: [math.exp(relax * math.log(obs[p][i]) + (1 - relax) * math.log(win[p][i]))
+                   for i in (0, 1)] for p in obs}
     return its
 
 

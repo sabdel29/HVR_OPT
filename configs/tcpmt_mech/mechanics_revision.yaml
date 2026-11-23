@@ -35,9 +35,13 @@ solder:
     weighting: strain                   # strain (d PEEQ x V) | time (dt x V)
     quantiles: [0.05, 0.95]
     initial_MPa: {hot: [5.0, 40.0], cold: [10.0, 60.0]}
-    max_iterations: 6
+    max_iterations: 8
     tol_window_rel: 0.10
     tol_response_rel: 0.01
+    #: from the third fit on, the next window = (visited)^r (fitted)^(1-r): damps the two-cycle
+    #: oscillation of the Xiao-Armstrong window (campaign_v3 pass 1: 6 fits, last response
+    #: change 2.9 %); 1 = the plain fixed-point update
+    relaxation: 0.5
     #: rows at and above this temperature use the hot-dwell window, at and below 25 C the
     #: cold one, geometric blend between (visited only during the ramps)
     T_hot_assign_C: 75.0
