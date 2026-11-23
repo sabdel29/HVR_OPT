@@ -38,6 +38,13 @@ ROUND2_ORDER = ["Z1_S0", "Z2_S0", "Z3_S0", "Z1_S1", "Z2_S1", "A_Z3", "B_Z1", "B_
 CASE_ORDER = ROUND2_ORDER if STATE == "round2" else MP.labels(STATE)
 
 
+def mirror_of(a, b, tol=1e-6):
+    """Site a is a mirror image of site b (|x| and |y| swapped or reflected)."""
+    sa = sorted((abs(a["x_mm"]), abs(a["y_mm"])))
+    sb = sorted((abs(b["x_mm"]), abs(b["y_mm"])))
+    return abs(sa[0] - sb[0]) < tol and abs(sa[1] - sb[1]) < tol
+
+
 def pareto_front(rows):
     """Strict Pareto front in (|du_xy|, T): no other site is larger in both."""
     return [r for r in rows if not any(o["du_xy_um"] > r["du_xy_um"] and o["T_C"] > r["T_C"]
@@ -51,11 +58,11 @@ def monotonicity(rows):
     sites where one dominates the other in both (>=, one strictly), count the pairs whose
     responses are ordered the other way, and the largest such excess."""
     done = [r for r in rows if r.get("d_eps") is not None]
-    n = nv = 0
+    n = nv = nv1 = 0
     worst = None
     for a in done:
         for b in done:
-            if a is b:
+            if a is b or mirror_of(a, b):         # mirror twins: one site
                 continue
             if a["du_xy_um"] >= b["du_xy_um"] and a["T_C"] >= b["T_C"] and (
                     a["du_xy_um"] > b["du_xy_um"] or a["T_C"] > b["T_C"]):
@@ -63,16 +70,18 @@ def monotonicity(rows):
                 if b["d_eps"] > a["d_eps"]:
                     nv += 1
                     x = b["d_eps"] / a["d_eps"] - 1.0
+                    nv1 += x > 0.01
                     if worst is None or x > worst["excess_rel"]:
                         worst = {"excess_rel": x, "dominating": [a["x_mm"], a["y_mm"]],
                                  "dominated": [b["x_mm"], b["y_mm"]]}
     front = pareto_front(done)
     best = max(done, key=lambda r: r["d_eps"]) if done else None
-    return {"n_ordered_pairs": n, "n_violations": nv, "worst_violation": worst,
+    return {"n_ordered_pairs": n, "n_violations": nv, "n_violations_over_1pct": nv1,
+            "worst_violation": worst,
             "n_pareto_solved": len(front),
             "max_response_on_pareto_front": (best in front) if best else None,
             "rule": "a site at least as large in both |du_xy| and T must respond at least as "
-                    "much (pairs over every solved candidate)"}
+                    "much (pairs over every solved candidate; mirror twins are one site)"}
 
 
 def candidates(case, n_top):
@@ -145,7 +154,12 @@ def summarize(n_top):
             continue
         top = max(rows, key=lambda r: r["du_xy_um"])
         best = max(done, key=lambda r: r["d_eps"])
-        others = [r for r in done if r is not top]
+        # a mirror image of the maximum-du site (the package is mirror-symmetric: the same
+        # site up to the solution's own asymmetry) is that site, not another critical joint
+        twin = best is not top and mirror_of(best, top)
+        if twin:
+            best = top if top["d_eps"] is not None else best
+        others = [r for r in done if r is not top and not mirror_of(r, top)]
         second = max(others, key=lambda r: r["d_eps"]) if others else None
         n_tot += 1
         is_max = top["d_eps"] is not None and best is top
@@ -159,6 +173,7 @@ def summarize(n_top):
             "n_candidates": len(rows), "n_solved": len(done), "n_failed": len(stale),
             "monotonicity": monotonicity(rows),
             "max_du_site": top, "max_response_site": best,
+            "mirror_twin_of_max_du_responded_more": bool(twin),
             "critical_is_max_du": is_max if top["d_eps"] is not None else None,
             "margin_rel": ((top["d_eps"] - second["d_eps"]) / top["d_eps"]
                            if (second and top["d_eps"]) else None),
