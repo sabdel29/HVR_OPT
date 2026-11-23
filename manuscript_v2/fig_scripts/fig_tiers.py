@@ -1,20 +1,25 @@
-"""Fig. 8 (paper Fig. 9): the three integrations under the three-tier comparison at S0.
+"""Fig. 8 (paper Fig. 10): the three integrations compared three ways, in the production state
+(implemented decoupling: two interleaved 6-phase clock groups and a ring of input capacitors).
 
-(a) Package-internal loss at a common temperature (25 and 100 C, no coupling) and coupled
-    under cooling A (the same top cold plate) and cooling B (the same top and bottom plates).
+(a) Package-internal loss at a common temperature (25 and 100 C, no electrothermal coupling)
+    and coupled under cooling A (the same top cold plate) and cooling B (the same top and
+    bottom plates).
 (b) Peak temperature with the GaN junction rating, (c) die warpage, (d) critical-joint
-displacement and (e) stabilized local inelastic strain increment at L0, under A and B.
+    displacement, under cooling A and B.
+(e) Stabilized local inelastic strain increment at the L0 solder mesh. The local response is
+    solved for the ideal-decoupling reference (k_rms = 1) only; the panel says so.
 
-Every value is read from the generated results_macros.tex (itself produced from the case files
-by scripts/tcpmt_manuscript_macros.py and scripts/tcpmt_review_macros.py), so the figure and
-Table II print the same numbers. Z3 under A and B is the coupled land-side case
-(z3_land_t40_{A,B}_fvmap); its common-temperature loss is PIsoLandZthree / PIsoHotLandZthree.
-Error bars: +/-U from research/tcpmt_revision/uncertainty.json. Crossed bars: a rating fails
-(research/tcpmt_revision/feasibility.json limits applied to the plotted peak temperature, and
-any failed check of the matching feasibility case).
-Open diamond: the interface-free bottom plate (a bound), Z2 only -- the Z3 interface-free case
-predates the coupled land side and is not drawn against it.
+Values: the generated results_macros.tex (scripts/tcpmt_manuscript_macros.py and
+scripts/tcpmt_review_macros.py, from the case files) -- the coupled bars and Table V print the
+same numbers -- and, for the common-temperature bars of the production state, the results
+writer's macros_results.tex (\\WrIsoLo<Arch> at 25 C, \\WrIsoHi<Arch> at 100 C); a value not yet
+generated is drawn as a visible 'pending' marker. Z3 under A and B is the coupled land-side
+case. Error bars: +/-U95 from research/tcpmt_revision/uncertainty.json (production state; for
+(e) the relative U of each stabilized response). Hatched bars: the production-state
+feasibility record of that case (research/tcpmt_revision/feasibility.json, keys '<tier>_<arch>')
+lists a failed limit; a record of another case file is never used.
 """
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch, Rectangle
@@ -24,6 +29,7 @@ import style as S
 S.setup()
 ARCHS = ("Z1", "Z2", "Z3")
 WORD = {"Z1": "Zone", "Z2": "Ztwo", "Z3": "Zthree"}
+STATE = S.PROD                       # production input state (implemented decoupling)
 
 
 def m(name):
@@ -34,13 +40,34 @@ def m(name):
         return None
 
 
+def _writer_macros():
+    """{name: value} of the results writer's macros_results.tex (the repository copy first, then
+    the campaign root's); style.macro reads results_macros.tex only."""
+    out = {}
+    for f in (S.REPO / "manuscript_v2" / "macros_results.tex",
+              S.MACROS.parent / "macros_results.tex"):
+        if f.is_file():
+            for k, v in re.findall(r"\\newcommand\{\\([A-Za-z]+)\}\{([^}]*)\}", f.read_text()):
+                out.setdefault(k, v.strip())
+    return out
+
+
+WR = _writer_macros()
+
+
+def wm(name):
+    v = WR.get(name)
+    try:
+        return float(v) if v not in (None, "", "--") else None
+    except ValueError:
+        return None
+
+
 unc = S.JP(S.TR / "uncertainty.json") or {}
 U = unc.get("U") or {}
 feas = S.JP(S.TR / "feasibility.json") or {}
 limits = feas.get("limits") or {}
 GAN = m("GanTjMax") or limits.get("gan_Tj_C")
-TIER_CASE = {("A", "Z3"): "etm_Z3_HV_S0__z3_land_t40_A_fvmap.json",
-             ("B", "Z3"): "etm_Z3_HV_S0__z3_land_t40_B_fvmap.json"}
 
 # key -> (macro stem, uncertainty key)
 KEYS = {"P": ("Ploss", "P"), "Tmax": ("Tmax", "T"), "warp": ("Warp", "warp"),
@@ -49,40 +76,31 @@ KEYS = {"P": ("Ploss", "P"), "Tmax": ("Tmax", "T"), "warp": ("Warp", "warp"),
 
 def value(key, grp, a):
     if key == "P" and grp in ("iso25", "iso100"):
-        hot = "Hot" if grp == "iso100" else ""
-        return m(f"PIso{hot}Land{WORD[a]}") if a == "Z3" else m(f"PIso{hot}{WORD[a]}")
+        return wm(f"WrIso{'Hi' if grp == 'iso100' else 'Lo'}{WORD[a]}")
     if grp not in ("A", "B"):
         return None
+    if key == "eps":                 # solved for the ideal-decoupling reference only
+        return m(f"Eps{grp}{WORD[a]}Szero")
     return m(f"{KEYS[key][0]}{grp}{WORD[a]}")
 
 
 def err(key, grp, a):
     if grp not in ("A", "B"):
         return None
+    if key == "eps":
+        v, u = value("eps", grp, a), m(f"EpsU{grp}{WORD[a]}Szero")
+        return v * u / 100.0 if (v is not None and u is not None) else None
     return U.get(f"{grp}.{a}.{KEYS[key][1]}")
 
 
 def infeasible(grp, a):
-    """A rating fails: the plotted peak temperature exceeds the GaN rating, or a check of the
-    feasibility record for the same case file fails."""
-    T = value("Tmax", grp, a)
-    if T is not None and GAN is not None and T > GAN:
-        return True
+    """The production-state feasibility record of this very case lists a failed limit."""
     rec = (feas.get("cases") or {}).get(f"{grp}_{a}") or {}
-    want = TIER_CASE.get((grp, a))
-    if want and rec.get("case") != want:
+    p = S.TC.case_path(STATE, grp, a)
+    if not rec or p is None or rec.get("case") != p.name:
         return False
-    return any(isinstance(c, dict) and not c.get("ok", True)
-               for c in (rec.get("checks") or {}).values())
+    return bool(rec.get("fails"))
 
-
-# interface-free bottom plate (bound), Z2 only
-bound = {}
-bc = S.JP(S.SENS / "etm_Z2_HV_S0__z2_cooled.json")
-if bc:
-    crit = ((bc.get("mechanics") or {}).get("joint_search") or {}).get("critical") or {}
-    bound = {"P": bc.get("P_loss_w"), "Tmax": (bc.get("thermal") or {}).get("T_max_C"),
-             "warp": (bc.get("mechanics") or {}).get("die_warpage_pv_um"), "du": crit.get("du_um")}
 
 panels = [("P", "a", "Package-internal loss (W)", [("25 °C", "iso25"), ("100 °C", "iso100"),
                                                    ("A", "A"), ("B", "B")], "{:.0f}"),
@@ -90,12 +108,12 @@ panels = [("P", "a", "Package-internal loss (W)", [("25 °C", "iso25"), ("100 °
           ("warp", "c", "Die warpage (µm)", [("A", "A"), ("B", "B")], "{:.1f}"),
           ("du", "d", r"Joint driver $\Delta u_\mathrm{c}$ (µm)", [("A", "A"), ("B", "B")],
            "{:.2f}"),
-          ("eps", "e", r"$\Delta\varepsilon_\mathrm{in}$, L0 ($10^{-3}$/cyc.)",
+          ("eps", "e", r"$\Delta\varepsilon_\mathrm{in}$ ($10^{-3}$/cycle)",
            [("A", "A"), ("B", "B")], "{:.1f}")]
-fig, axes = plt.subplots(1, 5, figsize=(S.DBL_W, 2.25),
+fig, axes = plt.subplots(1, 5, figsize=(S.DBL_W, 2.3),
                          gridspec_kw={"width_ratios": [1.75, 1, 1, 1, 1], "wspace": 0.36,
                                       "left": 0.05, "right": 0.995, "bottom": 0.16,
-                                      "top": 0.80})
+                                      "top": 0.79})
 w = 0.25
 any_infeasible = False
 for ax, (key, letter, title, groups, fmt) in zip(axes, panels):
@@ -105,8 +123,6 @@ for ax, (key, letter, title, groups, fmt) in zip(axes, panels):
             v = value(key, g, a)
             if v is not None:
                 tops.append(v + (err(key, g, a) or 0.0))
-    if key in bound and bound[key] is not None:
-        tops.append(bound[key])
     if key == "Tmax" and GAN:
         tops.append(GAN)
     top = 1.16 * max(tops) if tops else 1.0
@@ -122,8 +138,9 @@ for ax, (key, letter, title, groups, fmt) in zip(axes, panels):
             v = value(key, g, a)
             xc = j + (n - 1) * (w + 0.02)
             if v is None:
-                S.pending(ax, xc, top * 0.03, f"{a} {g} {key}", "results_macros.tex",
-                          transform=ax.transData, rotation=90, ha="center", va="bottom")
+                src = ("macros_results.tex" if g.startswith("iso") else "results_macros.tex")
+                S.pending(ax, xc, top * 0.03, f"{a} {lab}", src, transform=ax.transData,
+                          rotation=90, ha="center", va="bottom")
                 continue
             S.rbar(ax, xc, v, w, S.ARCH[a])
             bad = g in ("A", "B") and infeasible(g, a)
@@ -142,28 +159,25 @@ for ax, (key, letter, title, groups, fmt) in zip(axes, panels):
             ax.text(xc, ylab, fmt.format(v), ha="center", va="center" if inside else "bottom",
                     rotation=90, fontsize=6.5, color="white" if inside else S.INK, zorder=6,
                     bbox=None if inside else dict(fc="white", ec="none", pad=0.2))
-            if g == "B" and a == "Z2" and bound.get(key) is not None:
-                ax.plot(xc, bound[key], "D", ms=3.6, mfc="white", mec=S.INK, mew=0.7,
-                        zorder=7)
     ax.set_xticks(range(len(groups)), [l for l, _ in groups])
     ax.tick_params(axis="x", length=0, pad=2)
     S.panel(ax, letter, title, y=1.04)
+# the local response exists for the ideal-decoupling reference only: said on the panel itself
+axes[4].text(0.98, 0.985, "ideal\ndecoupling", transform=axes[4].transAxes, ha="right",
+             va="top", fontsize=6.5, color=S.INK2, linespacing=1.0)
 axes[0].axvline(1.5, color=S.GRID, lw=0.8, zorder=0)
 axes[0].text(0.5, axes[0].get_ylim()[1] * 0.985, "no coupling", ha="center", va="top",
              fontsize=6.5, color=S.INK2)
 axes[0].text(3.0, axes[0].get_ylim()[1] * 0.985, "coupled", ha="center", va="top",
              fontsize=6.5, color=S.INK2)
 handles = [Patch(fc=S.ARCH[a], ec="none", label=S.ARCH_NAME[a]) for a in ARCHS]
-if bound:
-    handles.append(Line2D([], [], marker="D", ls="none", mfc="white", mec=S.INK, ms=4,
-                          label="Z2, interface-free bottom plate (bound)"))
 if any_infeasible:
-    handles.append(Patch(fc=S.Z3, ec="white", hatch="xxxx", lw=0,
-                         label="infeasible (rating exceeded)"))
-handles.append(Line2D([], [], color=S.INK, lw=0.6, marker="_", ms=4, label="±U"))
+    handles.append(Patch(fc=S.NEUTRAL, ec="white", hatch="xxxx", lw=0,
+                         label="infeasible (a limit fails)"))
+handles.append(Line2D([], [], color=S.INK, lw=0.6, marker="_", ms=4, label="±$U_{95}$"))
 fig.legend(handles=handles, loc="upper center", ncol=len(handles),
            bbox_to_anchor=(0.52, 1.02), columnspacing=1.1, handletextpad=0.5)
-fig.text(0.52, 0.01, "A: the same top cold plate   ·   B: the same top and bottom cold plates "
-         "(bottom plate through a 50-µm TIM under the cell grid)   ·   smoothed input (S0)   ·   "
+fig.text(0.52, 0.01, "Implemented decoupling   ·   A: the same top cold plate   ·   B: the same top "
+         "and bottom cold plates (bottom plate through a 50-µm TIM under the cell grid)   ·   "
          "Z3: coupled land side, 40 µm", ha="center", va="bottom", fontsize=6.5, color=S.INK2)
 S.save(fig, "fig8_tiers")

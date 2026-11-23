@@ -3,7 +3,8 @@
 (a)   Current carried by each class of connection inside one regulator cell, coloured by
       rail (48 V red, 16 V neutral, 1 V violet).
 (b,c) Package-internal loss of Z2 and of Z3 minus that of Z1 in the production state
-      (implemented input decoupling), decomposed term by term (waterfall): the routing terms
+      (implemented decoupling: two interleaved 6-phase clock groups and a ring of input
+      capacitors), decomposed term by term (waterfall): the routing terms
       each integration removes or adds, and the electrothermal term -- the same converter
       dissipating more or less because it runs at a different temperature. The converter row
       is annotated with that temperature difference.
@@ -191,6 +192,7 @@ for k, (ax, a) in enumerate(zip(axes, archs)):
     ax.spines["left"].set_visible(False)
     ax.set_xlabel("$\\Delta P$ (W)", labelpad=1.5)
     S.panel(ax, "bcd"[k], f"{a} $-$ Z1", y=1.02)
-fig.text(0.40, 0.615, "Loss difference, cooling A (S0)", ha="left", va="bottom",
+fig.text(0.40, 0.615, "Loss difference, cooling A (implemented decoupling)", ha="left",
+         va="bottom",
          fontsize=7, color=S.INK)
 S.save(fig, "fig5_loss_swap")

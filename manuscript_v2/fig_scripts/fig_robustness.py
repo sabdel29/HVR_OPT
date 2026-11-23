@@ -1,18 +1,21 @@
-"""Fig. 9 (proposed): ordering-robustness map — which neighbouring decisions move which
-architecture ordering.
+"""Fig. 9 (paper Fig. 11): ordering-robustness map -- which package decisions move which
+ranking of the embedded (Z1) and package-backside (Z2) regulators.
 
-Rows: every sensitivity input run on the production mesh at S0 (grouped by the design
-decision it represents; identical-outcome parameter sweeps merged, with their count).
-Columns: the orderings. Cell state is carried by a glyph AND a fill, never colour alone:
-  preserved  ·  light neutral          withdrawn (gap within 2U)  ≈  mid neutral
+Rows: every sensitivity input run on the production mesh, grouped by the design decision it
+represents (identical-outcome parameter sweeps merged, with their count). The classical
+decisions are run on the ideal-decoupling reference (k_rms = 1, cooling A); the group
+"Implemented decoupling, cooling A" holds the decisions run in the production state, and it
+opens with its own production-verdict row, so each group is read against its own baseline.
+Columns: the rankings. Cell state is carried by a glyph AND a fill, never colour alone:
+  preserved  ·  light neutral          withdrawn ( |D + beta| <= U95 )  ≈  mid neutral
   reversed toward Z1 / Z2  -> that architecture's identity colour with its label
-Top row: the production verdict. Each cell prints the gap Z2 - Z1 under that decision
-(min...max over the merged variants; units in the header). Positive: Z1 lower.
-ONE RULE (TCPMT round 3, scripts/tcpmt_resolution.py): every cell, the production row and the
-newer cooling-A decisions included, is the verdict final_closure_classB.py formed with the
-rule of Table IV, |D + beta_D| > U95(D); this script classifies nothing itself. A variant has no
-ladder of its own: its U is the production pair's, transferred provisionally on the identical
-mesh; a variant on another mesh is PENDING (own ladder needed), drawn as '?'.
+  pending (the variant's mesh differs; its own ladder is needed)  ?
+Each cell prints the gap Z2 - Z1 under that decision (min...max over the merged variants;
+units in the header). Positive: Z1 lower.
+ONE RULE (scripts/tcpmt_resolution.py): every cell is the verdict final_closure_classB.py
+formed with the rule of Table IV, |D + beta_D| > U95(D); this script classifies nothing
+itself. A variant has no ladder of its own: its U is the production pair's, transferred
+provisionally on the identical mesh; a variant on another mesh is PENDING.
 Data: classB_sensitivity_rows.csv (gate rows and robustness.newer_decisions_A rows).
 """
 import csv
@@ -56,34 +59,35 @@ LAYOUT = [
         ("Cold-plate $h$ from conjugate CFD", ["icepak_equivalent"]),
     ]),
     ("Construction, materials", [
-        ("Z1 tiers in the reference order", ["z1_tier_reference"]),
         ("Out-of-cell volume void", ["f2_void"]),
         ("Opening filled to the PCB sidewall", ["f1_sidewall_filled"]),
         ("Converter-tier conductivity ×0.1", ["conv_k_tenth"]),
         ("GaN-tier conductivity ×0.5", ["gan_k_half"]),
         ("Converter-tier $E$, CTE (4)", ["conv_E80_a4", "conv_E80_a10", "conv_E160_a4",
                                           "conv_E160_a10"]),
+        ("Low-CTE mold compound (2)", ["encap_emc_lowcte", "encap_emc_lowcte_const"]),
+        ("Underfill-class encapsulant", ["encap_uf_tg"]),
     ]),
     ("Board", [
         ("Board-bottom film 100 W/m$^2$K (10)", ["board_hbot100"]),
         ("Board-bottom film 500 W/m$^2$K (10)", ["board_hbot500"]),
         ("PCB as 5-block laminate", ["board_h1"]),
         ("PCB copper coverage 25 % / 75 % (2)", ["board_eta025", "board_eta075"]),
-        ("PCB 3.2 mm thick", ["board_t3p2"]),
+        ("PCB 2.4 mm thick", ["board_t2p4"]),
         ("BGA depopulated (420 of 528)", ["bga_depop"]),
+        ("BGA layer from the local solder card", ["bga_card_local"]),
     ]),
 ]
 
 # newer decisions: (label, variant) run for Z1 and Z2 under cooling A, classified by
 # final_closure_classB.py (gate robustness.newer_decisions_A) with the same rule
 NEW_A = [("Die hot-spot power map", "die_hotspot_A"),
-         ("Local cold-plate $h$ map", "plate_local_h_A"),
-         ("TIM warpage feedback", "tim_warp_fb_A")]
+         ("Plate interface follows the warpage", "tim_warp_fb_A")]
 NEWER_GATE = "robustness.newer_decisions_A"
+NEWER_GROUP = "Implemented decoupling, cooling A"
 _have = {r["case"] for r in rows if r["gate"] == NEWER_GATE}
 if _have:
-    LAYOUT.append(("Newer decisions (cooling A)",
-                   [(lab, [v]) for lab, v in NEW_A if v in _have]))
+    LAYOUT.append((NEWER_GROUP, [(lab, [v]) for lab, v in NEW_A if v in _have]))
 
 RANK = {"n/a": 0, "preserved": 1, "pending": 2, "withdrawn": 3, "reversed": 4}
 
@@ -99,8 +103,13 @@ def gap(case, obs):
         return None
 
 
-def prod_gap(obs):
-    r = next((r for r in rows if r["observable"] == obs and r["nominal_Z1"]), None)
+def _base_rows(newer):
+    """the rows of the reference baseline (classical gates) or of the production-state gate"""
+    return [r for r in rows if (r["gate"] == NEWER_GATE) == newer]
+
+
+def prod_gap(obs, newer=False):
+    r = next((r for r in _base_rows(newer) if r["observable"] == obs and r["nominal_Z1"]), None)
     return float(r["nominal_Z2"]) - float(r["nominal_Z1"]) if r else None
 
 
@@ -147,10 +156,11 @@ def merged(cases, obs):
     return worst, (n, len(st)) if len(st) > 1 and n != len(st) else None
 
 
-def _prod(key):
-    """The production verdict at S0 under the unified rule, as classB formed it on the
-    production pair's own ladders (never typed in)."""
-    v = next((r["production_verdict"].strip() for r in rows
+def _prod(key, newer=False):
+    """The baseline verdict under the unified rule, as classB formed it on the pair's own
+    ladders (never typed in): the ideal-decoupling reference for the classical gates, the
+    production state (implemented decoupling) for the newer cooling-A gate."""
+    v = next((r["production_verdict"].strip() for r in _base_rows(newer)
               if r["observable"] == key and r.get("production_verdict")), "")
     if v.endswith("lower"):
         return v.split()[0]
@@ -158,10 +168,12 @@ def _prod(key):
 
 
 PROD = [_prod(k) for k, _ in OBS]
+PROD_NEW = [_prod(k, True) for k, _ in OBS]
 HEAD = ["Int. loss\n(W)", "Peak\ntemp. (K)", "Die warp.\n(µm)", "Joint\n$\\Delta u_\\mathrm{c}$ (µm)"]
 
 COLW_IN, ROWH_IN, LAB_IN = 0.45, 0.145, 1.64
-n_body = sum(len(g[1]) for g in LAYOUT) + len(LAYOUT)
+n_body = (sum(len(g[1]) for g in LAYOUT) + len(LAYOUT)
+          + sum(1 for g in LAYOUT if g[0] == NEWER_GROUP))
 HEAD_R, LEG_R = 2.4, 5.0                       # header and legend heights, in rows
 W = S.COL_W
 H = (n_body + 1 + HEAD_R + LEG_R) * ROWH_IN + 0.05
@@ -225,8 +237,8 @@ for j, lab in enumerate(HEAD):
             color=S.INK, linespacing=1.0)
 
 iy = 0
-ax.text(x0c - 0.12, iy + 0.5, "Production verdict (S0)", ha="right", va="center",
-        fontsize=6.6, color=S.INK, fontweight="bold")
+ax.text(x0c - 0.12, iy + 0.5, "Reference verdict (ideal decoupling)", ha="right",
+        va="center", fontsize=6.6, color=S.INK, fontweight="bold")
 for j, v in enumerate(PROD):
     cell(j, iy, "prod", v, val=gtxt([prod_gap(OBS[j][0])], OBS[j][0]))
 iy += 1
@@ -235,6 +247,12 @@ for gname, items in LAYOUT:
     ax.text(xl + 0.1, iy + 0.62, gname, ha="left", va="center", fontsize=6.7,
             color=S.INK, fontstyle="italic")
     iy += 1
+    if gname == NEWER_GROUP:            # this group's own baseline: the production state
+        ax.text(x0c - 0.12, iy + 0.5, "Production verdict", ha="right", va="center",
+                fontsize=6.6, color=S.INK, fontweight="bold")
+        for j, v in enumerate(PROD_NEW):
+            cell(j, iy, "prod", v, val=gtxt([prod_gap(OBS[j][0], True)], OBS[j][0]))
+        iy += 1
     for lab, cases in items:
         ax.text(x0c - 0.12, iy + 0.5, lab, ha="right", va="center", fontsize=6.5,
                 color=S.INK2)

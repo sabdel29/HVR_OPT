@@ -1,11 +1,24 @@
-"""Fig. 8: the integrations across the three named 48-V input scenarios.
+"""Fig. 8 (scenarios): the embedded (Z1) and package-backside (Z2) regulators under cooling A in
+three 48-V input states.
 
-One quantity per panel (small multiples, one y-axis each). The Z1 operating point under
-S2 is inadmissible (critical joint above the SAC305 solidus); it is drawn hatched and
-clipped at the panel top so it does not set the scale. Whiskers: measured discretisation
-uncertainty (global: mesh change; local: declared local-mesh U). Data: final_results.json,
-ordering.json (research/final_closure), read-only.
+  ideal decoupling        reference: the cells draw a smooth input current (k_rms = 1)
+  implemented decoupling  PRODUCTION: two interleaved 6-phase clock groups and a ring of
+                          input capacitors outside the cell grid
+  bare decoupling         reference: no decoupling, every cell's input pulse at the buck duty
+The k_rms printed for each state is the factor its case was computed with (the package 48-V
+current over its DC average, read from the Z1 case's ledger), never a typed number.
+
+One quantity per panel (small multiples, one y-axis each): package-internal loss, peak
+temperature, die warpage and critical-joint displacement. The local joint response is not
+drawn: it is solved for the ideal and bare references only. Whiskers: +/-U95 where the case
+has a mesh ladder of its own (research/tcpmt_revision/uncertainty.json: the production state
+under 'U', the ideal-decoupling reference under 'reference_cases'); the bare reference has no
+ladder and carries no whisker. Hatched: the feasibility record of that very case file
+(research/tcpmt_revision/feasibility.json, keys S0_A_<arch>, A_<arch>, S1_A_<arch>) lists a
+failed limit of the filter in force.
+Cases: the case registry (scripts/tcpmt_cases.py), cooling A.
 """
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Patch
@@ -13,106 +26,126 @@ from matplotlib.lines import Line2D
 import style as S
 
 S.setup()
-fin = S.J("final_results.json")
-od = S.J("ordering.json")["orderings"]
-SC = ["HV_S0", "HV_S1", "HV_S2"]
-TICK = ["S0", "S1", "S2"]
-ARCHS = [a for a in ("Z1", "Z2", "Z3") if any(x["arch"] == a for x in fin)]
+TIER = "A"
+#: (registry state, tick label, feasibility key prefix, uncertainty source)
+STATES = [("S0", "ideal", "S0_A_", "reference"),
+          (S.PROD, "implemented", "A_", "production"),
+          ("S1", "bare", "S1_A_", None)]
+ARCHS = ("Z1", "Z2")
+
+CASE = {}
+for st, _, _, _ in STATES:
+    for a in ARCHS:
+        p = S.TC.case_path(st, TIER, a)
+        if p is not None:
+            CASE[(st, a)] = (p, json.loads(p.read_text()))
+
+unc = S.JP(S.TR / "uncertainty.json") or {}
+feas = (S.JP(S.TR / "feasibility.json") or {}).get("cases") or {}
+UKEY = {"P": "P", "T": "T", "warp": "warp", "du": "du"}
+
+
+def val(st, a, key):
+    c = (CASE.get((st, a)) or (None, None))[1]
+    if c is None:
+        return None
+    m = c.get("mechanics") or {}
+    return {"P": c.get("P_loss_w"), "T": (c.get("thermal") or {}).get("T_max_C"),
+            "warp": m.get("die_warpage_pv_um"),
+            "du": ((m.get("joint_search") or {}).get("critical") or {}).get("du_um")}[key]
+
+
+def u95(st, a, key, src):
+    if src == "production":
+        return (unc.get("U") or {}).get(f"{TIER}.{a}.{UKEY[key]}")
+    if src == "reference":
+        rc = (unc.get("reference_cases") or {}).get(a) or {}
+        return ((rc.get("outputs") or {}).get(UKEY[key]) or {}).get("U95")
+    return None
+
+
+def infeasible(st, a, prefix):
+    rec = feas.get(f"{prefix}{a}") or {}
+    p = (CASE.get((st, a)) or (None, None))[0]
+    if not rec or p is None or rec.get("case") != p.name:
+        return False
+    return bool(rec.get("fails"))
+
+
+def k_rms(st):
+    """package 48-V RMS current over its DC average in the Z1 case of this state"""
+    c = (CASE.get((st, "Z1")) or (None, None))[1]
+    if c is None:
+        return None
+    r = next((x for x in c["ledger_rows"] if x["term"] == "P_pkg_RDL_HV_supply"), None)
+    return (r["I_a"] / c["i_hv_avg_a"]) if (r and r.get("I_a") and c.get("i_hv_avg_a")) else None
+
+
+panels = [("P", "Package-internal loss (W)", "{:.1f}"),
+          ("T", "Peak temperature (°C)", "{:.1f}"),
+          ("warp", "Die warpage, P–V (µm)", "{:.1f}"),
+          ("du", r"Joint driver $\Delta u_\mathrm{c}$ (µm)", "{:.2f}")]
+fig, axes = plt.subplots(1, 4, figsize=(S.DBL_W, 2.1),
+                         gridspec_kw={"wspace": 0.34, "left": 0.05, "right": 0.995,
+                                      "bottom": 0.22, "top": 0.79})
+x = np.arange(len(STATES))
 NA = len(ARCHS)
-
-
-def g(a, s, k):
-    return next((x.get(k) for x in fin if x["arch"] == a and x["scenario"] == s), None)
-
-
-def unc(key, s):
-    return (od[key].get("uncertainty_rel") or {}).get(s) or od[key].get("mesh_change") or 0.0
-
-
-panels = [
-    ("P_loss_package_internal_w", "Package-internal loss (W)", "{:.1f}", 220),
-    ("T_max_C", "Peak temperature (°C)", "{:.1f}", 175),
-    ("die_warpage_pv_um", "Die warpage, P–V (µm)", "{:.1f}", 85),
-    ("du_c_um", r"Joint driver $\Delta u_\mathrm{c}$ (µm)", "{:.2f}", 4.2),
-]
-
-fig, axes = plt.subplots(1, 5, figsize=(S.DBL_W, 2.05),
-                         gridspec_kw={"wspace": 0.42, "left": 0.055, "right": 0.995,
-                                      "bottom": 0.20, "top": 0.80})
-x = np.arange(3)
-w = 0.68 / NA
+w = 0.66 / NA
 
 
 def xpos(n, j):
     return x[j] + (n - (NA - 1) / 2) * (w + 0.03)
-for ax, (key, title, fmt, ytop) in zip(axes[:4], panels):
-    ax.set_xlim(-0.6, 2.6)
-    ax.set_ylim(0, ytop)
+
+
+any_bad = False
+for k, (ax, (key, title, fmt)) in enumerate(zip(axes, panels)):
+    vals = [v + (u95(st, a, key, src) or 0.0) for st, _, _, src in STATES for a in ARCHS
+            if (v := val(st, a, key)) is not None]
+    top = 1.18 * max(vals) if vals else 1.0
+    ax.set_xlim(-0.6, len(STATES) - 0.4)
+    ax.set_ylim(0, top)
     for n, a in enumerate(ARCHS):
-        for j, s in enumerate(SC):
-            v = g(a, s, key)
+        for j, (st, lab, prefix, src) in enumerate(STATES):
+            v = val(st, a, key)
             xc = xpos(n, j)
             if v is None:
-                continue
-            infeasible = bool(g(a, s, "T_joint_at_or_above_solder_solidus"))
-            if infeasible:
-                hv = ytop * 0.97
-                ax.add_patch(Rectangle((xc - w / 2, 0), w, hv, fc="white",
-                                       ec=S.ARCH[a], lw=0.6, hatch="//////", zorder=2))
-                ax.text(xc, hv * 1.005, "▲", ha="center", va="bottom", fontsize=5,
-                        color=S.INK2)
-                ax.text(xc, hv * 0.5, fmt.format(v), ha="center", va="center", fontsize=6,
-                        color=S.INK, rotation=90,
-                        bbox=dict(boxstyle="square,pad=0.15", fc="white", ec="none"))
+                S.pending(ax, xc, top * 0.03, f"{a} {lab}", "case registry",
+                          transform=ax.transData, rotation=90, ha="center", va="bottom")
                 continue
             S.rbar(ax, xc, v, w, S.ARCH[a])
-            u = unc(key if key != "P_loss_package_internal_w" else key, s)
-            ax.errorbar(xc, v, yerr=v * u, fmt="none", ecolor=S.INK, elinewidth=0.6,
-                        capsize=1.6, capthick=0.6, zorder=3)
-            if s == "HV_S0":
-                ax.text(xc, v * 0.5 if v > 0.30 * ytop else v + v * u + ytop * 0.03,
-                        fmt.format(v), ha="center",
-                        va="center" if v > 0.30 * ytop else "bottom", fontsize=6.2,
-                        color="white" if v > 0.30 * ytop else S.INK, rotation=90)
-    ax.set_xticks(x, TICK)
+            bad = infeasible(st, a, prefix)
+            if bad:
+                any_bad = True
+                ax.add_patch(Rectangle((xc - w / 2, 0), w, v, fc="none", ec="white", lw=0,
+                                       hatch="xxxx", zorder=3))
+            e = u95(st, a, key, src)
+            if e:
+                ax.errorbar(xc, v, yerr=e, fmt="none", ecolor=S.INK, elinewidth=0.6,
+                            capsize=1.5, capthick=0.6, zorder=5)
+            inside = v > 0.36 * top and not bad
+            ax.text(xc, v * 0.5 if inside else v + (e or 0.0) + top * 0.025, fmt.format(v),
+                    ha="center", va="center" if inside else "bottom", rotation=90,
+                    fontsize=6.2, color="white" if inside else S.INK, zorder=6,
+                    bbox=None if inside else dict(fc="white", ec="none", pad=0.2))
+    ax.set_xticks(x, [lab for _, lab, _, _ in STATES])
     ax.tick_params(axis="x", length=0, pad=2)
-    for lab in ax.get_xticklabels():
-        lab.set_fontsize(7)
+    S.panel(ax, "abcd"[k], title, y=1.04)
 
-titles = [p[1] for p in panels] + [r"Local $\Delta\varepsilon_\mathrm{in}$ ($10^{-3}$/cycle)"]
-for k, (ax, t) in enumerate(zip(axes, titles)):
-    S.panel(ax, "abcde"[k], t, y=1.04)
-
-# (e) local inelastic response with its declared uncertainty
-ax = axes[4]
-ax.set_xlim(-0.6, 2.6)
-ax.set_ylim(0, 11)
-for n, a in enumerate(ARCHS):
-    for j, s in enumerate(SC):
-        xc = xpos(n, j)
-        v = g(a, s, "d_eps_in_per_cycle")
-        if v is None:
-            ax.text(xc, 0.4, "n/a", ha="center", va="bottom", fontsize=6, color=S.INK2,
-                    rotation=90)
-            continue
-        u = g(a, s, "local_mesh_U_rel") or 0.0
-        ext = bool(g(a, s, "T_joint_outside_norton_calibration"))
-        ax.errorbar(xc, 1e3 * v, yerr=1e3 * v * u, fmt="o", ms=4.2, color=S.ARCH[a],
-                    mfc="white" if ext else S.ARCH[a], mec=S.ARCH[a], mew=0.9,
-                    ecolor=S.INK, elinewidth=0.6, capsize=1.6, capthick=0.6, zorder=3)
-ax.set_xticks(x, TICK)
-ax.tick_params(axis="x", length=0, pad=2)
-for lab in ax.get_xticklabels():
-    lab.set_fontsize(6.3)
-
-handles = [Patch(fc=S.ARCH[a], ec="none", label=S.ARCH_NAME[a]) for a in ARCHS] + [
-           Patch(fc="white", ec=S.INK2, hatch="//////", lw=0.6,
-                 label="inadmissible (joint ≥ SAC305 solidus), clipped"),
-           Line2D([], [], marker="o", ls="none", mfc="white", mec=S.INK2, ms=4,
-                  label="joint beyond solder-model calibration")]
-fig.legend(handles=handles, loc="upper center", ncol=NA + 2, bbox_to_anchor=(0.52, 1.03),
+handles = [Patch(fc=S.ARCH[a], ec="none", label=S.ARCH_NAME[a]) for a in ARCHS]
+if any_bad:
+    handles.append(Patch(fc=S.NEUTRAL, ec="white", hatch="xxxx", lw=0,
+                         label="infeasible (a limit fails)"))
+handles.append(Line2D([], [], color=S.INK, lw=0.6, marker="_", ms=4, label="±$U_{95}$"))
+fig.legend(handles=handles, loc="upper center", ncol=len(handles), bbox_to_anchor=(0.52, 1.03),
            columnspacing=1.4, handletextpad=0.5)
-fig.text(0.52, 0.035, "48-V input scenarios:  S0 smoothed (local input decoupling)   ·   "
-         "S1 pulsed at the buck duty $D$   ·   S2 pulsed at the overall ratio 1/48",
-         ha="center", va="bottom", fontsize=7, color=S.INK2)
+
+
+def ktxt(st):
+    k = k_rms(st)
+    return "" if k is None else f", $k_\\mathrm{{rms}}$ = {k:.2f}"
+
+
+fig.text(0.52, 0.02, f"Input decoupling, cooling A:  ideal{ktxt('S0')}   ·   implemented "
+         f"(interleaved clocks and an input-capacitor ring){ktxt(S.PROD)}   ·   bare (pulse at "
+         f"the buck duty){ktxt('S1')}", ha="center", va="bottom", fontsize=6.6, color=S.INK2)
 S.save(fig, "fig8_scenarios")

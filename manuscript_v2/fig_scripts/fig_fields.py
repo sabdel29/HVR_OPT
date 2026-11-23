@@ -1,4 +1,6 @@
-"""Fig. 7: converged fields of every integration at S0 under cooling A (the same top plate).
+"""Fig. 7: converged fields of every integration in the production state (implemented
+decoupling: two interleaved 6-phase clock groups and a ring of input capacitors) under
+cooling A (the same top cold plate).
 
 (a)-(c) Temperature on the vertical section y = 0 (middle row of cells), drawn element by
         element so voids (board opening, sidewall ring) stay empty; shared heat scale.
@@ -6,15 +8,20 @@
         (peak-to-valley = die warpage); shared scale.
 (g)-(i) In-plane relative displacement across the ball layer at every legal BGA site;
         critical joint ringed; shared scale.
-Z3 under cooling A is the coupled land-side case z3_land_t40_A_fvmap: its fields are read from
-the solver scratch (last E-T iteration's thermal deck and the structural run, located as in
-scripts/tcpmt_z3land_variants.py: scratch_dir / last_thermal_frd) and checked against the
-case file's T_max; if they are missing or do not match, the top-only Z3 fields are used and
-the panel says so. The 150-C GaN-rating isotherm is drawn on every section.
-Data: converged production fields ($HVR_FIELDS/etm_*_HV_S0_r21), the case files and
-architecture_geometry.json (die-top height).
+Fields: the production-state runs of the case registry (scripts/tcpmt_cases.py, state SDEC,
+cooling A), read from the campaign solver scratch -- the last E-T iteration's last thermal
+deck (et<N>/th_<k>.frd) and the structural run (structural.frd) of
+<scratch>/fc_sens/sdec_A/<arch>_HV_SDEC_h1.1_r21 -- and accepted only when the deck's peak
+temperature matches the case file's T_max (0.05 K). Z3 is the coupled land-side case. The
+scratch root is $HVR_SCRATCH, else scratch_campaign/<name of $ETM_RESULTS_ROOT>. A field that
+is missing or does not match is reported and its panels are left out (never replaced by
+another state's field). The 150-C GaN-rating isotherm is drawn on every section it crosses.
+Data: the solver scratch above, the case files (joint search) and architecture_geometry.json
+(die-top height).
 """
 import json
+import os
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
@@ -27,24 +34,24 @@ S.setup()
 _g = S.macro("GanTjMax")
 GAN = float(_g) if _g else None
 iso_drawn = False
-F = S.FIELDS
-#: cooling A (the same top cold plate): production fields for Z1/Z2, the top-only case for Z3
-from pathlib import Path
+TIER = "A"                                  # cooling A: the same top cold plate
+STATE = S.PROD                              # the production input state (implemented decoupling)
+SCEN = S.TC.SCEN[STATE]
 
 
-def _pair(dirname):
-    return (F / dirname / "thermal_converged.frd", F / dirname / "structural.frd")
-
-
-def _scratch_pair(variant):
-    """last E-T thermal deck and the structural run of a Z3 land-side variant"""
-    import os
+def _scratch_roots():
     roots = [Path(os.environ["HVR_SCRATCH"])] if os.environ.get("HVR_SCRATCH") else []
-    roots += [Path.home() / "claude_scratch" / "hvr_work",
-              Path("/home/beams0/SABDELZAHER/ETM_project/scratch_z3land"),
-              Path("/home/beams0/SABDELZAHER/ETM_project/scratch")]
-    for r in roots:
-        wd = r / "fc_sens" / variant / "Z3_HV_S0_h1.1_r21"
+    rr = os.environ.get("ETM_RESULTS_ROOT")
+    if rr:
+        roots.append(Path("/home/beams0/SABDELZAHER/ETM_project/scratch_campaign")
+                     / Path(rr).resolve().name)
+    return roots
+
+
+def _field_pair(arch, variant):
+    """(last thermal deck, structural run) of one production-state run, or None"""
+    for r in _scratch_roots():
+        wd = r / "fc_sens" / variant / f"{arch}_{SCEN}_h1.1_r21"
         its = sorted(wd.glob("et*"), key=lambda p: int(p.name[2:])) if wd.is_dir() else []
         if its and (wd / "structural.frd").is_file():
             ths = sorted(its[-1].glob("th_*.frd"), key=lambda p: int(p.stem.split("_")[1]))
@@ -53,24 +60,29 @@ def _scratch_pair(variant):
     return None
 
 
-SRC_FIELD = {"Z1": (_pair("etm_Z1_HV_S0_r21"), "etm_Z1_HV_S0_h1.1_r21.json"),
-             "Z2": (_pair("etm_Z2_HV_S0_r21"), "etm_Z2_HV_S0_h1.1_r21.json"),
-             "Z3": (_pair("etm_Z3_HV_S0__z3_top_only"),
-                    "sensitivity/etm_Z3_HV_S0__z3_top_only.json")}
-Z3_NOTE = "top-only Z3 (land-side fields not found)"
-_land = _scratch_pair("z3_land_t40_A_fvmap")
-_lcase = "sensitivity/etm_Z3_HV_S0__z3_land_t40_A_fvmap.json"
-if _land and (S.FC / _lcase).is_file():
-    _tl = frd.read(_land[0])["NDTEMP"][:, 0].max()
-    _tc = json.loads((S.FC / _lcase).read_text())["thermal"]["T_max_C"]
-    if abs(_tl - _tc) < 0.05:
-        SRC_FIELD["Z3"] = (_land, _lcase)
-        Z3_NOTE = None
-    else:
-        Z3_NOTE = f"top-only Z3 (land-side field T_max {_tl:.1f} != case {_tc:.1f})"
-if Z3_NOTE:
-    print("NOTE:", Z3_NOTE)
-ARCHS = [a for a in ("Z1", "Z2", "Z3") if SRC_FIELD[a][0][1].exists()]
+SRC_FIELD, NOTES = {}, []
+for _a in ("Z1", "Z2", "Z3"):
+    _cp = S.TC.case_path(STATE, TIER, _a)
+    if _cp is None:
+        NOTES.append(f"{_a}: no production-state case for cooling {TIER}")
+        continue
+    _case = json.loads(Path(_cp).read_text())
+    _variant = (_case.get("variant") or {}).get("name") or f"sdec_{TIER}"
+    _pair = _field_pair(_a, _variant)
+    if _pair is None:
+        NOTES.append(f"{_a}: fields of {_variant} not found in {[str(r) for r in _scratch_roots()]}")
+        continue
+    _tl = float(frd.read(_pair[0])["NDTEMP"][:, 0].max())
+    _tc = float(_case["thermal"]["T_max_C"])
+    if abs(_tl - _tc) >= 0.05:
+        NOTES.append(f"{_a}: field T_max {_tl:.2f} C does not match the case {_tc:.2f} C")
+        continue
+    SRC_FIELD[_a] = (_pair, _case)
+for _n in NOTES:
+    print("NOTE:", _n)
+ARCHS = [a for a in ("Z1", "Z2", "Z3") if a in SRC_FIELD]
+if not ARCHS:
+    raise SystemExit("no production-state field matches its case file: " + "; ".join(NOTES))
 N = len(ARCHS)
 VEX = 2.0                                   # vertical exaggeration of the sections
 GEO = (S.J("architecture_geometry.json") or {}).get("architectures", {})
@@ -108,7 +120,7 @@ data = {}
 for a in ARCHS:
     dt = frd.read(SRC_FIELD[a][0][0])
     ds = frd.read(SRC_FIELD[a][0][1])
-    case = json.loads((S.FC / SRC_FIELD[a][1]).read_text())
+    case = SRC_FIELD[a][1]
     T = dt["NDTEMP"][:, 0]
     data[a] = dict(sec=section(dt, T), tmax=float(T.max()), die=die_top(ds, a),
                    js=case["mechanics"]["joint_search"])
@@ -168,15 +180,17 @@ for k, a in enumerate(ARCHS):
         ax.set_ylabel(f"$z$ (mm), vertical ×{VEX:g}", labelpad=1)
     S.panel(ax, LET[k], f"{a}, $T_\\max$ = {data[a]['tmax']:.1f} °C", y=1.02)
     if a == "Z3":
-        ax.text(1.0, 1.02, "coupled land side" if not Z3_NOTE else Z3_NOTE, transform=ax.transAxes,
+        ax.text(1.0, 1.02, "coupled land side", transform=ax.transAxes,
                 ha="right", va="bottom", fontsize=6.5, color=S.INK2)
 cb = fig.colorbar(plt.cm.ScalarMappable(norm=tnorm, cmap=tcmap), cax=caxT)
 cb.set_label("Temperature (°C)", labelpad=2)
 if GAN:
     cb.ax.axhline(GAN, color=S.INK, lw=0.7, ls=(0, (3, 1.5)))
     if iso_drawn:
-        axS[0].text(0.0, -0.32, f"dashed: {GAN:.0f}-°C GaN-rating isotherm",
-                    transform=axS[0].transAxes, ha="left", va="top", fontsize=6.5,
+        # in the empty lower part of the first section panel (its section is the shallowest),
+        # clear of the row titles below the sections
+        axS[0].text(0.03, 0.04, f"dashed: {GAN:.0f}-°C GaN-rating isotherm",
+                    transform=axS[0].transAxes, ha="left", va="bottom", fontsize=6.5,
                     color=S.INK2)
 cb.outline.set_linewidth(0.4)
 
