@@ -245,10 +245,13 @@ def _mech_values(c):
     case or a mechanics-only variant."""
     me = (c or {}).get("mechanics") or {}
     k = ((me.get("interconnects") or {}).get("bga") or {}).get("critical") or {}
+    loc = (c or {}).get("local") or {}
+    kin = loc.get("kin") or {}
     return {"warp": me.get("die_warpage_pv_um"),
             "du": (me.get("joint_search") or {}).get("critical", {}).get("du_um"),
             "du_def": k.get("du_def_xy_um"),
-            "eps": ((c or {}).get("local") or {}).get("d_peeq_per_cycle")}
+            "eps": loc.get("d_peeq_per_cycle"),
+            "eps_site": ([kin["x_mm"], kin["y_mm"]] if kin.get("x_mm") is not None else None)}
 
 
 def judge_state(state="SDEC"):
@@ -290,6 +293,22 @@ def judge_state(state="SDEC"):
             _mech_values(c), mesh=TU.mesh_signature(c), file=f.name)
         ins.update(MP.inputs_sha1([f]))
     ins.update(MP.inputs_sha1([LAW.TR / "uncertainty.json"]))   # the pairs' beta and U95
+    # the base case's local response at the VARIANT's own critical joint (the critical-joint
+    # check solved every candidate of the base case with the production card), so a variant's
+    # joint response is compared site for site; the base's own critical joint can differ
+    crit = json.loads((LAW.TR / "solder_critical_v2.json").read_text()) \
+        if (LAW.TR / "solder_critical_v2.json").is_file() else {}
+    for name, per_t in rows.items():
+        for t, per in per_t.items():
+            for a, vv in per.items():
+                site = vv.get("eps_site")
+                cand = ((crit.get("cases") or {}).get(f"{state}_{t}_{a}") or {}).get(
+                    "candidates") or []
+                hit = next((r for r in cand if site and abs(r["x_mm"] - site[0]) < 1e-6
+                            and abs(r["y_mm"] - site[1]) < 1e-6), None)
+                vv["base_eps_same_site"] = hit.get("d_eps") if hit else None
+    if crit:
+        ins.update(MP.inputs_sha1([LAW.TR / "solder_critical_v2.json"]))
     out = {"what": "mechanics-only variants on the compared cases of the state, against their "
                    "own base cases (findings 6-8, 11a)", "state": state, "base": base,
            "variants": {}, "rule": TU.RULE.RULE, "inputs_sha1": ins,
@@ -313,6 +332,8 @@ def judge_state(state="SDEC"):
                 r["change_rel"][a] = {y: (vv[y] / bt[a][y] - 1) if (vv.get(y) is not None and
                                                                     (bt.get(a) or {}).get(y))
                                       else None for y in ("warp", "du", "du_def", "eps")}
+                if vv.get("eps") is not None and vv.get("base_eps_same_site"):
+                    r["change_rel"][a]["eps"] = vv["eps"] / vv["base_eps_same_site"] - 1
             for y in ("warp", "du", "du_def", "eps"):
                 for a, b in itertools.combinations(TC.ARCHS, 2):
                     va, vb = (per.get(a) or {}).get(y), (per.get(b) or {}).get(y)
