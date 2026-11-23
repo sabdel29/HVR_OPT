@@ -1,22 +1,24 @@
 % ============================================================================ CONCLUSION
 \section{Conclusion}\label{sec:conclusion}
 
-Integrating a voltage regulator at the point of load is not a placement choice that can be made
-after the converter is designed: the integration sets the converter's temperature and therefore its
-loss, the waveform its package interconnect carries, the deformation of the package, the ratings
-its parts must meet and the interconnect it needs. The framework presented here carries a
-regulator synthesized over the topologies of a hybrid switched-capacitor--buck family, from discrete
-parts, through an explicit package to these consequences on one geometry, verifies each stage and
-the complete package against matched references, and attaches an uncertainty to every compared
-output. On one 1-kW specification it showed that the ranking of integrations is decided by the
-coupling and by the cooling and interface they share: the board-backside regulator fails its device
-ratings under one top plate and falls behind under two once its 1-V redistribution is coupled; the
-embedded and package-backside regulators tie electrically under one plate with implemented
-decoupling, the embedded one alone remaining feasible against a non-conforming plate; and under two
-plates the package-backside regulator leads electrically while the embedded one leads mechanically.
-It also turned results into requirements: interleaved input decoupling for the embedded regulator,
-a thin and adequately rated flying-capacitor technology for the via-optimal tier order, and copper
-and ball pitch for the board-backside one. The chain applies to any member of the hybrid family,
-any stack the builder can express and any cooling solution with a declared boundary; it is a tool
-for the integration decision, provided its conditions---the capacitor technology, the interface
-and the steady-state scope---are carried with its answers.
+This paper asked which integration of distributed vertical regulators a kilowatt processor should
+use once the converter, the package, its cooling and its joints are solved together. The answer
+depends on the coupling and on the cooling the integrations share. The framework returned the cell
+count as an output, $M = \WrProdM$ cells of an \WrProdTopo{} converter in \WrProdTiers{} mixed tiers,
+and the count's neighbours confirmed it through the full chain. At a common temperature the
+package-backside regulator leads by \WrIsoGapHiZtwo~W, through routing alone. Under one top cold
+plate neither leads electrically: the package-backside regulator is \GapAZtwo~W lower inside the
+package, but \WrPlatGapA~W higher once its 48-V feed is charged. When the plate does not conform
+to the warped die, only the embedded regulator stays feasible; the board-backside regulator exceeds
+its device ratings under this cooling in any case. A second plate makes the package-backside regulator the electrical
+leader, \GapBZtwo~W and \dTmaxTierBZtwo~K below the embedded one, while the embedded regulator keeps
+the smallest warpage and joint driver. The board-backside regulator stays infeasible under both
+coolings, on its 1-V static drop and its ball sites. The coupled solution also returned
+requirements: interleaved input decoupling with a capacitor ring outside the cell grid, a ball count
+set by the implemented waveform, a converter height bounded by the shallowest integration and a die
+checked against its own power map. The embedded design meets every limit, and its binding limits
+keep margins of \WrRonMarginAZone{} to \WrDieMarginAZone~K. A rigid plate interface narrows the smallest to
+\WrFbAZoneRonMargin~K, while a die hot spot or the upper estimate of the omitted converter losses
+exceeds them. The chain applies to any member
+of the hybrid family, any stack the builder can express and any cooling with a declared boundary,
+provided its assumptions travel with its answers.

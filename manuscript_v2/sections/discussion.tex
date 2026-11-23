@@ -1,75 +1,102 @@
 % ============================================================================ DISCUSSION
 \section{Discussion}\label{sec:discussion}
 
-\subsection{Design rules from the coupled solution}
-Each rule follows from a result of Sections~\ref{sec:evaluate}--\ref{sec:explore} and is stated with
-the condition under which it holds.
+\subsection{Design Rules from the Coupled Solution}\label{sec:rules}
+Each rule follows from a result of Sections~\ref{sec:evaluate}--\ref{sec:explore} and holds under
+the condition stated with it.
 
-\emph{Filter by ratings, then rank on the converged state under one cooling solution.} At a common
-temperature the integrations differ only in routing. Under one top plate the board-backside
-regulator exceeds its device ratings and the embedded and package-backside regulators are
-electrically tied once the decoupling the embedded one needs is implemented; under two plates the
-order splits by domain. A placement study that holds the converter loss fixed, gives the
-integrations different cooling, or ranks candidates that violate a rating, can reach the wrong
-answer.
+\emph{Filter by limits, then rank on the converged state under one cooling solution.} At a common
+temperature the package-backside regulator leads by routing alone. Under one top plate that lead
+shrinks below its feed loss, and the board-backside regulator exceeds its device ratings. A placement study that
+holds the converter loss fixed, cools the integrations differently or ranks a candidate that violates
+a limit can therefore reach the wrong answer. The rule holds for any converter whose loss rises with
+temperature, as an on-resistance-dominated loss does.
 
-\emph{Choose the cooling, and its interface, with the integration.} A bottom plate is an electrical
-decision for the backside regulators, whose converters touch it, and a mechanical one for the
-embedded regulator, whose board it cools; once pumping is charged it barely pays for itself
-electrically. The plate interface is part of the coupled problem: a flat plate on a warped die
-leaves the backside regulator without an operating point within its device rating, so a conforming
-interface, or a flatness specification, must accompany a thin-substrate integration.
+\emph{Choose the cooling and its interface with the integration.} A bottom plate is an electrical
+decision for a backside regulator, whose converter touches it: here it is worth \GainBZtwo~W and
+\CoolBZtwo~K. For the embedded regulator it is a mechanical decision. It saves only \GainBZone~W, but
+the die warpage falls from \WarpAZone{} to \WarpBZone~\textmu m. Each plate costs about
+\PumpShaftPlate~W of pumping. The plate interface belongs to the coupled problem as well. Against a
+rigid plate on the free warpage, the package-backside regulator has no feasible operating point under
+one top plate. A thin-substrate integration therefore needs a second plate, a conforming interface or
+a flatness specification.
 
-\emph{An embedded regulator needs physical input decoupling.} Capacitance that fits inside the
-stack cannot make the package input current smooth, and a few hundred nanofarads can make it
-worse by resonance. Interleaving the cells' clocks and placing the capacitance in a ring outside the
-grid reaches $k = \DecapKeq$, at about 5~W against ideal decoupling; the interleaving is a
-requirement on the converter's control.
+\emph{Decouple an embedded regulator by interleaving and a ring, not inside the stack.} Capacitance
+that fits in the stack resonates with the package inductance and raises $k_{\mathrm{rms}}$ from
+\WrKsync{} to \WrKgap. Two interleaved clock groups and a ring outside the grid lower it to \WrKrms,
+at \WrDecapCoupledA~W against ideal decoupling. The interleaving is a requirement on the converter's
+control. The rule holds while the package loop inductance stays within the evaluated
+\WrLloopLo--\WrLloopHi-pH band.
 
-\emph{Order the tiers for the heat path, and for the vias where the capacitor technology allows.}
-The repartitioned order removes one low-conductivity redistribution tier from the path between the
-low-side devices and the die, which is worth \SensDTierRefZonePloss~W with thin capacitors and more
-with rated ones. Its via advantage holds only with a thin, adequately rated flying capacitor; with
-commercial MLCCs both orders cross the thick capacitor tier and need copper posts.
+\emph{Size the 48-V balls at the implemented waveform.} The per-ball current is the DC peak times
+$k_{\mathrm{rms}}$, so the decoupling sets the ball count. At \WrBgaRule~A per ball Z1 needs
+\WrBgaNZone{} balls per rail; at 1.5~A no legal arrangement closes. The ball rating is a co-design
+input, not a final check.
 
-\emph{Check every flying capacitor against its own stress and effective capacitance.} In the
-hybrid family the capacitor voltages are $(N-i)V_{\mathrm{in}}/N$, not $V_{\mathrm{in}}/N$; a
-synthesis that checks the latter admits under-rated parts. The correction leaves this design's
-topology, devices and frequency unchanged and adds 3~W, and it is the capacitor's height, not its
-loss, that decides the stack.
+\emph{Let the integration bound the converter's height.} The five-tier converter saves
+\WrFiveAZonedPAbs~W in the embedded regulator, but it protrudes \WrFiveProtrude~\textmu m below the
+board of the package-backside regulator. A converter meant for several integrations should be
+synthesized under the tightest height among them, here four tiers on a \WrZtwoBoardT-mm board.
 
-\emph{Size the package interface for the rail it carries.} A board-backside regulator removes the
-board opening but sends the kiloampere 1-V current through the ball field and then sideways to the
-balls outside the cells: it needs 1334 of the 1369 ball sites, drops \ZthreeLandBFortyDrop~mV per
-rail in a 40-\textmu m land side, and matches the embedded regulator's loss under two plates only
-with \ZthreeLandTie~\textmu m of land-side copper. Keeping the 1-V current under the cells would need
-a ball pitch of \PitchMaxZthree~mm or less.
+\emph{Order the tiers by routing loss, then by the heat path.} With a 1-mm capacitor every order
+crosses the capacitor tier, so the vias cannot decide the order and copper posts are needed. A thin
+capacitor lowers the worst aspect ratio from \WrProdAr{} to \WrThinAr{} and changes the loss by at
+most \WrThinBZthreedPAbs~W. The rule assumes device dies with terminals on both faces
+(Section~\ref{sec:limits}).
 
-\emph{Specify the feed of a backside regulator.} The direct 48-V feed is outside the package and must
-stay below $R^*$: \RstarTierBZtwo~m$\Omega$ for the package-backside regulator under two plates,
-against 0.6--2~m$\Omega$ for the physical feeds evaluated here, with the RMS factor of whatever
-waveform the feed carries.
+\emph{Do not use temperature as a proxy for joint response.} Under cooling~A the package-backside
+regulator runs \WrdTmaxAZtwo~K hotter at its peak than the embedded one. Its critical joint is
+\WrdTjointAZtwo~K cooler, because the ball ring sits away from the converter. Yet that joint moves
+\WrDuRatioAZtwo{} times as far. The bending of the plate the balls support sets the driver, not
+their temperature.
 
-\emph{Do not use temperature as a proxy for joint response.} The package-backside regulator runs
-\dTmaxAbsZtwoSzero~K hotter at its peak than the embedded one, yet its critical joint is
-\dTjointAbsZtwoSzero~K cooler, because the ball ring sits away from the converter; the joint still
-moves \DuRatioZtwo{} times as far, because its driver is set by the bending of the plate the balls
-support rather than by their temperature.
+\emph{Check the die against its own power map.} A uniform die load leaves Z1's die
+\WrDieMarginAZone~K below its limit. Concentrating the load in the die's center consumes that margin
+under both coolings. Here only a bottom plate that takes the converter's heat, as cooling~B does for
+Z2, keeps the die within its limit.
 
-\subsection{Scope and limitations}
-The framework is verified stage by stage, and on the complete package, against matched references,
-not against a measured system; no fabricated DVPD package of this kind exists to measure. Its
-conclusions are restricted to steady-state conduction loss, temperature, deformation and joint
-response of an intact package: switching ripple beyond the RMS treatment, frequency-dependent
-resistance, high-frequency return paths, droop and resonance outside the input network are not
-modeled, and damage, delamination and joint degradation are outside the scope. The reference stack
-assumes a thin flying-capacitor technology that no vendor part currently meets at the required
-voltage, capacitance and area (case A0); with rated commercial capacitors (case A1) the embedded
-stack needs a different vertical interconnect, and the package-backside converter no longer fits its
-board opening, so the physical feasibility of the embedded stack is established only once the
-capacitor technology, or a redesigned stack, is demonstrated. The converter loss model is validated
-on other family members; its omitted terms are bounded and change no ranking. The local solder
-response is an inelastic strain increment, not a life, and its law is calibrated to 125\,$^\circ$C.
-The Z3 redistribution assumes equal ball sharing and two-dimensional sheets. The board is a 30-mm
-coupon with a film beneath. Every result belongs to one specification; the conclusions that
-generalize are the mechanisms and rules, with the conditions stated above.
+\emph{Size the 1-V path of a board-backside regulator before its cooling.} This regulator sends the
+kiloampere 1-V current through the ball field and then sideways in the land side and board planes.
+It drops \VdropBZthree~mV per rail even under cooling~B, and its 1-V balls take \WrBgaFracZthree\,\%
+of the sites. No cooling fixes that; copper thickness and ball pitch must.
+
+\subsection{Scope and Limitations}\label{sec:limits}
+This subsection collects every caveat of the preceding sections.
+
+\emph{No measurement.} The framework is verified stage by stage, and on the complete package, against
+matched numerical references (Section~\ref{sec:verification}). It is not validated against a measured
+system; no fabricated package of this kind exists to measure. Every uncertainty reported is numerical.
+
+\emph{Inductor.} The 1-mm$^2$ variant of the shared-core inductor array of~\cite{Rasheedi2026CoupledInductor}
+is not fabricated. Its 250~nH and 1.6~m$\Omega$ are design targets, not a scaled measurement, so its
+core loss is bracketed by three flux models (Table~S24).
+
+\emph{Device terminals.} The stack assumes device dies with terminals on both faces. With single-face
+terminals the tier-order result is a sensitivity (Section~\ref{sec:realizability}).
+
+\emph{Converter loss model.} The loss model is validated on other members of the hybrid family, not
+on this converter. Its omitted terms add \WrOmitLo--\WrOmitHi~W. At the upper end they close the
+cooling-A gap between Z1 and Z2 and exceed Z1's on-resistance-fit, capacitor and solder-law limits
+(Section~\ref{sec:explore-omit}).
+
+\emph{Solder law.} The solder law is calibrated to 125\,$^\circ$C and refitted over the stress window
+the joints visit; its band spans two laws. The local response is an inelastic strain increment for
+ranking, not a life, and it is solved for the ideal-decoupling reference. The microbump and pillar
+layers are screened by their shear driver only, without a local model.
+
+\emph{Ball rating.} The \WrBgaRule-A per-ball current is a design assumption~\cite{Kuan2015Imax}; at
+1.5~A no evaluated arrangement closes. The harmonic port model gives the worst Z1 ball
+\WrBgaRmsZone~A RMS, above the assumption. That bound ties every ball to an ideal board node and does
+not decide feasibility.
+
+\emph{Package idealizations.} The board is a 30-mm coupon, \WrZtwoBoardT~mm thick, with natural
+convection beneath under cooling~A; a larger or clamped board enters only through the bounding films
+of Fig.~\ref{fig:robust}. The board-backside redistribution assumes equal ball sharing and
+two-dimensional sheets. The die load is uniform unless stated, and the coolant has bulk properties.
+
+\emph{Steady state.} Every result is a steady state of an intact package. Load transients, droop,
+switching ripple beyond the RMS treatment, high-frequency return paths, damage and delamination are
+outside the scope.
+
+Every number belongs to one specification. What generalizes are the mechanisms and the rules, with
+the conditions stated above.

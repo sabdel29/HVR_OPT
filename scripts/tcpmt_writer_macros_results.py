@@ -221,6 +221,9 @@ def evaluate_z1():
     for i, k in enumerate(tiers, 1):
         m[f"WrTtier{['', 'One', 'Two', 'Three', 'Four', 'Five'][i]}AZone"] = fx(rg[k], 1)
     m["WrTdieMeanAZone"] = fx(c.get("die_T_mean_C"), 1)
+    h = c["et_history"][-1]
+    m["WrTlsRiseAZone"] = fx(h["T_ls_C"] - 25.0, 0)
+    m["WrThsRiseAZone"] = fx(h["T_hs_C"] - 25.0, 0)
     ic = c["mechanics"]["interconnects"]
     bga, itf = ic["bga"]["critical"], ic["interface"]["critical"]
     m["WrCritXAZone"] = fx(abs(bga["x_mm"]), 1)
@@ -336,8 +339,23 @@ def bga():
     m["WrBgaSitesZone"] = str(sites.get("Z1", NA))
     m["WrBgaSitesZtwo"] = str(sites.get("Z2", NA))
     pa = ((d.get("ball_currents_at_count") or {}).get("per_arch") or {}).get("Z1") or {}
-    m["WrBgaAtNmaxZone"] = fx(pa.get("I_ball_closure_rule_A"), 2)
     m["WrBgaRmsZone"] = fx(pa.get("I_ball_rms_max_A"), 1)
+    # Z1 at its legal maximum count (the 1.5-A sensitivity) and the bare-decoupling current there
+    sc = ((d.get("sensitivity_count") or {}).get("Z1") or {})
+    vmax = (sc.get("verified") or {}).get(str(d.get("n_max_per_rail"))) or {}
+    if vmax.get("peak_A") is not None:
+        m["WrBgaAtNmaxZone"] = fx(vmax["peak_A"], 2)
+        i_eq = (d.get("currents_A") or {}).get("Z1", {}).get("HV_SDEC")
+        i_bare = (d.get("currents_A") or {}).get("Z1", {}).get("HV_S1")
+        if vmax.get("peak_fraction") and i_bare:
+            m["WrBgaBareAtNmaxZone"] = fx(vmax["peak_fraction"] * i_bare, 1)
+    ce = ((d.get("coupled_effect") or {}).get("per_case") or {})
+    for key in ("A_Z1", "B_Z1"):
+        if (ce.get(key) or {}).get("dP_W") is not None:
+            m[f"WrBgaFeedDp{key[0]}Zone"] = fx(ce[key]["dP_W"], 1)
+    sb = (d.get("site_budget") or {}).get("Z2") or {}
+    if sb.get("cap_per_rail"):
+        m["WrBgaCapZtwo"] = str(sb["cap_per_rail"])
     # Z3 1-V balls (feasibility record, production cooling B)
     z3 = (((J(TR / "feasibility.json") or {}).get("cases") or {}).get("B_Z3") or {}).get("checks") or {}
     bc, bs = z3.get("bga_current") or {}, z3.get("bga_sites") or {}
@@ -578,7 +596,7 @@ def omitted():
     import re
     mm = re.search(r"is ([\d.]+) W against ([\d.]+) W", fl.get("coss_term", ""))
     if mm:
-        m["WrCossScreen"], m["WrCossDatasheet"] = mm.group(1), mm.group(2)
+        m["WrCossScreen"], m["WrCossDatasheet"] = fx(mm.group(1), 1), fx(mm.group(2), 1)
     # feasibility of Z1 (cooling A) under the nominal and the high bundle
     fe = J(TR / "feasibility.json") or {}
     om = (((fe.get("cases") or {}).get("A_Z1") or {}).get("omitted_losses") or {}).get("bundles") or {}

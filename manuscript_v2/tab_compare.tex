@@ -4,7 +4,7 @@
 \label{tab:compare}
 \centering
 \footnotesize
-\setlength{\tabcolsep}{3.5pt}
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lrrrrrr@{}}
 \toprule
  & \multicolumn{3}{c}{Cooling A: top plate} & \multicolumn{3}{c}{Cooling B: top and bottom plates}\\
@@ -15,19 +15,20 @@
 Loss (W) & 135.7$\pm$0.5 & 134.8$\pm$0.9 & 200.9$\pm$0.6 & 134.8$\pm$0.4 & 118.1$\pm$0.4 & 154.8$\pm$0.7 \\
 \quad conversion / routing (W) & 125.0 / 10.7 & 127.0 / 7.8 & 150.8 / 50.1 & 124.2 / 10.6 & 111.3 / 6.9 & 111.3 / 43.5 \\
 Peak temperature ($^\circ$C) & 112.1$\pm$1.4 & 118.5$\pm$2.7 & 184.9$\pm$2.8 & 108.9$\pm$1.2 & 77.0$\pm$2.8 & 80.0$\pm$2.7 \\
-GaN junction $T_{\mathrm{jn}}$, hotter tier ($^\circ$C) & 113.0 & 119.3 & 185.9 & 109.7 & 75.3 & 75.1 \\
+GaN junction $T_{\mathrm{jn}}$ ($^\circ$C) & 113.0 & 119.3 & 185.9 & 109.7 & 75.3 & 75.1 \\
 Processor die, maximum ($^\circ$C) & 87.6 & 86.1 & 90.8 & 87.1 & 77.0 & 79.3 \\
 Board, mean ($^\circ$C) & 109 & 83 & 125 & 70 & 72 & 76 \\
 Heat to top / bottom plate (W) & 1135 / 0 & 1135 / 0 & 1200 / 0 & 1126 / 9 & 979 / 139 & 1016 / 139 \\
 \midrule
 \multicolumn{7}{@{}l}{\emph{Mechanics}}\\
 Die warpage (\textmu m) & 17.2$\pm$1.7 & 58.1$\pm$11.4 & 48.4$\pm$1.7 & 5.2$\pm$0.5 & 17.1$\pm$6.4 & 7.5$\pm$5.0 \\
-$\du$ (\textmu m) at $T_{\mathrm{sj}}$ ($^\circ$C) & 1.91$\pm$0.09 (111.8) & 2.40$\pm$0.09 (84.4) & 3.90$\pm$0.14 (101.0) & 0.76$\pm$0.02 (103.9) & 1.82$\pm$0.01 (73.1) & 1.68$\pm$0.03 (79.7) \\
+Critical-joint driver $\du$ (\textmu m) & 1.91$\pm$0.09 & 2.40$\pm$0.09 & 3.90$\pm$0.14 & 0.76$\pm$0.02 & 1.82$\pm$0.01 & 1.68$\pm$0.03 \\
+Critical-joint temperature $T_{\mathrm{sj}}$ ($^\circ$C) & 111.8 & 84.4 & 101.0 & 103.9 & 73.1 & 79.7 \\
 $\deps$ ($10^{-3}$/cycle)\textsuperscript{a} & 4.42$\pm$0.17 & 5.25$\pm$0.12 & 11.04$\pm$0.15 & 1.45$\pm$0.07 & 2.83$\pm$0.03 & 2.65$\pm$0.12 \\
 \midrule
 \multicolumn{7}{@{}l}{\emph{Interconnect and platform}}\\
-Ball sites carrying power & 440 & 440\textsuperscript{c} & 1334\textsuperscript{d} & 440 & 440\textsuperscript{c} & 1334\textsuperscript{d} \\
-Current per power ball (A) & 1.73 & 1.63 & 1.50 & 1.73 & 1.61 & 1.50 \\
+Ball sites carrying power & 336 & 332\textsuperscript{c} & 1334\textsuperscript{d} & 336 & 332\textsuperscript{c} & 1334\textsuperscript{d} \\
+Current per power ball (A) & 2.00 & 1.94 & 1.50 & 2.00 & 1.94 & 1.50 \\
 Static 1-V drop per rail (mV)\textsuperscript{b} & 17.4 & 17.9 & 94.2 & 17.2 & 15.7 & 81.9 \\
 Feed limit $R^*$ (m$\Omega$) & n/a & 0.2 & none & n/a & 4.3 & none \\
 Physical feed loss (W) & -- & 7.60 & 0.83 & -- & 7.37 & 0.77 \\
@@ -37,7 +38,7 @@ Platform-inclusive loss (W) & 138.9 & 145.5 & 204.9 & 138.0 & 128.8 & 158.9 \\
 \multicolumn{7}{@{}l}{\emph{Feasibility}}\\
 Component and material ratings & pass & pass & \textbf{fail} & pass & pass & pass \\
 Processor die ($\le105\,^\circ$C) & pass & pass & pass & pass & pass & pass \\
-Hottest joint within solder law ($\le125\,^\circ$C) & pass & pass & pass & pass & pass & pass \\
+Joints within the solder law ($\le125\,^\circ$C) & pass & pass & pass & pass & pass & pass \\
 Balls ($\le2$~A each, $\le75\,\%$ of sites) & pass & \textbf{fail} & \textbf{fail} & pass & \textbf{fail} & \textbf{fail} \\
 Static drop ($\le30$~mV per rail) & pass & pass & \textbf{fail} & pass & pass & \textbf{fail} \\
 \textbf{Ranked} (every limit met) & yes & \textbf{no} & \textbf{no} & yes & \textbf{no} & \textbf{no} \\

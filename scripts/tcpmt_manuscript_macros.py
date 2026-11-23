@@ -619,8 +619,8 @@ def compare_table(S, mac):
                              "n/a": "n/a"}.get(m(f"{key}{t}{ATAG[a]}"), NA)
 
     def du_at(t, a):
-        du, tj = m(f"Du{t}{ATAG[a]}"), m(f"Tjoint{t}{ATAG[a]}")
-        return NA if du == NA else f"{pm(du, m(f'U{t}{ATAG[a]}Du'))} ({tj})"
+        du = m(f"Du{t}{ATAG[a]}")
+        return NA if du == NA else pm(du, m(f"U{t}{ATAG[a]}Du"))
 
     def eps(t, a):
         """stabilized local response of the ideal-decoupling reference, with its own U (%)"""
@@ -654,7 +654,7 @@ def compare_table(S, mac):
          r"(Table~\ref{tab:uncertainty}). A candidate that fails any limit of the feasibility "
          r"block is not ranked.}",
          r"\label{tab:compare}", r"\centering", r"\footnotesize",
-         r"\setlength{\tabcolsep}{3.5pt}",
+         r"\setlength{\tabcolsep}{4pt}",
          r"\begin{tabular}{@{}lrrrrrr@{}}", r"\toprule",
          r" & \multicolumn{3}{c}{Cooling A: top plate} & \multicolumn{3}{c}{Cooling B: top and "
          r"bottom plates}\\", r"\cmidrule(lr){2-4}\cmidrule(l){5-7}",
@@ -664,7 +664,7 @@ def compare_table(S, mac):
          row(r"\quad conversion / routing (W)", lambda t, a: NA if m(f"Pconv{t}{ATAG[a]}") == NA
              else f"{m(f'Pconv{t}{ATAG[a]}')} / {m(f'Proute{t}{ATAG[a]}')}"),
          row(r"Peak temperature ($^\circ$C)", lambda t, a: cell(t, a, "Tmax", "U{t}{a}Tmax")),
-         row(r"GaN junction $T_{\mathrm{jn}}$, hotter tier ($^\circ$C)",
+         row(r"GaN junction $T_{\mathrm{jn}}$ ($^\circ$C)",
              lambda t, a: m(f"Tj{t}{ATAG[a]}")),
          row(r"Processor die, maximum ($^\circ$C)", lambda t, a: m(f"Tdiemax{t}{ATAG[a]}")),
          row(r"Board, mean ($^\circ$C)", lambda t, a: cell(t, a, "Tboard")),
@@ -672,7 +672,9 @@ def compare_table(S, mac):
              else f"{m(f'QplTop{t}{ATAG[a]}')} / {m(f'QplBot{t}{ATAG[a]}')}"),
          r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Mechanics}}\\",
          row(r"Die warpage (\textmu m)", lambda t, a: cell(t, a, "Warp", "U{t}{a}Warp")),
-         row(r"$\du$ (\textmu m) at $T_{\mathrm{sj}}$ ($^\circ$C)", du_at),
+         row(r"Critical-joint driver $\du$ (\textmu m)", du_at),
+         row(r"Critical-joint temperature $T_{\mathrm{sj}}$ ($^\circ$C)",
+             lambda t, a: m(f"Tjoint{t}{ATAG[a]}")),
          row(r"$\deps$ ($10^{-3}$/cycle)\textsuperscript{a}", eps),
          r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Interconnect and platform}}\\",
          row(r"Ball sites carrying power", sites),
@@ -687,7 +689,7 @@ def compare_table(S, mac):
          r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Feasibility}}\\",
          row(r"Component and material ratings", feas("FeasThermal")),
          row(r"Processor die ($\le105\,^\circ$C)", feas("FeasDie")),
-         row(r"Hottest joint within solder law ($\le125\,^\circ$C)", feas("FeasSolder")),
+         row(r"Joints within the solder law ($\le125\,^\circ$C)", feas("FeasSolder")),
          row(r"Balls ($\le2$~A each, $\le75\,\%$ of sites)", feas("FeasBga")),
          row(r"Static drop ($\le30$~mV per rail)", feas("FeasDrop")),
          row(r"\textbf{Ranked} (every limit met)",

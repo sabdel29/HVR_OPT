@@ -2,99 +2,132 @@
 \section{Exploring the Design Space}\label{sec:explore}
 
 Exploration works at two levels. At the converter level the synthesis is repeated over the
-regulator count and the topology as an electrical screen (Section~\ref{sec:dse}, Fig.~\ref{fig:dse}).
-Under the corrected capacitor rule the minimum stays at $M = \DseCorrOptM$ (\DseCorrOptLoss~W
-against \DseOptLoss~W with the published rule, which the legacy configuration reproduces exactly).
-Every count's loss rises by \DseCorrDeltaLo--\DseCorrDeltaHi~W, and the selection changes only at
-$M = 36$--42, where the published choice relied on the 25-V capacitor or on a 22-\textmu F 50-V part
-that is not in the manufacturer's catalogue, so that its effective capacitance is unknown; the
-49-cell selection changes only in its capacitor (Table~S15); the omitted converter terms and a frequency grid
-sixteen times finer move no optimum. The screen's minimum is not buildable on the square grid of the
-package builder, and $M = 81$ admits no part pair in its 3.53-mm$^2$ budget, so the strongest buildable
-candidates are $M = 49$ and $M = 64$ ($N2K2K_A1$). Carried through the full coupled chain, the 64-cell
-regulator dissipates \CountSynPloss~W in its synthesized 3.74-mm$^2$ cell, whose components need a fifth
-tier that pushes the peak to \CountSynTmax\,$^\circ$C and the critical joint to
-\CountSynTjoint\,$^\circ$C, beyond the solder law; in a 4.0-mm$^2$ cell that recovers the four-tier stack
-it dissipates \CountCellPloss~W at \CountCellTmax\,$^\circ$C, against \PlossZone~W and \TmaxZone\,$^\circ$C
-for 49 cells. The coupled chain confirms the screen's ranking of the buildable counts and widens it
-from 4~W to 10--17~W: the screen returns an electrical optimum, and the cell size that optimum implies is
-itself a thermal and mechanical decision. At the package level, every input without a single
-defensible value is varied on the production mesh and the whole chain is rerun, so that each
-ranking of Section~\ref{sec:compare} is reported together with the decisions that can change
-it. Fig.~\ref{fig:robust} summarizes \NvariantRuns{} such runs for the embedded and
-package-backside pair at S0: for each decision and each ranking, whether the ranking is
-preserved, withdrawn (the gap falls within twice its uncertainty) or reversed. Every ranking
-survives the interconnect provisioning, the board model and its boundary, the cooling-model
-form and the converter's mechanical card. Only four decisions reverse one: cooling the
-package-backside converter from below reverses all of them, and the tier order, the
-out-of-cell construction and the converter-tier conductivity reverse the joint driver---the
-first also the loss and the peak temperature.
+regulator count and the topology as an electrical screen (Section~\ref{sec:dse},
+Fig.~\ref{fig:dse}). At the package level, every input without a single defensible value is varied
+and the whole chain is rerun. This section reports what each exploration confirms, refutes or adds
+to the results of Sections~\ref{sec:evaluate} and~\ref{sec:compare}.
+
+\subsection{Regulator Count}\label{sec:explore-count}
+The screen selects $M = \WrProdM$ cells under the \WrProdTiers-tier limit. Its square-grid
+neighbours were run through the full chain as well: $M = \WrMloM$ (\WrMloTopo{} at \WrMloFsw~kHz)
+and $M = \WrMhiM$ (\WrMhiTopo{} at \WrMhiFsw~kHz). The screen puts them \WrMloScreenD{} and
+\WrMhiScreenD~W behind the selected count. In the coupled Z1 chain under cooling~A they are
+\WrMloAZonedPAbs{} and \WrMhiAZonedPAbs~W behind, at peaks of \WrMloAZoneTmax{} and
+\WrMhiAZoneTmax\,$^\circ$C.
+
+Both neighbours fail the feasibility stage under that cooling. $M = \WrMloM$ exceeds the upper end
+of the on-resistance fit and the solder law's window; $M = \WrMhiM$ also exceeds the capacitor class.
+Under cooling~B both pass, but they remain \WrMloBZonedPAbs{} and \WrMhiBZonedPAbs~W behind. The
+coupled chain thus confirms the screen's order and widens its gaps. The neighbours run hotter, and
+the coupled ledger evaluates every part at its own temperature. The count is an electrical result,
+but its margin is a thermal one.
+
+\subsection{Converter and Integration Co-Design}\label{sec:explore-codesign}
+The tier limit is an integration constraint, so the screen was also run with five tiers. At the same
+count it selects \WrFiveTopo{} at \WrFiveFsw~kHz, \WrFiveScreenDAbs~W below the four-tier choice in
+the screen. Through the coupled chain the five-tier converter dissipates \WrFiveAZonePloss~W in Z1
+under cooling~A. That is \WrFiveAZonedPAbs~W less, at a peak only \WrFiveAZonedTAbs~K higher, with
+every thermal and solder limit met. In Z2 under cooling~B it saves \WrFiveBZtwodPAbs~W.
+
+Its stack, however, is \WrFiveStack~mm tall against \WrProdStack~mm. In Z2 the converter hangs below
+the substrate, inside the board opening. The four-tier stack clears the underside of the
+\WrZtwoBoardT-mm board by \WrProdBoardClear~\textmu m; the five-tier stack would protrude
+\WrFiveProtrude~\textmu m below it. The lower-loss converter therefore fits the embedded integration
+but not the package-backside one on this board. The integration constrains the converter. The
+four-tier limit is what lets one converter serve every integration compared here.
+
+\subsection{Tier Stack and Capacitor Technology}\label{sec:explore-thin}
+Every tier order of the production converter crosses the 1-mm capacitor tier. Its worst via aspect
+ratio is therefore \WrProdAr, and copper posts bridge the tiers (Section~\ref{sec:realizability}). A
+thin, 100-\textmu m flying-capacitor technology, which no vendor part offers at this rating
+(Table~S7), was evaluated as a sensitivity. It lowers the input-end tier to the height of the
+high-side devices. The stack shrinks to \WrThinStack~mm, and the worst aspect ratio falls to
+\WrThinAr. The vias still exceed the limit of build-up vias, so the posts remain. In Z1 the loss
+changes by \WrThinAZonedPAbs~W and the peak by \WrThinAZonedTAbs~K, and no integration moves by more
+than \WrThinBZthreedPAbs~W. The thick capacitor is a question of height and interconnect, not of
+loss.
+
+\subsection{Ball Rating}\label{sec:explore-bga}
+At a conservative 1.5~A per ball, no legal arrangement closes. The Z1 ball field carries
+\WrBgaAtNmaxZone~A per ball even at its legal maximum of \WrBgaNmax{} balls per rail. The Z2 ring
+needs \WrBgaSensNZtwo{} balls per rail, \WrBgaSensFracZtwo\,\% of its \WrBgaSitesZtwo{} sites, above
+the \BgaPowerFracMax-\% site limit. Under that rating neither the embedded nor the package-backside
+regulator is feasible, so the per-ball rating, not the coupled physics, would decide. The 2-A
+assumption of Section~\ref{sec:evaluate-bga} is therefore one the conclusions depend on
+(Section~\ref{sec:limits}).
+
+\subsection{Omitted Converter Losses}\label{sec:explore-omit}
+The converter loss model omits dead-time conduction, inductor core and alternating-current winding
+loss, and capacitor dielectric loss beyond the booked ESR. Evaluated from manufacturer data at each
+case's own tier temperatures, they add \WrOmitLo--\WrOmitHi~W to Z1 under cooling~A (Table~S24). The
+nominal estimate is \WrOmitNom~W, of which \WrOmitDead~W is dead-time conduction over a
+\WrOmitDeadLo--\WrOmitDeadHi-ns dead time.
+
+Because the integrations share one converter, these terms differ between them only through
+temperature. They narrow the Z1--Z2 gap under cooling~A by \WrOmitGapA~W nominally and by up to
+\WrOmitGapAHi~W, enough to close it. They widen Z2's lead under cooling~B by \WrOmitGapB~W nominally
+and by up to \WrOmitGapBHi~W.
+
+They also consume Z1's margins. With the nominal estimate Z1 keeps every limit: its hotter junction
+reaches \WrOmitNomRonAZone\,$^\circ$C and its hottest joint \WrOmitNomSolderAZone\,$^\circ$C. With the
+upper estimate it exceeds the on-resistance fit, the capacitor class and the solder law. In the count
+screen the lower and nominal estimates leave the optimum at $M = \WrOmitDseOptNom$. The upper
+estimate prefers $M = \WrOmitDseOptHi$, a count with no square grid, by \WrOmitDseMarginHi~W. One
+term of the screen errs the other way: its square-root output-capacitance law books \WrCossScreen~W
+at the design point, against \WrCossDatasheet~W from the digitized charge curves.
+
+\subsection{Die Power Map}\label{sec:explore-die}
+Under the uniform die load of the production cases, Z1's die peaks at \TdiemaxAZone\,$^\circ$C. A
+hot-spot map puts three quarters of the die load into the central half of its area. Z1's die then
+peaks at \WrHotAZoneDie\,$^\circ$C under cooling~A and \WrHotBZoneDie\,$^\circ$C under cooling~B,
+beyond the 105-$^\circ$C limit in both. Z2 under cooling~A fails as well: its die reaches
+\WrHotAZtwoDie\,$^\circ$C, and its converter, heated from above, crosses the on-resistance fit and
+the capacitor class. Only Z2 under cooling~B keeps its die, at \WrHotBZtwoDie\,$^\circ$C, and every
+other limit. The map barely changes the loss, but it reverses the joint-driver ranking under
+cooling~A (Fig.~\ref{fig:robust}). The die limit, slack under a uniform load, binds once the die's
+own power map is resolved.
+
+\subsection{Material and Card Bounds}\label{sec:explore-cards}
+The converter-tier cards come from unit-cell homogenization that includes the copper posts, and
+their ranges are run as variants on the ideal-decoupling reference (Table~S23). At the lower end of
+the post conductivity, Z1's peak changes by \WrPostLoZonedT~K and its loss by \WrPostLoZonedP~W; the
+upper end changes them by \WrPostHiZonedT~K and \WrPostHiZonedP~W. Halving the GaN-tier conductivity
+changes the peak by \WrGanHalfZonedT~K and the loss by \WrGanHalfZonedP~W. Z1's critical joint then
+sits at \WrGanHalfZoneTj\,$^\circ$C, still inside the solder law. A tenth of the capacitor and
+inductor-tier conductivity, an extreme bound, makes Z1 infeasible at \WrKTenthZoneTmax\,$^\circ$C.
+
+A low-CTE mold compound in the out-of-cell volume halves Z2's warpage, to \WrEmcZtwoWarp~\textmu m,
+but raises Z1's joint driver to \WrEmcZoneDu~\textmu m. The cold-plate coefficient without the
+caloric correction raises every loss by \WrCalBZtwodP--\WrCalAZthreedP~W and every peak by
+\WrCalBZtwodT--\WrCalAZthreedT~K. It changes no ranking and no verdict, although Z2's on-resistance
+margin under cooling~A shrinks to \WrCalAZtwoRonMargin~K.
+
+\subsection{Robustness of the Rankings}\label{sec:explore-robust}
+Fig.~\ref{fig:robust} maps \WrRobN{} verdicts for \WrRobCases{} package decisions, each rerun through
+the whole chain on the production mesh (Table~S23). These variants run on the ideal-decoupling
+reference, and every verdict uses the rule of Section~\ref{sec:verification}. At that reference Z1
+has the lower loss, by \LossGapZtwoSzero~W; in the production state Z2 is \GapAZtwo~W lower. The loss
+ranking between Z1 and Z2 is thus set by the input decoupling itself. The map is most informative for
+the other three rankings, which hold in both states.
+
+Of the verdicts, \WrRobPreserved{} are preserved, \WrRobWithdrawn{} withdrawn and \WrRobReversed{}
+reversed. The remaining \WrRobPending{} are pending: their \WrRobPendingCases{} variants change the
+mesh and need a ladder of their own before a verdict. Every ranking survives the interconnect
+provisioning, the 48-V feed model, the board boundary and the cooling-model form. A second plate
+under Z2 reverses the loss and peak rankings, which is the result of cooling~B. A tenth of the
+converter-tier conductivity and the low-CTE mold compound reverse the joint driver toward Z2. In the
+production state under cooling~A, the die hot-spot map reverses the joint driver as well, and the
+rigid-plate interface reverses the loss ranking toward Z1.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{fig9_robustness_map.pdf}
-\caption{Ranking-robustness map, Z1 against Z2 at S0. Rows: package decisions varied on the
-production mesh, grouped by the design choice they represent (merged rows give the number of
-runs); columns: the rankings. Each cell shows whether the production ranking is preserved,
-withdrawn (gap within twice its uncertainty) or reversed, with the integration it then
-favors; each cell gives the gap Z2$-$Z1 (min--max over merged variants). The last group adds the die
-power map and the local cold-plate coefficient under cooling~A.}
+\caption{Ranking-robustness map, Z1 against Z2. Rows: package decisions rerun on the production
+mesh, grouped by the choice they represent (merged rows give the number of variants). Columns: the
+rankings. Each cell gives the gap Z2$-$Z1 (range over merged variants) and whether the reference
+ranking is preserved, withdrawn ($|D+\beta_D| \le U_{95}(D)$), reversed (colored toward the
+integration it then favors) or pending a mesh ladder of its own. Upper groups: ideal-decoupling
+reference under cooling~A. Last group: the production state under cooling~A, read against its own
+verdict row.}
 \label{fig:robust}
 \end{figure}
-
-\emph{Omitted converter losses.} Dead-time conduction, inductor core and alternating-current
-winding loss and capacitor dielectric loss, evaluated from manufacturer data at each case's own
-tier temperatures---EPC2057 reverse conduction over a 2--10-ns dead time, the inductor
-material's loss line, the winding's AC-resistance ratio and an X7R dissipation factor---add
-\OmitLo--\OmitHi~W (\OmitNom~W nominal, \OmitDead~W of it dead time) to every integration
-(Table~S7). Because the integrations share one converter, these terms differ between them only
-through temperature: they change the Z1--Z2 gap under cooling~A by
-$+$\OmitGapAZoneZtwoLo{} to $+$\OmitGapAZoneZtwoHi~W and the Z2--Z3 gap under cooling~B by
-\OmitGapBZtwoZthreeLo{} to \OmitGapBZtwoZthreeHi~W, and the electrothermal feedback of the added
-heat widens both, by about \OmitGapAZoneZtwoFb{} and \OmitGapBZtwoZthreeFb~W. In the count screen
-they reorder the counts below the optimum but leave it at $M = \OmitDseOpt$, \OmitDseMarginLo--%
-\OmitDseMarginHi~W ahead, at 25 and 100\,$^\circ$C; a switching-frequency grid sixteen times finer
-moves no optimum and changes no count by more than 0.9~W ($M = 49$: \FswFineFortyNineKhz~kHz,
-\FswFineFortyNineLoss~W).
-% PENDING(authors): output-capacitance switching term and per-switch voltage stress of the family
-
-\emph{Tier order and capacitor technology.} The strongest single construction decision is the
-tier order. Built in the reference order, with the same components, heights and total, the
-embedded regulator dissipates \SensDTierRefZonePloss~W more, its peak rises by
-\SensDTierRefZoneTmax~K, its die warps by \SensTierRefZoneWarp~\textmu m instead of
-\WarpZone~\textmu m, and its critical joint moves \SensTierRefZoneDu~\textmu m at
-\SensTierRefZoneTjoint\,$^\circ$C, beyond the calibration of the solder law. The mechanism is the
-interlayer redistribution: a 10-\textmu m RDL tier conducts only 0.62~W\,m$^{-1}$K$^{-1}$ through its
-thickness, so each one between the low-side devices---which carry three quarters of the conversion
-loss---and the die adds several kelvin, and the reference order puts one more of them in that path.
-The thermal advantage survives the rated capacitors of case A1: with the 1030-\textmu m capacitor
-tier the repartitioned order dissipates \RcfmaxAPloss~W and peaks at \RcfmaxATmax\,$^\circ$C, the
-reference order \RcfmaxRefAPloss~W and \RcfmaxRefATmax\,$^\circ$C, and the case-A1 die warps by
-\RcfmaxAWarp~\textmu m. What A1 removes is the realizability advantage: with a thick capacitor tier
-both orders cross the capacitor tier with the same aspect ratio (Section~\ref{sec:realizability}). Tier order is
-therefore a coupled decision: the repartitioned order wins on vias only with a thin capacitor
-technology, and on the heat path in both cases.
-
-\emph{Cooling boundaries.} The cooling tiers of Section~\ref{sec:compare} fix two choices that
-are varied here. Removing the 50-\textmu m interface between the bottom plate and the converter
-lowers the backside losses only to \PlossIZtwo{} (Z2) and \PlossIZthree~W (Z3). The board
-boundary---a 30-mm coupon in natural convection, standing in for a full server board---moves the
-joint drivers by up to half but no ranking: with a 500-W\,m$^{-2}$K$^{-1}$ film beneath the
-board the die warpage of Z1 falls from \WarpZone{} to \SensHbotHiZoneWarp~\textmu m and its joint
-driver from \DuZone{} to \SensHbotHiZoneDu~\textmu m, and those of Z2 to \SensHbotHiZtwoWarp{} and
-\SensHbotHiZtwoDu~\textmu m---the same mechanism as the bottom plate of cooling~B, a cooler board
-expanding less against the silicon above it. The cold-plate coefficient equivalent to the
-conjugate CFD solution lowers both losses by about \SensDAbsIcepakZtwoPloss~W and both peaks by about
-\SensDAbsIcepakZtwoTmax~K, a common-mode change. Removing the double-counted caloric resistance from
-the top-plate coefficient lowers every loss by \CalBZthreedP{} to \CalAZthreedP~W and every peak by
-3.6--7.7~K, again changing no ranking; the production results are kept as the conservative case. A
-non-uniform die load---three quarters of the kilowatt in the central half of the die---raises the
-die peak by 15--20~K but changes no loss by more than 0.3~W and no ranking of loss or warpage.
-
-\emph{Construction and interconnect.} Leaving the space between the cells void instead of
-encapsulated relieves the one-sided Z2 plate---its die warpage falls to
-\SensVoidZtwoWarp~\textmu m---but stiffens nothing in Z1, whose warpage rises to
-\SensVoidZoneWarp~\textmu m, so the mechanical gap narrows without reversing. Under-provisioning
-the 1-V TSV field of Z2 (64 instead of 1444 vias per cell) adds \SensDTsvMinZtwoPloss~W and
-widens the electrical gap, whereas a sparser attach (30-\textmu m bumps at 80-\textmu m pitch)
-costs only \SensDAttSparseZtwoPloss~W.
