@@ -233,7 +233,7 @@ def bga_count():
             m[f"BgaSitesAdopt{tag}"] = str(2 * int(ad[a]))
             m[f"BgaSiteFrac{tag}"] = fx(100.0 * pa["site_fraction"], 1)
             m[f"BgaIball{tag}"] = fx(pa["I_ball_closure_rule_A"], 2)
-            m[f"BgaMargin{tag}"] = fx(pa.get("margin_A"), 3)
+            m[f"BgaMargin{tag}"] = fx(pa.get("margin_A"), 4)
             m[f"BgaPasses{tag}"] = "yes" if pa.get("passes") else "no"
             fe = pa.get("feed") or {}
             if fe.get("R_loop_20C_ohm"):
