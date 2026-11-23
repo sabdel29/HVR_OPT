@@ -2,7 +2,7 @@
 \section{Verification, Uncertainty and Cost}\label{sec:verification}
 
 A chain of models has no single accuracy, and checks of different kinds establish different
-things (Table~\ref{tab:verif}). Each reduced model is solved together with a reference on the
+things (Table~\ref{tab:verif}; every check: Table~S17). Each reduced model is solved together with a reference on the
 same problem and the same machine (Fig.~\ref{fig:verif}). The discretization of each FE model is
 measured on nested refinement ladders. Model-form choices that no reference can settle are
 carried as alternatives through the whole chain (Section~\ref{sec:explore}).
@@ -42,8 +42,8 @@ model on other members of the family & Accuracy at the synthesized point \\
 \end{table}
 
 \subsection{Reference checks}
-The direct-current conduction stages are checked against a commercial thermal FE solver through
-the exact analogy between $\nabla\!\cdot(k\nabla T) = 0$ and $\nabla\!\cdot(\sigma\nabla V) = 0$.
+The direct-current conduction stages are checked against a commercial thermal FE solver (Ansys
+Electronics Desktop, AEDT) through the exact analogy between $\nabla\!\cdot(k\nabla T) = 0$ and $\nabla\!\cdot(\sigma\nabla V) = 0$.
 The single-TSV resistance and the TSV-field and attach homogenizations agree with it within
 \ErrHomogMax\,\%. The series rule for the through-thickness conductivity of an RDL tier
 overstates it by \ErrRdlKz\,\%, because it ignores constriction onto the copper grid. The
@@ -69,8 +69,9 @@ two solvers agree to \MthSolverDu\,\% in $\du$ but only to \MthSolverWarp\,\% in
 This solver term is not part of $U_{95}$. Added to both cases of every resolved warpage
 comparison, it leaves \MthSolverHold{} of them resolved.
 
-A conjugate CFD solution of one channel half-pitch (\MthCfdCells{} cells, constant water
-properties) checks the plate model at the single-pass flow of the CFD model. With the three-wall
+A conjugate computational fluid dynamics (CFD) solution of one channel half-pitch
+(\MthCfdCells{} cells, constant water properties) checks the plate model at the single-pass flow
+of the CFD model. With the three-wall
 H1 Nusselt number, the correlation is within \MthCfdErr\,\% of the CFD in mean base temperature
 rise and within \MthCfdDpErr\,\% in pressure drop. The flow distribution of the manifold and its
 header losses are not checked by CFD (Section~\ref{sec:discussion}).
@@ -86,7 +87,8 @@ Section~\ref{sec:explore}.
 \caption{Matched-reference checks: $|$relative error$|$ of every reduced model, and of the
 complete Z1 package (CalculiX against MOOSE on the identical mesh), against its reference on the
 same problem and machine, with the median runtimes of both. The series-rule RDL conductivity
-(open marker) is replaced by the reference tensor in every result. Discretization and the local
+(open marker) is replaced by the reference tensor in every result; the solver row compares the
+iterative and direct structural solvers. Discretization and the local
 model are assessed in the text and in Table~\ref{tab:uncertainty}.}
 \label{fig:verif}
 \end{figure}
@@ -124,7 +126,8 @@ uncertainty is not part of $U_{95}$: both integrations are rerun under each decl
 alternative, and a resolved ranking that an alternative reverses is conditional on it
 (Section~\ref{sec:explore}).
 
-Of the \MthNcomp{} compared differences (Table~\ref{tab:uncertainty}), \MthNasym{} have
+Of the \MthNcomp{} compared differences (Table~\ref{tab:uncertainty}; per-case values:
+Table~S18), \MthNasym{} have
 asymptotic ladders, \MthNnotasym{} monotone but not asymptotic ones and \MthNosc{} oscillatory
 ones. The rule resolves \MthNresolved{} of them; die warpage between Z3 and Z1 under cooling~B is
 not resolved. The production mesh underestimates every loss, by \MthBiasPLo--\MthBiasPHi~W, and
@@ -158,7 +161,7 @@ the local uncertainty. The response rises monotonically with both $\Delta u$ and
 $T_{\mathrm{sj}}$, with \SolderViol{} violations among \SolderPairs{} ordered pairs.
 
 Heat deposited in the mesh equals the ledger total, and heat leaving through the plate and
-board films equals the deposited heat, to \MthEnergyResid{} in every compared case.
+board films equals the deposited heat, to a relative $\MthEnergyResid$ in every compared case.
 
 \input{tab_uncertainty}
 

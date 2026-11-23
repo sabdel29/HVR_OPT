@@ -6,7 +6,7 @@ The synthesized regulator of Section~\ref{sec:dse} is placed in three integratio
 (Fig.~\ref{fig:sections}). All three hold the same \MthNcells{} cells on a
 $\MthGrid\times\MthGrid$ grid under the 22.36-mm die, each cell \MthCellSide~mm square at a
 \MthCellPitch-mm pitch. They share one converter stack, one tier order and one
-\MthBoardMm-mm board, so they differ in placement only.
+\MthBoardMm-mm board, so they differ in placement only (layer stacks: Table~S4).
 
 In the \emph{embedded} integration (Z1), the \MthStackMm-mm converter sits between a
 300-\textmu m silicon power substrate and the die. Its 48-V input crosses the board, the 48-V
@@ -19,9 +19,9 @@ a \MthCutout-mm opening in the board, 1~mm from the sidewall. A 30-\textmu m att
 15-\textmu m Cu pillars at 30-\textmu m pitch joins it to the substrate; thermocompression
 bonding at that pitch has been demonstrated on organic substrates~\cite{Au2016CuPillar30um}.
 Only the 1-V current crosses the attach and the TSVs. The BGA is a ring of \MthSitesRing{}
-sites around the opening, and its power balls carry the 48-V feed: the current runs from the
-board through ring balls and a 48-V RDL on the land side of the substrate to the input pads of
-the cells. The lowest face of the converter lies \MthClearZtwo~\textmu m above the underside of
+sites around the opening, and its power balls carry the 48-V feed. The feed current runs from
+the board through these balls and a 48-V RDL on the land side of the substrate to the input pads
+of the cells. The lowest face of the converter lies \MthClearZtwo~\textmu m above the underside of
 the board.
 
 In the \emph{board-backside} integration (Z3), the converter is attached to the underside of an
@@ -45,16 +45,16 @@ compared case.}
 \end{figure*}
 
 \subsection{Converter stack, tier order and vertical interconnect}\label{sec:realizability}
-The eleven parts of a cell are packed into at most four tiers, and a tier may mix part classes
+The parts of a cell are packed into at most four tiers, and a tier may mix part classes
 (Section~\ref{sec:dse}). Each part keeps its body footprint and a \MthKeepout-\textmu m keep-out
-in a two-dimensional placement. Listed from the 48-V input end, the four tiers hold two
-high-side (HS) dies and both flying capacitors (\MthTierOne~\textmu m), an HS and a low-side
-(LS) die (\MthTierTwo~\textmu m), an LS die and an inductor (\MthTierThree~\textmu m), and an LS
-die and two inductors (\MthTierFour~\textmu m). With its 10-\textmu m interlayer RDLs, the
-converter is \MthStackUm~\textmu m tall.
+in a two-dimensional placement. Listed from the 48-V input end, the first tier holds two
+high-side (HS) dies and both flying capacitors (\MthTierOne~\textmu m). The second holds an HS
+and a low-side (LS) die (\MthTierTwo~\textmu m), the third an LS die and an inductor
+(\MthTierThree~\textmu m), and the fourth an LS die and two inductors (\MthTierFour~\textmu m).
+With its 10-\textmu m interlayer RDLs, the converter is \MthStackUm~\textmu m tall.
 
 A tier is as tall as its tallest part: the rated 0603 capacitor (\MthHtCf~\textmu m maximum
-height), the EPC2014C with its solder bars (\MthHtHs~\textmu m) or the EPC2055 with its bumps
+height), the EPC2014C (\MthHtHs~\textmu m with its terminals) or the EPC2055
 (\MthHtLs~\textmu m). Copper posts on the terminals bridge every shorter part to the RDLs above
 and below it. They are sized to each die's datasheet land pattern, to the electrode bands of the
 capacitor and to the inductor current at 100~A\,mm$^{-2}$. We assume dies with terminals on both
@@ -66,15 +66,15 @@ them. An interlayer RDL is patterned copper and serves as a capture plane, so a 
 only the dielectric depth of the tiers in between. Each vertical net is checked against the via
 count of~\eqref{eq:via}, the pitch, the landing area of the part and the aspect ratio of every
 via level. The declared rules are those of chip-embedding
-substrates~\cite{Ostmann2008ChipEmbedding}: laser-drilled \MthViaD-\textmu m microvias in a
-build-up dielectric, a capture pad 1.5 times the via diameter at every RDL, and an aspect ratio
-of at most 1 per via level, the stacked-microvia practice of high-density boards~\cite{IPC2226A2017,
-Ning2019MicroviaFatigue}.
+substrates~\cite{Ostmann2008ChipEmbedding}. Laser-drilled \MthViaD-\textmu m microvias cross a
+build-up dielectric, every RDL carries a capture pad 1.5 times the via diameter, and each via
+level has an aspect ratio of at most 1. This limit is the stacked-microvia practice of
+high-density boards~\cite{IPC2226A2017,Ning2019MicroviaFatigue}.
 
 The tier order is chosen in three steps. First, only orders that meet the via rule are kept; if
 none does, the orders with the best worst-case aspect ratio are kept. Second, the order of least
-intra-cell routing loss is taken, evaluated with the conductor model of the ledger at
-25\,$^\circ$C and the bare input factor on the 48-V nets (Sections~\ref{sec:scenarios}
+intra-cell routing loss is taken. This loss uses the conductor model of the ledger at
+25\,$^\circ$C, with the bare input factor on the 48-V nets (Sections~\ref{sec:scenarios}
 and~\ref{sec:ledger}). Each order carries the assignment of parts to tiers that routes with the
 least loss. Third, orders within \MthRouteTie~W of the least loss are separated by their heat
 path, a one-dimensional estimate of the temperature rise from each tier's loss to the die-side
@@ -84,17 +84,17 @@ None of the \MthNorders{} orders of the four tiers meets the via rule (Fig.~\ref
 Every order must cross the \MthTierOne-\textmu m capacitor tier, so its worst via level has an
 aspect ratio of \MthWorstAR. That crossing therefore needs copper posts, not build-up vias. The
 least routing loss is \MthRouteLeast~W, and \MthNtie{} orders lie within \MthRouteTie~W of it.
-Among them the heat path selects the order listed above, with \MthRouteChosen~W of intra-cell
-routing and a \MthHeatChosen-K heat path against \MthHeatLeast~K for the least-loss order. The
-same order with its worst part assignment would route \MthRouteWorst~W. Regrouping the eleven
-parts into every packable set of at most four tiers (\MthNgroupings{} groupings, \MthNregroup{}
+Among them the heat path selects the order listed above. It routes \MthRouteChosen~W inside
+the cells and has a \MthHeatChosen-K heat path, against \MthHeatLeast~K for the least-loss
+order. The same order with its worst part assignment would route \MthRouteWorst~W. Regrouping
+the parts into every packable set of at most four tiers (\MthNgroupings{} groupings, \MthNregroup{}
 orders) does not remove the posts either: the best worst-case aspect ratio is \MthRegroupAR.
 
 Two sensitivities test this verdict. With a 100-\textmu m capacitor tier the stack shrinks to
 \MthThinStackMm~mm, but every order still crosses a device tier, at an aspect ratio of at least
 \MthThinAR. With single-face terminals the rule selects the same order, and its worst aspect
 ratio stays \MthSingleAR. The verdict is geometric feasibility under declared rules, not a
-demonstrated process: placement within a tier, encapsulation and warpage during lamination are
+demonstrated process. Placement within a tier, encapsulation and warpage during lamination are
 not evaluated (Section~\ref{sec:discussion}).
 
 The four-tier limit also constrains the converter. The five-tier optimum at the same count
@@ -121,11 +121,11 @@ We describe it by the RMS factor $k_{\mathrm{rms}}$, the ratio of the RMS to the
 current. Three input states bound it. \emph{Ideal decoupling} ($k_{\mathrm{rms}} = 1$) is the
 limit of unlimited local capacitance. \emph{Bare decoupling} passes the pulse at the buck duty
 $D$ unfiltered, $k_{\mathrm{rms}} = 1/\sqrt{D} = \MthKbare$. \emph{Implemented decoupling} is
-the production state: \MthNphases{} clock phases in two interleaved groups of six and a ring of
-\MthNring{} 1206 capacitors outside the cell grid give $k_{\mathrm{rms}} = \MthKeq$ in the
-package network (Section~\ref{sec:evaluate}). In every state, the input loop inside each cell
-carries the bare pulse of the cell, $k_{\mathrm{rms}} = \MthKcell$ from a circuit model of its
-waveform. Ideal and bare decoupling serve as references.
+the production state. Its \MthNphases{} clock phases run in two interleaved groups of six, and a
+ring of \MthNring{} 1206 capacitors sits outside the cell grid. Together they give
+$k_{\mathrm{rms}} = \MthKeq$ in the package network (Section~\ref{sec:evaluate}). The input
+loop inside each cell still carries the bare pulse of the cell, $k_{\mathrm{rms}} = \MthKcell$
+from a circuit model of its waveform. Ideal and bare decoupling serve as references.
 
 \subsection{Rail-aware conductor ledger}\label{sec:ledger}
 Loss is reported inside a declared boundary. The package-internal loss $P_{\mathrm{int}}$ of Z2
@@ -144,9 +144,9 @@ solved for $I$ by fixed-point iteration. The feed loss is dissipated outside the
 not deposited in its thermal model. The same factor scales the package 48-V network of Z1: the
 pulsed input current is charged wherever it flows. The crossover $R^{\ast}$ at which a backside
 integration loses its advantage over Z1 is a specification for the feed. Two physical feeds are
-evaluated against it: the ring feed of Z2, solved with the same network model as Z1
-(\FeedRbgaZtwo-m$\Omega$ loop), and the plane pair of Z3, two \MthFeedPlaneT-\textmu m copper
-planes under the cell grid (\FeedRZthree~m$\Omega$).
+evaluated against it. The ring feed of Z2 is solved with the same network model as Z1, a
+\FeedRbgaZtwo-m$\Omega$ loop. The plane pair of Z3 is two \MthFeedPlaneT-\textmu m copper planes
+under the cell grid, a \FeedRZthree-m$\Omega$ loop.
 
 Every conductor carries the rail assigned to it and the RMS current that flows in it. Switched
 nets inside the cell carry the RMS currents of the converter model, and the 48-V nets carry
@@ -173,8 +173,8 @@ link within a tier is a lateral run, and the output plane of the cell is a finit
 Under each cell, \MthTsvCell{} TSVs of 30~\textmu m at 60-\textmu m pitch carry 48~V in Z1 and
 1~V in Z2 and Z3. The package 48-V network of Z1 and the ring feed of Z2 are each solved as two
 voltage-fed resistive sheets, supply and return. Every ball and pad feeds the sheets through its
-own resistance on a finite-volume grid aligned with every pad and ball edge, so the ball
-currents are an output. The Cu-pillar attach of Z2 (\MthPillarCell{} pillars per rail and cell)
+own resistance, on a finite-volume grid aligned with every pad and ball edge. The ball currents
+are therefore an output. The Cu-pillar attach of Z2 (\MthPillarCell{} pillars per rail and cell)
 and the solder attach of Z3 (\MthZthreeBumps{} bumps per rail and cell) are resolved on their
 lattices as series columns with two-sided constriction. In Z3, \MthPthCell{} plated
 through-holes per rail and cell carry the 1-V current through the board.
@@ -182,12 +182,11 @@ through-holes per rail and cell carry the 1-V current through the board.
 The 48-V balls of Z1 and of the ring of Z2 are provisioned by one rule. The current of a ball is
 the largest DC ball current of the solved network, scaled by $k_{\mathrm{rms}}$. The count is the smallest
 legal (mirror-symmetric) count on the 0.8-mm lattice that holds this current to
-\MthBgaTarget~A per ball, a design assumption for 0.4-mm SAC balls~\cite{Kuan2015Imax}. In the
-production state this gives \BgaNminZone{} balls per rail for Z1 and \BgaNminZtwo{} for the ring
-of Z2. A conservative \MthBgaTargetSens-A target is a sensitivity (Section~\ref{sec:explore}).
+\MthBgaTarget~A per ball. This target is a design assumption for 0.4-mm SAC305 (Sn3.0Ag0.5Cu)
+balls~\cite{Kuan2015Imax}. A conservative \MthBgaTargetSens-A target is a sensitivity (Section~\ref{sec:explore}).
 The power balls may occupy at most \MthLimSites~\% of the sites of the package; the rest carry
 signal and auxiliary rails. The harmonic port model of Z1, with every ball tied to an ideal board
-node, bounds its worst ball at \MthBgaRmsBound~A RMS; this bound exceeds the target and is
+node, bounds its worst ball at \MthBgaRmsBound~A RMS. This bound exceeds the target and is
 discussed as a limitation (Section~\ref{sec:discussion}).
 
 In Z3 the 1-V current of each rail is shared equally by balls that cover most of the BGA, while
@@ -195,15 +194,17 @@ the TSV fields that carry it to the die sit only under the cells. The current of
 outside a cell footprint therefore travels laterally, in a land-side copper plane of the
 substrate and in the 1-V planes of the board. Each sheet costs
 \begin{equation}
-P = \kappa\, R_{\mathrm{s}}(T)\, I_{\mathrm{r}}^2,\quad
-\Delta V = \kappa_V R_{\mathrm{s}}(T)\, I_{\mathrm{r}},\quad
-R_{\mathrm{s}}(T) = \frac{\rho(T)}{\varphi\, t_{\mathrm{Cu}}}
+\begin{aligned}
+P &= \kappa\, R_{\mathrm{s}}(T)\, I_{\mathrm{r}}^2,\qquad
+\Delta V = \kappa_V R_{\mathrm{s}}(T)\, I_{\mathrm{r}},\\
+R_{\mathrm{s}}(T) &= \rho(T)/(\varphi\, t_{\mathrm{Cu}})
+\end{aligned}
 \label{eq:sheet}
 \end{equation}
 for a rail current $I_{\mathrm{r}}$, where $\kappa$ and $\kappa_V$ are shape factors, $t_{\mathrm{Cu}}$
 the copper thickness and $\varphi$ its occupancy. The shape factors come from a two-dimensional
-finite-volume solution of one rail's sheet, with equal ball currents as sources and the TSV or
-via fields under the cells as sinks; halving its \MthLandGrid-mm grid changes them by
+finite-volume solution of one rail's sheet. Equal ball currents are its sources, and the TSV or
+via fields under the cells are its sinks. Halving its \MthLandGrid-mm grid changes them by
 \MthLandGridChk~\%. The land side gives $\kappa = \MthLandKappa$ per rail at
 $t_{\mathrm{Cu}} = \MthLandT$~\textmu m and $\varphi = \MthLandOcc$~\%. The board planes are
 \MthPlaneN{} declared \MthPlaneT-\textmu m planes per rail at $\varphi = \MthPlaneOcc$~\%, with
@@ -216,8 +217,8 @@ Steady conduction $\nabla\!\cdot(\mathbf{k}\nabla T) + q''' = 0$ is solved on th
 stack with orthotropic conductivity. Layers that contain regular arrays (TSV fields, attaches,
 RDL tiers, ball fields and the board via field of Z3) carry homogenized tensors, each checked
 against an explicitly meshed unit cell (Section~\ref{sec:verification}). Every ledger term is
-deposited in the layer and cell footprints that produce it; the deposited heat equals the ledger
-total to \EnergyTol.
+deposited in the layer and cell footprints that produce it. The deposited heat equals the
+ledger total to round-off, a relative $\MthDepositResid$.
 
 Each converter tier carries a card homogenized on a unit cell of its contents. Every part is a
 vertical column spanning the tier: a series stack of its own layers and, above a shorter part,
@@ -229,8 +230,8 @@ through-thickness conductivity of the input-end tier from \MthKzTierOneEncap{} t
 the terminal outlines (upper bound) spans \MthKzPostLo--\MthKzPostHi~W\,m$^{-1}$K$^{-1}$; both
 bounds are run as variants (Section~\ref{sec:explore}).
 
-The top boundary is a silicon microchannel cold plate on a 50-\textmu m thermal interface
-material (TIM; 3~W\,m$^{-1}$K$^{-1}$, \TimH~kW\,m$^{-2}$K$^{-1}$). Its effective coefficient
+The top boundary is a silicon microchannel cold plate (Table~S5) on a 50-\textmu m thermal
+interface material (TIM; 3~W\,m$^{-1}$K$^{-1}$, \TimH~kW\,m$^{-2}$K$^{-1}$). Its effective coefficient
 follows from the channel geometry and the flow,
 \begin{equation}
 \begin{aligned}
@@ -248,7 +249,7 @@ $L_{\mathrm{ch}} = 22.36$~mm over the footprint $A_{\mathrm{f}}$. The fins are s
 ($k_{\mathrm{s}}$) of thickness $t_{\mathrm{f}} = 50$~\textmu m, $D_{\mathrm{h}}$ is the
 hydraulic diameter, $k_{\mathrm{f}}$ the water conductivity, and $R_{\mathrm{base}}$ the
 resistance of a 100-\textmu m silicon base. A channel is heated on three walls (the base and both fins)
-under the H1 condition, with an adiabatic cover; its fully developed laminar Nusselt number is
+under the H1 condition, with an adiabatic cover. Its fully developed laminar Nusselt number is
 $\mathrm{Nu} = \CoolNu$ at aspect ratio 1/6~\cite{ShahLondon1978,QuMudawar2002}. Water enters
 at 25\,$^\circ$C at 27~g\,s$^{-1}$ per plate. Its properties are taken at the mean bulk
 temperature, \MthTbulk\,$^\circ$C at 1~kW~\cite{NISTWebBook}. The coolant warming
@@ -280,8 +281,8 @@ term is evaluated at the mean temperature of the region it is deposited in. Each
 the in-cell temperature of its own tier and uses its own datasheet coefficient. The iteration
 stops when every coupled temperature changes by less than 0.25~K and the loss by less than
 0.1\,\%. It converges in \MthEtItersLo--\MthEtItersHi{} thermal solves and contracts
-geometrically: each loss change is \MthEtContractLo--\MthEtContractHi{} times the previous one,
-the largest factor belonging to \MthEtContractCase. The on-resistance coefficients are fitted to
+geometrically. Each loss change is \MthEtContractLo--\MthEtContractHi{} times the previous one;
+the largest factor belongs to \MthEtContractCase. The on-resistance coefficients are fitted to
 the datasheet curves over 25--125\,$^\circ$C; above that range they are extrapolated, which the
 feasibility stage reports.
 
@@ -319,14 +320,14 @@ point and the thermoelastic solution are then iterated until the warpage changes
 bound this feedback.
 
 \subsection{Local solder response}\label{sec:local}
-The submodel resolves the critical joint, a 400-\textmu m SAC305 ball, 300~\textmu m tall at
+The submodel resolves the critical joint, a 400-\textmu m SAC305 ball 300~\textmu m tall at
 0.8-mm pitch~\cite{Krishnakumar2026DVPD}. It is meshed as the equal-area 354.5-\textmu m square
 prism between two 20-\textmu m copper pads, on four nested hexahedral meshes (L0--L3). The
 lower pad face is fixed. The upper face is displaced in plane by $\du$ (its other components
 restrained) for a 300-s dwell at $T_{\mathrm{sj}}$ and returned for a 300-s dwell at
-25\,$^\circ$C. Every load change is ramped linearly over 3~s and then held. This cycle stands in
-for power cycling between off and the converged operating point, which the package reaches in
-seconds, short against the dwell.
+25\,$^\circ$C. Every load change is ramped linearly over 3~s and then held. This prescribed cycle stands in
+for power cycling between off and the converged operating point; the thermal transient between
+them is not modeled.
 
 The solder is elastic--viscoplastic with $E = 45 - 0.12(T-25)$~GPa. Its room-temperature value is
 the midpoint of the band of~\cite{Paska2024SAC305}; the slope, $\nu = 0.36$ and the CTE of
@@ -334,14 +335,15 @@ the midpoint of the band of~\cite{Paska2024SAC305}; the slope, $\nu = 0.36$ and 
 with isotropic hardening that saturates at 2\,\% inelastic strain~\cite{Yuan2023SAC305}. Creep of
 the overstress follows a Norton law,
 $\dot\varepsilon_{\mathrm{in}} = A(T)\langle\sigma_{\mathrm{vm}}-\sigma_y\rangle^{n(T)}$, fitted
-to tensile creep data~\cite{Xiao2005SAC}. Those data cover 45--150\,$^\circ$C and
+to tensile creep data~\cite{Xiao2005SAC} (parameters and sources: Tables~S9 and~S10). Those
+data cover 45--150\,$^\circ$C and
 \MthCalLo--\MthCalHi~MPa, for a Sn3.9Ag0.6Cu alloy rather than SAC305. Between the 5th and
 95th percentiles of dwell time, the joints carry \MthVisHotLo--\MthVisHotHi~MPa hot and
 \MthVisColdLo--\MthVisColdHi~MPa cold.
 The law is therefore extrapolated in stress, and in temperature below 45\,$^\circ$C during the
 cold dwell.
 
-No calibrated SAC305 law covers that window, so the response is carried as a band over two
+Because the production law is extrapolated, the response is carried as a band over two
 laws. The second is the Garofalo law of~\cite{Schubert2003ECTC}, entered as a zero-yield Norton
 surrogate refitted at each temperature over the stress window the joints visit. The window and
 the responses are iterated to self-consistency; after \MthRefitIters{} fits the window settles
@@ -365,7 +367,7 @@ law, life relation or allowable is applied.
 
 \subsection{Feasibility limits}\label{sec:feasibility}
 The feasibility stage checks every candidate before any ranking, and a candidate that fails a
-limit is not ranked. The limits are:
+limit is not ranked. The limits are (every case: Table~S19):
 \begin{itemize}
 \item the GaN junction temperature, $T_{\mathrm{jn}} \le \MthLimGan\,^\circ$C per device tier:
 the in-cell maximum of the tier plus the junction-to-case resistance times the device's own

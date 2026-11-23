@@ -621,9 +621,9 @@ def latex(cases, res, eps, u_t):
          r"$U_{95}(D)$. The signed bias $\beta_D$ and the uncertainty $U_{95}(D)$ come from $D$'s "
          r"own mesh ladder; $D$ is resolved when $|D+\beta_D|>U_{95}(D)$.}",
          r"\label{tab:uncertainty}", r"\centering", r"\scriptsize",
-         r"\setlength{\tabcolsep}{2.4pt}",
-         r"\begin{tabular}{@{}l" + "r" * (ncol - 1) + r"@{}}", r"\toprule", head, unit,
-         r"\midrule"]
+         r"\setlength{\tabcolsep}{1.5pt}",
+         r"\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}l" + "r" * (ncol - 1)
+         + r"@{}}", r"\toprule", head, unit, r"\midrule"]
     last = None
     for t, x, y in SHOW:
         if last is not None and t != last:
@@ -650,8 +650,9 @@ def latex(cases, res, eps, u_t):
                  r"the local model was solved; $U_{95}(D)$ from the two joints' own numerical "
                  r"uncertainty. Every resolved $\deps$ sign also holds under the second solder "
                  r"law unless marked $^{\mathrm{L}}$.")
-    L += [r"\midrule", f"\\multicolumn{{{ncol}}}{{@{{}}p{{0.98\\columnwidth}}@{{}}}}"
-          f"{{{note}}}\\\\", r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    L += [r"\bottomrule", r"\end{tabular*}",
+          r"\par\smallskip\parbox{\columnwidth}{\scriptsize " + note + "}",
+          r"\end{table}"]
     return L
 
 

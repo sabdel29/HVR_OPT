@@ -225,7 +225,7 @@ def production_cases():
     import sys
     sys.path.insert(0, str(R / "scripts"))
     files = {(t, a): SENS / f"etm_{a}_HV_SDEC__sdec_{t}.json" for t in "AB" for a in ATAG}
-    iters, ratios, resid, per_case = [], [], [], []
+    iters, ratios, resid, per_case, dep = [], [], [], [], []
     for (t, a), f in files.items():
         c = J(f)
         if not c:
@@ -239,6 +239,7 @@ def production_cases():
         if rc:
             per_case.append((statistics.median(rc), t, a))
         resid.append(abs(get(c, "thermal", "energy_residual_rel") or 0))
+        dep.append(abs(get(c, "thermal", "deposit_residual_rel") or 0))
         tag = ATAG[a]
         if t == "A":
             M[f"MthEtMin{tag}"] = fx((c.get("et_wall_s") or 0) / 60.0, 0)
@@ -266,8 +267,10 @@ def production_cases():
         M["MthEtContractLo"], M["MthEtContractHi"] = fx(lo[0], 2), fx(hi[0], 2)
         M["MthEtContractCase"] = f"{hi[2]} under cooling~{hi[1]}"
     if resid:
-        M["MthEnergyResid"] = f"{max(resid):.0e}".replace("e-0", r"\times10^{-").replace(
-            "e-", r"\times10^{-") + "}"
+        # math-mode strings: the largest relative residual, as an order-of-magnitude bound
+        M["MthEnergyResid"] = f"10^{{{math.ceil(math.log10(max(resid)))}}}"
+    if dep and max(dep) > 0:
+        M["MthDepositResid"] = f"10^{{{math.ceil(math.log10(max(dep)))}}}"
     et = [float(M[f"MthEtMin{t}"]) for t in ATAG.values() if M.get(f"MthEtMin{t}", NA) != NA]
     if et:
         M["MthEtMinLo"], M["MthEtMinHi"] = fx(min(et), 0), fx(max(et), 0)
