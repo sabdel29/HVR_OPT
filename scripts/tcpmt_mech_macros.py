@@ -423,7 +423,8 @@ def board():
             # the 3x board's own E-T field (coarse rung) against the case's coupon rung
             m[f"MvBdOwnWarp{k}"] = spct(own["warp_rel"], 1)
             m[f"MvBdOwnDu{k}"] = spct(own["du_rel"], 1)
-            m[f"MvBdOwnT{k}"] = fx(own.get("T_max_K"), 1)
+            t_k = own.get("T_max_K")
+            m[f"MvBdOwnT{k}"] = NA if t_k is None else f"{t_k:+.1f}".replace("-", r"\textminus{}")
             m[f"MvBdOwnP{k}"] = spct(own.get("P_loss_rel"), 1)
             acc.setdefault("Own", {"w": [], "d": []})
             acc["Own"]["w"].append(own["warp_rel"])
