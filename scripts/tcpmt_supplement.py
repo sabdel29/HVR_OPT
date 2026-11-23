@@ -1054,14 +1054,16 @@ def joint_band_table():
         return placeholder("joint response under the law band", "solder_law_band.json")
     prod = b["production_law"]
     laws = [prod] + [k for k in b.get("band_laws") or [] if k != prod]
-    u = J(TR / "uncertainty.json") or {}
-    urel = u.get("eps_U_rel") or {}
+    # each joint's numerical U: the local checks' own (L0 -> L3, 4 -> 8 cycles), the values the
+    # uncertainty record carries once it is rebuilt on this band
+    jr = (J(TR / "solder_local_checks.json") or {}).get("joint_resolution") or {}
+    urel = jr.get("U_rel") or {}
     body = []
     for lab in ("A_Z1", "A_Z2", "A_Z3", "B_Z1", "B_Z2", "B_Z3"):
         v, jt = b["band"].get(lab), (b.get("joints") or {}).get(lab)
         if not v or not jt:
             continue
-        ur = urel.get(lab.replace("_", "."))
+        ur = urel.get(lab)
         body.append(f"{V2_CASE[lab]} & ({jt['x_mm']:g}, {jt['y_mm']:g}) & {fx(jt['T_C'])} & "
                     f"{fx(jt['du_xy_um'], 2)} & {fx(jt['du_z_um'], 2)} & "
                     + " & ".join(_sx(v["values"].get(k)) for k in laws)
