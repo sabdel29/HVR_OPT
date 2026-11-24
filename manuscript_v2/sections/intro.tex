@@ -23,7 +23,8 @@ carry the deformation. The converter decisions are coupled to the same package. 
 fixes each cell's footprint. The selected parts fix the component heights and ratings, and their
 assignment to tiers fixes which connections cross which dielectric depth. An
 electrically optimal design can therefore violate a via rule, overload the ball field, exceed its
-cooling, run a device beyond its rating or load a solder joint harder than an alternative.
+cooling, run a device beyond its rating, load a solder joint harder than an alternative or warp too
+far to be assembled.
 
 This paper asks one question: where should the cells of a synthesized regulator be integrated
 once its loss, temperature and deformation are solved together under identical cooling?
@@ -79,8 +80,10 @@ of~\cite{Choi2025SelfConsistent}, applied there to one embedded architecture, to
 package with a declared cooling boundary in three integrations. Four elements are new. The first
 is the comparison of three integrations of one synthesized regulator at a common temperature and
 under two identical coolings, after infeasible candidates are filtered out. The second is a
-thermoelastic solution of the mounted assembly with a search over every interconnect site, a
-viscoplastic joint submodel and an optional feedback through the plate interface. The third is a
+thermoelastic solution of the mounted assembly with a search over every interconnect site, in which
+a viscoplastic joint submodel driven by the global displacement field locates the governing joint
+on a candidate set that bounds the ball lattice; an optional feedback runs through the plate
+interface. The third is a
 realizability check of the tier order, and the fourth a comparison rule that resolves each
 difference against its own numerical uncertainty. Unlike~\cite{Krishnakumar2026DVPD}, the framework does not
 resolve transient droop, and the designer, not the framework, feeds the package result back to
@@ -91,21 +94,24 @@ The contributions are as follows.
 \item A device-to-joint electrothermal--mechanical framework for package-integrated voltage
 regulation, used in three modes---evaluate, compare and explore---on one geometry. Its couplings
 are classified, and each reduced model is checked against a matched reference. One coupled
-evaluation takes \FrEvalHLo--\FrEvalHHi~h on a workstation (Sections~\ref{sec:framework},
-\ref{sec:models} and~\ref{sec:verification}).
+evaluation takes \MthTotHLo--\MthTotHHi~h on a workstation, without the local joint model
+(Sections~\ref{sec:framework}, \ref{sec:models} and~\ref{sec:verification}).
 \item Converter synthesis from a discrete library under part-level rules, with the regulator count
 as an output. The screen selects \FrDseOptM{} cells from \FrDseNcounts{} counts, and the full
 chain confirms the choice: the neighbouring 25- and 49-cell designs dissipate
 \FrChainMarginLo--\FrChainMarginHi~W more (Section~\ref{sec:dse}).
 \item A comparison of the three integrations under identical coolings, behind a feasibility
-filter. Under one top cold plate, Z1 and Z2 tie within \GapAZtwo~W and Z3 is infeasible. With a
-bottom plate, Z2 saves \GapBZtwo~W and \dTmaxTierBZtwo~K of peak temperature over Z1, while Z1
-warps \FrWarpRatioB{} times less (Sections~\ref{sec:evaluate} and~\ref{sec:compare}).
+filter. Under one top cold plate, Z2 is \GapAZtwo~W below Z1 inside the package but \WrPlatGapA~W
+above it at the platform, and Z3 is infeasible. With a bottom plate, Z2 saves \GapBZtwo~W and
+\dTmaxTierBZtwo~K of peak temperature over Z1. Z1 warps least under both coolings but has the
+largest joint response under every solder law (Sections~\ref{sec:evaluate}
+and~\ref{sec:compare}).
 \item Requirements that only the coupled solution exposes. Interleaved input decoupling lowers
-the RMS-to-average ratio $k_{\mathrm{rms}}$ of the package input current from \FrKopen{} to
-\FrKrms. Every tier order crosses the 1-mm capacitor tier, so copper posts are needed. A
+the RMS-to-average ratio $k_{\mathrm{rms}}$ of the package input current from \WrKsync{} to
+\WrKrms. Every tier order crosses the 1-mm capacitor tier, so copper posts are needed. A
 five-tier converter saves \FrTfiveSaveLo--\FrTfiveSaveHi~W but protrudes \FrProtrudeTfive~\textmu m
-below the Z2 board (Sections~\ref{sec:explore} and~\ref{sec:discussion}).
+below the Z2 board. The fine-pitch attaches of Z1 and Z2 do not bond flat at their bonding
+temperature (Sections~\ref{sec:compare}--\ref{sec:discussion}).
 \end{enumerate}
 
 Section~\ref{sec:framework} describes the framework and Section~\ref{sec:dse} the converter

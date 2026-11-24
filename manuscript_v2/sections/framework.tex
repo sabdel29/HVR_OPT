@@ -7,8 +7,8 @@
 \caption{(a)--(c) The same regulator cells in the three integrations: Z1 between the substrate and
 the die, Z2 on the substrate backside inside a board opening, and Z3 on the board backside. The
 integration decides which rail crosses the substrate and
-the board, at what current, and which solder joints carry the deformation (ringed: critical
-joint). Every converter cell shows the four mixed tiers of the design point, input end at the
+the board, at what current, and which solder joints carry the deformation (ringed: the critical
+joint, at a corner in every compared case but Z2 under cooling~A). Every converter cell shows the four mixed tiers of the design point, input end at the
 bottom. The faded bottom plate exists only under cooling~B. The 48-V feed of Z2 and Z3
 starts outside the package-internal loss boundary (dashed box). Schematic; to-scale sections in
 Fig.~\ref{fig:sections}. (d) The framework: what each stage hands to the next on one geometry.
@@ -40,9 +40,10 @@ and it evaluates the conductor's resistance from geometry and temperature. The \
 thermal model} receives the ledger as a heat map, deposited where each loss arises, and returns
 temperatures that update every temperature-dependent resistance. The converged field drives a
 \emph{thermoelastic} finite-element (FE) model of the mounted assembly. It evaluates the relative
-displacement at every site of every interconnect layer and finds the critical joint. A
-\emph{local viscoplastic submodel} of that joint and its competitors returns their inelastic
-response per thermal cycle. The \emph{feasibility} stage, finally, checks the converged state
+displacement at every site of every interconnect layer. A \emph{local viscoplastic submodel},
+driven at a site by the displacement field of the global solution, returns the inelastic response
+per thermal cycle; solved on a candidate set that bounds the whole ball lattice, it finds the
+critical joint. The \emph{feasibility} stage, finally, checks the converged state
 against the ratings of the selected parts and the rules of the package
 (Fig.~\ref{fig:algorithm}; limits in Section~\ref{sec:feasibility}). A candidate that fails any check
 is reported but not ranked.
@@ -97,8 +98,8 @@ solve the thermal field with the cooling boundaries; $T^{k+1}$ = region means;\\
 of every interconnect layer.\\
 \textbf{6} \;\emph{Optional}: update the interface thickness from the solved warpage and return to
 step~4, until the warpage changes by less than 1\,\%.\\
-\textbf{7} \;Solve the local submodel at the critical site and at the competing sites; report the
-largest response.\\
+\textbf{7} \;Solve the local submodel on candidate ball sites until no unsolved site can exceed
+the largest response; report it and its site, the critical joint.\\
 \textbf{8} \;Check feasibility: device junction $T_{\mathrm{jn}}$ per tier, capacitor, inductor,
 dielectric, encapsulant, board and die temperatures, the validity range of the solder law at the
 joint temperature $T_{\mathrm{sj}}$, the static drop per rail, the ball current and sites, and a

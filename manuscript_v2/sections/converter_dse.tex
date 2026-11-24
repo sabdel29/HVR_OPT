@@ -51,7 +51,7 @@ the inductors must cover their branch currents.
 
 \emph{Effective capacitance and ESR.} The effective capacitance of each flying capacitor must keep
 its switching ripple below 10\,\% of its voltage. It is the vendor capacitance at the capacitor's
-own bias, corrected to 105\,$^\circ$C and reduced by the tolerance. A ceramic part without vendor
+own bias and at 105\,$^\circ$C, less the tolerance. A ceramic part without vendor
 bias data is not admitted. The ESR is taken at $f_{\mathrm{sw}}$ from the vendor's frequency data
 at the bias of $C_1$. Because the flying capacitors are soft-charged through the inductors, only
 this resistance enters the loss.
@@ -99,7 +99,7 @@ $k_{\mathrm{rms}} = \FrKopen$. $C_{\mathrm{in}}$ is the package input capacitanc
 \FrDecapN{} 1206 100-V X7S capacitors (\FrDecapCtot~\textmu F at 48~V and 105\,$^\circ$C) in a
 ring outside the cell grid. With the cells' clocks interleaved in \FrDecapPhases{} phases, two
 interleaved \FrDecapGroup-phase groups, the implemented decoupling holds the package input current
-at $k_{\mathrm{rms}} = \FrKrms$ (Section~\ref{sec:evaluate}).}
+at $k_{\mathrm{rms}} = \WrKrms$ (Section~\ref{sec:evaluate-decap}).}
 \label{fig:converter}
 \end{figure}
 
@@ -179,7 +179,7 @@ summed cell ripple is \FrConvOutRipple~A against the \FrConvOutRippleLim-A limit
 ripple is \FrConvVripple~mV.
 
 The rated 0603 flying capacitors~\cite{FrMurataGRM188} hold \FrConvCapVone{} and \FrConvCapVtwo~V,
-against \FrConvCapVallow~V derated. Corrected for bias, 105\,$^\circ$C and tolerance, they retain
+against \FrConvCapVallow~V derated. At their bias and 105\,$^\circ$C, less the tolerance, they retain
 \FrConvCapCeffHotOne{} and \FrConvCapCeffHotTwo~\textmu F, so the worst switching ripple is
 \FrConvCapRipple\,\% of the capacitor voltage. Their ESR at \FrConvFsw~kHz is \FrConvCapEsr~m$\Omega$.
 The cell dissipates \FrConvLossCell~W at 25\,$^\circ$C. Conduction accounts for \FrConvCondCell~W,
@@ -233,13 +233,13 @@ synth. \\
 Loss per cell, 25\,$^\circ$C & \FrConvLossCell~W: \FrConvCondCell~W conduction, \FrConvSwCell~W
 switching & synth. \\
 Input decoupling & \FrDecapN{} $\times$ 1206 4.7-\textmu F 100-V X7S~\cite{FrMurataGRM31}, ring
-outside the grid (\FrDecapCtot~\textmu F at 48~V); \FrDecapPhases{} clock phases;
-$k_{\mathrm{rms}} = \FrKrms$ & design \\
+outside the grid (\FrDecapCtot~\textmu F at 48~V and 105\,$^\circ$C); \FrDecapPhases{} clock
+phases; $k_{\mathrm{rms}} = \WrKrms$ & design \\
 \midrule
 \multicolumn{3}{@{}l}{\emph{Package and cooling}}\\
 Power substrate & Si, 300~\textmu m, $30\times30$~mm; TSVs 30~\textmu m at 60~\textmu m &
 \cite{Krishnakumar2026DVPD} \\
-BGA & 0.8-mm pitch, 0.4-mm SAC305 balls; 2~A per ball, assumed &
+BGA & 0.8-mm pitch, 0.4-mm SAC305 balls; \WrBgaRule~A per ball, assumed &
 \cite{Krishnakumar2026DVPD,Kuan2015Imax} \\
 Board & IT-968G laminate, \FrBoardMm~mm, homogenized Cu planes & arch. \\
 Cold plate (each) & Si microchannels, \CoolZones-zone manifold; water at 25\,$^\circ$C,
