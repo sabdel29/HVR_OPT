@@ -2581,7 +2581,10 @@ def main():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     txt = "\n".join(L) + "\n"
     for a, b in ((r"(NOT SAC305; DEFECT \#41)", "(not SAC305)"),
-                 ("(NOT SAC305; DEFECT #41)", "(not SAC305)"), ("(NOT SAC305)", "(not SAC305)")):
+                 ("(NOT SAC305; DEFECT #41)", "(not SAC305)"), ("(NOT SAC305)", "(not SAC305)"),
+                 # one name for the die power map, as in the paper
+                 ("Die hot-spot power map", "Core-heavy die power map"),
+                 ("die hot-spot map", "core-heavy die map")):
         txt = txt.replace(a, b)
     OUT.write_text(txt)
     print(f"wrote {OUT} ({len(L)} lines)")
