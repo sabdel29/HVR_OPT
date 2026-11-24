@@ -118,7 +118,8 @@ Z3 is infeasible (GaN junction \TjAZthree\degC). Inside the package Z2 then diss
 less than Z1, but with its feed and the pumping charged Z1 is lower (\PlatAZone{} against
 \PlatAZtwo~W), and against a rigid plate only Z1 stays feasible. With a bottom plate Z2 leads in loss
 and peak temperature (\GapBZtwo~W and \dTmaxTierBZtwo~K), and Z3 stays infeasible on its static
-drop. Z1 has the smallest die warpage under both coolings but the largest joint response
+drop. On the declared board Z1 has the smallest die warpage under both coolings but the largest
+joint response
 (\MvEpsAZone{} and \MvEpsBZone$\times10^{-3}$ per cycle) under every solder law. The
 thermocompression-bonding gaps of Z1 and Z2 exceed the bonding limit.
 
@@ -316,11 +317,12 @@ Conjugate CFD of one channel agrees with the correlation to \MthCfdErr\,\% in ba
 as the top plate's (\MthBotFlowZtwo~g\,s$^{-1}$ for the \MthBotQZtwo~W it receives in Z2), pumping
 counts every plate at its own flow and enters the platform-inclusive loss, and the heat to each plate
 is reported (Table~\ref{tab:compare}, Table~\ref{S:tab:supp-heat}). The comparison holds the hardware
-equal; the platform-inclusive loss charges the cooling energy. A hot-spot die map (three quarters of
-the die power in its central half) barely changes the loss, but it takes the die beyond its
+equal; the platform-inclusive loss charges the cooling energy. A core-heavy die map (three quarters
+of the die power in its central half) barely changes the loss, but it takes the die beyond its
 \MthLimDie-$^\circ$C limit in Z1 under both coolings and in Z2 under cooling~A (up to
 \FrDieHotMax\degC); only Z2 under cooling~B keeps it within the limit (\WrHotBZtwoDie\degC). It also
-reverses the joint-driver ranking under cooling~A (Section~\ref{sec:explore-die}).
+reverses the ranking of the largest ball displacement under cooling~A
+(Section~\ref{sec:explore-die}).
 
 \rc{MC11}{The aspect-ratio check is not a full interconnect and assembly verdict; state the process
 and the ball provisioning.}
@@ -381,9 +383,12 @@ is now resolved, but in the opposite direction to the reviewed version: under co
 $U_{95}$: both integrations are rerun under each declared alternative, and a ranking that an
 alternative reverses is conditional on it (Section~\ref{sec:explore-robust}, Fig.~\ref{fig:robust}:
 \WrRobN{} verdicts for \WrRobCases{} decisions, \WrRobPreserved{} preserved, \WrRobWithdrawn{}
-withdrawn, \WrRobReversed{} reversed, \WrRobPending{} pending a ladder of their own). Omitted losses,
-the die map and material bounds are bounded separately
-(Sections~\ref{sec:explore-omit}--\ref{sec:explore-cards}).
+withdrawn, \WrRobReversed{} reversed, \WrRobPending{} pending a ladder of their own). The mechanical
+variants (encapsulant, ball card, board size, mounting and clamp) were also rerun on the converged
+production fields of all six cases. They keep the joint-response ordering of each cooling, but a
+clamp reacted by a backplate and, under cooling~B, pinned screws or a larger board with a cold rim
+take the smallest warpage from Z1 (Table~\ref{S:tab:supp-mounting}). Omitted losses, the die map and
+material bounds are bounded separately (Sections~\ref{sec:explore-omit}--\ref{sec:explore-cards}).
 
 \rc{MC14}{The DC ledger does not characterize high-frequency power integrity; verify it or restrict
 the claims.}
@@ -601,7 +606,7 @@ are given per integration (Table~\ref{tab:compare}, Table~\ref{S:tab:supp-feas})
 Table~\ref{S:tab:supp-mounting}.
 \item \emph{Board model.} A laminate with homogenized copper planes, temperature-independent
 (Table~\ref{S:tab:supp-materials}); its size, mounting and clamp are varied
-(Table~\ref{S:tab:supp-mounting}).
+(Section~\ref{sec:explore-robust}, Table~\ref{S:tab:supp-mounting}).
 \item \emph{What the evaluation time includes.} Every electrothermal iteration and the structural
 solve with the all-site displacement search; not geometry and meshing, the local model or
 post-processing (Section~\ref{sec:verification}, Table~\ref{S:tab:supp-mesh}).
