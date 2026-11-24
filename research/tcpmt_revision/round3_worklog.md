@@ -288,3 +288,17 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     below Z3 under cooling A (Z2 searched in full). The summary job needed --force (valid-skip).
     Builds: paper 24 pp, supplement 22, letter 10, notes 3; 0 errors, 0 undefined, 0 overfull.
     Commit 015a201 (pushed to sabdel/tcpmt-revision).
+- 2026-11-24: GAP round DONE (c238a9a..015a201; MC1 96e94b3).
+  - Fine f_sw grid: optimum M=36 unchanged (788 kHz, -0.46 W).
+  - Neighbours m25/m49: joint response +15-22 %, resolved.
+  - Band study v2: -4..+8 %, no ordering change.
+  - Top-20 screen: escalated to the full search for 26 variants (screen up to 1.51x short); stated in the text.
+  - Robustness on the joint response: 38 preserved, 5 pending, none reversed. A 3x board with a 25 C rim reverses
+    Z1/Z2 under A (B holds).
+  - Z3 at 500 balls: thin cap -0.1/-0.9 W; 5-tier -29.4/-17.5 W; still infeasible.
+  - Builds: paper 24, supplement 22, letter 10, notes 3.
+  - JEDEC cited as JEP95 Sec. 3 SPP-024A (Mar 2009).
+- The [17] PDF was added to literature/ and the "rests on full text" notes removed (73cf00a). User rule: "paper, not
+  report".
+- EDITORIAL PASS running (one editor, full read; meta/redundancy/paragraph quality; letters rebuilt), then an
+  independent proofread, then report to the user, then page reduction.
