@@ -2453,7 +2453,7 @@ def variants_table():
                        "found the worst site outside the screened sites in "
                        + str(sum(1 for x in val.values() if not x.get("max_in_top_k")))
                        + " of them.") if val else ""))
-    return ltab(r"@{}L{4.0cm}lL{0.9cm}L{" + ("8.5" if g0 else "10.5") + "cm}"
+    return ltab(r"@{}L{4.0cm}lL{1.1cm}L{" + ("8.3" if g0 else "10.3") + "cm}"
                 + ("r" if g0 else "") + "@{}", 4 + bool(g0),
                 [r"Variant & Rerun & Int. & What changes" + (r" & Joint" if g0 else "")
                  + r" \\"], body,

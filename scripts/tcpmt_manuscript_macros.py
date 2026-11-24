@@ -671,7 +671,7 @@ def compare_table(S, mac):
          r"\begin{table*}[!t]",
          r"\caption{The Three Integrations in the Production State under Coolings~A and~B}",
          r"\label{tab:compare}", r"\centering", r"\footnotesize",
-         r"\setlength{\tabcolsep}{4pt}",
+         r"\setlength{\tabcolsep}{3.8pt}",
          r"\begin{tabular}{@{}lrrrrrr@{}}", r"\toprule",
          r" & \multicolumn{3}{c}{Cooling A: top plate} & \multicolumn{3}{c}{Cooling B: top and "
          r"bottom plates}\\", r"\cmidrule(lr){2-4}\cmidrule(l){5-7}",

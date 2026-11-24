@@ -7,7 +7,8 @@ decisions are run on the ideal-decoupling reference (k_rms = 1, cooling A); the 
 "Implemented decoupling, cooling A" holds the decisions run in the production state, and it
 opens with its own production-verdict row, so each group is read against its own baseline.
 Columns: the rankings; the joint column is the joint response of each integration, solved at
-the K worst sites of its reference case (tcpmt_mech_joint_screen -> robustness_joint.json; the
+the K worst sites of its reference case or, where escalated, by a full critical-joint search
+(tcpmt_mech_joint_screen -> robustness_joint.json; the
 largest ball displacement, the disproven proxy, is no longer a column). Cell state is carried by a
 glyph AND a fill, never colour alone:
   preserved  ·  light neutral          withdrawn ( |D + beta| <= U95 )  ≈  mid neutral
@@ -32,7 +33,8 @@ import style as S
 S.setup()
 rows = list(csv.DictReader(open(S.FC / "classB_sensitivity_rows.csv")))
 #: the joint column: the joint response of each integration, solved at the worst sites of its
-#: reference case (tcpmt_mech_joint_screen -> robustness_joint.json), judged with the same rule
+#: reference case or searched in full where escalated (tcpmt_mech_joint_screen ->
+#: robustness_joint.json), judged with the same rule
 JOINT = "d_eps_screen"
 OBS = [("P_loss_package_internal_w", "Package-\ninternal loss"),
        ("T_max_C", "Peak\ntemperature"),

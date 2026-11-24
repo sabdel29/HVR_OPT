@@ -966,7 +966,7 @@ Table~\ref{tab:supp-variants} gives the package decisions of the robustness stud
 
 \needspace{32.0\baselineskip}
 \begingroup\footnotesize\setlength{\tabcolsep}{3pt}
-\begin{longtable}{@{}L{4.0cm}lL{0.9cm}L{8.5cm}r@{}}
+\begin{longtable}{@{}L{4.0cm}lL{1.1cm}L{8.3cm}r@{}}
 \caption{Package decisions varied in the robustness study}\label{tab:supp-variants}\\
 \toprule
 Variant & Rerun & Int. & What changes & Joint \\
@@ -1013,7 +1013,7 @@ Z3 bottom plate via TIM & full & Z3 & Z3 converter plate through a 50~\textmu m 
 Z3 top plate only & full & Z3 & Z3 with the top cold plate only (converter underside in the board's natural-convection film instead of its own plate) & -- \\
 Z1 reference tier order & full & Z1 & Z1 in the reference tier order HS-LS-Cf-L (production: repartitioned HS-Cf-LS-L); components, heights unchanged & -- \\
 Board-bottom film 100 & full & Z1/Z2/Z3 & effective board-bottom coefficient 100 W\,m$^{-2}$K$^{-1}$ instead of 10 (full server board, forced air) & 5.97 / 3.79 \\
-Board-bottom film 500 & full & Z1/Z2/Z3 & effective board-bottom coefficient 500 W\,m$^{-2}$K$^{-1}$ instead of 10 (upper end of board spreading) & 5.50 / 4.32 \\
+Board-bottom film 500 & full & Z1/Z2/Z3 & effective board-bottom coefficient 500 W\,m$^{-2}$K$^{-1}$ instead of 10 (upper end of board spreading) & 5.50 / 4.32$^\dagger$ \\
 Z2 bottom plate, no TIM & full & Z2 & top-type cold plate on the Z2 converter underside & 6.49 / 1.50 \\
 1-V pads at the drop floor & full & Z1/Z2 & 1 V source pads at the drop floor (4 per rail per cell) instead of 2040 & 6.63 / 3.42 \\
 GaN-tier $k\times0.5$ & full & Z1/Z2 & GaN device-tier cards at half their conductivity & 7.47 / 3.81 \\
@@ -1043,7 +1043,7 @@ Converter $E$ 80~GPa, CTE 10 & mech. & Z1/Z2 & converter medium $E$ = 80 GPa, CT
 Converter $E$ 160~GPa, CTE 4 & mech. & Z1/Z2 & converter medium $E$ = 160 GPa, CTE = 4 ppm/K & 6.56 / 2.99$^\dagger$ \\
 Converter $E$ 160~GPa, CTE 10 & mech. & Z1/Z2 & converter medium $E$ = 160 GPa, CTE = 10 ppm/K & 6.55 / 4.00 \\
 \end{longtable}
-\nopagebreak\noindent Each run changes one declared input on the production mesh and reruns the whole electrothermal--mechanical chain (full) or only the mechanics on the converged field (mech.). The bottom-plate variants of Z1, Z2 and Z3 define cooling~B and the top-plate-only variant of Z3 defines its cooling~A; the Z3 cases of the paper add the coupled land-side and board-plane redistribution (Table~\ref{tab:supp-z3land}). Joint: $\deps$ of Z1 / Z2 ($10^{-3}$ per cycle, ideal decoupling, cooling~A; reference 6.49 / 3.34), the production local model at the 20 worst sites of each reference case's critical-joint search, the variant's response being the largest of them (a lower bound) or, marked $^\dagger$, the maximum of a full search; a variant whose largest response falls beyond the first 5 of those sites, and the lower side of every Z1/Z2 ordering within a factor of 1.5, is searched in full (10 of all screened variants); an integration a variant does not touch keeps the reference value. The full searches of the deepest variant of each kind (converter $E$ 160~GPa, CTE 4 (Z1, ideal decoupling, cooling~B); mold compound without $T_g$ (Z2, implemented decoupling, cooling~A); 3x board, ring at 25~$^\circ$C (Z2, implemented decoupling, cooling~B); die\_hotspot\_B (Z2, implemented decoupling, cooling~B)) found the worst site outside the screened sites in 3 of them.\par
+\nopagebreak\noindent Each run changes one declared input on the production mesh and reruns the whole electrothermal--mechanical chain (full) or only the mechanics on the converged field (mech.). The bottom-plate variants of Z1, Z2 and Z3 define cooling~B and the top-plate-only variant of Z3 defines its cooling~A; the Z3 cases of the paper add the coupled land-side and board-plane redistribution (Table~\ref{tab:supp-z3land}). Joint: $\deps$ of Z1 / Z2 ($10^{-3}$ per cycle, ideal decoupling, cooling~A; reference 6.49 / 3.34), the production local model at the 20 worst sites of each reference case's critical-joint search, the variant's response being the largest of them (a lower bound) or, marked $^\dagger$, the maximum of a full search; a variant whose largest response falls beyond the first 5 of those sites, and the lower side of every Z1/Z2 ordering within a factor of 1.5, is searched in full (26 of all screened variants); an integration a variant does not touch keeps the reference value. The full searches of the deepest variant of each kind (converter $E$ 160~GPa, CTE 4 (Z1, ideal decoupling, cooling~B); mold compound without $T_g$ (Z2, implemented decoupling, cooling~A); 3x board, ring at 25~$^\circ$C (Z2, implemented decoupling, cooling~B); die\_hotspot\_B (Z2, implemented decoupling, cooling~B)) found the worst site outside the screened sites in 3 of them.\par
 \endgroup
 \medskip
 
@@ -1187,18 +1187,18 @@ Variant & Z1, A & Z2, A & Z3, A & Z1, B & Z2, B & Z3, B \\
 \endlastfoot
 Screws at the board corners & $-$1 / $-$0 / +0 & $-$13 / $-$12 / +5 & $-$3 / $-$2 / +7 & $-$12 / +0 / $-$0 & $-$29 / $-$10 / +16 & $-$5 / $-$1 / +3 \\
 Screws, pinned & $-$62 / $-$27 / +16 & $-$28 / $-$55 / +52 & $-$31 / $-$21 / +134 & +19 / +15 / +8 & $-$66 / $-$55 / +74 & $-$68 / $-$22 / +75 \\
-Edge simply supported & $-$9 / +2 / +8 & $-$22 / $-$15 / +29 & $-$21 / +5 / +167 & $-$12 / +5 / $-$20 & $-$48 / $-$12 / +106 & $-$29 / +4 / +60 \\
+Edge simply supported & $-$9 / +2 / +8 & $-$22 / $-$15 / +30$^\dagger$ & $-$21 / +5 / +167 & $-$12 / +5 / $-$20 & $-$48 / $-$12 / +106$^\dagger$ & $-$29 / +4 / +60 \\
 Clamp 200 N at the screws & +13 / +3 / +0 & +8 / +3 / +6 & +3 / +1 / +7 & $-$9 / +8 / $-$0 & +40 / +10 / +16 & +36 / +5 / +2 \\
 Clamp only (25\,$^\circ$C) & $-$86 / $-$95 / -- & $-$79 / $-$81 / -- & $-$94 / $-$97 / -- & $-$53 / $-$88 / -- & $-$30 / $-$75 / -- & $-$59 / $-$94 / -- \\
-Clamp on a backplate & $-$54 / $-$8 / +3 & $-$22 / $-$33 / +64 & $-$98 / $-$20 / +156 & +33 / $-$17 / $-$22 & $-$31 / $-$25 / +102 & $-$92 / $-$5 / +72 \\
+Clamp on a backplate & $-$54 / $-$8 / +3 & $-$22 / $-$33 / +69$^\dagger$ & $-$98 / $-$20 / +156 & +33 / $-$17 / $-$22 & $-$31 / $-$25 / +102$^\dagger$ & $-$92 / $-$5 / +72 \\
 3x board, ring at the edge temperature & +64 / +26 / +25 & $-$15 / +15 / +12 & $-$4 / +22 / +147 & $-$4 / +64 / +41 & $-$24 / +26 / +190 & +15 / +39 / +134 \\
-3x board, ring at 25\,$^\circ$C & $-$23 / $-$40 / $-$48 & $-$26 / $-$28 / +107 & $-$10 / $-$37 / $-$10 & +18 / +38 / $-$22 & $-$45 / $-$36 / +63$^\dagger$ & $-$19 / $-$33 / $-$11 \\
-3x board on screws & +1 / +17 / +15 & $-$16 / +15 / +11 & $-$5 / +22 / +147 & $-$4 / +64 / +41 & $-$28 / +26 / +190 & $-$8 / +37 / +133 \\
-3x board, clamp at the screws & +41 / $-$45 / +15 & +20 / $-$8 / +12 & +14 / $-$8 / +146 & +56 / $-$38 / +41 & +92 / $-$5 / +187 & +114 / $-$33 / +133 \\
+3x board, ring at 25\,$^\circ$C & $-$23 / $-$40 / $-$48 & $-$26 / $-$28 / +107 & $-$10 / $-$37 / +2$^\dagger$ & +18 / +38 / $-$22$^\dagger$ & $-$45 / $-$36 / +63$^\dagger$ & $-$19 / $-$33 / $-$11$^\dagger$ \\
+3x board on screws & +1 / +17 / +15 & $-$16 / +15 / +67$^\dagger$ & $-$5 / +22 / +147 & $-$4 / +64 / +41 & $-$28 / +26 / +190 & $-$8 / +37 / +133 \\
+3x board, clamp at the screws & +41 / $-$45 / +15 & +20 / $-$8 / +66$^\dagger$ & +14 / $-$8 / +146 & +56 / $-$38 / +41 & +92 / $-$5 / +187 & +114 / $-$33 / +133 \\
 Underfill-class encapsulant (Tg 130) & $-$2 / $-$2 / +1 & +2 / +0 / +3 & +23 / +7 / $-$5 & +4 / $-$6 / +0 & $-$4 / $-$1 / +0 & $-$4 / $-$0 / +0 \\
-Low-CTE mold compound (Tg 165) & +18 / +39 / $-$18 & $-$54 / $-$4 / $-$45 & $-$47 / $-$14 / +10 & +1 / +90 / $-$20 & $-$54 / $-$1 / +3 & $-$77 / $-$11 / +5 \\
+Low-CTE mold compound (Tg 165) & +18 / +39 / $-$18 & $-$54 / $-$4 / $-$36$^\dagger$ & $-$47 / $-$14 / +10 & +1 / +90 / $-$20 & $-$54 / $-$1 / +3 & $-$77 / $-$11 / +5 \\
 Mold compound without Tg & +18 / +39 / $-$18 & $-$54 / $-$4 / $-$36$^\dagger$ & $-$60 / $-$18 / +12 & +1 / +90 / $-$20 & $-$54 / $-$1 / +3 & $-$77 / $-$11 / +5 \\
-BGA layer from the local solder card & $-$1 / $-$28 / $-$40 & $-$2 / $-$13 / $-$29 & +0 / $-$12 / $-$52 & +0 / $-$37 / $-$37 & $-$1 / $-$16 / $-$42 & +1 / $-$22 / $-$56 \\
+BGA layer from the local solder card & $-$1 / $-$28 / $-$40 & $-$2 / $-$13 / $-$29 & +0 / $-$12 / $-$52 & +0 / $-$37 / $-$37 & $-$1 / $-$16 / $-$42$^\dagger$ & +1 / $-$22 / $-$56 \\
 \end{longtable}
 \nopagebreak\noindent Change of die warpage / largest ball displacement $\du$ / joint response $\deps$ (\%) against each compared case (production state), mechanics only on the case's converged field, production mesh; $\deps$: the production local model at the 20 worst sites of the case's critical-joint search, the variant's response being the largest of them, a lower bound, or ($^\dagger$) the maximum of a full critical-joint search over the variant's own lattice (a clamp is held through the cycle: its cold half-cycle is the clamp-only state at the same site). Mounting: $u_z = 0$ on 2-mm patches 3~mm inside the board corners (pinned: also in plane), or along the underside perimeter; clamp: the cold-plate preload as a uniform pressure on the TIM, reacted at the screws or by a backplate under the package; 3x board: the board extended to three package sides with its ring at the coupon's edge temperature or at 25\,$^\circ$C (bounds of the ring's temperature); encapsulant classes with their glass transition on the out-of-cell fill.\par
 \endgroup
