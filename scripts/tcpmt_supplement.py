@@ -2491,7 +2491,7 @@ def assembly_mounting_table():
                 r"plane-removed peak-to-valley over the ball footprint and the signed bow (corners "
                 r"minus centre, positive away from the board); PV/cop.: over the "
                 + (f"{cv:g}" if cv else "80") + r"-\textmu m room-temperature coplanarity "
-                r"(JEP95); the SPP-024 reflow window is "
+                r"(JEP95); the SPP-024A reflow window is "
                 + (f"{rl[0]:g} to +{rl[1]:g}" if rl[0] is not None else "--")
                 + r"~\textmu m. Gap: plane-removed non-uniformity of the fine-pitch joint's gap "
                 r"at its bonding temperature (Z1: converter top under the flat die; Z2: substrate "
