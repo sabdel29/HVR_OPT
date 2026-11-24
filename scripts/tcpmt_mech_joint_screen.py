@@ -534,19 +534,44 @@ FULL = TR / "robustness_joint_full"
 ESCALATE_FRACTION = 4
 
 
-def escalation_list():
-    """The variants the escalation rule sends to a full search (from the screen's summary)."""
+#: the second escalation rule: the lower integration of a Z1/Z2 joint ordering within this
+#: ratio is searched in full (a verdict of the map must not rest on a screened lower bound)
+ESCALATE_RATIO = 1.5
+
+
+def escalation_list(rule="all"):
+    """The variants the escalation rules send to a full search (from the screen's summary):
+    'rank' -- the screened maximum lies beyond the first K // ESCALATE_FRACTION sites; 'gap' --
+    the lower side of a Z1/Z2 ordering within ESCALATE_RATIO (screened values)."""
     d = json.loads(OUT.read_text())
     lim = int(d["K"]) // ESCALATE_FRACTION
-    return sorted(k for k, v in d["variants"].items()
-                  if v.get("complete") and (v.get("rank_in_reference") or 0) > lim)
+    rank = {k for k, v in d["variants"].items()
+            if v.get("complete") and (v.get("rank_in_reference") or 0) > lim}
+    gap = set()
+    for g, per in (d.get("groups") or {}).items():
+        for name, r in per.items():
+            o = (r.get("orderings") or {}).get("eps:Z1/Z2")
+            if not o:
+                continue
+            va, vb = o["variant"]
+            lo = "Z1" if va < vb else "Z2"
+            if max(va, vb) / min(va, vb) < ESCALATE_RATIO:
+                k = next((key for key, v in d["variants"].items() if v["group"] == g
+                          and v["name"] == name and v["arch"] == lo), None)
+                if k:
+                    gap.add(k)
+    if rule == "rank":
+        return sorted(rank)
+    if rule == "gap":
+        return sorted(gap - rank)
+    return sorted(rank | gap)
 
 
-def escalate(part=None, nparts=None, reverse_all=False):
+def escalate(part=None, nparts=None, reverse_all=False, rule="rank"):
     """Full dominance-bounded searches of the escalated variants (optionally one part of the
     list, for parallel jobs; reverse_all: every key from the end of the list, a helper that
     takes the tails of the parts) -> robustness_joint_full/<key>.json."""
-    keys = escalation_list()
+    keys = escalation_list(rule)
     if part is not None:
         keys = keys[int(part)::int(nparts)]
     if reverse_all:
@@ -569,7 +594,7 @@ def escalate(part=None, nparts=None, reverse_all=False):
               flush=True)
     log = TR / "robustness_joint_runs" / (f"escalate_{part}.json" if part is not None
                                           else "escalate_reverse.json" if reverse_all
-                                          else "escalate.json")
+                                          else f"escalate_{rule}.json")
     log.write_text(json.dumps({"keys": keys, "n": len(keys),
                                "all_closed": all(r.get("closed") for r in out.values())},
                               indent=1) + "\n")
@@ -789,7 +814,8 @@ def summarize():
         for f in vfiles:
             out["inputs_sha1"][str(f.resolve())] = MP.sha1(f)
     esc = [v for v in out["variants"].values() if v.get("searched_in_full")]
-    out["escalation"] = {"rule": f"rank of the screened maximum > K // {ESCALATE_FRACTION}",
+    out["escalation"] = {"rule": f"rank of the screened maximum > K // {ESCALATE_FRACTION}, or the "
+                                 f"lower side of a Z1/Z2 ordering within {ESCALATE_RATIO}x",
                          "n_searched_in_full": len(esc),
                          "n_screen_found_max": sum(1 for v in esc
                                                    if v["full_search"].get("max_in_top_k")),
@@ -811,7 +837,7 @@ def main():
     a = sys.argv[1:]
     cmd = a[0] if a else "list"
     keys = [x for i, x in enumerate(a) if i > 0 and not x.startswith("--")
-            and a[i - 1] not in ("--log", "--groups", "--kind", "--part", "--nparts")]
+            and a[i - 1] not in ("--log", "--groups", "--kind", "--part", "--nparts", "--rule")]
     if cmd == "list":
         for s in variants(True):
             print(s["key"], s["group"], s["ref"], s.get("cold_key") or "")
@@ -832,9 +858,10 @@ def main():
     elif cmd == "escalate":
         part = a[a.index("--part") + 1] if "--part" in a else None
         nparts = a[a.index("--nparts") + 1] if "--nparts" in a else None
-        escalate(part, nparts, "--reverse-all" in a)
+        escalate(part, nparts, "--reverse-all" in a,
+                 a[a.index("--rule") + 1] if "--rule" in a else "rank")
     elif cmd == "escalation-list":
-        print("\n".join(escalation_list()))
+        print("\n".join(escalation_list(a[a.index("--rule") + 1] if "--rule" in a else "all")))
     elif cmd == "pick":
         for kind, r in pick().items():
             print(kind, r)

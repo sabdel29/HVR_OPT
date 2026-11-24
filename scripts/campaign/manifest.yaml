@@ -8683,6 +8683,39 @@ jobs:
     TCPMT_SOLDER_SLOTS: '24'
   workers: 24
   notes: the same variants as run_a2, in reverse order
+- id: mech.screen.escalate.gap
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - escalate
+  - --rule
+  - gap
+  outputs:
+  - tcpmt_revision/robustness_joint_runs/escalate_gap.json
+  deps:
+  - mech.screen.pick
+  - mech.screen.validate.mounting
+  - mech.screen.validate.encapsulant
+  - mech.screen.validate.mechcard
+  - mech.screen.validate.thermal
+  ncpus: 16
+  mem_gb: 24.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: tcpmt_revision/robustness_joint_runs/escalate_gap.json
+    kind: json
+    nonempty:
+    - keys
+  workers: 16
+  notes: no Z1/Z2 verdict of the map rests on a screened lower bound
 - id: mech.lawband
   stage: mech_revision
   argv:
@@ -10237,6 +10270,7 @@ jobs:
   - mech.screen.escalate.0
   - mech.screen.escalate.1
   - mech.screen.escalate.2
+  - mech.screen.escalate.gap
   - mech.screen.escalate.reverse
   ncpus: 1
   mem_gb: 4.0
@@ -12301,6 +12335,7 @@ jobs:
   - mech.screen.escalate.0
   - mech.screen.escalate.1
   - mech.screen.escalate.2
+  - mech.screen.escalate.gap
   - mech.screen.escalate.reverse
   - mech.screen.summary
   - mech.band_study

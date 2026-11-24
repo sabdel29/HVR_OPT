@@ -1190,6 +1190,15 @@ def joint_screen_jobs(mech):
                        validate=[{"file": f, "kind": "json", "nonempty": ["keys"]}],
                        notes="full searches of the variants whose screened maximum lies deep "
                              "among the K sites (a validated variant reuses its search)"))
+    # the second rule: the lower side of every Z1/Z2 ordering within 1.5x is searched in full
+    f = tr("robustness_joint_runs/escalate_gap.json")
+    esc.append(job("mech.screen.escalate.gap", "mech_revision",
+                   ["scripts/tcpmt_mech_joint_screen.py", "escalate", "--rule", "gap"], [f],
+                   deps=[pk] + vals, ncpus=16, workers=16, mem_gb=24, est_h=0.6,
+                   prefer="pbs", backends=("pbs", "local"),
+                   env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 16},
+                   validate=[{"file": f, "kind": "json", "nonempty": ["keys"]}],
+                   notes="no Z1/Z2 verdict of the map rests on a screened lower bound"))
     # a helper on the local host from the end of the list (skips what the parts have started)
     f = tr("robustness_joint_runs/escalate_reverse.json")
     esc.append(job("mech.screen.escalate.reverse", "mech_revision",
