@@ -7,15 +7,16 @@ kiloampere~\cite{Krishnakumar2026DVPD,Ye2026TenKiloAmp,Swaminathan2026IVPDReview
 current, one milliohm between the regulator and the load dissipates a kilowatt. Voltage
 regulation is therefore moving into the package or directly beneath
 it~\cite{VPD2023Architectures,Ye2026TenKiloAmp}. Distributed vertical power delivery (DVPD) goes
-further. Many voltage-regulator (VR) cells each sit beneath their own load region, so 48~V
-travels laterally and the kiloampere travels only
+further: many regulator cells each sit beneath their own load region, so 48~V travels laterally
+and the kiloampere travels only
 micrometers~\cite{Krishnakumar2026DVPD,Sriharini_ECTC_24,ISCAS2024DVPD}.
 
-The cells can be integrated in several ways. They can be embedded between the package substrate
-and the die (Z1)~\cite{Krishnakumar2026DVPD} or stacked on the die
-backside~\cite{GoogleBacksideIVR2021}. They can be attached to the substrate backside inside an
-opening in the board (Z2)~\cite{ArmCutoutVR2026}. Finally, they can be mounted on the board
-backside beneath the package (Z3), as in current vertical-power
+The cells can be integrated in several ways (Fig.~\ref{fig:concept}a--c). In the \emph{embedded}
+integration (Z1), they sit between the package substrate and the die~\cite{Krishnakumar2026DVPD};
+they can also be stacked on the die backside~\cite{GoogleBacksideIVR2021}. In the
+\emph{package-backside} integration (Z2), they are attached to the substrate backside inside an
+opening in the board~\cite{ArmCutoutVR2026}. In the \emph{board-backside} integration (Z3), they
+are mounted on the board backside beneath the package, as in current vertical-power
 modules~\cite{Vicor_VPD_AI,Baek2022LEGOPoL,Radhakrishnan2021PowerDelivery}. Each integration
 decides which rail crosses each vertical interconnect and at what current. It also decides where
 the converter's heat flows, which materials expand against each other and which solder joints
@@ -66,9 +67,9 @@ interconnect realizability together (Table~\ref{tab:prior}).
 
 \input{tab_prior}
 
-Relative to its closest predecessors (Table~\ref{tab:prior}), the framework adopts, extends and
-adds the following. From~\cite{Krishnakumar2026DVPD} it adopts the 1-kW, 48-to-1-V specification,
-the embedded integration, the TSV and ball-grid-array (BGA) technology and the routing model that
+Relative to its closest predecessors (Table~\ref{tab:prior}), the framework adopts and extends
+the following. From~\cite{Krishnakumar2026DVPD} it adopts the 1-kW, 48-to-1-V specification, the
+embedded integration, the TSV and ball-grid-array (BGA) technology and the routing model that
 scores the regulator-count screen. From our converter work~\cite{Abdelzaher2025ECTC,
 Abdelzaher2026EPEPS} it adopts the generalized hybrid switched-capacitor (SC)--buck family, its
 closed-form loss model and the selection of catalog parts. It extends the count optimization
@@ -77,41 +78,31 @@ topology is re-synthesized from discrete parts at every count, under part-level 
 derating, effective capacitance, output-capacitance loss, two-dimensional placement and the number
 of tiers. It also extends the self-consistent electrothermal treatment
 of~\cite{Choi2025SelfConsistent}, applied there to one embedded architecture, to a mounted
-package with a declared cooling boundary in three integrations. Four elements are new. The first
-is the comparison of three integrations of one synthesized regulator at a common temperature and
-under two identical coolings, after infeasible candidates are filtered out. The second is a
-thermoelastic solution of the mounted assembly with a search over every interconnect site, in which
-a viscoplastic joint submodel driven by the global displacement field locates the governing joint
-on a candidate set that bounds the ball lattice; an optional feedback runs through the plate
-interface. The third is a
-realizability check of the tier order, and the fourth a comparison rule that resolves each
-difference against its own numerical uncertainty. Unlike~\cite{Krishnakumar2026DVPD}, the framework does not
-resolve transient droop, and the designer, not the framework, feeds the package result back to
-the synthesis.
+package with a declared cooling boundary in three integrations. Unlike~\cite{Krishnakumar2026DVPD},
+the framework does not resolve transient droop, and the designer, not the framework, feeds the
+package result back to the synthesis.
 
-The contributions are as follows.
+The new elements are the contributions of this paper.
 \begin{enumerate}
 \item A device-to-joint electrothermal--mechanical framework for package-integrated voltage
-regulation, used in three modes---evaluate, compare and explore---on one geometry. Its couplings
-are classified, and each reduced model is checked against a matched reference. One coupled
-evaluation takes \MthTotHLo--\MthTotHHi~h on a workstation, without the local joint model
-(Sections~\ref{sec:framework}, \ref{sec:models} and~\ref{sec:verification}).
+regulation, used in three modes---evaluate, compare and explore---on one geometry
+(Sections~\ref{sec:framework}, \ref{sec:models} and~\ref{sec:verification}). Its couplings are
+classified, each reduced model is checked against a matched reference, and each compared
+difference is resolved against its own numerical uncertainty. One coupled evaluation takes
+\MthTotHLo--\MthTotHHi~h on a workstation, without the local joint model.
 \item Converter synthesis from a discrete library under part-level rules, with the regulator count
-as an output. The screen selects \FrDseOptM{} cells from \FrDseNcounts{} counts, and the full
-chain confirms the choice: the neighbouring 25- and 49-cell designs dissipate
-\FrChainMarginLo--\FrChainMarginHi~W more (Section~\ref{sec:dse}).
-\item A comparison of the three integrations under identical coolings, behind a feasibility
-filter. Under one top cold plate, Z2 is \GapAZtwo~W below Z1 inside the package but \WrPlatGapA~W
-above it at the platform, and Z3 is infeasible. With a bottom plate, Z2 saves \GapBZtwo~W and
-\dTmaxTierBZtwo~K of peak temperature over Z1. Z1 warps least under both coolings but has the
-largest joint response under every solder law (Sections~\ref{sec:evaluate}
-and~\ref{sec:compare}).
-\item Requirements that only the coupled solution exposes. Interleaved input decoupling lowers
-the RMS-to-average ratio $k_{\mathrm{rms}}$ of the package input current from \WrKsync{} to
-\WrKrms. Every tier order crosses the 1-mm capacitor tier, so copper posts are needed. A
-five-tier converter saves \FrTfiveSaveLo--\FrTfiveSaveHi~W but protrudes \FrProtrudeTfive~\textmu m
-below the Z2 board. The fine-pitch attaches of Z1 and Z2 do not bond flat at their bonding
-temperature (Sections~\ref{sec:compare}--\ref{sec:discussion}).
+as an output that the coupled chain confirms against its neighbours, and a realizability check of
+the tier order (Sections~\ref{sec:dse}, \ref{sec:realizability} and~\ref{sec:explore-count}).
+\item A thermoelastic solution of the mounted assembly that searches every interconnect site. A
+viscoplastic joint submodel, driven by the global displacement field, locates the governing joint
+on a candidate set that bounds the ball lattice, and an optional feedback runs through the plate
+interface (Sections~\ref{sec:mechanics} and~\ref{sec:local}).
+\item A comparison of three integrations of one synthesized regulator at a common temperature and
+under two identical coolings, after infeasible candidates are filtered out
+(Sections~\ref{sec:evaluate}--\ref{sec:discussion}). It shows that the preferred integration
+depends on the cooling and on the loss boundary, and that the joint response does not follow the
+warpage. It also exposes requirements on decoupling, interconnect, converter height and bonding
+flatness that no single domain shows.
 \end{enumerate}
 
 Section~\ref{sec:framework} describes the framework and Section~\ref{sec:dse} the converter

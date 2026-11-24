@@ -2,23 +2,22 @@
 \begin{abstract}
 Kilowatt processors draw about a kiloampere at 1~V, so distributed vertical power delivery
 places many regulator cells beneath the load. Where should these cells be integrated once
-loss, temperature and deformation are solved together? Three integrations are
-compared: embedded between substrate and die (Z1), on the substrate backside (Z2) and on the
-board backside (Z3). An electrothermal--mechanical framework synthesizes the regulator from a
-discrete part library and returns the cell count. On one package geometry it couples a
-rail-aware loss ledger to temperature, solves the governing solder joint and checks every part
-rating. For a 1-kW, 48-to-1-V load it selects \FrDseOptM{} hybrid
-switched-capacitor cells switching at \FrConvFsw~kHz. Under one top cold plate, Z2 dissipates \GapAZtwo~W less than Z1
-inside the package but \WrPlatGapA~W more once its 48-V feed is charged, and Z3 exceeds its
-device ratings. With a bottom plate added, Z2 dissipates \GapBZtwo~W less than Z1 and peaks
+loss, temperature and deformation are solved together? This paper compares three integrations:
+embedded between substrate and die (Z1), on the package backside (Z2) and on the board backside
+(Z3). An electrothermal--mechanical framework synthesizes the regulator from a discrete part
+library and returns the cell count. On one package geometry, it couples a rail-aware loss ledger
+to temperature, locates the governing solder joint and checks every part rating. For a 1-kW,
+48-to-1-V load, it selects \FrDseOptM{} hybrid switched-capacitor cells switching at
+\FrConvFsw~kHz. Under one top cold plate, Z2 dissipates \GapAZtwo~W less than Z1 inside the
+package but \WrPlatGapA~W more once its 48-V feed is charged, and Z3 exceeds its device ratings.
+With a bottom plate added, Z2 dissipates \GapBZtwo~W less than Z1 and peaks
 \dTmaxTierBZtwo~K cooler, while Z3 exceeds the static voltage-drop limit. Z1 warps least under
-both coolings, yet its hot corner joints accumulate the most inelastic strain; the joint of
-largest displacement need not govern. The fine-pitch attaches of Z1 and Z2 warp far beyond
-their bonding allowance. The die stays below \MthLimDie\,$^\circ$C under a
-uniform load but reaches \FrDieHotMax\,$^\circ$C under a core-heavy power map. Further
-requirements are interleaved input decoupling, copper posts through the 1-mm capacitor tier and,
-at up to \FrTfiveSaveHi~W of extra loss, a converter short enough for the package-backside
-board.
+both coolings, yet its hot corner joints accumulate the most inelastic strain, and the joint of
+largest displacement need not govern. At their bonding temperature, the fine-pitch attaches of
+Z1 and Z2 warp far beyond their allowance. The die stays below \MthLimDie\,$^\circ$C under a
+uniform load but reaches \FrDieHotMax\,$^\circ$C under a core-heavy power map. The design also
+needs interleaved input decoupling, copper posts through the 1-mm capacitor tier and, at up to
+\FrTfiveSaveHi~W of extra loss, a converter short enough for the package-backside board.
 \end{abstract}
 
 \begin{IEEEkeywords}
