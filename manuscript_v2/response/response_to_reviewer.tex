@@ -112,7 +112,8 @@ the supplement and this letter comes from it.
 \end{itemize}
 
 \paragraph{What the revised results say.} The framework returns \FrDseOptM{} cells; its neighbouring
-square grids dissipate \FrChainMarginLo--\FrChainMarginHi~W more through the full chain. At a common
+square grids dissipate \FrChainMarginLo--\FrChainMarginHi~W more through the full chain, and their
+joints respond more. At a common
 temperature Z2 leads Z1 by routing alone (\WrIsoGapHiZtwo~W at 100\degC). Under one top cold plate
 Z3 is infeasible (GaN junction \TjAZthree\degC). Inside the package Z2 then dissipates \GapAZtwo~W
 less than Z1, but with its feed and the pumping charged Z1 is lower (\PlatAZone{} against
@@ -254,10 +255,19 @@ feasibility stage (Section~\ref{sec:explore-count}, Fig.~\ref{fig:dse}c). The fi
 same count saves \FrTfiveSaveLo--\FrTfiveSaveHi~W through the chain but protrudes
 \FrProtrudeTfive~\textmu m below the Z2 board (Section~\ref{sec:explore-codesign}). Placement and the
 tier limit are constraints of the synthesis; temperature, manufacturability and mechanics are
-evaluated afterward by the chain (Section~\ref{sec:dse-rules}). Two requests are met only in part:
-the neighbours are compared in loss, peak temperature and feasibility, not in warpage or joint
-response, and the 50-point frequency grid was not refined under the corrected rules (a refinement
-under the reviewed rules had left that optimum unchanged).
+evaluated afterward by the chain (Section~\ref{sec:dse-rules}). The neighbours also went through the
+mechanics of the production cases: the same thermoelastic solution, local model, law band and
+dominance-bounded search for the critical joint. Their critical joints run hotter
+(\WrMloAZoneTsj{} and \WrMhiAZoneTsj\degC{} against \MvTsjAZone\degC{} under cooling~A) and respond
+\WrMloAZoneEps{} and \WrMhiAZoneEps$\times10^{-3}$ per cycle against \MvEpsAZone$\times10^{-3}$, and
+\WrMloBZoneEps{} and \WrMhiBZoneEps{} against \MvEpsBZone{} under cooling~B, more under every law of
+the band; their dies warp \WrMloAZoneWarp{} and \WrMhiAZoneWarp~\textmu m against \WarpAZone~\textmu m
+under cooling~A (Section~\ref{sec:explore-count}, Table~\ref{S:tab:supp-jointband}). The
+\FrFswCoarseN-point frequency grid was refined \FrFswFineFactor-fold (\FrFswFineN{} points, every
+original point kept) under the same rules. No count changes its topology or parts; the optimum stays
+at $M = \FrFswFineOptM$, at \FrFswFineOptFsw{} instead of \FrConvFsw~kHz and \FrFswFineOptGain~W
+lower, and the runner-up, $M = \FrFswFineRunnerUp$, which has no square grid, comes within
+\FrFswFineRunnerUpMargin~W (Table~\ref{S:tab:supp-dse}).
 
 \rc{MC8}{The solder analysis needs complete parameters, stabilization, a defined cycle, constitutive
 justification and a benchmark.}
