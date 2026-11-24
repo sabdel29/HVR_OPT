@@ -144,8 +144,8 @@ optional plate-interface feedback; the tier-order realizability check; and a rul
 difference against its own numerical uncertainty. New Table~\ref{tab:prior} compares capabilities,
 geometry, verification and runtime with~\pcite{Krishnakumar2026DVPD}, \pcite{Choi2025SelfConsistent}
 and commercial tools. Each entry for another work rests on a cited passage
-(Table~\ref{S:tab:supp-prior}); the column of~\pcite{Choi2025SelfConsistent} rests on its abstract
-and on the description of its model in~\pcite{Krishnakumar2026DVPD}. The categorical claims are
+(Table~\ref{S:tab:supp-prior}); the column of~\pcite{Choi2025SelfConsistent} rests on its full
+text. The categorical claims are
 gone, and the introduction states what~\pcite{Krishnakumar2026DVPD} does that this work does not.
 The ablation is Section~\ref{sec:compare-ablation}. With electrical models alone Z2 is
 \WrIsoGapHiZtwo~W ahead of Z1 and Z3 \WrIsoGapHiZthree~W behind; the electrothermal fixed point under
@@ -332,8 +332,8 @@ equal; the platform-inclusive loss charges the cooling energy. A core-heavy die 
 of the die power in its central half) barely changes the loss, but it takes the die beyond its
 \MthLimDie-$^\circ$C limit in Z1 under both coolings and in Z2 under cooling~A (up to
 \FrDieHotMax\degC); only Z2 under cooling~B keeps it within the limit (\WrHotBZtwoDie\degC). It also
-reverses the ranking of the largest ball displacement under cooling~A
-(Section~\ref{sec:explore-die}).
+reverses the ranking of the largest ball displacement under cooling~A, but not that of the joint
+response (Section~\ref{sec:explore-die}).
 
 \rc{MC11}{The aspect-ratio check is not a full interconnect and assembly verdict; state the process
 and the ball provisioning.}
@@ -350,8 +350,10 @@ version relied on a 100-\textmu m capacitor tier that no rated part provides
 (Table~\ref{S:tab:supp-capev}) and is withdrawn. For the 30-\textmu m pillar pitch of Z2,
 thermocompression bonding has been demonstrated on organic substrates~\pcite{Au2016CuPillar30um}. The
 paper separates geometric feasibility under declared rules from a demonstrated process and from
-assembly, and assembly is now evaluated in part (Section~\ref{sec:compare-assembly};
-Tables~\ref{S:tab:supp-reflow} and~\ref{S:tab:supp-mounting}). At the 245-$^\circ$C reflow peak the
+assembly. Assembly and mounting are now evaluated: the warpage at reflow and the gap at bonding
+(Section~\ref{sec:compare-assembly}, Table~\ref{S:tab:supp-reflow}), and board size, mounting and
+the cold-plate clamp on the warpage, the ball displacement and the joint response
+(Section~\ref{sec:explore-robust}, Table~\ref{S:tab:supp-mounting}). At the 245-$^\circ$C reflow peak the
 ball plane of the unmounted package is \MvRfBgaZone, \MvRfBgaZtwo{} and \MvRfBgaZthree~\textmu m out
 of plane (Z1, Z2, Z3) against the \MvCoplLim-\textmu m coplanarity, Z2 at \MvRfCoplZtwo{} times it,
 and all three stay within the reflow-warpage window~\pcite{JEDEC_JEP95}. At thermocompression bonding
@@ -394,14 +396,32 @@ is now resolved, but in the opposite direction to the reviewed version: under co
 $U_{95}$: both integrations are rerun under each declared alternative, and a ranking that an
 alternative reverses is conditional on it (Section~\ref{sec:explore-robust}, Fig.~\ref{fig:robust}:
 \WrRobN{} verdicts for \WrRobCases{} decisions, \WrRobPreserved{} preserved, \WrRobWithdrawn{}
-withdrawn, \WrRobReversed{} reversed, \WrRobPending{} pending a ladder of their own). The mechanical
-variants were also rerun on the converged production fields of all six cases. The encapsulant and
-ball-card variants keep the joint-response ordering of each cooling. Board size, mounting and clamp
-change the warpage and ball displacement substantially (a clamp reacted by a backplate and, under
-cooling~B, pinned screws or a larger board with a cold rim take the smallest warpage from Z1), but
-their effect on the joint response was evaluated for the clamp only (\MvClampEpsLo{} to
-\MvClampEpsHi\,\%; Table~\ref{S:tab:supp-mounting}). Omitted losses, the die map and
-material bounds are bounded separately (Sections~\ref{sec:explore-omit}--\ref{sec:explore-cards}).
+withdrawn, \WrRobReversed{} reversed, \WrRobPending{} pending a ladder of their own). The map's joint
+column now judges the joint response instead of the largest ball displacement. Every mechanical
+variant, and every other decision with a field of its own, is solved with the production local model
+at the \MvScrK{} worst sites of its reference case's critical-joint search, and its response is the
+largest of them (\MvScrNvar{} variants, \grp{\MvScrNsolves} local solutions). Full searches of
+\MvScrValN{} variants, in each kind (mounting, encapsulant class, mechanical card, thermal decision)
+the one whose screened maximum lies deepest among the \MvScrK{} sites, found the worst site among
+them in \MvScrValInTopK{}: on the ring of Z2 many sites respond within a few percent, and a variant
+can move the worst one. Every variant whose screened maximum fell beyond the first \MvScrEscFrac{}
+sites, \MvScrEscN{} in all, was therefore searched in full; the \MvScrK{} sites alone had fallen
+short by up to \MvScrEscShortMax\,\% (Section~\ref{sec:explore-robust}). On this response the Z1--Z2 ranking
+holds for all \WrRobJointPreserved{} decisions with a verdict, including the three that reverse the
+ranking of the largest ball displacement. The mechanical variants were also rerun on the converged
+production fields of all six cases. The encapsulant and ball-card variants keep
+\MvScrEncOrderSame{} of \MvScrEncOrderN{} joint orderings (the low-CTE mold compound puts Z2 below Z3
+under cooling~A). Board size, mounting and clamp change the warpage and ball displacement
+substantially (a clamp reacted by a backplate and, under cooling~B, pinned screws or a larger board
+with a cold rim take the smallest warpage from Z1) and the joint responses by \MvScrBdEpsLo{} to
+\MvScrBdEpsHi\,\%. On the declared coupon Z2's joints respond less than Z1's under every mounting
+and clamp; the clamp changes the response by at most \MvScrClampEffAbsMax\,\%. On a board three
+times larger the rim decides under cooling~A: with the rim at the coupon's edge temperature Z1's
+critical joint responds \MvScrEpsLargeHotAZone{} against \MvScrEpsLargeHotAZtwo$\times10^{-3}$ per
+cycle for Z2's, with the rim at 25\degC{} Z2's responds \MvScrEpsLargeColdAZtwo{} against
+\MvScrEpsLargeColdAZone, and that board's own field puts the ball displacement between the two bounds
+(Section~\ref{sec:explore-robust}, Table~\ref{S:tab:supp-mounting}). Omitted losses, the die map and material bounds are bounded
+separately (Sections~\ref{sec:explore-omit}--\ref{sec:explore-cards}).
 
 \rc{MC14}{The DC ledger does not characterize high-frequency power integrity; verify it or restrict
 the claims.}
@@ -622,8 +642,9 @@ are given per integration (Table~\ref{tab:compare}, Table~\ref{S:tab:supp-feas})
 \item \emph{Encapsulant properties.} In Table~\ref{S:tab:supp-materials}, its alternatives in
 Table~\ref{S:tab:supp-mounting}.
 \item \emph{Board model.} A laminate with homogenized copper planes, temperature-independent
-(Table~\ref{S:tab:supp-materials}); its size, mounting and clamp are varied
-(Section~\ref{sec:explore-robust}, Table~\ref{S:tab:supp-mounting}).
+(Table~\ref{S:tab:supp-materials}); its size, mounting and clamp are varied, with their effect on the
+warpage, the ball displacement and the joint response (Section~\ref{sec:explore-robust},
+Table~\ref{S:tab:supp-mounting}).
 \item \emph{What the evaluation time includes.} Every electrothermal iteration and the structural
 solve with the all-site displacement search; not geometry and meshing, the local model or
 post-processing (Section~\ref{sec:verification}, Table~\ref{S:tab:supp-mesh}).
