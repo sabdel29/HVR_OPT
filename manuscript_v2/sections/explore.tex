@@ -7,7 +7,7 @@ At the converter level, the count, the tier limit and the capacitor technology o
 without a single defensible value is varied through the whole chain.
 
 \subsection{Regulator Count}\label{sec:explore-count}
-The selected count, $M = \FrDseOptM$ under the \FrDseOptTiers-tier limit, survives a finer
+The selected count, $M = \FrDseOptM$ under the \FrDseOptTiersWord-tier limit, survives a finer
 frequency grid. Refined \FrFswFineFactor-fold to \FrFswFineN{} points, keeping every original point,
 the grid changes no count's topology or parts (Table~S2). The optimum stays at $M =
 \FrFswFineOptM$; its frequency moves to \FrFswFineOptFsw~kHz and its loss falls by
@@ -129,32 +129,32 @@ The joint column judges each integration by its joint response, not by its large
 displacement. Each of the \MvScrNvar{} variants is first solved at the \MvScrK{} worst sites of its
 reference case's search, which avoids a full critical-joint search per variant. This screen can
 miss the worst site: in the deepest variant of each kind (mounting, encapsulant class, mechanical
-card and thermal decision), the full search found it among the \MvScrK{} in \MvScrValInTopK{} of
-\MvScrValN{} cases. A variant is therefore searched in full when its largest response falls beyond
-the first \MvScrEscFrac{} of the \MvScrK{} sites, or when it is the lower side of a Z1--Z2 ordering
+card and thermal decision), the full search found it among the \MvScrK{} in \MvScrValInTopKWord{} of
+\MvScrValNWord{} cases. A variant is therefore searched in full when its largest response falls beyond
+the first \MvScrEscFracWord{} of the \MvScrK{} sites, or when it is the lower side of a Z1--Z2 ordering
 within a factor of 1.5. This applied to \MvScrEscN{} variants, mostly on the ring of Z2, where many
 sites respond within a few percent of each other. The full search raised a screened maximum by at
 most a factor of \MvScrEscShortFactor, less than the gap of any Z1--Z2 ordering left to the screen,
 at least a factor of \MvScrGapScreenMin.
 
-Of the verdicts, \WrRobPreserved{} are preserved, \WrRobWithdrawn{} withdrawn and \WrRobReversed{}
-reversed. The remaining \WrRobPending{} are pending: their \WrRobPendingCases{} variants change the
+Of the verdicts, \WrRobPreserved{} are preserved, \WrRobWithdrawnWord{} withdrawn and \WrRobReversedWord{}
+reversed. The remaining \WrRobPending{} are pending: their \WrRobPendingCasesWord{} variants change the
 mesh and need a ladder of their own before a verdict. Every ranking survives the interconnect
 provisioning, the 48-V feed model, the board boundary and the cooling-model form. A second plate
 under Z2 reverses the loss and peak rankings, which is the result of cooling~B. In the production
 state under cooling~A, the rigid-plate interface reverses the loss ranking toward Z1. The joint
 ranking holds for all \WrRobJointPreserved{} decisions with a verdict; the other
-\WrRobJointPending{} are pending. A tenth of the converter-tier conductivity, the low-CTE mold compound and the
+\WrRobJointPendingWord{} are pending. A tenth of the converter-tier conductivity, the low-CTE mold compound and the
 core-heavy die map reverse the ranking of the largest ball displacement toward Z2, but not that of
 the joints.
 
 Under cooling~B, \MvCoolBVariants{} mechanical variants keep \MvCoolBOrderSame{} of
-\MvCoolBOrderN{} orderings of warpage and displacement, with \MvCoolBOrderRev{} resolved reversal,
+\MvCoolBOrderN{} orderings of warpage and displacement, with \MvCoolBOrderRevWord{} resolved reversal,
 and all \MvScrCoolBZoneZtwoN{} Z1--Z2 orderings of the joint responses. In the production state the
 encapsulant and ball-card variants keep \MvEncOrderSame{} of \MvEncOrderN{} orderings of warpage
-and displacement, and all \MvEncOrderRev{} resolved reversals come from the low-CTE mold compound.
+and displacement, and all \MvEncOrderRevWord{} resolved reversals come from the low-CTE mold compound.
 They change the joint responses by \MvScrEncEpsLo{} to \MvScrEncEpsHi\,\%, most of all when the
-ball layer takes its card from the local solder law, and keep all \MvScrEncZoneZtwoN{} Z1--Z2
+ball layer takes its card from the local solder law, and keep all \MvScrEncZoneZtwoNWord{} Z1--Z2
 joint orderings. The low-CTE mold compound also puts Z2's joints below Z3's under cooling~A. Z2 was
 searched in full there, so this reversal does not rest on the screen.
 
