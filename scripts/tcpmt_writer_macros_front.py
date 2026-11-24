@@ -44,7 +44,8 @@ WORD = {16: "Sixteen", 25: "Twentyfive", 36: "Thirtysix", 49: "Fortynine", 64: "
         81: "Eightyone"}
 #: IEEE style spells out integers below ten in running text: each count the prose prints as a
 #: word gets a "<name>Word" twin from the same value (digits from ten on)
-WORD_FORM = ("FrDseNmembers", "FrDseOptTiers", "FrDseTinfSqTiers", "FrDecapGroup")
+WORD_FORM = ("FrDseNmembers", "FrDseOptTiers", "FrDseTinfSqTiers", "FrDecapGroup",
+             "FrConvTierMax")
 _WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
 
 

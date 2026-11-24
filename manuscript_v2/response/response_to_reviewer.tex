@@ -70,10 +70,10 @@ $\max(N-1,2)\,V_{\mathrm{in}}/N$ and each low-side switch at $V_{\mathrm{in}}/N$
 \FrConvSwDerate{} of the rating. $C_{\mathrm{oss}}$ is charged at every hard-switched transition at
 its own node swing; the overlap loss uses each part's datasheet gate resistance; the parts keep their
 body footprints and are placed in two dimensions with a \FrKeepout-\textmu m keep-out in at most
-\FrConvTierMax{} mixed tiers. These rules move the design point from the 49 cells of the reviewed
+\FrConvTierMaxWord{} mixed tiers. These rules move the design point from the 49 cells of the reviewed
 version to $M = \FrDseOptM$ ($\FrDseOptGrid\times\FrDseOptGrid$, \FrConvTopo{} at \FrConvFsw~kHz),
 which is the framework's own optimum: the cell count is now an output, confirmed by the full chain
-against its neighbours (Section~\ref{sec:explore-count}).
+against its neighbors (Section~\ref{sec:explore-count}).
 \item \textbf{Inductor} (Section~\ref{sec:dse-point}). A 1-mm$^2$ variant of the shared-core
 inductor array of~\pcite{Rasheedi2026CoupledInductor} at \FrConvIndL~nH and \FrConvIndDcr~m$\Omega$.
 These are design targets, not a fabricated part, so its core loss is bracketed
@@ -81,7 +81,7 @@ These are design targets, not a fabricated part, so its core loss is bracketed
 \item \textbf{Cold plate} (Section~\ref{sec:thermal}). The Nusselt number is that of the plate's
 own channel, heated on three walls under an adiabatic short cover (\CoolNu); the water properties
 are taken at the bulk temperature; and the coolant warming is resolved along every pass. A single
-pass would need \CoolDpSinglePass~kPa, so each plate is now a \CoolZones-zone manifold at
+pass would need \CoolDpSinglePass~kPa, so each plate is now a \CoolZonesWord-zone manifold at
 \CoolDp~kPa.
 \item \textbf{Converter-tier cards} homogenized on unit cells of each tier's parts, with copper posts
 above the shorter parts. The posts raise the through-thickness conductivity of the input-end tier
@@ -98,7 +98,7 @@ rail in Z1, \BgaNadoptZtwo{} in the Z2 ring and \BgaNadoptZthree{} 1-V balls per
 static 1-V drop (\MthLimDrop~mV per rail); a candidate that fails any limit is not ranked
 (Section~\ref{sec:feasibility}).
 \item \textbf{Solder joints} (Section~\ref{sec:local}). A production law made self-consistent over
-the stress window the joints visit and carried in a band of \MvLawN{} laws; a submodel driven by the
+the stress window the joints visit and carried in a band of \MvLawNWord{} laws; a submodel driven by the
 full displacement of both pad faces; and a dominance-bounded search for the joint of largest
 response over the whole ball lattice. The maximum-displacement proxy of the reviewed version was
 tested and disproven (MC9).
@@ -111,7 +111,7 @@ the production fields (Tables~\ref{S:tab:supp-reflow} and~\ref{S:tab:supp-mounti
 the supplement and this letter comes from it.
 \end{itemize}
 
-\paragraph{What the revised results say.} The framework returns \FrDseOptM{} cells; its neighbouring
+\paragraph{What the revised results say.} The framework returns \FrDseOptM{} cells; its neighboring
 square grids dissipate \FrChainMarginLo--\FrChainMarginHi~W more through the full chain, and their
 joints respond more. At a common
 temperature Z2 leads Z1 by routing alone (\WrIsoGapHiZtwo~W at 100\degC). Under one top cold plate
@@ -169,7 +169,7 @@ contact and intermetallic resistances, which the attach and pad terms carry as a
 on, a flat rigid plate rests on the warped die and the interface thickens where the die falls away
 (Section~\ref{sec:mechanics}). Under one top plate Z1 then converges \FbAZonedP~W and \FbAZonedT~K
 higher and stays feasible, its smallest margin cut to \WrFbAZoneRonMargin~K, whereas Z2 converges
-after \FbAZtwoIters{} passes at \FbAZtwoPloss~W and \FbAZtwoTmax\degC, beyond the GaN rating. Under
+after \FbAZtwoItersWord{} passes at \FbAZtwoPloss~W and \FbAZtwoTmax\degC, beyond the GaN rating. Under
 two plates the feedback adds \FbBZonedP{} and \FbBZtwodP~W and changes no verdict
 (Sections~\ref{sec:compare-a} and~\ref{sec:compare-b}). The sequential approximation therefore holds
 for a conforming interface or a second plate, and the paper says where it does not.
@@ -202,7 +202,7 @@ Agreed; the decoupling is now physical, and the earlier ``about 0.5~\textmu F pe
 $k_{\mathrm{rms}}\le1.2$ needs about \WrCkTwelve~\textmu F per cell, which the stack cannot hold. The
 \WrGapCapsPerCell{} capacitors per cell that fit between the cells resonate with the package
 inductance and raise $k_{\mathrm{rms}}$ from \WrKsync{} to \WrKgap. The implemented decoupling
-interleaves the cells' clocks in \FrDecapPhases{} phases (two interleaved \FrDecapGroup-phase groups)
+interleaves the cells' clocks in \FrDecapPhases{} phases (two interleaved \FrDecapGroupWord-phase groups)
 and places \FrDecapN{} 1206 100-V X7S capacitors~\pcite{FrMurataGRM31} in a ring outside the cell
 grid (\FrDecapCtot~\textmu F at 48~V and 105\degC). It reaches $k_{\mathrm{rms}} = \FrKrms$
 (\FrKrmsLo--\FrKrmsHi{} over the inductance band), against \WrKring{} for the ring alone and
@@ -248,14 +248,14 @@ counts from \FrDseMlo{} to \FrDseMhi{} has its minimum at $M = \FrDseOptM$, a sq
 design is now the paper's design point. Table~\ref{S:tab:supp-dse} lists the selection at every
 count, which identifies the part or topology change behind each jump. From \FrDseInfeasLo{} cells on
 no member places within four tiers, so 76 cells admit none; Fig.~\ref{fig:dse}(a) marks every
-sampled count and every count without a member. The square-grid neighbours, \WrMloM{} and \WrMhiM{}
+sampled count and every count without a member. The square-grid neighbors, \WrMloM{} and \WrMhiM{}
 cells, were synthesized under the same rules and carried through the full chain in Z1 under both
 coolings. They dissipate \FrChainMarginLo--\FrChainMarginHi~W more, and under cooling~A both fail the
 feasibility stage (Section~\ref{sec:explore-count}, Fig.~\ref{fig:dse}c). The five-tier design at the
 same count saves \FrTfiveSaveLo--\FrTfiveSaveHi~W through the chain but protrudes
 \FrProtrudeTfive~\textmu m below the Z2 board (Section~\ref{sec:explore-codesign}). Placement and the
 tier limit are constraints of the synthesis; temperature, manufacturability and mechanics are
-evaluated afterward by the chain (Section~\ref{sec:dse-rules}). The neighbours also went through the
+evaluated afterward by the chain (Section~\ref{sec:dse-rules}). The neighbors also went through the
 mechanics of the production cases: the same thermoelastic solution, local model, law band and
 dominance-bounded search for the critical joint. Their critical joints run hotter
 (\WrMloAZoneTsj{} and \WrMhiAZoneTsj\degC{} against \MvTsjAZone\degC{} under cooling~A) and respond
@@ -280,7 +280,7 @@ the production law of Schubert et al.~\pcite{Schubert2003ECTC} enters as a zero-
 surrogate refitted over the stress window the joints visit and iterated to self-consistency, and two
 laws fitted to the measured creep data of~\pcite{Xiao2005SAC} (as tabulated
 in~\pcite{Yuan2023SAC305}; Sn3.9Ag0.6Cu, not SAC305) complete the band. Every joint comparison is
-judged under all \MvLawN. Loads are ramped linearly over 3~s with 300-s dwells. (A)~The laws carry no
+judged under all \MvLawNWord. Loads are ramped linearly over 3~s with 300-s dwells. (A)~The laws carry no
 rate-independent hardening, so the response stabilizes at once: the eighth cycle repeats the fourth
 to the printed digit (\MvCycUmax\,\%; Section~\ref{sec:verif-local},
 Table~\ref{S:tab:supp-localchecks}). (B)~The cycle is a
@@ -305,7 +305,7 @@ times as much as the largest-displacement joint; under cooling~B it is the mirro
 is withdrawn. The critical joint is now the maximum response over the whole ball lattice, found by a
 dominance-bounded search. In the screening features (deforming displacement, $|\Delta u_z|$,
 $T_{\mathrm{sj}}$) the response is monotone within a stated margin, so a solved site bounds every site
-it dominates. Every one of the \MvCritLattice{} lattice sites of the \MvCritCases{} compared cases
+it dominates. Every one of the \MvCritLattice{} lattice sites of the \MvCritCasesWord{} compared cases
 whose bound exceeded the maximum found was solved, under each law of the band, until none did
 (\MvCritSolvedAll{} local solutions). The search closes in every case, and every law finds the same
 critical site (Sections~\ref{sec:mechanics} and~\ref{sec:verif-local}). Table~\ref{tab:compare}
@@ -319,7 +319,7 @@ number now belongs to the plate's own three-wall channel (\CoolNu), the water pr
 the bulk temperature (\MthTbulk\degC), and the coolant warming is resolved along every pass instead
 of by a uniform-sink coefficient that counted half of it twice. A single pass would need
 \CoolDpSinglePass~kPa, which the reviewed version did not report, so each plate is now a manifold of
-\CoolZones{} streamwise zones: \CoolDp~kPa,
+\CoolZonesWord{} streamwise zones: \CoolDp~kPa,
 \CoolPhyd~W hydraulic and \CoolPshaftLo--\CoolPshaftHi~W at the shaft for pump efficiencies of 0.75 to
 0.35. The thermal entry length (\CoolLth~mm) makes the fully developed Nusselt number a lower bound.
 Conjugate CFD of one channel agrees with the correlation to \MthCfdErr\,\% in base temperature rise and
@@ -396,16 +396,16 @@ is now resolved, but in the opposite direction to the reviewed version: under co
 \MvEpsUrelBZone{} and \MvEpsUrelBZthree\,\%, under every law of the band. Model form stays out of
 $U_{95}$: both integrations are rerun under each declared alternative, and a ranking that an
 alternative reverses is conditional on it (Section~\ref{sec:explore-robust}, Fig.~\ref{fig:robust}:
-\WrRobN{} verdicts for \WrRobCases{} decisions, \WrRobPreserved{} preserved, \WrRobWithdrawn{}
-withdrawn, \WrRobReversed{} reversed, \WrRobPending{} pending a ladder of their own). The map's joint
+\WrRobN{} verdicts for \WrRobCases{} decisions, \WrRobPreserved{} preserved, \WrRobWithdrawnWord{}
+withdrawn, \WrRobReversedWord{} reversed, \WrRobPending{} pending a ladder of their own). The map's joint
 column now judges the joint response instead of the largest ball displacement. Every mechanical
 variant, and every other decision with a field of its own, is solved with the production local model
 at the \MvScrK{} worst sites of its reference case's critical-joint search, and its response is the
 largest of them (\MvScrNvar{} variants, \grp{\MvScrNsolves} local solutions). Full searches of
-\MvScrValN{} variants, in each kind (mounting, encapsulant class, mechanical card, thermal decision)
+\MvScrValNWord{} variants, in each kind (mounting, encapsulant class, mechanical card, thermal decision)
 the one whose screened maximum lies deepest among the \MvScrK{} sites, found the worst site among
-them in \MvScrValInTopK{}: on the ring of Z2 many sites respond within a few percent, and a variant
-can move the worst one. Every variant whose screened maximum fell beyond the first \MvScrEscFrac{}
+them in \MvScrValInTopKWord{}: on the ring of Z2 many sites respond within a few percent, and a variant
+can move the worst one. Every variant whose screened maximum fell beyond the first \MvScrEscFracWord{}
 sites, and the lower side of every Z1--Z2 ordering within a factor of 1.5, \MvScrEscN{} variants in
 all, were therefore searched in full. A full search raised the screened maximum by up to a factor of
 \MvScrEscShortFactor; every Z1--Z2 ordering left to the screen has a wider gap, at least a factor of
@@ -413,7 +413,7 @@ all, were therefore searched in full. A full search raised the screened maximum 
 holds for all \WrRobJointPreserved{} decisions with a verdict, including the three that reverse the
 ranking of the largest ball displacement. The mechanical variants were also rerun on the converged
 production fields of all six cases. The encapsulant and ball-card variants keep all
-\MvScrEncZoneZtwoN{} Z1--Z2 joint orderings, and the low-CTE mold compound puts Z2's joints below
+\MvScrEncZoneZtwoNWord{} Z1--Z2 joint orderings, and the low-CTE mold compound puts Z2's joints below
 Z3's under cooling~A. Board size, mounting and clamp change the warpage and ball displacement
 substantially (a clamp reacted by a backplate and, under cooling~B, pinned screws or a larger board
 with a cold rim take the smallest warpage from Z1) and the joint responses by \MvScrBdEpsLo{} to
@@ -485,7 +485,7 @@ Section~\ref{sec:evaluate-decap}.
 \item \textbf{Fig.~3} \emph{(identify the sampled counts and the jumps; separate the electrical from
 the ETM optimum; reconcile the baseline).} Now Fig.~\ref{fig:dse}: every sampled count, the counts
 without a four-tier member, the stack height against the Z2 depth, and the coupled results of the
-neighbours and the five-tier design, with the different loss boundary stated. The selection at each
+neighbors and the five-tier design, with the different loss boundary stated. The selection at each
 count is in Table~\ref{S:tab:supp-dse}, the baseline in the audit below.
 \item \textbf{Fig.~4} \emph{(clearer paths, dimensions and interfaces; a meshed view).} Now
 Fig.~\ref{fig:sections}: the integrations as meshed, half sections to scale in $z$, with the parts of
@@ -563,7 +563,7 @@ the 25-$^\circ$C power-off state, and no longer used alone to pick the critical 
 Eq.~\eqref{eq:deps}, with the law, its calibration, the time integration and the stabilized cycle
 (MC8). The averaging core excludes a corner band of fixed physical width (\MthBandProdUm~\textmu m), a
 numerical device. The band study was repeated with the production local model at the
-\MthBandNjoints{} production critical joints, at L0 and L2: bands of \MthBandUm~\textmu m change the
+\MthBandNjointsWord{} production critical joints, at L0 and L2: bands of \MthBandUm~\textmu m change the
 responses by \MthBandLo{} to \MthBandHi\,\% and change no ordering (Section~\ref{sec:verif-local},
 Table~\ref{S:tab:supp-localchecks}).
 \end{itemize}

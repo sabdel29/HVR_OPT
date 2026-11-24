@@ -37,7 +37,7 @@ NA = "--"
 #: IEEE style spells out integers below ten in running text: each count the prose (or a table
 #: note) prints as a word gets a "<name>Word" twin from the same value (digits from ten on)
 WORD_FORM = ("CoolZones", "FbAZtwoIters", "MvLawN", "MvEncOrderRev", "MvCoolBOrderRev",
-             "MvScrValInTopK", "MvScrValN", "MvScrEscFrac", "MvScrEncZoneZtwoN")
+             "MvScrValInTopK", "MvScrValN", "MvScrEscFrac", "MvScrEncZoneZtwoN", "MvCritCases")
 _WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
 
 

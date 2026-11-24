@@ -29,7 +29,7 @@ NA = "--"
 ATAG = {"Z1": "Zone", "Z2": "Ztwo", "Z3": "Zthree"}
 #: IEEE style spells out integers below ten in running text: each count the prose prints as a
 #: word gets a "<name>Word" twin from the same value (digits from ten on)
-WORD_FORM = ("MthNtie", "MthPlaneN", "MthNasym", "MthNosc")
+WORD_FORM = ("MthNtie", "MthPlaneN", "MthNasym", "MthNosc", "MthBandNjoints")
 _WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
 
 
