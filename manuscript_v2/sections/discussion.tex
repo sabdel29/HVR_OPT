@@ -42,7 +42,8 @@ but protrudes \FrProtrudeTfive~\textmu m below the package-backside board
 (Section~\ref{sec:explore-codesign}).
 
 \emph{Order the tiers by routing loss, then by the heat path.} With a 1-mm capacitor every order
-crosses the capacitor tier, so the vias cannot decide the order and copper posts are needed
+crosses the capacitor tier, so the vias cannot decide the order and copper posts are needed; the
+order is the same whether the die terminals are on one face or both
 (Section~\ref{sec:realizability}). A thin capacitor lowers the worst aspect ratio from
 \MthWorstAR{} to \MthThinAR{} but does not remove the posts, and it changes the loss of every
 integration by at most \WrThinDPAbsMax~W (Section~\ref{sec:explore-thin}).
@@ -85,8 +86,7 @@ Its omitted terms add \WrOmitLo--\WrOmitHi~W; at the upper end they exceed Z1's
 on-resistance-fit, capacitor and solder-law limits (Section~\ref{sec:explore-omit}). The 1-mm$^2$
 variant of the inductor array of~\cite{Rasheedi2026CoupledInductor} is not fabricated. Its
 \FrConvIndL~nH and \FrConvIndDcr~m$\Omega$ are design targets, not a scaled measurement, so its core
-loss is bracketed by three flux models (Table~S23). The stack assumes device dies with terminals
-on both faces (Section~\ref{sec:realizability}).
+loss is bracketed by three flux models (Table~S23).
 
 \emph{Realizability and assembly.} The tier-order verdict is geometric feasibility under declared
 rules, not a demonstrated process; placement within a tier, encapsulation and warpage during
