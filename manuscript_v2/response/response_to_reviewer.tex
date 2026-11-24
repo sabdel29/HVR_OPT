@@ -528,9 +528,11 @@ Eq.~\eqref{eq:du}: sampled at every legal site from the nodal displacements of b
 the 25-$^\circ$C power-off state, and no longer used alone to pick the critical joint (MC9).
 \item \textbf{Eq.~(5)} \emph{(law, calibration, time stepping, averaging volume, stabilization).} Now
 Eq.~\eqref{eq:deps}, with the law, its calibration, the time integration and the stabilized cycle
-(MC8). The averaging core excludes a band of fixed physical width, a numerical device. The band study
-(bands of \MthBandUm~\textmu m: \MthBandLo{} to \MthBandHi\,\%, no ranking changed) was made with the
-round-2 local model and has not been repeated with the production model.
+(MC8). The averaging core excludes a corner band of fixed physical width (\MthBandProdUm~\textmu m), a
+numerical device. The band study was repeated with the production local model at the
+\MthBandNjoints{} production critical joints, at L0 and L2: bands of \MthBandUm~\textmu m change the
+responses by \MthBandLo{} to \MthBandHi\,\% and change no ordering (Section~\ref{sec:verif-local},
+Table~\ref{S:tab:supp-localchecks}).
 \end{itemize}
 
 \section*{Numerical audit}
@@ -644,7 +646,8 @@ switch-sizing model, which nearly removed it; now each part's datasheet value.
 \item \textbf{Footprints and placement.} Library land areas and an area-sum check with one part class
 per tier admitted stacks that cannot be placed; now body footprints, two-dimensional placement with
 keep-out and mixed tiers. Under items 1--5 the 76-cell optimum of the reviewed version admits no
-four-tier member, and the minimum moves to $M = \FrDseOptM$ (Table~\ref{S:tab:supp-caprule}).
+four-tier member (from \FrDseInfeasLo{} cells on, none places), and the minimum moves to $M =
+\FrDseOptM$ (Table~\ref{S:tab:supp-dse}).
 \item \textbf{On-resistance temperature coefficient.} An intermediate state used one device's
 coefficient for another; each device now uses its own datasheet coefficient.
 \item \textbf{Cold plate.} The coefficient took the Nusselt number from the three-wall family with a

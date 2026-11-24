@@ -60,7 +60,7 @@ Section~\ref{sec:ledger} is therefore one the conclusions depend on (Section~\re
 \subsection{Omitted Converter Losses}\label{sec:explore-omit}
 The converter loss model omits dead-time conduction, inductor core and alternating-current winding
 loss, and capacitor dielectric loss beyond the booked ESR. Evaluated from manufacturer data at each
-case's own tier temperatures, they add \WrOmitLo--\WrOmitHi~W to Z1 under cooling~A (Table~S24). The
+case's own tier temperatures, they add \WrOmitLo--\WrOmitHi~W to Z1 under cooling~A (Table~S23). The
 nominal estimate is \WrOmitNom~W, of which \WrOmitDead~W is dead-time conduction over a
 \WrOmitDeadLo--\WrOmitDeadHi-ns dead time.
 
@@ -92,7 +92,7 @@ map is resolved.
 
 \subsection{Material and Card Bounds}\label{sec:explore-cards}
 The converter-tier cards come from unit-cell homogenization that includes the copper posts, and
-their ranges are run as variants on the ideal-decoupling reference (Table~S23). At the lower end of
+their ranges are run as variants on the ideal-decoupling reference (Table~S22). At the lower end of
 the post conductivity, Z1's peak changes by \WrPostLoZonedT~K and its loss by \WrPostLoZonedP~W; the
 upper end changes them by \WrPostHiZonedT~K and \WrPostHiZonedP~W. Halving the GaN-tier conductivity
 changes the peak by \WrGanHalfZonedT~K and the loss by \WrGanHalfZonedP~W, and Z1's corner joint then
@@ -102,7 +102,7 @@ capacitor and inductor-tier conductivity, an extreme bound, makes Z1 infeasible 
 
 In the production state under cooling~A, a low-CTE mold compound in the out-of-cell volume changes
 Z2's warpage by \MvEncEmcWarpAZtwo\,\% and Z1's largest ball displacement by \MvEncEmcDuAZone\,\%, yet
-Z1's joint response by \MvEncEmcEpsAZone\,\% (Table~S27). A cold-plate coefficient that also counts
+Z1's joint response by \MvEncEmcEpsAZone\,\% (Table~S26). A cold-plate coefficient that also counts
 the caloric resistance of a uniform sink (Section~\ref{sec:thermal}) raises every loss by
 \WrCalBZtwodP--\WrCalAZthreedP~W and every peak by \WrCalBZtwodT--\WrCalAZthreedT~K. It changes no
 ranking and no verdict, although Z2's on-resistance margin under cooling~A shrinks to
@@ -110,7 +110,7 @@ ranking and no verdict, although Z2's on-resistance margin under cooling~A shrin
 
 \subsection{Robustness of the Rankings}\label{sec:explore-robust}
 Fig.~\ref{fig:robust} maps \WrRobN{} verdicts for \WrRobCases{} package decisions, each rerun
-through the whole chain on the production mesh (Table~S23). Most of them run on the
+through the whole chain on the production mesh (Table~S22). Most of them run on the
 ideal-decoupling reference under cooling~A. The decisions that matter most are rerun in the
 production state, and the mechanical ones also under cooling~B and on the converged fields of the
 production state. Every verdict uses the rule of Section~\ref{sec:verification}. At the
@@ -136,7 +136,7 @@ mold compound. These variants change the joint responses by \MvEncBgaLocalEpsLo{
 but the joint-response ordering of each cooling stays the same.
 
 Board size, mounting and clamping were rerun mechanically on the converged fields of all six cases
-(Table~S27). They change the warpage and the largest ball displacement by up to
+(Table~S26). They change the warpage and the largest ball displacement by up to
 \MvBdLargeClampAbsMax\,\%. Z1 keeps the smallest warpage except under a clamp reacted by a backplate
 and, under cooling~B, on pinned screws or on a three-times-larger board with a cold rim. A
 \MvBoardSide-mm board with its own electrothermal field changes the warpage by \MvBdOwnWarpLo{} to

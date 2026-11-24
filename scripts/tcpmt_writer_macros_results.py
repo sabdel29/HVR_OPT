@@ -166,6 +166,20 @@ def designs():
                 m[f"Wr{tag}BoardClear"] = fx(clr, 0)
                 m[f"Wr{tag}Protrude"] = fx(-clr, 0) if clr < 0 else "0"
         m["WrZtwoBoardT"] = fx(lay["board"]["t_um"] / 1e3, 1)
+    # the largest change of an alternative design against the production design, over every
+    # integration and cooling it ran (e.g. the thin-capacitor tier: Z1/Z2/Z3 x A/B)
+    for name, tag in DTAG.items():
+        if name == "m36":
+            continue
+        dps, dts = [], []
+        for key, cs in ((D.get(name) or {}).get("cases") or {}).items():
+            pc0 = (prod.get("cases") or {}).get(key) or {}
+            if pc0.get("P_loss_W") is not None and cs.get("P_loss_W") is not None:
+                dps.append(abs(cs["P_loss_W"] - pc0["P_loss_W"]))
+                dts.append(abs(cs["T_max_C"] - pc0["T_max_C"]))
+        if dps:
+            m[f"Wr{tag}DPAbsMax"], m[f"Wr{tag}DTAbsMax"] = fx(max(dps), 1), fx(max(dts), 1)
+            m[f"Wr{tag}Ncases"] = str(len(dps))
     rk = (dc.get("ranking") or {}).get("Z1_A") or {}
     m["WrCountSameRank"] = "yes" if rk.get("same_ranking") else "no"
     # the count comparison of the joints under the rule and the law band (Z1, each cooling)
