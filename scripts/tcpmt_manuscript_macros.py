@@ -712,7 +712,7 @@ def compare_table(S, mac):
          r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Feasibility}}\\",
          row(r"Component and material ratings", feas("FeasThermal")),
          row(r"Processor die ($\le105\,^\circ$C)", feas("FeasDie")),
-         row(r"Joints within the solder-law range ($\le125\,^\circ$C)", feas("FeasSolder")),
+         row(r"Hottest joint, solder-law range ($\le125\,^\circ$C)", feas("FeasSolder")),
          row(r"Balls ($\le2$~A each, $\le75\,\%$ of sites)", feas("FeasBga")),
          row(r"Static drop ($\le30$~mV per rail)", feas("FeasDrop")),
          row(r"\textbf{Ranked} (every limit met)",
