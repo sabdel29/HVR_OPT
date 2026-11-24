@@ -7842,6 +7842,37 @@ jobs:
   evidence: ~8 dominance-bounded searches of ~100-300 sites each
   notes: full searches of the variants whose screened maximum lies deep among the K sites (a validated
     variant reuses its search)
+- id: mech.screen.escalate.reverse
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - escalate
+  - --reverse-all
+  outputs:
+  - tcpmt_revision/robustness_joint_runs/escalate_reverse.json
+  deps:
+  - mech.screen.pick
+  - mech.screen.validate.mounting
+  - mech.screen.validate.encapsulant
+  - mech.screen.validate.mechcard
+  - mech.screen.validate.thermal
+  ncpus: 24
+  mem_gb: 24.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  prefer: local
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '24'
+  validate:
+  - file: tcpmt_revision/robustness_joint_runs/escalate_reverse.json
+    kind: json
+    nonempty:
+    - keys
+  workers: 24
+  notes: the escalated variants from the end of the list
 - id: robust.coolB.Z1
   stage: mech_revision
   argv:
@@ -10206,6 +10237,7 @@ jobs:
   - mech.screen.escalate.0
   - mech.screen.escalate.1
   - mech.screen.escalate.2
+  - mech.screen.escalate.reverse
   ncpus: 1
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -12269,6 +12301,7 @@ jobs:
   - mech.screen.escalate.0
   - mech.screen.escalate.1
   - mech.screen.escalate.2
+  - mech.screen.escalate.reverse
   - mech.screen.summary
   - mech.band_study
   - prep.dse_engine

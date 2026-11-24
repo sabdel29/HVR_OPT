@@ -1190,6 +1190,15 @@ def joint_screen_jobs(mech):
                        validate=[{"file": f, "kind": "json", "nonempty": ["keys"]}],
                        notes="full searches of the variants whose screened maximum lies deep "
                              "among the K sites (a validated variant reuses its search)"))
+    # a helper on the local host from the end of the list (skips what the parts have started)
+    f = tr("robustness_joint_runs/escalate_reverse.json")
+    esc.append(job("mech.screen.escalate.reverse", "mech_revision",
+                   ["scripts/tcpmt_mech_joint_screen.py", "escalate", "--reverse-all"], [f],
+                   deps=[pk] + vals, ncpus=24, workers=24, mem_gb=24, est_h=1.0,
+                   prefer="local", backends=("local",),
+                   env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 24},
+                   validate=[{"file": f, "kind": "json", "nonempty": ["keys"]}],
+                   notes="the escalated variants from the end of the list"))
     return post("mech.screen.summary", "mech_revision", "tcpmt_mech_joint_screen.py",
                 [tr("robustness_joint.json")], args=["summarize"],
                 deps=[run_b, "derived.uncertainty"] + vals + esc, est_h=0.05,

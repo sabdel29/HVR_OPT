@@ -542,12 +542,15 @@ def escalation_list():
                   if v.get("complete") and (v.get("rank_in_reference") or 0) > lim)
 
 
-def escalate(part=None, nparts=None):
+def escalate(part=None, nparts=None, reverse_all=False):
     """Full dominance-bounded searches of the escalated variants (optionally one part of the
-    list, for parallel jobs) -> robustness_joint_full/<key>.json."""
+    list, for parallel jobs; reverse_all: every key from the end of the list, a helper that
+    takes the tails of the parts) -> robustness_joint_full/<key>.json."""
     keys = escalation_list()
     if part is not None:
         keys = keys[int(part)::int(nparts)]
+    if reverse_all:
+        keys = keys[::-1]
     FULL.mkdir(parents=True, exist_ok=True)
     out = {}
     for key in keys:
@@ -555,6 +558,9 @@ def escalate(part=None, nparts=None):
         if f.is_file() and json.loads(f.read_text()).get("closed"):
             out[key] = json.loads(f.read_text())
             continue
+        if reverse_all and (FULL / f"{key}.started").is_file():
+            continue                              # a part is on it
+        (FULL / f"{key}.started").write_text(str(os.getpid()))
         val = VAL / f"{key}.json"               # a validation search of the same variant
         r = json.loads(val.read_text()) if val.is_file() else full_search(key)
         f.write_text(json.dumps(r, indent=1, default=float) + "\n")
@@ -562,6 +568,7 @@ def escalate(part=None, nparts=None):
         print(key, {k: r.get(k) for k in ("closed", "n_solved", "max_d_eps", "max_in_top_k")},
               flush=True)
     log = TR / "robustness_joint_runs" / (f"escalate_{part}.json" if part is not None
+                                          else "escalate_reverse.json" if reverse_all
                                           else "escalate.json")
     log.write_text(json.dumps({"keys": keys, "n": len(keys),
                                "all_closed": all(r.get("closed") for r in out.values())},
@@ -825,7 +832,7 @@ def main():
     elif cmd == "escalate":
         part = a[a.index("--part") + 1] if "--part" in a else None
         nparts = a[a.index("--nparts") + 1] if "--nparts" in a else None
-        escalate(part, nparts)
+        escalate(part, nparts, "--reverse-all" in a)
     elif cmd == "escalation-list":
         print("\n".join(escalation_list()))
     elif cmd == "pick":
