@@ -225,3 +225,25 @@ add the manifold plate, redo the tier order for the new stack, update the manife
   Supplement staleness (S7, S10, S16, S20) was also sent to the integration agent.
   Next: a gap-closing round (fine f_sw grid under the full rules; neighbours' mechanics; band study with v2;
   larger-board joint response), then a letter update.
+- 2026-11-24: INTEGRATION DONE (21 commits 5974708..5281267). Paper 23 pp, supplement 21 pp, clean builds.
+  - Narrative matches the final results; Z1 has the least warpage but the largest joint response (explained); VII-E
+    reflow/TCB requirements; VIII-H robustness on cooling B, encapsulant, board and clamp; the max-du proxy replaced
+    by the bounded search.
+  - Audit: about 35 duplicate macros merged; captions fixed; Fig. 11 overflow fixed; S7, S10, S16 (peak memory) and
+    S20 fixed.
+  - Open:
+    - Z3 placement rule (user);
+    - JEDEC SPP-024 edition;
+    - Z3 thin/5-tier at 667 balls;
+    - legacy columns in S2/S8/S22;
+    - robustness mechanics judged on du;
+    - Data DOI TODO (author);
+    - page cuts (later).
+- GAP round running:
+  - MC7: fine f_sw under the full rules; neighbours' mechanics;
+  - MC8: band study with v2;
+  - robustness and mounting on the joint response (top-K screen, validated);
+  - Z3 thin/5-tier at 500 balls;
+  - supplement: remove legacy columns, drop S22, renumber;
+  - JEDEC citation;
+  - text and letter updates.
