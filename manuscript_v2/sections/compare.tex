@@ -11,9 +11,9 @@ identical bottom plate under the cell grid behind the same 50-\textmu m interfac
 alone is not an option. The die's kilowatt would then have to cross the redistribution tiers, the
 ball field and, in Z1 and Z3, the board.
 
-A candidate that fails any limit of the feasibility stage is not ranked. Every ranking uses the rule
-of Section~\ref{sec:verification}. A difference $D$ is resolved when $|D+\beta_D| > U_{95}(D)$, where
-$\beta_D$ is its discretization bias and $U_{95}(D)$ its uncertainty from its own mesh ladder.
+A candidate that fails any limit of the feasibility stage is not ranked, and every difference is
+judged by the resolution rule of Section~\ref{sec:verification} on its own mesh ladder
+(Table~\ref{tab:uncertainty}).
 
 \input{tab_compare}
 
@@ -45,52 +45,55 @@ temperature difference in parentheses).}
 \end{figure}
 
 \subsection{The Same Top Cold Plate}\label{sec:compare-a}
-Under one top plate the board-backside converter must push its heat up through 3.2~mm of board. It
-dissipates \PlossAZthree~W, and its GaN junctions reach \TjAZthree\,$^\circ$C against their
-150-$^\circ$C rating. Its capacitor, inductor, dielectric and encapsulant limits fail as well, and
-its 1-V path drops \VdropAZthree~mV per rail against the 30-mV limit. Z3 is infeasible under this
-cooling and leaves the ranking. A cooling solution that serves the embedded and package-backside
-integrations does not serve the board-backside one.
+Under one top plate the board-backside converter must push its heat up through \FrBoardMm~mm of
+board. It dissipates \PlossAZthree~W, and its GaN junctions reach \TjAZthree\,$^\circ$C against their
+\MthLimGan-$^\circ$C rating. Its capacitor, inductor, dielectric and encapsulant limits fail as well,
+and its 1-V path drops \VdropAZthree~mV per rail against the \MthLimDrop-mV limit. Z3 is infeasible
+under this cooling and leaves the ranking. A cooling solution that serves the embedded and
+package-backside integrations does not serve the board-backside one.
 
-Between Z1 and Z2 the converter's thermal path decides. The converter of Z2 is cooled only through
-the attach and the substrate. Its low-side tier runs \WrdTlsAZtwo~K hotter than in Z1, and its
-conversion loss rises by \WrdPconvAZtwo~W, against a routing saving of \WrdProuteAZtwo~W. Inside the
-package \WrLowA{} has the lower loss, by \GapAZtwo~W. The rule finds this gap \WrResAZoneZtwoPloss,
-with $|D+\beta_D| = \WrResAZoneZtwoPlossDc$~W against $U_{95}(D) = \WrResAZoneZtwoPlossUni$~W. The
-omitted converter terms could shift it toward \WrOmitFavorA{} by up to \WrOmitGapAHi~W
-(Section~\ref{sec:explore-omit}).
+Between Z1 and Z2 the converter's thermal path decides the package loss. The converter of Z2 is
+cooled only through the attach and the substrate. Its low-side tier runs \WrdTlsAZtwo~K hotter than
+in Z1, and its conversion loss rises by \WrdPconvAZtwo~W, against a routing saving of
+\WrdProuteAZtwo~W. Inside the package \WrLowA{} has the lower loss, by \GapAZtwo~W. The rule finds
+this gap \WrResAZoneZtwoPloss, with $|D+\beta_D| = \WrResAZoneZtwoPlossDc$~W against $U_{95}(D) =
+\WrResAZoneZtwoPlossUni$~W. The omitted converter terms could shift it toward \WrOmitFavorA{} by up to
+\WrOmitGapAHi~W (Section~\ref{sec:explore-omit}).
 
 The platform boundary adds Z2's direct 48-V feed, which carries the cells' residual pulse outside
 the package. \WrRstarSentA{} The physical feeds evaluated here measure
 \FeedRflexZtwo--\FeedRbgaZtwo~m$\Omega$. With the ball-ring feed and the pumping charged, the
-platform-inclusive loss is \PlatAZone~W for Z1 and \PlatAZtwo~W for Z2. \WrElecVerdictA
+platform-inclusive loss is \PlatAZone~W for Z1 and \PlatAZtwo~W for Z2, so Z1 is \WrPlatGapA~W
+lower. Under this cooling Z2 leads inside the package and Z1 at the platform: the boundary of the
+comparison decides.
 
-Thermally and mechanically the two are not tied. Z1 peaks \WrdTmaxAZtwo~K lower, a resolved gap. Z2
-is a thin silicon plate that carries the encapsulated converter on one side and rests on a ring of
-balls around the board opening. It bends like a bimetal strip. Its die warps \WrWarpRatioAZtwo{}
-times as much as Z1's, and its critical joint moves \WrDuRatioAZtwo{} times as far, both resolved
-(Fig.~\ref{fig:fields}). That joint runs \WrdTjointAZtwo~K cooler than Z1's, because the ball ring
-sits away from the converter.
+Thermally and mechanically the two are not tied either. Z1 peaks \WrdTmaxAZtwo~K lower, a resolved
+gap. Z2 is a thin silicon plate that carries the encapsulated converter on one side and rests on a
+ring of balls around the board opening. It bends like a bimetal strip. Its die warps
+\WrWarpRatioAZtwo{} times as much as Z1's, and its corner balls move \WrDuRatioAZtwo{} times as far,
+both resolved (Fig.~\ref{fig:fields}). Its joints nevertheless respond less than Z1's
+(Section~\ref{sec:compare-joints}).
 
 Beneath every package lies the board. It expands at \CteBoard~ppm\,K$^{-1}$ against
 \CteSi~ppm\,K$^{-1}$ for silicon, and the ball field ties it to the package. The Z1 board averages
-\TboardAZone\,$^\circ$C, because the converter's heat leaks into it. Yet the thick, nearly symmetric
-sandwich of substrate, converter and die above it resists bending.
+\TboardAZone\,$^\circ$C, because the converter's heat leaks into it, against \TboardAZtwo\,$^\circ$C
+under Z2. The thick, nearly symmetric sandwich of substrate, converter and die above it resists
+bending, so Z1's die stays flat while its balls take the expansion mismatch.
 
 \emph{Plate interface.} A flat plate on a warped die leaves the interface thickest where the die
-falls away. The upper bound of Section~\ref{sec:models} lets the interface follow the free warpage
-and iterates the coupled chain with it. Z1's die opens a mean gap of \FbAZoneGapMean~\textmu m. Z1
-then converges \FbAZonedP~W and \FbAZonedT~K higher, at \FbAZonePloss~W and
-\FbAZoneTmax\,$^\circ$C. It still passes every limit, but its margins shrink to
+falls away. The upper bound of Section~\ref{sec:mechanics} lets the interface follow the free
+warpage and iterates the coupled chain with it. Z1's die opens a mean gap of
+\FbAZoneGapMean~\textmu m. Z1 then converges \FbAZonedP~W and \FbAZonedT~K higher, at
+\FbAZonePloss~W and \FbAZoneTmax\,$^\circ$C. It still passes every limit, but its margins shrink to
 \WrFbAZoneRonMargin~K on the on-resistance fit, \WrFbAZoneMlccMargin~K on the capacitor tier and
-\WrFbAZoneSolderMargin~K on the solder law.
+\WrFbAZoneSolderMargin~K on the range of the solder laws.
 
 Z2's die, warping \WrWarpRatioAZtwo{} times as much, opens a mean gap of \FbAZtwoGapMean~\textmu m.
 Its loop converges after \FbAZtwoIters{} passes, at \FbAZtwoPloss~W and \FbAZtwoTmax\,$^\circ$C. That
 point exceeds the GaN rating, and the die reaches \WrFbAZtwoDie\,$^\circ$C against its
-105-$^\circ$C limit. Under one top plate, Z1 is therefore the only integration that stays feasible
-for every interface between a conforming one and a rigid plate on the free warpage. At the rigid end
-its margins are small.
+\MthLimDie-$^\circ$C limit. Under one top plate, Z1 is therefore the only integration that stays
+feasible for every interface between a conforming one and a rigid plate on the free warpage. At the
+rigid end its margins are small.
 
 \begin{figure*}[!t]
 \centering
@@ -99,9 +102,9 @@ its margins are small.
 loss at one common temperature (no electrothermal coupling) and coupled under cooling~A (the same
 top cold plate) and cooling~B (the same top and bottom plates); Z3 includes its coupled land-side
 and board-plane redistribution. (b) Peak temperature, with the 150-$^\circ$C GaN rating, (c) die
-warpage and (d) critical-joint displacement under cooling~A and~B. (e) Local inelastic strain
-increment on the stabilized cycle, solved for the ideal-decoupling reference; a relative response,
-not a life. Bars: $\pm U_{95}$; hatched: a feasibility limit fails.}
+warpage and (d) largest ball displacement under cooling~A and~B. (e) Joint response at each case's
+critical joint under the production solder law (bars) and the other laws of the band (circles); a
+relative response, not a life. Bars: $\pm U_{95}$; hatched: a feasibility limit fails.}
 \label{fig:tiers}
 \end{figure*}
 
@@ -109,52 +112,93 @@ not a life. Bars: $\pm U_{95}$; hatched: a feasibility limit fails.}
 An identical bottom plate changes the integrations in different ways. The converters of Z2 and Z3
 touch it. Z2's loss falls by \GainBZtwo~W to \PlossBZtwo~W as \QbotBZtwo~W leaves through the bottom
 plate, and its peak falls by \CoolBZtwo~K to \TmaxBZtwo\,$^\circ$C. Z3 now meets every component and
-material rating, at \TmaxBZthree\,$^\circ$C. Its 1-V path still drops \VdropBZthree~mV per rail:
+material rating, at \TmaxBZthree\,$^\circ$C, and its loss, \PlossBZthree~W, is not resolved from
+Z1's (Table~\ref{tab:uncertainty}). Its 1-V path still drops \VdropBZthree~mV per rail:
 \VdropLandBZthree~mV in the land side and \VdropPlanesBZthree~mV in the board planes, besides the
-vertical conductors. Z3 therefore stays infeasible, on the static drop and on the ball sites its
-1-V current needs.
+vertical conductors. Z3 therefore stays infeasible, on the static drop.
 
-The converter of Z1 reaches the bottom plate only through the substrate, the ball field and 3.2~mm
-of board. Only \QbotBZone~W takes that path, and Z1's loss falls by just \GainBZone~W. For Z1 the
-bottom plate is a mechanical decision instead. It cools the board underside to
-\TboardBotBZone\,$^\circ$C and the board to \TboardBZone\,$^\circ$C on average. That removes most of
-the expansion mismatch with the silicon above, while the stiff sandwich holds the board flat. The
-die warpage falls from \WarpAZone{} to \WarpBZone~\textmu m, and the joint driver from \DuAZone{} to
-\DuBZone~\textmu m.
+The converter of Z1 reaches the bottom plate only through the substrate, the ball field and
+\FrBoardMm~mm of board. Only \QbotBZone~W takes that path, and Z1's loss falls by just
+\GainBZone~W. The plate cools the board underside to \TboardBotBZone\,$^\circ$C and the board to
+\TboardBZone\,$^\circ$C on average. That removes most of the expansion mismatch with the silicon
+above, while the stiff sandwich holds the board flat. The die warpage falls from \WarpAZone{} to
+\WarpBZone~\textmu m, and the largest ball displacement from \DuAZone{} to \DuBZone~\textmu m. The
+critical joint gains little. It still runs at \MvTsjBZone\,$^\circ$C, its deforming displacement
+falls only from \MvDudefAZone{} to \MvDudefBZone~\textmu m, and its response from \MvEpsAZone{} to
+\MvEpsBZone$\times10^{-3}$ per cycle.
 
-With identical cooling the ranking splits by domain (Fig.~\ref{fig:tiers}). Z2 has the lower loss,
-by \GapBZtwo~W, and the lower peak, by \dTmaxTierBZtwo~K, both resolved. Z1 has the smaller die
-warpage, \WarpBZone{} against \WarpBZtwo~\textmu m, and the smaller joint driver, \DuBZone{} against
-\DuBZtwo~\textmu m, both resolved. The plate interface moves neither ranking. Under the rigid-plate
-bound Z1 rises by \FbBZonedP~W and Z2 by \FbBZtwodP~W, and both stay feasible. With its feed loss of
-\PlatFeedBZtwo~W and the pumping of both plates charged, Z2 keeps the lower platform-inclusive loss,
-by \WrPlatGapB~W. Its feed limit, $R^* = \RstarTierBZtwo$~m$\Omega$, lies above the physical feeds.
+With identical cooling the rankings split. Z2 has the lower loss, by \GapBZtwo~W, the lower peak, by
+\dTmaxTierBZtwo~K, and the smaller joint response, \MvEpsBZtwo{} against
+\MvEpsBZone$\times10^{-3}$ per cycle, all resolved. Z1 has the smaller die warpage, \WarpBZone{}
+against \WarpBZtwo~\textmu m, and the smaller largest ball displacement, \DuBZone{} against
+\DuBZtwo~\textmu m, both resolved. The plate interface moves neither the loss nor the warpage
+ranking. Under the rigid-plate bound Z1 rises by \FbBZonedP~W and Z2 by \FbBZtwodP~W, and both stay
+feasible. With its feed loss of \PlatFeedBZtwo~W and the pumping of both plates charged, Z2 keeps the
+lower platform-inclusive loss, by \WrPlatGapB~W. Its feed limit, $R^* = \RstarTierBZtwo$~m$\Omega$,
+lies above the physical feeds.
 
 \subsection{Joints and Interconnect Layers}\label{sec:compare-joints}
-The local joint response (Table~\ref{tab:compare}) is solved \WrEpsState. On the stabilized cycle
-the critical joints accumulate \WrEpsAZone, \WrEpsAZtwo{} and \WrEpsAZthree$\times10^{-3}$ per cycle
-in Z1, Z2 and Z3 under cooling~A, and \WrEpsBZone, \WrEpsBZtwo{} and \WrEpsBZthree$\times10^{-3}$
-under cooling~B. \WrEpsLowSent
+The joint response (Table~\ref{tab:compare}, Fig.~\ref{fig:tiers}e) is solved at each case's
+critical joint, the site of largest response over the ball lattice (Section~\ref{sec:mechanics}).
+Under cooling~A the critical joints accumulate \MvEpsAZone, \MvEpsAZtwo{} and
+\MvEpsAZthree$\times10^{-3}$ per cycle in Z1, Z2 and Z3, and under cooling~B \MvEpsBZone,
+\MvEpsBZtwo{} and \MvEpsBZthree$\times10^{-3}$. The ordering is \MvEpsOrderA{} under cooling~A and
+\MvEpsOrderB{} under cooling~B. It is the same under all \MvLawN{} laws of the band, which span the
+brackets of Table~\ref{tab:compare}, and every difference is resolved. Z1, whose die warps least, has
+the largest joint response under both coolings.
 
-The production solder law is a zero-yield Norton fit over the stress window the joints visit. An
-independent law~\cite{Schubert2003ECTC}, refitted over the same window, gives increments
-\SchubertRatioLo--\SchubertRatioHi{} times larger. Under both laws, \WrLawHold{} ranking of the joint
-response holds.
+Two features of the drive account for this. The first is the joint temperature. Z1's ball field
+lies under the converter, and its critical joints run at \MvTsjAZone{} and \MvTsjBZone\,$^\circ$C,
+against at most \MvTsjAZthree\,$^\circ$C in the other integrations. The second is the deformation the
+solder actually feels. Under cooling~A, Z1's corner displacement is mostly the membrane mismatch
+between the hot board and the silicon above (\MvMemShareAZone\,\% of $\Delta u$). In Z2 and Z3,
+membrane and bending terms several times larger than $\Delta u$ cancel, and part of what remains is
+a rigid rotation of the joint, \MvRigidRotAZtwo{} and \MvRigidRotAZthree~\textmu m, which strains no
+solder (Table~S15). The deforming displacement of the critical joint is largest in Z1 under both
+coolings, \MvDudefAZone{} and \MvDudefBZone~\textmu m against at most \MvDudefAZthree~\textmu m
+elsewhere. Neither the warpage nor the largest ball displacement ranks the joints: under cooling~A,
+Z3 has the largest $\Delta u$, \DuAZthree~\textmu m, and the smallest response. Within Z2 the largest
+displacement does not even locate the critical joint (Section~\ref{sec:verif-local}).
 
 The other interconnect layers rank differently from the balls. In Z2 the 30-\textmu m Cu pillars
-carry a larger driver than its balls under cooling~A, $\gamma = \WrGamAttAZtwo\times10^{-3}$
-against $\WrGamBgaAZtwo\times10^{-3}$. In Z3 under cooling~A the converter-to-board solder attach runs at
-\WrTAttAZthree\,$^\circ$C, beyond the window of the solder law. Z3 is already infeasible there.
+carry a larger driver than its balls under cooling~A, $\gamma = \WrGamAttAZtwo\times10^{-3}$ against
+$\WrGamBgaAZtwo\times10^{-3}$. In Z3 under cooling~A the converter-to-board solder attach runs at
+\WrTAttAZthree\,$^\circ$C, beyond the range of the solder laws; Z3 is already infeasible there. Solved
+with their own geometry, the critical fine-pitch joints respond more than the balls (Table~S14).
+The microbump driver, however, peaks at the singular corner of the die edge and does not converge
+with the mesh, so these layers are screened, not ranked.
+
+\subsection{Assembly Warpage}\label{sec:compare-assembly}
+The operating-point warpage says nothing about assembly, which asks whether each part is flat
+enough, at the joining temperature, for its joints to form (Table~S26). At the 245-$^\circ$C reflow
+peak, the ball plane of the unmounted package is \MvRfBgaZone~\textmu m out of plane in Z1 and
+\MvRfBgaZthree~\textmu m in Z3, at the \MvCoplLim-\textmu m coplanarity limit, and
+\MvRfBgaZtwo~\textmu m in Z2, \MvRfCoplZtwo{} times the limit. All three stay within the
+reflow-warpage window of \MvRfLimLo{} to \MvRfLimHi~\textmu m~\cite{JEDEC_JEP95}. The fine-pitch
+attaches are the harder requirement. Thermocompression bonding at \MvRfTcbTZone\,$^\circ$C, of Z1's
+die onto the converter top and of Z2's converter onto the substrate, meets gaps that vary by
+\MvRfTcbZone{} and \MvRfTcbZtwo~\textmu m across the joint, against a declared allowance of
+\MvTcbLim~\textmu m, half the solder cap of the 30-\textmu m-pitch pillar. Only Z3's 100-\textmu m
+solder attach to the board forms as designed, at \MvRfTcbZthree~\textmu m against
+\MvAttLimZthree~\textmu m. A low-CTE mold compound in the out-of-cell volume lowers Z1's ball-plane
+warpage to \MvRfBgaEmcZone~\textmu m but its bonding gap only to \MvRfTcbEmcZone~\textmu m. Referred
+to a 150-$^\circ$C encapsulant cure instead of 25\,$^\circ$C, the ball-plane warpage falls to
+\MvRfCureZone, \MvRfCureZtwo{} and \MvRfCureZthree~\textmu m. The bonding gap of Z1 and Z2 is
+therefore a manufacturing requirement, on the bonding process or on the converter stack, that the
+framework states but does not resolve.
 
 \subsection{Which Physics Changes Which Ranking}\label{sec:compare-ablation}
 Read as an ablation, Table~\ref{tab:compare} shows each domain changing the answer. With electrical
 models alone, at a common temperature, Z2 is \WrIsoGapHiZtwo~W ahead of Z1 and Z3 is far behind. The
-electrothermal fixed point under one top plate brings Z1 and Z2 within \GapAZtwo~W, less than Z2's
-feed loss outside the package. It also removes Z3 by its device ratings. The mechanics separate Z1 from Z2 under that plate by a
-factor of \WrWarpRatioAZtwo{} in warpage. Through the plate interface they also remove Z2 when the
-plate does not conform.
+electrothermal fixed point under one top plate cuts Z2's lead to \GapAZtwo~W, less than its feed
+loss outside the package, and removes Z3 by its device ratings. The mechanics separate Z1 from Z2
+under that plate in opposite directions: Z1's die warps \WrWarpRatioAZtwo{} times less, but its
+critical joint responds most. Through the plate interface they also remove Z2 when the plate does
+not conform.
 
-A second plate makes Z2 the electrical and thermal leader, by \GapBZtwo~W and \dTmaxTierBZtwo~K,
-while Z1 stays the mechanical one. The platform boundary, with feed and pumping, favors
-\WrLowPlatA{} under cooling~A and \WrLowPlatB{} under cooling~B. The static-drop and ball-site checks remove Z3 even where its
-ratings pass. No single domain, and no single cooling, returns this ranking.
+A second plate makes Z2 the leader in loss, by \GapBZtwo~W, in peak temperature, by
+\dTmaxTierBZtwo~K, and in joint response, while Z1 keeps the flattest die. The platform boundary,
+with feed and pumping, favors \WrLowPlatA{} under cooling~A and \WrLowPlatB{} under cooling~B. The
+static-drop check removes Z3 even where its ratings pass, and assembly adds a requirement that the
+operating point does not show: the fine-pitch attaches of Z1 and Z2 do not bond flat. No single
+domain, and no single cooling, returns this ranking.
