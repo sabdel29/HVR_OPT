@@ -20,14 +20,13 @@ bonding at that pitch has been demonstrated on organic substrates~\cite{Au2016Cu
 Only the 1-V current crosses the attach and the TSVs. The BGA is a ring of \MthSitesRing{}
 sites around the opening, and its power balls carry the 48-V feed. The feed current runs from
 the board through these balls and a 48-V RDL on the land side of the substrate to the input pads
-of the cells. The lowest face of the converter lies \FrFitThirtysix~\textmu m above the underside of
-the board.
+of the cells.
 
 In the \emph{board-backside} integration (Z3), the converter is attached to the underside of an
 uncut board beneath the package, as in current vertical power modules~\cite{Vicor_VPD_AI}. Its
 1-V output crosses a board-level solder attach, a field of plated through-holes in the board,
-the full BGA and the TSVs. A pair of 48-V copper planes in the board feeds it, and a second cold
-plate cools it from below.
+the full BGA and the TSVs. A pair of 48-V copper planes in the board feeds it. Under cooling~B
+(Section~\ref{sec:thermal}), a second cold plate cools it from below.
 
 \begin{figure*}[!t]
 \centering
@@ -37,7 +36,7 @@ drawn as lines). Every converter tier holds the parts of its design-record tier;
 (hatched) fill the height above parts shorter than the tier. (a) Z1: converter between
 substrate and die, full BGA. (b) Z2: converter in the board opening below the substrate; its
 48-V feed runs through the BGA ring and the substrate (dashed). (c) Z3: converter on the board
-underside with its own cold plate; the full BGA carries the 1-V output. Red: 48-V path; violet:
+underside, shown with the bottom plate of cooling~B; the full BGA carries the 1-V output. Red: 48-V path; violet:
 1-V path; ringed ball: the outermost row, which holds the joint of largest $\Delta u$ in every
 compared case and the critical joint in all but Z2 under cooling~A.}
 \label{fig:sections}
@@ -92,9 +91,7 @@ orders) does not remove the posts either: the best worst-case aspect ratio is \M
 Two sensitivities test this verdict. With a 100-\textmu m capacitor tier the stack shrinks to
 \MthThinStackMm~mm, but every order still crosses a device tier, at an aspect ratio of at least
 \MthThinAR. With single-face terminals the rule selects the same order, and its worst aspect
-ratio stays \MthSingleAR. The verdict is geometric feasibility under declared rules, not a
-demonstrated process. Placement within a tier, encapsulation and warpage during lamination are
-not evaluated (Section~\ref{sec:discussion}).
+ratio stays \MthSingleAR.
 
 \begin{figure}[!t]
 \centering
@@ -112,19 +109,18 @@ of either stack meets it, so copper posts make every whole-tier crossing.}
 The hybrid cell draws input current only in phase $\phi_1$ (Fig.~\ref{fig:converter}b). The RMS
 current of the 48-V path therefore depends on how much of that pulse local decoupling absorbs.
 We describe it by the RMS factor $k_{\mathrm{rms}}$, the ratio of the RMS to the average 48-V
-current. Three input states bound it. \emph{Ideal decoupling} ($k_{\mathrm{rms}} = 1$) is the
-limit of unlimited local capacitance. \emph{Bare decoupling} passes the pulse at the buck duty
-$D$ unfiltered, $k_{\mathrm{rms}} = 1/\sqrt{D} = \MthKbare$. \emph{Implemented decoupling} is
-the production state: interleaved cell clocks and a ring of input capacitors outside the cell grid
+current, in three input states. \emph{Ideal decoupling} ($k_{\mathrm{rms}} = 1$) is the limit of
+unlimited local capacitance. \emph{Bare decoupling} passes the pulse at the buck duty $D$
+unfiltered, $k_{\mathrm{rms}} = 1/\sqrt{D} = \MthKbare$. These two bound $k_{\mathrm{rms}}$ and
+serve as references. \emph{Implemented decoupling} is the production state: interleaved cell clocks and a ring of input capacitors outside the cell grid
 (Section~\ref{sec:evaluate-decap}) give $k_{\mathrm{rms}} = \WrKrms$ in the package network. The
 input loop inside each cell still carries the bare pulse of the cell, $k_{\mathrm{rms}} =
-\FrKopen$ from a circuit model of its waveform. Ideal and bare decoupling serve as references.
+\FrKopen$ from a circuit model of its waveform.
 
 \subsection{Rail-Aware Conductor Ledger}\label{sec:ledger}
 Loss is reported inside a declared boundary. The package-internal loss $P_{\mathrm{int}}$ of Z2
-and Z3 starts at the 48-V input terminals of the converter. That of Z1 starts at its 48-V BGA
-pads, where the 48-V node of the board, common to all three, meets the package. The board's 48-V
-distribution upstream of that node is common to all three and excluded. The external feed of a
+and Z3 starts at the 48-V input terminals of the converter. That of Z1 starts at its 48-V BGA pads, where the board's 48-V node meets the package. The board's
+48-V distribution upstream of that node, common to all three, is excluded. The external feed of a
 backside integration, from that node to the converter, has the loop resistance $R$ and costs
 \begin{equation}
 P(R) = P_{\mathrm{int}} + \left(k_{\mathrm{rms}} I\right)^2 R,\qquad
@@ -180,9 +176,7 @@ balls~\cite{Kuan2015Imax}; a conservative \WrBgaRuleSens-A target is a sensitivi
 (Section~\ref{sec:explore-bga}). The 1-V balls of Z3 are sized by the same target at their DC
 current, and they occupy the sites nearest the cells, a declared placement rule. The power balls
 may occupy at most \MthLimSites~\% of the sites of the package; the rest carry signal and
-auxiliary rails. The harmonic port model of Z1, with every ball tied to an ideal board node,
-bounds its worst ball at \WrBgaRmsZone~A RMS. This bound exceeds the target and is discussed as a
-limitation (Section~\ref{sec:limits}).
+auxiliary rails.
 
 In Z3 the 1-V current of each rail is shared equally by its balls, which cover most of the BGA,
 while the TSV fields that carry it to the die sit only under the cells. The current of every ball
@@ -211,9 +205,7 @@ finite-volume loss map.
 Steady conduction $\nabla\!\cdot(\mathbf{k}\nabla T) + q''' = 0$ is solved on the explicit
 stack with orthotropic conductivity. Layers that contain regular arrays (TSV fields, attaches,
 RDL tiers, ball fields and the board via field of Z3) carry homogenized tensors, each checked
-against an explicitly meshed unit cell (Section~\ref{sec:verification}). Every ledger term is
-deposited in the layer and cell footprints that produce it. The deposited heat equals the
-ledger total to round-off, a relative $\MthDepositResid$.
+against an explicitly meshed unit cell (Section~\ref{sec:verification}).
 
 Each converter tier carries a card homogenized on a unit cell of its contents. Every part is a
 vertical column spanning the tier: a series stack of its own layers and, above a shorter part,
@@ -264,7 +256,8 @@ entry length (\CoolLth~mm) is \MthLthRatio{} of a pass. The fully developed Nuss
 thus a lower bound, and the pass-mean coefficient could be up to \MthNuDevRatio{} times higher.
 
 Cooling~A is this top plate alone. Cooling~B adds an identical plate beneath the cell grid,
-behind the same TIM. Its flow is sized so that its coolant rises as much as that of the top
+behind the same TIM. A bottom plate alone is not an option: the die's kilowatt would then have to
+cross the redistribution tiers, the ball field and, in Z1 and Z3, the board. Its flow is sized so that its coolant rises as much as that of the top
 plate: \MthBotFlowZtwo~g\,s$^{-1}$ for the \QbotBZtwo~W that reach it in Z2. Pumping counts
 every plate at its own flow. The die dissipates its 1~kW uniformly; a core-heavy map, with three
 quarters of the die power in the central half of its area, is a sensitivity
@@ -291,8 +284,8 @@ the board and the ball field are meshed as real layers, and only rigid-body moti
 restrained. With this reference the solution is the change from power-off to the operating
 point, the excursion that the local cycle imposes. The moduli and coefficients of thermal
 expansion (CTE) are those of Table~S3. The encapsulant between the cells and the size, thickness, mounting
-and clamping of the board are declared; their alternatives are rerun on the production mesh
-(Section~\ref{sec:explore-robust}).
+and clamping of the board are declared; Section~\ref{sec:explore-robust} evaluates their
+alternatives.
 
 Every interconnect layer is searched rather than assumed: the BGA, the die microbumps, and the
 Cu-pillar attach of Z2 or the solder attach of Z3. At every site of a layer of height $h$, the
@@ -344,8 +337,7 @@ vertical part included, and its in-plane stretch, shear and rotation, not $\Delt
 300-s dwell the joint holds this drive at $T_{\mathrm{sj}}$, the mean temperature of its two faces;
 for a second 300-s dwell, drive and temperature return to the stress-free state at
 25\,$^\circ$C. Every load change is ramped linearly over 3~s and then held. This prescribed cycle
-stands in for power cycling between off and the converged operating point; the thermal transient
-between them is not modeled.
+stands in for power cycling between off and the converged operating point.
 
 The solder is elastic--viscoplastic with $E = 45 - 0.12(T-25)$~GPa. Its room-temperature value is
 the midpoint of the band of~\cite{Paska2024SAC305}; the slope, $\nu = 0.36$ and the CTE of
@@ -386,8 +378,8 @@ device, not a statement about where damage occurs. $\deps$ compares integrations
 life relation or allowable is applied.
 
 \subsection{Feasibility Limits}\label{sec:feasibility}
-The feasibility stage checks every candidate before any ranking, and a candidate that fails a
-limit is not ranked. The limits are (every case: Table~S19):
+The feasibility stage checks every candidate against the following limits before any ranking
+(every case: Table~S19):
 \begin{itemize}
 \item the GaN junction temperature, $T_{\mathrm{jn}} \le \MthLimGan\,^\circ$C per device tier:
 the in-cell maximum of the tier plus the junction-to-case resistance times the device's own
