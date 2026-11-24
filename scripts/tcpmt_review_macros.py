@@ -168,14 +168,28 @@ def feasibility():
         m[f"Nfail{k}"] = str(len(c["fails"]))
         m[f"Feasible{k}"] = {"feasible": "yes", "infeasible": "no"}.get(c["verdict"], "open")
         m[f"FeasFails{k}"] = ", ".join(CHECK_LABEL.get(x, x) for x in c["fails"]) or "none"
-        hb = ((c.get("omitted_losses") or {}).get("bundles") or {}).get("high") or {}
-        if hb:
-            m[f"OmitHiFails{k}"] = (", ".join(CHECK_LABEL.get(x, x) for x in hb["fails"])
-                                    or "none")
-            m[f"OmitHiDp{k}"] = fx(hb["dP_w"], 0)
+        ob = (c.get("omitted_losses") or {}).get("bundles") or {}
+        for bn, bt in (("nominal", "Nom"), ("high", "Hi")):
+            b = ob.get(bn) or {}
+            if not b:
+                continue
+            m[f"Omit{bt}Fails{k}"] = (", ".join(CHECK_LABEL.get(x, x) for x in b["fails"])
+                                      or "none")
+            m[f"Omit{bt}Dp{k}"] = fx(b["dP_w"], 0)
             for chk in ("mlcc", "ron_fit", "solder_law", "die"):
-                if chk in hb["checks"]:
-                    m[f"OmitHi{chk.title().replace('_', '')}{k}"] = fx(hb["checks"][chk]["value"], 1)
+                if chk in b["checks"]:
+                    m[f"Omit{bt}{chk.title().replace('_', '')}{k}"] = fx(b["checks"][chk]["value"], 1)
+            # the 48-V per-ball current with the bundle's added input current
+            # (tcpmt_feasibility.omitted_ball_current): at the adopted count, at the nominal
+            # k_rms and at the upper end of its band, and the count the ball rule would adopt
+            bg = b["checks"].get("bga_current") or {}
+            if bg.get("value") is not None:
+                m[f"Omit{bt}Bga{k}"] = fx(bg["value"], 2)
+                m[f"Omit{bt}BgaBand{k}"] = fx(bg.get("value_at_band"), 2)
+                cn = bg.get("count_across_band") or {}
+                if cn:
+                    m[f"Omit{bt}BgaN{k}"] = str(cn["n_per_rail"]) if cn.get("n_per_rail") else "none"
+    m.update(omitted_ball_counts(f))
     for key, rk in (f.get("rankings") or {}).items():
         st, t = key.split("_")
         tag = t + ("" if st == f.get("production_state", "SDEC") else
@@ -193,6 +207,35 @@ def feasibility():
             m[f"OmitShiftFb{t}{bt}"] = fx(v["feedback_max_w"][b], 1)
             m[f"OmitShiftTot{t}{bt}"] = fx(v["total_max_w"][b], 1)
         m[f"OmitSmallestGap{t}"] = fx(v["smallest_gap_w"], 1)
+    return m
+
+
+def omitted_ball_counts(f):
+    """Per 48-V ball field (Z1, the ring of Z2), production state: the per-ball current with the
+    omitted converter losses at the adopted count, the largest of the two coolings, at the
+    nominal k_rms (Omit<b>Bga<A>) and at the upper end of its band (Omit<b>BgaBand<A>), and the
+    count the ball rule (across the band) would adopt for both coolings (Omit<b>BgaN<A>: the
+    larger of their counts; a count meeting the rule at the larger current meets it at the
+    smaller); OmitBgaN<A>: the count meeting it under both bundles. <b>: Nom / Hi bundle."""
+    cs = f.get("cases") or {}
+    m = {}
+    for a in ("Z1", "Z2"):
+        tag, both = ATAG[a], []
+        for bn, bt in (("nominal", "Nom"), ("high", "Hi")):
+            bg = [((((cs.get(f"{t}_{a}") or {}).get("omitted_losses") or {}).get("bundles")
+                    or {}).get(bn) or {}).get("checks", {}).get("bga_current") for t in ("A", "B")]
+            bg = [x for x in bg if x and x.get("value") is not None]
+            if len(bg) < 2:                      # both coolings, or no summary
+                continue
+            m[f"Omit{bt}Bga{tag}"] = fx(max(x["value"] for x in bg), 2)
+            if all(x.get("value_at_band") is not None for x in bg):
+                m[f"Omit{bt}BgaBand{tag}"] = fx(max(x["value_at_band"] for x in bg), 2)
+            ns = [(x.get("count_across_band") or {}).get("n_per_rail") for x in bg]
+            if all(x.get("count_across_band") for x in bg):
+                m[f"Omit{bt}BgaN{tag}"] = str(max(ns)) if all(ns) else "none"
+                both += ns
+        if len(both) == 4:
+            m[f"OmitBgaN{tag}"] = str(max(both)) if all(both) else "none"
     return m
 
 

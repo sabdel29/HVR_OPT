@@ -56,10 +56,16 @@ chain since review round 2) / die_T_max_C; the stored converged deck and field
 whole-field peak as a BOUND -- a check that passes on the bound passes, one that fails only on
 the bound is UNRESOLVED (the candidate is then not ranked either).
 
-OMITTED CONVERTER LOSSES. The margins are re-checked with the high bundle of
+OMITTED CONVERTER LOSSES. The margins are re-checked with the nominal and the high bundle of
 research/tcpmt_revision/omitted_losses.json (dead time, core, AC winding, dielectric) plus its
 electrothermal feedback, each region raised by its own dT/dP from the case's first two E-T
-iterations (the slope the omitted-loss study used).
+iterations (the slope the omitted-loss study used). The same added loss raises the 48-V input
+current by dP / 48 V, so the per-ball check of the 48-V balls (Z1, Z2's BGA-ring feed) is
+re-checked too: at the case's own waveform (k_eq kept) the per-ball current at the adopted count
+scales by 1 + dP / (48 V x I_avg), recorded at the nominal k_eq and at the upper end of its band;
+for the production state the count the re-closure's rule would adopt at that current is
+recorded beside it (final_closure_pkg_network.adopt_count, verified on the resolved level). The
+1-V balls of Z3 carry the load current, which the converter loss does not change.
 
     python tcpmt_feasibility.py [--no-fields]   -> research/tcpmt_revision/feasibility.json
 """
@@ -613,7 +619,8 @@ def bga_check(arch, case, feed=None):
                     "(DC peak x k rule; no port model of the ring feed)",
                     {"I_ball_closure_rule_A": val, "I_ball_rms_max_A": None,
                      "ok_at_sensitivity_1p5A": None if val is None
-                     else val <= LIMITS["bga_A_per_ball_sensitivity"], "n_per_rail": n}))
+                     else val <= LIMITS["bga_A_per_ball_sensitivity"], "n_per_rail": n,
+                     "I_rms_48V_A": i_rms}))
         out.append(("bga_sites", 2 * n / BGA_SITES["Z2"], LIMITS["bga_power_site_fraction_max"],
                     2 * n / BGA_SITES["Z2"] <= LIMITS["bga_power_site_fraction_max"],
                     f"{2 * n} of {BGA_SITES['Z2']} sites carry the 48-V feed", {}))
@@ -808,8 +815,95 @@ def slopes(case):
     return out
 
 
+def _reclosure():
+    """The re-closure's record (final_closure_pkg_network reclose: bga_count_production.json):
+    k_eq and the k its count rule closes at (the upper end of the k_eq band); {} without one."""
+    if "reclose" not in _NET:
+        f = FC / "bga_count_production.json"
+        try:
+            _NET["reclose"] = json.loads(f.read_text()) if f.is_file() else {}
+        except json.JSONDecodeError:
+            _NET["reclose"] = {}
+    return _NET["reclose"]
+
+
+#: the level-1 screen, the legal counts and the verified (resolved-level) rows of the count
+#: searches, shared between the calls of ball_count_at within one run
+_COUNT_SEARCH = {}
+
+
+def ball_count_at(net_arch, i_rms):
+    """The count the re-closure's rule would adopt at the 48-V RMS current i_rms (A) of the
+    BGA-fed network net_arch ('Z1', or 'Z2' for Z2's BGA-ring feed): final_closure_pkg_network.
+    ADOPT_RULE / adopt_count -- the smallest legal (mirror-symmetric) count per rail on the
+    level-1 screen whose per-ball current, verified on the resolved level, meets the per-ball
+    target, the next lower legal count failing there, within the site budget. i_rms is the
+    current the rule judges (for the band rule: the current at the upper end of the k_eq band).
+    The solves run on FC_WORKERS processes (default 1, the stage's core)."""
+    import final_closure_pkg_network as PN
+    PN.WORKERS = max(1, min(PN.WORKERS, int(os.environ.get("FC_WORKERS", "1"))))
+    if not _COUNT_SEARCH:
+        screen = PN.screen_from_csv()
+        _COUNT_SEARCH.update(screen=screen, verified={},
+                             counts={a: sorted(r["n_per_rail"] for r in screen if r["arch"] == a)
+                                     for a in ("Z1", "Z2")})
+    # the screen and the verified rows carry the per-ball current at the production scenario's
+    # current: k_factor rescales it to i_rms (adopt_count judges row x k_factor)
+    i_ref = float(PN.scenarios(net_arch)[PN.PRODUCTION_SCEN])
+    budget = PN.site_budget(net_arch)
+    r = PN.adopt_count(net_arch, _COUNT_SEARCH["screen"], _COUNT_SEARCH["counts"],
+                       {"mode": "VIN_PAD"}, LIMITS["bga_A_per_ball"], budget["cap_per_rail"],
+                       cache=_COUNT_SEARCH["verified"], k_factor=float(i_rms) / i_ref)
+    n = r.get("n_per_rail")
+    return {"rule": "the re-closure's count rule (final_closure_pkg_network.ADOPT_RULE) at "
+                    "the 48-V RMS current I_rms_judged_A",
+            "status": r["status"], "n_per_rail": n, "I_rms_judged_A": float(i_rms),
+            "I_ball_at_count_A": r.get("peak_at_band_A"),
+            "lower_count": r.get("lower_count"),
+            "I_ball_at_lower_count_A": r.get("peak_at_lower_at_band_A"),
+            "site_fraction": None if n is None else 2 * n / budget["sites"],
+            "cap_per_rail": budget["cap_per_rail"], "verify_level": r.get("verify_level"),
+            "least_peak_count_within_cap": r.get("least_peak_count_within_cap")}
+
+
+def omitted_ball_current(rec, case, dp):
+    """The per-ball check of a 48-V ball field under an added package loss dp (W). Z1's BGA and
+    Z2's BGA-ring feed carry the 48-V input current, (P_load + P_loss + dp) / 48 V at the case's
+    own waveform (k_eq kept), so the per-ball current at the count checked scales by
+    1 + dp / (48 V x I_avg). Recorded at the nominal k_eq (the check's own basis) and at the upper
+    end of the k_eq band (the re-closure's k_eq_count_rule); for the production state also the
+    count the re-closure's rule would adopt at that current, across the band (ball_count_at).
+    None for the 1-V balls of Z3 (the load current, which the converter loss does not change)
+    or a check without a value."""
+    c = rec["checks"].get("bga_current") or {}
+    if rec["arch"] not in ("Z1", "Z2") or c.get("value") is None:
+        return None
+    i_avg = case.get("i_hv_avg_a") or ((1000.0 + case["P_loss_w"]) / 48.0
+                                       if case.get("P_loss_w") else None)
+    if not i_avg:
+        return None
+    scale = 1.0 + dp / (48.0 * float(i_avg))
+    v, lim = float(c["value"]) * scale, c["limit"]
+    rc = _reclosure()
+    k, k_hi = rc.get("k_eq"), rc.get("k_eq_count_rule")
+    kf = float(k_hi) / float(k) if (k and k_hi) else None
+    i_rms = None if c.get("I_rms_48V_A") is None else float(c["I_rms_48V_A"]) * scale
+    out = {"value": v, "limit": lim, "ok": v <= lim, "policy_switched": True,
+           "basis": f"the case's per-ball current at {c.get('n_per_rail')}/rail x {scale:.5f} "
+                    f"(48-V current + {dp:.2f} W / 48 V)",
+           "n_per_rail": c.get("n_per_rail"), "current_scale": scale,
+           "I_avg_48V_A": float(i_avg) * scale, "I_rms_48V_A": i_rms,
+           "k_eq": k, "k_eq_band_end": k_hi,
+           "value_at_band": None if kf is None else v * kf,
+           "ok_at_band": None if kf is None else v * kf <= lim}
+    if rec.get("state") == TC.PRODUCTION_STATE and kf is not None and i_rms:
+        out["count_across_band"] = ball_count_at(rec["arch"], i_rms * kf)
+    return out
+
+
 def omitted_margins(rec, case, omit):
-    """The high bundle (+ its feedback) applied to the checked temperatures."""
+    """The nominal and the high bundle (+ their feedback) applied to the checked temperatures,
+    and their added input current to the 48-V per-ball check (omitted_ball_current)."""
     if not omit:
         return None
     key = f"{rec['tier']}_{rec['arch']}"           # the registry keys of the regenerated study
@@ -845,9 +939,13 @@ def omitted_margins(rec, case, omit):
             v = c[chk]["value"] + sl * dp
             shifted[chk] = {"value": v, "limit": c[chk]["limit"], "dT_K": sl * dp,
                             "ok": v <= c[chk]["limit"]}
+        ball = omitted_ball_current(rec, case, dp)
+        if ball:
+            shifted["bga_current"] = ball
+        by_policy = {p: verdict_under(shifted, p)["fails"] for p in BGA_POLICIES}
         out["bundles"][name] = {"dP_w": dp, "P_omitted_w": p_om, "feedback_w": f,
-                                "checks": shifted,
-                                "fails": sorted(k for k, v in shifted.items() if not v["ok"])}
+                                "checks": shifted, "fails": by_policy[BGA_POLICY],
+                                "fails_by_bga_policy": by_policy}
     return out
 
 
@@ -960,18 +1058,19 @@ def summary_of(records, policy=None):
 
 def apply_bga_policy(doc, policy):
     """A stored feasibility document under another BGA policy, without rerunning anything:
-    each record's verdict / fails / unresolved from its by_bga_policy entry, the compared
-    cells, the rankings and the summary. Returns a new document."""
+    each record's verdict / fails / unresolved from its by_bga_policy entry (and the fails of
+    its omitted-loss bundles), the compared cells, the rankings and the summary. Returns a new
+    document."""
     import copy
     if policy not in BGA_POLICIES:
         raise ValueError(f"BGA policy {policy!r}: not one of {sorted(BGA_POLICIES)}")
     d = copy.deepcopy(doc)
-    for r in d["records"]:
+    for r in list(d["records"]) + list(d["cases"].values()):
         r.update(r["by_bga_policy"][policy])
         r["bga_policy"] = policy
-    for key, r in d["cases"].items():
-        r.update(r["by_bga_policy"][policy])
-        r["bga_policy"] = policy
+        for b in ((r.get("omitted_losses") or {}).get("bundles") or {}).values():
+            if b.get("fails_by_bga_policy"):
+                b["fails"] = b["fails_by_bga_policy"][policy]
     d["rankings"] = d["rankings_by_bga_policy"][policy]
     d["summary"] = summary_of(d["records"])
     d["bga_policy"] = dict(d["bga_policy"], in_force=policy)

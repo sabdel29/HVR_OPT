@@ -571,6 +571,58 @@ def test_feasibility_peak_fraction_at_the_adopted_count(tmp_path, monkeypatch):
     assert F.peak_fraction("Z1", 220) == (0.0277, "package network (level 3)")
 
 
+def test_omitted_losses_raise_the_48v_ball_current(tmp_path, monkeypatch):
+    """The omitted converter losses (with their feedback, dP) add to the 48-V input current:
+    the per-ball check of a 48-V ball field scales by 1 + dP / (48 V x I_avg) at the adopted
+    count (k_eq kept), at the nominal k and at the upper end of the band, and for the
+    production state the re-closure's count rule is applied at that current (solver stubbed:
+    peak fraction c / n). Z3's 1-V balls carry the load current and are not shifted; a
+    reference state gets the shifted current without a count search; the bundle's fails
+    follow the BGA policy."""
+    import tcpmt_feasibility as F
+    k, i_avg = 2.64, 23.6
+    c = {"Z1": 1.73 * 220 / (k * i_avg), "Z2": 1.63 * 220 / (k * i_avg)}
+    _stub_reclose(tmp_path, monkeypatch, c, k, i_avg, range(160, 221, 2))
+    (tmp_path / "bga_count_production.json").write_text(json.dumps(
+        {"k_eq": k, "k_eq_count_rule": 2.70}))
+    monkeypatch.setattr(F, "FC", tmp_path)
+    monkeypatch.setattr(F, "_NET", {})
+    monkeypatch.setattr(F, "_COUNT_SEARCH", {})
+    v0 = c["Z1"] / 196 * k * i_avg                       # 196 per rail: the adopted count
+    rec = {"arch": "Z1", "state": F.TC.PRODUCTION_STATE, "tier": "A",
+           "checks": {"bga_current": {"value": v0, "limit": 2.0, "ok": True, "n_per_rail": 196,
+                                      "I_rms_48V_A": k * i_avg}}}
+    case = {"i_hv_avg_a": i_avg, "P_loss_w": 48.0 * i_avg - 1000.0}
+    dp = 24.0
+    s = 1.0 + dp / (48.0 * i_avg)
+    b = F.omitted_ball_current(rec, case, dp)
+    assert b["current_scale"] == pytest.approx(s) and b["value"] == pytest.approx(v0 * s)
+    assert b["value_at_band"] == pytest.approx(v0 * s * 2.70 / k)
+    assert b["ok"] is (v0 * s <= 2.0) and b["I_rms_48V_A"] == pytest.approx(k * i_avg * s)
+    # the count rule at the band's current: 1.73 A x 220 / n x s x 2.70 / 2.64 <= 2 A
+    need = 1.73 * 220 * s * 2.70 / k / 2.0
+    cnt = b["count_across_band"]
+    assert cnt["status"] == "CLOSED" and cnt["n_per_rail"] == min(
+        n for n in range(160, 221, 2) if n >= need) == 200
+    assert cnt["I_ball_at_count_A"] <= 2.0 < cnt["I_ball_at_lower_count_A"]
+    assert cnt["lower_count"] == 198
+    assert F.omitted_ball_current(dict(rec, arch="Z3"), case, dp) is None
+    assert "count_across_band" not in F.omitted_ball_current(dict(rec, state="S0"), case, dp)
+    # the bundle's fails follow the policy: the ball check filters only under 'hard'
+    case.update(et_history=[{"P_loss_w": 100.0, "T_hs_C": 80.0, "T_die_mean_C": 70.0,
+                             "T_max_C": 90.0},
+                            {"P_loss_w": 110.0, "T_hs_C": 82.0, "T_die_mean_C": 71.0,
+                             "T_max_C": 92.0}])
+    omit = {"cases": {"A_Z1": {"omitted": {"nominal": {"total_w": 30.0},
+                                           "high": {"total_w": 60.0}}}}}
+    rec["checks"]["bga_current"]["value"] = 1.99
+    m = F.omitted_margins(rec, case, omit)
+    hb = m["bundles"]["high"]
+    assert hb["checks"]["bga_current"]["value"] > 2.0
+    assert hb["fails_by_bga_policy"] == {"hard": ["bga_current"], "requirement": []}
+    assert hb["fails"] == hb["fails_by_bga_policy"][F.BGA_POLICY]
+
+
 def test_converged_field_skips_stale_files_of_an_earlier_run(tmp_path, monkeypatch):
     """A re-run in a re-used work tree can leave higher-numbered thermal files of the earlier
     run beside its own: the converged field is the newest-numbered file whose T_max matches the

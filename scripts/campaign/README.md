@@ -356,6 +356,22 @@ unresolved under both), `rankings_by_bga_policy` holds both rankings, and
 `apply_bga_policy(doc, policy)` re-derives verdicts, rankings and summary of a stored
 `feasibility.json` without rerunning. The site budget (`bga_sites`) stays a filter under both.
 
+**Omitted converter losses and the 48-V balls (2026-11-24).** The omitted-loss re-check of the
+feasibility stage (`omitted_margins`: the nominal and high bundles of `omitted_losses.json` plus
+their electrothermal feedback, dP) also re-checks the 48-V per-ball current
+(`omitted_ball_current`): dP raises the 48-V input current by dP / 48 V at the case's own waveform
+(k_eq kept), so the per-ball current at the adopted count scales by 1 + dP / (48 V x I_avg); it is
+recorded at the nominal k and at the band's upper end, and for the production state the count the
+re-closure's rule would adopt at that current (`ball_count_at` -> `adopt_count`, verified on level
+2, `count_across_band`). Each bundle's `fails` include the ball check under the policy in force
+(`fails_by_bga_policy`). Z3's 1-V balls carry the load current and are not shifted. campaign_v3
+(dP nominal / high about 27 / 60 W): Z1 at 170 per rail 2.023 / 2.079 A (cooling A; 2.040 / 2.097 A
+at k_hi), Z2's ring at 166 per rail 1.989 / 2.045 A (cooling A; 2.006 / 2.063 A at k_hi); the rule
+would need 174 per rail for Z1 and 170 for Z2 under either bundle (Z2 under cooling B: 166 with the
+nominal bundle). The thermal re-check is unchanged: with the nominal bundle Z2 under cooling A
+exceeds the on-resistance fit and the capacitor class (127.5 / 126.9 C). `derived.feasibility` now
+runs about 12 resolved-level network solves (FC_WORKERS, default 1: about 4 min).
+
 **Tier orders: the rule counts routing loss** (the coordinator's decision: the framework's
 objective is loss). Every order of the decided tiers takes its part assignment of least
 intra-VR routing loss (among the assignments of its best worst-via AR); among the orders tied
