@@ -20,11 +20,8 @@ output-capacitance ($C_{\mathrm{oss}}$) switching losses~\cite{Abdelzaher2025ECT
 Abdelzaher2026EPEPS}. The model was checked against circuit simulation of four other members:
 $N/K = 2/2$, $3/2$, $4/4$ and $6/2$, at 48-to-1~V, 30~A and 500~kHz. It reproduces their total loss
 with $94.4\pm1.5$\,\% accuracy (worst case 92.9\,\%)~\cite{Abdelzaher2025ECTC}, and its
-extension does so with $95.3\pm1$\,\%~\cite{Abdelzaher2026EPEPS}.
-These members do not include the design point, whose topology, devices and frequency have not
-been simulated at the circuit level. Nor were the $C_{\mathrm{oss}}$ and gate-resistance rules
-below part of that validation (Section~\ref{sec:limits}). Inductor core loss, alternating-current
-winding resistance, dielectric loss and dead-time loss are not in the model.
+extension does so with $95.3\pm1$\,\%~\cite{Abdelzaher2026EPEPS}. Inductor core loss,
+alternating-current winding resistance, dielectric loss and dead-time loss are not in the model;
 Section~\ref{sec:explore-omit} bounds them (Table~S23) and compares the $C_{\mathrm{oss}}$ term with
 the datasheet charge curves.
 
@@ -38,8 +35,8 @@ combination of HS device, LS device, inductor, capacitor and switching frequency
 that passes the rules below. It returns the combination of least loss at 25\,$^\circ$C. The
 library holds 90 enhancement-mode gallium-nitride (GaN) transistors, 11 integrated inductors and 10
 capacitors. The frequency takes \FrFswCoarseN{} logarithmically spaced values from 43~kHz to
-200~MHz, up to each inductor's rated frequency; on a grid \FrFswFineFactor{} times finer no count
-changes its topology or parts (Section~\ref{sec:explore-count}).
+200~MHz, up to each inductor's rated frequency (a \FrFswFineFactor-fold finer grid:
+Section~\ref{sec:explore-count}).
 
 \emph{Voltage stress and derating.} The flying capacitor $C_i$ holds $(N-i)V_{\mathrm{in}}/N$,
 which is \FrConvCapVone{} and \FrConvCapVtwo~V for $C_1$ and $C_2$ of an N3K3 cell. Every flying capacitor's rating, derated
@@ -83,24 +80,20 @@ ripple below 0.25~V with 50~\textmu F of output capacitance per cell. This outpu
 assumption of the check; it is not placed in the tiers.
 
 Temperature, manufacturability and mechanics are not constraints of the synthesis; the package
-chain evaluates them afterward. There, each device's on-resistance follows the linear-equivalent
-temperature coefficient of its own datasheet curve over 25--125\,$^\circ$C,
-$6.0\times10^{-3}$~K$^{-1}$ for both the EPC2014C and the EPC2055~\cite{EPC2014C_DS2021,
-FrEPC2055DS2025}. Each device is evaluated at the in-cell temperature of its own tier.
+chain evaluates them afterward (Section~\ref{sec:models}).
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{fig2_converter.pdf}
 \caption{(a) The synthesized cell, N3K3 with $K_A = 2$: a 3:1 SC stage (S$_1$--S$_3$; $C_1$ at
-\FrConvCapVone~V, $C_2$ at \FrConvCapVtwo~V) feeding three inductor branches of $I_{\mathrm{cell}}/3$.
-(b) S$_1$ and S$_3$ conduct in $\phi_1$ and drive $L_1$ and $L_3$ at $V_{\mathrm{in}}/N$; S$_2$ conducts in $\phi_2$ and drives $L_2$;
-S$_4$--S$_6$ freewheel the undriven inductors ($D = \FrConvDuty$, $f_{\mathrm{sw}} =
-\FrConvFsw$~kHz). The 48-V input current flows only in $\phi_1$, so one cell's input pulse has
-$k_{\mathrm{rms}} = \FrKopen$. $C_{\mathrm{in}}$ is the package input capacitance:
-\FrDecapN{} 1206 100-V X7S capacitors (\FrDecapCtot~\textmu F at 48~V and 105\,$^\circ$C) in a
-ring outside the cell grid. With the cells' clocks interleaved in \FrDecapPhases{} phases, two
-interleaved \FrDecapGroup-phase groups, the implemented decoupling holds the package input current
-at $k_{\mathrm{rms}} = \WrKrms$ (Section~\ref{sec:evaluate-decap}).}
+\FrConvCapVone~V, $C_2$ at \FrConvCapVtwo~V) feeding three inductor branches of $I_{\mathrm{cell}}/3$;
+$C_{\mathrm{in}}$: the package input capacitor ring outside the cell grid (Table~\ref{tab:spec}).
+(b) S$_1$ and S$_3$ conduct in $\phi_1$ and drive $L_1$ and $L_3$ at $V_{\mathrm{in}}/N$; S$_2$
+conducts in $\phi_2$ and drives $L_2$; S$_4$--S$_6$ freewheel the undriven inductors
+($D = \FrConvDuty$, $f_{\mathrm{sw}} = \FrConvFsw$~kHz). The 48-V input current flows only in
+$\phi_1$, so one cell's input pulse has an RMS-to-average ratio $k_{\mathrm{rms}} = \FrKopen$.
+Interleaving the cells' clocks in \FrDecapPhases{} phases (bottom trace), with the ring, lowers the
+package input current to $k_{\mathrm{rms}} = \WrKrms$ (Section~\ref{sec:evaluate-decap}).}
 \label{fig:converter}
 \end{figure}
 
@@ -109,7 +102,6 @@ The explore mode repeats the synthesis over the regulator count $M$ and scores e
 25\,$^\circ$C. The score is its conversion loss plus the system-level routing loss of the
 vertical interconnect chain and the lateral redistribution, from the routing model
 of~\cite{Krishnakumar2026DVPD}. The selection minimizes this sum, not the conversion loss alone.
-The screen is electrical; its strongest candidates are then carried through the coupled chain.
 Fig.~\ref{fig:dse} shows the screen for a 1-kW, 48-to-1-V load on a 500-mm$^2$ die at
 $J_{\mathrm{t}} = 3.5$~A\,mm$^{-2}$, over \FrDseNcounts{} counts from \FrDseMlo{} to \FrDseMhi{}
 (the selection at every count: Table~S2).
@@ -120,22 +112,16 @@ tiers; the limit moves to \FrDseTfiveFeasHi{} cells with five tiers and to \FrDs
 cells without a tier limit. The minimum lies at $M = \FrDseOptM$: \FrConvTopo{} with
 \FrConvHsPart{} HS and \FrConvLsPart{} LS devices at \FrConvFsw~kHz, with \FrDseOptLoss~W
 (\FrDseOptConv~W conversion, \FrDseOptRoute~W routing) in \FrDseOptTiers{} tiers
-\FrDseOptStack~mm tall. At 25\,$^\circ$C with ideal input decoupling, the package ledger of Z1
-returns \PIsoZone~W for this design. It has the same \FrDseOptConv-W conversion loss and
-\ProuteIsoZone~W of routing in the explicit package conductors.
+\FrDseOptStack~mm tall. The explicit package ledger of Z1, evaluated at 25\,$^\circ$C with ideal
+input decoupling, returns \PIsoZone~W for this design: the same \FrDseOptConv-W conversion loss and
+\ProuteIsoZone~W of routing in the package conductors.
 
 The package builder realizes square grids of square cells under the square die, the shape that
 keeps the routing from every cell to its loads short~\cite{Krishnakumar2026DVPD}. The screen's
 optimum is such a grid ($\FrConvGrid\times\FrConvGrid$) and the best of them. The 16-, 25- and
 49-cell grids dissipate \FrDseSqSixteen, \FrDseSqTwentyfive{} and \FrDseSqFortynine~W, and the
-grids of \FrDseSqInfeasList{} cells admit no member.
-
-The count is confirmed by the chain, not assumed. The neighbouring square grids, 25 cells
-(\FrDseTwentyfiveTopo{} at \FrDseTwentyfiveFsw~kHz) and 49 cells (\FrDseFortynineTopo{} at
-\FrDseFortynineFsw~kHz), were synthesized under the same rules and carried through the full chain
-in Z1 (Fig.~\ref{fig:dse}c). The screen puts them \FrDseTwentyfiveMargin{} and
-\FrDseFortynineMargin~W behind the 36-cell design, and the coupled chain
-\FrChainMarginLo--\FrChainMarginHi~W behind under both coolings (Section~\ref{sec:explore-count}).
+grids of \FrDseSqInfeasList{} cells admit no member. Section~\ref{sec:explore-count} carries the
+\WrMloM- and \WrMhiM-cell neighbours through the coupled chain.
 
 \begin{figure}[!t]
 \centering
@@ -146,7 +132,7 @@ production rule), at most five and no tier limit; filled markers are square grid
 counts without a four-tier member. (b) Converter stack height of the same selections; the
 horizontal line is the depth available below the substrate in Z2 (board and balls less the
 attach). (c) Package-internal loss through the full coupled chain under coolings~A and~B: the
-square-grid neighbours in Z1 and the five-tier design at 36 cells in Z1 and Z2, a different loss
+square-grid neighbours in Z1 and the five-tier design at \FrDseTfiveSqM{} cells in Z1 and Z2, a different loss
 boundary from (a).}
 \label{fig:dse}
 \end{figure}
@@ -159,38 +145,33 @@ square grid stays at \FrDseTfiveSqM{} cells, now \FrDseTfiveSqTopo{} at \FrDseTf
 a square grid. Without a tier limit the best square grid moves to \FrDseTinfSqM{} cells at
 \FrDseTinfSqLoss~W, in \FrDseTinfSqTiers{} tiers \FrDseTinfSqStack~mm tall.
 
-The five-tier, 36-cell design is the co-design comparison of this paper. Through the coupled
-chain it dissipates \FrTfiveSaveLo--\FrTfiveSaveHi~W less than the four-tier design in Z1 and Z2
-(Fig.~\ref{fig:dse}c). Its \FrDseTfiveSqStack-mm stack, however, protrudes \FrProtrudeTfive~\textmu m
-below the \FrBoardMm-mm board of Z2, whose opening the four-tier stack clears by
-\FrFitThirtysix~\textmu m (Fig.~\ref{fig:dse}b). The integration thus constrains the converter. The
-four-tier design, which fits every integration compared here, is therefore the design point;
-Section~\ref{sec:explore-codesign} evaluates the five-tier design in full.
+The integration bounds this height. The \FrDseTfiveSqStack-mm five-tier stack would protrude
+\FrProtrudeTfive~\textmu m below the \FrBoardMm-mm board of Z2, whose opening the four-tier stack
+clears by \FrFitThirtysix~\textmu m (Fig.~\ref{fig:dse}b). The four-tier design, which fits every
+integration compared here, is therefore the design point. The five-tier design at
+\FrDseTfiveSqM{} cells is the co-design comparison of Section~\ref{sec:explore-codesign}.
 
 \subsection{The Design Point}\label{sec:dse-point}
 At \FrDseOptM{} cells the synthesis returns the regulator of Table~\ref{tab:spec} and
-Fig.~\ref{fig:converter}. It is \FrConvTopo{} with $K_A = \FrConvKA$ and $\mathbf{B} =
-[\FrConvB]$, so each inductor serves one SC branch, and $D = \FrConvDuty$ at \FrConvFsw~kHz. The
-\FrConvHsPart{} HS switches block \FrConvHsVsone~V ($S_1$) and \FrConvHsVstack~V (stacked), within
-their derated \FrConvSwVallow~V; the \FrConvLsPart{} LS switches block \FrConvLsVs~V. Each inductor
-is a 1-mm$^2$ variant of the shared-core inductor array of~\cite{Rasheedi2026CoupledInductor}, at
-\FrConvIndL~nH and \FrConvIndDcr~m$\Omega$. It carries \FrConvIndIavg~A with \FrConvIndRipple~A of
-peak-to-peak ripple, an \FrConvIndIpk-A peak against its \FrConvIndIsat-A saturation current. The
-summed cell ripple is \FrConvOutRipple~A against the \FrConvOutRippleLim-A limit, and the output
-ripple is \FrConvVripple~mV.
-
-The rated 0603 flying capacitors~\cite{FrMurataGRM188} hold \FrConvCapVone{} and \FrConvCapVtwo~V,
-against \FrConvCapVallow~V derated. At their bias and 105\,$^\circ$C, less the tolerance, they retain
+Fig.~\ref{fig:converter}: \FrConvTopo{} with $K_A = \FrConvKA$ and $\mathbf{B} = [\FrConvB]$, so
+each inductor serves one SC branch, and $D = \FrConvDuty$ at \FrConvFsw~kHz. Every part operates
+within its derated rating. The \FrConvHsPart{} HS switches block \FrConvHsVsone~V ($S_1$) and
+\FrConvHsVstack~V (stacked) against an allowed \FrConvSwVallow~V, and the \FrConvLsPart{} LS
+switches block \FrConvLsVs~V. Each inductor is a 1-mm$^2$ variant of the shared-core inductor array
+of~\cite{Rasheedi2026CoupledInductor}, at \FrConvIndL~nH and \FrConvIndDcr~m$\Omega$. It carries
+\FrConvIndIavg~A with \FrConvIndRipple~A of peak-to-peak ripple, so its \FrConvIndIpk-A peak stays
+below the \FrConvIndIsat-A saturation current. The rated 0603 flying
+capacitors~\cite{FrMurataGRM188} hold \FrConvCapVone{} and \FrConvCapVtwo~V against
+\FrConvCapVallow~V derated. At their bias and 105\,$^\circ$C, less the tolerance, they retain
 \FrConvCapCeffHotOne{} and \FrConvCapCeffHotTwo~\textmu F, so the worst switching ripple is
-\FrConvCapRipple\,\% of the capacitor voltage. Their ESR at \FrConvFsw~kHz is \FrConvCapEsr~m$\Omega$.
-The cell dissipates \FrConvLossCell~W at 25\,$^\circ$C. Conduction accounts for \FrConvCondCell~W,
-of which \FrConvLsCondCell~W is in the LS switches, and switching for \FrConvSwCell~W, of which
-\FrConvCossCell~W is $C_{\mathrm{oss}}$ loss. The \FrDseOptM{} cells together lose \FrDseOptConv~W at
-25\,$^\circ$C.
+\FrConvCapRipple\,\% of the capacitor voltage. The summed cell ripple is \FrConvOutRipple~A against
+the \FrConvOutRippleLim-A limit, and the output ripple is \FrConvVripple~mV.
 
-The parts fill four mixed tiers, \FrDseOptStack~mm tall (Table~\ref{tab:spec}).
-Section~\ref{sec:realizability} describes this stack, its copper posts and the order of its
-tiers.
+The cell dissipates \FrConvLossCell~W at 25\,$^\circ$C, and the \FrDseOptM{} cells together
+\FrDseOptConv~W. Conduction accounts for \FrConvCondCell~W per cell, of which \FrConvLsCondCell~W is
+in the LS switches, and switching for \FrConvSwCell~W, of which \FrConvCossCell~W is
+$C_{\mathrm{oss}}$ loss. The parts fill four mixed tiers, \FrDseOptStack~mm tall;
+Section~\ref{sec:realizability} describes this stack, its copper posts and the order of its tiers.
 
 \begin{table}[!t]
 \caption{System Specification, Synthesized Design Point and Package Parameters (Material and

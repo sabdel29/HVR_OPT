@@ -273,14 +273,15 @@ convection (10~W\,m$^{-2}$K$^{-1}$) beneath it.
 
 The temperature-dependent terms are iterated with the thermal solution to a fixed point: the
 on-resistance of each device, the inductor winding and the resistivity of every conductor. Each
-term is evaluated at the mean temperature of the region it is deposited in. Each device sits at
-the in-cell temperature of its own tier and uses its own datasheet coefficient. The iteration
-stops when every coupled temperature changes by less than 0.25~K and the loss by less than
-0.1\,\%. It converges in \MthEtItersLo--\MthEtItersHi{} thermal solves and contracts
-geometrically. Each loss change is \MthEtContractLo--\MthEtContractHi{} times the previous one;
-the largest factor belongs to \MthEtContractCase. The on-resistance coefficients are fitted to
-the datasheet curves over 25--125\,$^\circ$C; above that range they are extrapolated, which the
-feasibility stage reports.
+term is evaluated at the mean temperature of the region it is deposited in, and each device at
+the in-cell temperature of its own tier. A device's on-resistance follows the linear-equivalent
+temperature coefficient of its own datasheet curve over 25--125\,$^\circ$C,
+$6.0\times10^{-3}$~K$^{-1}$ for both the EPC2014C and the EPC2055~\cite{EPC2014C_DS2021,
+FrEPC2055DS2025}; above that range it is extrapolated, which the feasibility stage reports. The
+iteration stops when every coupled temperature changes by less than 0.25~K and the loss by less
+than 0.1\,\%. It converges in \MthEtItersLo--\MthEtItersHi{} thermal solves and contracts
+geometrically: each loss change is \MthEtContractLo--\MthEtContractHi{} times the previous one, the
+largest factor belonging to \MthEtContractCase.
 
 \subsection{Thermoelastic Package and Interconnect Search}\label{sec:mechanics}
 The converged temperature field loads an FE model of the mounted assembly,
