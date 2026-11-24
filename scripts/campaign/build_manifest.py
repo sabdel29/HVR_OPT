@@ -665,6 +665,7 @@ def build(design):
     # critical-joint search, the averaging-band study of the v2 model
     mech["count"] = count_mech_jobs(alt)
     mech["s0"] = s0_reference_jobs(prod)
+    mech["screen"] = joint_screen_jobs(mech)
     mech["band_study"] = job(
         "mech.band_study", "mech_revision",
         ["bash", "-c", "set -e; cd {repo}; {python} scripts/tcpmt_mech_band_study.py --run; "
@@ -1069,6 +1070,90 @@ def s0_reference_jobs(prod):
                           "fresh": True}],
                notes="the maximum response over the BGA lattice of every reference case "
                      "(S0: ideal decoupling) under the production law at the production card")
+
+
+#: the full searches that validate the joint-response screen (tcpmt_mech_joint_screen.VALIDATE)
+SCREEN_VALIDATE = ("SDEC_A_Z2__board_screws_pinned", "SDEC_A_Z1__encap_emc_lowcte",
+                   "S0_A_Z2__conv_E160_a10", "S0_A_Z2__conv_k_tenth")
+
+
+def joint_screen_jobs(mech):
+    """The joint response of every mechanical robustness variant (tcpmt_mech_joint_screen):
+    the clamp-only states the clamps need as their cold half-cycle, every variant's full
+    lattice kinematics recomputed from its converged structural field (verified against its
+    stored candidates), the screen at the reference case's K worst sites (production law),
+    full dominance-bounded searches on variants of different kinds, and the summary."""
+    T = MECH_LOCAL_THREADS
+    cold = []
+    for a in ARCHS:
+        for t in TIERS:
+            f = tr(f"board_study/SDEC_{t}_{a}_cold.json")
+            cold.append(job(f"mech.board_cold.{a}.{t}", "mech_revision",
+                            ["scripts/tcpmt_mech_board.py", "state", a, t, "--state", "SDEC",
+                             "--cold"], [f], deps=[f"mech.board.{a}.{t}"], ncpus=4, workers=2,
+                            mem_gb=40, est_h=0.6, prefer="pbs",
+                            env={"FC_POOL_MAX": 2, "FC_THREADS": 2},
+                            evidence="2 structural solves (coupon, 3x board) as mech.board",
+                            validate=[{"file": f, "kind": "json",
+                                       "nonempty": ["mechanics", "all_solves_ok"],
+                                       "fresh": True}],
+                            notes="the clamp-only states of the backplate clamp and of the "
+                                  "3x board's screw clamp (no thermal load)"))
+    producers = sorted(j["id"] for j in JOBS if j["id"].startswith((
+        "robust.", "mech.state.", "hotspot.", "feedback.", "mech.board.")) and
+        not j["id"].startswith(("robust.local.", "robust.coolB_local.", "robust.caloric.")))
+    lat = job("mech.screen.lattice", "mech_revision",
+              ["scripts/tcpmt_mech_joint_screen.py", "lattice"],
+              [tr("robustness_joint_lattice.json")],
+              deps=producers + ["mech.lattice", "mech.lattice_S0"], ncpus=8, workers=8,
+              mem_gb=48, est_h=0.5, prefer="pbs", env={"FC_POOL_MAX": 8},
+              evidence="~10 s per variant (mesh build, two .frd reads, 528-1369 site fits)",
+              validate=[{"file": tr("robustness_joint_lattice.json"), "kind": "json",
+                         "keys": ["errors"]}],
+              notes="every variant's full-lattice kinematics from its converged structural "
+                    "field on its own mesh, verified against its stored candidates")
+    latc = job("mech.screen.lattice_cold", "mech_revision",
+               ["scripts/tcpmt_mech_joint_screen.py", "lattice", "--cold"],
+               [tr("robustness_joint_lattice_cold.json")], deps=cold + [lat], ncpus=4,
+               workers=4, mem_gb=24, est_h=0.2, prefer="pbs", env={"FC_POOL_MAX": 4},
+               validate=[{"file": tr("robustness_joint_lattice_cold.json"), "kind": "json",
+                          "keys": ["errors"]}])
+    env = {"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 64}
+    run_a = job("mech.screen.run_a", "mech_revision",
+                ["scripts/tcpmt_mech_joint_screen.py", "run", "--log", "run_a"],
+                [tr("robustness_joint_runs/run_a.json")],
+                deps=[lat, mech["critical"], mech["s0"]], ncpus=64, workers=64, mem_gb=64,
+                est_h=1.5, prefer="pbs", backends=("pbs", "local"), env=env,
+                evidence="~3000 solves (the variants x K = 20 sites) x ~60 s on one thread",
+                notes="every variant at its reference case's K worst sites (production law); "
+                      "the clamps wait for their clamp-only lattices (run_b)")
+    run_b = job("mech.screen.run_b", "mech_revision",
+                ["scripts/tcpmt_mech_joint_screen.py", "run", "--log", "run_b"],
+                [tr("robustness_joint_runs/run_b.json")], deps=[run_a, latc], ncpus=32,
+                workers=32, mem_gb=32, est_h=0.3, prefer="pbs", backends=("pbs", "local"),
+                env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 32},
+                evidence="the clamps' solves (36 variants x 20 sites at most)")
+    vals = []
+    for key in SCREEN_VALIDATE:
+        f = tr(f"robustness_joint_validation/{key}.json")
+        vals.append(job(f"mech.screen.validate.{key}", "mech_revision",
+                        ["scripts/tcpmt_mech_joint_screen.py", "validate", key], [f],
+                        deps=[run_a], ncpus=24, workers=24, mem_gb=24, est_h=1.0,
+                        prefer="pbs", backends=("pbs", "local"),
+                        env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 24},
+                        evidence="a dominance-bounded search: ~150-350 sites x ~60 s",
+                        validate=[{"file": f, "kind": "json", "nonempty": ["closed"]}],
+                        notes="full dominance-bounded search on the variant's own lattice "
+                              "(production law): is its worst site inside the reference's "
+                              "top K?"))
+    return post("mech.screen.summary", "mech_revision", "tcpmt_mech_joint_screen.py",
+                [tr("robustness_joint.json")], args=["summarize"],
+                deps=[run_b, "derived.uncertainty"] + vals, est_h=0.05,
+                validate=[{"file": tr("robustness_joint.json"), "kind": "json",
+                           "nonempty": ["variants", "complete"], "fresh": True}],
+                notes="per variant: the screened response, its site and rank among the K, the "
+                      "change against its reference, the orderings under the rule; the "
+                      "validation")
 
 
 #: artifacts the pipeline reads that NO job produces (hand-written, ANSYS-only, web or PDF

@@ -232,7 +232,7 @@ def map_field_to_large(m_small, T_small, m_big, lx, ly, t_ref, ring="hot"):
     return T, n_ring
 
 
-def state_run(arch, tier, state="SDEC", factor=None, only=None):
+def state_run(arch, tier, state="SDEC", factor=None, only=None, cold=False):
     """Board size, mounting and clamp on one compared case, mechanics only on its converged
     field (production mesh, production solver):
       coupon   free (the production restraint: must reproduce the case), screws, pinned
@@ -240,7 +240,11 @@ def state_run(arch, tier, state="SDEC", factor=None, only=None):
                without heat, and reacted by a backplate under the package;
       larger   a board `factor` x the package side (configs/tcpmt_mech board) with its ring at
                the coupon's board-edge temperature (hot) or at the stress-free temperature
-               (cold), free, on screws, and with the clamp at the screws."""
+               (cold), free, on screws, and with the clamp at the screws.
+    cold=True solves only the clamp-only (no thermal load) states the joint-response screen
+    needs as the cold half-cycle of the clamps that have none in the plan above -- the
+    backplate clamp of the coupon and the screw clamp of the larger board -- into
+    board_study/<state>_<tier>_<arch>_cold.json (the main record is left as it is)."""
     import multiprocessing as mp
     import numpy as np
     import final_closure_physical_etm as E
@@ -298,6 +302,16 @@ def state_run(arch, tier, state="SDEC", factor=None, only=None):
                      ("screws_ring_hot", "BC_BOARD_SCREWS", scr, None, True, "large_hot"),
                      ("clamp_screws_ring_hot", "BC_BOARD_SCREWS", scr, lines, True,
                       "large_hot")]
+    if cold:
+        lb = clamp_lines(mb, float(LAW._val(bcfg()["clamp"]["force_N"])))[0]
+        zb_c = next(Lr for Lr in m.layers if Lr.name == "board").z0
+        zb_l = next(Lr for Lr in mb.layers if Lr.name == "board").z0
+        scr_l = {"inset_mm": float(mt["screw_inset_mm"]), "patch_mm": float(mt["screw_patch_mm"]),
+                 "z_mm": zb_l}
+        lc = clamp_lines(m, float(LAW._val(bcfg()["clamp"]["force_N"])))[0]
+        plan = [("clamp_backplate_only", "BC_BACKPLATE",
+                 {"footprint_half_mm": lx / 2, "z_mm": zb_c}, lc, False, "coupon"),
+                ("clamp_screws_ring_only", "BC_BOARD_SCREWS", scr_l, lb, False, "large_hot")]
     if only:
         plan = [x for x in plan if x[0] in only]
     res = {"arch": arch, "tier": tier, "state": state, "case": base_name,
@@ -315,7 +329,7 @@ def state_run(arch, tier, state="SDEC", factor=None, only=None):
            "ring_rule": map_field_to_large.__doc__.split("\n\n")[0].strip(),
            "mechanics": {}}
     OUTD.mkdir(parents=True, exist_ok=True)
-    f = OUTD / f"{tg}.json"
+    f = OUTD / (f"{tg}_cold.json" if cold else f"{tg}.json")
     n = max(1, min(len(plan), int(os.environ.get("FC_POOL_MAX", "1"))))
     with mp.get_context("fork").Pool(n, maxtasksperchild=1) as pool:
         for name, me in pool.imap_unordered(_state_task, plan):
@@ -629,7 +643,7 @@ def main():
             else None
         only = sys.argv[sys.argv.index("--only") + 1].split(",") if "--only" in sys.argv \
             else None
-        print(state_run(sys.argv[2], sys.argv[3], st, fac, only))
+        print(state_run(sys.argv[2], sys.argv[3], st, fac, only, "--cold" in sys.argv))
     elif sys.argv[1:2] == ["state-et"]:
         # python tcpmt_mech_board.py state-et ARCH TIER [--state SDEC] [--factor 3] [--refine 11]
         st = sys.argv[sys.argv.index("--state") + 1] if "--state" in sys.argv else "SDEC"

@@ -7063,6 +7063,34 @@ jobs:
   - file: tcpmt_revision/solder_parameters.json
     kind: json
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+- id: mech.screen.run_a
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - run
+  - --log
+  - run_a
+  outputs:
+  - tcpmt_revision/robustness_joint_runs/run_a.json
+  deps:
+  - mech.screen.lattice
+  - mech.critical
+  - mech.critical_S0
+  ncpus: 64
+  mem_gb: 64.0
+  est_wall_h: 1.5
+  walltime_h: 4.5
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '64'
+  workers: 64
+  evidence: ~3000 solves (the variants x K = 20 sites) x ~60 s on one thread
+  notes: every variant at its reference case's K worst sites (production law); the clamps wait for their
+    clamp-only lattices (run_b)
 - id: robust.coolB.Z2
   stage: mech_revision
   argv:
@@ -7547,6 +7575,126 @@ jobs:
   evidence: ~1000 sites over the six reference cases x ~65 s on one thread
   notes: 'the maximum response over the BGA lattice of every reference case (S0: ideal decoupling) under
     the production law at the production card'
+- id: mech.screen.validate.SDEC_A_Z2__board_screws_pinned
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - validate
+  - SDEC_A_Z2__board_screws_pinned
+  outputs:
+  - tcpmt_revision/robustness_joint_validation/SDEC_A_Z2__board_screws_pinned.json
+  deps:
+  - mech.screen.run_a
+  ncpus: 24
+  mem_gb: 24.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '24'
+  validate:
+  - file: tcpmt_revision/robustness_joint_validation/SDEC_A_Z2__board_screws_pinned.json
+    kind: json
+    nonempty:
+    - closed
+  workers: 24
+  evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
+  notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
+    inside the reference''s top K?'
+- id: mech.screen.validate.SDEC_A_Z1__encap_emc_lowcte
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - validate
+  - SDEC_A_Z1__encap_emc_lowcte
+  outputs:
+  - tcpmt_revision/robustness_joint_validation/SDEC_A_Z1__encap_emc_lowcte.json
+  deps:
+  - mech.screen.run_a
+  ncpus: 24
+  mem_gb: 24.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '24'
+  validate:
+  - file: tcpmt_revision/robustness_joint_validation/SDEC_A_Z1__encap_emc_lowcte.json
+    kind: json
+    nonempty:
+    - closed
+  workers: 24
+  evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
+  notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
+    inside the reference''s top K?'
+- id: mech.screen.validate.S0_A_Z2__conv_E160_a10
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - validate
+  - S0_A_Z2__conv_E160_a10
+  outputs:
+  - tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_E160_a10.json
+  deps:
+  - mech.screen.run_a
+  ncpus: 24
+  mem_gb: 24.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '24'
+  validate:
+  - file: tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_E160_a10.json
+    kind: json
+    nonempty:
+    - closed
+  workers: 24
+  evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
+  notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
+    inside the reference''s top K?'
+- id: mech.screen.validate.S0_A_Z2__conv_k_tenth
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - validate
+  - S0_A_Z2__conv_k_tenth
+  outputs:
+  - tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_k_tenth.json
+  deps:
+  - mech.screen.run_a
+  ncpus: 24
+  mem_gb: 24.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '24'
+  validate:
+  - file: tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_k_tenth.json
+    kind: json
+    nonempty:
+    - closed
+  workers: 24
+  evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
+  notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
+    inside the reference''s top K?'
 - id: robust.coolB.Z1
   stage: mech_revision
   argv:
@@ -8118,6 +8266,216 @@ jobs:
   evidence: 4 mechanics-only solves on the cooling-B field, 4 at a time
   notes: 'finding 8: NAME@B, mechanics only on the cooling-B field of the reference (configs/tcpmt_mech
     cooling_B_base)'
+- id: mech.board_cold.Z1.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z1
+  - A
+  - --state
+  - SDEC
+  - --cold
+  outputs:
+  - tcpmt_revision/board_study/SDEC_A_Z1_cold.json
+  deps:
+  - mech.board.Z1.A
+  ncpus: 4
+  mem_gb: 40.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_A_Z1_cold.json
+    kind: json
+    nonempty:
+    - mechanics
+    - all_solves_ok
+    fresh: true
+  workers: 2
+  evidence: 2 structural solves (coupon, 3x board) as mech.board
+  notes: the clamp-only states of the backplate clamp and of the 3x board's screw clamp (no thermal load)
+- id: mech.board_cold.Z1.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z1
+  - B
+  - --state
+  - SDEC
+  - --cold
+  outputs:
+  - tcpmt_revision/board_study/SDEC_B_Z1_cold.json
+  deps:
+  - mech.board.Z1.B
+  ncpus: 4
+  mem_gb: 40.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_B_Z1_cold.json
+    kind: json
+    nonempty:
+    - mechanics
+    - all_solves_ok
+    fresh: true
+  workers: 2
+  evidence: 2 structural solves (coupon, 3x board) as mech.board
+  notes: the clamp-only states of the backplate clamp and of the 3x board's screw clamp (no thermal load)
+- id: mech.board_cold.Z2.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z2
+  - A
+  - --state
+  - SDEC
+  - --cold
+  outputs:
+  - tcpmt_revision/board_study/SDEC_A_Z2_cold.json
+  deps:
+  - mech.board.Z2.A
+  ncpus: 4
+  mem_gb: 40.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_A_Z2_cold.json
+    kind: json
+    nonempty:
+    - mechanics
+    - all_solves_ok
+    fresh: true
+  workers: 2
+  evidence: 2 structural solves (coupon, 3x board) as mech.board
+  notes: the clamp-only states of the backplate clamp and of the 3x board's screw clamp (no thermal load)
+- id: mech.board_cold.Z2.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z2
+  - B
+  - --state
+  - SDEC
+  - --cold
+  outputs:
+  - tcpmt_revision/board_study/SDEC_B_Z2_cold.json
+  deps:
+  - mech.board.Z2.B
+  ncpus: 4
+  mem_gb: 40.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_B_Z2_cold.json
+    kind: json
+    nonempty:
+    - mechanics
+    - all_solves_ok
+    fresh: true
+  workers: 2
+  evidence: 2 structural solves (coupon, 3x board) as mech.board
+  notes: the clamp-only states of the backplate clamp and of the 3x board's screw clamp (no thermal load)
+- id: mech.board_cold.Z3.A
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z3
+  - A
+  - --state
+  - SDEC
+  - --cold
+  outputs:
+  - tcpmt_revision/board_study/SDEC_A_Z3_cold.json
+  deps:
+  - mech.board.Z3.A
+  ncpus: 4
+  mem_gb: 40.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_A_Z3_cold.json
+    kind: json
+    nonempty:
+    - mechanics
+    - all_solves_ok
+    fresh: true
+  workers: 2
+  evidence: 2 structural solves (coupon, 3x board) as mech.board
+  notes: the clamp-only states of the backplate clamp and of the 3x board's screw clamp (no thermal load)
+- id: mech.board_cold.Z3.B
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_board.py
+  - state
+  - Z3
+  - B
+  - --state
+  - SDEC
+  - --cold
+  outputs:
+  - tcpmt_revision/board_study/SDEC_B_Z3_cold.json
+  deps:
+  - mech.board.Z3.B
+  ncpus: 4
+  mem_gb: 40.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '2'
+    FC_THREADS: '2'
+  validate:
+  - file: tcpmt_revision/board_study/SDEC_B_Z3_cold.json
+    kind: json
+    nonempty:
+    - mechanics
+    - all_solves_ok
+    fresh: true
+  workers: 2
+  evidence: 2 structural solves (coupon, 3x board) as mech.board
+  notes: the clamp-only states of the backplate clamp and of the 3x board's screw clamp (no thermal load)
 - id: mech.lawband
   stage: mech_revision
   argv:
@@ -8157,6 +8515,132 @@ jobs:
   notes: 'pass 2: under every law its own maximum-response joint (that law''s critical-joint check), the
     window re-iterated there and the maximum re-verified at the final card (the production joint response
     and its law band: the reported uncertainty of the joint response)'
+- id: mech.screen.lattice
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - lattice
+  outputs:
+  - tcpmt_revision/robustness_joint_lattice.json
+  deps:
+  - feedback.Z1.A
+  - feedback.Z1.B
+  - feedback.Z2.A
+  - feedback.Z2.B
+  - feedback.Z3.A
+  - feedback.Z3.B
+  - hotspot.Z1.A
+  - hotspot.Z1.B
+  - hotspot.Z2.A
+  - hotspot.Z2.B
+  - hotspot.Z3.A
+  - hotspot.Z3.B
+  - mech.board.Z1.A
+  - mech.board.Z1.B
+  - mech.board.Z2.A
+  - mech.board.Z2.B
+  - mech.board.Z3.A
+  - mech.board.Z3.B
+  - mech.state.Z1.bga_card_local
+  - mech.state.Z1.encap_emc_lowcte
+  - mech.state.Z1.encap_emc_lowcte_const
+  - mech.state.Z1.encap_uf_tg
+  - mech.state.Z2.bga_card_local
+  - mech.state.Z2.encap_emc_lowcte
+  - mech.state.Z2.encap_emc_lowcte_const
+  - mech.state.Z2.encap_uf_tg
+  - mech.state.Z3.bga_card_local
+  - mech.state.Z3.encap_emc_lowcte
+  - mech.state.Z3.encap_emc_lowcte_const
+  - mech.state.Z3.encap_uf_tg
+  - robust.Z1.bga_card_local
+  - robust.Z1.board_eta025
+  - robust.Z1.board_eta075
+  - robust.Z1.board_h0_h1grid
+  - robust.Z1.board_h1
+  - robust.Z1.board_hbot100
+  - robust.Z1.board_hbot500
+  - robust.Z1.board_t2p4
+  - robust.Z1.conv_E160_a10
+  - robust.Z1.conv_E160_a4
+  - robust.Z1.conv_E80_a10
+  - robust.Z1.conv_E80_a4
+  - robust.Z1.conv_k_tenth
+  - robust.Z1.conv_posts_lower
+  - robust.Z1.conv_posts_upper
+  - robust.Z1.encap_emc_lowcte
+  - robust.Z1.encap_emc_lowcte_const
+  - robust.Z1.encap_uf_tg
+  - robust.Z1.f2_void
+  - robust.Z1.gan_k_half
+  - robust.Z1.icepak_equivalent
+  - robust.Z1.pad_drop
+  - robust.Z1.tsv_mid
+  - robust.Z1.tsv_min
+  - robust.Z2.attach_dense
+  - robust.Z2.attach_eng_p34
+  - robust.Z2.attach_eng_p37
+  - robust.Z2.attach_eng_p41
+  - robust.Z2.attach_h20
+  - robust.Z2.attach_h40
+  - robust.Z2.attach_sn
+  - robust.Z2.attach_sparse
+  - robust.Z2.attach_sparse_stiff
+  - robust.Z2.attach_stiff
+  - robust.Z2.attach_uf_soft
+  - robust.Z2.attach_uf_stiff
+  - robust.Z2.bga_card_local
+  - robust.Z2.bga_depop
+  - robust.Z2.board_eta025
+  - robust.Z2.board_eta075
+  - robust.Z2.board_h0_h1grid
+  - robust.Z2.board_h1
+  - robust.Z2.board_hbot100
+  - robust.Z2.board_hbot500
+  - robust.Z2.board_t2p4
+  - robust.Z2.conv_E160_a10
+  - robust.Z2.conv_E160_a4
+  - robust.Z2.conv_E80_a10
+  - robust.Z2.conv_E80_a4
+  - robust.Z2.conv_k_tenth
+  - robust.Z2.conv_posts_lower
+  - robust.Z2.conv_posts_upper
+  - robust.Z2.encap_emc_lowcte
+  - robust.Z2.encap_emc_lowcte_const
+  - robust.Z2.encap_uf_tg
+  - robust.Z2.f1_sidewall_filled
+  - robust.Z2.f2_void
+  - robust.Z2.feed_heat_at_crossover
+  - robust.Z2.gan_k_half
+  - robust.Z2.icepak_equivalent
+  - robust.Z2.pad_drop
+  - robust.Z2.tsv_mid
+  - robust.Z2.tsv_min
+  - robust.Z2.z2_cooled
+  - robust.coolB.Z1
+  - robust.coolB.Z2
+  - robust.coolB.Z3
+  - mech.lattice
+  - mech.lattice_S0
+  ncpus: 8
+  mem_gb: 48.0
+  est_wall_h: 0.5
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '8'
+  validate:
+  - file: tcpmt_revision/robustness_joint_lattice.json
+    kind: json
+    keys:
+    - errors
+  workers: 8
+  evidence: ~10 s per variant (mesh build, two .frd reads, 528-1369 site fits)
+  notes: every variant's full-lattice kinematics from its converged structural field on its own mesh,
+    verified against its stored candidates
 - id: mech.board_et.Z1.A
   stage: mech_revision
   argv:
@@ -8605,6 +9089,31 @@ jobs:
   notes: 'finding 5: isothermal warpage of the unmounted package at the SAC305 reflow peak / solidus against
     JEP95 / SPP-024, and the fine-pitch joint''s gap at its bonding temperature; encapsulant encap_emc_lowcte
     (Tg class)'
+- id: mech.screen.run_b
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - run
+  - --log
+  - run_b
+  outputs:
+  - tcpmt_revision/robustness_joint_runs/run_b.json
+  deps:
+  - mech.screen.run_a
+  - mech.screen.lattice_cold
+  ncpus: 32
+  mem_gb: 32.0
+  est_wall_h: 0.3
+  walltime_h: 1.5
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '32'
+  workers: 32
+  evidence: the clamps' solves (36 variants x 20 sites at most)
 - id: mech.reflow.Z1
   stage: mech_revision
   argv:
@@ -8742,6 +9251,38 @@ jobs:
   workers: 6
   notes: every board / mounting / clamp solve against its case, and the clamp in the local response (v2,
     production card)
+- id: mech.screen.lattice_cold
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - lattice
+  - --cold
+  outputs:
+  - tcpmt_revision/robustness_joint_lattice_cold.json
+  deps:
+  - mech.board_cold.Z1.A
+  - mech.board_cold.Z1.B
+  - mech.board_cold.Z2.A
+  - mech.board_cold.Z2.B
+  - mech.board_cold.Z3.A
+  - mech.board_cold.Z3.B
+  - mech.screen.lattice
+  ncpus: 4
+  mem_gb: 24.0
+  est_wall_h: 0.2
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    FC_POOL_MAX: '4'
+  validate:
+  - file: tcpmt_revision/robustness_joint_lattice_cold.json
+    kind: json
+    keys:
+    - errors
+  workers: 4
 - id: mech.state_local.encap_uf_tg
   stage: mech_revision
   argv:
@@ -9445,6 +9986,38 @@ jobs:
     - site_coverage
     fresh: true
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+- id: mech.screen.summary
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - summarize
+  outputs:
+  - tcpmt_revision/robustness_joint.json
+  deps:
+  - mech.screen.run_b
+  - derived.uncertainty
+  - mech.screen.validate.SDEC_A_Z2__board_screws_pinned
+  - mech.screen.validate.SDEC_A_Z1__encap_emc_lowcte
+  - mech.screen.validate.S0_A_Z2__conv_E160_a10
+  - mech.screen.validate.S0_A_Z2__conv_k_tenth
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/robustness_joint.json
+    kind: json
+    nonempty:
+    - variants
+    - complete
+    fresh: true
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+  notes: 'per variant: the screened response, its site and rank among the K, the change against its reference,
+    the orderings under the rule; the validation'
 - id: mech.kin.Z1.A
   stage: mech_revision
   argv:
@@ -11444,6 +12017,21 @@ jobs:
   - mech.kin_S0
   - mech.lattice_S0
   - mech.critical_S0
+  - mech.board_cold.Z1.A
+  - mech.board_cold.Z1.B
+  - mech.board_cold.Z2.A
+  - mech.board_cold.Z2.B
+  - mech.board_cold.Z3.A
+  - mech.board_cold.Z3.B
+  - mech.screen.lattice
+  - mech.screen.lattice_cold
+  - mech.screen.run_a
+  - mech.screen.run_b
+  - mech.screen.validate.SDEC_A_Z2__board_screws_pinned
+  - mech.screen.validate.SDEC_A_Z1__encap_emc_lowcte
+  - mech.screen.validate.S0_A_Z2__conv_E160_a10
+  - mech.screen.validate.S0_A_Z2__conv_k_tenth
+  - mech.screen.summary
   - mech.band_study
   - prep.dse_engine
   - dse.etm35
