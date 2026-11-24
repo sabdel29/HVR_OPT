@@ -7076,7 +7076,7 @@ jobs:
   - mech.screen.lattice
   - mech.critical
   - mech.critical_S0
-  ncpus: 64
+  ncpus: 48
   mem_gb: 64.0
   est_wall_h: 1.5
   walltime_h: 4.5
@@ -7086,8 +7086,8 @@ jobs:
   prefer: pbs
   env:
     LOCAL_THREADS: '1'
-    TCPMT_SOLDER_SLOTS: '64'
-  workers: 64
+    TCPMT_SOLDER_SLOTS: '48'
+  workers: 48
   evidence: ~3000 solves (the variants x K = 20 sites) x ~60 s on one thread
   notes: every variant at its reference case's K worst sites (production law); the clamps wait for their
     clamp-only lattices (run_b)
@@ -7585,7 +7585,7 @@ jobs:
   - tcpmt_revision/robustness_joint_validation/SDEC_A_Z2__board_screws_pinned.json
   deps:
   - mech.screen.run_a
-  ncpus: 24
+  ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
   walltime_h: 3.0
@@ -7595,13 +7595,13 @@ jobs:
   prefer: pbs
   env:
     LOCAL_THREADS: '1'
-    TCPMT_SOLDER_SLOTS: '24'
+    TCPMT_SOLDER_SLOTS: '16'
   validate:
   - file: tcpmt_revision/robustness_joint_validation/SDEC_A_Z2__board_screws_pinned.json
     kind: json
     nonempty:
     - closed
-  workers: 24
+  workers: 16
   evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
   notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
     inside the reference''s top K?'
@@ -7615,7 +7615,7 @@ jobs:
   - tcpmt_revision/robustness_joint_validation/SDEC_A_Z1__encap_emc_lowcte.json
   deps:
   - mech.screen.run_a
-  ncpus: 24
+  ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
   walltime_h: 3.0
@@ -7625,13 +7625,13 @@ jobs:
   prefer: pbs
   env:
     LOCAL_THREADS: '1'
-    TCPMT_SOLDER_SLOTS: '24'
+    TCPMT_SOLDER_SLOTS: '16'
   validate:
   - file: tcpmt_revision/robustness_joint_validation/SDEC_A_Z1__encap_emc_lowcte.json
     kind: json
     nonempty:
     - closed
-  workers: 24
+  workers: 16
   evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
   notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
     inside the reference''s top K?'
@@ -7645,7 +7645,7 @@ jobs:
   - tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_E160_a10.json
   deps:
   - mech.screen.run_a
-  ncpus: 24
+  ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
   walltime_h: 3.0
@@ -7655,13 +7655,13 @@ jobs:
   prefer: pbs
   env:
     LOCAL_THREADS: '1'
-    TCPMT_SOLDER_SLOTS: '24'
+    TCPMT_SOLDER_SLOTS: '16'
   validate:
   - file: tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_E160_a10.json
     kind: json
     nonempty:
     - closed
-  workers: 24
+  workers: 16
   evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
   notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
     inside the reference''s top K?'
@@ -7675,7 +7675,7 @@ jobs:
   - tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_k_tenth.json
   deps:
   - mech.screen.run_a
-  ncpus: 24
+  ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
   walltime_h: 3.0
@@ -7685,13 +7685,13 @@ jobs:
   prefer: pbs
   env:
     LOCAL_THREADS: '1'
-    TCPMT_SOLDER_SLOTS: '24'
+    TCPMT_SOLDER_SLOTS: '16'
   validate:
   - file: tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_k_tenth.json
     kind: json
     nonempty:
     - closed
-  workers: 24
+  workers: 16
   evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
   notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
     inside the reference''s top K?'
@@ -11166,6 +11166,9 @@ jobs:
   - m25.prod.Z1.SDEC.B
   - m49.prod.Z1.SDEC.A
   - m49.prod.Z1.SDEC.B
+  - m25.mech.lawband
+  - m49.mech.lawband
+  - derived.uncertainty
   ncpus: 1
   mem_gb: 4.0
   est_wall_h: 0.05

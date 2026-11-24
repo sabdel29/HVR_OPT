@@ -173,6 +173,43 @@ def dse():
     return m
 
 
+def fsw_fine():
+    """The four-tier screen on the nested 16x finer f_sw grid under the full rules
+    (scripts/tcpmt_dse_fsw_grid.py -> dse_fsw_fine.json)."""
+    d = J(TR / "dse_fsw_fine.json")
+    if not d:
+        return {}
+    m = {}
+    pc = {int(k): v for k, v in d["counts"].items()}
+    m["FrFswFineN"] = str(d["n_grid_points"])
+    m["FrFswCoarseN"] = str(d["n_grid_points_screen"])
+    m["FrFswFineFactor"] = str(round((d["n_grid_points"] - 1)
+                                     / (d["n_grid_points_screen"] - 1)))
+    o = d["optimum_fine"]
+    f, c = pc[o]["fine"], pc[o]["grid50"]
+    m["FrFswFineOptM"] = str(o)
+    m["FrFswFineOptSame"] = "yes" if d["optimum_unchanged"] else "no"
+    m["FrFswFineSelSame"] = "yes" if d["optimum_selection_unchanged"] else "no"
+    m["FrFswFineOptFsw"] = fx(f["f_sw_kHz"], 0)
+    m["FrFswFineOptLoss"] = fx(f["total_loss_W"], 1)
+    m["FrFswFineOptGain"] = fx(c["total_loss_W"] - f["total_loss_W"], 2)
+    m["FrFswFineNselChanged"] = str(d["n_counts_selection_changed"])
+    m["FrFswFineNfswChanged"] = str(d["n_counts_f_sw_changed"])
+    m["FrFswFineNfeasChanged"] = str(d["n_counts_feasibility_changed"])
+    m["FrFswFineNfeas"] = str(sum(1 for v in pc.values() if v["fine"]))
+    lo, hi = d["loss_change_range_W"]
+    m["FrFswFineGainMax"] = fx(-lo, 1)
+    m["FrFswFineRunnerUp"] = str(d["runner_up_fine"])
+    m["FrFswFineRunnerUpMargin"] = fx(d["margin_to_runner_up_W"], 1)
+    for mm in (25, 49):
+        v = pc.get(mm) or {}
+        if v.get("fine") and f:
+            m[f"FrFswFine{WORD[mm]}Margin"] = fx(v["fine"]["total_loss_W"] - f["total_loss_W"], 1)
+    sq = d.get("square_ranking_fine") or []
+    m["FrFswFineSqSecond"] = str(sq[1]) if len(sq) > 1 else NA
+    return m
+
+
 # ------------------------------------------------------------------ designs through the chain
 def chain():
     d = J(TR / "design_comparison.json")
@@ -415,7 +452,8 @@ def die_and_mech():
 
 def main():
     m = {}
-    for f in (dse, chain, cutout_fit, converter, record_tiers, decoupling, die_and_mech):
+    for f in (dse, fsw_fine, chain, cutout_fit, converter, record_tiers, decoupling,
+              die_and_mech):
         try:
             m.update(f())
         except Exception as e:                                     # noqa: BLE001

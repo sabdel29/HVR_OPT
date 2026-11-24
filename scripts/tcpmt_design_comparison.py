@@ -53,10 +53,79 @@ def summary(path):
         return None
     c = json.loads(path.read_text())
     th = c.get("thermal") or {}
+    me = c.get("mechanics") or {}
+    crit = (me.get("joint_search") or {}).get("critical") or {}
     return {"file": str(path), "P_loss_W": c.get("P_loss_w"), "T_max_C": th.get("T_max_C"),
             "die_T_max_C": c.get("die_T_max_C"), "et_converged": c.get("et_converged"),
             "energy_residual_rel": th.get("energy_residual_rel"),
+            "die_warpage_pv_um": me.get("die_warpage_pv_um"), "du_c_um": crit.get("du_um"),
             "design": (c.get("design") or {}).get("design")}
+
+
+def joint_band(key):
+    """{'<tier>_<arch>': joint response of the design's own v2 law band} (the production law at
+    its own maximum over the BGA lattice and every other law at its own; the band's file in
+    the design's results root), or {} when the design has none."""
+    f = design_root(key) / "tcpmt_revision" / "solder_law_band.json"
+    if not f.is_file():
+        return {}
+    b = json.loads(f.read_text())
+    out = {}
+    for lab, r in (b.get("band") or {}).items():
+        if not r.get("complete"):
+            continue
+        site = (b.get("joints") or {}).get(lab) or {}
+        out[lab] = {"production": r["production"], "min": r["min"], "max": r["max"],
+                    "values": r["values"], "same_site_all_laws": r.get("same_site_all_laws"),
+                    "site_mm": [site.get("x_mm"), site.get("y_mm")], "T_C": site.get("T_C"),
+                    "du_def_xy_um": site.get("du_def_xy_um"),
+                    "all_verified": b.get("all_verified"),
+                    "production_law": b.get("production_law")}
+    return out
+
+
+def count_joints(out):
+    """The joint response of the count neighbours against the production count (Z1, each
+    cooling) under THE rule: D = y_b - y_a resolved when |D| > U95(D) under EVERY law of the
+    band (tcpmt_resolution.law_band); U95 from each joint's numerical U of the local model
+    (the production joints' own L0 -> L3 and 4 -> 8 cycle changes, transferred to the
+    neighbours' joints, which run the same local model)."""
+    try:
+        import tcpmt_resolution as RULE
+        import tcpmt_uncertainty as TU
+        _eps, u_t, _own, _basis, _band = TU.local_u()
+    except Exception as e:                        # recorded, never silent
+        return {"error": str(e)[-300:]}
+    prod = DR.production_key()
+    res = {}
+    for t in TIERS:
+        u = u_t.get((t, "Z1"))
+        rows = {k: (d.get("joints") or {}).get(f"{t}_Z1") for k, d in out["designs"].items()
+                if DR.get(k)["role"] in ("production", "count neighbour")}
+        if None in rows.values() or u is None:
+            res[t] = {"complete": False}
+            continue
+        laws = sorted(set.intersection(*(set(r["values"]) for r in rows.values())))
+        pairs = {}
+        for k, r in rows.items():
+            if k == prod:
+                continue
+            p0 = rows[prod]
+            per = {law: (r["values"][law] - p0["values"][law],
+                         RULE.quad(u * p0["values"][law], u * r["values"][law]))
+                   for law in laws}
+            lb = RULE.law_band(per, p0["production_law"])
+            pairs[k] = {"D_production": r["production"] - p0["production"],
+                        "ratio_production": r["production"] / p0["production"],
+                        "verdict": lb.get("verdict"),
+                        "lower": prod if r["production"] > p0["production"] else k,
+                        "sign_changes": lb.get("sign_changes")}
+        order = {law: [k for k, _r in sorted(rows.items(), key=lambda kv: kv[1]["values"][law])]
+                 for law in laws}
+        res[t] = {"complete": True, "U_rel": u, "laws": laws, "order_by_law": order,
+                  "same_order_all_laws": len({tuple(v) for v in order.values()}) == 1,
+                  "pairs_vs_production": pairs}
+    return res
 
 
 def compare():
@@ -73,6 +142,7 @@ def compare():
                 s = summary(case_file(key, a, t))
                 if s:
                     rec["cases"][f"{a}_{t}"] = s
+        rec["joints"] = joint_band(key)
         out["designs"][key] = rec
     for t in TIERS:
         rows = [(k, d["n_vr"], d["screen_P_total_W"], (d["cases"].get(f"Z1_{t}") or {})
@@ -87,10 +157,12 @@ def compare():
             "same_ranking": bool(len(have) == len(rows) and screen_rank == chain_rank),
             "rows": [{"design": k, "M": m, "screen_P_total_W": ps, "chain_P_loss_W": pc}
                      for k, m, ps, pc in rows]}
+    out["count_joints"] = count_joints(out)
     f = ROOT / "tcpmt_revision" / "design_comparison.json"
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps(out, indent=1, default=float) + "\n")
-    print(json.dumps(out["ranking"], indent=1, default=float))
+    print(json.dumps({"ranking": out["ranking"], "count_joints": out["count_joints"]},
+                     indent=1, default=float))
     return out
 
 

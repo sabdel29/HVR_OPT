@@ -528,20 +528,32 @@ def solder():
         else "0"
     M["MthCritCase"] = (worst[1] or NA).replace("_", " ")
     M["MthCritNotMax"] = str(sum(1 for v in cj.values() if not v.get("critical_is_max_du")))
-    # averaging band
-    ab = (d.get("averaging_band") or {}).get("bands") or {}
-    ch = []
-    for b in ab.values():
-        for lev in ("L0", "L2"):
-            for a in ("Z1", "Z2"):
-                x = get(b, lev, a, "change_vs_production_band")
-                if x is not None:
-                    ch.append(x)
-    if ch:
-        M["MthBandLo"], M["MthBandHi"] = sfx(100 * min(ch), 0), sfx(100 * max(ch), 0)
-    bu = sorted(b.get("band_um") for b in ab.values() if b.get("band_um"))
-    if bu:
+    # averaging band: the v2 study at the production critical joints (tcpmt_mech_band_study:
+    # the production local model, six joints, L0 and L2); the round-2 legacy study otherwise
+    v2 = J(TR / "solder_band_study_v2.json") or {}
+    if v2.get("complete"):
+        lo, hi = v2["change_range_rel"]
+        M["MthBandLo"], M["MthBandHi"] = sfx(100 * lo, 0), sfx(100 * hi, 0)
+        bu = sorted(b["band_um"] for b in v2["bands"].values())
         M["MthBandUm"] = ", ".join(fx(x, 0) for x in bu[:-1]) + " and " + fx(bu[-1], 0)
+        M["MthBandNjoints"] = str(len(v2["joints"]))
+        M["MthBandLevels"] = " and ".join(v2["levels"][::-1])
+        M["MthBandProdUm"] = fx(v2["bands"][v2["production_band"]]["band_um"], 0)
+        M["MthBandOrderHold"] = "yes" if v2.get("orderings_hold_everywhere") else "no"
+    else:
+        ab = (d.get("averaging_band") or {}).get("bands") or {}
+        ch = []
+        for b in ab.values():
+            for lev in ("L0", "L2"):
+                for a in ("Z1", "Z2"):
+                    x = get(b, lev, a, "change_vs_production_band")
+                    if x is not None:
+                        ch.append(x)
+        if ch:
+            M["MthBandLo"], M["MthBandHi"] = sfx(100 * min(ch), 0), sfx(100 * max(ch), 0)
+        bu = sorted(b.get("band_um") for b in ab.values() if b.get("band_um"))
+        if bu:
+            M["MthBandUm"] = ", ".join(fx(x, 0) for x in bu[:-1]) + " and " + fx(bu[-1], 0)
     lc = J(FC / "local_cycle_study.json") or {}
     w = [v.get("wall_s") for v in (lc.get("cases") or {}).values() if v.get("wall_s")]
     if w:

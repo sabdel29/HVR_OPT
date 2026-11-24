@@ -664,6 +664,9 @@ def build(design):
     # gap closing (MC7, MC8, robustness): the count neighbours' joints, the reference-state
     # critical-joint search, the averaging-band study of the v2 model
     mech["count"] = count_mech_jobs(alt)
+    # the design comparison reads the neighbours' joints (each design's own law band)
+    jd = next(j for j in JOBS if j["id"] == "derived.design_comparison")
+    jd["deps"] += [mech["count"][k] for k in sorted(mech["count"])] + ["derived.uncertainty"]
     mech["s0"] = s0_reference_jobs(prod)
     mech["screen"] = joint_screen_jobs(mech)
     mech["band_study"] = job(
@@ -1118,11 +1121,12 @@ def joint_screen_jobs(mech):
                workers=4, mem_gb=24, est_h=0.2, prefer="pbs", env={"FC_POOL_MAX": 4},
                validate=[{"file": tr("robustness_joint_lattice_cold.json"), "kind": "json",
                           "keys": ["errors"]}])
-    env = {"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 64}
+    # califone's cpu_only queue runs at most 56 cpus per user at a time
+    env = {"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 48}
     run_a = job("mech.screen.run_a", "mech_revision",
                 ["scripts/tcpmt_mech_joint_screen.py", "run", "--log", "run_a"],
                 [tr("robustness_joint_runs/run_a.json")],
-                deps=[lat, mech["critical"], mech["s0"]], ncpus=64, workers=64, mem_gb=64,
+                deps=[lat, mech["critical"], mech["s0"]], ncpus=48, workers=48, mem_gb=64,
                 est_h=1.5, prefer="pbs", backends=("pbs", "local"), env=env,
                 evidence="~3000 solves (the variants x K = 20 sites) x ~60 s on one thread",
                 notes="every variant at its reference case's K worst sites (production law); "
@@ -1138,9 +1142,9 @@ def joint_screen_jobs(mech):
         f = tr(f"robustness_joint_validation/{key}.json")
         vals.append(job(f"mech.screen.validate.{key}", "mech_revision",
                         ["scripts/tcpmt_mech_joint_screen.py", "validate", key], [f],
-                        deps=[run_a], ncpus=24, workers=24, mem_gb=24, est_h=1.0,
+                        deps=[run_a], ncpus=16, workers=16, mem_gb=24, est_h=1.0,
                         prefer="pbs", backends=("pbs", "local"),
-                        env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 24},
+                        env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 16},
                         evidence="a dominance-bounded search: ~150-350 sites x ~60 s",
                         validate=[{"file": f, "kind": "json", "nonempty": ["closed"]}],
                         notes="full dominance-bounded search on the variant's own lattice "
