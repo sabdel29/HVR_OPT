@@ -4,7 +4,7 @@
 \subsection{Generalized Hybrid Regulator Family}\label{sec:dse-family}
 The regulator is synthesized from a family rather than fixed in advance. Each member is a
 two-phase hybrid SC--buck converter with $N$ SC branches and $K$ inductor branches
-(Fig.~\ref{fig:converter}a). It has $N$ high-side (HS) switches, $N-1$ flying capacitors, $K$
+(Fig.~\ref{fig:converter}(a)). It has $N$ high-side (HS) switches, $N-1$ flying capacitors, $K$
 low-side (LS) switches and $K$ inductors, with $2\le K\le N$. A member is written N$x$K$y$ for
 $N = x$ and $K = y$; the design point below is N3K3. In the first switching phase $\phi_1$, $K_A$
 of the inductors are driven, and the remaining $K-K_A$ are driven in $\phi_2$. The
@@ -121,7 +121,7 @@ keeps the routing from every cell to its loads short~\cite{Krishnakumar2026DVPD}
 optimum is such a grid ($\FrConvGrid\times\FrConvGrid$) and the best of them. The 16-, 25- and
 49-cell grids dissipate \FrDseSqSixteen, \FrDseSqTwentyfive{} and \FrDseSqFortynine~W, and the
 grids of \FrDseSqInfeasList{} cells admit no member. Section~\ref{sec:explore-count} carries the
-\WrMloM- and \WrMhiM-cell neighbours through the coupled chain.
+\WrMloM- and \WrMhiM-cell neighbors through the coupled chain.
 
 \begin{figure}[!t]
 \centering
@@ -132,12 +132,12 @@ production rule), at most five and no tier limit; filled markers are square grid
 counts without a four-tier member. (b) Converter stack height of the same selections; the
 horizontal line is the depth available below the substrate in Z2 (board and balls less the
 attach). (c) Package-internal loss through the full coupled chain under coolings~A and~B: the
-square-grid neighbours in Z1 and the five-tier design at \FrDseTfiveSqM{} cells in Z1 and Z2, a different loss
+square-grid neighbors in Z1 and the five-tier design at \FrDseTfiveSqM{} cells in Z1 and Z2, a different loss
 boundary from (a).}
 \label{fig:dse}
 \end{figure}
 
-The tier limit is itself a design decision (Fig.~\ref{fig:dse}b). More tiers admit larger devices
+The tier limit is itself a design decision (Fig.~\ref{fig:dse}(b)). More tiers admit larger devices
 and more branches in the same cell, so the loss falls as the stack grows. With five tiers the best
 square grid stays at \FrDseTfiveSqM{} cells, now \FrDseTfiveSqTopo{} at \FrDseTfiveSqFsw~kHz with
 \FrDseTfiveSqLoss~W, \FrDseTfiveSqGain~W less, but its stack grows from \FrDseOptStack{} to
@@ -147,7 +147,7 @@ a square grid. Without a tier limit the best square grid moves to \FrDseTinfSqM{
 
 The integration bounds this height. The \FrDseTfiveSqStack-mm five-tier stack would protrude
 \FrProtrudeTfive~\textmu m below the \FrBoardMm-mm board of Z2, whose opening the four-tier stack
-clears by \FrFitThirtysix~\textmu m (Fig.~\ref{fig:dse}b). The four-tier design, which fits every
+clears by \FrFitThirtysix~\textmu m (Fig.~\ref{fig:dse}(b)). The four-tier design, which fits every
 integration compared here, is therefore the design point. The five-tier design at
 \FrDseTfiveSqM{} cells is the co-design comparison of Section~\ref{sec:explore-codesign}.
 

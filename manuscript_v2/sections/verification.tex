@@ -55,9 +55,9 @@ open-source FE solution~\cite{MOOSE} to \ErrPkgRdlZone{} and \MthErrRingNet\,\%.
 agrees with commercial and open-source FE solutions of representative unit cells to
 \ErrThermMax\,\% of the temperature rise.
 
-The complete Z1 package, solved by the production path and by the MOOSE heat-transfer
+The complete Z1 package, solved by the framework and by the MOOSE heat-transfer
 module~\cite{MOOSE} on the identical mesh of \MthFpElems{} hexahedra, agrees to
-\FullPkgErrZone~K at the peak and over the nodal field. The problem used the converged heat map
+\FullPkgErrZone~K at the peak and over the nodal field. The check uses the converged heat map
 of the ideal-decoupling case and a uniform film on the plate face. This check verifies the
 assembled solver input and solve; Section~\ref{sec:verif-disc} measures the discretization.
 
@@ -89,7 +89,7 @@ Discretization and the local model: Sections~\ref{sec:verif-disc} and~\ref{sec:v
 \subsection{Discretization and the Resolution Rule}\label{sec:verif-disc}
 The package mesh is a graded 1.1-mm grid refined by nested splitting, in which every coarse node
 survives; level r$IJ$ splits every in-plane interval into $I$ and every layer into $J$ parts.
-Splitting every in-plane interval in two changed the Z1 peak temperature by \MthMeshStepT\,\%, so
+Splitting every in-plane interval in two changes the Z1 peak temperature by \MthMeshStepT\,\%, so
 the production mesh is r21 (Table~S16). Every compared case, Z1--Z3 under both coolings in the
 production state, carries its own ladder of three in-plane levels, r11, r21 and r31. The
 ideal-decoupling references of Z1 and Z2 add a through-thickness rung, r12.
@@ -108,7 +108,7 @@ estimate on $D$'s own rung sequence~\cite{Roache1998,Celik2008}. Errors that the
 on one mesh family thus cancel only where they move together. A monotone ladder whose observed
 order lies within 0.2 of the formal order 2 is asymptotic and uses the safety factor
 $F_s = 1.25$. Other monotone ladders use $F_s = 3$ with the order limited to [0.5,~2]. An
-oscillatory ladder carries $F_s$ = 3 times half its range and no signed bias. The bias is
+oscillatory ladder carries $F_s = 3$ times half its range and no signed bias. The bias is
 $\beta = e_{32}r^p/(r^p-1)$, with $e_{32}$ the r21-to-r31 change, $p$ the order and $r = 1.5$.
 
 $U_{95}(D)$ adds three terms in quadrature to the discretization term: the through-thickness
@@ -161,7 +161,7 @@ sites ordered by $(\Delta u, T_{\mathrm{sj}})$, the dominated site responds more
 pairs reverse by more than 1\,\%, by at most \MvCritRevF\,\%, which sets the margin at
 \MvCritMarginMin--\MvCritMargin\,\%.
 
-The joint of largest $\Delta u$, or its mirror image within the 1-\% noise of the local model, is
+The joint of largest $\Delta u$, or its mirror image within the 1\,\% noise of the local model, is
 the critical joint in every case except those of Z2. Under cooling~A, the critical joint of Z2 is
 an inner site of the ring that responds \MvCritRatioMax\,\% more than the joint of largest
 $\Delta u$. Under cooling~B, it is the mirror corner, which responds \MvCritRatioBZtwo{} times as
@@ -181,5 +181,5 @@ thread, and geometry and meshing take under 2~min. The critical-joint search add
 \MvCritSolvedAll{} independent solves of the local model over the six cases and three laws; they
 parallelize over the sites. The per-stage breakdown, mesh sizes, degrees of freedom and peak
 memory are in Table~S16. On the identical package mesh the open-source solver is faster (\FullPkgMooseZone~s
-against \FullPkgCcxZone~s on eight cores), because the production path factors the system with a
+against \FullPkgCcxZone~s on eight cores), because the framework factors the system with a
 single-threaded direct solver.

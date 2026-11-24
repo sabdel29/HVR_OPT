@@ -14,21 +14,21 @@ the grid changes no count's topology or parts (Table~S2). The optimum stays at $
 \FrFswFineOptGain~W. The runner-up, $M = \FrFswFineRunnerUp$, a count with no square grid, comes
 within \FrFswFineRunnerUpMargin~W instead of \FrFswCoarseRunnerUpMargin~W.
 
-The coupled chain also confirms the count against its square-grid neighbours, $M = \WrMloM$
+The coupled chain also confirms the count against its square-grid neighbors, $M = \WrMloM$
 (\FrDseTwentyfiveTopo{} at \FrDseTwentyfiveFsw~kHz) and $M = \WrMhiM$ (\FrDseFortynineTopo{} at
 \FrDseFortynineFsw~kHz). Both are synthesized under the same rules and evaluated in Z1 with the
-mechanics of the production cases (Fig.~\ref{fig:dse}c). The screen puts them
+mechanics of the production cases (Fig.~\ref{fig:dse}(c)). The screen puts them
 \FrDseTwentyfiveMargin{} and \FrDseFortynineMargin~W behind the selected count; under cooling~A the
 coupled chain puts them \WrMloAZonedPAbs{} and \WrMhiAZonedPAbs~W behind, at peaks of
 \WrMloAZoneTmax{} and \WrMhiAZoneTmax\,$^\circ$C.
 
-Both neighbours fail the feasibility stage under that cooling. $M = \WrMloM$ exceeds the upper end
+Both neighbors fail the feasibility stage under that cooling. $M = \WrMloM$ exceeds the upper end
 of the on-resistance fit and the range of the solder laws; $M = \WrMhiM$ also exceeds the capacitor
 class. Under cooling~B both pass, but they remain \WrMloBZonedPAbs{} and \WrMhiBZonedPAbs~W behind.
-The coupled chain thus keeps the screen's order and widens its gaps. The neighbours run hotter,
+The coupled chain thus keeps the screen's order and widens its gaps. The neighbors run hotter,
 and the coupled ledger evaluates every part at its own temperature.
 
-The mechanics follow the same order. Under cooling~A the neighbours' dies warp \WrMloAZoneWarp{} and
+The mechanics follow the same order. Under cooling~A the neighbors' dies warp \WrMloAZoneWarp{} and
 \WrMhiAZoneWarp~\textmu m, against \WarpAZone~\textmu m. Their critical joints run at
 \WrMloAZoneTsj{} and \WrMhiAZoneTsj\,$^\circ$C, against \MvTsjAZone\,$^\circ$C, and respond
 \WrMloAZoneEps{} and \WrMhiAZoneEps$\times10^{-3}$ per cycle, against \MvEpsAZone$\times10^{-3}$.
@@ -40,7 +40,7 @@ joints inherit it.
 \subsection{Converter and Integration Co-Design}\label{sec:explore-codesign}
 Through the coupled chain, the five-tier converter of Section~\ref{sec:dse-count}
 (\FrDseTfiveSqTopo{} at \FrDseTfiveSqFsw~kHz) saves \FrTfiveSaveLo--\FrTfiveSaveHi~W in Z1 and Z2
-(Fig.~\ref{fig:dse}c). In Z1 under cooling~A it dissipates \WrFiveAZonePloss~W,
+(Fig.~\ref{fig:dse}(c)). In Z1 under cooling~A it dissipates \WrFiveAZonePloss~W,
 \WrFiveAZonedPAbs~W less than the four-tier design, at a peak only \WrFiveAZonedTAbs~K higher and
 with every thermal and solder limit met. In Z2, which it does not fit, the saving under cooling~B
 would be \WrFiveBZtwodPAbs~W. In Z3 it saves \WrFiveAZthreedPAbs{} and \WrFiveBZthreedPAbs~W under
@@ -60,7 +60,7 @@ interconnect, not of loss.
 At a conservative \WrBgaRuleSens~A per ball, no legal ball arrangement meets the rating. The Z1 ball field carries
 \WrBgaAtNmaxZone~A per ball even at its legal maximum of \WrBgaNmax{} balls per rail. The Z2 ring
 needs \WrBgaSensNZtwo{} balls per rail, \WrBgaSensFracZtwo\,\% of its \MthSitesRing{} sites, above
-the \MthLimSites-\% site limit, and the 1-V balls of Z3 would need \BgaNsensZthree{} per rail, more
+the \MthLimSites\,\% site limit, and the 1-V balls of Z3 would need \BgaNsensZthree{} per rail, more
 than the site limit admits. Under that rating none of the integrations is feasible, so the per-ball
 rating, not the coupled physics, would decide. The \WrBgaRule-A assumption of
 Section~\ref{sec:ledger} is therefore one the conclusions depend on (Section~\ref{sec:limits}).
@@ -104,7 +104,7 @@ the post conductivity, Z1's peak changes by \WrPostLoZonedT~K and its loss by \W
 upper end changes them by \WrPostHiZonedT~K and \WrPostHiZonedP~W. Halving the GaN-tier conductivity
 changes the peak by \WrGanHalfZonedT~K and the loss by \WrGanHalfZonedP~W, and Z1's corner joint then
 runs at \WrGanHalfZoneTj\,$^\circ$C, still inside the range of the solder laws. A tenth of the
-capacitor and inductor-tier conductivity, an extreme bound, makes Z1 infeasible at
+capacitor- and inductor-tier conductivity, an extreme bound, makes Z1 infeasible at
 \WrKTenthZoneTmax\,$^\circ$C.
 
 In the production state under cooling~A, a low-CTE mold compound in the out-of-cell volume changes
@@ -127,7 +127,7 @@ the other three rankings, which hold in both states.
 
 The joint column judges each integration by its joint response, not by its largest ball
 displacement. Each of the \MvScrNvar{} variants is first solved at the \MvScrK{} worst sites of its
-reference case's search, which avoids a full critical-joint search per variant. This screen can
+reference case's search. This screen can
 miss the worst site: in the deepest variant of each kind (mounting, encapsulant class, mechanical
 card and thermal decision), the full search found it among the \MvScrK{} in \MvScrValInTopKWord{} of
 \MvScrValNWord{} cases. A variant is therefore searched in full when its largest response falls beyond

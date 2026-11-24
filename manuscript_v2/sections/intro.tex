@@ -11,7 +11,7 @@ further: many regulator cells each sit beneath their own load region, so 48~V tr
 and the kiloampere travels only
 micrometers~\cite{Krishnakumar2026DVPD,Sriharini_ECTC_24,ISCAS2024DVPD}.
 
-The cells can be integrated in several ways (Fig.~\ref{fig:concept}a--c). In the \emph{embedded}
+The cells can be integrated in several ways (Fig.~\ref{fig:concept}(a)--(c)). In the \emph{embedded}
 integration (Z1), they sit between the package substrate and the die~\cite{Krishnakumar2026DVPD};
 they can also be stacked on the die backside~\cite{GoogleBacksideIVR2021}. In the
 \emph{package-backside} integration (Z2), they are attached to the substrate backside inside an
@@ -67,7 +67,7 @@ interconnect realizability together (Table~\ref{tab:prior}).
 
 \input{tab_prior}
 
-Relative to its closest predecessors (Table~\ref{tab:prior}), the framework adopts and extends
+Relative to its closest predecessors, the framework adopts and extends
 the following. From~\cite{Krishnakumar2026DVPD} it adopts the 1-kW, 48-to-1-V specification, the
 embedded integration, the TSV and ball-grid-array (BGA) technology and the routing model that
 scores the regulator-count screen. From our converter work~\cite{Abdelzaher2025ECTC,
@@ -82,7 +82,7 @@ package with a declared cooling boundary in three integrations. Unlike~\cite{Kri
 the framework does not resolve transient droop, and the designer, not the framework, feeds the
 package result back to the synthesis.
 
-The new elements are the contributions of this paper.
+The contributions of this paper are as follows.
 \begin{enumerate}
 \item A device-to-joint electrothermal--mechanical framework for package-integrated voltage
 regulation, used in three modes---evaluate, compare and explore---on one geometry
@@ -91,7 +91,7 @@ classified, each reduced model is checked against a matched reference, and each 
 difference is resolved against its own numerical uncertainty. One coupled evaluation takes
 \MthTotHLo--\MthTotHHi~h on a workstation, without the local joint model.
 \item Converter synthesis from a discrete library under part-level rules, with the regulator count
-as an output that the coupled chain confirms against its neighbours, and a realizability check of
+as an output that the coupled chain confirms against its neighbors, and a realizability check of
 the tier order (Sections~\ref{sec:dse}, \ref{sec:realizability} and~\ref{sec:explore-count}).
 \item A thermoelastic solution of the mounted assembly that searches every interconnect site. A
 viscoplastic joint submodel, driven by the global displacement field, locates the governing joint

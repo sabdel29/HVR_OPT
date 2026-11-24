@@ -16,7 +16,7 @@ network and \WrPringAZone~W in the input capacitors.
 
 The peak, \TmaxAZone\,$^\circ$C, lies in the input-end tier, which holds two high-side devices and
 the two flying capacitors. That tier sits farthest from the cold plate: its heat crosses the other
-three tiers and the die. The three low-side tiers peak at \WrTtierTwoAZone, \WrTtierThreeAZone{} and
+three tiers and the die. The other three tiers peak at \WrTtierTwoAZone, \WrTtierThreeAZone{} and
 \WrTtierFourAZone\,$^\circ$C, falling toward the die. The die averages \WrTdieMeanAZone\,$^\circ$C and
 peaks at \TdiemaxAZone\,$^\circ$C under its uniform load.
 
@@ -26,9 +26,9 @@ analysis decoupled from the thermal solution would therefore understate the pack
 parts that run \WrTlsRiseAZone{} to \WrThsRiseAZone~K above room temperature.
 
 \subsection{Input Decoupling}\label{sec:evaluate-decap}
-Neither capacitance inside the stack nor interleaving or a ring alone lowers the RMS factor
-$k_{\mathrm{rms}}$ enough, so the implemented decoupling (Section~\ref{sec:scenarios}) combines the
-last two. With the cells in phase and no input capacitance, a port model of the package network
+Capacitance inside the stack does not lower the RMS factor $k_{\mathrm{rms}}$ enough, and neither
+does interleaving or a ring alone, so the implemented decoupling (Section~\ref{sec:scenarios})
+combines the last two. With the cells in phase and no input capacitance, a port model of the package network
 gives $k_{\mathrm{rms}} = \WrKsync$.
 
 Charge balance asks for only \WrCchargeOneV~\textmu F per cell for 1~V of input ripple. A circuit

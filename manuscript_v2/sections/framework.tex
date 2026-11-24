@@ -65,7 +65,7 @@ submodel reads the displacement and temperature of a site of the same ball latti
 ledger provisions.
 
 \subsection{Coupling Classes}\label{sec:fw-coupling}
-The framework keeps four kinds of interaction apart (Fig.~\ref{fig:concept}d).
+The framework keeps four kinds of interaction apart (Fig.~\ref{fig:concept}(d)).
 \emph{Bidirectional electrothermal (E--T) coupling}: loss and temperature are solved
 together, by fixed-point iteration, because each changes the other at first order. \emph{One-way temperature-to-mechanics
 transfer}: the converged temperature field loads the thermoelastic model, and nothing is returned.
@@ -113,7 +113,7 @@ step 8: Section~\ref{sec:feasibility} and Table~S19.}
 
 \subsection{Three Modes of Use}\label{sec:fw-modes}
 Because every stage reads and writes the same geometry, the framework is used in three modes
-(Fig.~\ref{fig:concept}d). To \emph{evaluate} a design, the chain is run once and every output is
+(Fig.~\ref{fig:concept}(d)). To \emph{evaluate} a design, the chain is run once and every output is
 checked against the feasibility rules (Section~\ref{sec:evaluate}). To \emph{compare}
 integrations, the same design record is placed in each candidate under the same cooling
 boundaries. Every output is reported side by side, inside declared loss boundaries. Candidates
@@ -123,6 +123,6 @@ numerical uncertainty (Sections~\ref{sec:verification} and~\ref{sec:compare}).
 To \emph{explore} the design space, the synthesis is repeated over the regulator count, the
 topology and the tier limit as an electrical screen (Section~\ref{sec:dse}). The count is thus an
 output, not an input: the screen proposes it, and the coupled chain accepts it only if it also
-beats its neighbours after coupling. A neighbouring count is a new design record, so the rest of
+beats its neighbors after coupling. A neighboring count is a new design record, so the rest of
 the chain runs unchanged. Every package input without a single defensible value is then varied
-on the production mesh (Section~\ref{sec:explore}).
+through the whole chain (Section~\ref{sec:explore}).
