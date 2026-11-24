@@ -2437,7 +2437,8 @@ def variants_table():
                  rf"local model at the {sc['K']} worst sites of each reference case's "
                  r"critical-joint search, the variant's response being the largest of them; a "
                  rf"variant whose largest response falls beyond the first {sc['K'] // 4} of "
-                 r"those sites is searched in full ("
+                 r"those sites, and the lower side of every Z1/Z2 ordering within a factor of "
+                 r"1.5, is searched in full ("
                  + str((sc.get("escalation") or {}).get("n_searched_in_full", 0))
                  + r" of all screened variants); an integration a variant does not touch keeps "
                  r"the reference value. "
