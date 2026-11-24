@@ -1,7 +1,6 @@
 % Capability comparison with the closest prior work. Evidence: the full text of
-% [Krishnakumar2026DVPD] (arXiv:2606.28837v1), which also describes the electrothermal model of
-% [Choi2025SelfConsistent] (its ref. [26]: Fig. 4, Secs. II and IV-D); the abstract of
-% [Choi2025SelfConsistent]; the product pages of the commercial tools. The detailed version
+% [Krishnakumar2026DVPD] (arXiv:2606.28837v1); the full text of [Choi2025SelfConsistent]
+% (TCPMT 16(7), 2026); the product pages of the commercial tools. The detailed version
 % with pointers is Table S1 of the supplementary material (supplement/tab_prior_detailed.tex).
 \begin{table}[!t]
 \caption{Capabilities Stated in the Closest Prior Work and in This Work}
@@ -18,7 +17,7 @@ Converter topology search             & --         & --\textsuperscript{a} & -- 
 Discrete device and passive library   & --         & --\textsuperscript{a} & --         & \checkmark \\
 Regulator-count optimization          & \checkmark & --                    & --         & \checkmark\textsuperscript{c} \\
 Floorplan, interconnect allocation    & \checkmark & --\textsuperscript{a} & --         & $\circ$ \\
-Static IR drop, transient droop       & \checkmark & --\textsuperscript{a} & $\circ$    & $\circ$\textsuperscript{d} \\
+Static IR drop, transient droop       & \checkmark & --                    & $\circ$    & $\circ$\textsuperscript{d} \\
 Package-explicit geometry             & $\circ$    & \checkmark            & \checkmark & \checkmark \\
 Integration comparison                & $\circ$    & --                    & --         & \checkmark \\
 Electrothermal coupling               & \checkmark & \checkmark            & \checkmark & \checkmark \\
@@ -27,20 +26,20 @@ Thermomechanics                       & --         & --                    & \ch
 All-site joint search                 & --         & --                    & --         & \checkmark \\
 Local solder response                 & --         & --                    & \checkmark & \checkmark\textsuperscript{f} \\
 Interconnect realizability            & $\circ$    & --                    & --         & \checkmark \\
-Component-rating feasibility          & $\circ$\textsuperscript{g} & $\circ$\textsuperscript{g} & -- & \checkmark \\
+Component-rating feasibility          & $\circ$\textsuperscript{g} & $\circ$\textsuperscript{j} & -- & \checkmark \\
 Per-stage reference verification      & $\circ$    & $\circ$\textsuperscript{h} & $\circ$ & \checkmark\textsuperscript{i} \\
 Uncertainty of compared outputs       & --         & --                    & --         & \checkmark \\
-Runtime reported                      & --         & $\circ$               & --         & \checkmark \\
+Runtime reported                      & --         & $\circ$\textsuperscript{k} & --         & \checkmark \\
 \bottomrule
 \end{tabular}
 \par\smallskip
 \parbox{\columnwidth}{\scriptsize
 \checkmark: stated and demonstrated; $\circ$: partial; --: not part of the work as described.
-Column~\cite{Choi2025SelfConsistent} rests on its abstract and on the description of its model
-in~\cite{Krishnakumar2026DVPD}; its entries record what these two sources state. The column
+Column~\cite{Choi2025SelfConsistent} rests on its full text. The column
 of~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius,Ansys_Sherlock} rests on their product pages,
 whose silence (--) does not show that a tool lacks a capability.
-\textsuperscript{a}\,Supplied by the electrical framework~\cite{Krishnakumar2026DVPD}.
+\textsuperscript{a}\,One fixed design from the group's standalone electrical simulator, the precursor
+of~\cite{Krishnakumar2026DVPD}.
 \textsuperscript{b}\,All $(N,K)$ members within a component budget; $K_A$ and $\mathbf{B}$ set by
 rule~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}. \textsuperscript{c}\,Electrical screen; the
 optimum and its neighbours are carried through the coupled chain. \textsuperscript{d}\,Static drop
@@ -48,6 +47,8 @@ of the 1-V path; no droop. \textsuperscript{e}\,Declared film boundary; demonstr
 microchannel cold plates. \textsuperscript{f}\,Inelastic strain increment at the joint of largest
 response, no life.
 \textsuperscript{g}\,Junction-temperature threshold only. \textsuperscript{h}\,Region-specific
-meshing stated to keep the prediction accuracy. \textsuperscript{i}\,Converter loss model validated on other family
-members~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}.}
+mesh benchmarked against a globally refined mesh (error below 1\,\%). \textsuperscript{i}\,Converter loss model validated on other family
+members~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}. \textsuperscript{j}\,A preset
+85\,$^\circ$C maximum temperature sets the coolant flow; no component rating is checked.
+\textsuperscript{k}\,Relative savings in meshing and iteration time only.}
 \end{table}

@@ -4,10 +4,8 @@
 % tools rests on a passage of the cited source. Pointers to [Krishnakumar2026DVPD] are to its
 % preprint (arXiv:2606.28837v1; check section and table numbers against the published version,
 % TCPMT 16(9), pp. 2089--2102). The preprint describes the electrothermal model of
-% [Choi2025SelfConsistent] (its ref. [26]) in Fig. 4 and Secs. II and IV-D; that description and
-% the abstract of [Choi2025SelfConsistent] are the basis of its column. No cell is left
-% undecided: "not part of the work as described" is stated where neither source reports the
-% capability. The "This work" column carries no computed number (the supplement is compiled
+% [Choi2025SelfConsistent] (its ref. [26]); the column of [Choi2025SelfConsistent] rests on its
+% full text. "Not part of the work" is stated where the source does not report the capability. The "This work" column carries no computed number (the supplement is compiled
 % without the paper's macros); it points to the sections and tables that do. Packages: booktabs,
 % array, longtable, amssymb; the column type L{w} is defined in the supplement's preamble.
 \begingroup
@@ -41,14 +39,15 @@ Capability
 \endlastfoot
 Converter topology
  & Input; DSCH demonstrated, not searched\textsuperscript{a}
- & Supplied by the electrical framework\textsuperscript{b}
+ & One fixed DSCH hybrid SC--buck design with analytical loss models\textsuperscript{b}
  & Not described; the design is imported\textsuperscript{c}
  & $(N,K)$ members of the hybrid SC--buck family enumerated within a component budget,
    $K_A=\lceil K/2\rceil$ and balanced $\mathbf{B}$~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS} \\
 Devices and passives
  & Switch width sized continuously ($\partial P/\partial w=0$); arrays of a target unit
    inductor\textsuperscript{d}
- & Supplied by the electrical framework\textsuperscript{b}
+ & Fixed: optimal switch width and minimum passive dimensions, held constant in the thermal
+   loop\textsuperscript{b}
  & Not described\textsuperscript{c}
  & Selected from a discrete library of GaN transistors, integrated inductors and capacitors under
    rating, derating, effective-capacitance, output-capacitance and placement rules (paper,
@@ -63,19 +62,19 @@ Regulator count
 Floorplan and interconnect allocation
  & $m\times n$ floorplan, VR placement, vertical stacking, per-connection VIC and RDL
    allocation
- & Supplied by the electrical framework\textsuperscript{b}
+ & Component bounding boxes and layout margins of the fixed design\textsuperscript{b}
  & Analysis of imported designs~\cite{Cadence_Celsius}
  & Square grid of square cells; mixed tiers placed in two dimensions; per-rail via
    provisioning; BGA count solved \\
 Static IR drop and transient droop
  & Spatial IR drop and $L\,\mathrm{d}i/\mathrm{d}t$ droop over 100 POL segments
- & Supplied by the electrical framework\textsuperscript{b}
+ & Not part of the work; package power-network losses only
  & IR drop with Joule heating~\cite{Cadence_Celsius}
  & Static drop of the 1-V path per rail against a declared limit; no droop \\
 Package geometry
  & Representative cell stack; VIC dimensions (Table~III of~\cite{Krishnakumar2026DVPD})
- & Meshed model, geometry and power map consistent with the electrical model; channels next to
-   the GaN layer (\cite{Krishnakumar2026DVPD}, Sec.~IV-D)
+ & Meshed vertical stack of substrates with IVRs, embedded passives, RDL, package power network
+   and TIM; geometry and power map consistent with the electrical model
  & Package, PCB and multi-die models~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius}
  & Mounted stack: die, RDL tiers, converter tiers with copper posts, Si substrate with TSVs,
    attach, BGA, board, cold plate(s) \\
@@ -88,74 +87,73 @@ Integration architectures compared
 Electrothermal coupling
  & Via~\cite{Choi2025SelfConsistent,Choi2025AutoET}: temperature-dependent parameters fed back;
    loop returns to the electrical design until $T_j\le85\,^\circ$C
- & Self-consistent loop; loss $200\to231$~W
+ & Self-consistent loop on a fixed geometry; temperature-dependent mobility and threshold voltage;
+   loss $200\to231$~W
  & Coupled co-simulation~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius}
  & Fixed point on a fixed design: on-resistance per device tier, resistivity per conductor; no
    re-synthesis inside the loop \\
 Cooling boundary
  & Substrate-embedded microchannels at the GaN layer (example implementation); flow set for
    $T_j\approx84\,^\circ$C
- & Substrate-embedded microchannels; flow solved (1.39~g\,s$^{-1}$)
+ & Substrate-embedded microchannels, laminar or $k$--$\omega$ SST by Reynolds number; flow adjusted
+   to a preset 85\,$^\circ$C maximum (1.39~g\,s$^{-1}$)
  & General: FEA for solids, CFD for fluids~\cite{Cadence_Celsius}
  & Declared film boundary $(h_{\mathrm{eff}},T_{\mathrm{f}})$; shown with Si microchannel
    manifold plates, top and top + bottom; flow fixed \\
 Thermomechanics and joint search
  & Qualitative discussion only
- & Not part of the work as described: \cite{Krishnakumar2026DVPD} names temperature
-   distributions, loss convergence and cooling optimization as its content (Sec.~IV-D)
+ & Not part of the work
  & Stress and warpage~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius}; joint search not
    described\textsuperscript{c}
  & Thermoelastic FE of the mounted assembly; $\Delta u_{\mathrm{c}}$ at every site of every
    interconnect layer \\
 Local solder response
  & Not addressed
- & Not part of the work as described
+ & Not part of the work
  & Solder failure and BGA life prediction~\cite{Ansys_Sherlock}
  & Viscoplastic submodel driven by the global displacement field, solved on a candidate set that
    bounds the ball lattice to find the critical joint; band over three solder laws;
    $\Delta\varepsilon_{\mathrm{in}}$ per cycle, no life \\
 Interconnect realizability
  & VIC count and area against footprint; aspect ratio and pitch fixed by technology
- & Not part of the work as described; VIC allocation by~\cite{Krishnakumar2026DVPD}
+ & Not part of the work
  & Not described\textsuperscript{c}
  & Per-net via count, pitch, aspect ratio and landing area for the actual tier order \\
 Component-rating feasibility
  & Junction threshold $T_j\le85\,^\circ$C in the electrothermal loop
    (\cite{Krishnakumar2026DVPD}, Fig.~4)
- & Self-consistent solution at the 85\,$^\circ$C junction threshold
+ & A preset 85\,$^\circ$C maximum temperature sets the coolant flow; no component rating is checked
  & Not described\textsuperscript{c}
  & Every device, part, material and die limit, the solder-law range, the static drop and the ball
    current and sites; a failing candidate is not ranked (paper, Sec.~VI; Table~S19) \\
 Verification
  & Models stated to be cross-verified (SPICE/Spectre, vendor tools); no errors reported
- & Region-specific meshing stated to keep the prediction accuracy while cutting meshing and
-   per-iteration time by over 30\,\%
+ & Region-specific mesh benchmarked against a globally refined mesh (error below 1\,\%); meshing
+   and iteration time cut by 31\,\% and 37\,\%
  & Foundry-certified thermal analysis~\cite{Synopsys_RedHawkSC_ET}
  & Per stage against FE, CFD or closed form (paper, Sec.~V; Table~S17); converter model as
    in~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}\textsuperscript{f}; solder submodel:
    mesh, cycle, dwell, ramp and element checks \\
 Uncertainty of compared outputs
  & Not reported
- & Not reported in the abstract
+ & Not reported
  & Not described\textsuperscript{c}
  & Numerical uncertainty of every compared output from a grid-convergence index on its own mesh
    ladder; a difference is resolved only if it exceeds it (paper, Sec.~V; Table~S18) \\
 Runtime per evaluation
  & Not reported
- & Relative only: meshing and per-iteration time $-30$\,\%
+ & Relative only: meshing $-31$\,\%, iteration $-37$\,\%, on a 32-core node
  & Not described\textsuperscript{c}
  & Reported per stage (paper, Sec.~V; Table~S16) \\
 \end{longtable}
 \nopagebreak\noindent
-Pointers to~\cite{Krishnakumar2026DVPD} refer to its preprint, which also describes the
-electrothermal model of~\cite{Choi2025SelfConsistent} (its ref.~[26]) in Fig.~4 and
-Secs.~II and~IV-D; the column of~\cite{Choi2025SelfConsistent} rests on that description and on
-its abstract. VIC: vertical interconnect. \textsuperscript{a}\,The topology is an
+Pointers to~\cite{Krishnakumar2026DVPD} refer to its preprint; the column
+of~\cite{Choi2025SelfConsistent} rests on its full text. VIC: vertical interconnect. \textsuperscript{a}\,The topology is an
 input~\cite[Sec.~IV]{Krishnakumar2026DVPD}, and the method is stated to apply to other hybrid
 and buck-derived topologies~\cite[Sec.~II]{Krishnakumar2026DVPD}.
-\textsuperscript{b}\,\cite[Fig.~4]{Krishnakumar2026DVPD} passes VR sizes, loss maps and
-floorplan from its electrical framework to the electrothermal model
-of~\cite{Choi2025SelfConsistent}. \textsuperscript{c}\,Not described on the cited product
+\textsuperscript{b}\,The design, its loss models and its component dimensions come from the
+group's standalone electrical simulator, the precursor of~\cite{Krishnakumar2026DVPD}, and are
+held fixed during the electrothermal loop. \textsuperscript{c}\,Not described on the cited product
 pages, which does not establish that the tool lacks the capability.
 \textsuperscript{d}\,\cite{Krishnakumar2026DVPD} refers to ``component libraries''
 (Sec.~III); switches are sized from per-width technology parameters and inductors are
