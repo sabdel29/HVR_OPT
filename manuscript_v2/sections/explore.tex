@@ -8,7 +8,14 @@ and the whole chain is rerun. This section reports what each exploration confirm
 to the results of Sections~\ref{sec:evaluate} and~\ref{sec:compare}.
 
 \subsection{Regulator Count}\label{sec:explore-count}
-The screen selects $M = \FrDseOptM$ cells under the \FrDseOptTiers-tier limit. Its square-grid
+The screen selects $M = \FrDseOptM$ cells under the \FrDseOptTiers-tier limit. Its frequency grid
+was refined \FrFswFineFactor-fold to \FrFswFineN{} points, keeping every original point, under the
+same rules. No count changes its topology or parts (Table~S2). The optimum stays at $M =
+\FrFswFineOptM$, its frequency moves to \FrFswFineOptFsw~kHz and its loss falls by
+\FrFswFineOptGain~W. The runner-up, $M = \FrFswFineRunnerUp$, a count with no square grid, comes
+within \FrFswFineRunnerUpMargin~W instead of \FrFswCoarseRunnerUpMargin~W.
+
+Its square-grid
 neighbours were run through the full chain as well: $M = \WrMloM$ (\FrDseTwentyfiveTopo{} at \FrDseTwentyfiveFsw~kHz)
 and $M = \WrMhiM$ (\FrDseFortynineTopo{} at \FrDseFortynineFsw~kHz). The screen puts them \FrDseTwentyfiveMargin{} and
 \FrDseFortynineMargin~W behind the selected count. In the coupled Z1 chain under cooling~A they are

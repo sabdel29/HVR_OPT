@@ -201,6 +201,13 @@ def fsw_fine():
     m["FrFswFineGainMax"] = fx(-lo, 1)
     m["FrFswFineRunnerUp"] = str(d["runner_up_fine"])
     m["FrFswFineRunnerUpMargin"] = fx(d["margin_to_runner_up_W"], 1)
+    # the same on the coarse (screen) grid
+    c50 = sorted((v["grid50"]["total_loss_W"], k) for k, v in pc.items() if v["grid50"])
+    if len(c50) > 1:
+        m["FrFswCoarseRunnerUp"] = str(c50[1][1])
+        m["FrFswCoarseRunnerUpMargin"] = fx(c50[1][0] - c50[0][0], 1)
+    sq_ = int(round(d["runner_up_fine"] ** 0.5)) ** 2 == d["runner_up_fine"]
+    m["FrFswFineRunnerUpSquare"] = "yes" if sq_ else "no"
     for mm in (25, 49):
         v = pc.get(mm) or {}
         if v.get("fine") and f:

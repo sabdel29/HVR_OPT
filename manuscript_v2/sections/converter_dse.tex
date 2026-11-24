@@ -37,8 +37,9 @@ the balanced allocation~\cite{Abdelzaher2026EPEPS}. For each member, the search 
 combination of HS device, LS device, inductor, capacitor and switching frequency $f_{\mathrm{sw}}$
 that passes the rules below. It returns the combination of least loss at 25\,$^\circ$C. The
 library holds 90 enhancement-mode gallium-nitride (GaN) transistors, 11 integrated inductors and 10
-capacitors. The frequency takes 50 logarithmically spaced values from 43~kHz to 200~MHz, up to each
-inductor's rated frequency.
+capacitors. The frequency takes \FrFswCoarseN{} logarithmically spaced values from 43~kHz to
+200~MHz, up to each inductor's rated frequency; on a grid \FrFswFineFactor{} times finer no count
+changes its topology or parts (Section~\ref{sec:explore-count}).
 
 \emph{Voltage stress and derating.} The flying capacitor $C_i$ holds $(N-i)V_{\mathrm{in}}/N$,
 which is \FrConvCapVone{} and \FrConvCapVtwo~V for $C_1$ and $C_2$ of an N3K3 cell. Every flying capacitor's rating, derated
