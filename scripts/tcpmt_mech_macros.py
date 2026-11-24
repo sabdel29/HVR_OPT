@@ -603,6 +603,9 @@ def screen():
          "MvScrNatLast": str(d["n_at_last_rank"])}
     m["MvScrNsolves"] = str(sum(v.get("n_sites") or 0 for v in d["variants"].values()))
     val = d.get("validation") or {}
+    for k in ("MvScrValN", "MvScrValInTopK", "MvScrValAll", "MvScrValRankMax", "MvScrValSolved",
+              "MvScrValClosed", "MvScrValRatioMin", "MvScrValLatticeLo", "MvScrValLatticeHi"):
+        m[k] = NA                                 # until the validation searches have run
     if val:
         m["MvScrValN"] = str(len(val))
         m["MvScrValInTopK"] = str(sum(1 for v in val.values() if v.get("max_in_top_k")))

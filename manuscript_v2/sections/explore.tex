@@ -126,6 +126,14 @@ ideal-decoupling reference \WrLowRefA{} has the lower loss, by \LossGapZtwoSzero
 production state \WrLowA{} has, by \GapAZtwo~W. \WrDecapRankSent{} The map is most informative for
 the other three rankings, which hold in both states.
 
+The joint column judges each integration by its joint response, not by its largest ball
+displacement. A full critical-joint search for every variant would multiply the cost of
+Section~\ref{sec:verif-local}, so each variant is solved at the \MvScrK{} worst sites of its
+reference case's search, and its response is the largest of them. Full searches of
+\MvScrValN{} variants of different kinds, a mounting, an encapsulant class, a converter-tier
+stiffness and a converter-tier conductivity, found the worst site among those \MvScrK{} in
+\MvScrValInTopK{} of them.
+
 Of the verdicts, \WrRobPreserved{} are preserved, \WrRobWithdrawn{} withdrawn and \WrRobReversed{}
 reversed. The remaining \WrRobPending{} are pending: their \WrRobPendingCases{} variants change the
 mesh and need a ladder of their own before a verdict. Every ranking survives the interconnect
