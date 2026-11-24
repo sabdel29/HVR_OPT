@@ -111,8 +111,9 @@ Local solder response
  & Not addressed
  & Not part of the work as described
  & Solder failure and BGA life prediction~\cite{Ansys_Sherlock}
- & Viscoplastic submodel of the critical joint and its competing sites, band over two solder
-   laws; $\Delta\varepsilon_{\mathrm{in}}$ per cycle, no life \\
+ & Viscoplastic submodel driven by the global displacement field, solved on a candidate set that
+   bounds the ball lattice to find the critical joint; band over three solder laws;
+   $\Delta\varepsilon_{\mathrm{in}}$ per cycle, no life \\
 Interconnect realizability
  & VIC count and area against footprint; aspect ratio and pitch fixed by technology
  & Not part of the work as described; VIC allocation by~\cite{Krishnakumar2026DVPD}
@@ -132,7 +133,7 @@ Verification
  & Foundry-certified thermal analysis~\cite{Synopsys_RedHawkSC_ET}
  & Per stage against FE, CFD or closed form (paper, Sec.~V; Table~S17); converter model as
    in~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}\textsuperscript{f}; solder submodel:
-   discretization only \\
+   mesh, cycle, dwell, ramp and element checks \\
 Uncertainty of compared outputs
  & Not reported
  & Not reported in the abstract
