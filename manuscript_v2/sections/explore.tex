@@ -43,7 +43,9 @@ count it selects \FrDseTfiveSqTopo{} at \FrDseTfiveSqFsw~kHz, \FrDseTfiveSqGain~
 the screen. Through the coupled chain the five-tier converter dissipates \WrFiveAZonePloss~W in Z1
 under cooling~A. That is \WrFiveAZonedPAbs~W less, at a peak only \WrFiveAZonedTAbs~K higher, with
 every thermal and solder limit met. Run through Z2 as if it fitted, it would save
-\WrFiveBZtwodPAbs~W under cooling~B. Its \FrDseTfiveSqStack-mm stack, however, protrudes below the board
+\WrFiveBZtwodPAbs~W under cooling~B. In Z3 it saves \WrFiveAZthreedPAbs{} and
+\WrFiveBZthreedPAbs~W under the two coolings, but the 1-V path that makes Z3 infeasible is unchanged. Its \FrDseTfiveSqStack-mm
+stack, however, protrudes below the board
 of Z2 (Section~\ref{sec:dse-count}). The lower-loss converter therefore fits the embedded
 integration but not the package-backside one on this board, and the four-tier limit is what lets
 one converter serve every integration compared here.
@@ -52,8 +54,8 @@ one converter serve every integration compared here.
 The 100-\textmu m flying-capacitor tier of Section~\ref{sec:realizability}, a technology that no
 vendor part offers at this rating (Table~S7), was also run through the coupled chain. It lowers the
 input-end tier to the height of the high-side devices, but the vias still exceed the limit of
-build-up vias, so the posts remain. In Z1 and Z2 the loss changes by at most \WrThinAZonedPAbs~W
-and the peak by at most \WrThinAZonedTAbs~K. The thick capacitor is a question of height and
+build-up vias, so the posts remain. In every integration and cooling the loss changes by at most
+\WrThinDPAbsMax~W and the peak by at most \WrThinDTAbsMax~K. The thick capacitor is a question of height and
 interconnect, not of loss.
 
 \subsection{Ball Rating}\label{sec:explore-bga}
