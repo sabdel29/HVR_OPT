@@ -486,6 +486,10 @@ def board():
         if c.get("board_side_mm"):
             m["MvBoardSide"] = fx(c["board_side_mm"], 0)
         own = c.get("larger_board_own_field") or {}
+        if own.get("du_position_in_bracket") is not None:
+            # where the 3x board's own field puts the largest ball displacement between the
+            # cold-ring (0) and hot-ring (1) bounds of the production-mesh solves
+            m[f"MvBdOwnDuPos{k}"] = fx(own["du_position_in_bracket"], 2)
         if own.get("warp_rel") is not None:
             # the 3x board's own E-T field (coarse rung) against the case's coupon rung
             m[f"MvBdOwnWarp{k}"] = spct(own["warp_rel"], 1)
@@ -673,6 +677,24 @@ def screen():
                                             if v == bv else "withdrawn" if v == "unresolved"
                                             else "reversed")
             m[f"MvScrG{gt}{ctag(name)}"] = fx(1e3 * (o["variant"][1] - o["variant"][0]), 2)
+    # the board study's variants: the screened response of each, and the Z1/Z2 joint ordering on
+    # the coupon (mountings, clamps) and on the 3x board (its ring at the coupon edge temperature
+    # or at 25 C, the two bounds of the ring)
+    coupon = ("screws", "screws_pinned", "edge", "clamp_screws", "clamp_backplate")
+    large = ("free_ring_hot", "screws_ring_hot", "clamp_screws_ring_hot", "free_ring_cold")
+    for key, v in d["variants"].items():
+        if v["group"].startswith("board") and v.get("d_eps") is not None and BVAR.get(v["name"]):
+            m[f"MvScrEps{BVAR[v['name']]}{v['tier']}{ATAG[v['arch']]}"] = fx(1e3 * v["d_eps"], 2)
+    for t in TIERS:
+        per = (g.get(f"board_{t}") or {})
+        for names, tag in ((coupon, "Coupon"), (large, "Large")):
+            n = same = 0
+            for name in names:
+                o = ((per.get(name) or {}).get("orderings") or {}).get("eps:Z1/Z2")
+                if o:
+                    n += 1
+                    same += bool(o.get("same_direction"))
+            m[f"MvScrBd{tag}ZoneZtwoN{t}"], m[f"MvScrBd{tag}ZoneZtwoSame{t}"] = str(n), str(same)
     # the clamp held through the cycle against the same screws without it (each case)
     eff = []
     for t in TIERS:
@@ -683,6 +705,7 @@ def screen():
                 m[f"MvScrClampEff{t}{ATAG[a]}"] = spct(c / s_ - 1, 1)
                 eff.append(c / s_ - 1)
     m["MvScrClampEffLo"], m["MvScrClampEffHi"] = rng(eff, spct, 1)
+    m["MvScrClampEffAbsMax"] = pct(max(abs(x) for x in eff), 1) if eff else NA
     return m
 
 

@@ -7731,6 +7731,117 @@ jobs:
   evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
   notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
     inside the reference''s top K?'
+- id: mech.screen.escalate.0
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - escalate
+  - --part
+  - '0'
+  - --nparts
+  - '3'
+  outputs:
+  - tcpmt_revision/robustness_joint_runs/escalate_0.json
+  deps:
+  - mech.screen.pick
+  - mech.screen.validate.mounting
+  - mech.screen.validate.encapsulant
+  - mech.screen.validate.mechcard
+  - mech.screen.validate.thermal
+  ncpus: 16
+  mem_gb: 24.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: tcpmt_revision/robustness_joint_runs/escalate_0.json
+    kind: json
+    nonempty:
+    - keys
+  workers: 16
+  evidence: ~8 dominance-bounded searches of ~100-300 sites each
+  notes: full searches of the variants whose screened maximum lies deep among the K sites (a validated
+    variant reuses its search)
+- id: mech.screen.escalate.1
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - escalate
+  - --part
+  - '1'
+  - --nparts
+  - '3'
+  outputs:
+  - tcpmt_revision/robustness_joint_runs/escalate_1.json
+  deps:
+  - mech.screen.pick
+  - mech.screen.validate.mounting
+  - mech.screen.validate.encapsulant
+  - mech.screen.validate.mechcard
+  - mech.screen.validate.thermal
+  ncpus: 16
+  mem_gb: 24.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: tcpmt_revision/robustness_joint_runs/escalate_1.json
+    kind: json
+    nonempty:
+    - keys
+  workers: 16
+  evidence: ~8 dominance-bounded searches of ~100-300 sites each
+  notes: full searches of the variants whose screened maximum lies deep among the K sites (a validated
+    variant reuses its search)
+- id: mech.screen.escalate.2
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - escalate
+  - --part
+  - '2'
+  - --nparts
+  - '3'
+  outputs:
+  - tcpmt_revision/robustness_joint_runs/escalate_2.json
+  deps:
+  - mech.screen.pick
+  - mech.screen.validate.mounting
+  - mech.screen.validate.encapsulant
+  - mech.screen.validate.mechcard
+  - mech.screen.validate.thermal
+  ncpus: 16
+  mem_gb: 24.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: tcpmt_revision/robustness_joint_runs/escalate_2.json
+    kind: json
+    nonempty:
+    - keys
+  workers: 16
+  evidence: ~8 dominance-bounded searches of ~100-300 sites each
+  notes: full searches of the variants whose screened maximum lies deep among the K sites (a validated
+    variant reuses its search)
 - id: robust.coolB.Z1
   stage: mech_revision
   argv:
@@ -10092,6 +10203,9 @@ jobs:
   - mech.screen.validate.encapsulant
   - mech.screen.validate.mechcard
   - mech.screen.validate.thermal
+  - mech.screen.escalate.0
+  - mech.screen.escalate.1
+  - mech.screen.escalate.2
   ncpus: 1
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -12152,6 +12266,9 @@ jobs:
   - mech.screen.validate.encapsulant
   - mech.screen.validate.mechcard
   - mech.screen.validate.thermal
+  - mech.screen.escalate.0
+  - mech.screen.escalate.1
+  - mech.screen.escalate.2
   - mech.screen.summary
   - mech.band_study
   - prep.dse_engine

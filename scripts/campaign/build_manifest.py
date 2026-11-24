@@ -1176,9 +1176,23 @@ def joint_screen_jobs(mech):
                         notes="full dominance-bounded search on the variant's own lattice "
                               "(production law): is its worst site inside the reference's "
                               "top K?"))
+    # escalation: every variant whose screened maximum lies beyond the first K/4 sites of its
+    # reference is searched in full (tcpmt_mech_joint_screen.escalate), in three parallel parts
+    esc = []
+    for part in range(3):
+        f = tr(f"robustness_joint_runs/escalate_{part}.json")
+        esc.append(job(f"mech.screen.escalate.{part}", "mech_revision",
+                       ["scripts/tcpmt_mech_joint_screen.py", "escalate", "--part", str(part),
+                        "--nparts", "3"], [f], deps=[pk] + vals, ncpus=16, workers=16,
+                       mem_gb=24, est_h=1.0, prefer="pbs", backends=("pbs", "local"),
+                       env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 16},
+                       evidence="~8 dominance-bounded searches of ~100-300 sites each",
+                       validate=[{"file": f, "kind": "json", "nonempty": ["keys"]}],
+                       notes="full searches of the variants whose screened maximum lies deep "
+                             "among the K sites (a validated variant reuses its search)"))
     return post("mech.screen.summary", "mech_revision", "tcpmt_mech_joint_screen.py",
                 [tr("robustness_joint.json")], args=["summarize"],
-                deps=[run_b, "derived.uncertainty"] + vals, est_h=0.05,
+                deps=[run_b, "derived.uncertainty"] + vals + esc, est_h=0.05,
                 validate=[{"file": tr("robustness_joint.json"), "kind": "json",
                            "nonempty": ["variants", "complete"], "fresh": True}],
                 notes="per variant: the screened response, its site and rank among the K, the "

@@ -528,6 +528,47 @@ def pick():
     return out
 
 
+FULL = TR / "robustness_joint_full"
+#: escalation rule: a variant whose screened maximum lies beyond the first K // ESCALATE_FRACTION
+#: sites of its reference's ranking is searched in full (its worst site may lie outside the K)
+ESCALATE_FRACTION = 4
+
+
+def escalation_list():
+    """The variants the escalation rule sends to a full search (from the screen's summary)."""
+    d = json.loads(OUT.read_text())
+    lim = int(d["K"]) // ESCALATE_FRACTION
+    return sorted(k for k, v in d["variants"].items()
+                  if v.get("complete") and (v.get("rank_in_reference") or 0) > lim)
+
+
+def escalate(part=None, nparts=None):
+    """Full dominance-bounded searches of the escalated variants (optionally one part of the
+    list, for parallel jobs) -> robustness_joint_full/<key>.json."""
+    keys = escalation_list()
+    if part is not None:
+        keys = keys[int(part)::int(nparts)]
+    FULL.mkdir(parents=True, exist_ok=True)
+    out = {}
+    for key in keys:
+        f = FULL / f"{key}.json"
+        if f.is_file() and json.loads(f.read_text()).get("closed"):
+            out[key] = json.loads(f.read_text())
+            continue
+        val = VAL / f"{key}.json"               # a validation search of the same variant
+        r = json.loads(val.read_text()) if val.is_file() else full_search(key)
+        f.write_text(json.dumps(r, indent=1, default=float) + "\n")
+        out[key] = r
+        print(key, {k: r.get(k) for k in ("closed", "n_solved", "max_d_eps", "max_in_top_k")},
+              flush=True)
+    log = TR / "robustness_joint_runs" / (f"escalate_{part}.json" if part is not None
+                                          else "escalate.json")
+    log.write_text(json.dumps({"keys": keys, "n": len(keys),
+                               "all_closed": all(r.get("closed") for r in out.values())},
+                              indent=1) + "\n")
+    return out
+
+
 KIND_SLUG = {"mounting": "mounting", "encapsulant class": "encapsulant",
              "mechanical card": "mechcard", "thermal decision": "thermal"}
 VALK = TR / "robustness_joint_validation_by_kind"
@@ -635,8 +676,24 @@ def summarize():
     for f in CRIT.values():
         if f.is_file():
             out["inputs_sha1"][str(f.resolve())] = MP.sha1(f)
+    full = {f.stem: json.loads(f.read_text()) for f in sorted(FULL.glob("*.json"))} \
+        if FULL.is_dir() else {}
+    for f in (sorted(VAL.glob("*.json")) if VAL.is_dir() else []):
+        full.setdefault(f.stem, json.loads(f.read_text()))
     for s in specs:
         sc = screened(s, recs)
+        fr = full.get(s["key"])
+        if sc.get("complete") and fr and fr.get("max_d_eps") is not None:
+            # escalated (or validated) variant: the full search's maximum is its response
+            sc["d_eps_screen"], sc["site_mm_screen"] = sc["d_eps"], sc["site_mm"]
+            sc["searched_in_full"] = True
+            sc["full_search"] = {k: fr.get(k) for k in ("closed", "n_solved", "n_lattice",
+                                                        "max_site_mm", "max_in_top_k",
+                                                        "max_rank_in_reference", "margin_rel")}
+            if fr["max_d_eps"] > sc["d_eps"]:
+                sc["d_eps"], sc["site_mm"] = fr["max_d_eps"], fr["max_site_mm"]
+            sc["screen_over_full"] = sc["d_eps_screen"] / sc["d_eps"]
+            sc["change_rel"] = sc["d_eps"] / sc["reference_d_eps"] - 1.0
         lf = lat_path(s["key"])
         lrec = json.loads(lf.read_text()) if lf.is_file() else {}
         mesh = (lrec.get("provenance") or {}).get("mesh")
@@ -721,9 +778,18 @@ def summarize():
             x["kind"] = kinds.get(key)
             sv = out["variants"].get(key) or {}
             if x.get("max_d_eps") and sv.get("d_eps"):
-                x["screen_over_full"] = sv["d_eps"] / x["max_d_eps"]
+                x["screen_over_full"] = sv.get("d_eps_screen", sv["d_eps"]) / x["max_d_eps"]
         for f in vfiles:
             out["inputs_sha1"][str(f.resolve())] = MP.sha1(f)
+    esc = [v for v in out["variants"].values() if v.get("searched_in_full")]
+    out["escalation"] = {"rule": f"rank of the screened maximum > K // {ESCALATE_FRACTION}",
+                         "n_searched_in_full": len(esc),
+                         "n_screen_found_max": sum(1 for v in esc
+                                                   if v["full_search"].get("max_in_top_k")),
+                         "screen_over_full_min": min((v["screen_over_full"] for v in esc),
+                                                     default=None),
+                         "all_closed": all(v["full_search"].get("closed") for v in esc)
+                         if esc else None}
     out["n_variants"] = len(out["variants"])
     out["n_complete"] = sum(1 for v in out["variants"].values() if v.get("complete"))
     out["n_at_last_rank"] = sum(1 for v in out["variants"].values() if v.get("at_last_rank"))
@@ -738,7 +804,7 @@ def main():
     a = sys.argv[1:]
     cmd = a[0] if a else "list"
     keys = [x for i, x in enumerate(a) if i > 0 and not x.startswith("--")
-            and a[i - 1] not in ("--log", "--groups", "--kind")]
+            and a[i - 1] not in ("--log", "--groups", "--kind", "--part", "--nparts")]
     if cmd == "list":
         for s in variants(True):
             print(s["key"], s["group"], s["ref"], s.get("cold_key") or "")
@@ -756,6 +822,12 @@ def main():
             validate_kind(a[a.index("--kind") + 1])
         else:
             validate(keys or None)
+    elif cmd == "escalate":
+        part = a[a.index("--part") + 1] if "--part" in a else None
+        nparts = a[a.index("--nparts") + 1] if "--nparts" in a else None
+        escalate(part, nparts)
+    elif cmd == "escalation-list":
+        print("\n".join(escalation_list()))
     elif cmd == "pick":
         for kind, r in pick().items():
             print(kind, r)
