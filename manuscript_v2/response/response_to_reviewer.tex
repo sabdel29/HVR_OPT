@@ -102,9 +102,9 @@ the stress window the joints visit and carried in a band of \MvLawN{} laws; a su
 full displacement of both pad faces; and a dominance-bounded search for the joint of largest
 response over the whole ball lattice. The maximum-displacement proxy of the reviewed version was
 tested and disproven (MC9).
-\item \textbf{Assembly}: warpage at the reflow peak and the gap at thermocompression bonding, and
-board mounting, clamp, board size and encapsulant class on the production fields
-(Tables~\ref{S:tab:supp-reflow} and~\ref{S:tab:supp-mounting}).
+\item \textbf{Assembly}: warpage at the reflow peak and the gap at thermocompression bonding
+(Section~\ref{sec:compare-assembly}), and board mounting, clamp, board size and encapsulant class on
+the production fields (Tables~\ref{S:tab:supp-reflow} and~\ref{S:tab:supp-mounting}).
 \item \textbf{One uncertainty rule} for every comparison, on each difference's own mesh ladder
 (Section~\ref{sec:verification}).
 \item \textbf{One regenerated campaign}: every case, variant, table, figure and number of the paper,
@@ -148,10 +148,10 @@ gone, and the introduction states what~\pcite{Krishnakumar2026DVPD} does that th
 The ablation is Section~\ref{sec:compare-ablation}. With electrical models alone Z2 is
 \WrIsoGapHiZtwo~W ahead of Z1 and Z3 \WrIsoGapHiZthree~W behind; the electrothermal fixed point under
 one top plate brings Z1 and Z2 within \GapAZtwo~W, less than Z2's feed loss, and removes Z3 by its
-ratings; the mechanics separate Z1 from Z2 by a factor of \WrWarpRatioAZtwo{} in warpage and,
-through the plate interface, remove Z2 when the plate does not conform. The local joint model then
-reverses the order that the displacement suggests: Z1 has the smallest $\du$ but the largest joint
-response (Table~\ref{tab:compare}).
+ratings; the mechanics separate Z1 from Z2 in opposite directions, Z1's die warping
+\WrWarpRatioAZtwo{} times less while its critical joint responds most, and through the plate
+interface they remove Z2 when the plate does not conform; assembly adds a requirement that the
+operating point does not show, since the fine-pitch attaches of Z1 and Z2 do not bond flat.
 
 \rc{MC2}{Only loss and temperature are bidirectionally coupled; classify every coupling and state
 when the sequential approximation holds.}
@@ -337,13 +337,13 @@ version relied on a 100-\textmu m capacitor tier that no rated part provides
 (Table~\ref{S:tab:supp-capev}) and is withdrawn. For the 30-\textmu m pillar pitch of Z2,
 thermocompression bonding has been demonstrated on organic substrates~\pcite{Au2016CuPillar30um}. The
 paper separates geometric feasibility under declared rules from a demonstrated process and from
-assembly, and assembly is now evaluated in part (Tables~\ref{S:tab:supp-reflow}
-and~\ref{S:tab:supp-mounting}). At the 245-$^\circ$C reflow peak the unmounted package warps
-\MvRfBgaZone, \MvRfBgaZtwo{} and \MvRfBgaZthree~\textmu m (Z1, Z2, Z3) against the
-\MvCoplLim-\textmu m room-temperature coplanarity, Z2 at \MvRfCoplZtwo{} times it. At
-thermocompression bonding the gap non-uniformity of the fine-pitch joint is \MvRfTcbZone{} and
-\MvRfTcbZtwo~\textmu m for Z1 and Z2 against \MvTcbLim~\textmu m, a failure that a low-CTE mold
-compound reduces only to \MvRfTcbEmcZone~\textmu m for Z1 (Z3: \MvRfTcbZthree{} against
+assembly, and assembly is now evaluated in part (Section~\ref{sec:compare-assembly};
+Tables~\ref{S:tab:supp-reflow} and~\ref{S:tab:supp-mounting}). At the 245-$^\circ$C reflow peak the
+ball plane of the unmounted package is \MvRfBgaZone, \MvRfBgaZtwo{} and \MvRfBgaZthree~\textmu m out
+of plane (Z1, Z2, Z3) against the \MvCoplLim-\textmu m coplanarity, Z2 at \MvRfCoplZtwo{} times it,
+and all three stay within the reflow-warpage window~\pcite{JEDEC_JEP95}. At thermocompression bonding
+the gap across the fine-pitch joint varies by \MvRfTcbZone{} and \MvRfTcbZtwo~\textmu m for Z1 and Z2
+against an allowance of \MvTcbLim~\textmu m, a failure that a low-CTE mold compound reduces only to \MvRfTcbEmcZone~\textmu m for Z1 (Z3: \MvRfTcbZthree{} against
 \MvAttLimZthree~\textmu m). Like the via rule, coplanarity is reported as a manufacturing requirement,
 not used as a filter (Section~\ref{sec:feasibility}). Ball provisioning is a feasibility check with at most \MthLimSites\,\% of
 the sites carrying power. At \BgaTarget~A per ball Z1 uses \BgaSitesAdoptZone{} of
