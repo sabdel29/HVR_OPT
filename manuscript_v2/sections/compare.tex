@@ -3,8 +3,8 @@
 
 The same design record is placed in each integration (Section~\ref{sec:archs}), and all three run
 in the production state. Because the integrations differ in how the converter can be cooled, they
-are compared three ways (Table~\ref{tab:compare}): at a common temperature, which is what an
-analysis without electrothermal coupling sees, and coupled under coolings~A and~B
+are compared three ways (Table~\ref{tab:compare}). The first is a common temperature, the view of
+an analysis without electrothermal coupling; the other two are coupled, under coolings~A and~B
 (Section~\ref{sec:thermal}). A candidate that fails a feasibility limit is not ranked, and every
 difference is judged on its own mesh ladder (Section~\ref{sec:verif-disc},
 Table~\ref{tab:uncertainty}).
@@ -140,7 +140,7 @@ which span the brackets of Table~\ref{tab:compare}, and every difference is reso
 (Table~\ref{tab:uncertainty}). Section~\ref{sec:explore-robust} tests the ordering of Z1 and Z2
 against the package decisions.
 
-Two features of the drive account for this. The first is the joint temperature. Z1's ball field
+Two features of the drive explain why Z1's joints respond most. The first is the joint temperature. Z1's ball field
 lies under the converter, and its critical joints run at \MvTsjAZone{} and \MvTsjBZone\,$^\circ$C,
 against at most \MvTsjAZthree\,$^\circ$C in the other integrations. The second is the deformation the
 solder actually feels. Under cooling~A, Z1's corner displacement is mostly the membrane mismatch
@@ -165,8 +165,8 @@ with the mesh, so these layers are screened, not ranked.
 The operating-point warpage says nothing about assembly, which asks whether each part is flat
 enough, at its joining temperature, for its joints to form (Table~S25). At the 245-$^\circ$C reflow
 peak, the ball plane of the unmounted package is \MvRfBgaZone~\textmu m out of plane in Z1 and
-\MvRfBgaZthree~\textmu m in Z3, at the \MvCoplLim-\textmu m coplanarity limit, and
-\MvRfBgaZtwo~\textmu m in Z2, \MvRfCoplZtwo{} times the limit. All three stay within the
+\MvRfBgaZthree~\textmu m in Z3, at the \MvCoplLim-\textmu m coplanarity limit. In Z2 it is
+\MvRfBgaZtwo~\textmu m, \MvRfCoplZtwo{} times the limit. All three stay within the
 reflow-warpage window of $\MvRfLimLo$ to $+\MvRfLimHi$~\textmu m~\cite{JEDEC_JEP95}. The fine-pitch
 attaches are the harder requirement. Thermocompression bonding at \MvRfTcbTZone\,$^\circ$C joins
 Z1's die to the converter top and Z2's converter to the substrate. Across these joints the gap

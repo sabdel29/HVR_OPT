@@ -214,8 +214,8 @@ thickness; in plane, the midpoint of the series--parallel bracket is used. The p
 through-thickness conductivity of the input-end tier from \MthKzTierOneEncap{} to
 \MthKzTierOne~W\,m$^{-1}$K$^{-1}$, and across the four tiers it lies between \MthKzLo{} and
 \MthKzHi~W\,m$^{-1}$K$^{-1}$. Sizing the posts to the terminal RMS currents (lower bound) or to
-the terminal outlines (upper bound) spans \MthKzPostLo--\MthKzPostHi~W\,m$^{-1}$K$^{-1}$; both
-bounds are run as variants (Section~\ref{sec:explore-cards}).
+the terminal outlines (upper bound) spans \MthKzPostLo--\MthKzPostHi~W\,m$^{-1}$K$^{-1}$;
+Section~\ref{sec:explore-cards} evaluates both bounds.
 
 The top boundary is a silicon microchannel cold plate (Table~S5) on a 50-\textmu m thermal
 interface material (TIM; 3~W\,m$^{-1}$K$^{-1}$, \TimH~kW\,m$^{-2}$K$^{-1}$). Its effective coefficient
@@ -256,10 +256,10 @@ entry length (\CoolLth~mm) is \MthLthRatio{} of a pass. The fully developed Nuss
 thus a lower bound, and the pass-mean coefficient could be up to \MthNuDevRatio{} times higher.
 
 Cooling~A is this top plate alone. Cooling~B adds an identical plate beneath the cell grid,
-behind the same TIM. A bottom plate alone is not an option: the die's kilowatt would then have to
-cross the redistribution tiers, the ball field and, in Z1 and Z3, the board. Its flow is sized so that its coolant rises as much as that of the top
-plate: \MthBotFlowZtwo~g\,s$^{-1}$ for the \QbotBZtwo~W that reach it in Z2. Pumping counts
-every plate at its own flow. The die dissipates its 1~kW uniformly; a core-heavy map, with three
+behind the same TIM. Its flow is sized so that its coolant rises as much as that of the top plate:
+\MthBotFlowZtwo~g\,s$^{-1}$ for the \QbotBZtwo~W that reach it in Z2. Pumping counts every plate at
+its own flow. A bottom plate alone is not an option: the die's kilowatt would then have to cross
+the redistribution tiers, the ball field and, in Z1 and Z3, the board. The die dissipates its 1~kW uniformly; a core-heavy map, with three
 quarters of the die power in the central half of its area, is a sensitivity
 (Section~\ref{sec:explore-die}). The board is a $30\times30$-mm coupon with natural
 convection (10~W\,m$^{-2}$K$^{-1}$) beneath it.
@@ -270,8 +270,8 @@ term is evaluated at the mean temperature of the region it is deposited in, and 
 the in-cell temperature of its own tier. A device's on-resistance follows the linear-equivalent
 temperature coefficient of its own datasheet curve over 25--125\,$^\circ$C,
 $6.0\times10^{-3}$~K$^{-1}$ for both the EPC2014C and the EPC2055~\cite{EPC2014C_DS2021,
-FrEPC2055DS2025}; above that range it is extrapolated, which the feasibility stage reports. The
-iteration stops when every coupled temperature changes by less than 0.25~K and the loss by less
+FrEPC2055DS2025}. Above that range the coefficient would be extrapolated, so the feasibility stage
+treats the range as a limit (Section~\ref{sec:feasibility}). The iteration stops when every coupled temperature changes by less than 0.25~K and the loss by less
 than 0.1\,\%. It converges in \MthEtItersLo--\MthEtItersHi{} thermal solves and contracts
 geometrically: each loss change is \MthEtContractLo--\MthEtContractHi{} times the previous one, the
 largest factor belonging to \MthEtContractCase.
@@ -300,10 +300,10 @@ of Z2); the thinner layers are evaluated at every mesh node. The largest $\Delta
 reported as $\du$.
 
 The joint of largest $\Delta u$ need not respond most. Part of $\Delta u$ can be a rigid rotation
-of the joint, which strains no solder, and the response also depends on the joint temperature and
-on the vertical and gradient terms of the drive (Section~\ref{sec:local}). The critical joint is
+of the joint, which strains no solder. The response also depends on the joint temperature and on
+the vertical and gradient terms of the drive (Section~\ref{sec:local}). The critical joint is
 therefore found with the local model itself, on a candidate set that bounds the response over the
-whole lattice. Every legal site carries its own drive from the converged fields, and three
+whole lattice. Every legal site carries its own drive from the converged fields. Three
 screening features are taken from it: the deforming part of $\Delta u$ (the rigid rotation
 removed), the vertical displacement across the layer and the joint temperature $T_{\mathrm{sj}}$.
 Within one case the response rises with these features to within a margin $m$, so a site that a
@@ -350,11 +350,11 @@ the window spans \MvVisHotLo--\MvVisHotHi~MPa hot and \MvVisColdLo--\MvVisColdHi
 surrogate follows the rate of the law within \MvSurrErrHot\,\% hot and \MvSurrErrCold\,\% cold.
 
 No law is calibrated for these joints. The production law was fitted to a near-eutectic SnAgCu
-alloy and is published without its data window; inside the window of the measured data below, its
+alloy and is published without its data window. Inside the window of the measured data below, its
 creep rate is \MvRateVsDataLo{} to \MvRateVsDataHi{} times the measured one. The response is
-therefore carried as a band over three laws: the production law and two fits of the tensile creep
-data of~\cite{Xiao2005SAC}, its own constants and per-temperature Norton fits of the measured
-points, both as tabulated in~\cite{Yuan2023SAC305}. Those data cover
+therefore carried as a band over three laws. Besides the production law, the band holds two fits
+of the tensile creep data of~\cite{Xiao2005SAC}: its own constants and per-temperature Norton fits
+of the measured points, both as tabulated in~\cite{Yuan2023SAC305}. Those data cover
 45--150\,$^\circ$C and \MthCalLo--\MthCalHi~MPa, for a Sn3.9Ag0.6Cu alloy rather than SAC305. Under
 these two laws the joints visit \MvXiaoVisHotLo--\MvMeasVisHotHi~MPa hot and
 \MvXiaoVisColdLo--\MvMeasVisColdHi~MPa cold, so they are extrapolated in stress, and in temperature
