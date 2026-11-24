@@ -258,12 +258,13 @@ sites, above the site budget, so Z2 failed `bga_sites` in every case). The 48-V 
 PROVISIONED by the paper's rule: per architecture the ADOPTED count is the smallest legal
 (mirror-symmetric, nearest-symmetric selection) count per rail whose per-ball current meets the
 feasibility stage's target (`tcpmt_feasibility.LIMITS`: 2 A per ball, Kuan et al. ASQED 2015) by
-ONE rule for every integration, the verified (level-2) DC peak x k_eq, within the site budget
+ONE rule for every integration, the verified (level-2) DC peak x k_eq, across the k_eq
+uncertainty band (since 2026-11-24: at the band's upper end, below), within the site budget
 (`bga_power_site_fraction_max`: at most 75 % of the package's own sites carry power; Z1 1369
 sites, Z2's ring 528, i.e. at most 198 per rail) and at most 220 per rail
 (`final_closure_pkg_network.ADOPT_RULE`, `site_budget`, `adopt_count`). 1.5 A is the
-conservative sensitivity: the re-closure records the count it would need (verified), or that it
-cannot close. Z1's worst-ball RMS of the harmonic port model at its adopted count
+conservative sensitivity: the re-closure records the count it would need by the same rule
+(verified), or that it cannot close. Z1's worst-ball RMS of the harmonic port model at its adopted count
 (`tcpmt_decap_placement.ball_rms_at_counts`, all balls tied to an ideal board node) stays an
 idealized bound, reported, not the verdict (Z2 and Z3 have no such model). Only WHICH lattice
 sites carry 48 V changes: the BGA layer is homogenized in the FE model and the all-site joint
@@ -274,24 +275,40 @@ adopted counts (converged levels 1-3, `final_closure/package_network_adopted.jso
 (`final_closure_ledger.package_network`), the Z2 BGA-ring feed (`tcpmt_platform`) and the
 feasibility stage take it. `package_network.json` (the network build's count, 220 per rail at
 m36) stays the network the decoupling chain derives k_eq on. The re-closure also records the
-change of every production case's BGA feed terms between the two networks (`coupled_effect`,
-`final_closure_ledger.package_hv_terms` at each case's own 48-V current and BGA temperature):
-below 0.1 W it is recorded and the coupled cases are not re-run; above it the production cases
-on another count are re-run, and the re-closure is run again to confirm the count at their
-current (the per-ball check reads the production cases' 48-V current: a fixed point).
-campaign_v3 (k_eq 2.641 from the campaign's own decoupling chain), confirmed by the second pass at
-the re-run production currents:
+change of every production case's BGA feed terms from the count the case was solved at (its own
+ledger terms; `coupled_effect`, `final_closure_ledger.package_hv_terms` at each case's own 48-V
+current and BGA temperature; `dP_vs_modelled_W` keeps the comparison with the network build's
+220 per rail): below 0.1 W it is recorded and the coupled cases are not re-run -- they stand for
+the adopted count (`final_closure_ledger.accepted_count`: the feasibility stage checks their balls
+at the adopted count with their own 48-V current, Table V's sites follow it, and the mechanics
+guard `tcpmt_mech_production.input_issue` accepts them); above it the production cases on
+another count are re-run, and the re-closure is run again to confirm the count at their current
+(the per-ball check reads the production cases' 48-V current: a fixed point).
+campaign_v3 (k_eq 2.641 from the campaign's own decoupling chain, band 2.623-2.664 over the loop
+inductance; the count closed at 2.664):
 
-| | adopted count / rail (sites) | DC peak x k_eq (verified) | worst-ball RMS (port model, bound) | R_loop 20 C (vs 220/rail) | 1.5 A would need |
+| | adopted count / rail (sites) | DC peak x k_eq (verified): nominal / band end | worst-ball RMS (port model, bound) | R_loop 20 C (vs 220/rail) | 1.5 A would need |
 |---|---:|---:|---:|---:|---|
-| Z1 (48 V) | 168 (336 of 1369, 24.5 %) | 2.00 A (1.9996; margin 0.0004 A) | 2.17 A | 0.894 mOhm (+32 %) | no legal count <= 220 closes it (1.73 A at 220) |
-| Z2 (48-V ring feed) | 166 (332 of 528, 62.9 %) | 1.94 A | n/a | 1.475 mOhm (-2 %) | 202 / rail (76.5 % of the ring): beyond the site budget |
-| Z3 (1 V, DC, equal sharing) | 500 (1000 of 1369, 73.0 %) | 2.00 A | n/a | -- | 667 / rail (97.4 %): beyond the site budget |
+| Z1 (48 V) | 170 (340 of 1369, 24.8 %) | 1.976 A (margin 0.024 A) / 1.993 A (0.007 A) | 2.17 A | 0.884 mOhm (+31 %) | no legal count <= 220 closes it (1.73 A at 220) |
+| Z2 (48-V ring feed) | 166 (332 of 528, 62.9 %) | 1.941 A (0.059 A) / 1.958 A (0.042 A) | n/a | 1.475 mOhm (-2 %) | 202 / rail (76.5 % of the ring): beyond the site budget |
+| Z3 (1 V, DC, equal sharing) | 500 (1000 of 1369, 73.0 %) | 2.00 A (no k) | n/a | -- | 667 / rail (97.4 %): beyond the site budget |
 
-At 168 the level-1 screen gives 2.001 A and the verification level 1.9996 A (the upper end of
-the k_eq band needs 170); the port model's own k_eq at 168 balls is 2.42 (2.64 at 220), so the
-rule's design k is conservative there (the change of Z1's 48-V package terms would be +0.39 W at
-that k instead of +1.17 W).
+**Band-robust count (2026-11-24).** At the nominal k the rule gave Z1 168 per rail at 1.9996 A
+(a 0.0004-A margin), and with the feasibility policy `hard` three production-state variants of
+Z1 then failed the ball limit by a few mA (rigid-plate interface feedback under cooling A,
+2.007 A; caloric plate coefficient under coolings A and B, 2.003 and 2.002 A). The count rule now
+meets the target across the k_eq band, at its upper end (`ADOPT_RULE`, `adopt_count(k_factor=
+k_hi / k_eq)`; the 1.5-A sensitivity by the same rule), and the verdict is recorded at the
+nominal k and at k_hi (`I_ball_at_band_A`, `margin_at_band_A`, `passes_band`). Z1 moves to 170
+(168 gives 2.017 A at k_hi); Z2's ring stays at 166 (164 fails already at the nominal k). Z1's
+package 48-V terms change by -0.056 W (A) and -0.055 W (B) from 168 to 170, below the threshold,
+so the coupled cases (solved at 168) are not re-run; the per-ball maxima at 170 over every
+production-state case and variant are 1.983 A (Z1, rigid-plate feedback, cooling A) and 1.972 A
+(Z2, the same). The common-temperature ledger re-evaluates Z1 at 170 (it reproduces the coupled
+Z1 case within 0.05 W). Re-run: `derived.bga_reclose`, `derived.decap_limits`, `derived.platform`,
+`derived.feasibility`, `manuscript.macros`, `manuscript.supplement`; the 168-per-rail outputs
+are in `_campaign/superseded/2026-11-24_bga_168_per_rail/`. History: at 168 the port model's own
+k_eq was 2.42 (2.64 at 220); at 170 it is 2.42.
 
 Coupled effect and re-runs (2026-11-23). Z1's package 48-V ledger terms change by +1.17 W (A) and
 +1.15 W (B) at the cases' current, above the 0.1-W threshold. Re-run through the runner: the

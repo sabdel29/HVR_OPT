@@ -422,6 +422,54 @@ def merge_adopted(pn, adopted):
     return out
 
 
+#: the re-closure's record beside the networks (final_closure_pkg_network.reclose): the
+#: adopted counts, their per-ball verdict and the change of the production cases' BGA feed
+#: terms from the count each case was solved at to the adopted count (coupled_effect)
+RECLOSE_RECORD_NAME = "bga_count_production.json"
+
+
+def accepted_count(net_key, n_case, fc_dir):
+    """(n, note) of a BGA-fed case solved at n_case 48-V balls per rail on network key
+    `net_key` (Z1; Z2 for the BGA-fed Z2 control): n = the re-closure's adopted count when the
+    case stands for it without a re-run, else None. A case on another count stands for the
+    adopted one when the re-closure record (RECLOSE_RECORD_NAME) and the adopted network
+    (ADOPTED_NETWORK_NAME) in fc_dir are of the network build's design and adopt the same
+    count, and the record evaluated the coupled production cases solved at n_case
+    (coupled_effect per_case n_case / n_adopted) and found the change of their BGA feed terms
+    below its threshold (the authors' decision of 2026-11-22: below it the change is recorded,
+    the coupled cases are not re-run). Only which lattice sites carry 48 V differs (the ball
+    layer of the FE model is homogenized), so the case's thermal and mechanical state stands
+    for the adopted count and its loss carries the recorded change. (n_case, None) when the
+    case carries the adopted count; (None, why) when it does not stand for it."""
+    fc = Path(fc_dir)
+    try:
+        pn = json.loads((fc / "package_network.json").read_text())
+        pa = json.loads((fc / ADOPTED_NETWORK_NAME).read_text())
+        rec = json.loads((fc / RECLOSE_RECORD_NAME).read_text())
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        return None, f"no re-closure record beside the network ({type(e).__name__})"
+    if not (_same_design(pn, pa) and _same_design(pn, {"meta": {"design": rec.get("design")}})):
+        return None, "the re-closure is of another design than the network build"
+    n_ad = (pa.get("adopted_count") or {}).get(net_key)
+    if n_ad is None or (rec.get("adopted_count") or {}).get(net_key) != n_ad:
+        return None, f"no adopted count of {net_key} in both re-closure files"
+    n_ad, n_case = int(n_ad), int(n_case)
+    if n_case == n_ad:
+        return n_ad, None
+    ce = rec.get("coupled_effect") or {}
+    ev = [r for k, r in (ce.get("per_case") or {}).items()
+          if k.endswith(f"_{net_key}") and r.get("coupled") and r.get("dP_W") is not None
+          and r.get("n_case") == n_case and r.get("n_adopted") == n_ad]
+    if not ev or ce.get("exceeds_threshold") is not False:
+        return None, (f"solved at {n_case} per rail, the re-closure adopted {n_ad}: "
+                      + ("the change of the BGA feed terms exceeds the threshold (re-run)"
+                         if ev else "no recorded change of the BGA feed terms from that count"))
+    dp = max((r["dP_W"] for r in ev), key=abs)
+    return n_ad, (f"solved at {n_case} 48-V balls per rail; the re-closure adopted {n_ad}, a "
+                  f"change of the production cases' BGA feed terms of at most {dp:+.3f} W, "
+                  f"below the {ce.get('threshold_W')} W threshold (recorded, not re-run)")
+
+
 @lru_cache(maxsize=1)
 def package_network():
     """The package 48 V network (research/final_closure/package_network.json; a non-default

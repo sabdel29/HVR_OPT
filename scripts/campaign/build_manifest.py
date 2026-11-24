@@ -35,13 +35,16 @@ decoupling chain derives k_eq on. Review round 3 (the authors' decision of 2026-
 derived.bga_reclose ADOPTS the provisioned 48-V count of each architecture -- the smallest
 legal count per rail meeting the feasibility target (2 A per ball, Kuan et al. 2015; 1.5 A
 reported as a sensitivity) by ONE rule for every integration, the DC peak x k_eq at the k the
-campaign's chain derived, within the site budget (75 % of the package's own sites; Z2's ring:
-at most 198 per rail) and at most 220 per rail -- solves the network there
-(package_network_adopted.json, which the BGA-fed ledgers, the Z2 ring feed and the feasibility
-stage take) and records Z1's worst-ball RMS of the port model as an idealized bound and the
-change of each production case's BGA feed terms (coupled_effect). The per-ball check reads the
-production cases' own 48-V current, so the production cases on another count are re-run after
-the re-closure and the re-closure confirms the count (a second pass; README 4c). The
+campaign's chain derived, across its uncertainty band (at the band's upper end), within the
+site budget (75 % of the package's own sites; Z2's ring: at most 198 per rail) and at most
+220 per rail -- solves the network there (package_network_adopted.json, which the BGA-fed
+ledgers, the Z2 ring feed and the feasibility stage take) and records Z1's worst-ball RMS of
+the port model as an idealized bound and the change of each production case's BGA feed terms
+from the count it was solved at (coupled_effect). The per-ball check reads the production
+cases' own 48-V current, so above 0.1 W the production cases on another count are re-run
+after the re-closure and the re-closure confirms the count (a second pass; README 4c); below
+it the change is recorded and the cases stand for the adopted count (final_closure_ledger.
+accepted_count). The
 feasibility stage applies the same limit per TCPMT_BGA_POLICY ('hard' by default, a filter;
 'requirement' reports it without filtering; both policies' verdicts are stored).
 Paths in `outputs` are relative to the campaign results root (= the stand-in for research/);
@@ -567,12 +570,15 @@ def build(design):
                "of 2026-11-22): the smallest legal count meeting the feasibility target (2 A "
                "per ball, Kuan et al. 2015) by one rule for every integration, the verified "
                "DC peak x k_eq at the production cases' 48-V currents and the k this "
-               "campaign's decoupling chain derives, within the site budget (Z2's ring: at "
-               "most 198 per rail) and at most 220 per rail; the network solved there "
+               "campaign's decoupling chain derives, across its uncertainty band (at the "
+               "band's upper end), within the site budget (Z2's ring: at most 198 per rail) "
+               "and at most 220 per rail; the network solved there "
                "(package_network_adopted.json), the 1.5-A sensitivity (the count it needs), "
                "Z1's worst-ball RMS of the port model as an idealized bound, and the change of "
-               "each production case's BGA feed terms (above 0.1 W: the production cases on "
-               "another count are re-run and this job confirms the count)")
+               "each production case's BGA feed terms from the count it was solved at (above "
+               "0.1 W: the production cases on another count are re-run and this job confirms "
+               "the count; below it the change is recorded and the cases stand for the "
+               "adopted count)")
     post("derived.decap_limits", "derived", "tcpmt_decap_placement.py",
          [tr("decoupling_limits.json")], args=["limits"], deps=["derived.bga_reclose"],
          est_h=0.15, evidence="input_decoupling limits of the m36 development run: wall 321 s",

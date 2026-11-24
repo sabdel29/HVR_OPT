@@ -134,7 +134,11 @@ def input_issue(arch, case):
     """None when the case was solved with the BGA counts in force, else what is stale. The
     48-V balls of Z1 follow the re-closure's adopted count (final_closure_ledger reads
     package_network_adopted.json when it exists); the 1-V balls of Z3 the design record's count
-    (configs/phase0nz/z3_board_backside.yaml). Z2's coupled ledger depends on neither."""
+    (configs/phase0nz/z3_board_backside.yaml). Z2's coupled ledger depends on neither. A Z1
+    case solved at another 48-V count stands for the adopted one when the re-closure recorded
+    the change of the production cases' BGA feed terms below its threshold
+    (final_closure_ledger.accepted_count: only which lattice sites carry 48 V differs, and the
+    ball layer of the FE model is homogenized)."""
     rows = {r["term"]: r for r in case.get("ledger_rows") or []}
     if arch == "Z1":
         n = z1_adopted_per_rail()
@@ -142,6 +146,10 @@ def input_issue(arch, case):
         if n is not None and r is not None:
             m = re.search(r"N=(\d+)/rail", _row_text(r))
             if not m or int(m.group(1)) != int(n):
+                if m:
+                    import final_closure_ledger as FL
+                    if FL.accepted_count("Z1", int(m.group(1)), FC)[0] is not None:
+                        return None
                 return (f"Z1 48-V balls {m.group(1) if m else '?'} per rail in the case, the "
                         f"re-closure adopted {n}: the re-run has not landed")
     if arch == "Z3":

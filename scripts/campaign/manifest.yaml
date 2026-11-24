@@ -11026,11 +11026,12 @@ jobs:
   notes: 'the 48-V count ADOPTED per architecture (review round 3, the authors'' decision of 2026-11-22):
     the smallest legal count meeting the feasibility target (2 A per ball, Kuan et al. 2015) by one rule
     for every integration, the verified DC peak x k_eq at the production cases'' 48-V currents and the
-    k this campaign''s decoupling chain derives, within the site budget (Z2''s ring: at most 198 per rail)
-    and at most 220 per rail; the network solved there (package_network_adopted.json), the 1.5-A sensitivity
-    (the count it needs), Z1''s worst-ball RMS of the port model as an idealized bound, and the change
-    of each production case''s BGA feed terms (above 0.1 W: the production cases on another count are
-    re-run and this job confirms the count)'
+    k this campaign''s decoupling chain derives, across its uncertainty band (at the band''s upper end),
+    within the site budget (Z2''s ring: at most 198 per rail) and at most 220 per rail; the network solved
+    there (package_network_adopted.json), the 1.5-A sensitivity (the count it needs), Z1''s worst-ball
+    RMS of the port model as an idealized bound, and the change of each production case''s BGA feed terms
+    from the count it was solved at (above 0.1 W: the production cases on another count are re-run and
+    this job confirms the count; below it the change is recorded and the cases stand for the adopted count)'
 - id: derived.results
   stage: derived
   argv:

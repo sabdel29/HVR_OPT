@@ -413,6 +413,12 @@ def bga():
                 m[f"WrBgaSensFrac{ATAG[a]}"] = fx(100 * 2 * s["n_min_screen"] / sites[a], 0)
     m["WrBgaSitesZone"] = str(sites.get("Z1", NA))
     m["WrBgaSitesZtwo"] = str(sites.get("Z2", NA))
+    # the count rule closes each count across the k_rms band: the per-ball current at the
+    # band's upper end at the adopted count (the nominal-k current is WrBgaI*)
+    for a in ("Z1", "Z2"):
+        v = (((d.get("ball_currents_at_count") or {}).get("per_arch") or {}).get(a) or {})
+        if v.get("I_ball_at_band_A") is not None:
+            m[f"WrBgaIhi{ATAG[a]}"] = fx(v["I_ball_at_band_A"], 2)
     pa = ((d.get("ball_currents_at_count") or {}).get("per_arch") or {}).get("Z1") or {}
     m["WrBgaRmsZone"] = fx(pa.get("I_ball_rms_max_A"), 1)
     # Z1 at its legal maximum count (the 1.5-A sensitivity) and the bare-decoupling current there

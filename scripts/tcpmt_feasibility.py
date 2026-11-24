@@ -31,7 +31,11 @@ LIMITS (declared, with sources; LIMITS below)
                       of the package network at the case's ball count x the case's 48-V RMS
                       current (the DC peak x k rule, ONE rule for every integration; Z1, Z2's
                       BGA-ring feed; review round 3: the counts are the re-closure's ADOPTED
-                      ones, final_closure_pkg_network.ADOPT_RULE) and, for Z1 in the
+                      ones, final_closure_pkg_network.ADOPT_RULE, the smallest legal count
+                      meeting 2 A across the k_eq band; a Z1 case solved at another count
+                      stands for the adopted one when the re-closure recorded the change of
+                      its BGA feed terms below the threshold, final_closure_ledger.
+                      accepted_count, and is checked there) and, for Z1 in the
                       production state, the worst-ball RMS of the harmonic port model (scaled
                       to the case's 48-V current) reported as an idealized bound, not the
                       verdict; Z3's 1-V balls at DC with equal sharing. BGA_POLICY decides how it
@@ -90,8 +94,10 @@ LIMITS = {"gan_Tj_C": 150.0, "ron_fit_max_C": 125.0, "mlcc_C": 125.0, "inductor_
 #: REVIEW ROUND 3 -- the per-ball limit is 2 A (published design assumption: Kuan et al., IEEE
 #: ASQED 2015, doi:10.1109/ACQED.2015.7274009), with 1.5 A as a conservative sensitivity. The
 #: 48-V ball counts are the re-closure's ADOPTED ones (the authors' decision of 2026-11-22: per
-#: architecture the smallest legal count meeting the limit within the site budget,
-#: final_closure_pkg_network.ADOPT_RULE). How the limit enters the stage (both evaluated on
+#: architecture the smallest legal count meeting the limit within the site budget, since
+#: 2026-11-24 across the k_eq uncertainty band, final_closure_pkg_network.ADOPT_RULE); the
+#: check itself is at each case's own waveform (the nominal k x its 48-V current). How the
+#: limit enters the stage (both evaluated on
 #: every record, so post-processing applies either without reruns):
 #:   hard          the per-ball check is a FILTER: a case above 2 A per ball is infeasible
 #:                 (DEFAULT: the authors adopted 2 A per ball as the nominal limit, 1.5 A as a
@@ -529,31 +535,43 @@ def bga_check(arch, case, feed=None):
     provisioning rule against the 2-A target, with 1.5 A as a sensitivity. Where the port model
     describes the case (Z1), its idealized worst-ball RMS (all balls tied to an ideal board
     node) is reported as a bound in `extra`, not used for the verdict, because Z2 and Z3 have no
-    such model and the rule must be the same for all."""
+    such model and the rule must be the same for all. A BGA-fed case of the production network
+    solved at another count than the re-closure's adopted one is checked at the adopted count
+    when it stands for it (final_closure_ledger.accepted_count: the re-closure recorded the
+    change of the production cases' BGA feed terms below its threshold, so they were not
+    re-run): the adopted network's peak fraction x the case's own 48-V RMS current (solved on
+    the case's count; more balls only lower it)."""
     rows = {r["term"]: r for r in case.get("ledger_rows") or []}
     out = []
     lim = LIMITS["bga_A_per_ball"]
     if "P_BGA_supply" in rows:                       # BGA-fed 48 V (Z1, the Z2BF control)
         import re
-        n = int(re.search(r"N=(\d+)", rows["P_BGA_supply"]["conductor"]).group(1))
+        n_case = int(re.search(r"N=(\d+)", rows["P_BGA_supply"]["conductor"]).group(1))
+        n, count_note = n_case, None
         i_rms = float(rows["P_BGA_supply"]["I_a"])
         net = (case.get("design") or {}).get("package_network")
-        frac, src = peak_fraction("Z2" if arch == "Z2BF" else "Z1", n,
-                                  R / net if net else None)
+        net_key = "Z2" if arch == "Z2BF" else "Z1"
+        if net is None or (R / net).resolve() == (FC / "package_network.json").resolve():
+            import final_closure_ledger as FL
+            n_ad, why = FL.accepted_count(net_key, n_case, FC)
+            if n_ad is not None:
+                n, count_note = n_ad, why
+        frac, src = peak_fraction(net_key, n, R / net if net else None)
         sites = BGA_SITES.get(arch, 1369)
         dc = None if frac is None else frac * i_rms
         rms, rsrc = port_model_ball_rms(case, n) if arch == "Z1" else (None, "no port model")
         val = dc
         sens = LIMITS["bga_A_per_ball_sensitivity"]
         out.append(("bga_current", val, lim, None if val is None else val <= lim,
-                    f"48-V balls: {n}/rail; DC peak x k rule (peak fraction {frac} ({src}) x "
+                    f"48-V balls: {n}/rail" + (f" ({count_note})" if count_note else "")
+                    + f"; DC peak x k rule (peak fraction {frac} ({src}) x "
                     f"I_rms {i_rms:.2f} A = " + (f"{dc:.3f} A" if dc is not None else "n/a")
                     + "); idealized worst-ball RMS bound " + (f"{rms:.3f} A ({rsrc})"
                                                               if rms is not None else rsrc),
                     {"I_ball_closure_rule_A": dc, "I_ball_rms_max_A": rms,
                      "I_ball_rms_bound_ok_2A": None if rms is None else rms <= lim,
                      "ok_at_sensitivity_1p5A": None if val is None else val <= sens,
-                     "n_per_rail": n, "I_rms_48V_A": i_rms}))
+                     "n_per_rail": n, "n_per_rail_case": n_case, "I_rms_48V_A": i_rms}))
         out.append(("bga_sites", 2 * n / sites, LIMITS["bga_power_site_fraction_max"],
                     2 * n / sites <= LIMITS["bga_power_site_fraction_max"],
                     f"{2 * n} of {sites} sites carry 48 V", {}))

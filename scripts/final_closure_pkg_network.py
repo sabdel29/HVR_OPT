@@ -61,40 +61,54 @@ CLOSURE_RULE = ("network count: DC peak x k_eq <= 1.5 A per ball, at most 220 ba
                 "else the fallback count (the modelled arrangement, on which the decoupling "
                 "chain derives k_eq); the provisioned count and the per-ball verdict are the "
                 "re-closure's (ADOPT_RULE: the smallest legal count meeting the 2-A target by "
-                "the DC peak x k_eq rule, within the site budget)")
+                "the DC peak x k_eq rule across the k_eq band, within the site budget)")
 #: REVIEW ROUND 3, the authors' decision of 2026-11-22 (round3_worklog; it replaces the fixed
 #: modelled arrangement of 2026-11-19, whose 220 per rail put Z2's ring feed on 440 of its 528
 #: ring sites, above the site budget): the 48-V BGA is PROVISIONED by the paper's rule. Per
 #: architecture the ADOPTED count is the SMALLEST legal (mirror-symmetric: the nearest_symmetric
 #: selection of n supply and n return sites) ball count per rail whose verified per-ball current
 #: -- ONE rule for every integration, the level-2 DC peak x k_eq -- meets the feasibility stage's
-#: target (tcpmt_feasibility.LIMITS bga_A_per_ball: 2 A, Kuan et al. ASQED 2015), within the
+#: target (tcpmt_feasibility.LIMITS bga_A_per_ball: 2 A, Kuan et al. ASQED 2015) ACROSS THE k_eq
+#: UNCERTAINTY BAND (the loop-inductance band of the decoupling chain the k is taken from:
+#: the count is closed at the band's upper end, so the nominal k leaves a margin instead of
+#: a count that only just meets the target; 2026-11-24, after the nominal-k count of 168 per
+#: rail left Z1 0.0004 A and put three production-state variants a few mA above the target
+#: under the hard policy), within the
 #: site budget (LIMITS bga_power_site_fraction_max of the package's own ball sites: Z1 the 1369
 #: of the full lattice, Z2 the ring of 528 around the board opening, i.e. at most 198 per rail)
 #: and N_MAX_PER_RAIL. The conservative sensitivity (bga_A_per_ball_sensitivity, 1.5 A) is
-#: reported: the count it would need, or that no legal count closes it. Z1's worst-ball RMS of
+#: reported by the same rule: the count it would need, or that no legal count closes it. The
+#: per-ball verdict (and the feasibility stage's check of every case) stays at the case's own
+#: waveform, the nominal k x the case's 48-V current. Z1's worst-ball RMS of
 #: the harmonic port model at the adopted count stays an idealized bound (reported, not the
 #: verdict). Only WHICH lattice sites carry 48 V changes: the ball layer (homogenized in the FE
 #: model) and the all-site joint search are unchanged. The re-closure solves the network at the
 #: adopted counts (ADOPTED_OUT, package_network.json's schema with one count per architecture),
 #: which the BGA-fed ledgers (final_closure_ledger.package_network), the Z2 BGA-ring feed
-#: (tcpmt_platform) and the feasibility stage take; the coupled cases computed on another count
-#: are re-run (a second pass: the per-ball check reads the production cases' own 48-V current,
-#: so the adoption is confirmed at the re-run cases' current, a fixed point).
+#: (tcpmt_platform) and the feasibility stage take. The change of each coupled production
+#: case's BGA feed terms from the count it was solved at to the adopted count is checked
+#: against COUPLED_DP_THRESHOLD_W (coupled_effect): above it the cases are re-run (a second
+#: pass: the per-ball check reads the production cases' own 48-V current, so the adoption is
+#: confirmed at the re-run cases' current, a fixed point); below it the change is recorded
+#: and the cases stand for the adopted count (final_closure_ledger.accepted_count: the
+#: feasibility stage checks their balls at the adopted count with their own 48-V current).
 ADOPT_RULE = ("adopted count, per architecture: the smallest legal (mirror-symmetric) ball "
               "count per rail whose verified per-ball current (level-2 DC peak x k_eq, one "
               "rule for every integration) meets the feasibility stage's target "
-              "(tcpmt_feasibility.LIMITS bga_A_per_ball), within the site budget "
-              "(bga_power_site_fraction_max of the package's own ball sites) and at most 220 "
-              "per rail; the sensitivity bga_A_per_ball_sensitivity is reported (the count it "
-              "needs, or that none closes it); Z1's worst-ball RMS of the port model is an "
-              "idealized bound, reported")
+              "(tcpmt_feasibility.LIMITS bga_A_per_ball) across the k_eq uncertainty band "
+              "(at its upper end), within the site budget (bga_power_site_fraction_max of the "
+              "package's own ball sites) and at most 220 per rail; the sensitivity "
+              "bga_A_per_ball_sensitivity is reported by the same rule (the count it needs, or "
+              "that none closes it); Z1's worst-ball RMS of the port model is an idealized "
+              "bound, reported")
 RECLOSE_RULE = ("per-ball current = verified DC peak x k_eq (one rule for every integration) "
                 "against the feasibility stage's per-ball target (tcpmt_feasibility.LIMITS "
                 "bga_A_per_ball; the conservative sensitivity bga_A_per_ball_sensitivity is "
-                "reported), at the ADOPTED count of each architecture (ADOPT_RULE: the smallest "
-                "legal count meeting the target within the site budget, at most 220 per rail); "
-                "Z1's worst-ball RMS of the port model is an idealized bound, reported")
+                "reported), at the nominal k_eq and at the upper end of its band, at the "
+                "ADOPTED count of each architecture (ADOPT_RULE: the smallest legal count "
+                "meeting the target across the k_eq band within the site budget, at most 220 "
+                "per rail); Z1's worst-ball RMS of the port model is an idealized bound, "
+                "reported")
 ADOPTED_OUT = OUT / "package_network_adopted.json"
 #: the coupled-effect threshold (the authors' decision of 2026-11-22): a change of the BGA feed
 #: ledger terms of a production case below it is recorded, not re-run
@@ -347,18 +361,27 @@ def site_budget(arch):
     return {"sites": sites, "fraction_max": fmax, "cap_per_rail": cap}
 
 
-def adopt_count(arch, screen, counts, kw, crit, cap, scen=PRODUCTION_SCEN, cache=None):
+def adopt_count(arch, screen, counts, kw, crit, cap, scen=PRODUCTION_SCEN, cache=None,
+                k_factor=1.0):
     """The smallest legal count per rail (<= cap) whose per-ball current (DC peak x k_eq of
-    `scen`) is <= crit on the level-1 screen AND on the verification level, the next lower
-    legal count failing on the verification level (the closure's minimality check; a lower
-    count passing there is walked down to). {status, n_per_rail, verified{n: ...}, ...}:
-    status CLOSED, or NOT_CLOSED (no legal count within the cap meets crit; n_per_rail is then
-    None and the count of least screen peak within the cap is recorded). `cache`: verified
-    level-2 rows by (arch, n), shared between calls."""
+    `scen`, times `k_factor`) is <= crit on the level-1 screen AND on the verification level,
+    the next lower legal count failing on the verification level (the closure's minimality
+    check; a lower count passing there is walked down to). k_factor = k_hi / k_eq closes the
+    count at the upper end of the k_eq band (ADOPT_RULE: the target met across the band); the
+    peaks are recorded at the nominal k (peak_A) and at the band's end (peak_at_band_A).
+    {status, n_per_rail, verified{n: ...}, ...}: status CLOSED, or NOT_CLOSED (no legal count
+    within the cap meets crit; n_per_rail is then None and the count of least screen peak
+    within the cap is recorded). `cache`: verified level-2 rows by (arch, n), shared between
+    calls (the rows are at the nominal k: k_factor applies on reading)."""
     cache = {} if cache is None else cache
     key = f"i_ball_max_A__{scen}"
+    kf = float(k_factor)
     by = {r["n_per_rail"]: r for r in screen if r["arch"] == arch}
     legal = sorted(n for n in counts[arch] if n <= cap and n in by)
+
+    def cur(r):
+        """the per-ball current the rule judges: the row's (nominal-k) peak x k_factor"""
+        return r[key] * kf
 
     def verify(ns):
         need = [n for n in ns if (arch, n) not in cache]
@@ -374,18 +397,18 @@ def adopt_count(arch, screen, counts, kw, crit, cap, scen=PRODUCTION_SCEN, cache
         return lo[-1] if lo else None
 
     def rec(r):
-        return {"peak_A": r[key], "peak_fraction": r["peak_fraction"],
+        return {"peak_A": r[key], "peak_at_band_A": cur(r), "peak_fraction": r["peak_fraction"],
                 "r_loop_ohm": r["supply_r_eff_ohm"] + r["return_r_eff_ohm"],
-                "pass": bool(r[key] <= crit)}
+                "pass": bool(cur(r) <= crit), "pass_nominal_k": bool(r[key] <= crit)}
 
-    cand = [n for n in legal if by[n][key] <= crit]
-    out = {"criterion_A": crit, "cap_per_rail": cap, "scenario": scen,
+    cand = [n for n in legal if cur(by[n]) <= crit]
+    out = {"criterion_A": crit, "cap_per_rail": cap, "scenario": scen, "k_factor": kf,
            "screen_candidates": cand[:12], "verify_level": VERIFY_LEVEL}
     n_ok = None
     for n in cand:
         lo = lower(n)
         v = verify([n] + ([lo] if lo is not None else []))
-        if v[n][key] <= crit:
+        if cur(v[n]) <= crit:
             n_ok = n
             break
     if n_ok is None:
@@ -395,22 +418,26 @@ def adopt_count(arch, screen, counts, kw, crit, cap, scen=PRODUCTION_SCEN, cache
         return {**out, "status": "NOT_CLOSED", "n_per_rail": None,
                 "least_peak_count_within_cap": best,
                 "least_peak_screen_A": by[best][key] if best is not None else None,
+                "least_peak_screen_at_band_A": cur(by[best]) if best is not None else None,
                 "reason": (f"no legal count of at most {cap} per rail meets {crit:g} A per "
-                           f"ball (DC peak x k_eq)")}
+                           f"ball (DC peak x k_eq" + (f" x {kf:.4f}, the upper end of the k_eq "
+                                                      f"band)" if kf != 1.0 else ")"))}
     while True:                              # minimality on the verification level
         lo = lower(n_ok)
-        if lo is None or verify([lo])[lo][key] > crit:
+        if lo is None or cur(verify([lo])[lo]) > crit:
             break
         n_ok = lo
     lo = lower(n_ok)
     ver = {m: cache[(arch, m)] for m in sorted({n_ok} | ({lo} if lo is not None else set()))}
     return {**out, "status": "CLOSED", "n_per_rail": n_ok,
             "peak_A": cache[(arch, n_ok)][key],
+            "peak_at_band_A": cur(cache[(arch, n_ok)]),
             "peak_at_lower_A": cache[(arch, lo)][key] if lo is not None else None,
+            "peak_at_lower_at_band_A": cur(cache[(arch, lo)]) if lo is not None else None,
             "lower_count": lo,
             "verified": {str(m): rec(r) for m, r in ver.items()},
             "larger_counts_that_FAIL_on_screen": [m for m in legal if m > n_ok
-                                                  and by[m][key] > crit]}
+                                                  and cur(by[m]) > crit]}
 
 
 def production_cases():
@@ -428,17 +455,21 @@ def production_cases():
 
 def coupled_effect(adopted, modelled, k):
     """The change of the BGA feed terms of every production case (Z1/Z2 x cooling A/B) when
-    the 48-V balls move from the modelled arrangement to the adopted count, each case at its
-    own 48-V RMS current and BGA temperature (the last E-T iteration):
+    the 48-V balls move from the count the case was solved at to the adopted count, each case
+    at its own 48-V RMS current and BGA temperature (the last E-T iteration):
       Z1  the ledger's package 48-V terms (P_pkg_RDL_HV_* + P_BGA_*, final_closure_ledger.
-          package_hv_terms) on both networks -- the coupled case carries them;
+          package_hv_terms) on the adopted network against the case's own terms (its ledger
+          rows, solved on the network of its count) -- the coupled case carries them. The
+          same terms on the modelled arrangement (the network build's count) are recorded
+          beside them (dP_vs_modelled_W);
       Z2  no ledger term (direct feed: its 48 V never enters the package-internal boundary,
           final_closure_ledger.FORBIDDEN_DIRECT_FEED_TERMS); the BGA-ring feed of the platform
           accounting (outside the boundary, not coupled) is reported beside it, as the same
           terms of the Z2 network at k_eq x the case's average current.
     Against COUPLED_DP_THRESHOLD_W: below it the change is recorded and the coupled cases are
-    not re-run; above it the cases on another count are re-run (case_carries_adopted_count
-    says whether a case already carries the adopted count)."""
+    not re-run (a case on another count then stands for the adopted one: final_closure_ledger.
+    accepted_count); above it the cases on another count are re-run
+    (case_carries_adopted_count says whether a case already carries the adopted count)."""
     import re
     import final_closure_ledger as FL
     out, worst = {}, 0.0
@@ -455,15 +486,17 @@ def coupled_effect(adopted, modelled, k):
             pm = FL.package_hv_terms(modelled, "Z1", i_rms, t_bga)
             p_a, p_m = (sum(x["P_w"] for x in pa.values()),
                         sum(x["P_w"] for x in pm.values()))
-            dp = p_a - p_m
+            p_c = sum(float(rows[k_]["P_w"]) for k_ in pa)
+            dp = p_a - p_c
             rec.update({"coupled": True, "I_rms_48V_A": i_rms, "n_case": n_case,
                         "n_adopted": adopted["loop"]["Z1"]["n_per_rail"],
                         "n_modelled": modelled["loop"]["Z1"]["n_per_rail"],
                         "terms_adopted_W": {k_: v["P_w"] for k_, v in pa.items()},
                         "terms_modelled_W": {k_: v["P_w"] for k_, v in pm.items()},
+                        "terms_case_W": {k_: float(rows[k_]["P_w"]) for k_ in pa},
                         "P_terms_adopted_W": p_a, "P_terms_modelled_W": p_m,
-                        "P_terms_case_W": sum(float(rows[k_]["P_w"]) for k_ in pa),
-                        "dP_W": dp,
+                        "P_terms_case_W": p_c,
+                        "dP_W": dp, "dP_vs_modelled_W": p_a - p_m,
                         "case_carries_adopted_count":
                             n_case == adopted["loop"]["Z1"]["n_per_rail"]})
             worst = max(worst, abs(dp))
@@ -474,7 +507,7 @@ def coupled_effect(adopted, modelled, k):
             rec.update({"coupled": False, "dP_W": 0.0,
                         "why": "direct feed: no package 48-V term in the coupled ledger; the "
                                "BGA-ring feed is outside the package-internal boundary "
-                               "(platform accounting)",
+                               "(platform accounting, recomputed at the adopted count)",
                         "ring_feed_I_rms_A": i_rms,
                         "n_adopted": adopted["loop"]["Z2"]["n_per_rail"],
                         "n_modelled": modelled["loop"]["Z2"]["n_per_rail"],
@@ -487,17 +520,24 @@ def coupled_effect(adopted, modelled, k):
     exceeds = worst >= COUPLED_DP_THRESHOLD_W
     stale = sorted(key for key, r in out.items()
                    if r.get("coupled") and not r.get("case_carries_adopted_count"))
+    if not exceeds:
+        action = ("below the threshold: recorded; the coupled cases are not re-run and stand "
+                  "for the adopted count (final_closure_ledger.accepted_count: their balls are "
+                  "checked at the adopted count with their own 48-V current, their loss "
+                  "carries the recorded change)" if stale else
+                  "below the threshold: recorded, the coupled cases are not re-run")
+    else:
+        action = ("above the threshold: the production cases on another count are re-run at "
+                  "the adopted count (prod.Z1.SDEC.*), then the re-closure confirms the count "
+                  "at their current" if stale else
+                  "above the threshold although the production cases carry the adopted "
+                  "count: check the network the cases were solved on")
     return {"threshold_W": COUPLED_DP_THRESHOLD_W, "per_case": out, "max_abs_dP_W": worst,
-            "exceeds_threshold": exceeds, "cases_on_another_count": stale,
-            "action": ("below the threshold: recorded, the coupled cases are not re-run"
-                       if not exceeds else
-                       "above the threshold: the production cases on another count are "
-                       "re-run at the adopted count (prod.Z1.SDEC.*), then the re-closure "
-                       "confirms the count at their current" if stale else
-                       "above the threshold: the production cases carry the adopted count "
-                       "(re-run)"),
-            "basis": "final_closure_ledger.package_hv_terms on the adopted and the modelled "
-                     "network, each case at its own 48-V RMS current and BGA temperature"}
+            "exceeds_threshold": exceeds, "cases_on_another_count": stale, "action": action,
+            "basis": "final_closure_ledger.package_hv_terms on the adopted network against "
+                     "each case's own ledger terms (dP_W) and against the modelled "
+                     "arrangement (dP_vs_modelled_W), each case at its own 48-V RMS current "
+                     "and BGA temperature"}
 
 
 def verified_peaks(n, kw):
@@ -564,7 +604,9 @@ def reclose():
     The per-ball target is the feasibility stage's (tcpmt_feasibility.LIMITS: bga_A_per_ball,
     with the conservative bga_A_per_ball_sensitivity reported), ONE rule applies to every
     integration (the verified level-2 DC peak x k_eq), and the count is the smallest legal one
-    meeting the target within the site budget (site_budget; Z2's ring: at most 198 per rail).
+    meeting the target across the k_eq band -- at the band's upper end k_hi, the per-ball
+    current scaled by k_hi / k_eq -- within the site budget (site_budget; Z2's ring: at most
+    198 per rail); the verdict is recorded at the nominal k_eq and at k_hi.
     The network is solved at the adopted counts (converged levels, ADOPTED_OUT: what the
     BGA-fed ledgers, the Z2 ring feed and the feasibility stage take), the per-ball currents
     and the feed losses are recorded there beside the modelled arrangement's (the network
@@ -572,9 +614,9 @@ def reclose():
     production case's BGA feed terms is checked against COUPLED_DP_THRESHOLD_W
     (coupled_effect). Z1's worst-ball RMS of the harmonic port model at its adopted count is
     reported as an idealized bound (all balls tied to an ideal board node), not the verdict.
-    The 1.5-A sensitivity records the count it would need (verified), within or beyond the
-    site budget, or that no legal count closes it. Writes bga_count_production.json and
-    package_network_adopted.json."""
+    The 1.5-A sensitivity records the count it would need by the same rule (verified), within
+    or beyond the site budget, or that no legal count closes it. Writes
+    bga_count_production.json and package_network_adopted.json."""
     global _K_FROM_CHAIN, _CRIT_A
     import design_record as DR
     t0 = time.time()
@@ -593,10 +635,16 @@ def reclose():
                          f"bga_count_screen.csv: rebuild the network and its screen")
     kw = {"mode": "VIN_PAD"}
     k, band = production_k()
+    # ADOPT_RULE: the count meets the target across the k_eq band, i.e. at its upper end
+    k_hi = max(float(band[1]), float(k))
+    kf = k_hi / float(k)
     out = {"criterion_A_per_ball": target, "criterion_sensitivity_A_per_ball": sens,
            "criterion_source": f"tcpmt_feasibility.LIMITS bga_A_per_ball: {target_src}",
            "bga_policy_in_force": policy,
-           "k_eq": k, "k_eq_band": band,
+           "k_eq": k, "k_eq_band": band, "k_eq_count_rule": k_hi,
+           "k_eq_count_rule_basis": ("the upper end of the k_eq band (loop-inductance band of "
+                                     "the same decoupling record): the count meets the target "
+                                     "across the band"),
            "k_source": ("the results root's decoupling chain (input_decoupling.json)"
                         if chain_k() else "the design record's committed k"),
            "currents_A": {a: scenarios(a) for a in ("Z1", "Z2")},
@@ -631,16 +679,17 @@ def reclose():
                 "larger_counts_that_FAIL_on_screen": fail_above}
         # the upper end of the loop-inductance band
         i_prod = out["currents_A"][a][PRODUCTION_SCEN]
-        i_hi = band[1] / k * i_prod
+        i_hi = kf * i_prod
         ok = [r["n_per_rail"] for r in screen if r["arch"] == a and r["peak_fraction"] * i_hi
               <= target]
-        out["closure"][f"{a}__{PRODUCTION_SCEN}__k_hi"] = {"k": band[1],
+        out["closure"][f"{a}__{PRODUCTION_SCEN}__k_hi"] = {"k": k_hi,
                                                          "n_min_screen": min(ok) if ok else None}
-        # the conservative sensitivity of the target, on the screen
-        ok = [r["n_per_rail"] for r in screen if r["arch"] == a and r["peak_fraction"] * i_prod
+        # the conservative sensitivity of the target, on the screen, by the same rule (across
+        # the k_eq band: at its upper end)
+        ok = [r["n_per_rail"] for r in screen if r["arch"] == a and r["peak_fraction"] * i_hi
               <= sens]
         out["closure_sensitivity"][f"{a}__{PRODUCTION_SCEN}"] = {
-            "criterion_A": sens, "n_min_screen": min(ok) if ok else None,
+            "criterion_A": sens, "k": k_hi, "n_min_screen": min(ok) if ok else None,
             "status": "SCREEN_ONLY_NOT_VERIFIED" if ok else "NOT_SATISFIABLE_AT_ANY_LEGAL_COUNT"}
     # provisioning record: the smallest common count passing the target for both
     n_dc = matched_count(screen, counts, kw, PRODUCTION_SCEN)
@@ -656,13 +705,13 @@ def reclose():
     adoption, sens_count = {}, {}
     for a in ("Z1", "Z2"):
         adoption[a] = adopt_count(a, screen, counts, kw, target, budget[a]["cap_per_rail"],
-                                  cache=cache)
-        s = adopt_count(a, screen, counts, kw, sens, N_MAX_PER_RAIL, cache=cache)
+                                  cache=cache, k_factor=kf)
+        s = adopt_count(a, screen, counts, kw, sens, N_MAX_PER_RAIL, cache=cache, k_factor=kf)
         n_s, cap = s["n_per_rail"], budget[a]["cap_per_rail"]
         if n_s is None:
             lp = s.get("least_peak_screen_A")
             s["statement"] = (f"cannot close at {sens:g} A: no legal count of at most "
-                              f"{N_MAX_PER_RAIL} per rail meets it"
+                              f"{N_MAX_PER_RAIL} per rail meets it across the k_eq band"
                               + (f" (least screen peak {lp:.2f} A at "
                                  f"{s['least_peak_count_within_cap']} per rail)"
                                  if lp is not None else ""))
@@ -670,7 +719,8 @@ def reclose():
             s["site_fraction"] = 2 * n_s / budget[a]["sites"]
             s["within_site_budget"] = bool(n_s <= cap)
             s["status_within_site_budget"] = "CLOSED" if n_s <= cap else "NOT_CLOSED"
-            s["statement"] = (f"needs {n_s} per rail at {sens:g} A ({2 * n_s} of "
+            s["statement"] = (f"needs {n_s} per rail at {sens:g} A across the k_eq band "
+                              f"({2 * n_s} of "
                               f"{budget[a]['sites']} sites, {100 * s['site_fraction']:.1f} %)"
                               + ("" if n_s <= cap else
                                  f": beyond the site budget (at most {cap} per rail), so it "
@@ -688,7 +738,8 @@ def reclose():
                  "count_rule": ADOPT_RULE, "criterion_A_per_ball": target,
                  "criterion_sensitivity_A_per_ball": sens,
                  "criterion_source": out["criterion_source"],
-                 "k_eq": k, "k_source": out["k_source"],
+                 "k_eq": k, "k_eq_band": band, "k_eq_count_rule": k_hi,
+                 "k_source": out["k_source"],
                  "screen_level": SCREEN_LEVEL, "verify_level": VERIFY_LEVEL,
                  "final_levels": list(FINAL_LEVELS),
                  "levels_mm": {str(k_): v for k_, v in RF.LEVELS.items()},
@@ -726,6 +777,9 @@ def reclose():
                   "I_ball_closure_rule_A": v, "I_ball_A": v,
                   "I_ball_converged_A": frac * out["currents_A"][a][PRODUCTION_SCEN],
                   "I_ball_rms_max_A": i_rms, "margin_A": target - v,
+                  # the count rule's view: the upper end of the k_eq band
+                  "k_eq_count_rule": k_hi, "I_ball_at_band_A": v * kf,
+                  "margin_at_band_A": target - v * kf, "passes_band": bool(v * kf <= target),
                   "passes": bool(v <= target), "passes_sensitivity": bool(v <= sens),
                   "rms_bound_within_target": None if i_rms is None else bool(i_rms <= target),
                   "screen_peak_A": (by.get((a, n)) or {}).get(key),
@@ -751,7 +805,8 @@ def reclose():
             "note": "package 48-V RDL sheets at 20 C and k_eq x the production current; the "
                     "ledger takes them at the case's BGA temperature, plus the balls "
                     "(coupled_effect)"}
-    closed = all(c["passes"] and c["adoption_status"] == "CLOSED" for c in cur.values())
+    closed = all(c["passes"] and c["passes_band"] and c["adoption_status"] == "CLOSED"
+                 for c in cur.values())
     out["site_budget"] = budget
     out["adopted_count"] = dict(adopted)
     out["adoption"] = adoption
@@ -760,6 +815,7 @@ def reclose():
         "n_per_rail": dict(adopted), "criterion_A": target, "criterion_sensitivity_A": sens,
         "per_arch": cur, "port_model": r_,
         "k_eq_port_model_at_count": r_.get("k_eq"),
+        "k_eq": k, "k_eq_count_rule": k_hi,
         "status": "CLOSED" if closed else "NOT_CLOSED",
         "status_at_sensitivity": ("CLOSED" if all(c["passes_sensitivity"] for c in cur.values())
                                   else "NOT_CLOSED"),
@@ -770,8 +826,9 @@ def reclose():
                 "(no longer the provisioned count)"}
     out["match_fallback"] = None if closed else {
         "status": "NOT_CLOSED",
-        "rule": ("no legal count within the site budget meets the per-ball target: the count "
-                 "of least screen peak within the budget is adopted, the target is VIOLATED"),
+        "rule": ("no legal count within the site budget meets the per-ball target across the "
+                 "k_eq band: the count of least screen peak within the budget is adopted, the "
+                 "target is VIOLATED at the band's upper end"),
         "scenario": PRODUCTION_SCEN, "n_per_rail": dict(adopted), "criterion_A": target,
         "verified_peak_A": {a: cur[a]["I_ball_closure_rule_A"] for a in cur},
         "verified_level": VERIFY_LEVEL,

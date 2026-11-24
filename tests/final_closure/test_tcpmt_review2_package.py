@@ -343,10 +343,11 @@ def _stub_reclose(tmp_path, monkeypatch, c, k, i_avg, counts):
 def test_bga_reclose_adopts_the_smallest_passing_count(tmp_path, monkeypatch):
     """Review round 3 (the authors' decision of 2026-11-22), the re-closure with the solver
     stubbed: each architecture ADOPTS the smallest legal count whose verified DC peak x k_eq
-    meets the feasibility stage's 2-A target within the site budget (Z2's ring of 528 sites: at
-    most 198 per rail), the network is solved there (package_network_adopted.json), 1.5 A is
-    reported as the sensitivity (here: no legal count closes it), Z1's port-model RMS is an
-    idealized bound only, the modelled arrangement is recorded beside it, and a network of
+    meets the feasibility stage's 2-A target across the k_eq band (at its upper end, here 2.70
+    against the nominal 2.64) within the site budget (Z2's ring of 528 sites: at most 198 per
+    rail), the network is solved there (package_network_adopted.json), 1.5 A is reported as
+    the sensitivity by the same rule (here: no legal count closes it), Z1's port-model RMS is
+    an idealized bound only, the modelled arrangement is recorded beside it, and a network of
     another design is refused."""
     import design_record as DR
     k, i_avg = 2.64, 23.6
@@ -358,30 +359,37 @@ def test_bga_reclose_adopts_the_smallest_passing_count(tmp_path, monkeypatch):
     PN.reclose()
     out = json.loads((tmp_path / "bga_count_production.json").read_text())
     assert out["criterion_A_per_ball"] == 2.0 and out["criterion_sensitivity_A_per_ball"] == 1.5
-    # 1.73 A x 220 / n <= 2 A -> n >= 190.3; 1.63 A x 220 / n <= 2 A -> n >= 179.3
-    assert out["adopted_count"] == {"Z1": 192, "Z2": 180}
+    # across the band (k 2.70 / 2.64): 1.73 A x 220 / n x 2.70 / 2.64 <= 2 A -> n >= 194.6;
+    # 1.63 A x 220 / n x 2.70 / 2.64 <= 2 A -> n >= 183.4 (at the nominal k: 192 and 180)
+    kf = 2.70 / 2.64
+    assert out["adopted_count"] == {"Z1": 196, "Z2": 184}
+    assert out["k_eq_count_rule"] == pytest.approx(2.70)
     assert out["modelled_count"] == 220 and out["matched_count_dc_rule"] == 192
     assert out["count_rule"] == PN.ADOPT_RULE
     bc = out["ball_currents_at_count"]
-    assert bc["n_per_rail"] == {"Z1": 192, "Z2": 180} and bc["rule"] == PN.RECLOSE_RULE
+    assert bc["n_per_rail"] == {"Z1": 196, "Z2": 184} and bc["rule"] == PN.RECLOSE_RULE
     assert bc["status"] == "CLOSED" and bc["status_at_sensitivity"] == "NOT_CLOSED"
     z1, z2 = bc["per_arch"]["Z1"], bc["per_arch"]["Z2"]
-    assert z1["I_ball_A"] == pytest.approx(1.73 * 220 / 192)
-    assert z2["I_ball_A"] == pytest.approx(1.63 * 220 / 180)
-    assert z2["site_fraction"] == pytest.approx(360 / 528) and z2["site_budget_ok"]
+    assert z1["I_ball_A"] == pytest.approx(1.73 * 220 / 196)
+    assert z2["I_ball_A"] == pytest.approx(1.63 * 220 / 184)
+    assert z1["I_ball_at_band_A"] == pytest.approx(1.73 * 220 / 196 * kf) and z1["passes_band"]
+    assert z1["margin_at_band_A"] == pytest.approx(2.0 - 1.73 * 220 / 196 * kf)
+    assert z2["site_fraction"] == pytest.approx(368 / 528) and z2["site_budget_ok"]
     assert z1["passes"] and z2["passes"] and not z1["passes_sensitivity"]
     assert z1["I_ball_rms_max_A"] == pytest.approx(2.2) and z1["rms_bound_within_target"] is False
     assert z2["I_ball_rms_max_A"] is None and out["match_fallback"] is None
-    assert out["adoption"]["Z1"]["peak_at_lower_A"] > 2.0 and out["adoption"]["Z1"]["lower_count"] == 190
-    for a in ("Z1", "Z2"):                                   # 1.5 A: needs n >= 254 / 239
+    ad1 = out["adoption"]["Z1"]
+    assert ad1["lower_count"] == 194 and ad1["peak_at_lower_A"] < 2.0        # nominal k: passes
+    assert ad1["peak_at_lower_at_band_A"] > 2.0                             # the band: fails
+    for a in ("Z1", "Z2"):                                   # 1.5 A: needs n >= 260 / 245
         assert out["sensitivity_count"][a]["n_per_rail"] is None
         assert "cannot close" in out["sensitivity_count"][a]["statement"]
     mo = out["modelled_arrangement"]["per_arch"]
     assert mo["Z2"]["site_fraction"] == pytest.approx(440 / 528) and not mo["Z2"]["site_budget_ok"]
     assert mo["Z1"]["I_ball_closure_rule_A"] == pytest.approx(1.73)
     ad = json.loads((tmp_path / "package_network_adopted.json").read_text())
-    assert ad["adopted_count"] == {"Z1": 192, "Z2": 180}
-    assert ad["loop"]["Z1"]["n_per_rail"] == 192 and len(ad["convergence"]["Z2_supply"]["i_ball_frac"]) == 180
+    assert ad["adopted_count"] == {"Z1": 196, "Z2": 184}
+    assert ad["loop"]["Z1"]["n_per_rail"] == 196 and len(ad["convergence"]["Z2_supply"]["i_ball_frac"]) == 184
     assert ad["meta"]["design"]["design"] == DR.name()
     # another design's network never stands in
     pn["meta"]["design"]["design"] = "not_" + DR.name()
@@ -404,13 +412,16 @@ def test_bga_reclose_site_budget_binds(tmp_path, monkeypatch):
     assert out["adopted_count"]["Z2"] == 198                       # least peak within the budget
     assert out["ball_currents_at_count"]["status"] == "NOT_CLOSED"
     assert out["match_fallback"]["status"] == "NOT_CLOSED"
-    assert out["adopted_count"]["Z1"] == 192
+    assert out["adopted_count"]["Z1"] == 196
 
 
 def test_bga_coupled_effect_of_the_adopted_count():
-    """The change of a production case's BGA feed terms between the modelled and the adopted
-    network, at the case's own 48-V current and BGA temperature (final_closure_ledger.
-    package_hv_terms); Z2 has no coupled term (direct feed), its ring feed is reported."""
+    """The change of a production case's BGA feed terms from the count it was solved at (its
+    own ledger terms) to the adopted network, at the case's own 48-V current and BGA
+    temperature (final_closure_ledger.package_hv_terms), with the modelled arrangement's terms
+    recorded beside it; Z2 has no coupled term (direct feed), its ring feed is reported. A
+    case solved at the modelled arrangement changes by the adopted-minus-modelled terms; a
+    case solved at a count next to the adopted one changes by little and is not re-run."""
     import final_closure_ledger as FL
     import final_closure_pkg_network as PN
 
@@ -420,27 +431,91 @@ def test_bga_coupled_effect_of_the_adopted_count():
                 "convergence": {f"{a}_{rail}": {"i_ball_frac": [1.0 / n] * n}
                                 for a in ("Z1", "Z2") for rail in ("supply", "return")}}
     mod, ado = net(220, 4.5e-4), net(168, 6.0e-4)
-    row = {"term": "P_BGA_supply", "conductor": "BGA supply balls (N=220)", "I_a": 62.5,
-           "P_w": 0.0}
-    cases = {("Z1", "A"): (Path("etm_Z1.json"), {
-        "ledger_rows": [row] + [{"term": t, "P_w": 0.0} for t in
-                                ("P_BGA_return", "P_pkg_RDL_HV_supply", "P_pkg_RDL_HV_return")],
-        "et_history": [{"T_bga_C": 110.0}], "i_hv_avg_a": 23.7, "P_loss_w": 135.0}),
-        ("Z2", "A"): (Path("etm_Z2.json"), {"ledger_rows": [], "et_history": [{"T_bga_C": 89.0}],
-                                            "i_hv_avg_a": 23.6, "P_loss_w": 134.0})}
+
+    def case(n, terms):
+        rows = [{"term": t, "P_w": v["P_w"], "I_a": 62.5,
+                 "conductor": f"BGA supply balls (N={n})"} for t, v in terms.items()]
+        return {"ledger_rows": rows, "et_history": [{"T_bga_C": 110.0}], "i_hv_avg_a": 23.7,
+                "P_loss_w": 135.0}
+    tm = FL.package_hv_terms(mod, "Z1", 62.5, 110.0)
+    p_a = sum(v["P_w"] for v in FL.package_hv_terms(ado, "Z1", 62.5, 110.0).values())
+    p_m = sum(v["P_w"] for v in tm.values())
+    z2 = (Path("etm_Z2.json"), {"ledger_rows": [], "et_history": [{"T_bga_C": 89.0}],
+                                "i_hv_avg_a": 23.6, "P_loss_w": 134.0})
     orig = PN.production_cases
-    PN.production_cases = lambda: cases
     try:
+        PN.production_cases = lambda: {("Z1", "A"): (Path("etm_Z1.json"), case(220, tm)),
+                                       ("Z2", "A"): z2}
         ce = PN.coupled_effect(ado, mod, 2.64)
+        # the case solved on a network 1 % off the adopted one (a neighbouring count)
+        near = net(166, 6.06e-4)
+        PN.production_cases = lambda: {("Z1", "A"): (Path("etm_Z1.json"), case(
+            166, FL.package_hv_terms(near, "Z1", 62.5, 110.0)))}
+        ce2 = PN.coupled_effect(ado, mod, 2.64)
     finally:
         PN.production_cases = orig
-    z1, z2 = ce["per_case"]["A_Z1"], ce["per_case"]["A_Z2"]
-    p_a = sum(v["P_w"] for v in FL.package_hv_terms(ado, "Z1", 62.5, 110.0).values())
-    p_m = sum(v["P_w"] for v in FL.package_hv_terms(mod, "Z1", 62.5, 110.0).values())
+    z1, z2r = ce["per_case"]["A_Z1"], ce["per_case"]["A_Z2"]
     assert z1["dP_W"] == pytest.approx(p_a - p_m) and z1["dP_W"] > 0.1
+    assert z1["dP_vs_modelled_W"] == pytest.approx(p_a - p_m)
     assert z1["n_case"] == 220 and z1["case_carries_adopted_count"] is False
-    assert z2["coupled"] is False and z2["dP_W"] == 0.0 and z2["ring_feed_dP_W"] is not None
+    assert z2r["coupled"] is False and z2r["dP_W"] == 0.0 and z2r["ring_feed_dP_W"] is not None
     assert ce["exceeds_threshold"] and ce["cases_on_another_count"] == ["A_Z1"]
+    assert "re-run" in ce["action"] and "below" not in ce["action"]
+    n1 = ce2["per_case"]["A_Z1"]
+    assert n1["n_case"] == 166 and abs(n1["dP_W"]) < 0.1 and n1["dP_vs_modelled_W"] > 0.1
+    assert not ce2["exceeds_threshold"] and ce2["cases_on_another_count"] == ["A_Z1"]
+    assert ce2["action"].startswith("below the threshold") and "accepted_count" in ce2["action"]
+
+
+def test_case_on_another_count_stands_for_the_adopted_one(tmp_path, monkeypatch):
+    """A BGA-fed case solved at another 48-V count than the re-closure's adopted one stands for
+    it only when the re-closure recorded the change of the production cases' BGA feed terms
+    from that count below its threshold (final_closure_ledger.accepted_count); the feasibility
+    stage then checks its balls at the adopted count with the case's own 48-V current, and the
+    mechanics guard accepts the case."""
+    import design_record as DR
+    import final_closure_ledger as FL
+    import tcpmt_feasibility as F
+    import tcpmt_mech_production as MP
+    ident = DR.design_identity()
+    conv = lambda f: {f"Z1_{r}": {"final": {"i_ball_max_a": f}} for r in ("supply", "return")}
+    (tmp_path / "package_network.json").write_text(json.dumps(
+        {"matched_count": 220, "meta": {"design": ident, "final_levels": [1, 2, 3]},
+         "convergence": conv(0.0277)}))
+    (tmp_path / FL.ADOPTED_NETWORK_NAME).write_text(json.dumps(
+        {"meta": {"design": ident, "final_levels": [1, 2, 3]}, "adopted_count": {"Z1": 170},
+         "loop": {"Z1": {"n_per_rail": 170}}, "convergence": conv(0.0316)}))
+    rec = {"design": ident, "adopted_count": {"Z1": 170},
+           "coupled_effect": {"threshold_W": 0.1, "exceeds_threshold": False, "per_case": {
+               "A_Z1": {"coupled": True, "n_case": 168, "n_adopted": 170, "dP_W": -0.045},
+               "A_Z2": {"coupled": False, "dP_W": 0.0}}}}
+    (tmp_path / FL.RECLOSE_RECORD_NAME).write_text(json.dumps(rec))
+    n, note = FL.accepted_count("Z1", 168, tmp_path)
+    assert n == 170 and "0.1" in note and "-0.045" in note
+    assert FL.accepted_count("Z1", 170, tmp_path) == (170, None)
+    assert FL.accepted_count("Z1", 166, tmp_path)[0] is None       # no recorded change from 166
+    assert FL.accepted_count("Z2", 166, tmp_path)[0] is None       # no adopted Z2 count here
+    case = {"arch": "Z1", "scenario": "HV_S0", "design": {},
+            "ledger_rows": [{"term": "P_BGA_supply", "I_a": 62.5,
+                             "conductor": "BGA supply balls (N=168)"},
+                            {"term": "P_pkg_RDL_HV_supply", "conductor": "",
+                             "model": "voltage-fed refined FV sheet, N=168/rail"}]}
+    monkeypatch.setattr(F, "FC", tmp_path)
+    monkeypatch.setattr(F, "_NET", {})
+    monkeypatch.setattr(MP, "FC", tmp_path)
+    chk = {c[0]: c for c in F.bga_check("Z1", case)}
+    _, val, _lim, ok, basis, extra = chk["bga_current"]
+    assert val == pytest.approx(0.0316 * 62.5) and ok and "adopted 170" in basis
+    assert extra["n_per_rail"] == 170 and extra["n_per_rail_case"] == 168
+    assert chk["bga_sites"][1] == pytest.approx(340 / 1369)
+    assert MP.input_issue("Z1", case) is None
+    rec["coupled_effect"]["exceeds_threshold"] = True             # above it: re-run, not accepted
+    (tmp_path / FL.RECLOSE_RECORD_NAME).write_text(json.dumps(rec))
+    assert FL.accepted_count("Z1", 168, tmp_path)[0] is None
+    assert "re-run has not landed" in MP.input_issue("Z1", case)
+    monkeypatch.setattr(F, "_NET", {})
+    _, val, _lim, ok, basis, extra = {c[0]: c for c in F.bga_check("Z1", case)}["bga_current"]
+    assert extra["n_per_rail"] == 168                               # its own count (screen)
 
 
 def test_ledger_takes_the_adopted_network(tmp_path, monkeypatch):

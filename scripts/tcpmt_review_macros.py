@@ -210,6 +210,8 @@ def bga_count():
     cl = d["closure"]
     ad0 = d.get("adopted_count") or {}
     m = {"BgaKeq": fx(d["k_eq"], 2),
+         # the k the count rule closes each count at: the upper end of the k_eq band
+         "BgaKeqCountRule": fx(d.get("k_eq_count_rule"), 2),
          # the smallest count both architectures meet: the larger adopted count (the screen-
          # first common count, matched_count_dc_rule, can sit one step above it)
          "BgaNmatch": str(max(int(v) for v in ad0.values()) if ad0 else
@@ -234,6 +236,10 @@ def bga_count():
             m[f"BgaSiteFrac{tag}"] = fx(100.0 * pa["site_fraction"], 1)
             m[f"BgaIball{tag}"] = fx(pa["I_ball_closure_rule_A"], 2)
             m[f"BgaMargin{tag}"] = fx(pa.get("margin_A"), 4)
+            # the count rule's view: the upper end of the k_eq band
+            if pa.get("I_ball_at_band_A") is not None:
+                m[f"BgaIballBand{tag}"] = fx(pa["I_ball_at_band_A"], 2)
+                m[f"BgaMarginBand{tag}"] = fx(pa.get("margin_at_band_A"), 4)
             m[f"BgaPasses{tag}"] = "yes" if pa.get("passes") else "no"
             fe = pa.get("feed") or {}
             if fe.get("R_loop_20C_ohm"):
@@ -322,9 +328,12 @@ def _z3_1v_balls(d):
 
 def bga_sites():
     """Ball sites carrying power, per compared case (Table V): Z1 its 48-V balls (the case's
-    own count), Z2 the BGA-ring feed of the platform accounting (outside its package-internal
-    boundary, but power sites of the package), Z3 its 1-V balls."""
+    own count, or the re-closure's adopted count when the case stands for it:
+    final_closure_ledger.accepted_count, the count the feasibility stage checks), Z2 the
+    BGA-ring feed of the platform accounting (outside its package-internal boundary, but power
+    sites of the package), Z3 its 1-V balls."""
     import re
+    import final_closure_ledger as FL
     import tcpmt_cases as TC
     pl = J(TR / "platform_inclusive.json") or {}
     ring = (pl.get("feed_design") or {}).get("Z2_bga_ring") or {}
@@ -339,7 +348,8 @@ def bga_sites():
                 rows = {r["term"]: r for r in c["ledger_rows"]}
                 n = None
                 if "P_BGA_supply" in rows:
-                    n = 2 * int(re.search(r"N=(\d+)", rows["P_BGA_supply"]["conductor"]).group(1))
+                    n_case = int(re.search(r"N=(\d+)", rows["P_BGA_supply"]["conductor"]).group(1))
+                    n = 2 * (FL.accepted_count("Z1", n_case, SENS.parent)[0] or n_case)
                 elif a == "Z2" and ring.get("n_per_rail"):
                     n = 2 * int(ring["n_per_rail"])
                 elif "P_BGA_1V_VDD" in rows:
