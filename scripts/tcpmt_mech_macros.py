@@ -232,7 +232,8 @@ def critical():
             _s, t, a = lab.split("_")
             moved.setdefault(a, []).append(t)
     if moved:
-        parts = [f"{a} under cooling~{' and '.join(ts)}" for a, ts in sorted(moved.items())]
+        parts = [f"{a} under cooling{'s' if len(ts) > 1 else ''}~{'~and~'.join(sorted(ts))}"
+                 for a, ts in sorted(moved.items())]
         m["MvCritMovedCases"] = "; ".join(parts)
     m["MvCritOnPareto"] = str(sum(1 for x in mono if x.get("max_response_on_pareto_front")))
     rat = [v.get("max_response_over_max_du") for v in cs.values()
