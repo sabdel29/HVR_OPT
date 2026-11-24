@@ -261,3 +261,12 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     --only 'mech.screen.*' --only 'mech.board_cold.*' --only 'm36thin.prod.Z3.SDEC.*' --only 'm36t5.prod.Z3.SDEC.*'`.
   - Then: derived.design_comparison, macros (manuscript + writers), supplement, Fig. 11, text, letter.
 - 2026-11-24: USER CONFIRMED the Z3 1-V ball placement rule (500 balls/rail on the sites nearest the cells).
+  - 12:30 status: count mechanics done (m25/m49 joints 1.15-1.22x m36, resolved under every law);
+    screen done (178 variants x 20 sites, 3560 solves); map joint ranking preserved for all 38
+    decisions with a verdict (5 pending, mesh); encapsulant: low-CTE puts Z2 below Z3 (A);
+    mounting: coupon keeps Z1 > Z2, 3x board with a 25-C rim reverses Z1/Z2 under A (bound).
+    Validation of the deepest variant per kind: 2 of 2 Z2 picks found the worst site OUTSIDE
+    the 20 (screen 5 and 18 % low) -> escalation rule added: rank > K/4 -> full search (23
+    variants, mech.screen.escalate.{0,1,2}); then mech.screen.summary, regen.sh, text, letter.
+    Text drafts for VIII-H, VII-D, IX, X, letter MC13/MC10/MC11 and notes are in the working tree
+    (uncommitted until the final macros exist).
