@@ -247,3 +247,16 @@ add the manifold plate, redo the tier order for the new stack, update the manife
   - supplement: remove legacy columns, drop S22, renumber;
   - JEDEC citation;
   - text and letter updates.
+- 2026-11-24 GAP ROUND (agent) progress, for a resume after an interruption:
+  - Done: fine f_sw grid (dse.fsw785_t4: 785 points nested, M = 36 unchanged, same parts, 788 kHz,
+    -0.46 W; runner-up M = 35 within 2.3 W instead of 5.8 W; no count changes topology/parts);
+    v2 band study (mech.band_study: 44/59/89 um at L0/L2, -4..+8 %, orderings hold); S0 critical
+    search (mech.critical_S0, all closed); JEDEC citation = SPP-024A, JEP95 Section 3, Mar 2009.
+  - Jobs added (build_manifest): m25/m49.mech.* (count neighbours' mechanics, TCPMT_LOCAL_ARCHS=Z1),
+    mech.kin_S0/lattice_S0/critical_S0, mech.band_study, dse.fsw785_t4, mech.board_cold.*,
+    mech.screen.{lattice,lattice_cold,run_a1,run_a2,run_b,validate.*,summary}
+    (scripts/tcpmt_mech_joint_screen.py: every mechanical variant at its reference's 20 worst sites).
+  - Runners: runner_gap1.log (count/S0/Z3 thin+t5), runner_gap2c.log (screen); resume with
+    `$PY scripts/campaign/run.py run --backend both --strict-deps --only 'm25.mech.*' --only 'm49.mech.*'
+    --only 'mech.screen.*' --only 'mech.board_cold.*' --only 'm36thin.prod.Z3.SDEC.*' --only 'm36t5.prod.Z3.SDEC.*'`.
+  - Then: derived.design_comparison, macros (manuscript + writers), supplement, Fig. 11, text, letter.
