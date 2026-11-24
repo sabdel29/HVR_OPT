@@ -278,3 +278,13 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     low-CTE Z2 < Z3 reversal, where Z2 was searched in full. Private preview of the summary:
     /tmp/tcpmt_build_tools/private_summary.py (writes outside the campaign root; re-run after the
     last search to check that no new Z1/Z2 ordering falls within 1.5x on a screened lower side).
+  - 14:10 FINAL (gap round): escalation complete, 26 variants searched in full (rank rule 23 incl.
+    the 4 validation searches, gap rule 3), all closed; the screen found the maximum in 7; largest
+    shortfall a factor 1.51 (SDEC_A_Z2 screws on the 3x board, hot rim); closest Z1/Z2 gap left to
+    the screen 1.55 (SDEC_A_Z2 pinned screws); the gap list recomputed from the final summary adds
+    no variant (fixed point); no ordering direction differs between screen-only and final values.
+    Map joint column: 38 preserved, 5 pending (mesh), 0 withdrawn or reversed; cooling B 11/11 and
+    production-state encapsulant/ball-card 8/8 Z1/Z2 joint orderings kept; low-CTE EMC puts Z2
+    below Z3 under cooling A (Z2 searched in full). The summary job needed --force (valid-skip).
+    Builds: paper 24 pp, supplement 22, letter 10, notes 3; 0 errors, 0 undefined, 0 overfull.
+    Commit 015a201 (pushed to sabdel/tcpmt-revision).
