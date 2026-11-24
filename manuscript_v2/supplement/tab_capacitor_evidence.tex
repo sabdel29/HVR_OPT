@@ -3,12 +3,12 @@
 \begin{longtable}{@{}L{3.2cm}L{3.4cm}L{1.3cm}L{1.6cm}L{2.0cm}L{1.5cm}L{3.5cm}@{}}
 \caption{Flying-capacitor evidence matrix}\label{tab:supp-capev}\\
 \toprule
-Part & Status & Rated V (BV) & $C_{\mathrm{eff}}$ at 32/16~V (\textmu F) & Size, maximum height & Parts, area & Verdict \\
+Part & Status & Rated V (BV) & $C_{\mathrm{eff}}$ at 32/16~V, 105\,$^\circ$C (\textmu F) & Size, maximum height & Parts, area & Verdict \\
 \midrule
 \endfirsthead
 \multicolumn{7}{@{}l}{\emph{Table~\ref{tab:supp-capev} (continued)}}\\
 \toprule
-Part & Status & Rated V (BV) & $C_{\mathrm{eff}}$ at 32/16~V (\textmu F) & Size, maximum height & Parts, area & Verdict \\
+Part & Status & Rated V (BV) & $C_{\mathrm{eff}}$ at 32/16~V, 105\,$^\circ$C (\textmu F) & Size, maximum height & Parts, area & Verdict \\
 \midrule
 \endhead
 \midrule
@@ -16,8 +16,8 @@ Part & Status & Rated V (BV) & $C_{\mathrm{eff}}$ at 32/16~V (\textmu F) & Size,
 \endfoot
 \bottomrule
 \endlastfoot
-Murata GRM188D72A105KE01 & production & 100 & 0.245/0.439 & 1.6$\times$0.8~mm, 1000~\textmu m & 1+1, 2.6~mm$^2$ & rating, capacitance and area met; fails the 100/150-\textmu m height \\
-Murata GRM188D71H105KE01 & production & 50 & 0.245/0.437 & 1.6$\times$0.8~mm, 1000~\textmu m & 1+1, 2.6~mm$^2$ & rating, capacitance and area met; fails the 100/150-\textmu m height \\
+Murata GRM188D72A105KE01 & production & 100 & 0.253/0.461 & 1.6$\times$0.8~mm, 1000~\textmu m & 1+1, 2.6~mm$^2$ & rating, capacitance and area met; fails the 100/150-\textmu m height \\
+Murata GRM188D71H105KE01 & production & 50 & 0.256/0.455 & 1.6$\times$0.8~mm, 1000~\textmu m & 1+1, 2.6~mm$^2$ & rating, capacitance and area met; fails the 100/150-\textmu m height \\
 Murata GCM21BR71E106KA73 & published library part; not in the current Murata catalogue & 25 & --/2.290 & 2.0$\times$1.25~mm, 1250~\textmu m & -- & fails the $C_1$ rating \\
 Murata GRM31CR71H226KE08 & published library entry; not found in the Murata catalogue (largest 1206 50-V X7R: 4.7~\textmu F) & 50 & --/-- & 3.2$\times$1.6~mm & -- & effective capacitance not published \\
 Murata 935146050510 & production (WLSC silicon) & 32 (100) & 0.009/0.009 & 0.8$\times$0.8~mm, 100~\textmu m & -- & fails the $C_1$ rating \\
@@ -26,7 +26,7 @@ TDK CGB series (low profile) & production & 6.3 & --/-- & --, 220~\textmu m & --
 ELSPES deep-trench silicon capacitors & research / early product & -- (5) & --/-- & --, 70~\textmu m & -- & fails the $C_1$ rating \\
 Murata custom 3-D silicon capacitor / IPD & custom (research candidate) & -- & --/-- & -- & -- & no voltage rating published \\
 \end{longtable}
-\nopagebreak\noindent Requirement per cell: $C_1$ at 32~V and $C_2$ at 16~V, rated voltage times 0.8 covering the stress; effective capacitance at bias, temperature and tolerance of at least 0.19~\textmu F ($C_1$) and 0.38~\textmu F ($C_2$) for 10\,\% ripple; both capacitors within the 5.61-mm$^2$ cell; height judged against 100~\textmu m (the reference tier, case~A0) and 150~\textmu m. Parts, area: parts needed for $C_1$ and $C_2$ and their footprint. No part meets the 100-\textmu m or the 150-\textmu m height together with the voltage, capacitance and area requirements. The search covered the parts of Murata, TDK and ELSPES listed above; the catalogues of Samsung Electro-Mechanics, Taiyo Yuden, Kyocera AVX and Vishay were not part of it.\par
+\nopagebreak\noindent Requirement per cell: $C_1$ at 32~V and $C_2$ at 16~V, rated voltage times 0.8 covering the stress; effective capacitance at bias, 105\,$^\circ$C and tolerance of at least 0.225~\textmu F ($C_1$) and 0.449~\textmu F ($C_2$) for 10\,\% ripple, the synthesis rule of the production design ($M = 36$, 805~kHz); both capacitors within the 7.94-mm$^2$ cell; height judged against the 100-\textmu m tier of the thin-capacitor sensitivity and against 150~\textmu m. Parts, area: parts needed for $C_1$ and $C_2$ and their footprint. No part meets the 100-\textmu m or the 150-\textmu m height together with the voltage, capacitance and area requirements. The search covered the parts of Murata, TDK and ELSPES listed above; the catalogues of Samsung Electro-Mechanics, Taiyo Yuden, Kyocera AVX and Vishay were not part of it.\par
 \smallskip
 \noindent Sources:
 {\raggedright

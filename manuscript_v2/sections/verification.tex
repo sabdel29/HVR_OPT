@@ -183,8 +183,8 @@ workstation (Intel Xeon Gold 6342; CalculiX~2.23). The electrothermal fixed poin
 The structural solve with the all-site search takes \MthMechMinLo--\MthMechMinHi~min on one
 thread, and geometry and meshing take under 2~min. The critical-joint search adds
 \MvCritSolvedAll{} independent solves of the local model over the six cases and three laws; they
-parallelize over the sites. The per-stage breakdown, mesh sizes and degrees of freedom are in
-Table~S16. On the identical package mesh the open-source solver is faster (\FullPkgMooseZone~s
+parallelize over the sites. The per-stage breakdown, mesh sizes, degrees of freedom and peak
+memory are in Table~S16. On the identical package mesh the open-source solver is faster (\FullPkgMooseZone~s
 against \FullPkgCcxZone~s on eight cores), because the production path factors the system with a
 single-threaded direct solver. No end-to-end speedup against another flow is claimed; the
 per-stage comparison is Fig.~\ref{fig:verif}.

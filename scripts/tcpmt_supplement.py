@@ -99,7 +99,7 @@ def design_sentence(key=None, lib=None):
     N, K, KA = DR.topology(key)
     g = DR.grid_n(key)
     cap = passive_label(d["capacitor"], lib if lib is not None else passive_library(), maker=True)
-    return (rf"$M = {DR.n_vr(key)}$ ({g}$\times${g} cells), $N{N}K{K}K_A{KA}$, "
+    return (rf"$M = {DR.n_vr(key)}$ ({g}$\times${g} cells), N{N}K{K} ($K_A = {KA}$), "
             rf"{tex(d['hs_part'])} / {tex(d['ls_part'])}, {float(d['f_sw_hz']) / 1e3:.0f}~kHz, "
             rf"flying capacitor {cap}, {len(DR.tiers(key))} mixed tiers")
 
@@ -182,7 +182,7 @@ _RULES = [(re.compile(p), r) for p, r in (
     (r"(?<![A-Za-z])M=(\d+)", lambda m: f"$M = {m.group(1)}$"),
     (r"(?<![A-Za-z])N=(\d+)", lambda m: f"$N = {m.group(1)}$"),
     (r"(?<![A-Za-z])N(\d)K(\d)K_A(\d)(?![A-Za-z0-9])",
-     lambda m: f"$N{m.group(1)}K{m.group(2)}K_A{m.group(3)}$"),
+     lambda m: f"N{m.group(1)}K{m.group(2)} ($K_A = {m.group(3)}$)"),
     (r"(?<![A-Za-z])rho L / A(?![A-Za-z])", r"$\rho L/A$"),
     (r"R\*", r"$R^*$"),
     (r"(?<![A-Za-z])E = (?=\d)", r"$E$ = "),
@@ -418,7 +418,7 @@ def dse_selection_table():
             why = prose((r.get("reason") or "no feasible member").replace("architecture", "member"))
             body.append(rf"{m}{mk} & \multicolumn{{8}}{{l}}{{{why}}} \\")
             continue
-        top = f"$N{int(float(r['N']))}K{int(float(r['K']))}K_A{int(float(r['K_A']))}$"
+        top = f"N{int(float(r['N']))}K{int(float(r['K']))}, $K_A = {int(float(r['K_A']))}$"
         body.append(f"{m}{mk} & {top} & {tex(r['hs'])} / {tex(r['ls'])} & "
                     f"{passive_label(dse_passive(r, 'inductor'), lib)} & "
                     f"{passive_label(dse_passive(r, 'capacitor'), lib)} & "
@@ -902,8 +902,8 @@ def solder_tables_v2(p):
              r"slope and $\nu$ assumed",
              "Room temperature only; no temperature dependence in the source"),
             ("Yield and hardening", "None (zero yield)",
-             r"The zero-yield laws carry no rate-independent hardening; the round-2 card's "
-             r"isotropic hardening of a Chaboche fit is retired", "--")]
+             r"The zero-yield laws carry no rate-independent hardening; no hardening card "
+             r"is used", "--")]
     laws = [(prod, {"form": cr.get("form"), "alloy": cr.get("alloy_of_the_law"),
                     "calibration_window": cr.get("calibration_window"),
                     "visited_window_MPa": cr.get("visited_window_MPa"),
@@ -1201,7 +1201,7 @@ def local_checks_table():
              ("8 cycles", "cycles", "N8"), ("Dwell 60 s", "dwell", "dwell60"),
              ("Dwell 900 s", "dwell", "dwell900"), ("Ramp 30 s", "dwell", "ramp30"),
              ("C3D8I elements", "element", "C3D8I"), ("C3D8R elements", "element", "C3D8R"),
-             ("Round-2 model (R2)", "chain", "R2"), ("R2 + ramps", "chain", "ramp"),
+             ("Earlier model (E)", "chain", "R2"), ("E + ramps", "chain", "ramp"),
              ("+ zero-yield law", "chain", "law"), ("+ $u_z$ released", "chain", "uz"),
              ("v2 with STEP loads", "chain", "v2_step")]
     body = []
@@ -1225,7 +1225,7 @@ def local_checks_table():
     head = [r"Check & " + " & ".join(V2_CASE[l] for l in labs) + r" \\"]
     note = (r"Change of $\deps$ against the production local model (first row), in \%. Mesh: "
             r"the nested joint meshes L1--L3 against L0; 8 cycles against 4; dwell and ramp "
-            r"against 300 and 3~s; element types against C3D8. Attribution chain: the round-2 "
+            r"against 300 and 3~s; element types against C3D8. Attribution chain: an earlier local "
             r"model (overstress card with hardening, in-plane $\Delta u$ only, STEP loading) and "
             r"each change toward the production model in turn. "
             + ("Critical fine-pitch joints, own geometry: " + "; ".join(fp_txt) + "."
@@ -1646,28 +1646,70 @@ def solder_tables():
 
 
 # ---------------------------------------------------------------- S-VI verification
+#: the campaign's job records (peak resident memory per attempt), under the root in force
+JOB_STATUS = Path(os.environ.get("ETM_RESULTS_ROOT") or R / "research") / "_campaign" / "status"
+
+
+def job_rss_mb(pattern):
+    """Peak resident memory (MB) of the finished jobs whose status files match a glob pattern:
+    the runner's RUSAGE_CHILDREN maximum, i.e. the largest process of each job."""
+    out = []
+    for f in sorted(JOB_STATUS.glob(pattern)) if JOB_STATUS.is_dir() else []:
+        d = J(f) or {}
+        if d.get("status") == "done" and d.get("maxrss_mb"):
+            out.append(float(d["maxrss_mb"]))
+    return out
+
+
+def _gb(vals):
+    """'a' or 'a--b' in GB, one decimal; None when no job matched."""
+    if not vals:
+        return None
+    lo, hi = min(vals) / 1024, max(vals) / 1024
+    return f"{hi:.1f}" if abs(hi - lo) < 0.05 else f"{lo:.1f}--{hi:.1f}"
+
+
 def mesh_runtime_table():
-    """Mesh and runtime of the compared cases of the production state under cooling A
-    (tcpmt_cases; Z3 the coupled land-side case); a case not run yet is a row of dashes."""
+    """Mesh, runtime and peak memory of the compared cases of the production state under
+    cooling A (tcpmt_cases; Z3 the coupled land-side case); a case not run is a row of dashes.
+    Peak memory: the campaign's job record of the case (status/*.json, maxrss); the note gives
+    the other stages by job class."""
     st = TC.PRODUCTION_STATE
     body, threads = [], set()
+    missing = False
     for a in ARCHS:
         pth = TC.case_path(st, "A", a)
         c = J(pth) if pth else None
         if not c:
-            body.append(f"{a} & -- & -- & -- & -- & -- & -- & -- \\\\")
+            body.append(f"{a} & -- & -- & -- & -- & -- & -- & -- & -- \\\\")
+            missing = True
             continue
         threads.add(c.get("threads"))
         th, me = c["thermal"], c.get("mechanics") or {}
         tot = (c["et_wall_s"] + me.get("wall_s", 0)) / 3600
+        mem = _gb(job_rss_mb(f"prod.{a}.{st}.A.a*.json")) or "--"
         body.append(f"{a}{z3_dag(a, pth.name, c)} & {th['n_nodes']:,} & {th['n_elems']:,} & "
                     f"{3 * th['n_nodes']:,} & {len(c['et_history'])} & {c['et_wall_s']:.0f} & "
-                    f"{me.get('wall_s', 0):.0f} & {tot:.1f} \\\\".replace(",", "{,}"))
+                    f"{me.get('wall_s', 0):.0f} & {tot:.1f} & {mem} \\\\".replace(",", "{,}"))
     n_thr = next(iter(threads)) if len(threads) == 1 and None not in threads else 2
-    head = [r"Integration & Nodes & Elements & Structural & E--T & E--T & Structural & Total \\",
-            r" & & & DOF & iterations & (s) & (s) & (h) \\"]
+    head = [r"Integration & Nodes & Elements & Structural & E--T & E--T & Structural & Total "
+            r"& Peak \\",
+            r" & & & DOF & iterations & (s) & (s) & (h) & memory (GB) \\"]
+    stages = [("the coarsest mesh rung (r11)", "ladder.*.r11.a*.json"),
+              ("the through-thickness rung (r12)", "ladder.*.r12.a*.json"),
+              ("the finest rung (r31)", "ladder.*.r31.a*.json"),
+              ("the complete-package MOOSE reference", "moose.fullpkg.a*.json"),
+              ("the mechanics-only reruns on converged fields", "mech.board*.a*.json"),
+              ("the reflow and bonding checks", "mech.reflow.*.a*.json"),
+              ("a critical-joint search of the local model", "mech.critical*.a*.json"),
+              ("the local-model checks with the finest joint mesh", "mech.local_checks.a*.json")]
+    mem_txt = [f"{what} {_gb(job_rss_mb(pat))}~GB" for what, pat in stages if job_rss_mb(pat)]
+    mem_note = ((r" Peak memory: the largest resident set of any process of the job, from the "
+                 r"campaign's job records (thermal and structural solves of the case); "
+                 r"other stages: " + "; ".join(mem_txt) + ".") if mem_txt else "")
     note = (rf"Cases: the production state ({STATE_TEXT[st]}) under cooling~A, Z3 with the "
-            r"coupled land-side and board-plane redistribution; --: not run yet. "
+            r"coupled land-side and board-plane redistribution" + ("; --: not run" if missing
+                                                                    else "") + ". "
             r"Production mesh: graded $h_{xy}=1.1$~mm grid with every in-plane interval split in "
             r"two (r21); 8-node hexahedra (thermal C3D8, structural C3D8I incompatible modes); "
             r"CalculiX~2.23. Thermal: steady conduction, direct solver; E--T stop: every coupled "
@@ -1681,10 +1723,10 @@ def mesh_runtime_table():
             r"E--T iteration (each a thermal solve with its coolant balance) and the structural "
             r"solve with the all-site joint search; they exclude geometry construction and meshing "
             r"(under 2~min per integration), the local solder model and postprocessing. "
-            r"Sensitivity runs repeat the same chain."
+            r"Sensitivity runs repeat the same chain." + mem_note
             + (DAGGER_NOTE if any(r"$^\dagger$" in b for b in body) else ""))
-    return ltab(r"@{}lrrrrrrr@{}", 8, head, body,
-                "Meshes, solvers and runtimes (production state, cooling A)",
+    return ltab(r"@{}lrrrrrrrr@{}", 9, head, body,
+                "Meshes, solvers, runtimes and memory (production state, cooling A)",
                 "tab:supp-mesh", note)
 
 
@@ -2099,7 +2141,8 @@ def scenario_table():
             + f" = 1/{1.0 / DR.buck_duty():.0f}$); S2, a square pulse at the overall conversion "
             r"ratio $V_{\mathrm{out}}/V_{\mathrm{in}}$. $k$: RMS-to-average ratio of the current "
             r"the 48-V feed carries (SDEC: the loss-equivalent $k_{\mathrm{eq}}$ the case was run "
-            r"with); --: not run yet." + (DAGGER_NOTE if marked else ""))
+            r"with)" + ("; --: not run" if any(" -- & -- " in b for b in body) else "") + "."
+            + (DAGGER_NOTE if marked else ""))
     return ltab(r"@{}llrrrrrr@{}", 8, head, body,
                 "The selected regulator under the input states", "tab:supp-scen", note)
 
@@ -2390,7 +2433,7 @@ def review_variants_table():
             r"land side: Z3 with the land-side and board-plane redistribution coupled "
             r"(Table~\ref{tab:supp-z3land}); FV map: redistribution heat deposited along its "
             r"finite-volume loss map instead of uniformly." + DAGGER_NOTE)
-    return ltab(r"@{}lL{6.2cm}lrrrrr@{}", 8, head, body, "Review-round variants",
+    return ltab(r"@{}lL{6.2cm}lrrrrr@{}", 8, head, body, "Further variants of the compared cases",
                 "tab:supp-review", note)
 
 
@@ -2529,14 +2572,18 @@ def main():
                  r"Table~\ref{tab:supp-caprule} gives the regulator-count screen before and "
                  r"after the capacitor-rule correction, Table~\ref{tab:supp-variants} the package "
                  r"decisions of the robustness study, Table~\ref{tab:supp-omit} the omitted "
-                 r"converter losses and Table~\ref{tab:supp-review} the variants added in the "
-                 r"review round; the warpage at reflow and bonding and the board, mounting, "
+                 r"converter losses and Table~\ref{tab:supp-review} further variants of the "
+                 r"compared cases; the warpage at reflow and bonding and the board, mounting, "
                  r"clamp and material variants on the production fields follow it.")
     L += caprule_screen_table() + variants_table() + omitted_losses_table()
     L += review_variants_table()
     L += assembly_mounting_table()
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text("\n".join(L) + "\n")
+    txt = "\n".join(L) + "\n"
+    for a, b in ((r"(NOT SAC305; DEFECT \#41)", "(not SAC305)"),
+                 ("(NOT SAC305; DEFECT #41)", "(not SAC305)"), ("(NOT SAC305)", "(not SAC305)")):
+        txt = txt.replace(a, b)
+    OUT.write_text(txt)
     print(f"wrote {OUT} ({len(L)} lines)")
 
 
