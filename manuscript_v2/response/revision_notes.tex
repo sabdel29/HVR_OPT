@@ -87,8 +87,10 @@ a core-heavy die map (die at \WrHotAZoneDie\degC), by the upper omitted-loss est
 capacitor class, solder-law range) and almost by a rigid plate (Sections~\ref{sec:explore-omit}
 and~\ref{sec:explore-die}).
 \item \cl{The count optimum} $M = \FrDseOptM$ holds for the lower and nominal omitted-loss
-estimates; the upper estimate prefers $M = \WrOmitDseOptHi$, which has no square grid. The
-frequency grid has not been refined under the corrected rules (Section~\ref{sec:explore-omit}).
+estimates; the upper estimate prefers $M = \WrOmitDseOptHi$, which has no square grid
+(Section~\ref{sec:explore-omit}). On a frequency grid \FrFswFineFactor{} times finer no count changes
+its topology or parts, but the runner-up, $M = \FrFswFineRunnerUp$ (no square grid), comes within
+\FrFswFineRunnerUpMargin~W (Section~\ref{sec:explore-count}).
 \item \cl{Every joint ranking} holds under the \MvLawN-law band, but each law is extrapolated in
 stress and none is benchmarked against a measured joint (Section~\ref{sec:local}).
 \item \cl{Robustness.} \WrRobReversed{} of \WrRobN{} verdicts reverse under a declared alternative
@@ -197,8 +199,7 @@ path, so both sheets need far more copper, and the 1-V balls need sites that lea
 \item \cl{Plate interface and cooling.} A conforming interface or a die-flatness specification,
 cooling for a core-heavy die map, and CFD of the manifold's flow split and headers.
 \item \cl{Converter.} A fabricated 1-mm$^2$ inductor at \FrConvIndL~nH and \FrConvIndDcr~m$\Omega$;
-circuit-level validation of the synthesized \FrConvTopo{} point and of its omitted losses; a refined
-frequency grid.
+circuit-level validation of the synthesized \FrConvTopo{} point and of its omitted losses.
 \item \cl{Joints.} A SAC305 law calibrated against measured hysteresis loops, local models of the
 microbumps and pillars, and a transient power cycle instead of the prescribed one.
 \item \cl{Numerics.} A through-thickness rung on the production ladders, and the
