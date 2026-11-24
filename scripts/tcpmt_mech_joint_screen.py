@@ -407,7 +407,7 @@ def tasks_for(s, sites):
     return out
 
 
-def run(keys=None, log=None, groups=None):
+def run(keys=None, log=None, groups=None, reverse=False):
     import tcpmt_mech_submodel as SUB
     ts, skipped = [], []
     for s in variants():
@@ -426,6 +426,8 @@ def run(keys=None, log=None, groups=None):
             continue
         ts += t
     print(f"{len(ts)} screen tasks", flush=True)
+    if reverse:             # a helper from the other end: solve() skips what the other finished
+        ts = ts[::-1]
     recs = SUB.run_tasks(ts)
     if log:
         d = TR / "robustness_joint_runs"
@@ -524,6 +526,23 @@ def pick():
     (TR / "robustness_joint_validation_picks.json").write_text(json.dumps(
         {"rule": pick.__doc__.split("\n\n")[0].strip(), "picks": out}, indent=1) + "\n")
     return out
+
+
+KIND_SLUG = {"mounting": "mounting", "encapsulant class": "encapsulant",
+             "mechanical card": "mechcard", "thermal decision": "thermal"}
+VALK = TR / "robustness_joint_validation_by_kind"
+
+
+def validate_kind(slug):
+    """The full search of the variant the validation rule picked for one kind."""
+    picks = json.loads((TR / "robustness_joint_validation_picks.json").read_text())["picks"]
+    kind = next(k for k, v in KIND_SLUG.items() if v == slug)
+    key = picks[kind]["key"]
+    r = validate([key])[key]
+    VALK.mkdir(parents=True, exist_ok=True)
+    (VALK / f"{slug}.json").write_text(json.dumps(dict(r, kind=kind, pick=picks[kind]),
+                                                  indent=1, default=float) + "\n")
+    return r
 
 
 def validate(keys=None):
@@ -693,7 +712,13 @@ def summarize():
         out["validation"] = v
         out["validation_all_in_top_k"] = all(x.get("max_in_top_k") for x in v.values()) \
             if v else None
+        kinds = {}
+        if VALK.is_dir():
+            for f in VALK.glob("*.json"):
+                r = json.loads(f.read_text())
+                kinds[r.get("key")] = r.get("kind")
         for key, x in v.items():
+            x["kind"] = kinds.get(key)
             sv = out["variants"].get(key) or {}
             if x.get("max_d_eps") and sv.get("d_eps"):
                 x["screen_over_full"] = sv["d_eps"] / x["max_d_eps"]
@@ -713,7 +738,7 @@ def main():
     a = sys.argv[1:]
     cmd = a[0] if a else "list"
     keys = [x for i, x in enumerate(a) if i > 0 and not x.startswith("--")
-            and a[i - 1] not in ("--log", "--groups")]
+            and a[i - 1] not in ("--log", "--groups", "--kind")]
     if cmd == "list":
         for s in variants(True):
             print(s["key"], s["group"], s["ref"], s.get("cold_key") or "")
@@ -724,9 +749,13 @@ def main():
             sys.exit(1)
     elif cmd == "run":
         run(keys or None, a[a.index("--log") + 1] if "--log" in a else None,
-            a[a.index("--groups") + 1].split(",") if "--groups" in a else None)
+            a[a.index("--groups") + 1].split(",") if "--groups" in a else None,
+            "--reverse" in a)
     elif cmd == "validate":
-        validate(keys or None)
+        if "--kind" in a:
+            validate_kind(a[a.index("--kind") + 1])
+        else:
+            validate(keys or None)
     elif cmd == "pick":
         for kind, r in pick().items():
             print(kind, r)

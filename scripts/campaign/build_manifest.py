@@ -1136,6 +1136,16 @@ def joint_screen_jobs(mech):
                      "thread (califone)",
             notes=f"the variants of {groups} at their reference case's K worst sites "
                   "(production law); the clamps wait for their clamp-only lattices (run_b)"))
+    # a helper from the other end of the production-state task list (the board solves are the
+    # slowest): solve() skips every record the forward job has already written
+    runs_a.append(job(
+        "mech.screen.run_a2r", "mech_revision",
+        ["scripts/tcpmt_mech_joint_screen.py", "run", "--log", "run_a2r", "--groups",
+         "SDEC_new_A,SDEC_new_B,SDEC_mech_A,SDEC_mech_B,board_A,board_B", "--reverse"],
+        [tr("robustness_joint_runs/run_a2r.json")],
+        deps=[lat, mech["critical"], mech["s0"]], ncpus=24, workers=24, mem_gb=32, est_h=0.6,
+        prefer="pbs", backends=("pbs", "local"), env=env,
+        notes="the same variants as run_a2, in reverse order"))
     run_a = runs_a[0]
     run_b = job("mech.screen.run_b", "mech_revision",
                 ["scripts/tcpmt_mech_joint_screen.py", "run", "--log", "run_b"],
@@ -1143,12 +1153,22 @@ def joint_screen_jobs(mech):
                 workers=32, mem_gb=32, est_h=0.3, prefer="pbs", backends=("pbs", "local"),
                 env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 32},
                 evidence="the clamps' solves (36 variants x 20 sites at most)")
+    # the validation rule (tcpmt_mech_joint_screen.pick): in each kind of mechanical variant,
+    # the variant whose screened maximum lies deepest among the K sites gets a full search
+    pk = post("mech.screen.pick", "mech_revision", "tcpmt_mech_joint_screen.py",
+              [tr("robustness_joint_validation_picks.json")], args=["pick"],
+              deps=[run_b, "mech.screen.summarize_pre"], est_h=0.02)
+    post("mech.screen.summarize_pre", "mech_revision", "tcpmt_mech_joint_screen.py",
+         [tr("robustness_joint.json")], args=["summarize"], deps=[run_b, "derived.uncertainty"],
+         est_h=0.05, validate=[{"file": tr("robustness_joint.json"), "kind": "json",
+                                "nonempty": ["variants"]}],
+         notes="the screen's summary before the validation (the picks read it)")
     vals = []
-    for key in SCREEN_VALIDATE:
-        f = tr(f"robustness_joint_validation/{key}.json")
-        vals.append(job(f"mech.screen.validate.{key}", "mech_revision",
-                        ["scripts/tcpmt_mech_joint_screen.py", "validate", key], [f],
-                        deps=runs_a, ncpus=16, workers=16, mem_gb=24, est_h=1.0,
+    for slug in ("mounting", "encapsulant", "mechcard", "thermal"):
+        f = tr(f"robustness_joint_validation_by_kind/{slug}.json")
+        vals.append(job(f"mech.screen.validate.{slug}", "mech_revision",
+                        ["scripts/tcpmt_mech_joint_screen.py", "validate", "--kind", slug], [f],
+                        deps=[pk], ncpus=16, workers=16, mem_gb=24, est_h=1.0,
                         prefer="pbs", backends=("pbs", "local"),
                         env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 16},
                         evidence="a dominance-bounded search: ~150-350 sites x ~60 s",

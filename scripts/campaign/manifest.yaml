@@ -7607,17 +7607,17 @@ jobs:
   evidence: ~1000 sites over the six reference cases x ~65 s on one thread
   notes: 'the maximum response over the BGA lattice of every reference case (S0: ideal decoupling) under
     the production law at the production card'
-- id: mech.screen.validate.SDEC_A_Z2__board_screws_pinned
+- id: mech.screen.validate.mounting
   stage: mech_revision
   argv:
   - scripts/tcpmt_mech_joint_screen.py
   - validate
-  - SDEC_A_Z2__board_screws_pinned
+  - --kind
+  - mounting
   outputs:
-  - tcpmt_revision/robustness_joint_validation/SDEC_A_Z2__board_screws_pinned.json
+  - tcpmt_revision/robustness_joint_validation_by_kind/mounting.json
   deps:
-  - mech.screen.run_a1
-  - mech.screen.run_a2
+  - mech.screen.pick
   ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
@@ -7630,7 +7630,7 @@ jobs:
     LOCAL_THREADS: '1'
     TCPMT_SOLDER_SLOTS: '16'
   validate:
-  - file: tcpmt_revision/robustness_joint_validation/SDEC_A_Z2__board_screws_pinned.json
+  - file: tcpmt_revision/robustness_joint_validation_by_kind/mounting.json
     kind: json
     nonempty:
     - closed
@@ -7638,17 +7638,17 @@ jobs:
   evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
   notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
     inside the reference''s top K?'
-- id: mech.screen.validate.SDEC_A_Z1__encap_emc_lowcte
+- id: mech.screen.validate.encapsulant
   stage: mech_revision
   argv:
   - scripts/tcpmt_mech_joint_screen.py
   - validate
-  - SDEC_A_Z1__encap_emc_lowcte
+  - --kind
+  - encapsulant
   outputs:
-  - tcpmt_revision/robustness_joint_validation/SDEC_A_Z1__encap_emc_lowcte.json
+  - tcpmt_revision/robustness_joint_validation_by_kind/encapsulant.json
   deps:
-  - mech.screen.run_a1
-  - mech.screen.run_a2
+  - mech.screen.pick
   ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
@@ -7661,7 +7661,7 @@ jobs:
     LOCAL_THREADS: '1'
     TCPMT_SOLDER_SLOTS: '16'
   validate:
-  - file: tcpmt_revision/robustness_joint_validation/SDEC_A_Z1__encap_emc_lowcte.json
+  - file: tcpmt_revision/robustness_joint_validation_by_kind/encapsulant.json
     kind: json
     nonempty:
     - closed
@@ -7669,17 +7669,17 @@ jobs:
   evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
   notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
     inside the reference''s top K?'
-- id: mech.screen.validate.S0_A_Z2__conv_E160_a10
+- id: mech.screen.validate.mechcard
   stage: mech_revision
   argv:
   - scripts/tcpmt_mech_joint_screen.py
   - validate
-  - S0_A_Z2__conv_E160_a10
+  - --kind
+  - mechcard
   outputs:
-  - tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_E160_a10.json
+  - tcpmt_revision/robustness_joint_validation_by_kind/mechcard.json
   deps:
-  - mech.screen.run_a1
-  - mech.screen.run_a2
+  - mech.screen.pick
   ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
@@ -7692,7 +7692,7 @@ jobs:
     LOCAL_THREADS: '1'
     TCPMT_SOLDER_SLOTS: '16'
   validate:
-  - file: tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_E160_a10.json
+  - file: tcpmt_revision/robustness_joint_validation_by_kind/mechcard.json
     kind: json
     nonempty:
     - closed
@@ -7700,17 +7700,17 @@ jobs:
   evidence: 'a dominance-bounded search: ~150-350 sites x ~60 s'
   notes: 'full dominance-bounded search on the variant''s own lattice (production law): is its worst site
     inside the reference''s top K?'
-- id: mech.screen.validate.S0_A_Z2__conv_k_tenth
+- id: mech.screen.validate.thermal
   stage: mech_revision
   argv:
   - scripts/tcpmt_mech_joint_screen.py
   - validate
-  - S0_A_Z2__conv_k_tenth
+  - --kind
+  - thermal
   outputs:
-  - tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_k_tenth.json
+  - tcpmt_revision/robustness_joint_validation_by_kind/thermal.json
   deps:
-  - mech.screen.run_a1
-  - mech.screen.run_a2
+  - mech.screen.pick
   ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
@@ -7723,7 +7723,7 @@ jobs:
     LOCAL_THREADS: '1'
     TCPMT_SOLDER_SLOTS: '16'
   validate:
-  - file: tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_k_tenth.json
+  - file: tcpmt_revision/robustness_joint_validation_by_kind/thermal.json
     kind: json
     nonempty:
     - closed
@@ -8512,6 +8512,35 @@ jobs:
   workers: 2
   evidence: 2 structural solves (coupon, 3x board) as mech.board
   notes: the clamp-only states of the backplate clamp and of the 3x board's screw clamp (no thermal load)
+- id: mech.screen.run_a2r
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - run
+  - --log
+  - run_a2r
+  - --groups
+  - SDEC_new_A,SDEC_new_B,SDEC_mech_A,SDEC_mech_B,board_A,board_B
+  - --reverse
+  outputs:
+  - tcpmt_revision/robustness_joint_runs/run_a2r.json
+  deps:
+  - mech.screen.lattice
+  - mech.critical
+  - mech.critical_S0
+  ncpus: 24
+  mem_gb: 32.0
+  est_wall_h: 0.6
+  walltime_h: 2.0
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '24'
+  workers: 24
+  notes: the same variants as run_a2, in reverse order
 - id: mech.lawband
   stage: mech_revision
   argv:
@@ -9137,6 +9166,7 @@ jobs:
   deps:
   - mech.screen.run_a1
   - mech.screen.run_a2
+  - mech.screen.run_a2r
   - mech.screen.lattice_cold
   ncpus: 32
   mem_gb: 32.0
@@ -10023,6 +10053,31 @@ jobs:
     - site_coverage
     fresh: true
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+- id: mech.screen.summarize_pre
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - summarize
+  outputs:
+  - tcpmt_revision/robustness_joint.json
+  deps:
+  - mech.screen.run_b
+  - derived.uncertainty
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/robustness_joint.json
+    kind: json
+    nonempty:
+    - variants
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+  notes: the screen's summary before the validation (the picks read it)
 - id: mech.screen.summary
   stage: mech_revision
   argv:
@@ -10033,10 +10088,10 @@ jobs:
   deps:
   - mech.screen.run_b
   - derived.uncertainty
-  - mech.screen.validate.SDEC_A_Z2__board_screws_pinned
-  - mech.screen.validate.SDEC_A_Z1__encap_emc_lowcte
-  - mech.screen.validate.S0_A_Z2__conv_E160_a10
-  - mech.screen.validate.S0_A_Z2__conv_k_tenth
+  - mech.screen.validate.mounting
+  - mech.screen.validate.encapsulant
+  - mech.screen.validate.mechcard
+  - mech.screen.validate.thermal
   ncpus: 1
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -10223,6 +10278,28 @@ jobs:
   evidence: reads one case file (seconds)
   notes: the case's stored interconnect search (every layer; BGA candidates with their full cut-boundary
     kinematics) and its site coverage; refuses a case whose BGA counts are not in force (tcpmt_mech_production.input_issue)
+- id: mech.screen.pick
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - pick
+  outputs:
+  - tcpmt_revision/robustness_joint_validation_picks.json
+  deps:
+  - mech.screen.run_b
+  - mech.screen.summarize_pre
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/robustness_joint_validation_picks.json
+    kind: json
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
 - id: moose.fullpkg
   stage: moose_checks
   argv:
@@ -12067,11 +12144,14 @@ jobs:
   - mech.screen.lattice_cold
   - mech.screen.run_a1
   - mech.screen.run_a2
+  - mech.screen.run_a2r
   - mech.screen.run_b
-  - mech.screen.validate.SDEC_A_Z2__board_screws_pinned
-  - mech.screen.validate.SDEC_A_Z1__encap_emc_lowcte
-  - mech.screen.validate.S0_A_Z2__conv_E160_a10
-  - mech.screen.validate.S0_A_Z2__conv_k_tenth
+  - mech.screen.pick
+  - mech.screen.summarize_pre
+  - mech.screen.validate.mounting
+  - mech.screen.validate.encapsulant
+  - mech.screen.validate.mechcard
+  - mech.screen.validate.thermal
   - mech.screen.summary
   - mech.band_study
   - prep.dse_engine
