@@ -260,3 +260,4 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     `$PY scripts/campaign/run.py run --backend both --strict-deps --only 'm25.mech.*' --only 'm49.mech.*'
     --only 'mech.screen.*' --only 'mech.board_cold.*' --only 'm36thin.prod.Z3.SDEC.*' --only 'm36t5.prod.Z3.SDEC.*'`.
   - Then: derived.design_comparison, macros (manuscript + writers), supplement, Fig. 11, text, letter.
+- 2026-11-24: USER CONFIRMED the Z3 1-V ball placement rule (500 balls/rail on the sites nearest the cells).
