@@ -46,8 +46,8 @@ SUPP_SRC = R / "manuscript_v2" / "supplement"
 OUT = SUPP / "supp_tables.tex"
 ARCHS = ("Z1", "Z2", "Z3")
 NAMES = {"Z1": "embedded", "Z2": "package-backside", "Z3": "board-backside"}
-STATE_TEXT = {"SDEC": "implemented decoupling", "S0": "ideal input smoothing",
-              "S1": "no decoupling", "S2": "square pulse at the overall ratio"}
+STATE_TEXT = {"SDEC": "implemented decoupling", "S0": "ideal decoupling",
+              "S1": "bare decoupling", "S2": "a square pulse at the overall conversion ratio"}
 
 
 def J(p):
@@ -101,7 +101,7 @@ def design_sentence(key=None, lib=None):
     cap = passive_label(d["capacitor"], lib if lib is not None else passive_library(), maker=True)
     return (rf"$M = {DR.n_vr(key)}$ ({g}$\times${g} cells), N{N}K{K} ($K_A = {KA}$), "
             rf"{tex(d['hs_part'])} / {tex(d['ls_part'])}, {float(d['f_sw_hz']) / 1e3:.0f}~kHz, "
-            rf"flying capacitor {cap}, {len(DR.tiers(key))} mixed tiers")
+            rf"flying capacitor {cap}, {word(len(DR.tiers(key)))} mixed tiers")
 
 
 def thin_design():
@@ -165,6 +165,20 @@ def fx(x, d=1):
     return "--" if x is None else f"{float(x):.{d}f}"
 
 
+_WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+
+
+def word(v):
+    """An integer below ten as a word (IEEE style in running text); anything else unchanged."""
+    t = str(v).strip()
+    return _WORDS[int(t)] if t.isdigit() and int(t) < 10 else t
+
+
+def sgn(x, d=2):
+    """A signed number with a typographic minus."""
+    return f"{float(x):+.{d}f}".replace("-", "$-$")
+
+
 # ---------------------------------------------------------------- prose from data strings
 # Plain-text tokens of the data files rendered as typeset prose; everything else is escaped.
 _SPELL = (("homogenisation", "homogenization"), ("homogenised", "homogenized"),
@@ -209,6 +223,8 @@ _RULES = [(re.compile(p), r) for p, r in (
     (r"W/mK", r"W\,m$^{-1}$K$^{-1}$"),
     (r"(?<=\d)\s?mm2(?![A-Za-z0-9])", r"~mm$^2$"),
     (r"(?<=[\d\s])x(?=\s?\d)", r"$\times$"),
+    (r"(?<![\w.])(\d)x(?= [a-z])", lambda m: m.group(1) + r"$\times$"),
+    (r"(?<![A-Za-z_])u_([xyz])(?![A-Za-z_])", lambda m: f"$u_{m.group(1)}$"),
     (r"(?<=\d) C(?![A-Za-z0-9])", r"\,$^\circ$C"),
     (r"<=", r"$\le$"), (r">=", r"$\ge$"), (r"->", r"$\to$"),
     (r"~(?=\d)", r"$\approx$"),
@@ -397,7 +413,7 @@ def dse_passive(r, key):
 
 def tier_rule(n):
     return ("no tier limit" if n is None else "tier limit unknown" if n == "unknown"
-            else f"at most {n} converter tiers")
+            else f"at most {word(n)} converter tiers")
 
 
 def dse_selection_table():
@@ -456,7 +472,7 @@ def dse_selection_table():
     note = (f"Specification: {meta.get('P_load', 1000) / 1e3:g}~kW at {meta.get('V_out', 1):g}~V "
             f"from {meta.get('V_in', 48):g}~V on a {meta.get('die_area_mm2', 500):g}-mm$^2$ die, "
             f"$J_{{\\mathrm{{t}}}} = {meta.get('J_target', 3.5):g}$~A\\,mm$^{{-2}}$; topology "
-            r"re-synthesized at every count with the discrete device library (case~D) under the "
+            r"re-synthesized at every count with the discrete device library under the "
             r"converter rules of the paper (Section~III): each flying capacitor rated with 0.8 "
             r"derating for the voltage it holds, with its effective capacitance and its ESR at "
             r"$f_{\mathrm{sw}}$; every switch at 0.9 of its rating; $C_{\mathrm{oss}}$ charged "
@@ -465,12 +481,14 @@ def dse_selection_table():
             + tier_rule(max_tiers(tag)) + ". "
             + ((rf"{fine['n_grid_points']}-point grid: the same screen with the "
                 rf"{fine['n_grid_points_screen']}-point $f_{{\mathrm{{sw}}}}$ grid of the "
-                r"synthesis split 16 times (every original point kept); "
+                rf"synthesis refined "
+                rf"{(fine['n_grid_points'] - 1) // (fine['n_grid_points_screen'] - 1)}-fold "
+                r"(every original point kept); "
                 + (r"no count changes its topology or parts" if not
                    fine.get("n_counts_selection_changed") else
                    r"$^\dagger$: another topology or part") + ". ") if nf else "")
             + (rf"Least total loss at $M = {best}$. " if best is not None else "")
-            + rf"$^\ast$: the production design ({design_sentence(lib=lib)}). "
+            + rf"$^\ast$: the design point ({design_sentence(lib=lib)}). "
             + ((r"Every count selects the inductor "
                 + passive_label(dse_passive(feas_rows[0], "inductor"), lib)
                 + r" and the flying capacitor "
@@ -480,7 +498,7 @@ def dse_selection_table():
             r"Losses are for the package of $M$ regulators: conversion from the synthesis loss "
             r"model, routing from the model of~\cite{Krishnakumar2026DVPD} (electrical only).")
     return ltab(spec, 7 + np_ + nf, head, body,
-                r"Converter selected at each regulator count (production converter rules)",
+                r"Converter selected at each regulator count",
                 "tab:supp-dse", note, sep="3pt")
 
 
@@ -552,7 +570,7 @@ def materials_table(B):
         body.append(f"{mat_label(name)} & {kk} & {E_s} & {nu_s} & {cte_s} & "
                     f"{STATUS.get(st_, tex(st_.lower()))} & {', '.join(d['archs'])} \\\\")
     head = [r"Material card & $k$ & $E$ (GPa) & $\nu$ & CTE (ppm/K) & Basis & Used in \\"]
-    note = (r"Values exactly as passed to the solvers, temperature-independent. $k$ in "
+    note = (r"Temperature-independent values; $k$ in "
             r"W\,m$^{-1}$K$^{-1}$, isotropic or in-plane/through-thickness; silicon elastic "
             r"constants cubic. Basis: source, datasheet or handbook value; derived, homogenized "
             r"from the constituents by a rule verified in Table~\ref{tab:supp-verif}; provisional, "
@@ -561,10 +579,10 @@ def materials_table(B):
 
 
 LAYER_LABEL = {"board": "Board", "bga": "BGA", "sub_lower": "Si substrate (TSV field)",
-               "tile_band": "Si substrate, top band", "interface": "Microbump interface",
-               "die": "Die", "tim": "TIM", "z2_top_rdl": "Top RDL",
-               "conv_attach_vr_substrate": "VR attach to the substrate",
-               "z3_attach_vr_pcb": "VR attach to the board"}
+               "tile_band": "Si substrate, top band", "interface": "Die microbumps",
+               "die": "Die", "tim": "TIM", "z2_top_rdl": "Substrate top RDL",
+               "conv_attach_vr_substrate": "Cu-pillar attach",
+               "z3_attach_vr_pcb": "SAC attach"}
 #: the RDL layers of a converter stack (design_record.converter_tiers)
 LAYER_PART = {"bottom_substrate_rdl": "Converter landing RDL (on the substrate)",
               "interlayer_rdl": "Interlayer RDL", "output_rdl": "Converter output RDL",
@@ -640,16 +658,18 @@ def cooling_tables():
             ("Channel length / plate width", f"{g['length_mm']:.2f} / {g['width_mm']:.2f} mm"),
             ("Base, solid", f"{g['t_base_um']:.0f}~\\textmu m Si, $k$ = {g['k_solid_W_mK']:.0f}~W\\,m$^{{-1}}$K$^{{-1}}$"),
             ("Hydraulic diameter, aspect ratio", f"{g['D_h_um']:.1f}~\\textmu m, {g['aspect_ratio']:.3f}"),
-            ("Coolant, inlet", f"water, {f['T_inlet_C']:.0f}\\,$^\\circ$C, {f['m_dot_g_s']:.0f}~g/s ({f['V_dot_ml_min']:.0f} ml/min) per plate"),
-            ("Flow distribution", f.get("flow_distribution",
-                                        "uniform over the channels (ideal plenum)")),
+            ("Coolant, inlet", f"water, {f['T_inlet_C']:.0f}\\,$^\\circ$C, {f['m_dot_g_s']:.0f}~g/s ({f['V_dot_ml_min']:.0f} mL/min) per plate"),
+            ("Flow distribution", re.sub(r"\b(\d) manifold zones",
+                                         lambda m_: word(m_.group(1)) + " manifold zones",
+                                         f.get("flow_distribution",
+                                               "uniform over the channels (ideal plenum)"))),
             *([("Construction", f"{p['construction']['n_zones']}-zone manifold, alternating "
                                 f"inlet/outlet headers; pass {p['construction']['pass_length_mm']:.2f} mm, "
                                 f"{p['construction']['m_dot_per_pass_g_s']:.2f} g/s per zone")]
               if (p.get("construction") or {}).get("n_zones", 1) > 1 else []),
-            ("Velocity, $Re$, $Pr$", f"{rg['velocity_m_s']:.2f} m/s, {rg['Re']:.0f} (laminar), {f['Pr']:.2f}"),
+            ("Velocity, $\\mathrm{Re}$, $\\mathrm{Pr}$", f"{rg['velocity_m_s']:.2f} m/s, {rg['Re']:.0f} (laminar), {f['Pr']:.2f}"),
             ("Entrance lengths $L_h$ / $L_{th}$", f"{rg['L_hydrodynamic_entrance_mm']:.1f} / {rg['L_thermal_entrance_mm']:.1f} mm"),
-            ("$Nu$ (Shah--London, 3 walls, fully developed)", f"{ht['Nu_fully_developed_3walls']:.2f}"),
+            ("$\\mathrm{Nu}$ (Shah--London, three walls, fully developed)", f"{ht['Nu_fully_developed_3walls']:.2f}"),
             ("$h_{\\mathrm{ch}}$, $\\eta_{\\mathrm{f}}$, $\\Lambda$", f"{ht['h_channel_W_m2K']:.0f} W\\,m$^{{-2}}$K$^{{-1}}$, {ht['fin_efficiency']:.3f}, {ht['area_amplification_Lambda']:.2f}"),
             ("$R_{\\mathrm{conv}}$, $R_{\\mathrm{cal}}$, $R_{\\mathrm{base}}$", f"{ht['R_conv_K_W'] * 1e3:.2f}, {ht['R_caloric_K_W'] * 1e3:.2f}, {ht['R_base_K_W'] * 1e3:.2f} mK/W"),
             ("$h_{\\mathrm{eff}}$ uniform sink / streamwise sink", f"{ht['h_eff_uniform_sink_W_m2K']:.0f} / {ht['h_eff_streamwise_sink_W_m2K']:.0f} W\\,m$^{{-2}}$K$^{{-1}}$"),
@@ -751,21 +771,21 @@ def capacitor_tables():
     thin = thin_design()
     L = section("Flying-Capacitor Technology",
                 r"Table~\ref{tab:supp-capev} is the evidence behind the flying capacitor of the "
-                r"production design, the rated part "
+                r"design point, the rated part "
                 + passive_label(d["capacitor"], lib, maker=True)
                 + (rf" in a {float(d['cap_height_um']):.0f}-\textmu m tier"
                    if d.get("cap_height_um") else "")
                 + (rf", and behind the thin-capacitor technology of the sensitivity design "
                    rf"(a {thin[1]:.0f}-\textmu m capacitor tier)" if thin else "")
-                + r"; Table~\ref{tab:supp-cap49} gives the flying capacitors at the operating "
-                  r"point of the production design.")
+                + r"; Table~\ref{tab:supp-cap49} gives the flying capacitors at the design "
+                  r"point.")
     if (SUPP / "tab_capacitor_evidence.tex").is_file():
         L += [r"\input{tab_capacitor_evidence}", ""]
     else:
         L += placeholder("flying-capacitor evidence matrix", "tab_capacitor_evidence.tex")
     rows, ctx = flying_cap_rows()
     if not rows:
-        return L + placeholder("flying capacitors of the production design",
+        return L + placeholder("flying capacitors of the design point",
                                "Scalable_Integrated_VR/src/HVR_FULL_OPT_EPC_V2.py")
     role = {"production": "production", "rated": "rated", "thin": "thin"}
 
@@ -794,7 +814,7 @@ def capacitor_tables():
             + f"{ctx['derating']:g} against the {ctx['v_c1']:g}" + r"~V that $C_1$ holds. "
             r"Height: the part's maximum mounted height.")
     return L + ltab(r"@{}llrlrrrrr@{}", 9, head, body,
-                    "Flying capacitors at the operating point of the production design",
+                    "Flying capacitors at the design point",
                     "tab:supp-cap49", note)
 
 
@@ -845,7 +865,7 @@ def _extrap_txt(cal, win):
     if s and ws:
         lo, hi = min(x[0] for x in ws), max(x[1] for x in ws)
         if lo < s[0] or hi > s[1]:
-            out.append(f"stress {lo:g}--{hi:g}~MPa visited against {s[0]:g}--{s[1]:g}~MPa")
+            out.append(f"stress {lo:.3g}--{hi:.3g}~MPa visited against {s[0]:g}--{s[1]:g}~MPa")
     if T and T[0] > 25.0:
         out.append(rf"the 25-$^\circ$C cold dwell (rows below {T[0]:g}\,$^\circ$C)")
     return "; ".join(out) or "none"
@@ -917,12 +937,11 @@ def solder_tables_v2(p):
                rf"{100 * err['cold']:.0f}\,\% (cold dwell)" if err.get("hot") is not None
                and err.get("cold") is not None else "")
             + ". Elasticity: " + _e_txt(el.get("E_MPa")) + r", $\nu$ = " + num(nu)
-            + " (" + prose(re.sub(r"^ASSUMPTION", "assumption",
-                                  str(el.get("kind") or "assumption"))) + ")"
+            + r" (room-temperature $E$ from~\cite{Paska2024SAC305}; slope and $\nu$ assumed)"
             + (rf"; thermal expansion {alpha * 1e6:.3g}~ppm/K, stress-free at "
                rf"{float(ex.get('T_ref_C', 25)):.0f}\,$^\circ$C" if alpha else "") + ".")
-    L += ltab(r"@{}rrrrr@{}", 5, head, body, "Solder card as passed to the solver (production "
-              "law)", "tab:supp-card", note)
+    L += ltab(r"@{}rrrrr@{}", 5, head, body, "Solder card (production law)", "tab:supp-card",
+              note)
 
     # -- ingredients: every law of the band, with its calibration and what is extrapolated
     cu = p.get("copper_pads") or {}
@@ -987,8 +1006,10 @@ def solder_tables_v2(p):
         ("Elements", f"{tex(me.get('element', '--'))}, level {tex(me.get('level', '--'))}: "
          f"{me.get('n_elements', '--')} elements, {me.get('n_core_elements', '--')} in the "
          "averaging core"),
-        ("Pad faces", prose(bc.get("pad_faces") or "--")),
-        ("Global-to-local transfer", prose(bc.get("transfer_from_global") or "--")),
+        ("Pad faces", prose(bc.get("pad_faces") or "--").replace(
+            "the in-plane du lies on local +x", r"the in-plane $\Delta u$ lies on the local $+x$ axis")),
+        ("Global-to-local transfer",
+         prose(re.sub(r"\s*\(tcpmt_\w+\)", "", bc.get("transfer_from_global") or "--"))),
         ("Temperature", prose(bc.get("temperature") or "--")
          + (rf"; stress-free at {float(bc['stress_free_temperature_C']):.0f}\,$^\circ$C"
             if bc.get("stress_free_temperature_C") is not None else "")),
@@ -1013,8 +1034,10 @@ def solder_tables_v2(p):
         ("Response $\\deps$", prose(rsp.get("definition") or "--")),
     ]
     if unc.get("eps_basis"):
-        prow.append(("Compared responses", prose(unc["eps_basis"])
-                     + r" (Table~\ref{tab:supp-unc})"))
+        eb = (str(unc["eps_basis"]).replace("v2 local model", "local model")
+              .replace("production law schubert2003", "production law (Schubert et al.)")
+              .replace("(4-cycle L0;", "(four cycles, L0;"))
+        prow.append(("Compared responses", prose(eb) + r" (Table~\ref{tab:supp-unc})"))
     L += ltab(r"@{}L{3.6cm}L{13.2cm}@{}", 2, [r"Item & Setting \\"],
               [f"{a} & {b} \\\\" for a, b in prow],
               "Local model geometry, boundary conditions, loading and integration",
@@ -1131,7 +1154,7 @@ def joint_band_table():
     note = (r"Joint response $\deps$ (per cycle) at each case's critical joint in " + st +
             r", local model driven by the full cut-boundary displacement of the global solution "
             r"(both pad faces: translation, in-plane stretch and rotation), linear 3-s ramps and "
-            r"300-s dwells, 4 cycles, L0 mesh; one column per law of the solder-law band, the "
+            r"300-s dwells, four cycles, L0 mesh; one column per law of the solder-law band, the "
             r"production law first. Band: lowest--highest law, the reported uncertainty of the "
             r"joint response; $U_{95}$: numerical (own L0$\to$L3 and 4$\to$8-cycle changes, "
             r"Table~\ref{tab:supp-localchecks}). "
@@ -1154,7 +1177,7 @@ def joint_band_table():
             + "Ranking per law: " + "; ".join(
                 f"{_law(k)[0]}: A {tex(rk.get(k, {}).get('A') or '--')}, B "
                 f"{tex(rk.get(k, {}).get('B') or '--')}" for k in laws if rk.get(k)) + "."
-            + (r" $M = 25$, $M = 49$: the Z1 joints of the count neighbours (their own "
+            + (r" $M = 25$, $M = 49$: the Z1 joints of the count neighbors (their own "
                r"production cases), the same local model, law band and lattice search, each "
                r"law's window iterated on their own joints." if nb_rows else ""))
     return ltab(r"@{}lrrrr" + "r" * len(laws) + "rr@{}", 7 + len(laws), head, body,
@@ -1242,14 +1265,14 @@ def local_checks_table():
         r = ((g.get(group) or {}).get(lab) or {}).get(var) or {}
         x = r.get("rel_to_v2")
         return "--" if x is None else f"{100 * x:+.1f}".replace("-", r"$-$")
-    rows = [("v2 response ($10^{-3}$)", None, None)]
+    rows = [("Response ($10^{-3}$)", None, None)]
     rows += [("Mesh L1", "mesh", "L1"), ("Mesh L2", "mesh", "L2"), ("Mesh L3", "mesh", "L3"),
              ("8 cycles", "cycles", "N8"), ("Dwell 60 s", "dwell", "dwell60"),
              ("Dwell 900 s", "dwell", "dwell900"), ("Ramp 30 s", "dwell", "ramp30"),
              ("C3D8I elements", "element", "C3D8I"), ("C3D8R elements", "element", "C3D8R"),
-             ("Earlier model (E)", "chain", "R2"), ("E + ramps", "chain", "ramp"),
+             ("Alternative model (M0)", "chain", "R2"), ("M0 + ramps", "chain", "ramp"),
              ("+ zero-yield law", "chain", "law"), ("+ $u_z$ released", "chain", "uz"),
-             ("v2 with STEP loads", "chain", "v2_step")]
+             ("Production model, step loads", "chain", "v2_step")]
     body = []
     for name, group, var in rows:
         if group is None:
@@ -1293,10 +1316,11 @@ def local_checks_table():
                          r"$u_z$ released)" if v.get("d_eps_uz") else ""))
     head = [r"Check & " + " & ".join(V2_CASE[l] for l in labs) + r" \\"]
     note = (r"Change of $\deps$ against the production local model (first row), in \%. Mesh: "
-            r"the nested joint meshes L1--L3 against L0; 8 cycles against 4; dwell and ramp "
-            r"against 300 and 3~s; element types against C3D8. Attribution chain: an earlier local "
-            r"model (overstress card with hardening, in-plane $\Delta u$ only, STEP loading) and "
-            r"each change toward the production model in turn." + band_txt + " "
+            r"the nested joint meshes L1--L3 against L0; eight cycles against four; dwell and "
+            r"ramp against 300 and 3~s; element types against C3D8. Attribution chain: an "
+            r"alternative local model (M0: overstress card with hardening, in-plane $\Delta u$ "
+            r"only, step loading) and each change toward the production model in turn."
+            + band_txt + " "
             + ("Critical fine-pitch joints, own geometry: " + "; ".join(fp_txt) + "."
                if fp_txt else ""))
     return ltab(r"@{}l" + "r" * len(labs) + "@{}", 1 + len(labs), head, body,
@@ -1304,8 +1328,9 @@ def local_checks_table():
                 note)
 
 
-LAYER_LABEL = {"bga": "BGA", "interface": "Die microbumps",
-               "conv_attach_vr_substrate": "Cu-pillar attach", "z3_attach_vr_pcb": "SAC attach"}
+IC_LAYER_LABEL = {"bga": "BGA", "interface": "Die microbumps",
+                  "conv_attach_vr_substrate": "Cu-pillar attach",
+                  "z3_attach_vr_pcb": "SAC attach"}
 
 
 def interconnect_table():
@@ -1319,8 +1344,9 @@ def interconnect_table():
         for name, r in (c.get("layers") or {}).items():
             cr = r["critical"]
             lr = ((lad.get(lab) or {}).get("layers") or {}).get(name) or {}
-            body.append(f"{_lab(lab) if first else ''} & {LAYER_LABEL.get(name, tex(name))} & "
-                        f"{fx(r.get('h_um'), 0)} & ({cr['x_mm']:.2f}, {cr['y_mm']:.2f}) & "
+            body.append(f"{_lab(lab) if first else ''} & {IC_LAYER_LABEL.get(name, tex(name))} & "
+                        f"{fx(r.get('h_um'), 0)} & ({tm(cr['x_mm'], '.2f')}, "
+                        f"{tm(cr['y_mm'], '.2f')}) & "
                         f"{fx(cr.get('T_C'))} & {fx(1e3 * r['gamma_max'], 2)} & "
                         f"{fx(1e3 * (r.get('gamma_def_max') or 0), 2)} & "
                         f"{fx(cr.get('du_z_um'), 3)} & {fx(lr.get('r31_over_r21'), 2)} \\\\")
@@ -1400,7 +1426,7 @@ def solder_tables():
             rf"Thermal expansion {ex['alpha_per_K'] * 1e6:.3g}~ppm/K, temperature-independent, "
             rf"stress-free at {ex['T_ref_C']:.0f}\,$^\circ$C. The solver interpolates every "
             r"column linearly between rows and holds the end rows outside them.")
-    L += ltab(r"@{}rrrrrrr@{}", 7, head, body, "Solder (SAC305) card as passed to the solver",
+    L += ltab(r"@{}rrrrrrr@{}", 7, head, body, "Solder (SAC305) card",
               "tab:supp-card", note)
 
     # -- ingredients, sources, calibrated ranges
@@ -1768,14 +1794,14 @@ def mesh_runtime_table():
               ("the through-thickness rung (r12)", "ladder.*.r12.a*.json"),
               ("the finest rung (r31)", "ladder.*.r31.a*.json"),
               ("the complete-package MOOSE reference", "moose.fullpkg.a*.json"),
-              ("the mechanics-only reruns on converged fields", "mech.board*.a*.json"),
+              ("the mechanics-only solutions on converged fields", "mech.board*.a*.json"),
               ("the reflow and bonding checks", "mech.reflow.*.a*.json"),
               ("a critical-joint search of the local model", "mech.critical*.a*.json"),
               ("the local-model checks with the finest joint mesh", "mech.local_checks.a*.json")]
     mem_txt = [f"{what} {_gb(job_rss_mb(pat))}~GB" for what, pat in stages if job_rss_mb(pat)]
-    mem_note = ((r" Peak memory: the largest resident set of any process of the job, from the "
-                 r"campaign's job records (thermal and structural solves of the case); "
-                 r"other stages: " + "; ".join(mem_txt) + ".") if mem_txt else "")
+    mem_note = ((r" Peak memory: the largest resident set of any process (thermal and "
+                 r"structural solves of the case); other stages: " + "; ".join(mem_txt) + ".")
+                if mem_txt else "")
     note = (rf"Cases: the production state ({STATE_TEXT[st]}) under cooling~A, Z3 with the "
             r"coupled land-side and board-plane redistribution" + ("; --: not run" if missing
                                                                     else "") + ". "
@@ -1787,12 +1813,13 @@ def mesh_runtime_table():
             r"$T_{\mathrm{ref}}=25\,^\circ$C, rigid-body motion restrained only, iterative "
             r"Cholesky solver (verified against the direct SPOOLES solver, "
             r"Table~\ref{tab:supp-verif}). Machine: two-socket Intel Xeon Gold 6342 (2.8~GHz, "
-            rf"48 cores), shared; thermal solves on {n_thr} threads, structural on 1. Times "
+            rf"48 cores), shared; thermal solves on {word(n_thr)} threads, structural on one. "
+            r"Times "
             r"include every "
             r"E--T iteration (each a thermal solve with its coolant balance) and the structural "
             r"solve with the all-site joint search; they exclude geometry construction and meshing "
             r"(under 2~min per integration), the local solder model and postprocessing. "
-            r"Sensitivity runs repeat the same chain." + mem_note
+            r"Sensitivity variants use the same chain." + mem_note
             + (DAGGER_NOTE if any(r"$^\dagger$" in b for b in body) else ""))
     return ltab(r"@{}lrrrrrrrr@{}", 9, head, body,
                 "Meshes, solvers, runtimes and memory (production state, cooling A)",
@@ -1827,7 +1854,11 @@ REF_KIND = {"INDEPENDENT COMMERCIAL FEM": "independent commercial FEM",
 
 def verif_clean(s):
     s = str(s or "")
-    for a, b in (("(equal_sharing_assessment)", ""), (" (Q3D and Maxwell are not licensed)", ""),
+    for a, b in (("earlier geometry; carried as history, not re-run on the physical lineage",
+                  "another package geometry; not repeated on the package of the paper"),
+                 ("(historical geometry)", "(another package geometry)"),
+                 ("pass = False", "not met"),
+                 ("(equal_sharing_assessment)", ""), (" (Q3D and Maxwell are not licensed)", ""),
                  ("no circuit simulator installed and no switch-state schedule exists",
                   "no circuit-level simulation of the selected design exists"),
                  ("the physical lineage", "the final package geometry"),
@@ -1835,8 +1866,8 @@ def verif_clean(s):
                  ("of the physical package", "of the package"),
                  ("the card is compared at the same f", "compared at the same metal fraction"),
                  ("MG is a dilute-limit form", "Maxwell-Garnett is a dilute-limit form"),
-                 ("DECLARED", "declared"), ("ADOPTS", "adopts"), ("pass = True", "passed"),
-                 ("named HV scenarios", "named input scenarios"), ("surf ", "surface "),
+                 ("DECLARED", "declared"), ("ADOPTS", "adopts"), ("pass = True", "met"),
+                 ("named HV scenarios", "the input states"), ("surf ", "surface "),
                  ("MOOSE heat_transfer-opt", "MOOSE"), ("graded FV sheet", "graded finite-volume sheet"),
                  ("aligned FV sheet", "aligned finite-volume sheet")):
         s = s.replace(a, b)
@@ -1848,7 +1879,7 @@ def verif_establishes(r):
     obs = verif_clean(r.get("observable") or "")
     ref = REF_KIND.get(r.get("reference_type") or "", "an independent solution")
     if r.get("status") == "HISTORICAL_REFERENCE_NOT_RERUN":
-        return r"Agreement with the reference on an earlier package geometry"
+        return r"Agreement with the reference on another package geometry"
     if ev == "UNVALIDATED":
         return (r"Bounds only: the response is carried for two cards, without a reference "
                 r"solution" if r.get("status") == "BOUNDED" else
@@ -1939,7 +1970,7 @@ def uncertainty_table():
         for a in ARCHS:
             c = rel.get(a, {}).get(y)
             comp = (" & ".join(f"{100 * c[k]:.2f}" for k in ("mesh", "tt", "et", "ref", "total"))
-                    + (f" & {100 * c['bias_rel']:+.2f}" if "bias_rel" in c else " & --")
+                    + (f" & {sgn(100 * c['bias_rel'])}" if "bias_rel" in c else " & --")
                     if c else r"\multicolumn{6}{c}{local mesh and cycle count; law band in the "
                               r"resolution}" if y == "eps" else
                     rf"\multicolumn{{6}}{{c}}{{no {ref_lab} reference ladder}}")
@@ -1963,7 +1994,9 @@ def uncertainty_table():
                        f"{code.get(r['verdict'], r['verdict'])}"
                        + (r"$^\dagger$" if r.get("provisional") else "") for r in rows)
              for (t, a, b), rows in seen.items()]
-    n_need = len(u.get("ladder_runs_needed") or [])
+    marked = any(r"$^\dagger$" in b for b in body) or any(r"$^\dagger$" in c for c in comps)
+    law_cond = any(r.get("verdict") == "law-conditional" for r in u.get("comparisons", []))
+    eps_here = any(r.get("output") == "eps" for r in u.get("comparisons", []))
     head = [r"Output & Int. & \multicolumn{6}{c}{Relative to the value, " + ref_lab +
             r" reference ladder (\%)} & \multicolumn{2}{c}{$U_{95}$} \\",
             r"\cmidrule(lr){3-8}\cmidrule(l){9-10}",
@@ -1980,14 +2013,16 @@ def uncertainty_table():
             r"the matched-reference agreement of the solver, in quadrature. Columns: the "
             r"components of each integration's " + ref_lab + r" reference ladder (cooling~A "
             r"production case), relative to the value "
-            r"(temperatures: to the rise above the inlet); $U_{95}$ of each compared case; "
-            r"$\dagger$: the case has no ladder of its own and carries its reference's estimate "
-            rf"provisionally (identical mesh; {n_need} ladder rungs listed for the campaign). "
+            r"(temperatures: to the rise above the inlet); $U_{95}$ of each compared case"
+            + (r"; $\dagger$: the case has no ladder of its own and carries its reference's "
+               r"estimate provisionally (identical mesh)" if marked else "") + ". "
             r"$\deps$: own local numerical $U$ (L0$\to$L3, cycle count), resolved only when "
-            r"resolved under every law of the solder-law band (L: production law only)" +
-            ("" if st == "S0" else r" (solved on the S0 cases; not compared in this state)") +
+            r"resolved under every law of the solder-law band"
+            + (" (L: production law only)" if law_cond else "")
+            + ("" if st == "S0" or eps_here
+               else r" (solved on the S0 cases; not compared in this state)") +
             r". Model-form uncertainty is not part of $U$: "
-            r"it is covered by rerunning both integrations under each declared alternative "
+            r"it is covered by solving both integrations under each declared alternative "
             r"(Table~\ref{tab:supp-variants}). Comparisons, lower integration first (R: "
             r"resolved; --: not resolved; P: pending): " +
             ". ".join(c[:1].upper() + c[1:] for c in comps) + ".")
@@ -2146,9 +2181,11 @@ def feasibility_table():
             r"\,\% of the ball sites left for signals; static drop $\le" +
             f"{lim['ir_drop_mV_per_rail']:.0f}" + r"$~mV per rail. Cases: integration, cooling "
             r"(A: top plate; B: top plate and bottom plate, the bottom one behind a 50-\textmu m "
-            r"TIM) and input state when not the production state " + tex(TC.PRODUCTION_STATE) +
-            " (" + STATE_TEXT[TC.PRODUCTION_STATE] + "): " +
-            "; ".join(f"{s}, {STATE_TEXT[s]}" for s in TC.STATES if s != TC.PRODUCTION_STATE) +
+            r"TIM) and input state when not the production state ("
+            + STATE_TEXT[TC.PRODUCTION_STATE] + "): " +
+            "; ".join(f"{STATE_NAME[s]}, {STATE_TEXT[s]}" for s in (*TC.STATES, "S2")
+                      if s != TC.PRODUCTION_STATE
+                      and (s != "S2" or any(case_state(r) == "S2" for r in recs))) +
             r"; Z3 always with the coupled land-side redistribution. A check that fails only on "
             r"the whole-field bound is unresolved; such a candidate is not ranked either." +
             (DAGGER_NOTE if any(v_[2] for v_ in labels.values()) else ""))
@@ -2207,13 +2244,15 @@ def scenario_table():
             r"$\du$ (\textmu m) & Warpage & $k$ \\",
             r" & & & ($^\circ$C) & ($^\circ$C) & at $T_{\mathrm{j}}$ ($^\circ$C) & (\textmu m) & \\"]
     note = (r"Package-internal loss, peak and low-side tier temperature, critical joint and die "
-            r"warpage under cooling~A (Z3: the coupled land-side case) per input state: SDEC, the "
-            r"implemented decoupling (the production state); S0, ideal input smoothing; S1, no "
-            r"decoupling (a square pulse at the buck duty $D = N V_{\mathrm{out}}/V_{\mathrm{in}}"
-            + f" = 1/{1.0 / DR.buck_duty():.0f}$); S2, a square pulse at the overall conversion "
-            r"ratio $V_{\mathrm{out}}/V_{\mathrm{in}}$. $k$: RMS-to-average ratio of the current "
-            r"the 48-V feed carries (SDEC: the loss-equivalent $k_{\mathrm{eq}}$ the case was run "
-            r"with)" + ("; --: not run" if any(" -- & -- " in b for b in body) else "") + "."
+            r"warpage under cooling~A (Z3: the coupled land-side case) per input state: "
+            r"implemented, the implemented decoupling (the production state); ideal, ideal "
+            r"decoupling; bare, bare decoupling (a square pulse at the buck duty "
+            r"$D = N V_{\mathrm{out}}/V_{\mathrm{in}}"
+            + f" = 1/{1.0 / DR.buck_duty():.0f}$); ratio pulse, a square pulse at the overall "
+            r"conversion ratio $V_{\mathrm{out}}/V_{\mathrm{in}}$. $k$: RMS-to-average ratio of "
+            r"the current the 48-V feed carries (implemented: the loss-equivalent "
+            r"$k_{\mathrm{eq}}$ of the case)"
+            + ("; --: not run" if any(" -- & -- " in b for b in body) else "") + "."
             + (DAGGER_NOTE if marked else ""))
     return ltab(r"@{}llrrrrrr@{}", 8, head, body,
                 "The selected regulator under the input states", "tab:supp-scen", note)
@@ -2243,7 +2282,7 @@ def z3land_table():
                     f"{num(r.get('P_land_w'), 3)} & {num(r.get('P_board_plane_w'), 3)} & "
                     f"{num(r.get('dV_land_static_one_rail_mV'), 3)} & {num(r.get('T_max_C'), 4)} & "
                     f"{num(r.get('die_warpage_pv_um'), 3)} & {num(r.get('du_c_um'), 3)} & "
-                    f"{num(r.get('R_star_mohm'), 3)} \\\\")
+                    f"{'none' if r.get('R_star_mohm') == 0 else num(r.get('R_star_mohm'), 3)} \\\\")
     dv = d.get("derived") or {}
     head = [r"Land side, cooling & $P$ & Land & Planes & $\Delta V_{\mathrm{land}}$ & "
             r"$T_{\max}$ & Warpage & $\du$ & $R^*$ \\",
@@ -2257,7 +2296,8 @@ def z3land_table():
         if t is None:
             return None
         return (f"$t = {t:.0f}$~\\textmu m" + ("" if x.get("bracketed", True) else
-                                                " (extrapolated beyond the runs)"))
+                                                " (extrapolated beyond the evaluated "
+                                                "thicknesses)"))
     tb, tl = tie("tie_with_board_planes"), tie("tie_land_only")
     drop = (dv.get("drop_30mV_one_rail") or {}).get("t_um")
     note = (r"Land-side copper thickness $t$ and cooling; board planes $2\times35$~\textmu m per "
@@ -2267,7 +2307,7 @@ def z3land_table():
             r"limit. "
             + (f"Tie with Z1 under cooling~B at {tb}" + (f" (land side alone: {tl})" if tl
                                                          else "") + "; "
-               if tb else "No tie with Z1 under cooling~B within the runs; ")
+               if tb else "No tie with Z1 under cooling~B over the evaluated thicknesses; ")
             + (r"a land-side drop of at most 30~mV per rail needs "
                rf"$t \ge {drop:.0f}$~\textmu m." if drop is not None else
                r"the 30-mV land-side drop thickness is not available."))
@@ -2339,7 +2379,7 @@ VARIANT_LABEL = {
     "board_t3p2": "PCB 3.2 mm thick", "board_eta025": "PCB copper coverage 25\\,\\%",
     "board_eta075": "PCB copper coverage 75\\,\\%", "board_h1": "PCB as five-block laminate",
     "board_h0_h1grid": "PCB single block, five-block grid",
-    "tsv_min": "TSV field minimal", "tsv_mid": "TSV field half density",
+    "tsv_min": "TSV field minimal",
     "f2_void": "Out-of-cell volume void", "f1_sidewall_filled": "Opening filled to the sidewall",
     "attach_h20": "Attach 20~\\textmu m tall", "attach_h40": "Attach 40~\\textmu m tall",
     "attach_sn": "Attach all-solder", "attach_dense": "Attach dense, real lattice",
@@ -2354,7 +2394,8 @@ VARIANT_LABEL = {
     "bga_depop": "BGA depopulated", "z1_bottom_plate_tim": "Z1 bottom plate via TIM",
     "z3_plate_tim": "Z3 bottom plate via TIM", "z3_top_only": "Z3 top plate only",
     "z1_tier_reference": "Z1 reference tier order",
-    "board_hbot100": "Board-bottom film 100", "board_hbot500": "Board-bottom film 500",
+    "board_hbot100": "Board-bottom film 100~W\\,m$^{-2}$K$^{-1}$",
+    "board_hbot500": "Board-bottom film 500~W\\,m$^{-2}$K$^{-1}$",
     "z2_cooled": "Z2 bottom plate, no TIM", "pad_drop": "1-V pads at the drop floor",
     "gan_k_half": "GaN-tier $k\\times0.5$", "conv_k_tenth": "Converter-tier $k\\times0.1$",
     # mechanics-only and cooling-model variants of the final campaign
@@ -2369,13 +2410,43 @@ VARIANT_LABEL = {
     "conv_k_legacy": "Converter tiers as one medium", "conv_gap_legacy": "Encapsulant cap, no posts",
     "nu_legacy_table": "Cold-plate Nu, three-wall table", "props_legacy_50C": "Coolant at 50~$^\\circ$C",
     "wall_viscosity": "Wall-viscosity correction", "plate_single_pass": "Single-pass cold plates",
-    "board_hbot60": "Board-bottom film 60", "board_hbot520": "Board-bottom film 520"}
+    "board_hbot60": "Board-bottom film 60~W\\,m$^{-2}$K$^{-1}$",
+    "board_hbot520": "Board-bottom film 520~W\\,m$^{-2}$K$^{-1}$",
+    "z1_bottom_plate_tim_fullflow": "Z1 bottom plate via TIM, full flow",
+    "z2_cooled_tim_fullflow": "Z2 bottom plate via TIM, full flow",
+    "z3_plate_tim_fullflow": "Z3 bottom plate via TIM, full flow",
+    "z2_cooled_fullflow": "Z2 bottom plate, no TIM, full flow",
+    "z3_plate_fullflow": "Z3 bottom plate, no TIM, full flow",
+    "die_hotspot": "Core-heavy die power map", "tsv_mid": "TSV field reduced"}
 #: neutral descriptions of the alternative forms (the registry's text names their history)
 VARIANT_WHAT = {
     "conv_k_legacy": "one effective medium (k 60 W\\,m$^{-1}$K$^{-1}$) on the inductor, output- and "
                      "flying-capacitor tiers, solid silicon on the GaN tiers",
     "nu_legacy_table": "cold-plate Nu from the three-wall table with a long wall adiabatic instead "
-                       "of the short-wall-adiabatic H1 fit"}
+                       "of the short-wall-adiabatic H1 fit",
+    "board_h1": "five depth blocks with their own copper fractions instead of one homogenized "
+                "block",
+    "board_h0_h1grid": "the single-block card on the five-block $z$ grid (isolates the grid)",
+    "tsv_min": "64 vias per cell ($8\\times8$) instead of the full field, in the FE substrate and "
+               "the ledger",
+    "tsv_mid": "729 vias per cell ($27\\times27$) instead of the full field, in the FE substrate "
+               "and the ledger",
+    "conv_posts_lower": "copper posts carrying only the terminal RMS currents at the in-cell design "
+                        "current density (the lower end of the post conductivity)",
+    "conv_posts_upper": "copper posts of the full solder-bar outline, the widest MLCC band and half "
+                        "the inductor post density (the upper end of the post conductivity)",
+    "wall_viscosity": "wall-viscosity correction ($\\mathrm{Nu}\\,(\\mu_b/\\mu_w)^{0.14}$, "
+                      "$f\\,(\\mu_w/\\mu_b)^{0.58}$)",
+    "plate_caloric_legacy": "top plate with the uniform-sink coefficient ($R_{\\mathrm{cal}}$ "
+                            "included) on the streamwise sink",
+    "plate_single_pass": "every plate single pass (one inlet, one outlet, full length and flow) "
+                         "instead of the four-zone manifold; same $h$, one-way coolant sink",
+    "z3_plate_fullflow": "interface-free Z3 converter plate at the full 27~g/s, uniform inlet sink",
+    "bga_card_local": "homogenized BGA layer from the local solder card ($E(T)$, $\\nu$, CTE)",
+    "encap_emc_lowcte_const": "out-of-cell encapsulant: the same mold compound, glassy values at "
+                              "every temperature (isolates $T_g$)"}
+#: variants that coincide with the production model (the 3.2-mm board is the board of the paper)
+SAME_AS_PRODUCTION = {"board_t3p2"}
 
 
 def variant_label(name):
@@ -2390,10 +2461,10 @@ def variant_label(name):
 BOARD_LABEL = {"screws": "screws at the board corners", "screws_pinned": "pinned screws",
                "edge": "simply supported edge", "clamp_screws": "clamp at the screws",
                "clamp_backplate": "clamp on a backplate",
-               "free_ring_hot": "3x board, ring at the edge temperature",
-               "free_ring_cold": "3x board, ring at 25~$^\\circ$C",
-               "screws_ring_hot": "3x board on screws",
-               "clamp_screws_ring_hot": "3x board, clamp at the screws"}
+               "free_ring_hot": "3$\\times$ board, ring at the edge temperature",
+               "free_ring_cold": "3$\\times$ board, ring at 25~$^\\circ$C",
+               "screws_ring_hot": "3$\\times$ board on screws",
+               "clamp_screws_ring_hot": "3$\\times$ board, clamp at the screws"}
 
 
 def screen_label(key):
@@ -2401,7 +2472,7 @@ def screen_label(key):
     ref, name = key.split("__", 1)
     st, t, a = ref.split("_")
     lab = (BOARD_LABEL.get(name[6:], tex(name[6:])) if name.startswith("board_")
-           else variant_label(name))
+           else variant_label(re.sub(r"_[AB]$", "", name)))
     return (f"{lab[:1].lower() + lab[1:] if not lab.startswith(('PCB', 'BGA', 'TSV', 'GaN')) else lab}"
             f" ({a}, {STATE_NAME.get(st, st)} decoupling, cooling~{t})")
 
@@ -2412,7 +2483,10 @@ def variants_table():
     g0 = (sc.get("groups") or {}).get("S0_A") or {}
     body = []
     for name, v in S.VARIANTS.items():
-        what = re.sub(r"\bmaterial dict\b", "material card", v["what"])
+        if name in SAME_AS_PRODUCTION:
+            continue
+        what = re.sub(r"\bmaterial dict\b", "material card", v["what"]).replace(
+            "scenarios", "input states")
         what = what.replace("Z2-COOLED plate", "a bottom plate under the Z2 converter")
         o = ((g0.get(name) or {}).get("orderings") or {}).get("eps:Z1/Z2")
         if name in VARIANT_WHAT:
@@ -2426,9 +2500,9 @@ def variants_table():
                     f"{VARIANT_WHAT[name] if what is None else prose(what)}"
                     + (f" & {jt}" if g0 else "") + r" \\")
     val = sc.get("validation") or {}
-    note = (r"Each run changes one declared input on the production mesh and reruns the whole "
-            r"electrothermal--mechanical chain (full) or only the mechanics on the converged "
-            r"field (mech.). The bottom-plate variants of Z1, Z2 and Z3 define cooling~B and the "
+    note = (r"Each variant changes one declared input on the production mesh and is solved "
+            r"through the whole electrothermal--mechanical chain (full) or through the mechanics "
+            r"only, on the converged field (mech.). The bottom-plate variants of Z1, Z2 and Z3 define cooling~B and the "
             r"top-plate-only variant of Z3 defines its cooling~A; the Z3 cases of the paper add the "
             r"coupled land-side and board-plane redistribution (Table~\ref{tab:supp-z3land}).")
     base = [r["orderings"]["eps:Z1/Z2"]["base"] for r in g0.values()
@@ -2440,7 +2514,7 @@ def variants_table():
                  rf"local model at the {sc['K']} worst sites of each reference case's "
                  r"critical-joint search, the variant's response being the largest of them "
                  r"(a lower bound) or, marked $^\dagger$, the maximum of a full search; a "
-                 rf"variant whose largest response falls beyond the first {sc['K'] // 4} of "
+                 rf"variant whose largest response falls beyond the first {word(sc['K'] // 4)} of "
                  r"those sites, and the lower side of every Z1/Z2 ordering within a factor of "
                  r"1.5, is searched in full ("
                  + str((sc.get("escalation") or {}).get("n_searched_in_full", 0))
@@ -2451,16 +2525,17 @@ def variants_table():
                     + ("found the worst site inside the screened sites in every one."
                        if sc.get("validation_all_in_top_k") else
                        "found the worst site outside the screened sites in "
-                       + str(sum(1 for x in val.values() if not x.get("max_in_top_k")))
+                       + word(sum(1 for x in val.values() if not x.get("max_in_top_k")))
                        + " of them.") if val else ""))
     return ltab(r"@{}L{4.0cm}lL{1.1cm}L{" + ("8.3" if g0 else "10.3") + "cm}"
                 + ("r" if g0 else "") + "@{}", 4 + bool(g0),
-                [r"Variant & Rerun & Int. & What changes" + (r" & Joint" if g0 else "")
+                [r"Variant & Solved & Int. & What changes" + (r" & Joint" if g0 else "")
                  + r" \\"], body,
                 "Package decisions varied in the robustness study", "tab:supp-variants", note)
 
 
-OMIT_CASE = {"A_Z1": "Z1, A", "A_Z2": "Z2, A", "A_Z3_toponly": "Z3, A (top plate only)",
+OMIT_CASE = {"A_Z1": "Z1, A", "A_Z2": "Z2, A", "A_Z3": "Z3, A",
+             "A_Z3_toponly": "Z3, A (top plate only)",
              "A_Z3_secondplate": "Z3, I", "B_Z1": "Z1, B", "B_Z2": "Z2, B", "B_Z3": "Z3, B"}
 
 
@@ -2486,8 +2561,9 @@ def omitted_losses_table():
     b = d.get("assumptions", {}).get("bundles", {})
     tdt = [b.get(x, {}).get("t_dt") for x in ("low", "nominal", "high")]
     note = (r"Converter loss terms the synthesis loss model omits, in W for the package, at each "
-            r"case's own tier temperatures: nominal (low--high bundle). Dead time: EPC2057 "
-            r"reverse conduction from its datasheet over a dead time of "
+            r"case's own tier temperatures: nominal (low--high bundle). Dead time: low-side "
+            r"reverse conduction, the EPC2057 datasheet curves standing in for the "
+            + tex(DR.get().get("ls_part") or "low-side device") + r", over a dead time of "
             + (f"{tdt[1]:g}~ns ({tdt[0]:g}--{tdt[2]:g}~ns)" if all(tdt) else "2--10~ns") +
             r"; core: the loss line of the inductor's metal-composite material"
             r"~\cite{Rasheedi2026CoupledInductor}; AC winding: the winding's AC-resistance ratio "
@@ -2567,18 +2643,32 @@ def review_variants_table():
                     f"{num(cr.get('T_C'), 4)} \\\\")
     head = [r"Int. & Variant & Cooling & $P$ (W) & $T_{\max}$ ($^\circ$C) & Warpage "
             r"(\textmu m) & $\du$ (\textmu m) & $T_{\mathrm{j}}$ ($^\circ$C) \\"]
-    note = (r"Production mesh, S0 unless the input decoupling is implemented. Interface feedback: "
-            r"TIM thickness following the die warpage; die hot-spot map: three quarters of the "
-            r"die power in its central half; local cold-plate coefficient: caloric resistance "
-            r"removed from the top-plate coefficient; rated $C_f$: rated MLCC flying capacitors "
-            r"(capacitor tier 830 or 1030~\textmu m) in the reference or repartitioned tier order; "
-            r"implemented input decoupling (scenario SDEC): the package 48-V network and the "
-            r"cell-internal input runs carry the RMS-to-average current ratios of the implemented "
-            r"decoupling" + (rf" ({k_eq} and {k_op}, respectively)" if k_eq and k_op else "") +
-            r", for Z1 under cooling~A also with the ring capacitors' ESR loss in the ledger; "
-            r"land side: Z3 with the land-side and board-plane redistribution coupled "
-            r"(Table~\ref{tab:supp-z3land}); FV map: redistribution heat deposited along its "
-            r"finite-volume loss map instead of uniformly." + DAGGER_NOTE)
+    shown = " ".join(body)
+    defs = [("Interface warpage feedback",
+             r"interface feedback: TIM thickness following the die warpage"),
+            ("Die hot-spot power map",
+             r"die hot-spot map: three quarters of the die power in its central half"),
+            ("Local cold-plate coefficient",
+             r"local cold-plate coefficient: caloric resistance removed from the top-plate "
+             r"coefficient"),
+            ("Rated $C_f$",
+             r"rated $C_f$: rated MLCC flying capacitors (capacitor tier 830 or "
+             r"1030~\textmu m) in the reference or repartitioned tier order"),
+            ("Implemented input decoupling",
+             r"implemented input decoupling: the package 48-V network and the cell-internal "
+             r"input runs carry the RMS-to-average current ratios of the implemented decoupling"
+             + (rf" ({k_eq} and {k_op}, respectively)" if k_eq and k_op else "")
+             + r", for Z1 under cooling~A also with the ring capacitors' ESR loss in the ledger"),
+            ("Land side",
+             r"land side: Z3 with the land-side and board-plane redistribution coupled "
+             r"(Table~\ref{tab:supp-z3land})"),
+            ("FV map", r"FV map: redistribution heat deposited along its finite-volume loss map "
+                       r"instead of uniformly")]
+    used = [d for lab_, d in defs if lab_ in shown]
+    note = (r"Production mesh, S0 unless the input decoupling is implemented."
+            + (" " + used[0][:1].upper() + used[0][1:] + "".join("; " + d for d in used[1:])
+               + "." if used else "")
+            + (DAGGER_NOTE if r"$^\dagger$" in shown else ""))
     return ltab(r"@{}lL{6.2cm}lrrrrr@{}", 8, head, body, "Further variants of the compared cases",
                 "tab:supp-review", note)
 
@@ -2624,10 +2714,10 @@ def assembly_mounting_table():
                 r"its converter) at the SAC305 reflow peak (245\,$^\circ$C) and solidus "
                 r"(217\,$^\circ$C) against a 25-$^\circ$C stress-free state, production mesh: "
                 r"plane-removed peak-to-valley over the ball footprint and the signed bow (corners "
-                r"minus centre, positive away from the board); PV/cop.: over the "
+                r"minus center, positive away from the board); PV/cop.: over the "
                 + (f"{cv:g}" if cv else "80") + r"-\textmu m room-temperature coplanarity "
                 r"(JEP95); the SPP-024A reflow window is "
-                + (f"{rl[0]:g} to +{rl[1]:g}" if rl[0] is not None else "--")
+                + (f"{tm(rl[0], 'g')} to +{rl[1]:g}" if rl[0] is not None else "--")
                 + r"~\textmu m. Gap: plane-removed non-uniformity of the fine-pitch joint's gap "
                 r"at its bonding temperature (Z1: converter top under the flat die; Z2: substrate "
                 r"underside against the converter top; Z3: board underside against the converter "
@@ -2698,8 +2788,9 @@ def assembly_mounting_table():
                 + r". Mounting: $u_z = 0$ on 2-mm patches 3~mm inside the board corners (pinned: "
                 r"also in plane), or along the underside perimeter; clamp: the cold-plate preload "
                 r"as a uniform pressure on the TIM, reacted at the screws or by a backplate under "
-                r"the package; 3x board: the board extended to three package sides with its ring "
-                r"at the coupon's edge temperature or at 25\,$^\circ$C (bounds of the ring's "
+                r"the package; 3$\times$ board: the board extended to three times the package "
+                r"side, with its ring at the coupon's edge temperature or at 25\,$^\circ$C (bounds "
+                r"of the ring's "
                 r"temperature); encapsulant classes with their glass transition on the "
                 r"out-of-cell fill.")
         L += ltab(r"@{}L{4.1cm}" + "r" * len(cols) + "@{}", 1 + len(cols), head, rows,
@@ -2712,17 +2803,6 @@ def assembly_mounting_table():
 #: the input states by the names the paper uses (no internal state labels in the supplement)
 STATE_NAME = {"SDEC": "implemented", "S0": "ideal", "S1": "bare", "S2": "ratio pulse"}
 _STATE_PHRASES = (
-    ("input state when not the production state SDEC (implemented decoupling): S0, ideal input "
-     "smoothing; S1, no decoupling;",
-     "input state when not the production state (implemented decoupling): ideal, ideal input "
-     "smoothing; bare, no decoupling;"),
-    ("per input state: SDEC, the implemented decoupling (the production state); S0, ideal input "
-     "smoothing; S1, no decoupling",
-     "per input state: implemented, the implemented decoupling (the production state); ideal, "
-     "ideal input smoothing; bare, no decoupling"),
-    ("; S2, a square pulse at the overall conversion", "; ratio pulse, a square pulse at the "
-                                                       "overall conversion"),
-    ("(SDEC: the loss-equivalent", "(implemented: the loss-equivalent"),
     ("Production mesh, S0 unless the input decoupling is implemented.",
      "Production mesh, ideal decoupling unless the input decoupling is implemented."),
     ("implemented input decoupling (scenario SDEC)", "implemented input decoupling"),

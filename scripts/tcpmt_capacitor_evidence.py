@@ -76,13 +76,13 @@ def entries():
             url=MURATA + part, source="Murata public characteristic data (repository cache)"))
     rows.append(dict(
         maker="Murata", part="GCM21BR71E106KA73", status="published library part; not in the "
-        "current Murata catalogue", kind="MLCC 0805 X7R", C_nom_uF=10.0, V_rated=25.0, BV=None,
+        "current Murata catalog", kind="MLCC 0805 X7R", C_nom_uF=10.0, V_rated=25.0, BV=None,
         C_eff_uF={"32V": None, "16V": 2.29}, derating="16-V value: decap survey (same-class "
         "equivalent)", esr_mohm_805kHz=3.25, size_mm=[2.0, 1.25], h_max_um=1250.0,
         n_C1=None, n_C2=1, url="https://www.murata.com", source="flying_caps.json"))
     rows.append(dict(
         maker="Murata", part="GRM31CR71H226KE08", status="published library entry; not found in "
-        "the Murata catalogue (largest 1206 50-V X7R: 4.7 uF)", kind="MLCC 1206 X7R",
+        "the Murata catalog (largest 1206 50-V X7R: 4.7 uF)", kind="MLCC 1206 X7R",
         C_nom_uF=22.0, V_rated=50.0, BV=None, C_eff_uF={"32V": None, "16V": None},
         derating="not published", esr_mohm_805kHz=None, size_mm=[3.2, 1.6], h_max_um=None,
         n_C1=None, n_C2=None, url="https://www.murata.com", source="flying_cap_vendor_data.json"))
@@ -198,7 +198,7 @@ def latex(rows, not_covered=()):
            f"capacitance at bias, {T_RULE:g}\\,$^\\circ$C and tolerance of at least "
            f"{REQ['C1']['C_uF']:g}~\\textmu F ($C_1$) and {REQ['C2']['C_uF']:g}~\\textmu F "
            f"($C_2$) for {100 * H.CAP_RIPPLE_MAX:g}\\,\\% ripple, the synthesis rule of the "
-           f"production design ($M = {DR.n_vr()}$, {float(DR.get()['f_sw_hz']) / 1e3:.0f}~kHz); "
+           f"design point ($M = {DR.n_vr()}$, {float(DR.get()['f_sw_hz']) / 1e3:.0f}~kHz); "
            f"both capacitors within the {AREA:g}-mm$^2$ cell; height judged against the "
            r"100-\textmu m tier of the thin-capacitor sensitivity and against 150~\textmu m. "
            r"Parts, area: parts needed for $C_1$ and $C_2$ and their footprint. ")
@@ -209,7 +209,7 @@ def latex(rows, not_covered=()):
             (" and " if len(makers) > 1 else "") + makers[-1] + " listed above")
     if not_covered:
         nc = list(not_covered)
-        req += ("; the catalogues of " + ", ".join(nc[:-1]) + (" and " if len(nc) > 1 else "") +
+        req += ("; the catalogs of " + ", ".join(nc[:-1]) + (" and " if len(nc) > 1 else "") +
                 nc[-1] + " were not part of it")
     L += [r"\nopagebreak\noindent " + req + r".\par", r"\smallskip",
           r"\noindent Sources:", r"{\raggedright", r"\begin{itemize}"]
