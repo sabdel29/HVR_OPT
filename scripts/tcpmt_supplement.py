@@ -2417,7 +2417,10 @@ def variants_table():
         o = ((g0.get(name) or {}).get("orderings") or {}).get("eps:Z1/Z2")
         if name in VARIANT_WHAT:
             what = None
-        jt = (f"{1e3 * o['variant'][0]:.2f} / {1e3 * o['variant'][1]:.2f}" if o else "--")
+        dg = {a: (r"$^\dagger$" if ((sc.get("variants") or {}).get(f"S0_A_{a}__{name}") or {})
+                  .get("searched_in_full") else "") for a in ("Z1", "Z2")}
+        jt = (f"{1e3 * o['variant'][0]:.2f}{dg['Z1']} / {1e3 * o['variant'][1]:.2f}{dg['Z2']}"
+              if o else "--")
         body.append(f"{variant_label(name)} & {'mech.' if v['kind'] == 'mech' else 'full'} & "
                     f"{'/'.join(v['archs'])} & "
                     f"{VARIANT_WHAT[name] if what is None else prose(what)}"
@@ -2435,7 +2438,8 @@ def variants_table():
         note += (rf" Joint: $\deps$ of Z1 / Z2 ($10^{{-3}}$ per cycle, ideal decoupling, "
                  rf"cooling~A; reference {1e3 * b[0]:.2f} / {1e3 * b[1]:.2f}), the production "
                  rf"local model at the {sc['K']} worst sites of each reference case's "
-                 r"critical-joint search, the variant's response being the largest of them; a "
+                 r"critical-joint search, the variant's response being the largest of them "
+                 r"(a lower bound) or, marked $^\dagger$, the maximum of a full search; a "
                  rf"variant whose largest response falls beyond the first {sc['K'] // 4} of "
                  r"those sites, and the lower side of every Z1/Z2 ordering within a factor of "
                  r"1.5, is searched in full ("
