@@ -324,12 +324,18 @@ def bga():
          "WrBgaNmax": str(d.get("n_max_per_rail", NA))}
     sites = (J(TR / "feasibility.json") or {}).get("bga_sites") or {}
     for a in ("Z1", "Z2"):
+        # the ADOPTED count (smallest legal count meeting the target within the site budget);
+        # the closure's n_min is only the screen's first verified pass and may not be minimal
+        ad = (d.get("adoption") or {}).get(a) or {}
         v = cl.get(f"{a}__HV_SDEC") or {}
-        if v.get("n_min"):
-            m[f"WrBgaN{ATAG[a]}"] = str(v["n_min"])
-            m[f"WrBgaI{ATAG[a]}"] = fx(v.get("peak_at_n_min_A"), 2)
+        n, i_ball = ad.get("n_per_rail"), ad.get("peak_A")
+        if n is None and v.get("n_min"):
+            n, i_ball = v["n_min"], v.get("peak_at_n_min_A")
+        if n:
+            m[f"WrBgaN{ATAG[a]}"] = str(n)
+            m[f"WrBgaI{ATAG[a]}"] = fx(i_ball, 2)
             if sites.get(a):
-                m[f"WrBgaFrac{ATAG[a]}"] = fx(100 * 2 * v["n_min"] / sites[a], 0)
+                m[f"WrBgaFrac{ATAG[a]}"] = fx(100 * 2 * n / sites[a], 1)
         s = (d.get("closure_sensitivity") or {}).get(f"{a}__HV_SDEC") or {}
         m[f"WrBgaSensStatus{ATAG[a]}"] = s.get("status", NA)
         if s.get("n_min_screen"):
@@ -513,16 +519,18 @@ def uncertainty_rule():
     """verdicts of the unified rule for the production comparisons (uncertainty.json)"""
     d = J(TR / "uncertainty.json") or {}
     m = {}
-    obs = {"P": "Ploss", "T": "Tmax", "warp": "Warp", "du": "Du"}
+    obs = {"P": "Ploss", "T": "Tmax", "warp": "Warp", "du": "Du", "eps": "Eps"}
     for c in d.get("comparisons") or []:
+        if c["output"] not in obs:
+            continue
         pair = "".join(sorted((ATAG[c["a"]], ATAG[c["b"]]), key=lambda s: ("Zone", "Ztwo", "Zthree").index(s)))
         k = f"WrRes{c['tier']}{pair}{obs[c['output']]}"
         m[k] = {"resolved": "resolved", "not resolved": "not resolved"}.get(c["verdict"], c["verdict"])
         m[k + "Ratio"] = fx(c.get("ratio"), 1)
-        m[k + "Uni"] = fx(c.get("U95"), 2 if c["output"] in ("P", "du") else 1)
+        m[k + "Uni"] = fx(c.get("U95"), 2 if c["output"] in ("P", "du", "eps") else 1)
         m[k + "Lower"] = c.get("lower") or NA
         m[k + "Dc"] = fx(abs(c["D_corrected"]) if c.get("D_corrected") is not None else None,
-                         2 if c["output"] in ("P", "du") else 1)
+                         2 if c["output"] in ("P", "du", "eps") else 1)
     return m
 
 

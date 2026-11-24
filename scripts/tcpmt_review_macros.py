@@ -584,7 +584,6 @@ def fullpkg():
     lm = z1.get("layer_volume_mean_C", {})
     if lm:
         m["FullPkgDieRefineZone"] = fx(abs(lm["die"]["moose_refined"] - lm["die"]["moose"]), 2)
-    m["FullPkgElemsZone"] = "144{,}512"
     return m
 
 

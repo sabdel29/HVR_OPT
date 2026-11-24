@@ -6,8 +6,10 @@ cooling A (the same top cold plate).
         element so voids (board opening, sidewall ring) stay empty; shared heat scale.
 (d)-(f) Out-of-plane displacement of the die top surface relative to its lowest point
         (peak-to-valley = die warpage); shared scale.
-(g)-(i) In-plane relative displacement across the ball layer at every legal BGA site;
-        critical joint ringed; shared scale.
+(g)-(i) In-plane relative displacement across the ball layer at every legal BGA site; the
+        joint of largest du ringed and, where it lies elsewhere, the critical joint (largest
+        joint response of the production local model, solder_critical_v2.json) marked by a
+        cross; shared scale.
 Fields: the production-state runs of the case registry (scripts/tcpmt_cases.py, state SDEC,
 cooling A), read from the campaign solver scratch -- the last E-T iteration's last thermal
 deck (et<N>/th_<k>.frd) and the structural run (structural.frd) of
@@ -216,6 +218,18 @@ cb.set_label("$u_z - u_{z,\\min}$ (µm)", labelpad=2)
 cb.outline.set_linewidth(0.4)
 
 vmax_j = max(d["js"]["critical"]["du_um"] for d in data.values())
+#: the critical joint of the production local model (largest response over the lattice)
+_CRIT = (S.JP(S.TR / "solder_critical_v2.json") or {}).get("cases") or {}
+
+
+def crit_site(a):
+    r = (_CRIT.get(f"{STATE}_{TIER}_{a}") or {}).get("max_response_site") or {}
+    return (r["x_mm"], r["y_mm"]) if r.get("x_mm") is not None else None
+
+
+def mirror(p, q, tol=1e-6):
+    return (abs(sorted((abs(p[0]), abs(p[1])))[0] - sorted((abs(q[0]), abs(q[1])))[0]) < tol and
+            abs(sorted((abs(p[0]), abs(p[1])))[1] - sorted((abs(q[0]), abs(q[1])))[1]) < tol)
 jnorm = mcolors.Normalize(0, vmax_j)
 jcmap = plt.get_cmap("Purples")
 for k, a in enumerate(ARCHS):
@@ -226,6 +240,9 @@ for k, a in enumerate(ARCHS):
     ax.scatter(xy[:, 0], xy[:, 1], c=du, s=1.1, cmap=jcmap, norm=jnorm, lw=0)
     c = js["critical"]
     ax.plot(c["x_mm"], c["y_mm"], "o", ms=5.0, mfc="none", mec=S.INK, mew=0.8, clip_on=False)
+    cs = crit_site(a)
+    if cs is not None and not mirror(cs, (c["x_mm"], c["y_mm"])):
+        ax.plot(cs[0], cs[1], "x", ms=4.6, mec=S.INK, mew=1.0, clip_on=False, zorder=8)
     ax.set_aspect("equal")
     ax.set_xlim(-15.3, 15.3)
     ax.set_ylim(-15.3, 15.3)

@@ -532,7 +532,7 @@ ACC = {"TsvBulk": "tsv_bulk", "TsvKz": "tsv_tile_kz", "TsvKx": "tsv_tile_kx",
        "ThermAedtZone": "thermal_column_aedt_Z1", "ThermAedtZtwo": "thermal_column_aedt_Z2",
        "ThermMooseZone": "thermal_column_moose_Z1", "ThermMooseZtwo": "thermal_column_moose_Z2",
        "MechClosed": "mech_bilayer_closed_form", "MechAedt": "mech_bilayer_aedt",
-       "CoolingIcepak": "cooling_icepak", "AttDenseKz": "vr_attach_dense_kz",
+       "AttDenseKz": "vr_attach_dense_kz",
        "AttDenseKxy": "vr_attach_dense_kxy"}
 
 
@@ -654,16 +654,16 @@ def compare_table(S, mac):
         v = m(f"BgaIball{ATAG[a]}") if a in ("Z1", "Z2") else NA
         return m(f"BgaPeak{t}{ATAG[a]}") if v == NA else v
 
-    foot_a = (r"\textsuperscript{a}At each case's critical joint -- the maximum response over "
-              r"the BGA lattice -- production state: local "
+    foot_a = (r"\textsuperscript{a}At each case's critical joint, the largest response over "
+              r"the BGA lattice (Section~\ref{sec:local}): local "
               r"model driven by the full cut-boundary displacement of the global solution, with "
               r"ramped loads and the self-consistent production solder law (L0 mesh, 4 cycles); "
               r"in brackets the lowest and highest response over the solder-law band "
-              r"(\MvLawN{} laws, each at its own maximum-response site), the reported "
+              r"(\MvLawN{} laws, each at its own critical joint), the reported "
               r"uncertainty of the joint response (numerical "
               r"$U_{95}$: Table~\ref{tab:uncertainty}). "
-              + (r"The critical joint is not the maximum-$\du$ joint of the rows above for "
-                 r"\MvCritMovedCases. " if mac.get("MvCritMovedCases") else "")
+              + (r"For \MvCritMovedCases{} the critical joint is not the joint of largest "
+                 r"$\du$. " if mac.get("MvCritMovedCases") else "")
               if mac.get("MvEpsAZone", NA) != NA else
               r"\textsuperscript{a}Stabilized cycle, L0 mesh, solved \WrEpsState. "
               r"\WrEpsStateNote{} ")
@@ -694,9 +694,10 @@ def compare_table(S, mac):
              else f"{m(f'QplTop{t}{ATAG[a]}')} / {m(f'QplBot{t}{ATAG[a]}')}"),
          r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Mechanics}}\\",
          row(r"Die warpage (\textmu m)", lambda t, a: cell(t, a, "Warp", "U{t}{a}Warp")),
-         row(r"Critical-joint driver $\du$ (\textmu m)", du_at),
+         row(r"Largest ball displacement $\du$ (\textmu m)", du_at),
          row(r"Critical-joint temperature $T_{\mathrm{sj}}$ ($^\circ$C)",
-             lambda t, a: m(f"Tjoint{t}{ATAG[a]}")),
+             lambda t, a: m(f"MvTsj{t}{ATAG[a]}") if m(f"MvTsj{t}{ATAG[a]}") != NA
+             else m(f"Tjoint{t}{ATAG[a]}")),
          row(r"$\deps$ ($10^{-3}$/cycle)\textsuperscript{a}", eps),
          r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Interconnect and platform}}\\",
          row(r"Ball sites carrying power", sites),
@@ -721,10 +722,10 @@ def compare_table(S, mac):
          r"\par\smallskip\raggedright\footnotesize " + foot_a +
          r"\textsuperscript{b}Sum of the series maxima of one rail at 1000~A: vertical "
          r"conductors, the cell output plane and, for Z3, the land side and board planes. "
-         r"\textsuperscript{c}48-V balls of the ring feed, of the \WrBgaSitesZtwo{} sites around "
+         r"\textsuperscript{c}48-V balls of the ring feed, of the \MthSitesRing{} sites around "
          r"the board opening (outside the package-internal boundary). "
-         r"\textsuperscript{d}1-V balls, of \WrBgaSitesZone{}; \WrBgaLeftZthree{} sites remain for "
-         r"every signal and auxiliary rail. "
+         r"\textsuperscript{d}1-V balls on the sites nearest the cells, of \MthSitesFull{}; "
+         r"\WrBgaLeftZthree{} sites remain for every signal and auxiliary rail. "
          r"\textsuperscript{e}Per \CoolZones-zone manifold plate (\CoolDp~kPa, \CoolPhyd~W "
          r"hydraulic) at a pump efficiency of 0.55 (\WrPumpLo--\WrPumpHi~W for 0.75--0.35). "
          + mac.get("ZthreeLandNote", ""),

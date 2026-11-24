@@ -4,10 +4,12 @@
 (a) Package-internal loss at a common temperature (25 and 100 C, no electrothermal coupling)
     and coupled under cooling A (the same top cold plate) and cooling B (the same top and
     bottom plates).
-(b) Peak temperature with the GaN junction rating, (c) die warpage, (d) critical-joint
-    displacement, under cooling A and B.
-(e) Stabilized local inelastic strain increment at the L0 solder mesh. The local response is
-    solved for the ideal-decoupling reference (k_rms = 1) only; the panel says so.
+(b) Peak temperature with the GaN junction rating, (c) die warpage, (d) the largest relative
+    displacement across the ball layer, under cooling A and B.
+(e) Joint response of the production local model (full cut-boundary displacement, ramped
+    loads) at each case's critical joint, production state: the bar is the production solder
+    law (macro MvEps<t><Arch>), the error bar its numerical U95 (MvEpsU<t><Arch>), the open
+    markers the other two laws of the band (MvEpsXiao..., MvEpsMeas...).
 
 Values: the generated results_macros.tex (scripts/tcpmt_manuscript_macros.py and
 scripts/tcpmt_review_macros.py, from the case files) -- the coupled bars and Table V print the
@@ -15,7 +17,7 @@ same numbers -- and, for the common-temperature bars of the production state, th
 writer's macros_results.tex (\\WrIsoLo<Arch> at 25 C, \\WrIsoHi<Arch> at 100 C); a value not yet
 generated is drawn as a visible 'pending' marker. Z3 under A and B is the coupled land-side
 case. Error bars: +/-U95 from research/tcpmt_revision/uncertainty.json (production state; for
-(e) the relative U of each stabilized response). Hatched bars: the production-state
+(e) the joint's numerical U95). Hatched bars: the production-state
 feasibility record of that case (research/tcpmt_revision/feasibility.json, keys '<tier>_<arch>')
 lists a failed limit; a record of another case file is never used.
 """
@@ -79,17 +81,22 @@ def value(key, grp, a):
         return wm(f"WrIso{'Hi' if grp == 'iso100' else 'Lo'}{WORD[a]}")
     if grp not in ("A", "B"):
         return None
-    if key == "eps":                 # solved for the ideal-decoupling reference only
-        return m(f"Eps{grp}{WORD[a]}Szero")
+    if key == "eps":                 # production local model, production solder law
+        return m(f"MvEps{grp}{WORD[a]}")
     return m(f"{KEYS[key][0]}{grp}{WORD[a]}")
+
+
+def other_laws(grp, a):
+    """the joint response under the other laws of the solder-law band (same case)"""
+    return [v for v in (m(f"MvEpsXiao{grp}{WORD[a]}"), m(f"MvEpsMeas{grp}{WORD[a]}"))
+            if v is not None]
 
 
 def err(key, grp, a):
     if grp not in ("A", "B"):
         return None
     if key == "eps":
-        v, u = value("eps", grp, a), m(f"EpsU{grp}{WORD[a]}Szero")
-        return v * u / 100.0 if (v is not None and u is not None) else None
+        return m(f"MvEpsU{grp}{WORD[a]}")
     return U.get(f"{grp}.{a}.{KEYS[key][1]}")
 
 
@@ -106,7 +113,7 @@ panels = [("P", "a", "Package-internal loss (W)", [("25 °C", "iso25"), ("100 °
                                                    ("A", "A"), ("B", "B")], "{:.0f}"),
           ("Tmax", "b", "Peak temperature (°C)", [("A", "A"), ("B", "B")], "{:.0f}"),
           ("warp", "c", "Die warpage (µm)", [("A", "A"), ("B", "B")], "{:.1f}"),
-          ("du", "d", r"Joint driver $\Delta u_\mathrm{c}$ (µm)", [("A", "A"), ("B", "B")],
+          ("du", "d", r"Largest ball $\Delta u_\mathrm{c}$ (µm)", [("A", "A"), ("B", "B")],
            "{:.2f}"),
           ("eps", "e", r"$\Delta\varepsilon_\mathrm{in}$ ($10^{-3}$/cycle)",
            [("A", "A"), ("B", "B")], "{:.1f}")]
@@ -152,6 +159,9 @@ for ax, (key, letter, title, groups, fmt) in zip(axes, panels):
             if e:
                 ax.errorbar(xc, v, yerr=e, fmt="none", ecolor=S.INK, elinewidth=0.6,
                             capsize=1.4, capthick=0.6, zorder=5)
+            if key == "eps":
+                for vo in other_laws(g, a):
+                    ax.plot(xc, vo, "o", ms=2.6, mfc="white", mec=S.INK, mew=0.6, zorder=7)
             inside = v > 0.34 * top and not bad
             ylab = v * 0.5 if inside else v + (e or 0.0) + top * 0.025
             if key == "Tmax" and not inside and GAN and abs(ylab - GAN) < 0.12 * top:
@@ -162,9 +172,6 @@ for ax, (key, letter, title, groups, fmt) in zip(axes, panels):
     ax.set_xticks(range(len(groups)), [l for l, _ in groups])
     ax.tick_params(axis="x", length=0, pad=2)
     S.panel(ax, letter, title, y=1.04)
-# the local response exists for the ideal-decoupling reference only: said on the panel itself
-axes[4].text(0.98, 0.985, "ideal\ndecoupling", transform=axes[4].transAxes, ha="right",
-             va="top", fontsize=6.5, color=S.INK2, linespacing=1.0)
 axes[0].axvline(1.5, color=S.GRID, lw=0.8, zorder=0)
 axes[0].text(0.5, axes[0].get_ylim()[1] * 0.985, "no coupling", ha="center", va="top",
              fontsize=6.5, color=S.INK2)
@@ -175,6 +182,8 @@ if any_infeasible:
     handles.append(Patch(fc=S.NEUTRAL, ec="white", hatch="xxxx", lw=0,
                          label="infeasible (a limit fails)"))
 handles.append(Line2D([], [], color=S.INK, lw=0.6, marker="_", ms=4, label="±$U_{95}$"))
+handles.append(Line2D([], [], ls="none", marker="o", ms=2.6, mfc="white", mec=S.INK, mew=0.6,
+                      label="other solder laws (e)"))
 fig.legend(handles=handles, loc="upper center", ncol=len(handles),
            bbox_to_anchor=(0.52, 1.02), columnspacing=1.1, handletextpad=0.5)
 fig.text(0.52, 0.01, "Implemented decoupling   ·   A: the same top cold plate   ·   B: the same top "

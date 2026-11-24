@@ -316,7 +316,7 @@ def prior_section():
     L = section("Comparison with Prior Work",
                 r"Table~\ref{tab:supp-prior} details the capability comparison of the paper's "
                 r"introduction. Every entry for another work rests on a passage of the cited "
-                r"source; an entry that the accessible sources do not settle is marked ``?''.")
+                r"source; where neither source describes a capability, the entry states so.")
     if not (SUPP_SRC / "tab_prior_detailed.tex").is_file():
         return L + placeholder("prior work", "tab_prior_detailed.tex")
     return L + [r"\input{tab_prior_detailed}", ""]
@@ -1751,12 +1751,35 @@ def verif_establishes(r):
     return f"Agreement with {ref}: {obs}" if obs else f"Agreement with {ref}"
 
 
+def _cooling_row(r):
+    """The cold-plate row with the plate model in force (three-wall H1 Nusselt number) against
+    the conjugate CFD solution (cooling_spec.json); the matrix row predates that model and is
+    never printed with the superseded correlation's error."""
+    cf = ((J(TR / "cooling_spec.json") or {}).get("plate") or {}).get("cfd_comparison") or {}
+    if not isinstance(cf.get("dT_base_mean_rel_diff"), (int, float)):
+        return None
+    nu = cf.get("Nu")
+    return dict(r, error=cf["dT_base_mean_rel_diff"],
+                production_value=cf.get("dT_base_mean_correlation_K"),
+                reference_value=cf.get("dT_base_mean_cfd_K"),
+                production_model=("laminar microchannel correlation (three-wall H1 Nusselt "
+                                  "number" + (f" {nu:.2f}" if nu else "") + ", fin efficiency, "
+                                  "base resistance)"),
+                limitations=("one channel half-pitch with symmetry walls at the single-pass "
+                             "flow; constant water properties; the manifold flow split and "
+                             "its header losses are not part of the check"))
+
+
 def verification_table():
     acc = J(FC / "accuracy_speed_matrix.json")
     if not acc:
         return placeholder("verification matrix", "accuracy_speed_matrix.json")
     body = []
     for r in acc.get("rows", []):
+        if r.get("stage") == "cooling_icepak":
+            r = _cooling_row(r)
+            if r is None:
+                continue
         e = r.get("error")
         es = (f"${100 * e:+.3g}$\\,\\%" if isinstance(e, (int, float)) else
               verif_clean(e) if e else "--")
