@@ -127,10 +127,15 @@ def designs():
             m[f"{k}Die"] = fx(cs.get("die_T_max_C"), 1)
             m[f"{k}Warp"] = fx(cs.get("die_warpage_pv_um"), 1)
             m[f"{k}Du"] = fx(cs.get("du_c_um"), 2)
-            pc0 = (prod.get("cases") or {}).get(key) or {}
-            if name != "m36" and pc0.get("die_warpage_pv_um") and cs.get("die_warpage_pv_um"):
-                m[f"{k}WarpRatio"] = fx(cs["die_warpage_pv_um"] / pc0["die_warpage_pv_um"], 2)
-                m[f"{k}DuRatio"] = fx(cs["du_c_um"] / pc0["du_c_um"], 2)
+            pc = (prod.get("cases") or {}).get(key) or {}
+            if name != "m36" and pc.get("die_warpage_pv_um") and cs.get("die_warpage_pv_um"):
+                m[f"{k}WarpRatio"] = fx(cs["die_warpage_pv_um"] / pc["die_warpage_pv_um"], 2)
+                m[f"{k}DuRatio"] = fx(cs["du_c_um"] / pc["du_c_um"], 2)
+            if name != "m36" and pc.get("P_loss_W") is not None:
+                dp = cs["P_loss_W"] - pc["P_loss_W"]
+                dt = cs["T_max_C"] - pc["T_max_C"]
+                m[f"{k}dP"], m[f"{k}dPAbs"] = fsgn(dp, 1), fx(abs(dp), 1)
+                m[f"{k}dT"], m[f"{k}dTAbs"] = fsgn(dt, 1), fx(abs(dt), 1)
         # the design's joints: its own v2 law band (production law at its own maximum over the
         # BGA lattice, the other laws at theirs), x 1e-3 per cycle
         for lab, j in (d.get("joints") or {}).items():
@@ -146,12 +151,6 @@ def designs():
                 m[f"{k}EpsRatio"] = fx(r, 2)
                 m[f"{k}EpsdPct"] = fsgn(100 * (r - 1), 0)
                 m[f"{k}EpsdPctAbs"] = fx(abs(100 * (r - 1)), 0)
-            pc = (prod.get("cases") or {}).get(key) or {}
-            if name != "m36" and pc.get("P_loss_W") is not None:
-                dp = cs["P_loss_W"] - pc["P_loss_W"]
-                dt = cs["T_max_C"] - pc["T_max_C"]
-                m[f"{k}dP"], m[f"{k}dPAbs"] = fsgn(dp, 1), fx(abs(dp), 1)
-                m[f"{k}dT"], m[f"{k}dTAbs"] = fsgn(dt, 1), fx(abs(dt), 1)
     # the 5-tier converter in the Z2 board opening: board + BGA depth minus attach + converter
     geo = (J(FC / "architecture_geometry.json") or {}).get("architectures", {}).get("Z2")
     if geo:
