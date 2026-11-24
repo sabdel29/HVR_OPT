@@ -2422,13 +2422,17 @@ def variants_table():
         note += (rf" Joint: $\deps$ of Z1 / Z2 ($10^{{-3}}$ per cycle, ideal decoupling, "
                  rf"cooling~A; reference {1e3 * b[0]:.2f} / {1e3 * b[1]:.2f}), the production "
                  rf"local model at the {sc['K']} worst sites of each reference case's "
-                 r"critical-joint search, the variant's response being the largest of them; an "
-                 r"integration a variant does not touch keeps the reference value. "
-                 + (rf"A full critical-joint search on {len(val)} variants of different kinds "
+                 r"critical-joint search, the variant's response being the largest of them; a "
+                 rf"variant whose largest response falls beyond the first {sc['K'] // 4} of "
+                 r"those sites is searched in full ("
+                 + str((sc.get("escalation") or {}).get("n_searched_in_full", 0))
+                 + r" of all screened variants); an integration a variant does not touch keeps "
+                 r"the reference value. "
+                 + (rf"The full searches of the deepest variant of each kind "
                     rf"({'; '.join(screen_label(k) for k in sorted(val))}) "
-                    + ("found the worst site inside those sites in every one."
+                    + ("found the worst site inside the screened sites in every one."
                        if sc.get("validation_all_in_top_k") else
-                       "found the worst site outside those sites in "
+                       "found the worst site outside the screened sites in "
                        + str(sum(1 for x in val.values() if not x.get("max_in_top_k")))
                        + " of them.") if val else ""))
     return ltab(r"@{}L{4.0cm}lL{0.9cm}L{" + ("8.5" if g0 else "10.5") + "cm}"

@@ -624,6 +624,12 @@ def screen():
         lat = [v.get("n_lattice") for v in val.values() if v.get("n_lattice")]
         m["MvScrValLatticeLo"], m["MvScrValLatticeHi"] = (str(min(lat)), str(max(lat))) \
             if lat else (NA, NA)
+    esc = d.get("escalation") or {}
+    m["MvScrEscN"] = str(esc.get("n_searched_in_full") or 0)
+    m["MvScrEscFound"] = str(esc.get("n_screen_found_max") or 0)
+    m["MvScrEscShortMax"] = (pct(1.0 - esc["screen_over_full_min"], 0)
+                             if esc.get("screen_over_full_min") is not None else NA)
+    m["MvScrEscFrac"] = str(int(d["K"]) // 4)
     # changes against each variant's reference, per group (in %)
     acc = {}
     for key, v in d["variants"].items():
