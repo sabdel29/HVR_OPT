@@ -2648,7 +2648,8 @@ def assembly_mounting_table():
     def eps_txt(key):
         v = scv.get(key) or {}
         x = v.get("change_rel")
-        return "--" if x is None else f"{100 * x:+.0f}"
+        return "--" if x is None else (f"{100 * x:+.0f}"
+                                       + (r"$^\dagger$" if v.get("searched_in_full") else ""))
 
     for var, lab in var_lab.items():
         cells = []
@@ -2686,8 +2687,10 @@ def assembly_mounting_table():
                 r"mesh"
                 + ((rf"; $\deps$: the production local model at the {sc.get('K')} worst "
                     r"sites of the case's critical-joint search, the variant's response being "
-                    r"the largest of them (a clamp is held through the cycle: its cold "
-                    r"half-cycle is the clamp-only state at the same site)") if scv else "")
+                    r"the largest of them, a lower bound, or ($^\dagger$) the maximum of a full "
+                    r"critical-joint search over the variant's own lattice (a clamp is held "
+                    r"through the cycle: its cold half-cycle is the clamp-only state at the same "
+                    r"site)") if scv else "")
                 + r". Mounting: $u_z = 0$ on 2-mm patches 3~mm inside the board corners (pinned: "
                 r"also in plane), or along the underside perimeter; clamp: the cold-plate preload "
                 r"as a uniform pressure on the TIM, reacted at the screws or by a backplate under "
