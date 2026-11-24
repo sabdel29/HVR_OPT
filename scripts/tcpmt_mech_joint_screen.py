@@ -619,7 +619,11 @@ def summarize():
             for a in ("Z1", "Z2", "Z3"):
                 if a in per:
                     ref = per[a]["ref"]
-                    vals[a], refv[a] = per[a].get("d_eps"), ref_val(ref)
+                    # the ordering's baseline is the group's reference pair (for an S0
+                    # decision cooled from below, the cooling-A reference: the map's row
+                    # baseline), whatever reference supplied the screened sites
+                    vals[a] = per[a].get("d_eps")
+                    refv[a] = ref_val(f"{refst}_{tier}_{a}") if g == "S0_A" else ref_val(ref)
                     mesh_ok[a] = per[a]["same_mesh_as_reference"]
                 elif not g.startswith("board"):
                     ref = f"{refst}_{tier}_{a}"

@@ -26,10 +26,13 @@ import style as S
 
 S.setup()
 rows = list(csv.DictReader(open(S.FC / "classB_sensitivity_rows.csv")))
+#: the joint column: the joint response of each integration, solved at the worst sites of its
+#: reference case (tcpmt_mech_joint_screen -> robustness_joint.json), judged with the same rule
+JOINT = "d_eps_screen"
 OBS = [("P_loss_package_internal_w", "Package-\ninternal loss"),
        ("T_max_C", "Peak\ntemperature"),
        ("die_warpage_pv_um", "Die\nwarpage"),
-       ("du_c_um", "Joint\ndriver $\\Delta u_\\mathrm{c}$")]
+       (JOINT, "Joint\nresponse")]
 
 # (group, label, [case names merged into this row])
 LAYOUT = [
@@ -171,6 +174,32 @@ def _mech_groups():
     return groups
 
 
+def _joint_rows():
+    """classB-style rows of the joint column from the joint-response screen: every variant's
+    Z1/Z2 ordering of the joint response (x 1e-3 per cycle) against its group's baseline."""
+    f = S.TR / "robustness_joint.json"
+    if not f.is_file():
+        return
+    d = json.loads(f.read_text())
+    where = {"S0_A": ("robustness.joint_reference", "{}"), "SDEC_new_A": (NEWER_GATE, "{}"),
+             "S0_B": ("robustness.cooling_B_mech", "B::{}"),
+             "SDEC_mech_A": ("robustness.production_mech_A", "SDEC_A::{}"),
+             "SDEC_mech_B": ("robustness.production_mech_B", "SDEC_B::{}")}
+    for g, (gate, fmt) in where.items():
+        for name, r in sorted(((d.get("groups") or {}).get(g) or {}).items()):
+            o = (r.get("orderings") or {}).get("eps:Z1/Z2")
+            if not o:
+                continue
+            v, b = o["variant"], o["base"]
+            rows.append({"gate": gate, "case": fmt.format(name), "observable": JOINT,
+                         "alternate_verdict": o.get("verdict") or "pending",
+                         "production_verdict": o.get("base_verdict") or "",
+                         "outcome": "pending" if o.get("verdict") == "pending" else "judged",
+                         "alternate_Z1": str(1e3 * v[0]), "alternate_Z2": str(1e3 * v[1]),
+                         "nominal_Z1": str(1e3 * b[0]), "nominal_Z2": str(1e3 * b[1])})
+
+
+_joint_rows()
 LAYOUT += _mech_groups()
 
 RANK = {"n/a": 0, "preserved": 1, "pending": 2, "withdrawn": 3, "reversed": 4}
@@ -204,7 +233,8 @@ def prod_gap(obs, newer=False):
     return float(r["nominal_Z2"]) - float(r["nominal_Z1"]) if r else None
 
 
-DEC = {"P_loss_package_internal_w": 1, "T_max_C": 1, "die_warpage_pv_um": 1, "du_c_um": 2}
+DEC = {"P_loss_package_internal_w": 1, "T_max_C": 1, "die_warpage_pv_um": 1, "du_c_um": 2,
+       JOINT: 2}
 
 
 def gtxt(vals, obs):
@@ -261,7 +291,8 @@ def _prod(key, newer=False):
 PROD = [_prod(k) for k, _ in OBS]
 PROD_NEW = [_prod(k, True) for k, _ in OBS]
 PROD_GROUP = {g: [_prod(k, gate) for k, _ in OBS] for g, gate in GROUP_GATE.items()}
-HEAD = ["Int. loss\n(W)", "Peak\ntemp. (K)", "Die warp.\n(µm)", "Joint\n$\\Delta u_\\mathrm{c}$ (µm)"]
+HEAD = ["Int. loss\n(W)", "Peak\ntemp. (K)", "Die warp.\n(µm)",
+        "Joint resp.\n(10$^{-3}$/cyc.)"]
 
 COLW_IN, ROWH_IN, LAB_IN = 0.45, 0.145, 1.64
 n_body = (sum(len(g[1]) for g in LAYOUT) + len(LAYOUT)

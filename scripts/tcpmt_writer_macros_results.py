@@ -125,6 +125,27 @@ def designs():
             m[f"{k}Ploss"] = fx(cs.get("P_loss_W"), 1)
             m[f"{k}Tmax"] = fx(cs.get("T_max_C"), 1)
             m[f"{k}Die"] = fx(cs.get("die_T_max_C"), 1)
+            m[f"{k}Warp"] = fx(cs.get("die_warpage_pv_um"), 1)
+            m[f"{k}Du"] = fx(cs.get("du_c_um"), 2)
+            pc0 = (prod.get("cases") or {}).get(key) or {}
+            if name != "m36" and pc0.get("die_warpage_pv_um") and cs.get("die_warpage_pv_um"):
+                m[f"{k}WarpRatio"] = fx(cs["die_warpage_pv_um"] / pc0["die_warpage_pv_um"], 2)
+                m[f"{k}DuRatio"] = fx(cs["du_c_um"] / pc0["du_c_um"], 2)
+        # the design's joints: its own v2 law band (production law at its own maximum over the
+        # BGA lattice, the other laws at theirs), x 1e-3 per cycle
+        for lab, j in (d.get("joints") or {}).items():
+            t, a = lab.split("_")
+            k = f"Wr{tag}{t}{ATAG[a]}"
+            m[f"{k}Eps"] = fx(1e3 * j["production"], 2)
+            m[f"{k}EpsLo"], m[f"{k}EpsHi"] = fx(1e3 * j["min"], 2), fx(1e3 * j["max"], 2)
+            m[f"{k}Tsj"] = fx(j.get("T_C"), 1)
+            m[f"{k}Dudef"] = fx(j.get("du_def_xy_um"), 2)
+            pj = (prod.get("joints") or {}).get(lab)
+            if name != "m36" and pj:
+                r = j["production"] / pj["production"]
+                m[f"{k}EpsRatio"] = fx(r, 2)
+                m[f"{k}EpsdPct"] = fsgn(100 * (r - 1), 0)
+                m[f"{k}EpsdPctAbs"] = fx(abs(100 * (r - 1)), 0)
             pc = (prod.get("cases") or {}).get(key) or {}
             if name != "m36" and pc.get("P_loss_W") is not None:
                 dp = cs["P_loss_W"] - pc["P_loss_W"]
@@ -147,6 +168,30 @@ def designs():
         m["WrZtwoBoardT"] = fx(lay["board"]["t_um"] / 1e3, 1)
     rk = (dc.get("ranking") or {}).get("Z1_A") or {}
     m["WrCountSameRank"] = "yes" if rk.get("same_ranking") else "no"
+    # the count comparison of the joints under the rule and the law band (Z1, each cooling)
+    cj = dc.get("count_joints") or {}
+    word = {"resolved": "resolved", "not resolved": "not resolved",
+            "conditional on the law": "conditional on the law"}
+    for t in ("A", "B"):
+        r = cj.get(t) or {}
+        if not r.get("complete"):
+            continue
+        m[f"WrCountEpsSameOrder{t}"] = "yes" if r.get("same_order_all_laws") else "no"
+        prod_law = sorted(r["order_by_law"])[0]
+        for law, order in r["order_by_law"].items():
+            if law.startswith("schubert"):
+                prod_law = law
+        m[f"WrCountEpsOrder{t}"] = " $<$ ".join(
+            f"$M = {D[k]['n_vr']}$" for k in r["order_by_law"][prod_law])
+        for k, v in (r.get("pairs_vs_production") or {}).items():
+            tag = DTAG.get(k)
+            if tag:
+                m[f"Wr{tag}{t}EpsVerdict"] = word.get(v.get("verdict"), v.get("verdict") or NA)
+                m[f"Wr{tag}{t}EpsLower"] = (f"$M = {D[v['lower']]['n_vr']}$"
+                                           if v.get("lower") in D else NA)
+        vs = [v.get("verdict") for v in (r.get("pairs_vs_production") or {}).values()]
+        m[f"WrCountEpsAllResolved{t}"] = "yes" if vs and all(x == "resolved" for x in vs) \
+            else "no"
     return m
 
 
@@ -534,17 +579,42 @@ def uncertainty_rule():
     return m
 
 
+def _joint_outcomes():
+    """{case: outcome} of the joint column of the map (the joint response at the worst sites of
+    each variant's reference case, robustness_joint.json): the classical decisions on the
+    ideal-decoupling reference and the newer production-state decisions under cooling A."""
+    d = J(TR / "robustness_joint.json") or {}
+    out = {}
+    for g in ("S0_A", "SDEC_new_A"):
+        for name, r in ((d.get("groups") or {}).get(g) or {}).items():
+            o = (r.get("orderings") or {}).get("eps:Z1/Z2")
+            if not o:
+                continue
+            v, b = o.get("verdict"), o.get("base_verdict")
+            out[name] = ("pending" if v == "pending" else "preserved" if v == b else
+                         "withdrawn" if v == "unresolved" else "reversed")
+    return out
+
+
 def robustness():
-    """counts of the robustness verdicts (unified rule) over the four mapped observables"""
+    """counts of the robustness verdicts (unified rule) over the four mapped observables:
+    package loss, peak temperature and die warpage from the class-B rows, the joint response
+    from the joint-response screen (the largest ball displacement is counted apart)"""
     rows = list(csv.DictReader(open(FC / "classB_sensitivity_rows.csv")))
-    obs = ("P_loss_package_internal_w", "T_max_C", "die_warpage_pv_um", "du_c_um")
-    seen = {}
+    obs = ("P_loss_package_internal_w", "T_max_C", "die_warpage_pv_um")
+    seen, du = {}, {}
     for r in rows:
-        if r["observable"] not in obs or " vs " in r["case"] or r["case"] == "per scenario":
+        if " vs " in r["case"] or r["case"] == "per scenario":
             continue
         if r["outcome"] in ("n/a", "", "changed"):
             continue
-        seen[(r["case"], r["observable"])] = r["outcome"]
+        if r["observable"] in obs:
+            seen[(r["case"], r["observable"])] = r["outcome"]
+        elif r["observable"] == "du_c_um":
+            du[r["case"]] = r["outcome"]
+    jo = _joint_outcomes()
+    for c, v in jo.items():
+        seen[(c, "joint")] = v
     from collections import Counter
     n = Counter(v.split()[0] for v in seen.values())
     m = {"WrRobN": str(len(seen)), "WrRobPreserved": str(n.get("preserved", 0)),
@@ -553,6 +623,13 @@ def robustness():
          "WrRobCases": str(len({c for c, _ in seen}))}
     pend = sorted({c for (c, o), v in seen.items() if v == "pending"})
     m["WrRobPendingCases"] = str(len(pend))
+    nj = Counter(jo.values())
+    m["WrRobJointN"] = str(len(jo))
+    for k in ("preserved", "withdrawn", "reversed", "pending"):
+        m[f"WrRobJoint{k.capitalize()}"] = str(nj.get(k, 0))
+    nd = Counter(v.split()[0] for v in du.values())
+    m["WrRobDuN"] = str(len(du))
+    m["WrRobDuReversed"] = str(nd.get("reversed", 0))
     return m
 
 

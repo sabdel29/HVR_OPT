@@ -411,39 +411,62 @@ def dse_selection_table():
     meta = J(DSE_DATA / f"meta_{tag}.json") or {}
     lib = passive_library()
     m0 = DR.n_vr()
+    # the same screen on the nested 16x finer f_sw grid (scripts/tcpmt_dse_fsw_grid.py)
+    fine = J(TR / "dse_fsw_fine.json") or {}
+    fc = {int(k): v.get("fine") for k, v in (fine.get("counts") or {}).items()}
+    nf = 2 if fc else 0
     body = []
     for m, r in sorted(rows.items()):
         mk = r"$^\ast$" if m == m0 else ""
         if not dse_feasible(r):
             why = prose((r.get("reason") or "no feasible member").replace("architecture", "member"))
-            body.append(rf"{m}{mk} & \multicolumn{{8}}{{l}}{{{why}}} \\")
+            body.append(rf"{m}{mk} & \multicolumn{{{8 + nf}}}{{l}}{{{why}}} \\")
             continue
         top = f"N{int(float(r['N']))}K{int(float(r['K']))}, $K_A = {int(float(r['K_A']))}$"
+        f = fc.get(m) or {}
+        same = (f.get("topology") == r.get("arch") and f.get("hs") == r.get("hs")
+                and f.get("ls") == r.get("ls"))
+        ftxt = (f" & {f['f_sw_kHz']:.1f} & {f['total_loss_W']:.2f}" + ("" if same else
+                                                                     r"$^\dagger$")
+                if f else (" & -- & --" if nf else ""))
         body.append(f"{m}{mk} & {top} & {tex(r['hs'])} / {tex(r['ls'])} & "
                     f"{passive_label(dse_passive(r, 'inductor'), lib)} & "
                     f"{passive_label(dse_passive(r, 'capacitor'), lib)} & "
                     f"{float(r['f_sw_Hz']) / 1e3:.1f} & {float(r['conv_loss_total_W']):.2f} & "
-                    f"{float(r['routing_loss_W']):.2f} & {float(r['total_loss_W']):.2f} \\\\")
+                    f"{float(r['routing_loss_W']):.2f} & {float(r['total_loss_W']):.2f}"
+                    + ftxt + r" \\")
     head = [r"$M$ & Topology & HS / LS device & Inductor & Flying capacitor & "
-            r"$f_{\mathrm{sw}}$ & \multicolumn{3}{c}{Loss (W)} \\",
-            r"\cmidrule(l){7-9}",
-            r" & & & & & (kHz) & Conversion & Routing & Total \\"]
-    spec = r"@{}rllllrrrr@{}"
+            r"$f_{\mathrm{sw}}$ & \multicolumn{3}{c}{Loss (W)}"
+            + (r" & \multicolumn{2}{c}{" + f"{fine.get('n_grid_points')}" + r"-point grid}"
+               if nf else "") + r" \\",
+            r"\cmidrule(l){7-9}" + (r"\cmidrule(l){10-11}" if nf else ""),
+            r" & & & & & (kHz) & Conversion & Routing & Total"
+            + (r" & $f_{\mathrm{sw}}$ (kHz) & Total (W)" if nf else "") + r" \\"]
+    spec = r"@{}rllllrrrr" + ("rr" if nf else "") + "@{}"
     feas = [(float(r["total_loss_W"]), m) for m, r in rows.items() if dse_feasible(r)]
     best = min(feas)[1] if feas else None
     note = (f"Specification: {meta.get('P_load', 1000) / 1e3:g}~kW at {meta.get('V_out', 1):g}~V "
             f"from {meta.get('V_in', 48):g}~V on a {meta.get('die_area_mm2', 500):g}-mm$^2$ die, "
             f"$J_{{\\mathrm{{t}}}} = {meta.get('J_target', 3.5):g}$~A\\,mm$^{{-2}}$; topology "
             r"re-synthesized at every count with the discrete device library (case~D) under the "
-            r"production converter rules: the corrected capacitor rule "
-            r"(Table~\ref{tab:supp-caprule}), tiers that may mix part classes, "
+            r"converter rules of the paper (Section~III): each flying capacitor rated with 0.8 "
+            r"derating for the voltage it holds, with its effective capacitance and its ESR at "
+            r"$f_{\mathrm{sw}}$; every switch at 0.9 of its rating; $C_{\mathrm{oss}}$ charged "
+            r"at each node swing; datasheet gate resistance; body footprints placed with a "
+            r"50-\textmu m keep-out in tiers that may mix part classes, "
             + tier_rule(max_tiers(tag)) + ". "
+            + ((rf"{fine['n_grid_points']}-point grid: the same screen with the "
+                rf"{fine['n_grid_points_screen']}-point $f_{{\mathrm{{sw}}}}$ grid of the "
+                r"synthesis split 16 times (every original point kept); "
+                + (r"no count changes its topology or parts" if not
+                   fine.get("n_counts_selection_changed") else
+                   r"$^\dagger$: another topology or part") + ". ") if nf else "")
             + (rf"Least total loss at $M = {best}$. " if best is not None else "")
             + rf"$^\ast$: the production design ({design_sentence(lib=lib)}). "
             r"HS/LS: high- and low-side GaN devices; inductor: inductance and DC resistance. "
             r"Losses are for the package of $M$ regulators: conversion from the synthesis loss "
             r"model, routing from the model of~\cite{Krishnakumar2026DVPD} (electrical only).")
-    return ltab(spec, 9, head, body,
+    return ltab(spec, 9 + nf, head, body,
                 r"Converter selected at each regulator count (production converter rules)",
                 "tab:supp-dse", note)
 
@@ -692,13 +715,8 @@ def flying_cap_rows():
     f = float(d["f_sw_hz"])
     i_out = DR.P_LOAD_W / DR.V_OUT / DR.n_vr()
     v_c1 = (N - 1) * DR.V_IN / N
-    legacy = dse_rows("etm35") or {}
-    leg = legacy.get(DR.n_vr())
-    leg_part = dse_passive(leg, "capacitor") if dse_feasible(leg) else None
     order = [(d["capacitor"], "production")]
     order += [(c.name, "rated") for c in rated if c.name != d["capacitor"]]
-    if leg_part and leg_part not in {n for n, _ in order}:
-        order.append((leg_part, "legacy rule"))
     order += [(c.name, "thin") for c in thin if c.name not in {n for n, _ in order}]
     rows = []
     for name, role in order:
@@ -711,7 +729,7 @@ def flying_cap_rows():
                      "height_um": getattr(c, "height_um", None),
                      "ripple": [H.flying_cap_ripple(arch, c, i_out, DR.V_IN, DR.V_OUT, f, t)
                                 for t in CAP_TEMPS_C]})
-    return rows, {"v_c1": v_c1, "derating": H.CAP_V_DERATING, "legacy_part": leg_part}
+    return rows, {"v_c1": v_c1, "derating": H.CAP_V_DERATING}
 
 
 def capacitor_tables():
@@ -736,8 +754,7 @@ def capacitor_tables():
     if not rows:
         return L + placeholder("flying capacitors of the production design",
                                "Scalable_Integrated_VR/src/HVR_FULL_OPT_EPC_V2.py")
-    role = {"production": "production", "rated": "rated", "legacy rule": "legacy rule",
-            "thin": "thin"}
+    role = {"production": "production", "rated": "rated", "thin": "thin"}
 
     def rip(x):
         if x is None or not math.isfinite(x):
@@ -756,8 +773,7 @@ def capacitor_tables():
             r" & & V & rating & (m$\Omega$) & (\textmu m) & 25\,$^\circ$C & 105\,$^\circ$C & "
             r"125\,$^\circ$C \\"]
     note = (f"Design: {design_sentence(lib=lib)}. Role: production, the part of the design "
-            r"record; rated, the other rated part admitted by the corrected rule; legacy rule, "
-            r"the part the published capacitor rule selects at this count; thin, the "
+            r"record; rated, another part rated for the voltage it holds; thin, the "
             r"silicon-capacitor candidate of the thin-tier technology. Ripple at the worst "
             r"capacitor position, limit 10\,\%, with the effective capacitance at bias and "
             r"temperature from vendor data less 10\,\% tolerance; --: no vendor bias data, so "
@@ -1074,6 +1090,20 @@ def joint_band_table():
                     + " & ".join(_sx(v["values"].get(k)) for k in laws)
                     + f" & {_sx(v.get('min'))}--{_sx(v.get('max'))} & "
                     f"{'--' if ur is None else fx(100 * ur, 1)} \\\\")
+    # the count neighbours (design subroots): their Z1 joints, each design's own law band
+    nb_rows = 0
+    for dk in ("m25", "m49"):
+        nb = J(TR.parent / "designs" / dk / "tcpmt_revision" / "solder_law_band.json") or {}
+        for lab in ("A_Z1", "B_Z1"):
+            v, jt = (nb.get("band") or {}).get(lab), (nb.get("joints") or {}).get(lab)
+            if not v or not jt or not v.get("complete"):
+                continue
+            nb_rows += 1
+            mm = DR.get(dk)["n_vr"]
+            body.append(f"{V2_CASE[lab]}, $M = {mm}$ & {_xy(jt['x_mm'], jt['y_mm'])} & "
+                        f"{fx(jt['T_C'])} & {fx(jt['du_xy_um'], 2)} & {fx(jt['du_z_um'], 2)} & "
+                        + " & ".join(_sx(v["values"].get(k)) for k in laws)
+                        + f" & {_sx(v.get('min'))}--{_sx(v.get('max'))} & -- \\\\")
     cards = J(TR / "solder_law_cards.json") or {}
     cw = (cards.get("laws") or {}).get(prod) or {}
     rk = (b.get("rankings") or {})
@@ -1110,7 +1140,10 @@ def joint_band_table():
                 + ". ") if cc else r"Joints: the maximum-$|\Delta u_{xy}|$ sites. ")
             + "Ranking per law: " + "; ".join(
                 f"{_law(k)[0]}: A {tex(rk.get(k, {}).get('A') or '--')}, B "
-                f"{tex(rk.get(k, {}).get('B') or '--')}" for k in laws if rk.get(k)) + ".")
+                f"{tex(rk.get(k, {}).get('B') or '--')}" for k in laws if rk.get(k)) + "."
+            + (r" $M = 25$, $M = 49$: the Z1 joints of the count neighbours (their own "
+               r"production cases), the same local model, law band and lattice search, each "
+               r"law's window iterated on their own joints." if nb_rows else ""))
     return ltab(r"@{}lrrrr" + "r" * len(laws) + "rr@{}", 7 + len(laws), head, body,
                 "Joint response of the compared cases under the solder-law band",
                 "tab:supp-jointband", note, sep="2.5pt")
@@ -1211,6 +1244,29 @@ def local_checks_table():
                         + r" \\")
             continue
         body.append(f"{name} & " + " & ".join(cell(group, var, l) for l in labs) + r" \\")
+    # the averaging band (tcpmt_mech_band_study): each band against the production band at the
+    # same mesh level
+    bs = J(TR / "solder_band_study_v2.json") or {}
+    band_txt = ""
+    if bs.get("joints"):
+        for lev in bs.get("levels") or ():
+            for bnd, info in bs["bands"].items():
+                if bnd == bs.get("production_band"):
+                    continue
+                cells = []
+                for l in labs:
+                    x = (((bs["joints"].get(l) or {}).get("levels") or {}).get(lev) or {}).get(
+                        bnd, {}).get("change_vs_production_band")
+                    cells.append("--" if x is None else
+                                 f"{100 * x:+.1f}".replace("-", r"$-$"))
+                body.append(f"Band {info['band_um']:.0f}~\\textmu m ({lev}) & "
+                            + " & ".join(cells) + r" \\")
+        pb = bs["bands"][bs["production_band"]]["band_um"]
+        band_txt = (rf" Band: the corner band excluded from the averaging core, against the "
+                    rf"production {pb:.0f}~\textmu m at the same mesh level (L0, L2); the "
+                    r"orderings of each cooling "
+                    + ("hold under every band and level." if bs.get("orderings_hold_everywhere")
+                       else "change under some band or level."))
     fp = c.get("fine_pitch_joints") or {}
     fp_txt = []
     for key, v in fp.items():
@@ -1227,7 +1283,7 @@ def local_checks_table():
             r"the nested joint meshes L1--L3 against L0; 8 cycles against 4; dwell and ramp "
             r"against 300 and 3~s; element types against C3D8. Attribution chain: an earlier local "
             r"model (overstress card with hardening, in-plane $\Delta u$ only, STEP loading) and "
-            r"each change toward the production model in turn. "
+            r"each change toward the production model in turn." + band_txt + " "
             + ("Critical fine-pitch joints, own geometry: " + "; ".join(fp_txt) + "."
                if fp_txt else ""))
     return ltab(r"@{}l" + "r" * len(labs) + "@{}", 1 + len(labs), head, body,
@@ -2295,7 +2351,18 @@ VARIANT_LABEL = {
     "bga_card_local": "BGA layer from the local solder card",
     "board_t2p4": "PCB 2.4 mm thick", "conv_posts_lower": "Copper posts, lower bound",
     "conv_posts_upper": "Copper posts, upper bound",
-    "plate_caloric_legacy": "Cold-plate coefficient with the caloric resistance"}
+    "plate_caloric_legacy": "Cold-plate coefficient with the caloric resistance",
+    # cooling-model and card forms run as alternatives
+    "conv_k_legacy": "Converter tiers as one medium", "conv_gap_legacy": "Encapsulant cap, no posts",
+    "nu_legacy_table": "Cold-plate Nu, three-wall table", "props_legacy_50C": "Coolant at 50~$^\\circ$C",
+    "wall_viscosity": "Wall-viscosity correction", "plate_single_pass": "Single-pass cold plates",
+    "board_hbot60": "Board-bottom film 60", "board_hbot520": "Board-bottom film 520"}
+#: neutral descriptions of the alternative forms (the registry's text names their history)
+VARIANT_WHAT = {
+    "conv_k_legacy": "one effective medium (k 60 W\\,m$^{-1}$K$^{-1}$) on the inductor, output- and "
+                     "flying-capacitor tiers, solid silicon on the GaN tiers",
+    "nu_legacy_table": "cold-plate Nu from the three-wall table with a long wall adiabatic instead "
+                       "of the short-wall-adiabatic H1 fit"}
 
 
 def variant_label(name):
@@ -2307,21 +2374,65 @@ def variant_label(name):
     return tex(name)
 
 
+BOARD_LABEL = {"screws": "screws at the board corners", "screws_pinned": "pinned screws",
+               "edge": "simply supported edge", "clamp_screws": "clamp at the screws",
+               "clamp_backplate": "clamp on a backplate",
+               "free_ring_hot": "3x board, ring at the edge temperature",
+               "free_ring_cold": "3x board, ring at 25~$^\\circ$C",
+               "screws_ring_hot": "3x board on screws",
+               "clamp_screws_ring_hot": "3x board, clamp at the screws"}
+
+
+def screen_label(key):
+    """'SDEC_A_Z2__board_screws_pinned' -> 'pinned screws (Z2, implemented, A)'."""
+    ref, name = key.split("__", 1)
+    st, t, a = ref.split("_")
+    lab = (BOARD_LABEL.get(name[6:], tex(name[6:])) if name.startswith("board_")
+           else variant_label(name))
+    return (f"{lab[:1].lower() + lab[1:] if not lab.startswith(('PCB', 'BGA', 'TSV', 'GaN')) else lab}"
+            f" ({a}, {STATE_NAME.get(st, st)} decoupling, cooling~{t})")
+
+
 def variants_table():
     import final_closure_sensitivity as S
+    sc = J(TR / "robustness_joint.json") or {}
+    g0 = (sc.get("groups") or {}).get("S0_A") or {}
     body = []
     for name, v in S.VARIANTS.items():
         what = re.sub(r"\bmaterial dict\b", "material card", v["what"])
         what = what.replace("Z2-COOLED plate", "a bottom plate under the Z2 converter")
+        o = ((g0.get(name) or {}).get("orderings") or {}).get("eps:Z1/Z2")
+        if name in VARIANT_WHAT:
+            what = None
+        jt = (f"{1e3 * o['variant'][0]:.2f} / {1e3 * o['variant'][1]:.2f}" if o else "--")
         body.append(f"{variant_label(name)} & {'mech.' if v['kind'] == 'mech' else 'full'} & "
-                    f"{'/'.join(v['archs'])} & {prose(what)} \\\\")
+                    f"{'/'.join(v['archs'])} & "
+                    f"{VARIANT_WHAT[name] if what is None else prose(what)}"
+                    + (f" & {jt}" if g0 else "") + r" \\")
+    val = sc.get("validation") or {}
     note = (r"Each run changes one declared input on the production mesh and reruns the whole "
             r"electrothermal--mechanical chain (full) or only the mechanics on the converged "
             r"field (mech.). The bottom-plate variants of Z1, Z2 and Z3 define cooling~B and the "
             r"top-plate-only variant of Z3 defines its cooling~A; the Z3 cases of the paper add the "
             r"coupled land-side and board-plane redistribution (Table~\ref{tab:supp-z3land}).")
-    return ltab(r"@{}L{4.3cm}lL{1.0cm}L{10.7cm}@{}", 4,
-                [r"Variant & Rerun & Int. & What changes \\"], body,
+    if g0:
+        b = next(iter(g0.values()))["orderings"]["eps:Z1/Z2"]["base"]
+        note += (rf" Joint: $\deps$ of Z1 / Z2 ($10^{{-3}}$ per cycle, ideal decoupling, "
+                 rf"cooling~A; reference {1e3 * b[0]:.2f} / {1e3 * b[1]:.2f}), the production "
+                 rf"local model at the {sc['K']} worst sites of each reference case's "
+                 r"critical-joint search, the variant's response being the largest of them; an "
+                 r"integration a variant does not touch keeps the reference value. "
+                 + (rf"A full critical-joint search on {len(val)} variants of different kinds "
+                    rf"({'; '.join(screen_label(k) for k in sorted(val))}) "
+                    + ("found the worst site inside those sites in every one."
+                       if sc.get("validation_all_in_top_k") else
+                       "found the worst site outside those sites in "
+                       + str(sum(1 for x in val.values() if not x.get("max_in_top_k")))
+                       + " of them.") if val else ""))
+    return ltab(r"@{}L{4.0cm}lL{0.9cm}L{" + ("8.9" if g0 else "10.7") + "cm}"
+                + ("r" if g0 else "") + "@{}", 4 + bool(g0),
+                [r"Variant & Rerun & Int. & What changes" + (r" & Joint" if g0 else "")
+                 + r" \\"], body,
                 "Package decisions varied in the robustness study", "tab:supp-variants", note)
 
 
@@ -2510,13 +2621,24 @@ def assembly_mounting_table():
     cases = bd.get("cases") or {}
     order = [f"SDEC_{t}_{a}" for t in ("A", "B") for a in ("Z1", "Z2", "Z3")]
     cols = [k for k in order if k in cases]
+    # the joint response at the worst of the case's K worst sites (tcpmt_mech_joint_screen)
+    sc = J(TR / "robustness_joint.json") or {}
+    scv = sc.get("variants") or {}
+
+    def eps_txt(key):
+        v = scv.get(key) or {}
+        x = v.get("change_rel")
+        return "--" if x is None else f"{100 * x:+.0f}"
+
     for var, lab in var_lab.items():
         cells = []
         for k in cols:
             r = (cases[k].get("mechanics") or {}).get(var) or {}
             if "warp_rel_vs_case" in r:
-                cells.append(f"{100 * r['warp_rel_vs_case']:+.0f} / {100 * r['du_rel_vs_case']:+.0f}"
-                             .replace("-", r"$-$"))
+                cells.append((f"{100 * r['warp_rel_vs_case']:+.0f} / "
+                              f"{100 * r['du_rel_vs_case']:+.0f}"
+                              + (f" / {eps_txt(f'{k}__board_{var}')}" if scv else ""))
+                             .replace("-", r"$-$").replace(r"$-$$-$", "--"))
             else:
                 cells.append("--")
         rows.append(prose(lab) + " & " + " & ".join(cells) + r" \\")
@@ -2530,14 +2652,23 @@ def assembly_mounting_table():
             _s, t, a = k.split("_")
             ch = ((per.get(t) or {}).get("change_rel") or {}).get(a) or {}
             cells.append("--" if ch.get("warp") is None else
-                         f"{100 * ch['warp']:+.0f} / {100 * ch['du']:+.0f}".replace("-", r"$-$"))
+                         (f"{100 * ch['warp']:+.0f} / {100 * ch['du']:+.0f}"
+                          + (f" / {eps_txt(f'{k}__{name}')}" if scv else ""))
+                         .replace("-", r"$-$").replace(r"$-$$-$", "--"))
         rows.append(f"{tag} & " + " & ".join(cells) + r" \\")
     if cols:
         head = [r"Variant & " + " & ".join(f"{k.split('_')[2]}, {k.split('_')[1]}" for k in cols)
                 + r" \\"]
-        note = (r"Change of die warpage / critical-joint $\du$ (\%) against each compared case "
+        note = (r"Change of die warpage / largest ball displacement $\du$"
+                + (r" / joint response $\deps$" if scv else "")
+                + r" (\%) against each compared case "
                 r"(production state), mechanics only on the case's converged field, production "
-                r"mesh. Mounting: $u_z = 0$ on 2-mm patches 3~mm inside the board corners (pinned: "
+                r"mesh"
+                + ((rf"; $\deps$: the production local model at the {sc.get('K')} worst "
+                    r"sites of the case's critical-joint search, the variant's response being "
+                    r"the largest of them (a clamp is held through the cycle: its cold "
+                    r"half-cycle is the clamp-only state at the same site)") if scv else "")
+                + r". Mounting: $u_z = 0$ on 2-mm patches 3~mm inside the board corners (pinned: "
                 r"also in plane), or along the underside perimeter; clamp: the cold-plate preload "
                 r"as a uniform pressure on the TIM, reacted at the screws or by a backplate under "
                 r"the package; 3x board: the board extended to three package sides with its ring "
@@ -2623,13 +2754,12 @@ def main():
                  r"1-V redistribution in the coupled solution.")
     L += z3land_table()
     L += section("Exploring the Design Space",
-                 r"Table~\ref{tab:supp-caprule} gives the regulator-count screen before and "
-                 r"after the capacitor-rule correction, Table~\ref{tab:supp-variants} the package "
-                 r"decisions of the robustness study, Table~\ref{tab:supp-omit} the omitted "
-                 r"converter losses and Table~\ref{tab:supp-review} further variants of the "
-                 r"compared cases; the warpage at reflow and bonding and the board, mounting, "
-                 r"clamp and material variants on the production fields follow it.")
-    L += caprule_screen_table() + variants_table() + omitted_losses_table()
+                 r"Table~\ref{tab:supp-variants} gives the package decisions of the robustness "
+                 r"study, Table~\ref{tab:supp-omit} the omitted converter losses and "
+                 r"Table~\ref{tab:supp-review} further variants of the compared cases; the "
+                 r"warpage at reflow and bonding and the board, mounting, clamp and material "
+                 r"variants on the production fields follow them.")
+    L += variants_table() + omitted_losses_table()
     L += review_variants_table()
     L += assembly_mounting_table()
     OUT.parent.mkdir(parents=True, exist_ok=True)

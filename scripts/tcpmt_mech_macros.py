@@ -565,9 +565,105 @@ def variants():
     return m
 
 
+# ------------------------------------------------------------------ joint-response screen
+#: groups of tcpmt_mech_joint_screen -> macro tag
+SGROUP = {"S0_A": "Map", "SDEC_new_A": "New", "S0_B": "CoolB", "SDEC_mech_A": "Enc",
+          "SDEC_mech_B": "Enc", "board_A": "Bd", "board_B": "Bd"}
+
+
+def _eps_orderings(groups, keys, pairs=None):
+    """(n judged, n same direction, n resolved reversals, n withdrawn, n pending) over the
+    joint-response orderings of the named groups."""
+    n = same = rev = wd = pend = 0
+    for g in keys:
+        for name, r in (groups.get(g) or {}).items():
+            for o, x in (r.get("orderings") or {}).items():
+                if pairs and o not in pairs:
+                    continue
+                n += 1
+                same += bool(x.get("same_direction"))
+                v, bv = x.get("verdict"), x.get("base_verdict")
+                if v == "pending":
+                    pend += 1
+                elif v == "unresolved" and bv and bv.endswith("lower"):
+                    wd += 1
+                elif v and bv and v.endswith("lower") and bv.endswith("lower") and v != bv:
+                    rev += 1
+    return n, same, rev, wd, pend
+
+
+def screen():
+    """The joint response of the mechanical robustness variants (robustness_joint.json):
+    screen size, validation, and per group the changes and the orderings under the rule."""
+    d = J("robustness_joint.json")
+    if not d or not d.get("variants"):
+        return {}
+    m = {"MvScrK": str(d["K"]), "MvScrNvar": str(d["n_variants"]),
+         "MvScrNcomplete": str(d["n_complete"]), "MvScrMaxRank": str(d["max_rank_used"]),
+         "MvScrNatLast": str(d["n_at_last_rank"])}
+    m["MvScrNsolves"] = str(sum(v.get("n_sites") or 0 for v in d["variants"].values()))
+    val = d.get("validation") or {}
+    if val:
+        m["MvScrValN"] = str(len(val))
+        m["MvScrValInTopK"] = str(sum(1 for v in val.values() if v.get("max_in_top_k")))
+        m["MvScrValAll"] = yn(d.get("validation_all_in_top_k"))
+        rk = [v.get("max_rank_in_reference") for v in val.values()
+              if v.get("max_rank_in_reference")]
+        m["MvScrValRankMax"] = str(max(rk)) if rk else NA
+        m["MvScrValSolved"] = str(sum(v.get("n_solved") or 0 for v in val.values()))
+        m["MvScrValClosed"] = yn(all(v.get("closed") for v in val.values()))
+        rat = [v.get("screen_over_full") for v in val.values() if v.get("screen_over_full")]
+        m["MvScrValRatioMin"] = fx(min(rat), 3) if rat else NA
+        lat = [v.get("n_lattice") for v in val.values() if v.get("n_lattice")]
+        m["MvScrValLatticeLo"], m["MvScrValLatticeHi"] = (str(min(lat)), str(max(lat))) \
+            if lat else (NA, NA)
+    # changes against each variant's reference, per group (in %)
+    acc = {}
+    for key, v in d["variants"].items():
+        if v.get("change_rel") is None:
+            continue
+        acc.setdefault(SGROUP.get(v["group"], v["group"]), []).append(v["change_rel"])
+        if v["group"].startswith("board"):
+            tag = BVAR.get(v["name"])
+            if tag:
+                k = f"{v['tier']}{ATAG[v['arch']]}"
+                m[f"MvBd{tag}Eps{k}"] = spct(v["change_rel"], 1)
+                acc.setdefault(f"Bd{tag}", []).append(v["change_rel"])
+        if v["group"].startswith("SDEC_mech"):
+            tag = EVAR.get(v["name"])
+            if tag:
+                k = f"{v['tier']}{ATAG[v['arch']]}"
+                m[f"MvEncScr{tag}Eps{k}"] = spct(v["change_rel"], 1)
+                acc.setdefault(f"EncScr{tag}", []).append(v["change_rel"])
+    for tag, vals in acc.items():
+        m[f"MvScr{tag}EpsLo"], m[f"MvScr{tag}EpsHi"] = rng(vals, spct, 1)
+        m[f"MvScr{tag}EpsAbsMax"] = pct(max(abs(x) for x in vals), 1)
+    g = d.get("groups") or {}
+    for keys, tag in ((("board_A", "board_B"), "Bd"), (("SDEC_mech_A", "SDEC_mech_B"), "Enc"),
+                      (("S0_B",), "CoolB"), (("S0_A",), "Map"), (("SDEC_new_A",), "New")):
+        n, same, rev, wd, pend = _eps_orderings(g, keys)
+        m[f"MvScr{tag}OrderN"], m[f"MvScr{tag}OrderSame"] = str(n), str(same)
+        m[f"MvScr{tag}OrderRev"], m[f"MvScr{tag}OrderWd"] = str(rev), str(wd)
+        m[f"MvScr{tag}OrderPend"] = str(pend)
+        n2, same2, rev2, wd2, pend2 = _eps_orderings(g, keys, ("eps:Z1/Z2",))
+        m[f"MvScr{tag}ZoneZtwoN"], m[f"MvScr{tag}ZoneZtwoSame"] = str(n2), str(same2)
+        m[f"MvScr{tag}ZoneZtwoRev"], m[f"MvScr{tag}ZoneZtwoWd"] = str(rev2), str(wd2)
+    # the clamp held through the cycle against the same screws without it (each case)
+    eff = []
+    for t in TIERS:
+        for a in ARCHS:
+            c = (d["variants"].get(f"SDEC_{t}_{a}__board_clamp_screws") or {}).get("d_eps")
+            s_ = (d["variants"].get(f"SDEC_{t}_{a}__board_screws") or {}).get("d_eps")
+            if c and s_:
+                m[f"MvScrClampEff{t}{ATAG[a]}"] = spct(c / s_ - 1, 1)
+                eff.append(c / s_ - 1)
+    m["MvScrClampEffLo"], m["MvScrClampEffHi"] = rng(eff, spct, 1)
+    return m
+
+
 def macros():
     m = {}
-    for f in (joint, window, critical, checks, interconnects, reflow, board, variants):
+    for f in (joint, window, critical, checks, interconnects, reflow, board, variants, screen):
         try:
             m.update(f())
         except Exception as e:                        # noqa: BLE001 -- keep building
