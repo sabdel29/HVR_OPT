@@ -200,7 +200,7 @@ for case, dd in DATA.items():
         CASE_LAB[case] = (f"Sensitivity: {float(e['cap_height_um']):.0f}-µm "
                           f"$C_\\mathrm{{f}}$ tier")
     else:
-        CASE_LAB[case] = (f"Production: rated {cap_size(e['capacitor'])} MLCC "
+        CASE_LAB[case] = (f"Design point: rated {cap_size(e['capacitor'])} MLCC "
                           f"({float(e['cap_height_um']):.0f} µm)")
 for case in ("rated", "thin"):
     if case in DATA:
@@ -248,7 +248,7 @@ for bx, case in zip(bxs, ("rated", "thin")):
     bx.grid(False)
     n_ord = len(dd["t"].get("decided_orders") or [])
     ok = dd["t"].get("n_meeting_via_rule")
-    bx.set_title(f"{ {'rated': 'Production', 'thin': 'Thin $C_\\mathrm{f}$'}[case]}: "
+    bx.set_title(f"{ {'rated': 'Design point', 'thin': 'Thin $C_\\mathrm{f}$'}[case]}: "
                  f"{ok if ok is not None else '?'} of {n_ord} orders meet 1:1",
                  fontsize=6.5, pad=1, loc="left")
 bxs[0].set_ylabel("Worst via AR", labelpad=1)
@@ -259,11 +259,11 @@ _t = (DATA.get("rated") or {}).get("t", {})
 rs = _t.get("repartition_search") or {}
 key_txt = "■ chosen order   | range over every order of the tiers   - - 1:1 build-up limit"
 if rs.get("best_worst_ar") and rs.get("n_ordered"):
-    key_txt += (f"\nproduction: best over every regrouping into ≤ {rs.get('max_tiers', '?')} "
+    key_txt += (f"\ndesign point: best over every regrouping into ≤ {rs.get('max_tiers', '?')} "
                 f"tiers ({rs['n_ordered']} orders), AR {rs['best_worst_ar']['worst_ar_both']:.1f}")
 sf = _t.get("single_face") or {}
 if sf.get("chosen_order_worst_ar_single") is not None:
-    key_txt += (f"\nproduction with single-face terminals: {'same order' if sf.get('same_as_chosen') else 'another order'}"
+    key_txt += (f"\ndesign point with single-face terminals: {'same order' if sf.get('same_as_chosen') else 'another order'}"
                 f", AR {sf['chosen_order_worst_ar_single']:.1f}")
 fig.text(0.0, 0.368, key_txt, ha="left", va="top", fontsize=6, color=S.INK2, linespacing=1.15)
 S.save(fig, "fig4_realizability")

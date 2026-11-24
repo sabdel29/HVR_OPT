@@ -2447,6 +2447,15 @@ VARIANT_WHAT = {
                               "every temperature (isolates $T_g$)"}
 #: variants that coincide with the production model (the 3.2-mm board is the board of the paper)
 SAME_AS_PRODUCTION = {"board_t3p2"}
+#: variants defined only for a stack of single-class tiers (one part class per tier): a design of
+#: mixed tiers has no class tiers to swap, and the tier-order rule chooses among every order of
+#: its tiers instead (scripts/tcpmt_tier_order.py; the variant refuses such a design)
+SINGLE_CLASS_ONLY = {"z1_tier_reference"}
+
+
+def mixed_tiers():
+    """True when the design record's converter tiers are mixed (named tier<i>_<parts>)."""
+    return all(str(t["name"]).startswith("tier") for t in DR.tiers())
 
 
 def variant_label(name):
@@ -2482,8 +2491,9 @@ def variants_table():
     sc = J(TR / "robustness_joint.json") or {}
     g0 = (sc.get("groups") or {}).get("S0_A") or {}
     body = []
+    mixed = mixed_tiers()
     for name, v in S.VARIANTS.items():
-        if name in SAME_AS_PRODUCTION:
+        if name in SAME_AS_PRODUCTION or (mixed and name in SINGLE_CLASS_ONLY):
             continue
         what = re.sub(r"\bmaterial dict\b", "material card", v["what"]).replace(
             "scenarios", "input states")
@@ -2505,6 +2515,10 @@ def variants_table():
             r"only, on the converged field (mech.). The bottom-plate variants of Z1, Z2 and Z3 define cooling~B and the "
             r"top-plate-only variant of Z3 defines its cooling~A; the Z3 cases of the paper add the "
             r"coupled land-side and board-plane redistribution (Table~\ref{tab:supp-z3land}).")
+    if mixed:
+        note += (r" The tier order is not among the variants: the " + word(len(DR.tiers()))
+                 + r" mixed tiers take the order chosen among all their orders by the via rule, "
+                 r"the intra-cell routing loss and the heat path (Section~IV-B of the paper).")
     base = [r["orderings"]["eps:Z1/Z2"]["base"] for r in g0.values()
             if "eps:Z1/Z2" in (r.get("orderings") or {})]
     if g0 and base:
@@ -2689,8 +2703,9 @@ def assembly_mounting_table():
         if "_r21" not in key:
             continue
         a, sfx = key.split("_r21")
-        enc = {"": "production", "_encap_uf_tg": "underfill class (Tg 130)",
-               "_encap_emc_lowcte": "low-CTE mold compound (Tg 165)"}.get(sfx, tex(sfx))
+        enc = {"": "nominal", "_encap_uf_tg": r"underfill class ($T_g$ 130\,$^\circ$C)",
+               "_encap_emc_lowcte": r"low-CTE mold compound ($T_g$ 165\,$^\circ$C)"}.get(
+                   sfx, tex(sfx))
         ch = c.get("checks") or {}
         b, sol, tc = ch.get("bga@bga_reflow") or {}, ch.get("bga@bga_solidus") or {}, \
             ch.get("tcb") or {}
@@ -2757,9 +2772,9 @@ def assembly_mounting_table():
             else:
                 cells.append("--")
         rows.append(prose(lab) + " & " + " & ".join(cells) + r" \\")
-    for name, tag in (("encap_uf_tg", "Underfill-class encapsulant (Tg 130)"),
-                      ("encap_emc_lowcte", "Low-CTE mold compound (Tg 165)"),
-                      ("encap_emc_lowcte_const", "Mold compound without Tg"),
+    for name, tag in (("encap_uf_tg", r"Underfill-class encapsulant ($T_g$ 130\,$^\circ$C)"),
+                      ("encap_emc_lowcte", r"Low-CTE mold compound ($T_g$ 165\,$^\circ$C)"),
+                      ("encap_emc_lowcte_const", r"Mold compound without $T_g$"),
                       ("bga_card_local", "BGA layer from the local solder card")):
         per = (vr.get("variants") or {}).get(name) or {}
         cells = []

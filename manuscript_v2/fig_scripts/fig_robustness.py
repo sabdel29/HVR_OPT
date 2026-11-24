@@ -79,9 +79,9 @@ LAYOUT = [
         ("Underfill-class encapsulant", ["encap_uf_tg"]),
     ]),
     ("Board", [
-        ("Board-bottom film 100 W/m$^2$K (10)", ["board_hbot100"]),
-        ("Board-bottom film 500 W/m$^2$K (10)", ["board_hbot500"]),
-        ("PCB as 5-block laminate", ["board_h1"]),
+        ("Board-bottom film 10 → 100 W/m$^2$K", ["board_hbot100"]),
+        ("Board-bottom film 10 → 500 W/m$^2$K", ["board_hbot500"]),
+        ("Layered board (copper per layer)", ["board_h1"]),
         ("PCB copper coverage 25 % / 75 % (2)", ["board_eta025", "board_eta075"]),
         ("PCB 2.4 mm thick", ["board_t2p4"]),
         ("BGA depopulated (420 of 528)", ["bga_depop"]),
@@ -107,7 +107,7 @@ if _have:
 import json                                                          # noqa: E402
 MECH_LABEL = {"encap_uf_tg": "Underfill-class encapsulant",
               "encap_emc_lowcte": "Low-CTE mold compound",
-              "encap_emc_lowcte_const": "Mold compound without Tg",
+              "encap_emc_lowcte_const": "Mold compound without glass transition",
               "bga_card_local": "BGA layer from the local solder card",
               "attach_stiff": "Attach card column-stiffened", "attach_uf_soft": "Attach underfill soft",
               "attach_uf_stiff": "Attach underfill stiff"}

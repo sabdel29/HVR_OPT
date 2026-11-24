@@ -2,7 +2,7 @@
 
 (a) The electrical screen: conversion + routing loss at 25 C of the best member at every sampled
     count M (1 kW, 48 V -> 1 V, 500 mm2 die, J_t = 3.5 A/mm2, discrete library, full synthesis
-    rules), for the three tier limits of the screen: at most 4 tiers (the production rule), at
+    rules), for the three tier limits of the screen: at most 4 tiers (the synthesis rule), at
     most 5, none. Filled markers: square grids (the counts the package builder realizes);
     crosses: counts without a four-tier member. The optimum is ringed.
 (b) Converter stack height of the same selections (log scale), with the depth available below
@@ -48,7 +48,7 @@ def short(arch):
 SQUARES = {16, 25, 36, 49, 64, 81, 100}
 #: run key, legend label, ink (an ordinal neutral ramp: identity is also carried by the line
 #: style and the marker shape), line style, marker, width, z-order
-RUNS = (("etm35_p2_t4", "≤ 4 tiers (production rule)", S.INK, "-", "o", 1.3, 6),
+RUNS = (("etm35_p2_t4", "≤ 4 tiers (synthesis rule)", S.INK, "-", "o", 1.3, 6),
         ("etm35_p2_t5", "≤ 5 tiers", S.INK2, (0, (4, 2)), "s", 1.0, 5),
         ("etm35_p2_tinf", "no tier limit", S.MUTED, (0, (1, 1.4)), "^", 1.0, 4))
 series = {key: {int(m): v for m, v in SUMMARY["runs"][key]["per_count"].items()}

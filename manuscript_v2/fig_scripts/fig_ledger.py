@@ -49,7 +49,7 @@ LAND = pre("P_sub_land", "P_PCB_plane")          # coupled 1-V spreading (Z3)
 GROUPS = [
     ("48-V package path", pre("P_pkg_RDL_HV", "P_BGA_supply", "P_BGA_return", "P_Cin"), S.V48),
     ("TSV field", pre("P_TSV"), S.V1),
-    ("VR attach", pre("P_VR_attach", "P_VR_PCB_attach", "P_board_attach"), S.V1),
+    ("Regulator attach", pre("P_VR_attach", "P_VR_PCB_attach", "P_board_attach"), S.V1),
     ("Board vias, 1-V BGA", lambda t: pre("P_board", "P_PCB", "P_pcb", "P_BGA_LV", "P_BGA_1V",
                                           "P_BGA_VDD", "P_BGA_GND")(t) and not LAND(t), S.V1),
     ("Land side + board plane", lambda t: LAND(t), S.V1),
