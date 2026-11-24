@@ -1,12 +1,11 @@
 % ============================================================================ EVALUATE
 \section{Evaluating a Design}\label{sec:evaluate}
 
-In evaluation mode the chain runs once for one integration, and every output is checked against a
-limit the package must meet. The design evaluated here is the embedded regulator (Z1), the
-integration of the reference framework~\cite{Krishnakumar2026DVPD}, at the synthesized design point
-of Table~\ref{tab:spec}. It runs in the production state, with the implemented input decoupling,
-under cooling~A. Fig.~\ref{fig:fields} shows its fields, and the first column of
-Table~\ref{tab:compare} its numbers.
+The evaluated design is the embedded regulator (Z1), the integration of the reference
+framework~\cite{Krishnakumar2026DVPD}, at the design point of Table~\ref{tab:spec}. It runs in the
+production state, with the implemented input decoupling, under cooling~A.
+Fig.~\ref{fig:fields}(a), (d) and~(g) show its fields, and the first column of
+Table~\ref{tab:compare} gives its numbers.
 
 \subsection{Electrothermal State}\label{sec:evaluate-et}
 The fixed point converges in \WrEtItersAZone{} iterations to \PlossAZone~W inside the package, a
@@ -27,9 +26,10 @@ analysis decoupled from the thermal solution would therefore understate the pack
 parts that run \WrTlsRiseAZone{} to \WrThsRiseAZone~K above room temperature.
 
 \subsection{Input Decoupling}\label{sec:evaluate-decap}
-The input states of Section~\ref{sec:scenarios} bound the RMS factor $k_{\mathrm{rms}}$; this
-subsection shows why the implemented decoupling takes the form it does. With the cells in phase and
-no input capacitance, a port model of the package network gives $k_{\mathrm{rms}} = \WrKsync$.
+Neither capacitance inside the stack nor interleaving or a ring alone lowers the RMS factor
+$k_{\mathrm{rms}}$ enough, so the implemented decoupling (Section~\ref{sec:scenarios}) combines the
+last two. With the cells in phase and no input capacitance, a port model of the package network
+gives $k_{\mathrm{rms}} = \WrKsync$.
 
 Charge balance asks for only \WrCchargeOneV~\textmu F per cell for 1~V of input ripple. A circuit
 model of the package loop says otherwise. It includes the loop's inductance, \WrLloop~pH nominal
@@ -67,16 +67,14 @@ At the implemented waveform the ball rule of Section~\ref{sec:ledger} gives the 
 \subsection{Mechanical State}\label{sec:evaluate-mech}
 The die warps by \WarpAZone~\textmu m peak to valley. The largest relative displacement across the
 ball layer lies at a corner of the array, $\du = \DuAZone$~\textmu m. The critical joint is that
-corner or its mirror image, at $T_{\mathrm{sj}} = \MvTsjAZone\,^\circ$C, \WrSolderMarginAZone~K
-inside the \MthLimSolder-$^\circ$C range of the solder laws. It accumulates
+corner or its mirror image, at $T_{\mathrm{sj}} = \MvTsjAZone\,^\circ$C. It accumulates
 $\deps = \MvEpsAZone\times10^{-3}$ per cycle under the production law, with a numerical uncertainty
-of \MvEpsUrelAZone\,\%, and \MvEpsLoAZone$\times10^{-3}$ under the lowest law of the band. The
-increment ranks joints; it is not a life (Section~\ref{sec:limits}).
+of \MvEpsUrelAZone\,\%, and \MvEpsLoAZone$\times10^{-3}$ under the lowest law of the band.
 
 Of the other interconnect layers, the \WrHIfUm-\textmu m die-to-converter microbumps carry the
 largest driver: $\gamma = \WrGamIfAZone\times10^{-3}$ at \WrTIfAZone\,$^\circ$C, about
-\WrGamRatioAZone{} times that of the ball of largest $\Delta u$ ($\WrGamBgaAZone\times10^{-3}$). The
-microbumps are screened by this driver only (Section~\ref{sec:limits}).
+\WrGamRatioAZone{} times that of the ball of largest $\Delta u$ ($\WrGamBgaAZone\times10^{-3}$).
+Section~\ref{sec:compare-joints} explains why these layers are screened rather than ranked.
 
 \subsection{Feasibility}\label{sec:evaluate-feas}
 The evaluated design passes every check of the feasibility stage (Table~S19). The GaN junctions
