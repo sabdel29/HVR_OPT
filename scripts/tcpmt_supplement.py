@@ -988,7 +988,7 @@ def solder_tables_v2(p):
         p.get("loading_cycle") or {}
     ti, rsp, me = p.get("time_integration") or {}, p.get("response") or {}, p.get("mesh") or {}
     rs, ds = ti.get("ramp_step") or {}, ti.get("dwell_step") or {}
-    src = r"~\cite[Table~III]{Krishnakumar2026DVPD}" if "Krishnakumar" in str(g.get("source")) \
+    src = r"~\cite{Krishnakumar2026DVPD}" if "Krishnakumar" in str(g.get("source")) \
         else ""
     unc = J(TR / "uncertainty.json") or {}
     prow = [
@@ -1575,7 +1575,7 @@ def solder_tables():
         ("Ball, as homogenized globally",
          rf"diameter {g.get('ball_diameter_um', 0):.0f}~\textmu m, stand-off "
          rf"{g.get('standoff_height_um', 0):.0f}~\textmu m, pitch {g.get('pitch_um', 0):.0f}~\textmu m"
-         r"~\cite[Table~III]{Krishnakumar2026DVPD}"),
+         r"~\cite{Krishnakumar2026DVPD}"),
         ("Solder volume",
          rf"equal-area square prism, side {g.get('solder_side_um', 0):.1f}~\textmu m (the "
          r"convention of the global ball-array homogenization)"),

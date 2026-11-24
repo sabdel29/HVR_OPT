@@ -1,11 +1,10 @@
 % Capability comparison with the closest prior work: the detailed version of the compact
 % comparison table of the paper (manuscript tab_prior.tex), set as Table S1 of the supplementary
-% material. Every cell for [Krishnakumar2026DVPD], [Choi2025SelfConsistent] and the commercial
-% tools rests on a passage of the cited source. Pointers to [Krishnakumar2026DVPD] are to its
-% preprint (arXiv:2606.28837v1; check section and table numbers against the published version,
-% TCPMT 16(9), pp. 2089--2102). The preprint describes the electrothermal model of
-% [Choi2025SelfConsistent] (its ref. [26]); the column of [Choi2025SelfConsistent] rests on its
-% full text. "Not part of the work" is stated where the source does not report the capability. The "This work" column carries no computed number (the supplement is compiled
+% material. Every cell for [Krishnakumar2026DVPD] (TCPMT 16(9), pp. 2089--2102),
+% [Choi2025SelfConsistent] and the commercial tools rests on a passage of the cited source; the
+% entries cite [Krishnakumar2026DVPD] without section, table or figure pointers.
+% [Krishnakumar2026DVPD] describes the electrothermal model of [Choi2025SelfConsistent]; the column
+% of [Choi2025SelfConsistent] rests on its full text. "Not part of the work" is stated where the source does not report the capability. The "This work" column carries no computed number (the supplement is compiled
 % without the paper's macros); it points to the sections and tables that do. Packages: booktabs,
 % array, longtable, amssymb; the column type L{w} is defined in the supplement's preamble.
 \begingroup
@@ -72,7 +71,7 @@ Static IR drop and transient droop
  & IR drop with Joule heating~\cite{Cadence_Celsius}
  & Static drop of the 1-V path per rail against a declared limit; no droop \\
 Package geometry
- & Representative cell stack; VIC dimensions (Table~III of~\cite{Krishnakumar2026DVPD})
+ & Representative cell stack; VIC dimensions~\cite{Krishnakumar2026DVPD}
  & Meshed vertical stack of substrates with IVRs, embedded passives, RDL, package power network
    and TIM; geometry and power map consistent with the electrical model
  & Package, PCB and multi-die models~\cite{Synopsys_RedHawkSC_ET,Cadence_Celsius}
@@ -120,8 +119,8 @@ Interconnect realizability
  & Not described\textsuperscript{c}
  & Per-net via count, pitch, aspect ratio and landing area for the actual tier order \\
 Component-rating feasibility
- & Junction threshold $T_j\le85\,^\circ$C in the electrothermal loop
-   (\cite{Krishnakumar2026DVPD}, Fig.~4)
+ & Junction threshold $T_j\le85\,^\circ$C in the electrothermal
+   loop~\cite{Krishnakumar2026DVPD}
  & A preset 85\,$^\circ$C maximum temperature sets the coolant flow; no component rating is checked
  & Not described\textsuperscript{c}
  & Every device, part, material and die limit, the solder-law range, the static drop and the ball
@@ -147,16 +146,16 @@ Runtime per evaluation
  & Reported per stage (paper, Sec.~V; Table~S16) \\
 \end{longtable}
 \nopagebreak\noindent
-Pointers to~\cite{Krishnakumar2026DVPD} refer to its preprint. VIC: vertical interconnect. \textsuperscript{a}\,The topology is an
-input~\cite[Sec.~IV]{Krishnakumar2026DVPD}, and the method is stated to apply to other hybrid
-and buck-derived topologies~\cite[Sec.~II]{Krishnakumar2026DVPD}.
+VIC: vertical interconnect. \textsuperscript{a}\,The topology is an input of the framework
+of~\cite{Krishnakumar2026DVPD}, whose method is stated to apply to other hybrid and buck-derived
+topologies.
 \textsuperscript{b}\,The design, its loss models and its component dimensions come from the
 group's standalone electrical simulator, the precursor of~\cite{Krishnakumar2026DVPD}, and are
 held fixed during the electrothermal loop. \textsuperscript{c}\,Not described on the cited product
 pages, which does not establish that the tool lacks the capability.
-\textsuperscript{d}\,\cite{Krishnakumar2026DVPD} refers to ``component libraries''
-(Sec.~III); switches are sized from per-width technology parameters and inductors are
-parallel arrays of a target unit inductor. \textsuperscript{e}\,Thermal-only comparisons of
+\textsuperscript{d}\,\cite{Krishnakumar2026DVPD} refers to ``component libraries'';
+switches are sized from per-width technology parameters and inductors are parallel arrays of a
+target unit inductor. \textsuperscript{e}\,Thermal-only comparisons of
 DVPD integration variants: on- and in-interposer converters~\cite{Choi2024ITherm}; three
 embedded-switch configurations~\cite{Choi2025EmbeddedCooling}. \textsuperscript{f}\,Circuit
 simulation of four other members at 30~A and 500~kHz~\cite{Abdelzaher2025ECTC,
