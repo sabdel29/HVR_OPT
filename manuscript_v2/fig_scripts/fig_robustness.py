@@ -81,7 +81,7 @@ LAYOUT = [
 
 # newer decisions: (label, variant) run for Z1 and Z2 under cooling A, classified by
 # final_closure_classB.py (gate robustness.newer_decisions_A) with the same rule
-NEW_A = [("Die hot-spot power map", "die_hotspot_A"),
+NEW_A = [("Core-heavy die power map", "die_hotspot_A"),
          ("Plate interface follows the warpage", "tim_warp_fb_A")]
 NEWER_GATE = "robustness.newer_decisions_A"
 NEWER_GROUP = "Implemented decoupling, cooling A"
@@ -299,8 +299,11 @@ def cell(ix, iy, st, who=None, note=None, val=None):
     if val is not None:
         txt = (f"{who} {val}" if st == "prod" else f"{val} ?" if st == "pending"
                else f"≈{val}" if st == "withdrawn" else val)
+    # long ranges ("-0.29...-0.24") shrink so that they stay inside the cell
+    n_ch = len(str(txt))
+    fs = (6.5 if n_ch <= 9 else 5.6 if n_ch == 10 else 4.6) if (big or val) else 7.5
     ax.text(x + 0.5, y + 0.5 + (0.0 if (big or val) else 0.02), txt, ha="center",
-            va="center", fontsize=6.5 if (big or val) else 7.5, color=tc,
+            va="center", fontsize=fs, color=tc,
             fontweight="bold" if st == "reversed" else "normal")
 
 
@@ -320,7 +323,7 @@ for (st, who, lab), (lx, lyy) in zip(items, pos):
             fontweight="bold" if who else "normal")
     ax.text(lx + 0.8, lyy + 0.41, lab, ha="left", va="center", fontsize=6.5, color=S.INK2)
 ax.text(xl + 0.15, ly + 3.75, "Numbers: gap Z2 − Z1 (min…max over merged variants);\n"
-        "colored: the ordering reverses toward that architecture.", ha="left", va="center",
+        "colored: the ordering reverses toward that integration.", ha="left", va="center",
         fontsize=6.5, color=S.INK2)
 
 # header
