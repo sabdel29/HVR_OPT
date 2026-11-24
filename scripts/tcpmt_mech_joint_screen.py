@@ -499,6 +499,31 @@ def full_search(key, max_rounds=None):
 
 
 VAL = TR / "robustness_joint_validation"
+#: the kinds of mechanical variant the validation covers (one full search per kind)
+_MECH_CARDS = ("conv_E", "attach_stiff", "attach_uf", "bga_card_local")
+KINDS = (("mounting", lambda v: v["group"].startswith("board")),
+         ("encapsulant class", lambda v: v["name"].startswith("encap_")),
+         ("mechanical card", lambda v: v["name"].startswith(_MECH_CARDS)),
+         ("thermal decision", lambda v: not (v["group"].startswith("board")
+                                             or v["name"].startswith(("encap_",) + _MECH_CARDS))))
+
+
+def pick():
+    """The validation rule: in each kind, the screened variant whose maximum lies DEEPEST among
+    its reference's K worst sites (ties: the largest change against the reference) -- the
+    variant most likely to have its worst site outside the K. Needs the screen's summary."""
+    d = json.loads(OUT.read_text())
+    taken, out = set(), {}
+    for kind, test in KINDS:
+        rows = [(v["rank_in_reference"], abs(v["change_rel"]), key) for key, v in
+                d["variants"].items() if v.get("complete") and key not in taken and test(v)]
+        if rows:
+            r = max(rows)
+            out[kind] = {"key": r[2], "rank_in_reference": r[0], "change_rel_abs": r[1]}
+            taken.add(r[2])
+    (TR / "robustness_joint_validation_picks.json").write_text(json.dumps(
+        {"rule": pick.__doc__.split("\n\n")[0].strip(), "picks": out}, indent=1) + "\n")
+    return out
 
 
 def validate(keys=None):
@@ -702,6 +727,9 @@ def main():
             a[a.index("--groups") + 1].split(",") if "--groups" in a else None)
     elif cmd == "validate":
         validate(keys or None)
+    elif cmd == "pick":
+        for kind, r in pick().items():
+            print(kind, r)
     elif cmd == "summarize":
         s = summarize()
         print(json.dumps({k: s.get(k) for k in ("n_variants", "n_complete", "n_at_last_rank",
