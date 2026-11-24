@@ -648,6 +648,28 @@ def screen():
         n2, same2, rev2, wd2, pend2 = _eps_orderings(g, keys, ("eps:Z1/Z2",))
         m[f"MvScr{tag}ZoneZtwoN"], m[f"MvScr{tag}ZoneZtwoSame"] = str(n2), str(same2)
         m[f"MvScr{tag}ZoneZtwoRev"], m[f"MvScr{tag}ZoneZtwoWd"] = str(rev2), str(wd2)
+    # the verdict of every mapped decision's Z1/Z2 joint ordering against its group's baseline
+    # (preserved / withdrawn / reversed / pending), e.g. MvScrVNewDieHotspotA
+    digit = {str(i): w for i, w in enumerate(("Zero", "One", "Two", "Three", "Four", "Five",
+                                               "Six", "Seven", "Eight", "Nine"))}
+
+    def ctag(name):
+        out = ""
+        for part in name.replace("@", "_").split("_"):
+            part = "".join(digit.get(ch, ch) for ch in part)
+            out += part[:1].upper() + part[1:]
+        return out
+    for gk, gt in (("S0_A", "Map"), ("SDEC_new_A", "New"), ("S0_B", "CoolB"),
+                   ("SDEC_mech_A", "EncA"), ("SDEC_mech_B", "EncB")):
+        for name, r in (g.get(gk) or {}).items():
+            o = (r.get("orderings") or {}).get("eps:Z1/Z2")
+            if not o:
+                continue
+            v, bv = o.get("verdict"), o.get("base_verdict")
+            m[f"MvScrV{gt}{ctag(name)}"] = ("pending" if v == "pending" else "preserved"
+                                            if v == bv else "withdrawn" if v == "unresolved"
+                                            else "reversed")
+            m[f"MvScrG{gt}{ctag(name)}"] = fx(1e3 * (o["variant"][1] - o["variant"][0]), 2)
     # the clamp held through the cycle against the same screws without it (each case)
     eff = []
     for t in TIERS:
