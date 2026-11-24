@@ -215,3 +215,13 @@ add the manifold plate, redo the tier order for the new stack, update the manife
 - Running: the FINAL INTEGRATION agent (regenerate everything; text consistent with the final results; cleanup;
   number audit; clean build) and the LETTER agent (response letter and revision notes against the final paper, xr
   references).
+- 2026-11-24: LETTER DONE (letter 10 pp, notes 3 pp; commits 0d64829..1179cfd; xr refs, macros only). It states openly
+  the gaps not yet closed:
+  - MC7: f_sw fine grid not rerun under the corrected rules; the 25/49 neighbours have no warpage or joint response.
+  - MC8: no measured benchmark (cannot fix); the averaging-band study exists only for the old local model.
+  - MC11: assembly only partly covered (the TCB gaps are stated as requirements).
+  - Mounting: only the clamp was checked against the joint response.
+  - MC15: memory use (sent to the integration agent for S16).
+  Supplement staleness (S7, S10, S16, S20) was also sent to the integration agent.
+  Next: a gap-closing round (fine f_sw grid under the full rules; neighbours' mechanics; band study with v2;
+  larger-board joint response), then a letter update.
