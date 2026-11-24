@@ -302,3 +302,16 @@ add the manifold plate, redo the tier order for the new stack, update the manife
   report".
 - EDITORIAL PASS running (one editor, full read; meta/redundancy/paragraph quality; letters rebuilt), then an
   independent proofread, then report to the user, then page reduction.
+- 2026-11-24/25: EDITORIAL PASS DONE (88c931b..65af132; 24 -> 23 pp). Independent proofread (4a820f6..64bab28).
+  Alignment fixes (7b7396d..9243fc1):
+  - BGA policy "hard";
+  - Table S1 without preprint pointers;
+  - jargon labels fixed;
+  - letters in American spelling.
+  Band-robust BGA: Z1 170/rail (1.976 A nominal, 1.993 A at the band top); Z2 166; Z3 500; every production case and
+  variant passes (f4ce332..dce2f69). Omitted-loss ball current stated in VIII-E (7222ab0..cc3fa00): Z1 2.02/2.08 A at
+  170, needs 174; Z2-A exceeds R_on fit and capacitor class under nominal omitted losses.
+  FINAL VERSION READY FOR AUTHOR REVIEW: paper 23 pp, supplement 21, letter 11, notes 3; all clean builds.
+  - Pending author decision: contributions qualitative vs headline numbers.
+  - Next: page reduction (candidates: Fig. 10 vs Table V; Fig. 2 vs Fig. 1(d); Fig. 1(a)-(c) vs Fig. 5; Table III vs
+    Fig. 7; parts of Fig. 9).
