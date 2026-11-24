@@ -468,7 +468,7 @@ def dse_selection_table():
             r"model, routing from the model of~\cite{Krishnakumar2026DVPD} (electrical only).")
     return ltab(spec, 9 + nf, head, body,
                 r"Converter selected at each regulator count (production converter rules)",
-                "tab:supp-dse", note)
+                "tab:supp-dse", note, sep="1.6pt" if nf else "3pt")
 
 
 # ---------------------------------------------------------------- S-III package model
@@ -2431,7 +2431,7 @@ def variants_table():
                        "found the worst site outside those sites in "
                        + str(sum(1 for x in val.values() if not x.get("max_in_top_k")))
                        + " of them.") if val else ""))
-    return ltab(r"@{}L{4.0cm}lL{0.9cm}L{" + ("8.9" if g0 else "10.7") + "cm}"
+    return ltab(r"@{}L{4.0cm}lL{0.9cm}L{" + ("8.5" if g0 else "10.5") + "cm}"
                 + ("r" if g0 else "") + "@{}", 4 + bool(g0),
                 [r"Variant & Rerun & Int. & What changes" + (r" & Joint" if g0 else "")
                  + r" \\"], body,
