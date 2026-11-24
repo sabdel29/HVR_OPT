@@ -661,6 +661,22 @@ def build(design):
     for v in {k[1] for k in rb}:                 # a variant's local response: the production card
         jl = next(j for j in JOBS if j["id"] == f"robust.local.{v}")
         jl["deps"].append(mech["band"])
+    # gap closing (MC7, MC8, robustness): the count neighbours' joints, the reference-state
+    # critical-joint search, the averaging-band study of the v2 model
+    mech["count"] = count_mech_jobs(alt)
+    mech["s0"] = s0_reference_jobs(prod)
+    mech["band_study"] = job(
+        "mech.band_study", "mech_revision",
+        ["bash", "-c", "set -e; cd {repo}; {python} scripts/tcpmt_mech_band_study.py --run; "
+         "{python} scripts/tcpmt_mech_band_study.py --summarize"],
+        [tr("solder_band_study_v2.json")], deps=[mech["band"]], ncpus=18, workers=18,
+        mem_gb=24, est_h=0.4, prefer="pbs", env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 18},
+        evidence="36 solves: 6 joints x 3 bands x L0 / L2 (campaign_v3 local checks: L0 ~60 s, "
+                 "L2 176-323 s on 2 threads)",
+        validate=[{"file": tr("solder_band_study_v2.json"), "kind": "json",
+                   "nonempty": ["joints", "complete"], "fresh": True}],
+        notes="MC8: the averaging band (side/8, side/6, side/4, as the round-2 study) of the v2 "
+              "local model at the production critical joints, production law at its window")
 
     # ------------------------------------------------------------------ the rest
     rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s, lad, prep,
@@ -942,6 +958,119 @@ def mech_jobs(prod, vfields, lad, prep, class_b):
 
 
 
+def _laws():
+    """(production law, [production law, other laws of the band]) of configs/tcpmt_mech."""
+    import yaml
+    sc = yaml.safe_load((REPO / "configs" / "tcpmt_mech" / "mechanics_revision.yaml")
+                        .read_text())["solder"]
+    p = sc["production_law"]
+    return p, [p] + [x for x in sc["band_laws"] if x != p]
+
+
+def count_mech_jobs(alt):
+    """MC7: the count neighbours m25 and m49 (their Z1 production cases under cooling A and B,
+    design subroots) through the SAME mechanics as the production cases: site kinematics and
+    full-lattice kinematics from their case files and converged fields, the law band's window
+    iteration on their own joints (pass 1), the dominance-bounded maximum over the BGA lattice
+    under every law of the band, and pass 2 at each law's own maximum (re-verified at its
+    final card). TCPMT_LOCAL_ARCHS=Z1: the subroots hold no Z2 / Z3 case."""
+    prod_law, laws = _laws()
+    T = MECH_LOCAL_THREADS
+    out = {}
+    for dk in ("m25", "m49"):
+        sub = f"designs/{dk}/"
+        env0 = {"TCPMT_LOCAL_ARCHS": "Z1"}
+        kins = []
+        for t in TIERS:
+            lab = f"SDEC_{t}_Z1"
+            f = sub + tr(f"site_kinematics/{lab}.json")
+            kins.append(post(f"{dk}.mech.kin.Z1.{t}", "count_study", "tcpmt_mech_production.py",
+                             [f], args=["kin", lab], deps=[alt[(dk, "Z1", t)]], design=dk,
+                             env=env0, est_h=0.02, evidence="reads one case file (seconds)",
+                             validate=[{"file": f, "kind": "json",
+                                        "keys": ["interconnects", "site_coverage"],
+                                        "fresh": True}]))
+        labs = [f"SDEC_{t}_Z1" for t in TIERS]
+        lat = post(f"{dk}.mech.lattice", "count_study", "tcpmt_mech_production.py",
+                   [sub + tr(f"site_kinematics/lattice/{x}.json") for x in labs],
+                   args=["lattice"], deps=kins, design=dk, env=env0, est_h=0.05, mem_gb=8,
+                   evidence="campaign_v3: 11 s per case + the mesh build",
+                   validate=[{"file": sub + tr(f"site_kinematics/lattice/{x}.json"),
+                              "kind": "json", "nonempty": ["sites"], "fresh": True}
+                             for x in labs])
+        band_v = [{"file": sub + tr("solder_law_cards.json"), "kind": "json", "keys": ["laws"]}]
+        w1 = job(f"{dk}.mech.lawband.window", "count_study",
+                 ["scripts/tcpmt_mech_law_band.py", "--run"],
+                 [sub + tr("solder_law_cards.json"), sub + tr("solder_law_band.json")],
+                 deps=kins, ncpus=2 * T, workers=2, mem_gb=8, est_h=0.5, design=dk,
+                 env={**env0, "LOCAL_THREADS": T, "TCPMT_SOLDER_SLOTS": 2},
+                 evidence="2 joints x 3 laws x <= 6 window iterations, ~60 s per solve",
+                 validate=band_v + [{"file": sub + tr("solder_law_band.json"), "kind": "json",
+                                     "nonempty": ["band"], "fresh": True}],
+                 notes="pass 1 on the design's own joints (maximum-du sites)")
+        crits = []
+        for law in laws:
+            is_prod = law == prod_law
+            f = sub + tr("solder_critical_v2.json" if is_prod
+                         else f"solder_critical_v2_{law}.json")
+            la = "" if is_prod else f" --law {law}"
+            crits.append(job(
+                f"{dk}.mech.critical" + ("" if is_prod else f".{law}"), "count_study",
+                ["bash", "-c", "set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run"
+                 + la + "; {python} scripts/tcpmt_mech_critical.py --summarize" + la],
+                [f], deps=[w1, lat], ncpus=16, workers=16, mem_gb=16, est_h=1.0,
+                prefer="pbs", design=dk,
+                env={**env0, "LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 16},
+                evidence="~350 sites over the two cases x ~65 s on one thread",
+                validate=[{"file": f, "kind": "json", "nonempty": ["cases", "all_closed"],
+                           "fresh": True}],
+                notes=f"the maximum response over the BGA lattice under law {law} "
+                      "(dominance-bounded search of tcpmt_mech_critical)"))
+        out[dk] = job(f"{dk}.mech.lawband", "count_study",
+                      ["scripts/tcpmt_mech_law_band.py", "--run"],
+                      [sub + tr("solder_law_cards.json"), sub + tr("solder_law_band.json")],
+                      deps=crits, ncpus=2 * T, workers=2, mem_gb=8, est_h=0.3, design=dk,
+                      prefer="pbs", env={**env0, "LOCAL_THREADS": T, "TCPMT_SOLDER_SLOTS": 2},
+                      validate=band_v + [{"file": sub + tr("solder_law_band.json"),
+                                          "kind": "json", "keys": ["critical_check"],
+                                          "nonempty": ["band", "all_verified"],
+                                          "fresh": True}],
+                      notes="pass 2: every law at its own maximum-response joint")
+    return out
+
+
+def s0_reference_jobs(prod):
+    """The robustness map's mechanics-only variants are solved on the ideal-decoupling
+    reference (S0) fields under cooling A and B; their joint-response screen needs each
+    reference case's worst sites. The same dominance-bounded search as the production state,
+    production law at its converged window (the production card), TCPMT_LOCAL_STATE=S0."""
+    T = MECH_LOCAL_THREADS
+    labs = [f"S0_{t}_{a}" for t in TIERS for a in ARCHS]
+    kin = post("mech.kin_S0", "mech_revision", "tcpmt_mech_production.py",
+               [tr(f"site_kinematics/{x}.json") for x in labs], args=["kin", "--state", "S0"],
+               deps=[prod[(a, "S0", t)] for a in ARCHS for t in TIERS], est_h=0.05,
+               validate=[{"file": tr(f"site_kinematics/{x}.json"), "kind": "json",
+                          "keys": ["interconnects", "site_coverage"], "fresh": True}
+                         for x in labs])
+    lat = post("mech.lattice_S0", "mech_revision", "tcpmt_mech_production.py",
+               [tr(f"site_kinematics/lattice/{x}.json") for x in labs],
+               args=["lattice", "--state", "S0"], deps=[kin], est_h=0.1, mem_gb=8,
+               validate=[{"file": tr(f"site_kinematics/lattice/{x}.json"), "kind": "json",
+                          "nonempty": ["sites"], "fresh": True} for x in labs])
+    f = tr("solder_critical_v2_S0.json")
+    return job("mech.critical_S0", "mech_revision",
+               ["bash", "-c", "set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run; "
+                "{python} scripts/tcpmt_mech_critical.py --summarize"],
+               [f], deps=[lat, "mech.lawband"], ncpus=32, workers=32, mem_gb=32, est_h=1.0,
+               prefer="pbs", backends=("pbs", "local"),
+               env={"TCPMT_LOCAL_STATE": "S0", "LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 32},
+               evidence="~1000 sites over the six reference cases x ~65 s on one thread",
+               validate=[{"file": f, "kind": "json", "nonempty": ["cases", "all_closed"],
+                          "fresh": True}],
+               notes="the maximum response over the BGA lattice of every reference case "
+                     "(S0: ideal decoupling) under the production law at the production card")
+
+
 #: artifacts the pipeline reads that NO job produces (hand-written, ANSYS-only, web or PDF
 #: derived, or from an earlier lineage): `run.py seed` copies them from research/ into the
 #: campaign root (and into every design subroot) before the first job
@@ -1015,6 +1144,19 @@ def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s,
          env={"HVR_DSE_ENGINE": "{scratch}/dse_engine"},
          notes="the screen the design record entries reproduce (configs/design_points.yaml); "
                "reads the sweeps under the root, records the md5 of the campaign's engine")
+    # MC7: the screen on a nested 16x finer f_sw grid under the full rules (private engine copy)
+    job("dse.fsw785_t4", "dse_sweeps",
+        ["scripts/tcpmt_dse_fsw_grid.py", "all", "--npts", "785", "--workers", "27"],
+        [tr("dse_fsw_fine.json"), "tcpmt_revision/dse_j35/data/case_D_f785_t4.csv"],
+        deps=[eng, dse["etm35_p2_t4"]], ncpus=27, workers=27, mem_gb=32, est_h=0.8,
+        prefer="pbs", env={"HVR_DSE_ENGINE": "{scratch}/dse_engine"},
+        evidence="dse.etm35_p2_t4: 3.6-185 s per count at 50 points (both sizing modes); the "
+                 "discrete library alone at 785 points, one process per count",
+        validate=[{"file": tr("dse_fsw_fine.json"), "kind": "json",
+                   "nonempty": ["counts", "optimum_fine"]},
+                  {"file": "tcpmt_revision/dse_j35/data/case_D_f785_t4.csv", "kind": "csv"}],
+        notes="the 50-point grid split 16x (785 points, nested), case D only; the private copy "
+              "first reproduces the committed screen at 50 points (check stage)")
 
     # ------------------------------------------------------------ capacitors
     fcaps = post("derived.flying_caps", "derived", "tcpmt_decap_flying_caps.py",

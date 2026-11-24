@@ -1012,7 +1012,10 @@ AUDIT_OK = {"z2_direct_feed_architecture.json", "pcb_homogenization.json",
             # the committed production k of each design: read and written only by the
             # development step `tcpmt_design_comparison.py commit-k` (never by a campaign job;
             # the campaign reads it through the design record)
-            "decoupling_by_design.json"}
+            "decoupling_by_design.json",
+            # the DSE sweep driver is code, copied (read-only) into a private engine directory
+            # by scripts/tcpmt_dse_fsw_grid.py
+            '"dse_j35" / "sweep_etm.py"'}
 
 
 def cmd_audit_hooks(a):

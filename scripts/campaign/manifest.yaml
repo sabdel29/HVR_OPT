@@ -2249,6 +2249,556 @@ jobs:
     mechanics: true
   evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1_r21.json: et 2875 s + mech 1952 s (2 thr, 144512 el)'
   design: m49
+- id: m25.mech.critical
+  stage: count_study
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run; {python} scripts/tcpmt_mech_critical.py
+    --summarize
+  outputs:
+  - designs/m25/tcpmt_revision/solder_critical_v2.json
+  deps:
+  - m25.mech.lawband.window
+  - m25.mech.lattice
+  ncpus: 16
+  mem_gb: 16.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: designs/m25/tcpmt_revision/solder_critical_v2.json
+    kind: json
+    nonempty:
+    - cases
+    - all_closed
+    fresh: true
+  workers: 16
+  evidence: ~350 sites over the two cases x ~65 s on one thread
+  notes: the maximum response over the BGA lattice under law schubert2003 (dominance-bounded search of
+    tcpmt_mech_critical)
+  design: m25
+- id: m25.mech.critical.xiao_armstrong2005
+  stage: count_study
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run --law xiao_armstrong2005; {python}
+    scripts/tcpmt_mech_critical.py --summarize --law xiao_armstrong2005
+  outputs:
+  - designs/m25/tcpmt_revision/solder_critical_v2_xiao_armstrong2005.json
+  deps:
+  - m25.mech.lawband.window
+  - m25.mech.lattice
+  ncpus: 16
+  mem_gb: 16.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: designs/m25/tcpmt_revision/solder_critical_v2_xiao_armstrong2005.json
+    kind: json
+    nonempty:
+    - cases
+    - all_closed
+    fresh: true
+  workers: 16
+  evidence: ~350 sites over the two cases x ~65 s on one thread
+  notes: the maximum response over the BGA lattice under law xiao_armstrong2005 (dominance-bounded search
+    of tcpmt_mech_critical)
+  design: m25
+- id: m25.mech.critical.xa_measured_norton
+  stage: count_study
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run --law xa_measured_norton; {python}
+    scripts/tcpmt_mech_critical.py --summarize --law xa_measured_norton
+  outputs:
+  - designs/m25/tcpmt_revision/solder_critical_v2_xa_measured_norton.json
+  deps:
+  - m25.mech.lawband.window
+  - m25.mech.lattice
+  ncpus: 16
+  mem_gb: 16.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: designs/m25/tcpmt_revision/solder_critical_v2_xa_measured_norton.json
+    kind: json
+    nonempty:
+    - cases
+    - all_closed
+    fresh: true
+  workers: 16
+  evidence: ~350 sites over the two cases x ~65 s on one thread
+  notes: the maximum response over the BGA lattice under law xa_measured_norton (dominance-bounded search
+    of tcpmt_mech_critical)
+  design: m25
+- id: m49.mech.critical
+  stage: count_study
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run; {python} scripts/tcpmt_mech_critical.py
+    --summarize
+  outputs:
+  - designs/m49/tcpmt_revision/solder_critical_v2.json
+  deps:
+  - m49.mech.lawband.window
+  - m49.mech.lattice
+  ncpus: 16
+  mem_gb: 16.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: designs/m49/tcpmt_revision/solder_critical_v2.json
+    kind: json
+    nonempty:
+    - cases
+    - all_closed
+    fresh: true
+  workers: 16
+  evidence: ~350 sites over the two cases x ~65 s on one thread
+  notes: the maximum response over the BGA lattice under law schubert2003 (dominance-bounded search of
+    tcpmt_mech_critical)
+  design: m49
+- id: m49.mech.critical.xiao_armstrong2005
+  stage: count_study
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run --law xiao_armstrong2005; {python}
+    scripts/tcpmt_mech_critical.py --summarize --law xiao_armstrong2005
+  outputs:
+  - designs/m49/tcpmt_revision/solder_critical_v2_xiao_armstrong2005.json
+  deps:
+  - m49.mech.lawband.window
+  - m49.mech.lattice
+  ncpus: 16
+  mem_gb: 16.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: designs/m49/tcpmt_revision/solder_critical_v2_xiao_armstrong2005.json
+    kind: json
+    nonempty:
+    - cases
+    - all_closed
+    fresh: true
+  workers: 16
+  evidence: ~350 sites over the two cases x ~65 s on one thread
+  notes: the maximum response over the BGA lattice under law xiao_armstrong2005 (dominance-bounded search
+    of tcpmt_mech_critical)
+  design: m49
+- id: m49.mech.critical.xa_measured_norton
+  stage: count_study
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run --law xa_measured_norton; {python}
+    scripts/tcpmt_mech_critical.py --summarize --law xa_measured_norton
+  outputs:
+  - designs/m49/tcpmt_revision/solder_critical_v2_xa_measured_norton.json
+  deps:
+  - m49.mech.lawband.window
+  - m49.mech.lattice
+  ncpus: 16
+  mem_gb: 16.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '16'
+  validate:
+  - file: designs/m49/tcpmt_revision/solder_critical_v2_xa_measured_norton.json
+    kind: json
+    nonempty:
+    - cases
+    - all_closed
+    fresh: true
+  workers: 16
+  evidence: ~350 sites over the two cases x ~65 s on one thread
+  notes: the maximum response over the BGA lattice under law xa_measured_norton (dominance-bounded search
+    of tcpmt_mech_critical)
+  design: m49
+- id: m25.mech.lawband.window
+  stage: count_study
+  argv:
+  - scripts/tcpmt_mech_law_band.py
+  - --run
+  outputs:
+  - designs/m25/tcpmt_revision/solder_law_cards.json
+  - designs/m25/tcpmt_revision/solder_law_band.json
+  deps:
+  - m25.mech.kin.Z1.A
+  - m25.mech.kin.Z1.B
+  ncpus: 4
+  mem_gb: 8.0
+  est_wall_h: 0.5
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+    LOCAL_THREADS: '2'
+    TCPMT_SOLDER_SLOTS: '2'
+  validate:
+  - &id001
+    file: designs/m25/tcpmt_revision/solder_law_cards.json
+    kind: json
+    keys:
+    - laws
+  - file: designs/m25/tcpmt_revision/solder_law_band.json
+    kind: json
+    nonempty:
+    - band
+    fresh: true
+  workers: 2
+  evidence: 2 joints x 3 laws x <= 6 window iterations, ~60 s per solve
+  notes: pass 1 on the design's own joints (maximum-du sites)
+  design: m25
+- id: m49.mech.lawband.window
+  stage: count_study
+  argv:
+  - scripts/tcpmt_mech_law_band.py
+  - --run
+  outputs:
+  - designs/m49/tcpmt_revision/solder_law_cards.json
+  - designs/m49/tcpmt_revision/solder_law_band.json
+  deps:
+  - m49.mech.kin.Z1.A
+  - m49.mech.kin.Z1.B
+  ncpus: 4
+  mem_gb: 8.0
+  est_wall_h: 0.5
+  walltime_h: 2.0
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+    LOCAL_THREADS: '2'
+    TCPMT_SOLDER_SLOTS: '2'
+  validate:
+  - &id002
+    file: designs/m49/tcpmt_revision/solder_law_cards.json
+    kind: json
+    keys:
+    - laws
+  - file: designs/m49/tcpmt_revision/solder_law_band.json
+    kind: json
+    nonempty:
+    - band
+    fresh: true
+  workers: 2
+  evidence: 2 joints x 3 laws x <= 6 window iterations, ~60 s per solve
+  notes: pass 1 on the design's own joints (maximum-du sites)
+  design: m49
+- id: m25.mech.lawband
+  stage: count_study
+  argv:
+  - scripts/tcpmt_mech_law_band.py
+  - --run
+  outputs:
+  - designs/m25/tcpmt_revision/solder_law_cards.json
+  - designs/m25/tcpmt_revision/solder_law_band.json
+  deps:
+  - m25.mech.critical
+  - m25.mech.critical.xiao_armstrong2005
+  - m25.mech.critical.xa_measured_norton
+  ncpus: 4
+  mem_gb: 8.0
+  est_wall_h: 0.3
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+    LOCAL_THREADS: '2'
+    TCPMT_SOLDER_SLOTS: '2'
+  validate:
+  - *id001
+  - file: designs/m25/tcpmt_revision/solder_law_band.json
+    kind: json
+    keys:
+    - critical_check
+    nonempty:
+    - band
+    - all_verified
+    fresh: true
+  workers: 2
+  notes: 'pass 2: every law at its own maximum-response joint'
+  design: m25
+- id: m49.mech.lawband
+  stage: count_study
+  argv:
+  - scripts/tcpmt_mech_law_band.py
+  - --run
+  outputs:
+  - designs/m49/tcpmt_revision/solder_law_cards.json
+  - designs/m49/tcpmt_revision/solder_law_band.json
+  deps:
+  - m49.mech.critical
+  - m49.mech.critical.xiao_armstrong2005
+  - m49.mech.critical.xa_measured_norton
+  ncpus: 4
+  mem_gb: 8.0
+  est_wall_h: 0.3
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+    LOCAL_THREADS: '2'
+    TCPMT_SOLDER_SLOTS: '2'
+  validate:
+  - *id002
+  - file: designs/m49/tcpmt_revision/solder_law_band.json
+    kind: json
+    keys:
+    - critical_check
+    nonempty:
+    - band
+    - all_verified
+    fresh: true
+  workers: 2
+  notes: 'pass 2: every law at its own maximum-response joint'
+  design: m49
+- id: m25.mech.lattice
+  stage: count_study
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - lattice
+  outputs:
+  - designs/m25/tcpmt_revision/site_kinematics/lattice/SDEC_A_Z1.json
+  - designs/m25/tcpmt_revision/site_kinematics/lattice/SDEC_B_Z1.json
+  deps:
+  - m25.mech.kin.Z1.A
+  - m25.mech.kin.Z1.B
+  ncpus: 1
+  mem_gb: 8.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+  validate:
+  - file: designs/m25/tcpmt_revision/site_kinematics/lattice/SDEC_A_Z1.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: designs/m25/tcpmt_revision/site_kinematics/lattice/SDEC_B_Z1.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  evidence: 'campaign_v3: 11 s per case + the mesh build'
+  design: m25
+- id: m49.mech.lattice
+  stage: count_study
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - lattice
+  outputs:
+  - designs/m49/tcpmt_revision/site_kinematics/lattice/SDEC_A_Z1.json
+  - designs/m49/tcpmt_revision/site_kinematics/lattice/SDEC_B_Z1.json
+  deps:
+  - m49.mech.kin.Z1.A
+  - m49.mech.kin.Z1.B
+  ncpus: 1
+  mem_gb: 8.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+  validate:
+  - file: designs/m49/tcpmt_revision/site_kinematics/lattice/SDEC_A_Z1.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: designs/m49/tcpmt_revision/site_kinematics/lattice/SDEC_B_Z1.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  evidence: 'campaign_v3: 11 s per case + the mesh build'
+  design: m49
+- id: m25.mech.kin.Z1.A
+  stage: count_study
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - SDEC_A_Z1
+  outputs:
+  - designs/m25/tcpmt_revision/site_kinematics/SDEC_A_Z1.json
+  deps:
+  - m25.prod.Z1.SDEC.A
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+  validate:
+  - file: designs/m25/tcpmt_revision/site_kinematics/SDEC_A_Z1.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  evidence: reads one case file (seconds)
+  design: m25
+- id: m25.mech.kin.Z1.B
+  stage: count_study
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - SDEC_B_Z1
+  outputs:
+  - designs/m25/tcpmt_revision/site_kinematics/SDEC_B_Z1.json
+  deps:
+  - m25.prod.Z1.SDEC.B
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+  validate:
+  - file: designs/m25/tcpmt_revision/site_kinematics/SDEC_B_Z1.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  evidence: reads one case file (seconds)
+  design: m25
+- id: m49.mech.kin.Z1.A
+  stage: count_study
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - SDEC_A_Z1
+  outputs:
+  - designs/m49/tcpmt_revision/site_kinematics/SDEC_A_Z1.json
+  deps:
+  - m49.prod.Z1.SDEC.A
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+  validate:
+  - file: designs/m49/tcpmt_revision/site_kinematics/SDEC_A_Z1.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  evidence: reads one case file (seconds)
+  design: m49
+- id: m49.mech.kin.Z1.B
+  stage: count_study
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - SDEC_B_Z1
+  outputs:
+  - designs/m49/tcpmt_revision/site_kinematics/SDEC_B_Z1.json
+  deps:
+  - m49.prod.Z1.SDEC.B
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.02
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    TCPMT_LOCAL_ARCHS: Z1
+  validate:
+  - file: designs/m49/tcpmt_revision/site_kinematics/SDEC_B_Z1.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  evidence: reads one case file (seconds)
+  design: m49
 - id: m36thin.prod.Z1.SDEC.A
   stage: thin_cap
   argv:
@@ -6962,6 +7512,41 @@ jobs:
   notes: 'coupon: free (reproduces the case), screws, pinned screws, edge, the 200-N clamp at the screws
     (hot / clamp only) and on a backplate; a 3x board with its ring at the coupon edge temperature or
     at 25 C (bounds), free, screws, clamp'
+- id: mech.critical_S0
+  stage: mech_revision
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_critical.py --run; {python} scripts/tcpmt_mech_critical.py
+    --summarize
+  outputs:
+  - tcpmt_revision/solder_critical_v2_S0.json
+  deps:
+  - mech.lattice_S0
+  - mech.lawband
+  ncpus: 32
+  mem_gb: 32.0
+  est_wall_h: 1.0
+  walltime_h: 3.0
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    TCPMT_LOCAL_STATE: S0
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '32'
+  validate:
+  - file: tcpmt_revision/solder_critical_v2_S0.json
+    kind: json
+    nonempty:
+    - cases
+    - all_closed
+    fresh: true
+  workers: 32
+  evidence: ~1000 sites over the six reference cases x ~65 s on one thread
+  notes: 'the maximum response over the BGA lattice of every reference case (S0: ideal decoupling) under
+    the production law at the production card'
 - id: robust.coolB.Z1
   stage: mech_revision
   argv:
@@ -7053,7 +7638,7 @@ jobs:
     LOCAL_THREADS: '2'
     TCPMT_SOLDER_SLOTS: '6'
   validate:
-  - &id001
+  - &id003
     file: tcpmt_revision/solder_law_cards.json
     kind: json
     keys:
@@ -7557,7 +8142,7 @@ jobs:
     LOCAL_THREADS: '2'
     TCPMT_SOLDER_SLOTS: '6'
   validate:
-  - *id001
+  - *id003
   - file: tcpmt_revision/solder_law_band.json
     kind: json
     keys:
@@ -7782,6 +8367,40 @@ jobs:
     % elements at r21)'
   notes: the case's state hooks and cooling base, the 3x board, E-T then free / screws / clamp mechanics
     (finding 6)
+- id: mech.band_study
+  stage: mech_revision
+  argv:
+  - bash
+  - -c
+  - set -e; cd {repo}; {python} scripts/tcpmt_mech_band_study.py --run; {python} scripts/tcpmt_mech_band_study.py
+    --summarize
+  outputs:
+  - tcpmt_revision/solder_band_study_v2.json
+  deps:
+  - mech.lawband
+  ncpus: 18
+  mem_gb: 24.0
+  est_wall_h: 0.4
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '18'
+  validate:
+  - file: tcpmt_revision/solder_band_study_v2.json
+    kind: json
+    nonempty:
+    - joints
+    - complete
+    fresh: true
+  workers: 18
+  evidence: '36 solves: 6 joints x 3 bands x L0 / L2 (campaign_v3 local checks: L0 ~60 s, L2 176-323 s
+    on 2 threads)'
+  notes: 'MC8: the averaging band (side/8, side/6, side/4, as the round-2 study) of the v2 local model
+    at the production critical joints, production law at its window'
 - id: mech.reflow.Z1.encap_uf_tg
   stage: mech_revision
   argv:
@@ -8516,6 +9135,62 @@ jobs:
     kind: etm
     local: true
   workers: 4
+- id: mech.lattice_S0
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - lattice
+  - --state
+  - S0
+  outputs:
+  - tcpmt_revision/site_kinematics/lattice/S0_A_Z1.json
+  - tcpmt_revision/site_kinematics/lattice/S0_A_Z2.json
+  - tcpmt_revision/site_kinematics/lattice/S0_A_Z3.json
+  - tcpmt_revision/site_kinematics/lattice/S0_B_Z1.json
+  - tcpmt_revision/site_kinematics/lattice/S0_B_Z2.json
+  - tcpmt_revision/site_kinematics/lattice/S0_B_Z3.json
+  deps:
+  - mech.kin_S0
+  ncpus: 1
+  mem_gb: 8.0
+  est_wall_h: 0.1
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/site_kinematics/lattice/S0_A_Z1.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/lattice/S0_A_Z2.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/lattice/S0_A_Z3.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/lattice/S0_B_Z1.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/lattice/S0_B_Z2.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/lattice/S0_B_Z3.json
+    kind: json
+    nonempty:
+    - sites
+    fresh: true
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
 - id: mech.interconnects
   stage: mech_revision
   argv:
@@ -8702,6 +9377,73 @@ jobs:
   validate:
   - file: tcpmt_revision/reflow_warpage.json
     kind: json
+  evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+- id: mech.kin_S0
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_production.py
+  - kin
+  - --state
+  - S0
+  outputs:
+  - tcpmt_revision/site_kinematics/S0_A_Z1.json
+  - tcpmt_revision/site_kinematics/S0_A_Z2.json
+  - tcpmt_revision/site_kinematics/S0_A_Z3.json
+  - tcpmt_revision/site_kinematics/S0_B_Z1.json
+  - tcpmt_revision/site_kinematics/S0_B_Z2.json
+  - tcpmt_revision/site_kinematics/S0_B_Z3.json
+  deps:
+  - prod.Z1.S0.A
+  - prod.Z1.S0.B
+  - prod.Z2.S0.A
+  - prod.Z2.S0.B
+  - prod.Z3.S0.A
+  - prod.Z3.S0.B
+  ncpus: 1
+  mem_gb: 4.0
+  est_wall_h: 0.05
+  walltime_h: 1.0
+  backends:
+  - local
+  - pbs
+  prefer: local
+  validate:
+  - file: tcpmt_revision/site_kinematics/S0_A_Z1.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/S0_A_Z2.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/S0_A_Z3.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/S0_B_Z1.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/S0_B_Z2.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
+  - file: tcpmt_revision/site_kinematics/S0_B_Z3.json
+    kind: json
+    keys:
+    - interconnects
+    - site_coverage
+    fresh: true
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
 - id: mech.kin.Z1.A
   stage: mech_revision
@@ -8977,6 +9719,44 @@ jobs:
   - file: final_closure/reference_pkg_rdl_moose_Z2.json
     kind: json
   evidence: 'FV L3 4x ~20 s + gmsh + MOOSE serial m3 4x ~60 s: ~6 min'
+- id: dse.fsw785_t4
+  stage: dse_sweeps
+  argv:
+  - scripts/tcpmt_dse_fsw_grid.py
+  - all
+  - --npts
+  - '785'
+  - --workers
+  - '27'
+  outputs:
+  - tcpmt_revision/dse_fsw_fine.json
+  - tcpmt_revision/dse_j35/data/case_D_f785_t4.csv
+  deps:
+  - prep.dse_engine
+  - dse.etm35_p2_t4
+  ncpus: 27
+  mem_gb: 32.0
+  est_wall_h: 0.8
+  walltime_h: 2.5
+  backends:
+  - local
+  - pbs
+  prefer: pbs
+  env:
+    HVR_DSE_ENGINE: '{scratch}/dse_engine'
+  validate:
+  - file: tcpmt_revision/dse_fsw_fine.json
+    kind: json
+    nonempty:
+    - counts
+    - optimum_fine
+  - file: tcpmt_revision/dse_j35/data/case_D_f785_t4.csv
+    kind: csv
+  workers: 27
+  evidence: 'dse.etm35_p2_t4: 3.6-185 s per count at 50 points (both sizing modes); the discrete library
+    alone at 785 points, one process per count'
+  notes: the 50-point grid split 16x (785 points, nested), case D only; the private copy first reproduces
+    the committed screen at 50 points (check stage)
 - id: dse.etm35_p2_t4
   stage: dse_sweeps
   argv:
@@ -10645,6 +11425,26 @@ jobs:
   - robust.coolB_local.Z2
   - robust.coolB.Z3
   - robust.coolB_local.Z3
+  - m25.mech.kin.Z1.A
+  - m25.mech.kin.Z1.B
+  - m25.mech.lattice
+  - m25.mech.lawband.window
+  - m25.mech.critical
+  - m25.mech.critical.xiao_armstrong2005
+  - m25.mech.critical.xa_measured_norton
+  - m25.mech.lawband
+  - m49.mech.kin.Z1.A
+  - m49.mech.kin.Z1.B
+  - m49.mech.lattice
+  - m49.mech.lawband.window
+  - m49.mech.critical
+  - m49.mech.critical.xiao_armstrong2005
+  - m49.mech.critical.xa_measured_norton
+  - m49.mech.lawband
+  - mech.kin_S0
+  - mech.lattice_S0
+  - mech.critical_S0
+  - mech.band_study
   - prep.dse_engine
   - dse.etm35
   - dse.etm35_caprule_full
@@ -10652,6 +11452,7 @@ jobs:
   - dse.etm35_p2_t5
   - dse.etm35_p2_tinf
   - derived.dse_phase2_summary
+  - dse.fsw785_t4
   - derived.flying_caps
   - derived.capacitor_evidence
   - derived.direct_feed

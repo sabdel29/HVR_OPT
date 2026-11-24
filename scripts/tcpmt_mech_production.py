@@ -63,6 +63,10 @@ ARCHS = ("Z1", "Z2", "Z3")
 #: (S0, S1: the references, from their own case files; 'round2': the round-2 field cases of
 #: tcpmt_mech_kinematics.CASES, kept to reproduce the merged branch's numbers)
 LOCAL_STATE = os.environ.get("TCPMT_LOCAL_STATE", "SDEC")
+#: the integrations of the local model's state: all three unless TCPMT_LOCAL_ARCHS names a
+#: subset (e.g. "Z1" for the count neighbours m25 / m49, whose design subroots hold only Z1)
+LOCAL_ARCHS = tuple(a for a in os.environ.get("TCPMT_LOCAL_ARCHS", ",".join(ARCHS)).split(",")
+                    if a in ARCHS)
 
 
 def label(state, tier, arch):
@@ -77,7 +81,7 @@ def parse(lab):
 
 def labels(state=None):
     state = state or LOCAL_STATE
-    return [label(state, t, a) for t in TIERS for a in ARCHS]
+    return [label(state, t, a) for t in TIERS for a in ARCHS if a in LOCAL_ARCHS]
 
 
 def case_path(lab):
