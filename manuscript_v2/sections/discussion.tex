@@ -35,13 +35,13 @@ $k_{\mathrm{rms}}$, so the decoupling sets the ball count. At \WrBgaRule~A per b
 arrangement closes. The ball rating is a co-design input, not a final check.
 
 \emph{Let the integration bound the converter's height.} The five-tier converter saves
-\WrFiveAZonedPAbs~W in the embedded regulator, but it protrudes \WrFiveProtrude~\textmu m below the
+\WrFiveAZonedPAbs~W in the embedded regulator, but it protrudes \FrProtrudeTfive~\textmu m below the
 board of the package-backside regulator. A converter meant for several integrations should be
-synthesized under the tightest height among them, here four tiers on a \WrZtwoBoardT-mm board.
+synthesized under the tightest height among them, here four tiers on a \FrBoardMm-mm board.
 
 \emph{Order the tiers by routing loss, then by the heat path.} With a 1-mm capacitor every order
 crosses the capacitor tier, so the vias cannot decide the order and copper posts are needed. A thin
-capacitor lowers the worst aspect ratio from \WrProdAr{} to \WrThinAr{} and changes the loss of Z1
+capacitor lowers the worst aspect ratio from \MthWorstAR{} to \MthThinAR{} and changes the loss of Z1
 and Z2 by at most \WrThinAZonedPAbs~W. The rule assumes device dies with terminals on both faces
 (Section~\ref{sec:limits}).
 
@@ -78,7 +78,7 @@ matched numerical references (Section~\ref{sec:verification}). It is not validat
 system; no fabricated package of this kind exists to measure. Every uncertainty reported is numerical.
 
 \emph{Inductor.} The 1-mm$^2$ variant of the shared-core inductor array of~\cite{Rasheedi2026CoupledInductor}
-is not fabricated. Its 250~nH and 1.6~m$\Omega$ are design targets, not a scaled measurement, so its
+is not fabricated. Its \FrConvIndL~nH and \FrConvIndDcr~m$\Omega$ are design targets, not a scaled measurement, so its
 core loss is bracketed by three flux models (Table~S24).
 
 \emph{Device terminals.} The stack assumes device dies with terminals on both faces. With single-face
@@ -107,11 +107,11 @@ stay resolved (Section~\ref{sec:verification}).
 assumption~\cite{Kuan2015Imax}; at \WrBgaRuleSens~A no evaluated arrangement closes. The harmonic
 port model gives the worst Z1 ball \WrBgaRmsZone~A RMS, above the assumption; that bound ties every
 ball to an ideal board node and does not decide feasibility. The RMS factor $k_{\mathrm{rms}} =
-\BgaKeq$ of the 48-V path was evaluated on the modelled network of \BgaNmodel{} balls per rail; at
+\WrKrms$ of the 48-V path was evaluated on the modelled network of \BgaNmodel{} balls per rail; at
 the adopted \WrBgaNZone{} it is \BgaKeqAtCountZone. The 48-V losses, ball currents and feed results
 are therefore conservative.
 
-\emph{Package idealizations.} The board is a 30-mm coupon, \WrZtwoBoardT~mm thick, with natural
+\emph{Package idealizations.} The board is a 30-mm coupon, \FrBoardMm~mm thick, with natural
 convection beneath under cooling~A. Board size, mounting and clamping, rerun mechanically, change
 the warpage and the ball displacement substantially (Section~\ref{sec:explore-robust}); their effect
 on the joint response was evaluated for the clamp only. The board-backside redistribution assumes equal ball sharing and two-dimensional sheets. The die

@@ -3,12 +3,12 @@
 
 \subsection{Three Integrations of One Regulator}\label{sec:archs}
 The synthesized regulator of Section~\ref{sec:dse} is placed in three integrations
-(Fig.~\ref{fig:sections}). All three hold the same \MthNcells{} cells on a
-$\MthGrid\times\MthGrid$ grid under the 22.36-mm die, each cell \MthCellSide~mm square at a
+(Fig.~\ref{fig:sections}). All three hold the same \FrDseOptM{} cells on a
+$\FrConvGrid\times\FrConvGrid$ grid under the 22.36-mm die, each cell \FrConvCellSide~mm square at a
 \MthCellPitch-mm pitch. They share one converter stack, one tier order and one
-\MthBoardMm-mm board, so they differ in placement only (layer stacks: Table~S4).
+\FrBoardMm-mm board, so they differ in placement only (layer stacks: Table~S4).
 
-In the \emph{embedded} integration (Z1), the \MthStackMm-mm converter sits between a
+In the \emph{embedded} integration (Z1), the \FrDseOptStack-mm converter sits between a
 300-\textmu m silicon power substrate and the die. Its 48-V input crosses the board, the 48-V
 balls of the BGA, a 48-V RDL on the substrate and the TSVs. Its 1-V output reaches the die through a 10-\textmu m output RDL
 and the die pads.
@@ -20,7 +20,7 @@ bonding at that pitch has been demonstrated on organic substrates~\cite{Au2016Cu
 Only the 1-V current crosses the attach and the TSVs. The BGA is a ring of \MthSitesRing{}
 sites around the opening, and its power balls carry the 48-V feed. The feed current runs from
 the board through these balls and a 48-V RDL on the land side of the substrate to the input pads
-of the cells. The lowest face of the converter lies \MthClearZtwo~\textmu m above the underside of
+of the cells. The lowest face of the converter lies \FrFitThirtysix~\textmu m above the underside of
 the board.
 
 In the \emph{board-backside} integration (Z3), the converter is attached to the underside of an
@@ -45,7 +45,7 @@ compared case and the critical joint in all but Z2 under cooling~A.}
 
 \subsection{Converter Stack, Tier Order and Vertical Interconnect}\label{sec:realizability}
 The parts of a cell are packed into at most four tiers, and a tier may mix part classes
-(Section~\ref{sec:dse}). Each part keeps its body footprint and a \MthKeepout-\textmu m keep-out
+(Section~\ref{sec:dse}). Each part keeps its body footprint and a \FrKeepout-\textmu m keep-out
 in a two-dimensional placement. Listed from the 48-V input end, the first tier holds two
 HS dies and both flying capacitors (\MthTierOne~\textmu m). The second holds an HS and an LS die
 (\MthTierTwo~\textmu m), the third an LS die and an inductor
@@ -144,7 +144,7 @@ under the cell grid, a \FeedRZthree-m$\Omega$ loop.
 Every conductor carries the rail assigned to it and the RMS current that flows in it. Switched
 nets inside the cell carry the RMS currents of the converter model, and the 48-V nets carry
 $k_{\mathrm{rms}} I$. The 1-V path carries the RMS cell output current, \MthIoutRatio{} times its
-\MthIcell-A average. A vertical field of vias of radius $r$, liner $t_\ell$ and height $h$
+\FrConvIcell-A average. A vertical field of vias of radius $r$, liner $t_\ell$ and height $h$
 carrying the current $I$ is provisioned at a design current density $J_{\mathrm{d}}$ and resolved
 by its allocated count,
 \begin{equation}

@@ -59,7 +59,7 @@ complete record.
 description. The ledger takes conductor lengths, cross sections and counts from it, and the two FE
 models discretize it into one mesh. Each ledger term names the layer and the cell footprints that
 produce it, and these map to element sets of that mesh. The heat deposited in them equals the
-ledger total to a relative $10^{-6}$. The temperature returned to a term is the mean over the
+ledger total to round-off. The temperature returned to a term is the mean over the
 nodes of the same set. The mechanics reads the converged nodal field on the same mesh. The local
 submodel reads the displacement and temperature of a site of the same ball lattice that the
 ledger provisions.

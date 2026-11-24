@@ -41,7 +41,7 @@ capacitors. The frequency takes 50 logarithmically spaced values from 43~kHz to 
 inductor's rated frequency.
 
 \emph{Voltage stress and derating.} The flying capacitor $C_i$ holds $(N-i)V_{\mathrm{in}}/N$,
-which is 32 and 16~V for $C_1$ and $C_2$ of an N3K3 cell. Every flying capacitor's rating, derated
+which is \FrConvCapVone{} and \FrConvCapVtwo~V for $C_1$ and $C_2$ of an N3K3 cell. Every flying capacitor's rating, derated
 to 80\,\%, must cover its own stress. The top HS switch $S_1$ blocks $V_{\mathrm{in}}/N$, each
 stacked HS switch $\max(N-1,2)\,V_{\mathrm{in}}/N$ and each LS switch $V_{\mathrm{in}}/N$. A switch
 may operate at no more than 90\,\% of its rated drain--source voltage. Node analysis of the SC
@@ -66,7 +66,7 @@ transitions at turn-off are driven by the inductor currents and are lossless.
 
 \emph{Gate drive and footprints.} The HS overlap loss uses the datasheet gate resistance of the HS
 part; the nine parts without one take the median of the others, 0.4~$\Omega$. Each device occupies
-its die outline and each capacitor its body area, 1.28~mm$^2$ for an 0603 part.
+its die outline and each capacitor its body area, \FrConvCapArea~mm$^2$ for an 0603 part.
 
 \emph{Placement and tiers.} Every tier must be placeable. Its parts, rotation allowed, are packed
 without overlap in the square cell of side $(I_{\mathrm{cell}}/J_{\mathrm{t}})^{1/2}$. A
@@ -91,8 +91,8 @@ FrEPC2055DS2025}. Each device is evaluated at the in-cell temperature of its own
 \centering
 \includegraphics[width=\columnwidth]{fig2_converter.pdf}
 \caption{(a) The synthesized cell, N3K3 with $K_A = 2$: a 3:1 SC stage (S$_1$--S$_3$; $C_1$ at
-32~V, $C_2$ at 16~V) feeding three inductor branches of $I_{\mathrm{cell}}/3$. (b) S$_1$ and S$_3$
-conduct in $\phi_1$ and drive $L_1$ and $L_3$ at 16~V; S$_2$ conducts in $\phi_2$ and drives $L_2$;
+\FrConvCapVone~V, $C_2$ at \FrConvCapVtwo~V) feeding three inductor branches of $I_{\mathrm{cell}}/3$.
+(b) S$_1$ and S$_3$ conduct in $\phi_1$ and drive $L_1$ and $L_3$ at $V_{\mathrm{in}}/N$; S$_2$ conducts in $\phi_2$ and drives $L_2$;
 S$_4$--S$_6$ freewheel the undriven inductors ($D = \FrConvDuty$, $f_{\mathrm{sw}} =
 \FrConvFsw$~kHz). The 48-V input current flows only in $\phi_1$, so one cell's input pulse has
 $k_{\mathrm{rms}} = \FrKopen$. $C_{\mathrm{in}}$ is the package input capacitance:
@@ -116,16 +116,16 @@ $J_{\mathrm{t}} = 3.5$~A\,mm$^{-2}$, over \FrDseNcounts{} counts from \FrDseMlo{
 Under the four-tier limit, \FrDseNfeas{} counts admit a member, and \FrDseNmembers{} different
 members are selected among them. From \FrDseInfeasLo{} cells on, no member places within four
 tiers; the limit moves to \FrDseTfiveFeasHi{} cells with five tiers and to \FrDseTinfFeasHi{}
-cells without a tier limit. The minimum lies at $M = \FrDseOptM$: \FrDseOptTopo{} with
-\FrConvHsPart{} HS and \FrConvLsPart{} LS devices at \FrDseOptFsw~kHz, with \FrDseOptLoss~W
+cells without a tier limit. The minimum lies at $M = \FrDseOptM$: \FrConvTopo{} with
+\FrConvHsPart{} HS and \FrConvLsPart{} LS devices at \FrConvFsw~kHz, with \FrDseOptLoss~W
 (\FrDseOptConv~W conversion, \FrDseOptRoute~W routing) in \FrDseOptTiers{} tiers
 \FrDseOptStack~mm tall. At 25\,$^\circ$C with ideal input decoupling, the package ledger of Z1
-returns \PIsoZone~W for this design. It has the same \PconvIso-W conversion loss and
+returns \PIsoZone~W for this design. It has the same \FrDseOptConv-W conversion loss and
 \ProuteIsoZone~W of routing in the explicit package conductors.
 
 The package builder realizes square grids of square cells under the square die, the shape that
 keeps the routing from every cell to its loads short~\cite{Krishnakumar2026DVPD}. The screen's
-optimum is such a grid ($\FrDseOptGrid\times\FrDseOptGrid$) and the best of them. The 16-, 25- and
+optimum is such a grid ($\FrConvGrid\times\FrConvGrid$) and the best of them. The 16-, 25- and
 49-cell grids dissipate \FrDseSqSixteen, \FrDseSqTwentyfive{} and \FrDseSqFortynine~W, and the
 grids of \FrDseSqInfeasList{} cells admit no member.
 
@@ -152,7 +152,7 @@ boundary from (a).}
 
 The tier limit is itself a design decision (Fig.~\ref{fig:dse}b). More tiers admit larger devices
 and more branches in the same cell, so the loss falls as the stack grows. With five tiers the best
-square grid stays at 36 cells, now \FrDseTfiveSqTopo{} at \FrDseTfiveSqFsw~kHz with
+square grid stays at \FrDseTfiveSqM{} cells, now \FrDseTfiveSqTopo{} at \FrDseTfiveSqFsw~kHz with
 \FrDseTfiveSqLoss~W, \FrDseTfiveSqGain~W less, but its stack grows from \FrDseOptStack{} to
 \FrDseTfiveSqStack~mm. The five-tier optimum, $M = \FrDseTfiveOptM$ at \FrDseTfiveOptLoss~W, is not
 a square grid. Without a tier limit the best square grid moves to \FrDseTinfSqM{} cells at
@@ -167,7 +167,7 @@ four-tier design, which fits every integration compared here, is therefore the d
 Section~\ref{sec:explore-codesign} evaluates the five-tier design in full.
 
 \subsection{The Design Point}\label{sec:dse-point}
-At 36 cells the synthesis returns the regulator of Table~\ref{tab:spec} and
+At \FrDseOptM{} cells the synthesis returns the regulator of Table~\ref{tab:spec} and
 Fig.~\ref{fig:converter}. It is \FrConvTopo{} with $K_A = \FrConvKA$ and $\mathbf{B} =
 [\FrConvB]$, so each inductor serves one SC branch, and $D = \FrConvDuty$ at \FrConvFsw~kHz. The
 \FrConvHsPart{} HS switches block \FrConvHsVsone~V ($S_1$) and \FrConvHsVstack~V (stacked), within
@@ -184,7 +184,7 @@ against \FrConvCapVallow~V derated. At their bias and 105\,$^\circ$C, less the t
 \FrConvCapRipple\,\% of the capacitor voltage. Their ESR at \FrConvFsw~kHz is \FrConvCapEsr~m$\Omega$.
 The cell dissipates \FrConvLossCell~W at 25\,$^\circ$C. Conduction accounts for \FrConvCondCell~W,
 of which \FrConvLsCondCell~W is in the LS switches, and switching for \FrConvSwCell~W, of which
-\FrConvCossCell~W is $C_{\mathrm{oss}}$ loss. The 36 cells together lose \FrConvLossSys~W at
+\FrConvCossCell~W is $C_{\mathrm{oss}}$ loss. The \FrDseOptM{} cells together lose \FrDseOptConv~W at
 25\,$^\circ$C.
 
 The parts fill four mixed tiers, \FrDseOptStack~mm tall (Table~\ref{tab:spec}).
@@ -213,7 +213,7 @@ Derating & switches \FrConvSwDerate, capacitors \FrConvCapDerate & input \\
 Stack rules & $\le\FrConvTierMax$ mixed tiers; \FrKeepout-\textmu m keep-out & input \\
 \midrule
 \multicolumn{3}{@{}l}{\emph{Synthesized regulator (outputs; rating / operating stress)}}\\
-Count, grid & \FrConvM, $\FrConvGrid\times\FrConvGrid$; $I_{\mathrm{cell}} = \FrConvIcell$~A & screen \\
+Count, grid & \FrDseOptM, $\FrConvGrid\times\FrConvGrid$; $I_{\mathrm{cell}} = \FrConvIcell$~A & screen \\
 Topology & \FrConvTopo, $K_A = \FrConvKA$, $\mathbf{B} = [\FrConvB]$; $D = \FrConvDuty$;
 \FrConvFsw~kHz & synth. \\
 HS switch ($\times\FrConvN$) & \FrConvHsPart~\cite{EPC2014C_DS2021}: \FrConvHsVmax~V /
