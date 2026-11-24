@@ -168,15 +168,10 @@ and the solder attach of Z3 (\MthZthreeBumps{} bumps per rail and cell) are reso
 lattices as series columns with two-sided constriction. In Z3, \MthPthCell{} plated
 through-holes per rail and cell carry the 1-V current through the board.
 
-The 48-V balls of Z1 and of the ring of Z2 are provisioned by one rule. The current of a ball is
-the largest DC ball current of the solved network, scaled by $k_{\mathrm{rms}}$. The count is the smallest
-legal (mirror-symmetric) count on the 0.8-mm lattice that holds this current to
-\WrBgaRule~A per ball. This target is a design assumption for 0.4-mm SAC305 (Sn3.0Ag0.5Cu)
-balls~\cite{Kuan2015Imax}; a conservative \WrBgaRuleSens-A target is a sensitivity
-(Section~\ref{sec:explore-bga}). The 1-V balls of Z3 are sized by the same target at their DC
-current, and they occupy the sites nearest the cells, a declared placement rule. The power balls
-may occupy at most \MthLimSites~\% of the sites of the package; the rest carry signal and
-auxiliary rails.
+The current of a 48-V ball, in Z1 and in the ring of Z2, is the largest DC ball current of the
+solved network, scaled by $k_{\mathrm{rms}}$. The 1-V balls of Z3 occupy the sites nearest the
+cells, a declared placement rule. Every ball count follows the provisioning rule of
+Section~\ref{sec:feasibility}.
 
 In Z3 the 1-V current of each rail is shared equally by its balls, which cover most of the BGA,
 while the TSV fields that carry it to the die sit only under the cells. The current of every ball
@@ -396,6 +391,14 @@ declared for the solder laws and below the \MthLimSolidus-$^\circ$C solidus;
 (Section~\ref{sec:ledger}), with at most \MthLimSites~\% of the sites carrying power;
 \item a converged operating point.
 \end{itemize}
+The ball counts are provisioned against the same limit. Each 48-V count, of Z1 and of the ring of
+Z2, is the smallest legal (mirror-symmetric) count on the 0.8-mm lattice that meets
+\WrBgaRule~A per ball across the $k_{\mathrm{rms}}$ uncertainty band (\WrKrmsLo--\WrKrmsHi,
+Section~\ref{sec:evaluate-decap}); the 1-V count of Z3 is the smallest that meets it at the DC
+current. The limit is a design assumption for 0.4-mm SAC305 (Sn3.0Ag0.5Cu)
+balls~\cite{Kuan2015Imax}, and a conservative \WrBgaRuleSens-A limit is a sensitivity
+(Section~\ref{sec:explore-bga}). The sites without power carry signal and auxiliary rails.
+
 The via rule is reported but is not a filter: no order meets it, so it becomes a requirement for
 copper posts. The coplanarity at reflow and bonding is reported in the same way, as a manufacturing
 requirement (Section~\ref{sec:compare-assembly}).

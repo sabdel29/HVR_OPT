@@ -90,10 +90,11 @@ from \MthKzTierOneEncap{} to \MthKzTierOne~W\,m$^{-1}$K$^{-1}$ (Section~\ref{sec
 \FrDecapPhases{} interleaved clock phases and a ring of \FrDecapN{} capacitors outside the cell grid,
 $k_{\mathrm{rms}} = \FrKrms$ (Sections~\ref{sec:scenarios} and~\ref{sec:evaluate-decap}).
 \item \textbf{Ball rule.} \BgaTarget~A per 0.4-mm SAC305 ball~\pcite{Kuan2015Imax} on the largest DC
-ball current times $k_{\mathrm{rms}}$, a feasibility limit met at the smallest legal count, with
-\BgaTargetSens~A as a sensitivity. The counts were re-closed at the implemented waveform: \BgaNadoptZone{} 48-V balls per
+ball current times $k_{\mathrm{rms}}$, a feasibility limit; each count is the smallest legal one
+that meets it across the $k_{\mathrm{rms}}$ uncertainty band, and \BgaTargetSens~A is a
+sensitivity. The counts were re-closed at the implemented waveform: \BgaNadoptZone{} 48-V balls per
 rail in Z1, \BgaNadoptZtwo{} in the Z2 ring and \BgaNadoptZthree{} 1-V balls per rail in Z3
-(Sections~\ref{sec:ledger} and~\ref{sec:explore-bga}).
+(Sections~\ref{sec:feasibility} and~\ref{sec:explore-bga}).
 \item \textbf{Full feasibility filter}, now including the processor die (\MthLimDie\degC) and the
 static 1-V drop (\MthLimDrop~mV per rail); a candidate that fails any limit is not ranked
 (Section~\ref{sec:feasibility}).
@@ -698,7 +699,8 @@ that gap in the design and in the card (\MthKzTierOne~W\,m$^{-1}$K$^{-1}$).
 legal count, and an intermediate state used a fallback count of \BgaNmodel{} per rail; the Z2 ring
 carried the same count, \BgaSiteFracModelZtwo\,\% of its sites, beyond the site limit. The nominal
 limit is now \BgaTarget~A~\pcite{Kuan2015Imax}, a feasibility filter, every count is the smallest legal
-one that meets it, and \BgaTargetSens~A is a sensitivity under which no legal arrangement closes
+one that meets it across the $k_{\mathrm{rms}}$ uncertainty band, and \BgaTargetSens~A is a
+sensitivity under which no legal arrangement closes
 (Section~\ref{sec:explore-bga}). The RMS factor $k_{\mathrm{rms}} = \BgaKeq$ was computed on the
 \BgaNmodel-ball network; at the adopted \BgaNadoptZone{} balls the port model gives
 \BgaKeqAtCountZone, so the 48-V losses are slightly conservative.
