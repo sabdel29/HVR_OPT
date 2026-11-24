@@ -119,7 +119,7 @@ def geometry(e):
     cx = sorted((z1.get("cells") or {}).get("centres_x_mm") or [])
     if len(cx) > 1:
         M["MthCellPitch"] = fx(cx[1] - cx[0], 2)
-    M["MthSitesFull"] = str(get(z1, "bga", "sites_legal") or NA)
+    M["MthSitesFull"] = thou(get(z1, "bga", "sites_legal"))
     M["MthSitesRing"] = str(get(z2, "bga", "sites_legal") or NA)
     M["MthCutout"] = fx(z2.get("cutout_mm"), 2)
     M["MthTsvCell"] = thou(get(z1, "tsv", "n_per_cell"))
