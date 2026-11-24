@@ -654,10 +654,9 @@ def compare_table(S, mac):
         v = m(f"BgaIball{ATAG[a]}") if a in ("Z1", "Z2") else NA
         return m(f"BgaPeak{t}{ATAG[a]}") if v == NA else v
 
-    foot_a = (r"\textsuperscript{a}At each case's critical joint, the largest response over "
-              r"the BGA lattice (Section~\ref{sec:mechanics}): local "
-              r"model driven by the full cut-boundary displacement of the global solution, with "
-              r"ramped loads and the self-consistent production solder law (L0 mesh, 4 cycles); "
+    foot_a = (r"\textsuperscript{a}Production solder law at each case's critical joint, the "
+              r"largest response over the BGA lattice (Sections~\ref{sec:mechanics} "
+              r"and~\ref{sec:local}); "
               r"in brackets the lowest and highest response over the solder-law band "
               r"(\MvLawN{} laws, each at its own critical joint), the reported "
               r"uncertainty of the joint response (numerical "
