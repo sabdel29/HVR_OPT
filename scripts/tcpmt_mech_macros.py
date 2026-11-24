@@ -630,6 +630,26 @@ def screen():
     m["MvScrEscShortMax"] = (pct(1.0 - esc["screen_over_full_min"], 0)
                              if esc.get("screen_over_full_min") is not None else NA)
     m["MvScrEscFrac"] = str(int(d["K"]) // 4)
+    # the largest factor by which a full search raised a screened maximum, and the closest
+    # Z1/Z2 ordering (any group, verdict or pending) whose lower side is still a screened value
+    # (a reference's value comes from its own full search): the screen decides an ordering only
+    # where that gap is wider than the factor
+    m["MvScrEscShortFactor"] = (fx(1.0 / esc["screen_over_full_min"], 2)
+                                if esc.get("screen_over_full_min") else NA)
+    gaps = []
+    for gname, per in (d.get("groups") or {}).items():
+        for name, r in per.items():
+            o = (r.get("orderings") or {}).get("eps:Z1/Z2")
+            if not o or None in o["variant"]:
+                continue
+            lo = o["variant_lower"]
+            lv = next((v for v in d["variants"].values() if v["group"] == gname
+                       and v["name"] == name and v["arch"] == lo), None)
+            if lv is not None and not lv.get("searched_in_full"):
+                gaps.append(max(o["variant"]) / min(o["variant"]))
+    m["MvScrGapScreenMin"] = fx(min(gaps), 2) if gaps else NA
+    m["MvScrGapScreenOk"] = yn(bool(gaps) and esc.get("screen_over_full_min") is not None
+                               and min(gaps) > 1.0 / esc["screen_over_full_min"])
     # changes against each variant's reference, per group (in %)
     acc = {}
     for key, v in d["variants"].items():

@@ -270,3 +270,11 @@ add the manifold plate, redo the tier order for the new stack, update the manife
     variants, mech.screen.escalate.{0,1,2}); then mech.screen.summary, regen.sh, text, letter.
     Text drafts for VIII-H, VII-D, IX, X, letter MC13/MC10/MC11 and notes are in the working tree
     (uncommitted until the final macros exist).
+  - 13:45 status: escalation 17 of 26 full searches closed (rank rule 23, gap rule 3; the 4
+    validation searches are reused). Shortfall of the 20-site screen up to a factor 1.51 (larger
+    board, Z2, cooling A). Text now states the factor and the closest Z1/Z2 gap left to the screen
+    (macros MvScrEscShortFactor, MvScrGapScreenMin, MvScrGapScreenOk in tcpmt_mech_macros); the
+    Z3 orderings are no longer counted in the text (they rest on screened lower bounds), only the
+    low-CTE Z2 < Z3 reversal, where Z2 was searched in full. Private preview of the summary:
+    /tmp/tcpmt_build_tools/private_summary.py (writes outside the campaign root; re-run after the
+    last search to check that no new Z1/Z2 ordering falls within 1.5x on a screened lower side).

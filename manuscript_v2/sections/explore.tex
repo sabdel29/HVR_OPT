@@ -133,12 +133,13 @@ displacement. A full critical-joint search for each of the \MvScrNvar{} variants
 cost of Section~\ref{sec:verif-local}. Each variant is therefore first solved at the \MvScrK{}
 worst sites of its reference case's search. When its largest response falls beyond the first
 \MvScrEscFrac{} of them, the worst site may lie outside the \MvScrK, and the variant is searched in
-full. So is the lower side of every Z1--Z2 ordering within a factor of 1.5, so that no verdict of the
-map rests on a screened lower bound. This applied to \MvScrEscN{} variants, mostly on the ring of
-Z2, where many sites respond within a few percent of each other. In the deepest variant of each kind (mounting, encapsulant
-class, mechanical card and thermal decision) the full search found the worst site among the
-\MvScrK{} in \MvScrValInTopK{} of \MvScrValN{} cases, and over all escalated variants the
-\MvScrK{} sites alone fell short by up to \MvScrEscShortMax\,\%.
+full. So is the lower side of every Z1--Z2 ordering within a factor of 1.5. This applied to
+\MvScrEscN{} variants, mostly on the ring of Z2, where many sites respond within a few percent of
+each other. In the deepest variant of each kind (mounting, encapsulant class, mechanical card and
+thermal decision) the full search found the worst site among the \MvScrK{} in \MvScrValInTopK{} of
+\MvScrValN{} cases. Over all escalated variants the full search raised the screened maximum by up
+to a factor of \MvScrEscShortFactor. Every Z1--Z2 ordering left to the screen has a wider gap, at
+least a factor of \MvScrGapScreenMin.
 
 Of the verdicts, \WrRobPreserved{} are preserved, \WrRobWithdrawn{} withdrawn and \WrRobReversed{}
 reversed. The remaining \WrRobPending{} are pending: their \WrRobPendingCases{} variants change the
@@ -153,13 +154,13 @@ the joints.
 
 Under cooling~B, \MvCoolBVariants{} mechanical variants keep \MvCoolBOrderSame{} of
 \MvCoolBOrderN{} orderings of warpage and displacement, with \MvCoolBOrderRev{} resolved reversal,
-and all \MvScrCoolBOrderN{} orderings of the joint responses. In the production state the
+and all \MvScrCoolBZoneZtwoN{} Z1--Z2 orderings of the joint responses. In the production state the
 encapsulant and ball-card variants keep \MvEncOrderSame{} of \MvEncOrderN{} orderings of warpage
 and displacement, and all \MvEncOrderRev{} resolved reversals come from the low-CTE mold compound.
 They change the joint responses by \MvScrEncEpsLo{} to \MvScrEncEpsHi\,\%, most of all when the
-ball layer takes its card from the local solder law, and keep \MvScrEncOrderSame{} of
-\MvScrEncOrderN{} joint orderings. The \MvScrEncOrderRev{} resolved reversals again come from the
-low-CTE mold compound, which puts Z2's joints below Z3's under cooling~A.
+ball layer takes its card from the local solder law, and keep all \MvScrEncZoneZtwoN{} Z1--Z2
+joint orderings. The low-CTE mold compound also puts Z2's joints below Z3's under cooling~A. Z2 was
+searched in full there, so this reversal does not rest on the screen.
 
 Board size, mounting and clamping were rerun mechanically on the converged fields of all six cases
 (Table~S26). They change the warpage and the largest ball displacement by up to
@@ -182,7 +183,8 @@ Z2. Under cooling~B both bounds keep the ordering.
 \caption{Ranking-robustness map, Z1 against Z2. Rows: package decisions rerun on the production
 mesh, grouped by the choice they represent (merged rows give the number of variants). Columns: the
 rankings; the joint column is the joint response $\deps$, each integration's largest response over
-the \MvScrK{} worst sites of its reference case. Each cell gives the gap
+the \MvScrK{} worst sites of its reference case or, where escalated, over a full search. Each cell
+gives the gap
 Z2$-$Z1 (range over merged variants) and whether the baseline ranking of its group is preserved,
 withdrawn ($|D+\beta_D| \le U_{95}(D)$), reversed (colored toward the integration it then favors)
 or pending a mesh ladder of its own. Groups: the ideal-decoupling reference under cooling~A, the
