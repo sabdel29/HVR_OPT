@@ -82,8 +82,9 @@ is numerical.
 
 \emph{Converter.} The loss model is validated on other members of the hybrid family, not on this
 converter, and its $C_{\mathrm{oss}}$ and gate-resistance rules were not part of that validation.
-Its omitted terms add \WrOmitLo--\WrOmitHi~W; at the upper end they exceed Z1's
-on-resistance-fit, capacitor and solder-law limits (Section~\ref{sec:explore-omit}). The 1-mm$^2$
+Its omitted terms add \WrOmitLo--\WrOmitHi~W. The nominal estimate already takes Z2 under
+cooling~A beyond its on-resistance fit and capacitor class; at the upper end the terms also exceed
+Z1's on-resistance-fit, capacitor and solder-law limits (Section~\ref{sec:explore-omit}). The 1-mm$^2$
 variant of the inductor array of~\cite{Rasheedi2026CoupledInductor} is not fabricated. Its
 \FrConvIndL~nH and \FrConvIndDcr~m$\Omega$ are design targets, not a scaled measurement, so its core
 loss is bracketed by three flux models (Table~S23).
@@ -112,7 +113,10 @@ assumption~\cite{Kuan2015Imax}; at \WrBgaRuleSens~A no evaluated arrangement mee
 node, bounds the worst Z1 ball at \WrBgaRmsZone~A RMS, above the assumption; it does not decide
 feasibility. The RMS factor $k_{\mathrm{rms}} = \WrKrms$ of the 48-V path was evaluated on the
 modeled network of \BgaNmodel{} balls per rail; at the adopted \WrBgaNZone{} it is
-\BgaKeqAtCountZone, so the 48-V losses, ball currents and feed results are conservative.
+\BgaKeqAtCountZone, so the 48-V losses, ball currents and feed results are conservative. The
+omitted converter losses raise the input current: to cover either estimate, the rule would need
+\OmitBgaNZone{} balls per rail for Z1 and \OmitBgaNZtwo{} for the ring of Z2
+(Section~\ref{sec:explore-omit}).
 
 \emph{Package and cooling.} The board is a coupon (Section~\ref{sec:thermal}). Board size,
 mounting and clamping change the warpage and the ball displacement substantially, and the joint
