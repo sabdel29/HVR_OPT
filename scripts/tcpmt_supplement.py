@@ -415,12 +415,16 @@ def dse_selection_table():
     fine = J(TR / "dse_fsw_fine.json") or {}
     fc = {int(k): v.get("fine") for k, v in (fine.get("counts") or {}).items()}
     nf = 2 if fc else 0
+    feas_rows = [r for r in rows.values() if dse_feasible(r)]
+    same_passives = (len({dse_passive(r, "inductor") for r in feas_rows}) == 1
+                     and len({dse_passive(r, "capacitor") for r in feas_rows}) == 1)
+    np_ = 0 if same_passives else 2
     body = []
     for m, r in sorted(rows.items()):
         mk = r"$^\ast$" if m == m0 else ""
         if not dse_feasible(r):
             why = prose((r.get("reason") or "no feasible member").replace("architecture", "member"))
-            body.append(rf"{m}{mk} & \multicolumn{{{8 + nf}}}{{l}}{{{why}}} \\")
+            body.append(rf"{m}{mk} & \multicolumn{{{6 + np_ + nf}}}{{l}}{{{why}}} \\")
             continue
         top = f"N{int(float(r['N']))}K{int(float(r['K']))}, $K_A = {int(float(r['K_A']))}$"
         f = fc.get(m) or {}
@@ -429,20 +433,24 @@ def dse_selection_table():
         ftxt = (f" & {f['f_sw_kHz']:.1f} & {f['total_loss_W']:.2f}" + ("" if same else
                                                                      r"$^\dagger$")
                 if f else (" & -- & --" if nf else ""))
-        body.append(f"{m}{mk} & {top} & {tex(r['hs'])} / {tex(r['ls'])} & "
-                    f"{passive_label(dse_passive(r, 'inductor'), lib)} & "
-                    f"{passive_label(dse_passive(r, 'capacitor'), lib)} & "
+        pas = ("" if same_passives else
+               f"{passive_label(dse_passive(r, 'inductor'), lib)} & "
+               f"{passive_label(dse_passive(r, 'capacitor'), lib)} & ")
+        body.append(f"{m}{mk} & {top} & {tex(r['hs'])} / {tex(r['ls'])} & " + pas +
                     f"{float(r['f_sw_Hz']) / 1e3:.1f} & {float(r['conv_loss_total_W']):.2f} & "
                     f"{float(r['routing_loss_W']):.2f} & {float(r['total_loss_W']):.2f}"
                     + ftxt + r" \\")
-    head = [r"$M$ & Topology & HS / LS device & Inductor & Flying capacitor & "
-            r"$f_{\mathrm{sw}}$ & \multicolumn{3}{c}{Loss (W)}"
+    c0 = 5 + np_                                  # first loss column
+    head = [r"$M$ & Topology & HS / LS device & "
+            + ("" if same_passives else r"Inductor & Flying capacitor & ")
+            + r"$f_{\mathrm{sw}}$ & \multicolumn{3}{c}{Loss (W)}"
             + (r" & \multicolumn{2}{c}{" + f"{fine.get('n_grid_points')}" + r"-point grid}"
                if nf else "") + r" \\",
-            r"\cmidrule(l){7-9}" + (r"\cmidrule(l){10-11}" if nf else ""),
-            r" & & & & & (kHz) & Conversion & Routing & Total"
+            rf"\cmidrule(l){{{c0}-{c0 + 2}}}"
+            + (rf"\cmidrule(l){{{c0 + 3}-{c0 + 4}}}" if nf else ""),
+            r" & & & " + ("" if same_passives else "& & ") + r"(kHz) & Conversion & Routing & Total"
             + (r" & $f_{\mathrm{sw}}$ (kHz) & Total (W)" if nf else "") + r" \\"]
-    spec = r"@{}rllllrrrr" + ("rr" if nf else "") + "@{}"
+    spec = r"@{}rll" + ("" if same_passives else "ll") + "rrrr" + ("rr" if nf else "") + "@{}"
     feas = [(float(r["total_loss_W"]), m) for m, r in rows.items() if dse_feasible(r)]
     best = min(feas)[1] if feas else None
     note = (f"Specification: {meta.get('P_load', 1000) / 1e3:g}~kW at {meta.get('V_out', 1):g}~V "
@@ -463,12 +471,17 @@ def dse_selection_table():
                    r"$^\dagger$: another topology or part") + ". ") if nf else "")
             + (rf"Least total loss at $M = {best}$. " if best is not None else "")
             + rf"$^\ast$: the production design ({design_sentence(lib=lib)}). "
-            r"HS/LS: high- and low-side GaN devices; inductor: inductance and DC resistance. "
+            + ((r"Every count selects the inductor "
+                + passive_label(dse_passive(feas_rows[0], "inductor"), lib)
+                + r" and the flying capacitor "
+                + passive_label(dse_passive(feas_rows[0], "capacitor"), lib) + ". ")
+               if same_passives and feas_rows else "")
+            + r"HS/LS: high- and low-side GaN devices; inductor: inductance and DC resistance. "
             r"Losses are for the package of $M$ regulators: conversion from the synthesis loss "
             r"model, routing from the model of~\cite{Krishnakumar2026DVPD} (electrical only).")
-    return ltab(spec, 9 + nf, head, body,
+    return ltab(spec, 7 + np_ + nf, head, body,
                 r"Converter selected at each regulator count (production converter rules)",
-                "tab:supp-dse", note, sep="1.6pt" if nf else "3pt")
+                "tab:supp-dse", note, sep="3pt")
 
 
 # ---------------------------------------------------------------- S-III package model
@@ -2681,9 +2694,9 @@ def assembly_mounting_table():
                 r"at the coupon's edge temperature or at 25\,$^\circ$C (bounds of the ring's "
                 r"temperature); encapsulant classes with their glass transition on the "
                 r"out-of-cell fill.")
-        L += ltab(r"@{}L{5.0cm}" + "r" * len(cols) + "@{}", 1 + len(cols), head, rows,
+        L += ltab(r"@{}L{4.1cm}" + "r" * len(cols) + "@{}", 1 + len(cols), head, rows,
                   "Board, mounting, clamp and material variants on the production fields",
-                  "tab:supp-mounting", note, sep="2.5pt")
+                  "tab:supp-mounting", note, sep="2pt")
     return L
 
 
