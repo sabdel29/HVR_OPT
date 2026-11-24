@@ -1,11 +1,12 @@
 % ============================================================================ VERIFICATION
 \section{Verification, Uncertainty and Cost}\label{sec:verification}
 
-A chain of models has no single accuracy, and checks of different kinds establish different
-things (Table~\ref{tab:verif}; every check: Table~S17). Each reduced model is solved together with a reference on the
-same problem and the same machine (Fig.~\ref{fig:verif}). The discretization of each FE model is
-measured on nested refinement ladders. Model-form choices that no reference can settle are
-carried as alternatives through the whole chain (Section~\ref{sec:explore}).
+A chain of models has no single accuracy, so it is verified by three kinds of check, each of which
+establishes something different (Table~\ref{tab:verif}; every check: Table~S17). Each reduced model
+is solved together with a reference on the same problem and the same machine
+(Fig.~\ref{fig:verif}). The discretization of each FE model is measured on nested refinement
+ladders. Model-form choices that no reference can settle are carried as alternatives through the
+whole chain (Section~\ref{sec:explore}).
 
 \begin{table}[!t]
 \caption{What Each Check Establishes and What It Does Not}
@@ -45,61 +46,53 @@ model on other members of the family & Accuracy at the synthesized point \\
 The direct-current conduction stages are checked against a commercial thermal FE solver (Ansys
 Electronics Desktop, AEDT) through the exact analogy between $\nabla\!\cdot(k\nabla T) = 0$ and $\nabla\!\cdot(\sigma\nabla V) = 0$.
 The single-TSV resistance and the TSV-field and attach homogenizations agree with it within
-\ErrHomogMax\,\%. The series rule for the through-thickness conductivity of an RDL tier
-overstates it by \ErrRdlKz\,\%, because it ignores constriction onto the copper grid. The
-reference tensor therefore replaces the rule in every production result. The board via field
-and the solder attach of Z3 use the same mixing rules as the verified TSV and pillar cards,
-without a separate reference. The voltage-fed networks of the Z1 package and of the Z2 ring
-feed agree with an open-source FE solution~\cite{MOOSE} to \ErrPkgRdlZone{} and
-\MthErrRingNet\,\%. The thermal solver agrees with commercial and open-source FE solutions of
-representative unit cells of the stacks to \ErrThermMax\,\% of the temperature rise.
+\ErrHomogMax\,\%. The series rule for the through-thickness conductivity of an RDL tier, in
+contrast, overstates it by \ErrRdlKz\,\% because it ignores constriction onto the copper grid, so
+the reference tensor replaces the rule in every result. The board via field and the solder attach
+of Z3 use the same mixing rules as the verified TSV and pillar cards, without a separate
+reference. The voltage-fed networks of the Z1 package and of the Z2 ring feed agree with an
+open-source FE solution~\cite{MOOSE} to \ErrPkgRdlZone{} and \MthErrRingNet\,\%, and the thermal
+solver agrees with commercial and open-source FE solutions of representative unit cells to
+\ErrThermMax\,\% of the temperature rise.
 
-The complete Z1 package was solved by the production path and by the MOOSE heat-transfer
-module~\cite{MOOSE} on the identical mesh of \MthFpElems{} hexahedra. The problem used the
-converged heat map of the ideal-decoupling case and a uniform film on the plate face. The two
-solutions agree to \FullPkgErrZone~K at the peak and over the nodal field, the print
-resolution of the production output. This check verifies the assembled solver input and solve;
-the discretization is measured below.
+The complete Z1 package, solved by the production path and by the MOOSE heat-transfer
+module~\cite{MOOSE} on the identical mesh of \MthFpElems{} hexahedra, agrees to
+\FullPkgErrZone~K at the peak and over the nodal field. The problem used the converged heat map
+of the ideal-decoupling case and a uniform film on the plate face. This check verifies the
+assembled solver input and solve; Section~\ref{sec:verif-disc} measures the discretization.
 
 The thermoelastic element reproduces the bimaterial closed form~\cite{Timoshenko1925} to
 \ErrMechClosed\,\% and a commercial structural solution to \ErrMechAedt\,\%. The direct
 structural solver of this CalculiX build~\cite{CalculiX} fails at \MthSolverFailElems{} elements,
 so the production meshes use its iterative solver. On the \MthSolverElems-element base mesh the
 two solvers agree to \MthSolverDu\,\% in $\du$ but only to \MthSolverWarp\,\% in die warpage.
-This solver term is not part of $U_{95}$. Added to both cases of every resolved warpage
-comparison, it leaves \MthSolverHold{} of them resolved.
+This solver term lies outside $U_{95}$; added to both cases of every resolved warpage comparison,
+it leaves \MthSolverHold{} of them resolved.
 
 A conjugate computational fluid dynamics (CFD) solution of one channel half-pitch
-(\MthCfdCells{} cells, constant water properties) checks the plate model at the single-pass flow
-of the CFD model. With the three-wall
-H1 Nusselt number, the correlation is within \MthCfdErr\,\% of the CFD in mean base temperature
-rise and within \MthCfdDpErr\,\% in pressure drop. The flow distribution of the manifold and its
-header losses are not checked by CFD (Section~\ref{sec:discussion}).
-
-The converter loss model is taken from~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS}, where it
-is validated against circuit simulation of other members of the family. It is not
-re-validated at the synthesized point, and its omitted terms are bounded in
-Section~\ref{sec:explore}.
+(\MthCfdCells{} cells, constant water properties) checks the plate model at the single-pass flow.
+With the three-wall H1 Nusselt number, the correlation is within \MthCfdErr\,\% of the CFD in mean
+base temperature rise and within \MthCfdDpErr\,\% in pressure drop.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{fig10_verification.pdf}
-\caption{Matched-reference checks: $|$relative error$|$ of every reduced model, and of the
+\caption{Matched-reference checks: $|$relative error$|$ of each reduced model, and of the
 complete Z1 package (CalculiX against MOOSE on the identical mesh), against its reference on the
-same problem and machine, with the median runtimes of both. The series-rule RDL conductivity
-(open marker) is replaced by the reference tensor in every result; the solver row compares the
-iterative and direct structural solvers. Discretization and the local
-model are assessed in the text and in Table~\ref{tab:uncertainty}.}
+same problem and machine; right: median runtimes of model and reference. Open marker: the
+series-rule RDL conductivity, replaced by the reference tensor in every result; cross: the
+iterative against the direct structural solver in die warpage, a term outside $U_{95}$.
+Discretization and the local model: Sections~\ref{sec:verif-disc} and~\ref{sec:verif-local}.}
 \label{fig:verif}
 \end{figure}
 
-\subsection{Discretization and the Resolution Rule}
+\subsection{Discretization and the Resolution Rule}\label{sec:verif-disc}
 The package mesh is a graded 1.1-mm grid refined by nested splitting, in which every coarse node
-survives. Splitting every in-plane interval in two changed the Z1 peak temperature by
-\MthMeshStepT\,\%, so the production mesh (r21) uses the split grid (Table~S16). Every compared
-case, Z1--Z3 under both coolings in the production state, carries its own ladder of three
-in-plane levels (r11, r21 and r31). The ideal-decoupling references of Z1 and Z2 add a
-through-thickness rung (r12).
+survives; level r$IJ$ splits every in-plane interval into $I$ and every layer into $J$ parts.
+Splitting every in-plane interval in two changed the Z1 peak temperature by \MthMeshStepT\,\%, so
+the production mesh is r21 (Table~S16). Every compared case, Z1--Z3 under both coolings in the
+production state, carries its own ladder of three in-plane levels, r11, r21 and r31. The
+ideal-decoupling references of Z1 and Z2 add a through-thickness rung, r12.
 
 MOOSE solutions of the complete Z1 package on uniformly refined copies of up to
 \MthFpMaxElems~M hexahedra measure the production-mesh error from above. The die is converged to
@@ -122,56 +115,57 @@ $U_{95}(D)$ adds three terms in quadrature to the discretization term: the throu
 split where an r12 rung exists, the fixed-point stop of each case (0.1\,\% of the loss,
 0.25~K) and the matched-reference agreement of the solver (0.13\,\% of a temperature
 difference, 0.43\,\% of a displacement difference). The coverage is about 95\,\%. Model-form
-uncertainty is not part of $U_{95}$: both integrations are rerun under each declared
-alternative, and a resolved ranking that an alternative reverses is conditional on it
-(Section~\ref{sec:explore}).
+uncertainty is not part of $U_{95}$. Section~\ref{sec:explore} evaluates both integrations under
+each declared alternative, and a resolved ranking that an alternative reverses is conditional on
+it.
 
 Of the \MthNcomp{} compared differences in loss, peak temperature, warpage and $\du$
 (Table~\ref{tab:uncertainty}; per-case values: Table~S18), \MthNasym{} have asymptotic ladders,
 \MthNnotasym{} monotone but not asymptotic ones and \MthNosc{} oscillatory ones. The rule resolves
 \MthNresolved{} of them; only the loss of Z3 against Z1 under cooling~B is not resolved. The
 production mesh underestimates every loss, by \MthBiasPLo--\MthBiasPHi~W, and every peak
-temperature, by \MthBiasTLo--\MthBiasTHi~K. Testing each difference on its own ladder matters.
-Under cooling~A, the \GapAZtwo-W loss gap between Z1 and Z2 has $U_{95}(D) = \WrResAZoneZtwoPlossUni$~W,
-whereas the two cases' own $U_{95}$ sum to \MthGapAPlossSum~W.
+temperature, by \MthBiasTLo--\MthBiasTHi~K. Testing each difference on its own ladder matters:
+under cooling~A, the \GapAZtwo-W loss gap between Z1 and Z2 has $U_{95}(D) =
+\WrResAZoneZtwoPlossUni$~W, whereas the two cases' own $U_{95}$ sum to \MthGapAPlossSum~W.
 
 The through-thickness term is measured on the ideal-decoupling references. It moves loss and
 peak temperature by at most \MthTtTZone\,\%, but the die warpage of Z1 by \MthTtWarpZone\,\% and
 its $\du$ by \MthTtDuZone\,\%. The production ladders lack this rung. Adding the relative term of
 the references to every compared case, together with the solver term to every warpage, leaves
 \MthTtHold{} resolved differences resolved; the die warpage of Z3 against Z1 under cooling~B is the
-exception. Heat deposited in the mesh equals the ledger total to round-off (a relative
-$\MthDepositResid$), and heat leaving through the plate and board films equals the deposited heat
-to a relative $\MthEnergyResid$ in every compared case.
+exception.
+
+The coupled solution conserves energy. Heat deposited in the mesh equals the ledger total to
+round-off (a relative $\MthDepositResid$), and heat leaving through the plate and board films
+equals the deposited heat to a relative $\MthEnergyResid$ in every compared case.
 
 \subsection{Local Response and Critical Joint}\label{sec:verif-local}
-The local model is solved at the critical joints of the production state (Tables~S12--S14).
+The local model is verified at the critical joints of the production state (Tables~S12--S14).
 Refining its mesh from L0 to L3 changes the six responses by at most \MvMeshUmax\,\%, and eight
-cycles reproduce the four-cycle responses to the print resolution, so their numerical $U_{95}$ is
-at most \MvMeshUmax\,\%. A 60-s or 900-s dwell changes the responses by \MvDwellSixtyLo{} to
-\MvDwellNineHundredHi\,\%, and a 30-s ramp by at most \MvRampThirtyHi\,\%; neither changes a
-ranking. The averaging core excludes a corner band of \MthBandProdUm~\textmu m. Bands of
-\MthBandUm~\textmu m, at L0 and L2, change the responses by \MthBandLo{} to \MthBandHi\,\% and no
-ordering. The two band laws give \MvRatioXiaoLo--\MvRatioXiaoHi{} and
-\MvRatioMeasLo--\MvRatioMeasHi{} times the response of the production law. Under each law the
-critical joint is the same site, the orderings are \MvEpsOrderA{} under cooling~A and
-\MvEpsOrderB{} under cooling~B, and all \MvEpsResN{} joint-response differences of
-Table~\ref{tab:uncertainty} are resolved.
+cycles leave the four-cycle responses unchanged at the printed precision, so their numerical
+$U_{95}$ is at most \MvMeshUmax\,\%. A 60-s or 900-s dwell changes the responses by
+\MvDwellSixtyLo{} to \MvDwellNineHundredHi\,\%, and a 30-s ramp by at most \MvRampThirtyHi\,\%;
+neither changes a ranking. The averaging core excludes a corner band of
+\MthBandProdUm~\textmu m; bands of \MthBandUm~\textmu m, at L0 and L2, change the responses by
+\MthBandLo{} to \MthBandHi\,\% and no ordering. The two band laws give
+\MvRatioXiaoLo--\MvRatioXiaoHi{} and \MvRatioMeasLo--\MvRatioMeasHi{} times the response of the
+production law, and under each law the critical joint is the same site.
 
-The critical-joint search closed in every case (Table~S13). Of the \MvCritLattice{} lattice sites
-of the six cases, \MvCritSchubSolved{} were solved under the production law and \MvCritSolvedAll{}
-under the three laws, and no unsolved site has a bound above the largest response. The response is not
-monotone in the in-plane displacement and the joint temperature: in
-\num[group-separator={,}]{\MvCritViol} of
-\MvCritPairs{} pairs of sites ordered by $(\Delta u, T_{\mathrm{sj}})$ the dominated site responds
-more, by up to \MvCritViolMax\,\%. In the screening features only \MvCritViolF{} of
-\MvCritPairsF{} ordered pairs reverse by more than 1\,\%, by at most \MvCritRevF\,\%, which sets
-the margin at \MvCritMarginMin--\MvCritMargin\,\%. The joint of largest $\Delta u$, or its mirror
-image within the 1-\% noise of the local model, is the critical joint in every case except those
-of Z2. Under cooling~A the critical joint of Z2 is an inner site of the ring that responds
-\MvCritRatioMax\,\% more than the joint of largest $\Delta u$. Under cooling~B it is the mirror
-corner, which responds \MvCritRatioBZtwo{} times as much because the streamwise coolant breaks the
-symmetry.
+The critical-joint search terminated in every case with no unsolved site bounded above the
+largest response (Table~S13). Of the \MvCritLattice{} lattice sites of the six cases, it solved
+\MvCritSchubSolved{} under the production law and \MvCritSolvedAll{} under the three laws. The
+screening features are needed because the response is not monotone in the in-plane displacement
+and the joint temperature: in \num[group-separator={,}]{\MvCritViol} of \MvCritPairs{} pairs of
+sites ordered by $(\Delta u, T_{\mathrm{sj}})$, the dominated site responds more, by up to
+\MvCritViolMax\,\%. In the screening features only \MvCritViolF{} of \MvCritPairsF{} ordered
+pairs reverse by more than 1\,\%, by at most \MvCritRevF\,\%, which sets the margin at
+\MvCritMarginMin--\MvCritMargin\,\%.
+
+The joint of largest $\Delta u$, or its mirror image within the 1-\% noise of the local model, is
+the critical joint in every case except those of Z2. Under cooling~A, the critical joint of Z2 is
+an inner site of the ring that responds \MvCritRatioMax\,\% more than the joint of largest
+$\Delta u$. Under cooling~B, it is the mirror corner, which responds \MvCritRatioBZtwo{} times as
+much because the streamwise coolant breaks the symmetry.
 
 \input{tab_uncertainty}
 
@@ -179,7 +173,7 @@ symmetry.
 The analytical stages cost microseconds to minutes. A homogenized card takes microseconds
 (Fig.~\ref{fig:verif}), the converter cards of a design \MthCardsSec~s, the tier-order search
 \MthTierOrderMin~min and the \FrDseNcounts-count electrical screen \MthDseMin~min. One coupled
-evaluation on the production mesh, without the local model, takes \MthTotHLo--\MthTotHHi~h on a shared two-socket
+evaluation on the production mesh, without the local model, takes \MthTotHLo--\MthTotHHi~h on a two-socket
 workstation (Intel Xeon Gold 6342; CalculiX~2.23). The electrothermal fixed point takes
 \MthEtMinLo--\MthEtMinHi~min for \MthEtItersLo--\MthEtItersHi{} thermal solves on two threads.
 The structural solve with the all-site search takes \MthMechMinLo--\MthMechMinHi~min on one
@@ -188,5 +182,4 @@ thread, and geometry and meshing take under 2~min. The critical-joint search add
 parallelize over the sites. The per-stage breakdown, mesh sizes, degrees of freedom and peak
 memory are in Table~S16. On the identical package mesh the open-source solver is faster (\FullPkgMooseZone~s
 against \FullPkgCcxZone~s on eight cores), because the production path factors the system with a
-single-threaded direct solver. No end-to-end speedup against another flow is claimed; the
-per-stage comparison is Fig.~\ref{fig:verif}.
+single-threaded direct solver.

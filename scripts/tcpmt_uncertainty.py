@@ -663,6 +663,7 @@ def latex(cases, res, eps, u_t, band=None):
          r"\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}l" + "r" * (ncol - 1)
          + r"@{}}", r"\toprule", head, unit, r"\midrule"]
     last = None
+    any_l = False                      # a row marked L (resolved under the production law only)
     for t, x, y in SHOW:
         if last is not None and t != last:
             L.append(r"\midrule")
@@ -677,6 +678,7 @@ def latex(cases, res, eps, u_t, band=None):
                 mark = "" if e["resolved"] else r"$^{\ast}$"
                 if e["resolved"] and e["both"] is False:
                     mark = r"$^{\mathrm{L}}$"
+                    any_l = True
                 cells.append(f"{_num(e['D'], n)}/{e['U95']:.{n}f}{mark}")
         L.append(f"{t}: {x}\\textminus{{}}{y} & " + " & ".join(cells) + r" \\")
     note = (r"Differences $D$ in " + state + r", printed as $D+\beta_D$/$U_{95}(D)$; the "
@@ -687,11 +689,10 @@ def latex(cases, res, eps, u_t, band=None):
             r"agreement in quadrature ($\approx$95\,\% coverage). Negative: the first-named "
             r"integration is lower. $^{\ast}$Not resolved.")
     if show_eps and band and UNC_STATE == EPS_STATE:
-        note += (r" $\deps$: joint response of the local model (full cut-boundary "
-                 r"displacement, ramped loads) at each case's critical joint, production solder "
+        note += (r" $\deps$: joint response at each case's critical joint, production solder "
                  r"law; $U_{95}(D)$ from the two joints' own numerical uncertainty. Every "
-                 r"resolved $\deps$ sign holds under every law of the solder-law band unless "
-                 r"marked $^{\mathrm{L}}$.")
+                 r"resolved $\deps$ sign holds under every law of the solder-law band"
+                 + (r" unless marked $^{\mathrm{L}}$" if any_l else "") + ".")
     elif show_eps:
         note += (r" $\deps$: stabilized joint response of the ideal-decoupling cases, on which "
                  r"the local model was solved; $U_{95}(D)$ from the two joints' own numerical "
