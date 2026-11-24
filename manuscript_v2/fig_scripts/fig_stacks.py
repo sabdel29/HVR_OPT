@@ -12,8 +12,10 @@ one face). 10-um RDL tiers are drawn as lines (true thickness < line width). Rai
 x: 48 V (red) into the input-end tier of Z1 through its BGA and substrate; the 48-V feed of Z2
 through its BGA ring and the substrate's land side to the cells (dashed: outside the package-
 internal boundary); the 48-V plane pair of the Z3 board (dashed); 1 V (violet) out of the
-output-end tier. The outermost ball row is ringed: the critical joint of every compared case
-is the array corner.
+output-end tier. The top cold plate serves both coolings; the bottom plate of cooling B, beneath
+the cell grid (under the board in Z1, against the converter in Z2 and Z3), is absent under
+cooling A and is drawn faded with a dotted outline and labelled as such, as in Fig. 1. The
+outermost ball row is ringed: it holds the joint of largest displacement in every compared case.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -41,6 +43,20 @@ POST = S.MAT["tsv"]                                              # copper
 
 def Z(z_um):
     return z_um / 1000.0 * VEX
+
+
+PLATE_UM = 400.0                     # drawn thickness of a cold plate (top and bottom)
+
+
+def plate_b(ax, z_face, x_to):
+    """the bottom cold plate of cooling B (absent under cooling A), its top face at z_face:
+    faded fill and dotted outline, the convention of Fig. 1"""
+    z0 = z_face - PLATE_UM
+    ax.add_patch(Rectangle((0, Z(z0)), x_to, Z(z_face) - Z(z0), fc=S.MAT["coldplate"],
+                           ec=S.INK2, lw=0.6, ls=(0, (1, 1.2)), alpha=0.55, zorder=2))
+    for xc in np.arange(0.4, x_to - 0.35, 0.9):
+        ax.add_patch(Rectangle((xc, Z(z_face - 310)), 0.35, Z(z_face - 90) - Z(z_face - 310),
+                               fc="white", ec="none", alpha=0.55, zorder=3))
 
 
 def cells_and_fill(ax, z0, z1, col, fill_to, fill=S.MAT["fill"]):
@@ -152,13 +168,10 @@ def draw(ax, a):
     at = next((l for l in A["layers"] if "attach" in l["roles"]), None)
     if not z1 and at:
         cells_and_fill(ax, at["z0_um"], at["z1_um"], S.MAT["attach"], GRID_HALF)
-    if z3:                                   # the converter's own cold plate underneath
-        zb = min(l["z0_um"] for l in conv)
-        ax.add_patch(Rectangle((0, Z(zb - 400)), GRID_HALF + 0.8, Z(zb) - Z(zb - 400),
-                               fc=S.MAT["coldplate"], ec="none", zorder=2))
-        for xc in np.arange(0.4, GRID_HALF + 0.6, 0.9):
-            ax.add_patch(Rectangle((xc, Z(zb - 310)), 0.35, Z(zb - 90) - Z(zb - 310),
-                                   fc="white", ec="none", zorder=3))
+    # the bottom plate of cooling B beneath the cell grid: under the board in Z1, against the
+    # converter's input end in Z2 (inside the opening) and Z3
+    zb = brd["z0_um"] if z1 else min(l["z0_um"] for l in conv)
+    plate_b(ax, zb, GRID_HALF + 0.8)
     # RDL tiers as lines across the converter footprint
     for l in rdls:
         ax.plot([0, fill_to], [Z(mid(l)), Z(mid(l))], color=S.MAT["rdl"], lw=0.9, zorder=4)
@@ -171,7 +184,7 @@ def draw(ax, a):
         ax.add_patch(Rectangle((0, Z(l["z0_um"])), DIE_HALF, Z(l["z1_um"]) - Z(l["z0_um"]),
                                fc=col, ec="none", zorder=2))
     ztop = L["tim"]["z1_um"]
-    ax.add_patch(Rectangle((0, Z(ztop)), DIE_HALF + 0.8, Z(ztop + 400) - Z(ztop),
+    ax.add_patch(Rectangle((0, Z(ztop)), DIE_HALF + 0.8, Z(ztop + PLATE_UM) - Z(ztop),
                            fc=S.MAT["coldplate"], ec="none", zorder=2))
     for xc in np.arange(0.4, DIE_HALF + 0.6, 0.9):
         ax.add_patch(Rectangle((xc, Z(ztop + 90)), 0.35, Z(ztop + 310) - Z(ztop + 90),
@@ -217,7 +230,7 @@ def draw(ax, a):
         labs.append((mid(at), f"Cu pillar {thick(at):.0f} µm", GRID_HALF))
     if z3 and at:
         labs.append((mid(at), f"solder {thick(at):.0f} µm", GRID_HALF))
-        labs.append((min(l["z0_um"] for l in conv) - 200, "cold plate", GRID_HALF + 0.8))
+    labs.append((zb - 0.5 * PLATE_UM, "cold plate (B only)", GRID_HALF + 0.8))
     tb = thick(brd)
     z_brd = (brd["z0_um"] + 0.15 * tb) if a == "Z2" else mid(brd)
     labs += [(0.5 * (zs0 + zs1), f"Si + TSVs {zs1 - zs0:.0f} µm", HALF),
@@ -242,7 +255,7 @@ def draw(ax, a):
     for yi, i in zip(y, order):
         z, t, xe = labs[i]
         label(ax, z, t, xe, y_text=yi)
-    zlo = min(l["z0_um"] for l in A["layers"]) - (450 if z3 else 50)
+    zlo = min(min(l["z0_um"] for l in A["layers"]), zb - PLATE_UM) - 50
     ax.plot([0, 0], [Z(zlo), Z(ztop + 450)], color=S.MUTED, lw=0.5, ls=(0, (3, 2)))
     ax.set_xlim(-0.3, HALF + 8.4)
     ax.set_ylim(Z(ZMIN), Z(ZTOP))
@@ -268,11 +281,11 @@ TITLE = {"Z1": "Z1 embedded: 48 V crosses the substrate",
 for k, a in enumerate(ARCHS):
     draw(axes[k], a)
     S.panel(axes[k], "abc"[k], TITLE[a], x=0.0, y=1.0)
-# z scale bar (true thickness) under the first panel's stack
+# z scale bar (true thickness) under the first panel's stack and its bottom plate
 ax = axes[0]
-_zb = min(l["z0_um"] for l in G[ARCHS[0]]["layers"])
-ax.plot([-0.2, -0.2], [Z(_zb - 1200), Z(_zb - 200)], color=S.INK, lw=0.8)
-ax.text(0.15, Z(_zb - 700), "1 mm", ha="left", va="center", fontsize=6, color=S.INK,
+_zb = min(l["z0_um"] for l in G[ARCHS[0]]["layers"]) - PLATE_UM
+ax.plot([-0.2, -0.2], [Z(_zb - 1300), Z(_zb - 300)], color=S.INK, lw=0.8)
+ax.text(0.15, Z(_zb - 800), "1 mm", ha="left", va="center", fontsize=6, color=S.INK,
         rotation=90)
 # (the caption carries the drawing conventions; nothing is printed under the panels)
 S.save(fig, "fig3_sections")
