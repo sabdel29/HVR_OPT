@@ -219,8 +219,8 @@ Agreed. The feasibility stage (Section~\ref{sec:feasibility}; every case and lim
 Table~\ref{S:tab:supp-feas}) checks every candidate before ranking: the GaN junction of each device
 tier ($T_{\mathrm{jn}}\le\MthLimGan\,^\circ$C, the in-cell tier maximum plus $R_{\theta\mathrm{JC}}$
 times the device's own dissipation), the on-resistance fit range, the capacitor and inductor classes,
-the dielectric, encapsulant and board glass transitions, the processor die, the solder law's range at
-the hottest joint, the static 1-V drop, the ball current and sites, and convergence. A candidate that
+the dielectric, encapsulant and board glass transitions, the processor die, the range of the solder laws
+at the hottest joint, the static 1-V drop, the ball current and sites, and convergence. A candidate that
 fails is reported, not ranked. Z3 under one top plate reaches $T_{\mathrm{jn}} = \TjAZthree\,^\circ$C
 and also fails its capacitor, inductor, dielectric and encapsulant limits and the static drop.
 Table~\ref{tab:compare} has a feasibility block and a junction row, Fig.~\ref{fig:fields} draws the
@@ -235,7 +235,7 @@ Table~\ref{S:tab:supp-omit}). They add \WrOmitLo--\WrOmitHi~W to Z1 under coolin
 Z1--Z2 comparison moves toward \WrOmitFavorA{} by \WrOmitGapA~W nominally and up to \WrOmitGapAHi~W
 under cooling~A, and toward \WrOmitFavorB{} by up to \WrOmitGapBHi~W under cooling~B. They do consume
 Z1's margins: at the upper estimate Z1 exceeds the on-resistance fit, the capacitor class and the
-solder law. In the count screen the lower and nominal estimates keep the optimum at
+range of the solder laws. In the count screen the lower and nominal estimates keep the optimum at
 $M = \WrOmitDseOptNom$; the upper estimate prefers $M = \WrOmitDseOptHi$, which has no square grid, by
 \WrOmitDseMarginHi~W. Our earlier statement that the omitted terms act alike in every architecture is
 withdrawn.
@@ -554,8 +554,8 @@ the \MthLimSites-\% site limit that is now a check, and leaves \WrBgaLeftZthree{
 \item \emph{Mesh sensitivity and the 3.1-W gap.} Each difference is judged on its own ladder (MC13).
 \item \emph{Fig.~9, panel (e).} Described in the caption.
 \item \emph{S2 ``has no operating point''.} With the corrected plate the S2 state converges
-(Table~\ref{S:tab:supp-scen}); its joint at \TjointZoneStwo\degC{} lies outside the solder law, so it
-fails that limit. ``Infeasible'' now means only that a limit fails.
+(Table~\ref{S:tab:supp-scen}); its joint at \TjointZoneStwo\degC{} lies outside the range of the solder
+laws, so it fails that limit. ``Infeasible'' now means only that a limit fails.
 \end{itemize}
 
 \section*{Section-by-section recommendations}
