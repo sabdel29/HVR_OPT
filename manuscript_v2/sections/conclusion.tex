@@ -3,22 +3,31 @@
 
 This paper asked which integration of distributed vertical regulators a kilowatt processor should
 use once the converter, the package, its cooling and its joints are solved together. The answer
-depends on the coupling and on the cooling the integrations share. The framework returned the cell
-count as an output: $M = \WrProdM$ cells of an \WrProdTopo{} converter in \WrProdTiers{} mixed
-tiers. The count's neighbours, run through the full chain, confirmed it. At a common temperature the
-package-backside regulator leads by \WrIsoGapHiZtwo~W, through routing alone. Under one top cold
-plate the embedded and package-backside regulators come within \GapAZtwo~W inside the package, and the
-backside regulator's 48-V feed adds \PlatFeedAZtwo~W outside it: \WrElecShortA. When the plate does not conform to
-the warped die, only the embedded regulator stays feasible. The board-backside regulator exceeds its
-device ratings under this cooling in any case. A second plate makes the package-backside regulator
-the electrical leader, \GapBZtwo~W and \dTmaxTierBZtwo~K below the embedded one, while the embedded
-regulator keeps the smallest warpage and joint driver. The board-backside regulator stays
-infeasible under both coolings, on its 1-V static drop and its ball sites. The coupled solution also
-returned requirements. The input decoupling must interleave the cells' clocks and add a capacitor
-ring outside the grid. The implemented waveform sets the ball count. The shallowest integration
-bounds the converter's height. The die must be checked against its own power map. The embedded
-design meets every limit, and its binding limits keep margins of \WrRonMarginAZone{} to
-\WrDieMarginAZone~K. A rigid plate interface narrows the smallest to \WrFbAZoneRonMargin~K, while a
-die hot spot or the upper estimate of the omitted converter losses exceeds them. The chain applies
-to any member of the hybrid family, any stack the builder can express and any cooling with a
-declared boundary. Its answers hold together with its stated assumptions.
+depends on the coupling, on the cooling the integrations share and on the boundary of the
+comparison. The framework returned the cell count as an output: $M = \WrProdM$ cells of an
+\WrProdTopo{} converter in \WrProdTiers{} mixed tiers, confirmed by its neighbours through the full
+chain. At a common temperature the package-backside regulator leads by \WrIsoGapHiZtwo~W, through
+routing alone. Under one top cold plate it stays \GapAZtwo~W lower inside the package, but its 48-V
+feed makes the embedded regulator \WrPlatGapA~W lower at the platform. When the plate does not
+conform to the warped die, only the embedded regulator stays feasible; the board-backside regulator
+exceeds its device ratings under this cooling in any case. A second plate makes the
+package-backside regulator the leader, \GapBZtwo~W and \dTmaxTierBZtwo~K below the embedded one and
+with the smallest joint response. The board-backside regulator then matches the embedded one in
+loss but stays infeasible on its 1-V static drop.
+
+The joints do not follow the warpage. The embedded regulator keeps the flattest die under both
+coolings, yet its hot, membrane-loaded corner joints accumulate the most inelastic strain under
+every solder law. In the package-backside integration the joint of largest displacement is not
+even the joint that governs, so the critical joint must be found with the local model over a
+candidate set that bounds the ball lattice.
+
+The coupled solution also returned requirements. The input decoupling must interleave the cells'
+clocks and add a capacitor ring outside the grid. The implemented waveform sets the ball count. The
+shallowest integration bounds the converter's height. The fine-pitch attaches of the embedded and
+package-backside regulators must be bonded across gaps far larger than their allowance. The die
+must be checked against its own power map. The embedded design meets every limit, and its binding
+limits keep margins of \WrRonMarginAZone{} to \WrDieMarginAZone~K. A rigid plate interface narrows
+the smallest to \WrFbAZoneRonMargin~K, while the core-heavy die map or the upper estimate of the
+omitted converter losses exceeds them. The chain applies to any member of the hybrid family, any
+stack the builder can express and any cooling with a declared boundary. Its answers hold together
+with its stated assumptions.
