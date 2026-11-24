@@ -6,21 +6,21 @@ Each rule follows from a result of Sections~\ref{sec:evaluate}--\ref{sec:explore
 the condition stated with it.
 
 \emph{Filter by limits, then rank on the converged state under one cooling solution.} At a common
-temperature the package-backside regulator leads by routing alone. Under one top plate the two
-come within \GapAZtwo~W, less than the backside regulator's feed loss, and the board-backside
-regulator exceeds its device ratings. A placement study that
-holds the converter loss fixed, cools the integrations differently or ranks a candidate that violates
-a limit can therefore reach the wrong answer. The rule holds for any converter whose loss rises with
+temperature the package-backside regulator leads by routing alone. Under one top plate it leads by
+only \GapAZtwo~W inside the package and trails by \WrPlatGapA~W once its feed is charged, and the
+board-backside regulator exceeds its device ratings. A placement study that holds the converter
+loss fixed, cools the integrations differently or ranks a candidate that violates a limit can
+therefore reach the wrong answer. The rule holds for any converter whose loss rises with
 temperature, as an on-resistance-dominated loss does.
 
 \emph{Choose the cooling and its interface with the integration.} A bottom plate is an electrical
 decision for a backside regulator, whose converter touches it: here it is worth \GainBZtwo~W and
-\CoolBZtwo~K. For the embedded regulator it is a mechanical decision. It saves only \GainBZone~W, but
-the die warpage falls from \WarpAZone{} to \WarpBZone~\textmu m. Each plate costs about
-\PumpShaftPlate~W of pumping. The plate interface belongs to the coupled problem as well. Against a
-rigid plate on the free warpage, the package-backside regulator has no feasible operating point under
-one top plate. A thin-substrate integration therefore needs a second plate, a conforming interface or
-a flatness specification.
+\CoolBZtwo~K. For the embedded regulator it saves only \GainBZone~W and mainly flattens the die,
+from \WarpAZone{} to \WarpBZone~\textmu m, while its joint response falls only from \MvEpsAZone{} to
+\MvEpsBZone$\times10^{-3}$ per cycle. Each plate costs about \PumpShaftPlate~W of pumping. The plate
+interface belongs to the coupled problem as well. Against a rigid plate on the free warpage, the
+package-backside regulator has no feasible operating point under one top plate. A thin-substrate
+integration therefore needs a second plate, a conforming interface or a flatness specification.
 
 \emph{Decouple an embedded regulator by interleaving and a ring, not inside the stack.} Capacitance
 that fits in the stack resonates with the package inductance and raises $k_{\mathrm{rms}}$ from
@@ -31,8 +31,8 @@ control. The rule holds while the package loop inductance stays within the evalu
 
 \emph{Size the 48-V balls at the implemented waveform.} The per-ball current is the DC peak times
 $k_{\mathrm{rms}}$, so the decoupling sets the ball count. At \WrBgaRule~A per ball Z1 needs
-\WrBgaNZone{} balls per rail; at 1.5~A no legal arrangement closes. The ball rating is a co-design
-input, not a final check.
+\WrBgaNZone{} balls per rail and the ring of Z2 \WrBgaNZtwo; at \WrBgaRuleSens~A no legal
+arrangement closes. The ball rating is a co-design input, not a final check.
 
 \emph{Let the integration bound the converter's height.} The five-tier converter saves
 \WrFiveAZonedPAbs~W in the embedded regulator, but it protrudes \WrFiveProtrude~\textmu m below the
@@ -41,20 +41,29 @@ synthesized under the tightest height among them, here four tiers on a \WrZtwoBo
 
 \emph{Order the tiers by routing loss, then by the heat path.} With a 1-mm capacitor every order
 crosses the capacitor tier, so the vias cannot decide the order and copper posts are needed. A thin
-capacitor lowers the worst aspect ratio from \WrProdAr{} to \WrThinAr{} and changes the loss by at
-most \WrThinBZthreedPAbs~W. The rule assumes device dies with terminals on both faces
+capacitor lowers the worst aspect ratio from \WrProdAr{} to \WrThinAr{} and changes the loss of Z1
+and Z2 by at most \WrThinAZonedPAbs~W. The rule assumes device dies with terminals on both faces
 (Section~\ref{sec:limits}).
 
-\emph{Do not use temperature as a proxy for joint response.} Under cooling~A the package-backside
-regulator runs \WrdTmaxAZtwo~K hotter at its peak than the embedded one. Its critical joint is
-\WrdTjointAZtwo~K cooler, because the ball ring sits away from the converter. Yet that joint moves
-\WrDuRatioAZtwo{} times as far. The bending of the plate the balls support sets the driver, not
-their temperature.
+\emph{Judge the joints by their own response, not by warpage, displacement or peak temperature.}
+The embedded regulator has the flattest die and the smallest ball displacement under both coolings,
+yet the largest joint response under every solder law. Its corner joints run hottest and carry a
+membrane mismatch that the solder feels, whereas much of the larger displacement of the backside
+integrations is a rigid rotation of the joint. Within one package the joint of largest displacement
+need not govern either: the critical joint of Z2 under cooling~A is an inner site of the ring that
+responds \MvCritRatioMax\,\% more. The critical joint must be found with the local model, on a
+candidate set that bounds the whole ball lattice.
+
+\emph{State assembly warpage as a requirement.} At their bonding temperature the fine-pitch
+attaches of the embedded and package-backside regulators meet gaps that vary by \MvRfTcbZone{} and
+\MvRfTcbZtwo~\textmu m against a declared \MvTcbLim-\textmu m allowance, and a low-CTE mold compound
+does not close them. The operating-point warpage, which favors the embedded regulator, says nothing
+about this; the bonding process or the converter stack must absorb it.
 
 \emph{Check the die against its own power map.} A uniform die load leaves Z1's die
-\WrDieMarginAZone~K below its limit. Concentrating the load in the die's center consumes that margin
-under both coolings. Here only a bottom plate that takes the converter's heat, as cooling~B does for
-Z2, keeps the die within its limit.
+\WrDieMarginAZone~K below its limit. The core-heavy map consumes that margin under both coolings.
+Here only a bottom plate that takes the converter's heat, as cooling~B does for Z2, keeps the die
+within its limit.
 
 \emph{Size the 1-V path of a board-backside regulator before its cooling.} This regulator sends the
 kiloampere 1-V current through the ball field and then sideways in the land side and board planes.
@@ -80,29 +89,38 @@ on this converter. Its omitted terms add \WrOmitLo--\WrOmitHi~W. At the upper en
 cooling-A comparison of Z1 and Z2 by \WrOmitGapAHi~W and exceed Z1's on-resistance-fit, capacitor and
 solder-law limits (Section~\ref{sec:explore-omit}).
 
-\emph{Solder law.} The solder law is calibrated to 125\,$^\circ$C and refitted over the stress window
-the joints visit; its band spans two laws. The local response is an inelastic strain increment for
-ranking, not a life, and it is solved \WrEpsState. The microbump and pillar layers are screened by
-their shear driver only, without a local model.
+\emph{Solder laws.} No law is calibrated for these joints. The production law is published without
+its data window, and the band laws are fitted to another alloy and extrapolated in stress. The
+band spans \MvLawN{} laws, and every ranking holds across them; the absolute response also depends
+on the card of the ball layer (Section~\ref{sec:explore-robust}). The response is an inelastic
+strain increment for ranking, not a life. The microbump and pillar layers are screened by their
+shear driver; their own local responses are reported but not ranked.
 
 \emph{Numerical scope.} The production-state mesh ladders have no through-thickness rung. On the
-ideal-decoupling ladders that term reaches \MthTtWarpZone\,\% of Z1's warpage, and adding it changes
-\MthTtFlips{} of the verdicts. The iterative and direct structural solvers differ by about
-\MthSolverWarp\,\% in die warpage and \MthSolverDu\,\% in $\du$; this term is not part of
-$U_{95}$, and with it added \MthSolverHold{} resolved warpage comparisons stay resolved
-(Section~\ref{sec:verification}).
+ideal-decoupling ladders that term reaches \MthTtWarpZone\,\% of Z1's warpage, and adding it
+withdraws one verdict, the die warpage of Z3 against Z1 under cooling~B. The iterative and direct
+structural solvers differ by about \MthSolverWarp\,\% in die warpage and \MthSolverDu\,\% in $\du$;
+this term is not part of $U_{95}$, and with it added \MthSolverHold{} resolved warpage comparisons
+stay resolved (Section~\ref{sec:verification}).
 
-\emph{Ball rating.} The \WrBgaRule-A per-ball current is a design assumption~\cite{Kuan2015Imax}; at
-1.5~A no evaluated arrangement closes. The harmonic port model gives the worst Z1 ball
-\WrBgaRmsZone~A RMS, above the assumption. That bound ties every ball to an ideal board node and does
-not decide feasibility.
+\emph{Ball rating and input current.} The \WrBgaRule-A per-ball current is a design
+assumption~\cite{Kuan2015Imax}; at \WrBgaRuleSens~A no evaluated arrangement closes. The harmonic
+port model gives the worst Z1 ball \WrBgaRmsZone~A RMS, above the assumption; that bound ties every
+ball to an ideal board node and does not decide feasibility. The RMS factor $k_{\mathrm{rms}} =
+\BgaKeq$ of the 48-V path was evaluated on the modelled network of \BgaNmodel{} balls per rail; at
+the adopted \WrBgaNZone{} it is \BgaKeqAtCountZone. The 48-V losses, ball currents and feed results
+are therefore conservative.
 
 \emph{Package idealizations.} The board is a 30-mm coupon, \WrZtwoBoardT~mm thick, with natural
-convection beneath under cooling~A. A larger or clamped board enters only through the bounding films
-of Fig.~\ref{fig:robust}. The board-backside redistribution assumes equal ball sharing and
-two-dimensional sheets. The die load is uniform unless stated, and the coolant has bulk properties.
-The cold-plate coefficient agrees with conjugate CFD, but the four-zone manifold, with its flow split
-and pressure drop, has no CFD check of its own.
+convection beneath under cooling~A. Board size, mounting and clamping, rerun mechanically, change
+the warpage and the ball displacement substantially (Section~\ref{sec:explore-robust}); their effect
+on the joint response was evaluated for the clamp only. The board-backside redistribution assumes equal ball sharing and two-dimensional sheets. The die
+load is uniform unless stated, and the coolant has bulk properties. The cold-plate coefficient
+agrees with conjugate CFD, but the four-zone manifold, with its flow split and pressure drop, has no
+CFD check of its own.
+
+\emph{Assembly.} The reflow and bonding checks are isothermal, from a stress-free state at
+25\,$^\circ$C, and the bonding allowances are declared, not measured.
 
 \emph{Steady state.} Every result is a steady state of an intact package. No thermal transient is
 solved: the joint cycle ramps between steady states. Load transients, droop, switching ripple beyond
