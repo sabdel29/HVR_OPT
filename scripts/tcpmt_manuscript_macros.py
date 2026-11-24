@@ -655,7 +655,7 @@ def compare_table(S, mac):
         return m(f"BgaPeak{t}{ATAG[a]}") if v == NA else v
 
     foot_a = (r"\textsuperscript{a}At each case's critical joint, the largest response over "
-              r"the BGA lattice (Section~\ref{sec:local}): local "
+              r"the BGA lattice (Section~\ref{sec:mechanics}): local "
               r"model driven by the full cut-boundary displacement of the global solution, with "
               r"ramped loads and the self-consistent production solder law (L0 mesh, 4 cycles); "
               r"in brackets the lowest and highest response over the solder-law band "
@@ -712,7 +712,7 @@ def compare_table(S, mac):
          r"\midrule", r"\multicolumn{7}{@{}l}{\emph{Feasibility}}\\",
          row(r"Component and material ratings", feas("FeasThermal")),
          row(r"Processor die ($\le105\,^\circ$C)", feas("FeasDie")),
-         row(r"Joints within the solder law ($\le125\,^\circ$C)", feas("FeasSolder")),
+         row(r"Joints within the solder-law range ($\le125\,^\circ$C)", feas("FeasSolder")),
          row(r"Balls ($\le2$~A each, $\le75\,\%$ of sites)", feas("FeasBga")),
          row(r"Static drop ($\le30$~mV per rail)", feas("FeasDrop")),
          row(r"\textbf{Ranked} (every limit met)",

@@ -32,7 +32,7 @@ solver tolerance & Solder fatigue \\
 Nested mesh ladder of every compared case & Signed bias and $U_{95}$ of each output and
 difference & Model accuracy \\
 Local mesh family, cycles, dwell, ramp; critical-joint search & Discretization and stabilization;
-the site that governs & Constitutive validity (carried as a band over \MvLawN{} laws) \\
+the site that governs & Constitutive validity (carried as a three-law band) \\
 Fixed point and energy balance & Convergence and conservation of the coupled solution &
 Completeness of the physics \\
 Converter model vs circuit simulation~\cite{Abdelzaher2025ECTC,Abdelzaher2026EPEPS} & The loss
@@ -157,9 +157,10 @@ critical joint is the same site, the orderings are \MvEpsOrderA{} under cooling~
 Table~\ref{tab:uncertainty} are resolved.
 
 The critical-joint search closed in every case (Table~S13). Of the \MvCritLattice{} lattice sites
-of the six cases, \MvCritSites{} were solved under the production law and \MvCritSolvedAll{} under
-the three laws, and no unsolved site has a bound above the largest response. The response is not
-monotone in the in-plane displacement and the joint temperature: in \MvCritViol{} of
+of the six cases, \MvCritSchubSolved{} were solved under the production law and \MvCritSolvedAll{}
+under the three laws, and no unsolved site has a bound above the largest response. The response is not
+monotone in the in-plane displacement and the joint temperature: in
+\num[group-separator={,}]{\MvCritViol} of
 \MvCritPairs{} pairs of sites ordered by $(\Delta u, T_{\mathrm{sj}})$ the dominated site responds
 more, by up to \MvCritViolMax\,\%. In the screening features only \MvCritViolF{} of
 \MvCritPairsF{} ordered pairs reverse by more than 1\,\%, by at most \MvCritRevF\,\%, which sets
