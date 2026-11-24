@@ -6,7 +6,10 @@ represents (identical-outcome parameter sweeps merged, with their count). The cl
 decisions are run on the ideal-decoupling reference (k_rms = 1, cooling A); the group
 "Implemented decoupling, cooling A" holds the decisions run in the production state, and it
 opens with its own production-verdict row, so each group is read against its own baseline.
-Columns: the rankings. Cell state is carried by a glyph AND a fill, never colour alone:
+Columns: the rankings; the joint column is the joint response of each integration, solved at
+the K worst sites of its reference case (tcpmt_mech_joint_screen -> robustness_joint.json; the
+largest ball displacement, the disproven proxy, is no longer a column). Cell state is carried by a
+glyph AND a fill, never colour alone:
   preserved  ·  light neutral          withdrawn ( |D + beta| <= U95 )  ≈  mid neutral
   reversed toward Z1 / Z2  -> that architecture's identity colour with its label
   pending (the variant's mesh differs; its own ladder is needed)  ?
@@ -16,7 +19,9 @@ ONE RULE (scripts/tcpmt_resolution.py): every cell is the verdict final_closure_
 formed with the rule of Table IV, |D + beta_D| > U95(D); this script classifies nothing
 itself. A variant has no ladder of its own: its U is the production pair's, transferred
 provisionally on the identical mesh; a variant on another mesh is PENDING.
-Data: classB_sensitivity_rows.csv (gate rows and robustness.newer_decisions_A rows).
+Data: classB_sensitivity_rows.csv (gate rows and robustness.newer_decisions_A rows),
+robustness_B.json / robustness_mech_SDEC.json (mechanics-only groups), robustness_joint.json
+(the joint column of every group).
 """
 import csv
 from collections import OrderedDict

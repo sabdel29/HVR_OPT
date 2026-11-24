@@ -148,7 +148,8 @@ changes the joint response by at most \MvClampEpsHi\,\%.
 \includegraphics[width=\columnwidth,height=0.84\textheight,keepaspectratio]{fig9_robustness_map.pdf}
 \caption{Ranking-robustness map, Z1 against Z2. Rows: package decisions rerun on the production
 mesh, grouped by the choice they represent (merged rows give the number of variants). Columns: the
-rankings, with the largest ball displacement $\du$ as the joint column. Each cell gives the gap
+rankings; the joint column is the joint response $\deps$, each integration's largest response over
+the \MvScrK{} worst sites of its reference case. Each cell gives the gap
 Z2$-$Z1 (range over merged variants) and whether the baseline ranking of its group is preserved,
 withdrawn ($|D+\beta_D| \le U_{95}(D)$), reversed (colored toward the integration it then favors)
 or pending a mesh ladder of its own. Groups: the ideal-decoupling reference under cooling~A, the
