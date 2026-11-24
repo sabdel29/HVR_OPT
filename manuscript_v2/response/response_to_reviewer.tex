@@ -270,7 +270,8 @@ laws fitted to the measured creep data of~\pcite{Xiao2005SAC} (as tabulated
 in~\pcite{Yuan2023SAC305}; Sn3.9Ag0.6Cu, not SAC305) complete the band. Every joint comparison is
 judged under all \MvLawN. Loads are ramped linearly over 3~s with 300-s dwells. (A)~The laws carry no
 rate-independent hardening, so the response stabilizes at once: the eighth cycle repeats the fourth
-to the printed digit (\MvCycUmax\,\%, Table~\ref{S:tab:supp-localchecks}). (B)~The cycle is a
+to the printed digit (\MvCycUmax\,\%; Section~\ref{sec:verif-local},
+Table~\ref{S:tab:supp-localchecks}). (B)~The cycle is a
 prescribed stand-in for power cycling between off and the operating point: 30-s ramps change the
 response by \MvRampThirtyLo{} to \MvRampThirtyHi\,\%, and 60-s and 900-s dwells by \MvDwellSixtyLo{}
 to \MvDwellSixtyHi{} and \MvDwellNineHundredLo{} to \MvDwellNineHundredHi\,\%; the package transient is
@@ -286,7 +287,7 @@ not part of this revision.
 The reviewer was right. Under the full displacement transfer the response is not monotone in
 $(|\Delta u_{xy}|, T_{\mathrm{sj}})$: \grp{\MvCritViol} of \MvCritPairs{} dominance pairs among the
 solved sites are reversed (Table~\ref{S:tab:supp-critv2}). In Z2 under cooling~A the critical joint
-is a mid-side site of the ring at \MvCritSiteAZtwo~mm, not a corner, and it responds \MvCritRatioAZtwo{}
+is an inner site of the ring at \MvCritSiteAZtwo~mm, not a corner, and it responds \MvCritRatioAZtwo{}
 times as much as the largest-displacement joint; under cooling~B it is the mirror-image corner, at
 \MvCritRatioBZtwo{} times. Our earlier claim that the largest-displacement joint is the critical one
 is withdrawn. The critical joint is now the maximum response over the whole ball lattice, found by a
@@ -295,7 +296,8 @@ $T_{\mathrm{sj}}$) the response is monotone within a stated margin, so a solved 
 it dominates. Every one of the \MvCritLattice{} lattice sites of the \MvCritCases{} compared cases
 whose bound exceeded the maximum found was solved, under each law of the band, until none did
 (\MvCritSolvedAll{} local solutions). The search closes in every case, and every law finds the same
-critical site. Table~\ref{tab:compare} reports these maxima.
+critical site (Sections~\ref{sec:mechanics} and~\ref{sec:verif-local}). Table~\ref{tab:compare}
+reports these maxima.
 
 \rc{MC10}{Document the cold plate, its hydraulics and pumping, and consider a non-uniform die map.}
 Section~\ref{sec:thermal}, Eq.~\eqref{eq:heff} and Table~\ref{S:tab:supp-plate} give the complete
@@ -342,7 +344,8 @@ and~\ref{S:tab:supp-mounting}). At the 245-$^\circ$C reflow peak the unmounted p
 thermocompression bonding the gap non-uniformity of the fine-pitch joint is \MvRfTcbZone{} and
 \MvRfTcbZtwo~\textmu m for Z1 and Z2 against \MvTcbLim~\textmu m, a failure that a low-CTE mold
 compound reduces only to \MvRfTcbEmcZone~\textmu m for Z1 (Z3: \MvRfTcbZthree{} against
-\MvAttLimZthree~\textmu m). Ball provisioning is a feasibility check with at most \MthLimSites\,\% of
+\MvAttLimZthree~\textmu m). Like the via rule, coplanarity is reported as a manufacturing requirement,
+not used as a filter (Section~\ref{sec:feasibility}). Ball provisioning is a feasibility check with at most \MthLimSites\,\% of
 the sites carrying power. At \BgaTarget~A per ball Z1 uses \BgaSitesAdoptZone{} of
 \BgaSitesTotalZone{} sites and the Z2 ring \BgaSitesAdoptZtwo{} of \BgaSitesTotalZtwo. Z3 needs
 \BgaSitesAdoptZthree{} of \BgaSitesTotalZone{} (\BgaSiteFracZthree\,\%) for its 1-V current, on the
@@ -404,10 +407,12 @@ verification matrix, the uncertainty budget, the feasibility limits and every va
 conductivities and the moduli and expansion coefficients of the package are temperature-independent
 as passed to the solvers; the solder card is temperature-dependent, and the resistivities and
 on-resistances follow the temperature through the fixed point. The converter tiers carry unit-cell
-cards with their copper posts (Section~\ref{sec:thermal}). One coupled evaluation takes
-\MthTotHLo--\MthTotHHi~h on a two-socket workstation: \MthEtMinLo--\MthEtMinHi~min for the
-electrothermal fixed point and \MthMechMinLo--\MthMechMinHi~min for the structural solve with the
-all-site displacement search (Section~\ref{sec:verification}).
+cards with their copper posts (Section~\ref{sec:thermal}). One coupled evaluation without the local
+model takes \MthTotHLo--\MthTotHHi~h on a two-socket workstation: \MthEtMinLo--\MthEtMinHi~min for
+the electrothermal fixed point and \MthMechMinLo--\MthMechMinHi~min for the structural solve with
+the all-site displacement search. The critical-joint search adds \MvCritSolvedAll{} independent local
+solves over the six cases and three laws, which parallelize over the sites
+(Section~\ref{sec:verification}).
 
 \rc{MC16}{System boundaries and the external feed must be treated consistently; show a real feed and
 report platform-inclusive loss.}
