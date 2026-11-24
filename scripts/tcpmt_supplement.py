@@ -2121,8 +2121,8 @@ def feasibility_table():
         return placeholder("feasibility stage", "feasibility.json")
     lim = f["limits"]
     labels = feas_labels(f)
-    # the per-ball current under the policy in force (tcpmt_feasibility: a filter, or a stated
-    # requirement on the package that is reported, not filtered on)
+    # the per-ball current under the policy in force (tcpmt_feasibility: a filter -- the
+    # default -- or a stated requirement on the package that is reported, not filtered on)
     if (f.get("bga_policy") or {}).get("in_force") == "requirement":
         sens = lim.get("bga_A_per_ball_sensitivity")
         bga = (r"the current of every power ball at the case's waveform a stated requirement on "
@@ -2130,8 +2130,8 @@ def feasibility_table():
                + (f", {sens:.1f}~A as sensitivity" if sens is not None else "")
                + "), reported, not a filter")
     else:
-        bga = (r"every power ball $\le" + f"{lim['bga_A_per_ball']:.1f}" + r"$~A at the case's "
-               r"waveform")
+        bga = (r"every power ball $\le" + f"{lim['bga_A_per_ball']:g}" + r"$~A at the case's "
+               r"waveform and the integration's ball count")
 
     def v(x, d=1):
         return "--" if x is None else f"{x:.{d}f}"

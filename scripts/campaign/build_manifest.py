@@ -42,8 +42,8 @@ stage take) and records Z1's worst-ball RMS of the port model as an idealized bo
 change of each production case's BGA feed terms (coupled_effect). The per-ball check reads the
 production cases' own 48-V current, so the production cases on another count are re-run after
 the re-closure and the re-closure confirms the count (a second pass; README 4c). The
-feasibility stage applies the same target per TCPMT_BGA_POLICY ('requirement' by default,
-'hard' a filter; both policies' verdicts are stored).
+feasibility stage applies the same limit per TCPMT_BGA_POLICY ('hard' by default, a filter;
+'requirement' reports it without filtering; both policies' verdicts are stored).
 Paths in `outputs` are relative to the campaign results root (= the stand-in for research/);
 `@fields/` is $HVR_FIELDS of the campaign.
 """

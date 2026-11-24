@@ -26,7 +26,7 @@ LIMITS (declared, with sources; LIMITS below)
                       chain recorded it, else the die layer of the converged field
   solder law          the hottest joint of the all-site search <= 125 C (the calibrated range of
                       the SAC305 law; the critical joint is reported too); solidus 217 C
-  BGA provisioning    (a) the PEAK PER-BALL CURRENT against the 2-A target (1.5 A a
+  BGA provisioning    (a) the PEAK PER-BALL CURRENT against the 2-A limit (1.5 A a
                       sensitivity) at the case's own waveform: the solved per-ball peak fraction
                       of the package network at the case's ball count x the case's 48-V RMS
                       current (the DC peak x k rule, ONE rule for every integration; Z1, Z2's
@@ -34,14 +34,14 @@ LIMITS (declared, with sources; LIMITS below)
                       ones, final_closure_pkg_network.ADOPT_RULE) and, for Z1 in the
                       production state, the worst-ball RMS of the harmonic port model (scaled
                       to the case's 48-V current) reported as an idealized bound, not the
-                      verdict; Z3's 1-V balls at DC with equal sharing. BGA_POLICY decides how it enters
-                      (review round 3; the authors decide): "hard" = a filter (fails the
-                      candidate), "requirement" (default) = a stated requirement on the package,
-                      reported but not a filter. Every record carries its verdict under BOTH
-                      policies and the rankings are stored for both (apply_bga_policy applies
-                      either to a stored feasibility.json without rerunning). (b) at least 25 %
-                      of the package's own ball sites left for signal and auxiliary nets
-                      (always a filter)
+                      verdict; Z3's 1-V balls at DC with equal sharing. BGA_POLICY decides how it
+                      enters: "hard" (default; the authors adopted 2 A per ball as the nominal
+                      limit) = a filter (fails the candidate), "requirement" = a stated
+                      requirement on the package, reported but not a filter. Every record carries
+                      its verdict under BOTH policies and the rankings are stored for both
+                      (apply_bga_policy applies either to a stored feasibility.json without
+                      rerunning). (b) at least 25 % of the package's own ball sites left for
+                      signal and auxiliary nets (always a filter)
   static IR drop      per-rail MAXIMUM static drop of the 1-V path <= 30 mV (tcpmt_ir_drop)
   operating point     the E-T fixed point (and, for the interface feedback, the feedback
                       iteration) converged; a run-away has no operating point
@@ -87,20 +87,22 @@ LIMITS = {"gan_Tj_C": 150.0, "ron_fit_max_C": 125.0, "mlcc_C": 125.0, "inductor_
           "bga_A_per_ball": 2.0, "bga_A_per_ball_sensitivity": 1.5,
           "bga_power_site_fraction_max": 0.75,
           "ir_drop_mV_per_rail": 30.0}
-#: REVIEW ROUND 3 -- the per-ball target is 2 A (published design assumption: Kuan et al., IEEE
+#: REVIEW ROUND 3 -- the per-ball limit is 2 A (published design assumption: Kuan et al., IEEE
 #: ASQED 2015, doi:10.1109/ACQED.2015.7274009), with 1.5 A as a conservative sensitivity. The
 #: 48-V ball counts are the re-closure's ADOPTED ones (the authors' decision of 2026-11-22: per
-#: architecture the smallest legal count meeting the target within the site budget,
-#: final_closure_pkg_network.ADOPT_RULE). How the target enters the stage (both evaluated on
+#: architecture the smallest legal count meeting the limit within the site budget,
+#: final_closure_pkg_network.ADOPT_RULE). How the limit enters the stage (both evaluated on
 #: every record, so post-processing applies either without reruns):
 #:   hard          the per-ball check is a FILTER: a case above 2 A per ball is infeasible
+#:                 (DEFAULT: the authors adopted 2 A per ball as the nominal limit, 1.5 A as a
+#:                 sensitivity)
 #:   requirement   the per-ball check is a STATED REQUIREMENT on the package (the current each
-#:                 ball must carry), reported beside the verdict, not a filter (DEFAULT)
+#:                 ball must carry), reported beside the verdict, not a filter
 BGA_POLICIES = {"hard": "the per-ball check is a filter: above 2 A per ball the candidate is "
                         "infeasible",
                 "requirement": "the per-ball check is a stated requirement on the package (the "
                                "current each ball must carry), reported, not a filter"}
-BGA_POLICY = os.environ.get("TCPMT_BGA_POLICY", "requirement")
+BGA_POLICY = os.environ.get("TCPMT_BGA_POLICY", "hard")
 if BGA_POLICY not in BGA_POLICIES:
     raise SystemExit(f"TCPMT_BGA_POLICY={BGA_POLICY!r}: not one of {sorted(BGA_POLICIES)}")
 #: the checks the policy switches (everything else is always a filter)

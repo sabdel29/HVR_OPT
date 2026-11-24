@@ -718,20 +718,20 @@ Z3, A, ideal & 179.6 & 177.1 & 178.7 & 170.6 & 177.6 & 177.6 & 88.7 & 104.8 & 54
 Z1, B, ideal & 108.3 & 107.6 & 107.5 & 103.5 & 107.4 & 106.8 & 86.8 & 105.8 & 17.2 & none \\
 Z2, B, ideal & 63.6 & 75.2 & 52.8 & 74.6 & 75.9 & 75.9 & 77.0 & 74.7 & 15.6 & none \\
 Z3, B, ideal & 62.4 & 73.0 & 52.0 & 72.4 & 73.0 & 72.6 & 78.0 & 76.6 & 46.2 & static drop \\
-Z1, A, bare & 117.5 & 114.4 & 116.6 & 108.6 & 119.2 & 119.2 & 88.2 & 119.2 & 17.5 & none \\
-Z2, A, bare & 119.4 & 117.2 & 118.5 & 111.6 & 117.6 & 117.4 & 86.1 & 86.4 & 17.9 & none \\
+Z1, A, bare & 117.5 & 114.4 & 116.6 & 108.6 & 119.2 & 119.2 & 88.2 & 119.2 & 17.5 & ball current \\
+Z2, A, bare & 119.4 & 117.2 & 118.5 & 111.6 & 117.6 & 117.4 & 86.1 & 86.4 & 17.9 & ball current \\
 Z3, A, bare & 181.0 & 178.4 & 180.0 & 171.9 & 178.9 & 178.9 & 88.9 & 105.2 & 55.0 & build-up $T_g$, encapsulant $T_g$, GaN $T_{\mathrm{jn}}$ (HS), GaN $T_{\mathrm{jn}}$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range \\
-Z1, B, bare & 112.5 & 111.0 & 111.6 & 106.0 & 111.6 & 111.2 & 87.5 & 110.9 & 17.4 & none \\
-Z2, B, bare & 63.7 & 75.3 & 52.9 & 74.7 & 76.0 & 76.0 & 77.1 & 74.7 & 15.7 & none \\
+Z1, B, bare & 112.5 & 111.0 & 111.6 & 106.0 & 111.6 & 111.2 & 87.5 & 110.9 & 17.4 & ball current \\
+Z2, B, bare & 63.7 & 75.3 & 52.9 & 74.7 & 76.0 & 76.0 & 77.1 & 74.7 & 15.7 & ball current \\
 Z3, B, bare & 62.6 & 73.2 & 52.1 & 72.6 & 73.2 & 72.8 & 78.0 & 76.7 & 46.2 & static drop \\
 \midrule
 \multicolumn{11}{@{}l}{\emph{Every case and variant of the study (a candidate that fails any limit is not ranked)}} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: base case, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z1, bare: base case, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z1, ratio pulse: base case, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{capacitors, $R_{DS(on)}$ fit range, solder law} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, bare: base case, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball current} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, ratio pulse: base case, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball current, capacitors, $R_{DS(on)}$ fit range, solder law} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z2, ideal: base case, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, bare: base case, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, ratio pulse: base case, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, bare: base case, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball current} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, ratio pulse: base case, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball current} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: BGA layer from the local solder card} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: BGA layer from the local solder card, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: PCB copper coverage 25\,\%} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
@@ -749,7 +749,7 @@ Z3, B, bare & 62.6 & 73.2 & 52.1 & 72.6 & 73.2 & 72.8 & 78.0 & 76.7 & 46.2 & sta
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: Converter $E$ 80~GPa, CTE 10, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: Converter $E$ 80~GPa, CTE 4} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: Converter $E$ 80~GPa, CTE 4, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: Converter-tier $k\times0.1$} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{board $T_g$, build-up $T_g$, encapsulant $T_g$, GaN $T_{\mathrm{jn}}$ (HS), GaN $T_{\mathrm{jn}}$ (LS), inductor, capacitors, $R_{DS(on)}$ fit range, solder law} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: Converter-tier $k\times0.1$} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{board $T_g$, build-up $T_g$, encapsulant $T_g$, GaN $T_{\mathrm{jn}}$ (HS), GaN $T_{\mathrm{jn}}$ (LS), inductor, capacitors, $R_{DS(on)}$ fit range, solder law, solder solidus} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: Copper posts, lower bound} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: Copper posts, upper bound} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: Low-CTE mold compound} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
@@ -765,7 +765,7 @@ Z3, B, bare & 62.6 & 73.2 & 52.1 & 72.6 & 73.2 & 72.8 & 78.0 & 76.7 & 46.2 & sta
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: TSV field reduced} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: TSV field minimal} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, ideal: Z1 bottom plate via TIM} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z1, bare: Z1 bottom plate via TIM} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, bare: Z1 bottom plate via TIM} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball current} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: BGA layer from the local solder card} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: BGA layer from the local solder card, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Core-heavy die power map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{processor die} \\
@@ -776,11 +776,11 @@ Z3, B, bare & 62.6 & 73.2 & 52.1 & 72.6 & 73.2 & 72.8 & 78.0 & 76.7 & 46.2 & sta
 \multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Mold compound without $T_g$, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Underfill-class encapsulant} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Underfill-class encapsulant, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Cold-plate coefficient with the caloric resistance, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Cold-plate coefficient with the caloric resistance, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Cold-plate coefficient with the caloric resistance, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball current} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Cold-plate coefficient with the caloric resistance, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball current} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Implemented input decoupling, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Implemented input decoupling, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Interface warpage feedback, cooling~A} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Interface warpage feedback, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball current} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z1, implemented: Interface warpage feedback, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z2, ideal: Attach dense, real lattice} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z2, ideal: Attach at 34-\textmu m pitch} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
@@ -834,7 +834,7 @@ Z3, B, bare & 62.6 & 73.2 & 52.1 & 72.6 & 73.2 & 72.8 & 78.0 & 76.7 & 46.2 & sta
 \multicolumn{6}{@{}L{7.0cm}}{Z2, ideal: TSV field minimal} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z2, ideal: Z2 bottom plate, no TIM} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z2, ideal: Z2 bottom plate via TIM} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
-\multicolumn{6}{@{}L{7.0cm}}{Z2, bare: Z2 bottom plate via TIM} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
+\multicolumn{6}{@{}L{7.0cm}}{Z2, bare: Z2 bottom plate via TIM} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{ball current} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z2, implemented: BGA layer from the local solder card} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z2, implemented: BGA layer from the local solder card, cooling~B} & \multicolumn{2}{l}{feasible} & \multicolumn{3}{L{4.8cm}}{--} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z2, implemented: Core-heavy die power map, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{processor die, inductor, capacitors, $R_{DS(on)}$ fit range} \\
@@ -886,7 +886,7 @@ Z3, B, bare & 62.6 & 73.2 & 52.1 & 72.6 & 73.2 & 72.8 & 78.0 & 76.7 & 46.2 & sta
 \multicolumn{6}{@{}L{7.0cm}}{Z3, implemented: Interface warpage feedback, cooling~A} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{board $T_g$, build-up $T_g$, processor die, encapsulant $T_g$, GaN $T_{\mathrm{jn}}$ (HS), GaN $T_{\mathrm{jn}}$ (LS), inductor, static drop, capacitors, $R_{DS(on)}$ fit range, solder law} \\
 \multicolumn{6}{@{}L{7.0cm}}{Z3, implemented: Interface warpage feedback, cooling~B} & \multicolumn{2}{l}{infeasible} & \multicolumn{3}{L{4.8cm}}{static drop} \\
 \end{longtable}
-\nopagebreak\noindent Maximum temperatures ($^\circ$C) of the converged fields; GaN junction per device tier: the tier maximum in the cells plus $R_{\theta\mathrm{JC}}$ at the device's own dissipation; joint: the hottest joint of the all-site search; drop: per-rail maximum static drop of the 1-V path. Limits: GaN $T_{\mathrm{jn}}\le150$; $R_{DS(on)}$ temperature fit $\le125$; X7R/X7S/X7T capacitors $\le125$; inductor $\le125$; build-up dielectric and encapsulant $T_g\approx150$; board $T_g\approx170$; processor die $\le105$; solder law calibrated $\le125$, solidus 217; the current of every power ball at the case's waveform a stated requirement on the package (target 2.0~A, 1.5~A as sensitivity), reported, not a filter, with at least 25\,\% of the ball sites left for signals; static drop $\le30$~mV per rail. Cases: integration, cooling (A: top plate; B: top plate and bottom plate, the bottom one behind a 50-\textmu m TIM) and input state when not the production state (implemented decoupling): ideal, ideal decoupling; bare, bare decoupling; ratio pulse, a square pulse at the overall conversion ratio; Z3 always with the coupled land-side redistribution. A check that fails only on the whole-field bound is unresolved; such a candidate is not ranked either.\par
+\nopagebreak\noindent Maximum temperatures ($^\circ$C) of the converged fields; GaN junction per device tier: the tier maximum in the cells plus $R_{\theta\mathrm{JC}}$ at the device's own dissipation; joint: the hottest joint of the all-site search; drop: per-rail maximum static drop of the 1-V path. Limits: GaN $T_{\mathrm{jn}}\le150$; $R_{DS(on)}$ temperature fit $\le125$; X7R/X7S/X7T capacitors $\le125$; inductor $\le125$; build-up dielectric and encapsulant $T_g\approx150$; board $T_g\approx170$; processor die $\le105$; solder law calibrated $\le125$, solidus 217; every power ball $\le2$~A at the case's waveform and the integration's ball count, with at least 25\,\% of the ball sites left for signals; static drop $\le30$~mV per rail. Cases: integration, cooling (A: top plate; B: top plate and bottom plate, the bottom one behind a 50-\textmu m TIM) and input state when not the production state (implemented decoupling): ideal, ideal decoupling; bare, bare decoupling; ratio pulse, a square pulse at the overall conversion ratio; Z3 always with the coupled land-side redistribution. A check that fails only on the whole-field bound is unresolved; such a candidate is not ranked either.\par
 \endgroup
 \medskip
 

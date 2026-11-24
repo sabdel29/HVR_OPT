@@ -730,7 +730,8 @@ def compare_table(S, mac):
          r"decoupling ($k_{\mathrm{rms}}=\WrKrms$); cooling~A: one top cold plate; cooling~B: top "
          r"and bottom plates. Loss is inside the package-internal boundary unless stated; "
          r"$\pm U$: numerical uncertainty at about 95\,\% coverage (Table~\ref{tab:uncertainty}). "
-         r"A candidate that fails any limit of the feasibility block is not ranked. " + foot_a +
+         r"A candidate that fails any limit of the feasibility block, including the per-ball "
+         r"current, is not ranked. " + foot_a +
          r"\textsuperscript{b}Sum of the series maxima of one rail at 1000~A: vertical "
          r"conductors, the cell output plane and, for Z3, the land side and board planes. "
          r"\textsuperscript{c}48-V balls of the ring feed, of the \MthSitesRing{} sites around "

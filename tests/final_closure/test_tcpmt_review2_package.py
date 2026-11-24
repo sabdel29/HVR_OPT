@@ -222,14 +222,14 @@ def test_z3_cooling_b_is_not_ranked():
 
 # ------------------------------------------------------------------ review round 3: BGA policy
 def test_bga_policy_switch_applies_without_rerun():
-    """The 1.5-A per-ball target is a filter under BGA_POLICY 'hard' and a stated requirement
-    under 'requirement' (the default until the authors decide); every record carries its
-    verdict under both, so a stored document is re-read under either (apply_bga_policy), and
-    the site budget stays a filter under both."""
+    """The per-ball limit is a filter under BGA_POLICY 'hard' (the default: the authors adopted
+    2 A per ball as the nominal limit) and a stated requirement under 'requirement'; every
+    record carries its verdict under both, so a stored document is re-read under either
+    (apply_bga_policy), and the site budget stays a filter under both."""
     import tcpmt_feasibility as F
     assert set(F.BGA_POLICIES) == {"hard", "requirement"}
     if not os.environ.get("TCPMT_BGA_POLICY"):
-        assert F.BGA_POLICY == "requirement"
+        assert F.BGA_POLICY == "hard"
     checks = {"die": {"ok": True}, "bga_sites": {"ok": True},
               "bga_current": {"ok": False, "value": 2.2, "limit": 1.5}}
     assert F.verdict_under(checks, "hard") == {"verdict": "infeasible",

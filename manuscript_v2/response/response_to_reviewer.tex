@@ -90,8 +90,8 @@ from \MthKzTierOneEncap{} to \MthKzTierOne~W\,m$^{-1}$K$^{-1}$ (Section~\ref{sec
 \FrDecapPhases{} interleaved clock phases and a ring of \FrDecapN{} capacitors outside the cell grid,
 $k_{\mathrm{rms}} = \FrKrms$ (Sections~\ref{sec:scenarios} and~\ref{sec:evaluate-decap}).
 \item \textbf{Ball rule.} \BgaTarget~A per 0.4-mm SAC305 ball~\pcite{Kuan2015Imax} on the largest DC
-ball current times $k_{\mathrm{rms}}$, at the smallest legal count, with \BgaTargetSens~A as a
-sensitivity. The counts were re-closed at the implemented waveform: \BgaNadoptZone{} 48-V balls per
+ball current times $k_{\mathrm{rms}}$, a feasibility limit met at the smallest legal count, with
+\BgaTargetSens~A as a sensitivity. The counts were re-closed at the implemented waveform: \BgaNadoptZone{} 48-V balls per
 rail in Z1, \BgaNadoptZtwo{} in the Z2 ring and \BgaNadoptZthree{} 1-V balls per rail in Z3
 (Sections~\ref{sec:ledger} and~\ref{sec:explore-bga}).
 \item \textbf{Full feasibility filter}, now including the processor die (\MthLimDie\degC) and the
@@ -360,9 +360,10 @@ and all three stay within the reflow-warpage window~\pcite{JEDEC_JEP95}. At ther
 the gap across the fine-pitch joint varies by \MvRfTcbZone{} and \MvRfTcbZtwo~\textmu m for Z1 and Z2
 against an allowance of \MvTcbLim~\textmu m, a failure that a low-CTE mold compound reduces only to \MvRfTcbEmcZone~\textmu m for Z1 (Z3: \MvRfTcbZthree{} against
 \MvAttLimZthree~\textmu m). Like the via rule, coplanarity is reported as a manufacturing requirement,
-not used as a filter (Section~\ref{sec:feasibility}). Ball provisioning is a feasibility check with at most \MthLimSites\,\% of
-the sites carrying power. At \BgaTarget~A per ball Z1 uses \BgaSitesAdoptZone{} of
-\BgaSitesTotalZone{} sites and the Z2 ring \BgaSitesAdoptZtwo{} of \BgaSitesTotalZtwo. Z3 needs
+not used as a filter (Section~\ref{sec:feasibility}). Ball provisioning is a feasibility check: every
+power ball carries at most \BgaTarget~A, and at most \MthLimSites\,\% of the sites carry power. Z1
+uses \BgaSitesAdoptZone{} of \BgaSitesTotalZone{} sites and the Z2 ring \BgaSitesAdoptZtwo{} of
+\BgaSitesTotalZtwo. Z3 needs
 \BgaSitesAdoptZthree{} of \BgaSitesTotalZone{} (\BgaSiteFracZthree\,\%) for its 1-V current, on the
 sites nearest the cells, which leaves \WrBgaLeftZthree{} for every signal and auxiliary rail (Table~\ref{tab:compare}).
 
@@ -635,9 +636,10 @@ is reported separately.
 \item \emph{Fit range of the GaN coefficients.} Fitted to each device's datasheet over
 25--125\degC; above that range they are extrapolated, which the feasibility stage reports
 (Section~\ref{sec:thermal}).
-\item \emph{Nature of the per-ball rule.} \BgaTarget~A per ball is a design target for 0.4-mm SAC305
-balls~\pcite{Kuan2015Imax}, not a derated capability, applied to the largest DC ball current scaled by
-$k_{\mathrm{rms}}$; \BgaTargetSens~A is a sensitivity (Section~\ref{sec:ledger}).
+\item \emph{Nature of the per-ball rule.} \BgaTarget~A per ball is a design assumption for 0.4-mm
+SAC305 balls~\pcite{Kuan2015Imax}, not a derated capability. The feasibility stage applies it as a
+limit to the largest DC ball current scaled by $k_{\mathrm{rms}}$; \BgaTargetSens~A is a sensitivity
+(Sections~\ref{sec:ledger} and~\ref{sec:feasibility}).
 \item \emph{Sites and power assignment per integration.} Legal sites, power sites and current per ball
 are given per integration (Table~\ref{tab:compare}, Table~\ref{S:tab:supp-feas}).
 \item \emph{Encapsulant properties.} In Table~\ref{S:tab:supp-materials}, its alternatives in
@@ -694,8 +696,9 @@ its shorter parts, \MthKzTierOneEncap~W\,m$^{-1}$K$^{-1}$ through the thickness;
 that gap in the design and in the card (\MthKzTierOne~W\,m$^{-1}$K$^{-1}$).
 \item \textbf{Ball rule.} At \BgaTargetSens~A per ball the Z1 ball field could not be closed at any
 legal count, and an intermediate state used a fallback count of \BgaNmodel{} per rail; the Z2 ring
-carried the same count, \BgaSiteFracModelZtwo\,\% of its sites, beyond the site limit. The nominal rule is now \BgaTarget~A~\pcite{Kuan2015Imax}, every count is
-the smallest legal one, and \BgaTargetSens~A is a sensitivity under which no legal arrangement closes
+carried the same count, \BgaSiteFracModelZtwo\,\% of its sites, beyond the site limit. The nominal
+limit is now \BgaTarget~A~\pcite{Kuan2015Imax}, a feasibility filter, every count is the smallest legal
+one that meets it, and \BgaTargetSens~A is a sensitivity under which no legal arrangement closes
 (Section~\ref{sec:explore-bga}). The RMS factor $k_{\mathrm{rms}} = \BgaKeq$ was computed on the
 \BgaNmodel-ball network; at the adopted \BgaNadoptZone{} balls the port model gives
 \BgaKeqAtCountZone, so the 48-V losses are slightly conservative.

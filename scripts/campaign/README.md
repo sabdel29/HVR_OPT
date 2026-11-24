@@ -88,9 +88,8 @@ root in force (`ETM_RESULTS_ROOT`) and skips when the artifact is of another des
 
 **LAUNCH (TCPMT round 3, design m36; ready, not launched).** From the checkout that holds this
 branch (the committed manifest is current; regenerate it only if the generator changes), with
-`TCPMT_BGA_POLICY` unset (the feasibility stage then reads the per-ball target -- 2 A, with 1.5 A
-as a sensitivity -- as a stated requirement; both policies' verdicts are stored either way,
-section 4c):
+`TCPMT_BGA_POLICY` unset (the feasibility stage then applies the per-ball limit -- 2 A, with 1.5 A
+as a sensitivity -- as a filter; both policies' verdicts are stored either way, section 4c):
 
     cd /home/beams0/SABDELZAHER/ETM_project/HVR_OPT_work
     PY=/home/beams0/MGHARIB/envs/etm/bin/python
@@ -329,11 +328,11 @@ Z3 case (S0/S1/S2 references and the production state), the land-side sensitivit
 report (`z3land.*`), the production-state rungs and variants (`ladder.Z3.sdec_*`, `feedback.Z3.*`,
 `hotspot.Z3.*`, `robust.caloric.Z3.*`) and the solder studies on the Z3 cases.
 
-**Feasibility: BGA policy.** `tcpmt_feasibility.BGA_POLICY` (env `TCPMT_BGA_POLICY`): `hard` = the
-per-ball check (peak per-ball current vs the 2-A target; 1.5 A recorded as the sensitivity,
-`ok_at_sensitivity_1p5A`) is a filter; `requirement` (DEFAULT) = a stated requirement on the
-package (`bga_requirement` of each record: the current each ball must carry), reported, not a
-filter. Every integration takes the same DC peak x k rule (Z1 at its BGA-fed 48-V balls, Z2 at
+**Feasibility: BGA policy.** `tcpmt_feasibility.BGA_POLICY` (env `TCPMT_BGA_POLICY`): `hard`
+(DEFAULT; the authors adopted 2 A per ball as the nominal limit) = the per-ball check (peak
+per-ball current vs the 2-A limit; 1.5 A recorded as the sensitivity, `ok_at_sensitivity_1p5A`)
+is a filter; `requirement` = a stated requirement on the package (`bga_requirement` of each
+record: the current each ball must carry), reported, not a filter. Every integration takes the same DC peak x k rule (Z1 at its BGA-fed 48-V balls, Z2 at
 its ring feed, Z3 at its 1-V balls at DC with equal sharing); Z1's port-model RMS, scaled to the
 case's 48-V current, is reported as the bound `I_ball_rms_max_A`. Every record carries `by_bga_policy` (verdict, fails,
 unresolved under both), `rankings_by_bga_policy` holds both rankings, and
