@@ -27,27 +27,27 @@ analysis decoupled from the thermal solution would therefore understate the pack
 parts that run \WrTlsRiseAZone{} to \WrThsRiseAZone~K above room temperature.
 
 \subsection{Input Decoupling}\label{sec:evaluate-decap}
-The input states and their RMS factors $k_{\mathrm{rms}}$ are defined in
-Section~\ref{sec:scenarios}. This subsection shows why the implemented decoupling takes the form it
-does. With the cells in phase and no input capacitance, a port model of the package network gives
-$k_{\mathrm{rms}} = \WrKsync$.
+The input states of Section~\ref{sec:scenarios} bound the RMS factor $k_{\mathrm{rms}}$; this
+subsection shows why the implemented decoupling takes the form it does. With the cells in phase and
+no input capacitance, a port model of the package network gives $k_{\mathrm{rms}} = \WrKsync$.
 
 Charge balance asks for only \WrCchargeOneV~\textmu F per cell for 1~V of input ripple. A circuit
 model of the package loop says otherwise. It includes the loop's inductance, \WrLloop~pH nominal
 within \WrLloopLo--\WrLloopHi~pH, and the capacitors' series resistance, series inductance and bias
 derating. In that model $k_{\mathrm{rms}}$ falls slowly with capacitance: $k_{\mathrm{rms}} \le 1.2$
-needs about \WrCkTwelve~\textmu F per cell at 100~pH (Table~S20).
+needs about \WrCkTwelve~\textmu F per cell at 100~pH.
 
 The embedded stack has no room for that. The gaps between cells hold \WrGapCapsPerCell{} capacitors
-per cell, 0402 100-V X7R parts, the largest such part rated to 125\,$^\circ$C. Their few nanofarads resonate
-with the package inductance and raise $k_{\mathrm{rms}}$ to \WrKgap{}, and to \WrKgapHi{} at the worst
-inductance of the band. A ring of \WrNring{} capacitors outside the cell grid, 1206 100-V X7S parts, holds
-\WrRingCtot~\textmu F at 48~V. On its own it gives $k_{\mathrm{rms}} = \WrKring$, because the package
-inductance separates it from the cells. Interleaving the cells' clocks on its own gives \WrKinter.
+per cell, 0402 100-V X7R parts, the largest such part rated to 125\,$^\circ$C. Their few nanofarads
+resonate with the package inductance and raise $k_{\mathrm{rms}}$ to \WrKgap{}, and to \WrKgapHi{} at
+the worst inductance of the band. A ring of \FrDecapN{} capacitors outside the cell grid, 1206 100-V
+X7S parts, holds \FrDecapCtot~\textmu F at 48~V and 105\,$^\circ$C. On its own it gives
+$k_{\mathrm{rms}} = \WrKring$, because the package inductance separates it from the cells.
+Interleaving the cells' clocks on its own gives \WrKinter.
 
-The implemented decoupling combines the two. Its two interleaved \WrNphaseGroup-phase clock groups
-sit on a checkerboard, the second offset by half a phase step. With the ring they reach
-$k_{\mathrm{rms}} = \WrKrms$, and \WrKrmsLo--\WrKrmsHi{} over the inductance band. An ideal
+The implemented decoupling combines the two. Its \FrDecapPhases{} clock phases form two interleaved
+\FrDecapGroup-phase groups on a checkerboard, the second offset by half a phase step. With the ring
+they reach $k_{\mathrm{rms}} = \WrKrms$, and \WrKrmsLo--\WrKrmsHi{} over the inductance band. An ideal
 \WrProdM-phase spread with the ring would reach only \WrKspread: the sheet next to each cell still
 carries that cell's own pulse.
 
@@ -55,42 +55,39 @@ The implemented decoupling costs \WrDecapCoupledA~W against ideal decoupling in 
 Of this, \WrHotLoop~W is dissipated in the cells' own input loops, which carry the bare pulse
 whatever sits outside the cell. Bare decoupling would cost \RiseSoneZone~W more than ideal
 decoupling. It would also put \WrBgaBareAtNmaxZone~A on each 48-V ball even at the legal maximum of
-\WrBgaNmax{} balls per rail, beyond the per-ball assumption below. The interleaving is therefore a requirement on the
-converter's control, not an option.
+\WrBgaNmax{} balls per rail, beyond the per-ball target. The interleaving is therefore a requirement
+on the converter's control, not an option.
 
 \subsection{Package Interface}\label{sec:evaluate-bga}
-The 48-V balls follow the provisioning rule of Section~\ref{sec:ledger}. At the implemented
-waveform it gives Z1 \WrBgaNZone{} balls per rail, each carrying \WrBgaIZone~A, on \WrBgaFracZone\,\%
-of the \WrBgaSitesZone{} sites. The per-ball assumption and its harmonic bound are discussed in
-Section~\ref{sec:limits}. The static 1-V drop from the converter output to the die is
-\VdropAZone~mV per rail, within the 30-mV limit.
+At the implemented waveform the ball rule of Section~\ref{sec:ledger} gives Z1 \WrBgaNZone{} 48-V
+balls per rail, the smallest legal count, each carrying \WrBgaIZone~A, on \WrBgaFracZone\,\% of the
+\WrBgaSitesZone{} sites. The static 1-V drop from the converter output to the die is
+\VdropAZone~mV per rail, within the \MthLimDrop-mV limit.
 
 \subsection{Mechanical State}\label{sec:evaluate-mech}
-The die warps by \WarpAZone~\textmu m peak to valley. The search over all \WrBgaSitesZone{} ball
-sites places the largest relative displacement at the corner of the array. There
-$\du = \DuAZone$~\textmu m at a solder-joint temperature $T_{\mathrm{sj}} = \TjointAZone\,^\circ$C,
-\WrSolderMarginAZone~K inside the 125-$^\circ$C calibration window of the solder law.
+The die warps by \WarpAZone~\textmu m peak to valley. The largest relative displacement across the
+ball layer lies at a corner of the array, $\du = \DuAZone$~\textmu m. The critical joint is that
+corner or its mirror image, at $T_{\mathrm{sj}} = \MvTsjAZone\,^\circ$C, \WrSolderMarginAZone~K
+inside the \MthLimSolder-$^\circ$C range of the solder laws. On the last cycle it accumulates
+$\deps = \MvEpsAZone\times10^{-3}$ per cycle under the production law, with a numerical uncertainty
+of \MvEpsUrelAZone\,\%, and \MvEpsLoAZone$\times10^{-3}$ under the lowest law of the band. The
+increment ranks joints; it is not a life (Section~\ref{sec:limits}).
 
-Every other interconnect layer is searched as well. The driver of a site is
-$\gamma = |\Delta u|/h$, the relative in-plane displacement across the layer over its height. The
-largest driver sits in the \WrHIfUm-\textmu m die-to-converter microbumps: $\gamma =
-\WrGamIfAZone\times10^{-3}$ at \WrTIfAZone\,$^\circ$C, about \WrGamRatioAZone{} times that of the
-critical ball ($\WrGamBgaAZone\times10^{-3}$). The microbumps are screened by this driver only
-(Section~\ref{sec:limits}).
-
-The local joint response is solved \WrEpsState. \WrEpsStateNote{} On the stabilized cycle the
-critical Z1 joint accumulates $\deps = \WrEpsAZone\times10^{-3}$ per cycle, with a numerical
-uncertainty of \WrEpsUrelAZone\,\%. The increment ranks joints (Section~\ref{sec:limits}).
+Of the other interconnect layers, the \WrHIfUm-\textmu m die-to-converter microbumps carry the
+largest driver: $\gamma = \WrGamIfAZone\times10^{-3}$ at \WrTIfAZone\,$^\circ$C, about
+\WrGamRatioAZone{} times that of the ball of largest $\Delta u$ ($\WrGamBgaAZone\times10^{-3}$). The
+microbumps are screened by this driver only (Section~\ref{sec:limits}).
 
 \subsection{Feasibility}\label{sec:evaluate-feas}
 The evaluated design passes every check of the feasibility stage (Table~S19). The GaN junctions
-reach $T_{\mathrm{jn}} = \TjAZone\,^\circ$C, \TjMarginAZone~K below their 150-$^\circ$C rating. Three
-limits bind more tightly than that rating. The hotter junction lies \WrRonMarginAZone~K below
-125\,$^\circ$C, the upper end of the on-resistance fit, beyond which the loss model would
-extrapolate. The flying-capacitor tier peaks \WrMlccMarginAZone~K below its 125-$^\circ$C class. The
-hottest joint lies \WrSolderMarginAZone~K inside the solder law. Under its uniform load the die peaks
-\WrDieMarginAZone~K below its 105-$^\circ$C limit. Section~\ref{sec:explore} shows which explored
-decisions consume these margins.
+reach $T_{\mathrm{jn}} = \TjAZone\,^\circ$C, \WrGanMarginAZone~K below their \MthLimGan-$^\circ$C
+rating. Three limits bind more tightly than that rating. The hotter junction lies
+\WrRonMarginAZone~K below \MthLimRonFit\,$^\circ$C, the upper end of the on-resistance fit, beyond
+which the loss model would extrapolate. The flying-capacitor tier peaks \WrMlccMarginAZone~K below
+its \MthLimMlcc-$^\circ$C class. The hottest joint lies \WrSolderMarginAZone~K inside the range of the
+solder laws. Under its uniform load the die peaks \WrDieMarginAZone~K below its
+\MthLimDie-$^\circ$C limit. Section~\ref{sec:explore} shows which explored decisions consume these
+margins.
 
 \begin{figure*}[!t]
 \centering
@@ -100,7 +97,8 @@ decoupling) under cooling~A (one top cold plate). (a)--(c) Temperature on the ve
 through the middle row of cells (vertical scale doubled; voids left empty; dashed: the
 150-$^\circ$C GaN-rating isotherm). (d)--(f) Out-of-plane displacement of the die top surface
 relative to its lowest point; its peak-to-valley value is the die warpage. (g)--(i) Relative
-in-plane displacement across the ball layer at every legal site; the critical joint is ringed. Z3
-includes its coupled land-side and board-plane redistribution.}
+in-plane displacement across the ball layer at every legal site. Ring: the joint of largest
+$\Delta u$, whose value heads the panel; cross: the critical joint where it is neither that joint
+nor its mirror image. Z3 includes its coupled land-side and board-plane redistribution.}
 \label{fig:fields}
 \end{figure*}
