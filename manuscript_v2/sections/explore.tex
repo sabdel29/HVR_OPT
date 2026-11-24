@@ -15,19 +15,27 @@ same rules. No count changes its topology or parts (Table~S2). The optimum stays
 \FrFswFineOptGain~W. The runner-up, $M = \FrFswFineRunnerUp$, a count with no square grid, comes
 within \FrFswFineRunnerUpMargin~W instead of \FrFswCoarseRunnerUpMargin~W.
 
-Its square-grid
-neighbours were run through the full chain as well: $M = \WrMloM$ (\FrDseTwentyfiveTopo{} at \FrDseTwentyfiveFsw~kHz)
-and $M = \WrMhiM$ (\FrDseFortynineTopo{} at \FrDseFortynineFsw~kHz). The screen puts them \FrDseTwentyfiveMargin{} and
-\FrDseFortynineMargin~W behind the selected count. In the coupled Z1 chain under cooling~A they are
-\WrMloAZonedPAbs{} and \WrMhiAZonedPAbs~W behind, at peaks of \WrMloAZoneTmax{} and
-\WrMhiAZoneTmax\,$^\circ$C.
+The square-grid neighbours of the selected count were run through the full chain as well, with the
+mechanics of the production cases: $M = \WrMloM$ (\FrDseTwentyfiveTopo{} at
+\FrDseTwentyfiveFsw~kHz) and $M = \WrMhiM$ (\FrDseFortynineTopo{} at \FrDseFortynineFsw~kHz). The
+screen puts them \FrDseTwentyfiveMargin{} and \FrDseFortynineMargin~W behind the selected count. In
+the coupled Z1 chain under cooling~A they are \WrMloAZonedPAbs{} and \WrMhiAZonedPAbs~W behind, at
+peaks of \WrMloAZoneTmax{} and \WrMhiAZoneTmax\,$^\circ$C.
 
 Both neighbours fail the feasibility stage under that cooling. $M = \WrMloM$ exceeds the upper end
 of the on-resistance fit and the range of the solder laws; $M = \WrMhiM$ also exceeds the capacitor
 class. Under cooling~B both pass, but they remain \WrMloBZonedPAbs{} and \WrMhiBZonedPAbs~W behind.
 The coupled chain thus confirms the screen's order and widens its gaps. The neighbours run hotter,
-and the coupled ledger evaluates every part at its own temperature. The count is an electrical
-result, but its margin is a thermal one.
+and the coupled ledger evaluates every part at its own temperature.
+
+The mechanics follow the same order. Under cooling~A the neighbours' dies warp \WrMloAZoneWarp{} and
+\WrMhiAZoneWarp~\textmu m, against \WarpAZone~\textmu m. Their critical joints run at
+\WrMloAZoneTsj{} and \WrMhiAZoneTsj\,$^\circ$C, against \MvTsjAZone\,$^\circ$C, and respond
+\WrMloAZoneEps{} and \WrMhiAZoneEps$\times10^{-3}$ per cycle, against \MvEpsAZone$\times10^{-3}$.
+Under cooling~B they respond \WrMloBZoneEps{} and \WrMhiBZoneEps$\times10^{-3}$, against
+\MvEpsBZone$\times10^{-3}$. Every one of these joint differences is resolved under all three laws of
+the band (Table~S12). The count is an electrical result, but its margin is a thermal one, and the
+joints inherit it.
 
 \subsection{Converter and Integration Co-Design}\label{sec:explore-codesign}
 The tier limit is an integration constraint, so the screen was also run with five tiers. At the same
