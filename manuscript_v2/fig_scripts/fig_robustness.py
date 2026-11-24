@@ -45,7 +45,7 @@ OBS = [("P_loss_package_internal_w", "Package-\ninternal loss"),
 LAYOUT = [
     ("Backside interconnect", [
         ("TSV field minimal (64 per cell)", ["tsv_min"]),
-        ("TSV field half density (729 per cell)", ["tsv_mid"]),
+        ("TSV field reduced (729 per cell)", ["tsv_mid"]),
         ("Attach sparse (30 µm, 80-µm pitch)", ["attach_sparse"]),
         ("Attach sparse, column-stiffened", ["attach_sparse_stiff"]),
         ("Attach all-solder", ["attach_sn"]),
