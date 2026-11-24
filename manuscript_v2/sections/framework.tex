@@ -4,14 +4,14 @@
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{fig1_concept_framework.pdf}
-\caption{(a)--(c) The same regulator cells in the three integrations: Z1 between the substrate and
-the die, Z2 on the substrate backside inside a board opening, and Z3 on the board backside. The
-integration decides which rail crosses the substrate and
-the board, at what current, and which solder joints carry the deformation (ringed: the critical
-joint, at a corner in every compared case but Z2 under cooling~A). Every converter cell shows the four mixed tiers of the design point, input end at the
-bottom. The faded bottom plate exists only under cooling~B. The 48-V feed of Z2 and Z3
-starts outside the package-internal loss boundary (dashed box). Schematic; to-scale sections in
-Fig.~\ref{fig:sections}. (d) The framework: what each stage hands to the next on one geometry.
+\caption{(a)--(c) Schematic of the same regulator cells in the three integrations (to scale:
+Fig.~\ref{fig:sections}): Z1 between the substrate and the die, Z2 on the substrate backside
+inside a board opening, and Z3 on the board backside. Each cell shows the four mixed tiers of the
+design point, input end at the bottom; the labels below give the rail and current that cross
+each layer. Red: 48-V path; violet: 1-V path; ringed: the critical joint (at a corner in every
+compared case except Z2 under cooling~A); dashed box: the package-internal loss boundary, outside
+which the 48-V feed of Z2 and Z3 starts; faded plate: present only under cooling~B. (d) The
+framework: what each stage hands to the next on one geometry.
 Double arrow: the bidirectional electrothermal (E--T) fixed point; single arrows: one-way
 transfers; dotted: the optional feedback through the plate interface; dashed: the exploration
 loop over the design inputs.}
@@ -41,9 +41,9 @@ thermal model} receives the ledger as a heat map, deposited where each loss aris
 temperatures that update every temperature-dependent resistance. The converged field drives a
 \emph{thermoelastic} finite-element (FE) model of the mounted assembly. It evaluates the relative
 displacement at every site of every interconnect layer. A \emph{local viscoplastic submodel},
-driven at a site by the displacement field of the global solution, returns the inelastic response
-per thermal cycle; solved on a candidate set that bounds the whole ball lattice, it finds the
-critical joint. The \emph{feasibility} stage, finally, checks the converged state
+driven at a joint site by the displacement field of the global solution, returns the inelastic
+response per thermal cycle. Solved on a candidate set that bounds the whole ball lattice, it finds
+the critical joint. The \emph{feasibility} stage, finally, checks the converged state
 against the ratings of the selected parts and the rules of the package
 (Fig.~\ref{fig:algorithm}; limits in Section~\ref{sec:feasibility}). A candidate that fails any check
 is reported but not ranked.
@@ -72,14 +72,12 @@ transfer}: the converged temperature field loads the thermoelastic model, and no
 \emph{One-way joint-to-local transfer}: the displacement and temperature at a joint site drive the
 local submodel, and nothing is returned. \emph{Optional plate-interface feedback}: a flat cold
 plate on a warped die leaves a thicker thermal interface where the die falls away. This loop is
-closed as an option, and Section~\ref{sec:compare} quantifies it.
+closed as an option, and Section~\ref{sec:compare-a} quantifies it.
 
 The remaining feedback is neglected. Thermal strain changes a copper conductor's resistance by
 about $\alpha_{\mathrm{Cu}}\Delta T$, with $\alpha_{\mathrm{Cu}} = 16.6$~ppm\,K$^{-1}$. The
 temperature coefficient of copper resistivity, $3.93\times10^{-3}$~K$^{-1}$, is more than two
-orders of magnitude larger, so the mechanical-to-electrical feedback is negligible. The
-framework assumes an intact package; Section~\ref{sec:limits} states this scope with the other
-limitations.
+orders of magnitude larger, so the mechanical-to-electrical feedback is negligible.
 
 \begin{figure}[!t]
 \centering
@@ -115,18 +113,16 @@ step 8: Section~\ref{sec:feasibility} and Table~S19.}
 
 \subsection{Three Modes of Use}\label{sec:fw-modes}
 Because every stage reads and writes the same geometry, the framework is used in three modes
-(Fig.~\ref{fig:algorithm}). To \emph{evaluate} a design, the chain is run once and every output is
+(Fig.~\ref{fig:concept}d). To \emph{evaluate} a design, the chain is run once and every output is
 checked against the feasibility rules (Section~\ref{sec:evaluate}). To \emph{compare}
 integrations, the same design record is placed in each candidate under the same cooling
 boundaries. Every output is reported side by side, inside declared loss boundaries. Candidates
 that fail a check are not ranked, and a difference is called resolved only if it exceeds its
-numerical uncertainty (Sections~\ref{sec:verification} and~\ref{sec:compare}). To \emph{explore}
-the design space, the synthesis is repeated over the regulator count, the topology and the tier
-limit as an electrical screen. The screen's optimum and its neighbours are carried through the
-coupled chain. Every package input without a single defensible value is then varied on the
-production mesh (Section~\ref{sec:explore}).
+numerical uncertainty (Sections~\ref{sec:verification} and~\ref{sec:compare}).
 
-In the explore mode the regulator count is an output, not an input. The screen proposes it, and
-the coupled chain accepts it only if it also beats its neighbours after coupling
-(Section~\ref{sec:dse}). The design record makes this test cheap: a neighbouring count is a new
-record, and the rest of the chain runs unchanged.
+To \emph{explore} the design space, the synthesis is repeated over the regulator count, the
+topology and the tier limit as an electrical screen (Section~\ref{sec:dse}). The count is thus an
+output, not an input: the screen proposes it, and the coupled chain accepts it only if it also
+beats its neighbours after coupling. A neighbouring count is a new design record, so the rest of
+the chain runs unchanged. Every package input without a single defensible value is then varied
+on the production mesh (Section~\ref{sec:explore}).
