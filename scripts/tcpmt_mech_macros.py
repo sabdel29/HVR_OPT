@@ -571,8 +571,8 @@ def variants():
 
 # ------------------------------------------------------------------ joint-response screen
 #: groups of tcpmt_mech_joint_screen -> macro tag
-SGROUP = {"S0_A": "Map", "SDEC_new_A": "New", "S0_B": "CoolB", "SDEC_mech_A": "Enc",
-          "SDEC_mech_B": "Enc", "board_A": "Bd", "board_B": "Bd"}
+SGROUP = {"S0_A": "Map", "SDEC_new_A": "New", "SDEC_new_B": "NewB", "S0_B": "CoolB",
+          "SDEC_mech_A": "Enc", "SDEC_mech_B": "Enc", "board_A": "Bd", "board_B": "Bd"}
 
 
 def _eps_orderings(groups, keys, pairs=None):
@@ -635,7 +635,8 @@ def screen():
     for key, v in d["variants"].items():
         if v.get("change_rel") is None:
             continue
-        acc.setdefault(SGROUP.get(v["group"], v["group"]), []).append(v["change_rel"])
+        acc.setdefault(SGROUP.get(v["group"], "".join(ch for ch in v["group"] if ch.isalpha())),
+                       []).append(v["change_rel"])
         if v["group"].startswith("board"):
             tag = BVAR.get(v["name"])
             if tag:
