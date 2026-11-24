@@ -60,8 +60,8 @@ against \DuBZtwo~\textmu m. All are resolved, and neither plate-interface bound 
 \WrBgaNmax{} balls per rail; interleaving and the ring reach $k_{\mathrm{rms}} = \FrKrms$
 (Section~\ref{sec:evaluate-decap}).
 \item \cl{Peak temperature is not a proxy for the joint.} Under one top plate Z2 peaks
-\WrdTmaxAZtwo~K hotter than Z1, while its critical joint runs \WrdTjointAZtwo~K cooler and moves
-\WrDuRatioAZtwo{} times as far (Section~\ref{sec:compare-a}). The joint response itself now ranks the
+\WrdTmaxAZtwo~K hotter than Z1, while its ball of largest displacement runs \WrdTjointAZtwo~K cooler
+and moves \WrDuRatioAZtwo{} times as far (Section~\ref{sec:compare-a}). The joint response itself now ranks the
 other way (new conclusion~2).
 \item \cl{Omitted converter losses change no ranking of feasible candidates.} They move the Z1--Z2
 gap by at most \WrOmitGapAHi~W under cooling~A (gap \GapAZtwo~W) and \WrOmitGapBHi~W under
@@ -83,7 +83,7 @@ plate on the free warpage it converges at \FbAZtwoTmax\degC, beyond the GaN rati
 \item \cl{The feasibility of Z1 and Z2 rests on \BgaTarget~A per ball}~\pcite{Kuan2015Imax}: at
 \BgaTargetSens~A no legal arrangement closes (Section~\ref{sec:explore-bga}).
 \item \cl{Z1's margins} (\WrRonMarginAZone{} to \WrDieMarginAZone~K under cooling~A) are consumed by
-a die hot spot (die at \WrHotAZoneDie\degC), by the upper omitted-loss estimate (on-resistance fit,
+a core-heavy die map (die at \WrHotAZoneDie\degC), by the upper omitted-loss estimate (on-resistance fit,
 capacitor class, solder law) and almost by a rigid plate (Sections~\ref{sec:explore-omit}
 and~\ref{sec:explore-die}).
 \item \cl{The count optimum} $M = \FrDseOptM$ holds for the lower and nominal omitted-loss
@@ -161,7 +161,7 @@ and \MvRfTcbZtwo~\textmu m against \MvTcbLim~\textmu m; a low-CTE mold compound 
 \item \cl{The integration bounds the converter.} The five-tier converter saves
 \FrTfiveSaveLo--\FrTfiveSaveHi~W but protrudes \FrProtrudeTfive~\textmu m below the Z2 board
 (Section~\ref{sec:explore-codesign}).
-\item \cl{The die limit binds under a hot-spot map:} only Z2 under cooling~B keeps its die within
+\item \cl{The die limit binds under a core-heavy die map:} only Z2 under cooling~B keeps its die within
 \MthLimDie\degC{} (\WrHotBZtwoDie\degC; Section~\ref{sec:explore-die}).
 \item \cl{The fine-pitch layers carry the largest shear drivers:} Z1's die-to-converter microbumps
 carry \WrGamRatioAZone{} times the driver of its ball of largest $\Delta u$, and Z2's pillars exceed its balls
@@ -195,7 +195,7 @@ stays inside the board opening (the four-tier stack clears it by \FrFitThirtysix
 (\VdropLandBZthree~mV) and the board planes (\VdropPlanesBZthree~mV) add to the drop of the vertical
 path, so both sheets need far more copper, and the 1-V balls need sites that leave room for signals.
 \item \cl{Plate interface and cooling.} A conforming interface or a die-flatness specification,
-cooling for the die hot spot, and CFD of the manifold's flow split and headers.
+cooling for a core-heavy die map, and CFD of the manifold's flow split and headers.
 \item \cl{Converter.} A fabricated 1-mm$^2$ inductor at \FrConvIndL~nH and \FrConvIndDcr~m$\Omega$;
 circuit-level validation of the synthesized \FrConvTopo{} point and of its omitted losses; a refined
 frequency grid.
