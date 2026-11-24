@@ -86,6 +86,9 @@ BOARD_SOLVES = {"screws": None, "screws_pinned": None, "edge": None,
                 "clamp_screws_ring_hot": ("cold", "clamp_screws_ring_only")}
 LARGE = ("free_ring_hot", "free_ring_cold", "screws_ring_hot", "clamp_screws_ring_hot",
          "clamp_screws_ring_only")
+#: the integrations each group compares (the map's reference-state groups: Z1 against Z2 under
+#: cooling A; the cooling-B and production-state groups: all three)
+GROUP_ARCHS = {"S0_A": ("Z1", "Z2")}
 #: the full searches that validate the screen: one variant of each kind (mounting,
 #: encapsulant class, class-B mechanical card, thermal card)
 VALIDATE = ("SDEC_A_Z2__board_screws_pinned", "SDEC_A_Z1__encap_emc_lowcte",
@@ -627,7 +630,7 @@ def summarize():
                     vals[a] = per[a].get("d_eps")
                     refv[a] = ref_val(f"{refst}_{tier}_{a}") if g == "S0_A" else ref_val(ref)
                     mesh_ok[a] = per[a]["same_mesh_as_reference"]
-                elif not g.startswith("board"):
+                elif not g.startswith("board") and a in GROUP_ARCHS.get(g, ("Z1", "Z2", "Z3")):
                     ref = f"{refst}_{tier}_{a}"
                     if ref_val(ref) is None:
                         continue
@@ -642,6 +645,8 @@ def summarize():
                 if a not in vals or b not in vals or None in (vals[a], vals[b], refv[a],
                                                               refv[b]):
                     continue
+                if a not in per and b not in per:
+                    continue                      # neither integration is changed
                 jv = _judge(a, b, vals[a], vals[b], urel[a], urel[b])
                 jb = _judge(a, b, refv[a], refv[b], urel[a], urel[b])
                 pend = not (mesh_ok.get(a) and mesh_ok.get(b))

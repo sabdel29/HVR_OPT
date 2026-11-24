@@ -2415,8 +2415,10 @@ def variants_table():
             r"field (mech.). The bottom-plate variants of Z1, Z2 and Z3 define cooling~B and the "
             r"top-plate-only variant of Z3 defines its cooling~A; the Z3 cases of the paper add the "
             r"coupled land-side and board-plane redistribution (Table~\ref{tab:supp-z3land}).")
-    if g0:
-        b = next(iter(g0.values()))["orderings"]["eps:Z1/Z2"]["base"]
+    base = [r["orderings"]["eps:Z1/Z2"]["base"] for r in g0.values()
+            if "eps:Z1/Z2" in (r.get("orderings") or {})]
+    if g0 and base:
+        b = base[0]
         note += (rf" Joint: $\deps$ of Z1 / Z2 ($10^{{-3}}$ per cycle, ideal decoupling, "
                  rf"cooling~A; reference {1e3 * b[0]:.2f} / {1e3 * b[1]:.2f}), the production "
                  rf"local model at the {sc['K']} worst sites of each reference case's "
