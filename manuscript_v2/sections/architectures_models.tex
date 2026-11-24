@@ -1,7 +1,7 @@
 % ============================================================================ ARCHITECTURES + MODELS
 \section{Integration Architectures and Physical Models}\label{sec:models}
 
-\subsection{Three integrations of one regulator}\label{sec:archs}
+\subsection{Three Integrations of One Regulator}\label{sec:archs}
 The synthesized regulator of Section~\ref{sec:dse} is placed in three integrations
 (Fig.~\ref{fig:sections}). All three hold the same \MthNcells{} cells on a
 $\MthGrid\times\MthGrid$ grid under the 22.36-mm die, each cell \MthCellSide~mm square at a
@@ -38,12 +38,12 @@ drawn as lines). Every converter tier holds the parts of its design-record tier;
 substrate and die, full BGA. (b) Z2: converter in the board opening below the substrate; its
 48-V feed runs through the BGA ring and the substrate (dashed). (c) Z3: converter on the board
 underside with its own cold plate; the full BGA carries the 1-V output. Red: 48-V path; violet:
-1-V path; ringed ball: the outermost row, which holds the critical (corner) joint in every
-compared case.}
+1-V path; ringed ball: the outermost row, which holds the joint of largest $\Delta u$ in every
+compared case and the critical joint in all but Z2 under cooling~A.}
 \label{fig:sections}
 \end{figure*}
 
-\subsection{Converter stack, tier order and vertical interconnect}\label{sec:realizability}
+\subsection{Converter Stack, Tier Order and Vertical Interconnect}\label{sec:realizability}
 The parts of a cell are packed into at most four tiers, and a tier may mix part classes
 (Section~\ref{sec:dse}). Each part keeps its body footprint and a \MthKeepout-\textmu m keep-out
 in a two-dimensional placement. Listed from the 48-V input end, the first tier holds two
@@ -96,11 +96,6 @@ ratio stays \MthSingleAR. The verdict is geometric feasibility under declared ru
 demonstrated process. Placement within a tier, encapsulation and warpage during lamination are
 not evaluated (Section~\ref{sec:discussion}).
 
-The four-tier limit also constrains the converter. The five-tier optimum at the same count
-($N4K4$, \MthFswFive~kHz) has a lower electrical loss but a \MthStackFiveMm-mm stack. Hung in the
-opening of Z2, it would protrude \MthProtrude~\textmu m below the board
-(Section~\ref{sec:explore}).
-
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{fig4_realizability.pdf}
@@ -113,20 +108,19 @@ of either stack meets it, so copper posts make every whole-tier crossing.}
 \label{fig:realize}
 \end{figure}
 
-\subsection{Input states}\label{sec:scenarios}
+\subsection{Input States}\label{sec:scenarios}
 The hybrid cell draws input current only in phase $\phi_1$ (Fig.~\ref{fig:converter}b). The RMS
 current of the 48-V path therefore depends on how much of that pulse local decoupling absorbs.
 We describe it by the RMS factor $k_{\mathrm{rms}}$, the ratio of the RMS to the average 48-V
 current. Three input states bound it. \emph{Ideal decoupling} ($k_{\mathrm{rms}} = 1$) is the
 limit of unlimited local capacitance. \emph{Bare decoupling} passes the pulse at the buck duty
 $D$ unfiltered, $k_{\mathrm{rms}} = 1/\sqrt{D} = \MthKbare$. \emph{Implemented decoupling} is
-the production state. Its \MthNphases{} clock phases run in two interleaved groups of six, and a
-ring of \MthNring{} 1206 capacitors sits outside the cell grid. Together they give
-$k_{\mathrm{rms}} = \MthKeq$ in the package network (Section~\ref{sec:evaluate}). The input
-loop inside each cell still carries the bare pulse of the cell, $k_{\mathrm{rms}} = \MthKcell$
-from a circuit model of its waveform. Ideal and bare decoupling serve as references.
+the production state: interleaved cell clocks and a ring of input capacitors outside the cell grid
+(Section~\ref{sec:evaluate-decap}) give $k_{\mathrm{rms}} = \WrKrms$ in the package network. The
+input loop inside each cell still carries the bare pulse of the cell, $k_{\mathrm{rms}} =
+\FrKopen$ from a circuit model of its waveform. Ideal and bare decoupling serve as references.
 
-\subsection{Rail-aware conductor ledger}\label{sec:ledger}
+\subsection{Rail-Aware Conductor Ledger}\label{sec:ledger}
 Loss is reported inside a declared boundary. The package-internal loss $P_{\mathrm{int}}$ of Z2
 and Z3 starts at the 48-V input terminals of the converter. That of Z1 starts at its 48-V BGA
 pads, where the 48-V node of the board, common to all three, meets the package. The board's 48-V
@@ -181,15 +175,17 @@ through-holes per rail and cell carry the 1-V current through the board.
 The 48-V balls of Z1 and of the ring of Z2 are provisioned by one rule. The current of a ball is
 the largest DC ball current of the solved network, scaled by $k_{\mathrm{rms}}$. The count is the smallest
 legal (mirror-symmetric) count on the 0.8-mm lattice that holds this current to
-\MthBgaTarget~A per ball. This target is a design assumption for 0.4-mm SAC305 (Sn3.0Ag0.5Cu)
-balls~\cite{Kuan2015Imax}. A conservative \MthBgaTargetSens-A target is a sensitivity (Section~\ref{sec:explore}).
-The power balls may occupy at most \MthLimSites~\% of the sites of the package; the rest carry
-signal and auxiliary rails. The harmonic port model of Z1, with every ball tied to an ideal board
-node, bounds its worst ball at \MthBgaRmsBound~A RMS. This bound exceeds the target and is
-discussed as a limitation (Section~\ref{sec:discussion}).
+\WrBgaRule~A per ball. This target is a design assumption for 0.4-mm SAC305 (Sn3.0Ag0.5Cu)
+balls~\cite{Kuan2015Imax}; a conservative \WrBgaRuleSens-A target is a sensitivity
+(Section~\ref{sec:explore-bga}). The 1-V balls of Z3 are sized by the same target at their DC
+current, and they occupy the sites nearest the cells, a declared placement rule. The power balls
+may occupy at most \MthLimSites~\% of the sites of the package; the rest carry signal and
+auxiliary rails. The harmonic port model of Z1, with every ball tied to an ideal board node,
+bounds its worst ball at \WrBgaRmsZone~A RMS. This bound exceeds the target and is discussed as a
+limitation (Section~\ref{sec:limits}).
 
-In Z3 the 1-V current of each rail is shared equally by balls that cover most of the BGA, while
-the TSV fields that carry it to the die sit only under the cells. The current of every ball
+In Z3 the 1-V current of each rail is shared equally by its balls, which cover most of the BGA,
+while the TSV fields that carry it to the die sit only under the cells. The current of every ball
 outside a cell footprint therefore travels laterally, in a land-side copper plane of the
 substrate and in the 1-V planes of the board. Each sheet costs
 \begin{equation}
@@ -211,7 +207,7 @@ $\kappa = \MthPlaneKappa$ for both rails together. Each $R_{\mathrm{s}}$ is eval
 converged temperature of its layer, and the redistribution heat is deposited along its
 finite-volume loss map.
 
-\subsection{Package thermal model and cooling}\label{sec:thermal}
+\subsection{Package Thermal Model and Cooling}\label{sec:thermal}
 Steady conduction $\nabla\!\cdot(\mathbf{k}\nabla T) + q''' = 0$ is solved on the explicit
 stack with orthotropic conductivity. Layers that contain regular arrays (TSV fields, attaches,
 RDL tiers, ball fields and the board via field of Z3) carry homogenized tensors, each checked
@@ -227,7 +223,7 @@ through-thickness conductivity of the input-end tier from \MthKzTierOneEncap{} t
 \MthKzTierOne~W\,m$^{-1}$K$^{-1}$, and across the four tiers it lies between \MthKzLo{} and
 \MthKzHi~W\,m$^{-1}$K$^{-1}$. Sizing the posts to the terminal RMS currents (lower bound) or to
 the terminal outlines (upper bound) spans \MthKzPostLo--\MthKzPostHi~W\,m$^{-1}$K$^{-1}$; both
-bounds are run as variants (Section~\ref{sec:explore}).
+bounds are run as variants (Section~\ref{sec:explore-cards}).
 
 The top boundary is a silicon microchannel cold plate (Table~S5) on a 50-\textmu m thermal
 interface material (TIM; 3~W\,m$^{-1}$K$^{-1}$, \TimH~kW\,m$^{-2}$K$^{-1}$). Its effective coefficient
@@ -255,7 +251,7 @@ temperature, \MthTbulk\,$^\circ$C at 1~kW~\cite{NISTWebBook}. The coolant warmin
 $T_{\mathrm{f}}(x) = T_{\mathrm{in}} + Q(0\!\to\!x)/(\dot m c_p)$ is resolved along every pass
 and iterated with the solid solution. The coefficient therefore excludes the caloric resistance
 $1/(2\dot m c_p)$ of a uniform sink, which would count half of the coolant rise twice
-(Section~\ref{sec:explore}).
+(Section~\ref{sec:explore-cards}).
 
 A single 22.36-mm pass would need \CoolDpSinglePass~kPa. The plate is therefore a manifold of
 \CoolZones{} streamwise zones with alternating inlet and outlet headers, and each pass is
@@ -269,9 +265,10 @@ thus a lower bound, and the pass-mean coefficient could be up to \MthNuDevRatio{
 
 Cooling~A is this top plate alone. Cooling~B adds an identical plate beneath the cell grid,
 behind the same TIM. Its flow is sized so that its coolant rises as much as that of the top
-plate: \MthBotFlowZtwo~g\,s$^{-1}$ for the \MthBotQZtwo~W that reach it in Z2. Pumping counts
-every plate at its own flow. The die dissipates its 1~kW uniformly; a hot-spot map is a
-sensitivity (Section~\ref{sec:explore}). The board is a $30\times30$-mm coupon with natural
+plate: \MthBotFlowZtwo~g\,s$^{-1}$ for the \QbotBZtwo~W that reach it in Z2. Pumping counts
+every plate at its own flow. The die dissipates its 1~kW uniformly; a core-heavy map, with three
+quarters of the die power in the central half of its area, is a sensitivity
+(Section~\ref{sec:explore-die}). The board is a $30\times30$-mm coupon with natural
 convection (10~W\,m$^{-2}$K$^{-1}$) beneath it.
 
 The temperature-dependent terms are iterated with the thermal solution to a fixed point: the
@@ -285,16 +282,16 @@ the largest factor belongs to \MthEtContractCase. The on-resistance coefficients
 the datasheet curves over 25--125\,$^\circ$C; above that range they are extrapolated, which the
 feasibility stage reports.
 
-\subsection{Thermoelastic package and interconnect search}\label{sec:mechanics}
+\subsection{Thermoelastic Package and Interconnect Search}\label{sec:mechanics}
 The converged temperature field loads an FE model of the mounted assembly,
 $\boldsymbol{\sigma} = \mathbf{C}:(\boldsymbol{\varepsilon}-\boldsymbol{\alpha}(T-T_{\mathrm{ref}}))$
 with $T_{\mathrm{ref}} = 25\,^\circ$C. It uses incompatible-mode hexahedra and cubic silicon;
 the board and the ball field are meshed as real layers, and only rigid-body motion is
 restrained. With this reference the solution is the change from power-off to the operating
 point, the excursion that the local cycle imposes. The moduli and coefficients of thermal
-expansion (CTE) are those of Table~S3. The encapsulant between the cells and the thickness and
-boundary of the board are declared; their alternatives are rerun on the production mesh
-(Section~\ref{sec:explore}).
+expansion (CTE) are those of Table~S3. The encapsulant between the cells and the size, thickness, mounting
+and clamping of the board are declared; their alternatives are rerun on the production mesh
+(Section~\ref{sec:explore-robust}).
 
 Every interconnect layer is searched rather than assumed: the BGA, the die microbumps, and the
 Cu-pillar attach of Z2 or the solder attach of Z3. At every site of a layer of height $h$, the
@@ -304,11 +301,28 @@ shear driver is $\gamma = \Delta u/h$, with the relative in-plane displacement a
 \label{eq:du}
 \end{equation}
 taken from the nodal displacements on its top and bottom planes, interpolated at the site. The
-BGA sites are the \MthSitesFull{} legal sites of the 0.8-mm lattice (\MthSitesRing{} in the
-ring of Z2); the thinner layers are evaluated at every mesh node. The BGA joint of largest
-$\Delta u$, with the displacement $\du$ at its local temperature $T_{\mathrm{sj}}$, drives the
-local submodel. The largest displacement need not give the largest inelastic response, so the
-submodel is also solved at competing sites (Section~\ref{sec:verification}).
+BGA sites are the \MthSitesFull{} legal sites of the 0.8-mm lattice (\MthSitesRing{} in the ring
+of Z2); the thinner layers are evaluated at every mesh node. The largest $\Delta u$ of the BGA is
+reported as $\du$.
+
+The joint of largest $\Delta u$ need not respond most. Part of $\Delta u$ can be a rigid rotation
+of the joint, which strains no solder, and the response also depends on the joint temperature and
+on the vertical and gradient terms of the drive (Section~\ref{sec:local}). The critical joint is
+therefore found with the local model itself, on a candidate set that bounds the response over the
+whole lattice. Every legal site carries its own drive from the converged fields, and three
+screening features are taken from it: the deforming part of $\Delta u$ (the rigid rotation
+removed), the vertical displacement across the layer and the joint temperature $T_{\mathrm{sj}}$.
+Within one case the response rises with these features to within a margin $m$, so a site that a
+solved site $c$ dominates in all three responds at most $(1+m)\,\deps(c)$. The margin is the
+larger of 10\,\% and twice the largest reversal among the solved sites. The candidate set starts
+from the sites of largest in-plane displacement, face tilt, vertical strain and deforming
+displacement, the Pareto fronts and the corners. It grows until no unsolved site has a bound above
+the largest response found, and the site of largest response is the critical joint. Each solder
+law of Section~\ref{sec:local} is searched in the same way.
+
+The same mesh checks assembly. The unmounted package at the 245-$^\circ$C reflow peak of the
+balls, and the two parts that each fine-pitch attach joins at its bonding temperature, are solved
+isothermally from the 25-$^\circ$C stress-free state (Section~\ref{sec:compare-assembly}).
 
 When the optional interface feedback is enabled, the solved warpage sets the local thickness of
 the top TIM. The plate is taken as flat and rigid, resting on the highest point of the warped
@@ -318,53 +332,59 @@ point and the thermoelastic solution are then iterated until the warpage changes
 1\,\%. A conforming TIM ($g = 0$, the production chain) and a rigid plate on the free warpage
 bound this feedback.
 
-\subsection{Local solder response}\label{sec:local}
-The submodel resolves the critical joint, a 400-\textmu m SAC305 ball 300~\textmu m tall at
-0.8-mm pitch~\cite{Krishnakumar2026DVPD}. It is meshed as the equal-area 354.5-\textmu m square
-prism between two 20-\textmu m copper pads, on four nested hexahedral meshes (L0--L3). The
-lower pad face is fixed. The upper face is displaced in plane by $\du$ (its other components
-restrained) for a 300-s dwell at $T_{\mathrm{sj}}$ and returned for a 300-s dwell at
-25\,$^\circ$C. Every load change is ramped linearly over 3~s and then held. This prescribed cycle stands in
-for power cycling between off and the converged operating point; the thermal transient between
-them is not modeled.
+\subsection{Local Solder Response}\label{sec:local}
+The submodel resolves one BGA joint, a 400-\textmu m SAC305 ball 300~\textmu m tall at 0.8-mm
+pitch~\cite{Krishnakumar2026DVPD}. It is meshed as the equal-area 354.5-\textmu m square prism
+between two 20-\textmu m copper pads, on four nested hexahedral meshes (L0--L3). The global
+solution drives it through its cut boundary. Each pad face follows the displacement of its own
+surface at the site, the board top below and the substrate underside above, fitted linearly over
+the pad footprint (Table~S11). The drive therefore carries the translation of each face, its
+vertical part included, and its in-plane stretch, shear and rotation, not $\Delta u$ alone. For a
+300-s dwell the joint holds this drive at $T_{\mathrm{sj}}$, the mean temperature of its two faces;
+for a second 300-s dwell, drive and temperature return to the stress-free state at
+25\,$^\circ$C. Every load change is ramped linearly over 3~s and then held. This prescribed cycle
+stands in for power cycling between off and the converged operating point; the thermal transient
+between them is not modeled.
 
 The solder is elastic--viscoplastic with $E = 45 - 0.12(T-25)$~GPa. Its room-temperature value is
 the midpoint of the band of~\cite{Paska2024SAC305}; the slope, $\nu = 0.36$ and the CTE of
-21.5~ppm\,K$^{-1}$ are assumed. The production law adds a temperature-dependent yield stress
-with isotropic hardening that saturates at 2\,\% inelastic strain~\cite{Yuan2023SAC305}. Creep of
-the overstress follows a Norton law,
-$\dot\varepsilon_{\mathrm{in}} = A(T)\langle\sigma_{\mathrm{vm}}-\sigma_y\rangle^{n(T)}$, fitted
-to tensile creep data~\cite{Xiao2005SAC} (parameters and sources: Tables~S9 and~S10). Those
-data cover 45--150\,$^\circ$C and
-\MthCalLo--\MthCalHi~MPa, for a Sn3.9Ag0.6Cu alloy rather than SAC305. Between the 5th and
-95th percentiles of dwell time, the joints carry \MthVisHotLo--\MthVisHotHi~MPa hot and
-\MthVisColdLo--\MthVisColdHi~MPa cold.
-The law is therefore extrapolated in stress, and in temperature below 45\,$^\circ$C during the
-cold dwell.
+21.5~ppm\,K$^{-1}$ are assumed. Creep follows the Garofalo law of~\cite{Schubert2003ECTC}, the
+production law, without a yield surface or rate-independent hardening. The solver integrates it
+as a Norton surrogate, $\dot\varepsilon_{\mathrm{in}} = A(T)\,\sigma_{\mathrm{vm}}^{\,n(T)}$,
+refitted at every 2.5-K row of the card over the stress window that the joints visit
+(Tables~S9--S11). Window and responses are iterated to self-consistency. At the compared joints
+the window spans \MvVisHotLo--\MvVisHotHi~MPa hot and \MvVisColdLo--\MvVisColdHi~MPa cold, and the
+surrogate follows the rate of the law within \MvSurrErrHot\,\% hot and \MvSurrErrCold\,\% cold.
 
-Because the production law is extrapolated, the response is carried as a band over two
-laws. The second is the Garofalo law of~\cite{Schubert2003ECTC}, entered as a zero-yield Norton
-surrogate refitted at each temperature over the stress window the joints visit. The window and
-the responses are iterated to self-consistency; after \MthRefitIters{} fits the window settles
-at \MthRefitHotLo--\MthRefitHotHi~MPa hot and \MthRefitColdLo--\MthRefitColdHi~MPa cold. Every
-joint-response comparison is judged under both laws (Section~\ref{sec:verification}).
+No law is calibrated for these joints. The production law was fitted to a near-eutectic SnAgCu
+alloy and is published without its data window; inside the window of the measured data below, its
+creep rate is \MvRateVsDataLo{} to \MvRateVsDataHi{} times the measured one. The response is
+therefore carried as a band over \MvLawN{} laws: the production law and two fits of the tensile
+creep data of~\cite{Xiao2005SAC} as tabulated in~\cite{Yuan2023SAC305}, the constants of its
+authors and per-temperature Norton fits of the measured points. Those data cover
+45--150\,$^\circ$C and \MthCalLo--\MthCalHi~MPa, for a Sn3.9Ag0.6Cu alloy rather than SAC305. Under
+these two laws the joints visit \MvXiaoVisHotLo--\MvMeasVisHotHi~MPa hot and
+\MvXiaoVisColdLo--\MvMeasVisColdHi~MPa cold, so they are extrapolated in stress, and in temperature
+below 45\,$^\circ$C during the cold dwell. Each law is refitted over its own window and searched
+for its own critical joint, and every joint-response comparison is judged under all of them
+(Section~\ref{sec:verif-local}).
 
-The response is the per-cycle increment of accumulated equivalent inelastic strain on the
-stabilized (48th) cycle, volume-averaged over the solder core,
+The response is the per-cycle increment of accumulated equivalent inelastic strain on the last of
+four cycles, volume-averaged over the solder core,
 \begin{equation}
 \deps = \frac{1}{V_{\mathrm{c}}}\int_{V_{\mathrm{c}}}\!
 \left[\varepsilon^{\mathrm{eq}}_{\mathrm{in}}(t_k)-\varepsilon^{\mathrm{eq}}_{\mathrm{in}}(t_{k-1})
 \right]\mathrm{d}V,
 \label{eq:deps}
 \end{equation}
-where $t_{k-1}$ and $t_k$ bound the last cycle. The core $V_{\mathrm{c}}$ excludes a band of
-fixed physical width (59~\textmu m, one sixth of the joint side) along the free edge, where the
-bimaterial corner is singular. Fixing the band in physical units keeps the averaging volume
-identical at every mesh level, which makes the response mesh-convergent; it is a numerical
-device, not a statement about where damage occurs. $\deps$ compares integrations: no damage
-law, life relation or allowable is applied.
+where $t_{k-1}$ and $t_k$ bound the last cycle. The core $V_{\mathrm{c}}$ excludes a band of fixed
+physical width (59~\textmu m, one sixth of the joint side) along the pads and the free surface,
+where the bimaterial corners are singular. Fixing the band in physical units keeps the averaging
+volume identical at every mesh level, which makes the response mesh-convergent; it is a numerical
+device, not a statement about where damage occurs. $\deps$ compares integrations: no damage law,
+life relation or allowable is applied.
 
-\subsection{Feasibility limits}\label{sec:feasibility}
+\subsection{Feasibility Limits}\label{sec:feasibility}
 The feasibility stage checks every candidate before any ranking, and a candidate that fails a
 limit is not ranked. The limits are (every case: Table~S19):
 \begin{itemize}
@@ -376,11 +396,12 @@ dissipation;
 \item the build-up dielectric and the encapsulant, $\le \MthLimBuildup\,^\circ$C, and the board
 laminate, $\le \MthLimBoard\,^\circ$C (glass transitions);
 \item the processor die, $\le \MthLimDie\,^\circ$C;
-\item the hottest joint of the all-site search, within the $\le\MthLimSolder\,^\circ$C range of
-the solder law and below the \MthLimSolidus-$^\circ$C solidus;
+\item the hottest joint of the all-site search, within the $\le\MthLimSolder\,^\circ$C range
+declared for the solder laws and below the \MthLimSolidus-$^\circ$C solidus;
 \item the static drop of the 1-V path, $\le \MthLimDrop$~mV per rail;
 \item the BGA rule above, with at most \MthLimSites~\% of the sites carrying power;
 \item a converged operating point.
 \end{itemize}
 The via rule is reported but is not a filter: no order meets it, so it becomes a requirement for
-copper posts.
+copper posts. The coplanarity at reflow and bonding is reported in the same way, as a manufacturing
+requirement (Section~\ref{sec:compare-assembly}).
