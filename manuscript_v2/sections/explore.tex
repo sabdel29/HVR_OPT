@@ -96,9 +96,9 @@ half of its area. Z1's die then peaks at \WrHotAZoneDie\,$^\circ$C under cooling
 cooling~A fails as well: its die reaches \WrHotAZtwoDie\,$^\circ$C, and its converter, heated from
 above, crosses the on-resistance fit, the capacitor class and the inductor limit. Only Z2 under
 cooling~B keeps its die, at \WrHotBZtwoDie\,$^\circ$C, and every other limit. The map barely changes
-the loss, but it reverses the ranking of the largest ball displacement under cooling~A
-(Fig.~\ref{fig:robust}). The die limit, slack under a uniform load, binds once the die's own power
-map is resolved.
+the loss. It reverses the ranking of the largest ball displacement under cooling~A, yet Z2's joints
+still respond less than Z1's (Fig.~\ref{fig:robust}). The die limit, slack under a uniform load,
+binds once the die's own power map is resolved.
 
 \subsection{Material and Card Bounds}\label{sec:explore-cards}
 The converter-tier cards come from unit-cell homogenization that includes the copper posts, and
@@ -112,7 +112,7 @@ capacitor and inductor-tier conductivity, an extreme bound, makes Z1 infeasible 
 
 In the production state under cooling~A, a low-CTE mold compound in the out-of-cell volume changes
 Z2's warpage by \MvEncEmcWarpAZtwo\,\% and Z1's largest ball displacement by \MvEncEmcDuAZone\,\%, yet
-Z1's joint response by \MvEncEmcEpsAZone\,\% (Table~S26). A cold-plate coefficient that also counts
+Z1's joint response by \MvEncScrEmcEpsAZone\,\% (Table~S26). A cold-plate coefficient that also counts
 the caloric resistance of a uniform sink (Section~\ref{sec:thermal}) raises every loss by
 \WrCalBZtwodP--\WrCalAZthreedP~W and every peak by \WrCalBZtwodT--\WrCalAZthreedT~K. It changes no
 ranking and no verdict, although Z2's on-resistance margin under cooling~A shrinks to
@@ -129,37 +129,54 @@ production state \WrLowA{} has, by \GapAZtwo~W. \WrDecapRankSent{} The map is mo
 the other three rankings, which hold in both states.
 
 The joint column judges each integration by its joint response, not by its largest ball
-displacement. A full critical-joint search for every variant would multiply the cost of
-Section~\ref{sec:verif-local}, so each variant is solved at the \MvScrK{} worst sites of its
-reference case's search, and its response is the largest of them. Full searches of
-\MvScrValN{} variants of different kinds, a mounting, an encapsulant class, a converter-tier
-stiffness and a converter-tier conductivity, found the worst site among those \MvScrK{} in
-\MvScrValInTopK{} of them.
+displacement. A full critical-joint search for each of the \MvScrNvar{} variants would multiply the
+cost of Section~\ref{sec:verif-local}. Each variant is therefore first solved at the \MvScrK{}
+worst sites of its reference case's search. When its largest response falls beyond the first
+\MvScrEscFrac{} of them, the worst site may lie outside the \MvScrK, and the variant is searched in
+full. This applied to \MvScrEscN{} variants, mostly on the ring of Z2, where many sites respond
+within a few percent of each other. In the deepest variant of each kind (mounting, encapsulant
+class, mechanical card and thermal decision) the full search found the worst site among the
+\MvScrK{} in \MvScrValInTopK{} of \MvScrValN{} cases, and over all escalated variants the
+\MvScrK{} sites alone fell short by up to \MvScrEscShortMax\,\%.
 
 Of the verdicts, \WrRobPreserved{} are preserved, \WrRobWithdrawn{} withdrawn and \WrRobReversed{}
 reversed. The remaining \WrRobPending{} are pending: their \WrRobPendingCases{} variants change the
 mesh and need a ladder of their own before a verdict. Every ranking survives the interconnect
 provisioning, the 48-V feed model, the board boundary and the cooling-model form. A second plate
-under Z2 reverses the loss and peak rankings, which is the result of cooling~B. A tenth of the
-converter-tier conductivity and the low-CTE mold compound reverse the ranking of the largest ball
-displacement toward Z2. In the production state under cooling~A, the core-heavy die map reverses it
-as well, and the rigid-plate interface reverses the loss ranking toward Z1.
+under Z2 reverses the loss and peak rankings, which is the result of cooling~B. In the production
+state under cooling~A, the rigid-plate interface reverses the loss ranking toward Z1. The joint
+ranking holds for all \WrRobJointPreserved{} decisions with a verdict; the other
+\WrRobJointPending{} await their ladders. A tenth of the converter-tier conductivity, the low-CTE mold compound and the
+core-heavy die map reverse the ranking of the largest ball displacement toward Z2, but not that of
+the joints.
 
 Under cooling~B, \MvCoolBVariants{} mechanical variants keep \MvCoolBOrderSame{} of
-\MvCoolBOrderN{} orderings of warpage and displacement, with \MvCoolBOrderRev{} resolved reversal.
-In the production state the encapsulant and ball-card variants keep \MvEncOrderSame{} of
-\MvEncOrderN{} such orderings, and all \MvEncOrderRev{} resolved reversals come from the low-CTE
-mold compound. These variants change the joint responses by \MvEncBgaLocalEpsLo{} to
-\MvEncEmcConstEpsHi\,\%, most of all when the ball layer takes its card from the local solder law,
-but the joint-response ordering of each cooling stays the same.
+\MvCoolBOrderN{} orderings of warpage and displacement, with \MvCoolBOrderRev{} resolved reversal,
+and all \MvScrCoolBOrderN{} orderings of the joint responses. In the production state the
+encapsulant and ball-card variants keep \MvEncOrderSame{} of \MvEncOrderN{} orderings of warpage
+and displacement, and all \MvEncOrderRev{} resolved reversals come from the low-CTE mold compound.
+They change the joint responses by \MvScrEncEpsLo{} to \MvScrEncEpsHi\,\%, most of all when the
+ball layer takes its card from the local solder law, and keep \MvScrEncOrderSame{} of
+\MvScrEncOrderN{} joint orderings. The \MvScrEncOrderRev{} resolved reversals again come from the
+low-CTE mold compound, which puts Z2's joints below Z3's under cooling~A.
 
 Board size, mounting and clamping were rerun mechanically on the converged fields of all six cases
 (Table~S26). They change the warpage and the largest ball displacement by up to
 \MvBdLargeClampAbsMax\,\%. Z1 keeps the smallest warpage except under a clamp reacted by a backplate
 and, under cooling~B, on pinned screws or on a three-times-larger board with a cold rim. A
 \MvBoardSide-mm board with its own electrothermal field changes the warpage by \MvBdOwnWarpLo{} to
-\MvBdOwnWarpHi\,\%. The cold-plate clamp, \MvClampForce~N (\MvClampMPa~MPa) held through the cycle,
-changes the joint response by at most \MvClampEpsHi\,\%.
+\MvBdOwnWarpHi\,\%. The joint responses change by \MvScrBdEpsLo{} to \MvScrBdEpsHi\,\%. On the
+coupon, Z2's joints respond less than Z1's under every mounting and clamp and both coolings, although
+a simply supported edge or a clamp on a backplate lifts Z3's above Z1's under cooling~A. The
+cold-plate clamp, \MvClampForce~N (\MvClampMPa~MPa) held through the cycle, changes the joint
+response by at most \MvScrClampEffAbsMax\,\% against the same screws without it. On the larger
+board the rim decides under cooling~A. With the rim at the coupon's edge temperature, Z1's critical
+joint responds \MvScrEpsLargeHotAZone{} against \MvScrEpsLargeHotAZtwo$\times10^{-3}$ per cycle for
+Z2's. With the rim at 25\,$^\circ$C, the bound that restrains the board most, Z2's responds
+\MvScrEpsLargeColdAZtwo{} against \MvScrEpsLargeColdAZone$\times10^{-3}$. The board's own
+electrothermal field puts the largest ball displacement \MvBdOwnDuPosAZone{} and
+\MvBdOwnDuPosAZtwo{} of the way from the cold to the hot bound for Z1 and Z2. Under cooling~B both
+bounds keep the ordering.
 
 \begin{figure}[!tp]
 \centering
