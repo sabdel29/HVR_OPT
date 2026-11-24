@@ -404,11 +404,13 @@ def tasks_for(s, sites):
     return out
 
 
-def run(keys=None, log=None):
+def run(keys=None, log=None, groups=None):
     import tcpmt_mech_submodel as SUB
     ts, skipped = [], []
     for s in variants():
         if keys and s["key"] not in keys:
+            continue
+        if groups and s["group"] not in groups:
             continue
         tk = top_k(s["ref"])
         if not tk:
@@ -681,7 +683,7 @@ def main():
     a = sys.argv[1:]
     cmd = a[0] if a else "list"
     keys = [x for i, x in enumerate(a) if i > 0 and not x.startswith("--")
-            and a[i - 1] != "--log"]
+            and a[i - 1] not in ("--log", "--groups")]
     if cmd == "list":
         for s in variants(True):
             print(s["key"], s["group"], s["ref"], s.get("cold_key") or "")
@@ -691,7 +693,8 @@ def main():
             print(f"{len(errs)} lattice errors", flush=True)
             sys.exit(1)
     elif cmd == "run":
-        run(keys or None, a[a.index("--log") + 1] if "--log" in a else None)
+        run(keys or None, a[a.index("--log") + 1] if "--log" in a else None,
+            a[a.index("--groups") + 1].split(",") if "--groups" in a else None)
     elif cmd == "validate":
         validate(keys or None)
     elif cmd == "summarize":

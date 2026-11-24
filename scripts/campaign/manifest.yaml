@@ -7063,34 +7063,66 @@ jobs:
   - file: tcpmt_revision/solder_parameters.json
     kind: json
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
-- id: mech.screen.run_a
+- id: mech.screen.run_a1
   stage: mech_revision
   argv:
   - scripts/tcpmt_mech_joint_screen.py
   - run
   - --log
-  - run_a
+  - run_a1
+  - --groups
+  - S0_A,S0_B
   outputs:
-  - tcpmt_revision/robustness_joint_runs/run_a.json
+  - tcpmt_revision/robustness_joint_runs/run_a1.json
   deps:
   - mech.screen.lattice
   - mech.critical
   - mech.critical_S0
-  ncpus: 48
-  mem_gb: 64.0
-  est_wall_h: 1.5
-  walltime_h: 4.5
+  ncpus: 24
+  mem_gb: 32.0
+  est_wall_h: 1.2
+  walltime_h: 3.5
   backends:
   - pbs
   - local
   prefer: pbs
   env:
     LOCAL_THREADS: '1'
-    TCPMT_SOLDER_SLOTS: '48'
-  workers: 48
-  evidence: ~3000 solves (the variants x K = 20 sites) x ~60 s on one thread
-  notes: every variant at its reference case's K worst sites (production law); the clamps wait for their
-    clamp-only lattices (run_b)
+    TCPMT_SOLDER_SLOTS: '24'
+  workers: 24
+  evidence: ~1700 solves (the variants of the groups x K = 20 sites) x ~30 s on one thread (califone)
+  notes: the variants of S0_A,S0_B at their reference case's K worst sites (production law); the clamps
+    wait for their clamp-only lattices (run_b)
+- id: mech.screen.run_a2
+  stage: mech_revision
+  argv:
+  - scripts/tcpmt_mech_joint_screen.py
+  - run
+  - --log
+  - run_a2
+  - --groups
+  - SDEC_new_A,SDEC_new_B,SDEC_mech_A,SDEC_mech_B,board_A,board_B
+  outputs:
+  - tcpmt_revision/robustness_joint_runs/run_a2.json
+  deps:
+  - mech.screen.lattice
+  - mech.critical
+  - mech.critical_S0
+  ncpus: 24
+  mem_gb: 32.0
+  est_wall_h: 1.2
+  walltime_h: 3.5
+  backends:
+  - pbs
+  - local
+  prefer: pbs
+  env:
+    LOCAL_THREADS: '1'
+    TCPMT_SOLDER_SLOTS: '24'
+  workers: 24
+  evidence: ~1700 solves (the variants of the groups x K = 20 sites) x ~30 s on one thread (califone)
+  notes: the variants of SDEC_new_A,SDEC_new_B,SDEC_mech_A,SDEC_mech_B,board_A,board_B at their reference
+    case's K worst sites (production law); the clamps wait for their clamp-only lattices (run_b)
 - id: robust.coolB.Z2
   stage: mech_revision
   argv:
@@ -7584,7 +7616,8 @@ jobs:
   outputs:
   - tcpmt_revision/robustness_joint_validation/SDEC_A_Z2__board_screws_pinned.json
   deps:
-  - mech.screen.run_a
+  - mech.screen.run_a1
+  - mech.screen.run_a2
   ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
@@ -7614,7 +7647,8 @@ jobs:
   outputs:
   - tcpmt_revision/robustness_joint_validation/SDEC_A_Z1__encap_emc_lowcte.json
   deps:
-  - mech.screen.run_a
+  - mech.screen.run_a1
+  - mech.screen.run_a2
   ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
@@ -7644,7 +7678,8 @@ jobs:
   outputs:
   - tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_E160_a10.json
   deps:
-  - mech.screen.run_a
+  - mech.screen.run_a1
+  - mech.screen.run_a2
   ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
@@ -7674,7 +7709,8 @@ jobs:
   outputs:
   - tcpmt_revision/robustness_joint_validation/S0_A_Z2__conv_k_tenth.json
   deps:
-  - mech.screen.run_a
+  - mech.screen.run_a1
+  - mech.screen.run_a2
   ncpus: 16
   mem_gb: 24.0
   est_wall_h: 1.0
@@ -9099,7 +9135,8 @@ jobs:
   outputs:
   - tcpmt_revision/robustness_joint_runs/run_b.json
   deps:
-  - mech.screen.run_a
+  - mech.screen.run_a1
+  - mech.screen.run_a2
   - mech.screen.lattice_cold
   ncpus: 32
   mem_gb: 32.0
@@ -12028,7 +12065,8 @@ jobs:
   - mech.board_cold.Z3.B
   - mech.screen.lattice
   - mech.screen.lattice_cold
-  - mech.screen.run_a
+  - mech.screen.run_a1
+  - mech.screen.run_a2
   - mech.screen.run_b
   - mech.screen.validate.SDEC_A_Z2__board_screws_pinned
   - mech.screen.validate.SDEC_A_Z1__encap_emc_lowcte

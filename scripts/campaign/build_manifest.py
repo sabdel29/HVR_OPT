@@ -1121,19 +1121,25 @@ def joint_screen_jobs(mech):
                workers=4, mem_gb=24, est_h=0.2, prefer="pbs", env={"FC_POOL_MAX": 4},
                validate=[{"file": tr("robustness_joint_lattice_cold.json"), "kind": "json",
                           "keys": ["errors"]}])
-    # califone's cpu_only queue runs at most 56 cpus per user at a time
-    env = {"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 48}
-    run_a = job("mech.screen.run_a", "mech_revision",
-                ["scripts/tcpmt_mech_joint_screen.py", "run", "--log", "run_a"],
-                [tr("robustness_joint_runs/run_a.json")],
-                deps=[lat, mech["critical"], mech["s0"]], ncpus=48, workers=48, mem_gb=64,
-                est_h=1.5, prefer="pbs", backends=("pbs", "local"), env=env,
-                evidence="~3000 solves (the variants x K = 20 sites) x ~60 s on one thread",
-                notes="every variant at its reference case's K worst sites (production law); "
-                      "the clamps wait for their clamp-only lattices (run_b)")
+    # califone's cpu_only queue runs at most 56 cpus per user at a time: two halves of 24
+    env = {"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 24}
+    runs_a = []
+    for half, groups in (("a1", "S0_A,S0_B"),
+                         ("a2", "SDEC_new_A,SDEC_new_B,SDEC_mech_A,SDEC_mech_B,board_A,board_B")):
+        runs_a.append(job(
+            f"mech.screen.run_{half}", "mech_revision",
+            ["scripts/tcpmt_mech_joint_screen.py", "run", "--log", f"run_{half}", "--groups",
+             groups], [tr(f"robustness_joint_runs/run_{half}.json")],
+            deps=[lat, mech["critical"], mech["s0"]], ncpus=24, workers=24, mem_gb=32,
+            est_h=1.2, prefer="pbs", backends=("pbs", "local"), env=env,
+            evidence="~1700 solves (the variants of the groups x K = 20 sites) x ~30 s on one "
+                     "thread (califone)",
+            notes=f"the variants of {groups} at their reference case's K worst sites "
+                  "(production law); the clamps wait for their clamp-only lattices (run_b)"))
+    run_a = runs_a[0]
     run_b = job("mech.screen.run_b", "mech_revision",
                 ["scripts/tcpmt_mech_joint_screen.py", "run", "--log", "run_b"],
-                [tr("robustness_joint_runs/run_b.json")], deps=[run_a, latc], ncpus=32,
+                [tr("robustness_joint_runs/run_b.json")], deps=runs_a + [latc], ncpus=32,
                 workers=32, mem_gb=32, est_h=0.3, prefer="pbs", backends=("pbs", "local"),
                 env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 32},
                 evidence="the clamps' solves (36 variants x 20 sites at most)")
@@ -1142,7 +1148,7 @@ def joint_screen_jobs(mech):
         f = tr(f"robustness_joint_validation/{key}.json")
         vals.append(job(f"mech.screen.validate.{key}", "mech_revision",
                         ["scripts/tcpmt_mech_joint_screen.py", "validate", key], [f],
-                        deps=[run_a], ncpus=16, workers=16, mem_gb=24, est_h=1.0,
+                        deps=runs_a, ncpus=16, workers=16, mem_gb=24, est_h=1.0,
                         prefer="pbs", backends=("pbs", "local"),
                         env={"LOCAL_THREADS": 1, "TCPMT_SOLDER_SLOTS": 16},
                         evidence="a dominance-bounded search: ~150-350 sites x ~60 s",
