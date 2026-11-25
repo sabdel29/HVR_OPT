@@ -88,8 +88,12 @@ tbody th { font-weight: 500; color: var(--ink-2); }
 .group th { background: var(--tint); color: var(--ink); font-weight: 600; font-size: 0.85rem; letter-spacing: 0; text-transform: none; }
 .routes td:nth-child(2), .routes td:nth-child(3) { font-variant-numeric: tabular-nums; }
 .routes td:nth-child(2), .routes td:nth-child(3) { white-space: nowrap; }
-.designs { font-size: 0.85rem; }
-.designs td.r, .designs th.r { white-space: nowrap; }
+.final { font-size: 0.84rem; }
+.final td.r, .final th.r { white-space: nowrap; }
+.final td:nth-child(1) { min-width: 9rem; }
+.final td:nth-child(3), .final td:nth-child(4) { min-width: 10rem; }
+.final td:nth-child(5) { min-width: 16rem; }
+.final td small { color: var(--muted); }
 .this-study td:first-child { font-weight: 600; }
 
 /* chart */
@@ -136,7 +140,7 @@ details table td, details table th { padding: 5px 10px; font-variant-numeric: ta
 .sources a { word-break: break-word; }
 footer { color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--rule); padding-top: 14px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-@page { size: letter; margin: 12mm 11mm; }
+@page { size: letter landscape; margin: 10mm 10mm; }
 @media print {
   html { font-size: 10.5px; }
   body { background: #fff; }
@@ -150,6 +154,15 @@ footer { color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--rul
   table { font-size: 0.9rem; }
   th, td { padding: 4px 7px; }
   details, .tip { display: none !important; }
+  .scroll { overflow: visible !important; }
+  .final { font-size: 0.78rem; table-layout: fixed; width: 100%; }
+  .final td, .final th { min-width: 0 !important; overflow-wrap: anywhere; padding: 3px 5px; }
+  .final td.r, .final th.r { white-space: normal; }
+  .final thead th:nth-child(1) { width: 11%; } .final thead th:nth-child(2) { width: 9%; }
+  .final thead th:nth-child(3) { width: 14%; } .final thead th:nth-child(4) { width: 13%; }
+  .final thead th:nth-child(5) { width: 26%; } .final thead th:nth-child(6) { width: 7%; }
+  .final thead th:nth-child(7) { width: 6%; } .final thead th:nth-child(8) { width: 7%; }
+  .final thead th:nth-child(9) { width: 7%; }
   figure, .keynums, tr, .cols div { break-inside: avoid; }
   .card { break-inside: auto; }
   section { break-inside: auto; }
@@ -172,10 +185,10 @@ footer { color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--rul
       <h2 id="ans">Short answer</h2>
       <ul>
         <li><strong>Yes, 1 kA per 1000 mm² works from both 48 V and 12 V</strong> with catalog parts on one layer. A GaN hybrid switched-capacitor buck built from catalog parts reaches it at 86% (48 V) and 87% (12 V) conversion efficiency, about 3 points lower when hot.</li>
-        <li><strong>The practical ceiling is about 1.2–1.3 A/mm²</strong> at 84–86%. Past that, only the smallest chip inductors still fit, running at their current limits, and efficiency drops off a cliff.</li>
+        <li><strong>The practical ceiling is about 1.3–1.4 A/mm²</strong> at 84–86%. Past that, only the smallest chip inductors still fit, running at their current limits, and efficiency drops off a cliff.</li>
         <li><strong>The absolute maximum is 1.6–1.7 A/mm²</strong> with gate drivers and local decoupling on the same layer, or 2.1–2.2 A/mm² for the power stage alone. Both run near 70% efficiency and 57–96 W/cm² of heat, so they are bounds, not designs.</li>
         <li><strong>At 12 V, catalog modules match the custom design:</strong> integrated-inductor modules (MPS, Infineon) give 1.0 A/mm² at 87%. <strong>At 48 V, no catalog route gets close:</strong> a 48→12 V bus converter plus those modules reaches 0.56 A/mm² at 86%, and the custom single-stage hybrid nearly doubles that.</li>
-        <li><strong>Cost per kA:</strong> about $150 in parts for the 1 A/mm² discrete designs, $170–250 for 12 V modules, $330–420 for the 48 V catalog two-stage route, and about $1,100 for Vicor’s catalog PRM + VTM.</li>
+        <li><strong>Cost per kA:</strong> about $150 in parts for the 1 A/mm² discrete designs (controller not included), $220–270 for 12 V modules at 1 A/mm², $380–440 for the 48 V catalog two-stage route at equal efficiency, and about $1,050 for Vicor’s catalog PRM + VTM.</li>
         <li><strong>TWVs are not the limit.</strong> About 2,700 copper vias of 50 µm carry 1 kA with 2–12 W of loss. Spreading the current in the backside copper costs more, 10–60 W.</li>
       </ul>
     </div>
@@ -189,7 +202,7 @@ footer { color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--rul
           <tr><th scope="row">Best efficiency, ≥ 0.1 A/mm²</th><td class="r">96.8% <small>at 0.10</small></td><td class="r">96.7% <small>at 0.11</small></td></tr>
           <tr><th scope="row">At 0.5 A/mm²</th><td class="r">92.5%</td><td class="r">93.3%</td></tr>
           <tr><th scope="row">At 1.0 A/mm²</th><td class="r">86.2% <small>(83.2% hot)</small></td><td class="r">87.0% <small>(84.0% hot)</small></td></tr>
-          <tr><th scope="row">Practical ceiling</th><td class="r">1.3 A/mm² <small>at 84.3%</small></td><td class="r">1.2 A/mm² <small>at 85.6%</small></td></tr>
+          <tr><th scope="row">Practical ceiling</th><td class="r">1.37 A/mm² <small>at 84.3%</small></td><td class="r">1.30 A/mm² <small>at 85.6%</small></td></tr>
           <tr><th scope="row">Maximum density</th><td class="r">1.67 A/mm² <small>at 72.5%</small></td><td class="r">1.60 A/mm² <small>at 73.7%</small></td></tr>
           <tr><th scope="row">Power stage only</th><td class="r">2.17 A/mm² <small>at 69.5%</small></td><td class="r">2.08 A/mm² <small>at 68.5%</small></td></tr>
           <tr><th scope="row">End to end at 1 A/mm²<br><small style="color:var(--muted);font-weight:400">with TWVs and backside copper</small></th><td class="r">81–85%</td><td class="r">83–86%</td></tr>
@@ -222,49 +235,36 @@ footer { color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--rul
     </div>
   </section>
 
-  <section aria-labelledby="routes-h">
-    <h2 id="routes-h">Routes compared</h2>
-    <p class="note">Density counts the converter parts and their spacing on the backside. Output bulk capacitors and the controller are excluded for every route. Cost is parts per kA at the operating point shown.</p>
+  <section aria-labelledby="all-h">
+    <h2 id="all-h">All results, 1 kA load</h2>
+    <p class="note">HVR_OPT rows are designs from the proposed framework built only from catalog parts; the other rows are off-the-shelf architectures. Every option is distributed: no catalog converter carries 1 kA alone. Density counts the converter parts and their spacing on the backside (modules at 1.3 × footprint, bus converters and other modules at 1.15 ×); output bulk capacitors are excluded throughout. HVR_OPT efficiency is the loss model at 25 °C with a hot estimate below it; catalog efficiencies are datasheet values. HVR_OPT cost covers switches, inductors, capacitors and gate drivers but not the controller; catalog cost covers modules, controllers and local capacitors. Catalog counts per kA are averages over a large array.</p>
     <div class="card scroll">
-      <table class="routes">
-        <thead><tr><th scope="col">Route</th><th scope="col">A/mm² at efficiency</th><th scope="col">Cost per kA</th><th scope="col">Notes</th></tr></thead>
-        <tbody>
-          <tr class="group"><th colspan="4" scope="colgroup">48 V → 1 V</th></tr>
-          <tr class="this-study"><td>Single-stage hybrid, discrete catalog parts (this study)</td><td>1.0 at 86%<br>1.3 at 84%<br>1.67 at 72%</td><td>$149</td><td>EPC GaN, TDK 17 nH chip inductors, Murata MLCCs, uPI gate drivers. Needs a controller that sequences the flying-capacitor switches.</td></tr>
-          <tr><td>48→12 V bus converter + 12→1 V modules <span class="mono">NBM2317 + MPC22165-170</span></td><td>0.56 at 86%<br>0.80 at 76%</td><td>$330–420</td><td>All catalog. The bus converter takes 30–45% of the area.</td></tr>
-          <tr><td>Ferric IVR behind 48→12→1.8 V <span class="mono">Fe1766</span></td><td>≈0.67 at ≈79%</td><td>not public</td><td>Estimate. The IVR alone is 4.5 A/mm², but it needs a 1.8 V bus that two more stages must supply.</td></tr>
-          <tr><td>Single-stage module <span class="mono">ADI LTM4664</span></td><td>0.17 at 88%</td><td>$1.6–2.4k</td><td>16 × 16 mm, 50 A.</td></tr>
-          <tr><td>Factorized power, catalog <span class="mono">Vicor PRM + VTM</span></td><td>0.13 at 88%</td><td>≈$1.1k</td><td>52-week lead time. The denser ChiP VTM is end of life.</td></tr>
-          <tr><td>Vertical-power current multipliers <span class="mono">Vicor MCM / GCM</span></td><td>2–5 claimed</td><td>not public</td><td>Multiplier only, regulator elsewhere. Sold to strategic customers.</td></tr>
-          <tr class="group"><th colspan="4" scope="colgroup">12 V → 1 V</th></tr>
-          <tr class="this-study"><td>Discrete catalog parts (this study): N:1 hybrids below 0.3 A/mm², buck to 0.65, 2:1 hybrid above</td><td>1.0 at 87%<br>1.2 at 86%<br>1.60 at 74%</td><td>$146</td><td>Same part families as at 48 V.</td></tr>
-          <tr><td>Integrated-inductor modules <span class="mono">MPS MPC22165-170</span>, Infineon TDM2254x similar</td><td>1.04 at 87%<br>1.45 at 80%</td><td>$170–250</td><td>Measured vendor curve. 9.65 mm tall; at the 170 A rating each module dissipates 43 W and needs a cold plate.</td></tr>
-          <tr><td>Smart power stages + discrete inductors <span class="mono">TDA21590 + SLC1049</span></td><td>0.2–0.35</td><td>$85–155</td><td>Standard multiphase buck; efficiency not evaluated here.</td></tr>
-          <tr><td>Ferric IVR behind 12→1.8 V modules <span class="mono">Fe1766</span></td><td>≈1.06 at ≈83%</td><td>not public</td><td>Estimate. Gains transient response, not area. Empower’s 3.3 V-input IVRs behave the same way.</td></tr>
-        </tbody>
-      </table>
+<table class="final">
+<thead><tr><th scope="col">Approach</th><th scope="col">Operating point</th><th scope="col">Topology</th><th scope="col">Single or distributed</th><th scope="col">Components</th><th scope="col" class="r">f<sub>sw</sub></th><th scope="col" class="r">A/mm²</th><th scope="col" class="r">Efficiency</th><th scope="col" class="r">Cost per kA</th></tr></thead><tbody>
+<tr class="group"><th colspan="9" scope="colgroup">48 V → 1 V</th></tr>
+<tr class="this-study"><td>HVR_OPT (proposed framework), discrete catalog parts</td><td>Highest efficiency (≥ 0.1 A/mm²)</td><td>Hybrid SC-buck: 8:1 switched-capacitor stage + 2 inductors (N8K2KA1)</td><td>Distributed: 45 cells × 22 A (90 phases)</td><td>per cell: 8× EPC2057 (HS), 2× EPC2366 (LS), 2× Bourns TLVR1005T-R15K (150 nH), 7× Murata GRM32EC72A106KE05 (10 µF 100 V 1210) flying, 5× uPI uP1966E driver<br><small>11.7 mm tall inductors; ≈0.3–0.4 W/cm² of heat</small></td><td class="r">0.40 MHz</td><td class="r">0.10</td><td class="r">96.8%<br><small>95.9% hot</small></td><td class="r">$870</td></tr>
+<tr class="this-study"><td>HVR_OPT (proposed framework), discrete catalog parts</td><td>1 A/mm² (1 kA per 1000 mm²)</td><td>Hybrid SC-buck: 7:1 switched-capacitor stage + 7 inductors (N7K7KA4)</td><td>Distributed: 4 cells × 250 A (28 phases)</td><td>per cell: 7× EPC2090 (HS), 7× EPC2366 (LS), 7× TDK CLT32-17N (17 nH), 6× Murata GRM32EC72A106KE05 (10 µF 100 V 1210) flying, 7× uPI uP1966E driver<br><small>parts ≤ 3 mm tall; 16 W/cm²</small></td><td class="r">1.41 MHz</td><td class="r">1.00</td><td class="r">86.2%<br><small>83.2% hot</small></td><td class="r">$149</td></tr>
+<tr class="this-study"><td>HVR_OPT (proposed framework), discrete catalog parts</td><td>Practical ceiling (knee of the curve)</td><td>Hybrid SC-buck: 4:1 switched-capacitor stage + 4 inductors (N4K4KA2)</td><td>Distributed: 6 cells × 167 A (24 phases)</td><td>per cell: 4× EPC2090 (HS), 4× EPC2366 (LS), 4× TDK CLT32-17N (17 nH), 3× Murata GRM21BC71H475KE11 (4.7 µF 50 V 0805) flying, 4× uPI uP1966E driver<br><small>25 W/cm²; efficiency falls steeply beyond this</small></td><td class="r">1.60 MHz</td><td class="r">1.37</td><td class="r">84.3%<br><small>81.7% hot</small></td><td class="r">$122</td></tr>
+<tr class="this-study"><td>HVR_OPT (proposed framework), discrete catalog parts</td><td>Maximum density</td><td>Hybrid SC-buck: 4:1 switched-capacitor stage + 4 inductors (N4K4KA2)</td><td>Distributed: 6 cells × 167 A (24 phases)</td><td>per cell: 4× EPC2090 (HS), 4× EPC2090 (LS), 4× TDK CLT32-17N (17 nH), 3× Murata GRM21BC71H475KE11 (4.7 µF 50 V 0805) flying, 4× uPI uP1966E driver<br><small>bound, not a design: 63 W/cm², parts at their limits</small></td><td class="r">1.60 MHz</td><td class="r">1.67</td><td class="r">72.5%<br><small>66.0% hot</small></td><td class="r">$116</td></tr>
+<tr class="this-study"><td>HVR_OPT (proposed framework), discrete catalog parts</td><td>Maximum density, power stage only</td><td>Hybrid SC-buck: 2:1 switched-capacitor stage + 2 inductors (N2K2KA1)</td><td>Distributed: 12 cells × 83 A (24 phases)</td><td>per cell: 2× EPC2090 (HS), 2× EPC2090 (LS), 2× TDK CLT32-17N (17 nH), 1× Murata GRM188D71H105KE01 (1 µF 50 V 0603) flying, 2× uPI uP1966E driver (placed elsewhere)<br><small>gate drivers not on the backside layer; 95 W/cm²</small></td><td class="r">2.26 MHz</td><td class="r">2.17</td><td class="r">69.5%<br><small>64.1% hot</small></td><td class="r">$117</td></tr>
+<tr><td>Off-the-shelf, two-stage (catalog)</td><td>Equal-efficiency point</td><td>48→12 V fixed-ratio bus converter (K = 1/4) + 2-phase buck modules with integrated inductors</td><td>Distributed: ≈1.1 bus converters + ≈11.1 modules × 90 A per kA</td><td>Vicor NBM2317S60D1580T0R; MPS MPC22165-170; multiphase controller<br><small>datasheet efficiencies; bus converter takes 30–45% of the area</small></td><td class="r">0.5 MHz (modules)</td><td class="r">0.56</td><td class="r">85.6%</td><td class="r">$377–436</td></tr>
+<tr><td>Off-the-shelf, two-stage (catalog)</td><td>Modules at 168 A (near the 170 A rating)</td><td>48→12 V fixed-ratio bus converter (K = 1/4) + 2-phase buck modules with integrated inductors</td><td>Distributed: ≈1.3 bus converters + ≈6.0 modules × 168 A per kA</td><td>Vicor NBM2317S60D1580T0R; MPS MPC22165-170; multiphase controller<br><small>datasheet efficiencies; bus converter takes 30–45% of the area</small></td><td class="r">0.5 MHz (modules)</td><td class="r">0.80</td><td class="r">76.4%</td><td class="r">$259–295</td></tr>
+<tr><td>Off-the-shelf, factorized power (catalog)</td><td>At rating</td><td>ZVS buck-boost regulator (PRM) + 40:1 sine-amplitude current multiplier (VTM)</td><td>Distributed: ≈1.8 PRM + ≈7.7 VTM × 130 A per kA</td><td>Vicor PRM48BF480T600A00 + VTM48EF012T130C01<br><small>52-week lead time; denser ChiP VTM is end of life</small></td><td class="r">≈1 MHz</td><td class="r">0.13</td><td class="r">88.2%</td><td class="r">$1,045</td></tr>
+<tr><td>Off-the-shelf, single module (catalog)</td><td>At rating</td><td>4:1 switched-capacitor divider + dual-phase buck in one module</td><td>Distributed: 20 modules × 50 A per kA</td><td>ADI LTM4664 (16 × 16 × 7.7 mm µModule)<br><small>price of the 60 A LTM4664A used</small></td><td class="r">0.1 / 0.2 MHz (stage 1 / 2)</td><td class="r">0.17</td><td class="r">88.0%</td><td class="r">$1,832–2,800</td></tr>
+<tr><td>Off-the-shelf, advanced IVR (estimate)</td><td>Estimate</td><td>48→12 V bus converter + 12→1.8 V buck modules + 16-phase integrated VR</td><td>Distributed: ≈1.2 bus converters + ≈6 modules + ≈6.3 IVRs × 160 A per kA</td><td>Vicor NBM2317; MPS MPC22165-170; Ferric Fe1766<br><small>IVR alone 4.5 A/mm²; needs a 1.8 V bus</small></td><td class="r">15 MHz (IVR)</td><td class="r">0.67</td><td class="r">79.1%</td><td class="r">not public (Ferric) + ≈$250</td></tr>
+<tr><td>Vendor claim, not catalog</td><td>Claimed</td><td>Vertical power: current multiplier under the load, regulator elsewhere</td><td>Distributed multipliers</td><td>Vicor MCM / GCM (VPD)<br><small>sold to strategic customers</small></td><td class="r">—</td><td class="r">2–5 (multiplier only)</td><td class="r">≈94% claimed</td><td class="r">not public</td></tr>
+<tr class="group"><th colspan="9" scope="colgroup">12 V → 1 V</th></tr>
+<tr class="this-study"><td>HVR_OPT (proposed framework), discrete catalog parts</td><td>Highest efficiency (≥ 0.1 A/mm²)</td><td>Hybrid SC-buck: 3:1 switched-capacitor stage + 2 inductors (N3K2KA1)</td><td>Distributed: 56 cells × 18 A (112 phases)</td><td>per cell: 3× EPC2055 (HS), 2× EPC2366 (LS), 2× Bourns TLVR1005T-R15K (150 nH), 2× Murata GRM32ER71E226KE15 (22 µF 25 V 1210) flying, 3× uPI uP1966E driver<br><small>11.7 mm tall inductors; ≈0.3–0.4 W/cm² of heat</small></td><td class="r">0.38 MHz</td><td class="r">0.11</td><td class="r">96.7%<br><small>95.8% hot</small></td><td class="r">$714</td></tr>
+<tr class="this-study"><td>HVR_OPT (proposed framework), discrete catalog parts</td><td>1 A/mm² (1 kA per 1000 mm²)</td><td>Hybrid SC-buck: 2:1 switched-capacitor stage + 2 inductors (N2K2KA1)</td><td>Distributed: 14 cells × 71 A (28 phases)</td><td>per cell: 2× EPC2090 (HS), 2× EPC2366 (LS), 2× TDK CLT32-17N (17 nH), 1× Murata GRM32EC72A106KE05 (10 µF 100 V 1210) flying, 2× uPI uP1966E driver<br><small>parts ≤ 3 mm tall; 15 W/cm²</small></td><td class="r">1.35 MHz</td><td class="r">1.01</td><td class="r">87.0%<br><small>84.0% hot</small></td><td class="r">$146</td></tr>
+<tr class="this-study"><td>HVR_OPT (proposed framework), discrete catalog parts</td><td>Practical ceiling (knee of the curve)</td><td>Hybrid SC-buck: 2:1 switched-capacitor stage + 2 inductors (N2K2KA1)</td><td>Distributed: 12 cells × 83 A (24 phases)</td><td>per cell: 2× EPC2090 (HS), 2× EPC2366 (LS), 2× TDK CLT32-17N (17 nH), 1× Murata GRM21BC81E226ME44 (22 µF 25 V 0805) flying, 2× uPI uP1966E driver<br><small>22 W/cm²; efficiency falls steeply beyond this</small></td><td class="r">1.87 MHz</td><td class="r">1.30</td><td class="r">85.6%<br><small>82.3% hot</small></td><td class="r">$122</td></tr>
+<tr class="this-study"><td>HVR_OPT (proposed framework), discrete catalog parts</td><td>Maximum density</td><td>Hybrid SC-buck: 2:1 switched-capacitor stage + 2 inductors (N2K2KA1)</td><td>Distributed: 12 cells × 83 A (24 phases)</td><td>per cell: 2× EPC2090 (HS), 2× EPC2090 (LS), 2× TDK CLT32-17N (17 nH), 1× Murata GRM21BC81E226ME44 (22 µF 25 V 0805) flying, 2× uPI uP1966E driver<br><small>bound, not a design: 57 W/cm², parts at their limits</small></td><td class="r">1.87 MHz</td><td class="r">1.60</td><td class="r">73.7%<br><small>66.7% hot</small></td><td class="r">$116</td></tr>
+<tr class="this-study"><td>HVR_OPT (proposed framework), discrete catalog parts</td><td>Maximum density, power stage only</td><td>Hybrid SC-buck: 3:1 switched-capacitor stage + 3 inductors (N3K3KA2)</td><td>Distributed: 8 cells × 125 A (24 phases)</td><td>per cell: 3× EPC2090 (HS), 3× EPC2090 (LS), 3× TDK CLT32-17N (17 nH), 2× Murata GRM21BC81E226ME44 (22 µF 25 V 0805) flying, 3× uPI uP1966E driver (placed elsewhere)<br><small>gate drivers not on the backside layer; 96 W/cm²</small></td><td class="r">3.00 MHz</td><td class="r">2.08</td><td class="r">68.5%<br><small>61.4% hot</small></td><td class="r">$115</td></tr>
+<tr><td>Off-the-shelf, integrated-inductor modules (catalog)</td><td>1 A/mm²</td><td>2-phase buck, smart power stages + inductors in one module</td><td>Distributed: ≈8.6 modules × 116 A per kA (17 phases)</td><td>MPS MPC22165-170 (9 × 9.9 × 9.65 mm); multiphase controller<br><small>measured vendor curve moved to 1 V; Infineon TDM22545D similar size at $15–18</small></td><td class="r">0.5 MHz</td><td class="r">1.00</td><td class="r">87.2%</td><td class="r">$222–272</td></tr>
+<tr><td>Off-the-shelf, integrated-inductor modules (catalog)</td><td>Modules at 168 A (near the 170 A rating)</td><td>2-phase buck, smart power stages + inductors in one module</td><td>Distributed: ≈6.0 modules × 168 A per kA (12 phases)</td><td>MPS MPC22165-170 (9 × 9.9 × 9.65 mm); multiphase controller<br><small>43 W per module; needs a cold plate</small></td><td class="r">0.5 MHz</td><td class="r">1.45</td><td class="r">79.9%</td><td class="r">$153–189</td></tr>
+<tr><td>Off-the-shelf, discrete multiphase (catalog)</td><td>Typical</td><td>Multiphase buck: one smart power stage + one inductor per phase</td><td>Distributed: 18–20 phases × 50–55 A per kA</td><td>Infineon TDA21590 (or MPS MP87190, TI CSD95410RRB); Coilcraft SLC1049-101 (100 nH); Infineon XDPE192C3B controller<br><small>standard server VR layout</small></td><td class="r">0.4–0.8 MHz</td><td class="r">0.2–0.35</td><td class="r">not evaluated</td><td class="r">$85–155</td></tr>
+<tr><td>Off-the-shelf, advanced IVR (estimate)</td><td>Estimate</td><td>12→1.8 V buck modules + 16-phase integrated VR</td><td>Distributed: ≈5.9 modules + ≈6.3 IVRs × 160 A per kA</td><td>MPS MPC22165-170; Ferric Fe1766<br><small>gains transient response, not area; Empower 3.3 V-input IVRs similar</small></td><td class="r">15 MHz (IVR)</td><td class="r">1.06</td><td class="r">82.7%</td><td class="r">not public (Ferric) + ≈$150–175</td></tr>
+</tbody></table>
     </div>
-  </section>
-
-  <section aria-labelledby="designs-h">
-    <h2 id="designs-h">The designs behind the discrete curve</h2>
-    <p class="note">HVR_OPT notation: an N:1 switched-capacitor stage feeding K inductors per cell. All parts are catalog items; prices include gate drivers.</p>
-    <div class="card scroll">
-      <table class="designs">
-        <thead><tr><th scope="col">Operating point</th><th scope="col">Topology, cells</th><th scope="col">Switches HS / LS</th><th scope="col">Inductor</th><th scope="col">Flying capacitor</th><th scope="col" class="r">f<sub>sw</sub></th><th scope="col" class="r">Efficiency</th><th scope="col" class="r">Heat</th><th scope="col" class="r">Per kA</th></tr></thead>
-        <tbody class="num">
-          <tr class="group"><th colspan="9" scope="colgroup">48 V → 1 V</th></tr>
-          <tr><td>Best efficiency, 0.10 A/mm²</td><td>8:1, K = 2; 45 × 22 A</td><td class="mono">EPC2057 / EPC2366</td><td><span class="mono">TLVR1005T</span> 150 nH, 11.7 mm tall</td><td>10 µF 100 V, 1210</td><td class="r">0.40 MHz</td><td class="r">96.8%</td><td class="r">0.3 W/cm²</td><td class="r">$870</td></tr>
-          <tr><td>1 A/mm²</td><td>7:1, K = 7; 4 × 250 A</td><td class="mono">EPC2090 / EPC2366</td><td><span class="mono">CLT32-17N</span> 17 nH, 2.5 mm</td><td>10 µF 100 V, 1210</td><td class="r">1.41 MHz</td><td class="r">86.2%</td><td class="r">16 W/cm²</td><td class="r">$149</td></tr>
-          <tr><td>Maximum, 1.67 A/mm²</td><td>4:1, K = 4; 6 × 167 A</td><td class="mono">EPC2090 / EPC2090</td><td><span class="mono">CLT32-17N</span> 17 nH, 2.5 mm</td><td>4.7 µF 50 V, 0805</td><td class="r">1.60 MHz</td><td class="r">72.5%</td><td class="r">63 W/cm²</td><td class="r">$116</td></tr>
-          <tr class="group"><th colspan="9" scope="colgroup">12 V → 1 V</th></tr>
-          <tr><td>Best efficiency, 0.11 A/mm²</td><td>3:1, K = 2; 56 × 18 A</td><td class="mono">EPC2055 / EPC2366</td><td><span class="mono">TLVR1005T</span> 150 nH, 11.7 mm tall</td><td>22 µF 25 V, 1210</td><td class="r">0.38 MHz</td><td class="r">96.7%</td><td class="r">0.4 W/cm²</td><td class="r">$714</td></tr>
-          <tr><td>1 A/mm²</td><td>2:1, K = 2; 14 × 71 A</td><td class="mono">EPC2090 / EPC2366</td><td><span class="mono">CLT32-17N</span> 17 nH, 2.5 mm</td><td>10 µF 100 V, 1210</td><td class="r">1.35 MHz</td><td class="r">87.0%</td><td class="r">15 W/cm²</td><td class="r">$146</td></tr>
-          <tr><td>Maximum, 1.60 A/mm²</td><td>2:1, K = 2; 12 × 83 A</td><td class="mono">EPC2090 / EPC2090</td><td><span class="mono">CLT32-17N</span> 17 nH, 2.5 mm</td><td>22 µF 25 V, 0805</td><td class="r">1.87 MHz</td><td class="r">73.7%</td><td class="r">57 W/cm²</td><td class="r">$116</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="note">At the maximum, the low-side switches carry most of the loss (about 240 W per kA): the packer picks the smallest GaN parts and 17 nH inductors because nothing larger fits.</p>
   </section>
 
   <section aria-labelledby="twv-h">
