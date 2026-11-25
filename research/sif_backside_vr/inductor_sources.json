@@ -1,0 +1,2828 @@
+{
+ "meta": {
+  "retrieved": "2026-11-25",
+  "n_parts": 120,
+  "ferrite_B_sat_ref_T": 0.37974784500000003,
+  "ferrite_B_sat_ref_spread_T": [
+   0.30756,
+   0.3924
+  ],
+  "ferrite_kv_calibration": 0.5748382422960577,
+  "ferrite_kv_tlvr": 0.0664961484741981,
+  "eaton_chart_vs_proxy": {
+   "FP1308R": {
+    "geomean_ratio": 0.7877901958779844,
+    "min": 0.3986897474567161,
+    "max": 2.6250991211914325,
+    "n": 25
+   },
+   "FP1007R6": {
+    "geomean_ratio": 0.7678470278215122,
+    "min": 0.36182861814678174,
+    "max": 3.242620004922456,
+    "n": 25
+   },
+   "FP1107R1": {
+    "geomean_ratio": 0.31401592906145676,
+    "min": 0.15829039641397497,
+    "max": 1.0625298890499522,
+    "n": 25
+   },
+   "TL1011V2": {
+    "geomean_ratio": 0.0664961484741981,
+    "min": 0.031438623894013216,
+    "max": 0.23677774625274298,
+    "n": 20
+   }
+  },
+  "composite_B_ref_T": 0.3278638797755776,
+  "composite_B_ref_spread_T": [
+   0.2410150932119839,
+   0.5242389963900388
+  ],
+  "composite_mu_r_assumed": 25.0,
+  "composite_kv": 0.7
+ },
+ "core_loss_records": [
+  {
+   "series": "FP1308R (R1/R2/R3); used for FP1308R3 parts",
+   "vendor": "Eaton (Coiltronics)",
+   "method": "vendor_K_factor_chart",
+   "core_material": "Ferrite",
+   "formula": "Bpp[Gauss] = K * L[nH] * dI_pp[A] * 1e-3 with K = 233; component core loss P[W] read from chart \"Core loss vs Bp-p\"; per-frequency power-law fits P = a * Bpp^b (Bpp in Gauss) digitized from the vector chart",
+   "params": {
+    "K_factor": 233,
+    "fits_P_W_vs_Bpp_G": {
+     "100kHz": {
+      "a": 2.755e-10,
+      "b": 2.553,
+      "Bpp_range_G": [
+       913,
+       6504
+      ]
+     },
+     "200kHz": {
+      "a": 1.578e-09,
+      "b": 2.477,
+      "Bpp_range_G": [
+       560,
+       6313
+      ]
+     },
+     "300kHz": {
+      "a": 4.419e-09,
+      "b": 2.435,
+      "Bpp_range_G": [
+       401,
+       5912
+      ]
+     },
+     "500kHz": {
+      "a": 5.01e-08,
+      "b": 2.248,
+      "Bpp_range_G": [
+       228,
+       5093
+      ]
+     },
+     "1MHz": {
+      "a": 4.122e-07,
+      "b": 2.164,
+      "Bpp_range_G": [
+       200,
+       2690
+      ]
+     }
+    }
+   },
+   "units": "P in W (whole component); Bpp peak-to-peak flux density in Gauss; L in nH; dI peak-to-peak ripple in A",
+   "digitized_points": [
+    {
+     "freq": "100kHz",
+     "Bpp": 1000,
+     "P_W": 0.0126
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 1500,
+     "P_W": 0.0355
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 2000,
+     "P_W": 0.074
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 3000,
+     "P_W": 0.2084
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 5000,
+     "P_W": 0.768
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 700,
+     "P_W": 0.0176
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 1000,
+     "P_W": 0.0425
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 1500,
+     "P_W": 0.1162
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 2000,
+     "P_W": 0.2369
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 3000,
+     "P_W": 0.6466
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 5000,
+     "P_W": 2.2918
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 500,
+     "P_W": 0.0165
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 700,
+     "P_W": 0.0375
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 1000,
+     "P_W": 0.0895
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 1500,
+     "P_W": 0.2402
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 2000,
+     "P_W": 0.484
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 3000,
+     "P_W": 1.2994
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 5000,
+     "P_W": 4.5087
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 300,
+     "P_W": 0.0186
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 500,
+     "P_W": 0.0586
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 700,
+     "P_W": 0.125
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 1000,
+     "P_W": 0.2786
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 1500,
+     "P_W": 0.6934
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 2000,
+     "P_W": 1.324
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 3000,
+     "P_W": 3.2946
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 5000,
+     "P_W": 10.39
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 200,
+     "P_W": 0.0393
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 300,
+     "P_W": 0.0946
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 500,
+     "P_W": 0.2857
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 700,
+     "P_W": 0.5917
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 1000,
+     "P_W": 1.2803
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 1500,
+     "P_W": 3.0787
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 2000,
+     "P_W": 5.7378
+    }
+   ],
+   "source": "Eaton FP1308R data sheet, Technical Data 4355 (June 2017), p.3 chart: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf",
+   "notes": "Digitized from PDF vector paths (max residual of power-law fit about 0.006 decade). Chart is for sinusoidal/unspecified waveform and presumably 25 C; chart shows 100k-1MHz only. Near the top of the chart (>6000 G) the curves steepen (slope ~2.9); fits valid inside listed ranges."
+  },
+  {
+   "series": "FP1308 (non-R, DS4313; not recommended for new designs) - cross-check only",
+   "vendor": "Eaton (Coiltronics)",
+   "method": "vendor_K_factor_chart",
+   "core_material": "Ferrite",
+   "formula": "Bpp = K * L[uH] * dI[A], K = 21.33-21.37; footnote labels the unit \"(mT): (Gauss)\" ambiguously - physically consistent only with mT (K=21.33 implies Ae ~ 47 mm^2 for a single turn); P = a * Bpp[mT]^b",
+   "params": {
+    "K_factor": 21.33,
+    "fits_P_W_vs_Bpp_mT": {
+     "50kHz": {
+      "a": 3.806e-07,
+      "b": 2.636
+     },
+     "100kHz": {
+      "a": 9.716e-07,
+      "b": 2.612
+     },
+     "300kHz": {
+      "a": 2.503e-06,
+      "b": 2.681
+     },
+     "500kHz": {
+      "a": 5.689e-06,
+      "b": 2.646
+     },
+     "1MHz": {
+      "a": 1.256e-05,
+      "b": 2.784
+     }
+    }
+   },
+   "units": "P in W; Bpp in mT; L in uH",
+   "digitized_points": [
+    {
+     "freq": "50kHz",
+     "Bpp": 10,
+     "P_W": 0.00017
+    },
+    {
+     "freq": "50kHz",
+     "Bpp": 30,
+     "P_W": 0.00302
+    },
+    {
+     "freq": "50kHz",
+     "Bpp": 100,
+     "P_W": 0.07093
+    },
+    {
+     "freq": "50kHz",
+     "Bpp": 300,
+     "P_W": 1.30677
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 10,
+     "P_W": 0.00041
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 30,
+     "P_W": 0.00704
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 100,
+     "P_W": 0.16171
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 300,
+     "P_W": 2.92127
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 10,
+     "P_W": 0.00123
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 30,
+     "P_W": 0.02301
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 100,
+     "P_W": 0.57663
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 200,
+     "P_W": 3.66021
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 10,
+     "P_W": 0.00252
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 30,
+     "P_W": 0.04606
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 100,
+     "P_W": 1.1103
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 200,
+     "P_W": 6.89893
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 10,
+     "P_W": 0.00794
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 30,
+     "P_W": 0.16401
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 100,
+     "P_W": 4.68734
+    }
+   ],
+   "source": "Eaton FP1308 data sheet DS4313 (June 2017): https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308-high-current-power-inductors-data-sheet.pdf",
+   "notes": "Older FP1308 material/chart. At equal flux it shows ~3x higher loss than the FP1308R chart (500 kHz, 50 mT = 500 G: 0.18 W here vs 0.059 W in FP1308R), consistent with FP1308R being marketed as low core loss. Use the FP1308R record for FP1308R3 parts; this record is a cross-check only."
+  },
+  {
+   "series": "FP1007R6",
+   "vendor": "Eaton (Coiltronics)",
+   "method": "vendor_K_factor_chart",
+   "core_material": "Ferrite",
+   "formula": "Bpp[Gauss] = K * L[nH] * dI_pp[A] * 1e-3, K = 348.8; P = a * Bpp[G]^b per frequency (digitized)",
+   "params": {
+    "K_factor": 348.8,
+    "fits_P_W_vs_Bpp_G": {
+     "100kHz": {
+      "a": 1.256e-10,
+      "b": 2.554,
+      "Bpp_range_G": [
+       200,
+       7822
+      ]
+     },
+     "200kHz": {
+      "a": 4.77e-10,
+      "b": 2.524,
+      "Bpp_range_G": [
+       200,
+       8076
+      ]
+     },
+     "300kHz": {
+      "a": 2.033e-09,
+      "b": 2.435,
+      "Bpp_range_G": [
+       200,
+       8076
+      ]
+     },
+     "500kHz": {
+      "a": 2.292e-08,
+      "b": 2.249,
+      "Bpp_range_G": [
+       200,
+       6671
+      ]
+     },
+     "1MHz": {
+      "a": 7.399e-07,
+      "b": 1.935,
+      "Bpp_range_G": [
+       200,
+       4977
+      ]
+     }
+    }
+   },
+   "units": "P in W (component); Bpp in Gauss",
+   "digitized_points": [
+    {
+     "freq": "100kHz",
+     "Bpp": 200,
+     "P_W": 9e-05
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 500,
+     "P_W": 0.00099
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 1000,
+     "P_W": 0.0058
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 2000,
+     "P_W": 0.03383
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 5000,
+     "P_W": 0.35288
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 200,
+     "P_W": 0.00031
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 500,
+     "P_W": 0.00313
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 1000,
+     "P_W": 0.01776
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 2000,
+     "P_W": 0.10222
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 5000,
+     "P_W": 1.03965
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 200,
+     "P_W": 0.00083
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 500,
+     "P_W": 0.00773
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 1000,
+     "P_W": 0.04078
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 2000,
+     "P_W": 0.22085
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 5000,
+     "P_W": 2.06681
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 200,
+     "P_W": 0.00351
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 500,
+     "P_W": 0.0268
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 1000,
+     "P_W": 0.1274
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 2000,
+     "P_W": 0.60852
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 5000,
+     "P_W": 4.7514
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 200,
+     "P_W": 0.02105
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 500,
+     "P_W": 0.12427
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 1000,
+     "P_W": 0.4728
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 2000,
+     "P_W": 1.80335
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 3000,
+     "P_W": 3.95294
+    }
+   ],
+   "source": "Eaton FP1007R6 data sheet, Technical Data 10007 (June 2017), p.3: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf",
+   "notes": "Digitized from vector paths (max fit residual ~0.025 decade). Points are local chart readings."
+  },
+  {
+   "series": "FP1107R1 / R2 / R5",
+   "vendor": "Eaton (Coiltronics)",
+   "method": "vendor_K_factor_chart",
+   "core_material": "Ferrite",
+   "formula": "Bpp[Gauss] = K * L[nH] * dI_pp[A] * 1e-3, K = 361.1 (R1,R5), 363.3 (R2); P = a * Bpp[G]^b per frequency (digitized)",
+   "params": {
+    "K_factor": 361.1,
+    "fits_P_W_vs_Bpp_G": {
+     "100kHz": {
+      "a": 4.942e-11,
+      "b": 2.552,
+      "Bpp_range_G": [
+       693,
+       6127
+      ]
+     },
+     "200kHz": {
+      "a": 2.894e-10,
+      "b": 2.472,
+      "Bpp_range_G": [
+       406,
+       5959
+      ]
+     },
+     "300kHz": {
+      "a": 8.264e-10,
+      "b": 2.428,
+      "Bpp_range_G": [
+       300,
+       6070
+      ]
+     },
+     "500kHz": {
+      "a": 8.942e-09,
+      "b": 2.247,
+      "Bpp_range_G": [
+       200,
+       5384
+      ]
+     },
+     "1MHz": {
+      "a": 7.318e-08,
+      "b": 2.163,
+      "Bpp_range_G": [
+       200,
+       5335
+      ]
+     }
+    }
+   },
+   "units": "P in W (component); Bpp in Gauss",
+   "digitized_points": [
+    {
+     "freq": "100kHz",
+     "Bpp": 700,
+     "P_W": 0.0009
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 1000,
+     "P_W": 0.00223
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 2000,
+     "P_W": 0.01309
+    },
+    {
+     "freq": "100kHz",
+     "Bpp": 5000,
+     "P_W": 0.13562
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 500,
+     "P_W": 0.00136
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 1000,
+     "P_W": 0.00755
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 2000,
+     "P_W": 0.04191
+    },
+    {
+     "freq": "200kHz",
+     "Bpp": 5000,
+     "P_W": 0.40376
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 300,
+     "P_W": 0.00085
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 1000,
+     "P_W": 0.0159
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 2000,
+     "P_W": 0.08559
+    },
+    {
+     "freq": "300kHz",
+     "Bpp": 5000,
+     "P_W": 0.79188
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 200,
+     "P_W": 0.00132
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 500,
+     "P_W": 0.01037
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 1000,
+     "P_W": 0.04921
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 2000,
+     "P_W": 0.23357
+    },
+    {
+     "freq": "500kHz",
+     "Bpp": 5000,
+     "P_W": 1.8304
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 200,
+     "P_W": 0.00695
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 500,
+     "P_W": 0.05046
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 1000,
+     "P_W": 0.22602
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 2000,
+     "P_W": 1.01239
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 5000,
+     "P_W": 7.34838
+    }
+   ],
+   "source": "Eaton FP1107R data sheet, Technical Data 4342 (June 2020), p.5: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf",
+   "notes": "Points from the power-law fits (fit residual <=0.03 decade). Same sheet has a separate FP1107R4 chart (next record)."
+  },
+  {
+   "series": "FP1107R4 (reference for MHz ferrite; R4 not in parts list)",
+   "vendor": "Eaton (Coiltronics)",
+   "method": "vendor_K_factor_chart",
+   "core_material": "Ferrite (different, lower-loss grade than R1/R2/R5)",
+   "formula": "Bpp[Gauss] = K * L[nH] * dI[A] * 1e-3, K = 361; curves drawn as 3-vertex polylines; vertices listed as digitized points",
+   "params": {
+    "K_factor": 361,
+    "fits_P_W_vs_Bpp_G": {
+     "700kHz": {
+      "a": 9.812e-13,
+      "b": 3.456
+     },
+     "1MHz": {
+      "a": 2.781e-11,
+      "b": 3.068
+     },
+     "1.5MHz": {
+      "a": 2.574e-10,
+      "b": 2.846
+     },
+     "2MHz": {
+      "a": 6.534e-10,
+      "b": 2.797
+     },
+     "3MHz": {
+      "a": 1.693e-08,
+      "b": 2.478
+     }
+    }
+   },
+   "units": "P in W (component); Bpp in Gauss",
+   "digitized_points": [
+    {
+     "freq": "700kHz",
+     "Bpp": 600,
+     "P_W": 0.0039
+    },
+    {
+     "freq": "700kHz",
+     "Bpp": 1000,
+     "P_W": 0.0229
+    },
+    {
+     "freq": "700kHz",
+     "Bpp": 1399,
+     "P_W": 0.0733
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 600,
+     "P_W": 0.0097
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 1000,
+     "P_W": 0.0398
+    },
+    {
+     "freq": "1MHz",
+     "Bpp": 1399,
+     "P_W": 0.1328
+    },
+    {
+     "freq": "1.5MHz",
+     "Bpp": 200,
+     "P_W": 0.0009
+    },
+    {
+     "freq": "1.5MHz",
+     "Bpp": 600,
+     "P_W": 0.0199
+    },
+    {
+     "freq": "1.5MHz",
+     "Bpp": 1000,
+     "P_W": 0.0914
+    },
+    {
+     "freq": "2MHz",
+     "Bpp": 200,
+     "P_W": 0.0018
+    },
+    {
+     "freq": "2MHz",
+     "Bpp": 600,
+     "P_W": 0.0368
+    },
+    {
+     "freq": "2MHz",
+     "Bpp": 1000,
+     "P_W": 0.1659
+    },
+    {
+     "freq": "3MHz",
+     "Bpp": 200,
+     "P_W": 0.0087
+    },
+    {
+     "freq": "3MHz",
+     "Bpp": 600,
+     "P_W": 0.1198
+    },
+    {
+     "freq": "3MHz",
+     "Bpp": 1000,
+     "P_W": 0.4861
+    }
+   ],
+   "source": "Same FP1107R data sheet (TD 4342), p.5 right-hand chart",
+   "notes": "Only 3 vertices per curve; fits are exact or near-exact through vertices (0.7-1.4 kG for 700k/1M, 0.2-1 kG for 1.5-3 MHz)."
+  },
+  {
+   "series": "TL1011V2 (TLVR)",
+   "vendor": "Eaton (Coiltronics)",
+   "method": "vendor_K_factor_chart",
+   "core_material": "Ferrite",
+   "formula": "Bpp[Gauss] = K * L[nH] * dI_pp[A] * 1e-3, K = 340 (L = winding inductance in nH as tabulated); P = a * Bpp[G]^b per frequency, digitized from raster charts at 25 C and 100 C",
+   "params": {
+    "K_factor": 340,
+    "fits_25C_P_W_vs_Bpp_G": {
+     "500kHz": {
+      "a": 2.305e-14,
+      "b": 3.935,
+      "Bpp_range_G": [
+       510,
+       1598
+      ]
+     },
+     "1MHz": {
+      "a": 1.931e-10,
+      "b": 2.753,
+      "Bpp_range_G": [
+       278,
+       1502
+      ]
+     },
+     "2MHz": {
+      "a": 5.203e-10,
+      "b": 2.822,
+      "Bpp_range_G": [
+       202,
+       1502
+      ]
+     },
+     "3MHz": {
+      "a": 4.733e-08,
+      "b": 2.303,
+      "Bpp_range_G": [
+       202,
+       1517
+      ]
+     },
+     "5MHz": {
+      "a": 3.981e-07,
+      "b": 2.28,
+      "Bpp_range_G": [
+       202,
+       1502
+      ]
+     }
+    },
+    "fits_100C_P_W_vs_Bpp_G": {
+     "500kHz": {
+      "a": 3.618e-14,
+      "b": 3.853,
+      "Bpp_range_G": [
+       518,
+       1607
+      ]
+     },
+     "1MHz": {
+      "a": 1.344e-10,
+      "b": 2.796,
+      "Bpp_range_G": [
+       288,
+       1504
+      ]
+     },
+     "2MHz": {
+      "a": 4.06e-10,
+      "b": 2.88,
+      "Bpp_range_G": [
+       203,
+       1504
+      ]
+     },
+     "3MHz": {
+      "a": 5.429e-09,
+      "b": 2.643,
+      "Bpp_range_G": [
+       203,
+       1519
+      ]
+     },
+     "5MHz": {
+      "a": 1.488e-07,
+      "b": 2.434,
+      "Bpp_range_G": [
+       202,
+       1504
+      ]
+     }
+    }
+   },
+   "units": "P in W (component); Bpp in Gauss",
+   "digitized_points": [
+    {
+     "freq": "25C_500kHz",
+     "Bpp": 500,
+     "P_W": 0.001
+    },
+    {
+     "freq": "25C_500kHz",
+     "Bpp": 700,
+     "P_W": 0.0036
+    },
+    {
+     "freq": "25C_500kHz",
+     "Bpp": 1000,
+     "P_W": 0.0147
+    },
+    {
+     "freq": "25C_500kHz",
+     "Bpp": 1500,
+     "P_W": 0.0724
+    },
+    {
+     "freq": "25C_1MHz",
+     "Bpp": 300,
+     "P_W": 0.0013
+    },
+    {
+     "freq": "25C_1MHz",
+     "Bpp": 500,
+     "P_W": 0.0052
+    },
+    {
+     "freq": "25C_1MHz",
+     "Bpp": 1000,
+     "P_W": 0.0351
+    },
+    {
+     "freq": "25C_1MHz",
+     "Bpp": 1500,
+     "P_W": 0.1072
+    },
+    {
+     "freq": "25C_2MHz",
+     "Bpp": 200,
+     "P_W": 0.0016
+    },
+    {
+     "freq": "25C_2MHz",
+     "Bpp": 500,
+     "P_W": 0.0215
+    },
+    {
+     "freq": "25C_2MHz",
+     "Bpp": 1000,
+     "P_W": 0.1523
+    },
+    {
+     "freq": "25C_2MHz",
+     "Bpp": 1500,
+     "P_W": 0.4783
+    },
+    {
+     "freq": "25C_3MHz",
+     "Bpp": 200,
+     "P_W": 0.0094
+    },
+    {
+     "freq": "25C_3MHz",
+     "Bpp": 500,
+     "P_W": 0.0776
+    },
+    {
+     "freq": "25C_3MHz",
+     "Bpp": 1000,
+     "P_W": 0.3831
+    },
+    {
+     "freq": "25C_3MHz",
+     "Bpp": 1500,
+     "P_W": 0.9745
+    },
+    {
+     "freq": "25C_5MHz",
+     "Bpp": 200,
+     "P_W": 0.0704
+    },
+    {
+     "freq": "25C_5MHz",
+     "Bpp": 500,
+     "P_W": 0.5685
+    },
+    {
+     "freq": "25C_5MHz",
+     "Bpp": 1000,
+     "P_W": 2.762
+    },
+    {
+     "freq": "25C_5MHz",
+     "Bpp": 1500,
+     "P_W": 6.9629
+    },
+    {
+     "freq": "100C_500kHz",
+     "Bpp": 700,
+     "P_W": 0.0033
+    },
+    {
+     "freq": "100C_500kHz",
+     "Bpp": 1000,
+     "P_W": 0.0131
+    },
+    {
+     "freq": "100C_500kHz",
+     "Bpp": 1500,
+     "P_W": 0.0626
+    },
+    {
+     "freq": "100C_1MHz",
+     "Bpp": 300,
+     "P_W": 0.0011
+    },
+    {
+     "freq": "100C_1MHz",
+     "Bpp": 500,
+     "P_W": 0.0047
+    },
+    {
+     "freq": "100C_1MHz",
+     "Bpp": 1000,
+     "P_W": 0.0329
+    },
+    {
+     "freq": "100C_1MHz",
+     "Bpp": 1500,
+     "P_W": 0.1023
+    },
+    {
+     "freq": "100C_2MHz",
+     "Bpp": 200,
+     "P_W": 0.0017
+    },
+    {
+     "freq": "100C_2MHz",
+     "Bpp": 500,
+     "P_W": 0.0241
+    },
+    {
+     "freq": "100C_2MHz",
+     "Bpp": 1000,
+     "P_W": 0.1776
+    },
+    {
+     "freq": "100C_2MHz",
+     "Bpp": 1500,
+     "P_W": 0.5711
+    },
+    {
+     "freq": "100C_3MHz",
+     "Bpp": 200,
+     "P_W": 0.0066
+    },
+    {
+     "freq": "100C_3MHz",
+     "Bpp": 500,
+     "P_W": 0.0739
+    },
+    {
+     "freq": "100C_3MHz",
+     "Bpp": 1000,
+     "P_W": 0.4614
+    },
+    {
+     "freq": "100C_3MHz",
+     "Bpp": 1500,
+     "P_W": 1.3475
+    },
+    {
+     "freq": "100C_5MHz",
+     "Bpp": 200,
+     "P_W": 0.0593
+    },
+    {
+     "freq": "100C_5MHz",
+     "Bpp": 500,
+     "P_W": 0.5514
+    },
+    {
+     "freq": "100C_5MHz",
+     "Bpp": 1000,
+     "P_W": 2.9796
+    },
+    {
+     "freq": "100C_5MHz",
+     "Bpp": 1500,
+     "P_W": 7.9936
+    }
+   ],
+   "source": "Eaton TL1011V2 data sheet ELX1154 (March 2022), p.4: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf",
+   "notes": "Raster chart digitized by pixel centroid (fit residual <=0.009 decade; axis calibration from grid lines). Which winding L enters K*L*dI is not stated explicitly; tabulated L (both windings equal) used. Data range only to ~1.5 kG."
+  },
+  {
+   "series": "MnZn power ferrite proxy (Ferroxcube 3F3, 3F4)",
+   "vendor": "Ferroxcube (material data, not inductor vendor)",
+   "method": "material_steinmetz",
+   "core_material": "MnZn ferrite",
+   "formula": "Pv[mW/cm^3] = Cm * f^x * Bpeak^y * (ct0 - ct1*T + ct2*T^2); f in Hz, Bpeak in T (half of peak-to-peak), T in C; CT = 1 at 100 C",
+   "params": {
+    "3F3": [
+     {
+      "f_kHz": [
+       100,
+       300
+      ],
+      "Cm": 0.00025,
+      "x": 1.63,
+      "y": 2.45,
+      "ct2": 7.9e-05,
+      "ct1": 0.0105,
+      "ct0": 1.26
+     },
+     {
+      "f_kHz": [
+       300,
+       500
+      ],
+      "Cm": 2e-05,
+      "x": 1.8,
+      "y": 2.5,
+      "ct2": 7.7e-05,
+      "ct1": 0.0105,
+      "ct0": 1.28
+     },
+     {
+      "f_kHz": [
+       500,
+       1000
+      ],
+      "Cm": 3.6e-09,
+      "x": 2.4,
+      "y": 2.25,
+      "ct2": 6.7e-05,
+      "ct1": 0.0081,
+      "ct0": 1.14
+     }
+    ],
+    "3F4": [
+     {
+      "f_kHz": [
+       500,
+       1000
+      ],
+      "Cm": 0.0012,
+      "x": 1.75,
+      "y": 2.9,
+      "ct2": 9.5e-05,
+      "ct1": 0.011,
+      "ct0": 1.15
+     },
+     {
+      "f_kHz": [
+       1000,
+       3000
+      ],
+      "Cm": 1.1e-11,
+      "x": 2.8,
+      "y": 2.4,
+      "ct2": 3.4e-05,
+      "ct1": 0.0001,
+      "ct0": 0.67
+     }
+    ]
+   },
+   "units": "Pv mW/cm^3 (= kW/m^3); f Hz; Bpeak T; T degC",
+   "digitized_points": null,
+   "source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/",
+   "notes": "Printed 3F4 500-1000 kHz Cm = 12e-4 gives ~9.5x higher loss at 1 MHz than the 1000-3000 kHz row (1.1e-11), which matches the 3F4 datasheet limits (<=200 kW/m3 at 1 MHz/30 mT/100 C; <=320 kW/m3 at 3 MHz/10 mT). Likely misprint (1.2e-4 would be continuous) - use 1000-3000 kHz row for >=1 MHz. Proxy only: actual vendor ferrite grades are not disclosed."
+  },
+  {
+   "series": "Iron-powder / metal composite proxy (Micrometals mixes)",
+   "vendor": "Micrometals (material data, not inductor vendor)",
+   "method": "material_steinmetz",
+   "core_material": "Carbonyl iron (-2, -8), hydrogen-reduced iron (-26), FeSiAl (MS-26, MS-60)",
+   "formula": "Pcore[mW/cm^3] = k * f^alpha * dB^beta; f in Hz, dB in T (document does not state whether dB is peak or peak-to-peak - verify before use)",
+   "params": {
+    "fit_near_1MHz": {
+     "-2": {
+      "k": 1.527,
+      "alpha": 1.1077,
+      "beta": 2.443
+     },
+     "-8": {
+      "k": 0.15861,
+      "alpha": 1.294,
+      "beta": 2.3408
+     },
+     "-18": {
+      "k": 0.00094,
+      "alpha": 1.6934,
+      "beta": 2.196
+     },
+     "-26": {
+      "k": 0.00012,
+      "alpha": 1.9452,
+      "beta": 2.1471
+     },
+     "MS-26": {
+      "k": 0.09623,
+      "alpha": 1.2543,
+      "beta": 2.1263
+     },
+     "MS-60": {
+      "k": 1.6e-05,
+      "alpha": 1.9157,
+      "beta": 2.0732
+     }
+    },
+    "fit_near_100kHz": {
+     "-2": {
+      "k": 3.0739,
+      "alpha": 1.0083,
+      "beta": 2.3065
+     },
+     "-8": {
+      "k": 5.4256,
+      "alpha": 1.0261,
+      "beta": 2.354
+     },
+     "-26": {
+      "k": 0.05147,
+      "alpha": 1.442,
+      "beta": 2.149
+     },
+     "MS-26": {
+      "k": 0.16033,
+      "alpha": 1.2613,
+      "beta": 2.0764
+     }
+    }
+   },
+   "units": "mW/cm^3 (= kW/m^3); f Hz; dB T",
+   "digitized_points": null,
+   "source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf",
+   "notes": "Material-class proxy for molded composite/metal-alloy inductors (Coilcraft XEL/XGL, Wurth WE-MAPI/WE-XHMI, TDK CLT32/SPM-VT). These are NOT the vendors' materials; Coilcraft/Wurth/TDK molded powders are proprietary. Use only for sensitivity studies; coefficients fitted around 1 MHz (and 100 kHz) only."
+  },
+  {
+   "series": "XEL4020, XEL4030, XEL5030, XEL6030, XGL4020, XGL4030, XGL5030, XGL6030",
+   "vendor": "Coilcraft",
+   "method": "none",
+   "core_material": "Composite (molded)",
+   "formula": null,
+   "params": null,
+   "units": null,
+   "digitized_points": null,
+   "source": "Coilcraft datasheets (\"Core and winding loss: see www.coilcraft.com/coreloss\"); Doc 486 \"Determining Inductor Power Losses\" (rev 05/17/18): https://www.coilcraft.com/getmedia/236a5602-fc7f-432a-9bdb-30fd09b63837/doc486_inductorlosses.pdf",
+   "notes": "No numeric core-loss model published. Doc 486 gives only the generic form Pcore[mW] = K1 * f^x * B^y * Ve (f kHz, B peak kGauss, Ve cm^3) without constants; per-part losses only via the online calculator (not accessible to scripted clients). No paper with Steinmetz fits for XAL/XEL/XGL composite at 0.5-5 MHz was found. Suggested proxy: Micrometals proxy record."
+  },
+  {
+   "series": "SLC7530, SLC1049, SLR7010, SLR1075",
+   "vendor": "Coilcraft",
+   "method": "none",
+   "core_material": "Ferrite",
+   "formula": null,
+   "params": null,
+   "units": null,
+   "digitized_points": null,
+   "source": "Coilcraft datasheets (core and winding loss: online calculator only)",
+   "notes": "No vendor formula or chart. Suggested proxy: Ferroxcube 3F3/3F4 proxy record; Eaton single-turn ferrite charts (FP1308R/FP1007R6/FP1107R) are the closest published analogue."
+  },
+  {
+   "series": "WE-HCM, WE-HCF",
+   "vendor": "Wurth Elektronik",
+   "method": "none",
+   "core_material": "MnZn ferrite (WE-HCM per product page; WE-HCF unverified)",
+   "formula": null,
+   "params": null,
+   "units": null,
+   "digitized_points": null,
+   "source": "Wurth ANP029 \"Accurate inductor loss determination using REDEXPERT\" (2015-06-15): https://www.we-online.com/components/media/o109035v410%20AppNotes_ANP029_AccurateInductorLossDeterminationUsingRedExpert_EN.pdf",
+   "notes": "Wurth states Steinmetz-type equations are reliable only for certain conditions and uses its own measurement-based model in REDEXPERT; no published coefficients per part/material. Suggested proxy: Ferroxcube 3F3/3F4 proxy record."
+  },
+  {
+   "series": "WE-MAPI, WE-XHMI",
+   "vendor": "Wurth Elektronik",
+   "method": "none",
+   "core_material": "Iron alloy / iron-based composite",
+   "formula": null,
+   "params": null,
+   "units": null,
+   "digitized_points": null,
+   "source": "Wurth ANP029 (as above); REDEXPERT online tool",
+   "notes": "No published coefficients. Suggested proxy: Micrometals proxy record."
+  },
+  {
+   "series": "CLT32, SPM5030VT-D",
+   "vendor": "TDK",
+   "method": "none",
+   "core_material": "Molded metal / metal composite",
+   "formula": null,
+   "params": null,
+   "units": null,
+   "digitized_points": null,
+   "source": "TDK datasheets; TDK online \"Inductor Loss Calculation Tool\" (https://product.tdk.com/en/search/inductor/core_loss_simulation)",
+   "notes": "No formula or chart in datasheets. Suggested proxy: Micrometals proxy record."
+  },
+  {
+   "series": "VLB10050",
+   "vendor": "TDK",
+   "method": "none",
+   "core_material": "Wound ferrite",
+   "formula": null,
+   "params": null,
+   "units": null,
+   "digitized_points": null,
+   "source": "TDK VLB10050 catalog (2026-01-28) and online loss tool",
+   "notes": "No formula or chart in catalog. Suggested proxy: Ferroxcube proxy; Eaton FP1007R6 chart is a similar-size VRM ferrite analogue."
+  },
+  {
+   "series": "TLVR1005T",
+   "vendor": "Bourns",
+   "method": "none",
+   "core_material": "Ferrite",
+   "formula": null,
+   "params": null,
+   "units": null,
+   "digitized_points": null,
+   "source": "Bourns TLVR1005T datasheet (2026-05-16)",
+   "notes": "No core-loss data in datasheet. Suggested proxy: Eaton TL1011V2 chart (same construction class, 0.5-5 MHz) or Ferroxcube proxy."
+  }
+ ],
+ "parts": [
+  {
+   "part": "Coilcraft-XEL4020-800MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/3c7caaa2-c1ed-4ff8-84e5-0b1b14a30417/xel4020.pdf",
+   "datasheet_revision": "Doc 1302, revised 02/19/26",
+   "price_usd": 0.7,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4020-101MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/3c7caaa2-c1ed-4ff8-84e5-0b1b14a30417/xel4020.pdf",
+   "datasheet_revision": "Doc 1302, revised 02/19/26",
+   "price_usd": 0.7,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4020-201MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/3c7caaa2-c1ed-4ff8-84e5-0b1b14a30417/xel4020.pdf",
+   "datasheet_revision": "Doc 1302, revised 02/19/26",
+   "price_usd": 0.7,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4020-331MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/3c7caaa2-c1ed-4ff8-84e5-0b1b14a30417/xel4020.pdf",
+   "datasheet_revision": "Doc 1302, revised 02/19/26",
+   "price_usd": 0.7,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4020-561MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/3c7caaa2-c1ed-4ff8-84e5-0b1b14a30417/xel4020.pdf",
+   "datasheet_revision": "Doc 1302, revised 02/19/26",
+   "price_usd": 0.7,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4020-821MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/3c7caaa2-c1ed-4ff8-84e5-0b1b14a30417/xel4020.pdf",
+   "datasheet_revision": "Doc 1302, revised 02/19/26",
+   "price_usd": 0.7,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4020-102MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/3c7caaa2-c1ed-4ff8-84e5-0b1b14a30417/xel4020.pdf",
+   "datasheet_revision": "Doc 1302, revised 02/19/26",
+   "price_usd": 0.7,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4030-101MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/8245f050-f190-4295-8c41-7c03d662ee3d/xel4030.pdf",
+   "datasheet_revision": "Doc 1321, revised 02/19/26",
+   "price_usd": 0.72,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4030-201MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/8245f050-f190-4295-8c41-7c03d662ee3d/xel4030.pdf",
+   "datasheet_revision": "Doc 1321, revised 02/19/26",
+   "price_usd": 0.72,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4030-301MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/8245f050-f190-4295-8c41-7c03d662ee3d/xel4030.pdf",
+   "datasheet_revision": "Doc 1321, revised 02/19/26",
+   "price_usd": 0.72,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4030-471MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/8245f050-f190-4295-8c41-7c03d662ee3d/xel4030.pdf",
+   "datasheet_revision": "Doc 1321, revised 02/19/26",
+   "price_usd": 0.72,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4030-901MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/8245f050-f190-4295-8c41-7c03d662ee3d/xel4030.pdf",
+   "datasheet_revision": "Doc 1321, revised 02/19/26",
+   "price_usd": 0.72,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL4030-102MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/8245f050-f190-4295-8c41-7c03d662ee3d/xel4030.pdf",
+   "datasheet_revision": "Doc 1321, revised 02/19/26",
+   "price_usd": 0.72,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL5030-131MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/38f73356-5dfa-4ba3-b406-5d8b038c37d2/xel5030.pdf",
+   "datasheet_revision": "Doc 1412, revised 05/04/26",
+   "price_usd": 1.09,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL5030-261MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/38f73356-5dfa-4ba3-b406-5d8b038c37d2/xel5030.pdf",
+   "datasheet_revision": "Doc 1412, revised 05/04/26",
+   "price_usd": 1.09,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL5030-421MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/38f73356-5dfa-4ba3-b406-5d8b038c37d2/xel5030.pdf",
+   "datasheet_revision": "Doc 1412, revised 05/04/26",
+   "price_usd": 1.09,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL5030-601MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/38f73356-5dfa-4ba3-b406-5d8b038c37d2/xel5030.pdf",
+   "datasheet_revision": "Doc 1412, revised 05/04/26",
+   "price_usd": 1.09,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL5030-102MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/38f73356-5dfa-4ba3-b406-5d8b038c37d2/xel5030.pdf",
+   "datasheet_revision": "Doc 1412, revised 05/04/26",
+   "price_usd": 1.09,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL6030-151MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/ed8d0314-5cbb-4be3-85da-32235c3701c8/xel6030.pdf",
+   "datasheet_revision": "Doc 1353, revised 02/20/26",
+   "price_usd": 1.17,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL6030-281MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/ed8d0314-5cbb-4be3-85da-32235c3701c8/xel6030.pdf",
+   "datasheet_revision": "Doc 1353, revised 02/20/26",
+   "price_usd": 1.17,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL6030-471MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/ed8d0314-5cbb-4be3-85da-32235c3701c8/xel6030.pdf",
+   "datasheet_revision": "Doc 1353, revised 02/20/26",
+   "price_usd": 1.17,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL6030-821MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/ed8d0314-5cbb-4be3-85da-32235c3701c8/xel6030.pdf",
+   "datasheet_revision": "Doc 1353, revised 02/20/26",
+   "price_usd": 1.17,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XEL6030-102MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/ed8d0314-5cbb-4be3-85da-32235c3701c8/xel6030.pdf",
+   "datasheet_revision": "Doc 1353, revised 02/20/26",
+   "price_usd": 1.17,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XEL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4020-400MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/76c9c081-4945-4c85-9129-9356e1ad6734/xgl4020.pdf",
+   "datasheet_revision": "Doc 1529, revised 02/19/26",
+   "price_usd": 0.67,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4020-111MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/76c9c081-4945-4c85-9129-9356e1ad6734/xgl4020.pdf",
+   "datasheet_revision": "Doc 1529, revised 02/19/26",
+   "price_usd": 0.67,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4020-251MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/76c9c081-4945-4c85-9129-9356e1ad6734/xgl4020.pdf",
+   "datasheet_revision": "Doc 1529, revised 02/19/26",
+   "price_usd": 0.67,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4020-471MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/76c9c081-4945-4c85-9129-9356e1ad6734/xgl4020.pdf",
+   "datasheet_revision": "Doc 1529, revised 02/19/26",
+   "price_usd": 0.67,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4020-601MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/76c9c081-4945-4c85-9129-9356e1ad6734/xgl4020.pdf",
+   "datasheet_revision": "Doc 1529, revised 02/19/26",
+   "price_usd": 0.67,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4020-102MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/76c9c081-4945-4c85-9129-9356e1ad6734/xgl4020.pdf",
+   "datasheet_revision": "Doc 1529, revised 02/19/26",
+   "price_usd": 0.67,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4020",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4030-450MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/032d9c73-4222-482f-b6bc-7808590e27c9/xgl4030.pdf",
+   "datasheet_revision": "Doc 1575, revised 02/19/26",
+   "price_usd": 0.69,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4030-131MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/032d9c73-4222-482f-b6bc-7808590e27c9/xgl4030.pdf",
+   "datasheet_revision": "Doc 1575, revised 02/19/26",
+   "price_usd": 0.69,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4030-271MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/032d9c73-4222-482f-b6bc-7808590e27c9/xgl4030.pdf",
+   "datasheet_revision": "Doc 1575, revised 02/19/26",
+   "price_usd": 0.69,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4030-401MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/032d9c73-4222-482f-b6bc-7808590e27c9/xgl4030.pdf",
+   "datasheet_revision": "Doc 1575, revised 02/19/26",
+   "price_usd": 0.69,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4030-761MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/032d9c73-4222-482f-b6bc-7808590e27c9/xgl4030.pdf",
+   "datasheet_revision": "Doc 1575, revised 02/19/26",
+   "price_usd": 0.69,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL4030-102MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/032d9c73-4222-482f-b6bc-7808590e27c9/xgl4030.pdf",
+   "datasheet_revision": "Doc 1575, revised 02/19/26",
+   "price_usd": 0.69,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL4030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL5030-550MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/e64ac115-95f2-45c7-b798-1b3769b91583/xgl5030.pdf",
+   "datasheet_revision": "Doc 1576 (2026 revision; date not captured)",
+   "price_usd": 1.04,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL5030-181MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/e64ac115-95f2-45c7-b798-1b3769b91583/xgl5030.pdf",
+   "datasheet_revision": "Doc 1576 (2026 revision; date not captured)",
+   "price_usd": 1.04,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL5030-401MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/e64ac115-95f2-45c7-b798-1b3769b91583/xgl5030.pdf",
+   "datasheet_revision": "Doc 1576 (2026 revision; date not captured)",
+   "price_usd": 1.04,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL5030-521MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/e64ac115-95f2-45c7-b798-1b3769b91583/xgl5030.pdf",
+   "datasheet_revision": "Doc 1576 (2026 revision; date not captured)",
+   "price_usd": 1.04,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL5030-651MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/e64ac115-95f2-45c7-b798-1b3769b91583/xgl5030.pdf",
+   "datasheet_revision": "Doc 1576 (2026 revision; date not captured)",
+   "price_usd": 1.04,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL5030-102MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/e64ac115-95f2-45c7-b798-1b3769b91583/xgl5030.pdf",
+   "datasheet_revision": "Doc 1576 (2026 revision; date not captured)",
+   "price_usd": 1.04,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL5030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL6030-650MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/9bfb2606-51aa-49a6-98ad-d20f3504c8ae/xgl6030.pdf",
+   "datasheet_revision": "Doc 1635, revised 02/19/26",
+   "price_usd": 0.88,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL6030-181MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/9bfb2606-51aa-49a6-98ad-d20f3504c8ae/xgl6030.pdf",
+   "datasheet_revision": "Doc 1635, revised 02/19/26",
+   "price_usd": 0.88,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL6030-381MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/9bfb2606-51aa-49a6-98ad-d20f3504c8ae/xgl6030.pdf",
+   "datasheet_revision": "Doc 1635, revised 02/19/26",
+   "price_usd": 0.88,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL6030-471MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/9bfb2606-51aa-49a6-98ad-d20f3504c8ae/xgl6030.pdf",
+   "datasheet_revision": "Doc 1635, revised 02/19/26",
+   "price_usd": 0.88,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL6030-821MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/9bfb2606-51aa-49a6-98ad-d20f3504c8ae/xgl6030.pdf",
+   "datasheet_revision": "Doc 1635, revised 02/19/26",
+   "price_usd": 0.88,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-XGL6030-102MEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/9bfb2606-51aa-49a6-98ad-d20f3504c8ae/xgl6030.pdf",
+   "datasheet_revision": "Doc 1635, revised 02/19/26",
+   "price_usd": 0.88,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=XGL6030",
+   "price_note": null,
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Coilcraft-SLC7530S-500MLC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/435d9f64-85f4-4270-b7b1-48b2f7d3fea8/slc7530.pdf",
+   "datasheet_revision": "Doc 366, revised 07/23/26",
+   "price_usd": 0.47,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLC7530S",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.123 mOhm +/-5%; DCR_max derived as nominal x 1.05",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLC7530S-640MLC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/435d9f64-85f4-4270-b7b1-48b2f7d3fea8/slc7530.pdf",
+   "datasheet_revision": "Doc 366, revised 07/23/26",
+   "price_usd": 0.47,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLC7530S",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.123 mOhm +/-5%; DCR_max derived as nominal x 1.05",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLC7530S-820MLC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/435d9f64-85f4-4270-b7b1-48b2f7d3fea8/slc7530.pdf",
+   "datasheet_revision": "Doc 366, revised 07/23/26",
+   "price_usd": 0.47,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLC7530S",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.123 mOhm +/-5%; DCR_max derived as nominal x 1.05",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLC7530S-101MLC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/435d9f64-85f4-4270-b7b1-48b2f7d3fea8/slc7530.pdf",
+   "datasheet_revision": "Doc 366, revised 07/23/26",
+   "price_usd": 0.47,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLC7530S",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.123 mOhm +/-5%; DCR_max derived as nominal x 1.05",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLC1049-750MLC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/ef564b79-aee7-4fb3-aabd-a8bf1c568496/slc1049.pdf",
+   "datasheet_revision": "Doc 498, revised 07/23/26",
+   "price_usd": 0.9,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLC1049",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.230 mOhm +/-7%; DCR_max derived as nominal x 1.07",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLC1049-101MLC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/ef564b79-aee7-4fb3-aabd-a8bf1c568496/slc1049.pdf",
+   "datasheet_revision": "Doc 498, revised 07/23/26",
+   "price_usd": 0.9,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLC1049",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.230 mOhm +/-7%; DCR_max derived as nominal x 1.07",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLC1049-121MLC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/ef564b79-aee7-4fb3-aabd-a8bf1c568496/slc1049.pdf",
+   "datasheet_revision": "Doc 498, revised 07/23/26",
+   "price_usd": 0.9,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLC1049",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.230 mOhm +/-7%; DCR_max derived as nominal x 1.07",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLC1049-151MLC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/ef564b79-aee7-4fb3-aabd-a8bf1c568496/slc1049.pdf",
+   "datasheet_revision": "Doc 498, revised 07/23/26",
+   "price_usd": 0.9,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLC1049",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.230 mOhm +/-7%; DCR_max derived as nominal x 1.07",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLC1049-231MLC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/ef564b79-aee7-4fb3-aabd-a8bf1c568496/slc1049.pdf",
+   "datasheet_revision": "Doc 498, revised 07/23/26",
+   "price_usd": 0.9,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLC1049",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.230 mOhm +/-7%; DCR_max derived as nominal x 1.07",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLR7010-101KED",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/5d2efa2a-208c-4a85-a876-0627d5930870/slr7010.pdf",
+   "datasheet_revision": "Doc 1467, revised 03/12/26",
+   "price_usd": 0.9,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLR7010",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.17 mOhm +/-10%; DCR_max derived as nominal x 1.10",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLR7010-151KED",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/5d2efa2a-208c-4a85-a876-0627d5930870/slr7010.pdf",
+   "datasheet_revision": "Doc 1467, revised 03/12/26",
+   "price_usd": 0.9,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLR7010",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.17 mOhm +/-10%; DCR_max derived as nominal x 1.10",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLR7010-201KED",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/5d2efa2a-208c-4a85-a876-0627d5930870/slr7010.pdf",
+   "datasheet_revision": "Doc 1467, revised 03/12/26",
+   "price_usd": 0.9,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLR7010",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.17 mOhm +/-10%; DCR_max derived as nominal x 1.10",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLR7010-251KED",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/5d2efa2a-208c-4a85-a876-0627d5930870/slr7010.pdf",
+   "datasheet_revision": "Doc 1467, revised 03/12/26",
+   "price_usd": 0.9,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLR7010",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.17 mOhm +/-10%; DCR_max derived as nominal x 1.10",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLR1075-121KEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/dd9423c7-1353-4f81-92bd-29be978371b1/slr1075.pdf",
+   "datasheet_revision": "Doc 1306, revised 03/12/26",
+   "price_usd": 0.77,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLR1075",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.29 mOhm +/-7%; DCR_max derived as nominal x 1.07",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLR1075-171KEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/dd9423c7-1353-4f81-92bd-29be978371b1/slr1075.pdf",
+   "datasheet_revision": "Doc 1306, revised 03/12/26",
+   "price_usd": 0.77,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLR1075",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.29 mOhm +/-7%; DCR_max derived as nominal x 1.07",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLR1075-231KEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/dd9423c7-1353-4f81-92bd-29be978371b1/slr1075.pdf",
+   "datasheet_revision": "Doc 1306, revised 03/12/26",
+   "price_usd": 0.77,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLR1075",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.29 mOhm +/-7%; DCR_max derived as nominal x 1.07",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Coilcraft-SLR1075-301KEC",
+   "datasheet_url": "https://www.coilcraft.com/getmedia/dd9423c7-1353-4f81-92bd-29be978371b1/slr1075.pdf",
+   "datasheet_revision": "Doc 1306, revised 03/12/26",
+   "price_usd": 0.77,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SLR1075",
+   "price_note": null,
+   "DCR_note": "Datasheet gives 0.29 mOhm +/-7%; DCR_max derived as nominal x 1.07",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Eaton-FP1308R3-R11-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 4355, effective June 2017 (PDF modified 2025-01-24)",
+   "price_usd": 1.41,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1308R3",
+   "price_note": null,
+   "DCR_note": "Datasheet: 0.18 mOhm +/-20% at 20 C (R3 version); DCR_max derived as 0.18 x 1.20. R1 = 0.32 +/-9.4%, R2 = 0.53 +/-10% (same L values).",
+   "core_loss_method": "vendor K-factor chart (FP1308R (R1/R2/R3); used for FP1308R3 pa)",
+   "core_loss_source": "Eaton FP1308R data sheet, Technical Data 4355 (June 2017), p.3 chart: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1308R3-R21-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 4355, effective June 2017 (PDF modified 2025-01-24)",
+   "price_usd": 1.41,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1308R3",
+   "price_note": "MOQ 400, reel",
+   "DCR_note": "Datasheet: 0.18 mOhm +/-20% at 20 C (R3 version); DCR_max derived as 0.18 x 1.20. R1 = 0.32 +/-9.4%, R2 = 0.53 +/-10% (same L values).",
+   "core_loss_method": "vendor K-factor chart (FP1308R (R1/R2/R3); used for FP1308R3 pa)",
+   "core_loss_source": "Eaton FP1308R data sheet, Technical Data 4355 (June 2017), p.3 chart: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1308R3-R26-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 4355, effective June 2017 (PDF modified 2025-01-24)",
+   "price_usd": 1.39,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1308R3",
+   "price_note": "MOQ 400, reel",
+   "DCR_note": "Datasheet: 0.18 mOhm +/-20% at 20 C (R3 version); DCR_max derived as 0.18 x 1.20. R1 = 0.32 +/-9.4%, R2 = 0.53 +/-10% (same L values).",
+   "core_loss_method": "vendor K-factor chart (FP1308R (R1/R2/R3); used for FP1308R3 pa)",
+   "core_loss_source": "Eaton FP1308R data sheet, Technical Data 4355 (June 2017), p.3 chart: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1308R3-R32-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 4355, effective June 2017 (PDF modified 2025-01-24)",
+   "price_usd": 1.42,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1308R3",
+   "price_note": "MOQ 400, reel",
+   "DCR_note": "Datasheet: 0.18 mOhm +/-20% at 20 C (R3 version); DCR_max derived as 0.18 x 1.20. R1 = 0.32 +/-9.4%, R2 = 0.53 +/-10% (same L values).",
+   "core_loss_method": "vendor K-factor chart (FP1308R (R1/R2/R3); used for FP1308R3 pa)",
+   "core_loss_source": "Eaton FP1308R data sheet, Technical Data 4355 (June 2017), p.3 chart: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1308R3-R44-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 4355, effective June 2017 (PDF modified 2025-01-24)",
+   "price_usd": 1.2,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1308R3",
+   "price_note": null,
+   "DCR_note": "Datasheet: 0.18 mOhm +/-20% at 20 C (R3 version); DCR_max derived as 0.18 x 1.20. R1 = 0.32 +/-9.4%, R2 = 0.53 +/-10% (same L values).",
+   "core_loss_method": "vendor K-factor chart (FP1308R (R1/R2/R3); used for FP1308R3 pa)",
+   "core_loss_source": "Eaton FP1308R data sheet, Technical Data 4355 (June 2017), p.3 chart: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1308r-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1007R6-R15-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 10007, effective June 2017",
+   "price_usd": 1.3,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1007R6",
+   "price_note": "MOQ 700, reel",
+   "DCR_note": "Datasheet: 0.29 mOhm +/-5% at 20 C; DCR_max derived as 0.29 x 1.05",
+   "core_loss_method": "vendor K-factor chart (FP1007R6)",
+   "core_loss_source": "Eaton FP1007R6 data sheet, Technical Data 10007 (June 2017), p.3: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1007R6-R22-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 10007, effective June 2017",
+   "price_usd": 1.34,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1007R6",
+   "price_note": "MOQ 700, reel",
+   "DCR_note": "Datasheet: 0.29 mOhm +/-5% at 20 C; DCR_max derived as 0.29 x 1.05",
+   "core_loss_method": "vendor K-factor chart (FP1007R6)",
+   "core_loss_source": "Eaton FP1007R6 data sheet, Technical Data 10007 (June 2017), p.3: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1007R6-R27-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 10007, effective June 2017",
+   "price_usd": 1.3,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1007R6",
+   "price_note": "MOQ 700, reel",
+   "DCR_note": "Datasheet: 0.29 mOhm +/-5% at 20 C; DCR_max derived as 0.29 x 1.05",
+   "core_loss_method": "vendor K-factor chart (FP1007R6)",
+   "core_loss_source": "Eaton FP1007R6 data sheet, Technical Data 10007 (June 2017), p.3: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1007R6-R33-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 10007, effective June 2017",
+   "price_usd": 1.38,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1007R6",
+   "price_note": "MOQ 700, reel",
+   "DCR_note": "Datasheet: 0.29 mOhm +/-5% at 20 C; DCR_max derived as 0.29 x 1.05",
+   "core_loss_method": "vendor K-factor chart (FP1007R6)",
+   "core_loss_source": "Eaton FP1007R6 data sheet, Technical Data 10007 (June 2017), p.3: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1007R6-R47-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 10007, effective June 2017",
+   "price_usd": 1.4,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1007R6",
+   "price_note": "MOQ 700, reel",
+   "DCR_note": "Datasheet: 0.29 mOhm +/-5% at 20 C; DCR_max derived as 0.29 x 1.05",
+   "core_loss_method": "vendor K-factor chart (FP1007R6)",
+   "core_loss_source": "Eaton FP1007R6 data sheet, Technical Data 10007 (June 2017), p.3: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1007r6-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1107R1-R07-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 4342, effective June 2020",
+   "price_usd": 1.3,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1107R1-R07-R",
+   "price_note": "MOQ 640, reel",
+   "DCR_note": "Datasheet: 0.29 mOhm +/-8% at 20 C (R1); DCR_max derived as 0.29 x 1.08. R5 version: same L/Isat with 0.29 +/-5%; R2: 0.47 +/-6.4%.",
+   "core_loss_method": "vendor K-factor chart (FP1107R1 / R2 / R5)",
+   "core_loss_source": "Eaton FP1107R data sheet, Technical Data 4342 (June 2020), p.5: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1107R1-R12-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 4342, effective June 2020",
+   "price_usd": 1.3,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1107R5-R070-R",
+   "price_note": "MOQ 640, reel; listed on Octopart page for that query",
+   "DCR_note": "Datasheet: 0.29 mOhm +/-8% at 20 C (R1); DCR_max derived as 0.29 x 1.08. R5 version: same L/Isat with 0.29 +/-5%; R2: 0.47 +/-6.4%.",
+   "core_loss_method": "vendor K-factor chart (FP1107R1 / R2 / R5)",
+   "core_loss_source": "Eaton FP1107R data sheet, Technical Data 4342 (June 2020), p.5: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1107R1-R15-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 4342, effective June 2020",
+   "price_usd": 1.261,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1107R5-R070-R",
+   "price_note": "MOQ 640",
+   "DCR_note": "Datasheet: 0.29 mOhm +/-8% at 20 C (R1); DCR_max derived as 0.29 x 1.08. R5 version: same L/Isat with 0.29 +/-5%; R2: 0.47 +/-6.4%.",
+   "core_loss_method": "vendor K-factor chart (FP1107R1 / R2 / R5)",
+   "core_loss_source": "Eaton FP1107R data sheet, Technical Data 4342 (June 2020), p.5: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1107R1-R23-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 4342, effective June 2020",
+   "price_usd": 1.35,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1107R5-R070-R",
+   "price_note": "MOQ 640, reel",
+   "DCR_note": "Datasheet: 0.29 mOhm +/-8% at 20 C (R1); DCR_max derived as 0.29 x 1.08. R5 version: same L/Isat with 0.29 +/-5%; R2: 0.47 +/-6.4%.",
+   "core_loss_method": "vendor K-factor chart (FP1107R1 / R2 / R5)",
+   "core_loss_source": "Eaton FP1107R data sheet, Technical Data 4342 (June 2020), p.5: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-FP1107R1-R30-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf",
+   "datasheet_revision": "Technical Data 4342, effective June 2020",
+   "price_usd": 1.3,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=FP1107R5-R070-R",
+   "price_note": "MOQ 640, reel",
+   "DCR_note": "Datasheet: 0.29 mOhm +/-8% at 20 C (R1); DCR_max derived as 0.29 x 1.08. R5 version: same L/Isat with 0.29 +/-5%; R2: 0.47 +/-6.4%.",
+   "core_loss_method": "vendor K-factor chart (FP1107R1 / R2 / R5)",
+   "core_loss_source": "Eaton FP1107R data sheet, Technical Data 4342 (June 2020), p.5: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-fp1107-high-current-power-inductors-data-sheet.pdf"
+  },
+  {
+   "part": "Eaton-TL1011V2-R070-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf",
+   "datasheet_revision": "ELX1154, effective March 2022",
+   "price_usd": 1.001,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=TL1011V2",
+   "price_note": "MOQ 350",
+   "DCR_note": "Phase (secondary, pins 1-2) winding 0.15 mOhm +/-10% at 20 C (max derived x1.10); TLVR loop (primary, pins 3-4) winding 0.6 mOhm +/-10%. Eaton names the phase winding \"secondary\".",
+   "core_loss_method": "vendor K-factor chart (TL1011V2 (TLVR))",
+   "core_loss_source": "Eaton TL1011V2 data sheet ELX1154 (March 2022), p.4: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf"
+  },
+  {
+   "part": "Eaton-TL1011V2-R100-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf",
+   "datasheet_revision": "ELX1154, effective March 2022",
+   "price_usd": 1.001,
+   "price_qty": null,
+   "price_source_url": "https://octopart.com/search?q=TL1011V2-R100-R",
+   "price_note": "no listing; price of TL1011V2-R120-R used",
+   "DCR_note": "Phase (secondary, pins 1-2) winding 0.15 mOhm +/-10% at 20 C (max derived x1.10); TLVR loop (primary, pins 3-4) winding 0.6 mOhm +/-10%. Eaton names the phase winding \"secondary\".",
+   "core_loss_method": "vendor K-factor chart (TL1011V2 (TLVR))",
+   "core_loss_source": "Eaton TL1011V2 data sheet ELX1154 (March 2022), p.4: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf"
+  },
+  {
+   "part": "Eaton-TL1011V2-R120-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf",
+   "datasheet_revision": "ELX1154, effective March 2022",
+   "price_usd": 1.001,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=TL1011V2",
+   "price_note": "MOQ 350",
+   "DCR_note": "Phase (secondary, pins 1-2) winding 0.15 mOhm +/-10% at 20 C (max derived x1.10); TLVR loop (primary, pins 3-4) winding 0.6 mOhm +/-10%. Eaton names the phase winding \"secondary\".",
+   "core_loss_method": "vendor K-factor chart (TL1011V2 (TLVR))",
+   "core_loss_source": "Eaton TL1011V2 data sheet ELX1154 (March 2022), p.4: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf"
+  },
+  {
+   "part": "Eaton-TL1011V2-R150-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf",
+   "datasheet_revision": "ELX1154, effective March 2022",
+   "price_usd": 1.0,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=TL1011V2",
+   "price_note": "MOQ 350",
+   "DCR_note": "Phase (secondary, pins 1-2) winding 0.15 mOhm +/-10% at 20 C (max derived x1.10); TLVR loop (primary, pins 3-4) winding 0.6 mOhm +/-10%. Eaton names the phase winding \"secondary\".",
+   "core_loss_method": "vendor K-factor chart (TL1011V2 (TLVR))",
+   "core_loss_source": "Eaton TL1011V2 data sheet ELX1154 (March 2022), p.4: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf"
+  },
+  {
+   "part": "Eaton-TL1011V2-R170-R",
+   "datasheet_url": "https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf",
+   "datasheet_revision": "ELX1154, effective March 2022",
+   "price_usd": 1.021,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=TL1011V2",
+   "price_note": "MOQ 350",
+   "DCR_note": "Phase (secondary, pins 1-2) winding 0.15 mOhm +/-10% at 20 C (max derived x1.10); TLVR loop (primary, pins 3-4) winding 0.6 mOhm +/-10%. Eaton names the phase winding \"secondary\".",
+   "core_loss_method": "vendor K-factor chart (TL1011V2 (TLVR))",
+   "core_loss_source": "Eaton TL1011V2 data sheet ELX1154 (March 2022), p.4: https://www.eaton.com/content/dam/eaton/products/electronic-components/resources/data-sheet/eaton-tl1011v2-trans-inductor-voltage-regulator-data-sheet-elx1154-en.pdf"
+  },
+  {
+   "part": "Bourns-TLVR1005T-70NK",
+   "datasheet_url": "https://www.bourns.com/docs/product-datasheets/TLVR1005T.pdf",
+   "datasheet_revision": "PDF dated 2026-05-16",
+   "price_usd": 1.38,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=TLVR1005T",
+   "price_note": "reel",
+   "DCR_note": "Main (pin 1-4) winding 0.125 mOhm +/-10% (max derived x1.10); second (pin 2-3) winding 0.450 mOhm +/-10%",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton TL1011V2 (TLVR) chart",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Bourns-TLVR1005T-R10K",
+   "datasheet_url": "https://www.bourns.com/docs/product-datasheets/TLVR1005T.pdf",
+   "datasheet_revision": "PDF dated 2026-05-16",
+   "price_usd": 1.39,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=TLVR1005T",
+   "price_note": "reel",
+   "DCR_note": "Main (pin 1-4) winding 0.125 mOhm +/-10% (max derived x1.10); second (pin 2-3) winding 0.450 mOhm +/-10%",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton TL1011V2 (TLVR) chart",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Bourns-TLVR1005T-R12K",
+   "datasheet_url": "https://www.bourns.com/docs/product-datasheets/TLVR1005T.pdf",
+   "datasheet_revision": "PDF dated 2026-05-16",
+   "price_usd": 1.42,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=TLVR1005T",
+   "price_note": "reel",
+   "DCR_note": "Main (pin 1-4) winding 0.125 mOhm +/-10% (max derived x1.10); second (pin 2-3) winding 0.450 mOhm +/-10%",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton TL1011V2 (TLVR) chart",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Bourns-TLVR1005T-R15K",
+   "datasheet_url": "https://www.bourns.com/docs/product-datasheets/TLVR1005T.pdf",
+   "datasheet_revision": "PDF dated 2026-05-16",
+   "price_usd": 1.38,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=TLVR1005T",
+   "price_note": "reel",
+   "DCR_note": "Main (pin 1-4) winding 0.125 mOhm +/-10% (max derived x1.10); second (pin 2-3) winding 0.450 mOhm +/-10%",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton TL1011V2 (TLVR) chart",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Wurth Elektronik-7443630070",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/7443630070.pdf",
+   "datasheet_revision": "rev 006.000, 2025-07-08 (size 2013)",
+   "price_usd": 4.59,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=7443630070",
+   "price_note": "reel",
+   "DCR_note": "Only RDC max given",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Wurth Elektronik-7443642010100",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/7443642010100.pdf",
+   "datasheet_revision": "rev 004.000, 2024-11-15 (size 2010)",
+   "price_usd": 4.97,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=7443642010100",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Wurth Elektronik-744340300025",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744340300025.pdf",
+   "datasheet_revision": "rev 004.000/006.000, 2026-11-10 (size 4030)",
+   "price_usd": 1.45,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744340300025",
+   "price_note": "reel",
+   "DCR_note": "Datasheet RDC 0.270 mOhm +/-10% at 20 C; max derived",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Wurth Elektronik-744340300055",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744340300055.pdf",
+   "datasheet_revision": "rev 004.000/006.000, 2026-11-10 (size 4030)",
+   "price_usd": 1.48,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744340300055",
+   "price_note": "reel",
+   "DCR_note": "Datasheet RDC 0.270 mOhm +/-10% at 20 C; max derived",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Wurth Elektronik-744302007",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744302007.pdf",
+   "datasheet_revision": "rev 004.000/006.000, 2026-11-10 (size 7050)",
+   "price_usd": 1.39,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744302007",
+   "price_note": "reel",
+   "DCR_note": "Datasheet RDC 0.235 mOhm +/-7% at 20 C; max derived",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Wurth Elektronik-744302015",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744302015.pdf",
+   "datasheet_revision": "rev 004.000/006.000, 2026-11-10 (size 7050)",
+   "price_usd": 1.4,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744302015",
+   "price_note": "reel",
+   "DCR_note": "Datasheet RDC 0.235 mOhm +/-7% at 20 C; max derived",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Wurth Elektronik-744303012",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744303012.pdf",
+   "datasheet_revision": "rev 004.000/006.000, 2026-11-10 (size 1050)",
+   "price_usd": 1.02,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744303012",
+   "price_note": "reel",
+   "DCR_note": "Datasheet RDC 0.325 mOhm +/-7% at 20 C; max derived",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "Wurth Elektronik-744383560033",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744383560033.pdf",
+   "datasheet_revision": "rev 003.002, 2026-09-01 (size 4020)",
+   "price_usd": 1.19,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744383560033",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Wurth Elektronik-744383570033",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744383570033.pdf",
+   "datasheet_revision": "rev 001.001, 2026-09-01 (size 4030)",
+   "price_usd": 1.19,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744383570033",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Wurth Elektronik-744383570056",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744383570056.pdf",
+   "datasheet_revision": "rev 001.001, 2026-09-01 (size 4030)",
+   "price_usd": 1.19,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744383570056",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Wurth Elektronik-744383670013",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744383670013.pdf",
+   "datasheet_revision": "rev 001.000, 2024-02-27 (size 5030)",
+   "price_usd": 1.29,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744383670013",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Wurth Elektronik-744383670047",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744383670047.pdf",
+   "datasheet_revision": "rev 001.000, 2024-02-27 (size 5030)",
+   "price_usd": 1.29,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744383670047",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Wurth Elektronik-744393440015",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744393440015.pdf",
+   "datasheet_revision": "rev 001.003, 2024-10-26 (size 6030)",
+   "price_usd": 1.75,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744393440015",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Wurth Elektronik-744393440033",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744393440033.pdf",
+   "datasheet_revision": "rev 004.002, 2024-10-26 (size 6030)",
+   "price_usd": 1.75,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744393440033",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Wurth Elektronik-744393440068",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744393440068.pdf",
+   "datasheet_revision": "rev 001.001, 2024-10-26 (size 6030)",
+   "price_usd": 1.73,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744393440068",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Wurth Elektronik-744393240033",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744393240033.pdf",
+   "datasheet_revision": "rev 001.002, 2024-10-26 (size 4030)",
+   "price_usd": 1.05,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744393240033",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "Wurth Elektronik-744393240056",
+   "datasheet_url": "https://www.we-online.com/components/products/datasheet/744393240056.pdf",
+   "datasheet_revision": "rev 001.002, 2024-10-26 (size 4030)",
+   "price_usd": 1.05,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=744393240056",
+   "price_note": "reel",
+   "DCR_note": null,
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-CLT32-17N",
+   "datasheet_url": "https://product.tdk.com/system/files/dam/doc/product/inductor/inductor/smd/data_sheet/30/ds/clt32.pdf",
+   "datasheet_revision": "October 2026",
+   "price_usd": 1.02,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=CLT32",
+   "price_note": "cut tape",
+   "DCR_note": "RDC typ with +/-15% tolerance; max derived x1.15",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-CLT32-42N",
+   "datasheet_url": "https://product.tdk.com/system/files/dam/doc/product/inductor/inductor/smd/data_sheet/30/ds/clt32.pdf",
+   "datasheet_revision": "October 2026",
+   "price_usd": 0.719,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=CLT32",
+   "price_note": "reel",
+   "DCR_note": "RDC typ with +/-15% tolerance; max derived x1.15",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-CLT32-80N",
+   "datasheet_url": "https://product.tdk.com/system/files/dam/doc/product/inductor/inductor/smd/data_sheet/30/ds/clt32.pdf",
+   "datasheet_revision": "October 2026",
+   "price_usd": 0.907,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=CLT32",
+   "price_note": "reel",
+   "DCR_note": "RDC typ with +/-15% tolerance; max derived x1.15",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-CLT32-R15",
+   "datasheet_url": "https://product.tdk.com/system/files/dam/doc/product/inductor/inductor/smd/data_sheet/30/ds/clt32.pdf",
+   "datasheet_revision": "October 2026",
+   "price_usd": 0.802,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=CLT32",
+   "price_note": "reel",
+   "DCR_note": "RDC typ with +/-15% tolerance; max derived x1.15",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-CLT32-R31",
+   "datasheet_url": "https://product.tdk.com/system/files/dam/doc/product/inductor/inductor/smd/data_sheet/30/ds/clt32.pdf",
+   "datasheet_revision": "October 2026",
+   "price_usd": 0.827,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=CLT32",
+   "price_note": "reel",
+   "DCR_note": "RDC typ with +/-15% tolerance; max derived x1.15",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-CLT32-R44",
+   "datasheet_url": "https://product.tdk.com/system/files/dam/doc/product/inductor/inductor/smd/data_sheet/30/ds/clt32.pdf",
+   "datasheet_revision": "October 2026",
+   "price_usd": 0.869,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=CLT32",
+   "price_note": "reel",
+   "DCR_note": "RDC typ with +/-15% tolerance; max derived x1.15",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-VLB10050HT-R12M",
+   "datasheet_url": "https://product.tdk.com/en/system/files/dam/doc/product/inductor/inductor/smd/catalog/inductor_commercial_power_vlb10050_en.pdf",
+   "datasheet_revision": "catalog dated 2026-01-28",
+   "price_usd": 2.05,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=VLB10050HT",
+   "price_note": "cut tape",
+   "DCR_note": "0.35 mOhm +/-6%; max derived x1.06",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "TDK-VLB10050HT-R15M",
+   "datasheet_url": "https://product.tdk.com/en/system/files/dam/doc/product/inductor/inductor/smd/catalog/inductor_commercial_power_vlb10050_en.pdf",
+   "datasheet_revision": "catalog dated 2026-01-28",
+   "price_usd": 1.56,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=VLB10050HT",
+   "price_note": "reel",
+   "DCR_note": "0.35 mOhm +/-6%; max derived x1.06",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "TDK-VLB10050HT-R20M",
+   "datasheet_url": "https://product.tdk.com/en/system/files/dam/doc/product/inductor/inductor/smd/catalog/inductor_commercial_power_vlb10050_en.pdf",
+   "datasheet_revision": "catalog dated 2026-01-28",
+   "price_usd": 1.55,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=VLB10050HT",
+   "price_note": "reel",
+   "DCR_note": "0.35 mOhm +/-6%; max derived x1.06",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "TDK-VLB10050HT-R30N",
+   "datasheet_url": "https://product.tdk.com/en/system/files/dam/doc/product/inductor/inductor/smd/catalog/inductor_commercial_power_vlb10050_en.pdf",
+   "datasheet_revision": "catalog dated 2026-01-28",
+   "price_usd": 1.55,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=VLB10050HT",
+   "price_note": "reel",
+   "DCR_note": "0.35 mOhm +/-6%; max derived x1.06",
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "core_loss_source": "Ferroxcube application note \"Design of Planar Power Transformers\", Table 1 (p.4): https://www.ferroxcube.com/zh-TW/download/download/133/"
+  },
+  {
+   "part": "TDK-SPM5030VT-R10M-D",
+   "datasheet_url": "https://product.tdk.com/en/system/files/dam/doc/product/inductor/inductor/smd/catalog/inductor_automotive_power_spm5030vt-d_en.pdf",
+   "datasheet_revision": "catalog dated 2023-12-28 (automotive grade, -55..155 C)",
+   "price_usd": 0.584,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SPM5030VT",
+   "price_note": "reel",
+   "DCR_note": "RDC typ +/-10%; max derived x1.10",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-SPM5030VT-R22M-D",
+   "datasheet_url": "https://product.tdk.com/en/system/files/dam/doc/product/inductor/inductor/smd/catalog/inductor_automotive_power_spm5030vt-d_en.pdf",
+   "datasheet_revision": "catalog dated 2023-12-28 (automotive grade, -55..155 C)",
+   "price_usd": 0.595,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SPM5030VT",
+   "price_note": "reel",
+   "DCR_note": "RDC typ +/-10%; max derived x1.10",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-SPM5030VT-R33M-D",
+   "datasheet_url": "https://product.tdk.com/en/system/files/dam/doc/product/inductor/inductor/smd/catalog/inductor_automotive_power_spm5030vt-d_en.pdf",
+   "datasheet_revision": "catalog dated 2023-12-28 (automotive grade, -55..155 C)",
+   "price_usd": 0.584,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SPM5030VT",
+   "price_note": "reel",
+   "DCR_note": "RDC typ +/-10%; max derived x1.10",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-SPM5030VT-R47M-D",
+   "datasheet_url": "https://product.tdk.com/en/system/files/dam/doc/product/inductor/inductor/smd/catalog/inductor_automotive_power_spm5030vt-d_en.pdf",
+   "datasheet_revision": "catalog dated 2023-12-28 (automotive grade, -55..155 C)",
+   "price_usd": 0.584,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SPM5030VT",
+   "price_note": "reel",
+   "DCR_note": "RDC typ +/-10%; max derived x1.10",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  },
+  {
+   "part": "TDK-SPM5030VT-1R0M-D",
+   "datasheet_url": "https://product.tdk.com/en/system/files/dam/doc/product/inductor/inductor/smd/catalog/inductor_automotive_power_spm5030vt-d_en.pdf",
+   "datasheet_revision": "catalog dated 2023-12-28 (automotive grade, -55..155 C)",
+   "price_usd": 0.632,
+   "price_qty": 1000,
+   "price_source_url": "https://octopart.com/search?q=SPM5030VT",
+   "price_note": "reel",
+   "DCR_note": "RDC typ +/-10%; max derived x1.10",
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "core_loss_source": "Micrometals Design Supplement I: Steinmetz Coefficients, Rev 11/02/23: https://s3.amazonaws.com/micrometals-production/filer_public/85/58/8558885c-f555-4cb7-8a92-60750b5c174d/steinmetzcoefficients_rev0_110223.pdf"
+  }
+ ],
+ "raw_notes": "Catalog parts only (UIC/literature integrated inductors such as Shared_Core_UIC_250_nH excluded). Electrical data parsed with pdftotext from vendor datasheets (Coilcraft getmedia PDFs, Eaton/TDK/Bourns PDFs, Wurth per-part PDFs). Isat_A uses the 30% drop value for composite/metal parts (Coilcraft XEL/XGL, Wurth, TDK CLT32/SPM) and the 20% drop value for ferrite parts (Coilcraft SLC/SLR, Eaton, TDK VLB, Bourns); all available drop levels are in Isat_by_drop_A. Irms_A is the 40 C (or 40 K) rise rating in every case; vendors differ in PCB/test conditions. DCR_max is derived (nominal x (1+tol)) where the datasheet gives only nominal +/- tolerance; see DCR_note. Prices: unit price at the 1,000-piece column as listed on Octopart search pages on 2026-11-25 (Coilcraft Direct for Coilcraft; else Mouser, then other authorized distributors); MOQ/packaging in price_note. Coilcraft, Digi-Key and Mouser sites blocked scripted access, so Octopart aggregation was used. Eaton K-factor chart data were digitized from PDF vector paths (FP1308/FP1308R/FP1007R6/FP1107) or raster pixels (TL1011V2). Eaton old-style FP1308 (DS4313) is not recommended for new designs; FP1308R3 used. FP0705 (7x7x4.95 mm, 72-226 nH, raster loss chart) and FP1007R3 exist but were not included. TDK SPM5030-HZ starts at 0.47 uH/11 A and was not included."
+}

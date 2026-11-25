@@ -1,0 +1,5837 @@
+{
+ "meta": {
+  "retrieved": "2026-11-25",
+  "n_parts": 120,
+  "ferrite_B_sat_ref_T": 0.37974784500000003,
+  "ferrite_B_sat_ref_spread_T": [
+   0.30756,
+   0.3924
+  ],
+  "ferrite_kv_calibration": 0.5748382422960577,
+  "ferrite_kv_tlvr": 0.0664961484741981,
+  "eaton_chart_vs_proxy": {
+   "FP1308R": {
+    "geomean_ratio": 0.7877901958779844,
+    "min": 0.3986897474567161,
+    "max": 2.6250991211914325,
+    "n": 25
+   },
+   "FP1007R6": {
+    "geomean_ratio": 0.7678470278215122,
+    "min": 0.36182861814678174,
+    "max": 3.242620004922456,
+    "n": 25
+   },
+   "FP1107R1": {
+    "geomean_ratio": 0.31401592906145676,
+    "min": 0.15829039641397497,
+    "max": 1.0625298890499522,
+    "n": 25
+   },
+   "TL1011V2": {
+    "geomean_ratio": 0.0664961484741981,
+    "min": 0.031438623894013216,
+    "max": 0.23677774625274298,
+    "n": 20
+   }
+  },
+  "composite_B_ref_T": 0.3278638797755776,
+  "composite_B_ref_spread_T": [
+   0.2410150932119839,
+   0.5242389963900388
+  ],
+  "composite_mu_r_assumed": 25.0,
+  "composite_kv": 0.7,
+  "notes": "Si-IF backside VR study -- curated catalog-inductor library with core-loss models.\n\nInput : inductor_catalog_raw.json  (datasheet values and loss data collected from manufacturer\n        documents on 2026-11-25; one record per part, one core-loss record per series)\nOutput: inductor_library.json      (the parts the sweep uses, each with a core-loss model that\n        sif_core.core_loss_w evaluates) and inductor_sources.json (per-part datasheet and price\n        sources, per-series core-loss method, calibration and assumptions)\n\nElectrical values\n  L nominal; DCR max at 25 C (derived nominal x (1 + tol) where the datasheet gives only a\n  tolerance; consistent with the EPC table's max R_DS(on)); I_sat the vendor's primary rating for\n  the core material (30 % drop for soft-saturating composite/metal parts, 20 % for ferrite) --\n  the 20 %-drop value of every part (given, or 0.72 x the 30 % value for composites, the mean of\n  the 10 % and 30 % values for Wurth ferrites) is kept as Isat20_A for the sensitivity run;\n  I_rms the vendor's 40 C (40 K) rise rating; body L x W (x H) for placement.\n  f_max: the vendor's stated limit, capped at 3 MHz (the study range) and, for parts whose loss\n  data is a vendor chart, at the chart's top frequency.\n\nCore loss (sinusoidal or symmetric loss data converted to the PWM waveform by the iGSE in\nsif_core.core_loss_w)\n  vendor   Eaton FP1308R3 / FP1007R6 / FP1107R1 / TL1011V2: the datasheet K-factor,\n           B_pp[G] = K L[nH] dI_pp 1e-3, and the digitized loss-vs-B_pp curves, P[W] = a(f) B^b(f)\n           per chart frequency, interpolated in log f (\"kfactor_table\")\n  ferrite  no vendor data (Coilcraft SLC/SLR, Wurth WE-HCF/WE-HCM, TDK VLB, Bourns TLVR1005T):\n           Ferroxcube 3F3 (below 1 MHz) / 3F4 (1-3 MHz row) Steinmetz coefficients\n           (\"steinmetz_rows\", 100 C), flux swing dB_pp = B_sat,ref dI_pp / I_sat with\n           B_sat,ref = 0.385 T -- the mean of K L I_sat over all 20 Eaton parts (0.31-0.39 T) --\n           and core volume = k_v x body volume, k_v calibrated so that the proxy reproduces the\n           Eaton charts of the same construction class (geometric mean over their frequencies\n           and flux ranges): FP charts for slab/drum VRM ferrites, the TL1011V2 chart for the\n           Bourns TLVR (the Eaton TLVR ferrite is a multi-MHz grade, ~10x lower loss)\n  composite no vendor data (Coilcraft XEL/XGL, Wurth WE-MAPI/WE-XHMI, TDK CLT32/SPM5030VT):\n           Micrometals mix -8 (carbonyl iron, mu 35) Steinmetz fits near 100 kHz and 1 MHz, peak\n           flux; dB_pp = B_ref dI_pp / I_sat with B_ref the median over these parts of the\n           energy estimate B(I_sat) = I_sat sqrt(mu0 mu_r L / V_core) (mu_r 25), core volume\n           0.7 x body volume (the molded winding takes the rest)\n"
+ },
+ "parts": [
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4020",
+   "part_number": "XEL4020-800MEC",
+   "L_nH": 80,
+   "DCR_typ_mohm": 1.5,
+   "DCR_max_mohm": 1.8,
+   "Isat_A": 33.2,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 23.904,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 21.4,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.2,
+   "core_material": "Composite (Coilcraft molded; alloy-powder composite, exact material not stated)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 33.2,
+    "V_core_m3": 2.464e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.7
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4020",
+   "part_number": "XEL4020-101MEC",
+   "L_nH": 100,
+   "DCR_typ_mohm": 2.04,
+   "DCR_max_mohm": 2.5,
+   "Isat_A": 28.5,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 20.52,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 19.9,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded; alloy-powder composite, exact material not stated)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 28.5,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.7
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4020",
+   "part_number": "XEL4020-201MEC",
+   "L_nH": 200,
+   "DCR_typ_mohm": 3.04,
+   "DCR_max_mohm": 3.35,
+   "Isat_A": 19.7,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 14.184,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 17.2,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded; alloy-powder composite, exact material not stated)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 19.7,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.7
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4020",
+   "part_number": "XEL4020-331MEC",
+   "L_nH": 330,
+   "DCR_typ_mohm": 5.18,
+   "DCR_max_mohm": 5.7,
+   "Isat_A": 15.7,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 11.303999999999998,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 15.4,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded; alloy-powder composite, exact material not stated)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 15.7,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.7
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4020",
+   "part_number": "XEL4020-561MEC",
+   "L_nH": 560,
+   "DCR_typ_mohm": 8.0,
+   "DCR_max_mohm": 8.8,
+   "Isat_A": 11.3,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 8.136000000000001,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 13.8,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded; alloy-powder composite, exact material not stated)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 11.3,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.7
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4020",
+   "part_number": "XEL4020-821MEC",
+   "L_nH": 820,
+   "DCR_typ_mohm": 11.8,
+   "DCR_max_mohm": 13.0,
+   "Isat_A": 10.2,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 7.343999999999999,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 11.5,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded; alloy-powder composite, exact material not stated)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 10.2,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.7
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4020",
+   "part_number": "XEL4020-102MEC",
+   "L_nH": 1000,
+   "DCR_typ_mohm": 13.25,
+   "DCR_max_mohm": 14.6,
+   "Isat_A": 9.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 6.4799999999999995,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 9.6,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded; alloy-powder composite, exact material not stated)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 9.0,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.7
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4030",
+   "part_number": "XEL4030-101MEC",
+   "L_nH": 100,
+   "DCR_typ_mohm": 1.5,
+   "DCR_max_mohm": 1.8,
+   "Isat_A": 30.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 21.599999999999998,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 25.8,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 30.0,
+    "V_core_m3": 3.584e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.72
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4030",
+   "part_number": "XEL4030-201MEC",
+   "L_nH": 200,
+   "DCR_typ_mohm": 2.15,
+   "DCR_max_mohm": 2.4,
+   "Isat_A": 22.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 15.84,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 21.6,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 22.0,
+    "V_core_m3": 3.584e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.72
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4030",
+   "part_number": "XEL4030-301MEC",
+   "L_nH": 300,
+   "DCR_typ_mohm": 2.8,
+   "DCR_max_mohm": 3.1,
+   "Isat_A": 19.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 13.68,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 18.9,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 19.0,
+    "V_core_m3": 3.584e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.72
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4030",
+   "part_number": "XEL4030-471MEC",
+   "L_nH": 470,
+   "DCR_typ_mohm": 4.1,
+   "DCR_max_mohm": 4.6,
+   "Isat_A": 15.5,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 11.16,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 15.6,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 15.5,
+    "V_core_m3": 3.472e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.72
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4030",
+   "part_number": "XEL4030-901MEC",
+   "L_nH": 900,
+   "DCR_typ_mohm": 8.0,
+   "DCR_max_mohm": 8.8,
+   "Isat_A": 10.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 7.199999999999999,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 11.2,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 10.0,
+    "V_core_m3": 3.472e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.72
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL4030",
+   "part_number": "XEL4030-102MEC",
+   "L_nH": 1000,
+   "DCR_typ_mohm": 8.89,
+   "DCR_max_mohm": 9.78,
+   "Isat_A": 9.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 6.4799999999999995,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 10.7,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 9.0,
+    "V_core_m3": 3.472e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.72
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL5030",
+   "part_number": "XEL5030-131MEC",
+   "L_nH": 130,
+   "DCR_typ_mohm": 1.53,
+   "DCR_max_mohm": 1.83,
+   "Isat_A": 44.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 31.68,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 35.0,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 44.0,
+    "V_core_m3": 6.481305600000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.09
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL5030",
+   "part_number": "XEL5030-261MEC",
+   "L_nH": 260,
+   "DCR_typ_mohm": 2.16,
+   "DCR_max_mohm": 2.6,
+   "Isat_A": 31.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 22.32,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 30.5,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 31.0,
+    "V_core_m3": 6.481305600000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.09
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL5030",
+   "part_number": "XEL5030-421MEC",
+   "L_nH": 420,
+   "DCR_typ_mohm": 3.0,
+   "DCR_max_mohm": 3.6,
+   "Isat_A": 23.5,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 16.919999999999998,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 25.0,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 23.5,
+    "V_core_m3": 6.481305600000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.09
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL5030",
+   "part_number": "XEL5030-601MEC",
+   "L_nH": 600,
+   "DCR_typ_mohm": 4.44,
+   "DCR_max_mohm": 5.33,
+   "Isat_A": 22.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 15.84,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 21.4,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 22.0,
+    "V_core_m3": 6.481305600000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.09
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL5030",
+   "part_number": "XEL5030-102MEC",
+   "L_nH": 1000,
+   "DCR_typ_mohm": 7.0,
+   "DCR_max_mohm": 8.4,
+   "Isat_A": 16.9,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 12.168,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 15.4,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 16.9,
+    "V_core_m3": 6.278764800000001e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.09
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL6030",
+   "part_number": "XEL6030-151MEC",
+   "L_nH": 150,
+   "DCR_typ_mohm": 1.35,
+   "DCR_max_mohm": 1.49,
+   "Isat_A": 45.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 32.4,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 33.3,
+   "length_mm": 6.36,
+   "width_mm": 6.56,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 45.0,
+    "V_core_m3": 9.3456384e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.17
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL6030",
+   "part_number": "XEL6030-281MEC",
+   "L_nH": 280,
+   "DCR_typ_mohm": 2.1,
+   "DCR_max_mohm": 2.35,
+   "Isat_A": 38.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 27.36,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 26.7,
+   "length_mm": 6.36,
+   "width_mm": 6.56,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 38.0,
+    "V_core_m3": 9.3456384e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.17
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL6030",
+   "part_number": "XEL6030-471MEC",
+   "L_nH": 470,
+   "DCR_typ_mohm": 3.01,
+   "DCR_max_mohm": 3.31,
+   "Isat_A": 28.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 20.16,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 22.3,
+   "length_mm": 6.36,
+   "width_mm": 6.56,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 28.0,
+    "V_core_m3": 9.3456384e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.17
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL6030",
+   "part_number": "XEL6030-821MEC",
+   "L_nH": 820,
+   "DCR_typ_mohm": 5.09,
+   "DCR_max_mohm": 5.6,
+   "Isat_A": 21.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 15.12,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 16.0,
+   "length_mm": 6.36,
+   "width_mm": 6.56,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 21.0,
+    "V_core_m3": 9.3456384e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.17
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XEL6030",
+   "part_number": "XEL6030-102MEC",
+   "L_nH": 1000,
+   "DCR_typ_mohm": 6.32,
+   "DCR_max_mohm": 6.95,
+   "Isat_A": 18.0,
+   "Isat_definition": "DC current at 25 C causing 30% (typ) inductance drop",
+   "Isat20_A": 12.959999999999999,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 16.0,
+   "length_mm": 6.36,
+   "width_mm": 6.56,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 18.0,
+    "V_core_m3": 9.0535872e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.17
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4020",
+   "part_number": "XGL4020-400MEC",
+   "L_nH": 40,
+   "DCR_typ_mohm": 0.66,
+   "DCR_max_mohm": 0.78,
+   "Isat_A": 41.0,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 28.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 45.0,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 41.0,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.67
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4020",
+   "part_number": "XGL4020-111MEC",
+   "L_nH": 110,
+   "DCR_typ_mohm": 1.4,
+   "DCR_max_mohm": 1.7,
+   "Isat_A": 29.0,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 21.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 29.0,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 29.0,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.67
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4020",
+   "part_number": "XGL4020-251MEC",
+   "L_nH": 250,
+   "DCR_typ_mohm": 2.5,
+   "DCR_max_mohm": 3.0,
+   "Isat_A": 16.5,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 12.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 24.0,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 16.5,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.67
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4020",
+   "part_number": "XGL4020-471MEC",
+   "L_nH": 470,
+   "DCR_typ_mohm": 4.2,
+   "DCR_max_mohm": 5.1,
+   "Isat_A": 13.4,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 9.7,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 19.7,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 13.4,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.67
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4020",
+   "part_number": "XGL4020-601MEC",
+   "L_nH": 600,
+   "DCR_typ_mohm": 5.1,
+   "DCR_max_mohm": 5.9,
+   "Isat_A": 11.7,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 8.2,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 18.4,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 11.7,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.67
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4020",
+   "part_number": "XGL4020-102MEC",
+   "L_nH": 1000,
+   "DCR_typ_mohm": 8.2,
+   "DCR_max_mohm": 9.0,
+   "Isat_A": 8.8,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 6.3,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 12.0,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 2.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 8.8,
+    "V_core_m3": 2.352e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.67
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4030",
+   "part_number": "XGL4030-450MEC",
+   "L_nH": 45,
+   "DCR_typ_mohm": 0.67,
+   "DCR_max_mohm": 0.8,
+   "Isat_A": 42.5,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 30.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 36.0,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 42.5,
+    "V_core_m3": 3.472e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.69
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4030",
+   "part_number": "XGL4030-131MEC",
+   "L_nH": 130,
+   "DCR_typ_mohm": 1.5,
+   "DCR_max_mohm": 1.8,
+   "Isat_A": 26.5,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 19.5,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 27.0,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 26.5,
+    "V_core_m3": 3.472e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.69
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4030",
+   "part_number": "XGL4030-271MEC",
+   "L_nH": 270,
+   "DCR_typ_mohm": 2.2,
+   "DCR_max_mohm": 2.4,
+   "Isat_A": 19.3,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 14.4,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 24.2,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 19.3,
+    "V_core_m3": 3.472e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.69
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4030",
+   "part_number": "XGL4030-401MEC",
+   "L_nH": 400,
+   "DCR_typ_mohm": 2.8,
+   "DCR_max_mohm": 3.2,
+   "Isat_A": 15.5,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 11.5,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 22.5,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 15.5,
+    "V_core_m3": 3.472e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.69
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4030",
+   "part_number": "XGL4030-761MEC",
+   "L_nH": 760,
+   "DCR_typ_mohm": 4.9,
+   "DCR_max_mohm": 5.5,
+   "Isat_A": 11.8,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 8.7,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 14.2,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 11.8,
+    "V_core_m3": 3.472e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.69
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL4030",
+   "part_number": "XGL4030-102MEC",
+   "L_nH": 1000,
+   "DCR_typ_mohm": 6.5,
+   "DCR_max_mohm": 7.2,
+   "Isat_A": 10.3,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 7.6,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 13.0,
+   "length_mm": 4.0,
+   "width_mm": 4.0,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 10.3,
+    "V_core_m3": 3.472e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.69
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL5030",
+   "part_number": "XGL5030-550MEC",
+   "L_nH": 55,
+   "DCR_typ_mohm": 0.62,
+   "DCR_max_mohm": 0.75,
+   "Isat_A": 53.0,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 38.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 40.0,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 53.0,
+    "V_core_m3": 6.481305600000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.04
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL5030",
+   "part_number": "XGL5030-181MEC",
+   "L_nH": 180,
+   "DCR_typ_mohm": 1.3,
+   "DCR_max_mohm": 1.6,
+   "Isat_A": 30.0,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 22.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 31.8,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 30.0,
+    "V_core_m3": 6.481305600000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.04
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL5030",
+   "part_number": "XGL5030-401MEC",
+   "L_nH": 400,
+   "DCR_typ_mohm": 2.2,
+   "DCR_max_mohm": 2.7,
+   "Isat_A": 23.0,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 16.6,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 25.1,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 23.0,
+    "V_core_m3": 6.481305600000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.04
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL5030",
+   "part_number": "XGL5030-521MEC",
+   "L_nH": 520,
+   "DCR_typ_mohm": 2.5,
+   "DCR_max_mohm": 3.0,
+   "Isat_A": 20.5,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 14.5,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 25.0,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 20.5,
+    "V_core_m3": 6.481305600000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.04
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL5030",
+   "part_number": "XGL5030-651MEC",
+   "L_nH": 650,
+   "DCR_typ_mohm": 3.3,
+   "DCR_max_mohm": 4.0,
+   "Isat_A": 17.9,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 12.9,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 21.2,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.2,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 17.9,
+    "V_core_m3": 6.481305600000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.04
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL5030",
+   "part_number": "XGL5030-102MEC",
+   "L_nH": 1000,
+   "DCR_typ_mohm": 4.8,
+   "DCR_max_mohm": 5.8,
+   "Isat_A": 14.0,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 10.2,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 17.8,
+   "length_mm": 5.28,
+   "width_mm": 5.48,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 14.0,
+    "V_core_m3": 6.278764800000001e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.04
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL6030",
+   "part_number": "XGL6030-650MEC",
+   "L_nH": 65,
+   "DCR_typ_mohm": 0.53,
+   "DCR_max_mohm": 0.63,
+   "Isat_A": 57.5,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 42.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 43.0,
+   "length_mm": 6.51,
+   "width_mm": 6.71,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 57.5,
+    "V_core_m3": 9.4790157e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.88
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL6030",
+   "part_number": "XGL6030-181MEC",
+   "L_nH": 180,
+   "DCR_typ_mohm": 1.0,
+   "DCR_max_mohm": 1.2,
+   "Isat_A": 43.0,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 29.5,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 34.7,
+   "length_mm": 6.51,
+   "width_mm": 6.71,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 43.0,
+    "V_core_m3": 9.4790157e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.88
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL6030",
+   "part_number": "XGL6030-381MEC",
+   "L_nH": 380,
+   "DCR_typ_mohm": 2.0,
+   "DCR_max_mohm": 2.4,
+   "Isat_A": 29.0,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 20.5,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 28.0,
+   "length_mm": 6.51,
+   "width_mm": 6.71,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 29.0,
+    "V_core_m3": 9.4790157e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.88
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL6030",
+   "part_number": "XGL6030-471MEC",
+   "L_nH": 470,
+   "DCR_typ_mohm": 2.2,
+   "DCR_max_mohm": 2.7,
+   "Isat_A": 26.5,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 18.7,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 25.0,
+   "length_mm": 6.51,
+   "width_mm": 6.71,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 26.5,
+    "V_core_m3": 9.4790157e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.88
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL6030",
+   "part_number": "XGL6030-821MEC",
+   "L_nH": 820,
+   "DCR_typ_mohm": 3.4,
+   "DCR_max_mohm": 4.0,
+   "Isat_A": 21.0,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 14.9,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 21.0,
+   "length_mm": 6.51,
+   "width_mm": 6.71,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 21.0,
+    "V_core_m3": 9.4790157e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.88
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "XGL6030",
+   "part_number": "XGL6030-102MEC",
+   "L_nH": 1000,
+   "DCR_typ_mohm": 4.2,
+   "DCR_max_mohm": 4.9,
+   "Isat_A": 17.7,
+   "Isat_definition": "DC current at 25 C causing the specified (10/20/30%) inductance drop; Isat_A = 30% value",
+   "Isat20_A": 12.4,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 18.1,
+   "length_mm": 6.51,
+   "width_mm": 6.71,
+   "height_mm": 3.1,
+   "core_material": "Composite (Coilcraft molded)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 17.7,
+    "V_core_m3": 9.4790157e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.88
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLC7530",
+   "part_number": "SLC7530S-500MLC",
+   "L_nH": 50,
+   "DCR_typ_mohm": 0.123,
+   "DCR_max_mohm": 0.1292,
+   "Isat_A": 50.0,
+   "Isat_definition": "DC current at 25 C causing 20% (typ) inductance drop",
+   "Isat20_A": 50.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 50,
+   "length_mm": 7.5,
+   "width_mm": 6.7,
+   "height_mm": 3.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 50.0,
+    "V_core_m3": 8.66568650261307e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.47
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLC7530",
+   "part_number": "SLC7530S-640MLC",
+   "L_nH": 64,
+   "DCR_typ_mohm": 0.123,
+   "DCR_max_mohm": 0.1292,
+   "Isat_A": 32.0,
+   "Isat_definition": "DC current at 25 C causing 20% (typ) inductance drop",
+   "Isat20_A": 32.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 50,
+   "length_mm": 7.5,
+   "width_mm": 6.7,
+   "height_mm": 3.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 32.0,
+    "V_core_m3": 8.66568650261307e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.47
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLC7530",
+   "part_number": "SLC7530S-820MLC",
+   "L_nH": 82,
+   "DCR_typ_mohm": 0.123,
+   "DCR_max_mohm": 0.1292,
+   "Isat_A": 22.0,
+   "Isat_definition": "DC current at 25 C causing 20% (typ) inductance drop",
+   "Isat20_A": 22.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 50,
+   "length_mm": 7.5,
+   "width_mm": 6.7,
+   "height_mm": 3.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 22.0,
+    "V_core_m3": 8.66568650261307e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.47
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLC7530",
+   "part_number": "SLC7530S-101MLC",
+   "L_nH": 100,
+   "DCR_typ_mohm": 0.123,
+   "DCR_max_mohm": 0.1292,
+   "Isat_A": 20.0,
+   "Isat_definition": "DC current at 25 C causing 20% (typ) inductance drop",
+   "Isat20_A": 20.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 50,
+   "length_mm": 7.5,
+   "width_mm": 6.7,
+   "height_mm": 3.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 20.0,
+    "V_core_m3": 8.66568650261307e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.47
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLC1049",
+   "part_number": "SLC1049-750MLC",
+   "L_nH": 75,
+   "DCR_typ_mohm": 0.23,
+   "DCR_max_mohm": 0.2461,
+   "Isat_A": 61.0,
+   "Isat_definition": "DC current at 25 C causing 20% (typ) inductance drop",
+   "Isat20_A": 61.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 66.0,
+   "length_mm": 10.2,
+   "width_mm": 6.88,
+   "height_mm": 5.16,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 61.0,
+    "V_core_m3": 2.081536182154596e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.9
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLC1049",
+   "part_number": "SLC1049-101MLC",
+   "L_nH": 100,
+   "DCR_typ_mohm": 0.23,
+   "DCR_max_mohm": 0.2461,
+   "Isat_A": 50.0,
+   "Isat_definition": "DC current at 25 C causing 20% (typ) inductance drop",
+   "Isat20_A": 50.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 66.0,
+   "length_mm": 10.2,
+   "width_mm": 6.88,
+   "height_mm": 5.16,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 50.0,
+    "V_core_m3": 2.081536182154596e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.9
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLC1049",
+   "part_number": "SLC1049-121MLC",
+   "L_nH": 125,
+   "DCR_typ_mohm": 0.23,
+   "DCR_max_mohm": 0.2461,
+   "Isat_A": 37.0,
+   "Isat_definition": "DC current at 25 C causing 20% (typ) inductance drop",
+   "Isat20_A": 37.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 66.0,
+   "length_mm": 10.2,
+   "width_mm": 6.88,
+   "height_mm": 5.16,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 37.0,
+    "V_core_m3": 2.081536182154596e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.9
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLC1049",
+   "part_number": "SLC1049-151MLC",
+   "L_nH": 150,
+   "DCR_typ_mohm": 0.23,
+   "DCR_max_mohm": 0.2461,
+   "Isat_A": 30.0,
+   "Isat_definition": "DC current at 25 C causing 20% (typ) inductance drop",
+   "Isat20_A": 30.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 66.0,
+   "length_mm": 10.2,
+   "width_mm": 6.88,
+   "height_mm": 5.16,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 30.0,
+    "V_core_m3": 2.081536182154596e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.9
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLC1049",
+   "part_number": "SLC1049-231MLC",
+   "L_nH": 230,
+   "DCR_typ_mohm": 0.23,
+   "DCR_max_mohm": 0.2461,
+   "Isat_A": 25.5,
+   "Isat_definition": "DC current at 25 C causing 20% (typ) inductance drop",
+   "Isat20_A": 25.5,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 66.0,
+   "length_mm": 10.2,
+   "width_mm": 6.88,
+   "height_mm": 5.16,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 25.5,
+    "V_core_m3": 2.081536182154596e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.9
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLR7010",
+   "part_number": "SLR7010-101KED",
+   "L_nH": 100,
+   "DCR_typ_mohm": 0.17,
+   "DCR_max_mohm": 0.187,
+   "Isat_A": 113.0,
+   "Isat_definition": "DC current causing 20% (typ) inductance drop, at 25 C",
+   "Isat20_A": 113.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 92,
+   "length_mm": 10.0,
+   "width_mm": 7.0,
+   "height_mm": 10.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 113.0,
+    "V_core_m3": 4.0238676960724043e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.9
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLR7010",
+   "part_number": "SLR7010-151KED",
+   "L_nH": 150,
+   "DCR_typ_mohm": 0.17,
+   "DCR_max_mohm": 0.187,
+   "Isat_A": 75.0,
+   "Isat_definition": "DC current causing 20% (typ) inductance drop, at 25 C",
+   "Isat20_A": 75.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 92,
+   "length_mm": 10.0,
+   "width_mm": 7.0,
+   "height_mm": 10.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 75.0,
+    "V_core_m3": 4.0238676960724043e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.9
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLR7010",
+   "part_number": "SLR7010-201KED",
+   "L_nH": 200,
+   "DCR_typ_mohm": 0.17,
+   "DCR_max_mohm": 0.187,
+   "Isat_A": 62.0,
+   "Isat_definition": "DC current causing 20% (typ) inductance drop, at 25 C",
+   "Isat20_A": 62.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 92,
+   "length_mm": 10.0,
+   "width_mm": 7.0,
+   "height_mm": 10.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 62.0,
+    "V_core_m3": 4.0238676960724043e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.9
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLR7010",
+   "part_number": "SLR7010-251KED",
+   "L_nH": 250,
+   "DCR_typ_mohm": 0.17,
+   "DCR_max_mohm": 0.187,
+   "Isat_A": 44.0,
+   "Isat_definition": "DC current causing 20% (typ) inductance drop, at 25 C",
+   "Isat20_A": 44.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 92,
+   "length_mm": 10.0,
+   "width_mm": 7.0,
+   "height_mm": 10.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 44.0,
+    "V_core_m3": 4.0238676960724043e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.9
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLR1075",
+   "part_number": "SLR1075-121KEC",
+   "L_nH": 120,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3103,
+   "Isat_A": 93.0,
+   "Isat_definition": "DC current causing 20% (typ) inductance drop, at 25 C",
+   "Isat20_A": 93.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 67,
+   "length_mm": 10.4,
+   "width_mm": 8.0,
+   "height_mm": 7.4,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 93.0,
+    "V_core_m3": 3.539164090168369e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.77
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLR1075",
+   "part_number": "SLR1075-171KEC",
+   "L_nH": 170,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3103,
+   "Isat_A": 65.0,
+   "Isat_definition": "DC current causing 20% (typ) inductance drop, at 25 C",
+   "Isat20_A": 65.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 67,
+   "length_mm": 10.4,
+   "width_mm": 8.0,
+   "height_mm": 7.4,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 65.0,
+    "V_core_m3": 3.539164090168369e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.77
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLR1075",
+   "part_number": "SLR1075-231KEC",
+   "L_nH": 230,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3103,
+   "Isat_A": 49.0,
+   "Isat_definition": "DC current causing 20% (typ) inductance drop, at 25 C",
+   "Isat20_A": 49.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 67,
+   "length_mm": 10.4,
+   "width_mm": 8.0,
+   "height_mm": 7.4,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 49.0,
+    "V_core_m3": 3.539164090168369e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.77
+  },
+  {
+   "vendor": "Coilcraft",
+   "series": "SLR1075",
+   "part_number": "SLR1075-301KEC",
+   "L_nH": 300,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3103,
+   "Isat_A": 36.0,
+   "Isat_definition": "DC current causing 20% (typ) inductance drop, at 25 C",
+   "Isat20_A": 36.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 67,
+   "length_mm": 10.4,
+   "width_mm": 8.0,
+   "height_mm": 7.4,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 36.0,
+    "V_core_m3": 3.539164090168369e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 0.77
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1308R3",
+   "part_number": "FP1308R3-R11-R",
+   "L_nH": 110,
+   "DCR_typ_mohm": 0.18,
+   "DCR_max_mohm": 0.216,
+   "Isat_A": 120.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 120.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 68,
+   "length_mm": 13.4,
+   "width_mm": 12.7,
+   "height_mm": 8.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 233.0,
+    "table": [
+     [
+      100000.0,
+      2.755e-10,
+      2.553
+     ],
+     [
+      200000.0,
+      1.578e-09,
+      2.477
+     ],
+     [
+      300000.0,
+      4.419e-09,
+      2.435
+     ],
+     [
+      500000.0,
+      5.01e-08,
+      2.248
+     ],
+     [
+      1000000.0,
+      4.122e-07,
+      2.164
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1308R (R1/R2/R3); used for FP1308R3 pa)",
+   "price_usd": 1.41
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1308R3",
+   "part_number": "FP1308R3-R21-R",
+   "L_nH": 210,
+   "DCR_typ_mohm": 0.18,
+   "DCR_max_mohm": 0.216,
+   "Isat_A": 80.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 80.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 68,
+   "length_mm": 13.4,
+   "width_mm": 12.7,
+   "height_mm": 8.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 233.0,
+    "table": [
+     [
+      100000.0,
+      2.755e-10,
+      2.553
+     ],
+     [
+      200000.0,
+      1.578e-09,
+      2.477
+     ],
+     [
+      300000.0,
+      4.419e-09,
+      2.435
+     ],
+     [
+      500000.0,
+      5.01e-08,
+      2.248
+     ],
+     [
+      1000000.0,
+      4.122e-07,
+      2.164
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1308R (R1/R2/R3); used for FP1308R3 pa)",
+   "price_usd": 1.41
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1308R3",
+   "part_number": "FP1308R3-R26-R",
+   "L_nH": 260,
+   "DCR_typ_mohm": 0.18,
+   "DCR_max_mohm": 0.216,
+   "Isat_A": 64.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 64.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 68,
+   "length_mm": 13.4,
+   "width_mm": 12.7,
+   "height_mm": 8.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 233.0,
+    "table": [
+     [
+      100000.0,
+      2.755e-10,
+      2.553
+     ],
+     [
+      200000.0,
+      1.578e-09,
+      2.477
+     ],
+     [
+      300000.0,
+      4.419e-09,
+      2.435
+     ],
+     [
+      500000.0,
+      5.01e-08,
+      2.248
+     ],
+     [
+      1000000.0,
+      4.122e-07,
+      2.164
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1308R (R1/R2/R3); used for FP1308R3 pa)",
+   "price_usd": 1.39
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1308R3",
+   "part_number": "FP1308R3-R32-R",
+   "L_nH": 320,
+   "DCR_typ_mohm": 0.18,
+   "DCR_max_mohm": 0.216,
+   "Isat_A": 52.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 52.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 68,
+   "length_mm": 13.4,
+   "width_mm": 12.7,
+   "height_mm": 8.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 233.0,
+    "table": [
+     [
+      100000.0,
+      2.755e-10,
+      2.553
+     ],
+     [
+      200000.0,
+      1.578e-09,
+      2.477
+     ],
+     [
+      300000.0,
+      4.419e-09,
+      2.435
+     ],
+     [
+      500000.0,
+      5.01e-08,
+      2.248
+     ],
+     [
+      1000000.0,
+      4.122e-07,
+      2.164
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1308R (R1/R2/R3); used for FP1308R3 pa)",
+   "price_usd": 1.42
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1308R3",
+   "part_number": "FP1308R3-R44-R",
+   "L_nH": 440,
+   "DCR_typ_mohm": 0.18,
+   "DCR_max_mohm": 0.216,
+   "Isat_A": 37.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 37.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 68,
+   "length_mm": 13.4,
+   "width_mm": 12.7,
+   "height_mm": 8.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 233.0,
+    "table": [
+     [
+      100000.0,
+      2.755e-10,
+      2.553
+     ],
+     [
+      200000.0,
+      1.578e-09,
+      2.477
+     ],
+     [
+      300000.0,
+      4.419e-09,
+      2.435
+     ],
+     [
+      500000.0,
+      5.01e-08,
+      2.248
+     ],
+     [
+      1000000.0,
+      4.122e-07,
+      2.164
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1308R (R1/R2/R3); used for FP1308R3 pa)",
+   "price_usd": 1.2
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1007R6",
+   "part_number": "FP1007R6-R15-R",
+   "L_nH": 150,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3045,
+   "Isat_A": 75.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 75.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 61,
+   "length_mm": 10.5,
+   "width_mm": 8.0,
+   "height_mm": 7.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 348.8,
+    "table": [
+     [
+      100000.0,
+      1.256e-10,
+      2.554
+     ],
+     [
+      200000.0,
+      4.77e-10,
+      2.524
+     ],
+     [
+      300000.0,
+      2.033e-09,
+      2.435
+     ],
+     [
+      500000.0,
+      2.292e-08,
+      2.249
+     ],
+     [
+      1000000.0,
+      7.399e-07,
+      1.935
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1007R6)",
+   "price_usd": 1.3
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1007R6",
+   "part_number": "FP1007R6-R22-R",
+   "L_nH": 220,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3045,
+   "Isat_A": 50.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 50.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 61,
+   "length_mm": 10.5,
+   "width_mm": 8.0,
+   "height_mm": 7.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 348.8,
+    "table": [
+     [
+      100000.0,
+      1.256e-10,
+      2.554
+     ],
+     [
+      200000.0,
+      4.77e-10,
+      2.524
+     ],
+     [
+      300000.0,
+      2.033e-09,
+      2.435
+     ],
+     [
+      500000.0,
+      2.292e-08,
+      2.249
+     ],
+     [
+      1000000.0,
+      7.399e-07,
+      1.935
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1007R6)",
+   "price_usd": 1.34
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1007R6",
+   "part_number": "FP1007R6-R27-R",
+   "L_nH": 270,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3045,
+   "Isat_A": 41.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 41.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 61,
+   "length_mm": 10.5,
+   "width_mm": 8.0,
+   "height_mm": 7.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 348.8,
+    "table": [
+     [
+      100000.0,
+      1.256e-10,
+      2.554
+     ],
+     [
+      200000.0,
+      4.77e-10,
+      2.524
+     ],
+     [
+      300000.0,
+      2.033e-09,
+      2.435
+     ],
+     [
+      500000.0,
+      2.292e-08,
+      2.249
+     ],
+     [
+      1000000.0,
+      7.399e-07,
+      1.935
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1007R6)",
+   "price_usd": 1.3
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1007R6",
+   "part_number": "FP1007R6-R33-R",
+   "L_nH": 330,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3045,
+   "Isat_A": 33.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 33.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 61,
+   "length_mm": 10.5,
+   "width_mm": 8.0,
+   "height_mm": 7.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 348.8,
+    "table": [
+     [
+      100000.0,
+      1.256e-10,
+      2.554
+     ],
+     [
+      200000.0,
+      4.77e-10,
+      2.524
+     ],
+     [
+      300000.0,
+      2.033e-09,
+      2.435
+     ],
+     [
+      500000.0,
+      2.292e-08,
+      2.249
+     ],
+     [
+      1000000.0,
+      7.399e-07,
+      1.935
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1007R6)",
+   "price_usd": 1.38
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1007R6",
+   "part_number": "FP1007R6-R47-R",
+   "L_nH": 470,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3045,
+   "Isat_A": 23.5,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 23.5,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 61,
+   "length_mm": 10.5,
+   "width_mm": 8.0,
+   "height_mm": 7.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 348.8,
+    "table": [
+     [
+      100000.0,
+      1.256e-10,
+      2.554
+     ],
+     [
+      200000.0,
+      4.77e-10,
+      2.524
+     ],
+     [
+      300000.0,
+      2.033e-09,
+      2.435
+     ],
+     [
+      500000.0,
+      2.292e-08,
+      2.249
+     ],
+     [
+      1000000.0,
+      7.399e-07,
+      1.935
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1007R6)",
+   "price_usd": 1.4
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1107R1",
+   "part_number": "FP1107R1-R07-R",
+   "L_nH": 70,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3132,
+   "Isat_A": 140.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 140.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 55,
+   "length_mm": 11.0,
+   "width_mm": 7.2,
+   "height_mm": 7.5,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 361.1,
+    "table": [
+     [
+      100000.0,
+      4.942e-11,
+      2.552
+     ],
+     [
+      200000.0,
+      2.894e-10,
+      2.472
+     ],
+     [
+      300000.0,
+      8.264e-10,
+      2.428
+     ],
+     [
+      500000.0,
+      8.942e-09,
+      2.247
+     ],
+     [
+      1000000.0,
+      7.318e-08,
+      2.163
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1107R1 / R2 / R5)",
+   "price_usd": 1.3
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1107R1",
+   "part_number": "FP1107R1-R12-R",
+   "L_nH": 120,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3132,
+   "Isat_A": 90.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 90.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 55,
+   "length_mm": 11.0,
+   "width_mm": 7.2,
+   "height_mm": 7.5,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 361.1,
+    "table": [
+     [
+      100000.0,
+      4.942e-11,
+      2.552
+     ],
+     [
+      200000.0,
+      2.894e-10,
+      2.472
+     ],
+     [
+      300000.0,
+      8.264e-10,
+      2.428
+     ],
+     [
+      500000.0,
+      8.942e-09,
+      2.247
+     ],
+     [
+      1000000.0,
+      7.318e-08,
+      2.163
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1107R1 / R2 / R5)",
+   "price_usd": 1.3
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1107R1",
+   "part_number": "FP1107R1-R15-R",
+   "L_nH": 150,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3132,
+   "Isat_A": 70.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 70.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 55,
+   "length_mm": 11.0,
+   "width_mm": 7.2,
+   "height_mm": 7.5,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 361.1,
+    "table": [
+     [
+      100000.0,
+      4.942e-11,
+      2.552
+     ],
+     [
+      200000.0,
+      2.894e-10,
+      2.472
+     ],
+     [
+      300000.0,
+      8.264e-10,
+      2.428
+     ],
+     [
+      500000.0,
+      8.942e-09,
+      2.247
+     ],
+     [
+      1000000.0,
+      7.318e-08,
+      2.163
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1107R1 / R2 / R5)",
+   "price_usd": 1.261
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1107R1",
+   "part_number": "FP1107R1-R23-R",
+   "L_nH": 230,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3132,
+   "Isat_A": 45.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 45.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 55,
+   "length_mm": 11.0,
+   "width_mm": 7.2,
+   "height_mm": 7.5,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 361.1,
+    "table": [
+     [
+      100000.0,
+      4.942e-11,
+      2.552
+     ],
+     [
+      200000.0,
+      2.894e-10,
+      2.472
+     ],
+     [
+      300000.0,
+      8.264e-10,
+      2.428
+     ],
+     [
+      500000.0,
+      8.942e-09,
+      2.247
+     ],
+     [
+      1000000.0,
+      7.318e-08,
+      2.163
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1107R1 / R2 / R5)",
+   "price_usd": 1.35
+  },
+  {
+   "vendor": "Eaton",
+   "series": "FP1107R1",
+   "part_number": "FP1107R1-R30-R",
+   "L_nH": 300,
+   "DCR_typ_mohm": 0.29,
+   "DCR_max_mohm": 0.3132,
+   "Isat_A": 35.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 35.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 55,
+   "length_mm": 11.0,
+   "width_mm": 7.2,
+   "height_mm": 7.5,
+   "core_material": "Ferrite",
+   "f_max_MHz": 1.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 361.1,
+    "table": [
+     [
+      100000.0,
+      4.942e-11,
+      2.552
+     ],
+     [
+      200000.0,
+      2.894e-10,
+      2.472
+     ],
+     [
+      300000.0,
+      8.264e-10,
+      2.428
+     ],
+     [
+      500000.0,
+      8.942e-09,
+      2.247
+     ],
+     [
+      1000000.0,
+      7.318e-08,
+      2.163
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (FP1107R1 / R2 / R5)",
+   "price_usd": 1.3
+  },
+  {
+   "vendor": "Eaton",
+   "series": "TL1011V2",
+   "part_number": "TL1011V2-R070-R",
+   "L_nH": 70,
+   "DCR_typ_mohm": 0.15,
+   "DCR_max_mohm": 0.165,
+   "Isat_A": 163.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 163.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 70,
+   "length_mm": 9.6,
+   "width_mm": 6.4,
+   "height_mm": 11.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 340.0,
+    "table": [
+     [
+      500000.0,
+      2.305e-14,
+      3.935
+     ],
+     [
+      1000000.0,
+      1.931e-10,
+      2.753
+     ],
+     [
+      2000000.0,
+      5.203e-10,
+      2.822
+     ],
+     [
+      3000000.0,
+      4.733e-08,
+      2.303
+     ],
+     [
+      5000000.0,
+      3.981e-07,
+      2.28
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (TL1011V2 (TLVR))",
+   "price_usd": 1.001
+  },
+  {
+   "vendor": "Eaton",
+   "series": "TL1011V2",
+   "part_number": "TL1011V2-R100-R",
+   "L_nH": 100,
+   "DCR_typ_mohm": 0.15,
+   "DCR_max_mohm": 0.165,
+   "Isat_A": 114.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 114.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 70,
+   "length_mm": 9.6,
+   "width_mm": 6.4,
+   "height_mm": 11.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 340.0,
+    "table": [
+     [
+      500000.0,
+      2.305e-14,
+      3.935
+     ],
+     [
+      1000000.0,
+      1.931e-10,
+      2.753
+     ],
+     [
+      2000000.0,
+      5.203e-10,
+      2.822
+     ],
+     [
+      3000000.0,
+      4.733e-08,
+      2.303
+     ],
+     [
+      5000000.0,
+      3.981e-07,
+      2.28
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (TL1011V2 (TLVR))",
+   "price_usd": 1.001
+  },
+  {
+   "vendor": "Eaton",
+   "series": "TL1011V2",
+   "part_number": "TL1011V2-R120-R",
+   "L_nH": 120,
+   "DCR_typ_mohm": 0.15,
+   "DCR_max_mohm": 0.165,
+   "Isat_A": 95.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 95.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 70,
+   "length_mm": 9.6,
+   "width_mm": 6.4,
+   "height_mm": 11.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 340.0,
+    "table": [
+     [
+      500000.0,
+      2.305e-14,
+      3.935
+     ],
+     [
+      1000000.0,
+      1.931e-10,
+      2.753
+     ],
+     [
+      2000000.0,
+      5.203e-10,
+      2.822
+     ],
+     [
+      3000000.0,
+      4.733e-08,
+      2.303
+     ],
+     [
+      5000000.0,
+      3.981e-07,
+      2.28
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (TL1011V2 (TLVR))",
+   "price_usd": 1.001
+  },
+  {
+   "vendor": "Eaton",
+   "series": "TL1011V2",
+   "part_number": "TL1011V2-R150-R",
+   "L_nH": 150,
+   "DCR_typ_mohm": 0.15,
+   "DCR_max_mohm": 0.165,
+   "Isat_A": 76.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 76.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 70,
+   "length_mm": 9.6,
+   "width_mm": 6.4,
+   "height_mm": 11.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 340.0,
+    "table": [
+     [
+      500000.0,
+      2.305e-14,
+      3.935
+     ],
+     [
+      1000000.0,
+      1.931e-10,
+      2.753
+     ],
+     [
+      2000000.0,
+      5.203e-10,
+      2.822
+     ],
+     [
+      3000000.0,
+      4.733e-08,
+      2.303
+     ],
+     [
+      5000000.0,
+      3.981e-07,
+      2.28
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (TL1011V2 (TLVR))",
+   "price_usd": 1.0
+  },
+  {
+   "vendor": "Eaton",
+   "series": "TL1011V2",
+   "part_number": "TL1011V2-R170-R",
+   "L_nH": 170,
+   "DCR_typ_mohm": 0.15,
+   "DCR_max_mohm": 0.165,
+   "Isat_A": 67.0,
+   "Isat_definition": "Isat1: peak current for approx. 20% roll-off at +25 C",
+   "Isat20_A": 67.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 70,
+   "length_mm": 9.6,
+   "width_mm": 6.4,
+   "height_mm": 11.0,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "kfactor_table",
+    "K_G_per_nH_A": 340.0,
+    "table": [
+     [
+      500000.0,
+      2.305e-14,
+      3.935
+     ],
+     [
+      1000000.0,
+      1.931e-10,
+      2.753
+     ],
+     [
+      2000000.0,
+      5.203e-10,
+      2.822
+     ],
+     [
+      3000000.0,
+      4.733e-08,
+      2.303
+     ],
+     [
+      5000000.0,
+      3.981e-07,
+      2.28
+     ]
+    ],
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "vendor K-factor chart (TL1011V2 (TLVR))",
+   "price_usd": 1.021
+  },
+  {
+   "vendor": "Bourns",
+   "series": "TLVR1005T",
+   "part_number": "TLVR1005T-70NK",
+   "L_nH": 70,
+   "DCR_typ_mohm": 0.125,
+   "DCR_max_mohm": 0.1375,
+   "Isat_A": 127.0,
+   "Isat_definition": "Isat1 at 25 C: inductance drops 20%",
+   "Isat20_A": 127.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 75,
+   "length_mm": 9.7,
+   "width_mm": 4.7,
+   "height_mm": 11.7,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 127.0,
+    "V_core_m3": 3.5469245084582685e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton TL1011V2 (TLVR) chart",
+   "price_usd": 1.38
+  },
+  {
+   "vendor": "Bourns",
+   "series": "TLVR1005T",
+   "part_number": "TLVR1005T-R10K",
+   "L_nH": 100,
+   "DCR_typ_mohm": 0.125,
+   "DCR_max_mohm": 0.1375,
+   "Isat_A": 89.0,
+   "Isat_definition": "Isat1 at 25 C: inductance drops 20%",
+   "Isat20_A": 89.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 75,
+   "length_mm": 9.7,
+   "width_mm": 4.7,
+   "height_mm": 11.7,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 89.0,
+    "V_core_m3": 3.5469245084582685e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton TL1011V2 (TLVR) chart",
+   "price_usd": 1.39
+  },
+  {
+   "vendor": "Bourns",
+   "series": "TLVR1005T",
+   "part_number": "TLVR1005T-R12K",
+   "L_nH": 120,
+   "DCR_typ_mohm": 0.125,
+   "DCR_max_mohm": 0.1375,
+   "Isat_A": 74.0,
+   "Isat_definition": "Isat1 at 25 C: inductance drops 20%",
+   "Isat20_A": 74.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 75,
+   "length_mm": 9.7,
+   "width_mm": 4.7,
+   "height_mm": 11.7,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 74.0,
+    "V_core_m3": 3.5469245084582685e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton TL1011V2 (TLVR) chart",
+   "price_usd": 1.42
+  },
+  {
+   "vendor": "Bourns",
+   "series": "TLVR1005T",
+   "part_number": "TLVR1005T-R15K",
+   "L_nH": 150,
+   "DCR_typ_mohm": 0.125,
+   "DCR_max_mohm": 0.1375,
+   "Isat_A": 59.0,
+   "Isat_definition": "Isat1 at 25 C: inductance drops 20%",
+   "Isat20_A": 59.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 75,
+   "length_mm": 9.7,
+   "width_mm": 4.7,
+   "height_mm": 11.7,
+   "core_material": "Ferrite",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 59.0,
+    "V_core_m3": 3.5469245084582685e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton TL1011V2 (TLVR) chart",
+   "price_usd": 1.38
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-HCF",
+   "part_number": "7443630070",
+   "L_nH": 700,
+   "DCR_typ_mohm": null,
+   "DCR_max_mohm": 0.91,
+   "Isat_A": 75.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 69.0,
+   "Isat20_basis": "mean of the 10 % and 30 % values",
+   "Irms_A": 54.7,
+   "length_mm": 21.8,
+   "width_mm": 21.5,
+   "height_mm": 14.5,
+   "core_material": "Ferrite (WE-HCF family; core material not stated in parsed datasheet text - unverified)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 75.0,
+    "V_core_m3": 3.906686920380353e-06,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 4.59
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-HCF",
+   "part_number": "7443642010100",
+   "L_nH": 1000,
+   "DCR_typ_mohm": 0.84,
+   "DCR_max_mohm": 0.92,
+   "Isat_A": 56.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 52.5,
+   "Isat20_basis": "mean of the 10 % and 30 % values",
+   "Irms_A": 50.3,
+   "length_mm": 19.3,
+   "width_mm": 19.0,
+   "height_mm": 10.0,
+   "core_material": "Ferrite (unverified, see above)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 56.0,
+    "V_core_m3": 2.107931834499644e-06,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 4.97
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-HCM",
+   "part_number": "744340300025",
+   "L_nH": 25,
+   "DCR_typ_mohm": 0.27,
+   "DCR_max_mohm": 0.297,
+   "Isat_A": 53.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 51.0,
+   "Isat20_basis": "mean of the 10 % and 30 % values",
+   "Irms_A": 53,
+   "length_mm": 4.1,
+   "width_mm": 3.1,
+   "height_mm": 3.0,
+   "core_material": "MnZn ferrite (per WE-HCM product page)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 53.0,
+    "V_core_m3": 2.191858217874868e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 1.45
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-HCM",
+   "part_number": "744340300055",
+   "L_nH": 55,
+   "DCR_typ_mohm": 0.27,
+   "DCR_max_mohm": 0.297,
+   "Isat_A": 27.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 25.5,
+   "Isat20_basis": "mean of the 10 % and 30 % values",
+   "Irms_A": 53,
+   "length_mm": 4.1,
+   "width_mm": 3.1,
+   "height_mm": 3.0,
+   "core_material": "MnZn ferrite (per WE-HCM product page)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 27.0,
+    "V_core_m3": 2.191858217874868e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 1.48
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-HCM",
+   "part_number": "744302007",
+   "L_nH": 72,
+   "DCR_typ_mohm": 0.235,
+   "DCR_max_mohm": 0.2515,
+   "Isat_A": 75.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 72.0,
+   "Isat20_basis": "mean of the 10 % and 30 % values",
+   "Irms_A": 76,
+   "length_mm": 7.15,
+   "width_mm": 7.0,
+   "height_mm": 5.0,
+   "core_material": "MnZn ferrite (per WE-HCM product page)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 75.0,
+    "V_core_m3": 1.438532701345885e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 1.39
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-HCM",
+   "part_number": "744302015",
+   "L_nH": 150,
+   "DCR_typ_mohm": 0.235,
+   "DCR_max_mohm": 0.2515,
+   "Isat_A": 40.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 35.5,
+   "Isat20_basis": "mean of the 10 % and 30 % values",
+   "Irms_A": 76,
+   "length_mm": 7.15,
+   "width_mm": 7.0,
+   "height_mm": 5.0,
+   "core_material": "MnZn ferrite (per WE-HCM product page)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 40.0,
+    "V_core_m3": 1.438532701345885e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 1.4
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-HCM",
+   "part_number": "744303012",
+   "L_nH": 120,
+   "DCR_typ_mohm": 0.325,
+   "DCR_max_mohm": 0.3478,
+   "Isat_A": 69.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 65.0,
+   "Isat20_basis": "mean of the 10 % and 30 % values",
+   "Irms_A": 64,
+   "length_mm": 10.2,
+   "width_mm": 7.0,
+   "height_mm": 5.0,
+   "core_material": "MnZn ferrite (per WE-HCM product page)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 69.0,
+    "V_core_m3": 2.052172524996926e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 1.02
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-MAPI",
+   "part_number": "744383560033",
+   "L_nH": 330,
+   "DCR_typ_mohm": 6,
+   "DCR_max_mohm": 7.2,
+   "Isat_A": 16.7,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 12.024,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 14.95,
+   "length_mm": 4.1,
+   "width_mm": 4.1,
+   "height_mm": 2.1,
+   "core_material": "Magnetic iron alloy (metal alloy powder; per WE-MAPI product page)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 16.7,
+    "V_core_m3": 2.4710700000000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.19
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-MAPI",
+   "part_number": "744383570033",
+   "L_nH": 330,
+   "DCR_typ_mohm": 4.3,
+   "DCR_max_mohm": 5.0,
+   "Isat_A": 14.5,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 10.44,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 15.8,
+   "length_mm": 4.1,
+   "width_mm": 4.1,
+   "height_mm": 3.1,
+   "core_material": "Magnetic iron alloy (metal alloy powder; per WE-MAPI product page)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 14.5,
+    "V_core_m3": 3.64777e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.19
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-MAPI",
+   "part_number": "744383570056",
+   "L_nH": 560,
+   "DCR_typ_mohm": 5.9,
+   "DCR_max_mohm": 6.7,
+   "Isat_A": 13.2,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 9.504,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 13.4,
+   "length_mm": 4.1,
+   "width_mm": 4.1,
+   "height_mm": 3.1,
+   "core_material": "Magnetic iron alloy (metal alloy powder; per WE-MAPI product page)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 13.2,
+    "V_core_m3": 3.64777e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.19
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-MAPI",
+   "part_number": "744383670013",
+   "L_nH": 130,
+   "DCR_typ_mohm": 1.4,
+   "DCR_max_mohm": 1.6,
+   "Isat_A": 30.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 21.599999999999998,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 27.4,
+   "length_mm": 5.4,
+   "width_mm": 5.4,
+   "height_mm": 3.1,
+   "core_material": "Magnetic iron alloy (metal alloy powder; per WE-MAPI product page)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 30.0,
+    "V_core_m3": 6.327720000000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.29
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-MAPI",
+   "part_number": "744383670047",
+   "L_nH": 470,
+   "DCR_typ_mohm": 3.5,
+   "DCR_max_mohm": 4.0,
+   "Isat_A": 20.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 14.399999999999999,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 20.8,
+   "length_mm": 5.4,
+   "width_mm": 5.4,
+   "height_mm": 3.1,
+   "core_material": "Magnetic iron alloy (metal alloy powder; per WE-MAPI product page)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 20.0,
+    "V_core_m3": 6.327720000000002e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.29
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-XHMI",
+   "part_number": "744393440015",
+   "L_nH": 150,
+   "DCR_typ_mohm": 1.24,
+   "DCR_max_mohm": 1.49,
+   "Isat_A": 56.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 40.32,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 37,
+   "length_mm": 6.65,
+   "width_mm": 6.45,
+   "height_mm": 3.3,
+   "core_material": "Iron-based composite (product page: \"iron core material\"/\"composite core material\")",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 56.0,
+    "V_core_m3": 9.908167500000001e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.75
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-XHMI",
+   "part_number": "744393440033",
+   "L_nH": 330,
+   "DCR_typ_mohm": 2.1,
+   "DCR_max_mohm": 2.31,
+   "Isat_A": 42.9,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 30.887999999999998,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 27.35,
+   "length_mm": 6.65,
+   "width_mm": 6.45,
+   "height_mm": 3.3,
+   "core_material": "Iron-based composite (product page: \"iron core material\"/\"composite core material\")",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 42.9,
+    "V_core_m3": 9.908167500000001e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.75
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-XHMI",
+   "part_number": "744393440068",
+   "L_nH": 680,
+   "DCR_typ_mohm": 3.8,
+   "DCR_max_mohm": 4.4,
+   "Isat_A": 27.7,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 19.944,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 21.7,
+   "length_mm": 6.65,
+   "width_mm": 6.45,
+   "height_mm": 3.3,
+   "core_material": "Iron-based composite (product page: \"iron core material\"/\"composite core material\")",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 27.7,
+    "V_core_m3": 9.908167500000001e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.73
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-XHMI",
+   "part_number": "744393240033",
+   "L_nH": 330,
+   "DCR_typ_mohm": 3.1,
+   "DCR_max_mohm": 4.0,
+   "Isat_A": 20.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 14.399999999999999,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 19.4,
+   "length_mm": 4.3,
+   "width_mm": 4.3,
+   "height_mm": 3.0,
+   "core_material": "Iron-based composite (product page: \"iron core material\"/\"composite core material\")",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 20.0,
+    "V_core_m3": 3.8828999999999997e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.05
+  },
+  {
+   "vendor": "Wurth Elektronik",
+   "series": "WE-XHMI",
+   "part_number": "744393240056",
+   "L_nH": 560,
+   "DCR_typ_mohm": 4.1,
+   "DCR_max_mohm": 5.63,
+   "Isat_A": 17.0,
+   "Isat_definition": "ISAT,30%: |dL/L| < 30% (typ), 20 C",
+   "Isat20_A": 12.24,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 16.4,
+   "length_mm": 4.3,
+   "width_mm": 4.3,
+   "height_mm": 3.0,
+   "core_material": "Iron-based composite (product page: \"iron core material\"/\"composite core material\")",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 17.0,
+    "V_core_m3": 3.8828999999999997e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.05
+  },
+  {
+   "vendor": "TDK",
+   "series": "CLT32",
+   "part_number": "CLT32-17N",
+   "L_nH": 17,
+   "DCR_typ_mohm": 0.39,
+   "DCR_max_mohm": 0.4485,
+   "Isat_A": 60.0,
+   "Isat_definition": "Isat typ at 23 C: inductance 30% below initial",
+   "Isat20_A": 43.199999999999996,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 45.0,
+   "length_mm": 3.2,
+   "width_mm": 2.5,
+   "height_mm": 2.5,
+   "core_material": "Molded metal (thick copper frame in metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 60.0,
+    "V_core_m3": 1.4e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 1.02
+  },
+  {
+   "vendor": "TDK",
+   "series": "CLT32",
+   "part_number": "CLT32-42N",
+   "L_nH": 42,
+   "DCR_typ_mohm": 1.0,
+   "DCR_max_mohm": 1.15,
+   "Isat_A": 54.0,
+   "Isat_definition": "Isat typ at 23 C: inductance 30% below initial",
+   "Isat20_A": 38.879999999999995,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 28.0,
+   "length_mm": 3.2,
+   "width_mm": 2.5,
+   "height_mm": 2.5,
+   "core_material": "Molded metal (thick copper frame in metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 54.0,
+    "V_core_m3": 1.4e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.719
+  },
+  {
+   "vendor": "TDK",
+   "series": "CLT32",
+   "part_number": "CLT32-80N",
+   "L_nH": 80,
+   "DCR_typ_mohm": 1.9,
+   "DCR_max_mohm": 2.185,
+   "Isat_A": 36.0,
+   "Isat_definition": "Isat typ at 23 C: inductance 30% below initial",
+   "Isat20_A": 25.919999999999998,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 20.0,
+   "length_mm": 3.2,
+   "width_mm": 2.5,
+   "height_mm": 2.5,
+   "core_material": "Molded metal (thick copper frame in metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 36.0,
+    "V_core_m3": 1.4e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.907
+  },
+  {
+   "vendor": "TDK",
+   "series": "CLT32",
+   "part_number": "CLT32-R15",
+   "L_nH": 150,
+   "DCR_typ_mohm": 3.3,
+   "DCR_max_mohm": 3.795,
+   "Isat_A": 25.4,
+   "Isat_definition": "Isat typ at 23 C: inductance 30% below initial",
+   "Isat20_A": 18.287999999999997,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 15.4,
+   "length_mm": 3.2,
+   "width_mm": 2.5,
+   "height_mm": 2.5,
+   "core_material": "Molded metal (thick copper frame in metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 25.4,
+    "V_core_m3": 1.4e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.802
+  },
+  {
+   "vendor": "TDK",
+   "series": "CLT32",
+   "part_number": "CLT32-R31",
+   "L_nH": 310,
+   "DCR_typ_mohm": 5.3,
+   "DCR_max_mohm": 6.095,
+   "Isat_A": 17.5,
+   "Isat_definition": "Isat typ at 23 C: inductance 30% below initial",
+   "Isat20_A": 12.6,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 12.1,
+   "length_mm": 3.2,
+   "width_mm": 2.5,
+   "height_mm": 2.5,
+   "core_material": "Molded metal (thick copper frame in metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 17.5,
+    "V_core_m3": 1.4e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.827
+  },
+  {
+   "vendor": "TDK",
+   "series": "CLT32",
+   "part_number": "CLT32-R44",
+   "L_nH": 440,
+   "DCR_typ_mohm": 7.6,
+   "DCR_max_mohm": 8.74,
+   "Isat_A": 13.5,
+   "Isat_definition": "Isat typ at 23 C: inductance 30% below initial",
+   "Isat20_A": 9.719999999999999,
+   "Isat20_basis": "0.72 x the 30 % value (XGL/SPM ratio)",
+   "Irms_A": 10.1,
+   "length_mm": 3.2,
+   "width_mm": 2.5,
+   "height_mm": 2.5,
+   "core_material": "Molded metal (thick copper frame in metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 13.5,
+    "V_core_m3": 1.4e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.869
+  },
+  {
+   "vendor": "TDK",
+   "series": "VLB10050",
+   "part_number": "VLB10050HT-R12M",
+   "L_nH": 120,
+   "DCR_typ_mohm": 0.35,
+   "DCR_max_mohm": 0.371,
+   "Isat_A": 68.0,
+   "Isat_definition": "Isat typ: inductance 20% below nominal",
+   "Isat20_A": 68.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 31,
+   "length_mm": 10.2,
+   "width_mm": 7.0,
+   "height_mm": 5.0,
+   "core_material": "Wound ferrite",
+   "f_max_MHz": 2.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 68.0,
+    "V_core_m3": 2.052172524996926e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 2.05
+  },
+  {
+   "vendor": "TDK",
+   "series": "VLB10050",
+   "part_number": "VLB10050HT-R15M",
+   "L_nH": 150,
+   "DCR_typ_mohm": 0.35,
+   "DCR_max_mohm": 0.371,
+   "Isat_A": 52.0,
+   "Isat_definition": "Isat typ: inductance 20% below nominal",
+   "Isat20_A": 52.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 31,
+   "length_mm": 10.2,
+   "width_mm": 7.0,
+   "height_mm": 5.0,
+   "core_material": "Wound ferrite",
+   "f_max_MHz": 2.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 52.0,
+    "V_core_m3": 2.052172524996926e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 1.56
+  },
+  {
+   "vendor": "TDK",
+   "series": "VLB10050",
+   "part_number": "VLB10050HT-R20M",
+   "L_nH": 200,
+   "DCR_typ_mohm": 0.35,
+   "DCR_max_mohm": 0.371,
+   "Isat_A": 37.0,
+   "Isat_definition": "Isat typ: inductance 20% below nominal",
+   "Isat20_A": 37.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 31,
+   "length_mm": 10.2,
+   "width_mm": 7.0,
+   "height_mm": 5.0,
+   "core_material": "Wound ferrite",
+   "f_max_MHz": 2.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 37.0,
+    "V_core_m3": 2.052172524996926e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 1.55
+  },
+  {
+   "vendor": "TDK",
+   "series": "VLB10050",
+   "part_number": "VLB10050HT-R30N",
+   "L_nH": 300,
+   "DCR_typ_mohm": 0.35,
+   "DCR_max_mohm": 0.371,
+   "Isat_A": 21.0,
+   "Isat_definition": "Isat typ: inductance 20% below nominal",
+   "Isat20_A": 21.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 31,
+   "length_mm": 10.2,
+   "width_mm": 7.0,
+   "height_mm": 5.0,
+   "core_material": "Wound ferrite",
+   "f_max_MHz": 2.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      100000.0,
+      300000.0,
+      0.00025,
+      1.63,
+      2.45
+     ],
+     [
+      300000.0,
+      500000.0,
+      2e-05,
+      1.8,
+      2.5
+     ],
+     [
+      500000.0,
+      1000000.0,
+      3.6e-09,
+      2.4,
+      2.25
+     ],
+     [
+      1000000.0,
+      3000000.0,
+      1.1e-11,
+      2.8,
+      2.4
+     ]
+    ],
+    "B_ref_T": 0.37974784500000003,
+    "I_ref_A": 21.0,
+    "V_core_m3": 2.052172524996926e-07,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Ferroxcube 3F3/3F4, volume factor calibrated on the Eaton FP charts",
+   "price_usd": 1.55
+  },
+  {
+   "vendor": "TDK",
+   "series": "SPM5030VT-D",
+   "part_number": "SPM5030VT-R10M-D",
+   "L_nH": 100,
+   "DCR_typ_mohm": 2.7,
+   "DCR_max_mohm": 2.97,
+   "Isat_A": 51.1,
+   "Isat_definition": "Isat typ at dL = -30% (Isat_by_drop gives -20%)",
+   "Isat20_A": 37.1,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 18.3,
+   "length_mm": 5.3,
+   "width_mm": 5.1,
+   "height_mm": 3.0,
+   "core_material": "Wound metal (metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 51.1,
+    "V_core_m3": 5.676299999999999e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.584
+  },
+  {
+   "vendor": "TDK",
+   "series": "SPM5030VT-D",
+   "part_number": "SPM5030VT-R22M-D",
+   "L_nH": 220,
+   "DCR_typ_mohm": 4.2,
+   "DCR_max_mohm": 4.62,
+   "Isat_A": 28.2,
+   "Isat_definition": "Isat typ at dL = -30% (Isat_by_drop gives -20%)",
+   "Isat20_A": 21.0,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 14.2,
+   "length_mm": 5.3,
+   "width_mm": 5.1,
+   "height_mm": 3.0,
+   "core_material": "Wound metal (metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 28.2,
+    "V_core_m3": 5.676299999999999e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.595
+  },
+  {
+   "vendor": "TDK",
+   "series": "SPM5030VT-D",
+   "part_number": "SPM5030VT-R33M-D",
+   "L_nH": 330,
+   "DCR_typ_mohm": 4.2,
+   "DCR_max_mohm": 4.62,
+   "Isat_A": 24.9,
+   "Isat_definition": "Isat typ at dL = -30% (Isat_by_drop gives -20%)",
+   "Isat20_A": 18.4,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 14.2,
+   "length_mm": 5.3,
+   "width_mm": 5.1,
+   "height_mm": 3.0,
+   "core_material": "Wound metal (metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 24.9,
+    "V_core_m3": 5.676299999999999e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.584
+  },
+  {
+   "vendor": "TDK",
+   "series": "SPM5030VT-D",
+   "part_number": "SPM5030VT-R47M-D",
+   "L_nH": 470,
+   "DCR_typ_mohm": 5.4,
+   "DCR_max_mohm": 5.94,
+   "Isat_A": 20.2,
+   "Isat_definition": "Isat typ at dL = -30% (Isat_by_drop gives -20%)",
+   "Isat20_A": 14.7,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 12.9,
+   "length_mm": 5.3,
+   "width_mm": 5.1,
+   "height_mm": 3.0,
+   "core_material": "Wound metal (metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 20.2,
+    "V_core_m3": 5.676299999999999e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.584
+  },
+  {
+   "vendor": "TDK",
+   "series": "SPM5030VT-D",
+   "part_number": "SPM5030VT-1R0M-D",
+   "L_nH": 1000,
+   "DCR_typ_mohm": 9.6,
+   "DCR_max_mohm": 10.56,
+   "Isat_A": 14.7,
+   "Isat_definition": "Isat typ at dL = -30% (Isat_by_drop gives -20%)",
+   "Isat20_A": 10.4,
+   "Isat20_basis": "datasheet 20 % value",
+   "Irms_A": 9.4,
+   "length_mm": 5.3,
+   "width_mm": 5.1,
+   "height_mm": 3.0,
+   "core_material": "Wound metal (metal composite)",
+   "f_max_MHz": 3.0,
+   "core_model": {
+    "type": "steinmetz_rows",
+    "rows": [
+     [
+      0.0,
+      316227.7660168379,
+      5.4256,
+      1.0261,
+      2.354
+     ],
+     [
+      316227.7660168379,
+      1000000000.0,
+      0.15861,
+      1.294,
+      2.3408
+     ]
+    ],
+    "B_ref_T": 0.3278638797755776,
+    "I_ref_A": 14.7,
+    "V_core_m3": 5.676299999999999e-08,
+    "waveform": "sinusoidal"
+   },
+   "core_loss_method": "material proxy: Micrometals -8 carbonyl iron, flux from I_sat",
+   "price_usd": 0.632
+  }
+ ]
+}

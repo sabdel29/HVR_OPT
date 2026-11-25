@@ -1,0 +1,17 @@
+# downloaded third-party documents (datasheets, chart images, web pages): not redistributed
+_downloads_*/
+# test-only libraries and smoke runs
+_test_*
+_smoke*
+sweep__smoke*
+# raw API cache (4 MB); mlcc_vendor_data.json is the reduced table the sweep uses and
+# mlcc_fetch.py regenerates both
+mlcc_vendor_raw.json
+# run logs
+log_*.txt
+run_*.log
+mlcc_fetch.log
+# uncompressed sweep outputs (the .gz copies are tracked; sif_report/sif_plot/sif_sensitivity
+# read either); per-cell tables of the sensitivity runs are not kept
+sweep_*_best.json
+sweep_*_cells.csv
