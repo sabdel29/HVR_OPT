@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Si-IF Backside VR Density</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one technical-brief column. Answer and key numbers first, the two-panel chart next,
+   then the route comparison, the designs behind the curve, the wafer path and the fine print. */
+:root {
+  --bg: #f4f4f1;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #4c4b48;
+  --muted: #6c6a65;
+  --rule: #e1e0d9;
+  --axis: #c3c2b7;
+  --ref: #8f8d86;
+  --accent: #1f64b8;
+  --tint: #eaeef3;
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111110; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #9c9a92;
+    --rule: #2c2c2a; --axis: #3b3b38; --ref: #7a7871; --accent: #6aa5ec; --tint: #1c222a;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111110; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #9c9a92;
+  --rule: #2c2c2a; --axis: #3b3b38; --ref: #7a7871; --accent: #6aa5ec; --tint: #1c222a;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink); font: 400 1rem/1.55 var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: 980px; margin: 0 auto;
+  padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 40px;
+}
+h1, h2, h3 { font-weight: 600; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.1rem); line-height: 1.2; max-width: 30ch; }
+h2 { font-size: 1.25rem; line-height: 1.3; }
+h3 { font-size: 1rem; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+header { display: grid; gap: 14px; }
+.lede { color: var(--ink-2); font-size: 1.05rem; }
+section { display: grid; gap: 16px; min-width: 0; }
+.mono { font-family: var(--font-mono); font-size: 0.92em; }
+.num { font-variant-numeric: tabular-nums; }
+.note { color: var(--ink-2); font-size: 0.9rem; }
+
+/* answer + key numbers */
+.answer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+@media (max-width: 820px) { .answer { grid-template-columns: minmax(0, 1fr); } }
+.answer ul { margin: 0; padding-left: 1.1em; display: grid; gap: 10px; }
+.answer li { padding-left: 2px; }
+.answer li strong { font-weight: 600; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; min-width: 0; }
+.keynums { padding: 6px 0 4px; }
+.keynums h2 { font-size: 0.95rem; padding: 10px 16px 6px; }
+.keynums .sub { padding: 0 16px 8px; color: var(--muted); font-size: 0.82rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; vertical-align: top; padding: 8px 12px; border-top: 1px solid var(--rule); }
+thead th { border-top: 0; color: var(--muted); font-weight: 500; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
+td.r, th.r { text-align: right; }
+tbody th { font-weight: 500; color: var(--ink-2); }
+.keynums td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.keynums td small { color: var(--muted); font-size: 0.8rem; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.group th { background: var(--tint); color: var(--ink); font-weight: 600; font-size: 0.85rem; letter-spacing: 0; text-transform: none; }
+.routes td:nth-child(2), .routes td:nth-child(3) { font-variant-numeric: tabular-nums; }
+.routes td:nth-child(2), .routes td:nth-child(3) { white-space: nowrap; }
+.designs { font-size: 0.85rem; }
+.designs td.r, .designs th.r { white-space: nowrap; }
+.this-study td:first-child { font-weight: 600; }
+
+/* chart */
+figure { margin: 0; padding: 18px 16px 14px; display: grid; gap: 12px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 0.86rem; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend svg { flex: none; }
+.panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 760px) { .panels { grid-template-columns: minmax(0, 1fr); } }
+.panel { position: relative; min-width: 0; }
+.panel h3 { font-size: 0.95rem; margin-bottom: 4px; }
+.panel svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.chart text { font-family: var(--font-sans); }
+.tick { fill: var(--muted); font-size: 11px; }
+.axis-title { fill: var(--muted); font-size: 11px; }
+.lab { fill: var(--ink-2); font-size: 11.5px; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+.lab.strong { fill: var(--ink); font-weight: 600; }
+.reflab { fill: var(--muted); font-size: 10.5px; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.tip {
+  position: absolute; pointer-events: none; z-index: 2; min-width: 190px; max-width: 250px;
+  background: var(--surface); border: 1px solid var(--axis); border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 8px 10px; font-size: 0.8rem; line-height: 1.35;
+}
+.tip .h { color: var(--muted); font-size: 0.75rem; margin-bottom: 4px; }
+.tip .row { display: grid; grid-template-columns: 14px 1fr; gap: 6px; align-items: start; margin-top: 4px; }
+.tip .row b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.tip .row i { font-style: normal; color: var(--ink-2); display: block; }
+.tip .key { width: 14px; height: 2px; margin-top: 8px; border-radius: 1px; }
+figcaption { color: var(--ink-2); font-size: 0.86rem; max-width: none; }
+details { font-size: 0.88rem; }
+details summary { cursor: pointer; color: var(--accent); width: max-content; }
+details .scroll { margin-top: 10px; max-height: 360px; overflow-y: auto; border: 1px solid var(--rule); border-radius: 4px; }
+details table td, details table th { padding: 5px 10px; font-variant-numeric: tabular-nums; }
+.datagrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .datagrid { grid-template-columns: minmax(0, 1fr); } }
+
+/* fine print */
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 32px; }
+@media (max-width: 760px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.cols div { display: grid; gap: 4px; min-width: 0; align-content: start; }
+.cols h3 { font-size: 0.92rem; }
+.cols p { font-size: 0.9rem; color: var(--ink-2); }
+.sources { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: 0.84rem; color: var(--ink-2); }
+.sources a { word-break: break-word; }
+footer { color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--rule); padding-top: 14px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@page { size: letter; margin: 12mm 11mm; }
+@media print {
+  html { font-size: 10.5px; }
+  body { background: #fff; }
+  h2, h3 { break-after: avoid; }
+  .wrap { max-width: none; padding: 0; gap: 18px; }
+  h1 { font-size: 2rem; max-width: none; }
+  h2 { font-size: 1.35rem; }
+  .answer { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 18px; }
+  .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .cols, .datagrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  table { font-size: 0.9rem; }
+  th, td { padding: 4px 7px; }
+  details, .tip { display: none !important; }
+  figure, .keynums, tr, .cols div { break-inside: avoid; }
+  .card { break-inside: auto; }
+  section { break-inside: auto; }
+  .card { border-color: #d8d7d0; }
+  a { color: #1f64b8; text-decoration: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Si-IF chiplet system · backside power delivery · 25 November 2026</div>
+    <h1>How much current can off-the-shelf converters deliver from the back of a Si-IF?</h1>
+    <p class="lede">Converters are mounted side by side on the wafer backside and the current reaches the chiplets through TWVs: a 1 V rail, 1 kA, from 48 V or 12 V. Current density is load current per mm² of backside area taken by the converters.</p>
+  </header>
+
+  <section class="answer" aria-labelledby="ans">
+    <div style="display:grid;gap:14px;min-width:0">
+      <h2 id="ans">Short answer</h2>
+      <ul>
+        <li><strong>Yes, 1 kA per 1000 mm² works from both 48 V and 12 V</strong> with catalog parts on one layer. A GaN hybrid switched-capacitor buck built from catalog parts reaches it at 86% (48 V) and 87% (12 V) conversion efficiency, about 3 points lower when hot.</li>
+        <li><strong>The practical ceiling is about 1.2–1.3 A/mm²</strong> at 84–86%. Past that, only the smallest chip inductors still fit, running at their current limits, and efficiency drops off a cliff.</li>
+        <li><strong>The absolute maximum is 1.6–1.7 A/mm²</strong> with gate drivers and local decoupling on the same layer, or 2.1–2.2 A/mm² for the power stage alone. Both run near 70% efficiency and 57–96 W/cm² of heat, so they are bounds, not designs.</li>
+        <li><strong>At 12 V, catalog modules match the custom design:</strong> integrated-inductor modules (MPS, Infineon) give 1.0 A/mm² at 87%. <strong>At 48 V, no catalog route gets close:</strong> a 48→12 V bus converter plus those modules reaches 0.56 A/mm² at 86%, and the custom single-stage hybrid nearly doubles that.</li>
+        <li><strong>Cost per kA:</strong> about $150 in parts for the 1 A/mm² discrete designs, $170–250 for 12 V modules, $330–420 for the 48 V catalog two-stage route, and about $1,100 for Vicor’s catalog PRM + VTM.</li>
+        <li><strong>TWVs are not the limit.</strong> About 2,700 copper vias of 50 µm carry 1 kA with 2–12 W of loss. Spreading the current in the backside copper costs more, 10–60 W.</li>
+      </ul>
+    </div>
+    <div class="card keynums" role="region" aria-labelledby="kn">
+      <h2 id="kn">Key numbers, discrete catalog parts</h2>
+      <p class="sub">HVR_OPT optimum on one layer, gate drivers and local decoupling included. Conversion efficiency at 1 V, loss model at 25 °C.</p>
+      <div class="scroll">
+      <table>
+        <thead><tr><th scope="col"></th><th scope="col" class="r">48 V → 1 V</th><th scope="col" class="r">12 V → 1 V</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Best efficiency, ≥ 0.1 A/mm²</th><td class="r">96.8% <small>at 0.10</small></td><td class="r">96.7% <small>at 0.11</small></td></tr>
+          <tr><th scope="row">At 0.5 A/mm²</th><td class="r">92.5%</td><td class="r">93.3%</td></tr>
+          <tr><th scope="row">At 1.0 A/mm²</th><td class="r">86.2% <small>(83.2% hot)</small></td><td class="r">87.0% <small>(84.0% hot)</small></td></tr>
+          <tr><th scope="row">Practical ceiling</th><td class="r">1.3 A/mm² <small>at 84.3%</small></td><td class="r">1.2 A/mm² <small>at 85.6%</small></td></tr>
+          <tr><th scope="row">Maximum density</th><td class="r">1.67 A/mm² <small>at 72.5%</small></td><td class="r">1.60 A/mm² <small>at 73.7%</small></td></tr>
+          <tr><th scope="row">Power stage only</th><td class="r">2.17 A/mm² <small>at 69.5%</small></td><td class="r">2.08 A/mm² <small>at 68.5%</small></td></tr>
+          <tr><th scope="row">End to end at 1 A/mm²<br><small style="color:var(--muted);font-weight:400">with TWVs and backside copper</small></th><td class="r">81–85%</td><td class="r">83–86%</td></tr>
+          <tr><th scope="row">Parts per kA at 1 A/mm²</th><td class="r">$149</td><td class="r">$146</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="chart-h">
+    <h2 id="chart-h">Efficiency against current density</h2>
+    <div class="card">
+      <figure>
+        <div class="legend" aria-hidden="true">
+          <span><svg width="22" height="10"><line x1="1" y1="5" x2="21" y2="5" stroke="var(--s1)" stroke-width="2" stroke-linecap="round"/></svg>Discrete catalog parts, HVR_OPT optimum</span>
+          <span><svg width="22" height="10"><line x1="1" y1="5" x2="21" y2="5" stroke="var(--s2)" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="5" r="3.5" fill="var(--s2)" stroke="var(--surface)" stroke-width="1.5"/></svg>Catalog modules (48 V: bus converter + modules)</span>
+          <span><svg width="14" height="12"><path d="M7 1 L12.5 6 L7 11 L1.5 6 Z" fill="var(--s3)" stroke="var(--surface)" stroke-width="1.5"/></svg>Other catalog products at rating</span>
+        </div>
+        <div class="panels">
+          <div class="panel" id="p48"><h3>48 V → 1 V</h3></div>
+          <div class="panel" id="p12"><h3>12 V → 1 V</h3></div>
+        </div>
+        <figcaption>Each line is an efficiency frontier, the best design at each density. Discrete line: HVR_OPT synthesis over 29 topologies (48 V) and 11 (12 V), catalog GaN switches, chip inductors and MLCCs, gate drivers and input capacitors included. Module line: the MPS MPC22165-170 datasheet curve (12 V → 0.8 V, moved to 1 V at equal loss), counted at 1.3 × footprint; at 48 V it is fed by a Vicor NBM2317 48→12 V bus converter. Ferric points are estimates. Hover or tap a panel for values.</figcaption>
+        <details>
+          <summary>Show the plotted data</summary>
+          <div class="datagrid" id="datagrid"></div>
+        </details>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="routes-h">
+    <h2 id="routes-h">Routes compared</h2>
+    <p class="note">Density counts the converter parts and their spacing on the backside. Output bulk capacitors and the controller are excluded for every route. Cost is parts per kA at the operating point shown.</p>
+    <div class="card scroll">
+      <table class="routes">
+        <thead><tr><th scope="col">Route</th><th scope="col">A/mm² at efficiency</th><th scope="col">Cost per kA</th><th scope="col">Notes</th></tr></thead>
+        <tbody>
+          <tr class="group"><th colspan="4" scope="colgroup">48 V → 1 V</th></tr>
+          <tr class="this-study"><td>Single-stage hybrid, discrete catalog parts (this study)</td><td>1.0 at 86%<br>1.3 at 84%<br>1.67 at 72%</td><td>$149</td><td>EPC GaN, TDK 17 nH chip inductors, Murata MLCCs, uPI gate drivers. Needs a controller that sequences the flying-capacitor switches.</td></tr>
+          <tr><td>48→12 V bus converter + 12→1 V modules <span class="mono">NBM2317 + MPC22165-170</span></td><td>0.56 at 86%<br>0.80 at 76%</td><td>$330–420</td><td>All catalog. The bus converter takes 30–45% of the area.</td></tr>
+          <tr><td>Ferric IVR behind 48→12→1.8 V <span class="mono">Fe1766</span></td><td>≈0.67 at ≈79%</td><td>not public</td><td>Estimate. The IVR alone is 4.5 A/mm², but it needs a 1.8 V bus that two more stages must supply.</td></tr>
+          <tr><td>Single-stage module <span class="mono">ADI LTM4664</span></td><td>0.17 at 88%</td><td>$1.6–2.4k</td><td>16 × 16 mm, 50 A.</td></tr>
+          <tr><td>Factorized power, catalog <span class="mono">Vicor PRM + VTM</span></td><td>0.13 at 88%</td><td>≈$1.1k</td><td>52-week lead time. The denser ChiP VTM is end of life.</td></tr>
+          <tr><td>Vertical-power current multipliers <span class="mono">Vicor MCM / GCM</span></td><td>2–5 claimed</td><td>not public</td><td>Multiplier only, regulator elsewhere. Sold to strategic customers.</td></tr>
+          <tr class="group"><th colspan="4" scope="colgroup">12 V → 1 V</th></tr>
+          <tr class="this-study"><td>Discrete catalog parts (this study): N:1 hybrids below 0.3 A/mm², buck to 0.65, 2:1 hybrid above</td><td>1.0 at 87%<br>1.2 at 86%<br>1.60 at 74%</td><td>$146</td><td>Same part families as at 48 V.</td></tr>
+          <tr><td>Integrated-inductor modules <span class="mono">MPS MPC22165-170</span>, Infineon TDM2254x similar</td><td>1.04 at 87%<br>1.45 at 80%</td><td>$170–250</td><td>Measured vendor curve. 9.65 mm tall; at the 170 A rating each module dissipates 43 W and needs a cold plate.</td></tr>
+          <tr><td>Smart power stages + discrete inductors <span class="mono">TDA21590 + SLC1049</span></td><td>0.2–0.35</td><td>$85–155</td><td>Standard multiphase buck; efficiency not evaluated here.</td></tr>
+          <tr><td>Ferric IVR behind 12→1.8 V modules <span class="mono">Fe1766</span></td><td>≈1.06 at ≈83%</td><td>not public</td><td>Estimate. Gains transient response, not area. Empower’s 3.3 V-input IVRs behave the same way.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="designs-h">
+    <h2 id="designs-h">The designs behind the discrete curve</h2>
+    <p class="note">HVR_OPT notation: an N:1 switched-capacitor stage feeding K inductors per cell. All parts are catalog items; prices include gate drivers.</p>
+    <div class="card scroll">
+      <table class="designs">
+        <thead><tr><th scope="col">Operating point</th><th scope="col">Topology, cells</th><th scope="col">Switches HS / LS</th><th scope="col">Inductor</th><th scope="col">Flying capacitor</th><th scope="col" class="r">f<sub>sw</sub></th><th scope="col" class="r">Efficiency</th><th scope="col" class="r">Heat</th><th scope="col" class="r">Per kA</th></tr></thead>
+        <tbody class="num">
+          <tr class="group"><th colspan="9" scope="colgroup">48 V → 1 V</th></tr>
+          <tr><td>Best efficiency, 0.10 A/mm²</td><td>8:1, K = 2; 45 × 22 A</td><td class="mono">EPC2057 / EPC2366</td><td><span class="mono">TLVR1005T</span> 150 nH, 11.7 mm tall</td><td>10 µF 100 V, 1210</td><td class="r">0.40 MHz</td><td class="r">96.8%</td><td class="r">0.3 W/cm²</td><td class="r">$870</td></tr>
+          <tr><td>1 A/mm²</td><td>7:1, K = 7; 4 × 250 A</td><td class="mono">EPC2090 / EPC2366</td><td><span class="mono">CLT32-17N</span> 17 nH, 2.5 mm</td><td>10 µF 100 V, 1210</td><td class="r">1.41 MHz</td><td class="r">86.2%</td><td class="r">16 W/cm²</td><td class="r">$149</td></tr>
+          <tr><td>Maximum, 1.67 A/mm²</td><td>4:1, K = 4; 6 × 167 A</td><td class="mono">EPC2090 / EPC2090</td><td><span class="mono">CLT32-17N</span> 17 nH, 2.5 mm</td><td>4.7 µF 50 V, 0805</td><td class="r">1.60 MHz</td><td class="r">72.5%</td><td class="r">63 W/cm²</td><td class="r">$116</td></tr>
+          <tr class="group"><th colspan="9" scope="colgroup">12 V → 1 V</th></tr>
+          <tr><td>Best efficiency, 0.11 A/mm²</td><td>3:1, K = 2; 56 × 18 A</td><td class="mono">EPC2055 / EPC2366</td><td><span class="mono">TLVR1005T</span> 150 nH, 11.7 mm tall</td><td>22 µF 25 V, 1210</td><td class="r">0.38 MHz</td><td class="r">96.7%</td><td class="r">0.4 W/cm²</td><td class="r">$714</td></tr>
+          <tr><td>1 A/mm²</td><td>2:1, K = 2; 14 × 71 A</td><td class="mono">EPC2090 / EPC2366</td><td><span class="mono">CLT32-17N</span> 17 nH, 2.5 mm</td><td>10 µF 100 V, 1210</td><td class="r">1.35 MHz</td><td class="r">87.0%</td><td class="r">15 W/cm²</td><td class="r">$146</td></tr>
+          <tr><td>Maximum, 1.60 A/mm²</td><td>2:1, K = 2; 12 × 83 A</td><td class="mono">EPC2090 / EPC2090</td><td><span class="mono">CLT32-17N</span> 17 nH, 2.5 mm</td><td>22 µF 25 V, 0805</td><td class="r">1.87 MHz</td><td class="r">73.7%</td><td class="r">57 W/cm²</td><td class="r">$116</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">At the maximum, the low-side switches carry most of the loss (about 240 W per kA): the packer picks the smallest GaN parts and 17 nH inductors because nothing larger fits.</p>
+  </section>
+
+  <section aria-labelledby="twv-h">
+    <h2 id="twv-h">Getting 1 kA through the wafer</h2>
+    <div class="cols">
+      <div><h3>Through-wafer vias</h3><p>About 2,700 copper TWVs carry 1 kA: 50 µm in diameter, 0.75 A each, for the 1 V rail and its return. At a 125 µm pitch they occupy about 40 mm², 4% of a 1000 mm² footprint. Through 100, 300 and 700 µm of silicon they lose 1.7, 5.0 and 11.8 W.</p></div>
+      <div><h3>Backside copper</h3><p>Spreading each converter’s output to the vias under it costs 10–60 W per kA at 1 A/mm², set by the copper thickness (20–50 µm) and the number of output feeds per cell. Smaller cells lower it. End to end, the 1 A/mm² designs deliver 81–85% at 48 V and 83–86% at 12 V, before the top-side distribution.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="fine-h">
+    <h2 id="fine-h">What the numbers include</h2>
+    <div class="cols">
+      <div><h3>Area</h3><p>Converter parts on one layer with 100 µm between part bodies, plus gate drivers, bootstrap and input capacitors. Modules count as 1.3 × their footprint for tiling gaps and input capacitors. With 200 µm spacing the maximum density falls by about 12%.</p></div>
+      <div><h3>Efficiency</h3><p>Loss model at 25 °C; hot resistances cost about 3 points. Dead time, inductor AC winding loss, solder and board resistance and controller power are not modeled. At 12 V the measured module curve and the modeled discrete design agree within half a point at 1 A/mm².</p></div>
+      <div><h3>Heat</h3><p>At 1 A/mm² the converters dissipate 150–160 W per kA, about 15–16 W/cm² of backside area. At the maximum density it is 57–63 W/cm². Thermal limits are not modeled.</p></div>
+      <div><h3>Part limits</h3><p>The 1 A/mm² designs run the 17 nH chip inductor near its ratings: 54 A peak against 60 A saturation, 37 A RMS against 45 A. Rating the inductors at 20% inductance drop instead of 30% lowers the power-stage maximum to 1.80 A/mm² (48 V) and 1.67 A/mm² (12 V); efficiency at 1 A/mm² moves by less than half a point. Halving or doubling the core loss moves it by up to about 1 point.</p></div>
+      <div><h3>Height</h3><p>The 1 A/mm² designs use parts at most 3 mm tall. The 96–97% designs need 11–12 mm tall inductors. The catalog modules are 5–10 mm tall.</p></div>
+      <div><h3>Control</h3><p>The hybrid topologies need a controller that drives the flying-capacitor switches in sequence. Standard multiphase buck controllers do not, so plan a programmable or custom controller.</p></div>
+      <div><h3>Prices</h3><p>EPC list price at 2,500 units, other discrete parts near 1,000 units, modules at 800–8,000 units from distributors. Volume contracts are lower. Vicor MCM/GCM, Ferric and Empower high-current parts have no public prices.</p></div>
+      <div><h3>Method</h3><p>HVR_OPT synthesis limited to one component tier: buck and N:1 switched-capacitor hybrids (N up to 8 at 48 V, 5 at 12 V), 4–250 cells per kA, 0.1–3 MHz. Libraries: EPC catalog GaN transistors with the framework’s voltage-stress and derating rules, 24 Murata MLCCs with DC-bias data, 120 catalog inductors (17 nH–1 µH) held to their datasheet saturation and RMS ratings. Every placement is checked for overlap.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="src-h">
+    <h2 id="src-h">Sources</h2>
+    <ol class="sources">
+      <li>MPS MPC22165-170 datasheet, Rev. 1.0 (Jan 2024), efficiency vs. load current: <a href="https://www.monolithicpower.com/en/products/power-modules/intelli-module.html">monolithicpower.com</a></li>
+      <li>Infineon TDM22544D / TDM22545D datasheets (140 A thermally managed, 160 A peak, 10 × 9 mm): <a href="https://www.infineon.com/dgdl/Infineon-TDM22545D-DataSheet-v01_00-EN.pdf">infineon.com</a></li>
+      <li>Infineon TDM4218U108, 1.3 kW 8:1 bus converter, 41.8 × 18.8 mm: <a href="https://www.infineon.com/assets/row/public/documents/24/49/infineon-tdm4218u108-datasheet-en.pdf">infineon.com</a></li>
+      <li>Vicor NBM2317S60D1580T0R datasheet (1 kW, 95.6% at full load, 22.8 × 17.3 mm): <a href="https://www.vicorpower.com/documents/datasheets/ds-NBM2317S60D1580T0R-VICOR.pdf">vicorpower.com</a></li>
+      <li>Vicor PRM48BF480T600A00 (97.6% at full load) and VTM48EF012T130C01 (90.4% at 130 A): <a href="https://www.vicorpower.com/products?productType=cfg&amp;productKey=VTM48EF012T130C01">vicorpower.com</a></li>
+      <li>Vicor vertical power delivery and current-multiplier claims: <a href="https://www.vicorpower.com/resource-library/articles/high-performance-computing/modules-mitigate-the-environmental-impact-of-genai">vicorpower.com</a></li>
+      <li>ADI LTM4664 datasheet (88% for 48 V to 1 V at 50 A): <a href="https://www.analog.com/en/products/ltm4664.html">analog.com</a></li>
+      <li>Ferric Fe1766 (160 A, 35.5 mm², 89% at 160 A from 1.8 V): <a href="https://www.ferric.com/fe1766">ferric.com/fe1766</a></li>
+      <li>Empower EP7502 / Crescendo brochure: <a href="https://www.empowersemi.com/wp-content/uploads/2026/09/Empower-Corporate-Brochure-September-2026.pdf">empowersemi.com</a></li>
+      <li>TDK CLT32 power inductors (17 nH, 60 A saturation, 45 A rated): <a href="https://product.tdk.com/system/files/dam/doc/product/inductor/inductor/smd/data_sheet/30/ds/clt32.pdf">product.tdk.com</a>; Würth WE-HCM, Bourns TLVR1005T, Coilcraft XEL/XGL/SLC/SLR, Eaton FP/TL datasheets</li>
+      <li>EPC GaN transistor product table and datasheets: <a href="https://epc-co.com/epc/products/gan-fets-and-ics">epc-co.com</a></li>
+      <li>Distributor prices via <a href="https://octopart.com">octopart.com</a> and <a href="https://www.digikey.com">digikey.com</a>, retrieved 25 Nov 2026.</li>
+    </ol>
+  </section>
+
+  <footer>Computed with the HVR_OPT synthesis framework (one tier) and datasheet values; the full sweep data and scripts are in the project repository under research/sif_backside_vr.</footer>
+</div>
+
+<script>
+const DATA = {"hvr48":[[0.0106,97.51,"N8K4KA2",56,"Würth 7443642010100",0.16],[0.0118,97.44,"N8K4KA2",50,"Würth 7443642010100",0.14],[0.0132,97.33,"N8K4KA2",45,"Würth 7443642010100",0.13],[0.0148,97.16,"N8K4KA2",40,"Würth 7443642010100",0.14],[0.0543,97.06,"N8K2KA1",63,"Eaton FP1107R1-R30-R",0.28],[0.0611,97.03,"N8K2KA1",56,"Eaton FP1107R1-R30-R",0.26],[0.0684,96.95,"N8K2KA1",50,"Eaton FP1107R1-R30-R",0.23],[0.0692,96.88,"N7K2KA1",50,"Eaton FP1107R1-R30-R",0.24],[0.076,96.83,"N8K2KA1",45,"Eaton FP1107R1-R30-R",0.2],[0.0913,96.78,"N7K2KA1",45,"Eaton TL1011V2-R170-R",0.38],[0.1,96.77,"N8K2KA1",45,"Bourns TLVR1005T-R15K",0.4],[0.1027,96.68,"N7K2KA1",40,"Eaton TL1011V2-R170-R",0.34],[0.1125,96.67,"N8K2KA1",40,"Bourns TLVR1005T-R15K",0.38],[0.1141,96.54,"N7K2KA1",36,"Eaton TL1011V2-R170-R",0.31],[0.1141,96.5,"N6K2KA1",36,"Eaton TL1011V2-R170-R",0.34],[0.1251,96.38,"N5K2KA1",36,"Eaton TL1011V2-R170-R",0.34],[0.1407,96.35,"N8K2KA1",32,"Bourns TLVR1005T-R15K",0.29],[0.1449,96.32,"N7K2KA1",32,"Bourns TLVR1005T-R15K",0.31],[0.1524,96.31,"N6K2KA1",36,"Bourns TLVR1005T-R15K",0.38],[0.1614,96.18,"N5K2KA1",32,"Bourns TLVR1005T-R15K",0.34],[0.1618,96.13,"N4K2KA1",36,"Bourns TLVR1005T-R15K",0.4],[0.1821,96.04,"N4K2KA1",32,"Bourns TLVR1005T-R15K",0.38],[0.1845,95.93,"N5K2KA1",28,"Bourns TLVR1005T-R15K",0.31],[0.2081,95.88,"N4K2KA1",28,"Bourns TLVR1005T-R15K",0.34],[0.2083,95.7,"N4K2KA1",25,"Bourns TLVR1005T-R15K",0.28],[0.2113,95.56,"N4K4KA2",16,"Bourns TLVR1005T-R15K",0.38],[0.2194,95.54,"N6K2KA1",25,"Bourns TLVR1005T-R15K",0.31],[0.2414,95.39,"N4K4KA2",14,"Bourns TLVR1005T-R15K",0.34],[0.2604,95.22,"N4K2KA1",20,"Bourns TLVR1005T-R15K",0.24],[0.2689,95.16,"N4K2KA1",22,"Bourns TLVR1005T-R15K",0.28],[0.27,95.04,"N3K2KA1",22,"Bourns TLVR1005T-R15K",0.26],[0.2817,94.98,"N4K4KA2",12,"Bourns TLVR1005T-R15K",0.34],[0.2893,94.88,"N4K2KA1",18,"Bourns TLVR1005T-R15K",0.24],[0.297,94.77,"N3K2KA1",20,"Bourns TLVR1005T-R15K",0.26],[0.3,94.69,"N4K2KA1",18,"Bourns TLVR1005T-R15K",0.24],[0.3004,94.6,"N3K2KA1",20,"Bourns TLVR1005T-R15K",0.26],[0.3304,94.51,"N2K2KA1",20,"Bourns TLVR1005T-R15K",0.26],[0.338,94.37,"N4K4KA2",10,"Bourns TLVR1005T-R15K",0.34],[0.3672,94.22,"N2K2KA1",18,"Bourns TLVR1005T-R15K",0.26],[0.3712,93.98,"N3K2KA1",16,"Bourns TLVR1005T-R15K",0.26],[0.372,93.87,"N4K2KA1",14,"Bourns TLVR1005T-R15K",0.24],[0.4131,93.68,"N2K2KA1",16,"Bourns TLVR1005T-R15K",0.26],[0.4242,93.34,"N3K2KA1",14,"Bourns TLVR1005T-R15K",0.28],[0.4721,93.18,"N2K2KA1",14,"Bourns TLVR1005T-R15K",0.26],[0.4949,92.55,"N3K2KA1",12,"Bourns TLVR1005T-R12K",0.28],[0.5508,92.5,"N2K2KA1",12,"Bourns TLVR1005T-R15K",0.26],[0.563,91.85,"N3K3KA2",8,"Bourns TLVR1005T-R15K",0.38],[0.5674,91.37,"N3K3KA2",7,"Bourns TLVR1005T-R15K",0.38],[0.5827,91.2,"N3K2KA1",10,"Bourns TLVR1005T-R10K",0.31],[0.6009,91.12,"N3K2KA1",10,"Bourns TLVR1005T-R10K",0.31],[0.6199,91.04,"N2K2KA1",10,"Bourns TLVR1005T-R12K",0.28],[0.662,90.34,"N3K3KA2",6,"Bourns TLVR1005T-R12K",0.4],[0.6689,90.05,"N4K2KA1",8,"Bourns TLVR1005T-R12K",0.34],[0.7068,89.69,"N4K4KA2",10,"TDK CLT32-42N",0.8],[0.7395,89.31,"N2K2KA1",8,"Bourns TLVR1005T-R10K",0.31],[0.791,89.05,"N6K6KA3",5,"Würth 744340300025",0.96],[0.8,88.89,"N3K3KA2",5,"Bourns TLVR1005T-R10K",0.45],[0.8225,88.43,"N7K7KA4",4,"Würth 744340300025",1.14],[0.8227,88.39,"N4K4KA2",10,"TDK CLT32-42N",0.96],[0.8857,87.19,"N4K4KA2",7,"Würth 744340300025",1.06],[0.9254,87.04,"N5K5KA3",5,"Würth 744340300025",1.41],[0.9887,86.75,"N6K6KA3",4,"Würth 744340300025",1.55],[1.0022,86.18,"N7K7KA4",4,"TDK CLT32-17N",1.41],[1.0259,85.74,"N4K4KA2",7,"TDK CLT32-17N",1.41],[1.1217,85.63,"N5K5KA3",5,"TDK CLT32-17N",1.55],[1.15,85.55,"N6K6KA3",4,"TDK CLT32-17N",1.41],[1.1969,85.11,"N4K4KA2",6,"TDK CLT32-17N",1.55],[1.2498,84.92,"N5K5KA3",5,"TDK CLT32-17N",1.55],[1.3712,84.34,"N4K4KA2",6,"TDK CLT32-17N",1.6],[1.3715,82.72,"N6K6KA3",4,"TDK CLT32-17N",3.0],[1.3868,79.01,"N2K2KA1",12,"TDK CLT32-17N",2.26],[1.5262,77.59,"N4K4KA2",6,"TDK CLT32-17N",1.6],[1.6666,72.55,"N4K4KA2",6,"TDK CLT32-17N",1.6]],"hvr12":[[0.0286,97.66,"N5K2KA1",140,"Eaton FP1107R1-R30-R",0.17],[0.0305,97.65,"N5K2KA1",125,"Eaton FP1107R1-R30-R",0.15],[0.034,97.55,"N5K2KA1",112,"Eaton FP1107R1-R30-R",0.17],[0.043,97.5,"N5K2KA1",100,"Eaton TL1011V2-R170-R",0.2],[0.0525,97.48,"N5K2KA1",100,"Bourns TLVR1005T-R15K",0.23],[0.0536,97.44,"N5K2KA1",90,"Bourns TLVR1005T-R15K",0.2],[0.0602,97.27,"N5K2KA1",80,"Bourns TLVR1005T-R15K",0.23],[0.0652,97.14,"N4K2KA1",71,"Eaton TL1011V2-R170-R",0.28],[0.0679,97.09,"N5K2KA1",71,"Bourns TLVR1005T-R15K",0.26],[0.0838,96.87,"N4K2KA1",56,"Bourns TLVR1005T-R15K",0.28],[0.0877,96.73,"N3K2KA1",50,"Eaton TL1011V2-R170-R",0.31],[0.1061,96.72,"N3K2KA1",56,"Bourns TLVR1005T-R15K",0.38],[0.113,96.61,"N3K2KA1",45,"Bourns TLVR1005T-R15K",0.31],[0.1214,96.5,"N2K2KA1",40,"Eaton TL1011V2-R170-R",0.34],[0.1526,96.42,"N2K2KA1",40,"Bourns TLVR1005T-R15K",0.38],[0.1695,96.35,"N2K2KA1",36,"Bourns TLVR1005T-R15K",0.34],[0.1907,96.13,"N2K2KA1",32,"Bourns TLVR1005T-R15K",0.34],[0.2065,95.72,"N2K2KA1",32,"Bourns TLVR1005T-R15K",0.34],[0.218,95.7,"N2K2KA1",28,"Bourns TLVR1005T-R15K",0.4],[0.2441,95.3,"N2K2KA1",25,"Bourns TLVR1005T-R15K",0.45],[0.2657,95.0,"buck",40,"Eaton TL1011V2-R170-R",0.45],[0.2774,94.83,"N2K2KA1",22,"Bourns TLVR1005T-R15K",0.5],[0.2974,94.8,"buck",32,"Coilcraft SLR7010-251KED",0.24],[0.3188,94.57,"buck",32,"Eaton TL1011V2-R170-R",0.38],[0.3399,94.44,"buck",28,"Coilcraft SLR7010-251KED",0.23],[0.3644,94.43,"buck",28,"Eaton TL1011V2-R170-R",0.31],[0.4081,94.14,"buck",25,"Eaton TL1011V2-R170-R",0.28],[0.4638,93.76,"buck",22,"Eaton TL1011V2-R170-R",0.24],[0.5101,93.35,"buck",20,"Eaton TL1011V2-R170-R",0.23],[0.5668,92.79,"buck",18,"Eaton TL1011V2-R170-R",0.24],[0.6377,92.06,"buck",16,"Eaton TL1011V2-R150-R",0.26],[0.6508,91.95,"buck",16,"Bourns TLVR1005T-R10K",0.31],[0.7437,91.14,"buck",14,"Bourns TLVR1005T-R10K",0.31],[0.7791,89.99,"N2K2KA1",20,"TDK CLT32-42N",1.14],[0.7931,89.67,"buck",12,"Coilcraft SLR7010-101KED",0.31],[0.8302,89.27,"N2K2KA1",14,"Würth 744340300025",1.06],[0.8676,88.66,"N2K2KA1",12,"Würth 744340300025",1.55],[0.9,88.39,"N2K2KA1",14,"Würth 744340300025",1.55],[0.9756,87.47,"N2K2KA1",16,"TDK CLT32-17N",1.41],[0.9882,87.16,"N2K2KA1",14,"TDK CLT32-17N",1.55],[1.0135,86.98,"N2K2KA1",14,"TDK CLT32-17N",1.35],[1.1,86.9,"N2K2KA1",12,"TDK CLT32-17N",1.35],[1.1149,86.82,"N2K2KA1",14,"TDK CLT32-17N",1.55],[1.1534,85.99,"N2K2KA1",12,"TDK CLT32-17N",1.35],[1.3008,85.61,"N2K2KA1",12,"TDK CLT32-17N",1.87],[1.3099,79.15,"N2K2KA1",12,"TDK CLT32-17N",1.55],[1.3119,79.04,"buck",25,"TDK CLT32-17N",2.73],[1.4153,78.88,"N2K2KA1",12,"TDK CLT32-17N",1.87],[1.4234,74.97,"buck",25,"TDK CLT32-17N",2.73],[1.5967,73.72,"N2K2KA1",12,"TDK CLT32-17N",1.87]],"mod12":[[0.259,92.7,30],[0.518,92.0,60],[0.777,89.5,90],[1.036,86.9,120],[1.295,83.4,150],[1.45,79.9,168]],"two48":[[0.23,88.6,30],[0.413,88.0,60],[0.557,85.6,90],[0.672,83.0,120],[0.76,79.7,150],[0.796,76.4,168]],"pts48":[["Vicor PRM + VTM",0.128,88.2],["ADI LTM4664",0.17,88.0],["Ferric IVR, two stages (est.)",0.67,79.1]],"pts12":[["Ferric IVR, two stages (est.)",1.06,82.7]]};
+(function () {
+  const NS = "http://www.w3.org/2000/svg";
+  const W = 480, H = 340, M = { l: 46, r: 14, t: 16, b: 42 };
+  const X0 = 0, X1 = 1.8, Y0 = 70, Y1 = 100;
+  const pw = W - M.l - M.r, ph = H - M.t - M.b;
+  const sx = j => M.l + (j - X0) / (X1 - X0) * pw;
+  const sy = e => M.t + (Y1 - e) / (Y1 - Y0) * ph;
+  const fx = px => X0 + (px - M.l) / pw * (X1 - X0);
+  const el = (tag, attrs, parent) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  const txt = (s, attrs, parent) => { const n = el("text", attrs, parent); n.textContent = s; return n; };
+  const pct = v => v.toFixed(1) + "%";
+  const topoName = t => {
+    if (t === "buck") return "buck";
+    const m = /^N(\d+)K(\d+)/.exec(t);
+    return m ? m[1] + ":1 hybrid, K = " + m[2] : t;
+  };
+
+  const PANELS = {
+    p48: {
+      title: "48 V → 1 V",
+      hvr: DATA.hvr48, mod: DATA.two48, pts: DATA.pts48,
+      modName: "Bus converter + modules",
+      labels: {
+        hvr: { j: 0.30, e: 97.6, text: "Discrete parts, HVR_OPT" },
+        mod: { j: 0.83, e: 74.3, text: "Bus converter + modules" },
+        pts: [
+          { j: 0.03, e: 90.4, anchor: "start" },
+          { j: 0.19, e: 85.4, anchor: "start" },
+          { j: 0.64, e: 77.0, anchor: "end", text: "Ferric, two stages (est.)" }
+        ]
+      },
+      at1: [{ series: "hvr", dx: 6, dy: -8 }]
+    },
+    p12: {
+      title: "12 V → 1 V",
+      hvr: DATA.hvr12, mod: DATA.mod12, pts: DATA.pts12,
+      modName: "MPS modules",
+      labels: {
+        hvr: { j: 0.30, e: 97.6, text: "Discrete parts, HVR_OPT" },
+        mod: { j: 1.49, e: 80.5, text: "MPS modules" },
+        pts: [{ j: 1.03, e: 80.6, anchor: "end", text: "Ferric, two stages (est.)" }]
+      },
+      at1: [{ series: "hvr", dx: 6, dy: -8 }]
+    }
+  };
+
+  // step value of a frontier at density j: best design reaching at least j
+  function frontierAt(pts, j) {
+    for (const p of pts) if (p[0] >= j - 1e-9) return p;
+    return null;
+  }
+  function interp(pts, j) {
+    if (j < pts[0][0] || j > pts[pts.length - 1][0]) return null;
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i];
+      if (j <= b[0]) return a[1] + (b[1] - a[1]) * (j - a[0]) / (b[0] - a[0]);
+    }
+    return null;
+  }
+
+  function render(id) {
+    const cfg = PANELS[id];
+    const host = document.getElementById(id);
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart", role: "img",
+      "aria-label": `${cfg.title}: conversion efficiency versus current density. Discrete catalog parts reach ` +
+        `${pct(frontierAt(cfg.hvr, 1.0)[1])} at 1 A/mm² and at most ${cfg.hvr[cfg.hvr.length - 1][0].toFixed(2)} A/mm².` }, host);
+    el("rect", { x: 0, y: 0, width: W, height: H, fill: "var(--surface)" }, svg);
+    // grid + ticks
+    for (let e = Y0; e <= Y1; e += 5) {
+      el("line", { x1: M.l, x2: W - M.r, y1: sy(e), y2: sy(e), stroke: "var(--rule)", "stroke-width": 1 }, svg);
+      txt(e + "%", { x: M.l - 6, y: sy(e) + 3.5, "text-anchor": "end", class: "tick" }, svg);
+    }
+    for (const j of [0, 0.5, 1.0, 1.5]) {
+      el("line", { x1: sx(j), x2: sx(j), y1: M.t, y2: H - M.b, stroke: "var(--rule)", "stroke-width": 1 }, svg);
+      txt(j.toFixed(1), { x: sx(j), y: H - M.b + 16, "text-anchor": "middle", class: "tick" }, svg);
+    }
+    el("line", { x1: M.l, x2: W - M.r, y1: H - M.b, y2: H - M.b, stroke: "var(--axis)", "stroke-width": 1 }, svg);
+    txt("Current density (A/mm²)", { x: M.l + pw / 2, y: H - 6, "text-anchor": "middle", class: "axis-title" }, svg);
+    txt("Efficiency", { x: 12, y: M.t + ph / 2, "text-anchor": "middle", class: "axis-title",
+      transform: `rotate(-90 12 ${M.t + ph / 2})` }, svg);
+    // 1 A/mm2 reference
+    el("line", { x1: sx(1), x2: sx(1), y1: M.t, y2: H - M.b, stroke: "var(--ref)", "stroke-width": 1 }, svg);
+    txt("1 kA per 1000 mm²", { x: sx(1) + 5, y: M.t + 11, class: "reflab" }, svg);
+
+    // series
+    const line = (pts, color) => el("path", {
+      d: pts.map((p, i) => (i ? "L" : "M") + sx(p[0]).toFixed(1) + " " + sy(p[1]).toFixed(1)).join(" "),
+      fill: "none", stroke: color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+    line(cfg.hvr, "var(--s1)");
+    line(cfg.mod, "var(--s2)");
+    for (const p of cfg.mod) el("circle", { cx: sx(p[0]), cy: sy(p[1]), r: 4, fill: "var(--s2)", stroke: "var(--surface)", "stroke-width": 2 }, svg);
+    const last = cfg.hvr[cfg.hvr.length - 1];
+    el("circle", { cx: sx(last[0]), cy: sy(last[1]), r: 4, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2 }, svg);
+    cfg.pts.forEach(p => {
+      const x = sx(p[1]), y = sy(p[2]);
+      el("path", { d: `M${x} ${y - 6} L${x + 6} ${y} L${x} ${y + 6} L${x - 6} ${y} Z`, fill: "var(--s3)", stroke: "var(--surface)", "stroke-width": 2 }, svg);
+    });
+    // 1 A/mm2 marker on the discrete frontier
+    const f1 = frontierAt(cfg.hvr, 1.0);
+    if (f1) {
+      el("circle", { cx: sx(1), cy: sy(f1[1]), r: 4, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2 }, svg);
+      txt(pct(f1[1]), { x: sx(1) + 7, y: sy(f1[1]) - 7, class: "lab strong" }, svg);
+    }
+    txt("max " + last[0].toFixed(2) + " at " + pct(last[1]), { x: sx(last[0]) - 6, y: sy(last[1]) + 17, "text-anchor": "end", class: "lab" }, svg);
+    // direct labels
+    const L = cfg.labels;
+    txt(L.hvr.text, { x: sx(L.hvr.j), y: sy(L.hvr.e), class: "lab" }, svg);
+    txt(L.mod.text, { x: sx(L.mod.j), y: sy(L.mod.e), class: "lab" }, svg);
+    cfg.pts.forEach((p, i) => {
+      const s = L.pts[i];
+      txt(s.text || p[0], { x: sx(s.j), y: sy(s.e), "text-anchor": s.anchor, class: "lab" }, svg);
+    });
+
+    // hover layer
+    const cross = el("line", { x1: 0, x2: 0, y1: M.t, y2: H - M.b, stroke: "var(--ink-2)", "stroke-width": 1, visibility: "hidden" }, svg);
+    const dot1 = el("circle", { r: 4.5, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2, visibility: "hidden" }, svg);
+    const dot2 = el("circle", { r: 4.5, fill: "var(--s2)", stroke: "var(--surface)", "stroke-width": 2, visibility: "hidden" }, svg);
+    const hit = el("rect", { x: M.l, y: M.t, width: pw, height: ph, fill: "transparent", tabindex: 0,
+      "aria-label": `${cfg.title} chart, use left and right arrow keys to read values` }, svg);
+    const tip = document.createElement("div");
+    tip.className = "tip"; tip.hidden = true; host.appendChild(tip);
+    let kj = 1.0;
+
+    function row(color, value, label, detail, shape) {
+      const r = document.createElement("div"); r.className = "row";
+      const k = document.createElement("span"); k.className = "key"; k.style.background = color;
+      if (shape === "dot") { k.style.height = "8px"; k.style.width = "8px"; k.style.borderRadius = "50%"; k.style.marginTop = "5px"; }
+      const t = document.createElement("span");
+      const b = document.createElement("b"); b.textContent = value;
+      t.appendChild(b); t.appendChild(document.createTextNode(" " + label));
+      if (detail) { const i = document.createElement("i"); i.textContent = detail; t.appendChild(i); }
+      r.appendChild(k); r.appendChild(t); tip.appendChild(r);
+    }
+
+    function show(j) {
+      j = Math.max(X0, Math.min(X1, j));
+      kj = j;
+      const x = sx(j);
+      cross.setAttribute("x1", x); cross.setAttribute("x2", x); cross.setAttribute("visibility", "visible");
+      tip.replaceChildren();
+      const h = document.createElement("div"); h.className = "h"; h.textContent = j.toFixed(2) + " A/mm²"; tip.appendChild(h);
+      const f = frontierAt(cfg.hvr, j);
+      if (f) {
+        dot1.setAttribute("cx", x); dot1.setAttribute("cy", sy(f[1])); dot1.setAttribute("visibility", "visible");
+        row("var(--s1)", pct(f[1]), "discrete parts",
+          `${topoName(f[2])}; ${f[3]} cells; ${f[4]}; ${f[5].toFixed(2)} MHz`);
+      } else { dot1.setAttribute("visibility", "hidden"); row("var(--s1)", "—", "discrete parts", "beyond the maximum density"); }
+      const m = interp(cfg.mod, j);
+      if (m !== null) {
+        dot2.setAttribute("cx", x); dot2.setAttribute("cy", sy(m)); dot2.setAttribute("visibility", "visible");
+        row("var(--s2)", pct(m), cfg.modName.toLowerCase(), null);
+      } else dot2.setAttribute("visibility", "hidden");
+      let near = null, nd = 0.06;
+      for (const p of cfg.pts) { const d = Math.abs(p[1] - j); if (d < nd) { nd = d; near = p; } }
+      if (near) row("var(--s3)", pct(near[2]), near[0], near[1].toFixed(2) + " A/mm²", "dot");
+      tip.hidden = false;
+      const box = host.getBoundingClientRect(), sb = svg.getBoundingClientRect();
+      const scale = sb.width / W;
+      let left = (sb.left - box.left) + x * scale + 12;
+      if (left + tip.offsetWidth > box.width) left = (sb.left - box.left) + x * scale - tip.offsetWidth - 12;
+      tip.style.left = Math.max(0, left) + "px";
+      tip.style.top = (sb.top - box.top + M.t * scale + 4) + "px";
+    }
+    function hide() {
+      tip.hidden = true;
+      [cross, dot1, dot2].forEach(n => n.setAttribute("visibility", "hidden"));
+    }
+    hit.addEventListener("pointermove", ev => {
+      const sb = svg.getBoundingClientRect();
+      show(fx((ev.clientX - sb.left) / sb.width * W));
+    });
+    hit.addEventListener("pointerleave", hide);
+    hit.addEventListener("focus", () => show(kj));
+    hit.addEventListener("blur", hide);
+    hit.addEventListener("keydown", ev => {
+      if (ev.key === "ArrowRight") { show(kj + 0.05); ev.preventDefault(); }
+      if (ev.key === "ArrowLeft") { show(kj - 0.05); ev.preventDefault(); }
+      if (ev.key === "Escape") hide();
+    });
+  }
+  render("p48");
+  render("p12");
+
+  // data tables (the accessible twin of the chart)
+  const grid = document.getElementById("datagrid");
+  function table(title, head, rows) {
+    const wrap = document.createElement("div");
+    const h = document.createElement("h3"); h.textContent = title; h.style.margin = "4px 0 0";
+    const sc = document.createElement("div"); sc.className = "scroll";
+    const t = document.createElement("table");
+    const thead = t.createTHead().insertRow();
+    head.forEach(c => { const th = document.createElement("th"); th.textContent = c; thead.appendChild(th); });
+    const tb = t.createTBody();
+    rows.forEach(r => { const tr = tb.insertRow(); r.forEach(c => { const td = tr.insertCell(); td.textContent = c; }); });
+    sc.appendChild(t); wrap.appendChild(h); wrap.appendChild(sc); grid.appendChild(wrap);
+  }
+  [["48 V → 1 V", "p48"], ["12 V → 1 V", "p12"]].forEach(([name, id]) => {
+    const c = PANELS[id];
+    const rows = c.hvr.map(p => ["Discrete", p[0].toFixed(3), p[1].toFixed(1) + "%", `${topoName(p[2])}, ${p[3]} cells, ${p[4]}, ${p[5].toFixed(2)} MHz`]);
+    c.mod.forEach(p => rows.push([c.modName, p[0].toFixed(3), p[1].toFixed(1) + "%", `${p[2]} A per module`]));
+    c.pts.forEach(p => rows.push([p[0], p[1].toFixed(3), p[2].toFixed(1) + "%", "at rating"]));
+    table(name, ["Series", "A/mm²", "Efficiency", "Design"], rows);
+  });
+})();
+</script>
+
+</body>
+</html>

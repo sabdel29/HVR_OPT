@@ -227,6 +227,8 @@ def main():
                     "Isat_A": isat, "Isat_definition": p.get("Isat_definition"),
                     "Isat20_A": isat20, "Isat20_basis": isat20_basis,
                     "Irms_A": p["Irms_A"], "length_mm": x, "width_mm": y, "height_mm": h,
+                    "footprint_length_mm": float(p.get("footprint_length_mm") or x),
+                    "footprint_width_mm": float(p.get("footprint_width_mm") or y),
                     "core_material": p.get("core_material"), "f_max_MHz": fmax,
                     "core_model": model, "core_loss_method": method, "price_usd": price})
         src.append({"part": f"{p['vendor'].split(' (')[0]}-{p['part_number']}",

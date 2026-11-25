@@ -1,0 +1,111 @@
+{
+ "assumptions": "Si-IF backside VR study -- catalog-module reference points for the efficiency-vs-density plot.\n\nPlaces the catalog alternatives on the same axes as the HVR_OPT sweep: conversion efficiency at\nV_out = 1.0 V versus current density over the backside area the converter occupies (output bulk\ncapacitance and the controller excluded, as in the sweep). Every input is a datasheet value; the\narea allowances and the 0.8 V -> 1.0 V conversion are stated assumptions.\n\nAssumptions\n  * Module area = footprint x 1.30 for point-of-load modules (tiling gaps ~15 % plus external\n    input MLCCs ~15 %); bus converters and other modules x 1.15 (tiling gaps).\n  * MPS MPC22165-170 (12 V -> 0.8 V, 500 kHz, datasheet Fig. \"Efficiency vs. Load Current\",\n    read from the plot) is moved to 1.0 V out at equal power loss: the switching and conduction\n    losses depend on V_in and current, not on V_out, to first order. The duty-cycle shift adds\n    a little high-side conduction, so the 1.0 V values are slightly optimistic.\n  * 48 V two-stage: Vicor NBM2317S60D1580T0R (K = 1/4, 1 kW, 95.6 % at full load) feeding the\n    same 12 V modules; bus-converter area scales continuously with the power it passes.\n  * Ferric Fe1766 two-stage: 12 V -> 1.8 V on the same modules at 105 A each, then Fe1766\n    (160 A, 35.5 mm^2, 89 % at 160 A, 1.8 V -> 0.75 V) -- an estimate, no published system data.\n\n    python commercial_compare.py   ->  commercial_compare.json\n",
+ "v12": {
+  "modules_MPC22165": [
+   {
+    "I_module_A": 30,
+    "loss_W": 2.373626373626376,
+    "eta": 0.9266802443991852,
+    "J": 0.25900025900025897
+   },
+   {
+    "I_module_A": 60,
+    "loss_W": 5.2150776053215075,
+    "eta": 0.920032639738882,
+    "J": 0.5180005180005179
+   },
+   {
+    "I_module_A": 90,
+    "loss_W": 10.568807339449542,
+    "eta": 0.8949096880131363,
+    "J": 0.777000777000777
+   },
+   {
+    "I_module_A": 120,
+    "loss_W": 18.14982164090369,
+    "eta": 0.8686221854988638,
+    "J": 1.0360010360010359
+   },
+   {
+    "I_module_A": 150,
+    "loss_W": 29.81273408239702,
+    "eta": 0.8342012080816497,
+    "J": 1.2950012950012948
+   },
+   {
+    "I_module_A": 168,
+    "loss_W": 42.209724047306175,
+    "eta": 0.7992018483511868,
+    "J": 1.4504014504014502
+   }
+  ],
+  "ferric_two_stage": {
+   "J": 1.0595916670896492,
+   "eta": 0.8271566041698349,
+   "eta_first_stage": 0.929389442887455,
+   "area_first_mm2": 688.6035313001607,
+   "area_ferric_mm2": 255.15624999999997
+  }
+ },
+ "v48": {
+  "bus_plus_modules": [
+   {
+    "I_module_A": 30,
+    "J": 0.22985886383867454,
+    "eta": 0.885906313645621,
+    "area_bus_mm2": 489.4957054945057,
+    "area_pol_mm2": 3861.0000000000005
+   },
+   {
+    "I_module_A": 60,
+    "J": 0.41262083203541206,
+    "eta": 0.8795512035903712,
+    "area_bus_mm2": 493.0325082039912,
+    "area_pol_mm2": 1930.5000000000002
+   },
+   {
+    "I_module_A": 90,
+    "J": 0.5574529104644073,
+    "eta": 0.8555336617405582,
+    "area_bus_mm2": 506.8734935779817,
+    "area_pol_mm2": 1287.0
+   },
+   {
+    "I_module_A": 120,
+    "J": 0.672285524520626,
+    "eta": 0.8304028093369138,
+    "area_bus_mm2": 522.2132332936981,
+    "area_pol_mm2": 965.2500000000001
+   },
+   {
+    "I_module_A": 150,
+    "J": 0.7599009968422259,
+    "eta": 0.7974963549260571,
+    "area_bus_mm2": 543.7609003745318,
+    "area_pol_mm2": 772.2000000000002
+   },
+   {
+    "I_module_A": 168,
+    "J": 0.7955208686689381,
+    "eta": 0.7640369670237346,
+    "area_bus_mm2": 567.5737624178712,
+    "area_pol_mm2": 689.4642857142858
+   }
+  ],
+  "vicor_prm_vtm": {
+   "J": 0.12753560486535165,
+   "eta": 0.882304
+  },
+  "ltm4664": {
+   "J": 0.16983695652173914,
+   "eta": 0.88
+  },
+  "ferric_two_stage": {
+   "J": 0.6701731450980617,
+   "eta": 0.7907617135863622,
+   "eta_first_stage": 0.929389442887455,
+   "area_first_mm2": 688.6035313001607,
+   "area_ferric_mm2": 255.15624999999997
+  }
+ }
+}

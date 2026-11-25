@@ -327,7 +327,11 @@ def build_inductor_library(path=os.path.join(HERE, "inductor_library.json"), dcr
             r = p["DCR_max_mohm"]
         if isat == "20" and p.get("Isat20_A"):
             p = dict(p, Isat_A=p["Isat20_A"])
-        x, y, h = p["length_mm"], p["width_mm"], p["height_mm"]
+        # placement footprint includes protruding terminals; the core volume (in core_model)
+        # uses the body
+        x = p.get("footprint_length_mm") or p["length_mm"]
+        y = p.get("footprint_width_mm") or p["width_mm"]
+        h = p["height_mm"]
         lib.append(CatalogInductor(
             name=f"{p['vendor']}-{p['part_number']}", category="catalog_smd",
             l_nh=float(p["L_nH"]), r_dcr_mohm=float(r), i_sat_a=float(p["Isat_A"]),
