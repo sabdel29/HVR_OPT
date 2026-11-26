@@ -144,14 +144,12 @@ most a factor of \MvScrEscShortFactor, less than the gap of any Z1--Z2 ordering 
 at least a factor of \MvScrGapScreenMin.
 
 Of the verdicts, \WrRobPreserved{} are preserved, \WrRobWithdrawnWord{} withdrawn and \WrRobReversedWord{}
-reversed. The remaining \WrRobPending{} are pending: their \WrRobPendingCasesWord{} variants change the
-mesh and need a ladder of their own before a verdict. Every ranking survives the interconnect
+reversed. The variants that change the mesh are judged on mesh ladders of their own. Every ranking survives the interconnect
 provisioning, the 48-V feed model, the board boundary and the cooling-model form. A second plate
 under Z2 reverses the loss and peak rankings, which is the result of cooling~B. In the production
 state under cooling~A, the rigid-plate interface reverses the loss ranking toward Z1. The joint
-ranking holds for all \WrRobJointPreserved{} decisions with a verdict; the other
-\WrRobJointPendingWord{} are pending. A tenth of the converter-tier conductivity, the low-CTE mold compound and the
-core-heavy die map reverse the ranking of the largest ball displacement toward Z2, but not that of
+ranking holds for all \WrRobJointPreserved{} decisions. A tenth of the converter-tier conductivity, the low-CTE mold compound, the
+core-heavy die map and an unfilled out-of-cell volume reverse the ranking of the largest ball displacement toward Z2, but not that of
 the joints.
 
 Under cooling~B, \MvCoolBVariants{} mechanical variants keep \MvCoolBOrderSame{} of
@@ -188,8 +186,8 @@ rankings; the joint column is the joint response $\deps$, each integration's lar
 the \MvScrK{} worst sites of its reference case or, where escalated, over a full search. Each cell
 gives the gap
 Z2$-$Z1 (range over merged variants) and whether the baseline ranking of its group is preserved,
-withdrawn ($|D+\beta_D| \le U_{95}(D)$), reversed (colored toward the integration it then favors)
-or pending a mesh ladder of its own. Groups: the ideal-decoupling reference under cooling~A, the
+withdrawn ($|D+\beta_D| \le U_{95}(D)$) or reversed (colored toward the integration it then favors).
+Groups: the ideal-decoupling reference under cooling~A, the
 production state under cooling~A, and the mechanics-only variants under cooling~B and on the
 production fields; each is read against its own verdict row.}
 \label{fig:robust}
