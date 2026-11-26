@@ -315,3 +315,33 @@ add the manifold plate, redo the tier order for the new stack, update the manife
   - Pending author decision: contributions qualitative vs headline numbers.
   - Next: page reduction (candidates: Fig. 10 vs Table V; Fig. 2 vs Fig. 1(d); Fig. 1(a)-(c) vs Fig. 5; Table III vs
     Fig. 7; parts of Fig. 9).
+- 2026-11-26: ROBUSTNESS LADDERS DONE: the five pending class-B variants have mesh ladders of their own
+  (75a46b1, 23b92ce, efe309a).
+  - Jobs: ladder.robust.{Z1,Z2}.{board_h1,board_h0_h1grid,board_t2p4,f2_void}.{r11,r31} and
+    ladder.robust.Z2.f1_sidewall_filled.{r11,r31} (18; build_manifest VARIANT_LADDERS, final_closure_sensitivity
+    --refine). derived.classB and mech.screen.summary depend on them. Local cap 60 cores, nice 0.
+  - All 18 ran on pinback (califone not needed): r11 144-303 s on 2 threads; r31 0.9-1.9 h on 4 threads, peak RSS
+    23-37 GB.
+  - Code: final_closure_classB judges a variant case with its own r11/r21/r31 ladder by the Table IV rule
+    (tcpmt_uncertainty.compare on D's own rungs; not provisional). The joint screen no longer marks such a variant
+    pending (same local-U basis as every joint verdict). Fig. 9 shows the pending legend entry only when a cell is
+    pending.
+  - Verdicts, all five variants: loss, peak and warpage preserved (Z1 lower). du preserved except f2_void, which
+    reverses toward Z2 (D = -0.68 um, U95 0.05 um). Joint response preserved (Z2 lower, |D|/U95 = 20-33).
+  - The own ladders have no r12 rung, so no through-thickness term enters (as for Table IV's production-state
+    pairs). Adding the reference pair's beta_tt/U_tt changes no verdict; the closest is f2_void warpage at ratio 1.30.
+  - Macros: WrRobN 153; preserved 144 (was 124); withdrawn 4; reversed 5; pending 0 (was 20). Joint: 43 preserved,
+    0 pending (was 38/5). WrRobDuReversed 5 (was 4).
+  - Regenerated with --force: derived.classB, mech.screen.summary, manuscript.macros, manuscript.supplement and
+    manuscript.fig_robustness. Writer macros run with the etm python 3.12.
+  - Text changes:
+    - VIII-H: the pending sentences now say that the mesh-changing variants are judged on their own ladders and
+      that the joint ranking holds for all 43; the unfilled out-of-cell volume is added to the du reversals.
+    - Fig. 9 caption: no pending state.
+    - Letter (MC13) and notes: the same fixes.
+    - Table S16 memory note: includes the new rungs.
+  - Builds: paper 23 pp, supplement 21, letter 11, notes 3; 0 errors, 0 undefined refs, 0 overfull.
+  - Blueprint K4: none of the five variants reverses the Z1/Z2 joint ordering.
+  - Pre-existing, unchanged: classB's d_eps_in_per_cycle rows compare the variants' v2 local responses with the
+    legacy local_mesh_study L0 baseline, so all 42 read "reversed". They feed no figure or macro (the joint column
+    comes from robustness_joint.json).
