@@ -27,7 +27,7 @@ campaign:
       m25: count neighbour M = 25 (screen ranking check)
       m49: count neighbour M = 49 (screen ranking check)
 local:
-  max_cores: 35
+  max_cores: 60
   nice: 0
 pbs:
   host: pioneer
@@ -3262,6 +3262,158 @@ jobs:
     kind: etm
     mechanics: true
   evidence: 'final_closure/etm_Z2_HV_S0_h1.1_r31.json: et 16138 s + mech 6747 s (2 thr, 326520 el)'
+- id: ladder.robust.Z2.board_h1.r31
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
+  - board_h1:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_h1_r31.json
+  deps:
+  - robust.Z2.board_h1
+  ncpus: 4
+  mem_gb: 53.0
+  est_wall_h: 5.086
+  walltime_h: 13.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '4'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_h1_r31.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1_r31.json: et 16138 s + mech 6747 s (2 thr, 326520
+    el)'
+  notes: 'board_h1 (Z2) on rung r31 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
+- id: ladder.robust.Z2.board_h0_h1grid.r31
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
+  - board_h0_h1grid:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_h0_h1grid_r31.json
+  deps:
+  - robust.Z2.board_h0_h1grid
+  ncpus: 4
+  mem_gb: 53.0
+  est_wall_h: 5.086
+  walltime_h: 13.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '4'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_h0_h1grid_r31.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1_r31.json: et 16138 s + mech 6747 s (2 thr, 326520
+    el)'
+  notes: 'board_h0_h1grid (Z2) on rung r31 of its own nested ladder: the variant changes the mesh, so
+    the production pair''s beta / U do not transfer; the class-B rows and the joint column judge it on
+    this ladder'
+- id: ladder.robust.Z2.board_t2p4.r31
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
+  - board_t2p4:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_t2p4_r31.json
+  deps:
+  - robust.Z2.board_t2p4
+  ncpus: 4
+  mem_gb: 49.0
+  est_wall_h: 5.086
+  walltime_h: 13.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '4'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_t2p4_r31.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1_r31.json: et 16138 s + mech 6747 s (2 thr, 326520
+    el)'
+  notes: 'board_t2p4 (Z2) on rung r31 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
+- id: ladder.robust.Z2.f2_void.r31
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
+  - f2_void:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__f2_void_r31.json
+  deps:
+  - robust.Z2.f2_void
+  ncpus: 4
+  mem_gb: 43.0
+  est_wall_h: 5.086
+  walltime_h: 13.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '4'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__f2_void_r31.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1_r31.json: et 16138 s + mech 6747 s (2 thr, 326520
+    el)'
+  notes: 'f2_void (Z2) on rung r31 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
+- id: ladder.robust.Z2.f1_sidewall_filled.r31
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
+  - f1_sidewall_filled:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__f1_sidewall_filled_r31.json
+  deps:
+  - robust.Z2.f1_sidewall_filled
+  ncpus: 4
+  mem_gb: 55.0
+  est_wall_h: 5.086
+  walltime_h: 13.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '4'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__f1_sidewall_filled_r31.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1_r31.json: et 16138 s + mech 6747 s (2 thr, 326520
+    el)'
+  notes: 'f1_sidewall_filled (Z2) on rung r31 of its own nested ladder: the variant changes the mesh,
+    so the production pair''s beta / U do not transfer; the class-B rows and the joint column judge it
+    on this ladder'
 - id: ladder.Z1.r31
   stage: refinement_ladders
   argv:
@@ -3477,6 +3629,127 @@ jobs:
   evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1_r31.json: et 17180 s + mech 3637 s (2 thr, 325152
     el)'
   notes: production state on the nested mesh rung
+- id: ladder.robust.Z1.board_h1.r31
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
+  - board_h1:Z1
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_h1_r31.json
+  deps:
+  - robust.Z1.board_h1
+  ncpus: 4
+  mem_gb: 54.0
+  est_wall_h: 4.626
+  walltime_h: 12.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '4'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_h1_r31.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1_r31.json: et 17180 s + mech 3637 s (2 thr, 325152
+    el)'
+  notes: 'board_h1 (Z1) on rung r31 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
+- id: ladder.robust.Z1.board_h0_h1grid.r31
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
+  - board_h0_h1grid:Z1
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_h0_h1grid_r31.json
+  deps:
+  - robust.Z1.board_h0_h1grid
+  ncpus: 4
+  mem_gb: 54.0
+  est_wall_h: 4.626
+  walltime_h: 12.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '4'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_h0_h1grid_r31.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1_r31.json: et 17180 s + mech 3637 s (2 thr, 325152
+    el)'
+  notes: 'board_h0_h1grid (Z1) on rung r31 of its own nested ladder: the variant changes the mesh, so
+    the production pair''s beta / U do not transfer; the class-B rows and the joint column judge it on
+    this ladder'
+- id: ladder.robust.Z1.board_t2p4.r31
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
+  - board_t2p4:Z1
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_t2p4_r31.json
+  deps:
+  - robust.Z1.board_t2p4
+  ncpus: 4
+  mem_gb: 49.0
+  est_wall_h: 4.626
+  walltime_h: 12.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '4'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_t2p4_r31.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1_r31.json: et 17180 s + mech 3637 s (2 thr, 325152
+    el)'
+  notes: 'board_t2p4 (Z1) on rung r31 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
+- id: ladder.robust.Z1.f2_void.r31
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r31
+  - f2_void:Z1
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z1_HV_S0__f2_void_r31.json
+  deps:
+  - robust.Z1.f2_void
+  ncpus: 4
+  mem_gb: 34.0
+  est_wall_h: 4.626
+  walltime_h: 12.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '4'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z1_HV_S0__f2_void_r31.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1_r31.json: et 17180 s + mech 3637 s (2 thr, 325152
+    el)'
+  notes: 'f2_void (Z1) on rung r31 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
 - id: ladder.Z2.r12
   stage: refinement_ladders
   argv:
@@ -3552,6 +3825,153 @@ jobs:
     kind: etm
     mechanics: true
   evidence: 'final_closure/etm_Z2_HV_S0_h1.1.json: et 289 s + mech 967 s (2 thr, 36280 el)'
+- id: ladder.robust.Z2.board_h1.r11
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
+  - board_h1:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_h1_r11.json
+  deps:
+  - robust.Z2.board_h1
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 0.349
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_h1_r11.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1.json: et 289 s + mech 967 s (2 thr, 36280 el)'
+  notes: 'board_h1 (Z2) on rung r11 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
+- id: ladder.robust.Z2.board_h0_h1grid.r11
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
+  - board_h0_h1grid:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_h0_h1grid_r11.json
+  deps:
+  - robust.Z2.board_h0_h1grid
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 0.349
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_h0_h1grid_r11.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1.json: et 289 s + mech 967 s (2 thr, 36280 el)'
+  notes: 'board_h0_h1grid (Z2) on rung r11 of its own nested ladder: the variant changes the mesh, so
+    the production pair''s beta / U do not transfer; the class-B rows and the joint column judge it on
+    this ladder'
+- id: ladder.robust.Z2.board_t2p4.r11
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
+  - board_t2p4:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_t2p4_r11.json
+  deps:
+  - robust.Z2.board_t2p4
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 0.349
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__board_t2p4_r11.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1.json: et 289 s + mech 967 s (2 thr, 36280 el)'
+  notes: 'board_t2p4 (Z2) on rung r11 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
+- id: ladder.robust.Z2.f2_void.r11
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
+  - f2_void:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__f2_void_r11.json
+  deps:
+  - robust.Z2.f2_void
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 0.349
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__f2_void_r11.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1.json: et 289 s + mech 967 s (2 thr, 36280 el)'
+  notes: 'f2_void (Z2) on rung r11 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
+- id: ladder.robust.Z2.f1_sidewall_filled.r11
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
+  - f1_sidewall_filled:Z2
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z2_HV_S0__f1_sidewall_filled_r11.json
+  deps:
+  - robust.Z2.f1_sidewall_filled
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 0.349
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: any
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z2_HV_S0__f1_sidewall_filled_r11.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z2_HV_S0_h1.1.json: et 289 s + mech 967 s (2 thr, 36280 el)'
+  notes: 'f1_sidewall_filled (Z2) on rung r11 of its own nested ladder: the variant changes the mesh,
+    so the production pair''s beta / U do not transfer; the class-B rows and the joint column judge it
+    on this ladder'
 - id: ladder.Z1.r11
   stage: refinement_ladders
   argv:
@@ -3761,6 +4181,123 @@ jobs:
     mechanics: true
   evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1.json: et 307 s + mech 556 s (2 thr, 36128 el)'
   notes: production state on the nested mesh rung; the coarse smoke test of the campaign
+- id: ladder.robust.Z1.board_h1.r11
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
+  - board_h1:Z1
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_h1_r11.json
+  deps:
+  - robust.Z1.board_h1
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 0.24
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_h1_r11.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1.json: et 307 s + mech 556 s (2 thr, 36128 el)'
+  notes: 'board_h1 (Z1) on rung r11 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
+- id: ladder.robust.Z1.board_h0_h1grid.r11
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
+  - board_h0_h1grid:Z1
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_h0_h1grid_r11.json
+  deps:
+  - robust.Z1.board_h0_h1grid
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 0.24
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_h0_h1grid_r11.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1.json: et 307 s + mech 556 s (2 thr, 36128 el)'
+  notes: 'board_h0_h1grid (Z1) on rung r11 of its own nested ladder: the variant changes the mesh, so
+    the production pair''s beta / U do not transfer; the class-B rows and the joint column judge it on
+    this ladder'
+- id: ladder.robust.Z1.board_t2p4.r11
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
+  - board_t2p4:Z1
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_t2p4_r11.json
+  deps:
+  - robust.Z1.board_t2p4
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 0.24
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z1_HV_S0__board_t2p4_r11.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1.json: et 307 s + mech 556 s (2 thr, 36128 el)'
+  notes: 'board_t2p4 (Z1) on rung r11 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
+- id: ladder.robust.Z1.f2_void.r11
+  stage: refinement_ladders
+  argv:
+  - scripts/final_closure_sensitivity.py
+  - --refine
+  - r11
+  - f2_void:Z1
+  outputs:
+  - final_closure/sensitivity/ladder/etm_Z1_HV_S0__f2_void_r11.json
+  deps:
+  - robust.Z1.f2_void
+  ncpus: 2
+  mem_gb: 6.0
+  est_wall_h: 0.24
+  walltime_h: 1.5
+  backends:
+  - local
+  - pbs
+  prefer: local
+  env:
+    FC_THREADS: '2'
+    FC_POOL_MAX: '1'
+  validate:
+  - file: final_closure/sensitivity/ladder/etm_Z1_HV_S0__f2_void_r11.json
+    kind: etm
+    mechanics: true
+  evidence: 'analog final_closure/etm_Z1_HV_S0_h1.1.json: et 307 s + mech 556 s (2 thr, 36128 el)'
+  notes: 'f2_void (Z1) on rung r11 of its own nested ladder: the variant changes the mesh, so the production
+    pair''s beta / U do not transfer; the class-B rows and the joint column judge it on this ladder'
 - id: ladder.solver_check.SPOOLES_t1
   stage: refinement_ladders
   argv:
@@ -10272,6 +10809,24 @@ jobs:
   - mech.screen.escalate.2
   - mech.screen.escalate.gap
   - mech.screen.escalate.reverse
+  - ladder.robust.Z1.board_h0_h1grid.r11
+  - ladder.robust.Z1.board_h0_h1grid.r31
+  - ladder.robust.Z1.board_h1.r11
+  - ladder.robust.Z1.board_h1.r31
+  - ladder.robust.Z1.board_t2p4.r11
+  - ladder.robust.Z1.board_t2p4.r31
+  - ladder.robust.Z1.f2_void.r11
+  - ladder.robust.Z1.f2_void.r31
+  - ladder.robust.Z2.board_h0_h1grid.r11
+  - ladder.robust.Z2.board_h0_h1grid.r31
+  - ladder.robust.Z2.board_h1.r11
+  - ladder.robust.Z2.board_h1.r31
+  - ladder.robust.Z2.board_t2p4.r11
+  - ladder.robust.Z2.board_t2p4.r31
+  - ladder.robust.Z2.f1_sidewall_filled.r11
+  - ladder.robust.Z2.f1_sidewall_filled.r31
+  - ladder.robust.Z2.f2_void.r11
+  - ladder.robust.Z2.f2_void.r31
   ncpus: 1
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -11692,6 +12247,24 @@ jobs:
   - robust.local.tsv_mid
   - robust.local.tsv_min
   - robust.local.z2_cooled
+  - ladder.robust.Z1.board_h0_h1grid.r11
+  - ladder.robust.Z1.board_h0_h1grid.r31
+  - ladder.robust.Z1.board_h1.r11
+  - ladder.robust.Z1.board_h1.r31
+  - ladder.robust.Z1.board_t2p4.r11
+  - ladder.robust.Z1.board_t2p4.r31
+  - ladder.robust.Z1.f2_void.r11
+  - ladder.robust.Z1.f2_void.r31
+  - ladder.robust.Z2.board_h0_h1grid.r11
+  - ladder.robust.Z2.board_h0_h1grid.r31
+  - ladder.robust.Z2.board_h1.r11
+  - ladder.robust.Z2.board_h1.r31
+  - ladder.robust.Z2.board_t2p4.r11
+  - ladder.robust.Z2.board_t2p4.r31
+  - ladder.robust.Z2.f1_sidewall_filled.r11
+  - ladder.robust.Z2.f1_sidewall_filled.r31
+  - ladder.robust.Z2.f2_void.r11
+  - ladder.robust.Z2.f2_void.r31
   ncpus: 1
   mem_gb: 4.0
   est_wall_h: 0.05
@@ -11708,6 +12281,7 @@ jobs:
   - file: final_closure/classB_sensitivity_rows.csv
     kind: csv
   evidence: cheap post-processing (reads JSON / fields; seconds to minutes)
+  notes: a variant on a mesh of its own is judged on its own ladder (ladder.robust.*)
 - id: derived.accuracy_matrix
   stage: derived
   argv:
@@ -12229,6 +12803,24 @@ jobs:
   - robust.Z1.bga_card_local
   - robust.Z2.bga_card_local
   - robust.local.bga_card_local
+  - ladder.robust.Z1.board_h1.r11
+  - ladder.robust.Z1.board_h1.r31
+  - ladder.robust.Z2.board_h1.r11
+  - ladder.robust.Z2.board_h1.r31
+  - ladder.robust.Z1.board_h0_h1grid.r11
+  - ladder.robust.Z1.board_h0_h1grid.r31
+  - ladder.robust.Z2.board_h0_h1grid.r11
+  - ladder.robust.Z2.board_h0_h1grid.r31
+  - ladder.robust.Z1.board_t2p4.r11
+  - ladder.robust.Z1.board_t2p4.r31
+  - ladder.robust.Z2.board_t2p4.r11
+  - ladder.robust.Z2.board_t2p4.r31
+  - ladder.robust.Z1.f2_void.r11
+  - ladder.robust.Z1.f2_void.r31
+  - ladder.robust.Z2.f2_void.r11
+  - ladder.robust.Z2.f2_void.r31
+  - ladder.robust.Z2.f1_sidewall_filled.r11
+  - ladder.robust.Z2.f1_sidewall_filled.r31
   - robust.caloric.Z1.A
   - robust.caloric.Z2.A
   - robust.caloric.Z3.A

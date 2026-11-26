@@ -122,6 +122,21 @@ Z3_LAND = {"A": "z3_land_t40_A_fvmap", "B": "z3_land_t40_B_fvmap"}
 TIER_BASE = {("Z1", "A"): None, ("Z2", "A"): None, ("Z3", "A"): Z3_LAND["A"],
              ("Z1", "B"): "z1_bottom_plate_tim", ("Z2", "B"): "z2_cooled_tim",
              ("Z3", "B"): Z3_LAND["B"]}
+#: the class-B variants that change the mesh: their r21 solve is not on the reference pair's
+#: mesh, so the transfer check refuses the production pair's beta / U and their verdicts were
+#: pending (final_closure_classB ladder_runs_needed). Each (arch, variant) gets a nested ladder
+#: of its own, r11 and r31 around its r21 solve (final_closure_sensitivity --refine), on which
+#: final_closure_classB and tcpmt_mech_joint_screen judge it (tcpmt_resolution: a case with a
+#: ladder of its own carries its own beta and U). board_t2p4 Z1 is on the reference mesh but is
+#: laddered too, so the pair's difference has a ladder of its own. Value: the r21 element count
+#: (thousands) of the variant's campaign_v3 case, for the memory request.
+VARIANT_LADDERS = {("Z1", "board_h1"): 123.8, ("Z2", "board_h1"): 121.7,
+                   ("Z1", "board_h0_h1grid"): 123.8, ("Z2", "board_h0_h1grid"): 121.7,
+                   ("Z1", "board_t2p4"): 112.3, ("Z2", "board_t2p4"): 113.9,
+                   ("Z1", "f2_void"): 79.1, ("Z2", "f2_void"): 100.1,
+                   ("Z2", "f1_sidewall_filled"): 126.0}
+#: element count of a rung relative to r21 (nested in-plane splits, layers unsplit: (I/2)^2)
+RUNG_AREA = {"r11": 0.25, "r21": 1.0, "r31": 2.25}
 
 
 def _json(rel):
@@ -276,6 +291,11 @@ def tr(name):
 
 def sens(arch, variant, scen="HV_S0"):
     return f"final_closure/sensitivity/etm_{arch}_{scen}__{variant}.json"
+
+
+def sens_ladder(arch, variant, rung, scen="HV_S0"):
+    """A rung of a variant's own ladder (final_closure_sensitivity.variant_file)."""
+    return f"final_closure/sensitivity/ladder/etm_{arch}_{scen}__{variant}_{rung}.json"
 
 
 def case(arch, scen, refine="r21"):
@@ -656,6 +676,19 @@ def build(design):
             backends=LOCAL_SOLVE_BACKENDS,
             validate=[{"file": sens(a, v), "kind": "etm", "local": True} for a in archs.split()],
             notes="adds the L0 local solder response at the variant's own critical joint")
+    # the variants on a mesh of their own: rungs r11 and r31 of their own nested ladder
+    vlad = {}
+    for (a, v), kel21 in VARIANT_LADDERS.items():
+        for r, thr in (("r11", 2), ("r31", 4)):
+            vlad[(a, v, r)] = etm_job(
+                f"ladder.robust.{a}.{v}.{r}", "refinement_ladders",
+                ["scripts/final_closure_sensitivity.py", "--refine", r, f"{v}:{a}"],
+                sens_ladder(a, v, r), deps=[rb[(a, v)]], analog=case(a, "HV_S0", r),
+                n_el_k=kel21 * RUNG_AREA[r], ncpus=thr, speed=(0.8 if r == "r31" else 1.0),
+                rung=r, notes=f"{v} ({a}) on rung {r} of its own nested ladder: the variant "
+                              "changes the mesh, so the production pair's beta / U do not "
+                              "transfer; the class-B rows and the joint column judge it on "
+                              "this ladder")
     for (a, t) in TIER_BASE:
         etm_job(f"robust.caloric.{a}.{t}", "robustness_map",
                 ["scripts/tcpmt_review_variants.py", "caloric", a, t, "HV_SDEC"],
@@ -675,6 +708,9 @@ def build(design):
     jd["deps"] += [mech["count"][k] for k in sorted(mech["count"])] + ["derived.uncertainty"]
     mech["s0"] = s0_reference_jobs(prod)
     mech["screen"] = joint_screen_jobs(mech)
+    # the joint column of a variant on a mesh of its own is judged on its own ladder
+    js = next(j for j in JOBS if j["id"] == mech["screen"])
+    js["deps"] += [vlad[k] for k in sorted(vlad)]
     mech["band_study"] = job(
         "mech.band_study", "mech_revision",
         ["bash", "-c", "set -e; cd {repo}; {python} scripts/tcpmt_mech_band_study.py --run; "
@@ -690,7 +726,7 @@ def build(design):
 
     # ------------------------------------------------------------------ the rest
     rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s, lad, prep,
-         dsum, mech)
+         dsum, mech, vlad)
     return {"jobs": JOBS, "static": sorted(STATIC)}
 
 
@@ -1249,7 +1285,7 @@ STATIC = [
 
 
 def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s, lad, prep,
-         dsum, mech=None):
+         dsum, mech=None, vlad=None):
     P = lambda a, s="S0", t="A": prod[(a, s, t)]                            # noqa: E731
     ref_A = [prod[(a, s, "A")] for a in ARCHS for s in ("S0", "S1", "S2")]
     sdec = [prod[(a, "SDEC", t)] for a in ARCHS for t in TIERS]
@@ -1362,7 +1398,9 @@ def rest(prod, fields, vfields, land, land_rep, fb, hs, rb, loc_t, loc_m, loc_s,
          [fc("classB_resolution.json"), fc("classB_resolution.csv"),
           fc("classB_sensitivity_rows.csv")],
          deps=[res, vra, loc_m, prep["network"], dfeed, P("Z1"), P("Z2")] +
-         [rb[k] for k in classb_vs] + sorted({f"robust.local.{k[1]}" for k in classb_vs}))
+         [rb[k] for k in classb_vs] + sorted({f"robust.local.{k[1]}" for k in classb_vs}) +
+         [vlad[k] for k in sorted(vlad or {})],
+         notes="a variant on a mesh of its own is judged on its own ladder (ladder.robust.*)")
     moose = moose_jobs(prod, fields, lad)
     post("derived.accuracy_matrix", "derived", "final_closure_accuracy_matrix.py",
          [fc("accuracy_speed_matrix.json"), fc("accuracy_speed_matrix.csv")],
@@ -1553,7 +1591,7 @@ def main():
                              "record": "configs/design_points.yaml",
                              "alternates": {k: v["role"] for k, v in ALTERNATES.items()}},
         },
-        "local": {"max_cores": 35, "nice": 0},
+        "local": {"max_cores": 60, "nice": 0},
         "pbs": {"host": "pioneer", "qsub": "/opt/pbs/bin/qsub", "qstat": "/opt/pbs/bin/qstat",
                 "qdel": "/opt/pbs/bin/qdel", "queue": "cpu_only", "select_extra": "host=califone",
                 "max_running": 8, "max_queued": 50, "max_walltime_h": 96, "max_ncpus": 112,
