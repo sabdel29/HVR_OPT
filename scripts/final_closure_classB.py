@@ -10,9 +10,13 @@ A run-based gate is judged on the sensitivity cases written by final_closure_sen
 (production mesh, HV-S0): for every observable the variant's Z1/Z2 verdict is formed with
 THE comparison rule of the revision (TCPMT round 3, scripts/tcpmt_resolution.py; the same rule
 as Table IV): resolved when |D + beta_D| > U95(D), D = Z2 - Z1. The production verdict is that
-rule on the production pair's own nested ladders; a variant pair has no ladder of its own, so
-the production pair's beta and discretization U are transferred PROVISIONALLY when both cases
-pass the transfer check (solved on the production mesh), else the verdict is PENDING; the
+rule on the production pair's own nested ladders. A variant case with a ladder of its own
+(r11 / r21 / r31 under sensitivity/ladder: the campaign's ladder.robust.* jobs, for the
+variants that change the mesh) is judged on it exactly like a compared pair
+(tcpmt_uncertainty.compare: D's own rung sequence, the integration a variant does not change
+carrying its reference ladder; not provisional). A variant pair without one carries the
+production pair's beta and discretization U, transferred PROVISIONALLY when both cases pass
+the transfer check (solved on the production mesh), else the verdict is PENDING; the
 variant's own E-T stop and reference terms enter U95. The local response is judged on each
 joint's numerical U (production joints', provisional) under the production law (the law band is
 solved for the tier joints only). The verdict of the superseded rule (gap > 2 x the r21 -> r31
@@ -378,6 +382,22 @@ def rule_verdict(k, va, vb, mesh_a=None, mesh_b=None):
     return rec["verdict"], rec
 
 
+def own_ladder(path):
+    """True when the case file has a ladder of its own (r11, r21, r31: tcpmt_uncertainty)."""
+    TU, _RULE, _pairs = _rule()
+    return bool(path) and Path(path).is_file() and TU.ladder_values(path)[1]
+
+
+def ladder_verdict(k, va, vb, pa, pb):
+    """Z1/Z2 verdict of one global observable for a variant pair in which a case has a ladder
+    of its own: the rule of Table IV (tcpmt_uncertainty.compare) -- D's own rung sequence when
+    both cases are laddered (an unchanged integration is its laddered reference case), else
+    the reference pair's estimate behind the transfer check of the case without one."""
+    TU, RULE, _pairs = _rule()
+    r = TU.compare("A", "Z1", "Z2", UKEY[k], pa, pb, va, vb)
+    return RULE.verdict_label(r["resolved"], r["D_corrected"], "Z1", "Z2"), r
+
+
 def _state_paths(state):
     """(Z1, Z2) case files the production verdict of `state` is formed on: the laddered S0
     production-boundary pair (the reference of every transfer); for the production state
@@ -445,21 +465,26 @@ def judge_runs(cases, observables, od, unc, state=None):
             base[a]["d_eps_in_per_cycle"] = (((lm.get(f"{a}_{scen}") or {}).get("levels")
                                               or {}).get("L0") or {}).get("d_peeq_per_cycle")
     prod_rule = production_rule_verdicts(base, state)
+    ref_paths = dict(zip(("Z1", "Z2"), _state_paths(state)))
     rows, missing = [], []
     for v in cases:
-        var, mesh = {}, {}
+        var, mesh, path = {}, {}, {}
         for a in ("Z1", "Z2"):
             f = SENS / f"etm_{a}_{scen}__{v}.json"
             c = J(f)
             if c is None and v in Z2_ONLY and a == "Z1":
                 var[a], mesh[a] = base[a], "reference"   # Z1 is unchanged by definition
+                path[a] = ref_paths[a]
                 continue
             if c is None and v in Z1_ONLY and a == "Z2":
                 var[a], mesh[a] = base[a], "reference"   # Z2 is unchanged by definition
+                path[a] = ref_paths[a]
                 continue
-            var[a], mesh[a] = _vals(c), _mesh(c)
+            var[a], mesh[a], path[a] = _vals(c), _mesh(c), f
             if var[a] is None:
                 missing.append(f.name)
+        # a variant case with a ladder of its own is judged on it (not by a transfer)
+        laddered = any(mesh[a] != "reference" and own_ladder(path[a]) for a in ("Z1", "Z2"))
         for k in observables:
             if any(var[a] is None for a in var):
                 continue
@@ -470,7 +495,10 @@ def judge_runs(cases, observables, od, unc, state=None):
             legacy, gap = _verdict(va, vb, u)
             if scen != SCEN:          # the superseded rule was never applied in another state
                 legacy = None
-            verdict, rec = rule_verdict(k, va, vb, mesh["Z1"], mesh["Z2"])
+            if laddered and k in UKEY:
+                verdict, rec = ladder_verdict(k, va, vb, path["Z1"], path["Z2"])
+            else:
+                verdict, rec = rule_verdict(k, va, vb, mesh["Z1"], mesh["Z2"])
             prod = (prod_rule.get(k) or (None,))[0]
             legacy_prod = (od.get(k) or {}).get("per_scenario", {}).get(scen)
             ch = {a: ((var[a][k] - base[a][k]) / base[a][k]
@@ -481,6 +509,7 @@ def judge_runs(cases, observables, od, unc, state=None):
                          "D_corrected": rec.get("D_corrected"), "U95": rec.get("U95"),
                          "provisional": rec.get("provisional"),
                          "transfer_checks": rec.get("transfer_checks"),
+                         "basis": rec.get("basis"),
                          "uncertainty_rel": (rec["U95"] / max(abs(va), abs(vb))
                                              if rec.get("U95") is not None else None),
                          "verdict": verdict, "production_verdict": prod,
@@ -853,8 +882,9 @@ def rule_change(out, newer):
             "now_pending": pend, "changes": changes,
             "note": "unique (case, observable) robustness rows; legacy = gap > 2 x the r21 -> "
                     "r31 step (old rows) or |D| > 2 U_D_paired (newer rows); unified = "
-                    "tcpmt_resolution.RULE; all variant verdicts are provisional (production "
-                    "pair's U transferred on the identical mesh, r11 check runs pending)"}
+                    "tcpmt_resolution.RULE; a variant verdict is provisional (production "
+                    "pair's U transferred on the identical mesh, r11 check runs pending) "
+                    "unless the variant has a ladder of its own (judged on it)"}
 
 
 def robustness_ladder_runs(out, newer):

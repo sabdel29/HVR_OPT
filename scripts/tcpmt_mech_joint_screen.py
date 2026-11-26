@@ -36,7 +36,9 @@ ramped loads, the production law at its converged window):
             integrations under THE rule (|D + beta| > U95(D); U95 from each joint's own
             numerical U of the local model -- the production joints' L0 -> L3 and 4 -> 8 cycle
             changes, transferred provisionally to the reference state; beta = 0; a variant on
-            another mesh than its reference is pending, as in the map), and the validation.
+            another mesh than its reference is pending, as in the map, unless it has a mesh
+            ladder of its own: r11 / r21 / r31, final_closure_sensitivity --refine, on which the
+            map judges its global outputs), and the validation.
 
     python tcpmt_mech_joint_screen.py list
     python tcpmt_mech_joint_screen.py lattice [KEY ...]     (FC_POOL_MAX workers)
@@ -688,8 +690,9 @@ def summarize():
                    "L0 -> L3 and 4 -> 8 cycle changes of the production joints, transferred "
                    "provisionally to the reference state's joints and to the variants); a "
                    "variant on another mesh than its reference is pending (the map's "
-                   "transfer check); production law only (the law band is not re-run for "
-                   "the variants)",
+                   "transfer check) unless it has a mesh ladder of its own (r11 / r21 / r31, "
+                   "on which the map judges its global outputs); production law only (the "
+                   "law band is not re-run for the variants)",
            "u_basis": ubasis, "references": {}, "variants": {}, "groups": {},
            "inputs_sha1": {}}
     refs = sorted({s["ref"] for s in specs})
@@ -731,9 +734,13 @@ def summarize():
         mesh = (lrec.get("provenance") or {}).get("mesh")
         same_mesh = (mesh is not None and ref_mesh.get(s["ref"]) is not None
                      and list(mesh)[:2] == list(ref_mesh[s["ref"]])[:2])
+        # a variant case with a mesh ladder of its own (r11, r21, r31: tcpmt_uncertainty)
+        own = (s["source"] in ("sens", "review") and Path(s["case_file"]).is_file()
+               and TU.ladder_values(s["case_file"])[1])
         out["variants"][s["key"]] = dict(
             {k: s[k] for k in ("group", "arch", "tier", "ref", "name", "source")},
-            same_mesh_as_reference=same_mesh, lattice=MP.rel(lf) if lf.is_file() else None,
+            same_mesh_as_reference=same_mesh, own_ladder=bool(own),
+            lattice=MP.rel(lf) if lf.is_file() else None,
             lattice_verification=lrec.get("verification"), **sc)
         out["inputs_sha1"].update(lrec.get("inputs_sha1") or {})
     # orderings per group (Z1 / Z2 / Z3 where present); an integration the variant does not
@@ -753,7 +760,7 @@ def summarize():
         for name, per in per_name.items():
             v0 = next(iter(per.values()))
             tier, refst = v0["tier"], v0["ref"].split("_")[0]
-            vals, refv, mesh_ok, urel = {}, {}, {}, {}
+            vals, refv, mesh_ok, urel, laddered = {}, {}, {}, {}, {}
             for a in ("Z1", "Z2", "Z3"):
                 if a in per:
                     ref = per[a]["ref"]
@@ -763,6 +770,7 @@ def summarize():
                     vals[a] = per[a].get("d_eps")
                     refv[a] = ref_val(f"{refst}_{tier}_{a}") if g == "S0_A" else ref_val(ref)
                     mesh_ok[a] = per[a]["same_mesh_as_reference"]
+                    laddered[a] = not mesh_ok[a] and per[a].get("own_ladder")
                 elif not g.startswith("board") and a in GROUP_ARCHS.get(g, ("Z1", "Z2", "Z3")):
                     ref = f"{refst}_{tier}_{a}"
                     if ref_val(ref) is None:
@@ -782,7 +790,12 @@ def summarize():
                     continue                      # neither integration is changed
                 jv = _judge(a, b, vals[a], vals[b], urel[a], urel[b])
                 jb = _judge(a, b, refv[a], refv[b], urel[a], urel[b])
-                pend = not (mesh_ok.get(a) and mesh_ok.get(b))
+                # another mesh than the reference's: judged only on a ladder of its own
+                pend = not all(mesh_ok.get(x) or laddered.get(x) for x in (a, b))
+                own = [x for x in (a, b) if laddered.get(x)]
+                note = ("variant mesh differs from its reference's" if pend else
+                        "variant mesh differs from its reference's; judged with a mesh "
+                        f"ladder of its own ({', '.join(own)})" if own else None)
                 ords[f"eps:{a}/{b}"] = {
                     "variant": [vals[a], vals[b]], "base": [refv[a], refv[b]],
                     "base_lower": a if refv[a] < refv[b] else b,
@@ -792,7 +805,7 @@ def summarize():
                     "verdict_if_transferred": jv["verdict"],
                     "base_verdict": jb["verdict"], "U95": jv.get("U95"),
                     "D_corrected": jv.get("D_corrected"), "provisional": True,
-                    **({"note": "variant mesh differs from its reference's"} if pend else {})}
+                    **({"note": note} if note else {})}
             res[name] = {"values": vals, "reference": refv, "orderings": ords}
         out["groups"][g] = res
     vfiles = sorted(VAL.glob("*.json")) if VAL.is_dir() else []

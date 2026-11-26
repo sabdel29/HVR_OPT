@@ -13,13 +13,15 @@ largest ball displacement, the disproven proxy, is no longer a column). Cell sta
 glyph AND a fill, never colour alone:
   preserved  ·  light neutral          withdrawn ( |D + beta| <= U95 )  ≈  mid neutral
   reversed toward Z1 / Z2  -> that architecture's identity colour with its label
-  pending (the variant's mesh differs; its own ladder is needed)  ?
+  pending (the variant's mesh differs and its own ladder is missing)  ?  (in the legend only
+  when a cell is pending)
 Each cell prints the gap Z2 - Z1 under that decision (min...max over the merged variants;
 units in the header). Positive: Z1 lower.
 ONE RULE (scripts/tcpmt_resolution.py): every cell is the verdict final_closure_classB.py
 formed with the rule of Table IV, |D + beta_D| > U95(D); this script classifies nothing
-itself. A variant has no ladder of its own: its U is the production pair's, transferred
-provisionally on the identical mesh; a variant on another mesh is PENDING.
+itself. A variant on the production mesh has no ladder of its own: its U is the production
+pair's, transferred provisionally; a variant on a mesh of its own is judged on its own nested
+ladder (r11 / r21 / r31) and is PENDING while that ladder is missing.
 Data: classB_sensitivity_rows.csv (gate rows and robustness.newer_decisions_A rows),
 robustness_B.json / robustness_mech_SDEC.json (mechanics-only groups), robustness_joint.json
 (the joint column of every group).
@@ -304,7 +306,10 @@ HEAD = ["Int. loss\n(W)", "Peak\ntemp. (K)", "Die warp.\n(µm)",
 COLW_IN, ROWH_IN, LAB_IN = 0.45, 0.145, 1.64
 n_body = (sum(len(g[1]) for g in LAYOUT) + len(LAYOUT)
           + sum(1 for g in LAYOUT if g[0] in GROUP_GATE))
-HEAD_R, LEG_R = 2.4, 5.0                       # header and legend heights, in rows
+#: the legend shows the pending state only when a cell is pending (it needs its own row)
+ANY_PENDING = any(merged(cases, obs)[0][0] == "pending" for _g, items in LAYOUT
+                  for _lab, cases in items for obs, _ in OBS)
+HEAD_R, LEG_R = 2.4, (5.0 if ANY_PENDING else 4.0)    # header and legend heights, in rows
 W = S.COL_W
 H = (n_body + 1 + HEAD_R + LEG_R) * ROWH_IN + 0.05
 fig = plt.figure(figsize=(W, H))
@@ -353,6 +358,8 @@ items = [("prod", "Z1", "Z1 lower"), ("prod", "Z2", "Z2 lower"),
          ("pending", None, "pending (own ladder)"), ("n/a", None, "not evaluated")]
 pos = [(xl + 0.15, ly), (xl + 2.65, ly), (xl + 5.15, ly), (xl + 0.15, ly + 1.0),
        (xl + 0.15, ly + 2.0), (xl + 5.15, ly + 1.0)]
+if not ANY_PENDING:
+    items, pos = items[:4] + items[5:], pos[:4] + pos[5:]
 for (st, who, lab), (lx, lyy) in zip(items, pos):
     fc = S.ARCH[who] if who else FILL[st]
     ax.add_patch(Rectangle((lx, lyy), 0.62, 0.78, fc=fc, ec="none"))
@@ -360,7 +367,8 @@ for (st, who, lab), (lx, lyy) in zip(items, pos):
             fontsize=5.6 if who else 7.5, color="white" if who else S.INK2,
             fontweight="bold" if who else "normal")
     ax.text(lx + 0.8, lyy + 0.41, lab, ha="left", va="center", fontsize=6.5, color=S.INK2)
-ax.text(xl + 0.15, ly + 3.75, "Numbers: gap Z2 − Z1 (min…max over merged variants);\n"
+ax.text(xl + 0.15, ly + (3.75 if ANY_PENDING else 2.75),
+        "Numbers: gap Z2 − Z1 (min…max over merged variants);\n"
         "colored: the ordering reverses toward that integration.", ha="left", va="center",
         fontsize=6.5, color=S.INK2)
 
